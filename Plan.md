@@ -5,11 +5,15 @@
 - Create a colab-bundle which contains all the training/test structure files and CSV files. Should be compressed.
 
 ### 2) Train the Metal classification model
-- Train/validate on 6 classes: Mn,Fe,Zn,Cu,Co and Ni seperately.
-- Test the test-set on prediction performance on 
+- Train/validate on 6 classes: Mn,Fe,Zn,Cu,Co and Ni separately.
+  - best_checkpoint = highest validation balanced accuracy 
+- Test the test-set on prediction performance on thr 6 Classes and on 4 classes, whereas Fe+Ni+Co are concatenated to VIII class.
 
 ### 3) Train the EC-number classification model
-
+- Train/validate on all EC classes first digit **AND** following digits (Need yet to think how many digit to train)
+- Use contrastive learning
+- Test on the test-set on all levels of digits so will have broad view on performance.
+- 
 ### 4) Do many parameters and model-types configurable
 - The parameters include:
   - `epochs`
