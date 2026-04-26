@@ -12,7 +12,7 @@
 ### 3) Train the EC-number classification model
 - Train/validate on all EC classes first digit **AND** following digits (Need yet to think how many digit to train)
 - Use contrastive learning
-- Test on the test-set on all levels of digits so will have broad view on performance.
+- Test on the test-set on all levels of digits so will have broad view on the prediction performance.
 - 
 ### 4) Do many parameters and model-types configurable
 - The parameters include:
