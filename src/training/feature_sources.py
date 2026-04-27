@@ -1,0 +1,234 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+from torch import Tensor
+
+from data_structures import PocketRecord
+from graph.feature_utils import attach_esm_embeddings, attach_external_residue_features
+from training.external_feature_loading import structure_dir_to_feature_lookup
+from training.esm_feature_loading import ResidueKey, load_esm_lookup_for_structure
+
+
+@dataclass(frozen=True)
+class StructureFeatureSources:
+    esm_lookup: Dict[ResidueKey, Tensor]
+    external_feature_lookup: Dict[ResidueKey, Dict[str, float]]
+
+
+def feature_fallback_record(
+    structure_path: Path,
+    *,
+    feature_name: str,
+    detail: str,
+) -> Dict[str, str]:
+    return {
+        "structure_path": str(structure_path),
+        "feature": feature_name,
+        "detail": detail,
+    }
+
+
+def resolve_structure_feature_dir(
+    *,
+    structure_path: Path,
+    structure_root: Path,
+    feature_root_dir: Optional[Path],
+    external_feature_source: str,
+) -> Optional[Path]:
+    direct_candidate = structure_path.parent / structure_path.stem
+    candidates: list[Path] = []
+
+    if feature_root_dir is not None:
+        feature_root_dir = Path(feature_root_dir)
+        try:
+            relative_parent = structure_path.parent.relative_to(structure_root)
+        except ValueError:
+            relative_parent = Path()
+
+        root_candidates = [
+            feature_root_dir / relative_parent / structure_path.stem,
+            feature_root_dir / structure_path.stem,
+        ]
+    else:
+        root_candidates = []
+
+    if external_feature_source in {"auto", "updated"}:
+        candidates.extend(root_candidates)
+    elif external_feature_source == "bluues_rosetta":
+        candidates.append(direct_candidate)
+        candidates.extend(root_candidates)
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def load_external_feature_lookup_for_structure(
+    *,
+    structure_path: Path,
+    structure_root: Path,
+    feature_root_dir: Optional[Path],
+    external_feature_source: str,
+) -> Dict[ResidueKey, Dict[str, float]]:
+    if external_feature_source == "bluues_rosetta":
+        raise ValueError(
+            "The current default external-feature contract expects updated "
+            "residue_features.json files with separate "
+            "'custom_charge_distance_proxy' and 'dpka_titr' values. "
+            "Use external_feature_source='updated' or 'auto' and regenerate "
+            "the external features with feature_extraction."
+        )
+    feature_dir = resolve_structure_feature_dir(
+        structure_path=structure_path,
+        structure_root=structure_root,
+        feature_root_dir=feature_root_dir,
+        external_feature_source=external_feature_source,
+    )
+    if feature_dir is None:
+        raise FileNotFoundError(f"No external feature directory found for {structure_path.stem}.")
+    return structure_dir_to_feature_lookup(feature_dir)
+
+
+def load_structure_feature_sources(
+    *,
+    structure,
+    structure_path: Path,
+    structure_root: Path,
+    embeddings_dir: Path,
+    require_esm_embeddings: bool,
+    feature_root_dir: Path,
+    external_feature_source: str,
+    require_external_features: bool,
+    feature_fallbacks: List[Dict[str, str]],
+) -> StructureFeatureSources:
+    esm_lookup: Dict[ResidueKey, Tensor] = {}
+    if require_esm_embeddings or embeddings_dir.exists():
+        try:
+            esm_lookup = load_esm_lookup_for_structure(structure, structure_path, embeddings_dir)
+        except FileNotFoundError as exc:
+            if require_esm_embeddings:
+                raise ValueError(f"Missing required ESM embeddings for {structure_path}: {exc}") from exc
+            feature_fallbacks.append(
+                feature_fallback_record(
+                    structure_path,
+                    feature_name="esm_embeddings",
+                    detail=str(exc),
+                )
+            )
+        except Exception as exc:
+            raise ValueError(f"Invalid ESM embeddings for {structure_path}: {exc}") from exc
+
+    try:
+        external_feature_lookup = load_external_feature_lookup_for_structure(
+            structure_path=structure_path,
+            structure_root=structure_root,
+            feature_root_dir=feature_root_dir,
+            external_feature_source=external_feature_source,
+        )
+    except FileNotFoundError as exc:
+        if require_external_features:
+            raise ValueError(f"Missing required external features for {structure_path}: {exc}") from exc
+        feature_fallbacks.append(
+            feature_fallback_record(
+                structure_path,
+                feature_name="external_features",
+                detail=str(exc),
+            )
+        )
+        external_feature_lookup = {}
+    except Exception as exc:
+        raise ValueError(f"Invalid external features for {structure_path}: {exc}") from exc
+
+    return StructureFeatureSources(
+        esm_lookup=esm_lookup,
+        external_feature_lookup=external_feature_lookup,
+    )
+
+
+def attach_structure_features_to_pocket(
+    pocket: PocketRecord,
+    *,
+    feature_sources: StructureFeatureSources,
+    esm_dim: int,
+    require_esm_embeddings: bool,
+    require_external_features: bool,
+    structure_path: Path,
+) -> None:
+    try:
+        if feature_sources.esm_lookup:
+            attach_esm_embeddings(
+                pocket,
+                esm_lookup=feature_sources.esm_lookup,
+                esm_dim=esm_dim,
+                zero_if_missing=not require_esm_embeddings,
+            )
+        if feature_sources.external_feature_lookup:
+            attach_external_residue_features(
+                pocket,
+                feature_sources.external_feature_lookup,
+                strict=require_external_features,
+            )
+    except (KeyError, ValueError) as exc:
+        raise ValueError(f"Feature alignment error for {structure_path}: {exc}") from exc
+
+
+def build_pocket_feature_coverage(pockets: List[PocketRecord]) -> Dict[str, float | int]:
+    total_residues = sum(len(pocket.residues) for pocket in pockets)
+    residues_with_esm = sum(
+        1 for pocket in pockets for residue in pocket.residues if residue.has_esm_embedding
+    )
+    residues_with_external_features = sum(
+        1 for pocket in pockets for residue in pocket.residues if residue.has_external_features
+    )
+    pockets_with_any_esm = sum(
+        1 for pocket in pockets if any(residue.has_esm_embedding for residue in pocket.residues)
+    )
+    pockets_with_any_external = sum(
+        1 for pocket in pockets if any(residue.has_external_features for residue in pocket.residues)
+    )
+
+    residue_denominator = max(1, total_residues)
+    pocket_denominator = max(1, len(pockets))
+    return {
+        "total_pockets": len(pockets),
+        "total_residues": total_residues,
+        "residues_with_esm_embeddings": residues_with_esm,
+        "residues_with_external_features": residues_with_external_features,
+        "esm_residue_coverage": residues_with_esm / residue_denominator,
+        "external_feature_residue_coverage": residues_with_external_features / residue_denominator,
+        "pockets_with_any_esm_embeddings": pockets_with_any_esm,
+        "pockets_with_any_external_features": pockets_with_any_external,
+        "esm_pocket_coverage": pockets_with_any_esm / pocket_denominator,
+        "external_feature_pocket_coverage": pockets_with_any_external / pocket_denominator,
+    }
+
+
+def build_feature_load_report(
+    *,
+    pockets: List[PocketRecord],
+    total_structure_files: int,
+    feature_fallbacks: List[Dict[str, str]],
+    skipped_pockets: List[Dict[str, str]],
+    invalid_structures: List[Dict[str, str]],
+) -> Dict[str, object]:
+    loaded_structures = {
+        str(pocket.metadata.get("source_path", pocket.structure_id))
+        for pocket in pockets
+    }
+    return {
+        "total_structure_files": total_structure_files,
+        "loaded_structure_files": len(loaded_structures),
+        "invalid_structures": invalid_structures,
+        "n_invalid_structures": len(invalid_structures),
+        "feature_fallbacks": feature_fallbacks,
+        "skipped_pockets": skipped_pockets,
+        **build_pocket_feature_coverage(pockets),
+    }

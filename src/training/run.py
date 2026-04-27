@@ -1,0 +1,607 @@
+from __future__ import annotations
+
+import copy
+import json
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+import torch
+from torch_geometric.loader import DataLoader
+
+from label_schemes import EC_TOP_LEVEL_LABELS, METAL_TARGET_LABELS, N_EC_CLASSES, N_METAL_CLASSES
+from model import GVPPocketClassifier
+from project_paths import resolve_runs_dir
+from training.config import TrainConfig, config_to_payload, required_targets_for_task
+from training.data import load_training_pockets_with_report_from_dir
+from training.graph_dataset import (
+    FeatureNormalizationStats,
+    PocketGraphDataset,
+    build_graph_data_list,
+    compute_feature_normalization_stats,
+)
+from training.loop import (
+    balanced_class_weights_from_pockets,
+    classification_metrics_from_logits,
+    evaluate_epoch_with_predictions,
+    train_epoch,
+)
+from training.preflight import run_preflight_checks
+from training.runtime_preparation import prepare_runtime_inputs
+from training.splits import (
+    PocketSplit,
+    build_balanced_metal_site_sampler,
+    build_dataset_summary,
+    split_pockets,
+    split_pockets_k_fold,
+)
+
+
+@dataclass(frozen=True)
+class PreparedRun:
+    config_payload: dict[str, Any]
+    run_dir: Path
+    split: PocketSplit
+    dataset_summary: dict[str, Any]
+    normalization_stats: FeatureNormalizationStats
+    train_loader: DataLoader
+    val_loader: DataLoader | None
+    model: GVPPocketClassifier
+    optimizer: torch.optim.Optimizer
+
+
+def set_seed(seed: int) -> None:
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def build_run_dir(config: TrainConfig) -> Path:
+    runs_dir = resolve_runs_dir(config.runs_dir, create=True)
+    effective_name = config.run_name or datetime.now().strftime("run_%Y%m%d_%H%M%S")
+    run_dir = runs_dir / effective_name
+    run_dir.mkdir(parents=True, exist_ok=False)
+    return run_dir
+
+
+def save_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str, Any], extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "stage": stage,
+        "status": status,
+        "config": config_payload,
+    }
+    if extra:
+        payload.update(extra)
+    return payload
+
+
+def validate_training_configuration(config: TrainConfig) -> None:
+    if config.gvp_layers < 1:
+        raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
+    if config.head_mlp_layers < 1:
+        raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
+    has_validation = config.val_fraction > 0.0 or config.n_folds is not None
+    if not has_validation and config.selection_metric.startswith("val_"):
+        raise ValueError(
+            "Selection metric "
+            f"{config.selection_metric!r} requires validation, but --val-fraction is 0. "
+            "Either enable validation or choose a train-based metric such as 'train_loss'."
+        )
+    if (config.n_folds is None) != (config.fold_index is None):
+        raise ValueError("--n-folds and --fold-index must be provided together.")
+    if config.n_folds is not None:
+        if config.n_folds < 2:
+            raise ValueError(f"--n-folds must be at least 2, got {config.n_folds}")
+        if not 0 <= int(config.fold_index) < config.n_folds:
+            raise ValueError(
+                f"--fold-index must be in [0, {config.n_folds - 1}], got {config.fold_index}"
+            )
+    if config.task == "metal" and ("ec_" in config.selection_metric or "joint_" in config.selection_metric):
+        raise ValueError(
+            f"Selection metric {config.selection_metric!r} is incompatible with --task metal. "
+            "Use train_loss or a metal validation metric."
+        )
+    if config.task == "ec" and ("metal_" in config.selection_metric or "joint_" in config.selection_metric):
+        raise ValueError(
+            f"Selection metric {config.selection_metric!r} is incompatible with --task ec. "
+            "Use train_loss or an EC validation metric."
+        )
+
+
+def task_predicts_metal(task: str) -> bool:
+    return task in ("joint", "metal")
+
+
+def task_predicts_ec(task: str) -> bool:
+    return task in ("joint", "ec")
+
+
+def present_metric_values(values: list[float | None]) -> list[float]:
+    return [float(value) for value in values if value is not None]
+
+
+def metal_label_index(label_name: str) -> int | None:
+    for label_idx, current_label_name in METAL_TARGET_LABELS.items():
+        if current_label_name == label_name:
+            return label_idx
+    return None
+
+
+def evaluate_split_metrics(
+    model,
+    loader: DataLoader | None,
+    device: str,
+    prefix: str,
+    *,
+    task: str,
+) -> dict[str, Any]:
+    if loader is None:
+        return {}
+
+    predictions = evaluate_epoch_with_predictions(model, loader, device=device)
+    payload = {
+        f"{prefix}_loss": predictions["loss"],
+    }
+    if task_predicts_metal(task) and "metal_y" in predictions and "metal_logits" in predictions:
+        metal_metrics = classification_metrics_from_logits(predictions["metal_logits"], predictions["metal_y"])
+        metal_recalls = present_metric_values(metal_metrics["per_class_recall"])
+        fe_idx = metal_label_index("Fe")
+        class_viii_idx = metal_label_index("Class VIII")
+        payload.update(
+            {
+                f"{prefix}_metal_acc": metal_metrics["accuracy"],
+                f"{prefix}_metal_balanced_acc": metal_metrics["balanced_accuracy"],
+                f"{prefix}_metal_macro_f1": metal_metrics["macro_f1"],
+                f"{prefix}_metal_min_recall": float(min(metal_recalls)),
+                f"{prefix}_metal_fe_recall": (
+                    metal_metrics["per_class_recall"][fe_idx] if fe_idx is not None else None
+                ),
+                f"{prefix}_metal_class_viii_recall": (
+                    metal_metrics["per_class_recall"][class_viii_idx] if class_viii_idx is not None else None
+                ),
+                f"{prefix}_metal_per_class_recall": {
+                    label_name: metal_metrics["per_class_recall"][label_idx]
+                    for label_idx, label_name in METAL_TARGET_LABELS.items()
+                },
+            }
+        )
+    else:
+        payload[f"{prefix}_metal_acc"] = None
+    if task_predicts_ec(task) and "ec_y" in predictions and "ec_logits" in predictions:
+        ec_metrics = classification_metrics_from_logits(predictions["ec_logits"], predictions["ec_y"])
+        payload.update(
+            {
+                f"{prefix}_ec_acc": ec_metrics["accuracy"],
+                f"{prefix}_ec_balanced_acc": ec_metrics["balanced_accuracy"],
+                f"{prefix}_ec_macro_f1": ec_metrics["macro_f1"],
+                f"{prefix}_ec_per_class_recall": {
+                    label_name: ec_metrics["per_class_recall"][label_idx]
+                    for label_idx, label_name in EC_TOP_LEVEL_LABELS.items()
+                },
+            }
+        )
+    else:
+        payload[f"{prefix}_ec_acc"] = None
+
+    balanced_values = [
+        value
+        for value in (
+            payload.get(f"{prefix}_metal_balanced_acc"),
+            payload.get(f"{prefix}_ec_balanced_acc"),
+        )
+        if value is not None
+    ]
+    macro_f1_values = [
+        value
+        for value in (
+            payload.get(f"{prefix}_metal_macro_f1"),
+            payload.get(f"{prefix}_ec_macro_f1"),
+        )
+        if value is not None
+    ]
+    if balanced_values:
+        payload[f"{prefix}_joint_balanced_acc"] = float(sum(balanced_values) / len(balanced_values))
+    if macro_f1_values:
+        payload[f"{prefix}_joint_macro_f1"] = float(sum(macro_f1_values) / len(macro_f1_values))
+    return payload
+
+
+def normalization_stats_payload(normalization_stats: FeatureNormalizationStats) -> dict[str, Any]:
+    return {
+        "means": normalization_stats.means,
+        "stds": normalization_stats.stds,
+        "clamp_value": normalization_stats.clamp_value,
+    }
+
+
+def checkpoint_payload(
+    *,
+    model_state_dict: dict[str, Any],
+    optimizer_state_dict: dict[str, Any],
+    history: list[dict[str, Any]],
+    config_payload: dict[str, Any],
+    normalization_stats: FeatureNormalizationStats,
+    dataset_summary: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "model_state_dict": model_state_dict,
+        "optimizer_state_dict": optimizer_state_dict,
+        "history": history,
+        "config": config_payload,
+        "metal_labels": METAL_TARGET_LABELS,
+        "ec_labels": EC_TOP_LEVEL_LABELS,
+        "normalization_stats": normalization_stats_payload(normalization_stats),
+        "dataset_summary": dataset_summary,
+    }
+
+
+def format_epoch_log(record: dict[str, Any]) -> str:
+    parts = [
+        f"epoch={record['epoch']}",
+        f"train_loss={record['train_loss']:.4f}",
+    ]
+    if record["train_metal_acc"] is not None:
+        parts.append(f"train_metal_acc={record['train_metal_acc']:.4f}")
+    if record["train_ec_acc"] is not None:
+        parts.append(f"train_ec_acc={record['train_ec_acc']:.4f}")
+    if "val_loss" in record:
+        parts.append(f"val_loss={record['val_loss']:.4f}")
+    if record.get("val_metal_acc") is not None:
+        parts.append(f"val_metal_acc={record['val_metal_acc']:.4f}")
+    if record.get("val_ec_acc") is not None:
+        parts.append(f"val_ec_acc={record['val_ec_acc']:.4f}")
+    if record.get("val_metal_min_recall") is not None:
+        parts.append(f"val_metal_min_recall={record['val_metal_min_recall']:.4f}")
+    if record.get("val_metal_fe_recall") is not None:
+        parts.append(f"val_fe_recall={record['val_metal_fe_recall']:.4f}")
+    if record.get("val_metal_class_viii_recall") is not None:
+        parts.append(f"val_class_viii_recall={record['val_metal_class_viii_recall']:.4f}")
+    if record.get("val_joint_balanced_acc") is not None:
+        parts.append(f"val_joint_bal_acc={record['val_joint_balanced_acc']:.4f}")
+    if record.get("val_joint_macro_f1") is not None:
+        parts.append(f"val_joint_macro_f1={record['val_joint_macro_f1']:.4f}")
+    return " ".join(parts)
+
+
+def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[float, bool]:
+    if selection_metric not in record or record[selection_metric] is None:
+        raise ValueError(f"Selection metric {selection_metric!r} is missing from the epoch record.")
+    metric_value = float(record[selection_metric])
+    if selection_metric.endswith("_loss"):
+        return metric_value, False
+    return metric_value, True
+
+
+def prepare_run(config: TrainConfig) -> PreparedRun:
+    validate_training_configuration(config)
+    config_payload = config_to_payload(config)
+    run_dir = build_run_dir(config)
+    save_json(
+        run_dir / "prepare_status.json",
+        prepare_status_payload(stage="prepare_run", status="started", config_payload=config_payload),
+    )
+    try:
+        runtime_preparation_report = prepare_runtime_inputs(
+            structure_dir=config.structure_dir,
+            esm_embeddings_dir=config.esm_embeddings_dir,
+            require_esm_embeddings=config.require_esm_embeddings,
+            prepare_missing_esm_embeddings=config.prepare_missing_esm_embeddings,
+            external_features_root_dir=config.external_features_root_dir,
+            external_feature_source=config.external_feature_source,
+            require_external_features=config.require_external_features,
+            require_ring_edges=config.require_ring_edges,
+            prepare_missing_ring_edges=config.prepare_missing_ring_edges,
+        )
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(
+                stage="runtime_preparation",
+                status="completed",
+                config_payload=config_payload,
+                extra={"runtime_preparation": runtime_preparation_report},
+            ),
+        )
+        load_result = load_training_pockets_with_report_from_dir(
+            structure_dir=config.structure_dir,
+            require_full_labels=True,
+            required_targets=required_targets_for_task(config.task),
+            summary_csv=config.summary_csv,
+            esm_dim=config.esm_dim,
+            esm_embeddings_dir=config.esm_embeddings_dir,
+            require_esm_embeddings=config.require_esm_embeddings,
+            external_features_root_dir=config.external_features_root_dir,
+            external_feature_source=config.external_feature_source,
+            require_external_features=config.require_external_features,
+            unsupported_metal_policy=config.unsupported_metal_policy,
+            invalid_structure_policy=config.invalid_structure_policy,
+        )
+        pockets = load_result.pockets
+        if not pockets:
+            raise ValueError("No training pockets were loaded.")
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(
+                stage="load_training_pockets",
+                status="completed",
+                config_payload=config_payload,
+                extra={"n_loaded_pockets": len(pockets), "feature_load_report": load_result.feature_report},
+            ),
+        )
+
+        if config.n_folds is not None:
+            split = split_pockets_k_fold(
+                pockets,
+                n_folds=config.n_folds,
+                fold_index=int(config.fold_index),
+                split_by=config.split_by,
+                seed=config.seed,
+                task=config.task,
+            )
+        else:
+            split = split_pockets(
+                pockets,
+                val_fraction=config.val_fraction,
+                split_by=config.split_by,
+                seed=config.seed,
+                task=config.task,
+            )
+        dataset_summary = build_dataset_summary(
+            split,
+            config,
+            feature_load_report=load_result.feature_report,
+        )
+        dataset_summary["runtime_preparation"] = runtime_preparation_report
+        train_graphs = build_graph_data_list(
+            split.train_pockets,
+            esm_dim=config.esm_dim,
+            edge_radius=config.edge_radius,
+            require_ring_edges=config.require_ring_edges,
+        )
+        val_graphs = (
+            build_graph_data_list(
+                split.val_pockets,
+                esm_dim=config.esm_dim,
+                edge_radius=config.edge_radius,
+                require_ring_edges=config.require_ring_edges,
+            )
+            if split.val_pockets
+            else None
+        )
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(
+                stage="build_graphs",
+                status="completed",
+                config_payload=config_payload,
+                extra={
+                    "n_train_graphs": len(train_graphs),
+                    "n_val_graphs": 0 if val_graphs is None else len(val_graphs),
+                },
+            ),
+        )
+        dataset_summary["preflight"] = run_preflight_checks(
+            split,
+            config,
+            train_graphs=train_graphs,
+            val_graphs=val_graphs,
+        )
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(
+                stage="preflight",
+                status="completed",
+                config_payload=config_payload,
+                extra={"dataset_summary": dataset_summary},
+            ),
+        )
+        normalization_stats = compute_feature_normalization_stats(train_graphs, clamp_value=5.0)
+        train_sampler = (
+            build_balanced_metal_site_sampler(split.train_pockets)
+            if config.balance_metal_site_symbols and task_predicts_metal(config.task)
+            else None
+        )
+        train_loader = DataLoader(
+            PocketGraphDataset(
+                split.train_pockets,
+                esm_dim=config.esm_dim,
+                edge_radius=config.edge_radius,
+                normalization_stats=normalization_stats,
+                require_ring_edges=config.require_ring_edges,
+                precomputed_data=train_graphs,
+                node_feature_set=config.node_feature_set,
+            ),
+            batch_size=config.batch_size,
+            shuffle=train_sampler is None,
+            sampler=train_sampler,
+        )
+        val_loader = (
+            DataLoader(
+                PocketGraphDataset(
+                    split.val_pockets,
+                    esm_dim=config.esm_dim,
+                    edge_radius=config.edge_radius,
+                    normalization_stats=normalization_stats,
+                    require_ring_edges=config.require_ring_edges,
+                    precomputed_data=val_graphs,
+                    node_feature_set=config.node_feature_set,
+                ),
+                batch_size=config.batch_size,
+                shuffle=False,
+            )
+            if split.val_pockets
+            else None
+        )
+
+        metal_class_weights = None
+        ec_class_weights = None
+        computed_metal_weights, computed_ec_weights = balanced_class_weights_from_pockets(
+            split.train_pockets,
+            n_metal_classes=N_METAL_CLASSES,
+            n_ec_classes=N_EC_CLASSES,
+        )
+        if task_predicts_metal(config.task):
+            metal_class_weights = computed_metal_weights
+            fe_idx = metal_label_index("Fe")
+            class_viii_idx = metal_label_index("Class VIII")
+            if fe_idx is not None:
+                metal_class_weights[fe_idx] = metal_class_weights[fe_idx] * float(config.fe_loss_multiplier)
+            if class_viii_idx is not None:
+                metal_class_weights[class_viii_idx] = (
+                    metal_class_weights[class_viii_idx] * float(config.class_viii_loss_multiplier)
+                )
+        if task_predicts_ec(config.task):
+            ec_class_weights = computed_ec_weights
+
+        model = GVPPocketClassifier(
+            esm_dim=config.esm_dim,
+            n_layers=config.gvp_layers,
+            head_mlp_layers=config.head_mlp_layers,
+            use_esm_branch=config.use_esm_branch,
+            metal_class_weights=metal_class_weights,
+            ec_class_weights=ec_class_weights,
+            predict_metal=task_predicts_metal(config.task),
+            predict_ec=task_predicts_ec(config.task),
+        ).to(config.device)
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=config.learning_rate,
+            weight_decay=config.weight_decay,
+        )
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(stage="prepare_run", status="ready", config_payload=config_payload),
+        )
+        return PreparedRun(
+            config_payload=config_payload,
+            run_dir=run_dir,
+            split=split,
+            dataset_summary=dataset_summary,
+            normalization_stats=normalization_stats,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            model=model,
+            optimizer=optimizer,
+        )
+    except Exception as exc:
+        save_json(
+            run_dir / "prepare_status.json",
+            prepare_status_payload(
+                stage="prepare_run",
+                status="failed",
+                config_payload=config_payload,
+                extra={"error": str(exc)},
+            ),
+        )
+        raise
+
+
+def train_and_select_checkpoint(
+    prepared: PreparedRun,
+    config: TrainConfig,
+) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    history: list[dict[str, Any]] = []
+    best_metric: float | None = None
+    best_checkpoint = None
+    for epoch in range(1, config.epochs + 1):
+        train_loss = train_epoch(prepared.model, prepared.train_loader, prepared.optimizer, device=config.device)
+        train_metrics = evaluate_split_metrics(
+            prepared.model,
+            prepared.train_loader,
+            config.device,
+            prefix="train",
+            task=config.task,
+        )
+        train_metrics.pop("train_loss", None)
+        record = {
+            "epoch": epoch,
+            "train_loss": train_loss,
+            **train_metrics,
+        }
+
+        val_metrics = evaluate_split_metrics(
+            prepared.model,
+            prepared.val_loader,
+            config.device,
+            prefix="val",
+            task=config.task,
+        )
+        record.update(val_metrics)
+        current_metric, maximize = metric_sort_value(record, config.selection_metric)
+        is_better = (
+            best_metric is None
+            or (maximize and current_metric > best_metric)
+            or (not maximize and current_metric < best_metric)
+        )
+        if is_better:
+            best_metric = current_metric
+            best_checkpoint = checkpoint_payload(
+                model_state_dict=copy.deepcopy(prepared.model.state_dict()),
+                optimizer_state_dict=copy.deepcopy(prepared.optimizer.state_dict()),
+                history=copy.deepcopy(history + [record]),
+                config_payload=prepared.config_payload,
+                normalization_stats=prepared.normalization_stats,
+                dataset_summary=prepared.dataset_summary,
+            )
+            best_checkpoint["epoch"] = epoch
+            best_checkpoint["selection_metric"] = config.selection_metric
+            best_checkpoint["selection_metric_value"] = current_metric
+
+        history.append(record)
+        print(format_epoch_log(record))
+    return history, best_checkpoint
+
+
+def persist_run_outputs(
+    prepared: PreparedRun,
+    *,
+    history: list[dict[str, float | int]],
+    best_checkpoint: dict[str, Any] | None,
+) -> None:
+    save_json(prepared.run_dir / "dataset_summary.json", prepared.dataset_summary)
+
+    checkpoint_path = prepared.run_dir / "last_model_checkpoint.pt"
+    torch.save(
+        checkpoint_payload(
+            model_state_dict=prepared.model.state_dict(),
+            optimizer_state_dict=prepared.optimizer.state_dict(),
+            history=history,
+            config_payload=prepared.config_payload,
+            normalization_stats=prepared.normalization_stats,
+            dataset_summary=prepared.dataset_summary,
+        ),
+        checkpoint_path,
+    )
+
+    if best_checkpoint is not None:
+        best_checkpoint_path = prepared.run_dir / "best_model_checkpoint.pt"
+        torch.save(best_checkpoint, best_checkpoint_path)
+
+    save_json(
+        prepared.run_dir / "run_config.json",
+        {
+            "config": prepared.config_payload,
+            "dataset_summary": prepared.dataset_summary,
+            "metal_labels": METAL_TARGET_LABELS,
+            "ec_labels": EC_TOP_LEVEL_LABELS,
+            "history": history,
+        },
+    )
+
+    print(f"Saved checkpoint to {checkpoint_path}")
+    if best_checkpoint is not None:
+        print(f"Saved best checkpoint to {prepared.run_dir / 'best_model_checkpoint.pt'}")
+    print(f"Saved dataset summary to {prepared.run_dir / 'dataset_summary.json'}")
+    print(f"Saved run config to {prepared.run_dir / 'run_config.json'}")
+
+
+def run_training(config: TrainConfig) -> Path:
+    set_seed(config.seed)
+    prepared = prepare_run(config)
+    history, best_checkpoint = train_and_select_checkpoint(prepared, config)
+    persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint)
+    return prepared.run_dir
