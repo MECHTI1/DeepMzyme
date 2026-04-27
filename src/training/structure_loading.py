@@ -4,11 +4,8 @@ from pathlib import Path
 from typing import Any
 
 from data_structures import PocketRecord
-from graph.construction import (
-    canonical_ring_edges_output_path,
-    extract_metal_pockets_from_structure,
-    parse_structure_file,
-)
+from graph.ring_edges import canonical_ring_edges_output_path
+from graph.structure_parsing import extract_metal_pockets_from_structure, parse_structure_file
 from label_schemes import map_site_metal_symbols
 from training.feature_sources import (
     attach_structure_features_to_pocket,

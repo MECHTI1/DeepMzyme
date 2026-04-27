@@ -443,7 +443,7 @@ class GVPPocketClassifier(nn.Module):
         predict_metal: bool = True,
         predict_ec: bool = True,
         use_esm_branch: bool = True,
-        fusion_mode: str = "gated",
+        fusion_mode: str = "late_fusion",
         cross_attention_layers: int = 1,
         cross_attention_heads: int = 4,
         cross_attention_dropout: float = 0.1,
@@ -495,7 +495,7 @@ class GVPPocketClassifier(nn.Module):
         self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
         self.edge_scalar_encoder = EdgeScalarEncoder(n_rbf=16, out_dim=edge_hidden, distance_sigma=edge_rbf_sigma)
         self.gvp_attn_pool = AttentionPool(hidden_s)
-        self.init_vec_proj = nn.Linear(3, hidden_v, bias=False)
+        self.init_vec_proj = nn.Linear(2, hidden_v, bias=False)
 
         self.layers = nn.ModuleList(
             [SimpleGVPLayer(s_dim=hidden_s, v_dim=hidden_v, e_dim=edge_hidden) for _ in range(n_layers)]
@@ -642,9 +642,19 @@ class GVPPocketClassifier(nn.Module):
         return target != MISSING_CLASS_LABEL
 
     def _init_vector_channels(self, x_vec: Tensor) -> Tensor:
-        # x_vec arrives as the retained explicit geometric channels per residue; project them
-        # into the hidden vector width used by the GVP layers.
-        x_t = x_vec.transpose(1, 2)
+        # x_vec stores two explicit geometric vector channels per residue,
+        # each represented in xyz coordinates.
+        if x_vec.ndim != 3:
+            raise ValueError(f"x_vec must be a 3D tensor, got shape {tuple(x_vec.shape)}.")
+        if x_vec.size(1) == self.init_vec_proj.in_features and x_vec.size(2) == 3:
+            x_t = x_vec.transpose(1, 2)
+        elif x_vec.size(1) == 3 and x_vec.size(2) == self.init_vec_proj.in_features:
+            x_t = x_vec
+        else:
+            raise ValueError(
+                "x_vec must have two vector channels and three xyz coordinates per residue. "
+                f"Got shape {tuple(x_vec.shape)}."
+            )
         x_proj = self.init_vec_proj(x_t)
         return x_proj.transpose(1, 2)
 

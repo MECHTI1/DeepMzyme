@@ -743,6 +743,23 @@ def train_and_select_checkpoint(
             best_checkpoint["selection_metric_value"] = current_metric
 
         history.append(record)
+        if config.save_epoch_checkpoints:
+            epoch_checkpoint_path = prepared.run_dir / f"epoch_{epoch:04d}_checkpoint.pt"
+            torch.save(
+                checkpoint_payload(
+                    model_state_dict=prepared.model.state_dict(),
+                    optimizer_state_dict=prepared.optimizer.state_dict(),
+                    scheduler_state_dict=(
+                        prepared.scheduler.state_dict() if prepared.scheduler is not None else None
+                    ),
+                    history=history,
+                    config_payload=prepared.config_payload,
+                    normalization_stats=prepared.normalization_stats,
+                    dataset_summary=prepared.dataset_summary,
+                    ec_labels=prepared.ec_labels,
+                ),
+                epoch_checkpoint_path,
+            )
         if prepared.scheduler is not None:
             prepared.scheduler.step()
         print(format_epoch_log(record))
