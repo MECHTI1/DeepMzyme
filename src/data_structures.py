@@ -130,6 +130,7 @@ INTERACTION_SUMMARIES_OPTIONAL_WITH_RING = [
     "PICATION:SC_SC",
     "METAL_ION:SC_LIG",
 ]
+METAL_ION_RING_INTERACTION = "METAL_ION:SC_LIG"
 RING_INTERACTION_TYPES = set(INTERACTION_SUMMARIES_OPTIONAL_WITH_RING)
 RING_INTERACTION_TO_INDEX = {
     interaction: i for i, interaction in enumerate(INTERACTION_SUMMARIES_OPTIONAL_WITH_RING)
@@ -153,6 +154,53 @@ NORMALIZABLE_FEATURE_NAMES = (
     "edge_dist_raw",
     "edge_seqsep",
     "site_metal_stats",
+)
+
+GRAPH_NODE_TENSOR_FIELDS = (
+    "x_esm",
+    "hydrophobicity_kd",
+    "x_reschem",
+    "x_role",
+    "x_dist_raw",
+    "x_misc",
+    "x_env_burial",
+    "x_env_electrostatics",
+    "x_vec",
+    "donor_coords",
+    "donor_mask",
+    "fg_centroid",
+    "pos",
+)
+
+GRAPH_EDGE_TENSOR_FIELDS = (
+    "edge_index",
+    "edge_dist_raw",
+    "edge_seqsep",
+    "edge_same_chain",
+    "edge_vector_raw",
+    "edge_interaction_type",
+    "edge_source_type",
+)
+
+GRAPH_METAL_EDGE_TENSOR_FIELDS = (
+    "metal_edge_index",
+    "metal_edge_dist_raw",
+    "metal_edge_vector_raw",
+    "metal_edge_interaction_type",
+    "metal_edge_source_type",
+)
+
+GRAPH_SITE_TENSOR_FIELDS = (
+    "metal_pos",
+    "metal_center_pos",
+    "metal_count",
+    "is_multinuclear",
+    "site_metal_stats",
+)
+
+GRAPH_TARGET_FIELDS = (
+    "y_metal",
+    "y_ec",
 )
 
 
