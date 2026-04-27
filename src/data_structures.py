@@ -136,8 +136,6 @@ NORMALIZABLE_FEATURE_NAMES = (
     "x_dist_raw",
     "x_misc",
     "x_env_burial",
-    "x_env_pka",
-    "x_env_conf",
     "x_env_interactions",
     "edge_dist_raw",
     "edge_seqsep",
