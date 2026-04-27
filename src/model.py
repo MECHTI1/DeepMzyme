@@ -14,6 +14,14 @@ from data_structures import EDGE_SOURCE_TYPES, INTERACTION_SUMMARIES_OPTIONAL_WI
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
 
+VALID_FUSION_MODES = {
+    "late_fusion",
+    "early_fusion",
+    "node_level_late_fusion",
+    "hybrid",
+    "cross_modal_attention",
+}
+
 
 class RBFExpansion(nn.Module):
     def __init__(self, n_rbf: int = 16, d_min: float = 0.0, d_max: float = 12.0, sigma: float | None = None):
@@ -375,6 +383,41 @@ def build_classifier_head(
     return nn.Sequential(*layers)
 
 
+def supervised_contrastive_loss(
+    embeddings: Tensor,
+    labels: Tensor,
+    *,
+    temperature: float = 0.1,
+) -> Tensor:
+    if embeddings.ndim != 2:
+        raise ValueError(
+            f"Contrastive loss expects 2D embeddings, got shape {tuple(embeddings.shape)}."
+        )
+    if labels.ndim != 1 or labels.size(0) != embeddings.size(0):
+        raise ValueError(
+            "Contrastive loss expects one label per embedding. "
+            f"Got embeddings={tuple(embeddings.shape)} labels={tuple(labels.shape)}."
+        )
+    if embeddings.size(0) < 2:
+        return embeddings.new_zeros(())
+
+    normalized = F.normalize(embeddings, dim=-1)
+    logits = torch.matmul(normalized, normalized.transpose(0, 1)) / max(float(temperature), 1e-6)
+    logits = logits - logits.max(dim=1, keepdim=True).values.detach()
+
+    same_label = labels.unsqueeze(0) == labels.unsqueeze(1)
+    self_mask = torch.eye(labels.size(0), dtype=torch.bool, device=labels.device)
+    positive_mask = same_label & ~self_mask
+    valid_anchors = positive_mask.any(dim=1)
+    if not bool(valid_anchors.any().item()):
+        return embeddings.new_zeros(())
+
+    exp_logits = torch.exp(logits) * (~self_mask)
+    log_prob = logits - torch.log(exp_logits.sum(dim=1, keepdim=True).clamp_min(1e-12))
+    mean_log_prob_pos = (log_prob * positive_mask).sum(dim=1) / positive_mask.sum(dim=1).clamp_min(1)
+    return (-mean_log_prob_pos[valid_anchors]).mean()
+
+
 class GVPPocketClassifier(nn.Module):
     def __init__(
         self,
@@ -411,6 +454,8 @@ class GVPPocketClassifier(nn.Module):
         early_esm_dropout: float = 0.2,
         early_esm_raw: bool = False,
         early_esm_scope: str = "all",
+        ec_contrastive_weight: float = 0.0,
+        ec_contrastive_temperature: float = 0.1,
     ):
         super().__init__()
         # Current supervised targets:
@@ -468,7 +513,7 @@ class GVPPocketClassifier(nn.Module):
             nn.LayerNorm(hidden_s),
             nn.SiLU(),
         )
-        if self.fusion_mode == "cross_attention":
+        if self.fusion_mode == "cross_modal_attention":
             self.esm_residue_proj = nn.Sequential(
                 nn.Linear(esm_dim, hidden_s),
                 nn.LayerNorm(hidden_s),
@@ -497,6 +542,19 @@ class GVPPocketClassifier(nn.Module):
             self.cross_attn_esm_pool = None
             self.cross_attn_esm_fusion_proj = None
             self.cross_attention_blocks = nn.ModuleList()
+        if self.fusion_mode == "node_level_late_fusion":
+            self.node_level_esm_proj = nn.Sequential(
+                nn.Linear(esm_dim, hidden_s),
+                nn.LayerNorm(hidden_s),
+                nn.SiLU(),
+            )
+            self.node_level_gate = nn.Sequential(
+                nn.Linear(2 * hidden_s, hidden_s),
+                nn.Sigmoid(),
+            )
+        else:
+            self.node_level_esm_proj = None
+            self.node_level_gate = None
         self.site_feature_encoder = nn.Sequential(
             nn.Linear(4, 32),
             nn.LayerNorm(32),
@@ -512,7 +570,7 @@ class GVPPocketClassifier(nn.Module):
         self.use_esm_branch = bool(use_esm_branch)
         if not self.predict_metal and not self.predict_ec:
             raise ValueError("GVPPocketClassifier requires at least one enabled prediction head.")
-        if self.fusion_mode not in {"gated", "cross_attention"}:
+        if self.fusion_mode not in VALID_FUSION_MODES:
             raise ValueError(f"Unsupported fusion_mode {self.fusion_mode!r}.")
         if self.early_esm_scope not in {"all", "first_shell", "first_second_shell"}:
             raise ValueError(f"Unsupported early_esm_scope {self.early_esm_scope!r}.")
@@ -520,8 +578,10 @@ class GVPPocketClassifier(nn.Module):
             raise ValueError(
                 f"Unsupported cross_attention_neighborhood {self.cross_attention_neighborhood!r}."
             )
-        if self.fusion_mode == "cross_attention" and not self.use_esm_branch:
-            raise ValueError("fusion_mode='cross_attention' requires the ESM branch to remain enabled.")
+        if self.fusion_mode == "cross_modal_attention" and not self.use_esm_branch:
+            raise ValueError("fusion_mode='cross_modal_attention' requires the ESM branch to remain enabled.")
+        if self.fusion_mode == "node_level_late_fusion" and not self.use_esm_branch:
+            raise ValueError("fusion_mode='node_level_late_fusion' requires the ESM branch to remain enabled.")
 
         self.head_metal = (
             build_classifier_head(
@@ -550,6 +610,8 @@ class GVPPocketClassifier(nn.Module):
         self.metal_loss_function = str(metal_loss_function)
         self.metal_focal_gamma = float(metal_focal_gamma)
         self.metal_label_smoothing = float(metal_label_smoothing)
+        self.ec_contrastive_weight = float(ec_contrastive_weight)
+        self.ec_contrastive_temperature = float(ec_contrastive_temperature)
         self.register_buffer(
             "metal_class_weights",
             metal_class_weights.float() if metal_class_weights is not None else torch.empty(0),
@@ -596,6 +658,7 @@ class GVPPocketClassifier(nn.Module):
 
     def _compute_supervised_loss(
         self,
+        pocket_embed: Tensor,
         logits_metal: Optional[Tensor],
         logits_ec: Optional[Tensor],
         data: Data,
@@ -636,6 +699,13 @@ class GVPPocketClassifier(nn.Module):
                 ec_weights = self.ec_class_weights if self.ec_class_weights.numel() > 0 else None
                 ec_loss = F.cross_entropy(logits_ec[ec_mask], data.y_ec[ec_mask], weight=ec_weights)
                 losses.append(self.ec_loss_weight * ec_loss)
+                if self.ec_contrastive_weight > 0.0:
+                    ec_contrastive = supervised_contrastive_loss(
+                        pocket_embed[ec_mask],
+                        data.y_ec[ec_mask],
+                        temperature=self.ec_contrastive_temperature,
+                    )
+                    losses.append(self.ec_contrastive_weight * ec_contrastive)
         if not losses:
             raise ValueError("No supervised targets were available for the enabled prediction heads.")
         return torch.stack(losses).sum()
@@ -674,7 +744,12 @@ class GVPPocketClassifier(nn.Module):
             s, v = layer(s, v, data.edge_index, edge_s, edge_v)
 
         # Structural branch: pool the residue-level GVP states into one graph embedding.
-        if self.fusion_mode == "cross_attention" and self.use_esm_branch:
+        if self.node_level_esm_proj is not None and self.node_level_gate is not None and self.use_esm_branch:
+            node_level_esm = self.node_level_esm_proj(data.x_esm)
+            node_level_gate = self.node_level_gate(torch.cat([s, node_level_esm], dim=-1))
+            s = s + (node_level_gate * node_level_esm)
+
+        if self.fusion_mode == "cross_modal_attention" and self.use_esm_branch:
             esm_residue_states = self.esm_residue_proj(data.x_esm)
             active_mask = shell_mask_from_roles(data.x_role, self.cross_attention_neighborhood)
             for block in self.cross_attention_blocks:
@@ -733,6 +808,6 @@ class GVPPocketClassifier(nn.Module):
             and self._supervised_mask(data.y_ec).any().item()
         )
         if has_supervised_targets:
-            outputs["loss"] = self._compute_supervised_loss(logits_metal, logits_ec, data)
+            outputs["loss"] = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
 
         return outputs

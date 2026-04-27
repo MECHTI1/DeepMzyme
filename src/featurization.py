@@ -18,6 +18,7 @@ from data_structures import (
     EXTERNAL_FEATURE_DPKA_TITR,
     EXTERNAL_FEATURE_RESIDUE_SASA,
     HYDROPHOBICITY_KD,
+    NODE_FEATURES_BY_SET,
     NEGATIVE,
     POSITIVE,
     PocketRecord,
@@ -251,10 +252,16 @@ def residue_to_stage1_node_features(
     pocket: PocketRecord,
     esm_dim: int,
     v_net: Tensor,
+    node_feature_set: str = "conservative",
     *,
     is_first_shell: bool | None = None,
     is_second_shell: bool | None = None,
 ) -> Dict[str, Tensor]:
+    if node_feature_set not in NODE_FEATURES_BY_SET:
+        raise ValueError(
+            f"Unsupported node feature set {node_feature_set!r}. "
+            f"Expected one of {sorted(NODE_FEATURES_BY_SET)}."
+        )
     esm_embedding = rr.esm_embedding
     if esm_embedding is None:
         esm_embedding = torch.zeros(esm_dim, dtype=torch.float32)

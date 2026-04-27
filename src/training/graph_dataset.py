@@ -40,6 +40,7 @@ def build_graph_data_list(
     esm_dim: int,
     edge_radius: float = DEFAULT_EDGE_RADIUS,
     require_ring_edges: bool = False,
+    node_feature_set: str = "conservative",
 ) -> list[Data]:
     return [
         pocket_to_pyg_data(
@@ -47,6 +48,7 @@ def build_graph_data_list(
             esm_dim=esm_dim,
             edge_radius=edge_radius,
             require_ring_edges=require_ring_edges,
+            node_feature_set=node_feature_set,
         )
         for pocket in pockets
     ]
@@ -92,6 +94,7 @@ def summarize_graph_dataset(
     esm_dim: int,
     edge_radius: float = DEFAULT_EDGE_RADIUS,
     require_ring_edges: bool = False,
+    node_feature_set: str = "conservative",
 ) -> list[dict[str, Any]]:
     report: list[dict[str, Any]] = []
     ring_idx = EDGE_SOURCE_TO_INDEX["ring"]
@@ -102,6 +105,7 @@ def summarize_graph_dataset(
             esm_dim=esm_dim,
             edge_radius=edge_radius,
             require_ring_edges=require_ring_edges,
+            node_feature_set=node_feature_set,
         )
         edge_index = getattr(data, _GRAPH_EDGE_INDEX_FIELD)
         edge_source_type = getattr(data, _GRAPH_EDGE_SOURCE_TYPE_FIELD)
@@ -134,12 +138,14 @@ class PocketGraphDataset(Dataset):
         normalization_stats: FeatureNormalizationStats | None = None,
         require_ring_edges: bool = False,
         precomputed_data: list[Data] | None = None,
+        node_feature_set: str = "conservative",
     ):
         self.pockets = pockets
         self.esm_dim = esm_dim
         self.edge_radius = edge_radius
         self.normalization_stats = normalization_stats
         self.require_ring_edges = require_ring_edges
+        self.node_feature_set = node_feature_set
         if precomputed_data is not None and len(precomputed_data) != len(pockets):
             raise ValueError("precomputed_data length must match pockets length.")
         self.precomputed_data = precomputed_data
@@ -153,6 +159,7 @@ class PocketGraphDataset(Dataset):
         clamp_value: float = 5.0,
         require_ring_edges: bool = False,
         precomputed_data: list[Data] | None = None,
+        node_feature_set: str = "conservative",
     ) -> FeatureNormalizationStats:
         data_list = precomputed_data
         if data_list is None:
@@ -161,6 +168,7 @@ class PocketGraphDataset(Dataset):
                 esm_dim=esm_dim,
                 edge_radius=edge_radius,
                 require_ring_edges=require_ring_edges,
+                node_feature_set=node_feature_set,
             )
         return compute_feature_normalization_stats(data_list, clamp_value=clamp_value)
 
@@ -176,5 +184,6 @@ class PocketGraphDataset(Dataset):
                 esm_dim=self.esm_dim,
                 edge_radius=self.edge_radius,
                 require_ring_edges=self.require_ring_edges,
+                node_feature_set=self.node_feature_set,
             )
         return apply_feature_normalization(data, self.normalization_stats)

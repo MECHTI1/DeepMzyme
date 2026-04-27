@@ -8,11 +8,18 @@ from pathlib import Path
 from typing import Any
 
 import torch
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from torch_geometric.loader import DataLoader
 
-from label_schemes import EC_TOP_LEVEL_LABELS, METAL_TARGET_LABELS, N_EC_CLASSES, N_METAL_CLASSES
-from model import GVPPocketClassifier
+from label_schemes import (
+    COLLAPSED_METAL_LABELS,
+    METAL_TARGET_LABELS,
+    N_METAL_CLASSES,
+    collapsed_metal_target_for_label_name,
+)
+from model_variants import build_pocket_classifier
 from project_paths import resolve_runs_dir
+from training.labels import ec_prefix_from_label_token
 from training.config import TrainConfig, config_to_payload, required_targets_for_task
 from training.data import load_training_pockets_with_report_from_dir
 from training.graph_dataset import (
@@ -44,11 +51,14 @@ class PreparedRun:
     run_dir: Path
     split: PocketSplit
     dataset_summary: dict[str, Any]
+    ec_labels: dict[int, str]
+    ec_label_to_index: dict[str, int]
     normalization_stats: FeatureNormalizationStats
     train_loader: DataLoader
     val_loader: DataLoader | None
-    model: GVPPocketClassifier
+    model: torch.nn.Module
     optimizer: torch.optim.Optimizer
+    scheduler: torch.optim.lr_scheduler.LRScheduler | None
 
 
 def set_seed(seed: int) -> None:
@@ -85,6 +95,8 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
     if config.head_mlp_layers < 1:
         raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
+    if config.ec_label_depth < 1:
+        raise ValueError(f"--ec-label-depth must be at least 1, got {config.ec_label_depth}")
     has_validation = config.val_fraction > 0.0 or config.n_folds is not None
     if not has_validation and config.selection_metric.startswith("val_"):
         raise ValueError(
@@ -111,6 +123,13 @@ def validate_training_configuration(config: TrainConfig) -> None:
             f"Selection metric {config.selection_metric!r} is incompatible with --task ec. "
             "Use train_loss or an EC validation metric."
         )
+    if config.lr_schedule == "step" and config.lr_step_size <= 0:
+        raise ValueError("--lr-step-size must be positive when --lr-schedule step is selected.")
+    if config.run_test_eval and (config.test_structure_dir is None or config.test_summary_csv is None):
+        raise ValueError(
+            "--run-test-eval requires both --test-structure-dir and --test-summary-csv "
+            "so held-out reporting remains explicit."
+        )
 
 
 def task_predicts_metal(task: str) -> bool:
@@ -132,6 +151,81 @@ def metal_label_index(label_name: str) -> int | None:
     return None
 
 
+def build_scheduler(
+    optimizer: torch.optim.Optimizer,
+    config: TrainConfig,
+) -> torch.optim.lr_scheduler.LRScheduler | None:
+    if config.lr_schedule == "fixed":
+        return None
+    if config.lr_schedule == "cosine":
+        return CosineAnnealingLR(optimizer, T_max=max(1, config.epochs))
+    if config.lr_schedule == "step":
+        return StepLR(optimizer, step_size=config.lr_step_size, gamma=config.lr_decay_gamma)
+    raise ValueError(f"Unsupported lr schedule {config.lr_schedule!r}.")
+
+
+def collapse_metal_logits(logits: torch.Tensor) -> torch.Tensor:
+    grouped_logits: list[torch.Tensor] = []
+    for collapsed_idx in sorted(COLLAPSED_METAL_LABELS):
+        source_indices = [
+            label_idx
+            for label_idx, label_name in METAL_TARGET_LABELS.items()
+            if collapsed_metal_target_for_label_name(label_name) == collapsed_idx
+        ]
+        if not source_indices:
+            grouped_logits.append(
+                torch.full(
+                    (logits.size(0), 1),
+                    fill_value=torch.finfo(logits.dtype).min,
+                    dtype=logits.dtype,
+                    device=logits.device,
+                )
+            )
+            continue
+        grouped_logits.append(torch.logsumexp(logits[:, source_indices], dim=-1, keepdim=True))
+    return torch.cat(grouped_logits, dim=-1)
+
+
+def collapse_metal_targets(targets: torch.Tensor) -> torch.Tensor:
+    collapsed = [
+        collapsed_metal_target_for_label_name(METAL_TARGET_LABELS[int(target_idx)])
+        for target_idx in targets.tolist()
+    ]
+    return torch.tensor(collapsed, dtype=torch.long)
+
+
+def ec_level_metrics_from_logits(
+    logits: torch.Tensor,
+    targets: torch.Tensor,
+    *,
+    ec_label_map: dict[int, str],
+    level: int,
+) -> dict[str, Any]:
+    predicted_ids = logits.argmax(dim=-1).tolist()
+    true_ids = targets.tolist()
+    prefix_to_index: dict[str, int] = {}
+    level_pred: list[int] = []
+    level_true: list[int] = []
+
+    for predicted_id, true_id in zip(predicted_ids, true_ids):
+        predicted_prefix = ec_prefix_from_label_token(ec_label_map[int(predicted_id)], level=level)
+        true_prefix = ec_prefix_from_label_token(ec_label_map[int(true_id)], level=level)
+        if predicted_prefix is None or true_prefix is None:
+            continue
+        for prefix in (predicted_prefix, true_prefix):
+            if prefix not in prefix_to_index:
+                prefix_to_index[prefix] = len(prefix_to_index)
+        level_pred.append(prefix_to_index[predicted_prefix])
+        level_true.append(prefix_to_index[true_prefix])
+
+    if not level_true:
+        return {}
+    return classification_metrics_from_logits(
+        torch.nn.functional.one_hot(torch.tensor(level_pred), num_classes=len(prefix_to_index)).float(),
+        torch.tensor(level_true, dtype=torch.long),
+    )
+
+
 def evaluate_split_metrics(
     model,
     loader: DataLoader | None,
@@ -139,6 +233,8 @@ def evaluate_split_metrics(
     prefix: str,
     *,
     task: str,
+    ec_label_map: dict[int, str],
+    ec_label_depth: int,
 ) -> dict[str, Any]:
     if loader is None:
         return {}
@@ -150,14 +246,21 @@ def evaluate_split_metrics(
     if task_predicts_metal(task) and "metal_y" in predictions and "metal_logits" in predictions:
         metal_metrics = classification_metrics_from_logits(predictions["metal_logits"], predictions["metal_y"])
         metal_recalls = present_metric_values(metal_metrics["per_class_recall"])
+        mn_idx = metal_label_index("Mn")
         fe_idx = metal_label_index("Fe")
         class_viii_idx = metal_label_index("Class VIII")
+        collapsed_logits = collapse_metal_logits(predictions["metal_logits"])
+        collapsed_targets = collapse_metal_targets(predictions["metal_y"])
+        collapsed_metrics = classification_metrics_from_logits(collapsed_logits, collapsed_targets)
         payload.update(
             {
                 f"{prefix}_metal_acc": metal_metrics["accuracy"],
                 f"{prefix}_metal_balanced_acc": metal_metrics["balanced_accuracy"],
                 f"{prefix}_metal_macro_f1": metal_metrics["macro_f1"],
                 f"{prefix}_metal_min_recall": float(min(metal_recalls)),
+                f"{prefix}_metal_mn_recall": (
+                    metal_metrics["per_class_recall"][mn_idx] if mn_idx is not None else None
+                ),
                 f"{prefix}_metal_fe_recall": (
                     metal_metrics["per_class_recall"][fe_idx] if fe_idx is not None else None
                 ),
@@ -168,6 +271,10 @@ def evaluate_split_metrics(
                     label_name: metal_metrics["per_class_recall"][label_idx]
                     for label_idx, label_name in METAL_TARGET_LABELS.items()
                 },
+                f"{prefix}_metal_collapsed4_acc": collapsed_metrics["accuracy"],
+                f"{prefix}_metal_collapsed4_balanced_acc": collapsed_metrics["balanced_accuracy"],
+                f"{prefix}_metal_collapsed4_macro_f1": collapsed_metrics["macro_f1"],
+                f"{prefix}_metal_collapsed4_mn_recall": collapsed_metrics["per_class_recall"][0],
             }
         )
     else:
@@ -181,10 +288,26 @@ def evaluate_split_metrics(
                 f"{prefix}_ec_macro_f1": ec_metrics["macro_f1"],
                 f"{prefix}_ec_per_class_recall": {
                     label_name: ec_metrics["per_class_recall"][label_idx]
-                    for label_idx, label_name in EC_TOP_LEVEL_LABELS.items()
+                    for label_idx, label_name in ec_label_map.items()
                 },
             }
         )
+        for level in range(1, ec_label_depth + 1):
+            level_metrics = ec_level_metrics_from_logits(
+                predictions["ec_logits"],
+                predictions["ec_y"],
+                ec_label_map=ec_label_map,
+                level=level,
+            )
+            if not level_metrics:
+                continue
+            payload.update(
+                {
+                    f"{prefix}_ec_level_{level}_acc": level_metrics["accuracy"],
+                    f"{prefix}_ec_level_{level}_balanced_acc": level_metrics["balanced_accuracy"],
+                    f"{prefix}_ec_level_{level}_macro_f1": level_metrics["macro_f1"],
+                }
+            )
     else:
         payload[f"{prefix}_ec_acc"] = None
 
@@ -223,18 +346,21 @@ def checkpoint_payload(
     *,
     model_state_dict: dict[str, Any],
     optimizer_state_dict: dict[str, Any],
+    scheduler_state_dict: dict[str, Any] | None,
     history: list[dict[str, Any]],
     config_payload: dict[str, Any],
     normalization_stats: FeatureNormalizationStats,
     dataset_summary: dict[str, Any],
+    ec_labels: dict[int, str],
 ) -> dict[str, Any]:
     return {
         "model_state_dict": model_state_dict,
         "optimizer_state_dict": optimizer_state_dict,
+        "scheduler_state_dict": scheduler_state_dict,
         "history": history,
         "config": config_payload,
         "metal_labels": METAL_TARGET_LABELS,
-        "ec_labels": EC_TOP_LEVEL_LABELS,
+        "ec_labels": ec_labels,
         "normalization_stats": normalization_stats_payload(normalization_stats),
         "dataset_summary": dataset_summary,
     }
@@ -244,6 +370,7 @@ def format_epoch_log(record: dict[str, Any]) -> str:
     parts = [
         f"epoch={record['epoch']}",
         f"train_loss={record['train_loss']:.4f}",
+        f"lr={record['lr']:.6g}",
     ]
     if record["train_metal_acc"] is not None:
         parts.append(f"train_metal_acc={record['train_metal_acc']:.4f}")
@@ -319,10 +446,16 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             require_external_features=config.require_external_features,
             unsupported_metal_policy=config.unsupported_metal_policy,
             invalid_structure_policy=config.invalid_structure_policy,
+            ec_label_depth=config.ec_label_depth,
         )
         pockets = load_result.pockets
         if not pockets:
             raise ValueError("No training pockets were loaded.")
+        if task_predicts_ec(config.task) and not load_result.ec_index_to_label:
+            raise ValueError(
+                "No EC labels were available after applying the configured "
+                f"--ec-label-depth {config.ec_label_depth}."
+            )
         save_json(
             run_dir / "prepare_status.json",
             prepare_status_payload(
@@ -354,6 +487,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             split,
             config,
             feature_load_report=load_result.feature_report,
+            ec_label_map=load_result.ec_index_to_label,
         )
         dataset_summary["runtime_preparation"] = runtime_preparation_report
         train_graphs = build_graph_data_list(
@@ -361,6 +495,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             esm_dim=config.esm_dim,
             edge_radius=config.edge_radius,
             require_ring_edges=config.require_ring_edges,
+            node_feature_set=config.node_feature_set,
         )
         val_graphs = (
             build_graph_data_list(
@@ -368,6 +503,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 esm_dim=config.esm_dim,
                 edge_radius=config.edge_radius,
                 require_ring_edges=config.require_ring_edges,
+                node_feature_set=config.node_feature_set,
             )
             if split.val_pockets
             else None
@@ -387,6 +523,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         dataset_summary["preflight"] = run_preflight_checks(
             split,
             config,
+            ec_label_map=load_result.ec_index_to_label,
             train_graphs=train_graphs,
             val_graphs=val_graphs,
         )
@@ -442,14 +579,29 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         computed_metal_weights, computed_ec_weights = balanced_class_weights_from_pockets(
             split.train_pockets,
             n_metal_classes=N_METAL_CLASSES,
-            n_ec_classes=N_EC_CLASSES,
+            n_ec_classes=max(1, len(load_result.ec_index_to_label)),
         )
         if task_predicts_metal(config.task):
             metal_class_weights = computed_metal_weights
+            mn_idx = metal_label_index("Mn")
+            cu_idx = metal_label_index("Cu")
+            zn_idx = metal_label_index("Zn")
             fe_idx = metal_label_index("Fe")
+            co_idx = metal_label_index("Co")
+            ni_idx = metal_label_index("Ni")
             class_viii_idx = metal_label_index("Class VIII")
+            if mn_idx is not None:
+                metal_class_weights[mn_idx] = metal_class_weights[mn_idx] * float(config.mn_loss_multiplier)
+            if cu_idx is not None:
+                metal_class_weights[cu_idx] = metal_class_weights[cu_idx] * float(config.cu_loss_multiplier)
+            if zn_idx is not None:
+                metal_class_weights[zn_idx] = metal_class_weights[zn_idx] * float(config.zn_loss_multiplier)
             if fe_idx is not None:
                 metal_class_weights[fe_idx] = metal_class_weights[fe_idx] * float(config.fe_loss_multiplier)
+            if co_idx is not None:
+                metal_class_weights[co_idx] = metal_class_weights[co_idx] * float(config.co_loss_multiplier)
+            if ni_idx is not None:
+                metal_class_weights[ni_idx] = metal_class_weights[ni_idx] * float(config.ni_loss_multiplier)
             if class_viii_idx is not None:
                 metal_class_weights[class_viii_idx] = (
                     metal_class_weights[class_viii_idx] * float(config.class_viii_loss_multiplier)
@@ -457,11 +609,37 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         if task_predicts_ec(config.task):
             ec_class_weights = computed_ec_weights
 
-        model = GVPPocketClassifier(
+        model = build_pocket_classifier(
+            model_architecture=config.model_architecture,
             esm_dim=config.esm_dim,
+            hidden_s=config.hidden_s,
+            hidden_v=config.hidden_v,
+            edge_hidden=config.edge_hidden,
             n_layers=config.gvp_layers,
+            n_metal=N_METAL_CLASSES,
+            n_ec=max(1, len(load_result.ec_index_to_label)),
+            esm_fusion_dim=config.esm_fusion_dim,
             head_mlp_layers=config.head_mlp_layers,
+            node_rbf_sigma=config.node_rbf_sigma,
+            edge_rbf_sigma=config.edge_rbf_sigma,
+            node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,
             use_esm_branch=config.use_esm_branch,
+            fusion_mode=config.fusion_mode,
+            cross_attention_layers=config.cross_attention_layers,
+            cross_attention_heads=config.cross_attention_heads,
+            cross_attention_dropout=config.cross_attention_dropout,
+            cross_attention_neighborhood=config.cross_attention_neighborhood,
+            cross_attention_bidirectional=config.cross_attention_bidirectional,
+            use_early_esm=config.use_early_esm,
+            early_esm_dim=config.early_esm_dim,
+            early_esm_dropout=config.early_esm_dropout,
+            early_esm_raw=config.early_esm_raw,
+            early_esm_scope=config.early_esm_scope,
+            metal_loss_function=config.metal_loss_function,
+            metal_focal_gamma=config.metal_focal_gamma,
+            metal_label_smoothing=config.metal_label_smoothing,
+            ec_contrastive_weight=config.ec_contrastive_weight,
+            ec_contrastive_temperature=config.ec_contrastive_temperature,
             metal_class_weights=metal_class_weights,
             ec_class_weights=ec_class_weights,
             predict_metal=task_predicts_metal(config.task),
@@ -472,6 +650,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
         )
+        scheduler = build_scheduler(optimizer, config)
         save_json(
             run_dir / "prepare_status.json",
             prepare_status_payload(stage="prepare_run", status="ready", config_payload=config_payload),
@@ -481,11 +660,14 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             run_dir=run_dir,
             split=split,
             dataset_summary=dataset_summary,
+            ec_labels=load_result.ec_index_to_label,
+            ec_label_to_index=load_result.ec_label_to_index,
             normalization_stats=normalization_stats,
             train_loader=train_loader,
             val_loader=val_loader,
             model=model,
             optimizer=optimizer,
+            scheduler=scheduler,
         )
     except Exception as exc:
         save_json(
@@ -515,11 +697,14 @@ def train_and_select_checkpoint(
             config.device,
             prefix="train",
             task=config.task,
+            ec_label_map=prepared.ec_labels,
+            ec_label_depth=config.ec_label_depth,
         )
         train_metrics.pop("train_loss", None)
         record = {
             "epoch": epoch,
             "train_loss": train_loss,
+            "lr": float(prepared.optimizer.param_groups[0]["lr"]),
             **train_metrics,
         }
 
@@ -529,6 +714,8 @@ def train_and_select_checkpoint(
             config.device,
             prefix="val",
             task=config.task,
+            ec_label_map=prepared.ec_labels,
+            ec_label_depth=config.ec_label_depth,
         )
         record.update(val_metrics)
         current_metric, maximize = metric_sort_value(record, config.selection_metric)
@@ -542,18 +729,97 @@ def train_and_select_checkpoint(
             best_checkpoint = checkpoint_payload(
                 model_state_dict=copy.deepcopy(prepared.model.state_dict()),
                 optimizer_state_dict=copy.deepcopy(prepared.optimizer.state_dict()),
+                scheduler_state_dict=(
+                    copy.deepcopy(prepared.scheduler.state_dict()) if prepared.scheduler is not None else None
+                ),
                 history=copy.deepcopy(history + [record]),
                 config_payload=prepared.config_payload,
                 normalization_stats=prepared.normalization_stats,
                 dataset_summary=prepared.dataset_summary,
+                ec_labels=prepared.ec_labels,
             )
             best_checkpoint["epoch"] = epoch
             best_checkpoint["selection_metric"] = config.selection_metric
             best_checkpoint["selection_metric_value"] = current_metric
 
         history.append(record)
+        if prepared.scheduler is not None:
+            prepared.scheduler.step()
         print(format_epoch_log(record))
     return history, best_checkpoint
+
+
+def evaluate_held_out_test_split(
+    prepared: PreparedRun,
+    config: TrainConfig,
+    *,
+    checkpoint: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if not config.run_test_eval or config.test_structure_dir is None or config.test_summary_csv is None:
+        return None
+
+    current_state_dict = copy.deepcopy(prepared.model.state_dict())
+    model_state_dict = (
+        checkpoint["model_state_dict"] if checkpoint is not None else prepared.model.state_dict()
+    )
+    prepared.model.load_state_dict(model_state_dict)
+    try:
+        test_load_result = load_training_pockets_with_report_from_dir(
+            structure_dir=config.test_structure_dir,
+            require_full_labels=True,
+            required_targets=required_targets_for_task(config.task),
+            summary_csv=config.test_summary_csv,
+            esm_dim=config.esm_dim,
+            esm_embeddings_dir=config.esm_embeddings_dir,
+            require_esm_embeddings=config.require_esm_embeddings,
+            external_features_root_dir=config.external_features_root_dir,
+            external_feature_source=config.external_feature_source,
+            require_external_features=config.require_external_features,
+            unsupported_metal_policy=config.unsupported_metal_policy,
+            invalid_structure_policy=config.invalid_structure_policy,
+            ec_label_depth=config.ec_label_depth,
+            ec_label_to_index=prepared.ec_label_to_index,
+        )
+        if not test_load_result.pockets:
+            raise ValueError("No held-out test pockets were loaded.")
+
+        test_graphs = build_graph_data_list(
+            test_load_result.pockets,
+            esm_dim=config.esm_dim,
+            edge_radius=config.edge_radius,
+            require_ring_edges=config.require_ring_edges,
+            node_feature_set=config.node_feature_set,
+        )
+        test_loader = DataLoader(
+            PocketGraphDataset(
+                test_load_result.pockets,
+                esm_dim=config.esm_dim,
+                edge_radius=config.edge_radius,
+                normalization_stats=prepared.normalization_stats,
+                require_ring_edges=config.require_ring_edges,
+                precomputed_data=test_graphs,
+                node_feature_set=config.node_feature_set,
+            ),
+            batch_size=config.batch_size,
+            shuffle=False,
+        )
+        metrics = evaluate_split_metrics(
+            prepared.model,
+            test_loader,
+            config.device,
+            prefix="test",
+            task=config.task,
+            ec_label_map=prepared.ec_labels,
+            ec_label_depth=config.ec_label_depth,
+        )
+        return {
+            "metrics": metrics,
+            "n_test_pockets": len(test_load_result.pockets),
+            "feature_load_report": test_load_result.feature_report,
+            "ec_labels": prepared.ec_labels,
+        }
+    finally:
+        prepared.model.load_state_dict(current_state_dict)
 
 
 def persist_run_outputs(
@@ -561,6 +827,7 @@ def persist_run_outputs(
     *,
     history: list[dict[str, float | int]],
     best_checkpoint: dict[str, Any] | None,
+    test_report: dict[str, Any] | None = None,
 ) -> None:
     save_json(prepared.run_dir / "dataset_summary.json", prepared.dataset_summary)
 
@@ -569,10 +836,12 @@ def persist_run_outputs(
         checkpoint_payload(
             model_state_dict=prepared.model.state_dict(),
             optimizer_state_dict=prepared.optimizer.state_dict(),
+            scheduler_state_dict=prepared.scheduler.state_dict() if prepared.scheduler is not None else None,
             history=history,
             config_payload=prepared.config_payload,
             normalization_stats=prepared.normalization_stats,
             dataset_summary=prepared.dataset_summary,
+            ec_labels=prepared.ec_labels,
         ),
         checkpoint_path,
     )
@@ -587,21 +856,27 @@ def persist_run_outputs(
             "config": prepared.config_payload,
             "dataset_summary": prepared.dataset_summary,
             "metal_labels": METAL_TARGET_LABELS,
-            "ec_labels": EC_TOP_LEVEL_LABELS,
+            "ec_labels": prepared.ec_labels,
             "history": history,
+            "test_report": test_report,
         },
     )
+    if test_report is not None:
+        save_json(prepared.run_dir / "test_report.json", test_report)
 
     print(f"Saved checkpoint to {checkpoint_path}")
     if best_checkpoint is not None:
         print(f"Saved best checkpoint to {prepared.run_dir / 'best_model_checkpoint.pt'}")
     print(f"Saved dataset summary to {prepared.run_dir / 'dataset_summary.json'}")
     print(f"Saved run config to {prepared.run_dir / 'run_config.json'}")
+    if test_report is not None:
+        print(f"Saved test report to {prepared.run_dir / 'test_report.json'}")
 
 
 def run_training(config: TrainConfig) -> Path:
     set_seed(config.seed)
     prepared = prepare_run(config)
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
-    persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint)
+    test_report = evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint)
+    persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint, test_report=test_report)
     return prepared.run_dir

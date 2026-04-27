@@ -90,6 +90,13 @@ METAL_LABEL_SCHEMES = {
     ),
 }
 
+COLLAPSED_METAL_LABELS = {
+    0: "Mn",
+    1: "Cu",
+    2: "Zn",
+    3: "Class VIII",
+}
+
 
 def _normalize_unsupported_metal_policy(policy: str) -> str:
     normalized = policy.strip().lower()
@@ -130,7 +137,7 @@ def _validate_metal_label_schemes() -> None:
 
 
 def active_metal_label_scheme_name() -> str:
-    return normalize_metal_label_scheme_name(os.environ.get("DEEPGM_METAL_LABEL_SCHEME", "split_fe"))
+    return normalize_metal_label_scheme_name(os.environ.get("DEEPGM_METAL_LABEL_SCHEME", "split_all_metals"))
 
 
 def metal_labels_for_scheme(scheme_name: str) -> dict[int, str]:
@@ -198,3 +205,20 @@ def map_site_metal_symbols(
         symbol_to_target=METAL_SYMBOL_TO_TARGET,
         unsupported_metal_policy=unsupported_metal_policy,
     )
+
+
+def collapsed_metal_target_for_label_name(label_name: str) -> int:
+    normalized = label_name.strip()
+    if normalized == "Mn":
+        return 0
+    if normalized == "Cu":
+        return 1
+    if normalized == "Zn":
+        return 2
+    if normalized in {"Fe", "Co", "Ni", "Class VIII"}:
+        return 3
+    raise ValueError(f"Unsupported metal label name for collapsed evaluation: {label_name!r}")
+
+
+def collapsed_metal_targets_from_ids(target_ids: list[int] | tuple[int, ...]) -> list[int]:
+    return [collapsed_metal_target_for_label_name(METAL_TARGET_LABELS[int(target_id)]) for target_id in target_ids]

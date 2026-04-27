@@ -48,6 +48,7 @@ def pocket_to_pyg_data(
     esm_dim: int,
     edge_radius: float = DEFAULT_EDGE_RADIUS,
     require_ring_edges: bool = False,
+    node_feature_set: str = "conservative",
 ) -> Data:
     shell_roles = compute_shell_roles(pocket)
     v_net = compute_net_ligand_vector(pocket)
@@ -58,6 +59,7 @@ def pocket_to_pyg_data(
                 pocket,
                 esm_dim,
                 v_net,
+                node_feature_set=node_feature_set,
                 is_first_shell=is_first_shell,
                 is_second_shell=is_second_shell,
             )

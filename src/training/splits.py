@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import WeightedRandomSampler
 
 from data_structures import PocketRecord
-from label_schemes import EC_TOP_LEVEL_LABELS, METAL_SYMBOL_TO_TARGET, METAL_TARGET_LABELS
+from label_schemes import METAL_SYMBOL_TO_TARGET, METAL_TARGET_LABELS
 from training.config import TrainConfig, VALID_SPLIT_BY_CHOICES
 from training.feature_sources import build_pocket_feature_coverage
 from training.labels import parse_structure_identity
@@ -311,6 +311,7 @@ def build_dataset_summary(
     split: PocketSplit,
     config: TrainConfig,
     feature_load_report: dict[str, Any],
+    ec_label_map: dict[int, str],
 ) -> dict[str, Any]:
     return {
         "structure_dir": str(config.structure_dir),
@@ -330,13 +331,15 @@ def build_dataset_summary(
         "unsupported_metal_policy": config.unsupported_metal_policy,
         "invalid_structure_policy": config.invalid_structure_policy,
         "balance_metal_site_symbols": config.balance_metal_site_symbols,
+        "ec_label_depth": config.ec_label_depth,
+        "ec_labels": ec_label_map,
         "feature_load_report": feature_load_report,
         "train_feature_coverage": build_pocket_feature_coverage(split.train_pockets),
         "val_feature_coverage": build_pocket_feature_coverage(split.val_pockets),
         "train_metal_distribution": count_labels(split.train_pockets, "y_metal", METAL_TARGET_LABELS),
-        "train_ec_distribution": count_labels(split.train_pockets, "y_ec", EC_TOP_LEVEL_LABELS),
+        "train_ec_distribution": count_labels(split.train_pockets, "y_ec", ec_label_map),
         "val_metal_distribution": count_labels(split.val_pockets, "y_metal", METAL_TARGET_LABELS),
-        "val_ec_distribution": count_labels(split.val_pockets, "y_ec", EC_TOP_LEVEL_LABELS),
+        "val_ec_distribution": count_labels(split.val_pockets, "y_ec", ec_label_map),
         "train_metal_site_distribution": count_metal_site_symbols(split.train_pockets),
         "val_metal_site_distribution": count_metal_site_symbols(split.val_pockets),
     }

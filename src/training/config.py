@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from data_structures import DEFAULT_EDGE_RADIUS, NODE_FEATURE_SET_CHOICES
-from model_variants import MODEL_ARCHITECTURE_CHOICES
-from model_variants.factory import normalize_model_architecture
+from model_variants import FUSION_MODE_CHOICES, MODEL_ARCHITECTURE_CHOICES
+from model_variants.factory import normalize_fusion_mode, normalize_model_architecture
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.feature_paths import VALID_EXTERNAL_FEATURE_SOURCE_CHOICES
@@ -20,7 +20,7 @@ VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
 VALID_LR_SCHEDULE_CHOICES = ("fixed", "cosine", "step")
-VALID_FUSION_MODE_CHOICES = ("gated", "cross_attention")
+VALID_FUSION_MODE_CHOICES = FUSION_MODE_CHOICES
 VALID_EARLY_ESM_SCOPE_CHOICES = ("all", "first_shell", "first_second_shell")
 VALID_CROSS_ATTENTION_NEIGHBORHOOD_CHOICES = ("all", "first_shell", "first_second_shell")
 VALID_SELECTION_METRIC_CHOICES = (
@@ -54,6 +54,9 @@ class TrainConfig:
     external_feature_source: str = "auto"
     runs_dir: str | None = None
     run_name: str | None = None
+    test_structure_dir: Path | None = None
+    test_summary_csv: Path | None = None
+    run_test_eval: bool = False
     device: str = "cpu"
     task: str = "joint"
     epochs: int = 10
@@ -77,7 +80,7 @@ class TrainConfig:
     node_rbf_use_raw_distances: bool = False
     node_feature_set: str = "conservative"
     use_esm_branch: bool = True
-    fusion_mode: str = "gated"
+    fusion_mode: str = "late_fusion"
     cross_attention_layers: int = 1
     cross_attention_heads: int = 4
     cross_attention_dropout: float = 0.1
@@ -95,8 +98,11 @@ class TrainConfig:
     balance_metal_site_symbols: bool = False
     require_all_task_classes: bool = False
     mn_loss_multiplier: float = 1.0
+    cu_loss_multiplier: float = 1.0
     zn_loss_multiplier: float = 1.0
     fe_loss_multiplier: float = 1.0
+    co_loss_multiplier: float = 1.0
+    ni_loss_multiplier: float = 1.0
     class_viii_loss_multiplier: float = 1.0
     metal_loss_function: str = "cross_entropy"
     metal_focal_gamma: float = 2.0
@@ -107,6 +113,9 @@ class TrainConfig:
     prepare_missing_ring_edges: bool = False
     unsupported_metal_policy: str = "error"
     invalid_structure_policy: str = "skip"
+    ec_label_depth: int = 1
+    ec_contrastive_weight: float = 0.0
+    ec_contrastive_temperature: float = 0.1
     lr_schedule: str = "fixed"
     lr_step_size: int = 0
     lr_decay_gamma: float = 0.5
@@ -130,6 +139,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--runs-dir", type=str, default=None)
     parser.add_argument("--run-name", type=str, default=None)
+    parser.add_argument("--test-structure-dir", type=Path, default=None)
+    parser.add_argument("--test-summary-csv", type=Path, default=None)
+    parser.add_argument("--run-test-eval", action="store_true")
     parser.add_argument("--device", type=str, default="cpu")
     parser.add_argument("--task", type=str, default="joint", choices=VALID_TASK_CHOICES)
     parser.add_argument("--epochs", type=int, default=10)
@@ -161,7 +173,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=VALID_NODE_FEATURE_SET_CHOICES,
     )
     parser.add_argument("--disable-esm-branch", action="store_true")
-    parser.add_argument("--fusion-mode", type=str, default="gated", choices=VALID_FUSION_MODE_CHOICES)
+    parser.add_argument(
+        "--fusion-mode",
+        type=normalize_fusion_mode,
+        default="late_fusion",
+        choices=VALID_FUSION_MODE_CHOICES,
+    )
     parser.add_argument("--cross-attention-layers", type=int, default=1)
     parser.add_argument("--cross-attention-heads", type=int, default=4)
     parser.add_argument("--cross-attention-dropout", type=float, default=0.1)
@@ -224,6 +241,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--cu-loss-multiplier",
+        type=float,
+        default=1.0,
+        help="Additional multiplicative boost applied to the metal class weight for Cu.",
+    )
+    parser.add_argument(
         "--fe-loss-multiplier",
         type=float,
         default=1.0,
@@ -231,6 +254,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Additional multiplicative boost applied to the metal class weight for "
             "Fe."
         ),
+    )
+    parser.add_argument(
+        "--co-loss-multiplier",
+        type=float,
+        default=1.0,
+        help="Additional multiplicative boost applied to the metal class weight for Co.",
+    )
+    parser.add_argument(
+        "--ni-loss-multiplier",
+        type=float,
+        default=1.0,
+        help="Additional multiplicative boost applied to the metal class weight for Ni.",
     )
     parser.add_argument(
         "--class-viii-loss-multiplier",
@@ -272,6 +307,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="skip",
         choices=VALID_INVALID_STRUCTURE_POLICY_CHOICES,
     )
+    parser.add_argument("--ec-label-depth", type=int, default=1)
+    parser.add_argument("--ec-contrastive-weight", type=float, default=0.0)
+    parser.add_argument("--ec-contrastive-temperature", type=float, default=0.1)
     parser.add_argument(
         "--selection-metric",
         type=str,
@@ -304,6 +342,9 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         external_feature_source=args.external_feature_source,
         runs_dir=args.runs_dir,
         run_name=args.run_name,
+        test_structure_dir=args.test_structure_dir,
+        test_summary_csv=args.test_summary_csv,
+        run_test_eval=args.run_test_eval,
         device=args.device,
         task=args.task,
         epochs=args.epochs,
@@ -344,8 +385,11 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         balance_metal_site_symbols=args.balance_metal_site_symbols,
         require_all_task_classes=args.require_all_task_classes,
         mn_loss_multiplier=args.mn_loss_multiplier,
+        cu_loss_multiplier=args.cu_loss_multiplier,
         zn_loss_multiplier=args.zn_loss_multiplier,
         fe_loss_multiplier=args.fe_loss_multiplier,
+        co_loss_multiplier=args.co_loss_multiplier,
+        ni_loss_multiplier=args.ni_loss_multiplier,
         class_viii_loss_multiplier=args.class_viii_loss_multiplier,
         metal_loss_function=args.metal_loss_function,
         metal_focal_gamma=args.metal_focal_gamma,
@@ -356,6 +400,9 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         prepare_missing_ring_edges=args.prepare_missing_ring_edges,
         unsupported_metal_policy=args.unsupported_metal_policy,
         invalid_structure_policy=args.invalid_structure_policy,
+        ec_label_depth=args.ec_label_depth,
+        ec_contrastive_weight=args.ec_contrastive_weight,
+        ec_contrastive_temperature=args.ec_contrastive_temperature,
         lr_schedule=args.lr_schedule,
         lr_step_size=args.lr_step_size,
         lr_decay_gamma=args.lr_decay_gamma,
@@ -396,4 +443,6 @@ def config_to_payload(config: TrainConfig) -> dict[str, Any]:
     payload = asdict(config)
     payload["structure_dir"] = str(config.structure_dir)
     payload["summary_csv"] = str(config.summary_csv)
+    payload["test_structure_dir"] = str(config.test_structure_dir) if config.test_structure_dir is not None else None
+    payload["test_summary_csv"] = str(config.test_summary_csv) if config.test_summary_csv is not None else None
     return payload

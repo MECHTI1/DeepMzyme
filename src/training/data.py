@@ -17,6 +17,7 @@ from data_structures import PocketRecord
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.feature_paths import resolve_runtime_feature_paths
+from training.labels import assign_ec_targets
 from training.site_filter import resolve_allowed_site_metal_labels
 from training.structure_loading import (
     StructureLoadError,
@@ -31,6 +32,8 @@ from training.structure_loading import (
 class PocketLoadResult:
     pockets: List[PocketRecord]
     feature_report: Dict[str, Any]
+    ec_label_to_index: Dict[str, int]
+    ec_index_to_label: Dict[int, str]
 
 
 def _assemble_pocket_load_result(
@@ -51,6 +54,8 @@ def _assemble_pocket_load_result(
             skipped_pockets=skipped_pockets,
             invalid_structures=invalid_structures,
         ),
+        ec_label_to_index={},
+        ec_index_to_label={},
     )
 
 
@@ -68,6 +73,8 @@ def load_labeled_pockets_with_report_from_dir(
     require_external_features: bool = True,
     unsupported_metal_policy: str = "error",
     invalid_structure_policy: str = "skip",
+    ec_label_depth: int = 1,
+    ec_label_to_index: Dict[str, int] | None = None,
 ) -> PocketLoadResult:
     """Load labeled pockets from a structure directory and return them with a load report."""
     structure_root = Path(structure_dir)
@@ -83,7 +90,7 @@ def load_labeled_pockets_with_report_from_dir(
         external_feature_source=external_feature_source,
     )
 
-    pockets: List[PocketRecord] = []
+    raw_pockets: List[PocketRecord] = []
     feature_fallbacks: List[Dict[str, str]] = []
     skipped_pockets: List[Dict[str, str]] = []
     invalid_structures: List[Dict[str, str]] = []
@@ -101,6 +108,7 @@ def load_labeled_pockets_with_report_from_dir(
                 external_feature_source=external_feature_source,
                 require_external_features=require_external_features,
                 unsupported_metal_policy=unsupported_metal_policy,
+                ec_label_depth=ec_label_depth,
             )
         except StructureLoadError as exc:
             if invalid_structure_policy != "skip":
@@ -116,28 +124,42 @@ def load_labeled_pockets_with_report_from_dir(
         feature_fallbacks.extend(structure_fallbacks)
         skipped_pockets.extend(structure_skipped_pockets)
 
-        for pocket in structure_pockets:
-            if require_full_labels and not pocket_has_required_supervision(
-                pocket,
-                required_targets=required_targets,
-            ):
-                skipped_pockets.append(
-                    {
-                        "structure_id": pocket.structure_id,
-                        "pocket_id": pocket.pocket_id,
-                        "reason": "missing_required_supervision",
-                    }
-                )
-                continue
-            pockets.append(pocket)
-            if max_cases is not None and len(pockets) >= max_cases:
-                return _assemble_pocket_load_result(
-                    pockets=pockets,
-                    structure_files=structure_files,
-                    feature_fallbacks=feature_fallbacks,
-                    skipped_pockets=skipped_pockets,
-                    invalid_structures=invalid_structures,
-                )
+        raw_pockets.extend(structure_pockets)
+
+    ec_label_to_index, ec_index_to_label = assign_ec_targets(
+        raw_pockets,
+        depth=ec_label_depth,
+        token_to_index=ec_label_to_index,
+    )
+    pockets: List[PocketRecord] = []
+    for pocket in raw_pockets:
+        if require_full_labels and not pocket_has_required_supervision(
+            pocket,
+            required_targets=required_targets,
+        ):
+            skipped_pockets.append(
+                {
+                    "structure_id": pocket.structure_id,
+                    "pocket_id": pocket.pocket_id,
+                    "reason": "missing_required_supervision",
+                }
+            )
+            continue
+        pockets.append(pocket)
+        if max_cases is not None and len(pockets) >= max_cases:
+            result = _assemble_pocket_load_result(
+                pockets=pockets,
+                structure_files=structure_files,
+                feature_fallbacks=feature_fallbacks,
+                skipped_pockets=skipped_pockets,
+                invalid_structures=invalid_structures,
+            )
+            return PocketLoadResult(
+                pockets=result.pockets,
+                feature_report=result.feature_report,
+                ec_label_to_index=ec_label_to_index,
+                ec_index_to_label=ec_index_to_label,
+            )
 
     if not pockets:
         if require_full_labels:
@@ -148,12 +170,18 @@ def load_labeled_pockets_with_report_from_dir(
             )
         raise ValueError(f"No metal-centered pockets were extracted from {structure_root}")
 
-    return _assemble_pocket_load_result(
+    result = _assemble_pocket_load_result(
         pockets=pockets,
         structure_files=structure_files,
         feature_fallbacks=feature_fallbacks,
         skipped_pockets=skipped_pockets,
         invalid_structures=invalid_structures,
+    )
+    return PocketLoadResult(
+        pockets=result.pockets,
+        feature_report=result.feature_report,
+        ec_label_to_index=ec_label_to_index,
+        ec_index_to_label=ec_index_to_label,
     )
 
 
@@ -170,6 +198,8 @@ def load_training_pockets_with_report_from_dir(
     require_external_features: bool = True,
     unsupported_metal_policy: str = "error",
     invalid_structure_policy: str = "skip",
+    ec_label_depth: int = 1,
+    ec_label_to_index: Dict[str, int] | None = None,
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
     return load_labeled_pockets_with_report_from_dir(
@@ -186,6 +216,8 @@ def load_training_pockets_with_report_from_dir(
         require_external_features=require_external_features,
         unsupported_metal_policy=unsupported_metal_policy,
         invalid_structure_policy=invalid_structure_policy,
+        ec_label_depth=ec_label_depth,
+        ec_label_to_index=ec_label_to_index,
     )
 
 
@@ -203,6 +235,8 @@ def load_smoke_test_pockets_from_dir(
     require_external_features: bool = False,
     unsupported_metal_policy: str = "error",
     invalid_structure_policy: str = "skip",
+    ec_label_depth: int = 1,
+    ec_label_to_index: Dict[str, int] | None = None,
 ) -> List[PocketRecord]:
     """Load a small pocket subset for smoke tests, with optional feature requirements relaxed."""
     return load_labeled_pockets_with_report_from_dir(
@@ -219,4 +253,6 @@ def load_smoke_test_pockets_from_dir(
         require_external_features=require_external_features,
         unsupported_metal_policy=unsupported_metal_policy,
         invalid_structure_policy=invalid_structure_policy,
+        ec_label_depth=ec_label_depth,
+        ec_label_to_index=ec_label_to_index,
     ).pockets

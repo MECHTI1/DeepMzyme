@@ -15,7 +15,11 @@ from training.feature_sources import (
     build_feature_load_report,
     load_structure_feature_sources,
 )
-from training.labels import infer_metal_target_class_from_pocket, parse_ec_top_level_from_structure_path
+from training.labels import (
+    infer_metal_target_class_from_pocket,
+    parse_ec_label_token_from_structure_path,
+    parse_structure_ec_numbers,
+)
 from training.site_filter import AllowedSiteMetalLabels, matched_site_metal_types, pocket_matches_allowed_sites
 
 
@@ -84,6 +88,7 @@ def load_structure_pockets(
     external_feature_source: str,
     require_external_features: bool,
     unsupported_metal_policy: str = "error",
+    ec_label_depth: int = 1,
 ) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
     try:
         structure = parse_structure_file(str(structure_path), structure_id=structure_path.stem)
@@ -109,7 +114,8 @@ def load_structure_pockets(
         )
     except ValueError as exc:
         raise StructureLoadError(str(exc)) from exc
-    ec_label = parse_ec_top_level_from_structure_path(structure_path)
+    ec_label_token = parse_ec_label_token_from_structure_path(structure_path, depth=ec_label_depth)
+    ec_numbers = list(parse_structure_ec_numbers(structure_path.stem))
 
     kept_pockets: list[PocketRecord] = []
     for pocket in extracted_pockets:
@@ -182,8 +188,10 @@ def load_structure_pockets(
                 }
             )
             continue
-        if ec_label is not None:
-            pocket.y_ec = ec_label
+        pocket.metadata["ec_label_depth"] = ec_label_depth
+        pocket.metadata["ec_numbers"] = ec_numbers
+        if ec_label_token is not None:
+            pocket.metadata["ec_label_token"] = ec_label_token
         kept_pockets.append(pocket)
 
     return kept_pockets, feature_fallbacks, skipped_pockets

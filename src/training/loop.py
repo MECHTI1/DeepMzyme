@@ -38,6 +38,10 @@ def evaluate_epoch(model: nn.Module, loader: DataLoader, device: str = "cpu") ->
 
 
 def balanced_class_weights_from_labels(labels: list[int], n_classes: int) -> Tensor:
+    if n_classes < 1:
+        raise ValueError(f"n_classes must be at least 1, got {n_classes}.")
+    if not labels:
+        return torch.ones(n_classes, dtype=torch.float32)
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=n_classes).float()
     counts = torch.where(counts > 0, counts, torch.ones_like(counts))
     weights = counts.sum() / (counts * float(n_classes))

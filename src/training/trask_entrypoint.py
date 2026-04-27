@@ -7,6 +7,7 @@ from training.config import TrainConfig, default_selection_metric_for_task, pars
 DEFAULT_SEPARATE_TASK_VAL_FRACTION = 0.2
 DEFAULT_SEPARATE_TASK_BATCH_SIZE = 8
 DEFAULT_SEPARATE_EXTERNAL_FEATURE_SOURCE = "updated"
+DEFAULT_EC_CONTRASTIVE_WEIGHT = 0.1
 VALID_SEPARATE_TASK_BATCH_SIZES = (8, 16)
 
 
@@ -35,6 +36,8 @@ def apply_separate_task_defaults(task: str, argv: Sequence[str] | None = None) -
         updated_argv.extend(["--batch-size", str(DEFAULT_SEPARATE_TASK_BATCH_SIZE)])
     if not cli_option_present(effective_argv, "--external-feature-source"):
         updated_argv.extend(["--external-feature-source", DEFAULT_SEPARATE_EXTERNAL_FEATURE_SOURCE])
+    if task == "ec" and not cli_option_present(effective_argv, "--ec-contrastive-weight"):
+        updated_argv.extend(["--ec-contrastive-weight", str(DEFAULT_EC_CONTRASTIVE_WEIGHT)])
 
     return updated_argv
 

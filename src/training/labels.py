@@ -35,14 +35,86 @@ def parse_structure_identity(structure_id: str) -> Tuple[str, str, str]:
     )
 
 
-def parse_ec_top_level_from_structure_path(path: Path) -> Optional[int]:
+def parse_structure_ec_numbers(structure_id: str) -> tuple[str, ...]:
+    _pdbid, _chain, ec_values = parse_structure_identity(structure_id)
+    return tuple(ec for ec in normalize_ec_number_list(ec_values).split(";") if ec)
+
+
+def ec_label_token_from_numbers(
+    ec_numbers: tuple[str, ...],
+    *,
+    depth: int,
+) -> Optional[str]:
+    if depth < 1:
+        raise ValueError(f"EC label depth must be at least 1, got {depth}.")
+    prefixes = {
+        ".".join(ec_number.split(".")[:depth])
+        for ec_number in ec_numbers
+        if len(ec_number.split(".")) >= depth
+    }
+    if not prefixes:
+        return None
+    if len(prefixes) > 1:
+        return None
+    return next(iter(prefixes))
+
+
+def ec_label_token_from_structure_id(
+    structure_id: str,
+    *,
+    depth: int,
+) -> Optional[str]:
+    return ec_label_token_from_numbers(parse_structure_ec_numbers(structure_id), depth=depth)
+
+
+def parse_ec_label_token_from_structure_path(
+    path: Path,
+    *,
+    depth: int,
+) -> Optional[str]:
     match = EC_TOP_LEVEL_RE.search(path.stem)
-    if not match:
+    if match is None:
         return None
-    top_level = int(match.group(1))
-    if not 1 <= top_level <= 7:
+    return ec_label_token_from_structure_id(path.stem, depth=depth)
+
+
+def assign_ec_targets(
+    pockets: list[PocketRecord],
+    *,
+    depth: int,
+    token_to_index: dict[str, int] | None = None,
+) -> tuple[dict[str, int], dict[int, str]]:
+    if depth < 1:
+        raise ValueError(f"EC label depth must be at least 1, got {depth}.")
+
+    if token_to_index is None:
+        tokens = sorted(
+            {
+                str(token)
+                for pocket in pockets
+                for token in [pocket.metadata.get("ec_label_token")]
+                if token is not None
+            }
+        )
+        token_to_index = {token: idx for idx, token in enumerate(tokens)}
+    else:
+        token_to_index = dict(token_to_index)
+
+    for pocket in pockets:
+        token = pocket.metadata.get("ec_label_token")
+        pocket.y_ec = token_to_index.get(str(token)) if token is not None else None
+
+    index_to_token = {idx: token for token, idx in token_to_index.items()}
+    return token_to_index, index_to_token
+
+
+def ec_prefix_from_label_token(label_token: str, *, level: int) -> Optional[str]:
+    if level < 1:
+        raise ValueError(f"EC prefix level must be at least 1, got {level}.")
+    parts = [part for part in str(label_token).split(".") if part]
+    if len(parts) < level:
         return None
-    return top_level - 1
+    return ".".join(parts[:level])
 
 
 def infer_metal_target_class_from_pocket(
