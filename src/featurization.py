@@ -14,6 +14,9 @@ from data_structures import (
     DEFAULT_FIRST_SHELL_CUTOFF,
     DONOR_ATOMS_BY_RESIDUE,
     DONOR_CAPABLE,
+    EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY,
+    EXTERNAL_FEATURE_DPKA_TITR,
+    EXTERNAL_FEATURE_RESIDUE_SASA,
     HYDROPHOBICITY_KD,
     NEGATIVE,
     POSITIVE,
@@ -21,8 +24,11 @@ from data_structures import (
     ResidueRecord,
 )
 
-BURIAL_FEATURE_NAMES = ("SASA",)
-INTERACTION_FEATURE_NAMES = ("fa_elec",)
+BURIAL_FEATURE_NAMES = (EXTERNAL_FEATURE_RESIDUE_SASA,)
+ELECTROSTATIC_FEATURE_NAMES = (
+    EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY,
+    EXTERNAL_FEATURE_DPKA_TITR,
+)
 
 
 def safe_norm(x: Tensor, dim: int = -1, keepdim: bool = False, eps: float = 1e-8) -> Tensor:
@@ -157,7 +163,7 @@ def build_external_feature_vector(rr: ResidueRecord, feature_names: Tuple[str, .
 def build_external_feature_groups(rr: ResidueRecord) -> Dict[str, Tensor]:
     return {
         "burial": build_external_feature_vector(rr, BURIAL_FEATURE_NAMES),
-        "interactions": build_external_feature_vector(rr, INTERACTION_FEATURE_NAMES),
+        "electrostatics": build_external_feature_vector(rr, ELECTROSTATIC_FEATURE_NAMES),
     }
 
 
@@ -298,7 +304,7 @@ def residue_to_stage1_node_features(
         "x_dist_raw": x_dist_raw,
         "x_misc": x_misc,
         "x_env_burial": env_groups["burial"],
-        "x_env_interactions": env_groups["interactions"],
+        "x_env_electrostatics": env_groups["electrostatics"],
         "x_vec": x_vec,
         "donor_coords": donor_coords.float(),
         "donor_mask": donor_mask,

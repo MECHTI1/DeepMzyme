@@ -54,7 +54,9 @@ class NodeScalarEncoder(nn.Module):
         self.dist_rbf = RBFExpansion(n_rbf=n_rbf, d_min=0.0, d_max=12.0, sigma=distance_sigma)
         self.burial_encoder = TinyFeatureGroupMLP(in_dim=1, hidden_dim=4, out_dim=4)
 
-        self.base_in_dim = 25 + 1 + 2 + 1 + 4 + 1 + 3 * n_rbf
+        # Keep the heuristic q1*q2/r-style proxy and the PROPKA-derived
+        # dpka_titr contribution as separate scalars rather than summing them.
+        self.base_in_dim = 25 + 1 + 2 + 1 + 4 + 2 + 3 * n_rbf
         self.extra_scalar_dim = int(extra_scalar_dim)
         self.in_dim = self.base_in_dim + self.extra_scalar_dim
         self.out_proj = nn.Sequential(
@@ -71,7 +73,7 @@ class NodeScalarEncoder(nn.Module):
         x_dist_raw: Tensor,
         x_misc: Tensor,
         x_env_burial: Tensor,
-        x_env_interactions: Tensor,
+        x_env_electrostatics: Tensor,
         extra_scalar_features: Tensor | None = None,
     ) -> Tensor:
         d_rbf = self.dist_rbf(x_dist_raw).flatten(start_dim=1)
@@ -82,7 +84,7 @@ class NodeScalarEncoder(nn.Module):
             x_role,
             x_misc,
             burial_latent,
-            x_env_interactions,
+            x_env_electrostatics,
             d_rbf,
         ]
         if extra_scalar_features is not None:
@@ -654,7 +656,7 @@ class GVPPocketClassifier(nn.Module):
             node_distances,
             data.x_misc,
             data.x_env_burial,
-            data.x_env_interactions,
+            data.x_env_electrostatics,
             extra_scalar_features=early_esm,
         )
         v = self._init_vector_channels(data.x_vec)

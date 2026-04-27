@@ -1,0 +1,192 @@
+from __future__ import annotations
+
+import subprocess
+import sys
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict
+
+import numpy as np
+from biotite.structure.io import load_structure, save_structure
+
+from .constants import METAL_CHARGE_PROXIES
+
+
+@dataclass(frozen=True)
+class PropkaResidueFeatures:
+    dpka_titr: float
+
+
+@dataclass(frozen=True)
+class PropkaRunResult:
+    residues: Dict[tuple[str, int, str], PropkaResidueFeatures]
+    warnings: list[str]
+
+
+def _parse_float_token(token: str) -> float | None:
+    try:
+        return float(token.rstrip("*"))
+    except ValueError:
+        return None
+
+
+def _primary_row_tokens(tokens: list[str]) -> bool:
+    return len(tokens) >= 19 and tokens[5] == "%"
+
+
+def _continuation_row_tokens(tokens: list[str]) -> bool:
+    return len(tokens) >= 12 and "%" not in tokens[:8]
+
+
+def _looks_like_residue_key(tokens: list[str]) -> bool:
+    if len(tokens) < 3:
+        return False
+    try:
+        int(tokens[1])
+    except ValueError:
+        return False
+    return True
+
+
+def parse_propka_output_text(text: str) -> Dict[tuple[str, int, str], PropkaResidueFeatures]:
+    detail_totals: dict[tuple[str, int, str], dict[str, float]] = {}
+    in_detail_table = False
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        if stripped.startswith("RESIDUE"):
+            in_detail_table = True
+            continue
+        if stripped.startswith("SUMMARY OF THIS PREDICTION"):
+            in_detail_table = False
+            continue
+        if stripped.startswith("Group      pKa"):
+            continue
+        if stripped.startswith("---------") or stripped.startswith("-----------") or stripped.startswith("---"):
+            continue
+        if stripped.startswith("Coupled residues") or stripped.startswith("Free energy of"):
+            continue
+
+        tokens = stripped.split()
+        if in_detail_table:
+            if not _looks_like_residue_key(tokens):
+                continue
+            resname = tokens[0]
+            if resname in {"N+", "C-"}:
+                continue
+            key = (tokens[2], int(tokens[1]), resname)
+            entry = detail_totals.setdefault(
+                key,
+                {
+                    "dpka_titr": 0.0,
+                    "saw_primary": 0.0,
+                },
+            )
+
+            if _primary_row_tokens(tokens):
+                coulombic = _parse_float_token(tokens[18])
+                if coulombic is None:
+                    continue
+                entry["dpka_titr"] += coulombic
+                entry["saw_primary"] = 1.0
+                continue
+
+            if _continuation_row_tokens(tokens):
+                coulombic = _parse_float_token(tokens[11])
+                if coulombic is not None:
+                    entry["dpka_titr"] += coulombic
+            continue
+
+    parsed: Dict[tuple[str, int, str], PropkaResidueFeatures] = {}
+    for key, values in detail_totals.items():
+        if not values["saw_primary"]:
+            continue
+        parsed[key] = PropkaResidueFeatures(
+            dpka_titr=values["dpka_titr"],
+        )
+    return parsed
+
+
+def _is_metal_pdb_line(line: str) -> bool:
+    element = line[76:78].strip().upper()
+    if element in METAL_CHARGE_PROXIES:
+        return True
+    return line[17:20].strip().upper() in METAL_CHARGE_PROXIES
+
+
+def _sanitize_propka_pdb_text(text: str) -> str:
+    sanitized_lines: list[str] = []
+    for line in text.splitlines():
+        if line.startswith("ATOM"):
+            sanitized_lines.append(line)
+            continue
+        if line.startswith("HETATM") and _is_metal_pdb_line(line):
+            sanitized_lines.append(line)
+            continue
+        if line.startswith(("TER", "END")):
+            sanitized_lines.append(line)
+    return "\n".join(sanitized_lines) + "\n"
+
+
+def _sanitize_propka_atom_array(atom_array):
+    keep_mask = (~atom_array.hetero) | np.isin(atom_array.element.astype(str), np.array(list(METAL_CHARGE_PROXIES)))
+    return atom_array[keep_mask]
+
+
+def _prepare_propka_input_path(structure_path: Path, temp_dir: Path) -> Path:
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    if structure_path.suffix.lower() == ".pdb":
+        target = temp_dir / structure_path.name
+        sanitized_text = _sanitize_propka_pdb_text(structure_path.read_text(encoding="utf-8", errors="ignore"))
+        target.write_text(sanitized_text, encoding="utf-8")
+        return target
+
+    atom_array = load_structure(str(structure_path))
+    atom_array = _sanitize_propka_atom_array(atom_array)
+    target = temp_dir / f"{structure_path.stem}.pdb"
+    save_structure(str(target), atom_array)
+    return target
+
+
+def run_propka_for_structure(structure_path: Path, *, ph: float = 7.0) -> PropkaRunResult:
+    with tempfile.TemporaryDirectory(prefix="deepgm_propka_") as tmpdir:
+        temp_dir = Path(tmpdir)
+        propka_input = _prepare_propka_input_path(structure_path, temp_dir)
+        command = [
+            sys.executable,
+            "-m",
+            "propka",
+            "-q",
+            "-o",
+            str(ph),
+            str(propka_input.name),
+        ]
+        completed = subprocess.run(
+            command,
+            cwd=temp_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        warnings = [
+            line.strip()
+            for line in (completed.stdout.splitlines() + completed.stderr.splitlines())
+            if line.strip()
+        ]
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"PROPKA failed for {structure_path} with exit code {completed.returncode}: "
+                f"{' | '.join(warnings[:8])}"
+            )
+
+        output_path = temp_dir / f"{propka_input.stem}.pka"
+        if not output_path.is_file():
+            raise FileNotFoundError(f"Expected PROPKA output was not created for {structure_path}")
+
+        residues = parse_propka_output_text(output_path.read_text(encoding="utf-8", errors="ignore"))
+        return PropkaRunResult(residues=residues, warnings=warnings)

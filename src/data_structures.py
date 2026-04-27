@@ -75,6 +75,18 @@ SUPPORTED_SITE_METAL_ELEMENTS = {
     "MN", "FE", "CO", "NI", "CU", "ZN",
 }
 
+EXTERNAL_FEATURE_RESIDUE_SASA = "biotite_residue_sasa"
+# Heuristic q1*q2/r-style charge-distance feature built from Biotite-derived
+# residue and metal geometry plus coarse charge proxies.
+EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY = "custom_charge_distance_proxy"
+# PROPKA-derived titration/electrostatic contribution. Kept separate from the
+# geometric charge-distance proxy because the two quantities are not assumed to
+# share a common physical scale.
+EXTERNAL_FEATURE_DPKA_TITR = "dpka_titr"
+EXTERNAL_FEATURE_NAME_ALIASES = {
+    "SASA": EXTERNAL_FEATURE_RESIDUE_SASA,
+}
+
 NODE_FEATURES_CONSERVATIVE = [
     "aa_one_hot",
     "hydrophobicity_kd",
@@ -88,8 +100,9 @@ NODE_FEATURES_CONSERVATIVE = [
     "ca_to_metal",
     "fg_to_metal",
     "min_donor_to_metal",
-    "SASA",
-    "fa_elec",
+    EXTERNAL_FEATURE_RESIDUE_SASA,
+    EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY,
+    EXTERNAL_FEATURE_DPKA_TITR,
     "v_cb_to_fg",
     "v_res_to_metal",
     "cos_theta_between_vnetligand_to_vrestometal",
@@ -136,7 +149,7 @@ NORMALIZABLE_FEATURE_NAMES = (
     "x_dist_raw",
     "x_misc",
     "x_env_burial",
-    "x_env_interactions",
+    "x_env_electrostatics",
     "edge_dist_raw",
     "edge_seqsep",
     "site_metal_stats",
