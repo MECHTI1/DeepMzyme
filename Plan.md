@@ -53,3 +53,121 @@
 ### 5) Create a Google Colab configurable training/test set
     - Do the training model flexibile by configurable options to input screening different parameters/models, make convinent nice interface for inputs.
     - In the end make a comparison table/proffesional figure for analyse prediction results which including all selected screened variety of parametrs/differrent models of choice.
+
+---
+
+### 6) Experiment tracking and reproducible run summaries
+
+Every training run should save enough information to reproduce and compare the result.
+
+Each run should save:
+
+- full config / hyperparameters
+- random seed
+- dataset paths and split identity
+- model architecture
+- fusion mode
+- node feature set
+- EC label depth, if relevant
+- contrastive-learning settings, if relevant
+- validation metric used for checkpoint selection
+- selected checkpoint path
+- final held-out test metrics, if test evaluation was requested
+- git commit hash, if available
+
+Create a reporting script that summarizes multiple run directories into one CSV table.
+
+The summary table should include, when available:
+
+- run name
+- task
+- model architecture
+- fusion mode
+- seed
+- node feature set
+- EC label depth
+- selection metric
+- best validation metrics
+- final held-out test metrics
+- metal 6-class metrics
+- metal collapsed-4 metrics
+- EC level-1 / level-2 metrics
+- split name/type used for the run
+- whether train/test overlap was detected
+
+Important rules:
+
+- Validation metrics are used for checkpoint selection and hyperparameter choice.
+- Held-out test metrics are used only for final reporting.
+- Do not choose models by repeatedly checking the held-out test set.
+
+---
+
+### 7) Baseline-first model comparison policy
+
+Before testing complex fusion models, establish clean baselines.
+
+Recommended order:
+
+1. Only-GVP
+2. Only-ESM
+3. GVP + simple late ESM fusion
+4. GVP + early residue-level ESM fusion
+5. More complex fusion modes only if simpler baselines justify them
+
+Complex fusion modes include:
+
+- hybrid fusion
+- node-level late fusion
+- cross-modal attention
+
+For each task:
+
+- compare models using validation metrics first
+- select checkpoints using validation metrics
+- evaluate the selected model once on the held-out test set for final reporting
+
+The goal is to avoid adding complex architecture before proving that it improves over simple baselines.
+
+---
+
+### 8) Data leakage and split policy
+
+The non-overlapped PinMyMetal split is the main trusted split for final held-out evaluation.
+
+For the EC-number classification task:
+
+- The non-overlapped PinMyMetal split should be treated as mandatory for final held-out testing.
+- The exact PinMyMetal split should not be used as the final EC held-out test split if train/test structures overlap.
+
+For the metal-type classification task:
+
+- The non-overlapped PinMyMetal split should be the preferred final held-out test split.
+- The exact PinMyMetal split may be kept as an optional secondary metal-testing mode.
+- If the exact PinMyMetal split is used for metal testing, the result must be clearly labeled as using the exact/possibly-overlapped split.
+- Metal results from the exact/possibly-overlapped split should not be presented as the main final held-out result if train/test overlap exists.
+
+The code and/or result summary files should clearly record which split was used:
+
+- non-overlapped PinMyMetal split
+- exact PinMyMetal split
+- any other custom split
+
+If the exact PinMyMetal split is used as an optional metal-testing mode, the output summary should explicitly warn that this split may contain train/test overlap and should be interpreted only as a secondary/reference result.
+
+Before final training/evaluation, validate train/test overlap by:
+
+- full structure filename
+- PDB ID
+- preferably PDB-chain or pocket ID when available
+
+The held-out test set must remain separate from model selection.
+
+Use only validation or cross-validation for:
+
+- checkpoint selection
+- hyperparameter choices
+- model architecture choices
+- fusion-mode choices
+
+Use the held-out test set only for final reporting of selected models.
