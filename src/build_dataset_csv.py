@@ -5,7 +5,7 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-from label_schemes import METAL_TARGET_LABELS
+from label_schemes import METAL_TARGET_LABELS, map_site_metal_symbols
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,9 +42,22 @@ def build_structure_rows(
     metals_by_structure: dict[str, set[str]] = defaultdict(set)
     ec_numbers_by_structure: dict[str, set[str]] = defaultdict(set)
     for pocket in load_result.pockets:
-        if pocket.y_metal is None:
-            raise ValueError(f"Structure {pocket.structure_id!r} is missing an inferred metal label.")
-        metals_by_structure[pocket.structure_id].add(METAL_TARGET_LABELS[int(pocket.y_metal)])
+        if pocket.y_metal is not None:
+            metals_by_structure[pocket.structure_id].add(METAL_TARGET_LABELS[int(pocket.y_metal)])
+        else:
+            raw_site_symbols = pocket.metadata.get("matched_summary_site_metal_types")
+            if not isinstance(raw_site_symbols, list) or not raw_site_symbols:
+                raw_site_symbols = pocket.metadata.get("metal_symbols_observed")
+            if not isinstance(raw_site_symbols, list) or not raw_site_symbols:
+                raw_site_symbols = [pocket.metal_element]
+            inferred_labels: set[str] = set()
+            for symbol in raw_site_symbols:
+                mapped_target = map_site_metal_symbols(symbol, unsupported_metal_policy="error")
+                if mapped_target is not None:
+                    inferred_labels.add(METAL_TARGET_LABELS[int(mapped_target)])
+            if not inferred_labels:
+                raise ValueError(f"Structure {pocket.structure_id!r} is missing an inferred metal label.")
+            metals_by_structure[pocket.structure_id].update(inferred_labels)
         for ec_number in pocket.metadata.get("ec_numbers", []):
             ec_numbers_by_structure[pocket.structure_id].add(str(ec_number))
 
@@ -87,6 +100,31 @@ def validate_rows(rows: list[dict[str, str]]) -> None:
             raise ValueError(f"Row for structure {structure_name!r} is missing metal_type.")
 
 
+def validate_rows_match_structure_dir(*, structure_dir: Path, rows: list[dict[str, str]]) -> None:
+    from training.structure_loading import find_structure_files
+
+    expected_structure_names = {path.stem for path in find_structure_files(structure_dir)}
+    observed_structure_names = {row["structure_name"].strip() for row in rows}
+
+    missing_structure_names = sorted(expected_structure_names.difference(observed_structure_names))
+    unexpected_structure_names = sorted(observed_structure_names.difference(expected_structure_names))
+    if missing_structure_names or unexpected_structure_names:
+        detail_parts: list[str] = []
+        if missing_structure_names:
+            detail_parts.append(
+                "missing rows for "
+                f"{len(missing_structure_names)} structure(s), e.g. {missing_structure_names[:5]}"
+            )
+        if unexpected_structure_names:
+            detail_parts.append(
+                "unexpected rows for "
+                f"{len(unexpected_structure_names)} structure(s), e.g. {unexpected_structure_names[:5]}"
+            )
+        raise ValueError(
+            f"Structure/CSV mismatch for {structure_dir}: " + "; ".join(detail_parts)
+        )
+
+
 def main() -> None:
     args = parse_args()
     rows = build_structure_rows(
@@ -96,6 +134,7 @@ def main() -> None:
         ec_label_depth=args.ec_label_depth,
     )
     validate_rows(rows)
+    validate_rows_match_structure_dir(structure_dir=args.structure_dir, rows=rows)
     write_rows(args.output_csv, rows)
     print(f"Wrote {len(rows)} rows to {args.output_csv}")
 

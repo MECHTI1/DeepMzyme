@@ -1,25 +1,42 @@
 # DeepMzyme audit against `Plan.md`
 
+## 2026-04-29 update after the new `test/` directories were added
+
+- Verified that `.data/train_and_test_sets_structures_exact_pinmymetal/test` and `.data/train_and_test_sets_structures_non_overlapped_pinmymetal/test` both exist and contain `334` `.pdb` files; the two test directories are identical at the filename level.
+- Verified that the paired train directories exist and currently contain `1738` `.pdb` files for the exact split and `1552` `.pdb` files for the non-overlapped split.
+- Updated the code so the real MAHOMES catalytic summary CSV format now loads correctly: `src/training/site_filter.py` accepts the on-disk headers (`structure`, `chain_resi`, `ecnumber`, `metaltype`) and filters catalytic rows when `whether_catalytic` is present.
+- Updated `src/label_schemes.py` so summary-site labels such as `FE2` normalize into the existing `Fe` class rather than failing the real-data load path.
+- Updated `src/build_dataset_csv.py` so it validates structure-directory coverage and can emit semicolon-joined structure labels for genuinely multi-metal structures when `--allow-multi-metal-structures` is enabled.
+- Updated `src/build_colab_bundle.py` into the missing end-to-end CLI that can derive train/test CSVs from a dataset root and then bundle the structures plus generated CSVs in one pass.
+- Checks run:
+  - `/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/label_schemes.py src/training/site_filter.py src/build_dataset_csv.py src/build_colab_bundle.py`
+  - `load_labeled_pockets_with_report_from_dir(...)` against `.data/train_and_test_sets_structures_exact_pinmymetal/test` with the real catalytic summary CSV; this succeeded and returned real pockets.
+  - A real-data metal smoke run with validation plus held-out evaluation wrote `.data/real_eval_smoke/runs/metal_test_eval_exact_smoke/test_report.json`, including both `test_metal_balanced_acc` and `test_metal_collapsed4_balanced_acc`.
+  - A real-data EC smoke run with `--ec-label-depth 2` plus held-out evaluation wrote `.data/real_eval_smoke/runs/ec_test_eval_exact_smoke/test_report.json`, including both `test_ec_level_1_*` and `test_ec_level_2_*` metrics.
+  - `src/build_colab_bundle.py` completed end to end on `.data/real_eval_smoke/exact_supported`, producing `.data/real_eval_smoke/exact_supported_bundle.tar.zst`.
+- Remaining data blocker for Plan item 1:
+  - Full CSV staging for the complete exact/non-overlapped train roots is still not cleanly completable under the current 6-class transition-metal policy because the train splits still contain Mg-bearing structures from the MAHOMES catalytic summary.
+  - Summary-based counts show `29` exact-train and `26` non-overlapped-train structures are Mg-only, and another `68` exact-train and `62` non-overlapped-train structures mix Mg with one of the supported transition-metal labels. Those cases need a project decision: exclude them from the release CSVs, represent multiple metal types explicitly including Mg, or expand the label policy beyond the current 6-class scheme.
+
 ## Already correctly implemented
 
 - Validation-aware checkpoint selection already exists when validation is enabled. `src/training/config.py::default_selection_metric_for_task`, `src/training/trask_entrypoint.py::validate_separate_task_config`, and `src/training/run.py::train_and_select_checkpoint` all point toward selecting checkpoints from validation metrics rather than the test set.
 - Reproducibility metadata is already being saved. `src/training/run.py::checkpoint_payload` and `src/training/run.py::persist_run_outputs` store config, label maps, normalization stats, dataset summary, and training history.
 - Split handling is already stronger than a minimal baseline. `src/training/splits.py` supports grouped validation splits and k-fold splits, and `src/training/preflight.py` checks leakage and missing-class problems.
 - Runtime preparation for ESM embeddings, ring edges, and external residue features already exists in `src/training/runtime_preparation.py`.
-- Summary-CSV site filtering is already implemented. `src/training/site_filter.py` and `src/training/structure_loading.py::load_structure_pockets` use summary rows to restrict allowed catalytic metal sites and to map site metals conservatively.
+- Summary-CSV site filtering is already implemented. `src/training/site_filter.py` and `src/training/structure_loading.py::load_structure_pockets` use summary rows to restrict allowed catalytic metal sites and to map site metals conservatively, and this path now matches the real MAHOMES header schema on disk.
 
 ## Missing
 
-- There is still no single end-to-end non-ignored script that assembles both the train and test CSV artifacts, validates them against prebuilt split assets, and stages them for release in one pass.
 - There is still no true Colab notebook/UI layer in active `src/` code; the repository now has CLI utilities for bundling and summarizing runs, but not a notebook-facing interactive interface.
 - There is still no automated publication-style figure generator for comparing screened models and parameters; the current reporting foundation is CSV-based.
+- The project still lacks an agreed release policy for Mg-bearing structures that appear in the exact and non-overlapped train splits, so Plan item 1 cannot yet be marked fully complete for the full split assets.
 
 ## Partially implemented or inconsistent
 
 - `--node-feature-set` is now wired through graph construction and validated, but there is still only one concrete feature set (`conservative`) in `src/data_structures.py`.
 - The EC-depth workflow is configurable, but structures whose multiple EC annotations disagree at the requested depth are intentionally left without an EC target rather than being forced into a guessed class.
-- Held-out evaluation is now implemented as an explicit post-selection step via `--run-test-eval`, but its runtime path was not exercised on real split data.
-- `torch_geometric` is available in the verified environment and a tiny synthetic CPU smoke test passed across all configured model architectures, but the built-in real-data smoke path is blocked here by a missing `Bio.PDB` dependency.
+- The end-to-end dataset-release CLI now exists, but it still stops on the full exact/non-overlapped train roots because the current split contents and the current 6-class metal policy disagree on how Mg-bearing structures should be represented.
 
 ## Likely files needing edits
 
@@ -35,6 +52,8 @@
 - `src/training/graph_dataset.py`
 - `src/graph/construction.py`
 - `src/build_colab_bundle.py`
+- `src/build_dataset_csv.py`
+- `src/training/site_filter.py`
 - Likely new modules under `src/model_variants/`
 - Likely new evaluation/reporting scripts for held-out test execution and comparison outputs
 - Likely new non-ignored dataset-preparation scripts for Plan item 1
@@ -57,13 +76,13 @@
   - Risk level: was high; now medium
   - Risk change reason: class-count wiring and output shapes were lightly verified, but real labeled data loading was not exercised.
 
-- [ ] Add metal held-out test evaluation that reports both 6-class performance and the collapsed 4-class view after checkpoint selection
+- [x] Add metal held-out test evaluation that reports both 6-class performance and the collapsed 4-class view after checkpoint selection
   - Reason: Plan item 2 requires testing on both the original 6 classes and the 4-class collapsed view where Fe, Co, and Ni are merged into Class VIII, while AGENTS.md requires keeping the test set for final reporting only.
   - Evidence in current code: there is no test loader/evaluator in `src/training/run.py`; `src/training/config.py` advertises collapsed-4 validation metrics, but `src/training/run.py::evaluate_split_metrics` does not compute collapsed-4 metrics anywhere.
   - Likely files: `src/training/run.py`, `src/training/config.py`, `src/label_schemes.py`, likely a new dedicated evaluation script
-  - REVIEW_NEEDED: the held-out evaluation path and collapsed-4 reporting code are present, and checkpoint selection remains validation-driven by inspection, but this path was not runtime-tested on real split data.
-  - Risk level: was high; now medium
-  - Risk change reason: the implementation exists and its separation from validation selection was checked, but evaluation behavior was not exercised end-to-end.
+  - DONE: a real-data smoke run against `.data/real_eval_smoke/exact_supported/test` wrote `.data/real_eval_smoke/runs/metal_test_eval_exact_smoke/test_report.json`, and that report contains both the 6-class metrics and the collapsed-4 metrics after validation-based checkpoint selection.
+  - Risk level: was high; now low
+  - Risk change reason: the held-out path was exercised end to end on real split-derived test files, not only by inspection.
 
 - [x] Wire the existing parsed hyperparameters into the actual model/optimizer/scheduler construction
   - Reason: Plan item 4 explicitly calls for many parameters to be configurable, but that only helps if the parsed values reach the real training objects.
@@ -89,13 +108,13 @@
   - Risk level: was high; now medium
   - Risk change reason: CLI/config exposure and default handling were verified, but each fusion behavior was not exercised separately at runtime.
 
-- [ ] Replace top-level-only EC labeling with an explicit, configurable EC-depth policy
+- [x] Replace top-level-only EC labeling with an explicit, configurable EC-depth policy
   - Reason: Plan item 3 requires learning on the first EC digit and following digits, but it explicitly leaves the exact depth undecided, so the code needs a configurable EC label-depth mechanism rather than a hardcoded assumption.
   - Evidence in current code: `src/training/labels.py::parse_ec_top_level_from_structure_path` returns only the first EC digit from the structure filename; `src/training/structure_loading.py` uses that single value as the EC target.
   - Likely files: `src/training/labels.py`, `src/training/structure_loading.py`, `src/training/config.py`, likely a new EC label utility module
-  - REVIEW_NEEDED: configurable EC-depth code is present and consistent with the current evaluation surface, but the real-data EC labeling path was not exercised because the built-in structure smoke path is blocked here by missing `Bio.PDB`.
-  - Risk level: was high; now medium
-  - Risk change reason: internal wiring was inspected, but runtime verification on parsed structures was not possible in this environment.
+  - DONE: the real-data EC path was exercised with `--ec-label-depth 2` on split-derived files, and the resulting held-out report includes both level-1 and level-2 EC metrics.
+  - Risk level: was high; now low
+  - Risk change reason: the runtime check reached real parsed structures and real held-out reporting rather than stopping at code inspection.
 
 - [ ] Add contrastive learning for the EC task in a configurable way
   - Reason: Plan item 3 explicitly says the EC-number model should use contrastive learning.
@@ -105,13 +124,13 @@
   - Risk level: was high; now medium
   - Risk change reason: the code exists and compiles, but behavior under nonzero contrastive settings remains unverified.
 
-- [ ] Add held-out EC test evaluation across the configured EC levels
+- [x] Add held-out EC test evaluation across the configured EC levels
   - Reason: Plan item 3 requires testing on all levels of digits to get a broad performance view, and AGENTS.md requires test reporting to remain separate from model selection.
   - Evidence in current code: there is no test-evaluation path in `src/training/run.py`, and the current label path only supports one EC target per pocket.
   - Likely files: `src/training/run.py`, `src/training/config.py`, `src/training/labels.py`, likely a new evaluation/reporting script
-  - REVIEW_NEEDED: multi-level held-out EC evaluation code is present and aligned with the configurable EC-depth path by inspection, but no held-out runtime evaluation was executed.
-  - Risk level: was high; now medium
-  - Risk change reason: post-selection reporting logic was implemented, but the evaluation path was not exercised end-to-end.
+  - DONE: a real-data smoke run against `.data/real_eval_smoke/exact_supported/test` wrote `.data/real_eval_smoke/runs/ec_test_eval_exact_smoke/test_report.json`, and that report contains `test_ec_level_1_*` and `test_ec_level_2_*` metrics after validation-based checkpoint selection.
+  - Risk level: was high; now low
+  - Risk change reason: the held-out evaluation path was exercised end to end on real split-derived files.
 
 - [x] Make `--node-feature-set` a real graph-construction switch, or remove the dead option until more feature sets exist
   - Reason: Plan item 4 explicitly lists `node_feature_set` as a configurable parameter.
@@ -124,15 +143,15 @@
 - [ ] Implement active, non-ignored dataset-preparation code for the train/test CSVs and structure-to-CSV consistency checks
   - Reason: Plan item 1 requires creating training/test CSVs with structure name, EC number(s), and metal type, and it explicitly requires consistency between structure files and CSV labels.
   - Evidence in current code: active `src/` code only consumes a pre-existing summary CSV via `src/training/defaults.py` and `src/training/site_filter.py`; there is no active, non-ignored CSV-generation path in the inspected code surface.
-  - Likely files: likely new dataset-preparation scripts under `src/`, possibly `src/training/site_filter.py` for shared validation helpers, possibly `src/project_paths.py`
-  - PARTIAL: `src/build_dataset_csv.py` provides a non-ignored structure-level CSV generator with duplicate/missing-row checks, but the broader train/test artifact orchestration and split-asset consistency workflow is still missing.
+  - Likely files: `src/build_dataset_csv.py`, `src/build_colab_bundle.py`, `src/training/site_filter.py`, `src/label_schemes.py`
+  - PARTIAL: the missing end-to-end CLI now exists and was verified on `.data/real_eval_smoke/exact_supported`, but the full exact/non-overlapped train roots still fail strict structure-to-CSV validation because Mg-only and mixed Mg+transition-metal structures do not fit the current 6-class release assumption.
   - Risk level: was high; now medium
-  - Risk change reason: there is now an implemented foundation, but the end-to-end dataset-preparation workflow required by the plan is still incomplete.
+  - Risk change reason: the code path is now real and verified, but the full dataset assets still need a project-level labeling/exclusion decision before this item can be closed.
 
 - [ ] Refactor the Colab bundle/reporting workflow into a configurable experiment interface
   - Reason: Plan item 5 requires a configurable Google Colab training/testing setup plus comparison tables or professional figures summarizing screened parameters and models.
   - Evidence in current code: `src/build_colab_bundle.py` is a fixed bundling script with hardcoded train/test paths and no parameter-screening interface, no test execution flow, and no reporting/figure generation.
   - Likely files: `src/build_colab_bundle.py`, likely new reporting or notebook-facing scripts under `src/`
-  - PARTIAL: `src/build_colab_bundle.py` is now a configurable CLI and `src/summarize_runs.py` provides CSV-based run comparisons, but there is still no true notebook-facing experiment UI or figure-generation layer.
+  - PARTIAL: `src/build_colab_bundle.py` is now a configurable CLI, it can derive train/test CSVs from a split root, and it was runtime-verified on `.data/real_eval_smoke/exact_supported`, but there is still no true notebook-facing experiment UI or figure-generation layer.
   - Risk level: medium
-  - Risk change reason: unchanged because the workflow is still only partially implemented and was not verified beyond basic code presence.
+  - Risk change reason: lowered only for the CLI release path because the bundle workflow now ran end to end on real split-derived files; the missing notebook/reporting layer is unchanged.

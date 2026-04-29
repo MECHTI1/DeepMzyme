@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# IMPORTANT:
+# This script is for MAHOMES held-out test-set runs using the edited
+# `pdb_updatedv2` structures as input.
+# Note that `CLEAN_JOB_DIRS=1` and `SKIP_COMPLETED_JOBS=0` are the safe
+# settings for a fresh rerun after source structures changed, because they
+# prevent reuse of stale completed MAHOMES outputs.
+# Use `CLEAN_JOB_DIRS=0` and `SKIP_COMPLETED_JOBS=1` only to resume an
+# interrupted run when the source PDB files are unchanged.
 # Save MAHOMES predictions for the held-out test-set structures.
 set -euo pipefail
 
@@ -8,8 +16,8 @@ pdb_dir="${PDB_DIR:-/media/Data/pinmymetal_sets/test/pdb_updatedv2}"
 N_JOBS="${N_JOBS:-4}"
 MAHOMES_DIR="${MAHOMES_DIR:-/home/mechti/MAHOMES-II}"
 VENV="${VENV:-$MAHOMES_DIR/venv/bin/activate}"
-CLEAN_JOB_DIRS="${CLEAN_JOB_DIRS:-0}"
-SKIP_COMPLETED_JOBS="${SKIP_COMPLETED_JOBS:-1}"
+CLEAN_JOB_DIRS="${CLEAN_JOB_DIRS:-1}"
+SKIP_COMPLETED_JOBS="${SKIP_COMPLETED_JOBS:-0}"
 RUN_MODE="${RUN_MODE:-all}"
 pdb_source_marker="$job_root/pdb_source_dir.txt"
 pdbids_query_txt="$job_root/pdbids_query.txt"
@@ -70,6 +78,40 @@ job_matches_current_batch() {
     cmp -s "$current_part_file" "$batch_input_path"
 }
 
+job_predictions_fresh_for_current_sources() {
+    local dir_path="$1"
+    local current_part_file="$2"
+    local current_pdb_dir="$3"
+    local predictions_path="$dir_path/predictions.csv"
+
+    [[ -f "$predictions_path" ]] || return 1
+
+    python - <<'PY' "$predictions_path" "$current_part_file" "$current_pdb_dir"
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+predictions_path = Path(sys.argv[1])
+batch_input_path = Path(sys.argv[2])
+pdb_dir = Path(sys.argv[3])
+prediction_mtime = predictions_path.stat().st_mtime
+
+with batch_input_path.open("r", encoding="utf-8", errors="replace") as handle:
+    for raw_line in handle:
+        struct_id = raw_line.rstrip()
+        if not struct_id:
+            continue
+        pdb_path = pdb_dir / f"{struct_id}.pdb"
+        if not pdb_path.exists():
+            continue
+        if pdb_path.stat().st_mtime > prediction_mtime:
+            raise SystemExit(1)
+
+raise SystemExit(0)
+PY
+}
+
 echo "[INFO] PDB dir:        $pdb_dir"
 echo "[INFO] Job root:       $job_root"
 echo "[INFO] N_JOBS:         $N_JOBS"
@@ -110,7 +152,8 @@ for part_file in "$job_root"/batch_input_part_*; do
     if [[ "$SKIP_COMPLETED_JOBS" == "1" ]] \
         && [[ -d "$job_dir" ]] \
         && job_matches_current_batch "$job_dir" "$part_file" \
-        && job_log_indicates_completion "$job_dir" "$job_index"; then
+        && job_log_indicates_completion "$job_dir" "$job_index" \
+        && job_predictions_fresh_for_current_sources "$job_dir" "$part_file" "$pdb_dir"; then
         echo "[SKIP] Job $job_index already finished according to job.log for current batch -> $job_dir"
         skipped_jobs=$((skipped_jobs + 1))
         job_index=$((job_index + 1))

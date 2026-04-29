@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# IMPORTANT:
+# This script is for selective reruns of failed MAHOMES train-set jobs using
+# the edited `pdb_updatedv2` structures as input.
+# Note that `CLEAN_JOB_DIRS=1` avoids mixing old failed-job outputs with new
+# reruns.
+# Use `CLEAN_JOB_DIRS=0` only if you intentionally want to resume the same
+# failed-job rerun in place and the source PDB files did not change.
 set -euo pipefail
 
 ### SETTINGS ###

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import re
 
 VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
+TRAILING_METAL_CHARGE_RE = re.compile(r"(?P<base>[A-Z]+?)(?:[0-9]+[+-]?|[+-][0-9]*)$")
 
 
 def normalize_metal_label_scheme_name(raw_name: str) -> str:
@@ -111,7 +113,14 @@ def _normalize_unsupported_metal_policy(policy: str) -> str:
 def _normalize_site_metal_symbols(symbols: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
     if isinstance(symbols, str):
         symbols = (symbols,)
-    return tuple(symbol.strip().upper() for symbol in symbols)
+    normalized_symbols: list[str] = []
+    for symbol in symbols:
+        normalized = symbol.strip().upper()
+        match = TRAILING_METAL_CHARGE_RE.match(normalized)
+        if match is not None:
+            normalized = match.group("base")
+        normalized_symbols.append(normalized)
+    return tuple(normalized_symbols)
 
 
 def _validate_metal_label_schemes() -> None:

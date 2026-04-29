@@ -12,6 +12,11 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from project_paths import MEDIA_DATA_ROOT
+from structure_sync_utils import (
+    SUPPORTED_TRANSITION_METALS,
+    collect_supported_transition_metal_sites,
+    resolve_structure_path,
+)
 
 SOURCE_CSV = (
     MEDIA_DATA_ROOT
@@ -23,7 +28,7 @@ SOURCE_CSV = (
 )
 SOURCE_PDB_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "test" / "pdb_updatedv2"
 DEST_DIR = SRC_DIR.parent / ".data" / "train_and_test_sets_structures_exact_pinmymetal" / "test"
-CSV_REQUIRED_COLUMNS = frozenset({"structure", "chain_resi", "ecnumber"})
+CSV_REQUIRED_COLUMNS = frozenset({"structure", "chain_resi", "ecnumber", "metaltype"})
 STRUCTURE_FILE_RE = re.compile(r"^(?P<structure>[^_]+)__chain_(?P<chain>[^_]+)__EC_(?P<ec>.+)\.pdb$")
 
 
@@ -94,6 +99,54 @@ def copy_file(source_path: Path, dest_path: Path) -> None:
     shutil.copy2(source_path, dest_path)
 
 
+def clear_existing_destination_files(dest_dir: Path, csv_name: str) -> None:
+    if not dest_dir.exists():
+        return
+    for path in dest_dir.glob("*.pdb"):
+        path.unlink()
+    csv_path = dest_dir / csv_name
+    if csv_path.exists():
+        csv_path.unlink()
+
+
+def validate_csv_against_copied_structures(csv_path: Path, structure_dir: Path) -> None:
+    structure_site_cache: dict[tuple[str, str, str], set[tuple[str, str]]] = {}
+    with csv_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        require_columns(reader.fieldnames, CSV_REQUIRED_COLUMNS, csv_path)
+
+        for row in reader:
+            structure = row["structure"].strip().lower()
+            chain_id = parse_chain_id(row["chain_resi"])
+            ecnumber = normalize_ec_number_list(row["ecnumber"])
+            metaltype = row["metaltype"].strip().upper()
+            if metaltype not in SUPPORTED_TRANSITION_METALS:
+                raise ValueError(
+                    f"Unsupported metaltype {metaltype!r} remained in dataset CSV {csv_path}"
+                )
+            cache_key = (structure, chain_id, ecnumber)
+            allowed_sites = structure_site_cache.get(cache_key)
+            if allowed_sites is None:
+                structure_path = resolve_structure_path(
+                    structure_dir,
+                    structure=structure,
+                    chain_id=chain_id,
+                    ecnumber=ecnumber,
+                )
+                if not structure_path.exists():
+                    raise FileNotFoundError(
+                        f"Copied structure not found while validating dataset CSV: {structure_path}"
+                    )
+                allowed_sites = collect_supported_transition_metal_sites(structure_path)
+                structure_site_cache[cache_key] = allowed_sites
+            chain_resi = row["chain_resi"].strip()
+            if (chain_resi, metaltype) not in allowed_sites:
+                raise ValueError(
+                    "Dataset CSV row is not present in the copied edited structure: "
+                    f"{structure} {chain_resi} {metaltype}"
+                )
+
+
 def main() -> None:
     if not SOURCE_CSV.exists():
         raise FileNotFoundError(f"Source CSV not found: {SOURCE_CSV}")
@@ -122,6 +175,7 @@ def main() -> None:
         raise FileNotFoundError(f"Missing source PDB files after EC normalization: {preview}{suffix}")
 
     DEST_DIR.mkdir(parents=True, exist_ok=True)
+    clear_existing_destination_files(DEST_DIR, SOURCE_CSV.name)
     copied_structure_count = 0
     for source_path in source_paths:
         copy_file(source_path, DEST_DIR / source_path.name)
@@ -129,6 +183,7 @@ def main() -> None:
 
     dest_csv_path = DEST_DIR / SOURCE_CSV.name
     copy_file(SOURCE_CSV, dest_csv_path)
+    validate_csv_against_copied_structures(dest_csv_path, DEST_DIR)
 
     print(f"Copied CSV to {dest_csv_path}")
     print(f"Copied {copied_structure_count} structures to {DEST_DIR}")

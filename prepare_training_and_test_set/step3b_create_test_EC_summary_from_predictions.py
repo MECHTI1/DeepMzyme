@@ -11,9 +11,15 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from project_paths import MEDIA_DATA_ROOT
+from structure_sync_utils import (
+    SUPPORTED_TRANSITION_METALS,
+    collect_supported_transition_metal_sites,
+    resolve_structure_path,
+)
 
 TEST_SET_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "mahomes" / "test_set"
 TEST_SUMMARY_DIR = TEST_SET_DIR / "data_summarizing_tables"
+SOURCE_PDB_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "test" / "pdb_updatedv2"
 PREDICTION_RESULTS_SUMMARY_CSV = TEST_SUMMARY_DIR / "prediction_results_summary.csv"
 WHETHER_CATALYTIC_SUMMARY_CSV = TEST_SUMMARY_DIR / "data_summarazing_table_transition_metals_whether_catalytic.csv"
 CATALYTIC_ONLY_SUMMARY_CSV = TEST_SUMMARY_DIR / "final_data_summarazing_table_transition_metals_only_catalytic.csv"
@@ -97,7 +103,8 @@ def format_chain_resi(chain_id: str, residue_number: int) -> str:
     return f"{chain_id}_{residue_number}"
 
 
-def iter_prediction_rows(job_root: Path):
+def iter_prediction_rows(job_root: Path, *, stats: dict[str, int | set[str]]):
+    structure_site_cache: dict[tuple[str, str, str], tuple[Path, set[tuple[str, str]]]] = {}
     for pred_path in sorted(job_root.glob("job_*/predictions.csv")):
         job_name = pred_path.parent.name
         with pred_path.open("r", encoding="utf-8", newline="") as handle:
@@ -106,6 +113,30 @@ def iter_prediction_rows(job_root: Path):
 
             for row in reader:
                 structure, chain_id, ecnumber = parse_prediction_input_file(row["input file"])
+                cache_key = (structure, chain_id, ecnumber)
+                cached = structure_site_cache.get(cache_key)
+                if cached is None:
+                    structure_path = resolve_structure_path(
+                        SOURCE_PDB_DIR,
+                        structure=structure,
+                        chain_id=chain_id,
+                        ecnumber=ecnumber,
+                    )
+                    if not structure_path.exists():
+                        raise FileNotFoundError(
+                            "Edited structure referenced by MAHOMES predictions was not found: "
+                            f"{structure_path}"
+                        )
+                    if pred_path.stat().st_mtime < structure_path.stat().st_mtime:
+                        stale_predictions = stats.setdefault("stale_prediction_structures", set())
+                        if isinstance(stale_predictions, set):
+                            stale_predictions.add(structure_path.name)
+                    cached = (
+                        structure_path,
+                        collect_supported_transition_metal_sites(structure_path),
+                    )
+                    structure_site_cache[cache_key] = cached
+                _structure_path, allowed_sites = cached
                 try:
                     catalytic_value = parse_prediction_label(row["prediction"])
                 except ValueError:
@@ -116,6 +147,9 @@ def iter_prediction_rows(job_root: Path):
                     residue_number = (row.get(f"Res#{idx}") or "").strip()
                     if not metaltype or not residue_number:
                         continue
+                    if metaltype not in SUPPORTED_TRANSITION_METALS:
+                        stats["unsupported_metal_rows_skipped"] = int(stats.get("unsupported_metal_rows_skipped", 0)) + 1
+                        continue
 
                     try:
                         residue_number_int = int(float(residue_number))
@@ -123,6 +157,10 @@ def iter_prediction_rows(job_root: Path):
                         raise ValueError(
                             f"Invalid residue number {residue_number!r} in {pred_path} for row jobid={row['jobid']!r}"
                         ) from exc
+                    chain_resi = format_chain_resi(chain_id, residue_number_int)
+                    if (chain_resi, metaltype) not in allowed_sites:
+                        stats["structure_mismatch_rows_skipped"] = int(stats.get("structure_mismatch_rows_skipped", 0)) + 1
+                        continue
 
                     yield {
                         "job_root": str(job_root),
@@ -134,7 +172,7 @@ def iter_prediction_rows(job_root: Path):
                         "chain": chain_id,
                         "ecnumber": ecnumber,
                         "metaltype": metaltype,
-                        "chain_resi": format_chain_resi(chain_id, residue_number_int),
+                        "chain_resi": chain_resi,
                         "percent catalytic predictions": row["percent catalytic predictions"].strip(),
                         "prediction": row["prediction"].strip(),
                         "whether_catalytic": catalytic_value,
@@ -202,7 +240,12 @@ def main() -> None:
     if not TEST_SET_DIR.exists():
         raise FileNotFoundError(f"Test-set job root not found: {TEST_SET_DIR}")
 
-    raw_prediction_rows = list(iter_prediction_rows(TEST_SET_DIR))
+    stats: dict[str, int | set[str]] = {
+        "unsupported_metal_rows_skipped": 0,
+        "structure_mismatch_rows_skipped": 0,
+        "stale_prediction_structures": set(),
+    }
+    raw_prediction_rows = list(iter_prediction_rows(TEST_SET_DIR, stats=stats))
     if not raw_prediction_rows:
         raise ValueError(f"No prediction rows found under: {TEST_SET_DIR}")
 
@@ -217,6 +260,17 @@ def main() -> None:
     print(f"Wrote {len(prediction_rows)} unique expanded prediction rows to {PREDICTION_RESULTS_SUMMARY_CSV}")
     print(f"Dropped {duplicate_prediction_rows} duplicate expanded prediction rows")
     print(f"Resolved {conflict_count} conflicting output rows by preferring catalytic (1)")
+    print(f"Skipped {int(stats['unsupported_metal_rows_skipped'])} unsupported-metal prediction rows")
+    print(f"Skipped {int(stats['structure_mismatch_rows_skipped'])} prediction rows absent from edited structures")
+    stale_prediction_structures = stats["stale_prediction_structures"]
+    if isinstance(stale_prediction_structures, set) and stale_prediction_structures:
+        preview = ", ".join(sorted(stale_prediction_structures)[:10])
+        extra_count = len(stale_prediction_structures) - min(len(stale_prediction_structures), 10)
+        suffix = "" if extra_count == 0 else f" ... and {extra_count} more"
+        print(
+            "[WARN] MAHOMES prediction files were older than the edited structures for "
+            f"{len(stale_prediction_structures)} structures: {preview}{suffix}"
+        )
     print(f"Wrote {len(output_rows)} rows to {WHETHER_CATALYTIC_SUMMARY_CSV}")
     print(f"Wrote {len(catalytic_only_rows)} catalytic rows to {CATALYTIC_ONLY_SUMMARY_CSV}")
 

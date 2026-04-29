@@ -1,3 +1,10 @@
+# IMPORTANT:
+# This script is intended for MAHOMES train-set runs using the edited
+# `pdb_updatedv2` structures as input.
+# Note that `CLEAN_JOB_DIRS=1` forces a fresh rerun and avoids reusing old
+# MAHOMES outputs after source structures changed.
+# Use `CLEAN_JOB_DIRS=0` only if you intentionally want to resume an
+# interrupted run and you are sure the source PDB files did not change.
 # save results of predictions within /media/Data/pinmymetal sets/....
 #!/usr/bin/env bash
 set -euo pipefail
