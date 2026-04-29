@@ -11,11 +11,18 @@ SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from project_paths import CATALYTIC_ONLY_SUMMARY_CSV, MEDIA_DATA_ROOT
+from project_paths import MEDIA_DATA_ROOT
 
-SOURCE_CSV = CATALYTIC_ONLY_SUMMARY_CSV
-SOURCE_PDB_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "train" / "pdb_updatedv2"
-DEST_DIR = SRC_DIR.parent / ".data" / "train_and_test_sets_structures_exact_pinmymetal" / "train"
+SOURCE_CSV = (
+    MEDIA_DATA_ROOT
+    / "pinmymetal_sets"
+    / "mahomes"
+    / "test_set"
+    / "data_summarizing_tables"
+    / "final_data_summarazing_table_transition_metals_only_catalytic.csv"
+)
+SOURCE_PDB_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "test" / "pdb_updatedv2"
+DEST_DIR = SRC_DIR.parent / ".data" / "train_and_test_sets_structures_exact_pinmymetal" / "test"
 CSV_REQUIRED_COLUMNS = frozenset({"structure", "chain_resi", "ecnumber"})
 STRUCTURE_FILE_RE = re.compile(r"^(?P<structure>[^_]+)__chain_(?P<chain>[^_]+)__EC_(?P<ec>.+)\.pdb$")
 

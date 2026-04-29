@@ -11,7 +11,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures"
+BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_exact_pinmymetal"
 TRAIN_DIR = BASE_DATA_DIR / "train"
 TEST_DIR = BASE_DATA_DIR / "test"
 OUTPUT_DIR = PROJECT_ROOT / ".data" / "Colab_Bundles"
