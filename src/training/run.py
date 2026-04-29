@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +20,7 @@ from label_schemes import (
 )
 from model_variants import build_pocket_classifier
 from project_paths import resolve_runs_dir
-from training.labels import ec_prefix_from_label_token
+from training.labels import ec_prefix_from_label_token, parse_structure_identity
 from training.config import TrainConfig, config_to_payload, required_targets_for_task
 from training.data import load_training_pockets_with_report_from_dir
 from training.graph_dataset import (
@@ -76,7 +77,109 @@ def build_run_dir(config: TrainConfig) -> Path:
 
 
 def save_json(path: Path, payload: dict[str, Any]) -> None:
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(to_jsonable(payload), indent=2), encoding="utf-8")
+
+
+def to_jsonable(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): to_jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_jsonable(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, torch.Tensor):
+        if value.ndim == 0:
+            return value.item()
+        return value.detach().cpu().tolist()
+    return value
+
+
+def git_commit_hash() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parents[2],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return None
+    commit = result.stdout.strip()
+    return commit or None
+
+
+def infer_split_identity(config: TrainConfig) -> dict[str, Any]:
+    path_text = " ".join(
+        str(path)
+        for path in (
+            config.structure_dir,
+            config.summary_csv,
+            config.test_structure_dir,
+            config.test_summary_csv,
+        )
+        if path is not None
+    )
+    normalized = path_text.lower()
+    if "train_and_test_sets_structures_non_overlapped_pinmymetal" in normalized:
+        return {
+            "split_name": "train_and_test_sets_structures_non_overlapped_pinmymetal",
+            "split_type": "non_overlapped_pinmymetal",
+            "overlap_warning": None,
+        }
+    if "train_and_test_sets_structures_exact_pinmymetal" in normalized:
+        return {
+            "split_name": "train_and_test_sets_structures_exact_pinmymetal",
+            "split_type": "exact_pinmymetal_possibly_overlapped",
+            "overlap_warning": (
+                "Exact PinMyMetal split may contain train/test overlap and should "
+                "be interpreted only as a secondary/reference result."
+            ),
+        }
+    return {
+        "split_name": Path(config.structure_dir).parent.name or Path(config.structure_dir).name,
+        "split_type": "custom_or_unknown",
+        "overlap_warning": None,
+    }
+
+
+def pocket_identity_sets(pockets) -> dict[str, set[str]]:
+    structure_ids: set[str] = set()
+    pdb_ids: set[str] = set()
+    pdb_chain_ids: set[str] = set()
+    pocket_ids: set[str] = set()
+    for pocket in pockets:
+        structure_ids.add(str(pocket.structure_id))
+        pocket_ids.add(str(pocket.pocket_id))
+        pdb_id, chain_id, _ec = parse_structure_identity(pocket.structure_id)
+        pdb_ids.add(str(pdb_id))
+        pdb_chain_ids.add(f"{pdb_id}__chain_{chain_id}")
+    return {
+        "structure_id": structure_ids,
+        "pdb_id": pdb_ids,
+        "pdb_chain": pdb_chain_ids,
+        "pocket_id": pocket_ids,
+    }
+
+
+def train_test_overlap_report(train_like_pockets, test_pockets) -> dict[str, Any]:
+    train_sets = pocket_identity_sets(train_like_pockets)
+    test_sets = pocket_identity_sets(test_pockets)
+    overlap_counts = {
+        key: len(train_sets[key].intersection(test_sets[key]))
+        for key in sorted(train_sets)
+    }
+    overlap_examples = {
+        key: sorted(train_sets[key].intersection(test_sets[key]))[:10]
+        for key in sorted(train_sets)
+    }
+    detected = any(count > 0 for count in overlap_counts.values())
+    return {
+        "train_test_overlap_detected": detected,
+        "overlap_counts": overlap_counts,
+        "overlap_examples": overlap_examples,
+        "overlap_warning": "Train/test overlap detected." if detected else None,
+    }
 
 
 def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str, Any], extra: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -97,6 +200,15 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
     if config.ec_label_depth < 1:
         raise ValueError(f"--ec-label-depth must be at least 1, got {config.ec_label_depth}")
+    if config.ec_contrastive_weight < 0.0:
+        raise ValueError(
+            f"--ec-contrastive-weight must be non-negative, got {config.ec_contrastive_weight}"
+        )
+    if config.ec_contrastive_temperature <= 0.0:
+        raise ValueError(
+            "--ec-contrastive-temperature must be positive, "
+            f"got {config.ec_contrastive_temperature}"
+        )
     has_validation = config.val_fraction > 0.0 or config.n_folds is not None
     if not has_validation and config.selection_metric.startswith("val_"):
         raise ValueError(
@@ -407,6 +519,8 @@ def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[fl
 def prepare_run(config: TrainConfig) -> PreparedRun:
     validate_training_configuration(config)
     config_payload = config_to_payload(config)
+    config_payload.update(infer_split_identity(config))
+    config_payload["git_commit"] = git_commit_hash()
     run_dir = build_run_dir(config)
     save_json(
         run_dir / "prepare_status.json",
@@ -488,6 +602,15 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             config,
             feature_load_report=load_result.feature_report,
             ec_label_map=load_result.ec_index_to_label,
+        )
+        dataset_summary.update(
+            {
+                "split_name": config_payload.get("split_name"),
+                "split_type": config_payload.get("split_type"),
+                "overlap_warning": config_payload.get("overlap_warning"),
+                "test_structure_dir": config_payload.get("test_structure_dir"),
+                "test_summary_csv": config_payload.get("test_summary_csv"),
+            }
         )
         dataset_summary["runtime_preparation"] = runtime_preparation_report
         train_graphs = build_graph_data_list(
@@ -829,11 +952,21 @@ def evaluate_held_out_test_split(
             ec_label_map=prepared.ec_labels,
             ec_label_depth=config.ec_label_depth,
         )
+        train_like_pockets = prepared.split.train_pockets + prepared.split.val_pockets
+        overlap_report = train_test_overlap_report(train_like_pockets, test_load_result.pockets)
+        split_identity = infer_split_identity(config)
+        overlap_warning = overlap_report.get("overlap_warning") or split_identity.get("overlap_warning")
         return {
             "metrics": metrics,
             "n_test_pockets": len(test_load_result.pockets),
             "feature_load_report": test_load_result.feature_report,
             "ec_labels": prepared.ec_labels,
+            "split_name": split_identity.get("split_name"),
+            "split_type": split_identity.get("split_type"),
+            "train_test_overlap_detected": overlap_report["train_test_overlap_detected"],
+            "overlap_counts": overlap_report["overlap_counts"],
+            "overlap_examples": overlap_report["overlap_examples"],
+            "overlap_warning": overlap_warning,
         }
     finally:
         prepared.model.load_state_dict(current_state_dict)
@@ -866,6 +999,36 @@ def persist_run_outputs(
     if best_checkpoint is not None:
         best_checkpoint_path = prepared.run_dir / "best_model_checkpoint.pt"
         torch.save(best_checkpoint, best_checkpoint_path)
+        selected_checkpoint_path = str(best_checkpoint_path)
+        selected_checkpoint_epoch = best_checkpoint.get("epoch")
+        selected_metric_value = best_checkpoint.get("selection_metric_value")
+    else:
+        selected_checkpoint_path = str(checkpoint_path)
+        selected_checkpoint_epoch = None
+        selected_metric_value = None
+
+    run_metadata = {
+        "config": prepared.config_payload,
+        "dataset_summary": prepared.dataset_summary,
+        "metal_labels": METAL_TARGET_LABELS,
+        "ec_labels": prepared.ec_labels,
+        "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
+        "selection_metric": prepared.config_payload.get("selection_metric"),
+        "selected_checkpoint": selected_checkpoint_path,
+        "selected_checkpoint_epoch": selected_checkpoint_epoch,
+        "selected_metric_value": selected_metric_value,
+        "split_name": prepared.config_payload.get("split_name"),
+        "split_type": prepared.config_payload.get("split_type"),
+        "train_test_overlap_detected": (
+            test_report.get("train_test_overlap_detected") if test_report is not None else None
+        ),
+        "overlap_warning": (
+            test_report.get("overlap_warning")
+            if test_report is not None
+            else prepared.config_payload.get("overlap_warning")
+        ),
+        "test_report": test_report,
+    }
 
     save_json(
         prepared.run_dir / "run_config.json",
@@ -874,10 +1037,16 @@ def persist_run_outputs(
             "dataset_summary": prepared.dataset_summary,
             "metal_labels": METAL_TARGET_LABELS,
             "ec_labels": prepared.ec_labels,
+            "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
+            "selection_metric": prepared.config_payload.get("selection_metric"),
+            "selected_checkpoint": selected_checkpoint_path,
+            "selected_checkpoint_epoch": selected_checkpoint_epoch,
+            "selected_metric_value": selected_metric_value,
             "history": history,
             "test_report": test_report,
         },
     )
+    save_json(prepared.run_dir / "run_metadata.json", run_metadata)
     if test_report is not None:
         save_json(prepared.run_dir / "test_report.json", test_report)
 
@@ -886,6 +1055,7 @@ def persist_run_outputs(
         print(f"Saved best checkpoint to {prepared.run_dir / 'best_model_checkpoint.pt'}")
     print(f"Saved dataset summary to {prepared.run_dir / 'dataset_summary.json'}")
     print(f"Saved run config to {prepared.run_dir / 'run_config.json'}")
+    print(f"Saved run metadata to {prepared.run_dir / 'run_metadata.json'}")
     if test_report is not None:
         print(f"Saved test report to {prepared.run_dir / 'test_report.json'}")
 

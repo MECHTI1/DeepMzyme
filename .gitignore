@@ -2,3 +2,5 @@
 .data
 .md_files
 Documenation
+__pycache__/
+*.py[cod]

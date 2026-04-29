@@ -24,6 +24,8 @@ def train_epoch(
         optimizer.zero_grad()
         model_outputs = model(batch)
         loss = model_outputs["loss"]
+        if not bool(torch.isfinite(loss).item()):
+            raise FloatingPointError(f"Non-finite training loss detected: {float(loss.item())}")
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
@@ -83,7 +85,10 @@ def evaluate_epoch_with_predictions(
     for batch in loader:
         batch = batch.to(device)
         model_outputs = model(batch)
-        total += float(model_outputs["loss"].item())
+        loss = model_outputs["loss"]
+        if not bool(torch.isfinite(loss).item()):
+            raise FloatingPointError(f"Non-finite evaluation loss detected: {float(loss.item())}")
+        total += float(loss.item())
         if hasattr(batch, _GRAPH_Y_METAL_FIELD):
             metal_targets = getattr(batch, _GRAPH_Y_METAL_FIELD)
             metal_mask = metal_targets != MISSING_CLASS_LABEL
