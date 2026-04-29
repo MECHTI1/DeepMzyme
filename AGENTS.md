@@ -143,7 +143,8 @@ If relevant, run a small smoke test before long training jobs.
 
 Do not launch expensive full training runs unless explicitly requested.
 
----
+Do not write temporary smoke-test files into `.data/` unless this is explicitly needed for the test.
+Prefer using a temporary directory outside the project data tree, and clean up any temporary files immediately after the test.---
 
 ## Data and paths
 
