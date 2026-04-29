@@ -1,22 +1,41 @@
 # DeepMzyme audit against `Plan.md`
 
-## 2026-04-29 update after the new `test/` directories were added
+## 2026-04-29 update after the Mg fix re-check
 
-- Verified that `.data/train_and_test_sets_structures_exact_pinmymetal/test` and `.data/train_and_test_sets_structures_non_overlapped_pinmymetal/test` both exist and contain `334` `.pdb` files; the two test directories are identical at the filename level.
-- Verified that the paired train directories exist and currently contain `1738` `.pdb` files for the exact split and `1552` `.pdb` files for the non-overlapped split.
-- Updated the code so the real MAHOMES catalytic summary CSV format now loads correctly: `src/training/site_filter.py` accepts the on-disk headers (`structure`, `chain_resi`, `ecnumber`, `metaltype`) and filters catalytic rows when `whether_catalytic` is present.
-- Updated `src/label_schemes.py` so summary-site labels such as `FE2` normalize into the existing `Fe` class rather than failing the real-data load path.
-- Updated `src/build_dataset_csv.py` so it validates structure-directory coverage and can emit semicolon-joined structure labels for genuinely multi-metal structures when `--allow-multi-metal-structures` is enabled.
-- Updated `src/build_colab_bundle.py` into the missing end-to-end CLI that can derive train/test CSVs from a dataset root and then bundle the structures plus generated CSVs in one pass.
+- Re-checked the current split contents instead of relying on the previous audit text. The live counts are now:
+  - `.data/train_and_test_sets_structures_non_overlapped_pinmymetal/train`: `1304` `.pdb` files
+  - `.data/train_and_test_sets_structures_non_overlapped_pinmymetal/test`: `316` `.pdb` files
+  - `.data/train_and_test_sets_structures_exact_pinmymetal/train`: `1483` `.pdb` files
+  - `.data/train_and_test_sets_structures_exact_pinmymetal/test`: `316` `.pdb` files
+- Verified the Mg blocker is resolved in the current split-local catalytic summary CSVs for the main non-overlapped split: the generated release CSVs contain no unsupported `Mg` label and no other unsupported metal labels.
+- Found and fixed a real workflow mismatch in `src/build_colab_bundle.py`: the live split uses separate train/test summary CSVs under each split directory, but the bundle CLI previously assumed one shared summary path. The CLI now resolves split-local summary CSVs by default and also accepts separate `--train-summary-csv` / `--test-summary-csv` overrides.
+- Re-ran the full non-overlapped CSV-generation workflow on the live split and validated the current outputs:
+  - `.data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_train.csv`
+  - `.data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_test.csv`
+- Verified those non-overlapped CSVs against the live structure directories:
+  - required columns are exactly `structure_name`, `ec_numbers`, `metal_type`
+  - CSV row counts match structure-file counts exactly: `1304` train rows and `316` test rows
+  - there are no missing rows, no unexpected rows, and no empty `ec_numbers`
+  - train/test filename overlap is `0`; train/test PDB-ID overlap is also `0`
+  - all emitted metal labels stay within the current 6-class policy (`Mn`, `Fe`, `Zn`, `Cu`, `Co`, `Ni`)
+  - the non-overlapped release CSVs still contain real multi-metal structures, but they are now represented only with semicolon-joined supported labels; counts are `48` multi-label train rows and `8` multi-label test rows
+- Also checked the exact PinMyMetal split as a secondary reference point. It is not suitable as the final held-out split because the current exact train/test directories overlap on `179` full structure filenames and `177` PDB IDs.
+- Re-ran lightweight but real held-out evaluation smokes on current post-fix non-overlapped data using a temporary subset under `/tmp/deepmzyme_non_overlap_smoke_20260429`:
+  - metal task report: `/tmp/deepmzyme_smoke_runs/metal_non_overlap_post_mg_smoke/test_report.json`
+  - EC task report with `--ec-label-depth 2`: `/tmp/deepmzyme_smoke_runs/ec_non_overlap_post_mg_smoke/test_report.json`
+  - both runs completed and wrote held-out `test_report.json` files; the metal report includes `test_metal_balanced_acc` and `test_metal_collapsed4_balanced_acc`, and the EC report includes `test_ec_level_1_*` and `test_ec_level_2_*`
+- Bundle status:
+  - the old `.data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal_colab_bundle_structures.tar.zst` file should be treated as stale/untrusted because listing it during this audit returned `Unexpected EOF`
+  - a validated replacement bundle was created at `.data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal_colab_bundle_structures_validated_fast.tar.zst`
+  - that validated bundle contains both split directories plus the generated train/test CSV files (`1626` total archive members)
 - Checks run:
-  - `/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/label_schemes.py src/training/site_filter.py src/build_dataset_csv.py src/build_colab_bundle.py`
-  - `load_labeled_pockets_with_report_from_dir(...)` against `.data/train_and_test_sets_structures_exact_pinmymetal/test` with the real catalytic summary CSV; this succeeded and returned real pockets.
-  - A real-data metal smoke run with validation plus held-out evaluation wrote `.data/real_eval_smoke/runs/metal_test_eval_exact_smoke/test_report.json`, including both `test_metal_balanced_acc` and `test_metal_collapsed4_balanced_acc`.
-  - A real-data EC smoke run with `--ec-label-depth 2` plus held-out evaluation wrote `.data/real_eval_smoke/runs/ec_test_eval_exact_smoke/test_report.json`, including both `test_ec_level_1_*` and `test_ec_level_2_*` metrics.
-  - `src/build_colab_bundle.py` completed end to end on `.data/real_eval_smoke/exact_supported`, producing `.data/real_eval_smoke/exact_supported_bundle.tar.zst`.
-- Remaining data blocker for Plan item 1:
-  - Full CSV staging for the complete exact/non-overlapped train roots is still not cleanly completable under the current 6-class transition-metal policy because the train splits still contain Mg-bearing structures from the MAHOMES catalytic summary.
-  - Summary-based counts show `29` exact-train and `26` non-overlapped-train structures are Mg-only, and another `68` exact-train and `62` non-overlapped-train structures mix Mg with one of the supported transition-metal labels. Those cases need a project decision: exclude them from the release CSVs, represent multiple metal types explicitly including Mg, or expand the label policy beyond the current 6-class scheme.
+  - `git status --short`
+  - `/home/mechti/miniconda3/envs/DeepMzyme/bin/python -c "import sys; print(sys.executable)"`
+  - `/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/build_colab_bundle.py src/build_dataset_csv.py`
+  - `PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab_bundle.py --dataset-root .data/train_and_test_sets_structures_non_overlapped_pinmymetal --allow-multi-metal-structures --skip-bundle`
+  - `PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --task metal --structure-dir /tmp/deepmzyme_non_overlap_smoke_20260429/train --summary-csv /tmp/deepmzyme_non_overlap_smoke_20260429/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --test-structure-dir /tmp/deepmzyme_non_overlap_smoke_20260429/test --test-summary-csv /tmp/deepmzyme_non_overlap_smoke_20260429/test/final_data_summarazing_table_transition_metals_only_catalytic.csv --run-test-eval --model-architecture only_gvp --allow-missing-esm-embeddings --no-prepare-missing-esm-embeddings --allow-missing-external-features --epochs 1 --batch-size 4 --val-fraction 0.25 --device cpu --runs-dir /tmp/deepmzyme_smoke_runs --run-name metal_non_overlap_post_mg_smoke`
+  - `PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --task ec --structure-dir /tmp/deepmzyme_non_overlap_smoke_20260429/train --summary-csv /tmp/deepmzyme_non_overlap_smoke_20260429/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --test-structure-dir /tmp/deepmzyme_non_overlap_smoke_20260429/test --test-summary-csv /tmp/deepmzyme_non_overlap_smoke_20260429/test/final_data_summarazing_table_transition_metals_only_catalytic.csv --run-test-eval --model-architecture only_gvp --allow-missing-esm-embeddings --no-prepare-missing-esm-embeddings --allow-missing-external-features --epochs 1 --batch-size 4 --val-fraction 0.25 --device cpu --ec-label-depth 2 --runs-dir /tmp/deepmzyme_smoke_runs --run-name ec_non_overlap_post_mg_smoke`
+  - `tar --use-compress-program='zstd -T0 -3' -cf .data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal_colab_bundle_structures_validated_fast.tar.zst -C /home/mechti/PycharmProjects/DeepMzyme .data/train_and_test_sets_structures_non_overlapped_pinmymetal/train .data/train_and_test_sets_structures_non_overlapped_pinmymetal/test .data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_train.csv .data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_test.csv`
 
 ## Already correctly implemented
 
@@ -30,13 +49,12 @@
 
 - There is still no true Colab notebook/UI layer in active `src/` code; the repository now has CLI utilities for bundling and summarizing runs, but not a notebook-facing interactive interface.
 - There is still no automated publication-style figure generator for comparing screened models and parameters; the current reporting foundation is CSV-based.
-- The project still lacks an agreed release policy for Mg-bearing structures that appear in the exact and non-overlapped train splits, so Plan item 1 cannot yet be marked fully complete for the full split assets.
 
 ## Partially implemented or inconsistent
 
 - `--node-feature-set` is now wired through graph construction and validated, but there is still only one concrete feature set (`conservative`) in `src/data_structures.py`.
 - The EC-depth workflow is configurable, but structures whose multiple EC annotations disagree at the requested depth are intentionally left without an EC target rather than being forced into a guessed class.
-- The end-to-end dataset-release CLI now exists, but it still stops on the full exact/non-overlapped train roots because the current split contents and the current 6-class metal policy disagree on how Mg-bearing structures should be represented.
+- The end-to-end dataset-release CLI now works on the full non-overlapped split, but the exact PinMyMetal split is still a poor final-evaluation candidate because its current train/test directories overlap.
 
 ## Likely files needing edits
 
@@ -140,18 +158,18 @@
   - Risk level: was medium; now low
   - Risk change reason: the active path was lightly verified through compile/import checks and the synthetic GVP-based smoke test, even though only one feature-set choice exists.
 
-- [ ] Implement active, non-ignored dataset-preparation code for the train/test CSVs and structure-to-CSV consistency checks
+- [x] Implement active, non-ignored dataset-preparation code for the train/test CSVs and structure-to-CSV consistency checks
   - Reason: Plan item 1 requires creating training/test CSVs with structure name, EC number(s), and metal type, and it explicitly requires consistency between structure files and CSV labels.
   - Evidence in current code: active `src/` code only consumes a pre-existing summary CSV via `src/training/defaults.py` and `src/training/site_filter.py`; there is no active, non-ignored CSV-generation path in the inspected code surface.
   - Likely files: `src/build_dataset_csv.py`, `src/build_colab_bundle.py`, `src/training/site_filter.py`, `src/label_schemes.py`
-  - PARTIAL: the missing end-to-end CLI now exists and was verified on `.data/real_eval_smoke/exact_supported`, but the full exact/non-overlapped train roots still fail strict structure-to-CSV validation because Mg-only and mixed Mg+transition-metal structures do not fit the current 6-class release assumption.
-  - Risk level: was high; now medium
-  - Risk change reason: the code path is now real and verified, but the full dataset assets still need a project-level labeling/exclusion decision before this item can be closed.
+  - DONE: the live non-overlapped split now passes full structure-to-CSV validation on the current data, the generated train/test CSVs match the on-disk `.pdb` files exactly, no unsupported `Mg` label remains, and a validated release bundle was created at `.data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal_colab_bundle_structures_validated_fast.tar.zst`.
+  - Risk level: was high; now low
+  - Risk change reason: this path was re-run and validated on the full current non-overlapped split rather than being inferred from smaller earlier smoke assets.
 
 - [ ] Refactor the Colab bundle/reporting workflow into a configurable experiment interface
   - Reason: Plan item 5 requires a configurable Google Colab training/testing setup plus comparison tables or professional figures summarizing screened parameters and models.
   - Evidence in current code: `src/build_colab_bundle.py` is a fixed bundling script with hardcoded train/test paths and no parameter-screening interface, no test execution flow, and no reporting/figure generation.
   - Likely files: `src/build_colab_bundle.py`, likely new reporting or notebook-facing scripts under `src/`
-  - PARTIAL: `src/build_colab_bundle.py` is now a configurable CLI, it can derive train/test CSVs from a split root, and it was runtime-verified on `.data/real_eval_smoke/exact_supported`, but there is still no true notebook-facing experiment UI or figure-generation layer.
+  - PARTIAL: `src/build_colab_bundle.py` is now a configurable CLI, it can derive train/test CSVs from a split root using split-local train/test summary CSVs, and the non-overlapped release bundle path was validated on the live dataset, but there is still no true notebook-facing experiment UI or figure-generation layer.
   - Risk level: medium
   - Risk change reason: lowered only for the CLI release path because the bundle workflow now ran end to end on real split-derived files; the missing notebook/reporting layer is unchanged.

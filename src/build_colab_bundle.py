@@ -23,13 +23,16 @@ BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_exact_p
 TRAIN_DIR = BASE_DATA_DIR / "train"
 TEST_DIR = BASE_DATA_DIR / "test"
 OUTPUT_DIR = PROJECT_ROOT / ".data" / "Colab_Bundles"
+SUMMARY_CSV_BASENAME = CATALYTIC_ONLY_SUMMARY_CSV.name
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create a compressed Colab bundle for train/test structures and CSVs.")
     parser.add_argument("--dataset-root", type=Path, default=BASE_DATA_DIR)
     parser.add_argument("--train-dir", type=Path, default=None)
     parser.add_argument("--test-dir", type=Path, default=None)
-    parser.add_argument("--summary-csv", type=Path, default=CATALYTIC_ONLY_SUMMARY_CSV)
+    parser.add_argument("--summary-csv", type=Path, default=None)
+    parser.add_argument("--train-summary-csv", type=Path, default=None)
+    parser.add_argument("--test-summary-csv", type=Path, default=None)
     parser.add_argument("--train-csv", type=Path, default=None)
     parser.add_argument("--test-csv", type=Path, default=None)
     parser.add_argument("--csv-output-dir", type=Path, default=None)
@@ -57,6 +60,35 @@ def resolve_split_dirs(args: argparse.Namespace) -> tuple[Path, Path]:
     train_dir = args.train_dir if args.train_dir is not None else dataset_root / "train"
     test_dir = args.test_dir if args.test_dir is not None else dataset_root / "test"
     return train_dir, test_dir
+
+
+def _default_summary_csv_for_structure_dir(structure_dir: Path) -> Path:
+    local_summary_csv = structure_dir / SUMMARY_CSV_BASENAME
+    if local_summary_csv.exists():
+        return local_summary_csv
+    return CATALYTIC_ONLY_SUMMARY_CSV
+
+
+def resolve_summary_csv_paths(
+    args: argparse.Namespace,
+    *,
+    train_dir: Path,
+    test_dir: Path,
+) -> tuple[Path | None, Path | None]:
+    train_summary_csv = args.train_summary_csv
+    test_summary_csv = args.test_summary_csv
+
+    if args.summary_csv is not None:
+        if train_summary_csv is None:
+            train_summary_csv = args.summary_csv
+        if test_summary_csv is None:
+            test_summary_csv = args.summary_csv
+
+    if train_summary_csv is None and args.train_csv is None:
+        train_summary_csv = _default_summary_csv_for_structure_dir(train_dir)
+    if test_summary_csv is None and args.test_csv is None:
+        test_summary_csv = _default_summary_csv_for_structure_dir(test_dir)
+    return train_summary_csv, test_summary_csv
 
 
 def default_csv_output_dir(dataset_root: Path) -> Path:
@@ -103,20 +135,20 @@ def prepare_csv_artifacts(
     dataset_root: Path,
     train_dir: Path,
     test_dir: Path,
+    train_summary_csv: Path | None,
+    test_summary_csv: Path | None,
 ) -> tuple[Path | None, Path | None]:
-    summary_csv = args.summary_csv
-    if summary_csv is None:
-        return args.train_csv, args.test_csv
-
     csv_output_dir = args.csv_output_dir or default_csv_output_dir(dataset_root)
     csv_output_dir.mkdir(parents=True, exist_ok=True)
 
     train_csv = args.train_csv
     if train_csv is None:
+        if train_summary_csv is None:
+            raise ValueError("A train summary CSV is required to generate the train CSV artifact.")
         train_csv = csv_output_dir / f"{dataset_root.name}_train.csv"
         generate_structure_csv(
             structure_dir=train_dir,
-            summary_csv=summary_csv,
+            summary_csv=train_summary_csv,
             output_csv=train_csv,
             allow_multi_metal_structures=args.allow_multi_metal_structures,
             ec_label_depth=args.ec_label_depth,
@@ -124,10 +156,12 @@ def prepare_csv_artifacts(
 
     test_csv = args.test_csv
     if test_csv is None:
+        if test_summary_csv is None:
+            raise ValueError("A test summary CSV is required to generate the test CSV artifact.")
         test_csv = csv_output_dir / f"{dataset_root.name}_test.csv"
         generate_structure_csv(
             structure_dir=test_dir,
-            summary_csv=summary_csv,
+            summary_csv=test_summary_csv,
             output_csv=test_csv,
             allow_multi_metal_structures=args.allow_multi_metal_structures,
             ec_label_depth=args.ec_label_depth,
@@ -156,10 +190,13 @@ def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
 def main() -> None:
     args = parse_args()
     train_dir, test_dir = resolve_split_dirs(args)
+    train_summary_csv, test_summary_csv = resolve_summary_csv_paths(args, train_dir=train_dir, test_dir=test_dir)
     dataset_root = args.dataset_root
     required_paths = [dataset_root, train_dir, test_dir]
-    if args.summary_csv is not None:
-        required_paths.append(args.summary_csv)
+    if train_summary_csv is not None:
+        required_paths.append(train_summary_csv)
+    if test_summary_csv is not None:
+        required_paths.append(test_summary_csv)
     for path in required_paths:
         if not path.exists():
             raise FileNotFoundError(f"Required bundle input path not found: {path}")
@@ -169,6 +206,8 @@ def main() -> None:
         dataset_root=dataset_root,
         train_dir=train_dir,
         test_dir=test_dir,
+        train_summary_csv=train_summary_csv,
+        test_summary_csv=test_summary_csv,
     )
 
     selected_paths = [train_dir, test_dir]
