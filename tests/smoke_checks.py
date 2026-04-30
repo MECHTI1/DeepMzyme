@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import torch
@@ -162,6 +164,134 @@ def check_cross_attention_config() -> None:
         observed_value = getattr(config, key)
         if observed_value != expected_value:
             raise AssertionError(f"Expected {key}={expected_value!r}, got {observed_value!r}")
+
+
+def check_colab_notebook_sweep_source() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    source = "\n".join("".join(cell.get("source", [])) for cell in nb.get("cells", []))
+    required_tokens = (
+        "RUN_SINGLE_MODE",
+        "RUN_SWEEP_MODE",
+        "ALLOW_SINGLE_AND_SWEEP",
+        "def build_train_command",
+        "def stream_command",
+        "def write_sweep_status",
+        "def summarize_completed_run",
+        "def make_safe_run_name",
+        "def validate_run_before_training",
+        "USE_ESM_EMBEDDINGS = True",
+        "ESM_EMBEDDINGS_DIR = '/content/drive/MyDrive/DeepMzyme/DeepMzyme_Data/embeddings'",
+        "ALLOW_MISSING_ESM_EMBEDDINGS = False",
+        "RING_EDGES_MODE = 'radius_only'",
+        "RING_EXE_PATH = 'DeepMzyme_Data/ring-4.0/out/bin/ring'",
+        "def resolve_ring_exe_control",
+        "drive_candidate = drive_data_dir / ring_path",
+        "repo_candidate = repo_dir / drive_data_dir.name / ring_path",
+        "drive_mount_available = str(drive_data_dir).startswith('/content/drive/') and Path('/content/drive').exists()",
+        "RING_EXE_PATH user setting",
+        "RING_EXE_PATH resolved",
+        "os.environ['RING_EXE_PATH'] = str(resolve_ring_exe_control(RING_EXE_PATH))",
+        "run_env['RING_EXE_PATH'] = config['ring_exe_path'] or str(resolve_ring_exe_control(RING_EXE_PATH))",
+        "RING_EDGE_OUTPUT_DIR",
+        "PRECOMPUTED_RING_EDGES_DIR",
+        "RING_EDGES_MODES",
+        "itertools.product",
+        "MAX_SWEEP_RUNS",
+        "STOP_ON_FIRST_FAILURE",
+        "sweep_status.csv",
+        "val_ec_group_balanced_acc",
+        "src' / 'train.py'",
+        "src' / 'report_runs.py'",
+        "--cross-attention-layers",
+        "--cross-attention-heads",
+        "--lr-schedule",
+        "--use-early-esm",
+        "--esm-embeddings-dir",
+        "--allow-missing-esm-embeddings",
+        "--no-prepare-missing-esm-embeddings",
+        "--require-ring-edges",
+        "--prepare-missing-ring-edges",
+        "'selected_checkpoint'",
+        "'selected_metric_value'",
+        "'test_summary'",
+        "'command'",
+        "'uses_esm'",
+        "'esm_embeddings_dir'",
+        "'ring_edges_mode'",
+        "'ring_edge_output_dir'",
+    )
+    missing = [token for token in required_tokens if token not in source]
+    if missing:
+        raise AssertionError(f"Colab notebook sweep source is missing expected tokens: {missing}")
+    if "subprocess.run(train_cmd" in source:
+        raise AssertionError("Colab notebook should stream training logs instead of subprocess.run(train_cmd).")
+    if "os.environ['RING_EXE_PATH'] = str(path_from_control(RING_EXE_PATH))" in source:
+        raise AssertionError("Colab notebook should resolve RING_EXE_PATH before exporting it.")
+    if "MODEL_PRESET = 'Only-GVP'" not in source:
+        raise AssertionError("Colab notebook default MODEL_PRESET no longer preserves Only-GVP.")
+    if "NODE_FEATURE_SET = 'conservative'  #@param ['conservative', 'expanded']" in source:
+        raise AssertionError("Colab notebook exposes node feature sets not accepted by the current CLI.")
+
+
+def check_ring_environment_overrides() -> None:
+    from graph.ring_edges import canonical_ring_edges_output_path
+    from embed_helpers.Interaction_edge import DEFAULT_RING_EXE, create_ring_edges_batch
+    from training.runtime_preparation import prepare_runtime_inputs
+
+    personal_ring_path = str(Path("/home") / "mechti" / "ring-4.0" / "out" / "bin" / "ring")
+    if DEFAULT_RING_EXE.is_absolute():
+        raise AssertionError(f"RING default fallback should be repo-relative, got: {DEFAULT_RING_EXE}")
+    expected_default = Path("DeepMzyme_Data") / "ring-4.0" / "out" / "bin" / "ring"
+    if DEFAULT_RING_EXE != expected_default:
+        raise AssertionError(f"Unexpected RING default fallback: {DEFAULT_RING_EXE}")
+    if str(DEFAULT_RING_EXE) == personal_ring_path:
+        raise AssertionError(f"RING default fallback still uses a personal path: {DEFAULT_RING_EXE}")
+    if personal_ring_path in str(DEFAULT_RING_EXE):
+        raise AssertionError(f"RING default fallback unexpectedly contains a personal path: {DEFAULT_RING_EXE}")
+
+    old_embeddings_dir = os.environ.get("EMBEDDINGS_DIR")
+    old_ring_exe_path = os.environ.get("RING_EXE_PATH")
+    try:
+        with tempfile.TemporaryDirectory(prefix="deepmzyme_ring_edges_smoke_") as tmp:
+            tmp_root = Path(tmp)
+            structure_dir = tmp_root / "structures"
+            structure_dir.mkdir()
+            ring_dir = tmp_root / "ring_edges"
+            os.environ["EMBEDDINGS_DIR"] = str(ring_dir)
+
+            expected_path = canonical_ring_edges_output_path("/tmp/example_structure.pdb")
+            if not str(expected_path).startswith(f"{ring_dir}/"):
+                raise AssertionError(f"RING edge lookup did not honor EMBEDDINGS_DIR: {expected_path}")
+
+            report = prepare_runtime_inputs(
+                structure_dir=structure_dir,
+                esm_embeddings_dir=None,
+                require_esm_embeddings=False,
+                prepare_missing_esm_embeddings=False,
+                require_ring_edges=False,
+                prepare_missing_ring_edges=False,
+            )
+            if report["ring_edges_output_dir"] != str(ring_dir):
+                raise AssertionError(f"RING edge output did not honor EMBEDDINGS_DIR: {report}")
+
+        os.environ["RING_EXE_PATH"] = "/tmp/deepmzyme_missing_ring_executable"
+        try:
+            create_ring_edges_batch([], dir_results="/tmp/deepmzyme_ring_edges_smoke")
+        except FileNotFoundError as exc:
+            if "/tmp/deepmzyme_missing_ring_executable" not in str(exc):
+                raise AssertionError(f"RING executable error did not mention RING_EXE_PATH: {exc}") from exc
+        else:
+            raise AssertionError("Missing RING_EXE_PATH executable was not rejected.")
+    finally:
+        if old_embeddings_dir is None:
+            os.environ.pop("EMBEDDINGS_DIR", None)
+        else:
+            os.environ["EMBEDDINGS_DIR"] = old_embeddings_dir
+        if old_ring_exe_path is None:
+            os.environ.pop("RING_EXE_PATH", None)
+        else:
+            os.environ["RING_EXE_PATH"] = old_ring_exe_path
 
 
 def synthetic_pocket(structure_id: str, pocket_id: str, y_ec: int | None) -> PocketRecord:
@@ -358,6 +488,8 @@ def main() -> int:
         check_loss_weight_validation,
         check_ec_group_weighting_config,
         check_cross_attention_config,
+        check_colab_notebook_sweep_source,
+        check_ring_environment_overrides,
         check_ec_group_weights_sum_per_group,
         check_ec_group_metric_aggregation,
         check_ec_group_id_batches_without_increment,

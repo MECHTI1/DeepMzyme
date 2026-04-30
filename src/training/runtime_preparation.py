@@ -203,6 +203,12 @@ def prepare_runtime_inputs(
         str(esm_embeddings_dir) if esm_embeddings_dir is not None else None,
         create=True,
     )
+    configured_ring_edges_output_dir = os.getenv("EMBEDDINGS_DIR")
+    ring_edges_output_dir = (
+        resolve_embeddings_dir(configured_ring_edges_output_dir, create=True)
+        if configured_ring_edges_output_dir
+        else embeddings_dir
+    )
     resolved_external_feature_root_dir = resolve_external_feature_root_dir(
         structure_dir=structure_dir,
         external_features_root_dir=external_features_root_dir,
@@ -214,6 +220,7 @@ def prepare_runtime_inputs(
         "esm_embeddings_dir": str(embeddings_dir),
         "external_feature_source": external_feature_source,
         "external_features_root_dir": str(resolved_external_feature_root_dir),
+        "ring_edges_output_dir": str(ring_edges_output_dir),
         "missing_esm_structures_before": 0,
         "generated_esm_files": 0,
         "missing_updated_external_feature_structures_before": 0,
@@ -253,13 +260,13 @@ def prepare_runtime_inputs(
             report["generated_updated_external_feature_files"] = len(list(summary.get("saved_files", [])))
 
     should_check_ring_edges = require_ring_edges or prepare_missing_ring_edges
-    should_prepare_ring_edges = require_ring_edges and prepare_missing_ring_edges
+    should_prepare_ring_edges = prepare_missing_ring_edges
     if should_check_ring_edges:
         missing_ring_structures = discover_missing_ring_edges(structure_files)
         report["missing_ring_edge_structures_before"] = len(missing_ring_structures)
         if missing_ring_structures:
             if should_prepare_ring_edges:
-                summary = _generate_missing_ring_edges(missing_ring_structures, embeddings_dir)
+                summary = _generate_missing_ring_edges(missing_ring_structures, ring_edges_output_dir)
                 _raise_on_failed_generation(summary=summary, feature_name="RING edge files")
                 report["generated_ring_edge_files"] = len(list(summary.get("saved_files", [])))
             else:

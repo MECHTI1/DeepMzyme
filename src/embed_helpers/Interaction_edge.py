@@ -9,11 +9,32 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from project_paths import resolve_embeddings_dir
+from project_paths import PROJECT_ROOT as REPO_ROOT, resolve_embeddings_dir
 
 
-RING_EXE = Path("/home/mechti/ring-4.0/out/bin/ring")
+DEFAULT_RING_EXE = Path("DeepMzyme_Data") / "ring-4.0" / "out" / "bin" / "ring"
 DIR_RESULTS = resolve_embeddings_dir(os.getenv("EMBEDDINGS_DIR"))
+
+
+def resolve_ring_path(path: str | Path) -> Path:
+    ring_path = Path(path).expanduser()
+    return ring_path if ring_path.is_absolute() else REPO_ROOT / ring_path
+
+
+def resolve_ring_executable() -> Path:
+    configured_path = (os.getenv("RING_EXE_PATH") or "").strip()
+    ring_exe = resolve_ring_path(configured_path if configured_path else DEFAULT_RING_EXE)
+    if not ring_exe.is_file():
+        raise FileNotFoundError(
+            f"RING executable not found: {ring_exe}. "
+            "Set RING_EXE_PATH to the RING binary path before requesting RING edge generation."
+        )
+    if not os.access(ring_exe, os.X_OK):
+        raise PermissionError(
+            f"RING executable is not executable: {ring_exe}. "
+            f"Run: chmod +x {ring_exe}"
+        )
+    return ring_exe
 
 
 def expected_ring_edges_path(dir_results, path_structure) -> Path:
@@ -25,6 +46,7 @@ def expected_ring_edges_path(dir_results, path_structure) -> Path:
 def ring_create_results(dir_results, path_structure):
     dir_results = Path(dir_results)
     path_structure = Path(path_structure)
+    ring_exe = resolve_ring_executable()
 
     dir_results.mkdir(parents=True, exist_ok=True)
 
@@ -33,7 +55,7 @@ def ring_create_results(dir_results, path_structure):
 
     subprocess.run(
         [
-            str(RING_EXE),
+            str(ring_exe),
             "-i",
             str(path_structure),
             "--out_dir",
@@ -56,8 +78,7 @@ def create_ring_edges_batch(
     dir_results = Path(dir_results)
     dir_results.mkdir(parents=True, exist_ok=True)
 
-    if not RING_EXE.is_file():
-        raise FileNotFoundError(f"RING executable not found: {RING_EXE}")
+    resolve_ring_executable()
     if jobs < 1:
         raise ValueError(f"jobs must be at least 1, got {jobs}")
 

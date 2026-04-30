@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -7,10 +8,17 @@ import torch
 from torch import Tensor
 
 from data_structures import PocketRecord, ResidueRecord
-from project_paths import get_default_embeddings_dir
+from project_paths import get_default_embeddings_dir, resolve_embeddings_dir
 
 
 DEFAULT_RING_OUTPUT_DIR = get_default_embeddings_dir()
+
+
+def default_ring_output_dir() -> Path:
+    configured_dir = os.getenv("EMBEDDINGS_DIR")
+    if configured_dir:
+        return resolve_embeddings_dir(configured_dir, create=False)
+    return DEFAULT_RING_OUTPUT_DIR
 
 
 def parse_ring_node_id(node_id: str) -> Tuple[str, int, str, str]:
@@ -53,7 +61,7 @@ def resolve_ring_endpoint_coord(residue: ResidueRecord, atom_or_coord: str) -> O
 
 def canonical_ring_edges_output_path(structure_path: str | Path) -> Path:
     structure_path = Path(structure_path)
-    return DEFAULT_RING_OUTPUT_DIR / structure_path.stem / f"{structure_path.name}_ringEdges"
+    return default_ring_output_dir() / structure_path.stem / f"{structure_path.name}_ringEdges"
 
 
 def ring_edges_path_candidates(
@@ -83,7 +91,7 @@ def ring_edges_path_candidates(
 
     normalized_structure_id = structure_id.strip()
     if normalized_structure_id:
-        embedding_dir = DEFAULT_RING_OUTPUT_DIR / normalized_structure_id
+        embedding_dir = default_ring_output_dir() / normalized_structure_id
         add_candidate(embedding_dir / f"{normalized_structure_id}.pdb_ringEdges")
         add_candidate(embedding_dir / f"{normalized_structure_id}.cif_ringEdges")
         if embedding_dir.is_dir():
