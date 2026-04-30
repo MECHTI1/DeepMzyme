@@ -45,6 +45,12 @@ def check_training_cli_help() -> None:
         "--metal-loss-weight",
         "--ec-loss-weight",
         "--ec-group-weighting",
+        "--fusion-mode",
+        "--cross-attention-layers",
+        "--cross-attention-heads",
+        "--cross-attention-dropout",
+        "--cross-attention-neighborhood",
+        "--cross-attention-bidirectional",
         "--allow-train-loss-test-eval-debug",
     )
     missing = [option for option in expected_options if option not in help_text]
@@ -122,6 +128,40 @@ def check_ec_group_weighting_config() -> None:
     validate_training_configuration(metal_config)
     if required_targets_for_task("metal") != ("metal",):
         raise AssertionError("Metal-only task unexpectedly requires EC supervision.")
+
+
+def check_cross_attention_config() -> None:
+    config = parse_args(
+        [
+            "--model-architecture",
+            "gvp",
+            "--fusion-mode",
+            "cross_modal_attention",
+            "--cross-attention-layers",
+            "2",
+            "--cross-attention-heads",
+            "8",
+            "--cross-attention-dropout",
+            "0.2",
+            "--cross-attention-neighborhood",
+            "first_second_shell",
+            "--cross-attention-bidirectional",
+        ]
+    )
+    validate_training_configuration(config)
+    expected = {
+        "model_architecture": "gvp",
+        "fusion_mode": "cross_modal_attention",
+        "cross_attention_layers": 2,
+        "cross_attention_heads": 8,
+        "cross_attention_dropout": 0.2,
+        "cross_attention_neighborhood": "first_second_shell",
+        "cross_attention_bidirectional": True,
+    }
+    for key, expected_value in expected.items():
+        observed_value = getattr(config, key)
+        if observed_value != expected_value:
+            raise AssertionError(f"Expected {key}={expected_value!r}, got {observed_value!r}")
 
 
 def synthetic_pocket(structure_id: str, pocket_id: str, y_ec: int | None) -> PocketRecord:
@@ -317,6 +357,7 @@ def main() -> int:
         check_test_eval_safety,
         check_loss_weight_validation,
         check_ec_group_weighting_config,
+        check_cross_attention_config,
         check_ec_group_weights_sum_per_group,
         check_ec_group_metric_aggregation,
         check_ec_group_id_batches_without_increment,
