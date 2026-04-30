@@ -299,8 +299,12 @@ git diff -- src/training/run.py src/training/loop.py src/report_runs.py | sed -n
 ## Plan.md remaining work not yet captured
 
 - [~] PARTIAL: Created `notebooks/DeepMzyme_training_colab.ipynb` with Google Drive mounting, Colab bundle unpacking, configurable model/task/hyperparameter selection, baseline-first presets, CLI training execution, copying outputs back to Drive, running `src/report_runs.py`, and displaying the summary CSV/figure. Lightweight JSON/IPYNB structure validation passed locally, but real Google Colab execution/training has not been verified.
-- [ ] TODO: Update `README.md` to link to `list_train_commands.md` and, after it exists, the Colab notebook.
-- [ ] TODO: Add a tiny smoke-test fixture and/or simple CI syntax-check workflow so future changes can be checked without writing temporary files into `.data/`.- [ ] TODO: Run real baseline-first experiments on the non-overlapped PinMyMetal split, starting with Only-GVP, Only-ESM, GVP + late fusion, and GVP + early fusion.
+- [x] DONE: Updated `README.md` to mention `list_train_commands.md` and `notebooks/DeepMzyme_training_colab.ipynb`.
+- [~] PARTIAL: Added `tests/smoke_checks.py` for fast CLI/config/docs checks without writing into `.data/`; still TODO: add a simple CI workflow and/or dataset-backed smoke fixture if needed.
+- [ ] TODO: Run real baseline-first experiments on the non-overlapped PinMyMetal split, starting with Only-GVP, Only-ESM, GVP + late fusion, and GVP + early fusion.
+- [ ] TODO: Rebuild or validate the Colab bundle for the trusted non-overlapped split so it includes train/test structures, site-level summary CSVs, and an explicit structure-vs-CSV metal/EC consistency check.
+- [x] DONE: Added configurable `--metal-loss-weight` and `--ec-loss-weight` options with defaults preserving previous behavior.
+- [ ] TODO: Define and run the EC label-depth experiment ladder beyond level 1, then report selected held-out EC metrics only after validation-based model selection.
 - [ ] TODO: After selecting checkpoints by validation metrics, report final held-out test metrics on the non-overlapped split for metal 6-class, metal collapsed 4-class, and supported EC levels.
 - [?] REVIEW_NEEDED: Confirm whether final real experiment outputs, not smoke tests, clearly preserve split identity, overlap status, selected checkpoint, validation metric, and held-out test metrics.
 

@@ -48,8 +48,8 @@ These commands assume the main trusted split is located here:
 ```bash
 TRAIN_DIR=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/train"
 TEST_DIR=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/test"
-TRAIN_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/catalytic_only_summary.csv"
-TEST_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/catalytic_only_summary.csv"
+TRAIN_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv"
+TEST_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv"
 RUNS_DIR=".data/runs_baseline_first"
 PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 ```
@@ -73,7 +73,7 @@ This is preferred over plain accuracy because metal classes may be imbalanced.
 This tests what the structural pocket graph can learn without an ESM branch.
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture only_gvp \
   --structure-dir "${TRAIN_DIR}" \
@@ -99,7 +99,7 @@ ${PYTHON} -m src.training.run \
 This tests how much signal comes from ESMC embeddings without graph message passing.
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture only_esm \
   --structure-dir "${TRAIN_DIR}" \
@@ -125,7 +125,7 @@ ${PYTHON} -m src.training.run \
 This is the first combined graph + ESM model to test.
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture gvp \
   --fusion-mode late_fusion \
@@ -152,7 +152,7 @@ ${PYTHON} -m src.training.run \
 Run this only after the first three baselines are working and comparable.
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture gvp \
   --fusion-mode early_fusion \
@@ -185,7 +185,7 @@ Run these only if the simple baselines justify more complexity.
 ### 3.1 Node-level late fusion
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture gvp \
   --fusion-mode node_level_late_fusion \
@@ -210,7 +210,7 @@ ${PYTHON} -m src.training.run \
 ### 3.2 Hybrid fusion
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture gvp \
   --fusion-mode hybrid \
@@ -237,7 +237,7 @@ ${PYTHON} -m src.training.run \
 ### 3.3 Cross-modal attention
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
   --model-architecture gvp \
   --fusion-mode cross_modal_attention \
@@ -278,7 +278,7 @@ val_ec_balanced_acc
 ### 4.1 EC Only-GVP baseline
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task ec \
   --model-architecture only_gvp \
   --ec-label-depth 1 \
@@ -303,7 +303,7 @@ ${PYTHON} -m src.training.run \
 ### 4.2 EC Only-ESM baseline
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task ec \
   --model-architecture only_esm \
   --ec-label-depth 1 \
@@ -328,7 +328,7 @@ ${PYTHON} -m src.training.run \
 ### 4.3 EC GVP + late ESM fusion
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task ec \
   --model-architecture gvp \
   --fusion-mode late_fusion \
@@ -366,7 +366,7 @@ val_joint_balanced_acc
 ### 5.1 Joint Only-GVP baseline
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task joint \
   --model-architecture only_gvp \
   --ec-label-depth 1 \
@@ -391,7 +391,7 @@ ${PYTHON} -m src.training.run \
 ### 5.2 Joint GVP + late ESM fusion
 
 ```bash
-${PYTHON} -m src.training.run \
+PYTHONPATH=src ${PYTHON} src/train.py \
   --task joint \
   --model-architecture gvp \
   --fusion-mode late_fusion \
@@ -430,7 +430,7 @@ Example for the GVP + late fusion metal model:
 
 ```bash
 for SEED in 42 123 777; do
-  ${PYTHON} -m src.training.run \
+  PYTHONPATH=src ${PYTHON} src/train.py \
     --task metal \
     --model-architecture gvp \
     --fusion-mode late_fusion \

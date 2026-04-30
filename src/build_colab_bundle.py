@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import subprocess
 import shutil
 from pathlib import Path
@@ -19,11 +20,17 @@ from project_paths import CATALYTIC_ONLY_SUMMARY_CSV
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_exact_pinmymetal"
+BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
 TRAIN_DIR = BASE_DATA_DIR / "train"
 TEST_DIR = BASE_DATA_DIR / "test"
 OUTPUT_DIR = PROJECT_ROOT / ".data" / "Colab_Bundles"
 SUMMARY_CSV_BASENAME = CATALYTIC_ONLY_SUMMARY_CSV.name
+SITE_SUMMARY_COLUMN_ALIASES = {
+    "pdbid": ("pdbid", "structure"),
+    "metal residue number": ("metal residue number", "chain_resi"),
+    "EC number": ("EC number", "ecnumber"),
+    "metal residue type": ("metal residue type", "metaltype"),
+}
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create a compressed Colab bundle for train/test structures and CSVs.")
@@ -62,11 +69,32 @@ def resolve_split_dirs(args: argparse.Namespace) -> tuple[Path, Path]:
     return train_dir, test_dir
 
 
-def _default_summary_csv_for_structure_dir(structure_dir: Path) -> Path:
+def _default_summary_csv_for_structure_dir(structure_dir: Path, *, split_name: str) -> Path:
     local_summary_csv = structure_dir / SUMMARY_CSV_BASENAME
     if local_summary_csv.exists():
         return local_summary_csv
-    return CATALYTIC_ONLY_SUMMARY_CSV
+    raise FileNotFoundError(
+        f"Expected MAHOMES-style site-level {split_name} summary CSV at {local_summary_csv}. "
+        f"Pass --{split_name}-summary-csv explicitly if it lives elsewhere."
+    )
+
+
+def validate_site_level_summary_csv(summary_csv: Path, *, split_name: str) -> None:
+    if not summary_csv.exists():
+        raise FileNotFoundError(f"{split_name.capitalize()} site-level summary CSV not found: {summary_csv}")
+    with summary_csv.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = {field.strip().lower() for field in (reader.fieldnames or []) if field}
+    missing_columns = [
+        canonical_name
+        for canonical_name, aliases in SITE_SUMMARY_COLUMN_ALIASES.items()
+        if not fieldnames.intersection(alias.lower() for alias in aliases)
+    ]
+    if missing_columns:
+        raise ValueError(
+            f"{split_name.capitalize()} summary CSV {summary_csv} is not a site-level MAHOMES summary. "
+            f"Missing columns compatible with: {', '.join(missing_columns)}."
+        )
 
 
 def resolve_summary_csv_paths(
@@ -85,9 +113,9 @@ def resolve_summary_csv_paths(
             test_summary_csv = args.summary_csv
 
     if train_summary_csv is None and args.train_csv is None:
-        train_summary_csv = _default_summary_csv_for_structure_dir(train_dir)
+        train_summary_csv = _default_summary_csv_for_structure_dir(train_dir, split_name="train")
     if test_summary_csv is None and args.test_csv is None:
-        test_summary_csv = _default_summary_csv_for_structure_dir(test_dir)
+        test_summary_csv = _default_summary_csv_for_structure_dir(test_dir, split_name="test")
     return train_summary_csv, test_summary_csv
 
 
@@ -107,6 +135,20 @@ def ensure_project_relative(path: Path) -> str:
         raise ValueError(
             f"Bundle input path must live under the project root {PROJECT_ROOT}: {resolved_path}"
         ) from exc
+
+
+def path_is_inside(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def append_unique_path(paths: list[Path], path: Path) -> None:
+    resolved = path.resolve()
+    if all(existing.resolve() != resolved for existing in paths):
+        paths.append(path)
 
 
 def generate_structure_csv(
@@ -200,6 +242,10 @@ def main() -> None:
     for path in required_paths:
         if not path.exists():
             raise FileNotFoundError(f"Required bundle input path not found: {path}")
+    if train_summary_csv is None or test_summary_csv is None:
+        raise ValueError("Train and test site-level summary CSVs are required for a runnable Colab bundle.")
+    validate_site_level_summary_csv(train_summary_csv, split_name="train")
+    validate_site_level_summary_csv(test_summary_csv, split_name="test")
 
     train_csv, test_csv = prepare_csv_artifacts(
         args,
@@ -211,14 +257,20 @@ def main() -> None:
     )
 
     selected_paths = [train_dir, test_dir]
+    if not path_is_inside(train_summary_csv, train_dir):
+        append_unique_path(selected_paths, train_summary_csv)
+    if not path_is_inside(test_summary_csv, test_dir):
+        append_unique_path(selected_paths, test_summary_csv)
     if train_csv is not None:
-        selected_paths.append(train_csv)
+        append_unique_path(selected_paths, train_csv)
     if test_csv is not None:
-        selected_paths.append(test_csv)
+        append_unique_path(selected_paths, test_csv)
 
     if args.skip_bundle:
         print(f"Prepared train directory: {train_dir}")
         print(f"Prepared test directory: {test_dir}")
+        print(f"Verified train site-level summary CSV: {train_summary_csv}")
+        print(f"Verified test site-level summary CSV: {test_summary_csv}")
         if train_csv is not None:
             print(f"Prepared train CSV: {train_csv}")
         if test_csv is not None:
@@ -228,6 +280,8 @@ def main() -> None:
     output_bundle = args.output_bundle or default_output_bundle(dataset_root)
     output_bundle = build_bundle(selected_paths, output_bundle=output_bundle)
     print(f"Created bundle: {output_bundle}")
+    print(f"Verified train site-level summary CSV: {train_summary_csv}")
+    print(f"Verified test site-level summary CSV: {test_summary_csv}")
     if train_csv is not None:
         print(f"Included train CSV: {train_csv}")
     if test_csv is not None:

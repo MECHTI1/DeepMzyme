@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import copy
 import json
+import random
 import subprocess
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -62,10 +64,31 @@ class PreparedRun:
     scheduler: torch.optim.lr_scheduler.LRScheduler | None
 
 
-def set_seed(seed: int) -> None:
+def set_seed(seed: int, *, deterministic: bool = False) -> None:
+    random.seed(seed)
+    try:
+        import numpy as np
+    except ImportError:
+        np = None
+    if np is not None:
+        np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        if hasattr(torch.backends, "cudnn"):
+            torch.backends.cudnn.benchmark = False
+            torch.backends.cudnn.deterministic = True
+        try:
+            torch.use_deterministic_algorithms(True, warn_only=True)
+        except TypeError:
+            warnings.warn(
+                "This PyTorch version does not support warn_only for deterministic algorithms; "
+                "using CUDA/cuDNN deterministic seeding flags only.",
+                RuntimeWarning,
+            )
+        except Exception as exc:
+            warnings.warn(f"Could not enable deterministic PyTorch algorithms: {exc}", RuntimeWarning)
 
 
 def build_run_dir(config: TrainConfig) -> Path:
@@ -209,6 +232,10 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "--ec-contrastive-temperature must be positive, "
             f"got {config.ec_contrastive_temperature}"
         )
+    if config.metal_loss_weight < 0.0:
+        raise ValueError(f"--metal-loss-weight must be non-negative, got {config.metal_loss_weight}")
+    if config.ec_loss_weight < 0.0:
+        raise ValueError(f"--ec-loss-weight must be non-negative, got {config.ec_loss_weight}")
     has_validation = config.val_fraction > 0.0 or config.n_folds is not None
     if not has_validation and config.selection_metric.startswith("val_"):
         raise ValueError(
@@ -216,6 +243,21 @@ def validate_training_configuration(config: TrainConfig) -> None:
             f"{config.selection_metric!r} requires validation, but --val-fraction is 0. "
             "Either enable validation or choose a train-based metric such as 'train_loss'."
         )
+    if config.run_test_eval and not config.allow_train_loss_test_eval_debug:
+        if not has_validation:
+            raise ValueError(
+                "--run-test-eval is for held-out reporting and must use a validation-selected "
+                "checkpoint. Set --val-fraction > 0, or use --n-folds/--fold-index, so model "
+                "selection is based on validation metrics rather than train_loss. For a tiny "
+                "debug/smoke run only, pass --allow-train-loss-test-eval-debug explicitly."
+            )
+        if config.selection_metric == "train_loss":
+            raise ValueError(
+                "--run-test-eval cannot select the checkpoint with train_loss because that tunes "
+                "the final held-out report from the training objective. Use a validation metric "
+                "such as val_metal_balanced_acc, val_ec_balanced_acc, or val_joint_balanced_acc. "
+                "For a tiny debug/smoke run only, pass --allow-train-loss-test-eval-debug explicitly."
+            )
     if (config.n_folds is None) != (config.fold_index is None):
         raise ValueError("--n-folds and --fold-index must be provided together.")
     if config.n_folds is not None:
@@ -758,6 +800,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             early_esm_dropout=config.early_esm_dropout,
             early_esm_raw=config.early_esm_raw,
             early_esm_scope=config.early_esm_scope,
+            metal_loss_weight=config.metal_loss_weight,
+            ec_loss_weight=config.ec_loss_weight,
             metal_loss_function=config.metal_loss_function,
             metal_focal_gamma=config.metal_focal_gamma,
             metal_label_smoothing=config.metal_label_smoothing,
@@ -1061,7 +1105,7 @@ def persist_run_outputs(
 
 
 def run_training(config: TrainConfig) -> Path:
-    set_seed(config.seed)
+    set_seed(config.seed, deterministic=config.deterministic)
     prepared = prepare_run(config)
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
     test_report = evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint)

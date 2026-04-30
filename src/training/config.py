@@ -57,7 +57,9 @@ class TrainConfig:
     test_structure_dir: Path | None = None
     test_summary_csv: Path | None = None
     run_test_eval: bool = False
+    allow_train_loss_test_eval_debug: bool = False
     device: str = "cpu"
+    deterministic: bool = False
     task: str = "joint"
     epochs: int = 10
     batch_size: int = 8
@@ -104,6 +106,8 @@ class TrainConfig:
     co_loss_multiplier: float = 1.0
     ni_loss_multiplier: float = 1.0
     class_viii_loss_multiplier: float = 1.0
+    metal_loss_weight: float = 1.0
+    ec_loss_weight: float = 1.0
     metal_loss_function: str = "cross_entropy"
     metal_focal_gamma: float = 2.0
     metal_label_smoothing: float = 0.0
@@ -142,7 +146,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-structure-dir", type=Path, default=None)
     parser.add_argument("--test-summary-csv", type=Path, default=None)
     parser.add_argument("--run-test-eval", action="store_true")
+    parser.add_argument(
+        "--allow-train-loss-test-eval-debug",
+        action="store_true",
+        help=(
+            "Debug/smoke override: allow held-out test evaluation without validation-selected "
+            "checkpointing. Do not use for final or publication-quality reporting."
+        ),
+    )
     parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument(
+        "--deterministic",
+        action="store_true",
+        help=(
+            "Enable extra deterministic PyTorch settings for reproducible debug/experiment "
+            "runs. This can reduce training speed."
+        ),
+    )
     parser.add_argument("--task", type=str, default="joint", choices=VALID_TASK_CHOICES)
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=8)
@@ -277,6 +297,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--metal-loss-weight",
+        type=float,
+        default=1.0,
+        help="Task-level multiplier for the metal classification loss.",
+    )
+    parser.add_argument(
+        "--ec-loss-weight",
+        type=float,
+        default=1.0,
+        help="Task-level multiplier for the EC classification loss.",
+    )
+    parser.add_argument(
         "--metal-loss-function",
         type=str,
         default="cross_entropy",
@@ -345,7 +377,9 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         test_structure_dir=args.test_structure_dir,
         test_summary_csv=args.test_summary_csv,
         run_test_eval=args.run_test_eval,
+        allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         device=args.device,
+        deterministic=args.deterministic,
         task=args.task,
         epochs=args.epochs,
         batch_size=args.batch_size,
@@ -391,6 +425,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         co_loss_multiplier=args.co_loss_multiplier,
         ni_loss_multiplier=args.ni_loss_multiplier,
         class_viii_loss_multiplier=args.class_viii_loss_multiplier,
+        metal_loss_weight=args.metal_loss_weight,
+        ec_loss_weight=args.ec_loss_weight,
         metal_loss_function=args.metal_loss_function,
         metal_focal_gamma=args.metal_focal_gamma,
         metal_label_smoothing=args.metal_label_smoothing,
