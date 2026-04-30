@@ -43,13 +43,13 @@ COFACTOR_SYMBOL_PATTERNS = {
 
 def find_project_root(start: Path) -> Path:
     for candidate in [start, *start.parents]:
-        if (candidate / ".data").exists() and (candidate / "prepare_training_and_test_set").exists():
+        if (candidate / "DeepMzyme_Data").exists() and (candidate / "prepare_training_and_test_set").exists():
             return candidate
     raise FileNotFoundError("Could not locate the project root from the current working directory.")
 
 
 PROJECT_ROOT = find_project_root(Path(__file__).resolve())
-DEFAULT_BASE_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_exact_pinmymetal"
+DEFAULT_BASE_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_exact_pinmymetal"
 
 
 def parse_args() -> argparse.Namespace:

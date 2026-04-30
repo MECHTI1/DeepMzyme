@@ -40,12 +40,12 @@ Example trusted-split Only-GVP metal baseline:
 PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --task metal \
   --model-architecture only_gvp \
-  --structure-dir .data/train_and_test_sets_structures_non_overlapped_pinmymetal/train \
-  --summary-csv .data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv \
-  --test-structure-dir .data/train_and_test_sets_structures_non_overlapped_pinmymetal/test \
-  --test-summary-csv .data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv \
+  --structure-dir DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train \
+  --summary-csv DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv \
+  --test-structure-dir DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test \
+  --test-summary-csv DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv \
   --run-test-eval \
-  --runs-dir .data/runs_baseline_first \
+  --runs-dir DeepMzyme_Data/runs_baseline_first \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
   --val-fraction 0.15 \

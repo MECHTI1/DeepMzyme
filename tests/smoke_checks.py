@@ -122,14 +122,14 @@ def check_docs_do_not_use_broken_training_command() -> None:
 
 def check_multi_metal_site_level_granularity() -> None:
     structure_id = "1cob__chain_A__EC_1.15.1.1"
-    dataset_root = REPO_ROOT / ".data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
+    dataset_root = REPO_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
     train_dir = dataset_root / "train"
     structure_path = train_dir / f"{structure_id}.pdb"
     site_summary_csv = train_dir / "final_data_summarazing_table_transition_metals_only_catalytic.csv"
     inspection_csv = (
         REPO_ROOT
-        / ".data"
-        / "Colab_Bundles"
+        / "DeepMzyme_Data"
+        / "DeepMzyme_Colab_Bundles"
         / dataset_root.name
         / f"{dataset_root.name}_train.csv"
     )

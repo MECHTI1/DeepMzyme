@@ -27,14 +27,14 @@ by the current model.
 
 Default output location:
 
-- `.data/updated_feature_extraction/<structure_id>/residue_features.json`
+- `DeepMzyme_Data/updated_feature_extraction/<structure_id>/residue_features.json`
 
 Example:
 
 ```bash
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python -m feature_extraction.generate_features \
   --structure-dir /media/Data/pinmymetal_sets/mahomes/train_set \
-  --output-root /home/mechti/PycharmProjects/DeepMzyme/.data/updated_feature_extraction \
+  --output-root /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction \
   --skip-existing
 ```
 

@@ -11,7 +11,7 @@ SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from project_paths import MEDIA_DATA_ROOT
+from project_paths import DATA_DIR, MEDIA_DATA_ROOT
 from structure_sync_utils import (
     SUPPORTED_TRANSITION_METALS,
     collect_supported_transition_metal_sites,
@@ -27,7 +27,7 @@ SOURCE_CSV = (
     / "final_data_summarazing_table_transition_metals_only_catalytic.csv"
 )
 SOURCE_PDB_DIR = MEDIA_DATA_ROOT / "pinmymetal_sets" / "test" / "pdb_updatedv2"
-DEST_DIR = SRC_DIR.parent / ".data" / "train_and_test_sets_structures_exact_pinmymetal" / "test"
+DEST_DIR = DATA_DIR / "train_and_test_sets_structures_exact_pinmymetal" / "test"
 CSV_REQUIRED_COLUMNS = frozenset({"structure", "chain_resi", "ecnumber", "metaltype"})
 STRUCTURE_FILE_RE = re.compile(r"^(?P<structure>[^_]+)__chain_(?P<chain>[^_]+)__EC_(?P<ec>.+)\.pdb$")
 

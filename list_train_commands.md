@@ -46,11 +46,11 @@ Recommended syntax checks before training:
 These commands assume the main trusted split is located here:
 
 ```bash
-TRAIN_DIR=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/train"
-TEST_DIR=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/test"
-TRAIN_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv"
-TEST_CSV=".data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv"
-RUNS_DIR=".data/runs_baseline_first"
+TRAIN_DIR="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train"
+TEST_DIR="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test"
+TRAIN_CSV="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv"
+TEST_CSV="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv"
+RUNS_DIR="DeepMzyme_Data/runs_baseline_first"
 PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 ```
 

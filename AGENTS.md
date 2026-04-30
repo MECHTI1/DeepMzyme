@@ -143,7 +143,7 @@ If relevant, run a small smoke test before long training jobs.
 
 Do not launch expensive full training runs unless explicitly requested.
 
-Do not write temporary smoke-test files into `.data/` unless this is explicitly needed for the test.
+Do not write temporary smoke-test files into `DeepMzyme_Data/` unless this is explicitly needed for the test.
 Prefer using a temporary directory outside the project data tree, and clean up any temporary files immediately after the test.---
 
 ## Data and paths
@@ -152,7 +152,7 @@ Be careful with project-relative paths.
 
 Prefer paths based on the repository root rather than paths relative to the currently running script.
 
-For example, avoid assuming that .data/... is relative to src/.
+For example, avoid assuming that DeepMzyme_Data/... is relative to src/.
 
 Use robust path construction with pathlib.Path.
 

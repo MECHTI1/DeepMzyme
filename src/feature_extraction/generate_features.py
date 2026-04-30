@@ -18,7 +18,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Generate DeepGM external residue features with Biotite/PROPKA and "
-            "save them into a .data-style structure-indexed directory tree."
+            "save them into a DeepMzyme_Data-style structure-indexed directory tree."
         )
     )
     parser.add_argument("--structure-dir", type=Path, required=True)

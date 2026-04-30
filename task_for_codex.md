@@ -169,11 +169,11 @@ sed -n '1,260p' src/training/loop.py
 sed -n '740,880p' src/model.py
 sed -n '1,380p' src/training/splits.py
 rg -n "split_name|split_type|overlap|pdb|source_path|structure_id|pocket_split_key|build_dataset_summary|summary" src/training src | head -200
-find .data/train_and_test_sets_structures_non_overlapped_pinmymetal -maxdepth 2 -type f | head -20
-find .data/train_and_test_sets_structures_non_overlapped_pinmymetal -maxdepth 2 -type f \( -name '*.csv' -o -name '*.pdb' \) | sed -n '1,80p'
-find .data/Colab_Bundles -maxdepth 3 -type f -name '*.csv' | sed -n '1,80p'
-head -5 .data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv 2>/dev/null || true
-head -5 .data/Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_train.csv 2>/dev/null || true
+find DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal -maxdepth 2 -type f | head -20
+find DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal -maxdepth 2 -type f \( -name '*.csv' -o -name '*.pdb' \) | sed -n '1,80p'
+find DeepMzyme_Data/DeepMzyme_Colab_Bundles -maxdepth 3 -type f -name '*.csv' | sed -n '1,80p'
+head -5 DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv 2>/dev/null || true
+head -5 DeepMzyme_Data/DeepMzyme_Colab_Bundles/train_and_test_sets_structures_non_overlapped_pinmymetal/train_and_test_sets_structures_non_overlapped_pinmymetal_train.csv 2>/dev/null || true
 sed -n '1,120p' src/training/site_filter.py
 ```
 
@@ -186,7 +186,7 @@ import shutil
 from collections import defaultdict
 
 repo = Path('/home/mechti/PycharmProjects/DeepMzyme')
-src_root = repo / '.data/train_and_test_sets_structures_non_overlapped_pinmymetal'
+src_root = repo / 'DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal'
 out_root = Path('/tmp/deepmzyme_ec_contrastive_smoke_data')
 if out_root.exists():
     shutil.rmtree(out_root)
@@ -321,7 +321,7 @@ git diff -- src/training/run.py src/training/loop.py src/report_runs.py | sed -n
 
 - [~] PARTIAL: Created `notebooks/DeepMzyme_training_colab.ipynb` with Google Drive mounting, Colab bundle unpacking, configurable model/task/hyperparameter selection, baseline-first presets, CLI training execution, copying outputs back to Drive, running `src/report_runs.py`, and displaying the summary CSV/figure. Lightweight JSON/IPYNB structure validation passed locally, but real Google Colab execution/training has not been verified.
 - [x] DONE: Updated `README.md` to mention `list_train_commands.md` and `notebooks/DeepMzyme_training_colab.ipynb`.
-- [~] PARTIAL: Added `tests/smoke_checks.py` for fast CLI/config/docs checks without writing into `.data/`; still TODO: add a simple CI workflow and/or dataset-backed smoke fixture if needed.
+- [~] PARTIAL: Added `tests/smoke_checks.py` for fast CLI/config/docs checks without writing into `DeepMzyme_Data/`; still TODO: add a simple CI workflow and/or dataset-backed smoke fixture if needed.
 - [ ] TODO: Run real baseline-first experiments on the non-overlapped PinMyMetal split, starting with Only-GVP, Only-ESM, GVP + late fusion, and GVP + early fusion.
 - [ ] TODO: Rebuild or validate the Colab bundle for the trusted non-overlapped split so it includes train/test structures, site-level summary CSVs, and an explicit structure-vs-CSV metal/EC consistency check.
 - [x] DONE: Added configurable `--metal-loss-weight` and `--ec-loss-weight` options with defaults preserving previous behavior.
@@ -332,7 +332,7 @@ git diff -- src/training/run.py src/training/loop.py src/report_runs.py | sed -n
 ## Remaining risks
 
 - The smoke runs are intentionally tiny CPU checks. They verify the code path and output structure, not model quality.
-- The depth-2 smoke used a `/tmp` subset, so split inference correctly reports `custom_or_unknown`; full trusted non-overlapped split runs should be labeled from the canonical `.data/...non_overlapped_pinmymetal...` paths.
+- The depth-2 smoke used a `/tmp` subset, so split inference correctly reports `custom_or_unknown`; full trusted non-overlapped split runs should be labeled from the canonical `DeepMzyme_Data/...non_overlapped_pinmymetal...` paths.
 - The contrastive branch was exercised with a nonzero weight, but the report does not yet break out supervised EC loss and contrastive loss as separate history fields.
 - Optional figure generation could not be fully tested because matplotlib is not installed.
 - `git status --short` showed unrelated pre-existing/generated files outside this task, including staged `src/model_variants/__pycache__/*.pyc` entries and other `__pycache__` directories. They were not used as task outputs.

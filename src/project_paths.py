@@ -6,7 +6,11 @@ from pathlib import Path
 MEDIA_DATA_ROOT_ENV = "DEEPGM_MEDIA_DATA_ROOT"
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / ".data"
+DATA_DIR_NAME = "DeepMzyme_Data"
+COLAB_BUNDLES_DIR_NAME = "DeepMzyme_Colab_Bundles"
+
+DATA_DIR = PROJECT_ROOT / DATA_DIR_NAME
+COLAB_BUNDLES_DIR = DATA_DIR / COLAB_BUNDLES_DIR_NAME
 EMBEDDINGS_DIR = DATA_DIR / "embeddings"
 UPDATED_FEATURE_EXTRACTION_DIR = DATA_DIR / "updated_feature_extraction"
 RUNS_DIR = DATA_DIR / "training_runs"

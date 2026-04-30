@@ -14,16 +14,16 @@ from build_dataset_csv import (
     validate_rows_match_structure_dir,
     write_rows,
 )
-from project_paths import CATALYTIC_ONLY_SUMMARY_CSV
+from project_paths import CATALYTIC_ONLY_SUMMARY_CSV, COLAB_BUNDLES_DIR, DATA_DIR
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-BASE_DATA_DIR = PROJECT_ROOT / ".data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
+BASE_DATA_DIR = DATA_DIR / "train_and_test_sets_structures_non_overlapped_pinmymetal"
 TRAIN_DIR = BASE_DATA_DIR / "train"
 TEST_DIR = BASE_DATA_DIR / "test"
-OUTPUT_DIR = PROJECT_ROOT / ".data" / "Colab_Bundles"
+OUTPUT_DIR = COLAB_BUNDLES_DIR
 SUMMARY_CSV_BASENAME = CATALYTIC_ONLY_SUMMARY_CSV.name
 SITE_SUMMARY_COLUMN_ALIASES = {
     "pdbid": ("pdbid", "structure"),
