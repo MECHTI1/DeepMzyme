@@ -296,6 +296,14 @@ git status --short
 git diff -- src/training/run.py src/training/loop.py src/report_runs.py | sed -n '1,260p'
 ```
 
+## Plan.md remaining work not yet captured
+
+- [~] PARTIAL: Created `notebooks/DeepMzyme_training_colab.ipynb` with Google Drive mounting, Colab bundle unpacking, configurable model/task/hyperparameter selection, baseline-first presets, CLI training execution, copying outputs back to Drive, running `src/report_runs.py`, and displaying the summary CSV/figure. Lightweight JSON/IPYNB structure validation passed locally, but real Google Colab execution/training has not been verified.
+- [ ] TODO: Update `README.md` to link to `list_train_commands.md` and, after it exists, the Colab notebook.
+- [ ] TODO: Add a tiny smoke-test fixture and/or simple CI syntax-check workflow so future changes can be checked without writing temporary files into `.data/`.- [ ] TODO: Run real baseline-first experiments on the non-overlapped PinMyMetal split, starting with Only-GVP, Only-ESM, GVP + late fusion, and GVP + early fusion.
+- [ ] TODO: After selecting checkpoints by validation metrics, report final held-out test metrics on the non-overlapped split for metal 6-class, metal collapsed 4-class, and supported EC levels.
+- [?] REVIEW_NEEDED: Confirm whether final real experiment outputs, not smoke tests, clearly preserve split identity, overlap status, selected checkpoint, validation metric, and held-out test metrics.
+
 ## Remaining risks
 
 - The smoke runs are intentionally tiny CPU checks. They verify the code path and output structure, not model quality.
