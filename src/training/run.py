@@ -41,8 +41,10 @@ from training.preflight import run_preflight_checks
 from training.runtime_preparation import prepare_runtime_inputs
 from training.splits import (
     PocketSplit,
+    assign_ec_group_metadata,
     build_balanced_metal_site_sampler,
     build_dataset_summary,
+    ec_grouping_mode_for_metrics,
     split_pockets,
     split_pockets_k_fold,
 )
@@ -223,6 +225,7 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
     if config.ec_label_depth < 1:
         raise ValueError(f"--ec-label-depth must be at least 1, got {config.ec_label_depth}")
+    ec_grouping_mode_for_metrics(config.ec_group_weighting)
     if config.ec_contrastive_weight < 0.0:
         raise ValueError(
             f"--ec-contrastive-weight must be non-negative, got {config.ec_contrastive_weight}"
@@ -255,7 +258,7 @@ def validate_training_configuration(config: TrainConfig) -> None:
             raise ValueError(
                 "--run-test-eval cannot select the checkpoint with train_loss because that tunes "
                 "the final held-out report from the training objective. Use a validation metric "
-                "such as val_metal_balanced_acc, val_ec_balanced_acc, or val_joint_balanced_acc. "
+                "such as val_metal_balanced_acc, val_ec_group_balanced_acc, or val_joint_balanced_acc. "
                 "For a tiny debug/smoke run only, pass --allow-train-loss-test-eval-debug explicitly."
             )
     if (config.n_folds is None) != (config.fold_index is None):
@@ -380,6 +383,66 @@ def ec_level_metrics_from_logits(
     )
 
 
+def ec_group_metrics_from_logits(
+    logits: torch.Tensor,
+    targets: torch.Tensor,
+    group_indices: torch.Tensor,
+    *,
+    ec_label_map: dict[int, str],
+    ec_label_depth: int,
+) -> dict[str, Any]:
+    grouped_logits: dict[int, list[torch.Tensor]] = {}
+    grouped_targets: dict[int, set[int]] = {}
+    for logit, target, group_idx in zip(logits, targets, group_indices):
+        group_id = int(group_idx.item())
+        if group_id < 0:
+            continue
+        grouped_logits.setdefault(group_id, []).append(logit)
+        grouped_targets.setdefault(group_id, set()).add(int(target.item()))
+
+    mean_logits: list[torch.Tensor] = []
+    group_targets: list[int] = []
+    conflicting_groups = 0
+    for group_id in sorted(grouped_logits):
+        target_values = grouped_targets[group_id]
+        if len(target_values) != 1:
+            conflicting_groups += 1
+            continue
+        mean_logits.append(torch.stack(grouped_logits[group_id], dim=0).mean(dim=0))
+        group_targets.append(next(iter(target_values)))
+
+    payload: dict[str, Any] = {
+        "n_groups": len(group_targets),
+        "n_conflicting_groups": conflicting_groups,
+    }
+    if not mean_logits:
+        return payload
+
+    group_logits = torch.stack(mean_logits, dim=0)
+    group_y = torch.tensor(group_targets, dtype=torch.long)
+    metrics = classification_metrics_from_logits(group_logits, group_y)
+    payload.update(
+        {
+            "accuracy": metrics["accuracy"],
+            "balanced_accuracy": metrics["balanced_accuracy"],
+            "macro_f1": metrics["macro_f1"],
+        }
+    )
+    for level in range(1, ec_label_depth + 1):
+        level_metrics = ec_level_metrics_from_logits(
+            group_logits,
+            group_y,
+            ec_label_map=ec_label_map,
+            level=level,
+        )
+        if not level_metrics:
+            continue
+        payload[f"level_{level}_accuracy"] = level_metrics["accuracy"]
+        payload[f"level_{level}_balanced_accuracy"] = level_metrics["balanced_accuracy"]
+        payload[f"level_{level}_macro_f1"] = level_metrics["macro_f1"]
+    return payload
+
+
 def evaluate_split_metrics(
     model,
     loader: DataLoader | None,
@@ -462,6 +525,35 @@ def evaluate_split_metrics(
                     f"{prefix}_ec_level_{level}_macro_f1": level_metrics["macro_f1"],
                 }
             )
+        if prefix in {"val", "test"} and "ec_group_id" in predictions:
+            group_metrics = ec_group_metrics_from_logits(
+                predictions["ec_logits"],
+                predictions["ec_y"],
+                predictions["ec_group_id"],
+                ec_label_map=ec_label_map,
+                ec_label_depth=ec_label_depth,
+            )
+            payload.update(
+                {
+                    f"{prefix}_ec_group_acc": group_metrics.get("accuracy"),
+                    f"{prefix}_ec_group_balanced_acc": group_metrics.get("balanced_accuracy"),
+                    f"{prefix}_ec_group_macro_f1": group_metrics.get("macro_f1"),
+                    f"{prefix}_ec_group_n_groups": group_metrics["n_groups"],
+                    f"{prefix}_ec_group_n_conflicting_groups": group_metrics["n_conflicting_groups"],
+                }
+            )
+            for level in range(1, ec_label_depth + 1):
+                if f"level_{level}_accuracy" not in group_metrics:
+                    continue
+                payload.update(
+                    {
+                        f"{prefix}_ec_group_level_{level}_acc": group_metrics[f"level_{level}_accuracy"],
+                        f"{prefix}_ec_group_level_{level}_balanced_acc": group_metrics[
+                            f"level_{level}_balanced_accuracy"
+                        ],
+                        f"{prefix}_ec_group_level_{level}_macro_f1": group_metrics[f"level_{level}_macro_f1"],
+                    }
+                )
     else:
         payload[f"{prefix}_ec_acc"] = None
 
@@ -639,6 +731,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 seed=config.seed,
                 task=config.task,
             )
+        if task_predicts_ec(config.task):
+            assign_ec_group_metadata(split.train_pockets, weighting_mode=config.ec_group_weighting)
+            assign_ec_group_metadata(split.val_pockets, weighting_mode=config.ec_group_weighting)
         dataset_summary = build_dataset_summary(
             split,
             config,
@@ -966,6 +1061,8 @@ def evaluate_held_out_test_split(
         )
         if not test_load_result.pockets:
             raise ValueError("No held-out test pockets were loaded.")
+        if task_predicts_ec(config.task):
+            assign_ec_group_metadata(test_load_result.pockets, weighting_mode=config.ec_group_weighting)
 
         test_graphs = build_graph_data_list(
             test_load_result.pockets,

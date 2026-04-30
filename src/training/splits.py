@@ -9,9 +9,13 @@ from torch.utils.data import WeightedRandomSampler
 
 from data_structures import PocketRecord
 from label_schemes import METAL_SYMBOL_TO_TARGET, METAL_TARGET_LABELS
-from training.config import TrainConfig, VALID_SPLIT_BY_CHOICES
+from training.config import TrainConfig, VALID_EC_GROUP_WEIGHTING_CHOICES, VALID_SPLIT_BY_CHOICES
 from training.feature_sources import build_pocket_feature_coverage
 from training.labels import parse_structure_identity
+
+EC_SAMPLE_WEIGHT_METADATA_KEY = "ec_sample_weight"
+EC_GROUP_KEY_METADATA_KEY = "ec_group_key"
+EC_GROUP_ID_METADATA_KEY = "ec_group_id"
 
 
 @dataclass(frozen=True)
@@ -40,6 +44,95 @@ def pocket_split_key(pocket: PocketRecord, split_by: str) -> str:
     if split_by == "pocket_id":
         return pocket.pocket_id
     raise AssertionError(f"Unhandled split_by value: {split_by!r}")
+
+
+def validate_ec_group_weighting(mode: str) -> str:
+    if mode not in VALID_EC_GROUP_WEIGHTING_CHOICES:
+        raise ValueError(
+            f"Unsupported --ec-group-weighting value: {mode!r}. "
+            f"Expected one of: {', '.join(repr(choice) for choice in VALID_EC_GROUP_WEIGHTING_CHOICES)}."
+        )
+    return mode
+
+
+def ec_grouping_mode_for_metrics(weighting_mode: str) -> str:
+    weighting_mode = validate_ec_group_weighting(weighting_mode)
+    return "structure_id" if weighting_mode == "none" else weighting_mode
+
+
+def ec_group_key_for_pocket(pocket: PocketRecord, mode: str) -> str:
+    mode = validate_ec_group_weighting(mode)
+    if mode == "none":
+        raise ValueError("'none' is not a concrete EC grouping mode.")
+    pdbid, chain, _ec = parse_structure_identity(pocket.structure_id)
+    if mode == "structure_id":
+        return str(pocket.structure_id)
+    if mode == "pdbid_chain":
+        return f"{pdbid}__chain_{chain}"
+    if mode == "pdbid":
+        return str(pdbid)
+    raise AssertionError(f"Unhandled EC grouping mode: {mode!r}")
+
+
+def ec_group_size_distribution(pockets: list[PocketRecord], mode: str) -> dict[str, int]:
+    if not pockets:
+        return {}
+    group_counts: Counter[str] = Counter()
+    for pocket in pockets:
+        if pocket.y_ec is None:
+            continue
+        group_counts[ec_group_key_for_pocket(pocket, mode)] += 1
+    size_counts: Counter[int] = Counter(group_counts.values())
+    return {str(size): int(count) for size, count in sorted(size_counts.items())}
+
+
+def count_ec_groups(pockets: list[PocketRecord], mode: str) -> int:
+    return len(
+        {
+            ec_group_key_for_pocket(pocket, mode)
+            for pocket in pockets
+            if pocket.y_ec is not None
+        }
+    )
+
+
+def assign_ec_group_metadata(
+    pockets: list[PocketRecord],
+    *,
+    weighting_mode: str,
+) -> None:
+    weighting_mode = validate_ec_group_weighting(weighting_mode)
+    metric_mode = ec_grouping_mode_for_metrics(weighting_mode)
+
+    metric_keys = sorted(
+        {
+            ec_group_key_for_pocket(pocket, metric_mode)
+            for pocket in pockets
+            if pocket.y_ec is not None
+        }
+    )
+    metric_key_to_index = {key: idx for idx, key in enumerate(metric_keys)}
+
+    weighting_counts: Counter[str] = Counter()
+    if weighting_mode != "none":
+        for pocket in pockets:
+            if pocket.y_ec is None:
+                continue
+            weighting_counts[ec_group_key_for_pocket(pocket, weighting_mode)] += 1
+
+    for pocket in pockets:
+        pocket.metadata[EC_SAMPLE_WEIGHT_METADATA_KEY] = 1.0
+        if pocket.y_ec is None:
+            pocket.metadata[EC_GROUP_KEY_METADATA_KEY] = None
+            pocket.metadata[EC_GROUP_ID_METADATA_KEY] = -1
+            continue
+
+        metric_key = ec_group_key_for_pocket(pocket, metric_mode)
+        pocket.metadata[EC_GROUP_KEY_METADATA_KEY] = metric_key
+        pocket.metadata[EC_GROUP_ID_METADATA_KEY] = int(metric_key_to_index[metric_key])
+        if weighting_mode != "none":
+            weight_key = ec_group_key_for_pocket(pocket, weighting_mode)
+            pocket.metadata[EC_SAMPLE_WEIGHT_METADATA_KEY] = 1.0 / float(weighting_counts[weight_key])
 
 
 def split_pockets(
@@ -313,6 +406,7 @@ def build_dataset_summary(
     feature_load_report: dict[str, Any],
     ec_label_map: dict[int, str],
 ) -> dict[str, Any]:
+    ec_group_mode = ec_grouping_mode_for_metrics(config.ec_group_weighting)
     return {
         "structure_dir": str(config.structure_dir),
         "summary_csv": str(config.summary_csv),
@@ -332,6 +426,9 @@ def build_dataset_summary(
         "invalid_structure_policy": config.invalid_structure_policy,
         "balance_metal_site_symbols": config.balance_metal_site_symbols,
         "ec_label_depth": config.ec_label_depth,
+        "ec_group_weighting": config.ec_group_weighting,
+        "ec_group_metric_mode": ec_group_mode,
+        "ec_group_weighting_applies_to": "ec_cross_entropy_only",
         "ec_labels": ec_label_map,
         "feature_load_report": feature_load_report,
         "train_feature_coverage": build_pocket_feature_coverage(split.train_pockets),
@@ -340,6 +437,10 @@ def build_dataset_summary(
         "train_ec_distribution": count_labels(split.train_pockets, "y_ec", ec_label_map),
         "val_metal_distribution": count_labels(split.val_pockets, "y_metal", METAL_TARGET_LABELS),
         "val_ec_distribution": count_labels(split.val_pockets, "y_ec", ec_label_map),
+        "n_train_ec_groups": count_ec_groups(split.train_pockets, ec_group_mode),
+        "n_val_ec_groups": count_ec_groups(split.val_pockets, ec_group_mode),
+        "train_ec_group_size_distribution": ec_group_size_distribution(split.train_pockets, ec_group_mode),
+        "val_ec_group_size_distribution": ec_group_size_distribution(split.val_pockets, ec_group_mode),
         "train_metal_site_distribution": count_metal_site_symbols(split.train_pockets),
         "val_metal_site_distribution": count_metal_site_symbols(split.val_pockets),
     }

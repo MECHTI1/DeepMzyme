@@ -272,8 +272,10 @@ For EC prediction, start with EC level 1, then test deeper EC labels later.
 Main metric for model selection:
 
 ```text
-val_ec_balanced_acc
+val_ec_group_balanced_acc
 ```
+
+EC loss uses `--ec-group-weighting structure_id` by default so structures with multiple separated EC-supervised pockets are not over-counted.
 
 ### 4.1 EC Only-GVP baseline
 
@@ -292,7 +294,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --seed 42 \
   --val-fraction 0.15 \
   --split-by pdbid \
-  --selection-metric val_ec_balanced_acc \
+  --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
   --learning-rate 3e-4 \
@@ -317,7 +319,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --seed 42 \
   --val-fraction 0.15 \
   --split-by pdbid \
-  --selection-metric val_ec_balanced_acc \
+  --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
   --learning-rate 3e-4 \
@@ -343,7 +345,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --seed 42 \
   --val-fraction 0.15 \
   --split-by pdbid \
-  --selection-metric val_ec_balanced_acc \
+  --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
   --learning-rate 3e-4 \

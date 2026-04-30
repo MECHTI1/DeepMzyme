@@ -18,6 +18,7 @@ CSV_COLUMNS = [
     "seed",
     "node_feature_set",
     "ec_label_depth",
+    "ec_group_weighting",
     "ec_contrastive_weight",
     "ec_contrastive_temperature",
     "selection_metric",
@@ -40,6 +41,17 @@ CSV_COLUMNS = [
     "test_ec_level_2_acc",
     "test_ec_level_2_balanced_acc",
     "test_ec_level_2_macro_f1",
+    "test_ec_group_acc",
+    "test_ec_group_balanced_acc",
+    "test_ec_group_macro_f1",
+    "test_ec_group_n_groups",
+    "test_ec_group_n_conflicting_groups",
+    "test_ec_group_level_1_acc",
+    "test_ec_group_level_1_balanced_acc",
+    "test_ec_group_level_1_macro_f1",
+    "test_ec_group_level_2_acc",
+    "test_ec_group_level_2_balanced_acc",
+    "test_ec_group_level_2_macro_f1",
 ]
 
 
@@ -172,6 +184,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "seed": config.get("seed"),
         "node_feature_set": first_present(config.get("node_feature_set"), dataset.get("node_feature_set")),
         "ec_label_depth": first_present(config.get("ec_label_depth"), dataset.get("ec_label_depth")),
+        "ec_group_weighting": first_present(config.get("ec_group_weighting"), dataset.get("ec_group_weighting")),
         "ec_contrastive_weight": config.get("ec_contrastive_weight"),
         "ec_contrastive_temperature": config.get("ec_contrastive_temperature"),
         "selection_metric": selection_metric,

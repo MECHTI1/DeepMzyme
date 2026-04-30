@@ -5,8 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from training.config import parse_args
-from training.run import validate_training_configuration
+import torch
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
+
+from data_structures import PocketRecord
+from training.config import default_selection_metric_for_task, parse_args, required_targets_for_task
+from training.run import ec_group_metrics_from_logits, validate_training_configuration
+from training.splits import assign_ec_group_metadata
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +44,7 @@ def check_training_cli_help() -> None:
         "--deterministic",
         "--metal-loss-weight",
         "--ec-loss-weight",
+        "--ec-group-weighting",
         "--allow-train-loss-test-eval-debug",
     )
     missing = [option for option in expected_options if option not in help_text]
@@ -97,6 +104,106 @@ def check_loss_weight_validation() -> None:
                 raise AssertionError(f"{option} failed with an unexpected error: {exc}") from exc
         else:
             raise AssertionError(f"{option} accepted a negative value.")
+
+
+def check_ec_group_weighting_config() -> None:
+    default_config = parse_args([])
+    if default_config.ec_group_weighting != "structure_id":
+        raise AssertionError(
+            f"Expected default ec_group_weighting='structure_id', got {default_config.ec_group_weighting!r}"
+        )
+    ec_config = parse_args(["--task", "ec", "--val-fraction", "0.2"])
+    if ec_config.selection_metric != "val_ec_group_balanced_acc":
+        raise AssertionError(f"Expected EC default selection metric to use group metrics, got {ec_config.selection_metric!r}")
+    if default_selection_metric_for_task("joint", has_validation=True) != "val_joint_balanced_acc":
+        raise AssertionError("Joint default selection metric changed unexpectedly.")
+
+    metal_config = parse_args(["--task", "metal", "--ec-group-weighting", "pdbid"])
+    validate_training_configuration(metal_config)
+    if required_targets_for_task("metal") != ("metal",):
+        raise AssertionError("Metal-only task unexpectedly requires EC supervision.")
+
+
+def synthetic_pocket(structure_id: str, pocket_id: str, y_ec: int | None) -> PocketRecord:
+    return PocketRecord(
+        structure_id=structure_id,
+        pocket_id=pocket_id,
+        metal_element="ZN",
+        metal_coords=[torch.zeros(3)],
+        residues=[],
+        y_ec=y_ec,
+    )
+
+
+def check_ec_group_weights_sum_per_group() -> None:
+    pockets = [
+        synthetic_pocket("1abc__chain_A__EC_1.1.1.1", "p0", 0),
+        synthetic_pocket("1abc__chain_A__EC_1.1.1.1", "p1", 0),
+        synthetic_pocket("2def__chain_B__EC_2.2.2.2", "p2", 1),
+        synthetic_pocket("3ghi__chain_C__EC_3.3.3.3", "p3", None),
+    ]
+    assign_ec_group_metadata(pockets, weighting_mode="structure_id")
+    sums: dict[str, float] = {}
+    for pocket in pockets:
+        if pocket.y_ec is None:
+            continue
+        group_key = str(pocket.metadata["ec_group_key"])
+        sums[group_key] = sums.get(group_key, 0.0) + float(pocket.metadata["ec_sample_weight"])
+    for group_key, total in sums.items():
+        if abs(total - 1.0) > 1e-6:
+            raise AssertionError(f"EC weights for group {group_key} sum to {total}, expected 1.0")
+
+
+def check_ec_group_metric_aggregation() -> None:
+    logits = torch.tensor(
+        [
+            [4.0, 0.0],
+            [2.0, 0.0],
+            [0.0, 3.0],
+        ],
+        dtype=torch.float32,
+    )
+    targets = torch.tensor([0, 0, 1], dtype=torch.long)
+    group_indices = torch.tensor([0, 0, 1], dtype=torch.long)
+    metrics = ec_group_metrics_from_logits(
+        logits,
+        targets,
+        group_indices,
+        ec_label_map={0: "1", 1: "2"},
+        ec_label_depth=1,
+    )
+    if metrics["n_groups"] != 2 or metrics["n_conflicting_groups"] != 0:
+        raise AssertionError(f"Unexpected EC group counts: {metrics}")
+    if metrics["accuracy"] != 1.0 or metrics["balanced_accuracy"] != 1.0 or metrics["macro_f1"] != 1.0:
+        raise AssertionError(f"Expected perfect EC group metrics, got {metrics}")
+    if metrics["level_1_accuracy"] != 1.0:
+        raise AssertionError(f"Expected perfect EC level-1 group metrics, got {metrics}")
+
+
+def check_ec_group_id_batches_without_increment() -> None:
+    loader = DataLoader(
+        [
+            Data(x=torch.zeros(2, 1), y_ec=torch.tensor([0]), ec_group_id=torch.tensor([0])),
+            Data(x=torch.zeros(3, 1), y_ec=torch.tensor([0]), ec_group_id=torch.tensor([0])),
+        ],
+        batch_size=2,
+        shuffle=False,
+    )
+    batch = next(iter(loader))
+    if batch.ec_group_id.tolist() != [0, 0]:
+        raise AssertionError(f"EC group IDs were shifted during PyG batching: {batch.ec_group_id.tolist()}")
+
+
+def check_conflicting_ec_group_metrics_are_skipped() -> None:
+    metrics = ec_group_metrics_from_logits(
+        torch.tensor([[4.0, 0.0], [0.0, 4.0]], dtype=torch.float32),
+        torch.tensor([0, 1], dtype=torch.long),
+        torch.tensor([0, 0], dtype=torch.long),
+        ec_label_map={0: "1", 1: "2"},
+        ec_label_depth=1,
+    )
+    if metrics["n_groups"] != 0 or metrics["n_conflicting_groups"] != 1:
+        raise AssertionError(f"Expected one skipped conflicting EC group, got {metrics}")
 
 
 def check_bundle_cli_help() -> None:
@@ -209,6 +316,11 @@ def main() -> int:
         check_training_cli_help,
         check_test_eval_safety,
         check_loss_weight_validation,
+        check_ec_group_weighting_config,
+        check_ec_group_weights_sum_per_group,
+        check_ec_group_metric_aggregation,
+        check_ec_group_id_batches_without_increment,
+        check_conflicting_ec_group_metrics_are_skipped,
         check_bundle_cli_help,
         check_docs_do_not_use_broken_training_command,
         check_multi_metal_site_level_granularity,

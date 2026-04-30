@@ -34,6 +34,8 @@ from graph.structure_parsing import extract_metal_pockets_from_structure, parse_
     _GRAPH_SITE_METAL_STATS_FIELD,
 ) = GRAPH_SITE_TENSOR_FIELDS
 _GRAPH_Y_METAL_FIELD, _GRAPH_Y_EC_FIELD = GRAPH_TARGET_FIELDS
+_GRAPH_EC_SAMPLE_WEIGHT_FIELD = "ec_sample_weight"
+_GRAPH_EC_GROUP_ID_FIELD = "ec_group_id"
 
 
 def stack_node_features(node_dicts: List[Dict[str, Tensor]]) -> Dict[str, Tensor]:
@@ -106,6 +108,16 @@ def pocket_to_pyg_data(
     )
     for field_name, value in zip(GRAPH_TARGET_FIELDS, target_values):
         setattr(data, field_name, torch.tensor([value], dtype=torch.long))
+    setattr(
+        data,
+        _GRAPH_EC_SAMPLE_WEIGHT_FIELD,
+        torch.tensor([float(pocket.metadata.get(_GRAPH_EC_SAMPLE_WEIGHT_FIELD, 1.0))], dtype=torch.float32),
+    )
+    setattr(
+        data,
+        _GRAPH_EC_GROUP_ID_FIELD,
+        torch.tensor([int(pocket.metadata.get(_GRAPH_EC_GROUP_ID_FIELD, -1))], dtype=torch.long),
+    )
     return data
 
 

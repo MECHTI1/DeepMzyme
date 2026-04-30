@@ -130,7 +130,20 @@ class PocketClassifierBase(nn.Module):
             ec_mask = self._supervised_mask(data.y_ec)
             if bool(ec_mask.any().item()):
                 ec_weights = self.ec_class_weights if self.ec_class_weights.numel() > 0 else None
-                ec_loss = F.cross_entropy(logits_ec[ec_mask], data.y_ec[ec_mask], weight=ec_weights)
+                ec_ce = F.cross_entropy(
+                    logits_ec[ec_mask],
+                    data.y_ec[ec_mask],
+                    weight=ec_weights,
+                    reduction="none",
+                )
+                if hasattr(data, "ec_sample_weight"):
+                    ec_sample_weight = data.ec_sample_weight.view(-1).to(
+                        dtype=ec_ce.dtype,
+                        device=ec_ce.device,
+                    )[ec_mask]
+                else:
+                    ec_sample_weight = torch.ones_like(ec_ce)
+                ec_loss = (ec_ce * ec_sample_weight).sum() / ec_sample_weight.sum().clamp_min(1e-8)
                 losses.append(self.ec_loss_weight * ec_loss)
                 if self.ec_contrastive_weight > 0.0:
                     ec_contrastive = supervised_contrastive_loss(

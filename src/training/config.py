@@ -19,6 +19,7 @@ VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
+VALID_EC_GROUP_WEIGHTING_CHOICES = ("none", "structure_id", "pdbid_chain", "pdbid")
 VALID_LR_SCHEDULE_CHOICES = ("fixed", "cosine", "step")
 VALID_FUSION_MODE_CHOICES = FUSION_MODE_CHOICES
 VALID_EARLY_ESM_SCOPE_CHOICES = ("all", "first_shell", "first_second_shell")
@@ -28,6 +29,21 @@ VALID_SELECTION_METRIC_CHOICES = (
     "val_loss",
     "val_metal_acc",
     "val_ec_acc",
+    "val_ec_group_acc",
+    "val_ec_group_balanced_acc",
+    "val_ec_group_macro_f1",
+    "val_ec_group_level_1_acc",
+    "val_ec_group_level_1_balanced_acc",
+    "val_ec_group_level_1_macro_f1",
+    "val_ec_group_level_2_acc",
+    "val_ec_group_level_2_balanced_acc",
+    "val_ec_group_level_2_macro_f1",
+    "val_ec_group_level_3_acc",
+    "val_ec_group_level_3_balanced_acc",
+    "val_ec_group_level_3_macro_f1",
+    "val_ec_group_level_4_acc",
+    "val_ec_group_level_4_balanced_acc",
+    "val_ec_group_level_4_macro_f1",
     "val_joint_balanced_acc",
     "val_joint_macro_f1",
     "val_metal_balanced_acc",
@@ -118,6 +134,7 @@ class TrainConfig:
     unsupported_metal_policy: str = "error"
     invalid_structure_policy: str = "skip"
     ec_label_depth: int = 1
+    ec_group_weighting: str = "structure_id"
     ec_contrastive_weight: float = 0.0
     ec_contrastive_temperature: float = 0.1
     lr_schedule: str = "fixed"
@@ -340,6 +357,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=VALID_INVALID_STRUCTURE_POLICY_CHOICES,
     )
     parser.add_argument("--ec-label-depth", type=int, default=1)
+    parser.add_argument(
+        "--ec-group-weighting",
+        type=str,
+        default="structure_id",
+        choices=VALID_EC_GROUP_WEIGHTING_CHOICES,
+        help=(
+            "EC-only per-sample weighting by the number of EC-supervised pockets "
+            "in each group. Metal training is unchanged."
+        ),
+    )
     parser.add_argument("--ec-contrastive-weight", type=float, default=0.0)
     parser.add_argument("--ec-contrastive-temperature", type=float, default=0.1)
     parser.add_argument(
@@ -437,6 +464,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         unsupported_metal_policy=args.unsupported_metal_policy,
         invalid_structure_policy=args.invalid_structure_policy,
         ec_label_depth=args.ec_label_depth,
+        ec_group_weighting=args.ec_group_weighting,
         ec_contrastive_weight=args.ec_contrastive_weight,
         ec_contrastive_temperature=args.ec_contrastive_temperature,
         lr_schedule=args.lr_schedule,
@@ -468,7 +496,7 @@ def default_selection_metric_for_task(task: str, *, has_validation: bool) -> str
     if task == "metal":
         return "val_metal_balanced_acc"
     if task == "ec":
-        return "val_ec_balanced_acc"
+        return "val_ec_group_balanced_acc"
     raise ValueError(
         f"Unsupported training task {task!r}. "
         f"Expected one of: {', '.join(repr(choice) for choice in VALID_TASK_CHOICES)}."

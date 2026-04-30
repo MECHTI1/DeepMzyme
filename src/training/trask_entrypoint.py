@@ -15,7 +15,7 @@ def valid_selection_metrics_for_task(task: str) -> tuple[str, ...]:
     if task == "metal":
         return ("val_metal_balanced_acc", "val_metal_acc")
     if task == "ec":
-        return ("val_ec_balanced_acc", "val_ec_acc")
+        return ("val_ec_group_balanced_acc", "val_ec_balanced_acc", "val_ec_acc")
     raise ValueError(f"Unsupported dedicated task {task!r}.")
 
 

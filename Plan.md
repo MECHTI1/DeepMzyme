@@ -140,6 +140,7 @@ For the EC-number classification task:
 
 - The non-overlapped PinMyMetal split should be treated as mandatory for final held-out testing.
 - The exact PinMyMetal split should not be used as the final EC held-out test split if train/test structures overlap.
+- EC supervision is structure/protein/chain-level even when extraction creates multiple separated metal-pocket samples for the same structure. EC cross-entropy should use group weighting, by default at `structure_id`, so such structures are not over-counted; this does not divide by raw metal atom count and does not downweight true multinuclear pockets.
 
 For the metal-type classification task:
 

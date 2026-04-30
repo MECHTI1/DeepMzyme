@@ -8,6 +8,7 @@ from torch_geometric.loader import DataLoader
 from data_structures import GRAPH_TARGET_FIELDS, MISSING_CLASS_LABEL, PocketRecord
 
 _GRAPH_Y_METAL_FIELD, _GRAPH_Y_EC_FIELD = GRAPH_TARGET_FIELDS
+_GRAPH_EC_GROUP_ID_FIELD = "ec_group_id"
 
 
 def train_epoch(
@@ -80,6 +81,7 @@ def evaluate_epoch_with_predictions(
     ec_logits_all = []
     metal_y_all = []
     ec_y_all = []
+    ec_group_id_all = []
     total = 0.0
 
     for batch in loader:
@@ -105,6 +107,8 @@ def evaluate_epoch_with_predictions(
                 if "logits_ec" in model_outputs:
                     ec_logits_all.append(model_outputs["logits_ec"][ec_mask].cpu())
                 ec_y_all.append(ec_targets[ec_mask].cpu())
+                if hasattr(batch, _GRAPH_EC_GROUP_ID_FIELD):
+                    ec_group_id_all.append(getattr(batch, _GRAPH_EC_GROUP_ID_FIELD).view(-1)[ec_mask].cpu())
         elif "logits_ec" in model_outputs:
             ec_logits_all.append(model_outputs["logits_ec"].cpu())
 
@@ -117,6 +121,8 @@ def evaluate_epoch_with_predictions(
         result["metal_y"] = torch.cat(metal_y_all, dim=0)
     if ec_y_all:
         result["ec_y"] = torch.cat(ec_y_all, dim=0)
+    if ec_group_id_all:
+        result["ec_group_id"] = torch.cat(ec_group_id_all, dim=0)
     result["loss"] = total / max(1, len(loader))
     return result
 
