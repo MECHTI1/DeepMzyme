@@ -1,3 +1,24 @@
+# DeepMzyme status update - 2026-04-30
+
+## Colab bundle workflow status
+
+Status: FIXED for the default local bundle-build path.
+
+The non-overlapped PinMyMetal split contains real multi-metal structures. For example,
+`1cob__chain_A__EC_1.15.1.1` has two catalytic metal sites in the site-level summary:
+
+- `A_152`, `CU`
+- `A_153`, `CO`
+
+The training and Colab notebook paths use the included site-level MAHOMES summary CSVs,
+so these sites remain unambiguous for training. The generated structure-level CSV artifacts
+are metadata for inspection. In those artifacts, multi-metal structures are represented with
+semicolon-joined labels such as `Co;Cu`.
+
+`src/build_colab_bundle.py` now allows multi-metal structure-level CSV rows by default and
+offers `--strict-single-metal-structures` for users who want the previous fail-fast behavior.
+The Colab notebook default bundle filename now matches the script's default output archive.
+
 # DeepMzyme status update - 2026-04-29
 
 ## Files changed

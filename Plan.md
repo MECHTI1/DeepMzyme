@@ -53,6 +53,7 @@
 ### 5) Create a Google Colab configurable training/test set
     - Do the training model flexibile by configurable options to input screening different parameters/models, make convinent nice interface for inputs.
     - In the end make a comparison table/proffesional figure for analyse prediction results which including all selected screened variety of parametrs/differrent models of choice.
+    - Colab bundles should include the site-level MAHOMES train/test summary CSVs as the training source of truth. Structure-level CSV artifacts may contain semicolon-joined metal labels for structures with multiple catalytic metal sites; these artifacts are for inspection and should not replace site-level labels for single-label metal training.
 
 ---
 

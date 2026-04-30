@@ -44,7 +44,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--test-csv", type=Path, default=None)
     parser.add_argument("--csv-output-dir", type=Path, default=None)
     parser.add_argument("--output-bundle", type=Path, default=None)
-    parser.add_argument("--allow-multi-metal-structures", action="store_true")
+    parser.set_defaults(allow_multi_metal_structures=True)
+    parser.add_argument(
+        "--allow-multi-metal-structures",
+        action="store_true",
+        help=(
+            "Allow structure-level CSV rows to contain semicolon-joined metal labels. "
+            "This is the default for Colab bundles because training uses the included site-level summary CSVs."
+        ),
+    )
+    parser.add_argument(
+        "--strict-single-metal-structures",
+        action="store_false",
+        dest="allow_multi_metal_structures",
+        help="Fail if a generated structure-level CSV row would contain more than one metal label.",
+    )
     parser.add_argument("--ec-label-depth", type=int, default=1)
     parser.add_argument("--skip-bundle", action="store_true")
     return parser.parse_args()
@@ -158,7 +172,7 @@ def generate_structure_csv(
     output_csv: Path,
     allow_multi_metal_structures: bool,
     ec_label_depth: int,
-) -> Path:
+) -> tuple[Path, int]:
     rows = build_structure_rows(
         structure_dir=structure_dir,
         summary_csv=summary_csv,
@@ -168,7 +182,8 @@ def generate_structure_csv(
     validate_rows(rows)
     validate_rows_match_structure_dir(structure_dir=structure_dir, rows=rows)
     write_rows(output_csv, rows)
-    return output_csv
+    multi_metal_row_count = sum(1 for row in rows if ";" in row["metal_type"])
+    return output_csv, multi_metal_row_count
 
 
 def prepare_csv_artifacts(
@@ -179,16 +194,17 @@ def prepare_csv_artifacts(
     test_dir: Path,
     train_summary_csv: Path | None,
     test_summary_csv: Path | None,
-) -> tuple[Path | None, Path | None]:
+) -> tuple[Path | None, Path | None, int, int]:
     csv_output_dir = args.csv_output_dir or default_csv_output_dir(dataset_root)
     csv_output_dir.mkdir(parents=True, exist_ok=True)
 
     train_csv = args.train_csv
+    train_multi_metal_rows = 0
     if train_csv is None:
         if train_summary_csv is None:
             raise ValueError("A train summary CSV is required to generate the train CSV artifact.")
         train_csv = csv_output_dir / f"{dataset_root.name}_train.csv"
-        generate_structure_csv(
+        train_csv, train_multi_metal_rows = generate_structure_csv(
             structure_dir=train_dir,
             summary_csv=train_summary_csv,
             output_csv=train_csv,
@@ -197,18 +213,25 @@ def prepare_csv_artifacts(
         )
 
     test_csv = args.test_csv
+    test_multi_metal_rows = 0
     if test_csv is None:
         if test_summary_csv is None:
             raise ValueError("A test summary CSV is required to generate the test CSV artifact.")
         test_csv = csv_output_dir / f"{dataset_root.name}_test.csv"
-        generate_structure_csv(
+        test_csv, test_multi_metal_rows = generate_structure_csv(
             structure_dir=test_dir,
             summary_csv=test_summary_csv,
             output_csv=test_csv,
             allow_multi_metal_structures=args.allow_multi_metal_structures,
             ec_label_depth=args.ec_label_depth,
         )
-    return train_csv, test_csv
+    return train_csv, test_csv, train_multi_metal_rows, test_multi_metal_rows
+
+
+def format_multi_metal_note(row_count: int) -> str:
+    if row_count <= 0:
+        return ""
+    return f" ({row_count} multi-metal structure row(s) use semicolon-joined labels)"
 
 
 def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
@@ -247,7 +270,7 @@ def main() -> None:
     validate_site_level_summary_csv(train_summary_csv, split_name="train")
     validate_site_level_summary_csv(test_summary_csv, split_name="test")
 
-    train_csv, test_csv = prepare_csv_artifacts(
+    train_csv, test_csv, train_multi_metal_rows, test_multi_metal_rows = prepare_csv_artifacts(
         args,
         dataset_root=dataset_root,
         train_dir=train_dir,
@@ -272,9 +295,9 @@ def main() -> None:
         print(f"Verified train site-level summary CSV: {train_summary_csv}")
         print(f"Verified test site-level summary CSV: {test_summary_csv}")
         if train_csv is not None:
-            print(f"Prepared train CSV: {train_csv}")
+            print(f"Prepared train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
         if test_csv is not None:
-            print(f"Prepared test CSV: {test_csv}")
+            print(f"Prepared test CSV: {test_csv}{format_multi_metal_note(test_multi_metal_rows)}")
         return
 
     output_bundle = args.output_bundle or default_output_bundle(dataset_root)
@@ -283,9 +306,9 @@ def main() -> None:
     print(f"Verified train site-level summary CSV: {train_summary_csv}")
     print(f"Verified test site-level summary CSV: {test_summary_csv}")
     if train_csv is not None:
-        print(f"Included train CSV: {train_csv}")
+        print(f"Included train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
     if test_csv is not None:
-        print(f"Included test CSV: {test_csv}")
+        print(f"Included test CSV: {test_csv}{format_multi_metal_note(test_multi_metal_rows)}")
 
 
 if __name__ == "__main__":

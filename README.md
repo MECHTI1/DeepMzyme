@@ -26,6 +26,14 @@ Show the training CLI:
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --help
 ```
 
+Build the default Colab bundle from the trusted non-overlapped split:
+
+```bash
+PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab_bundle.py
+```
+
+The bundle includes the site-level MAHOMES summary CSVs used by training. It also includes structure-level CSV artifacts for inspection; structures with multiple catalytic metal sites are represented there with semicolon-joined metal labels such as `Co;Cu`.
+
 Example trusted-split Only-GVP metal baseline:
 
 ```bash
