@@ -109,6 +109,7 @@ class TrainConfig:
     early_esm_dropout: float = 0.2
     early_esm_raw: bool = False
     early_esm_scope: str = "all"
+    use_ring_edges: bool = False
     require_ring_edges: bool = False
     split_by: str = "pdbid"
     n_folds: int | None = None
@@ -231,6 +232,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--early-esm-dropout", type=float, default=0.2)
     parser.add_argument("--early-esm-raw", action="store_true")
     parser.add_argument("--early-esm-scope", type=str, default="all", choices=VALID_EARLY_ESM_SCOPE_CHOICES)
+    parser.add_argument(
+        "--use-ring-edges",
+        action="store_true",
+        help=(
+            "Include precomputed or generated RING interaction edges when available. "
+            "By default, graphs use radius-only residue edges."
+        ),
+    )
     parser.add_argument("--require-ring-edges", action="store_true")
     parser.add_argument("--allow-missing-esm-embeddings", action="store_true")
     parser.add_argument("--no-prepare-missing-esm-embeddings", action="store_true")
@@ -438,6 +447,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         early_esm_dropout=args.early_esm_dropout,
         early_esm_raw=args.early_esm_raw,
         early_esm_scope=args.early_esm_scope,
+        use_ring_edges=args.use_ring_edges or args.require_ring_edges or args.prepare_missing_ring_edges,
         require_ring_edges=args.require_ring_edges,
         val_fraction=args.val_fraction,
         split_by=args.split_by,

@@ -48,6 +48,7 @@ def check_training_cli_help() -> None:
         "--ec-loss-weight",
         "--ec-group-weighting",
         "--fusion-mode",
+        "--use-ring-edges",
         "--cross-attention-layers",
         "--cross-attention-heads",
         "--cross-attention-dropout",
@@ -166,6 +167,74 @@ def check_cross_attention_config() -> None:
             raise AssertionError(f"Expected {key}={expected_value!r}, got {observed_value!r}")
 
 
+def check_ring_edge_cli_config() -> None:
+    default_config = parse_args([])
+    if default_config.use_ring_edges:
+        raise AssertionError("Default training config should use radius-only edges.")
+
+    optional_config = parse_args(["--use-ring-edges"])
+    if not optional_config.use_ring_edges or optional_config.require_ring_edges:
+        raise AssertionError("Expected --use-ring-edges to enable optional RING edges without requiring them.")
+
+    required_config = parse_args(["--require-ring-edges"])
+    if not required_config.use_ring_edges or not required_config.require_ring_edges:
+        raise AssertionError("Expected --require-ring-edges to imply use_ring_edges.")
+
+    prepared_config = parse_args(["--prepare-missing-ring-edges"])
+    if not prepared_config.use_ring_edges or not prepared_config.prepare_missing_ring_edges:
+        raise AssertionError("Expected --prepare-missing-ring-edges to imply use_ring_edges.")
+
+
+def check_graph_ring_edges_are_opt_in() -> None:
+    from data_structures import EDGE_SOURCE_TO_INDEX, ResidueRecord
+    from graph.construction import pocket_to_pyg_data
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_ring_opt_in_") as tmp:
+        ring_path = Path(tmp) / "example_ringEdges"
+        ring_path.write_text(
+            "NodeId1\tNodeId2\tInteraction\tAtom1\tAtom2\n"
+            "A:1:_:ALA\tA:2:_:GLU\tHBOND:SC_SC\tCA\tCA\n",
+            encoding="utf-8",
+        )
+        pocket = PocketRecord(
+            structure_id="example",
+            pocket_id="example_A_1",
+            metal_element="ZN",
+            metal_coords=[torch.tensor([0.0, 0.0, 0.0])],
+            residues=[
+                ResidueRecord(
+                    chain_id="A",
+                    resseq=1,
+                    icode="",
+                    resname="ALA",
+                    atoms={"CA": torch.tensor([1.0, 0.0, 0.0]), "CB": torch.tensor([1.5, 0.0, 0.0])},
+                ),
+                ResidueRecord(
+                    chain_id="A",
+                    resseq=2,
+                    icode="",
+                    resname="GLU",
+                    atoms={
+                        "CA": torch.tensor([3.0, 0.0, 0.0]),
+                        "CB": torch.tensor([3.5, 0.0, 0.0]),
+                        "OE1": torch.tensor([3.5, 0.5, 0.0]),
+                        "OE2": torch.tensor([3.5, -0.5, 0.0]),
+                    },
+                ),
+            ],
+            metadata={"ring_edges_path": str(ring_path)},
+        )
+
+        default_graph = pocket_to_pyg_data(pocket, esm_dim=2)
+        ring_idx = EDGE_SOURCE_TO_INDEX["ring"]
+        if int((default_graph.edge_source_type[:, ring_idx] > 0.5).sum().item()) != 0:
+            raise AssertionError("Default graph construction used RING edges; expected radius-only.")
+
+        ring_graph = pocket_to_pyg_data(pocket, esm_dim=2, use_ring_edges=True)
+        if int((ring_graph.edge_source_type[:, ring_idx] > 0.5).sum().item()) == 0:
+            raise AssertionError("--use-ring-edges path did not include available RING edges.")
+
+
 def check_colab_notebook_sweep_source() -> None:
     notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
     nb = json.loads(notebook_path.read_text(encoding="utf-8"))
@@ -196,6 +265,7 @@ def check_colab_notebook_sweep_source() -> None:
         "RING_EDGE_OUTPUT_DIR",
         "PRECOMPUTED_RING_EDGES_DIR",
         "RING_EDGES_MODES",
+        "'use_ring_edges'",
         "itertools.product",
         "MAX_SWEEP_RUNS",
         "STOP_ON_FIRST_FAILURE",
@@ -210,6 +280,7 @@ def check_colab_notebook_sweep_source() -> None:
         "--esm-embeddings-dir",
         "--allow-missing-esm-embeddings",
         "--no-prepare-missing-esm-embeddings",
+        "--use-ring-edges",
         "--require-ring-edges",
         "--prepare-missing-ring-edges",
         "'selected_checkpoint'",
@@ -232,6 +303,155 @@ def check_colab_notebook_sweep_source() -> None:
         raise AssertionError("Colab notebook default MODEL_PRESET no longer preserves Only-GVP.")
     if "NODE_FEATURE_SET = 'conservative'  #@param ['conservative', 'expanded']" in source:
         raise AssertionError("Colab notebook exposes node feature sets not accepted by the current CLI.")
+
+
+def check_colab_generated_training_commands_parse() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    command_builder_source = "".join(nb["cells"][16]["source"])
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
+        tmp_root = Path(tmp)
+        runs_dir = tmp_root / "runs"
+        drive_data_dir = tmp_root / "drive" / "DeepMzyme_Data"
+        namespace = {
+            "repo_dir": REPO_ROOT,
+            "drive_data_dir": drive_data_dir,
+            "local_runs_dir": runs_dir,
+            "train_dir": tmp_root / "dataset" / "train",
+            "test_dir": tmp_root / "dataset" / "test",
+            "train_csv": tmp_root / "dataset" / "train" / "site_summary.csv",
+            "test_csv": tmp_root / "dataset" / "test" / "site_summary.csv",
+            "display": lambda *_args, **_kwargs: None,
+            "TASK_MODE": "metal_6_class",
+            "MODEL_PRESET": "Only-GVP",
+            "EPOCHS": 1,
+            "BATCH_SIZE": 2,
+            "LEARNING_RATE": 3e-4,
+            "WEIGHT_DECAY": 1e-4,
+            "SEED": 42,
+            "VAL_FRACTION": 0.2,
+            "DEVICE": "cpu",
+            "RUN_NAME": "",
+            "EC_LABEL_DEPTH": 1,
+            "EC_CONTRASTIVE_WEIGHT": 0.0,
+            "NODE_FEATURE_SET": "conservative",
+            "SPLIT_BY": "pdbid",
+            "LR_SCHEDULE": "fixed",
+            "LR_STEP_SIZE": 10,
+            "LR_DECAY_GAMMA": 0.5,
+            "CROSS_ATTENTION_LAYERS": [1],
+            "CROSS_ATTENTION_HEADS": [4],
+            "CROSS_ATTENTION_DROPOUT": 0.1,
+            "CROSS_ATTENTION_NEIGHBORHOOD": "all",
+            "CROSS_ATTENTION_BIDIRECTIONAL": False,
+            "SINGLE_CROSS_ATTENTION_LAYERS": 1,
+            "SINGLE_CROSS_ATTENTION_HEADS": 4,
+            "USE_ESM_EMBEDDINGS": True,
+            "ESM_EMBEDDINGS_DIR": str(drive_data_dir / "embeddings"),
+            "PREPARE_MISSING_ESM_EMBEDDINGS": False,
+            "ALLOW_MISSING_ESM_EMBEDDINGS": False,
+            "ALLOW_MISSING_EXTERNAL_FEATURES": True,
+            "RING_EDGES_MODE": "radius_only",
+            "RING_EXE_PATH": "DeepMzyme_Data/ring-4.0/out/bin/ring",
+            "RING_EDGE_OUTPUT_DIR": str(drive_data_dir / "embeddings"),
+            "PRECOMPUTED_RING_EDGES_DIR": str(drive_data_dir / "precomputed_ring_edges"),
+            "REQUIRE_RING_EDGES": False,
+            "PREPARE_MISSING_RING_EDGES": False,
+            "RUN_HELD_OUT_TEST_EVAL": True,
+            "TASK_MODES": ["metal_6_class"],
+            "MODEL_PRESETS": ["Only-GVP"],
+            "RING_EDGES_MODES": ["radius_only"],
+            "LEARNING_RATES": [3e-4],
+            "WEIGHT_DECAYS": [1e-4],
+            "BATCH_SIZES": [2],
+            "SEEDS": [42],
+            "NODE_FEATURE_SETS": ["conservative"],
+            "EC_LABEL_DEPTHS": [1],
+            "EC_CONTRASTIVE_WEIGHTS": [0.0],
+            "LR_SCHEDULES": ["fixed"],
+            "MAX_SWEEP_RUNS": 24,
+        }
+        namespace["task_map"] = {
+            "metal_6_class": ("metal", "val_metal_balanced_acc"),
+            "metal_collapsed4_metric": ("metal", "val_metal_collapsed4_balanced_acc"),
+            "ec_prediction": ("ec", "val_ec_group_balanced_acc"),
+        }
+        namespace["preset_map"] = {
+            "Only-GVP": {"model_architecture": "only_gvp", "uses_esm": False},
+            "Only-ESM": {"model_architecture": "only_esm", "uses_esm": True},
+            "GVP + late fusion": {"model_architecture": "gvp", "fusion_mode": "late_fusion", "uses_esm": True},
+            "GVP + early fusion": {
+                "model_architecture": "gvp",
+                "fusion_mode": "early_fusion",
+                "early_esm_dim": 32,
+                "early_esm_dropout": 0.2,
+                "uses_esm": True,
+            },
+            "GVP + cross-modal attention": {
+                "model_architecture": "gvp",
+                "fusion_mode": "cross_modal_attention",
+                "uses_esm": True,
+            },
+        }
+
+        exec(command_builder_source, namespace)
+
+        def assert_training_command_parses(cmd: list[object]) -> None:
+            parts = [str(part) for part in cmd]
+            if parts[1] != str(REPO_ROOT / "src" / "train.py"):
+                raise AssertionError(f"Notebook command used an unexpected training entry point: {parts[:2]}")
+            config = parse_args(parts[2:])
+            validate_training_configuration(config)
+
+        default_cmd = namespace["train_cmd"]
+        assert_training_command_parses(default_cmd)
+        if "--use-ring-edges" in default_cmd:
+            raise AssertionError("Notebook radius_only command unexpectedly enables RING edges.")
+
+        config = namespace["build_run_config"](
+            task_mode="metal_6_class",
+            model_preset="GVP + cross-modal attention",
+            ring_edges_mode="radius_plus_precomputed_ring",
+            learning_rate=3e-4,
+            weight_decay=1e-4,
+            batch_size=2,
+            seed=42,
+            node_feature_set="conservative",
+            ec_label_depth=1,
+            ec_contrastive_weight=0.0,
+            cross_attention_layers=2,
+            cross_attention_heads=4,
+            lr_schedule="fixed",
+        )
+        ring_cmd = namespace["build_train_command"](config)
+        assert_training_command_parses(ring_cmd)
+        if "--use-ring-edges" not in ring_cmd:
+            raise AssertionError("Notebook precomputed-RING command did not pass --use-ring-edges.")
+        if "--cross-attention-layers" not in ring_cmd:
+            raise AssertionError("Notebook cross-modal command did not pass cross-attention flags.")
+
+        namespace["PREPARE_MISSING_RING_EDGES"] = True
+        config = namespace["build_run_config"](
+            task_mode="metal_6_class",
+            model_preset="Only-GVP",
+            ring_edges_mode="generate_missing_ring",
+            learning_rate=3e-4,
+            weight_decay=1e-4,
+            batch_size=2,
+            seed=42,
+            node_feature_set="conservative",
+            ec_label_depth=1,
+            ec_contrastive_weight=0.0,
+            cross_attention_layers=1,
+            cross_attention_heads=4,
+            lr_schedule="fixed",
+        )
+        generate_cmd = namespace["build_train_command"](config)
+        assert_training_command_parses(generate_cmd)
+        for expected_flag in ("--use-ring-edges", "--prepare-missing-ring-edges"):
+            if expected_flag not in generate_cmd:
+                raise AssertionError(f"Notebook generated-RING command is missing {expected_flag}.")
 
 
 def check_ring_environment_overrides() -> None:
@@ -269,6 +489,7 @@ def check_ring_environment_overrides() -> None:
                 esm_embeddings_dir=None,
                 require_esm_embeddings=False,
                 prepare_missing_esm_embeddings=False,
+                use_ring_edges=False,
                 require_ring_edges=False,
                 prepare_missing_ring_edges=False,
             )
@@ -488,7 +709,10 @@ def main() -> int:
         check_loss_weight_validation,
         check_ec_group_weighting_config,
         check_cross_attention_config,
+        check_ring_edge_cli_config,
+        check_graph_ring_edges_are_opt_in,
         check_colab_notebook_sweep_source,
+        check_colab_generated_training_commands_parse,
         check_ring_environment_overrides,
         check_ec_group_weights_sum_per_group,
         check_ec_group_metric_aggregation,

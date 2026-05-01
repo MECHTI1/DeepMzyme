@@ -82,14 +82,19 @@ def compute_shell_roles(
     pocket: PocketRecord,
     first_shell_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
     second_shell_cutoff: float = 4.5,
+    use_ring_edges: bool = True,
 ) -> list[tuple[bool, bool]]:
     first_shell_flags = _compute_first_shell_flags(
         pocket,
         first_shell_cutoff=first_shell_cutoff,
     )
-    second_shell_flags = _compute_second_shell_flags_from_ring(
-        pocket,
-        first_shell_flags=first_shell_flags,
+    second_shell_flags = (
+        _compute_second_shell_flags_from_ring(
+            pocket,
+            first_shell_flags=first_shell_flags,
+        )
+        if use_ring_edges
+        else None
     )
     if second_shell_flags is None:
         second_shell_flags = _compute_second_shell_flags_by_centroid(
@@ -105,11 +110,13 @@ def annotate_shell_roles(
     pocket: PocketRecord,
     first_shell_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
     second_shell_cutoff: float = 4.5,
+    use_ring_edges: bool = True,
 ) -> None:
     shell_roles = compute_shell_roles(
         pocket,
         first_shell_cutoff=first_shell_cutoff,
         second_shell_cutoff=second_shell_cutoff,
+        use_ring_edges=use_ring_edges,
     )
     for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
         residue.is_first_shell = is_first_shell

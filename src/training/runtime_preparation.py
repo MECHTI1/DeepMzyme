@@ -191,6 +191,7 @@ def prepare_runtime_inputs(
     esm_embeddings_dir: str | Path | None,
     require_esm_embeddings: bool,
     prepare_missing_esm_embeddings: bool,
+    use_ring_edges: bool = False,
     require_ring_edges: bool,
     prepare_missing_ring_edges: bool,
     external_features_root_dir: str | Path | None = None,
@@ -259,7 +260,7 @@ def prepare_runtime_inputs(
             _raise_on_failed_generation(summary=summary, feature_name="updated external features")
             report["generated_updated_external_feature_files"] = len(list(summary.get("saved_files", [])))
 
-    should_check_ring_edges = require_ring_edges or prepare_missing_ring_edges
+    should_check_ring_edges = use_ring_edges or require_ring_edges or prepare_missing_ring_edges
     should_prepare_ring_edges = prepare_missing_ring_edges
     if should_check_ring_edges:
         missing_ring_structures = discover_missing_ring_edges(structure_files)
@@ -269,7 +270,7 @@ def prepare_runtime_inputs(
                 summary = _generate_missing_ring_edges(missing_ring_structures, ring_edges_output_dir)
                 _raise_on_failed_generation(summary=summary, feature_name="RING edge files")
                 report["generated_ring_edge_files"] = len(list(summary.get("saved_files", [])))
-            else:
+            elif require_ring_edges:
                 sample = [str(path) for path in missing_ring_structures[:3]]
                 raise ValueError(
                     "RING edge files are required but missing for "

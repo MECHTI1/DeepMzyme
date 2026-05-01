@@ -26,6 +26,7 @@ def validate_graphs(
                 pocket,
                 esm_dim=config.esm_dim,
                 edge_radius=config.edge_radius,
+                use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 node_feature_set=config.node_feature_set,
             )

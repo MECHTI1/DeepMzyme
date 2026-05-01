@@ -49,10 +49,12 @@ def pocket_to_pyg_data(
     pocket: PocketRecord,
     esm_dim: int,
     edge_radius: float = DEFAULT_EDGE_RADIUS,
+    use_ring_edges: bool = False,
     require_ring_edges: bool = False,
     node_feature_set: str = "conservative",
 ) -> Data:
-    shell_roles = compute_shell_roles(pocket)
+    effective_use_ring_edges = bool(use_ring_edges or require_ring_edges)
+    shell_roles = compute_shell_roles(pocket, use_ring_edges=effective_use_ring_edges)
     v_net = compute_net_ligand_vector(pocket)
     node_features = stack_node_features(
         [
@@ -70,10 +72,13 @@ def pocket_to_pyg_data(
     )
 
     residue_edge_records = build_radius_edge_records_from_residues(pocket, edge_radius)
-    ring_residue_edge_records, metal_edge_records = build_ring_edge_records(
-        pocket,
-        require_ring_edges=require_ring_edges,
-    )
+    if effective_use_ring_edges:
+        ring_residue_edge_records, metal_edge_records = build_ring_edge_records(
+            pocket,
+            require_ring_edges=require_ring_edges,
+        )
+    else:
+        ring_residue_edge_records, metal_edge_records = [], []
     residue_edge_records.extend(ring_residue_edge_records)
     residue_edge_records = merge_edge_records(residue_edge_records)
     if not residue_edge_records:

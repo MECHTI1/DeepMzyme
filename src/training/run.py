@@ -669,6 +669,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             external_features_root_dir=config.external_features_root_dir,
             external_feature_source=config.external_feature_source,
             require_external_features=config.require_external_features,
+            use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             prepare_missing_ring_edges=config.prepare_missing_ring_edges,
         )
@@ -754,6 +755,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             split.train_pockets,
             esm_dim=config.esm_dim,
             edge_radius=config.edge_radius,
+            use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
         )
@@ -762,6 +764,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 split.val_pockets,
                 esm_dim=config.esm_dim,
                 edge_radius=config.edge_radius,
+                use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 node_feature_set=config.node_feature_set,
             )
@@ -808,6 +811,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 esm_dim=config.esm_dim,
                 edge_radius=config.edge_radius,
                 normalization_stats=normalization_stats,
+                use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 precomputed_data=train_graphs,
                 node_feature_set=config.node_feature_set,
@@ -823,6 +827,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                     esm_dim=config.esm_dim,
                     edge_radius=config.edge_radius,
                     normalization_stats=normalization_stats,
+                    use_ring_edges=config.use_ring_edges,
                     require_ring_edges=config.require_ring_edges,
                     precomputed_data=val_graphs,
                     node_feature_set=config.node_feature_set,
@@ -1068,6 +1073,7 @@ def evaluate_held_out_test_split(
             test_load_result.pockets,
             esm_dim=config.esm_dim,
             edge_radius=config.edge_radius,
+            use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
         )
@@ -1077,6 +1083,7 @@ def evaluate_held_out_test_split(
                 esm_dim=config.esm_dim,
                 edge_radius=config.edge_radius,
                 normalization_stats=prepared.normalization_stats,
+                use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 precomputed_data=test_graphs,
                 node_feature_set=config.node_feature_set,
