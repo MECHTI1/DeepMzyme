@@ -308,7 +308,16 @@ def check_colab_notebook_sweep_source() -> None:
 def check_colab_generated_training_commands_parse() -> None:
     notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
     nb = json.loads(notebook_path.read_text(encoding="utf-8"))
-    command_builder_source = "".join(nb["cells"][16]["source"])
+    command_builder_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code" and "def build_train_command" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if command_builder_source is None:
+        raise AssertionError("Could not find the Colab command-builder cell.")
 
     with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
         tmp_root = Path(tmp)
