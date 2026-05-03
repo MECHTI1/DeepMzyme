@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from data_structures import PocketRecord
+from graph.ring_edges import default_ring_output_dir
+from project_paths import resolve_ring_features_dir
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.feature_paths import resolve_runtime_feature_paths
@@ -68,6 +70,7 @@ def load_labeled_pockets_with_report_from_dir(
     esm_dim: int = DEFAULT_ESMC_EMBED_DIM,
     esm_embeddings_dir: str | Path | None = None,
     require_esm_embeddings: bool = True,
+    ring_features_dir: str | Path | None = None,
     external_features_root_dir: str | Path | None = None,
     external_feature_source: str = "auto",
     require_external_features: bool = True,
@@ -89,6 +92,11 @@ def load_labeled_pockets_with_report_from_dir(
         external_features_root_dir=external_features_root_dir,
         external_feature_source=external_feature_source,
     )
+    resolved_ring_features_dir = (
+        resolve_ring_features_dir(str(ring_features_dir), create=False)
+        if ring_features_dir is not None
+        else default_ring_output_dir()
+    )
 
     raw_pockets: List[PocketRecord] = []
     feature_fallbacks: List[Dict[str, str]] = []
@@ -104,6 +112,7 @@ def load_labeled_pockets_with_report_from_dir(
                 esm_dim=esm_dim,
                 embeddings_dir=embeddings_dir,
                 require_esm_embeddings=require_esm_embeddings,
+                ring_features_dir=resolved_ring_features_dir,
                 feature_root_dir=feature_root_dir,
                 external_feature_source=external_feature_source,
                 require_external_features=require_external_features,
@@ -193,6 +202,7 @@ def load_training_pockets_with_report_from_dir(
     esm_dim: int = DEFAULT_ESMC_EMBED_DIM,
     esm_embeddings_dir: str | Path | None = None,
     require_esm_embeddings: bool = True,
+    ring_features_dir: str | Path | None = None,
     external_features_root_dir: str | Path | None = None,
     external_feature_source: str = "auto",
     require_external_features: bool = True,
@@ -211,6 +221,7 @@ def load_training_pockets_with_report_from_dir(
         esm_dim=esm_dim,
         esm_embeddings_dir=esm_embeddings_dir,
         require_esm_embeddings=require_esm_embeddings,
+        ring_features_dir=ring_features_dir,
         external_features_root_dir=external_features_root_dir,
         external_feature_source=external_feature_source,
         require_external_features=require_external_features,
@@ -230,6 +241,7 @@ def load_smoke_test_pockets_from_dir(
     esm_dim: int = DEFAULT_ESMC_EMBED_DIM,
     esm_embeddings_dir: str | Path | None = None,
     require_esm_embeddings: bool = False,
+    ring_features_dir: str | Path | None = None,
     external_features_root_dir: str | Path | None = None,
     external_feature_source: str = "auto",
     require_external_features: bool = False,
@@ -248,6 +260,7 @@ def load_smoke_test_pockets_from_dir(
         esm_dim=esm_dim,
         esm_embeddings_dir=esm_embeddings_dir,
         require_esm_embeddings=require_esm_embeddings,
+        ring_features_dir=ring_features_dir,
         external_features_root_dir=external_features_root_dir,
         external_feature_source=external_feature_source,
         require_external_features=require_external_features,

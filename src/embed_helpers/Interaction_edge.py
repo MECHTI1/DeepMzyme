@@ -9,11 +9,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from project_paths import PROJECT_ROOT as REPO_ROOT, resolve_embeddings_dir
+from project_paths import PROJECT_ROOT as REPO_ROOT, resolve_ring_features_dir
 
 
 DEFAULT_RING_EXE = Path("DeepMzyme_Data") / "ring-4.0" / "out" / "bin" / "ring"
-DIR_RESULTS = resolve_embeddings_dir(os.getenv("EMBEDDINGS_DIR"))
+DIR_RESULTS = resolve_ring_features_dir(
+    os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
+)
 
 
 def resolve_ring_path(path: str | Path) -> Path:

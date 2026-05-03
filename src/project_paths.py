@@ -12,6 +12,7 @@ COLAB_BUNDLES_DIR_NAME = "DeepMzyme_Colab_Bundles"
 DATA_DIR = PROJECT_ROOT / DATA_DIR_NAME
 COLAB_BUNDLES_DIR = DATA_DIR / COLAB_BUNDLES_DIR_NAME
 EMBEDDINGS_DIR = DATA_DIR / "embeddings"
+RING_FEATURES_DIR = DATA_DIR / "RING_features"
 UPDATED_FEATURE_EXTRACTION_DIR = DATA_DIR / "updated_feature_extraction"
 RUNS_DIR = DATA_DIR / "training_runs"
 MEDIA_DATA_ROOT = Path(os.getenv(MEDIA_DATA_ROOT_ENV, "/media/Data")).expanduser()
@@ -29,6 +30,10 @@ CATALYTIC_ONLY_SUMMARY_CSV = MAHOMES_SUMMARY_DIR / "final_data_summarazing_table
 
 def get_default_embeddings_dir() -> Path:
     return EMBEDDINGS_DIR
+
+
+def get_default_ring_features_dir() -> Path:
+    return RING_FEATURES_DIR
 
 
 def get_default_updated_feature_extraction_dir() -> Path:
@@ -60,6 +65,14 @@ def resolve_embeddings_dir(configured_dir: str | None, create: bool = True) -> P
     return _resolve_project_dir(
         configured_dir=configured_dir,
         default_dir=get_default_embeddings_dir(),
+        create=create,
+    )
+
+
+def resolve_ring_features_dir(configured_dir: str | None, create: bool = True) -> Path:
+    return _resolve_project_dir(
+        configured_dir=configured_dir,
+        default_dir=get_default_ring_features_dir(),
         create=create,
     )
 

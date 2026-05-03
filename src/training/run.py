@@ -666,6 +666,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             esm_embeddings_dir=config.esm_embeddings_dir,
             require_esm_embeddings=config.require_esm_embeddings,
             prepare_missing_esm_embeddings=config.prepare_missing_esm_embeddings,
+            ring_features_dir=config.ring_features_dir,
             external_features_root_dir=config.external_features_root_dir,
             external_feature_source=config.external_feature_source,
             require_external_features=config.require_external_features,
@@ -673,13 +674,32 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             require_ring_edges=config.require_ring_edges,
             prepare_missing_ring_edges=config.prepare_missing_ring_edges,
         )
+        test_runtime_preparation_report = None
+        if config.run_test_eval and config.test_structure_dir is not None:
+            test_runtime_preparation_report = prepare_runtime_inputs(
+                structure_dir=config.test_structure_dir,
+                esm_embeddings_dir=config.esm_embeddings_dir,
+                require_esm_embeddings=config.require_esm_embeddings,
+                prepare_missing_esm_embeddings=config.prepare_missing_esm_embeddings,
+                ring_features_dir=config.ring_features_dir,
+                external_features_root_dir=config.external_features_root_dir,
+                external_feature_source=config.external_feature_source,
+                require_external_features=config.require_external_features,
+                use_ring_edges=config.use_ring_edges,
+                require_ring_edges=config.require_ring_edges,
+                prepare_missing_ring_edges=config.prepare_missing_ring_edges,
+            )
         save_json(
             run_dir / "prepare_status.json",
             prepare_status_payload(
                 stage="runtime_preparation",
                 status="completed",
                 config_payload=config_payload,
-                extra={"runtime_preparation": runtime_preparation_report},
+                extra={
+                    "runtime_preparation": runtime_preparation_report,
+                    "train_runtime_preparation": runtime_preparation_report,
+                    "test_runtime_preparation": test_runtime_preparation_report,
+                },
             ),
         )
         load_result = load_training_pockets_with_report_from_dir(
@@ -690,6 +710,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             esm_dim=config.esm_dim,
             esm_embeddings_dir=config.esm_embeddings_dir,
             require_esm_embeddings=config.require_esm_embeddings,
+            ring_features_dir=config.ring_features_dir,
             external_features_root_dir=config.external_features_root_dir,
             external_feature_source=config.external_feature_source,
             require_external_features=config.require_external_features,
@@ -1056,6 +1077,7 @@ def evaluate_held_out_test_split(
             esm_dim=config.esm_dim,
             esm_embeddings_dir=config.esm_embeddings_dir,
             require_esm_embeddings=config.require_esm_embeddings,
+            ring_features_dir=config.ring_features_dir,
             external_features_root_dir=config.external_features_root_dir,
             external_feature_source=config.external_feature_source,
             require_external_features=config.require_external_features,

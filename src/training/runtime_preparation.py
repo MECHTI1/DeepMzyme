@@ -5,8 +5,8 @@ import os
 from pathlib import Path
 from typing import Any, Sequence
 
-from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_path_candidates
-from project_paths import resolve_embeddings_dir
+from graph.ring_edges import ring_edges_output_path, ring_edges_path_candidates
+from project_paths import resolve_embeddings_dir, resolve_ring_features_dir
 from training.esm_feature_loading import embedding_path_candidates
 from training.feature_paths import resolve_external_feature_root_dir
 from training.structure_loading import find_structure_files
@@ -16,13 +16,13 @@ def _structure_has_esm_embedding(structure_path: Path, embeddings_dir: Path) -> 
     return any(candidate.is_file() for candidate in embedding_path_candidates(embeddings_dir, structure_path))
 
 
-def _structure_has_ring_edges(structure_path: Path) -> bool:
+def _structure_has_ring_edges(structure_path: Path, ring_features_dir: Path) -> bool:
     return any(
         candidate.is_file()
         for candidate in ring_edges_path_candidates(
             structure_id=structure_path.stem,
             source_path=str(structure_path),
-            expected_path=str(canonical_ring_edges_output_path(structure_path)),
+            expected_path=str(ring_edges_output_path(ring_features_dir, structure_path)),
         )
     )
 
@@ -76,8 +76,12 @@ def discover_missing_esm_embeddings(
     return [structure_path for structure_path in structure_files if not _structure_has_esm_embedding(structure_path, embeddings_dir)]
 
 
-def discover_missing_ring_edges(structure_files: Sequence[Path]) -> list[Path]:
-    return [structure_path for structure_path in structure_files if not _structure_has_ring_edges(structure_path)]
+def discover_missing_ring_edges(structure_files: Sequence[Path], ring_features_dir: Path) -> list[Path]:
+    return [
+        structure_path
+        for structure_path in structure_files
+        if not _structure_has_ring_edges(structure_path, ring_features_dir)
+    ]
 
 
 def discover_missing_updated_external_features(
@@ -194,6 +198,7 @@ def prepare_runtime_inputs(
     use_ring_edges: bool = False,
     require_ring_edges: bool,
     prepare_missing_ring_edges: bool,
+    ring_features_dir: str | Path | None = None,
     external_features_root_dir: str | Path | None = None,
     external_feature_source: str = "auto",
     require_external_features: bool = True,
@@ -204,11 +209,15 @@ def prepare_runtime_inputs(
         str(esm_embeddings_dir) if esm_embeddings_dir is not None else None,
         create=True,
     )
-    configured_ring_edges_output_dir = os.getenv("EMBEDDINGS_DIR")
+    configured_ring_features_dir = (
+        str(ring_features_dir)
+        if ring_features_dir is not None
+        else os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
+    )
     ring_edges_output_dir = (
-        resolve_embeddings_dir(configured_ring_edges_output_dir, create=True)
-        if configured_ring_edges_output_dir
-        else embeddings_dir
+        resolve_ring_features_dir(configured_ring_features_dir, create=True)
+        if configured_ring_features_dir
+        else resolve_ring_features_dir(None, create=True)
     )
     resolved_external_feature_root_dir = resolve_external_feature_root_dir(
         structure_dir=structure_dir,
@@ -260,10 +269,10 @@ def prepare_runtime_inputs(
             _raise_on_failed_generation(summary=summary, feature_name="updated external features")
             report["generated_updated_external_feature_files"] = len(list(summary.get("saved_files", [])))
 
-    should_check_ring_edges = use_ring_edges or require_ring_edges or prepare_missing_ring_edges
-    should_prepare_ring_edges = prepare_missing_ring_edges
+    should_check_ring_edges = use_ring_edges or require_ring_edges
+    should_prepare_ring_edges = should_check_ring_edges and prepare_missing_ring_edges
     if should_check_ring_edges:
-        missing_ring_structures = discover_missing_ring_edges(structure_files)
+        missing_ring_structures = discover_missing_ring_edges(structure_files, ring_edges_output_dir)
         report["missing_ring_edge_structures_before"] = len(missing_ring_structures)
         if missing_ring_structures:
             if should_prepare_ring_edges:

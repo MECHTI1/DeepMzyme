@@ -171,18 +171,42 @@ def check_ring_edge_cli_config() -> None:
     default_config = parse_args([])
     if default_config.use_ring_edges:
         raise AssertionError("Default training config should use radius-only edges.")
+    if not default_config.prepare_missing_ring_edges:
+        raise AssertionError("Default training config should prepare missing RING edges when RING is enabled.")
 
     optional_config = parse_args(["--use-ring-edges"])
-    if not optional_config.use_ring_edges or optional_config.require_ring_edges:
+    if (
+        not optional_config.use_ring_edges
+        or optional_config.require_ring_edges
+        or not optional_config.prepare_missing_ring_edges
+    ):
         raise AssertionError("Expected --use-ring-edges to enable optional RING edges without requiring them.")
 
     required_config = parse_args(["--require-ring-edges"])
-    if not required_config.use_ring_edges or not required_config.require_ring_edges:
+    if (
+        not required_config.use_ring_edges
+        or not required_config.require_ring_edges
+        or not required_config.prepare_missing_ring_edges
+    ):
         raise AssertionError("Expected --require-ring-edges to imply use_ring_edges.")
 
     prepared_config = parse_args(["--prepare-missing-ring-edges"])
     if not prepared_config.use_ring_edges or not prepared_config.prepare_missing_ring_edges:
         raise AssertionError("Expected --prepare-missing-ring-edges to imply use_ring_edges.")
+
+    disabled_prepare_config = parse_args(["--use-ring-edges", "--no-prepare-missing-ring-edges"])
+    if not disabled_prepare_config.use_ring_edges or disabled_prepare_config.prepare_missing_ring_edges:
+        raise AssertionError("Expected --no-prepare-missing-ring-edges to disable automatic RING generation.")
+
+
+def check_only_gvp_does_not_require_esm() -> None:
+    only_gvp_config = parse_args(["--model-architecture", "only_gvp"])
+    if only_gvp_config.require_esm_embeddings or only_gvp_config.use_esm_branch:
+        raise AssertionError("Only-GVP runs should not require or generate ESM embeddings.")
+
+    esm_config = parse_args(["--model-architecture", "only_esm"])
+    if not esm_config.require_esm_embeddings or not esm_config.use_esm_branch:
+        raise AssertionError("Only-ESM runs should require ESM embeddings by default.")
 
 
 def check_graph_ring_edges_are_opt_in() -> None:
@@ -719,6 +743,7 @@ def main() -> int:
         check_ec_group_weighting_config,
         check_cross_attention_config,
         check_ring_edge_cli_config,
+        check_only_gvp_does_not_require_esm,
         check_graph_ring_edges_are_opt_in,
         check_colab_notebook_sweep_source,
         check_colab_generated_training_commands_parse,

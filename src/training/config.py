@@ -66,6 +66,7 @@ class TrainConfig:
     structure_dir: Path = DEFAULT_STRUCTURE_DIR
     summary_csv: Path = DEFAULT_TRAIN_SUMMARY_CSV
     esm_embeddings_dir: str | None = None
+    ring_features_dir: str | None = None
     external_features_root_dir: str | None = None
     external_feature_source: str = "auto"
     runs_dir: str | None = None
@@ -131,7 +132,7 @@ class TrainConfig:
     require_esm_embeddings: bool = True
     prepare_missing_esm_embeddings: bool = True
     require_external_features: bool = True
-    prepare_missing_ring_edges: bool = False
+    prepare_missing_ring_edges: bool = True
     unsupported_metal_policy: str = "error"
     invalid_structure_policy: str = "skip"
     ec_label_depth: int = 1
@@ -152,6 +153,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--structure-dir", type=Path, default=DEFAULT_STRUCTURE_DIR)
     parser.add_argument("--summary-csv", type=Path, default=DEFAULT_TRAIN_SUMMARY_CSV)
     parser.add_argument("--esm-embeddings-dir", type=str, default=None)
+    parser.add_argument("--ring-features-dir", type=str, default=None)
     parser.add_argument("--external-features-root-dir", type=str, default=None)
     parser.add_argument(
         "--external-feature-source",
@@ -245,6 +247,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-prepare-missing-esm-embeddings", action="store_true")
     parser.add_argument("--allow-missing-external-features", action="store_true")
     parser.add_argument("--prepare-missing-ring-edges", action="store_true")
+    parser.add_argument(
+        "--no-prepare-missing-ring-edges",
+        action="store_true",
+        help=(
+            "Do not generate missing RING edge files during preflight. "
+            "With --use-ring-edges or --require-ring-edges, missing files will be skipped or fail instead."
+        ),
+    )
     parser.add_argument("--lr-schedule", type=str, default="fixed", choices=VALID_LR_SCHEDULE_CHOICES)
     parser.add_argument("--lr-step-size", type=int, default=0)
     parser.add_argument("--lr-decay-gamma", type=float, default=0.5)
@@ -402,10 +412,12 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
             args.task,
             has_validation=args.val_fraction > 0.0 or args.n_folds is not None,
         )
+    model_uses_esm_inputs = args.model_architecture != "only_gvp"
     return TrainConfig(
         structure_dir=args.structure_dir,
         summary_csv=args.summary_csv,
         esm_embeddings_dir=args.esm_embeddings_dir,
+        ring_features_dir=args.ring_features_dir,
         external_features_root_dir=args.external_features_root_dir,
         external_feature_source=args.external_feature_source,
         runs_dir=args.runs_dir,
@@ -435,7 +447,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
         node_feature_set=args.node_feature_set,
-        use_esm_branch=not args.disable_esm_branch,
+        use_esm_branch=model_uses_esm_inputs and not args.disable_esm_branch,
         fusion_mode=args.fusion_mode,
         cross_attention_layers=args.cross_attention_layers,
         cross_attention_heads=args.cross_attention_heads,
@@ -467,10 +479,10 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         metal_loss_function=args.metal_loss_function,
         metal_focal_gamma=args.metal_focal_gamma,
         metal_label_smoothing=args.metal_label_smoothing,
-        require_esm_embeddings=not args.allow_missing_esm_embeddings,
+        require_esm_embeddings=model_uses_esm_inputs and not args.allow_missing_esm_embeddings,
         prepare_missing_esm_embeddings=not args.no_prepare_missing_esm_embeddings,
         require_external_features=not args.allow_missing_external_features,
-        prepare_missing_ring_edges=args.prepare_missing_ring_edges,
+        prepare_missing_ring_edges=args.prepare_missing_ring_edges or not args.no_prepare_missing_ring_edges,
         unsupported_metal_policy=args.unsupported_metal_policy,
         invalid_structure_policy=args.invalid_structure_policy,
         ec_label_depth=args.ec_label_depth,

@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from data_structures import PocketRecord
-from graph.ring_edges import canonical_ring_edges_output_path
+from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_output_path
 from graph.structure_parsing import extract_metal_pockets_from_structure, parse_structure_file
 from label_schemes import map_site_metal_symbols
 from training.feature_sources import (
@@ -81,6 +81,7 @@ def load_structure_pockets(
     esm_dim: int,
     embeddings_dir: Path,
     require_esm_embeddings: bool,
+    ring_features_dir: Path | None = None,
     feature_root_dir: Path,
     external_feature_source: str,
     require_external_features: bool,
@@ -117,9 +118,14 @@ def load_structure_pockets(
     kept_pockets: list[PocketRecord] = []
     for pocket in extracted_pockets:
         pocket.metadata["source_path"] = str(structure_path)
+        expected_ring_path = (
+            ring_edges_output_path(ring_features_dir, structure_path)
+            if ring_features_dir is not None
+            else canonical_ring_edges_output_path(structure_path)
+        )
         pocket.metadata.setdefault(
             "ring_edges_expected_path",
-            str(canonical_ring_edges_output_path(structure_path)),
+            str(expected_ring_path),
         )
         try:
             attach_structure_features_to_pocket(

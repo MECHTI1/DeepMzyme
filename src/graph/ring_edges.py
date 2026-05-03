@@ -8,16 +8,16 @@ import torch
 from torch import Tensor
 
 from data_structures import PocketRecord, ResidueRecord
-from project_paths import get_default_embeddings_dir, resolve_embeddings_dir
+from project_paths import get_default_ring_features_dir, resolve_ring_features_dir
 
 
-DEFAULT_RING_OUTPUT_DIR = get_default_embeddings_dir()
+DEFAULT_RING_OUTPUT_DIR = get_default_ring_features_dir()
 
 
 def default_ring_output_dir() -> Path:
-    configured_dir = os.getenv("EMBEDDINGS_DIR")
+    configured_dir = os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
     if configured_dir:
-        return resolve_embeddings_dir(configured_dir, create=False)
+        return resolve_ring_features_dir(configured_dir, create=False)
     return DEFAULT_RING_OUTPUT_DIR
 
 
@@ -59,9 +59,14 @@ def resolve_ring_endpoint_coord(residue: ResidueRecord, atom_or_coord: str) -> O
     return atom.float() if atom is not None else None
 
 
-def canonical_ring_edges_output_path(structure_path: str | Path) -> Path:
+def ring_edges_output_path(output_dir: str | Path, structure_path: str | Path) -> Path:
+    output_dir = Path(output_dir)
     structure_path = Path(structure_path)
-    return default_ring_output_dir() / structure_path.stem / f"{structure_path.name}_ringEdges"
+    return output_dir / structure_path.stem / f"{structure_path.name}_ringEdges"
+
+
+def canonical_ring_edges_output_path(structure_path: str | Path) -> Path:
+    return ring_edges_output_path(default_ring_output_dir(), structure_path)
 
 
 def ring_edges_path_candidates(
