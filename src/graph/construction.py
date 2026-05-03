@@ -52,6 +52,7 @@ def pocket_to_pyg_data(
     use_ring_edges: bool = False,
     require_ring_edges: bool = False,
     node_feature_set: str = "conservative",
+    omit_node_features: tuple[str, ...] | list[str] = (),
 ) -> Data:
     effective_use_ring_edges = bool(use_ring_edges or require_ring_edges)
     shell_roles = compute_shell_roles(pocket, use_ring_edges=effective_use_ring_edges)
@@ -64,6 +65,7 @@ def pocket_to_pyg_data(
                 esm_dim,
                 v_net,
                 node_feature_set=node_feature_set,
+                omit_node_features=omit_node_features,
                 is_first_shell=is_first_shell,
                 is_second_shell=is_second_shell,
             )

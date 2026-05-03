@@ -23,6 +23,7 @@ from data_structures import (
     POSITIVE,
     PocketRecord,
     ResidueRecord,
+    validate_node_feature_omissions,
 )
 
 BURIAL_FEATURE_NAMES = (EXTERNAL_FEATURE_RESIDUE_SASA,)
@@ -168,6 +169,55 @@ def build_external_feature_groups(rr: ResidueRecord) -> Dict[str, Tensor]:
     }
 
 
+def apply_node_feature_omissions(
+    features: Dict[str, Tensor],
+    omitted_features: tuple[str, ...],
+) -> Dict[str, Tensor]:
+    if not omitted_features:
+        return features
+
+    for feature_name in omitted_features:
+        if feature_name == "aa_one_hot":
+            features["x_reschem"][: len(AA_ORDER)] = 0.0
+        elif feature_name == "hydrophobicity_kd":
+            features["hydrophobicity_kd"].zero_()
+        elif feature_name == "donor_flag":
+            features["x_reschem"][len(AA_ORDER) + 0] = 0.0
+        elif feature_name == "acceptor_flag":
+            features["x_reschem"][len(AA_ORDER) + 1] = 0.0
+        elif feature_name == "aromatic_flag":
+            features["x_reschem"][len(AA_ORDER) + 2] = 0.0
+        elif feature_name == "acidic_flag":
+            features["x_reschem"][len(AA_ORDER) + 3] = 0.0
+        elif feature_name == "basic_flag":
+            features["x_reschem"][len(AA_ORDER) + 4] = 0.0
+        elif feature_name == "is_first_shell":
+            features["x_role"][0] = 0.0
+        elif feature_name == "is_second_shell":
+            features["x_role"][1] = 0.0
+        elif feature_name == "ca_to_metal":
+            features["x_dist_raw"][0] = 0.0
+        elif feature_name == "fg_to_metal":
+            features["x_dist_raw"][1] = 0.0
+        elif feature_name == "min_donor_to_metal":
+            features["x_dist_raw"][2] = 0.0
+        elif feature_name == EXTERNAL_FEATURE_RESIDUE_SASA:
+            features["x_env_burial"][0] = 0.0
+        elif feature_name == EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY:
+            features["x_env_electrostatics"][0] = 0.0
+        elif feature_name == EXTERNAL_FEATURE_DPKA_TITR:
+            features["x_env_electrostatics"][1] = 0.0
+        elif feature_name == "v_cb_to_fg":
+            features["x_vec"][0].zero_()
+        elif feature_name == "v_res_to_metal":
+            features["x_vec"][1].zero_()
+        elif feature_name == "cos_theta_between_vnetligand_to_vrestometal":
+            features["x_misc"][0] = 0.0
+        else:
+            raise ValueError(f"Unmapped conservative node feature omission {feature_name!r}.")
+    return features
+
+
 class MultinuclearSiteHandler:
     @staticmethod
     def metal_coords_for_pocket(pocket: PocketRecord) -> Tensor:
@@ -253,6 +303,7 @@ def residue_to_stage1_node_features(
     esm_dim: int,
     v_net: Tensor,
     node_feature_set: str = "conservative",
+    omit_node_features: tuple[str, ...] | list[str] = (),
     *,
     is_first_shell: bool | None = None,
     is_second_shell: bool | None = None,
@@ -262,6 +313,7 @@ def residue_to_stage1_node_features(
             f"Unsupported node feature set {node_feature_set!r}. "
             f"Expected one of {sorted(NODE_FEATURES_BY_SET)}."
         )
+    omitted_features = validate_node_feature_omissions(node_feature_set, omit_node_features)
     esm_embedding = rr.esm_embedding
     if esm_embedding is None:
         esm_embedding = torch.zeros(esm_dim, dtype=torch.float32)
@@ -303,7 +355,7 @@ def residue_to_stage1_node_features(
     # Two node vector channels retained by the conservative feature set: sidechain chemistry and residue-to-metal direction.
     x_vec = torch.stack([(fg - cb).float(), v_res], dim=0)
 
-    return {
+    features = {
         "x_esm": esm_embedding.float(),
         "hydrophobicity_kd": residue_hydrophobicity_kd(rr.resname),
         "x_reschem": build_x_reschem(rr).float(),
@@ -318,3 +370,4 @@ def residue_to_stage1_node_features(
         "fg_centroid": fg.float(),
         "pos": ca.float(),
     }
+    return apply_node_feature_omissions(features, omitted_features)

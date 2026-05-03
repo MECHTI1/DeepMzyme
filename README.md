@@ -34,6 +34,12 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab
 
 The bundle includes the site-level MAHOMES summary CSVs used by training. It also includes structure-level CSV artifacts for inspection; structures with multiple catalytic metal sites are represented there with semicolon-joined metal labels such as `Co;Cu`.
 
+The Colab notebook supports three dataset input modes through `COLAB_DATA_SOURCE`:
+
+- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-03.tar.zst`, verifies SHA256, and unpacks it under `/content`.
+- `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
+- `drive`: uses the configured Google Drive data path after Drive is mounted.
+
 Example trusted-split Only-GVP metal baseline:
 
 ```bash

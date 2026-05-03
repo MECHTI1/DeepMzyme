@@ -115,6 +115,30 @@ NODE_FEATURES_BY_SET = {
     "conservative": NODE_FEATURES_CONSERVATIVE,
 }
 
+
+def validate_node_feature_omissions(
+    node_feature_set: str,
+    omitted_features: tuple[str, ...] | list[str],
+) -> tuple[str, ...]:
+    if node_feature_set not in NODE_FEATURES_BY_SET:
+        raise ValueError(
+            f"Unsupported node feature set {node_feature_set!r}. "
+            f"Expected one of {sorted(NODE_FEATURES_BY_SET)}."
+        )
+    omitted = tuple(feature for feature in omitted_features if feature)
+    if not omitted:
+        return ()
+    valid_features = set(NODE_FEATURES_BY_SET[node_feature_set])
+    unknown = sorted(set(omitted) - valid_features)
+    if unknown:
+        valid = ", ".join(NODE_FEATURES_BY_SET[node_feature_set])
+        invalid = ", ".join(unknown)
+        raise ValueError(
+            f"Unsupported --omit-node-features value(s) for node feature set "
+            f"{node_feature_set!r}: {invalid}. Valid feature names are: {valid}"
+        )
+    return omitted
+
 EDGE_FEATURES_RECOMMENDED_RING = [
     "ring_contact_type_one_hot",
     "contact_distance",

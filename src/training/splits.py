@@ -417,6 +417,7 @@ def build_dataset_summary(
         "n_val_pockets": len(split.val_pockets),
         "task": config.task,
         "node_feature_set": config.node_feature_set,
+        "omit_node_features": list(config.omit_node_features),
         "val_fraction": config.val_fraction,
         "split_by": config.split_by,
         "n_folds": config.n_folds,

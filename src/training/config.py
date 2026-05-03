@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from data_structures import DEFAULT_EDGE_RADIUS, NODE_FEATURE_SET_CHOICES
+from data_structures import DEFAULT_EDGE_RADIUS, NODE_FEATURE_SET_CHOICES, validate_node_feature_omissions
 from model_variants import FUSION_MODE_CHOICES, MODEL_ARCHITECTURE_CHOICES
 from model_variants.factory import normalize_fusion_mode, normalize_model_architecture
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
@@ -98,6 +98,7 @@ class TrainConfig:
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
     node_feature_set: str = "conservative"
+    omit_node_features: tuple[str, ...] = ()
     use_esm_branch: bool = True
     fusion_mode: str = "late_fusion"
     cross_attention_layers: int = 1
@@ -211,6 +212,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=str,
         default="conservative",
         choices=VALID_NODE_FEATURE_SET_CHOICES,
+    )
+    parser.add_argument(
+        "--omit-node-features",
+        type=str,
+        default="",
+        help=(
+            "Comma-separated conservative node feature names to zero out for "
+            "ablation runs. Leave blank to use the full node feature set."
+        ),
     )
     parser.add_argument("--disable-esm-branch", action="store_true")
     parser.add_argument(
@@ -403,9 +413,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def parse_omit_node_features(value: str | None) -> tuple[str, ...]:
+    if not value:
+        return ()
+    return tuple(token.strip() for token in value.split(",") if token.strip())
+
+
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
+    omit_node_features = validate_node_feature_omissions(
+        args.node_feature_set,
+        parse_omit_node_features(args.omit_node_features),
+    )
     selection_metric = args.selection_metric
     if selection_metric is None:
         selection_metric = default_selection_metric_for_task(
@@ -447,6 +467,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
         node_feature_set=args.node_feature_set,
+        omit_node_features=omit_node_features,
         use_esm_branch=model_uses_esm_inputs and not args.disable_esm_branch,
         fusion_mode=args.fusion_mode,
         cross_attention_layers=args.cross_attention_layers,

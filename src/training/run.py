@@ -779,6 +779,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
+            omit_node_features=config.omit_node_features,
         )
         val_graphs = (
             build_graph_data_list(
@@ -788,6 +789,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 node_feature_set=config.node_feature_set,
+                omit_node_features=config.omit_node_features,
             )
             if split.val_pockets
             else None
@@ -836,6 +838,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 require_ring_edges=config.require_ring_edges,
                 precomputed_data=train_graphs,
                 node_feature_set=config.node_feature_set,
+                omit_node_features=config.omit_node_features,
             ),
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
@@ -852,6 +855,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                     require_ring_edges=config.require_ring_edges,
                     precomputed_data=val_graphs,
                     node_feature_set=config.node_feature_set,
+                    omit_node_features=config.omit_node_features,
                 ),
                 batch_size=config.batch_size,
                 shuffle=False,
@@ -1098,6 +1102,7 @@ def evaluate_held_out_test_split(
             use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
+            omit_node_features=config.omit_node_features,
         )
         test_loader = DataLoader(
             PocketGraphDataset(
@@ -1109,6 +1114,7 @@ def evaluate_held_out_test_split(
                 require_ring_edges=config.require_ring_edges,
                 precomputed_data=test_graphs,
                 node_feature_set=config.node_feature_set,
+                omit_node_features=config.omit_node_features,
             ),
             batch_size=config.batch_size,
             shuffle=False,
@@ -1232,6 +1238,8 @@ def persist_run_outputs(
 
 def run_training(config: TrainConfig) -> Path:
     set_seed(config.seed, deterministic=config.deterministic)
+    if config.omit_node_features:
+        print("Omitting conservative node features:", ", ".join(config.omit_node_features))
     prepared = prepare_run(config)
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
     test_report = evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint)
