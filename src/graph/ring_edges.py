@@ -15,7 +15,7 @@ DEFAULT_RING_OUTPUT_DIR = get_default_ring_features_dir()
 
 
 def default_ring_output_dir() -> Path:
-    configured_dir = os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
+    configured_dir = os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR")
     if configured_dir:
         return resolve_ring_features_dir(configured_dir, create=False)
     return DEFAULT_RING_OUTPUT_DIR

@@ -14,7 +14,7 @@ from project_paths import PROJECT_ROOT as REPO_ROOT, resolve_ring_features_dir
 
 DEFAULT_RING_EXE = Path("DeepMzyme_Data") / "ring-4.0" / "out" / "bin" / "ring"
 DIR_RESULTS = resolve_ring_features_dir(
-    os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
+    os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR")
 )
 
 

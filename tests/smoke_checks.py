@@ -274,7 +274,7 @@ def check_colab_notebook_sweep_source() -> None:
         "def make_safe_run_name",
         "def validate_run_before_training",
         "USE_ESM_EMBEDDINGS = True",
-        "ESM_EMBEDDINGS_DIR = '/content/drive/MyDrive/DeepMzyme/DeepMzyme_Data/embeddings'",
+        "ESM_EMBEDDINGS_DIR = '/content/drive/MyDrive/DeepMzyme/DeepMzyme_Data/esm_embeddings'",
         "ALLOW_MISSING_ESM_EMBEDDINGS = False",
         "RING_EDGES_MODE = 'radius_only'",
         "RING_EXE_PATH = 'DeepMzyme_Data/ring-4.0/out/bin/ring'",
@@ -381,13 +381,13 @@ def check_colab_generated_training_commands_parse() -> None:
             "SINGLE_CROSS_ATTENTION_LAYERS": 1,
             "SINGLE_CROSS_ATTENTION_HEADS": 4,
             "USE_ESM_EMBEDDINGS": True,
-            "ESM_EMBEDDINGS_DIR": str(drive_data_dir / "embeddings"),
+            "ESM_EMBEDDINGS_DIR": str(drive_data_dir / "esm_embeddings"),
             "PREPARE_MISSING_ESM_EMBEDDINGS": False,
             "ALLOW_MISSING_ESM_EMBEDDINGS": False,
             "ALLOW_MISSING_EXTERNAL_FEATURES": True,
             "RING_EDGES_MODE": "radius_only",
             "RING_EXE_PATH": "DeepMzyme_Data/ring-4.0/out/bin/ring",
-            "RING_EDGE_OUTPUT_DIR": str(drive_data_dir / "embeddings"),
+            "RING_EDGE_OUTPUT_DIR": str(drive_data_dir / "RING_features"),
             "PRECOMPUTED_RING_EDGES_DIR": str(drive_data_dir / "precomputed_ring_edges"),
             "REQUIRE_RING_EDGES": False,
             "PREPARE_MISSING_RING_EDGES": False,
@@ -503,7 +503,7 @@ def check_ring_environment_overrides() -> None:
     if personal_ring_path in str(DEFAULT_RING_EXE):
         raise AssertionError(f"RING default fallback unexpectedly contains a personal path: {DEFAULT_RING_EXE}")
 
-    old_embeddings_dir = os.environ.get("EMBEDDINGS_DIR")
+    old_ring_features_dir = os.environ.get("RING_FEATURES_DIR")
     old_ring_exe_path = os.environ.get("RING_EXE_PATH")
     try:
         with tempfile.TemporaryDirectory(prefix="deepmzyme_ring_edges_smoke_") as tmp:
@@ -511,11 +511,11 @@ def check_ring_environment_overrides() -> None:
             structure_dir = tmp_root / "structures"
             structure_dir.mkdir()
             ring_dir = tmp_root / "ring_edges"
-            os.environ["EMBEDDINGS_DIR"] = str(ring_dir)
+            os.environ["RING_FEATURES_DIR"] = str(ring_dir)
 
             expected_path = canonical_ring_edges_output_path("/tmp/example_structure.pdb")
             if not str(expected_path).startswith(f"{ring_dir}/"):
-                raise AssertionError(f"RING edge lookup did not honor EMBEDDINGS_DIR: {expected_path}")
+                raise AssertionError(f"RING edge lookup did not honor RING_FEATURES_DIR: {expected_path}")
 
             report = prepare_runtime_inputs(
                 structure_dir=structure_dir,
@@ -527,7 +527,7 @@ def check_ring_environment_overrides() -> None:
                 prepare_missing_ring_edges=False,
             )
             if report["ring_edges_output_dir"] != str(ring_dir):
-                raise AssertionError(f"RING edge output did not honor EMBEDDINGS_DIR: {report}")
+                raise AssertionError(f"RING edge output did not honor RING_FEATURES_DIR: {report}")
 
         os.environ["RING_EXE_PATH"] = "/tmp/deepmzyme_missing_ring_executable"
         try:
@@ -538,10 +538,10 @@ def check_ring_environment_overrides() -> None:
         else:
             raise AssertionError("Missing RING_EXE_PATH executable was not rejected.")
     finally:
-        if old_embeddings_dir is None:
-            os.environ.pop("EMBEDDINGS_DIR", None)
+        if old_ring_features_dir is None:
+            os.environ.pop("RING_FEATURES_DIR", None)
         else:
-            os.environ["EMBEDDINGS_DIR"] = old_embeddings_dir
+            os.environ["RING_FEATURES_DIR"] = old_ring_features_dir
         if old_ring_exe_path is None:
             os.environ.pop("RING_EXE_PATH", None)
         else:
@@ -681,7 +681,7 @@ def check_multi_metal_site_level_granularity() -> None:
         structure_root=train_dir,
         allowed_site_metal_labels=resolve_allowed_site_metal_labels(site_summary_csv),
         esm_dim=960,
-        embeddings_dir=train_dir / "embeddings",
+        embeddings_dir=train_dir / "esm_embeddings",
         require_esm_embeddings=False,
         feature_root_dir=train_dir,
         external_feature_source="auto",

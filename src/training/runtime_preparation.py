@@ -212,7 +212,7 @@ def prepare_runtime_inputs(
     configured_ring_features_dir = (
         str(ring_features_dir)
         if ring_features_dir is not None
-        else os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR") or os.getenv("EMBEDDINGS_DIR")
+        else os.getenv("RING_FEATURES_DIR") or os.getenv("RING_EDGES_DIR")
     )
     ring_edges_output_dir = (
         resolve_ring_features_dir(configured_ring_features_dir, create=True)

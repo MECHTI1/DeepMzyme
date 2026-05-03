@@ -51,7 +51,7 @@ TEST_DIR="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymeta
 TRAIN_CSV="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv"
 TEST_CSV="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv"
 RUNS_DIR="DeepMzyme_Data/runs_baseline_first"
-ESM_EMBEDDINGS_DIR="/media/Data/DeepMzyme_Data/embeddings"
+ESM_EMBEDDINGS_DIR="/media/Data/DeepMzyme_Data/esm_embeddings"
 RING_FEATURES_DIR="DeepMzyme_Data/RING_features"
 PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 ```
