@@ -264,6 +264,50 @@ def check_colab_notebook_sweep_source() -> None:
     nb = json.loads(notebook_path.read_text(encoding="utf-8"))
     source = "\n".join("".join(cell.get("source", [])) for cell in nb.get("cells", []))
     required_tokens = (
+        'RUN_TRAINING = False',
+        'RUN_HELD_OUT_TEST_EVAL = False',
+        'MODEL_PRESETS_CSV = "Only-GVP"',
+        'RING_EDGE_MODES_CSV = "radius_only"',
+        'OMIT_NODE_FEATURE_SETS = ""',
+        'MAX_CONFIGURATION_RUNS',
+        "CONFIG = {",
+        "COLAB_DATA_SOURCE",
+        "huggingface_link",
+        "DeepMzyme_Data_runtime_local_2026-05-03.tar.zst",
+        "c86faa40ff69c021de02b72b5fef9ebd1712f5ef8e6cb3da27b3a9e8261816c1",
+        "site-level MAHOMES summary CSV",
+        "structure-level inspection CSV",
+        "MODEL_PRESET_MAP",
+        "Only-GVP",
+        "GVP + cross-modal attention",
+        "SimpleGNN + ESM",
+        "def parse_omit_node_feature_sets",
+        "validate_node_feature_omissions",
+        "def build_train_command",
+        "ring_mode",
+        "omit_node_features",
+        "--omit-node-features",
+        "--use-ring-edges",
+        "--require-ring-edges",
+        "--ring-features-dir",
+        "--prepare-missing-ring-edges",
+        "--no-prepare-missing-ring-edges",
+        "--no-prepare-missing-esm-embeddings",
+        "RING_EXE_PATH",
+        '"src" / "report_runs.py"',
+        "Recommended First Runs",
+    )
+    missing = [token for token in required_tokens if token not in source]
+    if missing:
+        raise AssertionError(f"Colab notebook source is missing expected tokens: {missing}")
+    forbidden_tokens = ("ipywidgets", "widgets.", "MAX_SWEEP_RUNS", "RUN_SWEEP_MODE")
+    present = [token for token in forbidden_tokens if token in source]
+    if present:
+        raise AssertionError(f"Colab notebook still contains retired widget/old-runner tokens: {present}")
+    if "sweep" in source.lower():
+        raise AssertionError("Colab notebook should not contain user-facing sweep terminology.")
+    return
+    required_tokens = (
         "RUN_SINGLE_MODE",
         "RUN_SWEEP_MODE",
         "ALLOW_SINGLE_AND_SWEEP",
@@ -370,6 +414,193 @@ def check_colab_generated_training_commands_parse() -> None:
     )
     if command_builder_source is None:
         raise AssertionError("Could not find the Colab command-builder cell.")
+
+    import contextlib
+    import copy
+    import io
+
+    def base_config(tmp_root: Path) -> dict[str, object]:
+        return {
+            "basic": {
+                "task": "metal",
+                "epochs": 1,
+                "run_training": False,
+                "device": "cpu",
+                "run_held_out_test_eval": False,
+            },
+            "configuration_comparison": {
+                "model_presets_csv": "Only-GVP",
+                "ring_edge_modes_csv": "radius_only",
+                "batch_sizes_csv": "4",
+                "learning_rates_csv": "1e-4",
+                "weight_decays_csv": "1e-4",
+                "seeds_csv": "42",
+                "max_configuration_runs": 24,
+                "stop_on_first_failure": True,
+                "skip_existing_runs": True,
+            },
+            "data": {"colab_data_source": "huggingface_link"},
+            "esm": {
+                "esm_embeddings_dir": "",
+                "prepare_missing_esm_embeddings": False,
+                "allow_missing_esm_embeddings": False,
+                "disable_esm_branch": False,
+                "esm_dim": 960,
+            },
+            "ring": {
+                "ring_features_dir": str(tmp_root / "ring_features"),
+                "ring_exe_path": str(tmp_root / "ring"),
+            },
+            "node_features": {
+                "node_feature_set": "conservative",
+                "omit_node_feature_sets": "",
+            },
+            "advanced": {
+                "val_fraction": 0.15,
+                "split_by": "pdbid",
+                "selection_metric": "val_metal_balanced_acc",
+                "hidden_s_values_csv": "128",
+                "hidden_v_values_csv": "16",
+                "edge_hidden_values_csv": "64",
+                "gvp_layers_values_csv": "4",
+                "head_mlp_layers_values_csv": "2",
+                "edge_radius_values_csv": "8.0",
+                "esm_fusion_dim_values_csv": "128",
+                "lr_schedules_csv": "fixed",
+                "lr_step_size": 10,
+                "lr_decay_gamma": 0.5,
+                "node_rbf_sigma": 0.75,
+                "edge_rbf_sigma": 0.75,
+                "node_rbf_use_raw_distances": False,
+                "early_esm_dim": 32,
+                "early_esm_dropout": 0.2,
+                "early_esm_raw": False,
+                "early_esm_scope": "all",
+                "cross_attention_layers_csv": "1",
+                "cross_attention_heads_csv": "4",
+                "cross_attention_dropout": 0.1,
+                "cross_attention_neighborhood": "all",
+                "cross_attention_bidirectional": False,
+                "ec_label_depths_csv": "1",
+                "ec_group_weighting": "structure_id",
+                "ec_contrastive_weights_csv": "0.0",
+                "ec_contrastive_temperature": 0.1,
+                "metal_loss_function": "cross_entropy",
+                "metal_focal_gamma": 2.0,
+                "metal_label_smoothing": 0.0,
+                "metal_loss_weight": 1.0,
+                "ec_loss_weight": 1.0,
+                "mn_loss_multiplier": 1.0,
+                "cu_loss_multiplier": 1.0,
+                "zn_loss_multiplier": 1.0,
+                "fe_loss_multiplier": 1.0,
+                "co_loss_multiplier": 1.0,
+                "ni_loss_multiplier": 1.0,
+                "class_viii_loss_multiplier": 1.0,
+                "balance_metal_site_symbols": False,
+                "require_all_task_classes": False,
+                "allow_missing_external_features": True,
+                "external_features_root_dir": "",
+                "external_feature_source": "auto",
+                "n_folds": "",
+                "fold_index": "",
+                "deterministic": False,
+                "save_epoch_checkpoints": False,
+                "allow_train_loss_test_eval_debug": False,
+                "unsupported_metal_policy": "error",
+                "invalid_structure_policy": "skip",
+            },
+            "output": {
+                "runs_dir": str(tmp_root / "runs"),
+                "run_name_prefix": "",
+                "copy_outputs_to_drive": False,
+                "summary_basename": "summary",
+            },
+        }
+
+    def run_builder(config_updates: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+        with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
+            tmp_root = Path(tmp)
+            config = base_config(tmp_root)
+            for section, updates in config_updates.items():
+                nested = config[section]
+                if not isinstance(nested, dict):
+                    raise AssertionError(f"Unexpected non-dict config section: {section}")
+                nested.update(updates)
+            ring_dir = Path(str(config["ring"]["ring_features_dir"]))
+            ring_dir.mkdir(parents=True)
+            (ring_dir / "example_ringEdges").write_text("NodeId1\tNodeId2\tInteraction\n", encoding="utf-8")
+            ring_exe = Path(str(config["ring"]["ring_exe_path"]))
+            ring_exe.write_text("#!/bin/sh\n", encoding="utf-8")
+            ring_exe.chmod(0o755)
+            train_dir = tmp_root / "train"
+            test_dir = tmp_root / "test"
+            train_dir.mkdir()
+            test_dir.mkdir()
+            train_csv = train_dir / "summary.csv"
+            test_csv = test_dir / "summary.csv"
+            train_csv.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
+            test_csv.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
+            namespace = {
+                "CONFIG": config,
+                "REPO_DIR": REPO_ROOT,
+                "SRC_DIR": REPO_ROOT / "src",
+                "TRAIN_DIR": train_dir,
+                "TEST_DIR": test_dir,
+                "TRAIN_CSV": train_csv,
+                "TEST_CSV": test_csv,
+                "DATA_ROOT": tmp_root,
+                "DRIVE_DATA_DIR": tmp_root / "drive" / "DeepMzyme_Data",
+            }
+            with contextlib.redirect_stdout(io.StringIO()):
+                exec(command_builder_source, namespace)
+            return copy.deepcopy(namespace["planned_runs"])
+
+    def assert_training_command_parses(cmd: list[object]) -> None:
+        parts = [str(part) for part in cmd]
+        if parts[1] != str(REPO_ROOT / "src" / "train.py"):
+            raise AssertionError(f"Notebook command used an unexpected training entry point: {parts[:2]}")
+        config = parse_args(parts[2:])
+        validate_training_configuration(config)
+
+    default_runs = run_builder({})
+    if len(default_runs) != 1:
+        raise AssertionError(f"Expected one default planned command, got {len(default_runs)}")
+    default_cmd = [str(part) for part in default_runs[0]["command"]]
+    assert_training_command_parses(default_cmd)
+    if "--use-ring-edges" in default_cmd or "--require-ring-edges" in default_cmd:
+        raise AssertionError("Default radius-only command unexpectedly enables RING edges.")
+    if "--esm-embeddings-dir" in default_cmd:
+        raise AssertionError("Only-GVP default command should not require an ESM embeddings directory.")
+    if "--omit-node-features" in default_cmd:
+        raise AssertionError("Full-feature default command unexpectedly omits node features.")
+
+    ring_runs = run_builder(
+        {"configuration_comparison": {"ring_edge_modes_csv": "radius_only,radius_plus_precomputed_ring"}}
+    )
+    if len(ring_runs) != 2:
+        raise AssertionError(f"Expected two RING planned commands, got {len(ring_runs)}")
+    radius_cmd = [str(part) for part in ring_runs[0]["command"]]
+    precomputed_cmd = [str(part) for part in ring_runs[1]["command"]]
+    if "--use-ring-edges" in radius_cmd or "--require-ring-edges" in radius_cmd:
+        raise AssertionError("radius_only command unexpectedly includes RING enable/require flags.")
+    for expected_flag in ("--use-ring-edges", "--require-ring-edges", "--ring-features-dir"):
+        if expected_flag not in precomputed_cmd:
+            raise AssertionError(f"Precomputed-RING command is missing {expected_flag}.")
+
+    omit_runs = run_builder(
+        {"node_features": {"omit_node_feature_sets": ";v_cb_to_fg;v_cb_to_fg,v_res_to_metal"}}
+    )
+    if len(omit_runs) != 3:
+        raise AssertionError(f"Expected three omission planned commands, got {len(omit_runs)}")
+    omit_cmds = [[str(part) for part in run["command"]] for run in omit_runs]
+    if "--omit-node-features" in omit_cmds[0]:
+        raise AssertionError("Full-feature omission entry unexpectedly passed --omit-node-features.")
+    if omit_cmds[1][omit_cmds[1].index("--omit-node-features") + 1] != "v_cb_to_fg":
+        raise AssertionError("Single-feature omission command passed the wrong value.")
+    if omit_cmds[2][omit_cmds[2].index("--omit-node-features") + 1] != "v_cb_to_fg,v_res_to_metal":
+        raise AssertionError("Combined-feature omission command passed the wrong value.")
+    return
 
     with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
         tmp_root = Path(tmp)
