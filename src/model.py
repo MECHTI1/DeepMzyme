@@ -21,6 +21,77 @@ VALID_FUSION_MODES = {
     "hybrid",
     "cross_modal_attention",
 }
+VALID_TASK_LOSS_WEIGHTING_MODES = {"fixed", "uncertainty"}
+
+
+class TaskLossWeighter(nn.Module):
+    def __init__(
+        self,
+        *,
+        mode: str = "fixed",
+        metal_loss_weight: float = 1.0,
+        ec_loss_weight: float = 1.0,
+        predict_metal: bool = True,
+        predict_ec: bool = True,
+    ):
+        super().__init__()
+        if mode not in VALID_TASK_LOSS_WEIGHTING_MODES:
+            raise ValueError(f"Unsupported task loss weighting mode {mode!r}.")
+        self.mode = str(mode)
+        self.metal_loss_weight = float(metal_loss_weight)
+        self.ec_loss_weight = float(ec_loss_weight)
+        if self.metal_loss_weight < 0.0:
+            raise ValueError(f"metal_loss_weight must be non-negative, got {self.metal_loss_weight}.")
+        if self.ec_loss_weight < 0.0:
+            raise ValueError(f"ec_loss_weight must be non-negative, got {self.ec_loss_weight}.")
+        self.use_uncertainty_weighting = self.mode == "uncertainty" and bool(predict_metal) and bool(predict_ec)
+        self.register_parameter(
+            "metal_log_variance",
+            nn.Parameter(torch.zeros(())) if self.use_uncertainty_weighting else None,
+        )
+        self.register_parameter(
+            "ec_log_variance",
+            nn.Parameter(torch.zeros(())) if self.use_uncertainty_weighting else None,
+        )
+
+    def _base_weight(self, task_name: str) -> float:
+        if task_name == "metal":
+            return self.metal_loss_weight
+        if task_name == "ec":
+            return self.ec_loss_weight
+        raise ValueError(f"Unsupported task loss name {task_name!r}.")
+
+    def _log_variance(self, task_name: str) -> Tensor:
+        if task_name == "metal" and self.metal_log_variance is not None:
+            return self.metal_log_variance
+        if task_name == "ec" and self.ec_log_variance is not None:
+            return self.ec_log_variance
+        raise ValueError(f"Missing uncertainty parameter for task {task_name!r}.")
+
+    def forward(self, task_losses: dict[str, Tensor]) -> tuple[Tensor, dict[str, Tensor]]:
+        if not task_losses:
+            raise ValueError("TaskLossWeighter received no task losses.")
+        weighted_losses = []
+        diagnostics: dict[str, Tensor] = {}
+        for task_name, task_loss in task_losses.items():
+            base_weight = self._base_weight(task_name)
+            diagnostics[f"{task_name}_loss_raw"] = task_loss.detach()
+            if base_weight == 0.0:
+                diagnostics[f"{task_name}_loss_scale"] = task_loss.new_zeros(())
+                continue
+            if self.use_uncertainty_weighting:
+                log_variance = self._log_variance(task_name)
+                precision = torch.exp(-log_variance)
+                weighted_losses.append(base_weight * (precision * task_loss + log_variance))
+                diagnostics[f"{task_name}_loss_scale"] = (base_weight * precision).detach()
+                diagnostics[f"{task_name}_loss_log_variance"] = log_variance.detach()
+            else:
+                weighted_losses.append(task_loss * base_weight)
+                diagnostics[f"{task_name}_loss_scale"] = task_loss.new_tensor(base_weight)
+        if not weighted_losses:
+            raise ValueError("All task losses were disabled by zero task weights.")
+        diagnostics["loss"] = torch.stack(weighted_losses).sum()
+        return diagnostics["loss"], diagnostics
 
 
 class RBFExpansion(nn.Module):
@@ -433,6 +504,7 @@ class GVPPocketClassifier(nn.Module):
         node_rbf_sigma: float = 0.75,
         edge_rbf_sigma: float = 0.75,
         node_rbf_use_raw_distances: bool = False,
+        joint_loss_weighting: str = "fixed",
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
         metal_class_weights: Optional[Tensor] = None,
@@ -606,6 +678,13 @@ class GVPPocketClassifier(nn.Module):
 
         self.metal_loss_weight = float(metal_loss_weight)
         self.ec_loss_weight = float(ec_loss_weight)
+        self.task_loss_weighter = TaskLossWeighter(
+            mode=joint_loss_weighting,
+            metal_loss_weight=metal_loss_weight,
+            ec_loss_weight=ec_loss_weight,
+            predict_metal=self.predict_metal,
+            predict_ec=self.predict_ec,
+        )
         self.node_rbf_use_raw_distances = bool(node_rbf_use_raw_distances)
         self.metal_loss_function = str(metal_loss_function)
         self.metal_focal_gamma = float(metal_focal_gamma)
@@ -672,12 +751,9 @@ class GVPPocketClassifier(nn.Module):
         logits_metal: Optional[Tensor],
         logits_ec: Optional[Tensor],
         data: Data,
-    ) -> Tensor:
-        # Final baseline policy:
-        # - keep class-balanced CE on both heads because both targets are imbalanced
-        # - keep equal task weights so the two supervised objectives remain symmetric
-        # - choose checkpoints with balanced metrics rather than introducing a more complex loss first
-        losses: list[Tensor] = []
+    ) -> tuple[Tensor, dict[str, Tensor]]:
+        task_losses: dict[str, Tensor] = {}
+        auxiliary_losses: dict[str, Tensor] = {}
         if self.predict_metal and logits_metal is not None and hasattr(data, "y_metal"):
             metal_mask = self._supervised_mask(data.y_metal)
             if bool(metal_mask.any().item()):
@@ -702,23 +778,45 @@ class GVPPocketClassifier(nn.Module):
                     metal_loss = (((1.0 - pt) ** self.metal_focal_gamma) * ce_per_sample).mean()
                 else:
                     raise ValueError(f"Unsupported metal loss function {self.metal_loss_function!r}.")
-                losses.append(self.metal_loss_weight * metal_loss)
+                task_losses["metal"] = metal_loss
         if self.predict_ec and logits_ec is not None and hasattr(data, "y_ec"):
             ec_mask = self._supervised_mask(data.y_ec)
             if bool(ec_mask.any().item()):
                 ec_weights = self.ec_class_weights if self.ec_class_weights.numel() > 0 else None
-                ec_loss = F.cross_entropy(logits_ec[ec_mask], data.y_ec[ec_mask], weight=ec_weights)
-                losses.append(self.ec_loss_weight * ec_loss)
+                ec_ce = F.cross_entropy(
+                    logits_ec[ec_mask],
+                    data.y_ec[ec_mask],
+                    weight=ec_weights,
+                    reduction="none",
+                )
+                if hasattr(data, "ec_sample_weight"):
+                    ec_sample_weight = data.ec_sample_weight.view(-1).to(
+                        dtype=ec_ce.dtype,
+                        device=ec_ce.device,
+                    )[ec_mask]
+                else:
+                    ec_sample_weight = torch.ones_like(ec_ce)
+                ec_loss = (ec_ce * ec_sample_weight).sum() / ec_sample_weight.sum().clamp_min(1e-8)
+                task_losses["ec"] = ec_loss
                 if self.ec_contrastive_weight > 0.0:
                     ec_contrastive = supervised_contrastive_loss(
                         pocket_embed[ec_mask],
                         data.y_ec[ec_mask],
                         temperature=self.ec_contrastive_temperature,
                     )
-                    losses.append(self.ec_contrastive_weight * ec_contrastive)
-        if not losses:
+                    auxiliary_losses["ec_contrastive"] = self.ec_contrastive_weight * ec_contrastive
+        if not task_losses and not auxiliary_losses:
             raise ValueError("No supervised targets were available for the enabled prediction heads.")
-        return torch.stack(losses).sum()
+        if task_losses:
+            supervised_loss, diagnostics = self.task_loss_weighter(task_losses)
+        else:
+            supervised_loss = pocket_embed.new_zeros(())
+            diagnostics = {}
+        if auxiliary_losses:
+            supervised_loss = supervised_loss + torch.stack(list(auxiliary_losses.values())).sum()
+            diagnostics.update({f"{name}_loss_raw": loss.detach() for name, loss in auxiliary_losses.items()})
+        diagnostics["loss"] = supervised_loss
+        return supervised_loss, diagnostics
 
     def forward(self, data: Data) -> Dict[str, Tensor]:
         node_distances = (
@@ -818,6 +916,8 @@ class GVPPocketClassifier(nn.Module):
             and self._supervised_mask(data.y_ec).any().item()
         )
         if has_supervised_targets:
-            outputs["loss"] = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
+            loss, loss_diagnostics = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
+            outputs.update(loss_diagnostics)
+            outputs["loss"] = loss
 
         return outputs

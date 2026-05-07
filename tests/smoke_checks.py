@@ -44,6 +44,7 @@ def check_training_cli_help() -> None:
     help_text = run_help(REPO_ROOT / "src" / "train.py")
     expected_options = (
         "--deterministic",
+        "--joint-loss-weighting",
         "--metal-loss-weight",
         "--ec-loss-weight",
         "--ec-group-weighting",
@@ -99,10 +100,21 @@ def check_test_eval_safety() -> None:
 
 def check_loss_weight_validation() -> None:
     default_config = parse_args([])
+    if default_config.joint_loss_weighting != "uncertainty":
+        raise AssertionError(
+            "Expected joint --joint-loss-weighting auto to resolve to uncertainty, "
+            f"got {default_config.joint_loss_weighting!r}"
+        )
     if default_config.metal_loss_weight != 1.0:
         raise AssertionError(f"Expected default metal_loss_weight=1.0, got {default_config.metal_loss_weight}")
     if default_config.ec_loss_weight != 1.0:
         raise AssertionError(f"Expected default ec_loss_weight=1.0, got {default_config.ec_loss_weight}")
+    metal_config = parse_args(["--task", "metal"])
+    if metal_config.joint_loss_weighting != "fixed":
+        raise AssertionError(
+            "Expected single-task --joint-loss-weighting auto to resolve to fixed, "
+            f"got {metal_config.joint_loss_weighting!r}"
+        )
 
     for option in ("--metal-loss-weight", "--ec-loss-weight"):
         config = parse_args([option, "-0.1"])
@@ -113,6 +125,32 @@ def check_loss_weight_validation() -> None:
                 raise AssertionError(f"{option} failed with an unexpected error: {exc}") from exc
         else:
             raise AssertionError(f"{option} accepted a negative value.")
+
+    invalid_single_task_config = parse_args(["--task", "metal", "--joint-loss-weighting", "uncertainty"])
+    try:
+        validate_training_configuration(invalid_single_task_config)
+    except ValueError as exc:
+        if "--joint-loss-weighting uncertainty requires --task joint" not in str(exc):
+            raise AssertionError(f"Unexpected joint-loss weighting validation error: {exc}") from exc
+    else:
+        raise AssertionError("Single-task uncertainty loss weighting was not rejected.")
+
+
+def check_uncertainty_task_loss_weighter() -> None:
+    from model import TaskLossWeighter
+
+    weighter = TaskLossWeighter(mode="uncertainty", predict_metal=True, predict_ec=True)
+    metal_loss = torch.tensor(2.0, requires_grad=True)
+    ec_loss = torch.tensor(1.0, requires_grad=True)
+    total_loss, diagnostics = weighter({"metal": metal_loss, "ec": ec_loss})
+    total_loss.backward()
+
+    if "metal_loss_scale" not in diagnostics or "ec_loss_scale" not in diagnostics:
+        raise AssertionError("Uncertainty task loss diagnostics are missing task scales.")
+    if weighter.metal_log_variance is None or weighter.ec_log_variance is None:
+        raise AssertionError("Joint uncertainty weighting did not create learnable log-variance parameters.")
+    if weighter.metal_log_variance.grad is None or weighter.ec_log_variance.grad is None:
+        raise AssertionError("Uncertainty weighting parameters did not receive gradients.")
 
 
 def check_ec_group_weighting_config() -> None:
@@ -990,6 +1028,7 @@ def main() -> int:
         check_training_cli_help,
         check_test_eval_safety,
         check_loss_weight_validation,
+        check_uncertainty_task_loss_weighter,
         check_ec_group_weighting_config,
         check_cross_attention_config,
         check_ring_edge_cli_config,

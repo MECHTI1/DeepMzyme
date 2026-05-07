@@ -24,6 +24,31 @@ def metric_value_or_default(record: dict, metric_name: str, default: float) -> f
     return float(value)
 
 
+def model_display_label(config: dict) -> str:
+    arch = str(config.get("model_architecture") or "unknown")
+    fusion = str(config.get("fusion_mode") or "")
+    use_esm_branch = config.get("use_esm_branch")
+    if arch == "only_gvp":
+        return "GVP only"
+    if arch == "only_esm":
+        return "ESM only"
+    if arch == "simple_gnn_esm":
+        return "SimpleGNN + ESM"
+    if arch == "gvp" and use_esm_branch is False:
+        return "GVP only"
+    if arch == "gvp":
+        fusion_labels = {
+            "late_fusion": "late fusion",
+            "early_fusion": "early fusion",
+            "node_level_late_fusion": "node-level ESM fusion",
+            "hybrid": "hybrid ESM fusion",
+            "cross_modal_attention": "cross-modal attention",
+        }
+        suffix = fusion_labels.get(fusion, fusion.replace("_", " ") if fusion else "fusion")
+        return f"GVP + ESM {suffix}"
+    return arch.replace("_", " ")
+
+
 def build_rows(runs_dir: Path) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for run_dir in sorted(path for path in runs_dir.iterdir() if path.is_dir()):
@@ -55,7 +80,9 @@ def build_rows(runs_dir: Path) -> list[dict[str, str]]:
                 "task": str(config.get("task", "")),
                 "model_architecture": str(config.get("model_architecture", "")),
                 "fusion_mode": str(config.get("fusion_mode", "")),
+                "model_label": model_display_label(config),
                 "ec_label_depth": str(config.get("ec_label_depth", "")),
+                "joint_loss_weighting": str(config.get("joint_loss_weighting", "")),
                 "selection_metric": selection_metric,
                 "best_epoch": str(best_epoch_record.get("epoch", "")),
                 "val_metal_balanced_acc": str(best_epoch_record.get("val_metal_balanced_acc", "")),
@@ -75,7 +102,9 @@ def write_rows(output_csv: Path, rows: list[dict[str, str]]) -> None:
         "task",
         "model_architecture",
         "fusion_mode",
+        "model_label",
         "ec_label_depth",
+        "joint_loss_weighting",
         "selection_metric",
         "best_epoch",
         "val_metal_balanced_acc",

@@ -15,6 +15,7 @@ CSV_COLUMNS = [
     "task",
     "model_architecture",
     "fusion_mode",
+    "model_label",
     "seed",
     "learning_rate",
     "weight_decay",
@@ -27,6 +28,9 @@ CSV_COLUMNS = [
     "ec_group_weighting",
     "ec_contrastive_weight",
     "ec_contrastive_temperature",
+    "joint_loss_weighting",
+    "metal_loss_weight",
+    "ec_loss_weight",
     "selection_metric",
     "selected_checkpoint",
     "split_name",
@@ -212,6 +216,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "task": task,
         "model_architecture": config.get("model_architecture"),
         "fusion_mode": config.get("fusion_mode"),
+        "model_label": model_display_label(config),
         "seed": config.get("seed"),
         "learning_rate": config.get("learning_rate"),
         "weight_decay": config.get("weight_decay"),
@@ -224,6 +229,9 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "ec_group_weighting": first_present(config.get("ec_group_weighting"), dataset.get("ec_group_weighting")),
         "ec_contrastive_weight": config.get("ec_contrastive_weight"),
         "ec_contrastive_temperature": config.get("ec_contrastive_temperature"),
+        "joint_loss_weighting": config.get("joint_loss_weighting"),
+        "metal_loss_weight": config.get("metal_loss_weight"),
+        "ec_loss_weight": config.get("ec_loss_weight"),
         "selection_metric": selection_metric,
         "selected_checkpoint": first_present(
             run_metadata.get("selected_checkpoint"),
@@ -305,16 +313,38 @@ def write_csv(rows: list[dict[str, Any]], out_csv: Path) -> None:
             writer.writerow({column: normalize_csv_value(row.get(column)) for column in CSV_COLUMNS})
 
 
+def model_display_label(row: dict[str, Any]) -> str:
+    arch = str(row.get("model_architecture") or row.get("model") or "unknown")
+    fusion = str(row.get("fusion_mode") or row.get("fusion") or "")
+    use_esm_branch = row.get("use_esm_branch")
+
+    if arch == "only_gvp":
+        return "GVP only"
+    if arch == "only_esm":
+        return "ESM only"
+    if arch == "simple_gnn_esm":
+        return "SimpleGNN + ESM"
+    if arch == "gvp" and use_esm_branch is False:
+        return "GVP only"
+    if arch == "gvp":
+        fusion_labels = {
+            "late_fusion": "late fusion",
+            "early_fusion": "early fusion",
+            "node_level_late_fusion": "node-level ESM fusion",
+            "hybrid": "hybrid ESM fusion",
+            "cross_modal_attention": "cross-modal attention",
+        }
+        suffix = fusion_labels.get(fusion, fusion.replace("_", " ") if fusion else "ESM fusion")
+        return f"GVP + ESM {suffix}"
+    return arch.replace("_", " ")
+
+
 def _short_label(row: dict[str, Any]) -> str:
-    arch = str(row.get("model_architecture") or "?")
-    fusion = row.get("fusion_mode")
+    model_label = str(row.get("model_label") or model_display_label(row))
     seed = row.get("seed")
     lr = row.get("learning_rate")
     parts: list[str] = []
-    if fusion and str(fusion) not in ("None", "none", ""):
-        parts.append(f"{arch[:8]}/{str(fusion)[:6]}")
-    else:
-        parts.append(arch[:14])
+    parts.append(model_label[:24])
     if lr is not None and is_number(lr):
         parts.append(f"lr={float(lr):.0e}")
     if seed is not None:
@@ -357,7 +387,7 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
         "#4c78a8", "#f58518", "#54a24b", "#e45756",
         "#72b7b2", "#b279a2", "#ff9da6", "#9d755d",
     ]
-    architectures = [str(row.get("model_architecture") or "unknown") for row in plot_rows]
+    architectures = [str(row.get("model_label") or model_display_label(row)) for row in plot_rows]
     unique_archs = list(dict.fromkeys(architectures))
     color_map = {arch: _ARCH_COLORS[i % len(_ARCH_COLORS)] for i, arch in enumerate(unique_archs)}
     bar_colors = [color_map[arch] for arch in architectures]
@@ -453,7 +483,7 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
             ncol=min(len(unique_archs), 4),
             fontsize=8,
             bbox_to_anchor=(0.5, 1.04),
-            title="Architecture",
+            title="Model",
             title_fontsize=8,
         )
 

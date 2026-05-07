@@ -239,6 +239,11 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--metal-loss-weight must be non-negative, got {config.metal_loss_weight}")
     if config.ec_loss_weight < 0.0:
         raise ValueError(f"--ec-loss-weight must be non-negative, got {config.ec_loss_weight}")
+    if config.joint_loss_weighting == "uncertainty" and config.task != "joint":
+        raise ValueError(
+            "--joint-loss-weighting uncertainty requires --task joint. "
+            "Single-task metal or EC runs use fixed weighting."
+        )
     has_validation = config.val_fraction > 0.0 or config.n_folds is not None
     if not has_validation and config.selection_metric.startswith("val_"):
         raise ValueError(
@@ -612,6 +617,26 @@ def checkpoint_payload(
     }
 
 
+def task_loss_weighting_state(model) -> dict[str, Any]:
+    weighter = getattr(model, "task_loss_weighter", None)
+    if weighter is None:
+        return {}
+    payload: dict[str, Any] = {"joint_loss_weighting": getattr(weighter, "mode", None)}
+    for task_name in ("metal", "ec"):
+        base_weight = getattr(weighter, f"{task_name}_loss_weight", None)
+        log_variance = getattr(weighter, f"{task_name}_log_variance", None)
+        if log_variance is None:
+            if base_weight is not None:
+                payload[f"{task_name}_loss_scale"] = float(base_weight)
+            continue
+        detached_log_variance = log_variance.detach().cpu()
+        payload[f"{task_name}_loss_log_variance"] = float(detached_log_variance.item())
+        payload[f"{task_name}_loss_scale"] = float(
+            (float(base_weight) * torch.exp(-detached_log_variance)).item()
+        )
+    return payload
+
+
 def format_epoch_log(record: dict[str, Any]) -> str:
     parts = [
         f"epoch={record['epoch']}",
@@ -638,6 +663,9 @@ def format_epoch_log(record: dict[str, Any]) -> str:
         parts.append(f"val_joint_bal_acc={record['val_joint_balanced_acc']:.4f}")
     if record.get("val_joint_macro_f1") is not None:
         parts.append(f"val_joint_macro_f1={record['val_joint_macro_f1']:.4f}")
+    if record.get("metal_loss_scale") is not None and record.get("ec_loss_scale") is not None:
+        parts.append(f"metal_loss_scale={record['metal_loss_scale']:.4f}")
+        parts.append(f"ec_loss_scale={record['ec_loss_scale']:.4f}")
     return " ".join(parts)
 
 
@@ -925,6 +953,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             early_esm_dropout=config.early_esm_dropout,
             early_esm_raw=config.early_esm_raw,
             early_esm_scope=config.early_esm_scope,
+            joint_loss_weighting=config.joint_loss_weighting,
             metal_loss_weight=config.metal_loss_weight,
             ec_loss_weight=config.ec_loss_weight,
             metal_loss_function=config.metal_loss_function,
@@ -998,6 +1027,7 @@ def train_and_select_checkpoint(
             "train_loss": train_loss,
             "lr": float(prepared.optimizer.param_groups[0]["lr"]),
             **train_metrics,
+            **task_loss_weighting_state(prepared.model),
         }
 
         val_metrics = evaluate_split_metrics(

@@ -18,6 +18,7 @@ from model import (
     EdgeScalarEncoder,
     LocalizedCrossAttentionBlock,
     NodeScalarEncoder,
+    TaskLossWeighter,
     build_classifier_head,
     pool_graph_states,
     shell_mask_from_roles,
@@ -39,6 +40,7 @@ class PocketClassifierBase(nn.Module):
         head_mlp_layers: int,
         predict_metal: bool,
         predict_ec: bool,
+        joint_loss_weighting: str,
         metal_loss_weight: float,
         ec_loss_weight: float,
         metal_class_weights: Optional[Tensor],
@@ -75,6 +77,13 @@ class PocketClassifierBase(nn.Module):
         )
         self.metal_loss_weight = float(metal_loss_weight)
         self.ec_loss_weight = float(ec_loss_weight)
+        self.task_loss_weighter = TaskLossWeighter(
+            mode=joint_loss_weighting,
+            metal_loss_weight=metal_loss_weight,
+            ec_loss_weight=ec_loss_weight,
+            predict_metal=self.predict_metal,
+            predict_ec=self.predict_ec,
+        )
         self.metal_loss_function = str(metal_loss_function)
         self.metal_focal_gamma = float(metal_focal_gamma)
         self.metal_label_smoothing = float(metal_label_smoothing)
@@ -99,8 +108,9 @@ class PocketClassifierBase(nn.Module):
         logits_metal: Optional[Tensor],
         logits_ec: Optional[Tensor],
         data: Data,
-    ) -> Tensor:
-        losses: list[Tensor] = []
+    ) -> tuple[Tensor, dict[str, Tensor]]:
+        task_losses: dict[str, Tensor] = {}
+        auxiliary_losses: dict[str, Tensor] = {}
         if self.predict_metal and logits_metal is not None and hasattr(data, "y_metal"):
             metal_mask = self._supervised_mask(data.y_metal)
             if bool(metal_mask.any().item()):
@@ -125,7 +135,7 @@ class PocketClassifierBase(nn.Module):
                     metal_loss = (((1.0 - pt) ** self.metal_focal_gamma) * ce_per_sample).mean()
                 else:
                     raise ValueError(f"Unsupported metal loss function {self.metal_loss_function!r}.")
-                losses.append(self.metal_loss_weight * metal_loss)
+                task_losses["metal"] = metal_loss
         if self.predict_ec and logits_ec is not None and hasattr(data, "y_ec"):
             ec_mask = self._supervised_mask(data.y_ec)
             if bool(ec_mask.any().item()):
@@ -144,17 +154,26 @@ class PocketClassifierBase(nn.Module):
                 else:
                     ec_sample_weight = torch.ones_like(ec_ce)
                 ec_loss = (ec_ce * ec_sample_weight).sum() / ec_sample_weight.sum().clamp_min(1e-8)
-                losses.append(self.ec_loss_weight * ec_loss)
+                task_losses["ec"] = ec_loss
                 if self.ec_contrastive_weight > 0.0:
                     ec_contrastive = supervised_contrastive_loss(
                         pocket_embed[ec_mask],
                         data.y_ec[ec_mask],
                         temperature=self.ec_contrastive_temperature,
                     )
-                    losses.append(self.ec_contrastive_weight * ec_contrastive)
-        if not losses:
+                    auxiliary_losses["ec_contrastive"] = self.ec_contrastive_weight * ec_contrastive
+        if not task_losses and not auxiliary_losses:
             raise ValueError("No supervised targets were available for the enabled prediction heads.")
-        return torch.stack(losses).sum()
+        if task_losses:
+            supervised_loss, diagnostics = self.task_loss_weighter(task_losses)
+        else:
+            supervised_loss = pocket_embed.new_zeros(())
+            diagnostics = {}
+        if auxiliary_losses:
+            supervised_loss = supervised_loss + torch.stack(list(auxiliary_losses.values())).sum()
+            diagnostics.update({f"{name}_loss_raw": loss.detach() for name, loss in auxiliary_losses.items()})
+        diagnostics["loss"] = supervised_loss
+        return supervised_loss, diagnostics
 
     def _attach_outputs(
         self,
@@ -183,7 +202,9 @@ class PocketClassifierBase(nn.Module):
             and self._supervised_mask(data.y_ec).any().item()
         )
         if has_supervised_targets:
-            outputs["loss"] = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
+            loss, loss_diagnostics = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
+            outputs.update(loss_diagnostics)
+            outputs["loss"] = loss
         return outputs
 
 
@@ -197,6 +218,7 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         n_ec: int = N_EC_CLASSES,
         esm_fusion_dim: int = 128,
         head_mlp_layers: int = 2,
+        joint_loss_weighting: str = "fixed",
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
         metal_class_weights: Optional[Tensor] = None,
@@ -229,6 +251,7 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             head_mlp_layers=head_mlp_layers,
             predict_metal=predict_metal,
             predict_ec=predict_ec,
+            joint_loss_weighting=joint_loss_weighting,
             metal_loss_weight=metal_loss_weight,
             ec_loss_weight=ec_loss_weight,
             metal_class_weights=metal_class_weights,
@@ -278,6 +301,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         head_mlp_layers: int = 2,
         node_rbf_sigma: float = 0.75,
         edge_rbf_sigma: float = 0.75,
+        joint_loss_weighting: str = "fixed",
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
         metal_class_weights: Optional[Tensor] = None,
@@ -413,6 +437,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             head_mlp_layers=head_mlp_layers,
             predict_metal=predict_metal,
             predict_ec=predict_ec,
+            joint_loss_weighting=joint_loss_weighting,
             metal_loss_weight=metal_loss_weight,
             ec_loss_weight=ec_loss_weight,
             metal_class_weights=metal_class_weights,

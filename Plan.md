@@ -90,8 +90,9 @@ The current training entry point is `src/train.py`, which delegates to `src/trai
 | Metal loss | `--metal-focal-gamma` | `2.0` | Focal-loss gamma when focal loss is selected. | Expose |
 | Metal loss | `--metal-label-smoothing` | `0.0` | Label smoothing for metal cross-entropy. | Expose |
 | Metal loss | `--mn-loss-multiplier`, `--cu-loss-multiplier`, `--zn-loss-multiplier`, `--fe-loss-multiplier`, `--co-loss-multiplier`, `--ni-loss-multiplier`, `--class-viii-loss-multiplier` | `1.0` each | Per-class multipliers applied to metal class weights. | Advanced |
-| Joint loss | `--metal-loss-weight` | `1.0` | Task-level multiplier for the metal loss in joint or metal runs. | Expose |
-| Joint loss | `--ec-loss-weight` | `1.0` | Task-level multiplier for the EC loss in joint or EC runs. | Expose |
+| Joint loss | `--joint-loss-weighting` | `auto`; choices `auto`, `fixed`, `uncertainty` | Controls task-level metal/EC loss balancing. `auto` uses learned uncertainty weighting for joint runs and fixed weighting for single-task runs. | Expose |
+| Joint loss | `--metal-loss-weight` | `1.0` | Base task-level multiplier for the metal loss; mainly useful with `--joint-loss-weighting fixed` or deliberate ablations. | Expose |
+| Joint loss | `--ec-loss-weight` | `1.0` | Base task-level multiplier for the EC loss; mainly useful with `--joint-loss-weighting fixed` or deliberate ablations. | Expose |
 | EC labels/loss | `--ec-label-depth` | `1` | EC hierarchy depth used to build EC labels. | Expose / sweep |
 | EC labels/loss | `--ec-group-weighting` | `structure_id`; choices `none`, `structure_id`, `pdbid_chain`, `pdbid` | Weights EC loss so multiple pockets from the same structure/group do not over-count one protein. | Expose |
 | EC labels/loss | `--ec-contrastive-weight` | `0.0` | Optional supervised contrastive loss weight for EC representations. Keep `0.0` for the clean baseline. | Expose / sweep |

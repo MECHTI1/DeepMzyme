@@ -19,6 +19,7 @@ VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
+VALID_JOINT_LOSS_WEIGHTING_CHOICES = ("auto", "fixed", "uncertainty")
 VALID_EC_GROUP_WEIGHTING_CHOICES = ("none", "structure_id", "pdbid_chain", "pdbid")
 VALID_LR_SCHEDULE_CHOICES = ("fixed", "cosine", "step")
 VALID_FUSION_MODE_CHOICES = FUSION_MODE_CHOICES
@@ -125,6 +126,7 @@ class TrainConfig:
     co_loss_multiplier: float = 1.0
     ni_loss_multiplier: float = 1.0
     class_viii_loss_multiplier: float = 1.0
+    joint_loss_weighting: str = "uncertainty"
     metal_loss_weight: float = 1.0
     ec_loss_weight: float = 1.0
     metal_loss_function: str = "cross_entropy"
@@ -343,6 +345,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--joint-loss-weighting",
+        type=str,
+        default="auto",
+        choices=VALID_JOINT_LOSS_WEIGHTING_CHOICES,
+        help=(
+            "How to combine metal and EC losses. 'auto' uses learned uncertainty "
+            "weighting for joint runs and fixed weighting for single-task runs; "
+            "'fixed' keeps --metal-loss-weight and --ec-loss-weight as manual "
+            "task multipliers."
+        ),
+    )
+    parser.add_argument(
         "--metal-loss-weight",
         type=float,
         default=1.0,
@@ -433,6 +447,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
             has_validation=args.val_fraction > 0.0 or args.n_folds is not None,
         )
     model_uses_esm_inputs = args.model_architecture != "only_gvp"
+    joint_loss_weighting = resolve_joint_loss_weighting(args.task, args.joint_loss_weighting)
     return TrainConfig(
         structure_dir=args.structure_dir,
         summary_csv=args.summary_csv,
@@ -495,6 +510,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         co_loss_multiplier=args.co_loss_multiplier,
         ni_loss_multiplier=args.ni_loss_multiplier,
         class_viii_loss_multiplier=args.class_viii_loss_multiplier,
+        joint_loss_weighting=joint_loss_weighting,
         metal_loss_weight=args.metal_loss_weight,
         ec_loss_weight=args.ec_loss_weight,
         metal_loss_function=args.metal_loss_function,
@@ -529,6 +545,17 @@ def required_targets_for_task(task: str) -> tuple[str, ...]:
         f"Unsupported training task {task!r}. "
         f"Expected one of: {', '.join(repr(choice) for choice in VALID_TASK_CHOICES)}."
     )
+
+
+def resolve_joint_loss_weighting(task: str, mode: str) -> str:
+    if mode not in VALID_JOINT_LOSS_WEIGHTING_CHOICES:
+        raise ValueError(
+            f"Unsupported --joint-loss-weighting value {mode!r}. "
+            f"Expected one of: {', '.join(repr(choice) for choice in VALID_JOINT_LOSS_WEIGHTING_CHOICES)}."
+        )
+    if mode == "auto":
+        return "uncertainty" if task == "joint" else "fixed"
+    return mode
 
 
 def default_selection_metric_for_task(task: str, *, has_validation: bool) -> str:
