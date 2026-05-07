@@ -266,8 +266,8 @@ def check_colab_notebook_sweep_source() -> None:
     required_tokens = (
         'RUN_TRAINING = False',
         'RUN_HELD_OUT_TEST_EVAL = False',
-        'MODEL_PRESETS_CSV = "Only-GVP"',
-        'RING_EDGE_MODES_CSV = "radius_only"',
+        'MODEL_PRESET = "Only-GVP"',
+        'RING_EDGE_MODE = "without_ring"',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
         "CONFIG = {",
@@ -288,7 +288,6 @@ def check_colab_notebook_sweep_source() -> None:
         "omit_node_features",
         "--omit-node-features",
         "--use-ring-edges",
-        "--require-ring-edges",
         "--ring-features-dir",
         "--prepare-missing-ring-edges",
         "--no-prepare-missing-ring-edges",
@@ -364,7 +363,7 @@ def check_colab_notebook_sweep_source() -> None:
         "'use_ring_edges'",
         "itertools.product",
         "MAX_SWEEP_RUNS",
-        "STOP_ON_FIRST_FAILURE",
+        "stop_on_first_failure",
         "sweep_status.csv",
         "val_ec_group_balanced_acc",
         "src' / 'train.py'",
@@ -429,8 +428,8 @@ def check_colab_generated_training_commands_parse() -> None:
                 "run_held_out_test_eval": False,
             },
             "configuration_comparison": {
-                "model_presets_csv": "Only-GVP",
-                "ring_edge_modes_csv": "radius_only",
+                "model_preset": "Only-GVP",
+                "ring_edge_mode": "without_ring",
                 "batch_sizes_csv": "4",
                 "learning_rates_csv": "1e-4",
                 "weight_decays_csv": "1e-4",
@@ -442,9 +441,7 @@ def check_colab_generated_training_commands_parse() -> None:
             "data": {"colab_data_source": "huggingface_link"},
             "esm": {
                 "esm_embeddings_dir": "",
-                "prepare_missing_esm_embeddings": False,
                 "allow_missing_esm_embeddings": False,
-                "disable_esm_branch": False,
                 "esm_dim": 960,
             },
             "ring": {
@@ -575,18 +572,13 @@ def check_colab_generated_training_commands_parse() -> None:
     if "--omit-node-features" in default_cmd:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
 
-    ring_runs = run_builder(
-        {"configuration_comparison": {"ring_edge_modes_csv": "radius_only,radius_plus_precomputed_ring"}}
-    )
-    if len(ring_runs) != 2:
-        raise AssertionError(f"Expected two RING planned commands, got {len(ring_runs)}")
-    radius_cmd = [str(part) for part in ring_runs[0]["command"]]
-    precomputed_cmd = [str(part) for part in ring_runs[1]["command"]]
-    if "--use-ring-edges" in radius_cmd or "--require-ring-edges" in radius_cmd:
-        raise AssertionError("radius_only command unexpectedly includes RING enable/require flags.")
-    for expected_flag in ("--use-ring-edges", "--require-ring-edges", "--ring-features-dir"):
-        if expected_flag not in precomputed_cmd:
-            raise AssertionError(f"Precomputed-RING command is missing {expected_flag}.")
+    ring_runs = run_builder({"configuration_comparison": {"ring_edge_mode": "with_ring"}})
+    if len(ring_runs) != 1:
+        raise AssertionError(f"Expected one RING planned command, got {len(ring_runs)}")
+    ring_cmd = [str(part) for part in ring_runs[0]["command"]]
+    for expected_flag in ("--use-ring-edges", "--ring-features-dir", "--prepare-missing-ring-edges"):
+        if expected_flag not in ring_cmd:
+            raise AssertionError(f"RING command is missing {expected_flag}.")
 
     omit_runs = run_builder(
         {"node_features": {"omit_node_feature_sets": ";v_cb_to_fg;v_cb_to_fg,v_res_to_metal"}}
@@ -641,7 +633,6 @@ def check_colab_generated_training_commands_parse() -> None:
             "SINGLE_CROSS_ATTENTION_HEADS": 4,
             "USE_ESM_EMBEDDINGS": True,
             "ESM_EMBEDDINGS_DIR": str(drive_data_dir / "esm_embeddings"),
-            "PREPARE_MISSING_ESM_EMBEDDINGS": False,
             "ALLOW_MISSING_ESM_EMBEDDINGS": False,
             "ALLOW_MISSING_EXTERNAL_FEATURES": True,
             "RING_EDGES_MODE": "radius_only",

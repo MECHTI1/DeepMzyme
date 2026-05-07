@@ -29,6 +29,8 @@ CSV_COLUMNS = [
     "overlap_warning",
     "best_validation_loss",
     "best_validation_metric_used_for_checkpoint_selection",
+    "comparison_test_metric_name",
+    "comparison_test_metric_value",
     "test_metal_acc",
     "test_metal_balanced_acc",
     "test_metal_macro_f1",
@@ -139,6 +141,19 @@ def metrics_from_report(test_report: dict[str, Any]) -> dict[str, Any]:
     return metrics if isinstance(metrics, dict) else {}
 
 
+def matching_test_metric_name(selection_metric: str | None, task: str | None) -> str | None:
+    metric = str(selection_metric or "")
+    if metric.startswith("val_"):
+        candidate = "test_" + metric.removeprefix("val_")
+        if candidate != "test_joint_balanced_acc":
+            return candidate
+    if task == "metal":
+        return "test_metal_balanced_acc"
+    if task == "ec":
+        return "test_ec_group_balanced_acc"
+    return None
+
+
 def summarize_run(run_dir: Path) -> dict[str, Any]:
     run_config = read_json(run_dir / "run_config.json")
     run_metadata = read_json(run_dir / "run_metadata.json")
@@ -164,6 +179,8 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     )
     history = history_from_payloads(run_config, run_metadata)
     best_val_loss, best_selection_metric = best_history_values(history, selection_metric)
+    task = first_present(config.get("task"), dataset.get("task"))
+    test_metric_name = matching_test_metric_name(selection_metric, task)
     inferred_split = infer_split_identity_from_paths(
         config.get("structure_dir"),
         config.get("summary_csv"),
@@ -178,7 +195,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     row = {
         "run_name": first_present(config.get("run_name"), run_dir.name),
         "run_dir": str(run_dir),
-        "task": first_present(config.get("task"), dataset.get("task")),
+        "task": task,
         "model_architecture": config.get("model_architecture"),
         "fusion_mode": config.get("fusion_mode"),
         "seed": config.get("seed"),
@@ -224,6 +241,8 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             run_config.get("selected_metric_value"),
             best_selection_metric,
         ),
+        "comparison_test_metric_name": test_metric_name,
+        "comparison_test_metric_value": metrics.get(test_metric_name) if test_metric_name else None,
     }
     for metric_name in CSV_COLUMNS:
         if metric_name.startswith("test_"):
@@ -276,21 +295,60 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
     plot_rows = [
         row
         for row in rows
-        if is_number(row.get("best_validation_metric_used_for_checkpoint_selection"))
+        if (
+            is_number(row.get("best_validation_metric_used_for_checkpoint_selection"))
+            or is_number(row.get("comparison_test_metric_value"))
+        )
     ]
     if not plot_rows:
-        print("warning: no numeric selected validation metric available; skipping figure", file=sys.stderr)
+        print("warning: no numeric validation or held-out test metric available; skipping figure", file=sys.stderr)
         return
 
     labels = [str(row.get("run_name") or Path(str(row.get("run_dir"))).name) for row in plot_rows]
-    values = [float(row["best_validation_metric_used_for_checkpoint_selection"]) for row in plot_rows]
+    validation_values = [
+        float(row["best_validation_metric_used_for_checkpoint_selection"])
+        if is_number(row.get("best_validation_metric_used_for_checkpoint_selection"))
+        else math.nan
+        for row in plot_rows
+    ]
+    test_values = [
+        float(row["comparison_test_metric_value"])
+        if is_number(row.get("comparison_test_metric_value"))
+        else math.nan
+        for row in plot_rows
+    ]
     fig_width = max(6, min(18, len(plot_rows) * 1.2))
-    fig, ax = plt.subplots(figsize=(fig_width, 4))
-    ax.bar(range(len(values)), values, color="#4c78a8")
-    ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels, rotation=30, ha="right")
-    ax.set_ylabel("Selected validation metric")
-    ax.set_title("DeepMzyme run comparison")
+    fig, axes = plt.subplots(2, 1, figsize=(fig_width, 7), sharex=True)
+    validation_metric_names = sorted(
+        {str(row.get("selection_metric")) for row in plot_rows if row.get("selection_metric")}
+    )
+    test_metric_names = sorted(
+        {
+            str(row.get("comparison_test_metric_name"))
+            for row in plot_rows
+            if row.get("comparison_test_metric_name") not in {None, "NA"}
+        }
+    )
+    validation_ylabel = (
+        f"Validation: {validation_metric_names[0]}"
+        if len(validation_metric_names) == 1
+        else "Validation metric value"
+    )
+    test_ylabel = (
+        f"Held-out test: {test_metric_names[0]}"
+        if len(test_metric_names) == 1
+        else "Held-out test metric value"
+    )
+
+    axes[0].bar(range(len(validation_values)), validation_values, color="#4c78a8")
+    axes[0].set_ylabel(validation_ylabel)
+    axes[0].set_title("Validation-selected checkpoint metric")
+    axes[1].bar(range(len(test_values)), test_values, color="#f58518")
+    axes[1].set_ylabel(test_ylabel)
+    axes[1].set_title("Matching held-out test metric")
+    axes[1].set_xticks(range(len(labels)))
+    axes[1].set_xticklabels(labels, rotation=30, ha="right")
+    fig.suptitle("DeepMzyme run comparison")
     fig.tight_layout()
     out_figure.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_figure, dpi=160)
