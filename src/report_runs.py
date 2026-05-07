@@ -16,6 +16,12 @@ CSV_COLUMNS = [
     "model_architecture",
     "fusion_mode",
     "seed",
+    "learning_rate",
+    "weight_decay",
+    "batch_size",
+    "epochs",
+    "use_ring_edges",
+    "omit_node_features",
     "node_feature_set",
     "ec_label_depth",
     "ec_group_weighting",
@@ -192,6 +198,14 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         dataset.get("test_summary_csv"),
     )
 
+    omit_raw = config.get("omit_node_features")
+    if isinstance(omit_raw, (list, tuple)):
+        omit_str = ",".join(str(x) for x in omit_raw) if omit_raw else "none"
+    elif omit_raw:
+        omit_str = str(omit_raw)
+    else:
+        omit_str = "none"
+
     row = {
         "run_name": first_present(config.get("run_name"), run_dir.name),
         "run_dir": str(run_dir),
@@ -199,6 +213,12 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "model_architecture": config.get("model_architecture"),
         "fusion_mode": config.get("fusion_mode"),
         "seed": config.get("seed"),
+        "learning_rate": config.get("learning_rate"),
+        "weight_decay": config.get("weight_decay"),
+        "batch_size": config.get("batch_size"),
+        "epochs": config.get("epochs"),
+        "use_ring_edges": config.get("use_ring_edges"),
+        "omit_node_features": omit_str,
         "node_feature_set": first_present(config.get("node_feature_set"), dataset.get("node_feature_set")),
         "ec_label_depth": first_present(config.get("ec_label_depth"), dataset.get("ec_label_depth")),
         "ec_group_weighting": first_present(config.get("ec_group_weighting"), dataset.get("ec_group_weighting")),
@@ -285,9 +305,27 @@ def write_csv(rows: list[dict[str, Any]], out_csv: Path) -> None:
             writer.writerow({column: normalize_csv_value(row.get(column)) for column in CSV_COLUMNS})
 
 
+def _short_label(row: dict[str, Any]) -> str:
+    arch = str(row.get("model_architecture") or "?")
+    fusion = row.get("fusion_mode")
+    seed = row.get("seed")
+    lr = row.get("learning_rate")
+    parts: list[str] = []
+    if fusion and str(fusion) not in ("None", "none", ""):
+        parts.append(f"{arch[:8]}/{str(fusion)[:6]}")
+    else:
+        parts.append(arch[:14])
+    if lr is not None and is_number(lr):
+        parts.append(f"lr={float(lr):.0e}")
+    if seed is not None:
+        parts.append(f"s{seed}")
+    return " ".join(parts)
+
+
 def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
     try:
         import matplotlib.pyplot as plt
+        import matplotlib.patches as mpatches
     except Exception as exc:
         print(f"warning: matplotlib unavailable; skipping figure: {exc}", file=sys.stderr)
         return
@@ -304,8 +342,28 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
         print("warning: no numeric validation or held-out test metric available; skipping figure", file=sys.stderr)
         return
 
-    labels = [str(row.get("run_name") or Path(str(row.get("run_dir"))).name) for row in plot_rows]
-    validation_values = [
+    # Sort ascending so best run appears at the top of the horizontal bar chart
+    plot_rows = sorted(
+        plot_rows,
+        key=lambda r: (
+            is_number(r.get("best_validation_metric_used_for_checkpoint_selection")),
+            float(r["best_validation_metric_used_for_checkpoint_selection"])
+            if is_number(r.get("best_validation_metric_used_for_checkpoint_selection"))
+            else float("-inf"),
+        ),
+    )
+
+    _ARCH_COLORS = [
+        "#4c78a8", "#f58518", "#54a24b", "#e45756",
+        "#72b7b2", "#b279a2", "#ff9da6", "#9d755d",
+    ]
+    architectures = [str(row.get("model_architecture") or "unknown") for row in plot_rows]
+    unique_archs = list(dict.fromkeys(architectures))
+    color_map = {arch: _ARCH_COLORS[i % len(_ARCH_COLORS)] for i, arch in enumerate(unique_archs)}
+    bar_colors = [color_map[arch] for arch in architectures]
+
+    labels = [_short_label(row) for row in plot_rows]
+    val_values = [
         float(row["best_validation_metric_used_for_checkpoint_selection"])
         if is_number(row.get("best_validation_metric_used_for_checkpoint_selection"))
         else math.nan
@@ -317,9 +375,22 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
         else math.nan
         for row in plot_rows
     ]
-    fig_width = max(6, min(18, len(plot_rows) * 1.2))
-    fig, axes = plt.subplots(2, 1, figsize=(fig_width, 7), sharex=True)
-    validation_metric_names = sorted(
+    has_test = any(not math.isnan(v) for v in test_values)
+    paired_count = sum(
+        1 for v, t in zip(val_values, test_values)
+        if not math.isnan(v) and not math.isnan(t)
+    )
+    has_scatter = has_test and paired_count >= 2
+
+    n_panels = 3 if has_scatter else (2 if has_test else 1)
+    n_runs = len(plot_rows)
+    bar_height = max(3.5, n_runs * 0.45 + 2.0)
+    fig_width = 6.5 * n_panels
+
+    fig, raw_axes = plt.subplots(1, n_panels, figsize=(fig_width, bar_height))
+    axes: list[Any] = list(raw_axes) if n_panels > 1 else [raw_axes]
+
+    val_metric_names = sorted(
         {str(row.get("selection_metric")) for row in plot_rows if row.get("selection_metric")}
     )
     test_metric_names = sorted(
@@ -329,29 +400,67 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
             if row.get("comparison_test_metric_name") not in {None, "NA"}
         }
     )
-    validation_ylabel = (
-        f"Validation: {validation_metric_names[0]}"
-        if len(validation_metric_names) == 1
-        else "Validation metric value"
-    )
-    test_ylabel = (
-        f"Held-out test: {test_metric_names[0]}"
-        if len(test_metric_names) == 1
-        else "Held-out test metric value"
-    )
+    val_xlabel = val_metric_names[0] if len(val_metric_names) == 1 else "validation metric"
+    test_xlabel = test_metric_names[0] if len(test_metric_names) == 1 else "test metric"
 
-    axes[0].bar(range(len(validation_values)), validation_values, color="#4c78a8")
-    axes[0].set_ylabel(validation_ylabel)
-    axes[0].set_title("Validation-selected checkpoint metric")
-    axes[1].bar(range(len(test_values)), test_values, color="#f58518")
-    axes[1].set_ylabel(test_ylabel)
-    axes[1].set_title("Matching held-out test metric")
-    axes[1].set_xticks(range(len(labels)))
-    axes[1].set_xticklabels(labels, rotation=30, ha="right")
-    fig.suptitle("DeepMzyme run comparison")
+    y = list(range(n_runs))
+
+    def _draw_hbars(ax: Any, values: list[float], title: str, xlabel: str) -> None:
+        ax.barh(y, values, color=bar_colors, alpha=0.85, height=0.65)
+        ax.set_yticks(y)
+        ax.set_yticklabels(labels, fontsize=8)
+        ax.set_xlabel(xlabel, fontsize=9)
+        ax.set_title(title, fontsize=10, pad=6)
+        finite = [v for v in values if not math.isnan(v)]
+        if not finite:
+            return
+        vrange = max(finite) - min(finite)
+        offset = max(vrange * 0.012, 1e-4)
+        for yi, val in zip(y, values):
+            if not math.isnan(val):
+                ax.text(val + offset, yi, f"{val:.4f}", va="center", ha="left", fontsize=7)
+        ax.set_xlim(right=max(finite) + max(vrange * 0.18, 0.04))
+
+    _draw_hbars(axes[0], val_values, "Validation metric (checkpoint selection)", val_xlabel)
+
+    if has_test:
+        _draw_hbars(axes[1], test_values, "Held-out test metric", test_xlabel)
+
+    if has_scatter:
+        ax2 = axes[2]
+        pairs = [
+            (v, t, lbl, clr)
+            for v, t, lbl, clr in zip(val_values, test_values, labels, bar_colors)
+            if not math.isnan(v) and not math.isnan(t)
+        ]
+        xs, ys_s, slabels, scolors = zip(*pairs)
+        ax2.scatter(xs, ys_s, c=scolors, s=70, alpha=0.9, zorder=3)
+        for xi, yi_pt, lbl in zip(xs, ys_s, slabels):
+            ax2.annotate(lbl, (xi, yi_pt), fontsize=6, textcoords="offset points", xytext=(5, 3))
+        all_vals = list(xs) + list(ys_s)
+        lo, hi = min(all_vals), max(all_vals)
+        margin = (hi - lo) * 0.05 if hi > lo else 0.01
+        ax2.plot([lo - margin, hi + margin], [lo - margin, hi + margin], "k--", lw=0.8, alpha=0.4)
+        ax2.set_xlabel(val_xlabel, fontsize=9)
+        ax2.set_ylabel(test_xlabel, fontsize=9)
+        ax2.set_title("Val vs. test correlation", fontsize=10, pad=6)
+
+    if len(unique_archs) > 1:
+        patches = [mpatches.Patch(color=color_map[a], label=a) for a in unique_archs]
+        fig.legend(
+            handles=patches,
+            loc="upper center",
+            ncol=min(len(unique_archs), 4),
+            fontsize=8,
+            bbox_to_anchor=(0.5, 1.04),
+            title="Architecture",
+            title_fontsize=8,
+        )
+
+    fig.suptitle("DeepMzyme run comparison", y=1.08, fontsize=12)
     fig.tight_layout()
     out_figure.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_figure, dpi=160)
+    fig.savefig(out_figure, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
 
