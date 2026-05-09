@@ -400,6 +400,153 @@ def count_labels(
     return counts
 
 
+def _safe_pocket_split_key(pocket: PocketRecord, split_by: str) -> str:
+    try:
+        return pocket_split_key(pocket, split_by)
+    except Exception:
+        if split_by == "pocket_id":
+            return str(pocket.pocket_id)
+        return str(pocket.structure_id)
+
+
+def _safe_identity_values(pocket: PocketRecord) -> dict[str, str | None]:
+    try:
+        pdbid, chain, _ec = parse_structure_identity(pocket.structure_id)
+    except Exception:
+        pdbid = None
+        pdbid_chain = None
+    else:
+        pdbid_chain = f"{pdbid}__chain_{chain}"
+    return {
+        "pocket_id": str(pocket.pocket_id),
+        "structure_id": str(pocket.structure_id),
+        "pdbid_chain": pdbid_chain,
+        "pdbid": pdbid,
+    }
+
+
+def _identity_sets(pockets: list[PocketRecord]) -> dict[str, set[str]]:
+    values = {
+        "pocket_id": set(),
+        "structure_id": set(),
+        "pdbid_chain": set(),
+        "pdbid": set(),
+    }
+    for pocket in pockets:
+        identity_values = _safe_identity_values(pocket)
+        for key, value in identity_values.items():
+            if value is not None:
+                values[key].add(value)
+    return values
+
+
+def _missing_classes(distribution: dict[str, int]) -> list[str]:
+    return [label for label, count in distribution.items() if int(count) == 0]
+
+
+def build_split_diagnostics(
+    split: PocketSplit,
+    config: TrainConfig,
+    ec_label_map: dict[int, str],
+) -> dict[str, Any]:
+    split_by = validate_split_by(config.split_by)
+    train_groups = {
+        _safe_pocket_split_key(pocket, split_by)
+        for pocket in split.train_pockets
+    }
+    val_groups = {
+        _safe_pocket_split_key(pocket, split_by)
+        for pocket in split.val_pockets
+    }
+    train_identity_sets = _identity_sets(split.train_pockets)
+    val_identity_sets = _identity_sets(split.val_pockets)
+    overlap_counts: dict[str, int] = {}
+    overlap_examples: dict[str, list[str]] = {}
+    for key in ("pocket_id", "structure_id", "pdbid_chain", "pdbid"):
+        overlap = train_identity_sets[key].intersection(val_identity_sets[key])
+        overlap_counts[key] = len(overlap)
+        overlap_examples[key] = sorted(overlap)[:10]
+
+    train_metal_distribution = count_labels(split.train_pockets, "y_metal", METAL_TARGET_LABELS)
+    val_metal_distribution = count_labels(split.val_pockets, "y_metal", METAL_TARGET_LABELS)
+    train_ec_distribution = count_labels(split.train_pockets, "y_ec", ec_label_map)
+    val_ec_distribution = count_labels(split.val_pockets, "y_ec", ec_label_map)
+
+    return {
+        "task": config.task,
+        "split_by": split_by,
+        "val_fraction": config.val_fraction,
+        "n_folds": config.n_folds,
+        "fold_index": config.fold_index,
+        "n_train_pockets": len(split.train_pockets),
+        "n_val_pockets": len(split.val_pockets),
+        "n_train_groups": len(train_groups),
+        "n_val_groups": len(val_groups),
+        "train_val_overlap_pocket_id": overlap_counts["pocket_id"],
+        "train_val_overlap_structure_id": overlap_counts["structure_id"],
+        "train_val_overlap_pdbid_chain": overlap_counts["pdbid_chain"],
+        "train_val_overlap_pdbid": overlap_counts["pdbid"],
+        "train_val_overlap_counts": overlap_counts,
+        "train_val_overlap_examples": overlap_examples,
+        "train_metal_distribution": train_metal_distribution,
+        "val_metal_distribution": val_metal_distribution,
+        "train_ec_distribution": train_ec_distribution,
+        "val_ec_distribution": val_ec_distribution,
+        "missing_train_metal_classes": _missing_classes(train_metal_distribution),
+        "missing_val_metal_classes": _missing_classes(val_metal_distribution),
+        "missing_train_ec_classes": _missing_classes(train_ec_distribution),
+        "missing_val_ec_classes": _missing_classes(val_ec_distribution),
+    }
+
+
+def _format_distribution(distribution: dict[str, int]) -> str:
+    if not distribution:
+        return "none"
+    return ", ".join(f"{label}={count}" for label, count in distribution.items())
+
+
+def _format_missing(classes: list[str]) -> str:
+    return ", ".join(classes) if classes else "none"
+
+
+def format_split_diagnostics(report: dict[str, Any]) -> str:
+    lines = [
+        "",
+        "=== Split diagnostics (passive; training behavior unchanged) ===",
+        (
+            f"task={report.get('task')} split_by={report.get('split_by')} "
+            f"val_fraction={report.get('val_fraction')} "
+            f"n_folds={report.get('n_folds')} fold_index={report.get('fold_index')}"
+        ),
+        (
+            f"pockets: train={report.get('n_train_pockets')} "
+            f"validation={report.get('n_val_pockets')}"
+        ),
+        (
+            f"groups by {report.get('split_by')}: train={report.get('n_train_groups')} "
+            f"validation={report.get('n_val_groups')}"
+        ),
+        (
+            "train/validation overlap counts: "
+            f"pdbid={report.get('train_val_overlap_pdbid')}, "
+            f"pdbid_chain={report.get('train_val_overlap_pdbid_chain')}, "
+            f"structure_id={report.get('train_val_overlap_structure_id')}, "
+            f"pocket_id={report.get('train_val_overlap_pocket_id')}"
+        ),
+        f"train metal distribution: {_format_distribution(report.get('train_metal_distribution', {}))}",
+        f"validation metal distribution: {_format_distribution(report.get('val_metal_distribution', {}))}",
+        f"missing train metal classes: {_format_missing(report.get('missing_train_metal_classes', []))}",
+        f"missing validation metal classes: {_format_missing(report.get('missing_val_metal_classes', []))}",
+        f"train EC distribution: {_format_distribution(report.get('train_ec_distribution', {}))}",
+        f"validation EC distribution: {_format_distribution(report.get('val_ec_distribution', {}))}",
+        f"missing train EC classes: {_format_missing(report.get('missing_train_ec_classes', []))}",
+        f"missing validation EC classes: {_format_missing(report.get('missing_val_ec_classes', []))}",
+        "===============================================================",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def build_dataset_summary(
     split: PocketSplit,
     config: TrainConfig,

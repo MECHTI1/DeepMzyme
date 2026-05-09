@@ -44,7 +44,9 @@ from training.splits import (
     assign_ec_group_metadata,
     build_balanced_metal_site_sampler,
     build_dataset_summary,
+    build_split_diagnostics,
     ec_grouping_mode_for_metrics,
+    format_split_diagnostics,
     split_pockets,
     split_pockets_k_fold,
 )
@@ -784,12 +786,20 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         if task_predicts_ec(config.task):
             assign_ec_group_metadata(split.train_pockets, weighting_mode=config.ec_group_weighting)
             assign_ec_group_metadata(split.val_pockets, weighting_mode=config.ec_group_weighting)
+        split_diagnostics = build_split_diagnostics(
+            split,
+            config,
+            ec_label_map=load_result.ec_index_to_label,
+        )
+        print(format_split_diagnostics(split_diagnostics))
+        save_json(run_dir / "split_diagnostics.json", split_diagnostics)
         dataset_summary = build_dataset_summary(
             split,
             config,
             feature_load_report=load_result.feature_report,
             ec_label_map=load_result.ec_index_to_label,
         )
+        dataset_summary["split_diagnostics"] = split_diagnostics
         dataset_summary.update(
             {
                 "split_name": config_payload.get("split_name"),

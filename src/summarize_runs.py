@@ -17,6 +17,18 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_json_if_exists(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    return load_json(path)
+
+
+def csv_list(value) -> str:
+    if isinstance(value, list):
+        return ";".join(str(item) for item in value)
+    return "" if value is None else str(value)
+
+
 def metric_value_or_default(record: dict, metric_name: str, default: float) -> float:
     value = record.get(metric_name)
     if value is None:
@@ -57,7 +69,8 @@ def build_rows(runs_dir: Path) -> list[dict[str, str]]:
             continue
         run_config = load_json(run_config_path)
         test_report_path = run_dir / "test_report.json"
-        test_report = load_json(test_report_path) if test_report_path.exists() else {}
+        test_report = load_json_if_exists(test_report_path)
+        split_diagnostics = load_json_if_exists(run_dir / "split_diagnostics.json")
         config = run_config.get("config", {})
         history = run_config.get("history", [])
         selection_metric = str(config.get("selection_metric", "train_loss"))
@@ -83,6 +96,19 @@ def build_rows(runs_dir: Path) -> list[dict[str, str]]:
                 "model_label": model_display_label(config),
                 "ec_label_depth": str(config.get("ec_label_depth", "")),
                 "joint_loss_weighting": str(config.get("joint_loss_weighting", "")),
+                "split_by": str(split_diagnostics.get("split_by", config.get("split_by", ""))),
+                "n_train_pockets": str(split_diagnostics.get("n_train_pockets", "")),
+                "n_val_pockets": str(split_diagnostics.get("n_val_pockets", "")),
+                "n_train_groups": str(split_diagnostics.get("n_train_groups", "")),
+                "n_val_groups": str(split_diagnostics.get("n_val_groups", "")),
+                "train_val_overlap_pdbid": str(split_diagnostics.get("train_val_overlap_pdbid", "")),
+                "train_val_overlap_pdbid_chain": str(split_diagnostics.get("train_val_overlap_pdbid_chain", "")),
+                "train_val_overlap_structure_id": str(split_diagnostics.get("train_val_overlap_structure_id", "")),
+                "train_val_overlap_pocket_id": str(split_diagnostics.get("train_val_overlap_pocket_id", "")),
+                "missing_train_metal_classes": csv_list(split_diagnostics.get("missing_train_metal_classes")),
+                "missing_val_metal_classes": csv_list(split_diagnostics.get("missing_val_metal_classes")),
+                "missing_train_ec_classes": csv_list(split_diagnostics.get("missing_train_ec_classes")),
+                "missing_val_ec_classes": csv_list(split_diagnostics.get("missing_val_ec_classes")),
                 "selection_metric": selection_metric,
                 "best_epoch": str(best_epoch_record.get("epoch", "")),
                 "val_metal_balanced_acc": str(best_epoch_record.get("val_metal_balanced_acc", "")),
@@ -105,6 +131,19 @@ def write_rows(output_csv: Path, rows: list[dict[str, str]]) -> None:
         "model_label",
         "ec_label_depth",
         "joint_loss_weighting",
+        "split_by",
+        "n_train_pockets",
+        "n_val_pockets",
+        "n_train_groups",
+        "n_val_groups",
+        "train_val_overlap_pdbid",
+        "train_val_overlap_pdbid_chain",
+        "train_val_overlap_structure_id",
+        "train_val_overlap_pocket_id",
+        "missing_train_metal_classes",
+        "missing_val_metal_classes",
+        "missing_train_ec_classes",
+        "missing_val_ec_classes",
         "selection_metric",
         "best_epoch",
         "val_metal_balanced_acc",

@@ -35,6 +35,19 @@ CSV_COLUMNS = [
     "selected_checkpoint",
     "split_name",
     "split_type",
+    "split_by",
+    "n_train_pockets",
+    "n_val_pockets",
+    "n_train_groups",
+    "n_val_groups",
+    "train_val_overlap_pdbid",
+    "train_val_overlap_pdbid_chain",
+    "train_val_overlap_structure_id",
+    "train_val_overlap_pocket_id",
+    "missing_train_metal_classes",
+    "missing_val_metal_classes",
+    "missing_train_ec_classes",
+    "missing_val_ec_classes",
     "train_test_overlap_detected",
     "overlap_warning",
     "best_validation_loss",
@@ -92,6 +105,12 @@ def first_present(*values: Any) -> Any:
         if value is not None:
             return value
     return None
+
+
+def csv_list(value: Any) -> Any:
+    if isinstance(value, list):
+        return ";".join(str(item) for item in value)
+    return value
 
 
 def is_number(value: Any) -> bool:
@@ -168,6 +187,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     run_config = read_json(run_dir / "run_config.json")
     run_metadata = read_json(run_dir / "run_metadata.json")
     dataset_summary = read_json(run_dir / "dataset_summary.json")
+    split_diagnostics = read_json(run_dir / "split_diagnostics.json")
     test_report = read_json(run_dir / "test_report.json")
 
     config = first_present(run_metadata.get("config"), run_config.get("config"), {})
@@ -176,6 +196,9 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     dataset = first_present(run_metadata.get("dataset_summary"), run_config.get("dataset_summary"), dataset_summary, {})
     if not isinstance(dataset, dict):
         dataset = {}
+    if not split_diagnostics:
+        embedded_split_diagnostics = dataset.get("split_diagnostics")
+        split_diagnostics = embedded_split_diagnostics if isinstance(embedded_split_diagnostics, dict) else {}
     embedded_test_report = first_present(run_metadata.get("test_report"), run_config.get("test_report"))
     if not test_report and isinstance(embedded_test_report, dict):
         test_report = embedded_test_report
@@ -251,6 +274,29 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             config.get("split_type"),
             inferred_split["split_type"],
         ),
+        "split_by": first_present(
+            split_diagnostics.get("split_by"),
+            dataset.get("split_by"),
+            config.get("split_by"),
+        ),
+        "n_train_pockets": first_present(
+            split_diagnostics.get("n_train_pockets"),
+            dataset.get("n_train_pockets"),
+        ),
+        "n_val_pockets": first_present(
+            split_diagnostics.get("n_val_pockets"),
+            dataset.get("n_val_pockets"),
+        ),
+        "n_train_groups": split_diagnostics.get("n_train_groups"),
+        "n_val_groups": split_diagnostics.get("n_val_groups"),
+        "train_val_overlap_pdbid": split_diagnostics.get("train_val_overlap_pdbid"),
+        "train_val_overlap_pdbid_chain": split_diagnostics.get("train_val_overlap_pdbid_chain"),
+        "train_val_overlap_structure_id": split_diagnostics.get("train_val_overlap_structure_id"),
+        "train_val_overlap_pocket_id": split_diagnostics.get("train_val_overlap_pocket_id"),
+        "missing_train_metal_classes": csv_list(split_diagnostics.get("missing_train_metal_classes")),
+        "missing_val_metal_classes": csv_list(split_diagnostics.get("missing_val_metal_classes")),
+        "missing_train_ec_classes": csv_list(split_diagnostics.get("missing_train_ec_classes")),
+        "missing_val_ec_classes": csv_list(split_diagnostics.get("missing_val_ec_classes")),
         "train_test_overlap_detected": first_present(
             run_metadata.get("train_test_overlap_detected"),
             test_report.get("train_test_overlap_detected"),
