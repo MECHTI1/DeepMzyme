@@ -180,7 +180,11 @@ def generate_structure_csv(
         ec_label_depth=ec_label_depth,
     )
     validate_rows(rows)
-    validate_rows_match_structure_dir(structure_dir=structure_dir, rows=rows)
+    validate_rows_match_structure_dir(
+        structure_dir=structure_dir,
+        rows=rows,
+        allow_missing_structure_rows=True,
+    )
     write_rows(output_csv, rows)
     multi_metal_row_count = sum(1 for row in rows if ";" in row["metal_type"])
     return output_csv, multi_metal_row_count

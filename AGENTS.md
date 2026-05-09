@@ -45,6 +45,31 @@ Do not make large architectural changes that contradict Plan.md unless explicitl
 
 ---
 
+### 1b. Read EXPERIMENT_STATUS.md for current progress
+
+If `EXPERIMENT_STATUS.md` is present at the repository root, read it before suggesting
+the next experiment, the next baseline, or the next hyperparameter sweep. It is a
+lightweight, frequently updated summary of where the project currently stands
+(stage, current best validation result, trusted split, next planned experiment,
+known caveats, and test-set rules).
+
+How to weigh these sources:
+
+- For design intent and planned project direction, `Plan.md` remains the main
+  design authority.
+- `EXPERIMENT_STATUS.md` is a mutable current-progress note and is lower
+  authority than `Plan.md`.
+- Current source code under `src/` and run outputs under
+  `DeepMzyme_Data/notebook_outputs/runs/` are evidence of actual implemented
+  behavior and actual results, not statements of design intent.
+- If code, run outputs, `Plan.md`, or `EXPERIMENT_STATUS.md` conflict, report
+  the conflict clearly instead of silently choosing one.
+
+`EXPERIMENT_STATUS.md` is the right place for short-lived experiment-status notes.
+Do not move that kind of frequently changing state into `AGENTS.md` or `Plan.md`.
+
+---
+
 ### 2. Be careful with src/model.py
 
 The current src/model.py may contain experimental, non-final, partially inconsistent, or not fully validated code.
@@ -169,4 +194,6 @@ When working on this repository:
 5. Run syntax or smoke checks when possible.
 6. Clearly summarize what changed and what was not changed.
 
-After writing the file, confirm the final path and show the first 20 lines of AGENTS.md.
+When editing AGENTS.md itself, briefly summarize the changed sections in the
+response so the user can review the policy delta without re-reading the whole
+file.

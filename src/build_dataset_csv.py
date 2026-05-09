@@ -100,7 +100,12 @@ def validate_rows(rows: list[dict[str, str]]) -> None:
             raise ValueError(f"Row for structure {structure_name!r} is missing metal_type.")
 
 
-def validate_rows_match_structure_dir(*, structure_dir: Path, rows: list[dict[str, str]]) -> None:
+def validate_rows_match_structure_dir(
+    *,
+    structure_dir: Path,
+    rows: list[dict[str, str]],
+    allow_missing_structure_rows: bool = False,
+) -> None:
     from training.structure_loading import find_structure_files
 
     expected_structure_names = {path.stem for path in find_structure_files(structure_dir)}
@@ -108,7 +113,7 @@ def validate_rows_match_structure_dir(*, structure_dir: Path, rows: list[dict[st
 
     missing_structure_names = sorted(expected_structure_names.difference(observed_structure_names))
     unexpected_structure_names = sorted(observed_structure_names.difference(expected_structure_names))
-    if missing_structure_names or unexpected_structure_names:
+    if (missing_structure_names and not allow_missing_structure_rows) or unexpected_structure_names:
         detail_parts: list[str] = []
         if missing_structure_names:
             detail_parts.append(

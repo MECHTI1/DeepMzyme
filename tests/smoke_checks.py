@@ -619,7 +619,10 @@ def check_colab_generated_training_commands_parse() -> None:
             raise AssertionError(f"RING command is missing {expected_flag}.")
 
     omit_runs = run_builder(
-        {"node_features": {"omit_node_feature_sets": ";v_cb_to_fg;v_cb_to_fg,v_res_to_metal"}}
+        {
+            "basic": {"run_mode": "manual_configurations"},
+            "node_features": {"omit_node_feature_sets": ";v_cb_to_fg;v_cb_to_fg,v_res_to_metal"},
+        }
     )
     if len(omit_runs) != 3:
         raise AssertionError(f"Expected three omission planned commands, got {len(omit_runs)}")
@@ -929,6 +932,35 @@ def check_bundle_cli_help() -> None:
         raise AssertionError(f"Bundle CLI help is missing expected options: {missing}")
 
 
+def check_bundle_artifact_can_be_labeled_subset() -> None:
+    from build_dataset_csv import validate_rows_match_structure_dir
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_bundle_subset_") as tmp:
+        structure_dir = Path(tmp)
+        (structure_dir / "labeled_structure.pdb").write_text("HEADER labeled\n", encoding="utf-8")
+        (structure_dir / "unlabeled_structure.pdb").write_text("HEADER unlabeled\n", encoding="utf-8")
+        rows = [
+            {
+                "structure_name": "labeled_structure",
+                "ec_numbers": "1",
+                "metal_type": "Zn",
+            }
+        ]
+        try:
+            validate_rows_match_structure_dir(structure_dir=structure_dir, rows=rows)
+        except ValueError as exc:
+            if "missing rows" not in str(exc):
+                raise AssertionError(f"Strict validation failed for an unexpected reason: {exc}") from exc
+        else:
+            raise AssertionError("Strict structure CSV validation accepted a missing structure row.")
+
+        validate_rows_match_structure_dir(
+            structure_dir=structure_dir,
+            rows=rows,
+            allow_missing_structure_rows=True,
+        )
+
+
 def check_docs_do_not_use_broken_training_command() -> None:
     broken_module = ".".join(("src", "training", "run"))
     broken_patterns = (f"python -m {broken_module}", broken_module)
@@ -1042,6 +1074,7 @@ def main() -> int:
         check_ec_group_id_batches_without_increment,
         check_conflicting_ec_group_metrics_are_skipped,
         check_bundle_cli_help,
+        check_bundle_artifact_can_be_labeled_subset,
         check_docs_do_not_use_broken_training_command,
         check_multi_metal_site_level_granularity,
     )
