@@ -89,6 +89,16 @@ def build_rows(runs_dir: Path) -> list[dict[str, str]]:
         test_metrics = test_report.get("metrics", {})
         rows.append(
             {
+                "result_stage": (
+                    "final-test evaluated"
+                    if test_metrics
+                    else (
+                        "seed-repeat validation"
+                        if "seed_repeat" in run_dir.name.lower()
+                        or ("top" in run_dir.name.lower() and "seed" in run_dir.name.lower())
+                        else "validation-only"
+                    )
+                ),
                 "run_name": run_dir.name,
                 "task": str(config.get("task", "")),
                 "model_architecture": str(config.get("model_architecture", "")),
@@ -96,6 +106,7 @@ def build_rows(runs_dir: Path) -> list[dict[str, str]]:
                 "model_label": model_display_label(config),
                 "ec_label_depth": str(config.get("ec_label_depth", "")),
                 "joint_loss_weighting": str(config.get("joint_loss_weighting", "")),
+                "metal_class_weight_mode": str(config.get("metal_class_weight_mode", "")),
                 "split_by": str(split_diagnostics.get("split_by", config.get("split_by", ""))),
                 "n_train_pockets": str(split_diagnostics.get("n_train_pockets", "")),
                 "n_val_pockets": str(split_diagnostics.get("n_val_pockets", "")),
@@ -125,12 +136,14 @@ def write_rows(output_csv: Path, rows: list[dict[str, str]]) -> None:
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "run_name",
+        "result_stage",
         "task",
         "model_architecture",
         "fusion_mode",
         "model_label",
         "ec_label_depth",
         "joint_loss_weighting",
+        "metal_class_weight_mode",
         "split_by",
         "n_train_pockets",
         "n_val_pockets",

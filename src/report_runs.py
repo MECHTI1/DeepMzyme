@@ -10,6 +10,7 @@ from typing import Any, Iterable
 
 
 CSV_COLUMNS = [
+    "result_stage",
     "run_name",
     "run_dir",
     "task",
@@ -31,6 +32,7 @@ CSV_COLUMNS = [
     "joint_loss_weighting",
     "metal_loss_weight",
     "ec_loss_weight",
+    "metal_class_weight_mode",
     "selection_metric",
     "selected_checkpoint",
     "split_name",
@@ -183,6 +185,15 @@ def matching_test_metric_name(selection_metric: str | None, task: str | None) ->
     return None
 
 
+def infer_result_stage(run_dir: Path, metrics: dict[str, Any]) -> str:
+    if metrics:
+        return "final-test evaluated"
+    name_text = str(run_dir.name).lower()
+    if "seed_repeat" in name_text or ("top" in name_text and "seed" in name_text):
+        return "seed-repeat validation"
+    return "validation-only"
+
+
 def summarize_run(run_dir: Path) -> dict[str, Any]:
     run_config = read_json(run_dir / "run_config.json")
     run_metadata = read_json(run_dir / "run_metadata.json")
@@ -234,6 +245,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         omit_str = "none"
 
     row = {
+        "result_stage": infer_result_stage(run_dir, metrics),
         "run_name": first_present(config.get("run_name"), run_dir.name),
         "run_dir": str(run_dir),
         "task": task,
@@ -255,6 +267,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "joint_loss_weighting": config.get("joint_loss_weighting"),
         "metal_loss_weight": config.get("metal_loss_weight"),
         "ec_loss_weight": config.get("ec_loss_weight"),
+        "metal_class_weight_mode": config.get("metal_class_weight_mode"),
         "selection_metric": selection_metric,
         "selected_checkpoint": first_present(
             run_metadata.get("selected_checkpoint"),

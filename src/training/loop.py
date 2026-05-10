@@ -40,25 +40,52 @@ def evaluate_epoch(model: nn.Module, loader: DataLoader, device: str = "cpu") ->
     return float(evaluate_epoch_with_predictions(model, loader, device=device)["loss"])
 
 
-def balanced_class_weights_from_labels(labels: list[int], n_classes: int) -> Tensor:
+def class_weights_from_labels(
+    labels: list[int],
+    n_classes: int,
+    *,
+    mode: str = "inverse_frequency",
+    effective_number_beta: float = 0.999,
+) -> Tensor:
     if n_classes < 1:
         raise ValueError(f"n_classes must be at least 1, got {n_classes}.")
+    if mode not in {"none", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
+        raise ValueError(f"Unsupported class weight mode {mode!r}.")
     if not labels:
         return torch.ones(n_classes, dtype=torch.float32)
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=n_classes).float()
     counts = torch.where(counts > 0, counts, torch.ones_like(counts))
-    weights = counts.sum() / (counts * float(n_classes))
+    if mode == "none":
+        weights = torch.ones_like(counts)
+    elif mode == "inverse_frequency":
+        weights = counts.sum() / (counts * float(n_classes))
+    elif mode == "inverse_sqrt_frequency":
+        weights = torch.rsqrt(counts)
+    else:
+        beta = float(effective_number_beta)
+        effective_counts = (1.0 - torch.pow(torch.full_like(counts, beta), counts)) / (1.0 - beta)
+        weights = 1.0 / effective_counts
     return weights / weights.mean()
+
+
+def balanced_class_weights_from_labels(labels: list[int], n_classes: int) -> Tensor:
+    return class_weights_from_labels(labels, n_classes, mode="inverse_frequency")
 
 
 def balanced_class_weights_from_pockets(
     pockets: list[PocketRecord],
     n_metal_classes: int,
     n_ec_classes: int,
+    *,
+    metal_class_weight_mode: str = "inverse_frequency",
 ) -> tuple[Tensor, Tensor]:
     metal_labels = [int(pocket.y_metal) for pocket in pockets if pocket.y_metal is not None]
     ec_labels = [int(pocket.y_ec) for pocket in pockets if pocket.y_ec is not None]
-    metal_weights = balanced_class_weights_from_labels(metal_labels, n_metal_classes)
+    metal_weights = class_weights_from_labels(
+        metal_labels,
+        n_metal_classes,
+        mode=metal_class_weight_mode,
+    )
     ec_weights = balanced_class_weights_from_labels(ec_labels, n_ec_classes)
     return metal_weights, ec_weights
 

@@ -241,6 +241,8 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--metal-loss-weight must be non-negative, got {config.metal_loss_weight}")
     if config.ec_loss_weight < 0.0:
         raise ValueError(f"--ec-loss-weight must be non-negative, got {config.ec_loss_weight}")
+    if config.metal_class_weight_mode not in {"none", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
+        raise ValueError(f"Unsupported --metal-class-weight-mode {config.metal_class_weight_mode!r}")
     if config.joint_loss_weighting == "uncertainty" and config.task != "joint":
         raise ValueError(
             "--joint-loss-weighting uncertainty requires --task joint. "
@@ -908,8 +910,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             split.train_pockets,
             n_metal_classes=N_METAL_CLASSES,
             n_ec_classes=max(1, len(load_result.ec_index_to_label)),
+            metal_class_weight_mode=config.metal_class_weight_mode,
         )
-        if task_predicts_metal(config.task):
+        if task_predicts_metal(config.task) and config.metal_class_weight_mode != "none":
             metal_class_weights = computed_metal_weights
             mn_idx = metal_label_index("Mn")
             cu_idx = metal_label_index("Cu")

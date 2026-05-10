@@ -19,6 +19,12 @@ VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
+VALID_METAL_CLASS_WEIGHT_MODE_CHOICES = (
+    "none",
+    "inverse_frequency",
+    "inverse_sqrt_frequency",
+    "effective_number",
+)
 VALID_JOINT_LOSS_WEIGHTING_CHOICES = ("auto", "fixed", "uncertainty")
 VALID_EC_GROUP_WEIGHTING_CHOICES = ("none", "structure_id", "pdbid_chain", "pdbid")
 VALID_LR_SCHEDULE_CHOICES = ("fixed", "cosine", "step")
@@ -129,6 +135,7 @@ class TrainConfig:
     joint_loss_weighting: str = "uncertainty"
     metal_loss_weight: float = 1.0
     ec_loss_weight: float = 1.0
+    metal_class_weight_mode: str = "inverse_frequency"
     metal_loss_function: str = "cross_entropy"
     metal_focal_gamma: float = 2.0
     metal_label_smoothing: float = 0.0
@@ -369,6 +376,16 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Task-level multiplier for the EC classification loss.",
     )
     parser.add_argument(
+        "--metal-class-weight-mode",
+        type=str,
+        default="inverse_frequency",
+        choices=VALID_METAL_CLASS_WEIGHT_MODE_CHOICES,
+        help=(
+            "How to compute metal class weights from the training split. "
+            "'inverse_frequency' preserves the previous default behavior."
+        ),
+    )
+    parser.add_argument(
         "--metal-loss-function",
         type=str,
         default="cross_entropy",
@@ -513,6 +530,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         joint_loss_weighting=joint_loss_weighting,
         metal_loss_weight=args.metal_loss_weight,
         ec_loss_weight=args.ec_loss_weight,
+        metal_class_weight_mode=args.metal_class_weight_mode,
         metal_loss_function=args.metal_loss_function,
         metal_focal_gamma=args.metal_focal_gamma,
         metal_label_smoothing=args.metal_label_smoothing,
