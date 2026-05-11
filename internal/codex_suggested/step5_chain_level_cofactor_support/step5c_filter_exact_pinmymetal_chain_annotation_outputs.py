@@ -72,6 +72,7 @@ def split_semicolon_values(value: str) -> list[str]:
     return [part.strip() for part in text.split(";") if part.strip()]
 
 
+
 def extract_symbols_from_cofactor_name(value: str) -> set[str]:
     upper_value = str(value).upper().strip()
     matches: set[str] = set()
