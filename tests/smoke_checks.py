@@ -302,8 +302,10 @@ def check_colab_notebook_sweep_source() -> None:
     nb = json.loads(notebook_path.read_text(encoding="utf-8"))
     source = "\n".join("".join(cell.get("source", [])) for cell in nb.get("cells", []))
     required_tokens = (
-        'RUN_TRAINING = False',
-        'RUN_HELD_OUT_TEST_EVAL = False',
+        '"run_training": False',
+        'LAUNCH_PLANNED_TRAINING_RUNS = False',
+        'INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False',
+        'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
         'MODEL_PRESET = "Only-GVP"',
         'RING_EDGE_MODE = "without_ring"',
         'OMIT_NODE_FEATURE_SETS = ""',
@@ -466,6 +468,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "run_held_out_test_eval": False,
             },
             "configuration_comparison": {
+                "recommended_run_set": "custom",
                 "model_preset": "Only-GVP",
                 "ring_edge_mode": "without_ring",
                 "batch_sizes_csv": "4",
@@ -475,16 +478,25 @@ def check_colab_generated_training_commands_parse() -> None:
                 "max_configuration_runs": 24,
                 "stop_on_first_failure": True,
                 "skip_existing_runs": True,
+                "allow_model_preset_mismatch": False,
+                "allow_single_mode_to_truncate_comparison": False,
+            },
+            "optuna": {
+                "run_seed_repeat_evaluation": False,
+                "top_k_configs_for_seed_repeat": 3,
             },
             "data": {"colab_data_source": "huggingface_link"},
             "esm": {
                 "esm_embeddings_dir": "",
                 "allow_missing_esm_embeddings": False,
+                "prepare_missing_esm_embeddings": False,
                 "esm_dim": 960,
             },
             "ring": {
                 "ring_features_dir": str(tmp_root / "ring_features"),
                 "ring_exe_path": str(tmp_root / "ring"),
+                "require_ring_edges": False,
+                "prepare_missing_ring_edges": True,
             },
             "node_features": {
                 "node_feature_set": "conservative",
@@ -584,6 +596,10 @@ def check_colab_generated_training_commands_parse() -> None:
                 "TEST_DIR": test_dir,
                 "TRAIN_CSV": train_csv,
                 "TEST_CSV": test_csv,
+                "TRAIN_SITE_SUMMARY_CSV": train_csv,
+                "TEST_SITE_SUMMARY_CSV": test_csv,
+                "TRAIN_STRUCTURES": [],
+                "TEST_STRUCTURES": [],
                 "DATA_ROOT": tmp_root,
                 "DRIVE_DATA_DIR": tmp_root / "drive" / "DeepMzyme_Data",
             }
