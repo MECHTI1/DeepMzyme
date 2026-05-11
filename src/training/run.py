@@ -5,7 +5,7 @@ import json
 import random
 import subprocess
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -595,6 +595,14 @@ def normalization_stats_payload(normalization_stats: FeatureNormalizationStats) 
         "stds": normalization_stats.stds,
         "clamp_value": normalization_stats.clamp_value,
     }
+
+
+def normalization_stats_from_payload(payload: dict[str, Any]) -> FeatureNormalizationStats:
+    return FeatureNormalizationStats(
+        means={str(key): torch.as_tensor(value).float() for key, value in payload.get("means", {}).items()},
+        stds={str(key): torch.as_tensor(value).float() for key, value in payload.get("stds", {}).items()},
+        clamp_value=float(payload.get("clamp_value", 5.0)),
+    )
 
 
 def checkpoint_payload(
@@ -1287,4 +1295,31 @@ def run_training(config: TrainConfig) -> Path:
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
     test_report = evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint)
     persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint, test_report=test_report)
+    return prepared.run_dir
+
+
+def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Path:
+    if not config.run_test_eval:
+        raise ValueError("evaluate_saved_checkpoint requires config.run_test_eval=True.")
+    if config.test_structure_dir is None or config.test_summary_csv is None:
+        raise ValueError("evaluate_saved_checkpoint requires held-out test structure and summary paths.")
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError(f"Checkpoint does not exist: {checkpoint_path}")
+
+    set_seed(config.seed, deterministic=config.deterministic)
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    if not isinstance(checkpoint, dict) or "model_state_dict" not in checkpoint:
+        raise ValueError(f"Checkpoint does not contain a model_state_dict: {checkpoint_path}")
+
+    prepared = prepare_run(config)
+    checkpoint_stats = checkpoint.get("normalization_stats")
+    if isinstance(checkpoint_stats, dict) and checkpoint_stats.get("means") and checkpoint_stats.get("stds"):
+        prepared = replace(prepared, normalization_stats=normalization_stats_from_payload(checkpoint_stats))
+
+    prepared.model.load_state_dict(checkpoint["model_state_dict"])
+    history = checkpoint.get("history", [])
+    if not isinstance(history, list):
+        history = []
+    test_report = evaluate_held_out_test_split(prepared, config, checkpoint=checkpoint)
+    persist_run_outputs(prepared, history=history, best_checkpoint=checkpoint, test_report=test_report)
     return prepared.run_dir
