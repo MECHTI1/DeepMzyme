@@ -188,9 +188,25 @@ Recommended order:
 
 Complex fusion modes include:
 
-- hybrid fusion
 - node-level late fusion
+- hybrid fusion
 - cross-modal attention
+
+The comparison should be sequential, not a fresh broad search at every stage:
+
+1. Tune and validate the simplest relevant model first.
+2. Select a stable validation-best anchor from multiple seeds where possible.
+3. Carry forward shared settings from the simpler anchor when adding one new source of complexity. Shared settings include the split policy, epoch budget, seed-repeat list, graph radius, GVP capacity, class-weighting policy, and validation selection metric.
+4. Retune only the settings likely affected by the added complexity, such as learning rate, weight decay, ESM/fusion projection dimension, dropout, or batch size.
+5. Move to the next more complex model only when validation evidence justifies the added parameters.
+
+For metal GVP/ESM fusion, the advanced-fusion order should be:
+
+1. Node-level late fusion after the late-fusion baseline is stable.
+2. Hybrid fusion only after early or late fusion shows useful validation signal.
+3. Cross-modal attention last, starting with a narrow one-layer configuration, because it has the most tuning degrees of freedom and the greatest overfitting risk.
+
+`simple_gnn_esm` should be treated as an auxiliary architecture ablation, not the main next step in the best-pipeline search. Use it after the GVP and ESM baselines are stable when the question is whether GVP vector geometry is actually helping compared with a simpler scalar graph model.
 
 For each task:
 

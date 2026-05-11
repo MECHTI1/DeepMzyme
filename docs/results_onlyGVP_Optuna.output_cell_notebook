@@ -1,0 +1,1245 @@
+[I 2026-05-11 07:19:31,672] A new study created in memory with name: deepmzyme_controlled_hpo
+Controlled Optuna HPO mode
+Optuna architecture scope: this notebook optimizes hyperparameters inside the selected base MODEL_PRESET only; it does not compare model_architecture or fusion_mode unless multiple base configs are explicitly added outside this HPO path.
+Optuna base model preset: Only-GVP arch= only_gvp fusion= none
+Optuna search-space fields: {
+  "batch_size": "2,4,8",
+  "cross_attention_dropout": "inactive",
+  "early_esm_dropout": "inactive",
+  "edge_hidden": "32,64,128",
+  "edge_radius": "6.0,8.0,10.0",
+  "gvp_layers": "2,4,6",
+  "head_mlp_layers": "1,2,3",
+  "hidden_s": "64,128,256",
+  "hidden_v": "8,16,32",
+  "learning_rate": "1e-5,3e-4",
+  "metal_class_weight_mode": "none,inverse_frequency,inverse_sqrt_frequency,effective_number",
+  "metal_focal_gamma": "inactive",
+  "weight_decay": "0.0,1e-5,1e-4,1e-3"
+}
+Study name: deepmzyme_controlled_hpo
+Intensity: first_useful
+Selection metric: val_metal_balanced_acc (task default for TASK='metal')
+Direction: maximize
+Trials: 16
+Trial epochs: 20 (MAX_EPOCHS_PER_TRIAL)
+Normal/final retrain epochs: 1 (EPOCHS)
+Timeout minutes: none
+Fixed HPO split/model seed: 42
+Validation split policy: split_by=pdbid, val_fraction=0.15, n_folds=None, fold_index=None
+Study output directory: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo
+Storage: in-memory (temporary/debug only)
+Base configuration run name: deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-05_wd0._f16ba530
+Storage note: persistent SQLite storage is recommended for useful/serious Colab HPO.
+================================================================================
+[Optuna trial 0] optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 2,
+  "head_mlp_layers": 1,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 3.574712922600245e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4 --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 3.574712922600245e-05 --weight-decay 0.0 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 2 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7017 lr=3.57471e-05 train_metal_acc=0.4666 val_loss=1.6042 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6646 lr=3.57471e-05 train_metal_acc=0.4877 val_loss=1.5828 val_metal_acc=0.4856 val_metal_min_recall=0.0000 val_fe_recall=0.0909 val_joint_bal_acc=0.1818 val_joint_macro_f1=0.1342 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.6258 lr=3.57471e-05 train_metal_acc=0.5292 val_loss=1.4809 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.2765 val_joint_macro_f1=0.2265 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.5291 lr=3.57471e-05 train_metal_acc=0.5800 val_loss=1.3712 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.3555 val_joint_macro_f1=0.3602 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.4562 lr=3.57471e-05 train_metal_acc=0.5817 val_loss=1.2723 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.3805 val_joint_macro_f1=0.3730 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.3644 lr=3.57471e-05 train_metal_acc=0.6317 val_loss=1.1929 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4469 val_joint_macro_f1=0.3733 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.3186 lr=3.57471e-05 train_metal_acc=0.6401 val_loss=1.1561 val_metal_acc=0.7212 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.4777 val_joint_macro_f1=0.4387 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.2560 lr=3.57471e-05 train_metal_acc=0.6749 val_loss=1.1424 val_metal_acc=0.7356 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5287 val_joint_macro_f1=0.5148 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.2323 lr=3.57471e-05 train_metal_acc=0.6757 val_loss=1.1702 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.4950 val_joint_macro_f1=0.4758 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.1995 lr=3.57471e-05 train_metal_acc=0.6732 val_loss=1.2743 val_metal_acc=0.5962 val_metal_min_recall=0.0000 val_fe_recall=0.3409 val_joint_bal_acc=0.4570 val_joint_macro_f1=0.4232 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.1790 lr=3.57471e-05 train_metal_acc=0.6994 val_loss=1.1253 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5200 val_joint_macro_f1=0.4916 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.1423 lr=3.57471e-05 train_metal_acc=0.6884 val_loss=1.1014 val_metal_acc=0.6587 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4943 val_joint_macro_f1=0.4752 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.1031 lr=3.57471e-05 train_metal_acc=0.6732 val_loss=1.2126 val_metal_acc=0.6298 val_metal_min_recall=0.0000 val_fe_recall=0.8409 val_joint_bal_acc=0.5297 val_joint_macro_f1=0.4954 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1043 lr=3.57471e-05 train_metal_acc=0.6782 val_loss=1.1720 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.4813 val_joint_macro_f1=0.3807 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.0667 lr=3.57471e-05 train_metal_acc=0.7248 val_loss=1.1342 val_metal_acc=0.6587 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.5083 val_joint_macro_f1=0.4725 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0448 lr=3.57471e-05 train_metal_acc=0.7019 val_loss=1.2399 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.5284 val_joint_macro_f1=0.4799 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.0464 lr=3.57471e-05 train_metal_acc=0.7333 val_loss=1.1594 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5256 val_joint_macro_f1=0.5146 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.0184 lr=3.57471e-05 train_metal_acc=0.7223 val_loss=1.0759 val_metal_acc=0.6731 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.5050 val_joint_macro_f1=0.4812 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.9937 lr=3.57471e-05 train_metal_acc=0.7240 val_loss=1.1294 val_metal_acc=0.6490 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5350 val_joint_macro_f1=0.4782 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.9748 lr=3.57471e-05 train_metal_acc=0.7443 val_loss=1.1145 val_metal_acc=0.6779 val_metal_min_recall=0.0769 val_fe_recall=0.6364 val_joint_bal_acc=0.5463 val_joint_macro_f1=0.5300 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4/run_metadata.json
+[I 2026-05-11 07:26:11,000] Trial 0 finished with value: 0.546336220337509 and parameters: {'learning_rate': 3.574712922600245e-05, 'weight_decay': 0.0, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 2, 'edge_radius': 6.0, 'hidden_v': 32, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 0 completed: val_metal_balanced_acc=0.546336220337509
+================================================================================
+[Optuna trial 1] optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 64,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 3,
+  "hidden_s": 64,
+  "hidden_v": 32,
+  "learning_rate": 7.896186801026683e-05,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0 --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 7.896186801026683e-05 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 64 --esm-fusion-dim 128 --head-mlp-layers 3 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 64 --gvp-layers 4 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7070 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5698 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6510 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5121 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.6429 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5357 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.6516 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5351 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.6501 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5234 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.6385 lr=7.89619e-05 train_metal_acc=0.4666 val_loss=1.5682 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.6329 lr=7.89619e-05 train_metal_acc=0.4682 val_loss=1.5602 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1064 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.6244 lr=7.89619e-05 train_metal_acc=0.4759 val_loss=1.5374 val_metal_acc=0.4183 val_metal_min_recall=0.0000 val_fe_recall=0.4318 val_joint_bal_acc=0.1958 val_joint_macro_f1=0.1785 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.5784 lr=7.89619e-05 train_metal_acc=0.5114 val_loss=1.4372 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.4773 val_joint_bal_acc=0.2393 val_joint_macro_f1=0.1993 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.5230 lr=7.89619e-05 train_metal_acc=0.5605 val_loss=1.3997 val_metal_acc=0.5529 val_metal_min_recall=0.0000 val_fe_recall=0.4091 val_joint_bal_acc=0.2348 val_joint_macro_f1=0.1998 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.4742 lr=7.89619e-05 train_metal_acc=0.5157 val_loss=1.4652 val_metal_acc=0.3942 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.2539 val_joint_macro_f1=0.2246 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.4168 lr=7.89619e-05 train_metal_acc=0.5834 val_loss=1.2609 val_metal_acc=0.5625 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.2993 val_joint_macro_f1=0.2659 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.3551 lr=7.89619e-05 train_metal_acc=0.6486 val_loss=1.2327 val_metal_acc=0.5625 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.3015 val_joint_macro_f1=0.3022 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.3676 lr=7.89619e-05 train_metal_acc=0.6647 val_loss=1.3796 val_metal_acc=0.5817 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.3634 val_joint_macro_f1=0.3714 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.3858 lr=7.89619e-05 train_metal_acc=0.6698 val_loss=1.1874 val_metal_acc=0.6635 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.3974 val_joint_macro_f1=0.4022 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.3571 lr=7.89619e-05 train_metal_acc=0.6876 val_loss=1.2534 val_metal_acc=0.7067 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4289 val_joint_macro_f1=0.4402 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.3441 lr=7.89619e-05 train_metal_acc=0.6605 val_loss=1.5476 val_metal_acc=0.6298 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.4475 val_joint_macro_f1=0.4288 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.3887 lr=7.89619e-05 train_metal_acc=0.6943 val_loss=1.2103 val_metal_acc=0.6971 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.4233 val_joint_macro_f1=0.4352 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=1.2821 lr=7.89619e-05 train_metal_acc=0.6935 val_loss=1.6328 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.3962 val_joint_macro_f1=0.3922 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=1.3857 lr=7.89619e-05 train_metal_acc=0.7045 val_loss=1.3238 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.4363 val_joint_macro_f1=0.4422 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0/run_metadata.json
+[I 2026-05-11 07:39:14,464] Trial 1 finished with value: 0.44752704697936657 and parameters: {'learning_rate': 7.896186801026683e-05, 'weight_decay': 0.001, 'batch_size': 2, 'hidden_s': 64, 'head_mlp_layers': 3, 'edge_hidden': 64, 'gvp_layers': 4, 'edge_radius': 6.0, 'hidden_v': 32, 'metal_class_weight_mode': 'effective_number'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 1 completed: val_metal_balanced_acc=0.44752704697936657
+================================================================================
+[Optuna trial 2] optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 3,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 3.750796359625605e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 1e-05,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739 --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 3.750796359625605e-05 --weight-decay 1e-05 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 3 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7461 lr=3.7508e-05 train_metal_acc=0.4666 val_loss=1.6840 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6897 lr=3.7508e-05 train_metal_acc=0.4666 val_loss=1.6394 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.6733 lr=3.7508e-05 train_metal_acc=0.4725 val_loss=1.6418 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1064 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.6619 lr=3.7508e-05 train_metal_acc=0.4733 val_loss=1.6010 val_metal_acc=0.4712 val_metal_min_recall=0.0000 val_fe_recall=0.0227 val_joint_bal_acc=0.1705 val_joint_macro_f1=0.1140 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.6334 lr=3.7508e-05 train_metal_acc=0.4725 val_loss=1.6165 val_metal_acc=0.4712 val_metal_min_recall=0.0000 val_fe_recall=0.0227 val_joint_bal_acc=0.1705 val_joint_macro_f1=0.1142 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.6022 lr=3.7508e-05 train_metal_acc=0.5207 val_loss=1.5349 val_metal_acc=0.5577 val_metal_min_recall=0.0000 val_fe_recall=0.3182 val_joint_bal_acc=0.2846 val_joint_macro_f1=0.2640 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.5511 lr=3.7508e-05 train_metal_acc=0.5656 val_loss=1.4428 val_metal_acc=0.6298 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.3614 val_joint_macro_f1=0.3368 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.4936 lr=3.7508e-05 train_metal_acc=0.6088 val_loss=1.3724 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.4309 val_joint_macro_f1=0.3696 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.4373 lr=3.7508e-05 train_metal_acc=0.6240 val_loss=1.3297 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4382 val_joint_macro_f1=0.3765 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.3871 lr=3.7508e-05 train_metal_acc=0.6088 val_loss=1.3104 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.8864 val_joint_bal_acc=0.4510 val_joint_macro_f1=0.3562 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.3393 lr=3.7508e-05 train_metal_acc=0.6266 val_loss=1.2692 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4359 val_joint_macro_f1=0.3545 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.3126 lr=3.7508e-05 train_metal_acc=0.6359 val_loss=1.2791 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4115 val_joint_macro_f1=0.3458 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.2657 lr=3.7508e-05 train_metal_acc=0.6494 val_loss=1.2224 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4339 val_joint_macro_f1=0.3753 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.2463 lr=3.7508e-05 train_metal_acc=0.6528 val_loss=1.2330 val_metal_acc=0.6490 val_metal_min_recall=0.0000 val_fe_recall=0.8864 val_joint_bal_acc=0.4512 val_joint_macro_f1=0.3736 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.2469 lr=3.7508e-05 train_metal_acc=0.6689 val_loss=1.1923 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4409 val_joint_macro_f1=0.4035 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.2044 lr=3.7508e-05 train_metal_acc=0.6622 val_loss=1.1595 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.4671 val_joint_macro_f1=0.4209 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.1848 lr=3.7508e-05 train_metal_acc=0.6596 val_loss=1.1598 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.8864 val_joint_bal_acc=0.4685 val_joint_macro_f1=0.4290 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.1818 lr=3.7508e-05 train_metal_acc=0.6562 val_loss=1.1688 val_metal_acc=0.6490 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.4567 val_joint_macro_f1=0.4068 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=1.1585 lr=3.7508e-05 train_metal_acc=0.6994 val_loss=1.1069 val_metal_acc=0.7212 val_metal_min_recall=0.0000 val_fe_recall=0.8409 val_joint_bal_acc=0.4868 val_joint_macro_f1=0.4683 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=1.1382 lr=3.7508e-05 train_metal_acc=0.7079 val_loss=1.1166 val_metal_acc=0.6731 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.4821 val_joint_macro_f1=0.4599 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739/run_metadata.json
+[I 2026-05-11 07:46:26,419] Trial 2 finished with value: 0.48675088514006043 and parameters: {'learning_rate': 3.750796359625605e-05, 'weight_decay': 1e-05, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 3, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 6.0, 'hidden_v': 32, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 2 completed: val_metal_balanced_acc=0.48675088514006043
+================================================================================
+[Optuna trial 3] optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 4,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 32,
+  "edge_radius": 10.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 2,
+  "head_mlp_layers": 1,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 1.501949057237435e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776 --model-architecture only_gvp --epochs 20 --batch-size 4 --learning-rate 1.501949057237435e-05 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 32 --gvp-layers 2 --edge-radius 10.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6653 lr=1.50195e-05 train_metal_acc=0.4666 val_loss=1.5644 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6380 lr=1.50195e-05 train_metal_acc=0.4699 val_loss=1.5308 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.6180 lr=1.50195e-05 train_metal_acc=0.4691 val_loss=1.5261 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.6066 lr=1.50195e-05 train_metal_acc=0.4242 val_loss=1.5002 val_metal_acc=0.5000 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.2573 val_joint_macro_f1=0.1950 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.5885 lr=1.50195e-05 train_metal_acc=0.4809 val_loss=1.4474 val_metal_acc=0.5625 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.2528 val_joint_macro_f1=0.2085 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.5524 lr=1.50195e-05 train_metal_acc=0.4945 val_loss=1.4139 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.2769 val_joint_macro_f1=0.2282 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.5100 lr=1.50195e-05 train_metal_acc=0.5080 val_loss=1.3992 val_metal_acc=0.5337 val_metal_min_recall=0.0000 val_fe_recall=0.2500 val_joint_bal_acc=0.2417 val_joint_macro_f1=0.2270 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.4610 lr=1.50195e-05 train_metal_acc=0.5385 val_loss=1.2636 val_metal_acc=0.6587 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.3642 val_joint_macro_f1=0.3398 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.4223 lr=1.50195e-05 train_metal_acc=0.5775 val_loss=1.2675 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.4024 val_joint_macro_f1=0.3458 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.3923 lr=1.50195e-05 train_metal_acc=0.5614 val_loss=1.3450 val_metal_acc=0.5817 val_metal_min_recall=0.0000 val_fe_recall=0.3409 val_joint_bal_acc=0.3152 val_joint_macro_f1=0.3171 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.3645 lr=1.50195e-05 train_metal_acc=0.5885 val_loss=1.2213 val_metal_acc=0.6731 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.4648 val_joint_macro_f1=0.4413 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.3430 lr=1.50195e-05 train_metal_acc=0.5775 val_loss=1.2097 val_metal_acc=0.7163 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4845 val_joint_macro_f1=0.4421 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.2988 lr=1.50195e-05 train_metal_acc=0.5859 val_loss=1.1181 val_metal_acc=0.7212 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.4696 val_joint_macro_f1=0.4156 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.2897 lr=1.50195e-05 train_metal_acc=0.6469 val_loss=1.1676 val_metal_acc=0.7115 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4979 val_joint_macro_f1=0.4782 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.2466 lr=1.50195e-05 train_metal_acc=0.6367 val_loss=1.1453 val_metal_acc=0.7356 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.5343 val_joint_macro_f1=0.5166 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.2326 lr=1.50195e-05 train_metal_acc=0.6672 val_loss=1.0858 val_metal_acc=0.7163 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4968 val_joint_macro_f1=0.4820 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.2132 lr=1.50195e-05 train_metal_acc=0.6833 val_loss=1.1053 val_metal_acc=0.7163 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.5059 val_joint_macro_f1=0.5094 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.1889 lr=1.50195e-05 train_metal_acc=0.6706 val_loss=1.1923 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.4318 val_joint_bal_acc=0.4771 val_joint_macro_f1=0.4640 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=1.1749 lr=1.50195e-05 train_metal_acc=0.7062 val_loss=1.1188 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.4930 val_joint_macro_f1=0.4925 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=1.1405 lr=1.50195e-05 train_metal_acc=0.6977 val_loss=1.0936 val_metal_acc=0.7260 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.5319 val_joint_macro_f1=0.5346 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776/run_metadata.json
+[I 2026-05-11 07:56:00,857] Trial 3 finished with value: 0.5342883455319022 and parameters: {'learning_rate': 1.501949057237435e-05, 'weight_decay': 0.001, 'batch_size': 4, 'hidden_s': 128, 'head_mlp_layers': 1, 'edge_hidden': 32, 'gvp_layers': 2, 'edge_radius': 10.0, 'hidden_v': 32, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 3 completed: val_metal_balanced_acc=0.5342883455319022
+================================================================================
+[Optuna trial 4] optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 32,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 6,
+  "head_mlp_layers": 3,
+  "hidden_s": 128,
+  "hidden_v": 8,
+  "learning_rate": 0.00015584289782385482,
+  "metal_class_weight_mode": "none",
+  "metal_weighting_setup": "none",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 0.00015584289782385482 --weight-decay 0.0 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 3 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode none --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 32 --gvp-layers 6 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.5279 lr=0.000155843 train_metal_acc=0.4666 val_loss=1.4550 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.4553 lr=0.000155843 train_metal_acc=0.4666 val_loss=1.4520 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.4336 lr=0.000155843 train_metal_acc=0.4725 val_loss=1.3749 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.3677 lr=0.000155843 train_metal_acc=0.5893 val_loss=1.2595 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.2882 val_joint_macro_f1=0.2315 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.2470 lr=0.000155843 train_metal_acc=0.6012 val_loss=1.2136 val_metal_acc=0.5913 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.2858 val_joint_macro_f1=0.2245 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.2380 lr=0.000155843 train_metal_acc=0.5843 val_loss=1.2973 val_metal_acc=0.5577 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.2821 val_joint_macro_f1=0.2164 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.1509 lr=0.000155843 train_metal_acc=0.6461 val_loss=1.2186 val_metal_acc=0.6346 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.3759 val_joint_macro_f1=0.3631 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.1006 lr=0.000155843 train_metal_acc=0.6274 val_loss=1.1949 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.3192 val_joint_macro_f1=0.3053 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.0526 lr=0.000155843 train_metal_acc=0.6427 val_loss=1.2193 val_metal_acc=0.6346 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.3837 val_joint_macro_f1=0.3822 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.0059 lr=0.000155843 train_metal_acc=0.6867 val_loss=1.1912 val_metal_acc=0.6106 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.3449 val_joint_macro_f1=0.3255 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=0.9907 lr=0.000155843 train_metal_acc=0.6613 val_loss=1.4744 val_metal_acc=0.4904 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.3809 val_joint_macro_f1=0.3358 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=0.9395 lr=0.000155843 train_metal_acc=0.7282 val_loss=1.0406 val_metal_acc=0.6635 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.4130 val_joint_macro_f1=0.4096 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.8923 lr=0.000155843 train_metal_acc=0.7265 val_loss=1.1321 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.4081 val_joint_macro_f1=0.3991 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.8365 lr=0.000155843 train_metal_acc=0.7401 val_loss=1.1012 val_metal_acc=0.6298 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4171 val_joint_macro_f1=0.4154 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.7732 lr=0.000155843 train_metal_acc=0.7604 val_loss=1.1606 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.4877 val_joint_macro_f1=0.4591 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.7402 lr=0.000155843 train_metal_acc=0.7849 val_loss=1.1903 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4380 val_joint_macro_f1=0.4529 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.7251 lr=0.000155843 train_metal_acc=0.8069 val_loss=1.0743 val_metal_acc=0.6779 val_metal_min_recall=0.0769 val_fe_recall=0.7273 val_joint_bal_acc=0.4998 val_joint_macro_f1=0.5177 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.6677 lr=0.000155843 train_metal_acc=0.8154 val_loss=1.1038 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.4645 val_joint_macro_f1=0.4712 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.6157 lr=0.000155843 train_metal_acc=0.8103 val_loss=1.3362 val_metal_acc=0.5577 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4350 val_joint_macro_f1=0.4465 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.5896 lr=0.000155843 train_metal_acc=0.8434 val_loss=1.1642 val_metal_acc=0.6731 val_metal_min_recall=0.0769 val_fe_recall=0.7727 val_joint_bal_acc=0.4660 val_joint_macro_f1=0.4879 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e/run_metadata.json
+[I 2026-05-11 08:03:46,006] Trial 4 finished with value: 0.4997772952992025 and parameters: {'learning_rate': 0.00015584289782385482, 'weight_decay': 0.0, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 3, 'edge_hidden': 32, 'gvp_layers': 6, 'edge_radius': 6.0, 'hidden_v': 8, 'metal_class_weight_mode': 'none'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 4 completed: val_metal_balanced_acc=0.4997772952992025
+================================================================================
+[Optuna trial 5] optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 64,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 6,
+  "head_mlp_layers": 2,
+  "hidden_s": 128,
+  "hidden_v": 16,
+  "learning_rate": 0.00021959317857485688,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 0.00021959317857485688 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 2 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 64 --gvp-layers 6 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 16 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6886 lr=0.000219593 train_metal_acc=0.4666 val_loss=1.6300 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6672 lr=0.000219593 train_metal_acc=0.4674 val_loss=1.6268 val_metal_acc=0.4231 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.2009 val_joint_macro_f1=0.1589 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.6641 lr=0.000219593 train_metal_acc=0.4454 val_loss=1.6041 val_metal_acc=0.5048 val_metal_min_recall=0.0000 val_fe_recall=0.0909 val_joint_bal_acc=0.2236 val_joint_macro_f1=0.1955 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.6144 lr=0.000219593 train_metal_acc=0.4962 val_loss=1.6801 val_metal_acc=0.3750 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.2203 val_joint_macro_f1=0.1598 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.5355 lr=0.000219593 train_metal_acc=0.5360 val_loss=1.5502 val_metal_acc=0.5096 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.2923 val_joint_macro_f1=0.2487 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.4736 lr=0.000219593 train_metal_acc=0.5106 val_loss=1.5126 val_metal_acc=0.4519 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.3091 val_joint_macro_f1=0.2400 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.4473 lr=0.000219593 train_metal_acc=0.6029 val_loss=1.3560 val_metal_acc=0.5769 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.3730 val_joint_macro_f1=0.3113 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.3969 lr=0.000219593 train_metal_acc=0.5995 val_loss=1.4835 val_metal_acc=0.4712 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.3415 val_joint_macro_f1=0.3035 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.3574 lr=0.000219593 train_metal_acc=0.5461 val_loss=1.4665 val_metal_acc=0.5048 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.3764 val_joint_macro_f1=0.3228 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.3358 lr=0.000219593 train_metal_acc=0.6063 val_loss=1.4559 val_metal_acc=0.5192 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.3374 val_joint_macro_f1=0.3206 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.2921 lr=0.000219593 train_metal_acc=0.5910 val_loss=1.3835 val_metal_acc=0.5529 val_metal_min_recall=0.0000 val_fe_recall=0.3636 val_joint_bal_acc=0.3045 val_joint_macro_f1=0.3044 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.2833 lr=0.000219593 train_metal_acc=0.6461 val_loss=1.4178 val_metal_acc=0.5817 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.3877 val_joint_macro_f1=0.3776 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.2214 lr=0.000219593 train_metal_acc=0.6520 val_loss=1.4961 val_metal_acc=0.5000 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.3717 val_joint_macro_f1=0.3473 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1791 lr=0.000219593 train_metal_acc=0.5258 val_loss=1.6618 val_metal_acc=0.3894 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.3539 val_joint_macro_f1=0.3064 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.1549 lr=0.000219593 train_metal_acc=0.6596 val_loss=1.6578 val_metal_acc=0.3942 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.3458 val_joint_macro_f1=0.3146 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0534 lr=0.000219593 train_metal_acc=0.7273 val_loss=1.3051 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.5227 val_joint_bal_acc=0.4115 val_joint_macro_f1=0.3989 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.0107 lr=0.000219593 train_metal_acc=0.7036 val_loss=1.4782 val_metal_acc=0.4519 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.3817 val_joint_macro_f1=0.3583 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.9581 lr=0.000219593 train_metal_acc=0.7240 val_loss=1.2490 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4057 val_joint_macro_f1=0.4148 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.8713 lr=0.000219593 train_metal_acc=0.7934 val_loss=1.5213 val_metal_acc=0.5000 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.3949 val_joint_macro_f1=0.3648 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.7859 lr=0.000219593 train_metal_acc=0.8154 val_loss=1.4302 val_metal_acc=0.5769 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4063 val_joint_macro_f1=0.4027 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a/run_metadata.json
+[I 2026-05-11 08:11:31,810] Trial 5 finished with value: 0.4115285308906443 and parameters: {'learning_rate': 0.00021959317857485688, 'weight_decay': 0.001, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 2, 'edge_hidden': 64, 'gvp_layers': 6, 'edge_radius': 6.0, 'hidden_v': 16, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 5 completed: val_metal_balanced_acc=0.4115285308906443
+================================================================================
+[Optuna trial 6] optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 4,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 2,
+  "head_mlp_layers": 2,
+  "hidden_s": 64,
+  "hidden_v": 8,
+  "learning_rate": 3.1900416724175495e-05,
+  "metal_class_weight_mode": "inverse_frequency",
+  "metal_weighting_setup": "inverse_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 1e-05,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec --model-architecture only_gvp --epochs 20 --batch-size 4 --learning-rate 3.1900416724175495e-05 --weight-decay 1e-05 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 64 --esm-fusion-dim 128 --head-mlp-layers 2 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 2 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7644 lr=3.19004e-05 train_metal_acc=0.4428 val_loss=1.7180 val_metal_acc=0.3942 val_metal_min_recall=0.0000 val_fe_recall=0.0909 val_joint_bal_acc=0.1492 val_joint_macro_f1=0.1157 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.7455 lr=3.19004e-05 train_metal_acc=0.3353 val_loss=1.7084 val_metal_acc=0.2548 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.1656 val_joint_macro_f1=0.0983 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.7521 lr=3.19004e-05 train_metal_acc=0.4708 val_loss=1.6979 val_metal_acc=0.5192 val_metal_min_recall=0.0000 val_fe_recall=0.3409 val_joint_bal_acc=0.2166 val_joint_macro_f1=0.1758 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.7441 lr=3.19004e-05 train_metal_acc=0.4894 val_loss=1.6907 val_metal_acc=0.5192 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.2539 val_joint_macro_f1=0.1983 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.7323 lr=3.19004e-05 train_metal_acc=0.4962 val_loss=1.6740 val_metal_acc=0.5721 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.2645 val_joint_macro_f1=0.2127 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.7064 lr=3.19004e-05 train_metal_acc=0.4327 val_loss=1.6562 val_metal_acc=0.4567 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.2412 val_joint_macro_f1=0.1894 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.6798 lr=3.19004e-05 train_metal_acc=0.5021 val_loss=1.6427 val_metal_acc=0.4808 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.3519 val_joint_macro_f1=0.3275 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.6489 lr=3.19004e-05 train_metal_acc=0.5436 val_loss=1.5881 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.3718 val_joint_macro_f1=0.3407 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.6190 lr=3.19004e-05 train_metal_acc=0.5724 val_loss=1.5500 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.3863 val_joint_macro_f1=0.3314 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.5977 lr=3.19004e-05 train_metal_acc=0.5258 val_loss=1.5368 val_metal_acc=0.6106 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.4265 val_joint_macro_f1=0.3587 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.5696 lr=3.19004e-05 train_metal_acc=0.5588 val_loss=1.5097 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.4329 val_joint_macro_f1=0.3542 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.5335 lr=3.19004e-05 train_metal_acc=0.5580 val_loss=1.5144 val_metal_acc=0.5577 val_metal_min_recall=0.0000 val_fe_recall=0.2273 val_joint_bal_acc=0.3115 val_joint_macro_f1=0.2737 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.5132 lr=3.19004e-05 train_metal_acc=0.6181 val_loss=1.4630 val_metal_acc=0.6538 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4357 val_joint_macro_f1=0.3756 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.4753 lr=3.19004e-05 train_metal_acc=0.6088 val_loss=1.4180 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4428 val_joint_macro_f1=0.3718 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.4515 lr=3.19004e-05 train_metal_acc=0.6384 val_loss=1.4255 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.4602 val_joint_macro_f1=0.4226 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.4309 lr=3.19004e-05 train_metal_acc=0.6511 val_loss=1.3780 val_metal_acc=0.6538 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.4460 val_joint_macro_f1=0.4028 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.3966 lr=3.19004e-05 train_metal_acc=0.6545 val_loss=1.3463 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4608 val_joint_macro_f1=0.4193 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.3875 lr=3.19004e-05 train_metal_acc=0.6554 val_loss=1.3364 val_metal_acc=0.6250 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4593 val_joint_macro_f1=0.4263 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=1.3639 lr=3.19004e-05 train_metal_acc=0.6334 val_loss=1.3113 val_metal_acc=0.6298 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4693 val_joint_macro_f1=0.4343 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=1.3442 lr=3.19004e-05 train_metal_acc=0.6503 val_loss=1.3057 val_metal_acc=0.5913 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4113 val_joint_macro_f1=0.3660 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec/run_metadata.json
+[I 2026-05-11 08:19:34,681] Trial 6 finished with value: 0.4693379394088157 and parameters: {'learning_rate': 3.1900416724175495e-05, 'weight_decay': 1e-05, 'batch_size': 4, 'hidden_s': 64, 'head_mlp_layers': 2, 'edge_hidden': 128, 'gvp_layers': 2, 'edge_radius': 6.0, 'hidden_v': 8, 'metal_class_weight_mode': 'inverse_frequency'}. Best is trial 0 with value: 0.546336220337509.
+Optuna trial 6 completed: val_metal_balanced_acc=0.4693379394088157
+================================================================================
+[Optuna trial 7] optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 6.464669746492395e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 6.464669746492395e-05 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 6.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6846 lr=6.46467e-05 train_metal_acc=0.4809 val_loss=1.5946 val_metal_acc=0.4760 val_metal_min_recall=0.0000 val_fe_recall=0.0455 val_joint_bal_acc=0.1742 val_joint_macro_f1=0.1214 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.6352 lr=6.46467e-05 train_metal_acc=0.4996 val_loss=1.5283 val_metal_acc=0.5000 val_metal_min_recall=0.0000 val_fe_recall=0.1591 val_joint_bal_acc=0.1932 val_joint_macro_f1=0.1513 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.5440 lr=6.46467e-05 train_metal_acc=0.5512 val_loss=1.4057 val_metal_acc=0.5721 val_metal_min_recall=0.0000 val_fe_recall=0.3864 val_joint_bal_acc=0.2571 val_joint_macro_f1=0.2361 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.4128 lr=6.46467e-05 train_metal_acc=0.5639 val_loss=1.4601 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.0909 val_joint_bal_acc=0.3974 val_joint_macro_f1=0.3185 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.3265 lr=6.46467e-05 train_metal_acc=0.6698 val_loss=1.1917 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4531 val_joint_macro_f1=0.3982 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.2220 lr=6.46467e-05 train_metal_acc=0.6791 val_loss=1.2451 val_metal_acc=0.5962 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4395 val_joint_macro_f1=0.3882 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.1915 lr=6.46467e-05 train_metal_acc=0.6351 val_loss=1.2071 val_metal_acc=0.6106 val_metal_min_recall=0.0000 val_fe_recall=0.9545 val_joint_bal_acc=0.4528 val_joint_macro_f1=0.4085 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.1491 lr=6.46467e-05 train_metal_acc=0.6638 val_loss=1.2312 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.9545 val_joint_bal_acc=0.5003 val_joint_macro_f1=0.4810 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.1105 lr=6.46467e-05 train_metal_acc=0.6960 val_loss=1.2626 val_metal_acc=0.4760 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.4273 val_joint_macro_f1=0.3860 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.0624 lr=6.46467e-05 train_metal_acc=0.7434 val_loss=1.1862 val_metal_acc=0.5865 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5025 val_joint_macro_f1=0.4887 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.0259 lr=6.46467e-05 train_metal_acc=0.7299 val_loss=1.0664 val_metal_acc=0.6827 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5264 val_joint_macro_f1=0.5203 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=0.9981 lr=6.46467e-05 train_metal_acc=0.7544 val_loss=1.1571 val_metal_acc=0.6346 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5231 val_joint_macro_f1=0.5150 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.9601 lr=6.46467e-05 train_metal_acc=0.7417 val_loss=1.1189 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5214 val_joint_macro_f1=0.5131 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.9467 lr=6.46467e-05 train_metal_acc=0.7714 val_loss=1.2124 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.4914 val_joint_macro_f1=0.4704 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.9114 lr=6.46467e-05 train_metal_acc=0.7587 val_loss=1.2131 val_metal_acc=0.6106 val_metal_min_recall=0.0769 val_fe_recall=0.6136 val_joint_bal_acc=0.5237 val_joint_macro_f1=0.5171 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.8873 lr=6.46467e-05 train_metal_acc=0.7434 val_loss=1.1629 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.4910 val_joint_macro_f1=0.4866 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.8523 lr=6.46467e-05 train_metal_acc=0.7934 val_loss=1.1780 val_metal_acc=0.5721 val_metal_min_recall=0.0769 val_fe_recall=0.7273 val_joint_bal_acc=0.5063 val_joint_macro_f1=0.4919 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.8299 lr=6.46467e-05 train_metal_acc=0.7477 val_loss=1.2339 val_metal_acc=0.5433 val_metal_min_recall=0.0769 val_fe_recall=0.7273 val_joint_bal_acc=0.5088 val_joint_macro_f1=0.4417 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.7963 lr=6.46467e-05 train_metal_acc=0.7858 val_loss=1.2867 val_metal_acc=0.5144 val_metal_min_recall=0.0769 val_fe_recall=0.7500 val_joint_bal_acc=0.4948 val_joint_macro_f1=0.4750 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.7679 lr=6.46467e-05 train_metal_acc=0.8044 val_loss=1.1247 val_metal_acc=0.6875 val_metal_min_recall=0.0769 val_fe_recall=0.7500 val_joint_bal_acc=0.5543 val_joint_macro_f1=0.5688 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669/run_metadata.json
+[I 2026-05-11 08:26:54,323] Trial 7 finished with value: 0.554291323653437 and parameters: {'learning_rate': 6.464669746492395e-05, 'weight_decay': 0.001, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 6.0, 'hidden_v': 32, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 7 completed: val_metal_balanced_acc=0.554291323653437
+================================================================================
+[Optuna trial 8] optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 2,
+  "head_mlp_layers": 2,
+  "hidden_s": 64,
+  "hidden_v": 16,
+  "learning_rate": 0.0002450029785105815,
+  "metal_class_weight_mode": "inverse_frequency",
+  "metal_weighting_setup": "inverse_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 0.0002450029785105815 --weight-decay 0.0 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 64 --esm-fusion-dim 128 --head-mlp-layers 2 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 2 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 16 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7852 lr=0.000245003 train_metal_acc=0.3353 val_loss=1.7505 val_metal_acc=0.2548 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.1656 val_joint_macro_f1=0.0983 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.7748 lr=0.000245003 train_metal_acc=0.3353 val_loss=1.7617 val_metal_acc=0.2548 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.1656 val_joint_macro_f1=0.0983 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.7725 lr=0.000245003 train_metal_acc=0.3455 val_loss=1.7827 val_metal_acc=0.2548 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.1656 val_joint_macro_f1=0.1036 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.7602 lr=0.000245003 train_metal_acc=0.2997 val_loss=1.7983 val_metal_acc=0.2163 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1750 val_joint_macro_f1=0.0888 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.7587 lr=0.000245003 train_metal_acc=0.3175 val_loss=1.7227 val_metal_acc=0.2452 val_metal_min_recall=0.0000 val_fe_recall=0.0455 val_joint_bal_acc=0.2271 val_joint_macro_f1=0.1745 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.7411 lr=0.000245003 train_metal_acc=0.4064 val_loss=1.7543 val_metal_acc=0.3317 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.3077 val_joint_macro_f1=0.2602 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.6602 lr=0.000245003 train_metal_acc=0.4064 val_loss=1.5986 val_metal_acc=0.3269 val_metal_min_recall=0.0000 val_fe_recall=0.3864 val_joint_bal_acc=0.3262 val_joint_macro_f1=0.2771 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.5550 lr=0.000245003 train_metal_acc=0.4903 val_loss=1.4977 val_metal_acc=0.3702 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.3574 val_joint_macro_f1=0.3044 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.4744 lr=0.000245003 train_metal_acc=0.5970 val_loss=1.4318 val_metal_acc=0.5625 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.3936 val_joint_macro_f1=0.3801 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.3891 lr=0.000245003 train_metal_acc=0.6537 val_loss=1.4071 val_metal_acc=0.5673 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.3816 val_joint_macro_f1=0.3727 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.3018 lr=0.000245003 train_metal_acc=0.6689 val_loss=1.3288 val_metal_acc=0.6346 val_metal_min_recall=0.0769 val_fe_recall=0.6591 val_joint_bal_acc=0.4641 val_joint_macro_f1=0.4603 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.2648 lr=0.000245003 train_metal_acc=0.6664 val_loss=1.3186 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4556 val_joint_macro_f1=0.4346 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.2292 lr=0.000245003 train_metal_acc=0.6943 val_loss=1.3288 val_metal_acc=0.5192 val_metal_min_recall=0.0769 val_fe_recall=0.6591 val_joint_bal_acc=0.4541 val_joint_macro_f1=0.4526 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1851 lr=0.000245003 train_metal_acc=0.7265 val_loss=1.3310 val_metal_acc=0.5192 val_metal_min_recall=0.0769 val_fe_recall=0.6136 val_joint_bal_acc=0.4653 val_joint_macro_f1=0.4540 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.1482 lr=0.000245003 train_metal_acc=0.7231 val_loss=1.3664 val_metal_acc=0.5529 val_metal_min_recall=0.0769 val_fe_recall=0.6136 val_joint_bal_acc=0.4516 val_joint_macro_f1=0.4504 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0951 lr=0.000245003 train_metal_acc=0.6842 val_loss=1.4330 val_metal_acc=0.4375 val_metal_min_recall=0.0769 val_fe_recall=0.6591 val_joint_bal_acc=0.4472 val_joint_macro_f1=0.4271 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.0746 lr=0.000245003 train_metal_acc=0.6494 val_loss=1.5812 val_metal_acc=0.3654 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.3834 val_joint_macro_f1=0.3359 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.0542 lr=0.000245003 train_metal_acc=0.7273 val_loss=1.4743 val_metal_acc=0.4663 val_metal_min_recall=0.0769 val_fe_recall=0.6818 val_joint_bal_acc=0.5038 val_joint_macro_f1=0.4615 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.9968 lr=0.000245003 train_metal_acc=0.7316 val_loss=1.3462 val_metal_acc=0.4856 val_metal_min_recall=0.0769 val_fe_recall=0.7045 val_joint_bal_acc=0.4570 val_joint_macro_f1=0.4569 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.9772 lr=0.000245003 train_metal_acc=0.7655 val_loss=1.4217 val_metal_acc=0.5096 val_metal_min_recall=0.0769 val_fe_recall=0.7045 val_joint_bal_acc=0.4597 val_joint_macro_f1=0.4539 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc/run_metadata.json
+[I 2026-05-11 08:34:15,636] Trial 8 finished with value: 0.5037611228977208 and parameters: {'learning_rate': 0.0002450029785105815, 'weight_decay': 0.0, 'batch_size': 8, 'hidden_s': 64, 'head_mlp_layers': 2, 'edge_hidden': 128, 'gvp_layers': 2, 'edge_radius': 8.0, 'hidden_v': 16, 'metal_class_weight_mode': 'inverse_frequency'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 8 completed: val_metal_balanced_acc=0.5037611228977208
+================================================================================
+[Optuna trial 9] optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 4,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 32,
+  "edge_radius": 10.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 6,
+  "head_mlp_layers": 2,
+  "hidden_s": 256,
+  "hidden_v": 32,
+  "learning_rate": 0.00015686446242335752,
+  "metal_class_weight_mode": "none",
+  "metal_weighting_setup": "none",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0 --model-architecture only_gvp --epochs 20 --batch-size 4 --learning-rate 0.00015686446242335752 --weight-decay 0.0001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 2 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode none --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 32 --gvp-layers 6 --edge-radius 10.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.4893 lr=0.000156864 train_metal_acc=0.4666 val_loss=1.4624 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.4465 lr=0.000156864 train_metal_acc=0.4666 val_loss=1.4787 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.4561 lr=0.000156864 train_metal_acc=0.4666 val_loss=1.4634 val_metal_acc=0.4663 val_metal_min_recall=0.0000 val_fe_recall=0.0000 val_joint_bal_acc=0.1667 val_joint_macro_f1=0.1060 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.4006 lr=0.000156864 train_metal_acc=0.5351 val_loss=1.4107 val_metal_acc=0.5288 val_metal_min_recall=0.0000 val_fe_recall=0.2955 val_joint_bal_acc=0.2159 val_joint_macro_f1=0.1793 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.3509 lr=0.000156864 train_metal_acc=0.4682 val_loss=1.5669 val_metal_acc=0.4038 val_metal_min_recall=0.0000 val_fe_recall=0.9773 val_joint_bal_acc=0.2333 val_joint_macro_f1=0.1634 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.2830 lr=0.000156864 train_metal_acc=0.5792 val_loss=1.3040 val_metal_acc=0.5913 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.2693 val_joint_macro_f1=0.2281 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.2380 lr=0.000156864 train_metal_acc=0.5978 val_loss=1.3818 val_metal_acc=0.5433 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.2743 val_joint_macro_f1=0.2411 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.2666 lr=0.000156864 train_metal_acc=0.5995 val_loss=1.3611 val_metal_acc=0.5817 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.2721 val_joint_macro_f1=0.2254 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.2145 lr=0.000156864 train_metal_acc=0.6003 val_loss=1.4431 val_metal_acc=0.5240 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.2592 val_joint_macro_f1=0.2332 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.2022 lr=0.000156864 train_metal_acc=0.5749 val_loss=1.4550 val_metal_acc=0.4471 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.2741 val_joint_macro_f1=0.2329 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.1931 lr=0.000156864 train_metal_acc=0.6164 val_loss=1.3450 val_metal_acc=0.5673 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.3004 val_joint_macro_f1=0.2697 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.1618 lr=0.000156864 train_metal_acc=0.6020 val_loss=1.4717 val_metal_acc=0.4375 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.2646 val_joint_macro_f1=0.2315 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.1296 lr=0.000156864 train_metal_acc=0.6240 val_loss=1.7076 val_metal_acc=0.5048 val_metal_min_recall=0.0000 val_fe_recall=0.5000 val_joint_bal_acc=0.2608 val_joint_macro_f1=0.2455 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1457 lr=0.000156864 train_metal_acc=0.6511 val_loss=1.4755 val_metal_acc=0.4760 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.2769 val_joint_macro_f1=0.2537 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.1019 lr=0.000156864 train_metal_acc=0.6215 val_loss=1.3861 val_metal_acc=0.5048 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.2704 val_joint_macro_f1=0.2542 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.1154 lr=0.000156864 train_metal_acc=0.6427 val_loss=1.4892 val_metal_acc=0.4808 val_metal_min_recall=0.0000 val_fe_recall=0.5227 val_joint_bal_acc=0.2613 val_joint_macro_f1=0.2460 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.1275 lr=0.000156864 train_metal_acc=0.6300 val_loss=1.3955 val_metal_acc=0.5433 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.2718 val_joint_macro_f1=0.2555 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.0827 lr=0.000156864 train_metal_acc=0.6494 val_loss=1.3972 val_metal_acc=0.5144 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.2829 val_joint_macro_f1=0.2571 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=1.0735 lr=0.000156864 train_metal_acc=0.6596 val_loss=1.3127 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.3041 val_joint_macro_f1=0.2876 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=1.0482 lr=0.000156864 train_metal_acc=0.6622 val_loss=1.3161 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.3146 val_joint_macro_f1=0.3096 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0/run_metadata.json
+[I 2026-05-11 08:46:08,483] Trial 9 finished with value: 0.3146454883890451 and parameters: {'learning_rate': 0.00015686446242335752, 'weight_decay': 0.0001, 'batch_size': 4, 'hidden_s': 256, 'head_mlp_layers': 2, 'edge_hidden': 32, 'gvp_layers': 6, 'edge_radius': 10.0, 'hidden_v': 32, 'metal_class_weight_mode': 'none'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 9 completed: val_metal_balanced_acc=0.3146454883890451
+================================================================================
+[Optuna trial 10] optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 256,
+  "hidden_v": 8,
+  "learning_rate": 7.98072998437076e-05,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3 --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 7.98072998437076e-05 --weight-decay 0.0001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6838 lr=7.98073e-05 train_metal_acc=0.4301 val_loss=1.5087 val_metal_acc=0.4135 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.2202 val_joint_macro_f1=0.1633 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.5850 lr=7.98073e-05 train_metal_acc=0.5275 val_loss=1.3199 val_metal_acc=0.5913 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.2928 val_joint_macro_f1=0.2434 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.5218 lr=7.98073e-05 train_metal_acc=0.5504 val_loss=1.2935 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.3409 val_joint_bal_acc=0.2374 val_joint_macro_f1=0.2094 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.4913 lr=7.98073e-05 train_metal_acc=0.5851 val_loss=1.1707 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.3093 val_joint_macro_f1=0.2993 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.4004 lr=7.98073e-05 train_metal_acc=0.6249 val_loss=1.1237 val_metal_acc=0.6490 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.3755 val_joint_macro_f1=0.3729 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.3419 lr=7.98073e-05 train_metal_acc=0.6588 val_loss=1.1586 val_metal_acc=0.6635 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.4160 val_joint_macro_f1=0.4016 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.2655 lr=7.98073e-05 train_metal_acc=0.7053 val_loss=1.2870 val_metal_acc=0.5673 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4218 val_joint_macro_f1=0.3868 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.1923 lr=7.98073e-05 train_metal_acc=0.7019 val_loss=1.2659 val_metal_acc=0.6346 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4488 val_joint_macro_f1=0.3979 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.2245 lr=7.98073e-05 train_metal_acc=0.7417 val_loss=1.3093 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.8409 val_joint_bal_acc=0.4558 val_joint_macro_f1=0.4455 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.1178 lr=7.98073e-05 train_metal_acc=0.7587 val_loss=1.2610 val_metal_acc=0.6779 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4700 val_joint_macro_f1=0.4388 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.0483 lr=7.98073e-05 train_metal_acc=0.7434 val_loss=1.8342 val_metal_acc=0.4952 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.4442 val_joint_macro_f1=0.3841 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.0055 lr=7.98073e-05 train_metal_acc=0.7333 val_loss=1.5599 val_metal_acc=0.6490 val_metal_min_recall=0.0625 val_fe_recall=0.8409 val_joint_bal_acc=0.4885 val_joint_macro_f1=0.4698 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.9882 lr=7.98073e-05 train_metal_acc=0.8069 val_loss=1.4974 val_metal_acc=0.6154 val_metal_min_recall=0.0769 val_fe_recall=0.6591 val_joint_bal_acc=0.4769 val_joint_macro_f1=0.4650 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.9004 lr=7.98073e-05 train_metal_acc=0.8332 val_loss=1.9158 val_metal_acc=0.5433 val_metal_min_recall=0.0000 val_fe_recall=0.5000 val_joint_bal_acc=0.4197 val_joint_macro_f1=0.3973 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.8286 lr=7.98073e-05 train_metal_acc=0.8442 val_loss=1.8118 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4880 val_joint_macro_f1=0.4356 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.8519 lr=7.98073e-05 train_metal_acc=0.8781 val_loss=1.6408 val_metal_acc=0.6971 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.4805 val_joint_macro_f1=0.4765 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.7012 lr=7.98073e-05 train_metal_acc=0.8806 val_loss=1.5892 val_metal_acc=0.7163 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5405 val_joint_macro_f1=0.5086 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.6754 lr=7.98073e-05 train_metal_acc=0.9026 val_loss=2.1386 val_metal_acc=0.5577 val_metal_min_recall=0.0769 val_fe_recall=0.6818 val_joint_bal_acc=0.4654 val_joint_macro_f1=0.4673 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.6185 lr=7.98073e-05 train_metal_acc=0.8247 val_loss=2.5188 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.3409 val_joint_bal_acc=0.4581 val_joint_macro_f1=0.4114 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.5092 lr=7.98073e-05 train_metal_acc=0.9102 val_loss=1.8783 val_metal_acc=0.6827 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5505 val_joint_macro_f1=0.5255 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3/run_metadata.json
+[I 2026-05-11 08:59:56,860] Trial 10 finished with value: 0.550520717112212 and parameters: {'learning_rate': 7.98072998437076e-05, 'weight_decay': 0.0001, 'batch_size': 2, 'hidden_s': 256, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 8.0, 'hidden_v': 8, 'metal_class_weight_mode': 'effective_number'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 10 completed: val_metal_balanced_acc=0.550520717112212
+================================================================================
+[Optuna trial 11] optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 256,
+  "hidden_v": 8,
+  "learning_rate": 7.967070377812668e-05,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 7.967070377812668e-05 --weight-decay 0.0001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6838 lr=7.96707e-05 train_metal_acc=0.4301 val_loss=1.5089 val_metal_acc=0.4183 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.2219 val_joint_macro_f1=0.1650 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.5860 lr=7.96707e-05 train_metal_acc=0.5368 val_loss=1.2946 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.3034 val_joint_macro_f1=0.2715 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.5164 lr=7.96707e-05 train_metal_acc=0.5495 val_loss=1.2743 val_metal_acc=0.5769 val_metal_min_recall=0.0000 val_fe_recall=0.3636 val_joint_bal_acc=0.2637 val_joint_macro_f1=0.2412 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.4688 lr=7.96707e-05 train_metal_acc=0.5368 val_loss=1.3059 val_metal_acc=0.5529 val_metal_min_recall=0.0000 val_fe_recall=0.3636 val_joint_bal_acc=0.2495 val_joint_macro_f1=0.2274 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.4093 lr=7.96707e-05 train_metal_acc=0.6283 val_loss=1.1568 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.3616 val_joint_macro_f1=0.3492 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.3418 lr=7.96707e-05 train_metal_acc=0.6554 val_loss=1.1695 val_metal_acc=0.6490 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.4077 val_joint_macro_f1=0.3595 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.2432 lr=7.96707e-05 train_metal_acc=0.6892 val_loss=1.2197 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.4273 val_joint_macro_f1=0.4000 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.1958 lr=7.96707e-05 train_metal_acc=0.7028 val_loss=1.3256 val_metal_acc=0.6154 val_metal_min_recall=0.0000 val_fe_recall=0.4545 val_joint_bal_acc=0.4277 val_joint_macro_f1=0.3685 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.2208 lr=7.96707e-05 train_metal_acc=0.7468 val_loss=1.2484 val_metal_acc=0.6923 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5112 val_joint_macro_f1=0.4800 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.1632 lr=7.96707e-05 train_metal_acc=0.7375 val_loss=1.3851 val_metal_acc=0.5865 val_metal_min_recall=0.0000 val_fe_recall=0.8409 val_joint_bal_acc=0.4698 val_joint_macro_f1=0.4308 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.1024 lr=7.96707e-05 train_metal_acc=0.7883 val_loss=1.8124 val_metal_acc=0.5096 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4841 val_joint_macro_f1=0.4387 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.0453 lr=7.96707e-05 train_metal_acc=0.7807 val_loss=1.3681 val_metal_acc=0.6875 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.5418 val_joint_macro_f1=0.4831 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.9461 lr=7.96707e-05 train_metal_acc=0.7849 val_loss=2.0501 val_metal_acc=0.5048 val_metal_min_recall=0.1429 val_fe_recall=0.6818 val_joint_bal_acc=0.4619 val_joint_macro_f1=0.4275 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.9354 lr=7.96707e-05 train_metal_acc=0.8247 val_loss=1.6932 val_metal_acc=0.5769 val_metal_min_recall=0.0769 val_fe_recall=0.6136 val_joint_bal_acc=0.4872 val_joint_macro_f1=0.4419 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.9023 lr=7.96707e-05 train_metal_acc=0.8527 val_loss=1.6896 val_metal_acc=0.6106 val_metal_min_recall=0.1429 val_fe_recall=0.7273 val_joint_bal_acc=0.4951 val_joint_macro_f1=0.4618 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.8805 lr=7.96707e-05 train_metal_acc=0.8425 val_loss=1.6487 val_metal_acc=0.6635 val_metal_min_recall=0.0769 val_fe_recall=0.5909 val_joint_bal_acc=0.4927 val_joint_macro_f1=0.4792 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.7740 lr=7.96707e-05 train_metal_acc=0.8933 val_loss=2.0505 val_metal_acc=0.5721 val_metal_min_recall=0.1429 val_fe_recall=0.6364 val_joint_bal_acc=0.4696 val_joint_macro_f1=0.4430 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.6854 lr=7.96707e-05 train_metal_acc=0.8662 val_loss=2.2263 val_metal_acc=0.5625 val_metal_min_recall=0.0769 val_fe_recall=0.5455 val_joint_bal_acc=0.4759 val_joint_macro_f1=0.4577 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.6908 lr=7.96707e-05 train_metal_acc=0.8798 val_loss=2.4198 val_metal_acc=0.5865 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4576 val_joint_macro_f1=0.4316 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.6252 lr=7.96707e-05 train_metal_acc=0.8967 val_loss=2.5548 val_metal_acc=0.5865 val_metal_min_recall=0.1429 val_fe_recall=0.5909 val_joint_bal_acc=0.4717 val_joint_macro_f1=0.4524 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f/run_metadata.json
+[I 2026-05-11 09:13:41,407] Trial 11 finished with value: 0.5417685693458889 and parameters: {'learning_rate': 7.967070377812668e-05, 'weight_decay': 0.0001, 'batch_size': 2, 'hidden_s': 256, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 8.0, 'hidden_v': 8, 'metal_class_weight_mode': 'effective_number'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 11 completed: val_metal_balanced_acc=0.5417685693458889
+================================================================================
+[Optuna trial 12] optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 256,
+  "hidden_v": 8,
+  "learning_rate": 7.479355725747099e-05,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 7.479355725747099e-05 --weight-decay 0.0001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6825 lr=7.47936e-05 train_metal_acc=0.4191 val_loss=1.5261 val_metal_acc=0.4183 val_metal_min_recall=0.0000 val_fe_recall=0.9773 val_joint_bal_acc=0.2385 val_joint_macro_f1=0.1669 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.5900 lr=7.47936e-05 train_metal_acc=0.5394 val_loss=1.3089 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.2951 val_joint_macro_f1=0.2334 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.5228 lr=7.47936e-05 train_metal_acc=0.5038 val_loss=1.4443 val_metal_acc=0.5144 val_metal_min_recall=0.0000 val_fe_recall=0.1364 val_joint_bal_acc=0.2102 val_joint_macro_f1=0.1790 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.5132 lr=7.47936e-05 train_metal_acc=0.5622 val_loss=1.2847 val_metal_acc=0.5673 val_metal_min_recall=0.0000 val_fe_recall=0.4545 val_joint_bal_acc=0.2511 val_joint_macro_f1=0.2196 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.4774 lr=7.47936e-05 train_metal_acc=0.5919 val_loss=1.3414 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.2784 val_joint_macro_f1=0.2606 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.4183 lr=7.47936e-05 train_metal_acc=0.6063 val_loss=1.3750 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.2893 val_joint_macro_f1=0.2487 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.4213 lr=7.47936e-05 train_metal_acc=0.5478 val_loss=1.6367 val_metal_acc=0.5192 val_metal_min_recall=0.0000 val_fe_recall=0.2045 val_joint_bal_acc=0.2112 val_joint_macro_f1=0.1832 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.3309 lr=7.47936e-05 train_metal_acc=0.6503 val_loss=1.4150 val_metal_acc=0.5192 val_metal_min_recall=0.0000 val_fe_recall=0.4545 val_joint_bal_acc=0.3708 val_joint_macro_f1=0.3568 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.3330 lr=7.47936e-05 train_metal_acc=0.6452 val_loss=1.3782 val_metal_acc=0.5000 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.3424 val_joint_macro_f1=0.3160 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.2554 lr=7.47936e-05 train_metal_acc=0.6833 val_loss=1.3946 val_metal_acc=0.5144 val_metal_min_recall=0.0000 val_fe_recall=0.4773 val_joint_bal_acc=0.4154 val_joint_macro_f1=0.4026 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.1996 lr=7.47936e-05 train_metal_acc=0.6672 val_loss=1.6554 val_metal_acc=0.4808 val_metal_min_recall=0.0000 val_fe_recall=0.4091 val_joint_bal_acc=0.3809 val_joint_macro_f1=0.3511 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.1898 lr=7.47936e-05 train_metal_acc=0.7273 val_loss=1.5472 val_metal_acc=0.5433 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.4432 val_joint_macro_f1=0.4309 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.1125 lr=7.47936e-05 train_metal_acc=0.7451 val_loss=1.5536 val_metal_acc=0.5577 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4185 val_joint_macro_f1=0.4324 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1245 lr=7.47936e-05 train_metal_acc=0.7629 val_loss=1.5510 val_metal_acc=0.6587 val_metal_min_recall=0.0000 val_fe_recall=0.5682 val_joint_bal_acc=0.4379 val_joint_macro_f1=0.4682 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.1057 lr=7.47936e-05 train_metal_acc=0.7917 val_loss=1.7822 val_metal_acc=0.5721 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4553 val_joint_macro_f1=0.4534 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0674 lr=7.47936e-05 train_metal_acc=0.7824 val_loss=1.6450 val_metal_acc=0.6442 val_metal_min_recall=0.0769 val_fe_recall=0.6136 val_joint_bal_acc=0.4969 val_joint_macro_f1=0.5181 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.9768 lr=7.47936e-05 train_metal_acc=0.8213 val_loss=1.7985 val_metal_acc=0.5769 val_metal_min_recall=0.0769 val_fe_recall=0.6364 val_joint_bal_acc=0.4996 val_joint_macro_f1=0.4872 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.9070 lr=7.47936e-05 train_metal_acc=0.8078 val_loss=2.0885 val_metal_acc=0.5577 val_metal_min_recall=0.1538 val_fe_recall=0.5909 val_joint_bal_acc=0.5193 val_joint_macro_f1=0.5252 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.9143 lr=7.47936e-05 train_metal_acc=0.7680 val_loss=1.8361 val_metal_acc=0.6058 val_metal_min_recall=0.0769 val_fe_recall=0.5000 val_joint_bal_acc=0.4333 val_joint_macro_f1=0.4695 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.8683 lr=7.47936e-05 train_metal_acc=0.8434 val_loss=2.0027 val_metal_acc=0.5673 val_metal_min_recall=0.0769 val_fe_recall=0.5682 val_joint_bal_acc=0.4688 val_joint_macro_f1=0.4834 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae/run_metadata.json
+[I 2026-05-11 09:27:37,010] Trial 12 finished with value: 0.5192944226449381 and parameters: {'learning_rate': 7.479355725747099e-05, 'weight_decay': 0.0001, 'batch_size': 2, 'hidden_s': 256, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 8.0, 'hidden_v': 8, 'metal_class_weight_mode': 'effective_number'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 12 completed: val_metal_balanced_acc=0.5192944226449381
+================================================================================
+[Optuna trial 13] optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 256,
+  "hidden_v": 8,
+  "learning_rate": 1.722270849789346e-05,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39 --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 1.722270849789346e-05 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 8 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6546 lr=1.72227e-05 train_metal_acc=0.4293 val_loss=1.4754 val_metal_acc=0.4519 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.2402 val_joint_macro_f1=0.1781 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.5660 lr=1.72227e-05 train_metal_acc=0.5309 val_loss=1.2551 val_metal_acc=0.6106 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.2860 val_joint_macro_f1=0.2564 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.4305 lr=1.72227e-05 train_metal_acc=0.5318 val_loss=1.2577 val_metal_acc=0.5769 val_metal_min_recall=0.0000 val_fe_recall=0.2727 val_joint_bal_acc=0.2930 val_joint_macro_f1=0.2988 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.3350 lr=1.72227e-05 train_metal_acc=0.5902 val_loss=1.2104 val_metal_acc=0.5865 val_metal_min_recall=0.0000 val_fe_recall=0.2727 val_joint_bal_acc=0.3330 val_joint_macro_f1=0.3354 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.2556 lr=1.72227e-05 train_metal_acc=0.6503 val_loss=1.1222 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.5227 val_joint_bal_acc=0.3798 val_joint_macro_f1=0.3902 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.1997 lr=1.72227e-05 train_metal_acc=0.6926 val_loss=0.9970 val_metal_acc=0.7308 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.5124 val_joint_macro_f1=0.5179 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.1443 lr=1.72227e-05 train_metal_acc=0.6774 val_loss=1.1542 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.3636 val_joint_bal_acc=0.4336 val_joint_macro_f1=0.4363 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.1103 lr=1.72227e-05 train_metal_acc=0.6850 val_loss=1.1566 val_metal_acc=0.6587 val_metal_min_recall=0.0000 val_fe_recall=0.4318 val_joint_bal_acc=0.4621 val_joint_macro_f1=0.4198 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.1334 lr=1.72227e-05 train_metal_acc=0.6960 val_loss=1.1194 val_metal_acc=0.6538 val_metal_min_recall=0.0000 val_fe_recall=0.8864 val_joint_bal_acc=0.5330 val_joint_macro_f1=0.5300 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.1079 lr=1.72227e-05 train_metal_acc=0.7409 val_loss=1.1492 val_metal_acc=0.6154 val_metal_min_recall=0.0769 val_fe_recall=0.5455 val_joint_bal_acc=0.4819 val_joint_macro_f1=0.4809 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.0501 lr=1.72227e-05 train_metal_acc=0.6935 val_loss=1.5170 val_metal_acc=0.4904 val_metal_min_recall=0.0000 val_fe_recall=0.4773 val_joint_bal_acc=0.4491 val_joint_macro_f1=0.4112 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.0768 lr=1.72227e-05 train_metal_acc=0.7341 val_loss=1.0597 val_metal_acc=0.6683 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.5345 val_joint_macro_f1=0.5090 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.0795 lr=1.72227e-05 train_metal_acc=0.7621 val_loss=1.1780 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.6136 val_joint_bal_acc=0.5316 val_joint_macro_f1=0.5114 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.0210 lr=1.72227e-05 train_metal_acc=0.7655 val_loss=1.1198 val_metal_acc=0.6538 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.5250 val_joint_macro_f1=0.4995 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.0347 lr=1.72227e-05 train_metal_acc=0.7426 val_loss=1.3354 val_metal_acc=0.6442 val_metal_min_recall=0.0000 val_fe_recall=0.7045 val_joint_bal_acc=0.5259 val_joint_macro_f1=0.4961 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0488 lr=1.72227e-05 train_metal_acc=0.7384 val_loss=1.5117 val_metal_acc=0.6635 val_metal_min_recall=0.0000 val_fe_recall=0.5000 val_joint_bal_acc=0.4207 val_joint_macro_f1=0.4364 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.9964 lr=1.72227e-05 train_metal_acc=0.7858 val_loss=1.2905 val_metal_acc=0.6731 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.5111 val_joint_macro_f1=0.5338 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.9732 lr=1.72227e-05 train_metal_acc=0.7587 val_loss=1.7639 val_metal_acc=0.6058 val_metal_min_recall=0.0000 val_fe_recall=0.4773 val_joint_bal_acc=0.4985 val_joint_macro_f1=0.4749 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.9350 lr=1.72227e-05 train_metal_acc=0.7942 val_loss=1.3879 val_metal_acc=0.7019 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.4847 val_joint_macro_f1=0.4988 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.9421 lr=1.72227e-05 train_metal_acc=0.7883 val_loss=1.4904 val_metal_acc=0.6250 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4355 val_joint_macro_f1=0.4544 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39/run_metadata.json
+[I 2026-05-11 09:41:47,165] Trial 13 finished with value: 0.5345163713720414 and parameters: {'learning_rate': 1.722270849789346e-05, 'weight_decay': 0.001, 'batch_size': 2, 'hidden_s': 256, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 8.0, 'hidden_v': 8, 'metal_class_weight_mode': 'effective_number'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 13 completed: val_metal_balanced_acc=0.5345163713720414
+================================================================================
+[Optuna trial 14] optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 2,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 8.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 256,
+  "hidden_v": 16,
+  "learning_rate": 5.523147467222908e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.0001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8 --model-architecture only_gvp --epochs 20 --batch-size 2 --learning-rate 5.523147467222908e-05 --weight-decay 0.0001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 256 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_sqrt_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 128 --gvp-layers 4 --edge-radius 8.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 16 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.6016 lr=5.52315e-05 train_metal_acc=0.4530 val_loss=1.4347 val_metal_acc=0.5481 val_metal_min_recall=0.0000 val_fe_recall=0.9091 val_joint_bal_acc=0.2787 val_joint_macro_f1=0.2132 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.5198 lr=5.52315e-05 train_metal_acc=0.5690 val_loss=1.2108 val_metal_acc=0.6106 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.2969 val_joint_macro_f1=0.2358 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.3506 lr=5.52315e-05 train_metal_acc=0.6139 val_loss=1.2354 val_metal_acc=0.6010 val_metal_min_recall=0.0000 val_fe_recall=0.5909 val_joint_bal_acc=0.2756 val_joint_macro_f1=0.2520 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.2865 lr=5.52315e-05 train_metal_acc=0.5588 val_loss=1.4905 val_metal_acc=0.3702 val_metal_min_recall=0.0000 val_fe_recall=0.2955 val_joint_bal_acc=0.3176 val_joint_macro_f1=0.2410 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.2338 lr=5.52315e-05 train_metal_acc=0.6393 val_loss=1.2948 val_metal_acc=0.5865 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.4534 val_joint_macro_f1=0.4081 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.1840 lr=5.52315e-05 train_metal_acc=0.7367 val_loss=1.0100 val_metal_acc=0.6923 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.5078 val_joint_macro_f1=0.5001 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.0896 lr=5.52315e-05 train_metal_acc=0.7163 val_loss=1.1810 val_metal_acc=0.6058 val_metal_min_recall=0.0769 val_fe_recall=0.4773 val_joint_bal_acc=0.5492 val_joint_macro_f1=0.5074 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.0901 lr=5.52315e-05 train_metal_acc=0.7358 val_loss=1.1683 val_metal_acc=0.6731 val_metal_min_recall=0.0769 val_fe_recall=0.5909 val_joint_bal_acc=0.4890 val_joint_macro_f1=0.4950 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.0050 lr=5.52315e-05 train_metal_acc=0.7638 val_loss=1.3477 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.4773 val_joint_bal_acc=0.4861 val_joint_macro_f1=0.4605 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.0163 lr=5.52315e-05 train_metal_acc=0.7765 val_loss=1.3474 val_metal_acc=0.6683 val_metal_min_recall=0.1538 val_fe_recall=0.5455 val_joint_bal_acc=0.5132 val_joint_macro_f1=0.5002 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=0.9315 lr=5.52315e-05 train_metal_acc=0.7731 val_loss=1.5917 val_metal_acc=0.6635 val_metal_min_recall=0.0000 val_fe_recall=0.5455 val_joint_bal_acc=0.4375 val_joint_macro_f1=0.4574 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=0.9394 lr=5.52315e-05 train_metal_acc=0.8349 val_loss=1.1951 val_metal_acc=0.7163 val_metal_min_recall=0.0769 val_fe_recall=0.7500 val_joint_bal_acc=0.5401 val_joint_macro_f1=0.5386 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.8511 lr=5.52315e-05 train_metal_acc=0.7985 val_loss=1.4214 val_metal_acc=0.6875 val_metal_min_recall=0.0769 val_fe_recall=0.7727 val_joint_bal_acc=0.5437 val_joint_macro_f1=0.5177 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.8265 lr=5.52315e-05 train_metal_acc=0.8332 val_loss=1.4674 val_metal_acc=0.6971 val_metal_min_recall=0.0000 val_fe_recall=0.8182 val_joint_bal_acc=0.4567 val_joint_macro_f1=0.4751 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.7950 lr=5.52315e-05 train_metal_acc=0.8501 val_loss=1.5559 val_metal_acc=0.6202 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.4909 val_joint_macro_f1=0.4913 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.7494 lr=5.52315e-05 train_metal_acc=0.8493 val_loss=1.6852 val_metal_acc=0.6442 val_metal_min_recall=0.0769 val_fe_recall=0.5227 val_joint_bal_acc=0.4995 val_joint_macro_f1=0.4862 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.7339 lr=5.52315e-05 train_metal_acc=0.8434 val_loss=1.7927 val_metal_acc=0.5913 val_metal_min_recall=0.0769 val_fe_recall=0.7500 val_joint_bal_acc=0.4030 val_joint_macro_f1=0.4152 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.6738 lr=5.52315e-05 train_metal_acc=0.8611 val_loss=1.8368 val_metal_acc=0.6683 val_metal_min_recall=0.1250 val_fe_recall=0.8182 val_joint_bal_acc=0.5252 val_joint_macro_f1=0.5030 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.6125 lr=5.52315e-05 train_metal_acc=0.8874 val_loss=1.9386 val_metal_acc=0.6875 val_metal_min_recall=0.0769 val_fe_recall=0.6818 val_joint_bal_acc=0.4698 val_joint_macro_f1=0.4965 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.5962 lr=5.52315e-05 train_metal_acc=0.8959 val_loss=1.8717 val_metal_acc=0.6298 val_metal_min_recall=0.0769 val_fe_recall=0.6364 val_joint_bal_acc=0.5044 val_joint_macro_f1=0.4707 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8/run_metadata.json
+[I 2026-05-11 09:56:28,324] Trial 14 finished with value: 0.5491805230851622 and parameters: {'learning_rate': 5.523147467222908e-05, 'weight_decay': 0.0001, 'batch_size': 2, 'hidden_s': 256, 'head_mlp_layers': 1, 'edge_hidden': 128, 'gvp_layers': 4, 'edge_radius': 8.0, 'hidden_v': 16, 'metal_class_weight_mode': 'inverse_sqrt_frequency'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 14 completed: val_metal_balanced_acc=0.5491805230851622
+================================================================================
+[Optuna trial 15] optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49
+Sampled parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 64,
+  "edge_radius": 10.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 0.00011118760527733153,
+  "metal_class_weight_mode": "effective_number",
+  "metal_weighting_setup": "effective_number",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+PYTHONPATH=/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/content/DeepMzyme/src:/env/python /usr/bin/python3 /content/DeepMzyme/src/train.py --task metal --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/deepmzyme_outputs/runs --run-name optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49 --model-architecture only_gvp --epochs 20 --batch-size 8 --learning-rate 0.00011118760527733153 --weight-decay 0.001 --seed 42 --val-fraction 0.15 --split-by pdbid --selection-metric val_metal_balanced_acc --device cuda --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 1 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode effective_number --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy skip --lr-schedule fixed --edge-hidden 64 --gvp-layers 4 --edge-radius 10.0 --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --hidden-v 32 --allow-missing-external-features --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None
+pockets: train=1181 validation=208
+groups by pdbid: train=1151 validation=110
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+train metal distribution: Mn=551, Cu=70, Zn=175, Fe=248, Co=73, Ni=64
+validation metal distribution: Mn=97, Cu=15, Zn=32, Fe=44, Co=13, Ni=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=491, 2=197, 3=344, 4=46, 5=69, 6=15, 7=1
+validation EC distribution: 1=68, 2=18, 3=48, 4=8, 5=64, 6=2, 7=0
+missing train EC classes: none
+missing validation EC classes: 7
+===============================================================
+
+epoch=1 train_loss=1.7872 lr=0.000111188 train_metal_acc=0.4242 val_loss=1.7108 val_metal_acc=0.3894 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.2961 val_joint_macro_f1=0.2171 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.7602 lr=0.000111188 train_metal_acc=0.4572 val_loss=1.6663 val_metal_acc=0.4135 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.2151 val_joint_macro_f1=0.1780 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=1.7230 lr=0.000111188 train_metal_acc=0.2252 val_loss=1.6501 val_metal_acc=0.2115 val_metal_min_recall=0.0000 val_fe_recall=0.0909 val_joint_bal_acc=0.2286 val_joint_macro_f1=0.1611 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=1.7237 lr=0.000111188 train_metal_acc=0.4674 val_loss=1.5886 val_metal_acc=0.4856 val_metal_min_recall=0.0000 val_fe_recall=0.7727 val_joint_bal_acc=0.2909 val_joint_macro_f1=0.2537 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=1.6242 lr=0.000111188 train_metal_acc=0.4649 val_loss=1.5368 val_metal_acc=0.3702 val_metal_min_recall=0.0000 val_fe_recall=0.8636 val_joint_bal_acc=0.3199 val_joint_macro_f1=0.2668 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=1.5472 lr=0.000111188 train_metal_acc=0.5318 val_loss=1.4759 val_metal_acc=0.5433 val_metal_min_recall=0.0000 val_fe_recall=0.7955 val_joint_bal_acc=0.3769 val_joint_macro_f1=0.3310 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=1.4703 lr=0.000111188 train_metal_acc=0.5292 val_loss=1.4827 val_metal_acc=0.6394 val_metal_min_recall=0.0000 val_fe_recall=0.8864 val_joint_bal_acc=0.3949 val_joint_macro_f1=0.3761 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=1.4244 lr=0.000111188 train_metal_acc=0.5021 val_loss=1.4375 val_metal_acc=0.4519 val_metal_min_recall=0.0000 val_fe_recall=0.8409 val_joint_bal_acc=0.3952 val_joint_macro_f1=0.3304 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=1.3587 lr=0.000111188 train_metal_acc=0.5377 val_loss=1.3765 val_metal_acc=0.5288 val_metal_min_recall=0.0769 val_fe_recall=0.5909 val_joint_bal_acc=0.5051 val_joint_macro_f1=0.4584 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=1.2856 lr=0.000111188 train_metal_acc=0.5978 val_loss=1.3673 val_metal_acc=0.4808 val_metal_min_recall=0.0000 val_fe_recall=0.6364 val_joint_bal_acc=0.4331 val_joint_macro_f1=0.3940 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=1.2421 lr=0.000111188 train_metal_acc=0.6351 val_loss=1.2350 val_metal_acc=0.4904 val_metal_min_recall=0.0000 val_fe_recall=0.6591 val_joint_bal_acc=0.5005 val_joint_macro_f1=0.4164 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=1.2059 lr=0.000111188 train_metal_acc=0.6198 val_loss=1.3402 val_metal_acc=0.4231 val_metal_min_recall=0.0000 val_fe_recall=0.4091 val_joint_bal_acc=0.4560 val_joint_macro_f1=0.4118 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=1.1283 lr=0.000111188 train_metal_acc=0.6867 val_loss=1.3375 val_metal_acc=0.4423 val_metal_min_recall=0.0000 val_fe_recall=0.7500 val_joint_bal_acc=0.4334 val_joint_macro_f1=0.3844 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=1.1327 lr=0.000111188 train_metal_acc=0.6969 val_loss=1.2616 val_metal_acc=0.5481 val_metal_min_recall=0.3077 val_fe_recall=0.7273 val_joint_bal_acc=0.5110 val_joint_macro_f1=0.5137 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=1.0538 lr=0.000111188 train_metal_acc=0.7087 val_loss=1.3874 val_metal_acc=0.5096 val_metal_min_recall=0.0769 val_fe_recall=0.7045 val_joint_bal_acc=0.4691 val_joint_macro_f1=0.4330 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=1.0289 lr=0.000111188 train_metal_acc=0.6986 val_loss=1.3119 val_metal_acc=0.5385 val_metal_min_recall=0.0769 val_fe_recall=0.7045 val_joint_bal_acc=0.5213 val_joint_macro_f1=0.4731 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=1.0366 lr=0.000111188 train_metal_acc=0.6291 val_loss=1.4572 val_metal_acc=0.4471 val_metal_min_recall=0.0769 val_fe_recall=0.7727 val_joint_bal_acc=0.4808 val_joint_macro_f1=0.4442 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=1.0101 lr=0.000111188 train_metal_acc=0.7053 val_loss=1.3220 val_metal_acc=0.5385 val_metal_min_recall=0.0000 val_fe_recall=0.7273 val_joint_bal_acc=0.4174 val_joint_macro_f1=0.4167 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.9740 lr=0.000111188 train_metal_acc=0.7485 val_loss=1.2884 val_metal_acc=0.6538 val_metal_min_recall=0.0769 val_fe_recall=0.7273 val_joint_bal_acc=0.4736 val_joint_macro_f1=0.4995 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.9225 lr=0.000111188 train_metal_acc=0.7223 val_loss=1.4540 val_metal_acc=0.4567 val_metal_min_recall=0.0000 val_fe_recall=0.6818 val_joint_bal_acc=0.5150 val_joint_macro_f1=0.4087 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49/last_model_checkpoint.pt
+Saved best checkpoint to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49/best_model_checkpoint.pt
+Saved dataset summary to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49/dataset_summary.json
+Saved run config to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49/run_config.json
+Saved run metadata to /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49/run_metadata.json
+[I 2026-05-11 10:05:40,199] Trial 15 finished with value: 0.52131822930792 and parameters: {'learning_rate': 0.00011118760527733153, 'weight_decay': 0.001, 'batch_size': 8, 'hidden_s': 128, 'head_mlp_layers': 1, 'edge_hidden': 64, 'gvp_layers': 4, 'edge_radius': 10.0, 'hidden_v': 32, 'metal_class_weight_mode': 'effective_number'}. Best is trial 7 with value: 0.554291323653437.
+Optuna trial 15 completed: val_metal_balanced_acc=0.52131822930792
+Seed-repeat source study: deepmzyme_controlled_hpo
+Seed-repeat source table: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/top_trials.csv
+Seed-repeat source config JSON: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/top_trial_configs.json
+Seed-repeat source note: using the just-completed Optuna study in this notebook run; not scanning old mixed run directories.
+Selected seed-repeat config: {"fusion_mode": "none", "learning_rate": 6.464669746492395e-05, "model_architecture": "only_gvp", "rank": 1, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669", "trial_number": 7, "use_early_esm": false, "use_esm": false, "weight_decay": 0.001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 6.464669746492395e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 42, "source": "seed-repeat source", "source_rank": 1, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669", "source_trial_number": 7, "use_early_esm": false, "use_esm": false, "weight_decay": 0.001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 6.464669746492395e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 123, "source": "seed-repeat source", "source_rank": 1, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669", "source_trial_number": 7, "use_early_esm": false, "use_esm": false, "weight_decay": 0.001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 6.464669746492395e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 2026, "source": "seed-repeat source", "source_rank": 1, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669", "source_trial_number": 7, "use_early_esm": false, "use_esm": false, "weight_decay": 0.001}
+Selected seed-repeat config: {"fusion_mode": "none", "learning_rate": 7.98072998437076e-05, "model_architecture": "only_gvp", "rank": 2, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3", "trial_number": 10, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 7.98072998437076e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 42, "source": "seed-repeat source", "source_rank": 2, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3", "source_trial_number": 10, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 7.98072998437076e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 123, "source": "seed-repeat source", "source_rank": 2, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3", "source_trial_number": 10, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 7.98072998437076e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 2026, "source": "seed-repeat source", "source_rank": 2, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3", "source_trial_number": 10, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat config: {"fusion_mode": "none", "learning_rate": 5.523147467222908e-05, "model_architecture": "only_gvp", "rank": 3, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8", "trial_number": 14, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 5.523147467222908e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 42, "source": "seed-repeat source", "source_rank": 3, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8", "source_trial_number": 14, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 5.523147467222908e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 123, "source": "seed-repeat source", "source_rank": 3, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8", "source_trial_number": 14, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Selected seed-repeat rerun: {"fusion_mode": "none", "learning_rate": 5.523147467222908e-05, "model_architecture": "only_gvp", "requires_esm": false, "seed": 2026, "source": "seed-repeat source", "source_rank": 3, "source_run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8", "source_trial_number": 14, "use_early_esm": false, "use_esm": false, "weight_decay": 0.0001}
+Seed-repeat execution is disabled. Commands were written for manual use: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/top_reevaluation_commands.txt
+
+Best Optuna trial summary
+Best trial number: 7
+Best validation metric: 0.554291323653437
+Best parameters: {
+  "balance_metal_site_symbols": false,
+  "batch_size": 8,
+  "class_viii_loss_multiplier": 1.0,
+  "co_loss_multiplier": 1.0,
+  "cu_loss_multiplier": 1.0,
+  "edge_hidden": 128,
+  "edge_radius": 6.0,
+  "fe_loss_multiplier": 1.0,
+  "gvp_layers": 4,
+  "head_mlp_layers": 1,
+  "hidden_s": 128,
+  "hidden_v": 32,
+  "learning_rate": 6.464669746492395e-05,
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "metal_weighting_setup": "inverse_sqrt_frequency",
+  "mn_loss_multiplier": 1.0,
+  "ni_loss_multiplier": 1.0,
+  "weight_decay": 0.001,
+  "zn_loss_multiplier": 1.0
+}
+Best run directory: /content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669
+All trials CSV: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/all_trials.csv
+Top trials CSV: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/top_trials.csv
+Best trial JSON: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/best_trial.json
+Best config command: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/best_config_command.txt
+Top-k reevaluation commands: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/top_reevaluation_commands.txt
+Study summary: /content/deepmzyme_outputs/runs/optuna/deepmzyme_controlled_hpo/optuna_study_summary.md
+Completed run directories: ['/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8', '/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49']
+Failed run directories: []
+Execution records JSON: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_execution_records.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------
+/usr/bin/python3 /content/DeepMzyme/src/report_runs.py --runs-dir /content/deepmzyme_outputs/runs --out-csv /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv --out-figure /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.png
+Completed-run summary CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv
+Summary source mode: planned table from current notebook state
+STRONG WARNING: This summary may mix old runs from the same RUNS_ROOT. Do not use this mixed table for model selection unless every scanned run is intentionally part of the same comparison.
+Comparison CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.csv
+rank	source_mode	config_source	result_stage	run_name	status	error_message	model_preset	model_display	model_architecture	...	missing_train_metal_classes	missing_val_metal_classes	missing_train_ec_classes	missing_val_ec_classes	selected_best_validation_metric_value	held_out_test_metric_name	held_out_test_metric_value	run_dir	stdout_log_path	stderr_log_path
+0	1.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0007_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.554291	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+1	2.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0010_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.550521	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+2	3.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0014_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.549181	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+3	4.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0000_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.546336	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+4	5.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0011_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.541769	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+5	6.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0013_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.534516	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+6	7.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0003_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.534288	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+7	8.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0015_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.521318	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+8	9.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0012_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.519294	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+9	10.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0008_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.503761	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+10	11.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0004_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.499777	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+11	12.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0002_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.486751	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+12	13.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0006_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.469338	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+13	14.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0001_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.447527	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+14	15.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0005_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.411529	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+15	16.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0009_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.314645	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+16	NaN	planned table	current notebook config	validation-only	deepmzyme_nonoverlap_baseline_metal_only_gvp_a...	planned		Only-GVP	Only-GVP (structure only)	only_gvp	...	NaN	NaN	NaN	NaN	NaN	None	None	/content/deepmzyme_outputs/runs/deepmzyme_nono...	/content/deepmzyme_outputs/runs/_execution_log...	/content/deepmzyme_outputs/runs/_execution_log...
+17 rows × 62 columns
+
+
+
+
+Ranked table sorted by validation selection metric:
+#1: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.554291323653437 | status=completed
+#2: optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.550520717112212 | status=completed
+#3: optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_3d692dc8 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5491805230851622 | status=completed
+#4: optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.546336220337509 | status=completed
+#5: optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_b6bba54f | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.5417685693458889 | status=completed
+#6: optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_645faf39 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.5345163713720414 | status=completed
+#7: optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5342883455319022 | status=completed
+#8: optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_195c3b49 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.52131822930792 | status=completed
+#9: optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_faedf3ae | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.5192944226449381 | status=completed
+#10: optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc | stage=validation-only | class_weight=inverse_frequency | val_metal_balanced_acc=0.5037611228977208 | status=completed
+#11: optuna_deepmzyme_controlled_hpo_trial0004_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_2d36f83e | stage=validation-only | class_weight=none | val_metal_balanced_acc=0.4997772952992025 | status=completed
+#12: optuna_deepmzyme_controlled_hpo_trial0002_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_39f60739 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.48675088514006043 | status=completed
+#13: optuna_deepmzyme_controlled_hpo_trial0006_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_d36624ec | stage=validation-only | class_weight=inverse_frequency | val_metal_balanced_acc=0.4693379394088157 | status=completed
+#14: optuna_deepmzyme_controlled_hpo_trial0001_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_d730fba0 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.44752704697936657 | status=completed
+#15: optuna_deepmzyme_controlled_hpo_trial0005_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c070ca8a | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.4115285308906443 | status=completed
+#16: optuna_deepmzyme_controlled_hpo_trial0009_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwnone_fullfeatur_fad121c0 | stage=validation-only | class_weight=none | val_metal_balanced_acc=0.3146454883890451 | status=completed
+
+Best overall configuration: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669
+{
+  "run_name": "optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669",
+  "result_stage": "validation-only",
+  "model_preset": "only_gvp",
+  "model_architecture": "only_gvp",
+  "fusion_mode": "late_fusion",
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "balance_metal_site_symbols": false,
+  "selection_metric": "val_metal_balanced_acc",
+  "selected_best_validation_metric_value": 0.554291323653437,
+  "run_dir": "/content/deepmzyme_outputs/runs/optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669"
+}
+
+Best configuration per model preset/mode:
+only_gvp: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.554291323653437
+
+Best Only-GVP configuration: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669
+Best ESM-based configuration: not available
+Best RING vs non-RING comparison: not available unless both modes have completed numeric validation metrics.
+
+Automatic interpretation
+Best validation config: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 with val_metal_balanced_acc = 0.554291323653437
+Top fusion mode: late_fusion
+Best learning-rate region: middle around 1e-4 (lr=6.464669746492395e-05)
+Held-out test results present: False
+Recommended next step: run top-K seed-repeat validation for the best Optuna configurations
+Drive copy skipped. Outputs remain under: /content/deepmzyme_outputs/runs#%%

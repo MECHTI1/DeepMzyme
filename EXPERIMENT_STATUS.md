@@ -157,8 +157,13 @@ assume these are active unless confirmed above.
    Example notebook preset: `baseline_model_comparison`.
 5. Bring up EC classification with clear EC label-depth and group-weighting
    rules.
-6. Test advanced fusion modes only after simpler baselines justify them:
-   early fusion, hybrid fusion, node-level late fusion, cross-modal attention.
+6. Test early fusion only after `Only-ESM` or late fusion shows useful
+   validation signal.
+7. Test advanced fusion modes only after simpler baselines justify them:
+   node-level late fusion first, hybrid fusion second, cross-modal attention
+   last with a narrow one-layer starting configuration.
+8. Use `SimpleGNN + ESM` as an auxiliary ablation after the GVP/ESM baselines
+   are stable, mainly to test whether GVP vector geometry is helping.
 
 ---
 

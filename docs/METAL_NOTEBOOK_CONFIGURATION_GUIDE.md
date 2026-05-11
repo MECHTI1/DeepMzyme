@@ -14,10 +14,11 @@ Use the non-overlapped PinMyMetal split:
 - `SPLIT_BY = "pdbid"`
 - `SELECTION_METRIC = ""`, which defaults to `val_metal_balanced_acc` for the metal task
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
+- Set a visible `RUN_BATCH_ID` for each real comparison batch, for example `metal_only_gvp_lr_seed_2026_05_11`. The notebook writes into that batch folder when `RUN_BATCH_ID` is set.
 
 The trusted final split for metal is the non-overlapped PinMyMetal split. Exact PinMyMetal split results, if used later, must be labeled as secondary/possibly-overlapped reference results.
 
-Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family.
+Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
 
 ## What To Run First
 
@@ -43,7 +44,7 @@ Set:
 
 Then run the planning cells. In the optional training execution cell, set `LAUNCH_PLANNED_TRAINING_RUNS = True`.
 
-Interpretation: a 1-epoch smoke run is not a performance result. It only proves the notebook and training loop run end to end.
+Interpretation: a 1-epoch smoke run is not a performance result. It only proves the notebook and training loop run end to end. The notebook blocks accidental 1-3 epoch non-smoke launches unless `ALLOW_SHORT_TRAINING_FOR_DEBUG=True` is set deliberately.
 
 ### 2. First real baseline
 
@@ -78,13 +79,29 @@ Use this order for metal:
 2. `Only-ESM`, after ESM embeddings are present.
 3. `GVP + late fusion`, after both structure-only and ESM-only baselines are stable.
 4. `GVP + early fusion`, if late fusion or ESM-only looks promising.
-5. Advanced fusion only if simple baselines justify it: `GVP + node-level late fusion`, `GVP + hybrid fusion`, `GVP + cross-modal attention`, and `SimpleGNN + ESM`.
+5. Advanced fusion only if simple baselines justify it: `GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention`.
+6. `SimpleGNN + ESM` as an auxiliary architecture ablation, not as the first best-pipeline candidate.
 
 The corresponding notebook presets are:
 
 - `baseline_model_comparison`: `Only-GVP`, `Only-ESM`, `GVP + late fusion`.
 - `esm_ready_comparison`: `Only-ESM`, `GVP + late fusion`, `GVP + early fusion`.
-- `full_model_comparison`: all eight model presets. Use this only after cheaper comparisons are stable.
+- `full_model_comparison`: all eight model presets. Use this only as a late-stage broad comparison after staged simpler comparisons justify advanced fusion.
+
+### 4. Sequential anchor protocol
+
+Do not treat each more complex model as a fresh, unrelated search. Use the best stable simpler model as the starting anchor for the next stage, then retune narrowly.
+
+Recommended protocol:
+
+1. Tune `Only-GVP` first using validation metrics only.
+2. Select a stable `Only-GVP` anchor from validation evidence across seeds, not from a single lucky run.
+3. Carry forward shared settings from that anchor when testing `GVP + late fusion`: split, epoch budget, seed list, graph radius, GVP capacity, class-weighting policy, and the selection metric.
+4. Retune only the settings likely affected by adding ESM, such as learning rate, weight decay, dropout/fusion dimension, and possibly batch size.
+5. Use the same idea for `GVP + early fusion`: start from the best validated late-fusion or ESM-informed baseline, then run a narrow validation-only comparison.
+6. Move to advanced fusion only if simpler graph-plus-ESM models give a real validation benefit over the simple baselines.
+
+This is a starting-anchor rule, not a freeze-everything rule. The best `Only-GVP` learning rate, regularization, or class weighting may change after ESM is added, so each added complexity still needs a small controlled validation search.
 
 ## Important Notebook Options
 
@@ -128,6 +145,47 @@ Do not set `RECOMMENDED_RUN_SET = "full_model_comparison"` and expect Optuna to 
 | `SimpleGNN + ESM` | non-GVP graph plus ESM comparison | Yes |
 
 For `Only-GVP`, fusion fields are effectively irrelevant even if a saved config displays `fusion_mode = late_fusion`.
+
+### Advanced fusion policy
+
+`GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention` are not recommended as part of the first best-pipeline search. Treat them as later ablations after simpler models have earned the extra complexity.
+
+Run advanced fusion only when all of the following are true:
+
+- `Only-GVP` has a stable validation baseline across multiple seeds.
+- `Only-ESM` has been measured with valid ESM embeddings.
+- `GVP + late fusion` has been compared against both simple baselines under the same split, epoch budget, seed-repeat list, and selection metric.
+- Late fusion or another simple ESM-informed model gives enough validation benefit to justify testing more expressive fusion.
+
+Suggested advanced-fusion order:
+
+1. `GVP + node-level late fusion`: first advanced option, because it adds residue-level ESM/node-state interaction after graph message passing without changing graph inputs.
+2. `GVP + hybrid fusion`: test only if early fusion or late fusion looks useful, because it combines early residue-level ESM injection with late graph-level ESM fusion.
+3. `GVP + cross-modal attention`: most expressive and easiest to over-tune; keep it last unless there is a specific reason to test attention earlier.
+
+Do not run `full_model_comparison` as the first serious architecture comparison. It mixes simple and advanced models before the simple anchor is established, which makes the result harder to interpret.
+
+If cross-attention is tested, keep the first search narrow:
+
+| Option | Starting value |
+| --- | --- |
+| `MODEL_PRESET` | `GVP + cross-modal attention` |
+| `CROSS_ATTENTION_LAYERS_CSV` | `1` |
+| `CROSS_ATTENTION_HEADS_CSV` | `4` |
+| `CROSS_ATTENTION_DROPOUT` | `0.1` |
+| `CROSS_ATTENTION_NEIGHBORHOOD` | `first_second_shell` or `all` |
+| `CROSS_ATTENTION_BIDIRECTIONAL` | `False` first |
+
+Compare cross-attention against the best validation-selected late-fusion model, not against an untuned or mismatched baseline. Use validation metrics only for the decision, and do not broaden layers, heads, bidirectionality, or neighborhoods until the narrow run beats the simpler model consistently across seeds.
+
+For node-level late fusion and hybrid fusion, inherit the same graph anchor and comparison rules:
+
+- Keep the validated `Only-GVP` graph settings fixed at first.
+- Keep the same split, epoch budget, seed-repeat list, and selection metric as late fusion.
+- Retune only a narrow set of ESM/fusion-sensitive settings first.
+- Compare against the best validation-selected `GVP + late fusion`, not only against `Only-GVP`.
+
+`SimpleGNN + ESM` is not an advanced GVP fusion mode. Use it later as an ablation to ask whether GVP vector geometry is helping compared with a simpler scalar graph + ESM model. It should not replace the `Only-GVP`, `Only-ESM`, and `GVP + late fusion` baseline sequence.
 
 The main capacity fields are:
 
@@ -192,7 +250,7 @@ For metal, optimize:
 
 Use balanced accuracy because the metal classes are imbalanced. Plain accuracy can look good while failing rare metals.
 
-Keep `VAL_FRACTION > 0` for reportable comparisons. If `VAL_FRACTION = 0`, the training CLI falls back to `train_loss`, which is not a valid basis for model selection.
+Keep `VAL_FRACTION > 0` for reportable comparisons. If `VAL_FRACTION = 0`, the training CLI falls back to `train_loss`, which is not a valid basis for model selection. The notebook prints a metal split diagnostic showing whether every metal class is present in train and validation; if any class is missing from validation, that run is not suitable for reportable model selection.
 
 ### Metal class weighting
 
@@ -249,12 +307,13 @@ Recommended controlled first search:
 | `RECOMMENDED_RUN_SET` | `custom` |
 | `MODEL_PRESET` | `Only-GVP` |
 | `OPTUNA_INTENSITY` | `first_useful` |
+| `OPTUNA_SEARCH_PRESET` | `first_useful_only_gvp_narrow` |
 | `OPTUNA_LEARNING_RATE_RANGE` | `1e-5,3e-4` |
 | `OPTUNA_WEIGHT_DECAYS_CSV` | `0.0,1e-5,1e-4` |
 | `OPTUNA_BATCH_SIZES_CSV` | `4,8` if memory allows |
-| `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` | initially `inverse_frequency`, then optionally broader |
+| `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` | `none,inverse_frequency,inverse_sqrt_frequency,effective_number` |
 
-Avoid broad architecture/capacity HPO until the simple baseline behavior is clear. Short HPO trials mostly rank early-training behavior.
+`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use `OPTUNA_SEARCH_PRESET = "later_capacity"` only after this narrow pass and seed-repeat validation look stable. Avoid broad architecture/capacity HPO until the simple baseline behavior is clear. Short HPO trials mostly rank early-training behavior.
 
 ## Professional Configuration Search Strategy
 
@@ -264,11 +323,13 @@ Use this controlled sequence:
 2. Run `only_gvp_lr_seed` for 30-50 epochs. Choose by `val_metal_balanced_acc`, not test.
 3. Run `only_gvp_broad_comparison` if the first baseline is stable. Confirm learning-rate and seed sensitivity.
 4. Optionally run controlled Optuna on `Only-GVP` only, with narrow ranges for learning rate, weight decay, batch size, and possibly a small set of capacity values.
-5. Rerun the top 2-3 validation configurations across several seeds.
-6. Once ESM embeddings are available, run `baseline_model_comparison`. Compare `Only-GVP`, `Only-ESM`, and `GVP + late fusion` using the same epoch budget and selection metric.
-7. Only then test early or advanced fusion modes.
-8. Select one final configuration by validation evidence.
-9. Use the optional final held-out test cell once for that selected configuration.
+5. Rerun the top 2-3 validation configurations across several seeds, then record the best stable `Only-GVP` anchor.
+6. Once ESM embeddings are available, run `Only-ESM` and `GVP + late fusion` using the `Only-GVP` anchor for shared graph/training settings where applicable.
+7. Retune only the small set of settings affected by ESM/fusion, such as learning rate, weight decay, fusion dimension, dropout, and batch size.
+8. Test `GVP + early fusion` only if `Only-ESM` or late fusion shows useful validation signal.
+9. Test advanced fusion only if simpler ESM-informed models justify it: node-level late fusion first, hybrid fusion second, and cross-modal attention last with a narrow one-layer configuration.
+10. Select one final configuration by validation evidence.
+11. Use the optional final held-out test cell once for that selected configuration.
 
 When comparing configurations, keep the comparison clean:
 
@@ -278,6 +339,7 @@ When comparing configurations, keep the comparison clean:
 - Same seed-repeat list.
 - Same final selection metric.
 - Same test-set policy.
+- Same anchor configuration for shared settings when comparing a simple model to the next more complex model.
 
 ## Metal-Class Diagnostics
 
