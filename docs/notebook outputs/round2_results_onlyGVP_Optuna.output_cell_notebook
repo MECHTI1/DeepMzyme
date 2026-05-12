@@ -1,3 +1,99 @@
+/usr/bin/python3 /content/DeepMzyme/src/report_runs.py --runs-dir /content/deepmzyme_outputs/runs --out-csv /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv --out-figure /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.png
+Completed-run summary CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv
+Summary source mode: planned table from current notebook state
+STRONG WARNING: This summary may mix old runs from the same RUNS_ROOT. Do not use this mixed table for model selection unless every scanned run is intentionally part of the same comparison.
+Comparison CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.csv
+rank	source_mode	config_source	result_stage	run_name	status	error_message	model_preset	model_display	model_architecture	...	missing_train_metal_classes	missing_val_metal_classes	missing_train_ec_classes	missing_val_ec_classes	selected_best_validation_metric_value	held_out_test_metric_name	held_out_test_metric_value	run_dir	stdout_log_path	stderr_log_path
+0	1.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed2026_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.647724	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
+1	2.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed2026...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.626016	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
+2	3.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed2026...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.614247	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
+3	4.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed42_de...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.583875	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
+4	5.0	completed-only scan	scanned run directory	validation-only	best_optuna_deepmzyme_controlled_hpo	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.580737	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/best_optuna_de...	None	None
+5	6.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed42_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.580737	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
+6	7.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed42_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.578510	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
+7	8.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed123_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.577976	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
+8	9.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed123_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.570372	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
+9	10.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0013_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.569840	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+10	11.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0012_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.567007	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+11	12.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed123_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.558363	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
+12	13.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0007_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.554291	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+13	14.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0015_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.546932	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+14	15.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0000_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.546336	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+15	16.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0014_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.542511	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+16	17.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0003_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.534288	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+17	18.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0010_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.532286	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+18	19.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0011_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.529622	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+19	20.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0008_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.507549	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+20	21.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0002_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.486751	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+21	22.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0006_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.469338	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+22	23.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0001_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.454850	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+23	24.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0004_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.451050	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+24	25.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0005_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.429040	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+25	26.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0009_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.411149	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
+26	NaN	planned table	current notebook config	validation-only	deepmzyme_nonoverlap_baseline_metal_only_gvp_a...	planned		Only-GVP	Only-GVP (structure only)	only_gvp	...	NaN	NaN	NaN	NaN	NaN	None	None	/content/deepmzyme_outputs/runs/deepmzyme_nono...	/content/deepmzyme_outputs/runs/_execution_log...	/content/deepmzyme_outputs/runs/_execution_log...
+27 rows × 62 columns
+
+
+
+
+Ranked table sorted by validation selection metric:
+#1: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.64772364969639 | status=completed
+#2: top2_trial12_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sq_d8fe79dc | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.6260156563241212 | status=completed
+#3: top1_trial13_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sq_2781576c | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.6142468443401011 | status=completed
+#4: top3_trial7_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_e989ceb4 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.583875410099637 | status=completed
+#5: best_optuna_deepmzyme_controlled_hpo | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5807368104404187 | status=completed
+#6: top1_trial13_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_88869054 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5807368104404187 | status=completed
+#7: top2_trial12_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_6b08e7e5 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5785100852755493 | status=completed
+#8: top2_trial12_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_f7518f3f | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5779763681389204 | status=completed
+#9: top1_trial13_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a95cb505 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5703723319595467 | status=completed
+#10: optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_20bb8a9e | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.569839524736432 | status=completed
+#11: optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_1deb2467 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5670070765431591 | status=completed
+#12: top3_trial7_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_6a80b285 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.558362528037978 | status=completed
+#13: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.554291323653437 | status=completed
+#14: optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_36f3ed29 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5469317373634384 | status=completed
+#15: optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.546336220337509 | status=completed
+#16: optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_791d2005 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5425105249847518 | status=completed
+#17: optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5342883455319022 | status=completed
+#18: optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.5322856231683551 | status=completed
+#19: optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_48a2b282 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5296218350664227 | status=completed
+#20: optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc | stage=validation-only | class_weight=inverse_frequency | val_metal_balanced_acc=0.5075490016855996 | status=completed
+
+Best overall configuration: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029
+{
+  "run_name": "top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029",
+  "result_stage": "validation-only",
+  "model_preset": "only_gvp",
+  "model_architecture": "only_gvp",
+  "fusion_mode": "late_fusion",
+  "metal_class_weight_mode": "inverse_sqrt_frequency",
+  "balance_metal_site_symbols": false,
+  "selection_metric": "val_metal_balanced_acc",
+  "selected_best_validation_metric_value": 0.64772364969639,
+  "run_dir": "/content/deepmzyme_outputs/runs/top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029"
+}
+
+Best configuration per model preset/mode:
+only_gvp: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.64772364969639
+
+Best Only-GVP configuration: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029
+Best ESM-based configuration: not available
+Best RING vs non-RING comparison: not available unless both modes have completed numeric validation metrics.
+
+Automatic interpretation
+Best validation config: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 with val_metal_balanced_acc = 0.64772364969639
+Top fusion mode: late_fusion
+Best learning-rate region: middle around 1e-4 (lr=6.464669746492395e-05)
+Held-out test results present: False
+Recommended next step: run top-K seed-repeat validation for the best Optuna configurations
+Drive copy skipped. Outputs remain under: /content/deepmzyme_outputs/runs
+
+
+
+#---------------------------------------------------------------------------
+
+
+
+
 [I 2026-05-11 10:44:25,074] A new study created in memory with name: deepmzyme_controlled_hpo
 Controlled Optuna HPO mode
 Optuna architecture scope: this notebook optimizes hyperparameters inside the selected base MODEL_PRESET only; it does not compare model_architecture or fusion_mode unless multiple base configs are explicitly added outside this HPO path.
@@ -1939,100 +2035,3 @@ Failed run directories: []
 Execution records JSON: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_execution_records.json
 
 
-
-
-
-
-
-
------------------------------------------------------------
-
-
-/usr/bin/python3 /content/DeepMzyme/src/report_runs.py --runs-dir /content/deepmzyme_outputs/runs --out-csv /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv --out-figure /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.png
-Completed-run summary CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison_completed_only.csv
-Summary source mode: planned table from current notebook state
-STRONG WARNING: This summary may mix old runs from the same RUNS_ROOT. Do not use this mixed table for model selection unless every scanned run is intentionally part of the same comparison.
-Comparison CSV: /content/deepmzyme_outputs/runs/deepmzyme_nonoverlap_model_comparison.csv
-rank	source_mode	config_source	result_stage	run_name	status	error_message	model_preset	model_display	model_architecture	...	missing_train_metal_classes	missing_val_metal_classes	missing_train_ec_classes	missing_val_ec_classes	selected_best_validation_metric_value	held_out_test_metric_name	held_out_test_metric_value	run_dir	stdout_log_path	stderr_log_path
-0	1.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed2026_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.647724	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
-1	2.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed2026...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.626016	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
-2	3.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed2026...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.614247	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
-3	4.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed42_de...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.583875	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
-4	5.0	completed-only scan	scanned run directory	validation-only	best_optuna_deepmzyme_controlled_hpo	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.580737	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/best_optuna_de...	None	None
-5	6.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed42_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.580737	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
-6	7.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed42_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.578510	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
-7	8.0	completed-only scan	scanned run directory	validation-only	top2_trial12_deepmzyme_controlled_hpo_seed123_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.577976	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top2_trial12_d...	None	None
-8	9.0	completed-only scan	scanned run directory	validation-only	top1_trial13_deepmzyme_controlled_hpo_seed123_...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.570372	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top1_trial13_d...	None	None
-9	10.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0013_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.569840	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-10	11.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0012_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.567007	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-11	12.0	completed-only scan	scanned run directory	validation-only	top3_trial7_deepmzyme_controlled_hpo_seed123_d...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.558363	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/top3_trial7_de...	None	None
-12	13.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0007_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.554291	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-13	14.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0015_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.546932	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-14	15.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0000_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.546336	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-15	16.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0014_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.542511	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-16	17.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0003_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.534288	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-17	18.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0010_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.532286	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-18	19.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0011_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.529622	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-19	20.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0008_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.507549	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-20	21.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0002_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.486751	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-21	22.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0006_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.469338	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-22	23.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0001_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.454850	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-23	24.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0004_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.451050	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-24	25.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0005_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.429040	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-25	26.0	completed-only scan	scanned run directory	validation-only	optuna_deepmzyme_controlled_hpo_trial0009_deep...	completed		only_gvp	Only-GVP (structure only)	only_gvp	...	[]	[]	[]	[7]	0.411149	test_metal_balanced_acc	None	/content/deepmzyme_outputs/runs/optuna_deepmzy...	None	None
-26	NaN	planned table	current notebook config	validation-only	deepmzyme_nonoverlap_baseline_metal_only_gvp_a...	planned		Only-GVP	Only-GVP (structure only)	only_gvp	...	NaN	NaN	NaN	NaN	NaN	None	None	/content/deepmzyme_outputs/runs/deepmzyme_nono...	/content/deepmzyme_outputs/runs/_execution_log...	/content/deepmzyme_outputs/runs/_execution_log...
-27 rows × 62 columns
-
-
-
-
-Ranked table sorted by validation selection metric:
-#1: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.64772364969639 | status=completed
-#2: top2_trial12_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sq_d8fe79dc | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.6260156563241212 | status=completed
-#3: top1_trial13_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sq_2781576c | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.6142468443401011 | status=completed
-#4: top3_trial7_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_e989ceb4 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.583875410099637 | status=completed
-#5: best_optuna_deepmzyme_controlled_hpo | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5807368104404187 | status=completed
-#6: top1_trial13_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_88869054 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5807368104404187 | status=completed
-#7: top2_trial12_deepmzyme_controlled_hpo_seed42_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_6b08e7e5 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5785100852755493 | status=completed
-#8: top2_trial12_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_f7518f3f | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5779763681389204 | status=completed
-#9: top1_trial13_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a95cb505 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5703723319595467 | status=completed
-#10: optuna_deepmzyme_controlled_hpo_trial0013_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_20bb8a9e | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.569839524736432 | status=completed
-#11: optuna_deepmzyme_controlled_hpo_trial0012_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_1deb2467 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5670070765431591 | status=completed
-#12: top3_trial7_deepmzyme_controlled_hpo_seed123_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_6a80b285 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.558362528037978 | status=completed
-#13: optuna_deepmzyme_controlled_hpo_trial0007_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_254d3669 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.554291323653437 | status=completed
-#14: optuna_deepmzyme_controlled_hpo_trial0015_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_36f3ed29 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5469317373634384 | status=completed
-#15: optuna_deepmzyme_controlled_hpo_trial0000_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_6c6f75c4 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.546336220337509 | status=completed
-#16: optuna_deepmzyme_controlled_hpo_trial0014_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_791d2005 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5425105249847518 | status=completed
-#17: optuna_deepmzyme_controlled_hpo_trial0003_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_c1038776 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5342883455319022 | status=completed
-#18: optuna_deepmzyme_controlled_hpo_trial0010_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mweffective_numbe_56e9d7d3 | stage=validation-only | class_weight=effective_number | val_metal_balanced_acc=0.5322856231683551 | status=completed
-#19: optuna_deepmzyme_controlled_hpo_trial0011_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqrt_fr_48a2b282 | stage=validation-only | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.5296218350664227 | status=completed
-#20: optuna_deepmzyme_controlled_hpo_trial0008_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequen_f7e124dc | stage=validation-only | class_weight=inverse_frequency | val_metal_balanced_acc=0.5075490016855996 | status=completed
-
-Best overall configuration: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029
-{
-  "run_name": "top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029",
-  "result_stage": "validation-only",
-  "model_preset": "only_gvp",
-  "model_architecture": "only_gvp",
-  "fusion_mode": "late_fusion",
-  "metal_class_weight_mode": "inverse_sqrt_frequency",
-  "balance_metal_site_symbols": false,
-  "selection_metric": "val_metal_balanced_acc",
-  "selected_best_validation_metric_value": 0.64772364969639,
-  "run_dir": "/content/deepmzyme_outputs/runs/top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029"
-}
-
-Best configuration per model preset/mode:
-only_gvp: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 | class_weight=inverse_sqrt_frequency | val_metal_balanced_acc=0.64772364969639
-
-Best Only-GVP configuration: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029
-Best ESM-based configuration: not available
-Best RING vs non-RING comparison: not available unless both modes have completed numeric validation metrics.
-
-Automatic interpretation
-Best validation config: top3_trial7_deepmzyme_controlled_hpo_seed2026_deepmzyme_nonoverlap_baseline_metal_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_sqr_a03e8029 with val_metal_balanced_acc = 0.64772364969639
-Top fusion mode: late_fusion
-Best learning-rate region: middle around 1e-4 (lr=6.464669746492395e-05)
-Held-out test results present: False
-Recommended next step: run top-K seed-repeat validation for the best Optuna configurations
-Drive copy skipped. Outputs remain under: /content/deepmzyme_outputs/runs
