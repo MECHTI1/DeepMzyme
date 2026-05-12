@@ -4,6 +4,10 @@ This guide explains how to use `notebooks/DeepMzyme_training_colab.ipynb` to fin
 
 The current project policy is baseline-first: use validation metrics for all model, checkpoint, hyperparameter, and architecture decisions; reserve the held-out test set for final reporting only.
 
+## Scope Of This Guide
+
+This guide describes stable workflow principles. Exact current experiment results and hyperparameters should not be duplicated here; those belong with the run evidence and current-status notes. For the current project state, read `EXPERIMENT_STATUS.md` if present. For raw copied notebook outputs, inspect `docs/notebook outputs/`.
+
 ## Starting Point
 
 Use the non-overlapped PinMyMetal split:
