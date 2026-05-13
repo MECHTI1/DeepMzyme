@@ -19,40 +19,35 @@ evidence in saved outputs, not in stable workflow guides.
 ## Current Stage
 
 - Current task focus: metal classification.
-- Stage: metal Only-GVP, radius-only, no ESM, no RING.
+- Stage: metal Only-ESM baseline confirmed; next planned comparison is a
+  validation-only tiny GVP + late-fusion stability check.
 - Trusted split policy: non-overlapped PinMyMetal train/test split, with
   validation split by `pdbid` and `VAL_FRACTION=0.15` for model selection.
 - Test-set policy: held-out test remains unused for model, checkpoint,
   hyperparameter, architecture, and fusion decisions. Use it once after the
   validation-selected anchor is fixed.
-- Latest copied notebook evidence: Round 6 finalist confirmation output under
-  `docs/notebook outputs/round6_three_Trials_comparisons.output_cell_notebook.md`.
-- Selected stable Only-GVP anchor: not yet formally recorded, pending final
-  config-level/per-class diagnostic review.
+- Latest copied notebook evidence: Only-ESM Round 3 confirmation output under
+  `docs/notebook outputs/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`.
+- Selected stable Only-ESM anchor: confirmed original `3e-5` +
+  `inverse_frequency` configuration from 5-seed validation evidence.
 
 ## Notebook Output File Map
 
 - Current experiment evidence:
-  - `docs/notebook outputs/round6_three_Trials_comparisons.output_cell_notebook.md`
-    is the latest copied output. It contains three 50-epoch validation-only
-    seed-repeat batches for finalist Only-GVP anchor candidates.
-  - `docs/notebook outputs/round3_results_onlyGVP_Optuna.output_cell_notebook`
-    contains the broader 50-epoch confirmation evidence for the top Round 2
-    Only-GVP configs plus `gvp_layers=3` ablations.
-  - `docs/notebook outputs/round4_results_onlyGVP_Optuna.output_cell_notebook`
-    plus `round5_Trial_12_batch.output_cell_notebook` and
-    `round5_Trial_13_batch.output_cell_notebook` contain a later 30-epoch split
-    batch. Treat this as supporting evidence because the epoch budget differs.
-  - `docs/notebook outputs/round1_results_onlyGVP_Optuna.output_cell_notebook`
-    and `round2_results_onlyGVP_Optuna.output_cell_notebook` are earlier Optuna
-    and top-k seed-repeat evidence.
+  - `docs/notebook outputs/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`
+    contains the original 5-seed validation-only Only-ESM anchor evidence.
+  - `docs/notebook outputs/Only-ESM/Round2_ESMonly.output_cell_notebook.md`
+    contains the narrow Only-ESM learning-rate, weight-decay, and class-weight
+    screen. It intended `36` runs but only `24` ran; `learning_rate=5e-5` was
+    not run because the notebook planned/executed only the first `24` Cartesian
+    product rows, consistent with `MAX_CONFIGURATION_RUNS=24`.
+  - `docs/notebook outputs/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`
+    contains the Round 3 confirmation run adding seeds `43` and `44` for the
+    Round 2 finalist settings.
 - Current summaries / planning notes:
-  - `docs/notebook outputs/metal_only_gvp_round3_next_batch_plan.md` documents
-    the Round 3 plan and a 2026-05-12 status summary. It is now partly
-    superseded by Round 6.
-  - `docs/notebook outputs/metal_only_gvp_round3_decision_next_steps.md`
-    captures the pre-Round-6 decision rule. It remains useful context but is not
-    the latest status.
+  - Older Only-GVP planning notes and outputs remain useful historical context,
+    but the current metal-task status is now governed by the Only-ESM evidence
+    listed above and the next planned late-fusion validation check.
 - Stable usage guide:
   - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` should stay focused on stable
     notebook usage principles and should point here for current status.
@@ -62,87 +57,100 @@ evidence in saved outputs, not in stable workflow guides.
 All numbers below are validation metrics from copied notebook outputs. They are
 not held-out test results.
 
-Round 6 re-ran the three finalist 50-epoch seed-repeat anchor candidates across
-seeds `42,123,2026,43,44`, with:
+Only-ESM Round 1 ran the original full-coverage 50-epoch validation-only
+seed-repeat batch across seeds `42,123,2026,43,44`, with:
 
 - `TASK=metal`
-- `MODEL_PRESET=Only-GVP`
+- `MODEL_PRESET=Only-ESM`
 - `EPOCHS=50`
 - `BATCH_SIZES_CSV=8`
+- `LEARNING_RATES_CSV=3e-5`
+- `WEIGHT_DECAYS_CSV=1e-4`
 - `SPLIT_BY=pdbid`
 - `VAL_FRACTION=0.15`
 - `SELECTION_METRIC=val_metal_balanced_acc`
-- `METAL_CLASS_WEIGHT_MODES_CSV=inverse_sqrt_frequency`
-- no ESM, no RING, no held-out test during training
+- `METAL_CLASS_WEIGHT_MODES_CSV=inverse_frequency`
+- `HEAD_MLP_LAYERS_VALUES_CSV=2`
+- `METAL_LOSS_FUNCTION=cross_entropy`
+- `METAL_LABEL_SMOOTHING=0.0`
+- no held-out test during training
 
-Round 6 validation-balanced-accuracy summary:
+Round 2 screened Only-ESM `learning_rate`, `weight_decay`, and
+`metal_class_weight_mode` values at seeds `42,123,2026`. The intended grid was
+`3` learning rates (`2e-5,3e-5,5e-5`) x `2` weight decays (`1e-4,1e-5`) x `2`
+class-weight modes x `3` seeds = `36` runs, but only `24` runs completed. The
+`5e-5` learning-rate rows are absent from the copied evidence.
 
-| Candidate | Mean | Sample std | Min | Max | Current interpretation |
-|---|---:|---:|---:|---:|---|
-| Trial7, `gvp_layers=4`, radius `6.0` | 0.6107 | 0.0415 | 0.5584 | 0.6559 | Highest mean and best single seed, but highest seed spread. |
-| Trial12, `gvp_layers=3`, radius `6.0` | 0.6071 | 0.0224 | 0.5671 | 0.6184 | Nearly tied mean with much better stability. |
-| Trial12, `gvp_layers=2`, radius `6.0` | 0.5986 | 0.0204 | 0.5785 | 0.6243 | Lower mean, best worst-seed value among the three finalists. |
+Round 3 added seeds `43` and `44` for the Cartesian product of:
 
-Earlier Round 3 evidence also included Trial7 `gvp_layers=3` and Trial13
-`gvp_layers=2/3`; these are currently secondary because the latest Round 6
-finalist confirmation focused on Trial7 `gvp_layers=4`, Trial12 `gvp_layers=3`,
-and Trial12 `gvp_layers=2`.
+- `LEARNING_RATES_CSV=3e-5,2e-5`
+- `WEIGHT_DECAYS_CSV=1e-4`
+- `METAL_CLASS_WEIGHT_MODES_CSV=inverse_sqrt_frequency,inverse_frequency`
+- `HEAD_MLP_LAYERS_VALUES_CSV=2`
+
+Combined Round 2 + Round 3 5-seed validation-balanced-accuracy summary for the
+matching `weight_decay=1e-4`, `head_mlp_layers=2` configurations:
+
+| Learning rate | Class weight | Mean | Sample std | Min | Max | Current interpretation |
+|---:|---|---:|---:|---:|---:|---|
+| `3e-5` | `inverse_frequency` | 0.6253 | 0.0314 | 0.5902 | 0.6722 | Confirmed best Only-ESM anchor; same setting as Round 1. |
+| `3e-5` | `inverse_sqrt_frequency` | 0.6219 | 0.0499 | 0.5546 | 0.6930 | Round 2's apparent winner did not remain best after seeds `43` and `44`. |
+| `2e-5` | `inverse_frequency` | 0.6199 | 0.0278 | 0.5800 | 0.6524 | Most stable among the Round 2 + Round 3 grid, but lower mean than the anchor. |
+| `2e-5` | `inverse_sqrt_frequency` | 0.6072 | 0.0402 | 0.5492 | 0.6605 | Lower mean and weaker worst-seed result. |
+
+The confirmed Only-ESM anchor is:
+
+- `learning_rate=3e-5`
+- `weight_decay=1e-4`
+- `metal_class_weight_mode=inverse_frequency`
+- `head_mlp_layers=2`
+- `batch_size=8`
+- `metal_loss_function=cross_entropy`
+- `metal_label_smoothing=0.0`
+- `EPOCHS=50`
+- `SELECTION_METRIC=val_metal_balanced_acc`
+- no held-out test during training
 
 ## Current Recommendation
 
-- Do not rerun the broad top-Round-2-plus-`gvp_layers=3` validation batch unless
-  the copied output evidence is found to be incomplete. That validation-only
-  plan appears complete in the current outputs.
-- Preferred anchor to inspect and likely select: Trial12 with `gvp_layers=3`,
-  radius `6.0`. It is essentially tied with Trial7 `gvp_layers=4` on mean
-  validation balanced accuracy while being much more stable across seeds.
-- Higher-risk candidate: Trial7 with `gvp_layers=4`, radius `6.0`. Select it
-  only if per-class recall, macro-F1, and min-recall diagnostics show a real
-  advantage that justifies the higher variance.
-- Conservative robustness candidate: Trial12 with `gvp_layers=2`, radius `6.0`.
-  Select it only if worst-seed or rare-metal robustness is the priority and its
-  lower mean validation balanced accuracy is acceptable.
-- Do not move to Only-ESM or GVP + late fusion until the Only-GVP anchor is
-  explicitly fixed.
+- Select the confirmed Only-ESM anchor above. It confirms the original Round 1
+  `3e-5` + `inverse_frequency` configuration rather than replacing it with the
+  attempted Round 2 winner.
+- Do not run held-out test yet. The held-out test remains postponed until the
+  validation-only model/fusion comparison is complete.
+- Do not spend another broad Only-ESM search now. The next useful comparison is
+  a tiny validation-only GVP + late-fusion stability check using the confirmed
+  Only-ESM training settings.
 
 ## Recommended Next Notebook Action
 
-First, use the notebook/reporting outputs to finish validation-only anchor
-selection. No new training run is required if the Round 6 evidence is complete.
-
-Recommended decision settings to preserve in the selected anchor record:
+Run a validation-only tiny GVP + late-fusion stability check. Recommended
+settings:
 
 - `TASK=metal`
-- `MODEL_PRESET=Only-GVP`
-- no ESM
-- no RING
+- `RUN_MODE=manual_configurations`
+- `RECOMMENDED_RUN_SET=custom`
+- `MODEL_PRESET=GVP + late fusion`
+- `RUN_BATCH_ID=metal_late_fusion_from_confirmed_only_esm_anchor_v1`
+- `EPOCHS=50`
+- `SEEDS_CSV=42,123,2026,43,44`
+- `BATCH_SIZES_CSV=8`
+- `LEARNING_RATES_CSV=3e-5`
+- `WEIGHT_DECAYS_CSV=1e-4`
+- `METAL_CLASS_WEIGHT_MODES_CSV=inverse_frequency`
+- `HEAD_MLP_LAYERS_VALUES_CSV=2`
+- `METAL_LOSS_FUNCTION=cross_entropy`
+- `METAL_LABEL_SMOOTHING=0.0`
+- `SELECTION_METRIC=val_metal_balanced_acc`
+- `INCLUDE_HELD_OUT_TEST_DURING_TRAINING=False`
+- `MAX_CONFIGURATION_RUNS=24` is sufficient because this grid is expected to
+  produce only `5` runs.
 - `SPLIT_BY=pdbid`
 - `VAL_FRACTION=0.15`
-- `SELECTION_METRIC=val_metal_balanced_acc`
-- `EPOCHS=50`
-- fixed seeds `42,123,2026,43,44`
-- no held-out test during model selection
-
-If the per-class diagnostics do not contradict the aggregate evidence, select
-Trial12 `gvp_layers=3` as the stable Only-GVP anchor. The best validation run in
-the Round 6 copied output is seed `123`, selected at epoch `20`, with
-`val_metal_balanced_acc=0.6184115476458212`; this is a checkpoint candidate for
-final reporting after the config-level anchor decision is recorded.
-
-After the anchor is fixed, run the notebook's optional final held-out test
-evaluation once for the selected checkpoint/configuration. That step is not a
-validation experiment; it is final reporting. Do not use held-out test metrics to
-switch to another seed, checkpoint, or config.
-
-The next model-comparison experiment after the Only-GVP anchor and final test
-report should be validation-only Only-ESM and then GVP + late fusion, carrying
-forward the trusted split, seed list, epoch budget, selection metric, and shared
-graph/training settings where applicable. It should remain validation-only
-because these are still model/fusion choices.
 
 ## Decision Rule
 
-Choose the stable Only-GVP anchor by seed-repeat mean, stability, and per-class
+Choose model and fusion anchors by seed-repeat mean, stability, and per-class
 diagnostics, not by one lucky seed.
 
 Use, at minimum:
@@ -158,13 +166,13 @@ Use, at minimum:
 - Held-out test is for final reporting only.
 - Do not use held-out test to choose model, hyperparameters, checkpoint,
   architecture, fusion mode, or seed.
-- The copied notebook outputs inspected here do not show created
-  `test_report.json` files for the finalist runs.
+- The copied Only-ESM outputs inspected here do not show created
+  `test_report.json` files for the confirmed anchor runs.
 
 ## Next Stage
 
-- After the stable Only-GVP anchor: compare Only-ESM and GVP + late fusion using
-  validation metrics only.
+- Next validation-only stage: tiny GVP + late-fusion stability check using the
+  confirmed Only-ESM training settings.
 - RING should be a later small side ablation, not mixed into the first
   ESM/fusion comparison.
 
@@ -172,17 +180,15 @@ Use, at minimum:
 
 - Exact hyperparameters and result numbers must be parsed from raw notebook
   outputs or saved configs before being used in a publication table.
-- Round 6 includes per-batch "selected final run" notebook output. Treat those
-  as within-batch best-validation checkpoints, not as a project-level anchor
-  decision by themselves.
-- The copied Round 6 output does not provide a compact combined per-class
-  diagnostic table across the three finalist configs. Inspect run metadata or
-  generated summary CSVs before declaring the anchor final.
-- Saved/displayed `fusion=late_fusion` may appear for `Only-GVP` runs; for
-  `only_gvp`, fusion is effectively irrelevant and should be reported as no ESM
-  fusion.
-- The 30-epoch Round 4/Round 5 batch uses a different epoch budget and should
-  not override the 50-epoch finalist evidence.
+- Round 2's copied output includes a notebook-selected best single seed. Treat
+  that as within-batch checkpoint selection, not as a project-level anchor
+  decision by itself.
+- The copied Only-ESM outputs do not provide a compact combined per-class
+  diagnostic table across all four confirmed configs. Aggregate validation
+  balanced accuracy is sufficient for the current anchor decision, but per-class
+  diagnostics should be inspected before publication reporting.
+- Saved/displayed `fusion=late_fusion` may appear in some Only-ESM tables, but
+  for `only_esm` the effective fusion mode is no graph/ESM fusion.
 
 ## Update Checklist
 

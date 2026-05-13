@@ -10,7 +10,7 @@ This guide describes stable workflow principles. Exact current experiment result
 
 ## Current Status Pointer
 
-This guide is not the source of truth for the latest best run or next experiment. As of the latest copied outputs, the active metal work is the Only-GVP anchor decision from validation-only seed-repeat evidence. Read `EXPERIMENT_STATUS.md` first for the current recommendation, then use this guide only to configure the notebook safely.
+This guide is not the source of truth for the latest best run or next experiment. Read `EXPERIMENT_STATUS.md` first for the current recommendation, then use this guide only to configure the notebook safely.
 
 Do not rerun old "first baseline" or Optuna examples just because they appear below. Those sections are stable workflow examples; the current metal-task recommendation may already be later in the sequence.
 
@@ -342,11 +342,9 @@ Use this controlled sequence:
 11. Use the optional final held-out test cell once for that selected configuration.
 
 For the current metal task, check `EXPERIMENT_STATUS.md` before starting at any
-numbered step. If the top Only-GVP seed-repeat confirmation is already complete,
-the next action is anchor selection from validation evidence, followed by one
-held-out test evaluation for final reporting. The next model-comparison stage
-after that is validation-only Only-ESM and GVP + late fusion, not another broad
-Only-GVP search unless the saved evidence is incomplete.
+numbered step. If the current validation anchor is already recorded there, use
+the status file's next planned action rather than restarting from an older
+workflow example in this guide.
 
 When comparing configurations, keep the comparison clean:
 
