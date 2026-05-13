@@ -70,6 +70,34 @@ Do not move that kind of frequently changing state into `AGENTS.md` or `Plan.md`
 
 ---
 
+### 1c. Key project files and directories
+
+Use this as a navigation map when a task touches the relevant area. Do not read
+every file for every small request; inspect the applicable files before making a
+claim or change.
+
+- `Plan.md`: design authority for architecture, experiment policy, validation
+  selection, and held-out test rules.
+- `EXPERIMENT_STATUS.md`: current experiment status, selected validation
+  anchors, trusted evidence files, caveats, and next planned action.
+- `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`: stable notebook workflow and
+  option meaning. It is not a live results table.
+- `notebooks/DeepMzyme_training_colab.ipynb`: actual Colab planning, command
+  expansion, run execution, skipping, capping, and reporting behavior.
+- `src/train.py`: training entry point.
+- `src/training/config.py`: CLI and training configuration parsing.
+- `src/model.py`: model definitions; see the caution below before editing.
+- `src/report_runs.py`: run-summary and comparison-table generation.
+- `docs/notebook outputs/`: copied notebook outputs used as portable evidence.
+- `DeepMzyme_Data/notebook_outputs/runs/`: local run outputs when present; treat
+  these as measured evidence, not design intent.
+
+For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
+the specific evidence files it names. For notebook behavior questions, inspect
+the notebook itself rather than relying only on the workflow guide.
+
+---
+
 ### 2. Be careful with src/model.py
 
 The current src/model.py may contain experimental, non-final, partially inconsistent, or not fully validated code.
