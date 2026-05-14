@@ -13,10 +13,10 @@ Following the Optuna HPO from Round 2, we have identified three top-performing O
 
 Evidence files:
 
-- `docs/notebook outputs/round3_results_onlyGVP_Optuna.output_cell_notebook`
-- `docs/notebook outputs/round4_results_onlyGVP_Optuna.output_cell_notebook`
-- `docs/notebook outputs/round5_Trial_12_batch.output_cell_notebook`
-- `docs/notebook outputs/round5_Trial_13_batch.output_cell_notebook`
+- `docs/notebook_outputs/raw/Only-GVP/round3_results_onlyGVP_Optuna.output_cell_notebook`
+- `docs/notebook_outputs/raw/Only-GVP/round4_results_onlyGVP_Optuna.output_cell_notebook`
+- `docs/notebook_outputs/raw/Only-GVP/round5_Trial_12_batch.output_cell_notebook`
+- `docs/notebook_outputs/raw/Only-GVP/round5_Trial_13_batch.output_cell_notebook`
 
 The copied outputs evidence two related validation-only comparisons across
 seeds `42,123,2026,43,44`: a 50-epoch confirmation batch in the round3 output
@@ -59,7 +59,7 @@ the 30-epoch batch as supporting evidence. Run the held-out test only after the
 anchor is fixed.
 
 ## Extracted Hyperparameters
-From `docs/notebook outputs/round2_results_onlyGVP_Optuna.output_cell_notebook`:
+From `docs/notebook_outputs/raw/Only-GVP/round2_results_onlyGVP_Optuna.output_cell_notebook`:
 
 ### Trial 7
 - `learning_rate`: 6.464669746492395e-05

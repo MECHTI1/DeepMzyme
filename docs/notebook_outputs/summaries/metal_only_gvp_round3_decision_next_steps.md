@@ -16,7 +16,7 @@ status summary.
 
 Use the 50-epoch confirmation batch from:
 
-- `docs/notebook outputs/round3_results_onlyGVP_Optuna.output_cell_notebook`
+- `docs/notebook_outputs/raw/Only-GVP/round3_results_onlyGVP_Optuna.output_cell_notebook`
 
 Use the 30-epoch split batch from round4/round5 only as supporting evidence,
 because it has a different epoch budget and lower aggregate validation metrics.

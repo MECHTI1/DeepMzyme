@@ -27,24 +27,25 @@ evidence in saved outputs, not in stable workflow guides.
   hyperparameter, architecture, and fusion decisions. Use it once after the
   validation-selected anchor is fixed.
 - Latest copied notebook evidence: Only-ESM Round 3 confirmation output under
-  `docs/notebook outputs/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`.
+  `docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`.
 - Selected stable Only-ESM anchor: confirmed original `3e-5` +
   `inverse_frequency` configuration from 5-seed validation evidence.
 
 ## Notebook Output File Map
 
 - Current experiment evidence:
-  - `docs/notebook outputs/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`
+  - `docs/notebook_outputs/raw/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`
     contains the original 5-seed validation-only Only-ESM anchor evidence.
-  - `docs/notebook outputs/Only-ESM/Round2_ESMonly.output_cell_notebook.md`
+  - `docs/notebook_outputs/raw/Only-ESM/Round2_ESMonly.output_cell_notebook.md`
     contains the narrow Only-ESM learning-rate, weight-decay, and class-weight
     screen. It intended `36` runs but only `24` ran; `learning_rate=5e-5` was
     not run because the notebook planned/executed only the first `24` Cartesian
     product rows, consistent with `MAX_CONFIGURATION_RUNS=24`.
-  - `docs/notebook outputs/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`
+  - `docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`
     contains the Round 3 confirmation run adding seeds `43` and `44` for the
     Round 2 finalist settings.
 - Current summaries / planning notes:
+  - Concise run summaries are under `docs/notebook_outputs/summaries/`.
   - Older Only-GVP planning notes and outputs remain useful historical context,
     but the current metal-task status is now governed by the Only-ESM evidence
     listed above and the next planned late-fusion validation check.

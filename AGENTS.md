@@ -88,7 +88,11 @@ claim or change.
 - `src/training/config.py`: CLI and training configuration parsing.
 - `src/model.py`: model definitions; see the caution below before editing.
 - `src/report_runs.py`: run-summary and comparison-table generation.
-- `docs/notebook outputs/`: copied notebook outputs used as portable evidence.
+- `docs/notebook_outputs/raw/`: copied notebook outputs used as portable
+  evidence.
+- `docs/notebook_outputs/summaries/`: short human-readable run summaries and
+  historical planning notes; read these before raw outputs when tracking
+  experiment status.
 - `DeepMzyme_Data/notebook_outputs/runs/`: local run outputs when present; treat
   these as measured evidence, not design intent.
 
