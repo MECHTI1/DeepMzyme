@@ -35,6 +35,7 @@ not bulk-load the `raw/` tree.
 - `summaries/summary_run_gvp_late_fusion_round1_trial12_anchor.md`
 - `summaries/summary_run_gvp_late_fusion_round1_full_coverage.md`
 - `summaries/summary_run_gvp_late_fusion_round2_confirmed_esm_anchor.md`
+- `summaries/summary_run_gvp_late_fusion_round3_optuna_50_v1.md`
 - `summaries/summary_run_only_gvp_round1_optuna_hpo.md`
 - `summaries/summary_run_only_gvp_round2_optuna_seed_repeat.md`
 - `summaries/summary_run_only_gvp_round3_top_optuna_confirm.md`

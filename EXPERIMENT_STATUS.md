@@ -19,21 +19,32 @@ evidence in saved outputs, not in stable workflow guides.
 ## Current Stage
 
 - Current task focus: metal classification.
-- Stage: metal Only-ESM baseline confirmed; next planned comparison is a
-  validation-only tiny GVP + late-fusion stability check.
+- Stage: metal Only-ESM baseline confirmed; GVP + late-fusion candidate search
+  has now advanced through a 50-trial validation-only Optuna run. The latest
+  late-fusion seed-repeat block is not usable for anchor selection because the
+  generated reruns used only `1` epoch.
 - Trusted split policy: non-overlapped PinMyMetal train/test split, with
   validation split by `pdbid` and `VAL_FRACTION=0.15` for model selection.
 - Test-set policy: held-out test remains unused for model, checkpoint,
   hyperparameter, architecture, and fusion decisions. Use it once after the
   validation-selected anchor is fixed.
-- Latest copied notebook evidence: Only-ESM Round 3 confirmation output under
-  `docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`.
+- Latest copied notebook evidence: GVP + late fusion Round 3 Optuna output under
+  `docs/notebook_outputs/raw/GVP + late fusion/Round3_late_fusion_optuna_50_v1.output_cell_notebook.md`.
 - Selected stable Only-ESM anchor: confirmed original `3e-5` +
   `inverse_frequency` configuration from 5-seed validation evidence.
+- Selected GVP + late-fusion anchor: not selected yet. Round 3 identified
+  candidates, but the seed-repeat evidence is smoke/debug only.
 
 ## Notebook Output File Map
 
 - Current experiment evidence:
+  - `docs/notebook_outputs/raw/GVP + late fusion/Round3_late_fusion_optuna_50_v1.output_cell_notebook.md`
+    contains the latest controlled 50-trial GVP + late-fusion Optuna run and
+    its generated top-3 seed-repeat block. The seed-repeat commands used
+    `--epochs 1`, so those reruns are not model-quality comparisons.
+  - `docs/notebook_outputs/raw/GVP + late fusion/Round2_late_fusion_from_confirmed_only_esm_anchor.output_cell_notebook.md`
+    contains the fixed five-seed late-fusion check using the confirmed Only-ESM
+    training settings.
   - `docs/notebook_outputs/raw/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`
     contains the original 5-seed validation-only Only-ESM anchor evidence.
   - `docs/notebook_outputs/raw/Only-ESM/Round2_ESMonly.output_cell_notebook.md`
@@ -46,9 +57,9 @@ evidence in saved outputs, not in stable workflow guides.
     Round 2 finalist settings.
 - Current summaries / planning notes:
   - Concise run summaries are under `docs/notebook_outputs/summaries/`.
-  - Older Only-GVP planning notes and outputs remain useful historical context,
-    but the current metal-task status is now governed by the Only-ESM evidence
-    listed above and the next planned late-fusion validation check.
+  - Current late-fusion summary:
+    `docs/notebook_outputs/summaries/summary_run_gvp_late_fusion_round3_optuna_50_v1.md`.
+  - Older Only-GVP planning notes and outputs remain useful historical context.
 - Stable usage guide:
   - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` should stay focused on stable
     notebook usage principles and should point here for current status.
@@ -57,6 +68,50 @@ evidence in saved outputs, not in stable workflow guides.
 
 All numbers below are validation metrics from copied notebook outputs. They are
 not held-out test results.
+
+### GVP + Late Fusion Round 3 Optuna
+
+Round 3 ran a controlled Optuna search inside the GVP + late-fusion model
+family:
+
+- `TASK=metal`
+- `MODEL_PRESET=GVP + late fusion`
+- `MODEL_ARCHITECTURE=gvp`
+- `FUSION_MODE=late_fusion`
+- `N_TRIALS=50`
+- `MAX_EPOCHS_PER_TRIAL=40`
+- fixed HPO split/model seed `42`
+- `SPLIT_BY=pdbid`
+- `VAL_FRACTION=0.15`
+- `SELECTION_METRIC=val_metal_balanced_acc`
+- no held-out test during training
+
+Raw-output check against
+`docs/notebook_outputs/summaries/summary_run_gvp_late_fusion_round3_optuna_50_v1.md`:
+
+- the raw file contains `50` completed Optuna trial-finished records;
+- best Optuna trial is trial `49` with
+  `val_metal_balanced_acc=0.6750130535709283`;
+- the best trial command used `--epochs 40` and selected epoch `37`;
+- the generated seed-repeat commands used `--epochs 1`;
+- the raw output explicitly states that `1-3` epoch runs are smoke/debug only;
+- no `test_report.json` was created for the selected run;
+- failed run directories were reported as `[]`.
+
+Top single-seed Optuna candidates:
+
+| Rank | Trial | Validation balanced accuracy | Key settings |
+|---:|---:|---:|---|
+| 1 | `49` | 0.6750130535709283 | `lr=1.6801503587890522e-05`, `wd=1e-05`, `hidden_s=256`, `hidden_v=32`, `edge_hidden=128`, `gvp_layers=4`, `edge_radius=6.0`, `esm_fusion_dim=64`, `head_mlp_layers=1`, `class_weight=inverse_frequency` |
+| 2 | `32` | 0.6585119076580177 | `lr=5.4715836015281065e-05`, `wd=0.001`, `hidden_s=128`, `hidden_v=32`, `edge_hidden=128`, `gvp_layers=2`, `edge_radius=6.0`, `esm_fusion_dim=64`, `head_mlp_layers=1`, `class_weight=inverse_frequency` |
+| 3 | `15` | 0.6550963478857217 | `lr=7.032630334240692e-05`, `wd=0.001`, `hidden_s=128`, `hidden_v=32`, `edge_hidden=128`, `gvp_layers=2`, `edge_radius=6.0`, `esm_fusion_dim=64`, `head_mlp_layers=1`, `class_weight=inverse_frequency` |
+
+The generated top-3 seed-repeat table reported means of `0.3349`, `0.3290`,
+and `0.3099` for trials `32`, `15`, and `49`, respectively, but those values
+come from `1`-epoch reruns. They should be recorded as smoke/debug results and
+should not be used to reject or select a late-fusion anchor.
+
+### Confirmed Only-ESM Anchor
 
 Only-ESM Round 1 ran the original full-coverage 50-epoch validation-only
 seed-repeat batch across seeds `42,123,2026,43,44`, with:
@@ -114,40 +169,45 @@ The confirmed Only-ESM anchor is:
 
 ## Current Recommendation
 
-- Select the confirmed Only-ESM anchor above. It confirms the original Round 1
-  `3e-5` + `inverse_frequency` configuration rather than replacing it with the
-  attempted Round 2 winner.
+- Keep the confirmed Only-ESM anchor above as the current stable ESM baseline.
+- Do not select a GVP + late-fusion anchor from Round 3 yet. The valid evidence
+  is single-seed 40-epoch Optuna candidate discovery; the seed-repeat block is
+  1-epoch smoke/debug evidence.
 - Do not run held-out test yet. The held-out test remains postponed until the
   validation-only model/fusion comparison is complete.
-- Do not spend another broad Only-ESM search now. The next useful comparison is
-  a tiny validation-only GVP + late-fusion stability check using the confirmed
-  Only-ESM training settings.
+- Do not spend another broad Only-ESM search now.
 
 ## Recommended Next Notebook Action
 
-Run a validation-only tiny GVP + late-fusion stability check. Recommended
-settings:
+Run a proper validation-only seed-repeat confirmation of the top late-fusion
+Optuna candidates from Round 3. Use a new batch id such as
+`metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1`.
+
+Recommended settings shared by all reruns:
 
 - `TASK=metal`
 - `RUN_MODE=manual_configurations`
 - `RECOMMENDED_RUN_SET=custom`
 - `MODEL_PRESET=GVP + late fusion`
-- `RUN_BATCH_ID=metal_late_fusion_from_confirmed_only_esm_anchor_v1`
+- `RUN_BATCH_ID=metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1`
 - `EPOCHS=50`
 - `SEEDS_CSV=42,123,2026,43,44`
 - `BATCH_SIZES_CSV=8`
-- `LEARNING_RATES_CSV=3e-5`
-- `WEIGHT_DECAYS_CSV=1e-4`
+- use the three fixed candidate rows from trials `49`, `32`, and `15` listed in
+  the table above
 - `METAL_CLASS_WEIGHT_MODES_CSV=inverse_frequency`
-- `HEAD_MLP_LAYERS_VALUES_CSV=2`
+- `HEAD_MLP_LAYERS_VALUES_CSV=1`
 - `METAL_LOSS_FUNCTION=cross_entropy`
 - `METAL_LABEL_SMOOTHING=0.0`
 - `SELECTION_METRIC=val_metal_balanced_acc`
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING=False`
-- `MAX_CONFIGURATION_RUNS=24` is sufficient because this grid is expected to
-  produce only `5` runs.
+- `MAX_CONFIGURATION_RUNS=15` is sufficient for `3` candidates x `5` seeds.
 - `SPLIT_BY=pdbid`
 - `VAL_FRACTION=0.15`
+
+The simplest execution path is to reuse the generated top-reevaluation commands
+from Round 3 but change `--epochs 1` to `--epochs 50`, write to the new
+`RUN_BATCH_ID`, and keep held-out test disabled.
 
 ## Decision Rule
 
@@ -172,8 +232,8 @@ Use, at minimum:
 
 ## Next Stage
 
-- Next validation-only stage: tiny GVP + late-fusion stability check using the
-  confirmed Only-ESM training settings.
+- Next validation-only stage: full-budget seed-repeat confirmation for late
+  fusion Optuna trials `49`, `32`, and `15`.
 - RING should be a later small side ablation, not mixed into the first
   ESM/fusion comparison.
 
@@ -181,9 +241,11 @@ Use, at minimum:
 
 - Exact hyperparameters and result numbers must be parsed from raw notebook
   outputs or saved configs before being used in a publication table.
-- Round 2's copied output includes a notebook-selected best single seed. Treat
-  that as within-batch checkpoint selection, not as a project-level anchor
-  decision by itself.
+- GVP + late-fusion Round 3 includes a notebook-selected best single Optuna
+  trial. Treat it as candidate discovery, not a project-level anchor decision.
+- GVP + late-fusion Round 3's top-3 seed-repeat table used only `1` epoch per
+  seed; do not compare those values to 40-epoch Optuna trials, 50-epoch
+  seed-repeat baselines, or Only-ESM anchor evidence.
 - The copied Only-ESM outputs do not provide a compact combined per-class
   diagnostic table across all four confirmed configs. Aggregate validation
   balanced accuracy is sufficient for the current anchor decision, but per-class
