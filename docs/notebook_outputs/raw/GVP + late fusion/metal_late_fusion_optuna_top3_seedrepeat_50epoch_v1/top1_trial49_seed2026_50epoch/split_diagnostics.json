@@ -1,0 +1,63 @@
+{
+  "task": "metal",
+  "split_by": "pdbid",
+  "val_fraction": 0.15,
+  "n_folds": null,
+  "fold_index": null,
+  "n_train_pockets": 1031,
+  "n_val_pockets": 182,
+  "n_train_groups": 1000,
+  "n_val_groups": 94,
+  "train_val_overlap_pocket_id": 0,
+  "train_val_overlap_structure_id": 0,
+  "train_val_overlap_pdbid_chain": 0,
+  "train_val_overlap_pdbid": 0,
+  "train_val_overlap_counts": {
+    "pocket_id": 0,
+    "structure_id": 0,
+    "pdbid_chain": 0,
+    "pdbid": 0
+  },
+  "train_val_overlap_examples": {
+    "pocket_id": [],
+    "structure_id": [],
+    "pdbid_chain": [],
+    "pdbid": []
+  },
+  "train_metal_distribution": {
+    "Mn": 475,
+    "Cu": 60,
+    "Zn": 158,
+    "Fe": 221,
+    "Co": 67,
+    "Ni": 50
+  },
+  "val_metal_distribution": {
+    "Mn": 85,
+    "Cu": 13,
+    "Zn": 29,
+    "Fe": 35,
+    "Co": 13,
+    "Ni": 7
+  },
+  "train_ec_distribution": {
+    "1": 451,
+    "2": 159,
+    "3": 278,
+    "4": 48,
+    "5": 70,
+    "6": 12
+  },
+  "val_ec_distribution": {
+    "1": 53,
+    "2": 12,
+    "3": 47,
+    "4": 5,
+    "5": 60,
+    "6": 3
+  },
+  "missing_train_metal_classes": [],
+  "missing_val_metal_classes": [],
+  "missing_train_ec_classes": [],
+  "missing_val_ec_classes": []
+}
