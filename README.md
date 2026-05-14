@@ -63,6 +63,10 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
 
 Detailed baseline-first commands are in `list_train_commands.md`. The interactive workflow is in `notebooks/DeepMzyme_training_colab.ipynb`.
 
+For copied notebook-output evidence, start with the concise run summaries in
+`docs/notebook_outputs/summaries/`, then inspect raw captured outputs in
+`docs/notebook_outputs/raw/` when exact logs or run commands are needed.
+
 Generated ESM embeddings should normally live outside the Git repository, then be passed with `--esm-embeddings-dir`. Use validation metrics for model and hyperparameter choice; reserve the held-out test set for final reporting of the selected checkpoint. Previous DeepMzyme runs favored `learning_rate=3e-5` among tested values, while `1e-4` was also reasonable in some runs. Use `3e-5` as the project-specific serious baseline starting point so far, and use `1e-4` as the main follow-up confirmation value rather than treating any LR as universally best.
 
 Optional reproducibility and joint-loss controls include `--deterministic`, `--metal-loss-weight`, and `--ec-loss-weight`.

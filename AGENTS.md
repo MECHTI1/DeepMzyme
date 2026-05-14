@@ -82,6 +82,8 @@ claim or change.
   anchors, trusted evidence files, caveats, and next planned action.
 - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`: stable notebook workflow and
   option meaning. It is not a live results table.
+- `docs/notebook_outputs/README.md`: index for copied notebook-output evidence;
+  read this before browsing raw notebook output files.
 - `notebooks/DeepMzyme_training_colab.ipynb`: actual Colab planning, command
   expansion, run execution, skipping, capping, and reporting behavior.
 - `src/train.py`: training entry point.
