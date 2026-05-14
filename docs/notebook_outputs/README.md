@@ -12,6 +12,10 @@ the important results easier to scan.
   deciding what happened in a run, then inspect the matching raw file when you
   need exact output details.
 
+Default reading order: scan the relevant summary by name; load a raw file only
+when a summary cites it or when exact log lines or run commands are needed. Do
+not bulk-load the `raw/` tree.
+
 ## Experiment-Tracking Rules
 
 - Use validation metrics for model, checkpoint, hyperparameter, architecture,

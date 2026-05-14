@@ -98,6 +98,22 @@ claim or change.
 - `DeepMzyme_Data/notebook_outputs/runs/`: local run outputs when present; treat
   these as measured evidence, not design intent.
 
+**Read by default** (small, high-leverage): `Plan.md`, `EXPERIMENT_STATUS.md`,
+and `docs/notebook_outputs/README.md`.
+
+**On-demand only** (large; do not bulk-load):
+- `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` — only when editing or running
+  the Colab workflow.
+- Files under `docs/notebook_outputs/raw/` — only when a summary cites the file
+  or when exact logs / run commands are needed.
+- `notebooks/DeepMzyme_training_colab.ipynb` — only for notebook-behavior
+  questions.
+- `DeepMzyme_Data/notebook_outputs/runs/*` — only when `EXPERIMENT_STATUS.md`
+  names a specific run.
+
+Read individual files under `docs/notebook_outputs/summaries/` by name; do not
+bulk-load all summaries.
+
 For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
 the specific evidence files it names. For notebook behavior questions, inspect
 the notebook itself rather than relying only on the workflow guide.
