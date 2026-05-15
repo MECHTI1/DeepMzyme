@@ -373,6 +373,13 @@ Class weights should be tested, but cautiously. A class-weighting mode that impr
 
 ## Output Files To Inspect
 
+In Colab, the notebook now mounts Google Drive by default and resolves a blank
+`RUNS_DIR` to `<DRIVE_ROOT>/notebook_outputs/runs` when Drive is available. The
+final held-out test cell uses the same resolved `RUNS_DIR`, so final-test output
+folders are saved beside the validation/HPO/seed-repeat run folders. If Drive
+cannot be mounted, the notebook prints a warning and falls back to local Colab
+storage.
+
 After planning:
 
 - `<RUNS_DIR>/<SUMMARY_BASENAME>_planned_runs.csv`: exact planned configurations.
