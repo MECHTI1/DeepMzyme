@@ -405,6 +405,11 @@ After the summarize/report cell:
 - `<RUNS_DIR>/<SUMMARY_BASENAME>.png`: comparison figure when plotting succeeds.
 - `<RUNS_DIR>/<SUMMARY_BASENAME>_execution_records.json`: execution status, logs, failures.
 
+For metal reports, `METAL_REPORT_VIEW` controls which already-computed metrics
+are emphasized in the notebook tables: `six_class`, `collapsed4`, or `both`.
+This is a display/reporting control only. It does not change the model targets,
+training loss, checkpoint-selection metric, or held-out test policy.
+
 After Optuna:
 
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
