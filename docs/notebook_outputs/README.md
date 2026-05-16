@@ -43,6 +43,7 @@ not bulk-load the `raw/` tree.
 - `summaries/summary_run_only_gvp_round5_trial12_batch.md`
 - `summaries/summary_run_only_gvp_round5_trial13_batch.md`
 - `summaries/summary_run_only_gvp_round6_three_trial_comparison.md`
+- `summaries/summary_run_hybrid_round1_optuna_plus_top3_seedrepeat.md`
 
 Older short Only-GVP planning notes are also kept in `summaries/` as historical
 context.
