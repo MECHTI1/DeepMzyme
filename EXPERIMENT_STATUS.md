@@ -18,12 +18,14 @@ evidence in saved outputs, not in stable workflow guides.
 
 ## Current Stage
 
-- Current task focus: metal classification.
+- Current task focus: metal classification, with an exploratory joint
+  (metal + EC) hybrid-fusion check now also on record.
 - Stage: metal Only-ESM baseline confirmed; GVP + late fusion has completed a
   proper 5-seed, 50-epoch validation-only seed repeat for the top Round 3
   Optuna candidates; GVP + node-level late fusion has also completed a 5-seed,
   50-epoch validation-only check initialized from the selected late-fusion
-  anchor.
+  anchor; GVP + ESM hybrid fusion has completed an exploratory Round 1
+  Optuna + 3-seed top-K repeat for the joint task.
 - Trusted split policy: non-overlapped PinMyMetal train/test split, with
   validation split by `pdbid` and `VAL_FRACTION=0.15` for model selection.
 - Test-set policy: held-out test remains unused for model, checkpoint,
@@ -35,6 +37,14 @@ evidence in saved outputs, not in stable workflow guides.
   5-seed, 50-epoch validation-only seed repeat.
 - Node-level late-fusion status: Round 1 did not replace the selected GVP +
   late-fusion trial `49` anchor.
+- Hybrid fusion status: Round 1 is an exploratory joint-task batch only and
+  has not been confirmed at the project-standard 5-seed, 50-epoch
+  validation-only protocol. Its best single-seed `val_joint_balanced_acc`
+  (trial 17 = `0.748343`) is not a metal anchor; the corresponding
+  metal-side `val_metal_balanced_acc` was `0.672077`.
+
+For a cross-family snapshot of validation results and reliability tiers,
+see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
 
 ## Notebook Output File Map
 
@@ -64,12 +74,21 @@ evidence in saved outputs, not in stable workflow guides.
   - `docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`
     contains the Round 3 confirmation run adding seeds `43` and `44` for the
     Round 2 finalist settings.
+  - `docs/notebook_outputs/raw/Hybrid/Round1_hybrid_fusion_optuna_plus_top3_seedrepeat.output_cell_notebook.md`
+    contains the GVP + ESM hybrid fusion Round 1 Optuna + top-3 seed-repeat
+    for the joint task. The batch id in the raw output is `debug_smoke` and
+    the raw output flags mixed/missing `RUN_BATCH_ID` values; treat it as
+    exploratory evidence only.
 - Current summaries / planning notes:
   - Concise run summaries are under `docs/notebook_outputs/summaries/`.
+  - Cross-family validation snapshot:
+    `docs/notebook_outputs/summaries/LEADERBOARD.md`.
   - Current late-fusion anchor summary:
     `docs/notebook_outputs/summaries/summary_run_gvp_late_fusion_round4_top3_seedrepeat_50epoch.md`.
   - Current node-level late-fusion summary:
     `docs/notebook_outputs/summaries/summary_run_gvp_node_level_late_fusion_round1_from_latefusion_trial49_seedrepeat_50epoch.md`.
+  - Hybrid fusion Round 1 exploratory summary:
+    `docs/notebook_outputs/summaries/summary_run_hybrid_round1_optuna_plus_top3_seedrepeat.md`.
 - Stable usage guide:
   - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` should stay focused on stable
     notebook usage principles and should point here for current status.
@@ -253,6 +272,11 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
   anchor.
 - Do not replace the selected GVP + late-fusion trial `49` anchor with the
   tested node-level late-fusion configuration.
+- Do not promote hybrid fusion Round 1 to anchor status. Before treating
+  hybrid fusion as a candidate metal anchor, extend its top-K seed-repeat to
+  the project-standard 5 seeds (`42,123,2026,43,44`) at the full validation
+  epoch budget, and compare its metal-side balanced accuracy against the
+  confirmed Only-ESM and GVP + late-fusion (trial `49`) anchors.
 - Do not run held-out test yet unless the validation architecture search is
   explicitly declared complete.
 - Do not spend another broad Only-ESM search now.
@@ -306,8 +330,14 @@ Use, at minimum:
 
 ## Caveats
 
-- Round 4 GVP + late-fusion and node-level late-fusion Round 1 are
-  validation-only results. They are not held-out test results.
+- Round 4 GVP + late-fusion, node-level late-fusion Round 1, and hybrid
+  fusion Round 1 are validation-only results. They are not held-out test
+  results.
+- Hybrid fusion Round 1 used a 3-seed top-K repeat (seeds `42,123,2026`),
+  not the project-standard 5-seed set, its raw output is tagged with a
+  `debug_smoke` batch id and a mixed-batch warning, and its selection metric
+  is `val_joint_balanced_acc`, not pure metal balanced accuracy. Treat it as
+  exploratory evidence only.
 - Held-out test remains postponed until the validation-side model/fusion
   selection is explicitly finalized.
 - The GVP + late-fusion trial `49` improvement over the confirmed Only-ESM

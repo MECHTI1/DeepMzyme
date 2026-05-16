@@ -26,6 +26,12 @@ not bulk-load the `raw/` tree.
 - If a summary field is unclear in the raw output, it should say
   `Not clearly available in source file`.
 
+## Cross-Family Snapshot
+
+- `summaries/LEADERBOARD.md` — single-page validation snapshot across model
+  families with reliability tiers (5-seed/50-epoch vs. partial). Start here
+  before scanning individual summaries. Held-out test is not yet evaluated.
+
 ## Current Summary Files
 
 - `summaries/summary_run_only_esm_round1_full_coverage.md`
@@ -36,6 +42,8 @@ not bulk-load the `raw/` tree.
 - `summaries/summary_run_gvp_late_fusion_round1_full_coverage.md`
 - `summaries/summary_run_gvp_late_fusion_round2_confirmed_esm_anchor.md`
 - `summaries/summary_run_gvp_late_fusion_round3_optuna_50_v1.md`
+- `summaries/summary_run_gvp_late_fusion_round4_top3_seedrepeat_50epoch.md`
+- `summaries/summary_run_gvp_node_level_late_fusion_round1_from_latefusion_trial49_seedrepeat_50epoch.md`
 - `summaries/summary_run_only_gvp_round1_optuna_hpo.md`
 - `summaries/summary_run_only_gvp_round2_optuna_seed_repeat.md`
 - `summaries/summary_run_only_gvp_round3_top_optuna_confirm.md`

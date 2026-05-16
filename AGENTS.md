@@ -84,6 +84,10 @@ claim or change.
   option meaning. It is not a live results table.
 - `docs/notebook_outputs/README.md`: index for copied notebook-output evidence;
   read this before browsing raw notebook output files.
+- `docs/notebook_outputs/summaries/LEADERBOARD.md`: cross-family validation
+  snapshot with reliability tiers (5-seed/50-epoch vs. partial); use as the
+  fastest entry point for comparing model families at the validation level.
+  Held-out test is not yet evaluated, so leaderboard numbers are not final.
 - `notebooks/DeepMzyme_training_colab.ipynb`: actual Colab planning, command
   expansion, run execution, skipping, capping, and reporting behavior.
 - `src/train.py`: training entry point.
