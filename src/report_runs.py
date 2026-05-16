@@ -54,6 +54,10 @@ CSV_COLUMNS = [
     "overlap_warning",
     "best_validation_loss",
     "best_validation_metric_used_for_checkpoint_selection",
+    "selected_val_joint_balanced_acc",
+    "selected_val_metal_balanced_acc",
+    "selected_val_ec_balanced_acc",
+    "selected_val_ec_group_balanced_acc",
     "comparison_test_metric_name",
     "comparison_test_metric_value",
     "test_metal_acc",
@@ -167,6 +171,52 @@ def best_history_values(history: list[dict[str, Any]], selection_metric: str | N
     return best_val_loss, best_metric
 
 
+def selected_history_record(
+    history: list[dict[str, Any]],
+    run_config: dict[str, Any],
+    run_metadata: dict[str, Any],
+    selection_metric: str | None,
+) -> dict[str, Any]:
+    if not history:
+        return {}
+    selected_epoch = first_present(
+        run_metadata.get("selected_checkpoint_epoch"),
+        run_config.get("selected_checkpoint_epoch"),
+    )
+    if selected_epoch is not None:
+        try:
+            selected_epoch_int = int(selected_epoch)
+        except (TypeError, ValueError):
+            selected_epoch_int = None
+        if selected_epoch_int is not None:
+            for record in history:
+                try:
+                    record_epoch = int(record.get("epoch", -1))
+                except (TypeError, ValueError):
+                    continue
+                if record_epoch == selected_epoch_int:
+                    return record
+
+    if selection_metric:
+        candidates = [record for record in history if is_number(record.get(selection_metric))]
+        if candidates:
+            key = lambda record: float(record[selection_metric])
+            return min(candidates, key=key) if selection_metric.endswith("_loss") else max(candidates, key=key)
+    return history[-1]
+
+
+def selected_metric_value(
+    selected_record: dict[str, Any],
+    metric_name: str,
+    selection_metric: str | None,
+    selected_selection_value: Any,
+) -> Any:
+    return first_present(
+        selected_record.get(metric_name),
+        selected_selection_value if selection_metric == metric_name else None,
+    )
+
+
 def metrics_from_report(test_report: dict[str, Any]) -> dict[str, Any]:
     metrics = test_report.get("metrics")
     return metrics if isinstance(metrics, dict) else {}
@@ -223,6 +273,12 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
     )
     history = history_from_payloads(run_config, run_metadata)
     best_val_loss, best_selection_metric = best_history_values(history, selection_metric)
+    selected_record = selected_history_record(history, run_config, run_metadata, selection_metric)
+    selected_selection_value = first_present(
+        run_metadata.get("selected_metric_value"),
+        run_config.get("selected_metric_value"),
+        best_selection_metric,
+    )
     task = first_present(config.get("task"), dataset.get("task"))
     test_metric_name = matching_test_metric_name(selection_metric, task)
     inferred_split = infer_split_identity_from_paths(
@@ -323,10 +379,30 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             inferred_split["overlap_warning"],
         ),
         "best_validation_loss": best_val_loss,
-        "best_validation_metric_used_for_checkpoint_selection": first_present(
-            run_metadata.get("selected_metric_value"),
-            run_config.get("selected_metric_value"),
-            best_selection_metric,
+        "best_validation_metric_used_for_checkpoint_selection": selected_selection_value,
+        "selected_val_joint_balanced_acc": selected_metric_value(
+            selected_record,
+            "val_joint_balanced_acc",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_metal_balanced_acc": selected_metric_value(
+            selected_record,
+            "val_metal_balanced_acc",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_ec_balanced_acc": selected_metric_value(
+            selected_record,
+            "val_ec_balanced_acc",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_ec_group_balanced_acc": selected_metric_value(
+            selected_record,
+            "val_ec_group_balanced_acc",
+            selection_metric,
+            selected_selection_value,
         ),
         "comparison_test_metric_name": test_metric_name,
         "comparison_test_metric_value": metrics.get(test_metric_name) if test_metric_name else None,

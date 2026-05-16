@@ -665,6 +665,12 @@ def format_epoch_log(record: dict[str, Any]) -> str:
         parts.append(f"val_metal_acc={record['val_metal_acc']:.4f}")
     if record.get("val_ec_acc") is not None:
         parts.append(f"val_ec_acc={record['val_ec_acc']:.4f}")
+    if record.get("val_metal_balanced_acc") is not None:
+        parts.append(f"val_metal_bal_acc={record['val_metal_balanced_acc']:.4f}")
+    if record.get("val_ec_balanced_acc") is not None:
+        parts.append(f"val_ec_bal_acc={record['val_ec_balanced_acc']:.4f}")
+    if record.get("val_ec_group_balanced_acc") is not None:
+        parts.append(f"val_ec_group_bal_acc={record['val_ec_group_balanced_acc']:.4f}")
     if record.get("val_metal_min_recall") is not None:
         parts.append(f"val_metal_min_recall={record['val_metal_min_recall']:.4f}")
     if record.get("val_metal_fe_recall") is not None:
