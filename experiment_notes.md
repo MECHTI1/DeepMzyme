@@ -17,6 +17,7 @@ Artifacts are under `DeepMzyme_Data/notebook_outputs/runs/`. Generated checkpoin
 
 ### Experiment 2: 30 epochs
 
+
 - Task: `metal_6_class`
 - Model: `Only-GVP`
 - Batch size: `8`
