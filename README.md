@@ -43,7 +43,7 @@ The bundle includes the site-level MAHOMES summary CSVs used by training. It als
 
 The Colab notebook supports three dataset input modes through `COLAB_DATA_SOURCE`:
 
-- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-03.tar.zst`, verifies SHA256, and unpacks it under `/content`.
+- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-17.tar.zst`, verifies SHA256, and unpacks it under `/content`.
 - `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive data path after Drive is mounted.
 
