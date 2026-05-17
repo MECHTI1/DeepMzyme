@@ -501,6 +501,13 @@ def evaluate_split_metrics(
                 f"{prefix}_metal_collapsed4_balanced_acc": collapsed_metrics["balanced_accuracy"],
                 f"{prefix}_metal_collapsed4_macro_f1": collapsed_metrics["macro_f1"],
                 f"{prefix}_metal_collapsed4_mn_recall": collapsed_metrics["per_class_recall"][0],
+                f"{prefix}_metal_collapsed4_cu_recall": collapsed_metrics["per_class_recall"][1],
+                f"{prefix}_metal_collapsed4_zn_recall": collapsed_metrics["per_class_recall"][2],
+                f"{prefix}_metal_collapsed4_class_viii_recall": collapsed_metrics["per_class_recall"][3],
+                f"{prefix}_metal_collapsed4_per_class_recall": {
+                    label_name: collapsed_metrics["per_class_recall"][label_idx]
+                    for label_idx, label_name in COLLAPSED_METAL_LABELS.items()
+                },
             }
         )
     else:

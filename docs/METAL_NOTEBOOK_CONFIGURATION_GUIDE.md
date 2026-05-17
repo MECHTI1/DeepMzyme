@@ -380,6 +380,31 @@ folders are saved beside the validation/HPO/seed-repeat run folders. If Drive
 cannot be mounted, the notebook prints a warning and falls back to local Colab
 storage.
 
+The "Optional final held-out test evaluation" cell has two different folder
+roles:
+
+- **Source run folder**: the validation run that supplies the saved config and
+  `best_model_checkpoint.pt`. In single-checkpoint mode, a blank
+  `FINAL_TEST_SOURCE_RUN_DIR` means "use `selected_final_run_dir` from the
+  previous Select final run cell" when `FINAL_TEST_SOURCE_CHOICE_INDEX = 0`. If
+  `FINAL_TEST_SOURCE_RUN_DIR` is filled, the cell uses that folder instead. If
+  `FINAL_TEST_SOURCE_CHOICE_INDEX` is positive, the cell uses that numbered row
+  from its printed source-run picker table.
+- **Batch parent folder**: the folder scanned in `evaluate_all_seeds_batch`
+  mode. A filled `FINAL_TEST_BATCH_PARENT_DIR` is used directly. If it is blank,
+  the cell uses the parent folder of the selected source run.
+- **Final-test output folder**: a new run folder written under the same
+  `RUNS_DIR`, named from `FINAL_TEST_RUN_NAME_PREFIX` plus the source run name.
+  The original validation run folder is not overwritten.
+
+The final-test cell prints a pre-flight checklist before launch. For a single
+source run, it checks that validation selection exists, the checkpoint exists,
+the held-out test paths exist, repeat policy is satisfied, and the output folder
+is separate from the source run. For batch mode, it also checks that all source
+runs share the same `task`, `model_architecture`, `fusion_mode`, and
+`selection_metric`. Leave `ALLOW_MIXED_FINAL_TEST_BATCH = False` unless a mixed
+folder is being evaluated deliberately.
+
 After planning:
 
 - `<RUNS_DIR>/<SUMMARY_BASENAME>_planned_runs.csv`: exact planned configurations.
@@ -407,8 +432,20 @@ After the summarize/report cell:
 
 For metal reports, `METAL_REPORT_VIEW` controls which already-computed metrics
 are emphasized in the notebook tables: `six_class`, `collapsed4`, or `both`.
-This is a display/reporting control only. It does not change the model targets,
-training loss, checkpoint-selection metric, or held-out test policy.
+The final held-out test cell also has `FINAL_TEST_METAL_REPORT_VIEW`; its
+default `use_METAL_REPORT_VIEW` follows the main notebook setting. These are
+display/reporting controls only. They do not change the model targets, training
+loss, checkpoint-selection metric, or held-out test policy.
+
+`FINAL_TEST_BATCH_METRICS` controls only which metric columns are emphasized in
+batch final-test summaries and plots. It does not change which metrics are
+computed or saved in `test_report.json`.
+
+Metal evaluation always keeps the six-class prediction problem
+`Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`. For every metal or joint test report, the
+code also computes collapsed-4 metrics by merging `Fe`, `Co`, and `Ni` into
+`Class VIII`, giving `Mn`, `Cu`, `Zn`, and `Class VIII`. Use the toggle to choose
+which view is emphasized in notebook output, not to rerun a different test.
 
 After Optuna:
 
@@ -447,8 +484,8 @@ For final reporting:
 
 1. Use the notebook's "Select final run and show saved outputs" cell to choose the validation-best run.
 2. Use the "Optional final held-out test evaluation" cell with `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True`.
-3. Prefer `FINAL_TEST_MODE = "evaluate_selected_checkpoint"` unless you intentionally want a retrain from the selected config.
-4. Record `test_metal_balanced_acc`, `test_metal_macro_f1`, `test_metal_collapsed4_balanced_acc`, and test per-class diagnostics from `test_report.json`.
+3. Prefer `FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"` unless you intentionally want a retrain from the selected config.
+4. Record `test_metal_balanced_acc`, `test_metal_macro_f1`, `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`, and `test_metal_collapsed4_per_class_recall` from `test_report.json`.
 5. Do not go back and choose a different configuration because its test score is better.
 
 ## Mistakes To Avoid
