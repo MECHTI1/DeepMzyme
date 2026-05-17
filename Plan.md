@@ -1,22 +1,106 @@
-### 1) Create training/test sets CSVs with summary of metal-type and EC-number
-- Used for the classification tasks of metal-type and EC-number, as start, the PinMyMetal training/test sets
-- The CSV will be written in the following format: structure name, EC number/s, Metal-Type
-- Important: Be sure that the only Metal-Type found in structures files, are those found in the CSV (and opposite).
-- Create a colab-bundle which contains all the training/test structure files and CSV files. Should be compressed.
+# DeepMzyme — Research Design and Technical Authority
 
-### 2) Train the Metal classification model
-- Train/validate on 6 classes: Mn,Fe,Zn,Cu,Co and Ni separately.
-  - best_checkpoint = highest validation balanced accuracy 
-- Test the test-set on prediction performance on thr 6 Classes and on 4 classes, whereas Fe+Ni+Co are concatenated to VIII class.
+DeepMzyme is a deep-learning framework for predicting metal type and enzyme class
+(EC number) from metalloenzyme structural pocket graphs and optional ESMC residue
+embeddings.
 
-### 3) Train the EC-number classification model
-- Train/validate on all EC classes first digit **AND** following digits (Need yet to think how many digit to train)
-- Use contrastive learning
-- Test on the test-set on all levels of digits so will have broad view on the prediction performance.
-- 
-### 4) Make important parameters and model types configurable
+This document is the primary design and policy authority. Source code and run
+outputs are evidence of implemented behavior; this document states the intended
+architecture, training policy, and experiment governance. When any other file
+conflicts with this document, prefer this document unless the source code
+clearly contains newer working logic that should be preserved.
 
-The current training entry point is `src/train.py`, which delegates to `src/training/config.py`. The Colab notebook should expose the commonly used controls below and document the rest clearly enough that advanced users can reproduce a command-line run.
+**Where to find related information:**
+
+| Need | Go to |
+| --- | --- |
+| Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
+| Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
+| Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
+| Copy-paste-ready EC training stages | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
+| Raw experiment results | `docs/notebook_outputs/` |
+| Current best-configuration snapshot | `docs/notebook_outputs/summaries/LEADERBOARD.md` |
+| CLI command examples | `list_train_commands.md` |
+| Public-facing overview and quick-start | `README.md` |
+
+---
+
+## 1) Training/Test Sets
+
+The primary data source is the PinMyMetal train/test split, converted to
+site-level summary CSVs compatible with the MAHOMES format. Each row represents
+one catalytic metal site.
+
+CSV format: structure name, EC number(s), metal type.
+
+Site-level MAHOMES summary CSVs are the training source of truth. Structure-level
+CSV artifacts may contain semicolon-joined metal labels for structures with
+multiple catalytic metal sites; these are for inspection only and must not
+replace site-level labels for single-label metal training.
+
+Data integrity rule: the only metal types present in structure files must match
+those in the CSV exactly, and vice versa.
+
+Preparation scripts live under `prepare_training_and_test_set/`. These scripts
+download structures, create non-redundant chain-level files, and run MAHOMES
+activation to produce the site-level summary CSVs used for training.
+
+Colab data bundles are built with `src/build_colab_bundle.py`. The bundle packs
+the site-level summary CSVs and structure files into a compressed archive for
+upload to HuggingFace or for local use. The notebook consumes this bundle via
+`COLAB_DATA_SOURCE`.
+
+---
+
+## 2) Train the Metal-Classification Model
+
+Train and validate on six metal classes: Mn, Fe, Zn, Cu, Co, Ni.
+
+Best checkpoint selection: highest validation balanced accuracy
+(`val_metal_balanced_acc`).
+
+Final test reporting: six-class metrics and collapsed-4 metrics, where Fe, Co,
+and Ni are merged into Class VIII.
+
+For the staged training pipeline (smoke, baseline, HPO, seed-repeat, final test)
+with copy-paste notebook configuration blocks, use
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+---
+
+## 3) Train the EC-Number Classification Model
+
+Train and validate on all EC first-digit classes, and progressively on deeper
+EC digits. The decision on maximum training depth is open; start with depth 1
+(`--ec-label-depth 1`) and expand to deeper digits after the depth-1 baseline
+is stable.
+
+Use supervised contrastive learning as a secondary loss. Start with
+`--ec-contrastive-weight 0.0` for the clean baseline; explore non-zero
+contrastive weight only after the supervised baseline is validated.
+
+EC supervision is structure/protein-level even when extraction creates multiple
+separated metal-pocket samples for the same structure. Use group weighting at
+`structure_id` to avoid over-counting such structures.
+
+Final test reporting: level-1 balanced accuracy, macro F1, and per-class recall
+at each trained depth. Report deeper-level metrics when deeper depths are trained.
+
+For the staged training pipeline with copy-paste notebook configuration blocks,
+use `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+---
+
+## 4) Make Important Parameters and Model Types Configurable
+
+The main training entry point is `src/train.py`, which delegates to
+`src/training/config.py` and `src/training/task_entrypoint.py`. Task-specific
+thin wrappers `src/train_metal.py` and `src/train_ec.py` are available for
+single-task invocations that bypass the joint-task dispatch.
+
+The Colab notebook (`notebooks/DeepMzyme_training_colab.ipynb`) exposes the
+commonly used controls and documents the rest clearly enough that advanced users
+can reproduce a command-line run.
 
 #### Supported configurable training parameters
 
@@ -120,16 +204,59 @@ For `gvp` and `simple_gnn_esm`, supported fusion modes are:
 - Generic class-loss multiplier flags for EC classes. Current per-class multipliers are metal-specific.
 - Additional LR schedules beyond `fixed`, `cosine`, and `step`.
 
-### 5) Create a Google Colab configurable training/test set
-    - Do the training model flexibile by configurable options to input screening different parameters/models, make convinent nice interface for inputs.
-    - In the end make a comparison table/proffesional figure for analyse prediction results which including all selected screened variety of parametrs/differrent models of choice.
-    - Colab bundles should include the site-level MAHOMES train/test summary CSVs as the training source of truth. Structure-level CSV artifacts may contain semicolon-joined metal labels for structures with multiple catalytic metal sites; these artifacts are for inspection and should not replace site-level labels for single-label metal training.
+#### Practical notebook-ready training pipelines
+
+`Plan.md` is the high-level research and design authority. The concrete,
+copy-paste-ready notebook pipelines live in task-specific playbooks:
+
+- Metal classification: `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`
+- EC-number classification: `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`
+
+Each playbook covers staged notebook configuration blocks for:
+
+- smoke/readiness checks
+- baseline model comparison
+- controlled medium Optuna searches
+- large controlled Optuna searches, including 200-trial examples
+- top-K seed-repeat validation
+- final held-out test evaluation after validation-based selection only
+
+Keep current best-result notes and mutable next-step status in
+`EXPERIMENT_STATUS.md`. Keep raw and summarized run evidence in
+`docs/notebook_outputs/`.
 
 ---
 
-### 6) Experiment tracking and reproducible run summaries
+## 5) Colab Notebook and Data Bundle
 
-Every training run should save enough information to reproduce and compare the result.
+The interactive training workflow is in `notebooks/DeepMzyme_training_colab.ipynb`.
+The notebook supports run planning, training execution, result summarization, and
+final held-out test evaluation in a staged, guarded workflow.
+
+Colab data input modes (controlled by `COLAB_DATA_SOURCE`):
+
+- `huggingface_link`: downloads and verifies the bundle from the project
+  HuggingFace repository. Recommended default for cloud use.
+- `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
+- `drive`: uses the configured Google Drive path after Drive is mounted.
+
+The bundle is built from the trusted non-overlapped PinMyMetal split using
+`src/build_colab_bundle.py`. It includes:
+
+- site-level MAHOMES train and test summary CSVs (training source of truth)
+- training and test structure files (`.pdb`, `.cif`)
+- structure-level CSV artifacts (for inspection; not used for training labels)
+
+Comparison table and professional figure output are generated by the summarize
+cell at the end of each run batch. Detailed notebook option reference is in
+`docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`.
+
+---
+
+## 6) Experiment Tracking and Reproducible Run Summaries
+
+Every training run should save enough information to reproduce and compare the
+result.
 
 Each run should save:
 
@@ -146,7 +273,7 @@ Each run should save:
 - final held-out test metrics, if test evaluation was requested
 - git commit hash, if available
 
-Create a reporting script that summarizes multiple run directories into one CSV table.
+`src/report_runs.py` summarizes multiple run directories into one CSV table.
 
 The summary table should include, when available:
 
@@ -174,7 +301,7 @@ Important rules:
 
 ---
 
-### 7) Baseline-first model comparison policy
+## 7) Baseline-First Model Comparison Policy
 
 Before testing complex fusion models, establish clean baselines.
 
@@ -218,7 +345,7 @@ The goal is to avoid adding complex architecture before proving that it improves
 
 ---
 
-### 8) Data leakage and split policy
+## 8) Data Leakage and Split Policy
 
 The non-overlapped PinMyMetal split remains the historically trusted split for
 final held-out evaluation unless a new experiment explicitly switches to a

@@ -8,6 +8,10 @@ The current project policy is baseline-first: use validation metrics for all mod
 
 This guide describes stable workflow principles. Exact current experiment results and hyperparameters should not be duplicated here; those belong with the run evidence and current-status notes. For the current project state, read `EXPERIMENT_STATUS.md` if present. For raw copied notebook outputs, inspect `docs/notebook_outputs/raw/`; for concise run summaries, start with `docs/notebook_outputs/summaries/`.
 
+For staged, copy-paste-ready notebook configuration blocks, use
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. This guide explains option meaning
+and safe workflow principles; the playbook is the practical execution recipe.
+
 ## Current Status Pointer
 
 This guide is not the source of truth for the latest best run or next experiment. Read `EXPERIMENT_STATUS.md` first for the current recommendation, then use this guide only to configure the notebook safely.
