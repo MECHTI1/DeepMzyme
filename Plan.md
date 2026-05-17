@@ -165,9 +165,9 @@ can reproduce a command-line run.
 | Cross-attention | `--cross-attention-neighborhood` | `all`; choices `all`, `first_shell`, `first_second_shell` | Which residues participate in localized cross-attention. | Expose |
 | Cross-attention | `--cross-attention-bidirectional` | false | Allows ESM states to also attend back to structure states. | Expose |
 | RING edges | `--ring-features-dir` | optional path | Directory containing RING edge files, or output directory for generated RING files. | Expose |
-| RING edges | `--use-ring-edges` | false | Adds RING interaction edges in addition to radius edges when files are available. | Expose via mode |
+| RING edges | `--use-ring-edges` | false in raw CLI; notebook default is RING-enabled | Adds RING interaction edges in addition to radius edges when files are available. | Expose via mode |
 | RING edges | `--require-ring-edges` | false | Fails if RING edge files are missing for requested structures. | Expose with warning |
-| RING edges | `--prepare-missing-ring-edges` | false flag, but current config prepares by default unless disabled | Generate missing RING edge files during preflight when RING is active. Notebook should keep default radius-only and no required RING. | Expose |
+| RING edges | `--prepare-missing-ring-edges` | false flag, but current config prepares by default unless disabled | Generate missing RING edge files during preflight when RING is active. Notebook default is `with_ring`, with `REQUIRE_RING_EDGES=False` and missing-edge preparation enabled. | Expose |
 | RING edges | `--no-prepare-missing-ring-edges` | false | Prevents RING generation during preflight. | Expose as prepare-missing toggle |
 | Metal loss | `--balance-metal-site-symbols` | false | Uses a weighted sampler to balance metal classes and Co/Ni symbols inside Class VIII. | Expose |
 | Metal loss | `--metal-loss-function` | `cross_entropy`; choices `cross_entropy`, `focal` | Loss function for metal classification. | Expose |

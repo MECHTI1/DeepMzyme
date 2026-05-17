@@ -43,9 +43,13 @@ SELECTION_METRIC = "val_metal_balanced_acc"
 OPTUNA_SELECTION_METRIC = "val_metal_balanced_acc"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 REQUIRE_RING_EDGES = False
 PREPARE_MISSING_RING_EDGES = True
+
+ALLOW_MISSING_EXTERNAL_FEATURES = False
+PREPARE_MISSING_EXTERNAL_FEATURES = False
+EXTERNAL_FEATURES_ROOT_DIR = ""
 
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"
 METAL_LOSS_FUNCTION = "cross_entropy"
@@ -91,7 +95,7 @@ VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_metal_balanced_acc"
 
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 ESM_EMBEDDINGS_DIR = ""
 ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = False
@@ -167,7 +171,7 @@ GVP_LAYERS_VALUES_CSV = "4"
 HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "8.0"
 
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 ESM_EMBEDDINGS_DIR = ""
 ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = False
@@ -210,7 +214,7 @@ EARLY_ESM_DIM_VALUES_CSV = "32"
 ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
 ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
@@ -277,7 +281,7 @@ EDGE_HIDDEN_VALUES_CSV = "64"
 GVP_LAYERS_VALUES_CSV = "4"
 HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "8.0"
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 
 OPTUNA_INTENSITY = "debug"
 N_OPTUNA_TRIALS = 4
@@ -355,7 +359,7 @@ EDGE_HIDDEN_VALUES_CSV = "64"
 GVP_LAYERS_VALUES_CSV = "4"
 HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "8.0"
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 
 OPTUNA_INTENSITY = "first_useful"
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
@@ -431,7 +435,7 @@ EPOCHS = 50
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_metal_balanced_acc"
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 
 OPTUNA_INTENSITY = "custom"
 N_OPTUNA_TRIALS = 200
@@ -485,7 +489,7 @@ EPOCHS = 50
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_metal_balanced_acc"
-RING_EDGE_MODE = "without_ring"
+RING_EDGE_MODE = "with_ring"
 
 ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
 ALLOW_MISSING_ESM_EMBEDDINGS = False
@@ -523,13 +527,14 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-### 5C - Optional RING-Controlled Search
+### 5C - Optional Radius-Only Ablation
 
-Use only after radius-only graph behavior is stable. This does not make Optuna
-sample RING on/off; it fixes the base run to RING-enabled graph construction.
+Use only when you deliberately want to compare against the older radius-only
+graph setting. This does not make Optuna sample RING on/off; it fixes the base
+run to radius-only graph construction.
 
 ```python
-RING_EDGE_MODE = "with_ring"
+RING_EDGE_MODE = "without_ring"
 REQUIRE_RING_EDGES = False
 PREPARE_MISSING_RING_EDGES = True
 RING_FEATURES_DIR = ""

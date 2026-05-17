@@ -27,6 +27,14 @@ evidence in saved outputs, not in stable workflow guides.
 
 - Current task focus: metal classification, with exploratory joint
   (metal + EC) hybrid-fusion and hybrid+RING checks now also on record.
+- Current default configuration policy for new notebook/playbook graph runs:
+  use updated external features strictly and use RING-enabled graph
+  construction by default. In notebook/configuration terms this means
+  `RING_EDGE_MODE="with_ring"`, `ALLOW_MISSING_EXTERNAL_FEATURES=False`,
+  `external_feature_source=updated`, `--use-ring-edges`,
+  `--ring-features-dir`, and `--prepare-missing-ring-edges`. Radius-only
+  graph construction is now an explicit ablation or raw low-level/CLI default,
+  not the recommended first graph setting.
 - Stage: metal Only-ESM baseline confirmed; GVP + late fusion has completed a
   proper 5-seed, 50-epoch validation-only seed repeat for the top Round 3
   Optuna candidates; GVP + node-level late fusion has also completed a 5-seed,

@@ -59,7 +59,7 @@ Set:
 | `LEARNING_RATES_CSV` | `3e-5` |
 | `WEIGHT_DECAYS_CSV` | `1e-4` |
 | `SEEDS_CSV` | `42` |
-| `RING_EDGE_MODE` | `without_ring` |
+| `RING_EDGE_MODE` | `with_ring` |
 | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` | `False` |
 
 Then run the planning cells. In the optional training execution cell, set `LAUNCH_PLANNED_TRAINING_RUNS = True`.
@@ -68,7 +68,9 @@ Interpretation: a 1-epoch smoke run is not a performance result. It only proves 
 
 ### 2. First real baseline
 
-After the smoke test succeeds, run a real Only-GVP radius-only baseline. Start with the notebook's baseline-first GVP settings:
+After the smoke test succeeds, run a real Only-GVP baseline with the notebook's
+default RING-enabled graph construction and strict updated external features.
+Start with the baseline-first GVP settings:
 
 | Option | Value |
 | --- | --- |
@@ -80,7 +82,8 @@ After the smoke test succeeds, run a real Only-GVP radius-only baseline. Start w
 | `SELECTION_METRIC` | blank or `val_metal_balanced_acc` |
 | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` | `False` |
 
-`only_gvp_lr_seed` runs `Only-GVP`, radius-only, with learning rates `3e-5` and `1e-4` across seeds `42` and `43`.
+`only_gvp_lr_seed` runs `Only-GVP`, RING-enabled, with learning rates `3e-5`
+and `1e-4` across seeds `42` and `43`.
 
 If those runs are stable and time permits, run:
 
@@ -95,7 +98,7 @@ This expands to learning rates `3e-5`, `1e-4`, and `3e-4` across seeds `42`, `43
 
 Use this order for metal:
 
-1. `Only-GVP`, radius-only, no ESM.
+1. `Only-GVP`, RING-enabled, no ESM.
 2. `Only-ESM`, after ESM embeddings are present.
 3. `GVP + late fusion`, after both structure-only and ESM-only baselines are stable.
 4. `GVP + early fusion`, if late fusion or ESM-only looks promising.
@@ -240,11 +243,16 @@ In notebook language, `uses_esm` means the selected preset requires ESM residue 
 
 Default first baseline:
 
-- `RING_EDGE_MODE = "without_ring"`
+- `RING_EDGE_MODE = "with_ring"`
 - `REQUIRE_RING_EDGES = False`
-- `PREPARE_MISSING_RING_EDGES = True` is harmless for radius-only planning, but RING files are not needed unless `RING_EDGE_MODE = "with_ring"` or `ring_comparison` is selected.
+- `PREPARE_MISSING_RING_EDGES = True`
+- `ALLOW_MISSING_EXTERNAL_FEATURES = False`
 
-Use `ring_comparison` only after the radius-only Only-GVP baseline is stable. If `with_ring` is used, make sure existing RING files or a working `RING_EXE_PATH` are available. If `REQUIRE_RING_EDGES = True`, incomplete RING coverage should fail instead of silently mixing graph types.
+The notebook now starts from RING-enabled graph construction and strict updated
+external features by default. Existing RING files are reused; missing files are
+generated when a working `RING_EXE_PATH` is available. If `REQUIRE_RING_EDGES =
+True`, incomplete RING coverage should fail instead of silently mixing graph
+types. To run a radius-only ablation, set `RING_EDGE_MODE = "without_ring"`.
 
 ### Training hyperparameters
 
@@ -518,7 +526,7 @@ These are documentation/UX issues found during inspection. They are not implemen
 1. `EPOCHS` defaults to `1`, which is safe for smoke tests but easy to forget before real comparisons. A stronger warning near the launch cell could reduce accidental 1-epoch rankings.
 2. `RECOMMENDED_RUN_SET` can override `MODEL_PRESET`; the notebook warns about this, but it remains a common user-error point. A more visible resolved-model summary could help.
 3. `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` still exists as a top-level option. It is guarded, but keeping final test evaluation only in the separate final-test cell would be safer.
-4. `PREPARE_MISSING_RING_EDGES = True` appears near the default radius-only settings. It may confuse users even though `without_ring` does not need RING files.
+4. RING is now the default first graph setting. Use the playbook's radius-only ablation block only when you intentionally want to reproduce the older graph construction.
 5. `fusion_mode` may appear in saved `Only-GVP` configs even though it is irrelevant for `only_gvp`; reporting could display it as `none` for clarity.
 6. Optuna can sample many capacity and graph parameters by default. For first useful metal HPO, the notebook could offer a narrower `Only-GVP_lr_wd_only` search-space preset.
 7. The current default `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` includes several weighting modes. That is useful later, but first HPO may be easier to interpret if class weighting is fixed initially.

@@ -208,7 +208,7 @@ def check_cross_attention_config() -> None:
 def check_ring_edge_cli_config() -> None:
     default_config = parse_args([])
     if default_config.use_ring_edges:
-        raise AssertionError("Default training config should use radius-only edges.")
+        raise AssertionError("Raw CLI default should use radius-only edges unless --use-ring-edges is passed.")
     if not default_config.prepare_missing_ring_edges:
         raise AssertionError("Default training config should prepare missing RING edges when RING is enabled.")
 
@@ -307,7 +307,8 @@ def check_colab_notebook_sweep_source() -> None:
         'INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False',
         'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
         'MODEL_PRESET = "Only-GVP"',
-        'RING_EDGE_MODE = "without_ring"',
+        'RING_EDGE_MODE = "with_ring"',
+        'ALLOW_MISSING_EXTERNAL_FEATURES = False',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
         "CONFIG = {",
@@ -345,99 +346,6 @@ def check_colab_notebook_sweep_source() -> None:
         raise AssertionError(f"Colab notebook still contains retired widget/old-runner tokens: {present}")
     if "sweep" in source.lower():
         raise AssertionError("Colab notebook should not contain user-facing sweep terminology.")
-    return
-    required_tokens = (
-        "RUN_SINGLE_MODE",
-        "RUN_SWEEP_MODE",
-        "ALLOW_SINGLE_AND_SWEEP",
-        "def _running_in_colab",
-        'RUN_MODE = "auto"',
-        "RUN_MODE must be 'auto', 'local', or 'colab'.",
-        'COLAB_DATA_SOURCE = "huggingface_link"',
-        "COLAB_DATA_SOURCE must be 'upload_file', 'huggingface_link', or 'drive'.",
-        "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-03.tar.zst",
-        "COLAB_HUGGINGFACE_BUNDLE_SHA256",
-        'BUNDLE_FILENAME = "DeepMzyme_Data_runtime_local_2026-05-03.tar.zst"',
-        'MOUNT_DRIVE = RUN_MODE == "colab" and COLAB_DATA_SOURCE == "drive"',
-        "DRIVE_MOUNT_TIMEOUT_MS",
-        "use_drive_paths = drive_requested and drive_available",
-        "COLAB_LOCAL_DATA_DIR",
-        "COLAB_BUNDLE_PATH",
-        "UPLOAD_LOCAL_BUNDLE_IN_COLAB",
-        "DOWNLOAD_HUGGINGFACE_BUNDLE_IN_COLAB",
-        "def download_file",
-        "def verify_sha256",
-        "def adopt_unpacked_runtime_data_dir",
-        "DeepMzyme Experiment Console",
-        "def _has_ec_task",
-        "def _has_metal_task",
-        "def _has_cross_attention_model",
-        "def _refresh_contextual_sections",
-        "_info('head MLP layers'",
-        "_info('EC label depth'",
-        "_info('cross-modal attention'",
-        "widgets.Tab",
-        "Runtime-local paths under /content will be used",
-        "def build_train_command",
-        "def stream_command",
-        "def write_sweep_status",
-        "def summarize_completed_run",
-        "def make_safe_run_name",
-        "def validate_run_before_training",
-        "USE_ESM_EMBEDDINGS = True",
-        "ESM_EMBEDDINGS_DIR = '/content/drive/MyDrive/DeepMzyme/DeepMzyme_Data/esm_embeddings'",
-        "ALLOW_MISSING_ESM_EMBEDDINGS = False",
-        "RING_EDGES_MODE = 'radius_only'",
-        "RING_EXE_PATH = 'DeepMzyme_Data/ring-4.0/out/bin/ring'",
-        "def resolve_ring_exe_control",
-        "drive_candidate = drive_data_dir / ring_path",
-        "repo_candidate = repo_dir / drive_data_dir.name / ring_path",
-        "drive_mount_available = str(drive_data_dir).startswith('/content/drive/') and Path('/content/drive').exists()",
-        "RING_EXE_PATH user setting",
-        "RING_EXE_PATH resolved",
-        "os.environ['RING_EXE_PATH'] = str(resolve_ring_exe_control(RING_EXE_PATH))",
-        "run_env['RING_EXE_PATH'] = config['ring_exe_path'] or str(resolve_ring_exe_control(RING_EXE_PATH))",
-        "RING_EDGE_OUTPUT_DIR",
-        "PRECOMPUTED_RING_EDGES_DIR",
-        "RING_EDGES_MODES",
-        "'use_ring_edges'",
-        "itertools.product",
-        "MAX_SWEEP_RUNS",
-        "stop_on_first_failure",
-        "sweep_status.csv",
-        "val_ec_group_balanced_acc",
-        "src' / 'train.py'",
-        "src' / 'report_runs.py'",
-        "--cross-attention-layers",
-        "--cross-attention-heads",
-        "--lr-schedule",
-        "--use-early-esm",
-        "--esm-embeddings-dir",
-        "--allow-missing-esm-embeddings",
-        "--no-prepare-missing-esm-embeddings",
-        "--use-ring-edges",
-        "--require-ring-edges",
-        "--prepare-missing-ring-edges",
-        "'selected_checkpoint'",
-        "'selected_metric_value'",
-        "'test_summary'",
-        "'command'",
-        "'uses_esm'",
-        "'esm_embeddings_dir'",
-        "'ring_edges_mode'",
-        "'ring_edge_output_dir'",
-    )
-    missing = [token for token in required_tokens if token not in source]
-    if missing:
-        raise AssertionError(f"Colab notebook sweep source is missing expected tokens: {missing}")
-    if "subprocess.run(train_cmd" in source:
-        raise AssertionError("Colab notebook should stream training logs instead of subprocess.run(train_cmd).")
-    if "os.environ['RING_EXE_PATH'] = str(path_from_control(RING_EXE_PATH))" in source:
-        raise AssertionError("Colab notebook should resolve RING_EXE_PATH before exporting it.")
-    if "MODEL_PRESET = 'Only-GVP'" not in source:
-        raise AssertionError("Colab notebook default MODEL_PRESET no longer preserves Only-GVP.")
-    if "NODE_FEATURE_SET = 'conservative'  #@param ['conservative', 'expanded']" in source:
-        raise AssertionError("Colab notebook exposes node feature sets not accepted by the current CLI.")
 
 
 def check_colab_generated_training_commands_parse() -> None:
@@ -470,7 +378,7 @@ def check_colab_generated_training_commands_parse() -> None:
             "configuration_comparison": {
                 "recommended_run_set": "custom",
                 "model_preset": "Only-GVP",
-                "ring_edge_mode": "without_ring",
+                "ring_edge_mode": "with_ring",
                 "batch_sizes_csv": "4",
                 "learning_rates_csv": "1e-4",
                 "weight_decays_csv": "1e-4",
@@ -546,9 +454,9 @@ def check_colab_generated_training_commands_parse() -> None:
                 "class_viii_loss_multiplier": 1.0,
                 "balance_metal_site_symbols": False,
                 "require_all_task_classes": False,
-                "allow_missing_external_features": True,
+                "allow_missing_external_features": False,
                 "external_features_root_dir": "",
-                "external_feature_source": "auto",
+                "external_feature_source": "updated",
                 "n_folds": "",
                 "fold_index": "",
                 "deterministic": False,
@@ -601,6 +509,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "TRAIN_STRUCTURES": [],
                 "TEST_STRUCTURES": [],
                 "DATA_ROOT": tmp_root,
+                "DATASET_ROOT": tmp_root / "dataset",
                 "DRIVE_DATA_DIR": tmp_root / "drive" / "DeepMzyme_Data",
             }
             with contextlib.redirect_stdout(io.StringIO()):
@@ -619,20 +528,22 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError(f"Expected one default planned command, got {len(default_runs)}")
     default_cmd = [str(part) for part in default_runs[0]["command"]]
     assert_training_command_parses(default_cmd)
-    if "--use-ring-edges" in default_cmd or "--require-ring-edges" in default_cmd:
-        raise AssertionError("Default radius-only command unexpectedly enables RING edges.")
+    for expected_flag in ("--use-ring-edges", "--ring-features-dir", "--prepare-missing-ring-edges"):
+        if expected_flag not in default_cmd:
+            raise AssertionError(f"Default graph command is missing {expected_flag}.")
+    if "--allow-missing-external-features" in default_cmd:
+        raise AssertionError("Default graph command should require updated external features.")
     if "--esm-embeddings-dir" in default_cmd:
         raise AssertionError("Only-GVP default command should not require an ESM embeddings directory.")
     if "--omit-node-features" in default_cmd:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
 
-    ring_runs = run_builder({"configuration_comparison": {"ring_edge_mode": "with_ring"}})
-    if len(ring_runs) != 1:
-        raise AssertionError(f"Expected one RING planned command, got {len(ring_runs)}")
-    ring_cmd = [str(part) for part in ring_runs[0]["command"]]
-    for expected_flag in ("--use-ring-edges", "--ring-features-dir", "--prepare-missing-ring-edges"):
-        if expected_flag not in ring_cmd:
-            raise AssertionError(f"RING command is missing {expected_flag}.")
+    radius_only_runs = run_builder({"configuration_comparison": {"ring_edge_mode": "without_ring"}})
+    if len(radius_only_runs) != 1:
+        raise AssertionError(f"Expected one radius-only ablation command, got {len(radius_only_runs)}")
+    radius_only_cmd = [str(part) for part in radius_only_runs[0]["command"]]
+    if "--use-ring-edges" in radius_only_cmd or "--require-ring-edges" in radius_only_cmd:
+        raise AssertionError("Explicit radius-only ablation command unexpectedly enables RING edges.")
 
     omit_runs = run_builder(
         {
@@ -649,149 +560,6 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Single-feature omission command passed the wrong value.")
     if omit_cmds[2][omit_cmds[2].index("--omit-node-features") + 1] != "v_cb_to_fg,v_res_to_metal":
         raise AssertionError("Combined-feature omission command passed the wrong value.")
-    return
-
-    with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
-        tmp_root = Path(tmp)
-        runs_dir = tmp_root / "runs"
-        drive_data_dir = tmp_root / "drive" / "DeepMzyme_Data"
-        namespace = {
-            "repo_dir": REPO_ROOT,
-            "drive_data_dir": drive_data_dir,
-            "local_runs_dir": runs_dir,
-            "train_dir": tmp_root / "dataset" / "train",
-            "test_dir": tmp_root / "dataset" / "test",
-            "train_csv": tmp_root / "dataset" / "train" / "site_summary.csv",
-            "test_csv": tmp_root / "dataset" / "test" / "site_summary.csv",
-            "display": lambda *_args, **_kwargs: None,
-            "TASK_MODE": "metal_6_class",
-            "MODEL_PRESET": "Only-GVP",
-            "EPOCHS": 1,
-            "BATCH_SIZE": 2,
-            "LEARNING_RATE": 3e-4,
-            "WEIGHT_DECAY": 1e-4,
-            "SEED": 42,
-            "VAL_FRACTION": 0.2,
-            "DEVICE": "cpu",
-            "RUN_NAME": "",
-            "EC_LABEL_DEPTH": 1,
-            "EC_CONTRASTIVE_WEIGHT": 0.0,
-            "NODE_FEATURE_SET": "conservative",
-            "SPLIT_BY": "pdbid",
-            "LR_SCHEDULE": "fixed",
-            "LR_STEP_SIZE": 10,
-            "LR_DECAY_GAMMA": 0.5,
-            "CROSS_ATTENTION_LAYERS": [1],
-            "CROSS_ATTENTION_HEADS": [4],
-            "CROSS_ATTENTION_DROPOUT": 0.1,
-            "CROSS_ATTENTION_NEIGHBORHOOD": "all",
-            "CROSS_ATTENTION_BIDIRECTIONAL": False,
-            "SINGLE_CROSS_ATTENTION_LAYERS": 1,
-            "SINGLE_CROSS_ATTENTION_HEADS": 4,
-            "USE_ESM_EMBEDDINGS": True,
-            "ESM_EMBEDDINGS_DIR": str(drive_data_dir / "esm_embeddings"),
-            "ALLOW_MISSING_ESM_EMBEDDINGS": False,
-            "ALLOW_MISSING_EXTERNAL_FEATURES": True,
-            "RING_EDGES_MODE": "radius_only",
-            "RING_EXE_PATH": "DeepMzyme_Data/ring-4.0/out/bin/ring",
-            "RING_EDGE_OUTPUT_DIR": str(drive_data_dir / "RING_features"),
-            "PRECOMPUTED_RING_EDGES_DIR": str(drive_data_dir / "precomputed_ring_edges"),
-            "REQUIRE_RING_EDGES": False,
-            "PREPARE_MISSING_RING_EDGES": False,
-            "RUN_HELD_OUT_TEST_EVAL": True,
-            "TASK_MODES": ["metal_6_class"],
-            "MODEL_PRESETS": ["Only-GVP"],
-            "RING_EDGES_MODES": ["radius_only"],
-            "LEARNING_RATES": [3e-4],
-            "WEIGHT_DECAYS": [1e-4],
-            "BATCH_SIZES": [2],
-            "SEEDS": [42],
-            "NODE_FEATURE_SETS": ["conservative"],
-            "EC_LABEL_DEPTHS": [1],
-            "EC_CONTRASTIVE_WEIGHTS": [0.0],
-            "LR_SCHEDULES": ["fixed"],
-            "MAX_SWEEP_RUNS": 24,
-        }
-        namespace["task_map"] = {
-            "metal_6_class": ("metal", "val_metal_balanced_acc"),
-            "metal_collapsed4_metric": ("metal", "val_metal_collapsed4_balanced_acc"),
-            "ec_prediction": ("ec", "val_ec_group_balanced_acc"),
-        }
-        namespace["preset_map"] = {
-            "Only-GVP": {"model_architecture": "only_gvp", "uses_esm": False},
-            "Only-ESM": {"model_architecture": "only_esm", "uses_esm": True},
-            "GVP + late fusion": {"model_architecture": "gvp", "fusion_mode": "late_fusion", "uses_esm": True},
-            "GVP + early fusion": {
-                "model_architecture": "gvp",
-                "fusion_mode": "early_fusion",
-                "early_esm_dim": 32,
-                "early_esm_dropout": 0.2,
-                "uses_esm": True,
-            },
-            "GVP + cross-modal attention": {
-                "model_architecture": "gvp",
-                "fusion_mode": "cross_modal_attention",
-                "uses_esm": True,
-            },
-        }
-
-        exec(command_builder_source, namespace)
-
-        def assert_training_command_parses(cmd: list[object]) -> None:
-            parts = [str(part) for part in cmd]
-            if parts[1] != str(REPO_ROOT / "src" / "train.py"):
-                raise AssertionError(f"Notebook command used an unexpected training entry point: {parts[:2]}")
-            config = parse_args(parts[2:])
-            validate_training_configuration(config)
-
-        default_cmd = namespace["train_cmd"]
-        assert_training_command_parses(default_cmd)
-        if "--use-ring-edges" in default_cmd:
-            raise AssertionError("Notebook radius_only command unexpectedly enables RING edges.")
-
-        config = namespace["build_run_config"](
-            task_mode="metal_6_class",
-            model_preset="GVP + cross-modal attention",
-            ring_edges_mode="radius_plus_precomputed_ring",
-            learning_rate=3e-4,
-            weight_decay=1e-4,
-            batch_size=2,
-            seed=42,
-            node_feature_set="conservative",
-            ec_label_depth=1,
-            ec_contrastive_weight=0.0,
-            cross_attention_layers=2,
-            cross_attention_heads=4,
-            lr_schedule="fixed",
-        )
-        ring_cmd = namespace["build_train_command"](config)
-        assert_training_command_parses(ring_cmd)
-        if "--use-ring-edges" not in ring_cmd:
-            raise AssertionError("Notebook precomputed-RING command did not pass --use-ring-edges.")
-        if "--cross-attention-layers" not in ring_cmd:
-            raise AssertionError("Notebook cross-modal command did not pass cross-attention flags.")
-
-        namespace["PREPARE_MISSING_RING_EDGES"] = True
-        config = namespace["build_run_config"](
-            task_mode="metal_6_class",
-            model_preset="Only-GVP",
-            ring_edges_mode="generate_missing_ring",
-            learning_rate=3e-4,
-            weight_decay=1e-4,
-            batch_size=2,
-            seed=42,
-            node_feature_set="conservative",
-            ec_label_depth=1,
-            ec_contrastive_weight=0.0,
-            cross_attention_layers=1,
-            cross_attention_heads=4,
-            lr_schedule="fixed",
-        )
-        generate_cmd = namespace["build_train_command"](config)
-        assert_training_command_parses(generate_cmd)
-        for expected_flag in ("--use-ring-edges", "--prepare-missing-ring-edges"):
-            if expected_flag not in generate_cmd:
-                raise AssertionError(f"Notebook generated-RING command is missing {expected_flag}.")
 
 
 def check_ring_environment_overrides() -> None:

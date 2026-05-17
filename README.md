@@ -64,7 +64,11 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
-  --batch-size 8
+  --batch-size 8 \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir DeepMzyme_Data/RING_features \
+  --prepare-missing-ring-edges
 ```
 
 Detailed baseline-first commands are in `list_train_commands.md`. The interactive workflow is in `notebooks/DeepMzyme_training_colab.ipynb`.

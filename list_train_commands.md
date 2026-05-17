@@ -57,7 +57,7 @@ PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 ```
 
 If your summary CSV has a different name, update `TRAIN_CSV` and `TEST_CSV` before running.
-For ESM-enabled models, set `ESM_EMBEDDINGS_DIR` to your precomputed/generated ESM embedding directory and pass it with `--esm-embeddings-dir`. Missing ESM embeddings are generated only for structures whose embedding files are absent, unless `--no-prepare-missing-esm-embeddings` is passed. For RING-enabled graph runs, pass `--ring-features-dir "${RING_FEATURES_DIR}"`; missing RING edge files are generated only when RING edges are enabled and the expected files are absent, unless `--no-prepare-missing-ring-edges` is passed.
+For ESM-enabled models, set `ESM_EMBEDDINGS_DIR` to your precomputed/generated ESM embedding directory and pass it with `--esm-embeddings-dir`. Missing ESM embeddings are generated only for structures whose embedding files are absent, unless `--no-prepare-missing-esm-embeddings` is passed. For graph runs, DeepMzyme's project default is RING-enabled plus strict updated external features: pass `--external-feature-source updated`, `--use-ring-edges`, `--ring-features-dir "${RING_FEATURES_DIR}"`, and `--prepare-missing-ring-edges`. Missing updated external features should fail unless you intentionally add `--allow-missing-external-features` for a debug/fallback ablation.
 
 Previous DeepMzyme runs favored `learning_rate=3e-5` among tested values, while `1e-4` was also reasonable in some runs. Use `3e-5` with `weight_decay=1e-4` as the serious baseline starting point so far. Use `1e-4` as the main follow-up confirmation value, or compare only `3e-5` and `1e-4` if time is limited. Reserve `3e-4` for an optional wider LR check or debug/default-code comparison after simpler runs are working. For larger or fusion-heavy models such as `hybrid` and `cross_modal_attention`, start conservatively with `3e-5` or `1e-4`, and reduce to `1e-5` if training is unstable. Choose LR by validation metrics, not by repeatedly checking the held-out test set.
 
@@ -96,7 +96,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --batch-size 8 \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ### 2.2 Only-ESM baseline
@@ -123,7 +127,8 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated
 ```
 
 ### 2.3 GVP + simple late ESM fusion
@@ -151,7 +156,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ### 2.4 GVP + early residue-level ESM fusion
@@ -180,6 +189,10 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
   --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges \
   --early-esm-dim 32 \
   --early-esm-dropout 0.2
 ```
@@ -213,7 +226,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ### 3.2 Hybrid fusion
@@ -240,6 +257,10 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
   --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges \
   --early-esm-dim 32 \
   --early-esm-dropout 0.2
 ```
@@ -268,6 +289,10 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
   --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges \
   --cross-attention-layers 1 \
   --cross-attention-heads 4 \
   --cross-attention-dropout 0.1 \
@@ -310,7 +335,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --batch-size 8 \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ### 4.2 EC Only-ESM baseline
@@ -336,7 +365,8 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated
 ```
 
 ### 4.3 EC GVP + late ESM fusion
@@ -363,7 +393,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ---
@@ -400,7 +434,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --batch-size 8 \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ### 5.2 Joint GVP + late ESM fusion
@@ -427,7 +465,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --learning-rate 3e-5 \
   --weight-decay 1e-4 \
   --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-  --node-feature-set conservative
+  --node-feature-set conservative \
+  --external-feature-source updated \
+  --use-ring-edges \
+  --ring-features-dir "${RING_FEATURES_DIR}" \
+  --prepare-missing-ring-edges
 ```
 
 ---
@@ -466,7 +508,11 @@ for SEED in 42 123 777; do
     --learning-rate 3e-5 \
     --weight-decay 1e-4 \
     --esm-embeddings-dir "${ESM_EMBEDDINGS_DIR}" \
-    --node-feature-set conservative
+    --node-feature-set conservative \
+    --external-feature-source updated \
+    --use-ring-edges \
+    --ring-features-dir "${RING_FEATURES_DIR}" \
+    --prepare-missing-ring-edges
 done
 ```
 

@@ -258,7 +258,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Include precomputed or generated RING interaction edges when available. "
-            "By default, graphs use radius-only residue edges."
+            "The raw CLI leaves this off unless requested; the notebook and playbook "
+            "project defaults enable RING for graph runs."
         ),
     )
     parser.add_argument("--require-ring-edges", action="store_true")
