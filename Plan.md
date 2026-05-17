@@ -298,6 +298,16 @@ Important rules:
 - Validation metrics are used for checkpoint selection and hyperparameter choice.
 - Held-out test metrics are used only for final reporting.
 - Do not choose models by repeatedly checking the held-out test set.
+- For a new check or fresh experiment request, previous raw notebook outputs are
+  context and guardrails by default, not the main source for narrowing the new
+  search. Use previous raw outputs heavily only when the request explicitly asks
+  to rely on prior runs/results/raws.
+- If the request is a fresh Optuna check and no narrower continuation is
+  requested, use the largest sensible validation-only search space for the
+  selected task/model family. Keep common-sense limits: one named model family
+  or fusion mode per study, no held-out test use, plausible runtime, fixed split
+  policy, fixed EC depth per EC study, and only features that are available or
+  deliberately prepared.
 
 ---
 
@@ -319,12 +329,20 @@ Complex fusion modes include:
 - hybrid fusion
 - cross-modal attention
 
-The comparison should be sequential, not a fresh broad search at every stage:
+The comparison should be sequential across model families, not a free search
+over every architecture at every stage:
 
 1. Tune and validate the simplest relevant model first.
 2. Select a stable validation-best anchor from multiple seeds where possible.
-3. Carry forward shared settings from the simpler anchor when adding one new source of complexity. Shared settings include the split policy, epoch budget, seed-repeat list, graph radius, GVP capacity, class-weighting policy, and validation selection metric.
-4. Retune only the settings likely affected by the added complexity, such as learning rate, weight decay, ESM/fusion projection dimension, dropout, or batch size.
+3. When deliberately continuing from an anchor, carry forward shared settings
+   from the simpler anchor when adding one new source of complexity. Shared
+   settings include the split policy, epoch budget, seed-repeat list, graph
+   radius, GVP capacity, class-weighting policy, and validation selection
+   metric.
+4. When the user instead asks for a new check or fresh Optuna sweep, do not
+   over-constrain the search to prior raw outputs. Search broadly within the
+   selected model family/fusion mode, while keeping the validation/test and
+   runtime safeguards above.
 5. Move to the next more complex model only when validation evidence justifies the added parameters.
 
 For metal GVP/ESM fusion, the advanced-fusion order should be:

@@ -39,6 +39,15 @@ final EC held-out split if train/test structures overlap (see Plan.md section 8)
 for model comparison, Optuna HPO, or seed-repeat validation. Use only
 validation metrics for all selection decisions.
 
+**Fresh-check default.** If the user asks for a new check, new run, or fresh
+Optuna sweep without explicitly asking to rely on previous raws/results, use
+previous notebook outputs only as context and safety checks. Prefer the broadest
+sensible validation-only Optuna search within the selected `MODEL_PRESET`, with
+fixed EC depth, fixed selection metric, and common-sense runtime and
+feature-availability limits. If the user explicitly asks to rely on previous
+running/results/raws, inspect that evidence and use it to narrow, continue, or
+repeat the prior configuration.
+
 **Selection metric.** For depth-1 EC training use
 `val_ec_group_level_1_balanced_acc`. This uses group weighting and balanced
 accuracy, which is the right choice for potentially imbalanced EC first-digit
@@ -278,7 +287,11 @@ Decision after this stage:
 - Choose a baseline anchor by validation evidence, not by held-out test.
 - Note whether `Only-ESM` outperforms `Only-GVP` — this is a key signal for EC.
 - If Only-ESM is clearly stronger, the ESM-fusion models become the priority.
-- Use the selected simpler anchor to constrain the next HPO stage.
+- If explicitly continuing from this baseline, use the selected simpler anchor
+  to constrain the next HPO stage.
+- If launching a fresh Optuna check, do not over-constrain it to prior raw
+  outputs; search broadly within the selected model family/fusion mode while
+  keeping EC depth fixed per study.
 
 ## Stage 3 — Small Debug Optuna
 
@@ -435,10 +448,11 @@ Decision after this stage:
 ## Stage 5 — Large Extensive Optuna Search
 
 Purpose: perform a longer, controlled EC search after the simpler baseline and
-medium HPO justify the search space.
+medium HPO justify the model family and search axes.
 
 When to use it: after at least one medium HPO or seed-repeat batch identifies
-the model family and axes worth expanding.
+the model family and axes worth expanding, or when the user asks for a fresh
+broad Optuna check and does not explicitly ask to rely on previous raw outputs.
 
 Expected scale/runtime: large Optuna search, potentially very long or
 overnight. A 200-trial run can be substantially longer than one night.

@@ -18,6 +18,12 @@ This guide is not the source of truth for the latest best run or next experiment
 
 Do not rerun old "first baseline" or Optuna examples just because they appear below. Those sections are stable workflow examples; the current metal-task recommendation may already be later in the sequence.
 
+When planning a new check or fresh Optuna sweep, use previous raw outputs only
+as context unless the user explicitly asks to rely on prior runs/results/raws.
+For the practical fresh-run default, prefer the broadest sensible
+validation-only Optuna search within one selected `MODEL_PRESET`; the current
+copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
 ## Starting Point
 
 Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
@@ -327,7 +333,7 @@ Recommended controlled first search:
 | `OPTUNA_BATCH_SIZES_CSV` | `4,8` if memory allows |
 | `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` | `none,inverse_frequency,inverse_sqrt_frequency,effective_number` |
 
-`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use `OPTUNA_SEARCH_PRESET = "later_capacity"` only after this narrow pass and seed-repeat validation look stable. Avoid broad architecture/capacity HPO until the simple baseline behavior is clear. Short HPO trials mostly rank early-training behavior.
+`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
 
 ## Professional Configuration Search Strategy
 
@@ -336,10 +342,10 @@ Use this controlled sequence:
 1. Smoke test `only_gvp_smoke` for 1 epoch. Ignore metrics except for obvious failures.
 2. Run `only_gvp_lr_seed` for 30-50 epochs. Choose by `val_metal_balanced_acc`, not test.
 3. Run `only_gvp_broad_comparison` if the first baseline is stable. Confirm learning-rate and seed sensitivity.
-4. Optionally run controlled Optuna on `Only-GVP` only, with narrow ranges for learning rate, weight decay, batch size, and possibly a small set of capacity values.
+4. Optionally run controlled Optuna on `Only-GVP` only. Use narrow ranges when deliberately continuing from an anchor; use the playbook's broader large-search blocks when the user asks for a fresh broad check.
 5. Rerun the top 2-3 validation configurations across several seeds, then record the best stable `Only-GVP` anchor.
 6. Once ESM embeddings are available, run `Only-ESM` and `GVP + late fusion` using the `Only-GVP` anchor for shared graph/training settings where applicable.
-7. Retune only the small set of settings affected by ESM/fusion, such as learning rate, weight decay, fusion dimension, dropout, and batch size.
+7. When deliberately continuing from the anchor, retune only the small set of settings affected by ESM/fusion, such as learning rate, weight decay, fusion dimension, dropout, and batch size. For a fresh Optuna check, search broadly within the selected fusion mode while keeping held-out test evaluation off.
 8. Test `GVP + early fusion` only if `Only-ESM` or late fusion shows useful validation signal.
 9. Test advanced fusion only if simpler ESM-informed models justify it: node-level late fusion first, hybrid fusion second, and cross-modal attention last with a narrow one-layer configuration.
 10. Select one final configuration by validation evidence.

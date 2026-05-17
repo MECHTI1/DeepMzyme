@@ -64,6 +64,20 @@ How to weigh these sources:
 `EXPERIMENT_STATUS.md` is the right place for short-lived experiment-status notes.
 Do not move that kind of frequently changing state into `AGENTS.md` or `Plan.md`.
 
+Default experiment-planning posture:
+
+- When the user asks for a new check, new run, next Optuna sweep, or fresh
+  experiment without explicitly saying to rely on previous runs, treat previous
+  raw outputs as context and guardrails only. Do not over-anchor the new plan to
+  old raw notebook outputs.
+- In that default case, prefer the largest sensible validation-only Optuna
+  search space the current stage can support, with common-sense constraints on
+  runtime, model family, available features, split policy, and final-test
+  protection.
+- When the user explicitly asks to rely on previous running/results/raws,
+  inspect the named evidence and use it directly to narrow, continue, or repeat
+  the prior configuration.
+
 ---
 
 ### 1c. Key project files and directories

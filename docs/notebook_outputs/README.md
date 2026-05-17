@@ -16,6 +16,12 @@ Default reading order: scan the relevant summary by name; load a raw file only
 when a summary cites it or when exact log lines or run commands are needed. Do
 not bulk-load the `raw/` tree.
 
+Planning rule: raw outputs are evidence for what already happened, not the
+default recipe for the next fresh experiment. When planning a new check or new
+Optuna sweep, rely on raw outputs heavily only if the user explicitly asks to
+use previous running/results/raws. Otherwise use summaries and status as
+context, then prefer a fresh, broad-but-sensible validation-only search space.
+
 ## Experiment-Tracking Rules
 
 - Use validation metrics for model, checkpoint, hyperparameter, architecture,

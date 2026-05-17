@@ -15,6 +15,13 @@ evidence in saved outputs, not in stable workflow guides.
 - If this file conflicts with `Plan.md`, source code, or run outputs, report the
   conflict instead of silently trusting this file.
 - Do not invent missing values or exact experiment numbers.
+- Default for new checks: unless the user explicitly asks to rely on previous
+  running/results/raw outputs, treat prior raw outputs as context only and plan
+  a fresh validation-only Optuna search with the largest sensible search space
+  for the chosen task/model family.
+- Explicit prior-run mode: when the user asks to rely on previous raws/results,
+  inspect the cited evidence and use it directly to narrow, continue, or repeat
+  that previous configuration.
 
 ## Current Stage
 

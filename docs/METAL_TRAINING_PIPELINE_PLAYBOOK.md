@@ -21,6 +21,14 @@ For all comparison, HPO, and seed-repeat stages:
   hyperparameter, architecture, and fusion decisions.
 - Do not run the optional final held-out test cell until the final
   validation-selected configuration is fixed.
+- If the user asks for a new check, new run, or fresh Optuna sweep without
+  explicitly asking to rely on previous raws/results, use previous notebook
+  outputs only as context and safety checks. Prefer the broadest sensible
+  validation-only Optuna search within the selected `MODEL_PRESET`, with
+  common-sense runtime and feature-availability limits.
+- If the user explicitly asks to rely on previous running/results/raws, inspect
+  the relevant copied evidence and use it to narrow, continue, or repeat that
+  prior configuration.
 
 ## Common Defaults
 
@@ -232,7 +240,10 @@ Decision after this stage:
 
 - Choose a baseline anchor by validation evidence, not by held-out test.
 - Prefer stability across seeds over a single high run.
-- Use the selected simpler anchor to constrain the next HPO/fusion stage.
+- If explicitly continuing from this baseline, use the selected simpler anchor
+  to constrain the next HPO/fusion stage.
+- If launching a fresh Optuna check, do not over-constrain it to prior raw
+  outputs; search broadly within the selected model family/fusion mode.
 
 ## Stage 3 - Small Debug Optuna
 
@@ -388,10 +399,12 @@ Decision after this stage:
 ## Stage 5 - Large Extensive Optuna Search
 
 Purpose: perform a longer, controlled search after the simpler baseline and
-medium HPO justify the search space.
+medium HPO justify the model family and search axes.
 
 When to use it: after at least one medium HPO or seed-repeat batch identifies
-the model family and search axes worth expanding.
+the model family and search axes worth expanding, or when the user asks for a
+fresh broad Optuna check and does not explicitly ask to rely on previous raw
+outputs.
 
 Expected scale/runtime: large Optuna search, potentially very long or
 overnight. A 200-trial run can be substantially longer than one night depending
