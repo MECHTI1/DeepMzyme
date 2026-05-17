@@ -137,7 +137,7 @@ can reproduce a command-line run.
 | Model size | `--hidden-s` | `128` | Scalar hidden channel width used by GVP/GNN and classifier projections. | Expose / sweep |
 | Model size | `--hidden-v` | `16` | Vector hidden channel width for GVP models. Ignored by non-GVP variants. | Expose / sweep |
 | Model size | `--edge-hidden` | `64` | Hidden width for encoded edge features. | Expose / sweep |
-| Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. | Expose / sweep |
+| Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. Default/recommended search spaces should cap this at 4 unless a deeper-depth ablation is explicitly labeled. | Expose / sweep |
 | Model size | `--head-mlp-layers` | `2` | Number of linear layers in metal/EC classifier heads. | Expose / sweep |
 | Graph construction | `--edge-radius` | project default currently `8.0` in code | Residue-neighbor radius for graph edges before optional RING edges. | Expose / sweep |
 | Node/edge encoders | `--node-feature-set` | `conservative` only | Named set of residue/node features. Only `conservative` is currently implemented. | Expose |
