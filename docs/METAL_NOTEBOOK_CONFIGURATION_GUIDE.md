@@ -16,7 +16,7 @@ Do not rerun old "first baseline" or Optuna examples just because they appear be
 
 ## Starting Point
 
-Use the non-overlapped PinMyMetal split:
+Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
 
 - `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"`
 - `TASK = "metal"`
@@ -26,7 +26,7 @@ Use the non-overlapped PinMyMetal split:
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
 - Set a visible `RUN_BATCH_ID` for each real comparison batch, for example `metal_only_gvp_lr_seed_2026_05_11`. The notebook writes into that batch folder when `RUN_BATCH_ID` is set.
 
-The trusted final split for metal is the non-overlapped PinMyMetal split. Exact PinMyMetal split results, if used later, must be labeled as secondary/possibly-overlapped reference results.
+The trusted final split for current metal evidence is the legacy Non-overlapped PinMyMetal split. Harsh Split PinMyMetal moves every common exact-split PDB ID to test as a whole group; use it only as an explicitly labeled new comparison. Metal Split PinMyMetal follows the exact PinMyMetal split for available supported structures; results from it, if used later, must be labeled as secondary/possibly-overlapped reference results. Common-PDBID 70/30 Split PinMyMetal is a custom comparison split, not the trusted final held-out split.
 
 Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
 

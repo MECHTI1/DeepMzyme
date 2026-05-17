@@ -4,7 +4,7 @@ This file lists conservative, baseline-first commands for DeepMzyme experiments.
 
 The main policy is:
 
-1. Use the **non-overlapped PinMyMetal split** for final held-out testing.
+1. Use the legacy **Non-overlapped PinMyMetal** split for final held-out testing unless a planned comparison explicitly selects another named split.
 2. Select checkpoints by **validation metrics**, not by the held-out test set.
 3. Run simple baselines before complex fusion models.
 4. Keep run names explicit so results can be compared later with `src/report_runs.py`.
@@ -43,7 +43,7 @@ Recommended syntax checks before training:
 
 ## 1. Shared paths
 
-These commands assume the main trusted split is located here:
+These commands assume the current trusted split, legacy **Non-overlapped PinMyMetal**, is located here:
 
 ```bash
 TRAIN_DIR="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train"
@@ -487,9 +487,9 @@ The CSV is the main comparison table. Prefer comparing models by validation-sele
 
 ---
 
-## 8. Optional: exact PinMyMetal split only as secondary/reference
+## 8. Optional: Metal Split PinMyMetal only as secondary/reference
 
-The exact PinMyMetal split should not be the main final held-out result if train/test overlap exists.
+Metal Split PinMyMetal is the exact PinMyMetal split for available supported structures. It should not be the main final held-out result if train/test overlap exists.
 
 If it is used, label the run names clearly, for example:
 
@@ -497,4 +497,4 @@ If it is used, label the run names clearly, for example:
 metal_exact_split_gvp_late_fusion_seed42_reference_only
 ```
 
-Do not mix exact-split runs and non-overlapped-split runs in the same final comparison without clearly labeling the split type.
+Do not mix Metal Split PinMyMetal, Harsh Split PinMyMetal, and custom split runs in the same final comparison without clearly labeling the split type.

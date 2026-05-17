@@ -293,6 +293,10 @@ def main() -> None:
     if test_csv is not None:
         append_unique_path(selected_paths, test_csv)
 
+    external_features_dir = dataset_root.parent / "updated_feature_extraction"
+    if external_features_dir.exists():
+        append_unique_path(selected_paths, external_features_dir)
+
     if args.skip_bundle:
         print(f"Prepared train directory: {train_dir}")
         print(f"Prepared test directory: {test_dir}")
@@ -302,6 +306,10 @@ def main() -> None:
             print(f"Prepared train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
         if test_csv is not None:
             print(f"Prepared test CSV: {test_csv}{format_multi_metal_note(test_multi_metal_rows)}")
+        if external_features_dir.exists():
+            print(f"Prepared external features directory: {external_features_dir}")
+        else:
+            print(f"Note: updated_feature_extraction not found at {external_features_dir}, will not be bundled.")
         return
 
     output_bundle = args.output_bundle or default_output_bundle(dataset_root)
@@ -309,6 +317,10 @@ def main() -> None:
     print(f"Created bundle: {output_bundle}")
     print(f"Verified train site-level summary CSV: {train_summary_csv}")
     print(f"Verified test site-level summary CSV: {test_summary_csv}")
+    if external_features_dir.exists():
+        print(f"Included updated external features: {external_features_dir}")
+    else:
+        print(f"Note: updated_feature_extraction not found at {external_features_dir}, not included in bundle.")
     if train_csv is not None:
         print(f"Included train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
     if test_csv is not None:

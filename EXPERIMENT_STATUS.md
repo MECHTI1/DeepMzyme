@@ -26,8 +26,11 @@ evidence in saved outputs, not in stable workflow guides.
   50-epoch validation-only check initialized from the selected late-fusion
   anchor; GVP + ESM hybrid fusion has completed an exploratory Round 1
   Optuna + 3-seed top-K repeat for the joint task.
-- Trusted split policy: non-overlapped PinMyMetal train/test split, with
-  validation split by `pdbid` and `VAL_FRACTION=0.15` for model selection.
+- Trusted split policy for current evidence: legacy Non-overlapped PinMyMetal
+  train/test split, with validation split by `pdbid` and `VAL_FRACTION=0.15`
+  for model selection. New Harsh Split PinMyMetal and Common-PDBID 70/30 Split
+  PinMyMetal variants exist for future comparisons but are not the basis of the
+  current reported anchors.
 - Test-set policy: held-out test remains unused for model, checkpoint,
   hyperparameter, architecture, and fusion decisions. Use it once after the
   validation-selected anchor is fixed.

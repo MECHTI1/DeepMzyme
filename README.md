@@ -10,7 +10,13 @@ DeepMzyme is a deep-learning framework for predicting metalloenzyme metal type a
 
 ## Recommended Split
 
-Use the non-overlapped PinMyMetal split for final held-out evaluation. Select checkpoints and model variants with validation metrics only; use the held-out test set for final reporting of the selected checkpoint.
+Current experiment evidence uses the legacy **Non-overlapped PinMyMetal** split (`DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`) for final held-out evaluation. Select checkpoints and model variants with validation metrics only; use the held-out test set for final reporting of the selected checkpoint.
+
+Other named split variants are available for secondary comparisons:
+
+- **Harsh Split PinMyMetal**: `DeepMzyme_Data/train_and_test_sets_structures_harsh_pinmymetal`, where every common exact-split PDB ID is assigned as a whole group to test.
+- **Metal Split PinMyMetal**: `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal`, matching the exact PinMyMetal train/test membership for available supported structures and possibly containing train/test overlap.
+- **Common-PDBID 70/30 Split PinMyMetal**: `DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal`, where common exact-split PDB IDs are assigned as whole groups with 70% to train and 30% to test.
 
 ## Quick Start
 

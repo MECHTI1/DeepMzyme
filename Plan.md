@@ -220,7 +220,33 @@ The goal is to avoid adding complex architecture before proving that it improves
 
 ### 8) Data leakage and split policy
 
-The non-overlapped PinMyMetal split is the main trusted split for final held-out evaluation.
+The non-overlapped PinMyMetal split remains the historically trusted split for
+final held-out evaluation unless a new experiment explicitly switches to a
+newer split variant.
+
+Named split variants:
+
+- **Harsh Split PinMyMetal**:
+  `DeepMzyme_Data/train_and_test_sets_structures_harsh_pinmymetal`.
+  Every PDB ID shared by the exact PinMyMetal train and test inputs is assigned
+  as a whole PDB-ID group to test, including exact-train structures/rows for
+  that shared PDB ID.
+- **Non-overlapped PinMyMetal**:
+  `DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`.
+  This is the legacy trusted final held-out split used by current experiment
+  evidence. It removes shared PDB IDs from train and keeps the original exact
+  test structures in test.
+- **Metal Split PinMyMetal**:
+  `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal`.
+  This follows the exact `prepare_training_and_test_set/pinmymetal_files`
+  train/test membership for available supported structures and may contain
+  train/test PDB-ID overlap.
+- **Common-PDBID 70/30 Split PinMyMetal**:
+  `DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal`.
+  Train-only PDB IDs remain train-only, test-only PDB IDs remain test-only, and
+  PDB IDs common to the exact train/test inputs are assigned as whole PDB-ID
+  groups with 70% to train and 30% to test. This is a custom comparison split,
+  not the main final held-out split.
 
 For the EC-number classification task:
 

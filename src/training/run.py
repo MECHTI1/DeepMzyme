@@ -148,19 +148,35 @@ def infer_split_identity(config: TrainConfig) -> dict[str, Any]:
         if path is not None
     )
     normalized = path_text.lower()
+    if "train_and_test_sets_structures_harsh_pinmymetal" in normalized:
+        return {
+            "split_name": "Harsh Split PinMyMetal",
+            "split_type": "harsh_pinmymetal",
+            "overlap_warning": None,
+        }
     if "train_and_test_sets_structures_non_overlapped_pinmymetal" in normalized:
         return {
-            "split_name": "train_and_test_sets_structures_non_overlapped_pinmymetal",
+            "split_name": "Non-overlapped PinMyMetal",
             "split_type": "non_overlapped_pinmymetal",
             "overlap_warning": None,
         }
     if "train_and_test_sets_structures_exact_pinmymetal" in normalized:
         return {
-            "split_name": "train_and_test_sets_structures_exact_pinmymetal",
-            "split_type": "exact_pinmymetal_possibly_overlapped",
+            "split_name": "Metal Split PinMyMetal",
+            "split_type": "metal_split_pinmymetal_possibly_overlapped",
             "overlap_warning": (
-                "Exact PinMyMetal split may contain train/test overlap and should "
+                "Metal Split PinMyMetal follows the exact PinMyMetal split and may contain train/test overlap. "
+                "It should "
                 "be interpreted only as a secondary/reference result."
+            ),
+        }
+    if "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal" in normalized:
+        return {
+            "split_name": "Common-PDBID 70/30 Split PinMyMetal",
+            "split_type": "common_pdbid_70_30_pinmymetal",
+            "overlap_warning": (
+                "Common-PDBID 70/30 Split PinMyMetal is a custom comparison split, "
+                "not the trusted final held-out split."
             ),
         }
     return {

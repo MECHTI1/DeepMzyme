@@ -49,7 +49,8 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_stru
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Create an additional non-overlapping train/test structure split where test PDB IDs have priority."
+            "Create Harsh Split PinMyMetal: a non-overlapping train/test structure split "
+            "where exact-test PDB IDs have priority and shared PDB IDs are removed from train."
         )
     )
     parser.add_argument("--train-dir", type=Path, default=DEFAULT_TRAIN_DIR)
