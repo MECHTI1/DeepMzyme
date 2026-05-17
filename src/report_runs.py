@@ -60,6 +60,8 @@ CSV_COLUMNS = [
     "selected_val_ec_group_balanced_acc",
     "comparison_test_metric_name",
     "comparison_test_metric_value",
+    "test_joint_balanced_acc",
+    "test_joint_macro_f1",
     "test_metal_acc",
     "test_metal_balanced_acc",
     "test_metal_macro_f1",
@@ -225,9 +227,7 @@ def metrics_from_report(test_report: dict[str, Any]) -> dict[str, Any]:
 def matching_test_metric_name(selection_metric: str | None, task: str | None) -> str | None:
     metric = str(selection_metric or "")
     if metric.startswith("val_"):
-        candidate = "test_" + metric.removeprefix("val_")
-        if candidate != "test_joint_balanced_acc":
-            return candidate
+        return "test_" + metric.removeprefix("val_")
     if task == "metal":
         return "test_metal_balanced_acc"
     if task == "ec":
