@@ -18,8 +18,8 @@ evidence in saved outputs, not in stable workflow guides.
 
 ## Current Stage
 
-- Current task focus: metal classification, with an exploratory joint
-  (metal + EC) hybrid-fusion check now also on record.
+- Current task focus: metal classification, with exploratory joint
+  (metal + EC) hybrid-fusion and hybrid+RING checks now also on record.
 - Stage: metal Only-ESM baseline confirmed; GVP + late fusion has completed a
   proper 5-seed, 50-epoch validation-only seed repeat for the top Round 3
   Optuna candidates; GVP + node-level late fusion has also completed a 5-seed,
@@ -42,6 +42,11 @@ evidence in saved outputs, not in stable workflow guides.
   validation-only protocol. Its best single-seed `val_joint_balanced_acc`
   (trial 17 = `0.748343`) is not a metal anchor; the corresponding
   metal-side `val_metal_balanced_acc` was `0.672077`.
+- Hybrid+RING status: the `joint_hybrid_ring_optuna_50epoch_wide_v1`
+  continuation log is also exploratory single-seed validation evidence. In the
+  copied trials 105-176 artifact, trial `114` reached
+  `val_metal_balanced_acc=0.7303469775006777`, but this has not been confirmed
+  with the project-standard 5-seed protocol and is not a replacement anchor.
 
 For a cross-family snapshot of validation results and reliability tiers,
 see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
@@ -79,6 +84,11 @@ see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
     for the joint task. The batch id in the raw output is `debug_smoke` and
     the raw output flags mixed/missing `RUN_BATCH_ID` values; treat it as
     exploratory evidence only.
+  - `docs/notebook_outputs/raw/Hybrid/Round2_joint_hybrid_ring_optuna_50epoch_wide_v1_trials105_176_partial_trial177.output_cell_notebook.md`
+    contains the copied continuation log for the GVP + ESM hybrid fusion +
+    RING Optuna study, with completed trials `105`-`176` and an incomplete
+    started trial `177`. Treat it as exploratory single-seed validation
+    evidence only.
 - Current summaries / planning notes:
   - Concise run summaries are under `docs/notebook_outputs/summaries/`.
   - Cross-family validation snapshot:
@@ -89,6 +99,8 @@ see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
     `docs/notebook_outputs/summaries/summary_run_gvp_node_level_late_fusion_round1_from_latefusion_trial49_seedrepeat_50epoch.md`.
   - Hybrid fusion Round 1 exploratory summary:
     `docs/notebook_outputs/summaries/summary_run_hybrid_round1_optuna_plus_top3_seedrepeat.md`.
+  - Hybrid+RING exploratory continuation summary:
+    `docs/notebook_outputs/summaries/summary_run_hybrid_ring_round2_optuna_50epoch_wide_v1_trials105_176.md`.
 - Stable usage guide:
   - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` should stay focused on stable
     notebook usage principles and should point here for current status.
