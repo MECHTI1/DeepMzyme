@@ -13,6 +13,42 @@ block, edit the notebook's **Main configuration** cell directly or paste the
 block at the end of that cell before running **Build central CONFIG
 dictionary**.
 
+## How To Use This Playbook
+
+Use exactly one stage block at a time. After editing the notebook's **Main
+configuration** cell, run the CONFIG/planning cells and inspect the resolved
+commands before setting `LAUNCH_PLANNED_TRAINING_RUNS = True`.
+
+Notebook execution order:
+
+1. Setup/install and data-source cells.
+2. Main configuration cell with one block from this playbook.
+3. Build central `CONFIG`.
+4. Planning/preflight cells.
+5. Optional training execution cell.
+6. Summarize/report cell for the current `RUN_BATCH_ID`.
+7. For final testing only: select final run, preview final held-out test, then
+   launch once.
+
+Pipeline stage map:
+
+| Stage | Purpose | Exact block |
+| --- | --- | --- |
+| 0 | Runtime/data/output setup shared by all stages | Common Defaults |
+| 1 | Smoke/readiness check | Stage 1 |
+| 2 | Baseline validation comparisons | Stage 2A/2B |
+| 3 | Debug Optuna plumbing check | Stage 3 |
+| 4 | Medium useful Optuna | Stage 4 |
+| 5 | Large model-family Optuna and optional RING ablation | Stage 5A-5G |
+| 6 | Top-K multi-seed validation | Stage 6 |
+| 7 | Final held-out test evaluation | Stage 7 |
+
+G4 GPU policy: for real searches, prefer the explicit `custom` Optuna budgets
+below over the notebook's small `first_useful` or `serious` presets. The
+recommended serious profile is 50-epoch baselines, batch size 8 when memory is
+stable, 64 x 35-epoch medium HPO, 200 x 50-epoch large HPO, and top-3 x 5-seed
+validation confirmation.
+
 For all comparison, HPO, and seed-repeat stages:
 
 - Keep `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`.
@@ -59,6 +95,22 @@ BALANCE_METAL_SITE_SYMBOLS = False
 
 COPY_OUTPUTS_TO_DRIVE = True
 METAL_REPORT_VIEW = "both"
+
+DEVICE = "cuda"
+SKIP_EXISTING_RUNS = True
+STOP_ON_FIRST_FAILURE = False
+ALLOW_MODEL_PRESET_MISMATCH = False
+ALLOW_SINGLE_MODE_TO_TRUNCATE_COMPARISON = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+
+OPTUNA_DIRECTION = "maximize"
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = False
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_TIMEOUT_MINUTES = 0
 ```
 
 If a run uses `Only-ESM` or any GVP + ESM fusion preset, set
@@ -158,12 +210,12 @@ RUN_BATCH_ID = "metal_only_gvp_baseline_lr_seed"
 SUMMARY_BASENAME = "metal_only_gvp_baseline_lr_seed"
 RUN_NAME_PREFIX = "metal_only_gvp_baseline"
 
-EPOCHS = 30
-BATCH_SIZES_CSV = "4,8"
-LEARNING_RATES_CSV = "3e-5,1e-4"
+EPOCHS = 50
+BATCH_SIZES_CSV = "8"
+LEARNING_RATES_CSV = "3e-5,1e-4,3e-4"
 WEIGHT_DECAYS_CSV = "1e-4"
-SEEDS_CSV = "42,43"
-MAX_CONFIGURATION_RUNS = 8
+SEEDS_CSV = "42,43,44"
+MAX_CONFIGURATION_RUNS = 9
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "16"
@@ -196,8 +248,8 @@ RUN_BATCH_ID = "metal_baseline_model_comparison"
 SUMMARY_BASENAME = "metal_baseline_model_comparison"
 RUN_NAME_PREFIX = "metal_baseline"
 
-EPOCHS = 30
-BATCH_SIZES_CSV = "4"
+EPOCHS = 50
+BATCH_SIZES_CSV = "8"
 LEARNING_RATES_CSV = "3e-5,1e-4"
 WEIGHT_DECAYS_CSV = "1e-4"
 SEEDS_CSV = "42,43"
@@ -287,6 +339,12 @@ RING_EDGE_MODE = "with_ring"
 OPTUNA_INTENSITY = "debug"
 N_OPTUNA_TRIALS = 4
 MAX_EPOCHS_PER_TRIAL = 3
+OPTUNA_N_STARTUP_TRIALS = 4
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_debug"
 OPTUNA_STORAGE = ""
@@ -335,7 +393,7 @@ Purpose: run a useful but bounded HPO pass inside one selected model family.
 When to use it: after baseline behavior is understood and you have selected a
 model family to tune, usually Only-GVP first.
 
-Expected scale/runtime: medium validation run to serious run, hours.
+Expected scale/runtime: useful serious run on a G4-class GPU, usually hours.
 
 Notebook configuration block for first useful Only-GVP HPO:
 
@@ -349,7 +407,7 @@ SUMMARY_BASENAME = "metal_only_gvp_optuna_medium"
 RUN_NAME_PREFIX = "metal_only_gvp_optuna_medium"
 
 EPOCHS = 50
-BATCH_SIZES_CSV = "4"
+BATCH_SIZES_CSV = "8"
 LEARNING_RATES_CSV = "3e-5"
 WEIGHT_DECAYS_CSV = "1e-4"
 SEEDS_CSV = "42"
@@ -362,21 +420,29 @@ HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "8.0"
 RING_EDGE_MODE = "with_ring"
 
-OPTUNA_INTENSITY = "first_useful"
+OPTUNA_INTENSITY = "custom"
+N_OPTUNA_TRIALS = 64
+MAX_EPOCHS_PER_TRIAL = 35
+OPTUNA_N_STARTUP_TRIALS = 20
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_medium.db"
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
-REPEAT_SEEDS = "42,123,2026"
+REPEAT_SEEDS = "42,123,2026,43,44"
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -441,6 +507,12 @@ RING_EDGE_MODE = "with_ring"
 OPTUNA_INTENSITY = "custom"
 N_OPTUNA_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_SEARCH_PRESET = "later_capacity"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_200_capacity"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_200_capacity.db"
@@ -470,7 +542,67 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-### 5B - 200-Trial GVP + Late-Fusion Search
+### 5B - 120-Trial Only-ESM Search
+
+Run this after ESM coverage is valid. It is the ESM-only baseline HPO; it does
+not use graph/RING capacity fields even if those fields remain present in the
+notebook.
+
+Notebook configuration block:
+
+```python
+TASK = "metal"
+RUN_MODE = "controlled_hpo_optuna"
+RECOMMENDED_RUN_SET = "custom"
+MODEL_PRESET = "Only-ESM"
+RUN_BATCH_ID = "metal_only_esm_optuna_120_controlled"
+SUMMARY_BASENAME = "metal_only_esm_optuna_120_controlled"
+RUN_NAME_PREFIX = "metal_only_esm_optuna_120"
+
+EPOCHS = 50
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_metal_balanced_acc"
+RING_EDGE_MODE = "with_ring"
+
+ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = True
+
+OPTUNA_INTENSITY = "custom"
+N_OPTUNA_TRIALS = 120
+MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 30
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_SEARCH_PRESET = "custom"
+OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
+OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_SPLIT_SEED = 42
+OPTUNA_TIMEOUT_MINUTES = 0
+
+OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
+OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
+OPTUNA_BATCH_SIZES_CSV = "8"
+OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
+OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+
+OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
+OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2,3"
+
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+REPEAT_SEEDS = "42,123,2026,43,44"
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+```
+
+### 5C - 200-Trial GVP + Late-Fusion Search
 
 Run this only after ESM coverage is valid and simpler baselines justify ESM
 fusion.
@@ -499,6 +631,12 @@ PREPARE_MISSING_ESM_EMBEDDINGS = True
 OPTUNA_INTENSITY = "custom"
 N_OPTUNA_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_late_fusion_optuna_200_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_late_fusion_optuna_200_controlled.db"
@@ -528,7 +666,204 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-### 5C - Optional Radius-Only Ablation
+### 5D - 200-Trial GVP + Node-Level Late-Fusion Search
+
+Run this after the late-fusion baseline has a stable validation anchor.
+
+Notebook configuration block:
+
+```python
+TASK = "metal"
+RUN_MODE = "controlled_hpo_optuna"
+RECOMMENDED_RUN_SET = "custom"
+MODEL_PRESET = "GVP + node-level late fusion"
+RUN_BATCH_ID = "metal_node_late_fusion_optuna_200_controlled"
+SUMMARY_BASENAME = "metal_node_late_fusion_optuna_200_controlled"
+RUN_NAME_PREFIX = "metal_node_late_fusion_optuna_200"
+
+EPOCHS = 50
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_metal_balanced_acc"
+RING_EDGE_MODE = "with_ring"
+
+ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = True
+
+OPTUNA_INTENSITY = "custom"
+N_OPTUNA_TRIALS = 200
+MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_SEARCH_PRESET = "custom"
+OPTUNA_STUDY_NAME = "metal_node_late_fusion_optuna_200_controlled"
+OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_SPLIT_SEED = 42
+OPTUNA_TIMEOUT_MINUTES = 0
+
+OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
+OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
+OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
+OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
+OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+
+OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
+OPTUNA_HIDDEN_V_VALUES_CSV = "16,32"
+OPTUNA_EDGE_HIDDEN_VALUES_CSV = "64,128"
+OPTUNA_GVP_LAYERS_VALUES_CSV = "2,3,4"
+OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
+OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
+OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
+
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+REPEAT_SEEDS = "42,123,2026,43,44"
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+```
+
+### 5E - 200-Trial GVP + Hybrid-Fusion Search
+
+Run this only after early/late ESM evidence justifies injecting ESM before graph
+message passing and also using late fusion.
+
+Notebook configuration block:
+
+```python
+TASK = "metal"
+RUN_MODE = "controlled_hpo_optuna"
+RECOMMENDED_RUN_SET = "custom"
+MODEL_PRESET = "GVP + hybrid fusion"
+RUN_BATCH_ID = "metal_hybrid_fusion_optuna_200_controlled"
+SUMMARY_BASENAME = "metal_hybrid_fusion_optuna_200_controlled"
+RUN_NAME_PREFIX = "metal_hybrid_fusion_optuna_200"
+
+EPOCHS = 50
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_metal_balanced_acc"
+RING_EDGE_MODE = "with_ring"
+
+ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = True
+
+OPTUNA_INTENSITY = "custom"
+N_OPTUNA_TRIALS = 200
+MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_SEARCH_PRESET = "custom"
+OPTUNA_STUDY_NAME = "metal_hybrid_fusion_optuna_200_controlled"
+OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_SPLIT_SEED = 42
+OPTUNA_TIMEOUT_MINUTES = 0
+
+OPTUNA_LEARNING_RATE_RANGE = "5e-6,1.5e-4"
+OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
+OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
+OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
+OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+
+OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
+OPTUNA_HIDDEN_V_VALUES_CSV = "16,32"
+OPTUNA_EDGE_HIDDEN_VALUES_CSV = "64,128"
+OPTUNA_GVP_LAYERS_VALUES_CSV = "2,3,4"
+OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
+OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
+OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
+OPTUNA_EARLY_ESM_DIM_VALUES_CSV = "16,32,64"
+OPTUNA_EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+REPEAT_SEEDS = "42,123,2026,43,44"
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+```
+
+### 5F - 120-Trial GVP + Cross-Modal Attention Search
+
+Run this last among fusion models. Keep attention narrow at first because it has
+more overfitting degrees of freedom.
+
+Notebook configuration block:
+
+```python
+TASK = "metal"
+RUN_MODE = "controlled_hpo_optuna"
+RECOMMENDED_RUN_SET = "custom"
+MODEL_PRESET = "GVP + cross-modal attention"
+RUN_BATCH_ID = "metal_cross_attention_optuna_120_controlled"
+SUMMARY_BASENAME = "metal_cross_attention_optuna_120_controlled"
+RUN_NAME_PREFIX = "metal_cross_attention_optuna_120"
+
+EPOCHS = 50
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_metal_balanced_acc"
+RING_EDGE_MODE = "with_ring"
+CROSS_ATTENTION_NEIGHBORHOOD = "first_second_shell"
+CROSS_ATTENTION_BIDIRECTIONAL = False
+
+ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = True
+
+OPTUNA_INTENSITY = "custom"
+N_OPTUNA_TRIALS = 120
+MAX_EPOCHS_PER_TRIAL = 50
+OPTUNA_N_STARTUP_TRIALS = 30
+OPTUNA_TPE_MULTIVARIATE = True
+OPTUNA_TPE_GROUP = True
+OPTUNA_AUTO_CONFIGURE_BUDGET = False
+OPTUNA_USE_PRUNING = False
+OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_SEARCH_PRESET = "custom"
+OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
+OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_cross_attention_optuna_120_controlled.db"
+OPTUNA_SPLIT_SEED = 42
+OPTUNA_TIMEOUT_MINUTES = 0
+
+OPTUNA_LEARNING_RATE_RANGE = "5e-6,1e-4"
+OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
+OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
+OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
+OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
+
+OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
+OPTUNA_HIDDEN_V_VALUES_CSV = "16,32"
+OPTUNA_EDGE_HIDDEN_VALUES_CSV = "64,128"
+OPTUNA_GVP_LAYERS_VALUES_CSV = "2,3,4"
+OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
+OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
+OPTUNA_CROSS_ATTENTION_LAYERS_CSV = "1"
+OPTUNA_CROSS_ATTENTION_HEADS_CSV = "2,4"
+OPTUNA_CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+REPEAT_SEEDS = "42,123,2026,43,44"
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+```
+
+### 5G - Optional Radius-Only Ablation
 
 Use only when you deliberately want to compare against the older radius-only
 graph setting. This does not make Optuna sample RING on/off; it fixes the base

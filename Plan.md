@@ -66,6 +66,34 @@ For the staged training pipeline (smoke, baseline, HPO, seed-repeat, final test)
 with copy-paste notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
+### Canonical Colab metal-training pipeline
+
+The canonical metal-training workflow is the single notebook
+`notebooks/DeepMzyme_training_colab.ipynb` configured through the staged blocks
+in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. That playbook is the source of
+truth for exact notebook variable values for each stage. The stable option
+reference is `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`.
+
+Use this order for reportable metal work:
+
+1. Run the 1-epoch smoke/readiness block.
+2. Run 50-epoch validation-only baseline comparisons on the trusted
+   Non-overlapped PinMyMetal split.
+3. Run controlled Optuna within one `MODEL_PRESET` at a time. Do not ask Optuna
+   to choose between model families.
+4. For a G4-class Colab GPU, prefer explicit serious/custom Optuna budgets over
+   the small notebook presets: persistent SQLite storage in Drive,
+   multivariate/group TPE enabled, no held-out test evaluation, and enough
+   startup trials for TPE to explore before exploiting.
+5. Confirm the top 2-3 Optuna configurations with a fixed multi-seed validation
+   repeat, normally five seeds and 50 epochs.
+6. Select one final configuration using validation evidence only.
+7. Run the held-out test cell once for that selected validation checkpoint.
+
+Current exact metal-stage parameters, including G4-oriented Optuna budgets,
+belong in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` rather than being
+duplicated here.
+
 ---
 
 ## 3) Train the EC-Number Classification Model
@@ -220,6 +248,24 @@ Each playbook covers staged notebook configuration blocks for:
 - large controlled Optuna searches, including 200-trial examples
 - top-K seed-repeat validation
 - final held-out test evaluation after validation-based selection only
+
+For the metal notebook pipeline, the playbook must keep exact values for:
+
+- `TASK`, `RUN_MODE`, `RECOMMENDED_RUN_SET`, `MODEL_PRESET`
+- split and selection controls: `DATASET_NAME`, `VAL_FRACTION`, `SPLIT_BY`,
+  `SELECTION_METRIC`, `OPTUNA_SELECTION_METRIC`
+- feature controls: `RING_EDGE_MODE`, RING preparation/requirement flags,
+  ESM embedding flags, and external-feature strictness
+- baseline budgets: epochs, batch sizes, learning rates, weight decay, seeds,
+  and maximum planned rows
+- Optuna budgets and sampler controls: `N_OPTUNA_TRIALS`,
+  `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`,
+  `OPTUNA_TPE_MULTIVARIATE`, `OPTUNA_TPE_GROUP`,
+  `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage, search preset, and search ranges
+- seed-repeat controls: top-K, repeat seed list, mismatch guard, and final-test
+  exclusion
+- final-test controls: preview mode first, explicit one-shot confirmation,
+  source-run selection, and repeat/mixed-batch guards
 
 Keep current best-result notes and mutable next-step status in
 `EXPERIMENT_STATUS.md`. Keep raw and summarized run evidence in

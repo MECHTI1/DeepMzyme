@@ -103,11 +103,13 @@ claim or change.
   expansion, run execution, skipping, capping, and reporting behavior. The
   single notebook supports all tasks (metal, EC, joint) via `TASK` selection.
 - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`: stable notebook workflow and
-  option meaning for metal classification. It is not a live results table.
+  option meaning for metal classification, including notebook execution order,
+  Optuna behavior, and safety policy. It is not a live results table.
 - `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`: staged, copy-paste-ready notebook
   configuration blocks for metal classification. Use this as the practical
-  execution recipe for each training stage (smoke, baseline, Optuna,
-  seed-repeat, final test).
+  execution recipe and exact parameter source for each training stage (smoke,
+  baseline, Optuna, seed-repeat, final test). For G4-class GPU planning, this
+  is where serious/custom Optuna budgets and search spaces should be recorded.
 - `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`: same staged structure as the metal
   playbook, covering EC-number classification. Covers EC label depth, group
   weighting, contrastive loss progression, and 200-trial Optuna examples.
@@ -249,6 +251,25 @@ bulk-load all summaries.
 For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
 the specific evidence files it names. For notebook behavior questions, inspect
 the notebook itself rather than relying only on the workflow guide.
+
+#### Metal Colab pipeline documentation policy
+
+When the task asks how to run the metal-training notebook, how to configure a
+training stage, or how to plan the next metal Optuna sweep:
+
+- Treat `notebooks/DeepMzyme_training_colab.ipynb` as the implemented behavior.
+- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact copy-paste
+  parameter recipe for the full metal pipeline.
+- Treat `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` as the stable explanation
+  of what those notebook variables mean and how to avoid unsafe comparisons.
+- Keep mutable "current best run" status in `EXPERIMENT_STATUS.md`, not in the
+  guide or playbook.
+
+For serious Optuna recommendations, prefer one selected `MODEL_PRESET` per
+study, validation-only objective `val_metal_balanced_acc`, persistent SQLite
+storage in Drive, multivariate/group TPE, enough startup trials for exploration,
+and top-K seed-repeat validation before any held-out test run. Do not tune or
+choose architecture/hyperparameters from held-out test results.
 
 ---
 

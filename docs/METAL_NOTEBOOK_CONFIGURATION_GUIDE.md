@@ -25,6 +25,56 @@ For the practical fresh-run default, prefer the broadest sensible
 validation-only Optuna search within one selected `MODEL_PRESET`; the current
 copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
+## Exact Pipeline Source And Notebook Cell Order
+
+Use the metal playbook for exact values. This guide explains how to interpret
+the notebook controls and what must stay fixed for a fair comparison.
+
+Recommended notebook cell order:
+
+1. Open `notebooks/DeepMzyme_training_colab.ipynb`.
+2. Run setup/install and data-source cells.
+3. Edit the **Main configuration** cell using one block from
+   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+4. Run **Build central CONFIG dictionary**.
+5. Run planning/preflight cells and inspect the resolved configuration table,
+   exact shell commands, feature coverage, split diagnostics, and warnings.
+6. In the optional execution cell, set `LAUNCH_PLANNED_TRAINING_RUNS = True`
+   only after the planned commands match the intended stage.
+7. Run the summarize/report cell for the current `RUN_BATCH_ID`.
+8. For Optuna stages, inspect `top_trials.csv` and the Optuna summary, then run
+   the predeclared top-K seed-repeat validation before selecting a final model.
+9. Only after validation selection is complete, run the **Select final run**
+   cell and then the final held-out test cell first in `preview_only` mode.
+10. Launch final held-out test evaluation once with
+    `CONFIRM_ONE_SHOT_POLICY = True`.
+
+The notebook is intentionally staged. Smoke, baseline, HPO, seed-repeat, and
+final-test settings should not be mixed in one batch folder unless the batch is
+explicitly labeled as mixed and not used for model selection.
+
+## G4-Oriented Training Profile
+
+A G4 GPU is strong enough to use the serious playbook blocks rather than the
+tiny notebook defaults. For reportable metal work, use this profile unless
+memory or wall-time forces a reduction:
+
+| Area | G4-oriented value |
+| --- | --- |
+| Real baseline epochs | `EPOCHS = 50` |
+| Batch size | start with `BATCH_SIZES_CSV = "8"`; use `"4"` only if memory fails |
+| Split | `VAL_FRACTION = 0.15`, `SPLIT_BY = "pdbid"` |
+| Objective | `SELECTION_METRIC = "val_metal_balanced_acc"` |
+| RING | `RING_EDGE_MODE = "with_ring"`, `PREPARE_MISSING_RING_EDGES = True` |
+| External features | strict updated features; keep `ALLOW_MISSING_EXTERNAL_FEATURES = False` |
+| Medium Optuna | custom budget, about `64` trials x `35` epochs |
+| Large Optuna | custom budget, `200` trials x `50` epochs |
+| Seed repeat | top `3` configs x seeds `42,123,2026,43,44` x `50` epochs |
+| Held-out test | disabled until final selected checkpoint |
+
+Use persistent Optuna storage in Drive for any useful or serious search. A blank
+`OPTUNA_STORAGE` is acceptable only for debug HPO.
+
 ## Starting Point
 
 Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
@@ -311,22 +361,47 @@ For debug only:
 
 For useful Colab HPO:
 
-- `OPTUNA_INTENSITY = "first_useful"` for the first meaningful pass.
+- Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
+  budget. The playbook uses this for G4-oriented medium and 200-trial searches.
 - Use persistent SQLite storage in Drive, for example:
   `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/deepmzyme_metal_only_gvp.db`
 - Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
+- Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
+  can model correlated parameters such as hidden width, vector width, graph
+  depth, and fusion dimension.
+- Set `OPTUNA_N_STARTUP_TRIALS` below `N_OPTUNA_TRIALS`. If startup trials are
+  greater than or equal to total trials, the run is effectively random search.
+  Use about `20` startup trials for a 64-trial medium search and about `40` for
+  a 200-trial wide search.
+- Keep `OPTUNA_AUTO_CONFIGURE_BUDGET = False` when using a playbook block with
+  explicit trial counts. If enabled, the notebook may raise trial counts to the
+  advisor's minimum recommendation.
+- Keep `OPTUNA_USE_PRUNING = False` for now. The notebook launches
+  `src/train.py` as subprocess trials and does not currently report
+  intermediate values back to Optuna, so pruner settings are not an effective
+  early-stopping mechanism in this path.
 - Use `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` only after you are ready to rerun the top configurations across seeds.
-- Use `REPEAT_SEEDS = "42,123,2026"` or another fixed, predeclared seed list.
+- Use `REPEAT_SEEDS = "42,123,2026,43,44"` for project-standard metal
+  confirmation, unless a smaller exploratory check is explicitly labeled.
 
 Current intensity presets:
 
 | `OPTUNA_INTENSITY` | Effective budget | Use |
 | --- | --- | --- |
 | `debug` | 4 trials x 3 epochs | setup check only |
-| `first_useful` | 16 trials x 20 epochs | first meaningful HPO |
+| `first_useful` | 16 trials x 20 epochs | first meaningful HPO when compute is limited |
 | `serious` | 40 trials x 40 epochs | longer Colab HPO with persistent storage |
 | `custom` | uses visible `N_OPTUNA_TRIALS` and `MAX_EPOCHS_PER_TRIAL` | deliberate manual budget |
+
+For a G4-class GPU, prefer the playbook's explicit `custom` budgets over
+`first_useful`/`serious` for the real search:
+
+| Search | Exact budget |
+| --- | --- |
+| Debug | `N_OPTUNA_TRIALS = 4`, `MAX_EPOCHS_PER_TRIAL = 3`, no model decision |
+| Medium useful | `N_OPTUNA_TRIALS = 64`, `MAX_EPOCHS_PER_TRIAL = 35`, `OPTUNA_N_STARTUP_TRIALS = 20` |
+| Large/final candidate discovery | `N_OPTUNA_TRIALS = 200`, `MAX_EPOCHS_PER_TRIAL = 50`, `OPTUNA_N_STARTUP_TRIALS = 40` |
 
 Recommended controlled first search:
 
@@ -335,11 +410,14 @@ Recommended controlled first search:
 | `RUN_MODE` | `controlled_hpo_optuna` |
 | `RECOMMENDED_RUN_SET` | `custom` |
 | `MODEL_PRESET` | `Only-GVP` |
-| `OPTUNA_INTENSITY` | `first_useful` |
+| `OPTUNA_INTENSITY` | `custom` |
+| `N_OPTUNA_TRIALS` | `64` |
+| `MAX_EPOCHS_PER_TRIAL` | `35` |
+| `OPTUNA_N_STARTUP_TRIALS` | `20` |
 | `OPTUNA_SEARCH_PRESET` | `first_useful_only_gvp_narrow` |
 | `OPTUNA_LEARNING_RATE_RANGE` | `1e-5,3e-4` |
 | `OPTUNA_WEIGHT_DECAYS_CSV` | `0.0,1e-5,1e-4` |
-| `OPTUNA_BATCH_SIZES_CSV` | `4,8` if memory allows |
+| `OPTUNA_BATCH_SIZES_CSV` | `8` on G4; use `4` only if memory fails |
 | `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` | `none,inverse_frequency,inverse_sqrt_frequency,effective_number` |
 
 `OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
@@ -349,7 +427,7 @@ Recommended controlled first search:
 Use this controlled sequence:
 
 1. Smoke test `only_gvp_smoke` for 1 epoch. Ignore metrics except for obvious failures.
-2. Run `only_gvp_lr_seed` for 30-50 epochs. Choose by `val_metal_balanced_acc`, not test.
+2. On a G4-class GPU, run `only_gvp_lr_seed` for 50 epochs. Choose by `val_metal_balanced_acc`, not test.
 3. Run `only_gvp_broad_comparison` if the first baseline is stable. Confirm learning-rate and seed sensitivity.
 4. Optionally run controlled Optuna on `Only-GVP` only. Use narrow ranges when deliberately continuing from an anchor; use the playbook's broader large-search blocks when the user asks for a fresh broad check.
 5. Rerun the top 2-3 validation configurations across several seeds, then record the best stable `Only-GVP` anchor.
