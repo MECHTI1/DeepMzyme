@@ -145,6 +145,16 @@ Forbidden in serious stages:
 - Letting `EPOCHS <= 3` reach Stage 4/5 (the short-training guard will block
   this; do not override).
 
+Batch-size policy for serious stages:
+
+- Use `4` only for smoke/debug runs or when a memory failure forces it.
+- Use `8,16` as the default serious validation-only Optuna batch-size search
+  space. This keeps the current validated `batch_size=8` anchor in scope while
+  testing whether `16` improves minority-class stability and GPU utilization.
+- Do not include `32` in the main Stage 4/5 search space. Test `32` only as an
+  explicitly labeled validation-only ablation after the `8,16` search is
+  stable, because it cuts optimizer updates per epoch substantially.
+
 Recommended G4 budgets (canonical):
 
 | Stage | `N_OPTUNA_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
@@ -634,7 +644,7 @@ OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_g
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
@@ -736,7 +746,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,3e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy,focal"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
@@ -815,7 +825,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
@@ -887,7 +897,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
@@ -967,7 +977,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
@@ -1044,7 +1054,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,1.5e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"
@@ -1124,7 +1134,7 @@ OPTUNA_TIMEOUT_MINUTES = 0
 
 OPTUNA_LEARNING_RATE_RANGE = "5e-6,1e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
-OPTUNA_BATCH_SIZES_CSV = "4,8"
+OPTUNA_BATCH_SIZES_CSV = "8,16"
 OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05"

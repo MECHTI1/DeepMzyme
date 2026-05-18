@@ -84,6 +84,10 @@ Authoritative rules for the pipeline:
   storage.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
   Stage 6 seed-repeat evidence.
+- Serious validation-only metal Optuna searches should keep the current
+  validated batch size in scope and compare the next larger practical batch
+  size; reserve very small batches for smoke/debug or memory fallback, and
+  reserve much larger batches for explicitly labeled ablations.
 - The advanced fusion order is Stage 5C -> 5D -> 5E -> 5F, gated by validation
   evidence from the preceding stage.
 

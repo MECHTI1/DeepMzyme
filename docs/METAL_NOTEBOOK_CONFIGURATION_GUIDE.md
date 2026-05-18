@@ -306,7 +306,7 @@ Recommended starting values:
 | Option | Smoke | First real baseline |
 | --- | --- | --- |
 | `EPOCHS` | `1` | `30` or `50` |
-| `BATCH_SIZES_CSV` | `4` | `4`, or `8` if memory is stable |
+| `BATCH_SIZES_CSV` | `4` | `8`; compare `16` in validation-only sweeps if memory is stable |
 | `LEARNING_RATES_CSV` | `3e-5` | `3e-5,1e-4`; optionally add `3e-4` |
 | `WEIGHT_DECAYS_CSV` | `1e-4` | `1e-4` first; later compare `0,1e-5,1e-4` |
 | `LR_SCHEDULES_CSV` | `fixed` | `fixed` first |

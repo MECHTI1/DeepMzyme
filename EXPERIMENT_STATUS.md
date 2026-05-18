@@ -311,6 +311,11 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
 - Do not run held-out test yet unless the validation architecture search is
   explicitly declared complete.
 - Do not spend another broad Only-ESM search now.
+- For any new validation-side metal Optuna search, use the playbook's updated
+  serious batch-size policy: search `8,16`, keep `4` for smoke/debug or memory
+  fallback, and test `32` only as a separately labeled validation-only
+  ablation. Keep final reporting tied to the selected run's own batch size
+  unless a validation-only batch-size ablation selects a replacement.
 
 ## Recommended Next Notebook Action
 
