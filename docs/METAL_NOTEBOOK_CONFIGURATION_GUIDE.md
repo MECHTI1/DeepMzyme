@@ -312,12 +312,15 @@ Default first baseline:
 - `REQUIRE_RING_EDGES = False`
 - `PREPARE_MISSING_RING_EDGES = True`
 - `ALLOW_MISSING_EXTERNAL_FEATURES = False`
+- `PREPARE_MISSING_EXTERNAL_FEATURES = True`
 
 The notebook now starts from RING-enabled graph construction and strict updated
 external features by default. Existing RING files are reused; missing files are
-generated when a working `RING_EXE_PATH` is available. If `REQUIRE_RING_EDGES =
-True`, incomplete RING coverage should fail instead of silently mixing graph
-types. To run a radius-only ablation, set `RING_EDGE_MODE = "without_ring"`.
+generated when the corresponding preparation tool is available. Missing updated
+external features are not allowed to fall back to default-filled values. If
+`REQUIRE_RING_EDGES = True`, incomplete RING coverage should fail instead of
+silently mixing graph types. To run a radius-only ablation, set
+`RING_EDGE_MODE = "without_ring"`.
 
 ### Training hyperparameters
 

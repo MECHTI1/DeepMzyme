@@ -41,10 +41,11 @@ evidence in saved outputs, not in stable workflow guides.
   use updated external features strictly and use RING-enabled graph
   construction by default. In notebook/configuration terms this means
   `RING_EDGE_MODE="with_ring"`, `ALLOW_MISSING_EXTERNAL_FEATURES=False`,
-  `external_feature_source=updated`, `--use-ring-edges`,
-  `--ring-features-dir`, and `--prepare-missing-ring-edges`. Radius-only
-  graph construction is now an explicit ablation or raw low-level/CLI default,
-  not the recommended first graph setting.
+  `PREPARE_MISSING_EXTERNAL_FEATURES=True`, `external_feature_source=updated`,
+  `--use-ring-edges`, `--ring-features-dir`, and
+  `--prepare-missing-ring-edges`. Radius-only graph construction is now an
+  explicit ablation or raw low-level/CLI default, not the recommended first
+  graph setting.
 - Trusted ESM embedding variant for new ESM/fusion work: ESMC `esmc_300m` with
   `embedding_dim=960`. Newly generated embeddings should have `*.pt.json`
   sidecar metadata. Older copied embeddings without sidecars are
