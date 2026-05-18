@@ -7,17 +7,35 @@ import sys
 import tempfile
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = REPO_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
 import torch
+import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
-from data_structures import PocketRecord
+from data_structures import PocketRecord, ResidueRecord
+from statistical_validation import paired_bootstrap_ci
 from training.config import default_selection_metric_for_task, parse_args, required_targets_for_task
+from training.final_test_reporting import (
+    equal_mass_ece,
+    fit_temperature_from_logits,
+    metal_bootstrap_metric_cis,
+)
+from training.loop import balanced_class_weights_from_pockets, class_weights_from_labels
 from training.run import ec_group_metrics_from_logits, validate_training_configuration
-from training.splits import assign_ec_group_metadata
+from training.splits import assign_ec_group_metadata, split_pockets_k_fold
+from metal_objectives import (
+    collapse_metal_logits_to_4,
+    collapsed4_cross_entropy_from_logits,
+    metal_loss_with_optional_collapsed4,
+    validate_required_six_class_metal_labels,
+)
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 
 
@@ -46,6 +64,7 @@ def check_training_cli_help() -> None:
         "--deterministic",
         "--joint-loss-weighting",
         "--metal-loss-weight",
+        "--metal-collapsed-loss-weight",
         "--ec-loss-weight",
         "--ec-group-weighting",
         "--fusion-mode",
@@ -55,6 +74,8 @@ def check_training_cli_help() -> None:
         "--cross-attention-dropout",
         "--cross-attention-neighborhood",
         "--cross-attention-bidirectional",
+        "--position-noise-std",
+        "--second-shell-dropout",
         "--allow-train-loss-test-eval-debug",
     )
     missing = [option for option in expected_options if option not in help_text]
@@ -135,6 +156,47 @@ def check_loss_weight_validation() -> None:
     else:
         raise AssertionError("Single-task uncertainty loss weighting was not rejected.")
 
+    default_metal_config = parse_args(["--task", "metal"])
+    if default_metal_config.metal_collapsed_loss_weight != 0.0:
+        raise AssertionError(
+            "Expected default metal_collapsed_loss_weight=0.0, "
+            f"got {default_metal_config.metal_collapsed_loss_weight}"
+        )
+    invalid_collapsed_config = parse_args(["--task", "metal", "--metal-collapsed-loss-weight", "1.1"])
+    try:
+        validate_training_configuration(invalid_collapsed_config)
+    except ValueError as exc:
+        if "--metal-collapsed-loss-weight" not in str(exc):
+            raise AssertionError(f"Unexpected collapsed-loss validation error: {exc}") from exc
+    else:
+        raise AssertionError("--metal-collapsed-loss-weight accepted a value outside [0, 1].")
+    invalid_ec_collapsed_config = parse_args(["--task", "ec", "--metal-collapsed-loss-weight", "0.3"])
+    try:
+        validate_training_configuration(invalid_ec_collapsed_config)
+    except ValueError as exc:
+        if "metal prediction head" not in str(exc):
+            raise AssertionError(f"Unexpected EC collapsed-loss validation error: {exc}") from exc
+    else:
+        raise AssertionError("EC-only training accepted a metal collapsed-4 loss.")
+
+    invalid_noise_config = parse_args(["--position-noise-std", "-0.1"])
+    try:
+        validate_training_configuration(invalid_noise_config)
+    except ValueError as exc:
+        if "--position-noise-std" not in str(exc):
+            raise AssertionError(f"Unexpected position-noise validation error: {exc}") from exc
+    else:
+        raise AssertionError("--position-noise-std accepted a negative value.")
+
+    invalid_dropout_config = parse_args(["--second-shell-dropout", "1.1"])
+    try:
+        validate_training_configuration(invalid_dropout_config)
+    except ValueError as exc:
+        if "--second-shell-dropout" not in str(exc):
+            raise AssertionError(f"Unexpected second-shell dropout validation error: {exc}") from exc
+    else:
+        raise AssertionError("--second-shell-dropout accepted a value outside [0, 1].")
+
 
 def check_uncertainty_task_loss_weighter() -> None:
     from model import TaskLossWeighter
@@ -151,6 +213,78 @@ def check_uncertainty_task_loss_weighter() -> None:
         raise AssertionError("Joint uncertainty weighting did not create learnable log-variance parameters.")
     if weighter.metal_log_variance.grad is None or weighter.ec_log_variance.grad is None:
         raise AssertionError("Uncertainty weighting parameters did not receive gradients.")
+
+
+def check_collapsed4_metal_loss_helpers() -> None:
+    label_map = {
+        0: "Zn",
+        1: "Fe",
+        2: "Mn",
+        3: "Ni",
+        4: "Cu",
+        5: "Co",
+    }
+    logits = torch.tensor(
+        [
+            [-5.0, 1.0, 0.5, 2.0, 3.0, 4.0],
+            [0.25, -1.0, 2.0, -2.0, 0.0, -3.0],
+        ],
+        dtype=torch.float32,
+    )
+    collapsed = collapse_metal_logits_to_4(logits, label_map=label_map, require_six_class=True)
+    expected = torch.stack(
+        [
+            logits[:, 2],
+            logits[:, 4],
+            logits[:, 0],
+            torch.logsumexp(logits[:, [1, 5, 3]], dim=-1),
+        ],
+        dim=-1,
+    )
+    if not torch.allclose(collapsed, expected, atol=1e-6):
+        raise AssertionError(f"Collapsed-4 logsumexp marginalization changed: {collapsed} vs {expected}")
+
+    targets = torch.tensor([2, 1], dtype=torch.long)
+    six_weights = torch.tensor([1.4, 0.7, 1.1, 0.9, 1.2, 0.8], dtype=torch.float32)
+    collapsed_weights = torch.tensor([1.0, 1.3, 0.6, 0.9], dtype=torch.float32)
+    six_ce = F.cross_entropy(logits, targets, weight=six_weights)
+    collapsed_ce = collapsed4_cross_entropy_from_logits(
+        logits,
+        targets,
+        weight=collapsed_weights,
+        label_map=label_map,
+        require_six_class=True,
+    )
+    alpha0_loss, alpha0_aux = metal_loss_with_optional_collapsed4(
+        six_ce,
+        logits,
+        targets,
+        alpha=0.0,
+        collapsed4_weight=collapsed_weights,
+        label_map=label_map,
+    )
+    if alpha0_aux is not None or not torch.allclose(alpha0_loss, six_ce, atol=0.0, rtol=0.0):
+        raise AssertionError("alpha=0 did not preserve the original six-class CE loss exactly.")
+
+    alpha1_loss, alpha1_aux = metal_loss_with_optional_collapsed4(
+        six_ce,
+        logits,
+        targets,
+        alpha=1.0,
+        collapsed4_weight=collapsed_weights,
+        label_map=label_map,
+    )
+    if alpha1_aux is None or not torch.allclose(alpha1_loss, collapsed_ce, atol=1e-6):
+        raise AssertionError("alpha=1 did not produce pure collapsed-4 CE.")
+
+    try:
+        validate_required_six_class_metal_labels({0: "Mn", 1: "Cu", 2: "Zn", 3: "Fe"})
+    except ValueError as exc:
+        message = str(exc)
+        if "Co" not in message or "Ni" not in message or "Observed labels" not in message:
+            raise AssertionError(f"Missing-label guard raised an unclear error: {message}") from exc
+    else:
+        raise AssertionError("Missing six-class metal labels were not rejected for collapsed-4 loss.")
 
 
 def check_ec_group_weighting_config() -> None:
@@ -237,6 +371,128 @@ def check_ring_edge_cli_config() -> None:
         raise AssertionError("Expected --no-prepare-missing-ring-edges to disable automatic RING generation.")
 
 
+def augmentation_fixture_pocket() -> PocketRecord:
+    return PocketRecord(
+        structure_id="augment_fixture",
+        pocket_id="augment_fixture_site0",
+        metal_element="ZN",
+        metal_coords=[torch.tensor([0.0, 0.0, 0.0])],
+        residues=[
+            ResidueRecord(
+                chain_id="A",
+                resseq=1,
+                icode="",
+                resname="CYS",
+                atoms={
+                    "CA": torch.tensor([1.0, 0.0, 0.0]),
+                    "CB": torch.tensor([1.2, 0.0, 0.0]),
+                    "SG": torch.tensor([1.5, 0.0, 0.0]),
+                },
+            ),
+            ResidueRecord(
+                chain_id="A",
+                resseq=2,
+                icode="",
+                resname="ALA",
+                atoms={
+                    "CA": torch.tensor([4.0, 0.0, 0.0]),
+                    "CB": torch.tensor([4.2, 0.0, 0.0]),
+                },
+            ),
+            ResidueRecord(
+                chain_id="A",
+                resseq=3,
+                icode="",
+                resname="ALA",
+                atoms={
+                    "CA": torch.tensor([10.0, 0.0, 0.0]),
+                    "CB": torch.tensor([10.2, 0.0, 0.0]),
+                },
+            ),
+        ],
+        y_metal=0,
+    )
+
+
+def check_training_graph_augmentation() -> None:
+    from graph.construction import pocket_to_pyg_data
+    from training.graph_dataset import PocketGraphDataset
+
+    pocket = augmentation_fixture_pocket()
+    reference = pocket_to_pyg_data(pocket, esm_dim=2)
+
+    train_dataset = PocketGraphDataset(
+        [pocket],
+        esm_dim=2,
+        position_noise_std=0.5,
+        second_shell_dropout=0.0,
+    )
+    first_epoch_graph = train_dataset[0]
+    second_epoch_graph = train_dataset[0]
+    if torch.allclose(first_epoch_graph.pos, second_epoch_graph.pos):
+        raise AssertionError("Training coordinate noise did not vary across repeated dataset reads.")
+
+    validation_dataset = PocketGraphDataset([pocket], esm_dim=2)
+    validation_graph = validation_dataset[0]
+    if not torch.allclose(validation_graph.pos, reference.pos):
+        raise AssertionError("Validation/default graph dataset unexpectedly changed coordinates.")
+    if not torch.allclose(pocket.residues[0].atoms["CA"], torch.tensor([1.0, 0.0, 0.0])):
+        raise AssertionError("Augmentation mutated the source PocketRecord coordinates.")
+
+    dropout_dataset = PocketGraphDataset(
+        [pocket],
+        esm_dim=2,
+        edge_radius=12.0,
+        position_noise_std=0.0,
+        second_shell_dropout=1.0,
+    )
+    dropout_graph = dropout_dataset[0]
+    kept_positions = {tuple(float(value) for value in row) for row in dropout_graph.pos.tolist()}
+    if (4.0, 0.0, 0.0) in kept_positions:
+        raise AssertionError("Second-shell dropout failed to remove the second-shell residue.")
+    if (1.0, 0.0, 0.0) not in kept_positions or (10.0, 0.0, 0.0) not in kept_positions:
+        raise AssertionError("Second-shell dropout removed a first-shell or non-second-shell residue.")
+
+
+def check_esm_embedding_metadata_sidecar() -> None:
+    from training.esm_feature_loading import (
+        build_embedding_payload,
+        embedding_metadata_from_payload,
+        load_embedding_metadata_sidecar,
+        summarize_esm_embedding_metadata,
+        write_embedding_metadata_sidecar,
+    )
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_esm_metadata_") as tmp:
+        tmp_root = Path(tmp)
+        structure_path = tmp_root / "1abc__chain_A__EC_1.1.1.1.pdb"
+        structure_path.write_text("HEADER metadata smoke\n", encoding="utf-8")
+        embeddings_dir = tmp_root / "embeddings"
+        embeddings_dir.mkdir()
+        embedding_path = embeddings_dir / "1abc__chain_A__EC_1.1.1.1_chain_A_esmc.pt"
+        payload = build_embedding_payload(
+            torch.zeros(2, 960),
+            [("A", 1, ""), ("A", 2, "")],
+            structure_id="1abc__chain_A__EC_1.1.1.1",
+            chain_id="A",
+            source_path=str(structure_path),
+            metadata={
+                "esm_model_name": "esmc_300m",
+                "embedding_dim": 960,
+                "generated_at": "2026-05-18T00:00:00+00:00",
+            },
+        )
+        metadata = embedding_metadata_from_payload(payload)
+        torch.save(payload, embedding_path)
+        write_embedding_metadata_sidecar(embedding_path, metadata)
+        loaded = load_embedding_metadata_sidecar(embedding_path)
+        if loaded is None or loaded.get("esm_model_name") != "esmc_300m":
+            raise AssertionError(f"ESM sidecar metadata was not round-tripped: {loaded}")
+        summary = summarize_esm_embedding_metadata([structure_path], embeddings_dir)
+        if summary["esm_model_names"] != ["esmc_300m"] or summary["embedding_dims"] != [960]:
+            raise AssertionError(f"ESM metadata summary did not capture model/dim: {summary}")
+
+
 def check_only_gvp_does_not_require_esm() -> None:
     only_gvp_config = parse_args(["--model-architecture", "only_gvp"])
     if only_gvp_config.require_esm_embeddings or only_gvp_config.use_esm_branch:
@@ -314,8 +570,8 @@ def check_colab_notebook_sweep_source() -> None:
         "CONFIG = {",
         "COLAB_DATA_SOURCE",
         "huggingface_link",
-        "DeepMzyme_Data_runtime_local_2026-05-03.tar.zst",
-        "c86faa40ff69c021de02b72b5fef9ebd1712f5ef8e6cb3da27b3a9e8261816c1",
+        "DeepMzyme_Data_runtime_local_2026-05-17.tar.zst",
+        "7543187fd5d5f0da994866ebcf2e8698b53e26f50ce8f527d1bbd77fc218d8fb",
         "site-level MAHOMES summary CSV",
         "structure-level inspection CSV",
         "MODEL_PRESET_MAP",
@@ -333,6 +589,9 @@ def check_colab_notebook_sweep_source() -> None:
         "--prepare-missing-ring-edges",
         "--no-prepare-missing-ring-edges",
         "--no-prepare-missing-esm-embeddings",
+        "METAL_COLLAPSED_LOSS_WEIGHT = 0.0",
+        "OPTUNA_MULTIOBJECTIVE = False",
+        'OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
         "RING_EXE_PATH",
         '"src" / "report_runs.py"',
         "Recommended First Runs",
@@ -392,6 +651,8 @@ def check_colab_generated_training_commands_parse() -> None:
             "optuna": {
                 "run_seed_repeat_evaluation": False,
                 "top_k_configs_for_seed_repeat": 3,
+                "position_noise_stds_csv": "0.0",
+                "second_shell_dropouts_csv": "0.0",
             },
             "data": {"colab_data_source": "huggingface_link"},
             "esm": {
@@ -427,6 +688,8 @@ def check_colab_generated_training_commands_parse() -> None:
                 "node_rbf_sigma": 0.75,
                 "edge_rbf_sigma": 0.75,
                 "node_rbf_use_raw_distances": False,
+                "position_noise_std": 0.0,
+                "second_shell_dropout": 0.0,
                 "early_esm_dim": 32,
                 "early_esm_dropout": 0.2,
                 "early_esm_raw": False,
@@ -443,6 +706,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "metal_loss_function": "cross_entropy",
                 "metal_focal_gamma": 2.0,
                 "metal_label_smoothing": 0.0,
+                "metal_collapsed_loss_weight": 0.0,
                 "metal_loss_weight": 1.0,
                 "ec_loss_weight": 1.0,
                 "mn_loss_multiplier": 1.0,
@@ -537,6 +801,14 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Only-GVP default command should not require an ESM embeddings directory.")
     if "--omit-node-features" in default_cmd:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
+
+    collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weight": 0.3}})
+    collapsed_loss_cmd = [str(part) for part in collapsed_loss_runs[0]["command"]]
+    assert_training_command_parses(collapsed_loss_cmd)
+    if "--metal-collapsed-loss-weight" not in collapsed_loss_cmd:
+        raise AssertionError("Collapsed-loss notebook command did not pass --metal-collapsed-loss-weight.")
+    if collapsed_loss_cmd[collapsed_loss_cmd.index("--metal-collapsed-loss-weight") + 1] != "0.3":
+        raise AssertionError("Collapsed-loss notebook command passed the wrong alpha value.")
 
     radius_only_runs = run_builder({"configuration_comparison": {"ring_edge_mode": "without_ring"}})
     if len(radius_only_runs) != 1:
@@ -651,6 +923,121 @@ def check_ec_group_weights_sum_per_group() -> None:
     for group_key, total in sums.items():
         if abs(total - 1.0) > 1e-6:
             raise AssertionError(f"EC weights for group {group_key} sum to {total}, expected 1.0")
+
+
+def check_fold_class_weights_use_training_fold_only() -> None:
+    pockets = [
+        PocketRecord(
+            structure_id=f"{index}abc__chain_A__EC_1.1.1.1",
+            pocket_id=f"p{index}",
+            metal_element="ZN",
+            metal_coords=[torch.zeros(3)],
+            residues=[],
+            y_metal=0 if index < 3 else 1,
+        )
+        for index in range(5)
+    ]
+    split = split_pockets_k_fold(
+        pockets,
+        n_folds=5,
+        fold_index=0,
+        split_by="pdbid",
+        seed=42,
+        task="metal",
+    )
+    train_labels = [int(pocket.y_metal) for pocket in split.train_pockets]
+    all_labels = [int(pocket.y_metal) for pocket in pockets]
+    train_only_weights, _ec_weights = balanced_class_weights_from_pockets(
+        split.train_pockets,
+        n_metal_classes=2,
+        n_ec_classes=1,
+        metal_class_weight_mode="inverse_frequency",
+    )
+    expected_train_only = class_weights_from_labels(
+        train_labels,
+        n_classes=2,
+        mode="inverse_frequency",
+    )
+    all_data_weights = class_weights_from_labels(
+        all_labels,
+        n_classes=2,
+        mode="inverse_frequency",
+    )
+    if not torch.allclose(train_only_weights, expected_train_only):
+        raise AssertionError(
+            "Fold class weights were not computed from the training fold labels."
+        )
+    if torch.allclose(train_only_weights, all_data_weights):
+        raise AssertionError(
+            "Fold class weights matched all-data weights; validation labels may be leaking into weights."
+        )
+
+
+def check_paired_bootstrap_ci_helper() -> None:
+    result = paired_bootstrap_ci(
+        [0.70, 0.72, 0.74, 0.71, 0.73],
+        [0.64, 0.66, 0.68, 0.65, 0.67],
+        n_bootstrap=1000,
+        seed=123,
+        raw_improvement_threshold=0.01,
+    )
+    if result.n_pairs != 5:
+        raise AssertionError(f"Unexpected paired bootstrap n_pairs: {result}")
+    if result.mean_difference <= 0.0 or result.ci_lower <= 0.0 or not result.passes:
+        raise AssertionError(f"Expected a positive paired bootstrap pass, got {result}")
+
+
+def check_equal_mass_ece_helper() -> None:
+    confidences = torch.tensor([0.55, 0.60, 0.80, 0.90], dtype=torch.float32)
+    outcomes = torch.tensor([1.0, 0.0, 1.0, 1.0], dtype=torch.float32)
+    ece, bins = equal_mass_ece(confidences, outcomes, n_bins=2)
+    expected = 0.1125
+    if len(bins) != 2:
+        raise AssertionError(f"Expected two equal-mass ECE bins, got {bins}")
+    if abs(ece - expected) > 1.0e-5:
+        raise AssertionError(f"Unexpected equal-mass ECE: {ece} != {expected}")
+
+
+def check_temperature_scaling_helper() -> None:
+    logits = torch.tensor(
+        [
+            [4.0, 0.0],
+            [4.0, 0.0],
+            [0.0, 4.0],
+            [0.0, 4.0],
+        ],
+        dtype=torch.float32,
+    )
+    targets = torch.tensor([0, 1, 1, 1], dtype=torch.long)
+    before = torch.nn.functional.cross_entropy(logits, targets).item()
+    temperature = fit_temperature_from_logits(logits, targets, max_iter=25)
+    after = torch.nn.functional.cross_entropy(logits / temperature, targets).item()
+    if temperature <= 0.0:
+        raise AssertionError(f"Temperature must be positive, got {temperature}")
+    if after > before + 1.0e-5:
+        raise AssertionError(f"Temperature scaling increased NLL: before={before}, after={after}")
+
+
+def check_final_test_bootstrap_ci_helper() -> None:
+    targets = torch.tensor([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5], dtype=torch.long)
+    probabilities = torch.full((targets.numel(), 6), 0.02, dtype=torch.float32)
+    for index, target in enumerate(targets.tolist()):
+        probabilities[index, target] = 0.90
+    probabilities = probabilities / probabilities.sum(dim=-1, keepdim=True)
+    cis = metal_bootstrap_metric_cis(
+        probabilities,
+        targets,
+        n_bootstrap=50,
+        confidence_level=0.95,
+        seed=123,
+        n_bins=3,
+    )
+    for key in ("test_metal_balanced_acc_ci95", "test_metal_collapsed4_balanced_acc_ci95"):
+        value = cis.get(key)
+        if not isinstance(value, list) or len(value) != 2:
+            raise AssertionError(f"Missing bootstrap CI field {key}: {cis}")
+        if value[0] > value[1]:
+            raise AssertionError(f"Bootstrap CI is reversed for {key}: {value}")
 
 
 def check_ec_group_metric_aggregation() -> None:
@@ -845,15 +1232,23 @@ def main() -> int:
         check_test_eval_safety,
         check_loss_weight_validation,
         check_uncertainty_task_loss_weighter,
+        check_collapsed4_metal_loss_helpers,
         check_ec_group_weighting_config,
         check_cross_attention_config,
         check_ring_edge_cli_config,
+        check_training_graph_augmentation,
+        check_esm_embedding_metadata_sidecar,
         check_only_gvp_does_not_require_esm,
         check_graph_ring_edges_are_opt_in,
         check_colab_notebook_sweep_source,
         check_colab_generated_training_commands_parse,
         check_ring_environment_overrides,
         check_ec_group_weights_sum_per_group,
+        check_fold_class_weights_use_training_fold_only,
+        check_paired_bootstrap_ci_helper,
+        check_equal_mass_ece_helper,
+        check_temperature_scaling_helper,
+        check_final_test_bootstrap_ci_helper,
         check_ec_group_metric_aggregation,
         check_ec_group_id_batches_without_increment,
         check_conflicting_ec_group_metrics_are_skipped,

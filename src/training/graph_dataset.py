@@ -17,8 +17,10 @@ from data_structures import (
     GRAPH_SITE_TENSOR_FIELDS,
     NORMALIZABLE_FEATURE_NAMES,
     PocketRecord,
+    ResidueRecord,
 )
 from graph.construction import pocket_to_pyg_data
+from graph.shell_roles import compute_shell_roles
 
 _GRAPH_EDGE_INDEX_FIELD = GRAPH_EDGE_TENSOR_FIELDS[0]
 _GRAPH_EDGE_SOURCE_TYPE_FIELD = GRAPH_EDGE_TENSOR_FIELDS[-1]
@@ -33,6 +35,120 @@ class FeatureNormalizationStats:
     means: dict[str, Tensor]
     stds: dict[str, Tensor]
     clamp_value: float = 5.0
+
+
+def graph_augmentation_enabled(
+    *,
+    position_noise_std: float = 0.0,
+    second_shell_dropout: float = 0.0,
+) -> bool:
+    return float(position_noise_std) > 0.0 or float(second_shell_dropout) > 0.0
+
+
+def _clone_residue_with_atoms(residue: ResidueRecord, atoms: dict[str, Tensor]) -> ResidueRecord:
+    return ResidueRecord(
+        chain_id=residue.chain_id,
+        resseq=residue.resseq,
+        icode=residue.icode,
+        resname=residue.resname,
+        atoms=atoms,
+        esm_embedding=residue.esm_embedding.clone() if residue.esm_embedding is not None else None,
+        has_esm_embedding=residue.has_esm_embedding,
+        is_first_shell=residue.is_first_shell,
+        is_second_shell=residue.is_second_shell,
+        external_features=dict(residue.external_features),
+        has_external_features=residue.has_external_features,
+    )
+
+
+def _clone_metadata_with_metal_coords(
+    metadata: dict[str, Any],
+    metal_coords: list[Tensor],
+) -> dict[str, Any]:
+    cloned = dict(metadata)
+    coord_map = metadata.get("metal_site_coord_map")
+    if isinstance(coord_map, dict):
+        site_ids = list(metadata.get("metal_site_ids", []))
+        updated_coord_map = {}
+        for site_key, coord in coord_map.items():
+            if site_key in site_ids:
+                site_index = int(site_ids.index(site_key))
+                if site_index < len(metal_coords):
+                    updated_coord_map[site_key] = metal_coords[site_index].clone()
+                    continue
+            updated_coord_map[site_key] = torch.as_tensor(coord).float().clone()
+        cloned["metal_site_coord_map"] = updated_coord_map
+    return cloned
+
+
+def _filter_second_shell_residues(
+    pocket: PocketRecord,
+    *,
+    second_shell_dropout: float,
+    use_ring_edges: bool,
+) -> list[ResidueRecord]:
+    if second_shell_dropout <= 0.0:
+        return list(pocket.residues)
+
+    shell_roles = compute_shell_roles(pocket, use_ring_edges=use_ring_edges)
+    keep_residues: list[ResidueRecord] = []
+    for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
+        if is_second_shell and not is_first_shell and bool(torch.rand(()) < float(second_shell_dropout)):
+            continue
+        keep_residues.append(residue)
+    return keep_residues or list(pocket.residues)
+
+
+def augment_pocket_for_training(
+    pocket: PocketRecord,
+    *,
+    position_noise_std: float = 0.0,
+    second_shell_dropout: float = 0.0,
+    use_ring_edges: bool = False,
+) -> PocketRecord:
+    """Return an in-memory augmented pocket without mutating the loaded records."""
+    if not graph_augmentation_enabled(
+        position_noise_std=position_noise_std,
+        second_shell_dropout=second_shell_dropout,
+    ):
+        return pocket
+
+    residues = _filter_second_shell_residues(
+        pocket,
+        second_shell_dropout=float(second_shell_dropout),
+        use_ring_edges=use_ring_edges,
+    )
+    if position_noise_std > 0.0:
+        noise_std = float(position_noise_std)
+        residues = [
+            _clone_residue_with_atoms(
+                residue,
+                {
+                    atom_name: coord.float().clone() + torch.randn_like(coord.float()) * noise_std
+                    for atom_name, coord in residue.atoms.items()
+                },
+            )
+            for residue in residues
+        ]
+        metal_coords = [
+            coord.float().clone() + torch.randn_like(coord.float()) * noise_std
+            for coord in pocket.metal_coords
+        ]
+        metadata = _clone_metadata_with_metal_coords(pocket.metadata, metal_coords)
+    else:
+        metal_coords = [coord.clone() for coord in pocket.metal_coords]
+        metadata = _clone_metadata_with_metal_coords(pocket.metadata, metal_coords)
+
+    return PocketRecord(
+        structure_id=pocket.structure_id,
+        pocket_id=pocket.pocket_id,
+        metal_element=pocket.metal_element,
+        metal_coords=metal_coords,
+        residues=residues,
+        y_metal=pocket.y_metal,
+        y_ec=pocket.y_ec,
+        metadata=metadata,
+    )
 
 
 def build_graph_data_list(
@@ -149,6 +265,8 @@ class PocketGraphDataset(Dataset):
         precomputed_data: list[Data] | None = None,
         node_feature_set: str = "conservative",
         omit_node_features: tuple[str, ...] | list[str] = (),
+        position_noise_std: float = 0.0,
+        second_shell_dropout: float = 0.0,
     ):
         self.pockets = pockets
         self.esm_dim = esm_dim
@@ -158,6 +276,8 @@ class PocketGraphDataset(Dataset):
         self.require_ring_edges = require_ring_edges
         self.node_feature_set = node_feature_set
         self.omit_node_features = tuple(omit_node_features)
+        self.position_noise_std = float(position_noise_std)
+        self.second_shell_dropout = float(second_shell_dropout)
         if precomputed_data is not None and len(precomputed_data) != len(pockets):
             raise ValueError("precomputed_data length must match pockets length.")
         self.precomputed_data = precomputed_data
@@ -192,7 +312,25 @@ class PocketGraphDataset(Dataset):
         return len(self.pockets)
 
     def __getitem__(self, idx: int) -> Data:
-        if self.precomputed_data is not None:
+        if graph_augmentation_enabled(
+            position_noise_std=self.position_noise_std,
+            second_shell_dropout=self.second_shell_dropout,
+        ):
+            data = pocket_to_pyg_data(
+                augment_pocket_for_training(
+                    self.pockets[idx],
+                    position_noise_std=self.position_noise_std,
+                    second_shell_dropout=self.second_shell_dropout,
+                    use_ring_edges=self.use_ring_edges or self.require_ring_edges,
+                ),
+                esm_dim=self.esm_dim,
+                edge_radius=self.edge_radius,
+                use_ring_edges=self.use_ring_edges,
+                require_ring_edges=self.require_ring_edges,
+                node_feature_set=self.node_feature_set,
+                omit_node_features=self.omit_node_features,
+            )
+        elif self.precomputed_data is not None:
             data = self.precomputed_data[idx].clone()
         else:
             data = pocket_to_pyg_data(

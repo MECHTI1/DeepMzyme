@@ -18,6 +18,12 @@ CSV_COLUMNS = [
     "fusion_mode",
     "model_label",
     "seed",
+    "model_seed",
+    "split_seed",
+    "final_test_primary_report",
+    "final_test_ensemble_mode",
+    "final_test_result_role",
+    "selected_config_id",
     "learning_rate",
     "weight_decay",
     "batch_size",
@@ -32,12 +38,16 @@ CSV_COLUMNS = [
     "joint_loss_weighting",
     "metal_loss_weight",
     "ec_loss_weight",
+    "metal_collapsed_loss_weight",
     "metal_class_weight_mode",
     "selection_metric",
     "selected_checkpoint",
     "split_name",
     "split_type",
     "split_by",
+    "val_fraction",
+    "n_folds",
+    "fold_index",
     "n_train_pockets",
     "n_val_pockets",
     "n_train_groups",
@@ -56,6 +66,13 @@ CSV_COLUMNS = [
     "best_validation_metric_used_for_checkpoint_selection",
     "selected_val_joint_balanced_acc",
     "selected_val_metal_balanced_acc",
+    "selected_val_metal_min_recall",
+    "selected_val_metal_per_class_recall",
+    "selected_val_metal_per_class_support",
+    "selected_val_metal_collapsed4_balanced_acc",
+    "selected_val_metal_collapsed4_min_recall",
+    "selected_val_metal_collapsed4_per_class_recall",
+    "selected_val_metal_collapsed4_per_class_support",
     "selected_val_ec_balanced_acc",
     "selected_val_ec_group_balanced_acc",
     "comparison_test_metric_name",
@@ -64,9 +81,19 @@ CSV_COLUMNS = [
     "test_joint_macro_f1",
     "test_metal_acc",
     "test_metal_balanced_acc",
+    "test_metal_min_recall",
+    "test_metal_balanced_acc_ci95",
     "test_metal_macro_f1",
+    "test_metal_ece_equal_mass",
+    "test_metal_ece_equal_mass_ci95",
+    "test_metal_nll",
+    "test_metal_temperature_scaled_balanced_acc",
+    "test_metal_temperature_scaled_ece_equal_mass",
+    "test_metal_temperature_scaled_nll",
     "test_metal_collapsed4_acc",
     "test_metal_collapsed4_balanced_acc",
+    "test_metal_collapsed4_min_recall",
+    "test_metal_collapsed4_balanced_acc_ci95",
     "test_metal_collapsed4_macro_f1",
     "test_metal_collapsed4_mn_recall",
     "test_metal_collapsed4_cu_recall",
@@ -241,7 +268,11 @@ def selected_metric_value(
 
 def metrics_from_report(test_report: dict[str, Any]) -> dict[str, Any]:
     metrics = test_report.get("metrics")
-    return metrics if isinstance(metrics, dict) else {}
+    result = dict(metrics) if isinstance(metrics, dict) else {}
+    calibrated = test_report.get("calibrated_metrics")
+    if isinstance(calibrated, dict):
+        result.update(calibrated)
+    return result
 
 
 def matching_test_metric_name(selection_metric: str | None, task: str | None) -> str | None:
@@ -257,8 +288,13 @@ def matching_test_metric_name(selection_metric: str | None, task: str | None) ->
 
 def infer_result_stage(run_dir: Path, metrics: dict[str, Any]) -> str:
     if metrics:
+        report = read_json(run_dir / "test_report.json")
+        if report.get("final_test_ensemble_mode") == "softmax_mean_5_seeds":
+            return "final-test ensemble evaluated"
         return "final-test evaluated"
     name_text = str(run_dir.name).lower()
+    if "group_kfold" in name_text or "group-kfold" in name_text or ("top" in name_text and "fold" in name_text):
+        return "group-kfold validation"
     if "seed_repeat" in name_text or ("top" in name_text and "seed" in name_text):
         return "seed-repeat validation"
     return "validation-only"
@@ -329,6 +365,29 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "fusion_mode": config.get("fusion_mode"),
         "model_label": model_display_label(config),
         "seed": config.get("seed"),
+        "model_seed": first_present(config.get("model_seed"), config.get("seed")),
+        "split_seed": first_present(
+            config.get("effective_split_seed"),
+            split_diagnostics.get("effective_split_seed"),
+            config.get("split_seed"),
+            config.get("seed"),
+        ),
+        "final_test_primary_report": first_present(
+            test_report.get("final_test_primary_report"),
+            config.get("final_test_primary_report"),
+        ),
+        "final_test_ensemble_mode": first_present(
+            test_report.get("final_test_ensemble_mode"),
+            config.get("final_test_ensemble_mode"),
+        ),
+        "final_test_result_role": first_present(
+            test_report.get("final_test_result_role"),
+            config.get("final_test_result_role"),
+        ),
+        "selected_config_id": first_present(
+            test_report.get("selected_config_id"),
+            config.get("final_test_selected_config_id"),
+        ),
         "learning_rate": config.get("learning_rate"),
         "weight_decay": config.get("weight_decay"),
         "batch_size": config.get("batch_size"),
@@ -343,6 +402,7 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
         "joint_loss_weighting": config.get("joint_loss_weighting"),
         "metal_loss_weight": config.get("metal_loss_weight"),
         "ec_loss_weight": config.get("ec_loss_weight"),
+        "metal_collapsed_loss_weight": config.get("metal_collapsed_loss_weight"),
         "metal_class_weight_mode": config.get("metal_class_weight_mode"),
         "selection_metric": selection_metric,
         "selected_checkpoint": first_present(
@@ -367,6 +427,21 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             split_diagnostics.get("split_by"),
             dataset.get("split_by"),
             config.get("split_by"),
+        ),
+        "val_fraction": first_present(
+            split_diagnostics.get("val_fraction"),
+            dataset.get("val_fraction"),
+            config.get("val_fraction"),
+        ),
+        "n_folds": first_present(
+            split_diagnostics.get("n_folds"),
+            dataset.get("n_folds"),
+            config.get("n_folds"),
+        ),
+        "fold_index": first_present(
+            split_diagnostics.get("fold_index"),
+            dataset.get("fold_index"),
+            config.get("fold_index"),
         ),
         "n_train_pockets": first_present(
             split_diagnostics.get("n_train_pockets"),
@@ -412,6 +487,32 @@ def summarize_run(run_dir: Path) -> dict[str, Any]:
             selection_metric,
             selected_selection_value,
         ),
+        "selected_val_metal_min_recall": selected_metric_value(
+            selected_record,
+            "val_metal_min_recall",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_metal_per_class_recall": selected_record.get("val_metal_per_class_recall"),
+        "selected_val_metal_per_class_support": selected_record.get("val_metal_per_class_support"),
+        "selected_val_metal_collapsed4_balanced_acc": selected_metric_value(
+            selected_record,
+            "val_metal_collapsed4_balanced_acc",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_metal_collapsed4_min_recall": selected_metric_value(
+            selected_record,
+            "val_metal_collapsed4_min_recall",
+            selection_metric,
+            selected_selection_value,
+        ),
+        "selected_val_metal_collapsed4_per_class_recall": selected_record.get(
+            "val_metal_collapsed4_per_class_recall"
+        ),
+        "selected_val_metal_collapsed4_per_class_support": selected_record.get(
+            "val_metal_collapsed4_per_class_support"
+        ),
         "selected_val_ec_balanced_acc": selected_metric_value(
             selected_record,
             "val_ec_balanced_acc",
@@ -456,6 +557,8 @@ def normalize_csv_value(value: Any) -> Any:
         return "NA"
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, sort_keys=True)
     return value
 
 

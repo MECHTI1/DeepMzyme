@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import copy
+import csv
 import json
 import random
 import subprocess
 import warnings
 from dataclasses import dataclass, replace
 from datetime import datetime
+from datetime import timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,13 +20,22 @@ from label_schemes import (
     COLLAPSED_METAL_LABELS,
     METAL_TARGET_LABELS,
     N_METAL_CLASSES,
-    collapsed_metal_target_for_label_name,
+)
+from metal_objectives import (
+    collapse_metal_label_ids_to_4,
+    collapse_metal_logits_to_4,
+    collapse_metal_targets_to_4,
+    validate_required_six_class_metal_labels,
 )
 from model_variants import build_pocket_classifier
 from project_paths import resolve_runs_dir
 from training.labels import ec_prefix_from_label_token, parse_structure_identity
 from training.config import TrainConfig, config_to_payload, required_targets_for_task
 from training.data import load_training_pockets_with_report_from_dir
+from training.final_test_reporting import (
+    build_metal_final_reporting_payload,
+    build_softmax_mean_ensemble_payload,
+)
 from training.graph_dataset import (
     FeatureNormalizationStats,
     PocketGraphDataset,
@@ -33,6 +44,7 @@ from training.graph_dataset import (
 )
 from training.loop import (
     balanced_class_weights_from_pockets,
+    class_weights_from_labels,
     classification_metrics_from_logits,
     evaluate_epoch_with_predictions,
     train_epoch,
@@ -95,6 +107,10 @@ def set_seed(seed: int, *, deterministic: bool = False) -> None:
             warnings.warn(f"Could not enable deterministic PyTorch algorithms: {exc}", RuntimeWarning)
 
 
+def split_seed_for_config(config: TrainConfig) -> int:
+    return int(config.seed if config.split_seed is None else config.split_seed)
+
+
 def build_run_dir(config: TrainConfig) -> Path:
     runs_dir = resolve_runs_dir(config.runs_dir, create=True)
     effective_name = config.run_name or datetime.now().strftime("run_%Y%m%d_%H%M%S")
@@ -134,6 +150,10 @@ def git_commit_hash() -> str | None:
         return None
     commit = result.stdout.strip()
     return commit or None
+
+
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def infer_split_identity(config: TrainConfig) -> dict[str, Any]:
@@ -253,10 +273,34 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "--ec-contrastive-temperature must be positive, "
             f"got {config.ec_contrastive_temperature}"
         )
+    if config.position_noise_std < 0.0:
+        raise ValueError(f"--position-noise-std must be non-negative, got {config.position_noise_std}")
+    if not 0.0 <= config.second_shell_dropout <= 1.0:
+        raise ValueError(
+            "--second-shell-dropout must be in [0, 1], "
+            f"got {config.second_shell_dropout}"
+        )
     if config.metal_loss_weight < 0.0:
         raise ValueError(f"--metal-loss-weight must be non-negative, got {config.metal_loss_weight}")
     if config.ec_loss_weight < 0.0:
         raise ValueError(f"--ec-loss-weight must be non-negative, got {config.ec_loss_weight}")
+    if not 0.0 <= config.metal_collapsed_loss_weight <= 1.0:
+        raise ValueError(
+            "--metal-collapsed-loss-weight must be in [0, 1], "
+            f"got {config.metal_collapsed_loss_weight}"
+        )
+    if config.metal_collapsed_loss_weight > 0.0:
+        if not task_predicts_metal(config.task):
+            raise ValueError(
+                "--metal-collapsed-loss-weight is only valid when a metal prediction head "
+                "is active (task=metal or task=joint); EC-only training has no metal loss."
+            )
+        if config.metal_loss_function != "cross_entropy":
+            raise ValueError(
+                "--metal-collapsed-loss-weight currently requires --metal-loss-function cross_entropy "
+                "so L_total=(1-alpha)*CE_6class + alpha*CE_4class is well-defined."
+            )
+        validate_required_six_class_metal_labels(METAL_TARGET_LABELS)
     if config.metal_class_weight_mode not in {"none", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
         raise ValueError(f"Unsupported --metal-class-weight-mode {config.metal_class_weight_mode!r}")
     if config.joint_loss_weighting == "uncertainty" and config.task != "joint":
@@ -312,6 +356,18 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "--run-test-eval requires both --test-structure-dir and --test-summary-csv "
             "so held-out reporting remains explicit."
         )
+    if config.final_test_primary_report not in {"single_checkpoint", "softmax_mean_5_seeds"}:
+        raise ValueError(f"Unsupported final_test_primary_report={config.final_test_primary_report!r}.")
+    if config.final_test_ensemble_mode not in {"single_checkpoint", "softmax_mean_5_seeds"}:
+        raise ValueError(f"Unsupported final_test_ensemble_mode={config.final_test_ensemble_mode!r}.")
+    if config.final_test_result_role not in {"primary_final_report", "secondary_diagnostic_report"}:
+        raise ValueError(f"Unsupported final_test_result_role={config.final_test_result_role!r}.")
+    if config.final_test_calibration_bins < 1:
+        raise ValueError("--final-test-calibration-bins must be positive.")
+    if config.final_test_bootstrap_resamples < 1:
+        raise ValueError("--final-test-bootstrap-resamples must be positive.")
+    if not 0.0 < config.final_test_bootstrap_confidence_level < 1.0:
+        raise ValueError("--final-test-bootstrap-confidence-level must be in (0, 1).")
 
 
 def task_predicts_metal(task: str) -> bool:
@@ -347,33 +403,11 @@ def build_scheduler(
 
 
 def collapse_metal_logits(logits: torch.Tensor) -> torch.Tensor:
-    grouped_logits: list[torch.Tensor] = []
-    for collapsed_idx in sorted(COLLAPSED_METAL_LABELS):
-        source_indices = [
-            label_idx
-            for label_idx, label_name in METAL_TARGET_LABELS.items()
-            if collapsed_metal_target_for_label_name(label_name) == collapsed_idx
-        ]
-        if not source_indices:
-            grouped_logits.append(
-                torch.full(
-                    (logits.size(0), 1),
-                    fill_value=torch.finfo(logits.dtype).min,
-                    dtype=logits.dtype,
-                    device=logits.device,
-                )
-            )
-            continue
-        grouped_logits.append(torch.logsumexp(logits[:, source_indices], dim=-1, keepdim=True))
-    return torch.cat(grouped_logits, dim=-1)
+    return collapse_metal_logits_to_4(logits, label_map=METAL_TARGET_LABELS, require_six_class=False)
 
 
 def collapse_metal_targets(targets: torch.Tensor) -> torch.Tensor:
-    collapsed = [
-        collapsed_metal_target_for_label_name(METAL_TARGET_LABELS[int(target_idx)])
-        for target_idx in targets.tolist()
-    ]
-    return torch.tensor(collapsed, dtype=torch.long)
+    return collapse_metal_targets_to_4(targets, label_map=METAL_TARGET_LABELS, require_six_class=False)
 
 
 def ec_level_metrics_from_logits(
@@ -468,20 +502,14 @@ def ec_group_metrics_from_logits(
     return payload
 
 
-def evaluate_split_metrics(
-    model,
-    loader: DataLoader | None,
-    device: str,
+def metrics_from_predictions(
+    predictions: dict[str, Any],
     prefix: str,
     *,
     task: str,
     ec_label_map: dict[int, str],
     ec_label_depth: int,
 ) -> dict[str, Any]:
-    if loader is None:
-        return {}
-
-    predictions = evaluate_epoch_with_predictions(model, loader, device=device)
     payload = {
         f"{prefix}_loss": predictions["loss"],
     }
@@ -494,6 +522,7 @@ def evaluate_split_metrics(
         collapsed_logits = collapse_metal_logits(predictions["metal_logits"])
         collapsed_targets = collapse_metal_targets(predictions["metal_y"])
         collapsed_metrics = classification_metrics_from_logits(collapsed_logits, collapsed_targets)
+        collapsed_recalls = present_metric_values(collapsed_metrics["per_class_recall"])
         payload.update(
             {
                 f"{prefix}_metal_acc": metal_metrics["accuracy"],
@@ -513,9 +542,15 @@ def evaluate_split_metrics(
                     label_name: metal_metrics["per_class_recall"][label_idx]
                     for label_idx, label_name in METAL_TARGET_LABELS.items()
                 },
+                f"{prefix}_metal_per_class_support": {
+                    label_name: metal_metrics["per_class_support"][label_idx]
+                    for label_idx, label_name in METAL_TARGET_LABELS.items()
+                },
+                f"{prefix}_metal_confusion_matrix": metal_metrics["confusion_matrix"],
                 f"{prefix}_metal_collapsed4_acc": collapsed_metrics["accuracy"],
                 f"{prefix}_metal_collapsed4_balanced_acc": collapsed_metrics["balanced_accuracy"],
                 f"{prefix}_metal_collapsed4_macro_f1": collapsed_metrics["macro_f1"],
+                f"{prefix}_metal_collapsed4_min_recall": float(min(collapsed_recalls)),
                 f"{prefix}_metal_collapsed4_mn_recall": collapsed_metrics["per_class_recall"][0],
                 f"{prefix}_metal_collapsed4_cu_recall": collapsed_metrics["per_class_recall"][1],
                 f"{prefix}_metal_collapsed4_zn_recall": collapsed_metrics["per_class_recall"][2],
@@ -524,6 +559,11 @@ def evaluate_split_metrics(
                     label_name: collapsed_metrics["per_class_recall"][label_idx]
                     for label_idx, label_name in COLLAPSED_METAL_LABELS.items()
                 },
+                f"{prefix}_metal_collapsed4_per_class_support": {
+                    label_name: collapsed_metrics["per_class_support"][label_idx]
+                    for label_idx, label_name in COLLAPSED_METAL_LABELS.items()
+                },
+                f"{prefix}_metal_collapsed4_confusion_matrix": collapsed_metrics["confusion_matrix"],
             }
         )
     else:
@@ -612,6 +652,29 @@ def evaluate_split_metrics(
     return payload
 
 
+def evaluate_split_metrics(
+    model,
+    loader: DataLoader | None,
+    device: str,
+    prefix: str,
+    *,
+    task: str,
+    ec_label_map: dict[int, str],
+    ec_label_depth: int,
+) -> dict[str, Any]:
+    if loader is None:
+        return {}
+
+    predictions = evaluate_epoch_with_predictions(model, loader, device=device)
+    return metrics_from_predictions(
+        predictions,
+        prefix,
+        task=task,
+        ec_label_map=ec_label_map,
+        ec_label_depth=ec_label_depth,
+    )
+
+
 def normalization_stats_payload(normalization_stats: FeatureNormalizationStats) -> dict[str, Any]:
     return {
         "means": normalization_stats.means,
@@ -672,6 +735,54 @@ def task_loss_weighting_state(model) -> dict[str, Any]:
     return payload
 
 
+def _ordered_metric_fields(rows: list[dict[str, Any]], predicate) -> list[str]:
+    fields: set[str] = set()
+    for row in rows:
+        fields.update(key for key in row if predicate(key))
+    ordered = [field for field in ("epoch", "lr", "train_loss", "val_loss") if field in fields]
+    ordered.extend(sorted(field for field in fields if field not in ordered))
+    return ordered
+
+
+def _write_metrics_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
+    if not fieldnames:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(path.name + ".tmp")
+    with tmp_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field) for field in fieldnames})
+    tmp_path.replace(path)
+
+
+def write_epoch_metric_files(run_dir: Path, history: list[dict[str, Any]]) -> None:
+    """Write per-epoch metric snapshots so external monitors can follow training."""
+    if not history:
+        return
+    base_fields = {"epoch", "lr"}
+    loss_state_fields = {
+        "joint_loss_weighting",
+        "metal_loss_scale",
+        "ec_loss_scale",
+        "metal_loss_log_variance",
+        "ec_loss_log_variance",
+    }
+    full_fields = _ordered_metric_fields(history, lambda _key: True)
+    train_fields = _ordered_metric_fields(
+        history,
+        lambda key: key in base_fields
+        or key == "train_loss"
+        or key.startswith("train_")
+        or key in loss_state_fields,
+    )
+    val_fields = _ordered_metric_fields(history, lambda key: key in base_fields or key.startswith("val_"))
+    _write_metrics_csv(run_dir / "epoch_metrics.csv", history, full_fields)
+    _write_metrics_csv(run_dir / "train_metrics.csv", history, train_fields)
+    _write_metrics_csv(run_dir / "val_metrics.csv", history, val_fields)
+
+
 def format_epoch_log(record: dict[str, Any]) -> str:
     parts = [
         f"epoch={record['epoch']}",
@@ -723,6 +834,19 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
     validate_training_configuration(config)
     config_payload = config_to_payload(config)
     config_payload.update(infer_split_identity(config))
+    config_payload["model_seed"] = int(config.seed)
+    config_payload["effective_split_seed"] = split_seed_for_config(config)
+    config_payload["training_graph_augmentation"] = {
+        "position_noise_std": float(config.position_noise_std),
+        "second_shell_dropout": float(config.second_shell_dropout),
+        "training_only": True,
+        "validation_and_test_unchanged": True,
+    }
+    config_payload["training_sampler_seed"] = (
+        int(config.seed)
+        if config.balance_metal_site_symbols and task_predicts_metal(config.task)
+        else None
+    )
     config_payload["git_commit"] = git_commit_hash()
     run_dir = build_run_dir(config)
     save_json(
@@ -811,7 +935,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 n_folds=config.n_folds,
                 fold_index=int(config.fold_index),
                 split_by=config.split_by,
-                seed=config.seed,
+                seed=split_seed_for_config(config),
                 task=config.task,
             )
         else:
@@ -819,7 +943,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 pockets,
                 val_fraction=config.val_fraction,
                 split_by=config.split_by,
-                seed=config.seed,
+                seed=split_seed_for_config(config),
                 task=config.task,
             )
         if task_predicts_ec(config.task):
@@ -900,11 +1024,14 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ),
         )
         normalization_stats = compute_feature_normalization_stats(train_graphs, clamp_value=5.0)
-        train_sampler = (
-            build_balanced_metal_site_sampler(split.train_pockets)
-            if config.balance_metal_site_symbols and task_predicts_metal(config.task)
-            else None
-        )
+        train_sampler = None
+        if config.balance_metal_site_symbols and task_predicts_metal(config.task):
+            sampler_generator = torch.Generator()
+            sampler_generator.manual_seed(int(config.seed))
+            train_sampler = build_balanced_metal_site_sampler(
+                split.train_pockets,
+                generator=sampler_generator,
+            )
         train_loader = DataLoader(
             PocketGraphDataset(
                 split.train_pockets,
@@ -916,6 +1043,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 precomputed_data=train_graphs,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
+                position_noise_std=config.position_noise_std,
+                second_shell_dropout=config.second_shell_dropout,
             ),
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
@@ -942,6 +1071,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         )
 
         metal_class_weights = None
+        metal_collapsed4_class_weights = None
         ec_class_weights = None
         computed_metal_weights, computed_ec_weights = balanced_class_weights_from_pockets(
             split.train_pockets,
@@ -973,6 +1103,23 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             if class_viii_idx is not None:
                 metal_class_weights[class_viii_idx] = (
                     metal_class_weights[class_viii_idx] * float(config.class_viii_loss_multiplier)
+                )
+        if task_predicts_metal(config.task) and config.metal_collapsed_loss_weight > 0.0:
+            train_metal_labels = [
+                int(pocket.y_metal)
+                for pocket in split.train_pockets
+                if pocket.y_metal is not None
+            ]
+            collapsed_train_labels = collapse_metal_label_ids_to_4(
+                train_metal_labels,
+                label_map=METAL_TARGET_LABELS,
+                require_six_class=True,
+            )
+            if config.metal_class_weight_mode != "none":
+                metal_collapsed4_class_weights = class_weights_from_labels(
+                    collapsed_train_labels,
+                    len(COLLAPSED_METAL_LABELS),
+                    mode=config.metal_class_weight_mode,
                 )
         if task_predicts_ec(config.task):
             ec_class_weights = computed_ec_weights
@@ -1009,9 +1156,11 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             metal_loss_function=config.metal_loss_function,
             metal_focal_gamma=config.metal_focal_gamma,
             metal_label_smoothing=config.metal_label_smoothing,
+            metal_collapsed_loss_weight=config.metal_collapsed_loss_weight,
             ec_contrastive_weight=config.ec_contrastive_weight,
             ec_contrastive_temperature=config.ec_contrastive_temperature,
             metal_class_weights=metal_class_weights,
+            metal_collapsed4_class_weights=metal_collapsed4_class_weights,
             ec_class_weights=ec_class_weights,
             predict_metal=task_predicts_metal(config.task),
             predict_ec=task_predicts_ec(config.task),
@@ -1115,6 +1264,7 @@ def train_and_select_checkpoint(
             best_checkpoint["selection_metric_value"] = current_metric
 
         history.append(record)
+        write_epoch_metric_files(prepared.run_dir, history)
         if config.save_epoch_checkpoints:
             epoch_checkpoint_path = prepared.run_dir / f"epoch_{epoch:04d}_checkpoint.pt"
             torch.save(
@@ -1199,21 +1349,91 @@ def evaluate_held_out_test_split(
             batch_size=config.batch_size,
             shuffle=False,
         )
-        metrics = evaluate_split_metrics(
-            prepared.model,
-            test_loader,
-            config.device,
-            prefix="test",
+        test_predictions = evaluate_epoch_with_predictions(prepared.model, test_loader, device=config.device)
+        metrics = metrics_from_predictions(
+            test_predictions,
+            "test",
             task=config.task,
             ec_label_map=prepared.ec_labels,
             ec_label_depth=config.ec_label_depth,
         )
+        final_reporting_payload: dict[str, Any] = {
+            "metrics": metrics,
+            "calibrated_metrics": {},
+            "fitted_temperatures": {},
+            "temperature_scaling": {
+                "enabled": False,
+                "unavailable_reason": "no metal logits were available for final-test calibration",
+            },
+            "bootstrap_settings": {
+                "method": "not_run",
+                "n_bootstrap": int(config.final_test_bootstrap_resamples),
+                "confidence_level": float(config.final_test_bootstrap_confidence_level),
+                "seed": int(config.final_test_bootstrap_seed),
+            },
+            "calibration_settings": {
+                "enabled": bool(config.final_test_enable_calibration),
+                "n_equal_mass_bins": int(config.final_test_calibration_bins),
+            },
+            "calibration_plot_paths": {},
+            "reliability_diagram_path": None,
+            "confidence_histogram_path": None,
+            "prediction_artifact_path": None,
+        }
+        if task_predicts_metal(config.task) and "metal_logits" in test_predictions and "metal_y" in test_predictions:
+            val_predictions = (
+                evaluate_epoch_with_predictions(prepared.model, prepared.val_loader, device=config.device)
+                if prepared.val_loader is not None
+                else {}
+            )
+            final_reporting_payload = build_metal_final_reporting_payload(
+                output_dir=prepared.run_dir,
+                metrics=metrics,
+                test_logits=test_predictions["metal_logits"],
+                test_targets=test_predictions["metal_y"],
+                val_logits=val_predictions.get("metal_logits") if isinstance(val_predictions, dict) else None,
+                val_targets=val_predictions.get("metal_y") if isinstance(val_predictions, dict) else None,
+                task=config.task,
+                enable_calibration=config.final_test_enable_calibration,
+                enable_temperature_scaling=config.final_test_enable_temperature_scaling,
+                enable_bootstrap_ci=config.final_test_enable_bootstrap_ci,
+                n_bins=config.final_test_calibration_bins,
+                n_bootstrap=config.final_test_bootstrap_resamples,
+                confidence_level=config.final_test_bootstrap_confidence_level,
+                bootstrap_seed=config.final_test_bootstrap_seed,
+            )
         train_like_pockets = prepared.split.train_pockets + prepared.split.val_pockets
         overlap_report = train_test_overlap_report(train_like_pockets, test_load_result.pockets)
         split_identity = infer_split_identity(config)
         overlap_warning = overlap_report.get("overlap_warning") or split_identity.get("overlap_warning")
         return {
-            "metrics": metrics,
+            "task": config.task,
+            "final_test_primary_report": config.final_test_primary_report,
+            "final_test_ensemble_mode": config.final_test_ensemble_mode,
+            "final_test_result_role": config.final_test_result_role,
+            "primary_final_report": config.final_test_result_role == "primary_final_report",
+            "secondary_diagnostic_report": config.final_test_result_role == "secondary_diagnostic_report",
+            "selected_config_id": config.final_test_selected_config_id,
+            "selected_run_id": (
+                Path(config.final_test_source_run_dirs[0]).name
+                if config.final_test_source_run_dirs
+                else config.run_name
+            ),
+            "checkpoint_paths": list(config.final_test_checkpoint_paths),
+            "seed_values": list(config.final_test_seed_values) or [int(config.seed)],
+            "run_directories": list(config.final_test_source_run_dirs),
+            "test_structure_dir": str(config.test_structure_dir),
+            "test_summary_csv": str(config.test_summary_csv),
+            "metrics": final_reporting_payload["metrics"],
+            "calibrated_metrics": final_reporting_payload["calibrated_metrics"],
+            "fitted_temperatures": final_reporting_payload["fitted_temperatures"],
+            "temperature_scaling": final_reporting_payload["temperature_scaling"],
+            "bootstrap_settings": final_reporting_payload["bootstrap_settings"],
+            "calibration_settings": final_reporting_payload["calibration_settings"],
+            "calibration_plot_paths": final_reporting_payload["calibration_plot_paths"],
+            "reliability_diagram_path": final_reporting_payload["reliability_diagram_path"],
+            "confidence_histogram_path": final_reporting_payload["confidence_histogram_path"],
+            "prediction_artifact_path": final_reporting_payload["prediction_artifact_path"],
             "n_test_pockets": len(test_load_result.pockets),
             "feature_load_report": test_load_result.feature_report,
             "ec_labels": prepared.ec_labels,
@@ -1223,6 +1443,17 @@ def evaluate_held_out_test_split(
             "overlap_counts": overlap_report["overlap_counts"],
             "overlap_examples": overlap_report["overlap_examples"],
             "overlap_warning": overlap_warning,
+            "timestamp": utc_timestamp(),
+            "git_commit": git_commit_hash(),
+            "code_version": git_commit_hash(),
+            "selection_policy_statement": (
+                "No held-out test metric was used for model, hyperparameter, ensemble, "
+                "temperature, threshold, seed, or checkpoint selection."
+            ),
+            "reporting_only_comparison_statement": (
+                "Primary and secondary final-test reports are labels fixed before evaluation; "
+                "test metrics must not be used to switch the primary result."
+            ),
         }
     finally:
         prepared.model.load_state_dict(current_state_dict)
@@ -1263,9 +1494,21 @@ def persist_run_outputs(
         selected_checkpoint_epoch = None
         selected_metric_value = None
 
+    if test_report is not None:
+        test_report = dict(test_report)
+        if not test_report.get("checkpoint_paths"):
+            test_report["checkpoint_paths"] = [selected_checkpoint_path]
+        if not test_report.get("run_directories"):
+            test_report["run_directories"] = [str(prepared.run_dir)]
+        if not test_report.get("selected_config_id"):
+            test_report["selected_config_id"] = prepared.config_payload.get("run_name") or prepared.run_dir.name
+
     run_metadata = {
         "config": prepared.config_payload,
         "dataset_summary": prepared.dataset_summary,
+        "esm_embedding_metadata": prepared.dataset_summary.get("runtime_preparation", {}).get(
+            "esm_embedding_metadata"
+        ),
         "metal_labels": METAL_TARGET_LABELS,
         "ec_labels": prepared.ec_labels,
         "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
@@ -1291,6 +1534,9 @@ def persist_run_outputs(
         {
             "config": prepared.config_payload,
             "dataset_summary": prepared.dataset_summary,
+            "esm_embedding_metadata": prepared.dataset_summary.get("runtime_preparation", {}).get(
+                "esm_embedding_metadata"
+            ),
             "metal_labels": METAL_TARGET_LABELS,
             "ec_labels": prepared.ec_labels,
             "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
@@ -1352,3 +1598,117 @@ def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Pat
     test_report = evaluate_held_out_test_split(prepared, config, checkpoint=checkpoint)
     persist_run_outputs(prepared, history=history, best_checkpoint=checkpoint, test_report=test_report)
     return prepared.run_dir
+
+
+def evaluate_softmax_mean_checkpoint_ensemble(
+    config: TrainConfig,
+    *,
+    prediction_artifact_paths: list[Path],
+    single_checkpoint_report_paths: list[Path] | None = None,
+) -> Path:
+    """Write a Stage 7 softmax-mean ensemble report from five fixed prediction artifacts."""
+    if not config.run_test_eval:
+        raise ValueError("evaluate_softmax_mean_checkpoint_ensemble requires config.run_test_eval=True.")
+    if config.final_test_ensemble_mode != "softmax_mean_5_seeds":
+        raise ValueError(
+            "evaluate_softmax_mean_checkpoint_ensemble requires "
+            "final_test_ensemble_mode='softmax_mean_5_seeds'."
+        )
+    if len(prediction_artifact_paths) != 5:
+        raise ValueError(
+            "softmax_mean_5_seeds requires exactly five prediction artifacts; "
+            f"got {len(prediction_artifact_paths)}."
+        )
+    if len(config.final_test_source_run_dirs) != 5 or len(config.final_test_checkpoint_paths) != 5:
+        raise ValueError("softmax_mean_5_seeds requires exactly five source run directories and checkpoints.")
+    validate_training_configuration(config)
+
+    config_payload = config_to_payload(config)
+    config_payload.update(infer_split_identity(config))
+    config_payload["git_commit"] = git_commit_hash()
+    run_dir = build_run_dir(config)
+    ensemble_payload = build_softmax_mean_ensemble_payload(
+        output_dir=run_dir,
+        prediction_artifact_paths=prediction_artifact_paths,
+        task=config.task,
+        enable_calibration=config.final_test_enable_calibration,
+        enable_bootstrap_ci=config.final_test_enable_bootstrap_ci,
+        n_bins=config.final_test_calibration_bins,
+        n_bootstrap=config.final_test_bootstrap_resamples,
+        confidence_level=config.final_test_bootstrap_confidence_level,
+        bootstrap_seed=config.final_test_bootstrap_seed,
+    )
+    split_identity = infer_split_identity(config)
+    test_report = {
+        "task": config.task,
+        "final_test_primary_report": config.final_test_primary_report,
+        "final_test_ensemble_mode": config.final_test_ensemble_mode,
+        "final_test_result_role": config.final_test_result_role,
+        "primary_final_report": config.final_test_result_role == "primary_final_report",
+        "secondary_diagnostic_report": config.final_test_result_role == "secondary_diagnostic_report",
+        "selected_config_id": config.final_test_selected_config_id,
+        "selected_run_id": config.final_test_selected_config_id,
+        "checkpoint_paths": list(config.final_test_checkpoint_paths),
+        "seed_values": list(config.final_test_seed_values),
+        "run_directories": list(config.final_test_source_run_dirs),
+        "test_structure_dir": str(config.test_structure_dir),
+        "test_summary_csv": str(config.test_summary_csv),
+        "metrics": ensemble_payload["metrics"],
+        "calibrated_metrics": ensemble_payload["calibrated_metrics"],
+        "fitted_temperatures": ensemble_payload["fitted_temperatures"],
+        "temperature_scaling": ensemble_payload["temperature_scaling"],
+        "bootstrap_settings": ensemble_payload["bootstrap_settings"],
+        "calibration_settings": ensemble_payload["calibration_settings"],
+        "calibration_plot_paths": ensemble_payload["calibration_plot_paths"],
+        "reliability_diagram_path": ensemble_payload["reliability_diagram_path"],
+        "confidence_histogram_path": ensemble_payload["confidence_histogram_path"],
+        "prediction_artifact_path": ensemble_payload["prediction_artifact_path"],
+        "prediction_artifact_paths": [str(path) for path in prediction_artifact_paths],
+        "n_test_pockets": ensemble_payload.get("n_test_pockets"),
+        "single_checkpoint_report_paths": [str(path) for path in (single_checkpoint_report_paths or [])],
+        "secondary_diagnostic_reports": [
+            {
+                "report_type": "single_checkpoint",
+                "report_role": "secondary_diagnostic_report",
+                "test_report_path": str(path),
+            }
+            for path in (single_checkpoint_report_paths or [])[:1]
+        ],
+        "split_name": split_identity.get("split_name"),
+        "split_type": split_identity.get("split_type"),
+        "timestamp": utc_timestamp(),
+        "git_commit": git_commit_hash(),
+        "code_version": git_commit_hash(),
+        "selection_policy_statement": (
+            "No held-out test metric was used for model, hyperparameter, ensemble, "
+            "temperature, threshold, seed, or checkpoint selection."
+        ),
+        "reporting_only_comparison_statement": (
+            "The five checkpoint list, averaging rule, and primary report label were fixed "
+            "before test evaluation; single-checkpoint comparisons are reporting-only."
+        ),
+    }
+    run_config_payload = {
+        "config": config_payload,
+        "selection_metric": config_payload.get("selection_metric"),
+        "selected_checkpoint": None,
+        "selected_checkpoint_epoch": None,
+        "selected_metric_value": None,
+        "test_report": test_report,
+    }
+    run_metadata = {
+        "config": config_payload,
+        "selection_metric": config_payload.get("selection_metric"),
+        "selected_checkpoint": None,
+        "selected_checkpoint_epoch": None,
+        "selected_metric_value": None,
+        "split_name": split_identity.get("split_name"),
+        "split_type": split_identity.get("split_type"),
+        "test_report": test_report,
+        "result_stage": "final-test ensemble evaluated",
+    }
+    save_json(run_dir / "run_config.json", run_config_payload)
+    save_json(run_dir / "run_metadata.json", run_metadata)
+    save_json(run_dir / "test_report.json", test_report)
+    print(f"Saved softmax-mean ensemble test report to {run_dir / 'test_report.json'}")
+    return run_dir

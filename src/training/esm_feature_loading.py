@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 import torch
 from torch import Tensor
@@ -13,6 +14,7 @@ from training.labels import parse_structure_identity
 ESM_FILE_RE = re.compile(r"^(?P<structure_id>.+)_chain_(?P<chain>[^_]+)_esmc\.pt$")
 DEFAULT_ESMC_EMBED_DIM = 960
 ResidueKey = Tuple[str, int, str]
+ESM_METADATA_SIDECAR_SUFFIX = ".json"
 
 
 def normalize_chain_id(chain_id: str) -> str:
@@ -82,6 +84,7 @@ def build_embedding_payload(
     structure_id: str | None = None,
     chain_id: str | None = None,
     source_path: str | None = None,
+    metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if embeddings.dim() != 2:
         raise ValueError(f"Expected a 2D embeddings tensor, got shape {tuple(embeddings.shape)}.")
@@ -89,13 +92,96 @@ def build_embedding_payload(
         raise ValueError(
             f"Embedding payload row count mismatch: got {embeddings.size(0)} rows for {len(residue_ids)} residue ids."
         )
-    return {
+    payload = {
         "format_version": 2,
         "structure_id": structure_id,
         "chain_id": normalize_chain_id(chain_id) if chain_id is not None else None,
         "source_path": source_path,
         "residue_ids": serialize_residue_ids(residue_ids),
         "embeddings": embeddings.float().cpu(),
+    }
+    if metadata is not None:
+        payload["metadata"] = dict(metadata)
+    return payload
+
+
+def embedding_metadata_sidecar_path(embedding_path: Path) -> Path:
+    return embedding_path.with_name(embedding_path.name + ESM_METADATA_SIDECAR_SUFFIX)
+
+
+def embedding_metadata_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    metadata = dict(payload.get("metadata") or {})
+    metadata.setdefault("format_version", payload.get("format_version"))
+    metadata.setdefault("structure_id", payload.get("structure_id"))
+    metadata.setdefault("chain_id", payload.get("chain_id"))
+    metadata.setdefault("source_path", payload.get("source_path"))
+    embeddings = payload.get("embeddings")
+    if isinstance(embeddings, torch.Tensor) and embeddings.dim() == 2:
+        metadata.setdefault("embedding_dim", int(embeddings.size(1)))
+        metadata.setdefault("n_residues", int(embeddings.size(0)))
+    return metadata
+
+
+def write_embedding_metadata_sidecar(embedding_path: Path, metadata: dict[str, Any]) -> Path:
+    sidecar_path = embedding_metadata_sidecar_path(embedding_path)
+    sidecar_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+    return sidecar_path
+
+
+def load_embedding_metadata_sidecar(embedding_path: Path) -> dict[str, Any] | None:
+    sidecar_path = embedding_metadata_sidecar_path(embedding_path)
+    if not sidecar_path.is_file():
+        return None
+    return json.loads(sidecar_path.read_text(encoding="utf-8"))
+
+
+def summarize_esm_embedding_metadata(
+    structure_files: Sequence[Path],
+    embeddings_dir: Path,
+    *,
+    sample_size: int = 5,
+) -> dict[str, Any]:
+    embedding_files: list[Path] = []
+    seen: set[Path] = set()
+    for structure_path in structure_files:
+        for candidate in embedding_path_candidates(embeddings_dir, structure_path):
+            if candidate.is_file() and candidate not in seen:
+                seen.add(candidate)
+                embedding_files.append(candidate)
+
+    sidecar_payloads: list[dict[str, Any]] = []
+    missing_sidecars: list[str] = []
+    for embedding_file in embedding_files:
+        sidecar = load_embedding_metadata_sidecar(embedding_file)
+        if sidecar is None:
+            missing_sidecars.append(str(embedding_file))
+            continue
+        payload = dict(sidecar)
+        payload["embedding_path"] = str(embedding_file)
+        sidecar_payloads.append(payload)
+
+    model_names = sorted(
+        {
+            str(payload.get("esm_model_name"))
+            for payload in sidecar_payloads
+            if payload.get("esm_model_name")
+        }
+    )
+    embedding_dims = sorted(
+        {
+            int(payload.get("embedding_dim"))
+            for payload in sidecar_payloads
+            if payload.get("embedding_dim") is not None
+        }
+    )
+    return {
+        "embedding_files_found": len(embedding_files),
+        "metadata_sidecars_found": len(sidecar_payloads),
+        "metadata_sidecars_missing": len(missing_sidecars),
+        "esm_model_names": model_names or (["unknown_in_older_embeddings"] if embedding_files else []),
+        "embedding_dims": embedding_dims,
+        "metadata_examples": sidecar_payloads[:sample_size],
+        "missing_sidecar_examples": missing_sidecars[:sample_size],
     }
 
 

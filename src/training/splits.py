@@ -316,7 +316,11 @@ def metal_sampler_key_for_pocket(pocket: PocketRecord) -> tuple[int, str]:
     return label_id, METAL_TARGET_LABELS[label_id]
 
 
-def build_balanced_metal_site_sampler(pockets: list[PocketRecord]) -> WeightedRandomSampler:
+def build_balanced_metal_site_sampler(
+    pockets: list[PocketRecord],
+    *,
+    generator: torch.Generator | None = None,
+) -> WeightedRandomSampler:
     if not pockets:
         raise ValueError("Cannot build a sampler for an empty training set.")
 
@@ -340,6 +344,7 @@ def build_balanced_metal_site_sampler(pockets: list[PocketRecord]) -> WeightedRa
         weights=torch.tensor(weights, dtype=torch.double),
         num_samples=len(weights),
         replacement=True,
+        generator=generator,
     )
 
 
@@ -476,6 +481,9 @@ def build_split_diagnostics(
         "task": config.task,
         "split_by": split_by,
         "val_fraction": config.val_fraction,
+        "split_seed": config.split_seed,
+        "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
+        "model_seed": config.seed,
         "n_folds": config.n_folds,
         "fold_index": config.fold_index,
         "n_train_pockets": len(split.train_pockets),
@@ -516,7 +524,8 @@ def format_split_diagnostics(report: dict[str, Any]) -> str:
         (
             f"task={report.get('task')} split_by={report.get('split_by')} "
             f"val_fraction={report.get('val_fraction')} "
-            f"n_folds={report.get('n_folds')} fold_index={report.get('fold_index')}"
+            f"n_folds={report.get('n_folds')} fold_index={report.get('fold_index')} "
+            f"model_seed={report.get('model_seed')} split_seed={report.get('effective_split_seed')}"
         ),
         (
             f"pockets: train={report.get('n_train_pockets')} "
@@ -567,6 +576,9 @@ def build_dataset_summary(
         "omit_node_features": list(config.omit_node_features),
         "val_fraction": config.val_fraction,
         "split_by": config.split_by,
+        "split_seed": config.split_seed,
+        "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
+        "model_seed": config.seed,
         "n_folds": config.n_folds,
         "fold_index": config.fold_index,
         "selection_metric": config.selection_metric,

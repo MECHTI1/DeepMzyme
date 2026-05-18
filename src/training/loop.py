@@ -161,7 +161,7 @@ def accuracy_from_logits(logits: Tensor, y: Tensor) -> float:
 
 
 @torch.no_grad()
-def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, float | list[float | None]]:
+def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, float | list[float | None] | list[int] | list[list[int]]]:
     if y.numel() == 0:
         raise ValueError("Cannot compute classification metrics for an empty target tensor.")
 
@@ -169,6 +169,10 @@ def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, f
     n_classes = int(logits.size(-1))
     per_class_recall: list[float | None] = []
     per_class_f1: list[float | None] = []
+    per_class_support: list[int] = []
+    confusion_matrix = torch.zeros((n_classes, n_classes), dtype=torch.long)
+    for true_idx, pred_idx in zip(y.detach().cpu().tolist(), pred.detach().cpu().tolist()):
+        confusion_matrix[int(true_idx), int(pred_idx)] += 1
 
     for class_idx in range(n_classes):
         true_mask = y == class_idx
@@ -176,6 +180,7 @@ def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, f
         support = int(true_mask.sum().item())
         predicted = int(pred_mask.sum().item())
         true_positive = int((true_mask & pred_mask).sum().item())
+        per_class_support.append(support)
 
         if support == 0:
             per_class_recall.append(None)
@@ -198,4 +203,6 @@ def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, f
         "balanced_accuracy": float(sum(present_recalls) / len(present_recalls)),
         "macro_f1": float(sum(present_f1) / len(present_f1)),
         "per_class_recall": per_class_recall,
+        "per_class_support": per_class_support,
+        "confusion_matrix": confusion_matrix.tolist(),
     }

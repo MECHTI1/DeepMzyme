@@ -12,6 +12,15 @@ evidence in saved outputs, not in stable workflow guides.
   results.
 - `EXPERIMENT_STATUS.md` is only a current-orientation note and may lag behind
   recent runs or code changes.
+- For metal-training stages, use `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as
+  the only source of exact executable values, budgets, search spaces, expected
+  outputs, and gates. Use `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` for
+  option meanings and workflow explanation.
+- As of the Stage 6 statistical-validation update, reportable Stage 6
+  confirmation uses top-K 5-fold grouped validation by `pdbid`, paired
+  fold-level bootstrap confidence intervals, and rare-class recall protection.
+  Older 5-seed validation-only repeats remain historical evidence, not the
+  current Stage 6 standard for new promotions.
 - If this file conflicts with `Plan.md`, source code, or run outputs, report the
   conflict instead of silently trusting this file.
 - Do not invent missing values or exact experiment numbers.
@@ -36,8 +45,13 @@ evidence in saved outputs, not in stable workflow guides.
   `--ring-features-dir`, and `--prepare-missing-ring-edges`. Radius-only
   graph construction is now an explicit ablation or raw low-level/CLI default,
   not the recommended first graph setting.
+- Trusted ESM embedding variant for new ESM/fusion work: ESMC `esmc_300m` with
+  `embedding_dim=960`. Newly generated embeddings should have `*.pt.json`
+  sidecar metadata. Older copied embeddings without sidecars are
+  `unknown_in_older_embeddings`; do not infer their exact checkpoint from
+  path/name alone.
 - Stage: metal Only-ESM baseline confirmed; GVP + late fusion has completed a
-  proper 5-seed, 50-epoch validation-only seed repeat for the top Round 3
+  historical 5-seed, 50-epoch validation-only seed repeat for the top Round 3
   Optuna candidates; GVP + node-level late fusion has also completed a 5-seed,
   50-epoch validation-only check initialized from the selected late-fusion
   anchor; GVP + ESM hybrid fusion has completed an exploratory Round 1
@@ -52,8 +66,10 @@ evidence in saved outputs, not in stable workflow guides.
   validation-selected anchor is fixed.
 - Selected stable Only-ESM anchor: confirmed original `3e-5` +
   `inverse_frequency` configuration from 5-seed validation evidence.
-- Selected GVP + late-fusion anchor: trial `49`, selected from the Round 4
-  5-seed, 50-epoch validation-only seed repeat.
+- Selected GVP + late-fusion anchor: trial `49`, selected from the historical
+  Round 4 5-seed, 50-epoch validation-only seed repeat. Under the current
+  Stage 6 policy, any new replacement/promotion should be confirmed with
+  shared grouped folds and paired bootstrap CIs.
 - Node-level late-fusion status: Round 1 did not replace the selected GVP +
   late-fusion trial `49` anchor.
 - Hybrid fusion status: Round 1 is an exploratory joint-task batch only and
@@ -74,7 +90,7 @@ see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
 
 - Current experiment evidence:
   - `docs/notebook_outputs/summaries/summary_run_gvp_late_fusion_round4_top3_seedrepeat_50epoch.md`
-    summarizes the proper 15-run seed-repeat batch for GVP + late-fusion trials
+    summarizes the historical 15-run seed-repeat batch for GVP + late-fusion trials
     `49`, `32`, and `15`, using 5 seeds and 50 epochs.
   - `docs/notebook_outputs/raw/GVP + late fusion/metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1/`
     contains copied run artifacts for that Round 4 seed-repeat batch.
@@ -131,8 +147,8 @@ run artifacts. They are not held-out test results.
 
 ### GVP + Late Fusion Round 4 Top-3 Seed Repeat
 
-Round 4 was the proper validation-only seed-repeat confirmation for the top 3
-GVP + late-fusion Optuna candidates from Round 3:
+Round 4 was the historical validation-only seed-repeat confirmation for the top
+3 GVP + late-fusion Optuna candidates from Round 3:
 
 - Source Optuna trials: `49`, `32`, `15`
 - Seeds: `42,123,2026,43,44`
@@ -304,10 +320,11 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
 - Do not replace the selected GVP + late-fusion trial `49` anchor with the
   tested node-level late-fusion configuration.
 - Do not promote hybrid fusion Round 1 to anchor status. Before treating
-  hybrid fusion as a candidate metal anchor, extend its top-K seed-repeat to
-  the project-standard 5 seeds (`42,123,2026,43,44`) at the full validation
-  epoch budget, and compare its metal-side balanced accuracy against the
-  confirmed Only-ESM and GVP + late-fusion (trial `49`) anchors.
+  hybrid fusion as a candidate metal anchor, run the current Stage 6 top-K
+  grouped-fold confirmation at the full validation epoch budget, and compare
+  its metal-side balanced accuracy against the confirmed Only-ESM and GVP +
+  late-fusion (trial `49`) anchors with paired bootstrap CIs and rare-class
+  recall protection.
 - Do not run held-out test yet unless the validation architecture search is
   explicitly declared complete.
 - Do not spend another broad Only-ESM search now.
@@ -335,8 +352,9 @@ Current non-selected recent architecture check:
 
 ## Decision Rule
 
-Choose model and fusion anchors by seed-repeat mean, stability, and per-class
-diagnostics, not by one lucky seed.
+Choose model and fusion anchors by Stage 6 grouped-fold mean, paired bootstrap
+comparison, and per-class diagnostics, not by one lucky seed or raw single-run
+delta.
 
 Use, at minimum:
 

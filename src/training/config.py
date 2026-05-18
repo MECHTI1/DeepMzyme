@@ -31,6 +31,9 @@ VALID_LR_SCHEDULE_CHOICES = ("fixed", "cosine", "step")
 VALID_FUSION_MODE_CHOICES = FUSION_MODE_CHOICES
 VALID_EARLY_ESM_SCOPE_CHOICES = ("all", "first_shell", "first_second_shell")
 VALID_CROSS_ATTENTION_NEIGHBORHOOD_CHOICES = ("all", "first_shell", "first_second_shell")
+VALID_FINAL_TEST_REPORT_CHOICES = ("single_checkpoint", "softmax_mean_5_seeds")
+VALID_FINAL_TEST_ENSEMBLE_MODE_CHOICES = ("single_checkpoint", "softmax_mean_5_seeds")
+VALID_FINAL_TEST_RESULT_ROLE_CHOICES = ("primary_final_report", "secondary_diagnostic_report")
 VALID_SELECTION_METRIC_CHOICES = (
     "train_loss",
     "val_loss",
@@ -60,6 +63,7 @@ VALID_SELECTION_METRIC_CHOICES = (
     "val_metal_class_viii_recall",
     "val_metal_collapsed4_acc",
     "val_metal_collapsed4_balanced_acc",
+    "val_metal_collapsed4_min_recall",
     "val_metal_collapsed4_macro_f1",
     "val_metal_collapsed4_mn_recall",
     "val_ec_balanced_acc",
@@ -95,6 +99,7 @@ class TrainConfig:
     edge_radius: float = DEFAULT_EDGE_RADIUS
     weight_decay: float = 1e-4
     seed: int = 42
+    split_seed: int | None = None
     hidden_s: int = 128
     hidden_v: int = 16
     edge_hidden: int = 64
@@ -104,6 +109,8 @@ class TrainConfig:
     node_rbf_sigma: float = 0.75
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
+    position_noise_std: float = 0.0
+    second_shell_dropout: float = 0.0
     node_feature_set: str = "conservative"
     omit_node_features: tuple[str, ...] = ()
     use_esm_branch: bool = True
@@ -139,6 +146,7 @@ class TrainConfig:
     metal_loss_function: str = "cross_entropy"
     metal_focal_gamma: float = 2.0
     metal_label_smoothing: float = 0.0
+    metal_collapsed_loss_weight: float = 0.0
     require_esm_embeddings: bool = True
     prepare_missing_esm_embeddings: bool = True
     require_external_features: bool = True
@@ -154,6 +162,20 @@ class TrainConfig:
     lr_decay_gamma: float = 0.5
     save_epoch_checkpoints: bool = False
     selection_metric: str = "train_loss"
+    final_test_primary_report: str = "single_checkpoint"
+    final_test_ensemble_mode: str = "single_checkpoint"
+    final_test_result_role: str = "primary_final_report"
+    final_test_selected_config_id: str | None = None
+    final_test_source_run_dirs: tuple[str, ...] = ()
+    final_test_checkpoint_paths: tuple[str, ...] = ()
+    final_test_seed_values: tuple[int, ...] = ()
+    final_test_enable_calibration: bool = True
+    final_test_enable_temperature_scaling: bool = True
+    final_test_calibration_bins: int = 15
+    final_test_enable_bootstrap_ci: bool = True
+    final_test_bootstrap_resamples: int = 1000
+    final_test_bootstrap_confidence_level: float = 0.95
+    final_test_bootstrap_seed: int = 20260518
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -207,6 +229,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=None,
+        help=(
+            "Optional seed for train/validation splitting. Defaults to --seed. "
+            "Use this to keep grouped fold definitions fixed while varying model initialization."
+        ),
+    )
     parser.add_argument("--hidden-s", type=int, default=128)
     parser.add_argument("--hidden-v", type=int, default=16)
     parser.add_argument("--edge-hidden", type=int, default=64)
@@ -216,6 +247,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--node-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--edge-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--node-rbf-use-raw-distances", action="store_true")
+    parser.add_argument(
+        "--position-noise-std",
+        type=float,
+        default=0.0,
+        help=(
+            "Training-only Gaussian coordinate noise standard deviation in Angstrom. "
+            "Default 0.0 leaves train/validation/test graphs unchanged."
+        ),
+    )
+    parser.add_argument(
+        "--second-shell-dropout",
+        type=float,
+        default=0.0,
+        help=(
+            "Training-only probability of dropping second-shell residues from each "
+            "in-memory graph. Default 0.0 disables the augmentation."
+        ),
+    )
     parser.add_argument(
         "--node-feature-set",
         type=str,
@@ -406,6 +455,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Optional label smoothing applied to cross-entropy metal loss.",
     )
     parser.add_argument(
+        "--metal-collapsed-loss-weight",
+        type=float,
+        default=0.0,
+        help=(
+            "Experimental validation-only auxiliary collapsed-4 metal loss weight. "
+            "0.0 disables it and preserves the standard six-class metal objective."
+        ),
+    )
+    parser.add_argument(
         "--unsupported-metal-policy",
         type=str,
         default="error",
@@ -437,6 +495,65 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=VALID_SELECTION_METRIC_CHOICES,
     )
     parser.add_argument(
+        "--final-test-primary-report",
+        type=str,
+        default="single_checkpoint",
+        choices=VALID_FINAL_TEST_REPORT_CHOICES,
+        help="Predeclared primary Stage 7 result before held-out test evaluation starts.",
+    )
+    parser.add_argument(
+        "--final-test-ensemble-mode",
+        type=str,
+        default="single_checkpoint",
+        choices=VALID_FINAL_TEST_ENSEMBLE_MODE_CHOICES,
+        help="Stage 7 final-test reporting mode. Does not affect validation selection or HPO.",
+    )
+    parser.add_argument(
+        "--final-test-result-role",
+        type=str,
+        default="primary_final_report",
+        choices=VALID_FINAL_TEST_RESULT_ROLE_CHOICES,
+        help="Whether this final-test report is the primary result or a secondary diagnostic.",
+    )
+    parser.add_argument("--final-test-selected-config-id", type=str, default=None)
+    parser.add_argument(
+        "--final-test-source-run-dirs",
+        type=str,
+        default="",
+        help="Comma-separated validation source run directories recorded in test_report.json.",
+    )
+    parser.add_argument(
+        "--final-test-checkpoint-paths",
+        type=str,
+        default="",
+        help="Comma-separated checkpoint paths recorded in test_report.json.",
+    )
+    parser.add_argument(
+        "--final-test-seed-values",
+        type=str,
+        default="",
+        help="Comma-separated model seed values recorded in test_report.json.",
+    )
+    parser.add_argument(
+        "--disable-final-test-calibration",
+        action="store_true",
+        help="Disable Stage 7 calibration metrics and plots.",
+    )
+    parser.add_argument(
+        "--disable-final-test-temperature-scaling",
+        action="store_true",
+        help="Disable validation-fitted temperature scaling for Stage 7 reporting.",
+    )
+    parser.add_argument("--final-test-calibration-bins", type=int, default=15)
+    parser.add_argument(
+        "--disable-final-test-bootstrap-ci",
+        action="store_true",
+        help="Disable Stage 7 bootstrap confidence intervals.",
+    )
+    parser.add_argument("--final-test-bootstrap-resamples", type=int, default=1000)
+    parser.add_argument("--final-test-bootstrap-confidence-level", type=float, default=0.95)
+    parser.add_argument("--final-test-bootstrap-seed", type=int, default=20260518)
+    parser.add_argument(
         "--split-by",
         type=str,
         default="pdbid",
@@ -449,6 +566,20 @@ def parse_omit_node_features(value: str | None) -> tuple[str, ...]:
     if not value:
         return ()
     return tuple(token.strip() for token in value.split(",") if token.strip())
+
+
+def parse_string_tuple(value: str | None) -> tuple[str, ...]:
+    if not value:
+        return ()
+    normalized = value.replace("\n", ",")
+    return tuple(token.strip() for token in normalized.split(",") if token.strip())
+
+
+def parse_int_tuple(value: str | None) -> tuple[int, ...]:
+    parsed: list[int] = []
+    for token in parse_string_tuple(value):
+        parsed.append(int(token))
+    return tuple(parsed)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
@@ -490,6 +621,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         learning_rate=args.learning_rate,
         weight_decay=args.weight_decay,
         seed=args.seed,
+        split_seed=args.split_seed,
         hidden_s=args.hidden_s,
         hidden_v=args.hidden_v,
         edge_hidden=args.edge_hidden,
@@ -499,6 +631,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         node_rbf_sigma=args.node_rbf_sigma,
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
+        position_noise_std=args.position_noise_std,
+        second_shell_dropout=args.second_shell_dropout,
         node_feature_set=args.node_feature_set,
         omit_node_features=omit_node_features,
         use_esm_branch=model_uses_esm_inputs and not args.disable_esm_branch,
@@ -535,6 +669,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         metal_loss_function=args.metal_loss_function,
         metal_focal_gamma=args.metal_focal_gamma,
         metal_label_smoothing=args.metal_label_smoothing,
+        metal_collapsed_loss_weight=args.metal_collapsed_loss_weight,
         require_esm_embeddings=model_uses_esm_inputs and not args.allow_missing_esm_embeddings,
         prepare_missing_esm_embeddings=not args.no_prepare_missing_esm_embeddings,
         require_external_features=not args.allow_missing_external_features,
@@ -550,6 +685,20 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         lr_decay_gamma=args.lr_decay_gamma,
         save_epoch_checkpoints=args.save_epoch_checkpoints,
         selection_metric=selection_metric,
+        final_test_primary_report=args.final_test_primary_report,
+        final_test_ensemble_mode=args.final_test_ensemble_mode,
+        final_test_result_role=args.final_test_result_role,
+        final_test_selected_config_id=args.final_test_selected_config_id,
+        final_test_source_run_dirs=parse_string_tuple(args.final_test_source_run_dirs),
+        final_test_checkpoint_paths=parse_string_tuple(args.final_test_checkpoint_paths),
+        final_test_seed_values=parse_int_tuple(args.final_test_seed_values),
+        final_test_enable_calibration=not args.disable_final_test_calibration,
+        final_test_enable_temperature_scaling=not args.disable_final_test_temperature_scaling,
+        final_test_calibration_bins=args.final_test_calibration_bins,
+        final_test_enable_bootstrap_ci=not args.disable_final_test_bootstrap_ci,
+        final_test_bootstrap_resamples=args.final_test_bootstrap_resamples,
+        final_test_bootstrap_confidence_level=args.final_test_bootstrap_confidence_level,
+        final_test_bootstrap_seed=args.final_test_bootstrap_seed,
     )
 
 

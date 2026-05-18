@@ -11,6 +11,7 @@ from torch_geometric.nn import GINEConv, global_mean_pool
 
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
+from metal_objectives import metal_loss_with_optional_collapsed4
 from model import (
     AttentionPool,
     ESMGraphEncoder,
@@ -44,10 +45,12 @@ class PocketClassifierBase(nn.Module):
         metal_loss_weight: float,
         ec_loss_weight: float,
         metal_class_weights: Optional[Tensor],
+        metal_collapsed4_class_weights: Optional[Tensor],
         ec_class_weights: Optional[Tensor],
         metal_loss_function: str,
         metal_focal_gamma: float,
         metal_label_smoothing: float,
+        metal_collapsed_loss_weight: float,
         ec_contrastive_weight: float,
         ec_contrastive_temperature: float,
     ) -> None:
@@ -87,11 +90,20 @@ class PocketClassifierBase(nn.Module):
         self.metal_loss_function = str(metal_loss_function)
         self.metal_focal_gamma = float(metal_focal_gamma)
         self.metal_label_smoothing = float(metal_label_smoothing)
+        self.metal_collapsed_loss_weight = float(metal_collapsed_loss_weight)
         self.ec_contrastive_weight = float(ec_contrastive_weight)
         self.ec_contrastive_temperature = float(ec_contrastive_temperature)
         self.register_buffer(
             "metal_class_weights",
             metal_class_weights.float() if metal_class_weights is not None else torch.empty(0),
+        )
+        self.register_buffer(
+            "metal_collapsed4_class_weights",
+            (
+                metal_collapsed4_class_weights.float()
+                if metal_collapsed4_class_weights is not None
+                else torch.empty(0)
+            ),
         )
         self.register_buffer(
             "ec_class_weights",
@@ -135,6 +147,20 @@ class PocketClassifierBase(nn.Module):
                     metal_loss = (((1.0 - pt) ** self.metal_focal_gamma) * ce_per_sample).mean()
                 else:
                     raise ValueError(f"Unsupported metal loss function {self.metal_loss_function!r}.")
+                if self.metal_collapsed_loss_weight > 0.0:
+                    collapsed_weights = (
+                        self.metal_collapsed4_class_weights
+                        if self.metal_collapsed4_class_weights.numel() > 0
+                        else None
+                    )
+                    metal_loss, _collapsed_loss = metal_loss_with_optional_collapsed4(
+                        metal_loss,
+                        metal_logits,
+                        metal_targets,
+                        alpha=self.metal_collapsed_loss_weight,
+                        collapsed4_weight=collapsed_weights,
+                        label_smoothing=self.metal_label_smoothing,
+                    )
                 task_losses["metal"] = metal_loss
         if self.predict_ec and logits_ec is not None and hasattr(data, "y_ec"):
             ec_mask = self._supervised_mask(data.y_ec)
@@ -222,10 +248,12 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
         metal_class_weights: Optional[Tensor] = None,
+        metal_collapsed4_class_weights: Optional[Tensor] = None,
         ec_class_weights: Optional[Tensor] = None,
         metal_loss_function: str = "cross_entropy",
         metal_focal_gamma: float = 2.0,
         metal_label_smoothing: float = 0.0,
+        metal_collapsed_loss_weight: float = 0.0,
         ec_contrastive_weight: float = 0.0,
         ec_contrastive_temperature: float = 0.1,
         predict_metal: bool = True,
@@ -255,10 +283,12 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             metal_loss_weight=metal_loss_weight,
             ec_loss_weight=ec_loss_weight,
             metal_class_weights=metal_class_weights,
+            metal_collapsed4_class_weights=metal_collapsed4_class_weights,
             ec_class_weights=ec_class_weights,
             metal_loss_function=metal_loss_function,
             metal_focal_gamma=metal_focal_gamma,
             metal_label_smoothing=metal_label_smoothing,
+            metal_collapsed_loss_weight=metal_collapsed_loss_weight,
             ec_contrastive_weight=ec_contrastive_weight,
             ec_contrastive_temperature=ec_contrastive_temperature,
         )
@@ -305,10 +335,12 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
         metal_class_weights: Optional[Tensor] = None,
+        metal_collapsed4_class_weights: Optional[Tensor] = None,
         ec_class_weights: Optional[Tensor] = None,
         metal_loss_function: str = "cross_entropy",
         metal_focal_gamma: float = 2.0,
         metal_label_smoothing: float = 0.0,
+        metal_collapsed_loss_weight: float = 0.0,
         predict_metal: bool = True,
         predict_ec: bool = True,
         use_esm_branch: bool = True,
@@ -441,10 +473,12 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             metal_loss_weight=metal_loss_weight,
             ec_loss_weight=ec_loss_weight,
             metal_class_weights=metal_class_weights,
+            metal_collapsed4_class_weights=metal_collapsed4_class_weights,
             ec_class_weights=ec_class_weights,
             metal_loss_function=metal_loss_function,
             metal_focal_gamma=metal_focal_gamma,
             metal_label_smoothing=metal_label_smoothing,
+            metal_collapsed_loss_weight=metal_collapsed_loss_weight,
             ec_contrastive_weight=ec_contrastive_weight,
             ec_contrastive_temperature=ec_contrastive_temperature,
         )

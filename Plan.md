@@ -63,8 +63,13 @@ Best checkpoint selection: highest validation balanced accuracy
 Final test reporting: six-class metrics and collapsed-4 metrics, where Fe, Co,
 and Ni are merged into Class VIII.
 
-For the staged training pipeline (smoke, baseline, HPO, seed-repeat, final test)
-with copy-paste notebook configuration blocks, use
+Six-class metal classification remains the main task. Collapsed-4 is an
+auxiliary/supplemental view only: it may be used as an optional validation-only
+auxiliary loss experiment, but it must not replace six-class metrics, six-class
+confusion matrices, or six-class rare-class recall checks.
+
+For the staged training pipeline (smoke, baseline, HPO, grouped-fold
+confirmation, final test) with copy-paste notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 ### Canonical Colab metal-training pipeline
@@ -72,24 +77,39 @@ with copy-paste notebook configuration blocks, use
 The canonical metal-training workflow is
 `notebooks/DeepMzyme_training_colab.ipynb` driven by the staged blocks in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The pipeline has eight stages with
-explicit decision gates: Stage 0 (environment readiness), Stage 1 (smoke),
-Stage 2 (Only-GVP and baseline-family validation), Stage 3 (Optuna plumbing
-check), Stage 4 (medium per-family Optuna), Stage 5 (200-trial per-family
-Optuna), Stage 6 (top-K x 5-seed validation), Stage 7 (single held-out test).
+explicit decision gates: Stage 0 (environment/data readiness), Stage 1
+(1-epoch smoke), Stage 2A (Only-GVP validation anchor), Stage 2B (baseline
+family comparison), Stage 3 (Optuna plumbing debug), Stage 4 (optional medium
+per-family Optuna), Stage 5A-5F (serious per-family HPO), Stage 5G
+(RING/radius-only ablation), Stage 6 (top-K seed/split confirmation), and
+Stage 7 (one-shot held-out test).
 
 Authoritative rules for the pipeline:
 
 - One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
-- Hardware target is a G4-class GPU; the playbook defines exact budgets and
-  storage.
+- Hardware target is a G4-class GPU; the playbook defines exact budgets,
+  storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
-  Stage 6 seed-repeat evidence.
+  Stage 6 grouped-fold confirmation evidence.
+- Stage 7 remains a one-shot held-out test event for a fixed
+  validation-selected configuration. Optional ensemble, calibration,
+  temperature-scaling, plot, or confidence-interval outputs are reporting
+  additions only and must not feed back into model/configuration/checkpoint
+  selection.
+- Stage 6 model promotion uses paired comparisons over shared validation
+  folds/splits, paired bootstrap 95% confidence intervals, and rare-class
+  recall protection. Raw validation deltas alone are not sufficient promotion
+  evidence.
+- Optional multi-objective HPO may be used as validation-only rare-class
+  protection tooling. Its primary objectives are `val_metal_balanced_acc` and
+  six-class `val_metal_min_recall`; collapsed-4 recall is supplemental and must
+  not hide Fe/Co/Ni failures.
 - Serious validation-only metal Optuna searches should keep the current
   validated batch size in scope and compare the next larger practical batch
   size; reserve very small batches for smoke/debug or memory fallback, and
   reserve much larger batches for explicitly labeled ablations.
-- The advanced fusion order is Stage 5C -> 5D -> 5E -> 5F, gated by validation
-  evidence from the preceding stage.
+- The advanced fusion order is Stage 5C -> Stage 5D -> Stage 5E -> Stage 5F,
+  gated by validation evidence and thresholds defined in the playbook.
 
 ### Metal Colab Parameter Ownership Rule
 
@@ -97,12 +117,14 @@ Exact notebook parameter values for the metal-training pipeline must live only
 in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 `Plan.md` defines the research policy and stage ordering, including
-validation-only selection, held-out-test protection, one `MODEL_PRESET` per
-Optuna study, and the advanced-fusion gate. It must not duplicate full stage
-configuration blocks.
+validation-only selection, held-out-test protection, `val_metal_balanced_acc`
+as the metal-selection metric, grouped validation splitting by `pdbid`, one
+`MODEL_PRESET` per Optuna study, baseline-first family promotion, and the
+advanced-fusion gate. It must not duplicate full stage configuration blocks or
+exact stage values.
 
-When a stage budget, Optuna search space, seed-repeat policy, or final-test
-configuration changes, update the files in this order:
+When a stage budget, Optuna search space, Stage 6 confirmation policy, or
+final-test configuration changes, update the files in this order:
 
 1. `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` - exact executable values.
 2. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
@@ -191,6 +213,8 @@ can reproduce a command-line run.
 | Node/edge encoders | `--node-rbf-sigma` | `0.75` | Width of distance radial-basis features for node distance features. | Advanced |
 | Node/edge encoders | `--edge-rbf-sigma` | `0.75` | Width of distance radial-basis features for edge distance features. | Advanced |
 | Node/edge encoders | `--node-rbf-use-raw-distances` | false | Uses raw, unnormalized node distances for node RBF expansion when available. | Advanced |
+| Training augmentation | `--position-noise-std` | `0.0` | Training-only Gaussian coordinate noise. Validation and held-out test graphs stay unaugmented. | Advanced / optional sweep |
+| Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. | Advanced / optional sweep |
 | ESM inputs | `--esm-embeddings-dir` | optional path | Directory containing precomputed ESMC residue embeddings. Needed by ESM-using models unless generation/missing behavior is enabled. | Expose |
 | ESM inputs | `--esm-dim` | code default ESMC dimension | Expected dimension of residue ESM embeddings. | Advanced |
 | ESM inputs | `--allow-missing-esm-embeddings` | false | Allows ESM-using runs to continue when embeddings are missing; use only for explicit debugging/ablation. | Expose with warning |
@@ -220,6 +244,7 @@ can reproduce a command-line run.
 | Metal loss | `--metal-loss-function` | `cross_entropy`; choices `cross_entropy`, `focal` | Loss function for metal classification. | Expose |
 | Metal loss | `--metal-focal-gamma` | `2.0` | Focal-loss gamma when focal loss is selected. | Expose |
 | Metal loss | `--metal-label-smoothing` | `0.0` | Label smoothing for metal cross-entropy. | Expose |
+| Metal loss | `--metal-collapsed-loss-weight` | `0.0` | Optional validation-only collapsed-4 auxiliary metal loss weight. `0.0` preserves the standard six-class objective. | Advanced |
 | Metal loss | `--mn-loss-multiplier`, `--cu-loss-multiplier`, `--zn-loss-multiplier`, `--fe-loss-multiplier`, `--co-loss-multiplier`, `--ni-loss-multiplier`, `--class-viii-loss-multiplier` | `1.0` each | Per-class multipliers applied to metal class weights. | Advanced |
 | Joint loss | `--joint-loss-weighting` | `auto`; choices `auto`, `fixed`, `uncertainty` | Controls task-level metal/EC loss balancing. `auto` uses learned uncertainty weighting for joint runs and fixed weighting for single-task runs. | Expose |
 | Joint loss | `--metal-loss-weight` | `1.0` | Base task-level multiplier for the metal loss; mainly useful with `--joint-loss-weighting fixed` or deliberate ablations. | Expose |
@@ -264,8 +289,8 @@ Each playbook covers staged notebook configuration blocks for:
 - smoke/readiness checks
 - baseline model comparison
 - controlled medium Optuna searches
-- large controlled Optuna searches, including 200-trial examples
-- top-K seed-repeat validation
+- large controlled Optuna searches
+- top-K grouped-fold confirmation
 - final held-out test evaluation after validation-based selection only
 
 For the metal notebook pipeline, the playbook must keep exact values for:
@@ -281,10 +306,17 @@ For the metal notebook pipeline, the playbook must keep exact values for:
   `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`,
   `OPTUNA_TPE_MULTIVARIATE`, `OPTUNA_TPE_GROUP`,
   `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage, search preset, and search ranges
-- seed-repeat controls: top-K, repeat seed list, mismatch guard, and final-test
-  exclusion
+- Optional validation-only objective controls:
+  `METAL_COLLAPSED_LOSS_WEIGHT`,
+  `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV`, and
+  `OPTUNA_MULTIOBJECTIVE`
+- Stage 6 confirmation controls: top-K, grouped-fold count, split seed, model
+  seed list for fallback repeats, mismatch guard, paired-bootstrap comparison,
+  and final-test exclusion
 - final-test controls: preview mode first, explicit one-shot confirmation,
-  source-run selection, and repeat/mixed-batch guards
+  source-run selection, predeclared primary report, optional five-checkpoint
+  softmax-mean ensemble reporting, calibration settings, bootstrap confidence
+  intervals, and repeat/mixed-batch guards
 
 Keep current best-result notes and mutable next-step status in
 `EXPERIMENT_STATUS.md`. Keep raw and summarized run evidence in
@@ -299,6 +331,23 @@ Pipeline governance:
   table.
 - Changes to the held-out test policy must update Plan.md first and propagate
   to the playbook's Stage 7.
+
+### Pipeline design trade-offs
+
+The sequential baseline-first architecture search is publication-safe because
+each added modeling component has validation evidence against a stable simpler
+anchor. The trade-off is that it may miss global optima that would appear only
+from a joint architecture, capacity, feature, and loss search.
+
+Separating Optuna discovery from Stage 6 grouped-fold stability checks costs
+more compute than selecting the single best trial directly, but it makes the
+analysis cleaner: HPO finds candidates, while shared-fold validation estimates
+whether a candidate is stable enough to promote.
+
+The non-overlapped PinMyMetal held-out test is useful as the current final
+reporting split. Stronger future claims may need additional splits, such as a
+temporal split, a sequence-identity-clustered split, or an EC-stratified split,
+so that generalization is not tied to one historical benchmark construction.
 
 ---
 
@@ -362,6 +411,7 @@ The summary table should include, when available:
 - selection metric
 - best validation metrics
 - final held-out test metrics
+- final held-out calibration metrics and bootstrap confidence intervals
 - metal 6-class metrics
 - metal collapsed-4 metrics
 - EC level-1 / level-2 metrics
@@ -373,6 +423,15 @@ Important rules:
 - Validation metrics are used for checkpoint selection and hyperparameter choice.
 - Held-out test metrics are used only for final reporting.
 - Do not choose models by repeatedly checking the held-out test set.
+- Stage 7 may report a predeclared five-checkpoint softmax-mean ensemble, but
+  the ensemble source runs, averaging rule, and primary result label must be
+  fixed before opening the held-out test.
+- Stage 7 may include calibration metrics, validation-fitted temperature
+  scaling, reliability/confidence plots, and bootstrap confidence intervals.
+  Temperature fitting must use validation logits only.
+- Primary final reports and secondary/diagnostic reports must be labeled
+  clearly, and held-out test metrics must never be used to switch the primary
+  report after evaluation.
 - For a new check or fresh experiment request, previous raw notebook outputs are
   context and guardrails by default, not the main source for narrowing the new
   search. Use previous raw outputs heavily only when the request explicitly asks
@@ -412,7 +471,7 @@ over every architecture at every stage:
 2. Select a stable validation-best anchor from multiple seeds where possible.
 3. When deliberately continuing from an anchor, carry forward shared settings
    from the simpler anchor when adding one new source of complexity. Shared
-   settings include the split policy, epoch budget, seed-repeat list, graph
+   settings include the split policy, epoch budget, Stage 6 fold plan, graph
    radius, GVP capacity, class-weighting policy, and validation selection
    metric.
 4. When the user instead asks for a new check or fresh Optuna sweep, do not
@@ -504,5 +563,7 @@ Use only validation or cross-validation for:
 - hyperparameter choices
 - model architecture choices
 - fusion-mode choices
+- temperature or calibration-method choices
+- ensemble membership, ensemble weighting, or threshold choices
 
 Use the held-out test set only for final reporting of selected models.

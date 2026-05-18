@@ -17,13 +17,21 @@ and safe workflow principles; the playbook is the practical execution recipe.
 
 | Playbook stage | Notebook variables most relevant to the stage | This guide's section to read |
 | --- | --- | --- |
-| Stage 0 | `DATASET_NAME`, `RING_EDGE_MODE`, `RING_EXE_PATH`, `ESM_EMBEDDINGS_DIR`, `ALLOW_MISSING_EXTERNAL_FEATURES`, `RUNS_DIR` | "Starting Point", "RING options", "ESM options" |
-| Stage 1 | `RUN_MODE`, `RECOMMENDED_RUN_SET`, `EPOCHS`, `LAUNCH_PLANNED_TRAINING_RUNS` | "Minimal smoke test" |
-| Stage 2A | `RECOMMENDED_RUN_SET="only_gvp_broad_comparison"`, `EPOCHS`, `SEEDS_CSV`, `LEARNING_RATES_CSV` | "First real baseline" |
-| Stage 2B | `RECOMMENDED_RUN_SET="baseline_model_comparison"` | "Recommended model order" |
-| Stage 3/4/5 | `RUN_MODE="controlled_hpo_optuna"`, `MODEL_PRESET`, `OPTUNA_*` | "Optuna storage and seed repeats" |
-| Stage 6 | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_K_CONFIGS_FOR_SEED_REPEAT`, `REPEAT_SEEDS` | "Optuna storage and seed repeats" |
-| Stage 7 | `FINAL_TEST_WORKFLOW`, `CONFIRM_ONE_SHOT_POLICY`, `FINAL_TEST_SOURCE_*` | "How To Decide The Current Best Configuration" -> "For final reporting" |
+| Stage 0: environment/data readiness | Data source, bundle, Drive, `RUNS_DIR`, RING/ESM/external-feature path controls | "Starting Point", "RING options", "ESM options" |
+| Stage 1: 1-epoch smoke | `RUN_MODE`, `RECOMMENDED_RUN_SET`, launch toggle, smoke/debug guards | "Minimal smoke test" |
+| Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
+| Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
+| Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
+| Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
+| Stage 5A: serious Only-GVP HPO | One `MODEL_PRESET`, serious Optuna search controls, graph capacity controls, imbalance controls | "Model architecture and fusion", "Metal class weighting", "Optuna storage and Stage 6 confirmation" |
+| Stage 5B: Only-ESM HPO | ESM path/generation controls, ESM-only preset, serious Optuna controls | "ESM options", "Optuna storage and Stage 6 confirmation" |
+| Stage 5C: GVP + late fusion HPO | ESM fusion controls, serious Optuna controls, validation gate for advanced fusion | "Advanced fusion policy", "Optuna storage and Stage 6 confirmation" |
+| Stage 5D: GVP + node-level late fusion HPO | Node-level fusion preset, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "ESM options" |
+| Stage 5E: GVP + hybrid fusion HPO | Early+late ESM controls, early ESM dimensions/dropout, advanced-fusion gate | "Advanced fusion policy", "ESM options" |
+| Stage 5F: GVP + cross-attention HPO | Cross-attention controls, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "Model architecture and fusion" |
+| Stage 5G: RING/radius-only ablation | `RING_EDGE_MODE`, RING requirement/preparation flags, ablation labeling | "RING options" |
+| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold"`, top-K controls, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, repeat model seed, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
+| Stage 7: one-shot held-out test | final-run selector, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
 
 ## Current Status Pointer
 
@@ -54,14 +62,15 @@ Recommended notebook usage:
    match the intended stage.
 5. Run the summarize/report cell for the current `RUN_BATCH_ID`.
 6. After Stage 5, inspect `top_trials.csv` and the Optuna summary, then run
-   Stage 6 (top-K x 5-seed validation).
+   Stage 6 using the playbook's top-K grouped-fold confirmation block.
 7. Only after Stage 6, run the Select final run cell, preview Stage 7 in
    `preview_only` mode, then launch Stage 7 with `CONFIRM_ONE_SHOT_POLICY =
    True` exactly once.
 
-The notebook is intentionally staged. Smoke, baseline, HPO, seed-repeat, and
-final-test settings should not be mixed in one batch folder unless the batch is
-explicitly labeled as mixed and not used for model selection.
+The notebook is intentionally staged. Smoke, baseline, HPO, grouped-fold
+confirmation, and final-test settings should not be mixed in one batch folder
+unless the batch is explicitly labeled as mixed and not used for model
+selection.
 
 ## How This Guide Relates To Exact Stage Blocks
 
@@ -87,8 +96,14 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
 | Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
-| Serious Optuna pruning | `OPTUNA_USE_PRUNING = False` until subprocess trials report intermediate values |
-| Final test | Stage 7 only, after Stage 6 seed-repeat validation |
+| Serious Optuna pruning | optional; if enabled, use real per-epoch metrics and `OPTUNA_PRUNING_MIN_EPOCH >= 8` for 50-epoch HPO |
+| Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
+| Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
+| Final test | Stage 7 only, after Stage 6 grouped-fold validation |
+
+Stage 6 grouped-fold confirmation is the exception to the `VAL_FRACTION`
+default: it sets `VAL_FRACTION = 0.0` and uses `SEED_REPEAT_N_FOLDS = 5` with
+`SPLIT_BY = "pdbid"`.
 
 Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 
@@ -98,19 +113,20 @@ The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
 spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "G4-Class Optuna
 Policy". This guide does not duplicate them. The high-level posture is:
 persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
-per study, validation-only objective, and >= 5-seed confirmation before any
-held-out test.
+per study, validation-only objective, and predeclared grouped-fold confirmation
+before any held-out test. The playbook owns the exact trial counts, startup
+trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
+batch-size search space, and seed list.
 
 ## Starting Point
 
 Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
 
-- `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"`
-- `TASK = "metal"`
-- `VAL_FRACTION = 0.15`
-- `SPLIT_BY = "pdbid"`
-- `SELECTION_METRIC = ""`, which defaults to `val_metal_balanced_acc` for the metal task
-- `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
+- Use the playbook stage block for the exact dataset, task, validation split,
+  grouping, and selection metric values.
+- For reportable metal runs, the resolved configuration must use the trusted
+  non-overlapped PinMyMetal split, grouped validation splitting, metal balanced
+  accuracy for selection, and no held-out test during training.
 - Set a visible `RUN_BATCH_ID` for each real comparison batch. The notebook
   writes into that batch folder when `RUN_BATCH_ID` is set; use the stage block
   in the playbook for the canonical name.
@@ -222,7 +238,8 @@ Run advanced fusion only when all of the following are true:
 
 - `Only-GVP` has a stable validation baseline across multiple seeds.
 - `Only-ESM` has been measured with valid ESM embeddings.
-- `GVP + late fusion` has been compared against both simple baselines under the same split, epoch budget, seed-repeat list, and selection metric.
+- `GVP + late fusion` has been compared against both simple baselines under
+  the same split, epoch budget, Stage 6 fold plan, and selection metric.
 - Late fusion or another simple ESM-informed model gives enough validation benefit to justify testing more expressive fusion.
 
 Suggested advanced-fusion order:
@@ -233,23 +250,17 @@ Suggested advanced-fusion order:
 
 Do not run `full_model_comparison` as the first serious architecture comparison. It mixes simple and advanced models before the simple anchor is established, which makes the result harder to interpret.
 
-If cross-attention is tested, keep the first search narrow:
-
-| Option | Starting value |
-| --- | --- |
-| `MODEL_PRESET` | `GVP + cross-modal attention` |
-| `CROSS_ATTENTION_LAYERS_CSV` | `1` |
-| `CROSS_ATTENTION_HEADS_CSV` | `4` |
-| `CROSS_ATTENTION_DROPOUT` | `0.1` |
-| `CROSS_ATTENTION_NEIGHBORHOOD` | `first_second_shell` or `all` |
-| `CROSS_ATTENTION_BIDIRECTIONAL` | `False` first |
-
-Compare cross-attention against the best validation-selected late-fusion model, not against an untuned or mismatched baseline. Use validation metrics only for the decision, and do not broaden layers, heads, bidirectionality, or neighborhoods until the narrow run beats the simpler model consistently across seeds.
+If cross-attention is tested, use the playbook's Stage 5F block for the exact
+first serious search space. Compare cross-attention against the best
+validation-selected late-fusion model, not against an untuned or mismatched
+baseline. Use validation metrics only for the decision, and do not broaden
+attention settings until the playbook gate is passed.
 
 For node-level late fusion and hybrid fusion, inherit the same graph anchor and comparison rules:
 
 - Keep the validated `Only-GVP` graph settings fixed at first.
-- Keep the same split, epoch budget, seed-repeat list, and selection metric as late fusion.
+- Keep the same split, epoch budget, Stage 6 fold plan, and selection metric
+  as late fusion.
 - Retune only a narrow set of ESM/fusion-sensitive settings first.
 - Compare against the best validation-selected `GVP + late fusion`, not only against `Only-GVP`.
 
@@ -257,14 +268,17 @@ For node-level late fusion and hybrid fusion, inherit the same graph anchor and 
 
 The main capacity fields are:
 
-- `HIDDEN_S_VALUES_CSV`: scalar hidden width for GVP/GNN states. Keep `128` first.
-- `HIDDEN_V_VALUES_CSV`: vector hidden width for GVP models. Keep `16` first.
-- `EDGE_HIDDEN_VALUES_CSV`: edge-feature hidden width. Keep `64` first.
-- `GVP_LAYERS_VALUES_CSV`: graph message-passing depth. Keep `4` first.
-- `HEAD_MLP_LAYERS_VALUES_CSV`: classifier-head depth. Keep `2` first.
-- `EDGE_RADIUS_VALUES_CSV`: graph radius cutoff. Keep `8.0` first.
+- `HIDDEN_S_VALUES_CSV`: scalar hidden width for GVP/GNN states.
+- `HIDDEN_V_VALUES_CSV`: vector hidden width for GVP models.
+- `EDGE_HIDDEN_VALUES_CSV`: edge-feature hidden width.
+- `GVP_LAYERS_VALUES_CSV`: graph message-passing depth.
+- `HEAD_MLP_LAYERS_VALUES_CSV`: classifier-head depth.
+- `EDGE_RADIUS_VALUES_CSV`: graph radius cutoff.
 
-Do not vary all capacity fields at once in the first baseline. Use `only_gvp_architecture_grid` or `only_gvp_geometry_grid` only after the simpler learning-rate and seed behavior is understood.
+Do not vary all capacity fields at once in the first baseline. Use the playbook
+for the exact first baseline and HPO search spaces; use
+`only_gvp_architecture_grid` or `only_gvp_geometry_grid` only after simpler
+learning-rate and seed behavior is understood.
 
 ### ESM options
 
@@ -279,6 +293,12 @@ For ESM or fusion runs:
 
 - Provide `ESM_EMBEDDINGS_DIR`, or explicitly set `PREPARE_MISSING_ESM_EMBEDDINGS = True`.
 - Do not set `ALLOW_MISSING_ESM_EMBEDDINGS = True` for reportable runs. It is a debug/ablation escape hatch.
+- Current canonical embeddings are ESMC `esmc_300m` with embedding dimension
+  `960`. Newly generated embeddings write a `*.pt.json` sidecar recording the
+  ESM model/checkpoint name, embedding dimension, generation time, code
+  version, and source structure/sequence identifier. Older embedding files may
+  lack this sidecar; label those as `unknown_in_older_embeddings` instead of
+  inferring the variant.
 
 `use_early_esm` is controlled by presets: early and hybrid fusion enable it; late fusion and `Only-ESM` do not.
 
@@ -301,18 +321,41 @@ types. To run a radius-only ablation, set `RING_EDGE_MODE = "without_ring"`.
 
 ### Training hyperparameters
 
-Recommended starting values:
+The playbook owns the exact values for `EPOCHS`, `BATCH_SIZES_CSV`,
+`LEARNING_RATES_CSV`, `WEIGHT_DECAYS_CSV`, `LR_SCHEDULES_CSV`, and `SEEDS_CSV`
+for each stage. Use this guide only to understand what those fields mean:
 
-| Option | Smoke | First real baseline |
-| --- | --- | --- |
-| `EPOCHS` | `1` | `30` or `50` |
-| `BATCH_SIZES_CSV` | `4` | `8`; compare `16` in validation-only sweeps if memory is stable |
-| `LEARNING_RATES_CSV` | `3e-5` | `3e-5,1e-4`; optionally add `3e-4` |
-| `WEIGHT_DECAYS_CSV` | `1e-4` | `1e-4` first; later compare `0,1e-5,1e-4` |
-| `LR_SCHEDULES_CSV` | `fixed` | `fixed` first |
-| `SEEDS_CSV` | `42` | at least `42,43`; preferably `42,43,44` |
+- `EPOCHS` controls the maximum training duration for each run or trial.
+- `BATCH_SIZES_CSV`, `LEARNING_RATES_CSV`, and `WEIGHT_DECAYS_CSV` define
+  manual comparison grids when `RUN_MODE = "manual_configurations"`.
+- `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs.
+- `SEEDS_CSV` controls both initialization and the validation split when using
+  the simple grouped split path.
 
 Do not compare 1-epoch runs as if they are model-quality evidence.
+
+### Training-only graph augmentation
+
+`POSITION_NOISE_STD` and `SECOND_SHELL_DROPOUT` map to
+`--position-noise-std` and `--second-shell-dropout`. Both default to `0.0`.
+They are applied only by the training dataset when nonzero; validation,
+grouped-fold confirmation, and held-out test inference use unaugmented
+coordinates and graph membership.
+
+For serious Stage 5A-and-later HPO, the playbook may opt into
+`OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
+`OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
+augmentation search so the unaugmented baseline remains directly comparable.
+
+### Joint-loss weighting caution
+
+`--joint-loss-weighting auto` resolves to learned uncertainty weighting for
+joint metal+EC runs. This can be useful, but it can also collapse one task's
+effective gradient if one loss becomes much smaller than the other. Prefer
+fixed task weights for reportable joint experiments unless uncertainty
+weighting has its own validation evidence. Record `--joint-loss-weighting`,
+`--metal-loss-weight`, `--ec-loss-weight`, and the learned task-loss scales in
+`run_metadata.json` / per-epoch metric CSVs.
 
 ### Validation and selection metric
 
@@ -323,7 +366,14 @@ For metal, optimize:
 
 Use balanced accuracy because the metal classes are imbalanced. Plain accuracy can look good while failing rare metals.
 
-Keep `VAL_FRACTION > 0` for reportable comparisons. If `VAL_FRACTION = 0`, the training CLI falls back to `train_loss`, which is not a valid basis for model selection. The notebook prints a metal split diagnostic showing whether every metal class is present in train and validation; if any class is missing from validation, that run is not suitable for reportable model selection.
+Keep `VAL_FRACTION > 0` for single-split reportable comparisons. Stage 6
+grouped-fold confirmation is the planned exception: it sets
+`VAL_FRACTION = 0` together with `N_FOLDS`/`FOLD_INDEX`, so validation still
+exists. If `VAL_FRACTION = 0` without a fold split, the training CLI falls
+back to `train_loss`, which is not a valid basis for model selection. The
+notebook prints a metal split diagnostic showing whether every metal class is
+present in train and validation; if any class is missing from validation, that
+run is not suitable for reportable model selection.
 
 ### Metal class weighting
 
@@ -335,6 +385,7 @@ Current code supports:
 - `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`
 - `BALANCE_METAL_SITE_SYMBOLS = True` or `False`
 - `METAL_LOSS_FUNCTION = "cross_entropy"` or `"focal"`
+- `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` by default
 
 Start cautiously:
 
@@ -346,7 +397,24 @@ Start cautiously:
 
 Class weights are computed from the training split only, which is correct. Still inspect whether weighting improves rare-class recall without destroying common-class performance.
 
-### Optuna storage and seed repeats
+### Collapsed-4 Auxiliary Loss
+
+`METAL_COLLAPSED_LOSS_WEIGHT` is an experimental metal-only objective option.
+The default `0.0` preserves the existing six-class loss. Nonzero values add an
+auxiliary collapsed-4 cross-entropy term where `Fe`, `Co`, and `Ni` are merged
+into `Class VIII` only for that auxiliary view.
+
+Use it only as a validation-only probe after the initial baselines are stable.
+The recommended first-use values are `0.0,0.3,0.5`, exposed for Stage 5A HPO by
+`OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"`. Keep
+`METAL_LOSS_FUNCTION = "cross_entropy"` for this probe.
+
+Do not use collapsed-4 loss in initial Stage 2 baselines, during final held-out
+test reporting, or as a reason to repeatedly inspect held-out test performance.
+Six-class reporting remains primary; collapsed-4 reporting is supplemental and
+must not hide Fe/Co/Ni failures.
+
+### Optuna Storage And Stage 6 Confirmation
 
 For debug only:
 
@@ -356,34 +424,65 @@ For debug only:
 For useful Colab HPO:
 
 - Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
-  budget. The playbook uses this for G4-oriented medium and 200-trial searches.
-- Use persistent SQLite storage in Drive, for example:
-  `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/deepmzyme_metal_only_gvp.db`
+  budget. The playbook uses this for G4-oriented serious searches.
+- Use persistent SQLite storage in Drive. The playbook gives the exact storage
+  path for each serious stage.
 - Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
+- Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
+  When set to `True`, the notebook creates a validation-only multi-objective
+  study over `val_metal_balanced_acc` and six-class `val_metal_min_recall`.
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
 - Set `OPTUNA_N_STARTUP_TRIALS` below `N_OPTUNA_TRIALS`. If startup trials are
   greater than or equal to total trials, the run is effectively random search.
-  Use about `20` startup trials for a 64-trial medium search and about `40` for
-  a 200-trial wide search.
+  The playbook owns the exact startup-trial value for each stage.
 - Keep `OPTUNA_AUTO_CONFIGURE_BUDGET = False` when using a playbook block with
   explicit trial counts. If enabled, the notebook may raise trial counts to the
   advisor's minimum recommendation.
-- Keep `OPTUNA_USE_PRUNING = False` for now. The notebook launches
-  `src/train.py` as subprocess trials and does not currently report
-  intermediate values back to Optuna, so pruner settings are not an effective
-  early-stopping mechanism in this path.
-- Use `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` only after you are ready to rerun the top configurations across seeds.
-- Use the playbook Stage 6 `REPEAT_SEEDS` value for project-standard metal
-  confirmation, unless a smaller exploratory check is explicitly labeled.
+- `OPTUNA_USE_PRUNING` is now real but optional: the notebook monitors
+  `val_metrics.csv` / `train_metrics.csv` in each trial run directory, calls
+  `trial.report(...)`, and terminates the trial subprocess process group when
+  Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 8` for serious 50-epoch
+  HPO; lower values are debug/plumbing-only.
+- Use `OPTUNA_LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
+  enables LR-schedule search. Do not include `step` in Optuna schedule search
+  unless step size and gamma are also explicitly searched.
+- Keep `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False`. The notebook records
+  model preset, task, split, metric, search-space hash, sampler seed, pruning
+  settings, batch-size choices, LR schedule choices, class-weight choices, and
+  run batch ID in study metadata, then stops if a persistent study is reused
+  incompatibly.
+- Use `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` only after you are ready
+  to rerun the top configurations through the Stage 6 confirmation plan.
+- Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` for project-standard
+  metal confirmation. The playbook Stage 6 block uses one model seed,
+  `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED` so every
+  candidate sees the same `pdbid` folds.
+- Use `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` only for explicitly
+  labeled exploratory checks; it measures combined initialization and split
+  variance.
 
-Numeric Optuna budgets are defined per stage in
-`METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use `OPTUNA_INTENSITY = "custom"` for
-every reportable run on the G4 GPU.
+Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
+learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
+defined per stage in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use
+`OPTUNA_INTENSITY = "custom"` and persistent Drive-backed storage for every
+reportable run on the G4 GPU.
 
-`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
+In multi-objective mode, Optuna uses six-class minimum recall for rare-class
+protection. Collapsed-4 minimum recall is reported as supplemental information,
+not as the default second objective. If pruning is incompatible with the
+multi-objective study, the notebook disables pruning and warns before launch.
+Inspect Pareto candidates as review inputs, then run Stage 6 grouped-fold
+confirmation before promoting any candidate.
+
+`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
+
+Stage 3 is plumbing/debug only. If `N_OPTUNA_TRIALS` equals
+`OPTUNA_N_STARTUP_TRIALS`, all trials are startup trials and the run is
+effectively random search. Do not treat Stage 3 rankings as model-selection
+evidence.
 
 ## Professional Configuration Search Strategy
 
@@ -397,7 +496,7 @@ Use this controlled sequence:
 4. Run Stage 4 or Stage 5 inside one selected `MODEL_PRESET`. Use narrower
    ranges only when deliberately continuing from an anchor; use the playbook's
    broader large-search blocks when the user asks for a fresh broad check.
-5. Run Stage 6 seed-repeat validation before treating any HPO candidate as
+5. Run Stage 6 grouped-fold validation before treating any HPO candidate as
    stable.
 6. Advance to Stage 5D/5E/5F only if the playbook's advanced-fusion gate is
    satisfied.
@@ -414,7 +513,7 @@ When comparing configurations, keep the comparison clean:
 - Same `TASK`.
 - Same split policy.
 - Same `EPOCHS`.
-- Same seed-repeat list.
+- Same Stage 6 fold plan or explicitly labeled seed-repeat plan.
 - Same final selection metric.
 - Same test-set policy.
 - Same anchor configuration for shared settings when comparing a simple model to the next more complex model.
@@ -477,7 +576,8 @@ After planning:
 After training:
 
 - Each run directory under `RUNS_DIR`.
-- `<run_dir>/run_metadata.json`: selected metric, selected checkpoint, config, history, split/test metadata.
+- `<run_dir>/run_metadata.json`: selected metric, selected checkpoint, config,
+  ESM embedding metadata summary, history, split/test metadata.
 - `<run_dir>/run_config.json`: full saved config and history.
 - `<run_dir>/dataset_summary.json`: dataset and split identity summary.
 - `<run_dir>/split_diagnostics.json`: train/validation counts, grouping, overlap, missing classes.
@@ -485,6 +585,11 @@ After training:
 - `<run_dir>/last_model_checkpoint.pt`: final epoch checkpoint.
 - `<run_dir>/prepare_status.json`: preparation/preflight status.
 - `<run_dir>/test_report.json`: only present after held-out test evaluation; do not use this for model selection.
+- `<run_dir>/test_predictions.pt`: final-test logits/probabilities used for
+  reporting artifacts, only present after held-out test evaluation.
+- `<run_dir>/test_reliability_diagram.png` and
+  `<run_dir>/test_confidence_histogram.png`: calibration plots when matplotlib
+  is available.
 
 After the summarize/report cell:
 
@@ -504,6 +609,32 @@ loss, checkpoint-selection metric, or held-out test policy.
 batch final-test summaries and plots. It does not change which metrics are
 computed or saved in `test_report.json`.
 
+Stage 7 also has explicit final-reporting controls:
+
+- `FINAL_TEST_PRIMARY_REPORT`: predeclares the primary final result before the
+  held-out test is opened. Use `single_checkpoint` for the selected checkpoint
+  or `softmax_mean_5_seeds` for the optional five-checkpoint ensemble.
+- `FINAL_TEST_ENSEMBLE_MODE`: use `single_checkpoint` for current behavior or
+  `softmax_mean_5_seeds` to average probabilities from exactly five fixed
+  Stage 6 source checkpoints.
+- `FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS`: comma- or newline-separated list of
+  the five source run directories for ensemble mode. This list must be fixed in
+  preview before launch.
+- `FINAL_TEST_SELECTED_CONFIG_ID`: optional human-readable identifier for the
+  validation-selected configuration.
+- `FINAL_TEST_CALIBRATION_BINS`, `FINAL_TEST_ENABLE_TEMPERATURE_SCALING`,
+  `FINAL_TEST_ENABLE_BOOTSTRAP_CI`, `FINAL_TEST_BOOTSTRAP_RESAMPLES`, and
+  `FINAL_TEST_BOOTSTRAP_SEED`: reporting controls for calibration plots,
+  validation-fitted temperature scaling, and bootstrap confidence intervals.
+
+Temperature scaling is fitted only on validation logits from the already fixed
+configuration. In ensemble mode, the fixed rule is one validation-fitted
+temperature per checkpoint, then averaging calibrated softmax probabilities.
+The notebook records primary versus secondary/diagnostic reports in
+`test_report.json`; do not change the primary report after viewing held-out
+metrics. The full Stage 7 policy and executable blocks live in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
 Metal evaluation always keeps the six-class prediction problem
 `Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`. For every metal or joint test report, the
 code also computes collapsed-4 metrics by merging `Fe`, `Co`, and `Ni` into
@@ -516,53 +647,96 @@ After Optuna:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_trials.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_results.csv`, if seed repeats were run
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.csv`, if seed repeats were run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/pareto_front.csv`, when
+  `OPTUNA_MULTIOBJECTIVE = True`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/pareto_candidates.csv`, when
+  `OPTUNA_MULTIOBJECTIVE = True`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/pareto_candidates_ranked_for_review.csv`, when
+  `OPTUNA_MULTIOBJECTIVE = True`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_results.csv`, if Stage 6 top-config reevaluation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.csv`, if Stage 6 top-config reevaluation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.csv`, if Stage 6 top-config reevaluation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
+
+Each launched run directory also gets `active_run_config.json` and
+`active_run_config.md` before the subprocess starts. Completed runs still write
+`run_config.json`, `run_metadata.json`, and per-epoch
+`train_metrics.csv` / `val_metrics.csv`.
 
 ## How To Decide The Current Best Configuration
 
 For a validation-only manual comparison:
 
 1. Open `<SUMMARY_BASENAME>.csv` and filter to `status = completed`.
-2. Filter to `result_stage = validation-only` or `seed-repeat validation`, not final-test rows.
+2. Filter to `result_stage = validation-only`, `group-kfold validation`, or
+   `seed-repeat validation`, not final-test rows.
 3. Filter to the intended `task = metal`, split type, epoch budget, and model comparison group.
 4. Rank by `selected_best_validation_metric_value` or `best_validation_metric_used_for_checkpoint_selection`, using `selection_metric = val_metal_balanced_acc`.
 5. Check diagnostics for missing validation metal classes and train/validation overlap.
 6. Check per-class recall and collapsed-4 balanced accuracy as secondary evidence.
-7. Prefer a configuration that is stable across seeds over one single high seed.
+7. Prefer a configuration supported across Stage 6 folds over one single high
+   Optuna trial.
 
 For Optuna:
 
-1. Inspect `top_trials.csv`.
+1. Inspect `top_trials.csv` for single-objective studies, or
+   `pareto_candidates_ranked_for_review.csv` for multi-objective studies.
 2. Inspect `optuna_study_summary.md`.
-3. Run top-k seed-repeat validation.
-4. Select by seed-repeat mean and variability on `val_metal_balanced_acc`, not by a single trial.
+3. Run top-k grouped-fold validation.
+4. Select by grouped-fold mean, paired bootstrap CI, and rare-class recall on
+   `val_metal_balanced_acc`, not by a single trial.
 5. Retrain or evaluate the final selected validation-best checkpoint only after selection is complete.
 
 For final reporting:
 
 1. Use the notebook's "Select final run and show saved outputs" cell to choose the validation-best run.
-2. Use the "Optional final held-out test evaluation" cell with `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True`.
-3. Prefer `FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"` unless you intentionally want a retrain from the selected config.
-4. Record `test_metal_balanced_acc`, `test_metal_macro_f1`, `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`, and `test_metal_collapsed4_per_class_recall` from `test_report.json`.
-5. Do not go back and choose a different configuration because its test score is better.
+2. In preview, set `FINAL_TEST_PRIMARY_REPORT` and, if using the ensemble,
+   list exactly five fixed source runs in `FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS`.
+3. Use the "Optional final held-out test evaluation" cell with
+   `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True` only after the preview is correct.
+4. Prefer `FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"` unless you
+   intentionally want a retrain from the selected config.
+5. Record `test_metal_balanced_acc`, `test_metal_macro_f1`,
+   `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`,
+   calibration metrics, plot paths, bootstrap CI fields, and
+   `calibrated_metrics` from `test_report.json`.
+6. Do not go back and choose a different configuration, ensemble subset,
+   temperature, or primary report because its test score is better.
 
 ## Mistakes To Avoid
 
 - Do not select models based on held-out test metrics.
-- Do not enable `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` for comparison, HPO, or seed-repeat runs.
+- Do not enable `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` for comparison, HPO,
+  grouped-fold confirmation, or seed-repeat runs.
+- Do not run reportable Optuna with notebook preset budgets; use the playbook's
+  `OPTUNA_INTENSITY = "custom"` stage blocks.
+- Do not enable `METAL_COLLAPSED_LOSS_WEIGHT > 0` in initial baselines or final
+  held-out test workflows.
+- Do not use multi-objective Pareto review as a substitute for Stage 6
+  grouped-fold confirmation.
+- Do not run serious Optuna with missing or nonpersistent `OPTUNA_STORAGE`.
+- Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
+  or incompatible search spaces; let the default study-compatibility guard stop
+  the run.
 - Do not compare old mixed folders silently. The current local `DeepMzyme_Data/notebook_outputs/runs/` contains older Only-GVP metal runs with held-out test reports; treat them as historical unless deliberately included.
-- Do not mix incompatible `MODEL_PRESET` values in seed-repeat evaluation.
+- Do not mix incompatible `MODEL_PRESET` values in Stage 6 top-config
+  reevaluation.
 - Do not set `ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = True` unless you are intentionally overriding the guard.
+- Do not launch Stage 7 from raw Optuna trial folders. Use a Stage 6
+  validation-selected source run.
 - Do not trust one lucky seed.
 - Do not over-interpret 1-epoch or 3-epoch debug results.
 - Do not let missing ESM embeddings silently define an ESM baseline.
 - Do not present exact/possibly-overlapped split results as the main held-out result.
-- Do not use `VAL_FRACTION = 0` for reportable model selection.
+- Do not use `VAL_FRACTION = 0` for reportable model selection unless Stage 6
+  grouped-fold validation is explicitly configured with `N_FOLDS`/`FOLD_INDEX`.
 
 ## Potential Notebook Improvements
 

@@ -7,7 +7,7 @@ from typing import Any, Sequence
 
 from graph.ring_edges import ring_edges_output_path, ring_edges_path_candidates
 from project_paths import resolve_embeddings_dir, resolve_ring_features_dir
-from training.esm_feature_loading import embedding_path_candidates
+from training.esm_feature_loading import embedding_path_candidates, summarize_esm_embedding_metadata
 from training.feature_paths import resolve_external_feature_root_dir
 from training.structure_loading import find_structure_files
 
@@ -228,6 +228,7 @@ def prepare_runtime_inputs(
     report: dict[str, Any] = {
         "total_structure_files": len(structure_files),
         "esm_embeddings_dir": str(embeddings_dir),
+        "esm_embedding_metadata": {},
         "external_feature_source": external_feature_source,
         "external_features_root_dir": str(resolved_external_feature_root_dir),
         "ring_edges_output_dir": str(ring_edges_output_dir),
@@ -242,6 +243,11 @@ def prepare_runtime_inputs(
     if not structure_files:
         return report
 
+    report["esm_embedding_metadata"] = summarize_esm_embedding_metadata(
+        structure_files,
+        embeddings_dir,
+    )
+
     should_prepare_esm = require_esm_embeddings and prepare_missing_esm_embeddings
     if should_prepare_esm:
         missing_esm_structures = discover_missing_esm_embeddings(structure_files, embeddings_dir)
@@ -250,6 +256,10 @@ def prepare_runtime_inputs(
             summary = _generate_missing_esm_embeddings(missing_esm_structures, embeddings_dir)
             _raise_on_failed_generation(summary=summary, feature_name="ESM embeddings")
             report["generated_esm_files"] = len(list(summary.get("saved_files", [])))
+            report["esm_embedding_metadata"] = summarize_esm_embedding_metadata(
+                structure_files,
+                embeddings_dir,
+            )
 
     should_prepare_updated_external_features = (
         external_feature_source in {"auto", "updated"} and require_external_features
