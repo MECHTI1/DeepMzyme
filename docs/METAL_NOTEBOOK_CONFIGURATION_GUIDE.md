@@ -63,6 +63,35 @@ The notebook is intentionally staged. Smoke, baseline, HPO, seed-repeat, and
 final-test settings should not be mixed in one batch folder unless the batch is
 explicitly labeled as mixed and not used for model selection.
 
+## How This Guide Relates To Exact Stage Blocks
+
+This guide explains notebook controls, common mistakes, and safe interpretation.
+It does not own the exact current values for serious experiments.
+
+For any real run, use the exact block from
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. If a numeric value in this guide
+appears to conflict with the Playbook, the Playbook wins.
+
+Before launching a run, verify these resolved notebook values:
+
+| Check | Required value for reportable metal runs |
+| --- | --- |
+| Task | `TASK = "metal"` |
+| Split | `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"` |
+| Validation split | `VAL_FRACTION = 0.15` |
+| Split grouping | `SPLIT_BY = "pdbid"` |
+| Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
+| Held-out test during training | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
+| Device on G4 | `DEVICE = "cuda"` |
+| RING default | `RING_EDGE_MODE = "with_ring"` |
+| Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
+| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
+| Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
+| Serious Optuna pruning | `OPTUNA_USE_PRUNING = False` until subprocess trials report intermediate values |
+| Final test | Stage 7 only, after Stage 6 seed-repeat validation |
+
+Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
+
 ## G4-Oriented Training Profile
 
 The exact G4-class Optuna budgets, sampler settings, storage URLs, and search

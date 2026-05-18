@@ -158,6 +158,49 @@ Recommended G4 budgets (canonical):
 | Stage 5E (GVP+hybrid) | 200 | 50 | 40 |
 | Stage 5F (GVP+cross-attn) | 120 | 50 | 30 |
 
+## Canonical G4 Metal Training Route
+
+Use this route when starting a clean, serious metal-classification campaign in
+`notebooks/DeepMzyme_training_colab.ipynb`.
+
+### Required order
+
+1. Stage 0 - environment and data readiness.
+2. Stage 1 - 1-epoch smoke test.
+3. Stage 2A - Only-GVP validation baseline.
+4. Stage 2B - ESM-ready baseline comparison, only after ESM coverage is valid.
+5. Stage 3 - debug Optuna plumbing check.
+6. Stage 5A - 200-trial Only-GVP capacity search.
+7. Stage 5B - 120-trial Only-ESM search, only after ESM coverage is valid.
+8. Stage 5C - 200-trial GVP + late-fusion search, only after simple baselines
+   justify ESM fusion.
+9. Stage 6 - top-K x 5-seed validation for the best candidates.
+10. Stage 7 - one held-out test evaluation for the final validation-selected
+    configuration.
+
+Stage 4 is optional on a G4 GPU. Use it when you want a medium 64-trial check
+before committing to a 120/200-trial search. For a serious fresh search on G4,
+Stage 5 is preferred after Stage 3 passes.
+
+### Advanced fusion gate
+
+Do not launch Stage 5D, Stage 5E, or Stage 5F until Stage 5C has produced a
+Stage 6 seed-repeat candidate that beats the Stage 2A Only-GVP anchor by at
+least `0.01` mean `val_metal_balanced_acc` across the 5-seed list.
+
+If this gate is not passed, stop advanced fusion escalation and continue with
+the best validated simpler family.
+
+### Final-selection rule
+
+The final selected model must come from Stage 6 seed-repeat validation, not from
+a single Optuna trial. Select by mean `val_metal_balanced_acc`, then inspect
+standard deviation, minimum seed result, `val_metal_min_recall`,
+`val_metal_macro_f1`, and collapsed-4 balanced accuracy as diagnostics.
+
+The held-out test is used only once, in Stage 7, after this validation-based
+selection is frozen.
+
 ## Optuna Study Naming And Storage
 
 Study naming: `metal_<preset_slug>_<size>_<purpose>`, for example
@@ -597,7 +640,7 @@ OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 5
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1230,6 +1273,31 @@ If gate fails: if the top-1 mean is within 1 std of top-2 or top-3, report all
 three as candidates and pick by `val_metal_min_recall` tiebreak. Record the
 mean validation score, variability, per-class diagnostics, split, seed list, and
 epoch budget before any held-out test launch.
+
+### Recommended Stage 6 candidate policy
+
+For each completed Optuna study, repeat the top 3 candidates across:
+
+```python
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+REPEAT_SEEDS = "42,123,2026,43,44"
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+RETRAIN_BEST_CONFIG_AFTER_HPO = False
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+```
+
+Use top 5 only when the top trials are tightly clustered or when the top 3
+contain different model-capacity regimes that are scientifically important to
+compare.
+
+A candidate is considered stable enough for final selection only if:
+
+- all 5 seed-repeat runs complete, or failures are explained and not biased;
+- no held-out test report was created;
+- all runs use `selection_metric = val_metal_balanced_acc`;
+- no validation class is missing;
+- the candidate has either the best mean validation balanced accuracy or a
+  clearly better mean/variance/per-class-recall tradeoff.
 
 ## Stage 7 - Final Held-Out Test Evaluation
 

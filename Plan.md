@@ -87,6 +87,28 @@ Authoritative rules for the pipeline:
 - The advanced fusion order is Stage 5C -> 5D -> 5E -> 5F, gated by validation
   evidence from the preceding stage.
 
+### Metal Colab Parameter Ownership Rule
+
+Exact notebook parameter values for the metal-training pipeline must live only
+in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+`Plan.md` defines the research policy and stage ordering, including
+validation-only selection, held-out-test protection, one `MODEL_PRESET` per
+Optuna study, and the advanced-fusion gate. It must not duplicate full stage
+configuration blocks.
+
+When a stage budget, Optuna search space, seed-repeat policy, or final-test
+configuration changes, update the files in this order:
+
+1. `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` - exact executable values.
+2. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
+   crosswalk, only if the meaning or stage mapping changed.
+3. `AGENTS.md` - agent instructions, only if the expected agent behavior
+   changed.
+4. `Plan.md` - only if the research policy or stage ordering changed.
+
+Do not add full Stage 0-7 blocks to `Plan.md`.
+
 ---
 
 ## 3) Train the EC-Number Classification Model

@@ -284,6 +284,47 @@ Operational assumptions for this project:
 - Stage 7 (held-out test) is one-shot per final validation-selected
   configuration.
 
+#### Required answer format for metal notebook stage requests
+
+When the user asks what to run next, how to configure the metal Colab notebook,
+or how to update the metal training pipeline documentation, answer using this
+format:
+
+1. Current stage assumption:
+   - State which stage is being configured.
+   - State whether the answer relies on `EXPERIMENT_STATUS.md` or is a fresh
+     validation-only plan.
+
+2. Exact notebook block:
+   - Copy the block from `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+   - Do not invent budgets.
+   - Do not silently change `N_OPTUNA_TRIALS`, `MAX_EPOCHS_PER_TRIAL`,
+     `OPTUNA_N_STARTUP_TRIALS`, search ranges, seed lists, or final-test flags.
+
+3. Safety checks:
+   - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final
+     stages.
+   - Confirm `SELECTION_METRIC = "val_metal_balanced_acc"`.
+   - Confirm `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless the stage is
+     explicitly a new split experiment.
+   - Confirm one `MODEL_PRESET` per Optuna study.
+   - Confirm persistent Drive SQLite storage for serious Optuna stages.
+
+4. Expected outputs:
+   - List the exact expected CSV/JSON/Markdown files for that stage.
+
+5. Decision gate:
+   - State what must be true before moving to the next stage.
+
+If the requested stage block is missing or incomplete, update
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` first instead of patching the answer
+with undocumented values.
+
+When editing the four metal-pipeline documents together, never copy full
+configuration blocks into `Plan.md`, `AGENTS.md`, or
+`docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable values belong in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` only.
+
 ---
 
 ### 2. Be careful with src/model.py
