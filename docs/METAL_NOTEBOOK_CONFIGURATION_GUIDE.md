@@ -13,6 +13,18 @@ For staged, copy-paste-ready notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. This guide explains option meaning
 and safe workflow principles; the playbook is the practical execution recipe.
 
+### Stage-to-option crosswalk
+
+| Playbook stage | Notebook variables most relevant to the stage | This guide's section to read |
+| --- | --- | --- |
+| Stage 0 | `DATASET_NAME`, `RING_EDGE_MODE`, `RING_EXE_PATH`, `ESM_EMBEDDINGS_DIR`, `ALLOW_MISSING_EXTERNAL_FEATURES`, `RUNS_DIR` | "Starting Point", "RING options", "ESM options" |
+| Stage 1 | `RUN_MODE`, `RECOMMENDED_RUN_SET`, `EPOCHS`, `LAUNCH_PLANNED_TRAINING_RUNS` | "Minimal smoke test" |
+| Stage 2A | `RECOMMENDED_RUN_SET="only_gvp_broad_comparison"`, `EPOCHS`, `SEEDS_CSV`, `LEARNING_RATES_CSV` | "First real baseline" |
+| Stage 2B | `RECOMMENDED_RUN_SET="baseline_model_comparison"` | "Recommended model order" |
+| Stage 3/4/5 | `RUN_MODE="controlled_hpo_optuna"`, `MODEL_PRESET`, `OPTUNA_*` | "Optuna storage and seed repeats" |
+| Stage 6 | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_K_CONFIGS_FOR_SEED_REPEAT`, `REPEAT_SEEDS` | "Optuna storage and seed repeats" |
+| Stage 7 | `FINAL_TEST_WORKFLOW`, `CONFIRM_ONE_SHOT_POLICY`, `FINAL_TEST_SOURCE_*` | "How To Decide The Current Best Configuration" -> "For final reporting" |
+
 ## Current Status Pointer
 
 This guide is not the source of truth for the latest best run or next experiment. Read `EXPERIMENT_STATUS.md` first for the current recommendation, then use this guide only to configure the notebook safely.
@@ -30,24 +42,22 @@ copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 Use the metal playbook for exact values. This guide explains how to interpret
 the notebook controls and what must stay fixed for a fair comparison.
 
-Recommended notebook cell order:
+Recommended notebook usage:
 
-1. Open `notebooks/DeepMzyme_training_colab.ipynb`.
-2. Run setup/install and data-source cells.
-3. Edit the **Main configuration** cell using one block from
-   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
-4. Run **Build central CONFIG dictionary**.
-5. Run planning/preflight cells and inspect the resolved configuration table,
-   exact shell commands, feature coverage, split diagnostics, and warnings.
-6. In the optional execution cell, set `LAUNCH_PLANNED_TRAINING_RUNS = True`
-   only after the planned commands match the intended stage.
-7. Run the summarize/report cell for the current `RUN_BATCH_ID`.
-8. For Optuna stages, inspect `top_trials.csv` and the Optuna summary, then run
-   the predeclared top-K seed-repeat validation before selecting a final model.
-9. Only after validation selection is complete, run the **Select final run**
-   cell and then the final held-out test cell first in `preview_only` mode.
-10. Launch final held-out test evaluation once with
-    `CONFIRM_ONE_SHOT_POLICY = True`.
+1. Open `notebooks/DeepMzyme_training_colab.ipynb` and run setup, repo, and
+   bundle cells.
+2. Paste exactly one stage block from `METAL_TRAINING_PIPELINE_PLAYBOOK.md` into
+   the Main configuration cell. Stages 0-7 cover the entire pipeline.
+3. Run Build CONFIG, planning, and preflight cells. Inspect the resolved
+   configuration table.
+4. Set `LAUNCH_PLANNED_TRAINING_RUNS = True` only when the planned commands
+   match the intended stage.
+5. Run the summarize/report cell for the current `RUN_BATCH_ID`.
+6. After Stage 5, inspect `top_trials.csv` and the Optuna summary, then run
+   Stage 6 (top-K x 5-seed validation).
+7. Only after Stage 6, run the Select final run cell, preview Stage 7 in
+   `preview_only` mode, then launch Stage 7 with `CONFIRM_ONE_SHOT_POLICY =
+   True` exactly once.
 
 The notebook is intentionally staged. Smoke, baseline, HPO, seed-repeat, and
 final-test settings should not be mixed in one batch folder unless the batch is
@@ -55,25 +65,12 @@ explicitly labeled as mixed and not used for model selection.
 
 ## G4-Oriented Training Profile
 
-A G4 GPU is strong enough to use the serious playbook blocks rather than the
-tiny notebook defaults. For reportable metal work, use this profile unless
-memory or wall-time forces a reduction:
-
-| Area | G4-oriented value |
-| --- | --- |
-| Real baseline epochs | `EPOCHS = 50` |
-| Batch size | start with `BATCH_SIZES_CSV = "8"`; use `"4"` only if memory fails |
-| Split | `VAL_FRACTION = 0.15`, `SPLIT_BY = "pdbid"` |
-| Objective | `SELECTION_METRIC = "val_metal_balanced_acc"` |
-| RING | `RING_EDGE_MODE = "with_ring"`, `PREPARE_MISSING_RING_EDGES = True` |
-| External features | strict updated features; keep `ALLOW_MISSING_EXTERNAL_FEATURES = False` |
-| Medium Optuna | custom budget, about `64` trials x `35` epochs |
-| Large Optuna | custom budget, `200` trials x `50` epochs |
-| Seed repeat | top `3` configs x seeds `42,123,2026,43,44` x `50` epochs |
-| Held-out test | disabled until final selected checkpoint |
-
-Use persistent Optuna storage in Drive for any useful or serious search. A blank
-`OPTUNA_STORAGE` is acceptable only for debug HPO.
+The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
+spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "G4-Class Optuna
+Policy". This guide does not duplicate them. The high-level posture is:
+persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
+per study, validation-only objective, and >= 5-seed confirmation before any
+held-out test.
 
 ## Starting Point
 
@@ -85,7 +82,9 @@ Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continu
 - `SPLIT_BY = "pdbid"`
 - `SELECTION_METRIC = ""`, which defaults to `val_metal_balanced_acc` for the metal task
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
-- Set a visible `RUN_BATCH_ID` for each real comparison batch, for example `metal_only_gvp_lr_seed_2026_05_11`. The notebook writes into that batch folder when `RUN_BATCH_ID` is set.
+- Set a visible `RUN_BATCH_ID` for each real comparison batch. The notebook
+  writes into that batch folder when `RUN_BATCH_ID` is set; use the stage block
+  in the playbook for the canonical name.
 
 The trusted final split for current metal evidence is the legacy Non-overlapped PinMyMetal split. Harsh Split PinMyMetal moves every common exact-split PDB ID to test as a whole group; use it only as an explicitly labeled new comparison. Metal Split PinMyMetal follows the exact PinMyMetal split for available supported structures; results from it, if used later, must be labeled as secondary/possibly-overlapped reference results. Common-PDBID 70/30 Split PinMyMetal is a custom comparison split, not the trusted final held-out split.
 
@@ -97,23 +96,9 @@ Do not choose configurations from old mixed run folders unless you have verified
 
 Use this to confirm that Colab setup, data paths, CSV detection, graph construction, and training execution work.
 
-Set:
-
-| Option | Value |
-| --- | --- |
-| `TASK` | `metal` |
-| `RUN_MODE` | `single` |
-| `RECOMMENDED_RUN_SET` | `only_gvp_smoke` |
-| `MODEL_PRESET` | `Only-GVP` |
-| `EPOCHS` | `1` |
-| `BATCH_SIZES_CSV` | `4` |
-| `LEARNING_RATES_CSV` | `3e-5` |
-| `WEIGHT_DECAYS_CSV` | `1e-4` |
-| `SEEDS_CSV` | `42` |
-| `RING_EDGE_MODE` | `with_ring` |
-| `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` | `False` |
-
-Then run the planning cells. In the optional training execution cell, set `LAUNCH_PLANNED_TRAINING_RUNS = True`.
+Use the Stage 1 block in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`; the playbook is
+the source of truth for exact smoke-test values. Then run the planning cells and
+launch only after the planned command matches Stage 1.
 
 Interpretation: a 1-epoch smoke run is not a performance result. It only proves the notebook and training loop run end to end. The notebook blocks accidental 1-3 epoch non-smoke launches unless `ALLOW_SHORT_TRAINING_FOR_DEBUG=True` is set deliberately.
 
@@ -121,29 +106,9 @@ Interpretation: a 1-epoch smoke run is not a performance result. It only proves 
 
 After the smoke test succeeds, run a real Only-GVP baseline with the notebook's
 default RING-enabled graph construction and strict updated external features.
-Start with the baseline-first GVP settings:
-
-| Option | Value |
-| --- | --- |
-| `RUN_MODE` | `manual_configurations` |
-| `RECOMMENDED_RUN_SET` | `only_gvp_lr_seed` |
-| `EPOCHS` | `30` or `50` |
-| `BATCH_SIZES_CSV` | `4` initially in Colab; `8` if GPU memory is stable |
-| `WEIGHT_DECAYS_CSV` | `1e-4` |
-| `SELECTION_METRIC` | blank or `val_metal_balanced_acc` |
-| `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` | `False` |
-
-`only_gvp_lr_seed` runs `Only-GVP`, RING-enabled, with learning rates `3e-5`
-and `1e-4` across seeds `42` and `43`.
-
-If those runs are stable and time permits, run:
-
-| Option | Value |
-| --- | --- |
-| `RECOMMENDED_RUN_SET` | `only_gvp_broad_comparison` |
-| `EPOCHS` | `30` or `50` |
-
-This expands to learning rates `3e-5`, `1e-4`, and `3e-4` across seeds `42`, `43`, and `44`. Treat this as the first useful validation ranking for the structure-only baseline.
+Use Stage 2A in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` for the exact baseline
+block. Treat it as the first useful validation ranking for the structure-only
+baseline, and do not copy older numeric examples from this guide.
 
 ### 3. Recommended model order
 
@@ -382,43 +347,12 @@ For useful Colab HPO:
   intermediate values back to Optuna, so pruner settings are not an effective
   early-stopping mechanism in this path.
 - Use `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` only after you are ready to rerun the top configurations across seeds.
-- Use `REPEAT_SEEDS = "42,123,2026,43,44"` for project-standard metal
+- Use the playbook Stage 6 `REPEAT_SEEDS` value for project-standard metal
   confirmation, unless a smaller exploratory check is explicitly labeled.
 
-Current intensity presets:
-
-| `OPTUNA_INTENSITY` | Effective budget | Use |
-| --- | --- | --- |
-| `debug` | 4 trials x 3 epochs | setup check only |
-| `first_useful` | 16 trials x 20 epochs | first meaningful HPO when compute is limited |
-| `serious` | 40 trials x 40 epochs | longer Colab HPO with persistent storage |
-| `custom` | uses visible `N_OPTUNA_TRIALS` and `MAX_EPOCHS_PER_TRIAL` | deliberate manual budget |
-
-For a G4-class GPU, prefer the playbook's explicit `custom` budgets over
-`first_useful`/`serious` for the real search:
-
-| Search | Exact budget |
-| --- | --- |
-| Debug | `N_OPTUNA_TRIALS = 4`, `MAX_EPOCHS_PER_TRIAL = 3`, no model decision |
-| Medium useful | `N_OPTUNA_TRIALS = 64`, `MAX_EPOCHS_PER_TRIAL = 35`, `OPTUNA_N_STARTUP_TRIALS = 20` |
-| Large/final candidate discovery | `N_OPTUNA_TRIALS = 200`, `MAX_EPOCHS_PER_TRIAL = 50`, `OPTUNA_N_STARTUP_TRIALS = 40` |
-
-Recommended controlled first search:
-
-| Option | Value |
-| --- | --- |
-| `RUN_MODE` | `controlled_hpo_optuna` |
-| `RECOMMENDED_RUN_SET` | `custom` |
-| `MODEL_PRESET` | `Only-GVP` |
-| `OPTUNA_INTENSITY` | `custom` |
-| `N_OPTUNA_TRIALS` | `64` |
-| `MAX_EPOCHS_PER_TRIAL` | `35` |
-| `OPTUNA_N_STARTUP_TRIALS` | `20` |
-| `OPTUNA_SEARCH_PRESET` | `first_useful_only_gvp_narrow` |
-| `OPTUNA_LEARNING_RATE_RANGE` | `1e-5,3e-4` |
-| `OPTUNA_WEIGHT_DECAYS_CSV` | `0.0,1e-5,1e-4` |
-| `OPTUNA_BATCH_SIZES_CSV` | `8` on G4; use `4` only if memory fails |
-| `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` | `none,inverse_frequency,inverse_sqrt_frequency,effective_number` |
+Numeric Optuna budgets are defined per stage in
+`METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use `OPTUNA_INTENSITY = "custom"` for
+every reportable run on the G4 GPU.
 
 `OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
 
@@ -426,17 +360,20 @@ Recommended controlled first search:
 
 Use this controlled sequence:
 
-1. Smoke test `only_gvp_smoke` for 1 epoch. Ignore metrics except for obvious failures.
-2. On a G4-class GPU, run `only_gvp_lr_seed` for 50 epochs. Choose by `val_metal_balanced_acc`, not test.
-3. Run `only_gvp_broad_comparison` if the first baseline is stable. Confirm learning-rate and seed sensitivity.
-4. Optionally run controlled Optuna on `Only-GVP` only. Use narrow ranges when deliberately continuing from an anchor; use the playbook's broader large-search blocks when the user asks for a fresh broad check.
-5. Rerun the top 2-3 validation configurations across several seeds, then record the best stable `Only-GVP` anchor.
-6. Once ESM embeddings are available, run `Only-ESM` and `GVP + late fusion` using the `Only-GVP` anchor for shared graph/training settings where applicable.
-7. When deliberately continuing from the anchor, retune only the small set of settings affected by ESM/fusion, such as learning rate, weight decay, fusion dimension, dropout, and batch size. For a fresh Optuna check, search broadly within the selected fusion mode while keeping held-out test evaluation off.
-8. Test `GVP + early fusion` only if `Only-ESM` or late fusion shows useful validation signal.
-9. Test advanced fusion only if simpler ESM-informed models justify it: node-level late fusion first, hybrid fusion second, and cross-modal attention last with a narrow one-layer configuration.
-10. Select one final configuration by validation evidence.
-11. Use the optional final held-out test cell once for that selected configuration.
+1. Run Stage 0 and Stage 1 from the playbook. Ignore smoke metrics except for
+   obvious failures.
+2. Run Stage 2A and Stage 2B as validation-only baselines. Choose by
+   `val_metal_balanced_acc`, not test.
+3. Run Stage 3 before the first Optuna batch in a new runtime.
+4. Run Stage 4 or Stage 5 inside one selected `MODEL_PRESET`. Use narrower
+   ranges only when deliberately continuing from an anchor; use the playbook's
+   broader large-search blocks when the user asks for a fresh broad check.
+5. Run Stage 6 seed-repeat validation before treating any HPO candidate as
+   stable.
+6. Advance to Stage 5D/5E/5F only if the playbook's advanced-fusion gate is
+   satisfied.
+7. Select one final configuration by validation evidence.
+8. Use Stage 7 once for that selected configuration.
 
 For the current metal task, check `EXPERIMENT_STATUS.md` before starting at any
 numbered step. If the current validation anchor is already recorded there, use

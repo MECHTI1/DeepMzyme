@@ -17,6 +17,7 @@ clearly contains newer working logic that should be preserved.
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
+| G4-class Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("G4-Class Optuna Policy") |
 | Copy-paste-ready EC training stages | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Raw experiment results | `docs/notebook_outputs/` |
 | Current best-configuration snapshot | `docs/notebook_outputs/summaries/LEADERBOARD.md` |
@@ -68,31 +69,23 @@ with copy-paste notebook configuration blocks, use
 
 ### Canonical Colab metal-training pipeline
 
-The canonical metal-training workflow is the single notebook
-`notebooks/DeepMzyme_training_colab.ipynb` configured through the staged blocks
-in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. That playbook is the source of
-truth for exact notebook variable values for each stage. The stable option
-reference is `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`.
+The canonical metal-training workflow is
+`notebooks/DeepMzyme_training_colab.ipynb` driven by the staged blocks in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The pipeline has eight stages with
+explicit decision gates: Stage 0 (environment readiness), Stage 1 (smoke),
+Stage 2 (Only-GVP and baseline-family validation), Stage 3 (Optuna plumbing
+check), Stage 4 (medium per-family Optuna), Stage 5 (200-trial per-family
+Optuna), Stage 6 (top-K x 5-seed validation), Stage 7 (single held-out test).
 
-Use this order for reportable metal work:
+Authoritative rules for the pipeline:
 
-1. Run the 1-epoch smoke/readiness block.
-2. Run 50-epoch validation-only baseline comparisons on the trusted
-   Non-overlapped PinMyMetal split.
-3. Run controlled Optuna within one `MODEL_PRESET` at a time. Do not ask Optuna
-   to choose between model families.
-4. For a G4-class Colab GPU, prefer explicit serious/custom Optuna budgets over
-   the small notebook presets: persistent SQLite storage in Drive,
-   multivariate/group TPE enabled, no held-out test evaluation, and enough
-   startup trials for TPE to explore before exploiting.
-5. Confirm the top 2-3 Optuna configurations with a fixed multi-seed validation
-   repeat, normally five seeds and 50 epochs.
-6. Select one final configuration using validation evidence only.
-7. Run the held-out test cell once for that selected validation checkpoint.
-
-Current exact metal-stage parameters, including G4-oriented Optuna budgets,
-belong in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` rather than being
-duplicated here.
+- One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
+- Hardware target is a G4-class GPU; the playbook defines exact budgets and
+  storage.
+- No held-out test evaluation before Stage 7 and no Stage 7 launch without
+  Stage 6 seed-repeat evidence.
+- The advanced fusion order is Stage 5C -> 5D -> 5E -> 5F, gated by validation
+  evidence from the preceding stage.
 
 ---
 
@@ -270,6 +263,16 @@ For the metal notebook pipeline, the playbook must keep exact values for:
 Keep current best-result notes and mutable next-step status in
 `EXPERIMENT_STATUS.md`. Keep raw and summarized run evidence in
 `docs/notebook_outputs/`.
+
+Pipeline governance:
+
+- The playbook holds the exact parameter values for every stage. Plan.md does
+  not duplicate them.
+- Changes to stage budgets or stage ordering must update the playbook first,
+  then this section, then `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`'s crosswalk
+  table.
+- Changes to the held-out test policy must update Plan.md first and propagate
+  to the playbook's Stage 7.
 
 ---
 

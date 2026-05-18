@@ -252,24 +252,37 @@ For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
 the specific evidence files it names. For notebook behavior questions, inspect
 the notebook itself rather than relying only on the workflow guide.
 
+To answer "what is the next metal-training step", the agent must:
+
+1. Read `EXPERIMENT_STATUS.md` to find the current stage anchor.
+2. Read the corresponding stage block in
+   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+3. Confirm the decision gate of the previous stage was passed.
+4. Output: (a) the exact notebook configuration block to paste, (b) the
+   expected outputs/files, (c) the decision gate that determines whether to
+   proceed to the next stage. Do not invent budgets; cite the playbook stage.
+
 #### Metal Colab pipeline documentation policy
 
-When the task asks how to run the metal-training notebook, how to configure a
-training stage, or how to plan the next metal Optuna sweep:
+When the task touches the metal-training notebook, configuring a stage, or
+planning the next Optuna sweep:
 
-- Treat `notebooks/DeepMzyme_training_colab.ipynb` as the implemented behavior.
-- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact copy-paste
-  parameter recipe for the full metal pipeline.
-- Treat `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` as the stable explanation
-  of what those notebook variables mean and how to avoid unsafe comparisons.
-- Keep mutable "current best run" status in `EXPERIMENT_STATUS.md`, not in the
-  guide or playbook.
+- Treat `notebooks/DeepMzyme_training_colab.ipynb` as implemented behavior.
+- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact-parameters
+  recipe; it owns all numeric budgets, search spaces, and stage decision gates.
+- Treat `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` as the option-meaning
+  reference and stage-to-option crosswalk.
+- Treat `Plan.md` as design authority and policy (selection metric, split
+  policy, held-out test rules, advanced-fusion ordering).
+- Keep mutable "current best result" status in `EXPERIMENT_STATUS.md`.
 
-For serious Optuna recommendations, prefer one selected `MODEL_PRESET` per
-study, validation-only objective `val_metal_balanced_acc`, persistent SQLite
-storage in Drive, multivariate/group TPE, enough startup trials for exploration,
-and top-K seed-repeat validation before any held-out test run. Do not tune or
-choose architecture/hyperparameters from held-out test results.
+Operational assumptions for this project:
+
+- Hardware: G4-class GPU. All serious Optuna runs use the budgets in the
+  playbook's "G4-Class Optuna Policy" subsection.
+- Persistent Optuna storage in Drive is mandatory for Stage 4 and Stage 5.
+- Stage 7 (held-out test) is one-shot per final validation-selected
+  configuration.
 
 ---
 

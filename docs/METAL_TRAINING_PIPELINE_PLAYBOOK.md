@@ -6,6 +6,27 @@ and design authority. Current best validation evidence belongs in
 `EXPERIMENT_STATUS.md` and `docs/notebook_outputs/`, not in this stable
 playbook.
 
+## Pipeline Overview At A Glance
+
+This playbook is the operational pipeline for
+`notebooks/DeepMzyme_training_colab.ipynb`. Each stage is a self-contained
+notebook configuration block; you paste one block at a time into the Main
+configuration cell. Stages 1, 3 are smoke checks. Stages 2, 4, 5, 6 are
+validation-only. Stage 7 is the only stage that touches the held-out test set,
+and it is run exactly once for the final validation-selected configuration.
+
+| Stage | Purpose | G4 wall-time (approx.) | Decision produced | Block |
+| --- | --- | --- | --- | --- |
+| 0 | Setup, Drive, data bundle, RING+ESM preflight | 10-20 min | "Environment ready" | Stage 0 |
+| 1 | 1-epoch smoke (Only-GVP, RING-on) | 5-15 min | "Notebook & data plumbing OK" | Stage 1 |
+| 2A | Only-GVP validation baseline (50 ep x 3 LR x 3 seeds) | 6-10 h | Only-GVP validation anchor | Stage 2A |
+| 2B | Baseline model comparison (Only-GVP, Only-ESM, GVP+late fusion) | 8-14 h | First cross-family ranking | Stage 2B |
+| 3 | Debug Optuna (4 x 3 ep) | 20-40 min | "Optuna plumbing OK" | Stage 3 |
+| 4 | Medium Optuna inside one preset (64 x 35 ep) | 18-28 h | Top 5 validation configs | Stage 4 |
+| 5A-5F | Large 200-trial Optuna per model family | 36-60 h each | Top 3 validation configs | Stage 5 |
+| 5G | RING radius-only ablation | optional 6-10 h | RING value evidence | Stage 5G |
+| 6 | Top-K x 5-seed validation confirmation (50 ep) | 15-25 h | Final validation-selected config | Stage 6 |
+| 7 | Held-out test (single shot) | 20-60 min | Final reportable test metrics | Stage 7 |
 
 All configuration blocks below use variables that exist in
 `notebooks/DeepMzyme_training_colab.ipynb` as of this repository state. To use a
@@ -29,25 +50,6 @@ Notebook execution order:
 6. Summarize/report cell for the current `RUN_BATCH_ID`.
 7. For final testing only: select final run, preview final held-out test, then
    launch once.
-
-Pipeline stage map:
-
-| Stage | Purpose | Exact block |
-| --- | --- | --- |
-| 0 | Runtime/data/output setup shared by all stages | Common Defaults |
-| 1 | Smoke/readiness check | Stage 1 |
-| 2 | Baseline validation comparisons | Stage 2A/2B |
-| 3 | Debug Optuna plumbing check | Stage 3 |
-| 4 | Medium useful Optuna | Stage 4 |
-| 5 | Large model-family Optuna and optional RING ablation | Stage 5A-5G |
-| 6 | Top-K multi-seed validation | Stage 6 |
-| 7 | Final held-out test evaluation | Stage 7 |
-
-G4 GPU policy: for real searches, prefer the explicit `custom` Optuna budgets
-below over the notebook's small `first_useful` or `serious` presets. The
-recommended serious profile is 50-epoch baselines, batch size 8 when memory is
-stable, 64 x 35-epoch medium HPO, 200 x 50-epoch large HPO, and top-3 x 5-seed
-validation confirmation.
 
 For all comparison, HPO, and seed-repeat stages:
 
@@ -113,10 +115,128 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_TIMEOUT_MINUTES = 0
 ```
 
+## G4-Class Optuna Policy
+
+This project runs on a G4-class GPU (16 GB VRAM, persistent runtime). All
+serious Optuna stages must use:
+
+- `OPTUNA_INTENSITY = "custom"` - never rely on `first_useful`/`serious`
+  notebook presets for reportable HPO.
+- `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`,
+  `OPTUNA_TPE_CONSTANT_LIAR = False`.
+- `OPTUNA_AUTO_CONFIGURE_BUDGET = False` (explicit budgets only).
+- `OPTUNA_USE_PRUNING = False` (subprocess training cannot report intermediate
+  metrics yet).
+- Persistent SQLite storage in Drive:
+  `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
+- Startup trials: `OPTUNA_N_STARTUP_TRIALS = max(20, 0.2 x N_OPTUNA_TRIALS)`.
+  For 200-trial searches this is 40; for 64-trial it is 20.
+- `OPTUNA_SPLIT_SEED = 42` for every study (so seed-repeat at Stage 6 is
+  meaningful).
+- `OPTUNA_SELECTION_METRIC = "val_metal_balanced_acc"`,
+  `OPTUNA_DIRECTION = "maximize"`.
+
+Forbidden in serious stages:
+
+- Mixing `MODEL_PRESET` values inside one study (Optuna optimizes one family at
+  a time).
+- Held-out test evaluation inside trials
+  (`INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`).
+- Letting `EPOCHS <= 3` reach Stage 4/5 (the short-training guard will block
+  this; do not override).
+
+Recommended G4 budgets (canonical):
+
+| Stage | `N_OPTUNA_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
+| --- | --- | --- | --- |
+| Stage 3 (debug) | 4 | 3 | 4 |
+| Stage 4 (medium per family) | 64 | 35 | 20 |
+| Stage 5A (Only-GVP) | 200 | 50 | 40 |
+| Stage 5B (Only-ESM) | 120 | 50 | 30 |
+| Stage 5C (GVP+late) | 200 | 50 | 40 |
+| Stage 5D (GVP+node-late) | 200 | 50 | 40 |
+| Stage 5E (GVP+hybrid) | 200 | 50 | 40 |
+| Stage 5F (GVP+cross-attn) | 120 | 50 | 30 |
+
+## Optuna Study Naming And Storage
+
+Study naming: `metal_<preset_slug>_<size>_<purpose>`, for example
+`metal_only_gvp_200_capacity` or `metal_late_fusion_200_controlled`. Always use
+lowercase, underscore-separated names.
+
+Storage path template:
+`sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`. Use one
+file per study. Never share a study DB across different `MODEL_PRESET` values.
+
+Resumption rule: re-running the notebook with the same `OPTUNA_STUDY_NAME` and
+storage URL appends trials. To start fresh, change the study name; do not delete
+the `.db` unless you mean to discard history.
+
 If a run uses `Only-ESM` or any GVP + ESM fusion preset, set
 `ESM_EMBEDDINGS_DIR` to the embeddings folder or set
 `PREPARE_MISSING_ESM_EMBEDDINGS = True` deliberately. Do not use
 `ALLOW_MISSING_ESM_EMBEDDINGS = True` for reportable runs.
+
+## Stage 0 - Environment And Data Readiness
+
+Purpose: confirm Drive is mounted, the bundle is present, RING/ESM/external
+features coverage is acceptable, and `RUNS_DIR` resolves under Drive.
+
+When to use it: first cell pass in a fresh Colab runtime, or after switching
+data bundles.
+
+Configuration block (paste into Main configuration cell):
+
+```python
+TASK = "metal"
+RUN_MODE = "single"
+RECOMMENDED_RUN_SET = "only_gvp_smoke"
+MODEL_PRESET = "Only-GVP"
+RUN_BATCH_ID = "stage0_environment_check"
+SUMMARY_BASENAME = "stage0_environment_check"
+RUN_NAME_PREFIX = "stage0_env"
+
+EPOCHS = 1
+BATCH_SIZES_CSV = "4"
+LEARNING_RATES_CSV = "3e-5"
+WEIGHT_DECAYS_CSV = "1e-4"
+SEEDS_CSV = "42"
+
+DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_metal_balanced_acc"
+
+RING_EDGE_MODE = "with_ring"
+REQUIRE_RING_EDGES = False
+PREPARE_MISSING_RING_EDGES = True
+ESM_EMBEDDINGS_DIR = ""
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = False
+ALLOW_MISSING_EXTERNAL_FEATURES = False
+
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+LAUNCH_PLANNED_TRAINING_RUNS = False   # planning only; do NOT train at Stage 0
+```
+
+Success criteria for Stage 0:
+
+- `RUNS_DIR` resolves under `<DRIVE_ROOT>/notebook_outputs/runs`.
+- Planning cell prints RING coverage >= 95% (or generation will run).
+- Planning cell prints external-features coverage = 100%.
+- No model preset mismatch warnings.
+
+### Decision gate after Stage 0
+
+Proceed to Stage 1 only if:
+
+- All four Stage 0 success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on the planned run.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: fix paths, Drive mounting, bundle selection, RING coverage, or
+external-feature coverage before any training.
 
 ## Stage 1 - Smoke And Readiness Check
 
@@ -178,12 +298,18 @@ Success criteria:
 - Train and validation metal diagnostics are printed.
 - No held-out test report is produced.
 
-Decision after this stage:
+### Decision gate after Stage 1
 
-- If it fails, fix data paths, bundle setup, structure parsing, or feature
-  availability before running real comparisons.
-- If it succeeds, move to baseline model comparison. Ignore the 1-epoch metric
-  as model-quality evidence.
+Proceed to Stage 2A only if:
+
+- The Stage 1 success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: return to Stage 0 and fix paths, bundle setup, RING executable
+configuration, structure parsing, ESM coverage, or feature availability before
+running real comparisons. Ignore the 1-epoch metric as model-quality evidence.
 
 ## Stage 2 - Baseline Model Comparison
 
@@ -204,7 +330,7 @@ Notebook configuration block:
 ```python
 TASK = "metal"
 RUN_MODE = "manual_configurations"
-RECOMMENDED_RUN_SET = "only_gvp_lr_seed"
+RECOMMENDED_RUN_SET = "only_gvp_broad_comparison"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_baseline_lr_seed"
 SUMMARY_BASENAME = "metal_only_gvp_baseline_lr_seed"
@@ -231,6 +357,22 @@ PREPARE_MISSING_ESM_EMBEDDINGS = False
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
+
+### Decision gate after Stage 2A
+
+Proceed to Stage 2B or Stage 4 only if:
+
+- The Only-GVP validation baseline completes all planned runs or all failures
+  are understood and documented.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+- Seed variance is acceptable: if seed standard deviation or high-low spread
+  suggests `val_metal_balanced_acc` variance above 0.04, rerun with 5 seeds
+  before Stage 2B or Stage 4.
+
+If gate fails: rerun Stage 2A with 5 seeds before any Stage 2B/4 decision, or
+return to Stage 0/1 if the failure is path, feature, or split related.
 
 ### 2B - ESM-Ready Baseline Comparison
 
@@ -293,14 +435,19 @@ Success criteria:
 - `split_diagnostics.json` shows usable train/validation class coverage.
 - Comparison tables rank only validation or seed-repeat validation rows.
 
-Decision after this stage:
+### Decision gate after Stage 2B
 
-- Choose a baseline anchor by validation evidence, not by held-out test.
-- Prefer stability across seeds over a single high run.
-- If explicitly continuing from this baseline, use the selected simpler anchor
-  to constrain the next HPO/fusion stage.
-- If launching a fresh Optuna check, do not over-constrain it to prior raw
-  outputs; search broadly within the selected model family/fusion mode.
+Proceed to Stage 3 or Stage 4 only if:
+
+- The Stage 2B success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: fix ESM coverage, rerun the affected baseline family, or fall
+back to the Stage 2A Only-GVP anchor until ESM-ready runs are trustworthy. Choose
+baseline anchors by validation evidence, not by held-out test, and prefer
+stability across seeds over one high run.
 
 ## Stage 3 - Small Debug Optuna
 
@@ -336,7 +483,7 @@ HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "8.0"
 RING_EDGE_MODE = "with_ring"
 
-OPTUNA_INTENSITY = "debug"
+OPTUNA_INTENSITY = "custom"
 N_OPTUNA_TRIALS = 4
 MAX_EPOCHS_PER_TRIAL = 3
 OPTUNA_N_STARTUP_TRIALS = 4
@@ -347,7 +494,8 @@ OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_debug"
-OPTUNA_STORAGE = ""
+OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_SPLIT_SEED = 42
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
 OPTUNA_WEIGHT_DECAYS_CSV = "0.0,1e-5,1e-4"
 OPTUNA_BATCH_SIZES_CSV = "4,8"
@@ -381,10 +529,18 @@ Success criteria:
 - Search-space preview shows architecture fixed to Only-GVP.
 - Trial commands omit held-out test evaluation.
 
-Decision after this stage:
+### Decision gate after Stage 3
 
-- If debug Optuna works, move to medium controlled Optuna.
-- Do not choose hyperparameters from this debug run.
+Proceed to Stage 4 only if:
+
+- The Stage 3 success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed trials.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: fix Optuna storage, search-space parsing, command generation, or
+feature paths before launching Stage 4. Do not choose hyperparameters from this
+debug run.
 
 ## Stage 4 - Controlled Medium Optuna Search
 
@@ -441,7 +597,7 @@ OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+TOP_K_CONFIGS_FOR_SEED_REPEAT = 5
 REPEAT_SEEDS = "42,123,2026,43,44"
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -462,10 +618,21 @@ Success criteria:
 - Trial logs show validation-only runs, not final-test runs.
 - Top candidates are plausible and not dominated by missing-class diagnostics.
 
-Decision after this stage:
+### Decision gate after Stage 4
 
-- Do not pick the final model from one Optuna trial alone.
-- Run top-K seed-repeat validation before considering a configuration stable.
+Proceed to Stage 5 or Stage 6 only if:
+
+- The Stage 4 success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+- Top candidates are meaningfully above the Stage 2A random/seed mean, not just
+  isolated noisy trials.
+
+If gate fails: check the search space; widen `OPTUNA_LEARNING_RATE_RANGE` or
+open `OPTUNA_HIDDEN_S_VALUES_CSV`. Do not pick the final model from one Optuna
+trial alone; run top-K seed-repeat validation before considering a configuration
+stable.
 
 ## Stage 5 - Large Extensive Optuna Search
 
@@ -484,6 +651,11 @@ on GPU and model.
 Important scope rule: the notebook's Optuna mode optimizes within the selected
 `MODEL_PRESET`. It does not freely search architectures or fusion modes. Choose
 the model family explicitly, then search a controlled set of hyperparameters.
+
+Advanced-fusion ordering rule: Stages 5D, 5E, 5F are only valid after Stage 5C
+(GVP + late fusion) has produced a Stage 6 seed-repeat candidate that exceeds
+the Stage 2A Only-GVP anchor by >= 0.01 `val_metal_balanced_acc` mean across
+the 5-seed list. If Stage 5C does not clear that bar, do not launch 5D/5E/5F.
 
 ### 5A - 200-Trial Only-GVP Capacity Search
 
@@ -541,6 +713,20 @@ REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
+
+### Decision gate after Stage 5A
+
+Proceed to Stage 6 for Only-GVP candidates, or to Stage 5B/5C for family
+comparison, only if:
+
+- The study writes complete `all_trials.csv`, `top_trials.csv`, and
+  `best_trial.json`.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: do not advance to a more complex fusion family; revisit Stage 2A
+and the Stage 5A search space.
 
 ### 5B - 120-Trial Only-ESM Search
 
@@ -601,6 +787,19 @@ REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
+
+### Decision gate after Stage 5B
+
+Proceed to Stage 6 for Only-ESM candidates, or to Stage 5C, only if:
+
+- ESM coverage is valid and no run used missing ESM embeddings as a reportable
+  fallback.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: fix ESM coverage or narrow the Only-ESM search before comparing
+ESM-informed model families.
 
 ### 5C - 200-Trial GVP + Late-Fusion Search
 
@@ -666,6 +865,23 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
+### Decision gate after Stage 5C
+
+Proceed to Stage 6 only if:
+
+- The late-fusion study produces plausible top candidates and complete Optuna
+  outputs.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+Proceed to Stage 5D/5E/5F only after Stage 6 confirms a late-fusion candidate
+that exceeds the Stage 2A Only-GVP anchor by >= 0.01
+`val_metal_balanced_acc` mean across the 5-seed list.
+
+If gate fails: no candidate from Stage 5C should trigger advanced fusion. Return
+to Stage 2A/5A or revise the late-fusion search space.
+
 ### 5D - 200-Trial GVP + Node-Level Late-Fusion Search
 
 Run this after the late-fusion baseline has a stable validation anchor.
@@ -728,6 +944,19 @@ REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
+
+### Decision gate after Stage 5D
+
+Proceed to Stage 6 only if:
+
+- Stage 5C previously cleared the advanced-fusion ordering gate.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: do not advance to Stage 5E/5F because no candidate beats the
+Stage 2A anchor by >= 1% balanced accuracy across 5 seeds at Stage 6; revisit
+Stage 2A or Stage 5C.
 
 ### 5E - 200-Trial GVP + Hybrid-Fusion Search
 
@@ -794,6 +1023,18 @@ REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
+
+### Decision gate after Stage 5E
+
+Proceed to Stage 6 only if:
+
+- Stage 5C previously cleared the advanced-fusion ordering gate.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: stop advanced fusion escalation and revisit the simpler
+late-fusion or Only-GVP anchors before cross-attention.
 
 ### 5F - 120-Trial GVP + Cross-Modal Attention Search
 
@@ -863,6 +1104,20 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
+### Decision gate after Stage 5F
+
+Proceed to Stage 6 only if:
+
+- Stage 5C previously cleared the advanced-fusion ordering gate.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+- Attention candidates justify their extra complexity against the Stage 6
+  late-fusion candidate.
+
+If gate fails: do not broaden cross-attention. Return to the best validated
+simpler fusion family.
+
 ### 5G - Optional Radius-Only Ablation
 
 Use only when you deliberately want to compare against the older radius-only
@@ -890,10 +1145,19 @@ Success criteria:
 - Top trials improve or clarify validation behavior without relying on one
   lucky seed.
 
-Decision after this stage:
+### Decision gate after Stage 5G
 
-- Choose the top 2-3 candidates for seed-repeat validation.
-- Do not finalize the model from the raw 200-trial ranking alone.
+Proceed to Stage 6 only if:
+
+- The ablation was explicitly labeled radius-only and compared against the
+  matching RING-enabled family.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+
+If gate fails: do not use the ablation as model-selection evidence. Choose the
+top 2-3 valid candidates for seed-repeat validation and do not finalize from a
+raw Optuna ranking alone.
 
 ## Stage 6 - Top-K Seed-Repeat Validation
 
@@ -952,12 +1216,20 @@ Success criteria:
 - Diagnostics do not show leakage, missing validation classes, or invalid
   feature coverage.
 
-Decision after this stage:
+### Decision gate after Stage 6
 
-- Select one final configuration using validation evidence only.
-- Record why it was selected: mean validation score, variability, per-class
-  diagnostics, split, seed list, and epoch budget.
-- Only then move to final held-out test evaluation.
+Proceed to Stage 7 only if:
+
+- The Stage 6 success criteria are met.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+- One final configuration is selected using validation evidence only.
+
+If gate fails: if the top-1 mean is within 1 std of top-2 or top-3, report all
+three as candidates and pick by `val_metal_min_recall` tiebreak. Record the
+mean validation score, variability, per-class diagnostics, split, seed list, and
+epoch budget before any held-out test launch.
 
 ## Stage 7 - Final Held-Out Test Evaluation
 
@@ -1026,13 +1298,19 @@ Success criteria:
 - The output folder is separate from the source validation run.
 - The test report includes six-class metal metrics and collapsed-4 metrics.
 
-Decision after this stage:
+### Decision gate after Stage 7
 
-- Report the final held-out test metrics.
-- Do not choose a different configuration because another tested candidate has
-  a better held-out test score. If more model development is needed, return to
-  validation-only experiments and treat the final-test result as already spent
-  for that selection cycle.
+Final reporting is complete only if:
+
+- The Stage 7 success criteria are met.
+- The source run was the Stage 6 validation-selected configuration.
+- `val_metal_balanced_acc` was the selection metric for the source run.
+- The final-test output is a separate folder from the source validation run.
+
+If gate fails: do not report the run as final. If the test completed, treat the
+one-shot final-test result as already spent for that selection cycle. Do not
+choose a different configuration because another tested candidate has a better
+held-out test score; return to validation-only experiments for new development.
 
 ## Safety Guards To Check
 
