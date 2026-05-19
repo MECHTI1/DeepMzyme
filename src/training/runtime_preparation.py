@@ -101,6 +101,10 @@ def discover_missing_updated_external_features(
     ]
 
 
+def _sample_structure_paths(structure_files: Sequence[Path], *, limit: int = 3) -> list[str]:
+    return [str(path) for path in list(structure_files)[:limit]]
+
+
 def _generate_missing_esm_embeddings(
     structure_files: Sequence[Path],
     embeddings_dir: Path,
@@ -109,8 +113,15 @@ def _generate_missing_esm_embeddings(
         from embed_helpers.esmc import create_resi_embed_batch
     except ImportError as exc:
         raise RuntimeError(
-            "Missing dependencies for real ESM embedding generation. "
-            "Install the packages required by embed_helpers/esmc.py."
+            "Missing dependencies for real ESM embedding generation. Runtime "
+            f"preparation tried to generate ESM embeddings for {len(structure_files)} "
+            "missing structure(s) because ESM inputs are required and "
+            "missing-embedding preparation is enabled. Install the `esm` package "
+            "used by embed_helpers/esmc.py, or provide complete precomputed "
+            "embeddings in --esm-embeddings-dir and rerun with "
+            "--no-prepare-missing-esm-embeddings. Use "
+            "--allow-missing-esm-embeddings only for an intentional debug or "
+            f"ablation run. Sample missing structures: {_sample_structure_paths(structure_files)}"
         ) from exc
 
     return create_resi_embed_batch(structure_files, out_dir=embeddings_dir, overwrite=False)
@@ -248,18 +259,29 @@ def prepare_runtime_inputs(
         embeddings_dir,
     )
 
-    should_prepare_esm = require_esm_embeddings and prepare_missing_esm_embeddings
-    if should_prepare_esm:
+    if require_esm_embeddings:
         missing_esm_structures = discover_missing_esm_embeddings(structure_files, embeddings_dir)
         report["missing_esm_structures_before"] = len(missing_esm_structures)
         if missing_esm_structures:
-            summary = _generate_missing_esm_embeddings(missing_esm_structures, embeddings_dir)
-            _raise_on_failed_generation(summary=summary, feature_name="ESM embeddings")
-            report["generated_esm_files"] = len(list(summary.get("saved_files", [])))
-            report["esm_embedding_metadata"] = summarize_esm_embedding_metadata(
-                structure_files,
-                embeddings_dir,
-            )
+            if prepare_missing_esm_embeddings:
+                summary = _generate_missing_esm_embeddings(missing_esm_structures, embeddings_dir)
+                _raise_on_failed_generation(summary=summary, feature_name="ESM embeddings")
+                report["generated_esm_files"] = len(list(summary.get("saved_files", [])))
+                report["esm_embedding_metadata"] = summarize_esm_embedding_metadata(
+                    structure_files,
+                    embeddings_dir,
+                )
+            else:
+                raise ValueError(
+                    "ESM embeddings are required but missing for "
+                    f"{len(missing_esm_structures)} structure(s). "
+                    f"ESM embeddings dir: {embeddings_dir}. Provide matching "
+                    "precomputed *_esmc.pt files, enable missing-embedding "
+                    "generation only in an environment with the `esm` package "
+                    "installed, or use --allow-missing-esm-embeddings only for "
+                    "an intentional debug or ablation run. "
+                    f"Sample missing structures: {_sample_structure_paths(missing_esm_structures)}"
+                )
 
     should_prepare_updated_external_features = (
         external_feature_source in {"auto", "updated"} and require_external_features
