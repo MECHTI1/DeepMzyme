@@ -6,6 +6,8 @@ and design authority. Current best validation evidence belongs in
 `EXPERIMENT_STATUS.md` and `docs/notebook_outputs/`, not in this stable
 playbook.
 
+For the cross-document run order and output-folder map, see `docs/README.md`.
+
 ## Quick-Paste Stage Selector
 
 This playbook is the operational pipeline for
@@ -485,8 +487,9 @@ Storage path template:
 file per study. Never share a study DB across different `MODEL_PRESET` values.
 
 Resumption rule: re-running the notebook with the same `OPTUNA_STUDY_NAME` and
-storage URL appends trials. To start fresh, change the study name; do not delete
-the `.db` unless you mean to discard history.
+storage URL resumes the persistent study and launches only the remaining trials
+needed to reach `N_OPTUNA_TRIALS` completed trials. To start fresh, change the
+study name; do not delete the `.db` unless you mean to discard history.
 
 Resume policy for reportable HPO:
 
@@ -496,7 +499,9 @@ Resume policy for reportable HPO:
   file.
 - If a study was interrupted, resume until the requested number of `COMPLETE`
   trials in the stage gate is reached. Failed/pruned/incomplete trials do not
-  count toward the required completed-trial count.
+  count toward the required completed-trial count, so they may make the stored
+  total trial count exceed `N_OPTUNA_TRIALS` while the completed-trial count
+  reaches the target.
 - The notebook records compatibility metadata and a search-space hash in each
   study. Reusing a persistent study with incompatible metadata stops with a
   clear error unless `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = True`.

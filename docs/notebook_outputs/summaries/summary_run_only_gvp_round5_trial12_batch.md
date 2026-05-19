@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 5 Trial 12 Batch
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round5_Trial_12_batch.output_cell_notebook` (renamed from `docs/notebook outputs/Only-GVP/round5_Trial_12_batch.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-GVP/round5_Trial_12_batch.output_cell_notebook`.
 
 ## Purpose
 Run a 30-epoch validation-only batch for the Only-GVP Trial 12 configuration and a `gvp_layers=3` ablation.

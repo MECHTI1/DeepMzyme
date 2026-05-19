@@ -4,6 +4,9 @@ This guide explains how to use `notebooks/DeepMzyme_training_colab.ipynb` to fin
 
 The current project policy is baseline-first: use validation metrics for all model, checkpoint, hyperparameter, and architecture decisions; reserve the held-out test set for final reporting only.
 
+For the cross-document validation/testing order, output-folder map, and Drive
+copying policy, read `docs/README.md` first.
+
 ## Scope Of This Guide
 
 This guide describes stable workflow principles. Exact current experiment results and hyperparameters should not be duplicated here; those belong with the run evidence and current-status notes. For the current project state, read `EXPERIMENT_STATUS.md` if present. For raw copied notebook outputs, inspect `docs/notebook_outputs/raw/`; for concise run summaries, start with `docs/notebook_outputs/summaries/`.
@@ -462,16 +465,20 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
-- Set `OPTUNA_N_STARTUP_TRIALS` below `N_OPTUNA_TRIALS`. If startup trials are
-  greater than or equal to total trials, the run is effectively random search.
-  The playbook owns the exact startup-trial value for each stage.
+- Set `OPTUNA_N_STARTUP_TRIALS` below `N_OPTUNA_TRIALS`. `N_OPTUNA_TRIALS` is
+  the target number of completed trials in the study; with persistent storage,
+  reruns launch only the remaining trials needed to reach that target. If
+  startup trials are greater than or equal to the completed-trial target, the
+  run is effectively random search. The playbook owns the exact startup-trial
+  value for each stage.
 - Keep `OPTUNA_AUTO_CONFIGURE_BUDGET = False` when using a playbook block with
   explicit trial counts. If enabled, the notebook may raise trial counts to the
   advisor's minimum recommendation.
-- If the final launch-time `OPTUNA_N_STARTUP_TRIALS` or `N_OPTUNA_TRIALS` is
-  below the advisor recommendation, the notebook asks for terminal-style
-  confirmation with `input()`. Type `Y` to continue an intentionally
-  under-budgeted smoke/debug run, or `N`/Enter to stop before Optuna launches.
+- If the final launch-time `OPTUNA_N_STARTUP_TRIALS` or completed-trial target
+  `N_OPTUNA_TRIALS` is below the advisor recommendation, the notebook asks for
+  terminal-style confirmation with `input()`. Type `Y` to continue an
+  intentionally under-budgeted smoke/debug run, or `N`/Enter to stop before
+  Optuna launches.
 - `OPTUNA_USE_PRUNING` is now real but optional: the notebook monitors
   `val_metrics.csv` / `train_metrics.csv` in each trial run directory, calls
   `trial.report(...)`, and terminates the trial subprocess process group when

@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 2 Optuna Seed Repeat
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round2_results_onlyGVP_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/Only-GVP/round2_results_onlyGVP_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-GVP/round2_results_onlyGVP_Optuna.output_cell_notebook`.
 
 ## Purpose
 Continue the Only-GVP Optuna workflow and launch seed-repeat validation for top HPO candidates.

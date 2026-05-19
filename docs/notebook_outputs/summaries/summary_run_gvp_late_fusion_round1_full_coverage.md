@@ -1,7 +1,7 @@
 # Summary Run: GVP Late Fusion Round 1 Full Coverage
 
 ## Source File
-`docs/notebook_outputs/raw/GVP + late fusion/Round1_Rerun validation-only GVP + late fusion on full ESM coverage.output_cell_notebook` (renamed from `docs/notebook outputs/GVP + late fusion/Round1_Rerun validation-only GVP + late fusion on full ESM coverage.output_cell_notebook`).
+`docs/notebook_outputs/raw/GVP + late fusion/Round1_Rerun validation-only GVP + late fusion on full ESM coverage.output_cell_notebook`.
 
 ## Purpose
 Rerun the GVP + late fusion candidate on full ESM coverage as a validation-only five-seed comparison.

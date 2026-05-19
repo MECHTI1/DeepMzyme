@@ -10,7 +10,7 @@ differences.
 validation evidence belongs in `EXPERIMENT_STATUS.md` and
 `docs/notebook_outputs/`, not in this stable playbook.
 
-
+For the cross-document run order and output-folder map, see `docs/README.md`.
 
 All configuration blocks use variables that exist in
 `notebooks/DeepMzyme_training_colab.ipynb` as of this repository state. Paste

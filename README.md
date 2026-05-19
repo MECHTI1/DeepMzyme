@@ -82,6 +82,8 @@ confirmation. Held-out test evaluation is reserved for the final
 validation-selected configuration under the one-shot Stage 7 policy.
 
 Detailed validation-only command examples are in `list_train_commands.md`. The
+documentation index, run-order map, and folder ownership rules are in
+`docs/README.md`. The
 interactive workflow is in `notebooks/DeepMzyme_training_colab.ipynb`; exact
 metal stage blocks live in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`, and EC
 stage blocks live in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`.

@@ -4,8 +4,9 @@ This file lists conservative, baseline-first direct CLI examples. The staged
 notebook playbooks are the authoritative source for exact current budgets,
 search spaces, Stage 6 confirmation, and Stage 7 final-test policy.
 
-The main policy is:
+For the canonical validation/testing order and folder map, use `docs/README.md`.
 
+The main policy is:
 
 1. Use the legacy **Non-overlapped PinMyMetal** split for final held-out testing unless a planned comparison explicitly selects another named split.
 2. Select checkpoints by **validation metrics**, not by the held-out test set.

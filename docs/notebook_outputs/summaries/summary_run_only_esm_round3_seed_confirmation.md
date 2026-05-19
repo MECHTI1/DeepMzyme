@@ -1,7 +1,7 @@
 # Summary Run: Only-ESM Round 3 Seed Confirmation
 
 ## Source File
-`docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md` (renamed from `docs/notebook outputs/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`).
+`docs/notebook_outputs/raw/Only-ESM/Round3_ESMonly_add_seeds43_44_5seed_confirmation.output_cell_notebook.md`.
 
 ## Purpose
 Add seeds 43 and 44 for Round 2 finalist Only-ESM settings to confirm whether the apparent winner is stable.

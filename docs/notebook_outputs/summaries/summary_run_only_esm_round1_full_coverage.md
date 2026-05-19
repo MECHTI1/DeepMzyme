@@ -1,7 +1,7 @@
 # Summary Run: Only-ESM Round 1 Full Coverage
 
 ## Source File
-`docs/notebook_outputs/raw/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook` (renamed from `docs/notebook outputs/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-ESM/Round1_Rerun validation-only Only-ESM on full ESM coverage.output_cell_notebook`.
 
 ## Purpose
 Validate the original full-coverage Only-ESM metal baseline across five seeds.

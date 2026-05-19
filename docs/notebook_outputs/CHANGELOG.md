@@ -1,5 +1,16 @@
 # Notebook Output And Pipeline Changelog
 
+## 2026-05-19
+
+- Added `docs/README.md` as the documentation-folder entry point, including
+  the run-order and folder-ownership map for validation, Stage 6 confirmation,
+  and Stage 7 held-out testing.
+- Re-pointed the main documentation indexes to that single coordination file.
+- Removed stale historical path mentions with the old space-separated
+  notebook-output folder name from copied run summaries; canonical copied
+  evidence remains under
+  `docs/notebook_outputs/`.
+
 ## 2026-05-18
 
 - Documentation source-of-truth cleanup: `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`

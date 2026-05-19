@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 3 Top Optuna Confirmation
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round3_results_onlyGVP_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/Only-GVP/round3_results_onlyGVP_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-GVP/round3_results_onlyGVP_Optuna.output_cell_notebook`.
 
 ## Purpose
 Confirm top Only-GVP Optuna candidates and ablations across validation-only seed-repeat runs.

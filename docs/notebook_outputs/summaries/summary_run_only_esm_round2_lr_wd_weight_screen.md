@@ -1,7 +1,7 @@
 # Summary Run: Only-ESM Round 2 LR/WD/Class-Weight Screen
 
 ## Source File
-`docs/notebook_outputs/raw/Only-ESM/Round2_ESMonly.output_cell_notebook.md` (renamed from `docs/notebook outputs/Only-ESM/Round2_ESMonly.output_cell_notebook.md`).
+`docs/notebook_outputs/raw/Only-ESM/Round2_ESMonly.output_cell_notebook.md`.
 
 ## Purpose
 Screen Only-ESM learning rate, weight decay, and metal class-weight mode values using validation metrics.

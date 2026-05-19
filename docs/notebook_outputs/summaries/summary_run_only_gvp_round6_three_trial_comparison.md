@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 6 Three-Trial Comparison
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round6_three_Trials_comparisons.output_cell_notebook.md` (renamed from `docs/notebook outputs/Only-GVP/round6_three_Trials_comparisons.output_cell_notebook.md`).
+`docs/notebook_outputs/raw/Only-GVP/round6_three_Trials_comparisons.output_cell_notebook.md`.
 
 ## Purpose
 Compare three finalist Only-GVP validation-only configurations: Trial12 GVP3, Trial7 GVP4, and Trial12 GVP2.

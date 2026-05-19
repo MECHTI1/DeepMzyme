@@ -93,6 +93,9 @@ claim or change.
 - `Plan.md`: design authority for architecture, experiment policy, validation
   selection, and held-out test rules. Contains the document map for all
   related files.
+- `docs/README.md`: top-level documentation index for validation/testing,
+  notebook, playbook, copied-output documentation, Drive/local output
+  handling, and copied-evidence placement rules.
 - `EXPERIMENT_STATUS.md`: current experiment status, selected validation
   anchors, trusted evidence files, caveats, and next planned action.
 - `README.md`: public-facing overview, quick-start commands, and split
@@ -232,7 +235,7 @@ claim or change.
   this as production code.
 
 **Read by default** (small, high-leverage): `Plan.md`, `EXPERIMENT_STATUS.md`,
-and `docs/notebook_outputs/README.md`.
+`docs/README.md`, and `docs/notebook_outputs/README.md`.
 
 **On-demand only** (large; do not bulk-load):
 - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` — only when editing or running

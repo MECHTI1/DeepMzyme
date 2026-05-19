@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 4 Top3 Plus GVP3
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round4_results_onlyGVP_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/Only-GVP/round4_results_onlyGVP_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-GVP/round4_results_onlyGVP_Optuna.output_cell_notebook`.
 
 ## Purpose
 Evaluate a 30-epoch split batch for top Only-GVP candidates and GVP3 ablations.

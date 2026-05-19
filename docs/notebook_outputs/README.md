@@ -3,6 +3,9 @@
 This directory keeps copied notebook outputs as experiment evidence while making
 the important results easier to scan.
 
+For the full validation/testing run order and folder ownership map, read
+`docs/README.md`.
+
 ## Layout
 
 - `raw/` preserves long copied notebook-output files. Treat these as the source
@@ -21,6 +24,11 @@ default recipe for the next fresh experiment. When planning a new check or new
 Optuna sweep, rely on raw outputs heavily only if the user explicitly asks to
 use previous running/results/raws. Otherwise use summaries and status as
 context, then prefer a fresh, broad-but-sensible validation-only search space.
+
+Canonical path rule: this folder is `docs/notebook_outputs/` with an
+underscore. Do not create or use a parallel `docs/notebook outputs/` folder with
+a space. Copied raw evidence should go under `raw/<model-family>/`; concise
+summaries should go under `summaries/`.
 
 ## Experiment-Tracking Rules
 

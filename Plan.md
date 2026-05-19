@@ -14,6 +14,7 @@ clearly contains newer working logic that should be preserved.
 
 | Need | Go to |
 | --- | --- |
+| Documentation index, validation/testing order, and output folder map | `docs/README.md` |
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |

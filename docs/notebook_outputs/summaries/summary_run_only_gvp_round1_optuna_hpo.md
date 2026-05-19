@@ -1,7 +1,7 @@
 # Summary Run: Only-GVP Round 1 Optuna HPO
 
 ## Source File
-`docs/notebook_outputs/raw/Only-GVP/round1_results_onlyGVP_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/Only-GVP/round1_results_onlyGVP_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-GVP/round1_results_onlyGVP_Optuna.output_cell_notebook`.
 
 ## Purpose
 Run an initial controlled Optuna HPO search within the Only-GVP model family.

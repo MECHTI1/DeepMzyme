@@ -1,7 +1,7 @@
 # Summary Run: GVP Late Fusion Round 1 Trial12 Anchor
 
 ## Source File
-`docs/notebook_outputs/raw/GVP + late fusion/Round1_results_gvp_plus_latefusion_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/GVP + late fusion/Round1_results_gvp_plus_latefusion_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/GVP + late fusion/Round1_results_gvp_plus_latefusion_Optuna.output_cell_notebook`.
 
 ## Purpose
 Evaluate a GVP + late ESM fusion configuration derived from an Only-GVP Trial 12/GVP3 anchor across five validation-only seeds.

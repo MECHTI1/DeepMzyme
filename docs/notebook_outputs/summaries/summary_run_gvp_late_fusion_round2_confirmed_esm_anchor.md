@@ -1,7 +1,7 @@
 # Summary Run: GVP Late Fusion Round 2 Confirmed ESM Anchor
 
 ## Source File
-`docs/notebook_outputs/raw/GVP + late fusion/Round2_late_fusion_from_confirmed_only_esm_anchor.output_cell_notebook.md` (renamed from `docs/notebook outputs/GVP + late fusion/Round2_late_fusion_from_confirmed_only_esm_anchor.output_cell_notebook.md`).
+`docs/notebook_outputs/raw/GVP + late fusion/Round2_late_fusion_from_confirmed_only_esm_anchor.output_cell_notebook.md`.
 
 ## Purpose
 Run a validation-only GVP + late fusion check using the confirmed Only-ESM training settings as the anchor.

@@ -1,7 +1,7 @@
 # Summary Run: Only-ESM Round 1 Anchor Comparison
 
 ## Source File
-`docs/notebook_outputs/raw/Only-ESM/Round1_results_only_esm_Optuna.output_cell_notebook` (renamed from `docs/notebook outputs/Only-ESM/Round1_results_only_esm_Optuna.output_cell_notebook`).
+`docs/notebook_outputs/raw/Only-ESM/Round1_results_only_esm_Optuna.output_cell_notebook`.
 
 ## Purpose
 Record a validation-only Only-ESM anchor comparison batch on full ESM coverage.

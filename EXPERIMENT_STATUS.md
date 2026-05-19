@@ -17,6 +17,8 @@ evidence in saved outputs, not in stable workflow guides.
   the only source of exact executable values, budgets, search spaces, expected
   outputs, and gates. Use `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` for
   option meanings and workflow explanation.
+- For validation/testing order, Drive/local output placement, and copied
+  evidence folder ownership, use `docs/README.md`.
 - As of the Stage 6 statistical-validation update, reportable Stage 6
   confirmation uses top-K 5-fold grouped validation by `pdbid`, paired
   fold-level bootstrap confidence intervals, and rare-class recall protection.
