@@ -448,6 +448,10 @@ For useful Colab HPO:
 - Keep `OPTUNA_AUTO_CONFIGURE_BUDGET = False` when using a playbook block with
   explicit trial counts. If enabled, the notebook may raise trial counts to the
   advisor's minimum recommendation.
+- If the final launch-time `OPTUNA_N_STARTUP_TRIALS` or `N_OPTUNA_TRIALS` is
+  below the advisor recommendation, the notebook asks for terminal-style
+  confirmation with `input()`. Type `Y` to continue an intentionally
+  under-budgeted smoke/debug run, or `N`/Enter to stop before Optuna launches.
 - `OPTUNA_USE_PRUNING` is now real but optional: the notebook monitors
   `val_metrics.csv` / `train_metrics.csv` in each trial run directory, calls
   `trial.report(...)`, and terminates the trial subprocess process group when
