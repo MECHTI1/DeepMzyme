@@ -363,8 +363,21 @@ def validate_training_configuration(config: TrainConfig) -> None:
                 "so L_total=(1-alpha)*CE_6class + alpha*CE_4class is well-defined."
             )
         validate_required_six_class_metal_labels(METAL_TARGET_LABELS)
-    if config.metal_class_weight_mode not in {"none", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
+    if config.metal_class_weight_mode not in {"none", "manual", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
         raise ValueError(f"Unsupported --metal-class-weight-mode {config.metal_class_weight_mode!r}")
+    for field_name in (
+        "mn_loss_multiplier",
+        "cu_loss_multiplier",
+        "zn_loss_multiplier",
+        "fe_loss_multiplier",
+        "co_loss_multiplier",
+        "ni_loss_multiplier",
+        "class_viii_loss_multiplier",
+    ):
+        value = float(getattr(config, field_name))
+        if value < 0.0:
+            flag_name = "--" + field_name.replace("_", "-")
+            raise ValueError(f"{flag_name} must be non-negative, got {value}")
     if config.joint_loss_weighting == "uncertainty" and config.task != "joint":
         raise ValueError(
             "--joint-loss-weighting uncertainty requires --task joint. "

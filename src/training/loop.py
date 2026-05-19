@@ -95,12 +95,12 @@ def class_weights_from_labels(
 ) -> Tensor:
     if n_classes < 1:
         raise ValueError(f"n_classes must be at least 1, got {n_classes}.")
-    if mode not in {"none", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
+    if mode not in {"none", "manual", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
         raise ValueError(f"Unsupported class weight mode {mode!r}.")
     if not labels:
         return torch.ones(n_classes, dtype=torch.float32)
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=n_classes).float()
-    if mode == "none":
+    if mode in {"none", "manual"}:
         return torch.ones(n_classes, dtype=torch.float32)
     present_mask = counts > 0
     if not bool(present_mask.any().item()):

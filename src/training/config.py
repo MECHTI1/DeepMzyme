@@ -29,6 +29,7 @@ VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
 VALID_METAL_CLASS_WEIGHT_MODE_CHOICES = (
     "none",
+    "manual",
     "inverse_frequency",
     "inverse_sqrt_frequency",
     "effective_number",
@@ -497,6 +498,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=VALID_METAL_CLASS_WEIGHT_MODE_CHOICES,
         help=(
             "How to compute metal class weights from the training split. "
+            "'manual' starts from weight 1.0 for every class so the per-class "
+            "loss multipliers become the exact manual class weights. "
             "'inverse_frequency' preserves the previous default behavior."
         ),
     )

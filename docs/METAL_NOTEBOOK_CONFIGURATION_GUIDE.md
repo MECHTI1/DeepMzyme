@@ -415,6 +415,7 @@ run is not suitable for reportable model selection.
 Current code supports:
 
 - `METAL_CLASS_WEIGHT_MODES_CSV = "none"`
+- `METAL_CLASS_WEIGHT_MODES_CSV = "manual"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_sqrt_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`
@@ -430,7 +431,12 @@ Start cautiously:
 4. Treat `focal` and per-class loss multipliers as later ablations, not first-line defaults.
 5. Do not decide class weighting from one seed.
 
-Class weights are computed from the training split only, which is correct. Still inspect whether weighting improves rare-class recall without destroying common-class performance.
+Class weights are computed from the training split only, except for `manual`.
+With `manual`, the base weight for every active metal class is `1.0`, so the
+per-class `*_LOSS_MULTIPLIER` notebook values are the exact metal loss weights.
+With computed modes, those same values multiply the training-split-derived
+weights. Still inspect whether weighting improves rare-class recall without
+destroying common-class performance.
 
 ### Collapsed-4 Auxiliary Loss
 
