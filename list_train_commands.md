@@ -1,6 +1,8 @@
 # DeepMzyme baseline-first training commands
 
-This file lists conservative, baseline-first commands for DeepMzyme experiments.
+This file lists conservative, baseline-first direct CLI examples. The staged
+notebook playbooks are the authoritative source for exact current budgets,
+search spaces, Stage 6 confirmation, and Stage 7 final-test policy.
 
 The main policy is:
 
@@ -8,6 +10,9 @@ The main policy is:
 2. Select checkpoints by **validation metrics**, not by the held-out test set.
 3. Run simple baselines before complex fusion models.
 4. Keep run names explicit so results can be compared later with `src/report_runs.py`.
+5. The commands below are validation-only examples and intentionally omit
+   `--run-test-eval`. Add test evaluation only for the final validation-selected
+   configuration under the one-shot Stage 7 policy.
 
 ---
 
@@ -60,7 +65,10 @@ PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 If your summary CSV has a different name, update `TRAIN_CSV` and `TEST_CSV` before running.
 For ESM-enabled models, set `ESM_EMBEDDINGS_DIR` to your precomputed/generated ESM embedding directory and pass it with `--esm-embeddings-dir`. Missing ESM embeddings are generated only for structures whose embedding files are absent, unless `--no-prepare-missing-esm-embeddings` is passed. For graph runs, DeepMzyme's project default is RING-enabled plus strict updated external features: pass `--external-feature-source updated`, `--use-ring-edges`, `--ring-features-dir "${RING_FEATURES_DIR}"`, and `--prepare-missing-ring-edges`. Missing updated external features should fail unless you intentionally add `--allow-missing-external-features` for a debug/fallback ablation.
 
-Previous DeepMzyme runs favored `learning_rate=3e-5` among tested values, while `1e-4` was also reasonable in some runs. Use `3e-5` with `weight_decay=1e-4` as the serious baseline starting point so far. Use `1e-4` as the main follow-up confirmation value, or compare only `3e-5` and `1e-4` if time is limited. Reserve `3e-4` for an optional wider LR check or debug/default-code comparison after simpler runs are working. For larger or fusion-heavy models such as `hybrid` and `cross_modal_attention`, start conservatively with `3e-5` or `1e-4`, and reduce to `1e-5` if training is unstable. Choose LR by validation metrics, not by repeatedly checking the held-out test set.
+These examples use `learning_rate=3e-5` only as a simple fixed CLI value. For
+current recommended grids, Optuna budgets, and stage-specific learning-rate
+ranges, use the metal and EC playbooks. Choose LR by validation metrics, not by
+repeatedly checking the held-out test set.
 
 ---
 
@@ -86,7 +94,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
@@ -116,7 +123,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_only_esm_seed42 \
   --seed 42 \
@@ -145,7 +151,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_gvp_late_fusion_seed42 \
   --seed 42 \
@@ -177,7 +182,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_gvp_early_fusion_seed42 \
   --seed 42 \
@@ -215,7 +219,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_gvp_node_level_late_fusion_seed42 \
   --seed 42 \
@@ -245,7 +248,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_gvp_hybrid_seed42 \
   --seed 42 \
@@ -277,7 +279,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name metal_gvp_cross_modal_attention_seed42 \
   --seed 42 \
@@ -325,7 +326,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name ec_level1_only_gvp_seed42 \
   --seed 42 \
@@ -354,7 +354,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name ec_level1_only_esm_seed42 \
   --seed 42 \
@@ -382,7 +381,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name ec_level1_gvp_late_fusion_seed42 \
   --seed 42 \
@@ -424,7 +422,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name joint_level1_only_gvp_seed42 \
   --seed 42 \
@@ -454,7 +451,6 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --summary-csv "${TRAIN_CSV}" \
   --test-structure-dir "${TEST_DIR}" \
   --test-summary-csv "${TEST_CSV}" \
-  --run-test-eval \
   --runs-dir "${RUNS_DIR}" \
   --run-name joint_level1_gvp_late_fusion_seed42 \
   --seed 42 \
@@ -478,8 +474,11 @@ PYTHONPATH=src ${PYTHON} src/train.py \
 ## 6. Repeating the strongest runs with multiple seeds
 
 After the first pass, repeat only the most promising models with multiple seeds.
+For reportable metal promotion, prefer the current playbook Stage 6 grouped-fold
+confirmation. The direct CLI loop below is an exploratory validation-only
+fallback, not a replacement for grouped-fold Stage 6.
 
-Recommended seeds:
+Example exploratory seeds:
 
 ```text
 42, 123, 777
@@ -497,7 +496,6 @@ for SEED in 42 123 777; do
     --summary-csv "${TRAIN_CSV}" \
     --test-structure-dir "${TEST_DIR}" \
     --test-summary-csv "${TEST_CSV}" \
-    --run-test-eval \
     --runs-dir "${RUNS_DIR}" \
     --run-name "metal_gvp_late_fusion_seed${SEED}" \
     --seed "${SEED}" \

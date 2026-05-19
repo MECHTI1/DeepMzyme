@@ -50,22 +50,11 @@ copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 Use the metal playbook for exact values. This guide explains how to interpret
 the notebook controls and what must stay fixed for a fair comparison.
 
-Recommended notebook usage:
-
-1. Open `notebooks/DeepMzyme_training_colab.ipynb` and run setup, repo, and
-   bundle cells.
-2. Paste exactly one stage block from `METAL_TRAINING_PIPELINE_PLAYBOOK.md` into
-   the Main configuration cell. Stages 0-7 cover the entire pipeline.
-3. Run Build CONFIG, planning, and preflight cells. Inspect the resolved
-   configuration table.
-4. Set `LAUNCH_PLANNED_TRAINING_RUNS = True` only when the planned commands
-   match the intended stage.
-5. Run the summarize/report cell for the current `RUN_BATCH_ID`.
-6. After Stage 5, inspect `top_trials.csv` and the Optuna summary, then run
-   Stage 6 using the playbook's top-K grouped-fold confirmation block.
-7. Only after Stage 6, run the Select final run cell, preview Stage 7 in
-   `preview_only` mode, then launch Stage 7 with `CONFIRM_ONE_SHOT_POLICY =
-   True` exactly once.
+For the current notebook execution order, use the playbook's "How To Use This
+Playbook" section. The invariant is: paste exactly one stage block, inspect the
+resolved planning table, launch only when the planned commands match the stage,
+summarize the current `RUN_BATCH_ID`, run Stage 6 before any final selection,
+and use Stage 7 only once after validation selection is frozen.
 
 The notebook is intentionally staged. Smoke, baseline, HPO, grouped-fold
 confirmation, and final-test settings should not be mixed in one batch folder
@@ -107,6 +96,25 @@ default: it sets `VAL_FRACTION = 0.0` and uses `SEED_REPEAT_N_FOLDS = 5` with
 
 Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 
+## Glossary
+
+- `EPOCHS`: maximum training epochs for normal manual runs, grouped-fold
+  confirmation runs, and final retraining/evaluation workflows.
+- `MAX_EPOCHS_PER_TRIAL`: per-trial epoch cap used only inside
+  `RUN_MODE = "controlled_hpo_optuna"`. It can be lower than `EPOCHS` for
+  debug or medium HPO, but then the Optuna ranking reflects early-training
+  behavior rather than a full training budget.
+- `seed_repeat*`: historical notebook naming for top-config reevaluation. In
+  reportable metal Stage 6, these variables now drive grouped-fold validation:
+  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"`, one fixed `REPEAT_SEEDS`
+  model seed, `SEED_REPEAT_N_FOLDS = 5`, and a fixed
+  `SEED_REPEAT_SPLIT_SEED`. The legacy `seed_repeat` mode remains exploratory.
+- `active_run_config.json` / `active_run_config.md`: notebook-generated records
+  of the resolved live configuration before a subprocess starts. Completed
+  runs still rely on `run_config.json` and `run_metadata.json`.
+- `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
+  merged into `Class VIII`. Six-class metal classification remains primary.
+
 ## G4-Oriented Training Profile
 
 The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
@@ -131,7 +139,10 @@ Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continu
   writes into that batch folder when `RUN_BATCH_ID` is set; use the stage block
   in the playbook for the canonical name.
 
-The trusted final split for current metal evidence is the legacy Non-overlapped PinMyMetal split. Harsh Split PinMyMetal moves every common exact-split PDB ID to test as a whole group; use it only as an explicitly labeled new comparison. Metal Split PinMyMetal follows the exact PinMyMetal split for available supported structures; results from it, if used later, must be labeled as secondary/possibly-overlapped reference results. Common-PDBID 70/30 Split PinMyMetal is a custom comparison split, not the trusted final held-out split.
+For detailed split-variant definitions and final split policy, use Plan.md
+section 8. This guide only repeats the operational rule: reportable metal runs
+use the trusted non-overlapped PinMyMetal split unless a new split experiment is
+explicitly labeled.
 
 Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
 
@@ -165,6 +176,11 @@ Use this order for metal:
 4. `GVP + early fusion`, if late fusion or ESM-only looks promising.
 5. Advanced fusion only if simple baselines justify it: `GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention`.
 6. `SimpleGNN + ESM` as an auxiliary architecture ablation, not as the first best-pipeline candidate.
+
+`GVP + early fusion` and `SimpleGNN + ESM` are supported notebook presets, but
+the metal playbook does not currently define standalone serious HPO stage
+blocks for them. Treat them as optional manual comparisons or future candidate
+stages until exact executable blocks are added to the playbook.
 
 The corresponding notebook presets are:
 
@@ -332,7 +348,9 @@ The playbook owns the exact values for `EPOCHS`, `BATCH_SIZES_CSV`,
 `LEARNING_RATES_CSV`, `WEIGHT_DECAYS_CSV`, `LR_SCHEDULES_CSV`, and `SEEDS_CSV`
 for each stage. Use this guide only to understand what those fields mean:
 
-- `EPOCHS` controls the maximum training duration for each run or trial.
+- `EPOCHS` controls the maximum training duration for normal/manual runs and
+  Stage 6/final workflows; Optuna trial duration is controlled by
+  `MAX_EPOCHS_PER_TRIAL`.
 - `BATCH_SIZES_CSV`, `LEARNING_RATES_CSV`, and `WEIGHT_DECAYS_CSV` define
   manual comparison grids when `RUN_MODE = "manual_configurations"`.
 - `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs.
@@ -412,9 +430,9 @@ auxiliary collapsed-4 cross-entropy term where `Fe`, `Co`, and `Ni` are merged
 into `Class VIII` only for that auxiliary view.
 
 Use it only as a validation-only probe after the initial baselines are stable.
-The recommended first-use values are `0.0,0.3,0.5`, exposed for Stage 5A HPO by
-`OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"`. Keep
-`METAL_LOSS_FUNCTION = "cross_entropy"` for this probe.
+The playbook's optional-objective section owns the exact first-use values and
+the Stage 5A overlay. Keep this out of initial baselines unless that playbook
+block is being run deliberately.
 
 Do not use collapsed-4 loss in initial Stage 2 baselines, during final held-out
 test reporting, or as a reason to repeatedly inspect held-out test performance.
@@ -736,7 +754,10 @@ For final reporting:
 - Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
   or incompatible search spaces; let the default study-compatibility guard stop
   the run.
-- Do not compare old mixed folders silently. The current local `DeepMzyme_Data/notebook_outputs/runs/` contains older Only-GVP metal runs with held-out test reports; treat them as historical unless deliberately included.
+- Do not compare old mixed folders silently. Treat local run directories as
+  historical evidence unless the current task explicitly includes them; use
+  `EXPERIMENT_STATUS.md` and `docs/notebook_outputs/` to identify trusted
+  evidence.
 - Do not mix incompatible `MODEL_PRESET` values in Stage 6 top-config
   reevaluation.
 - Do not set `ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = True` unless you are intentionally overriding the guard.
@@ -749,15 +770,18 @@ For final reporting:
 - Do not use `VAL_FRACTION = 0` for reportable model selection unless Stage 6
   grouped-fold validation is explicitly configured with `N_FOLDS`/`FOLD_INDEX`.
 
-## Potential Notebook Improvements
+## Notebook Behavior Notes
 
-These are documentation/UX issues found during inspection. They are not implemented here.
+These are stable usage cautions, not an implementation backlog:
 
-1. `EPOCHS` defaults to `1`, which is safe for smoke tests but easy to forget before real comparisons. A stronger warning near the launch cell could reduce accidental 1-epoch rankings.
-2. `RECOMMENDED_RUN_SET` can override `MODEL_PRESET`; the notebook warns about this, but it remains a common user-error point. A more visible resolved-model summary could help.
-3. `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` still exists as a top-level option. It is guarded, but keeping final test evaluation only in the separate final-test cell would be safer.
-4. RING is now the default first graph setting. Use the playbook's radius-only ablation block only when you intentionally want to reproduce the older graph construction.
-5. `fusion_mode` may appear in saved `Only-GVP` configs even though it is irrelevant for `only_gvp`; reporting could display it as `none` for clarity.
-6. Optuna can sample many capacity and graph parameters by default. For first useful metal HPO, the notebook could offer a narrower `Only-GVP_lr_wd_only` search-space preset.
-7. The current default `OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV` includes several weighting modes. That is useful later, but first HPO may be easier to interpret if class weighting is fixed initially.
-8. Existing run folders can be summarized with new runs if the same `RUNS_DIR` is reused. The notebook warns about mixed summaries, but a run-batch identifier could make accidental mixing harder.
+- The notebook's visible default `EPOCHS = 1` is smoke-safe. Every real stage
+  should paste the playbook block so the resolved training budget is explicit.
+- `RECOMMENDED_RUN_SET` may override `MODEL_PRESET`; inspect the resolved
+  planning table before launch.
+- `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` remains visible for compatibility, but
+  reportable workflows must keep it `False` and use Stage 7 only after
+  validation selection is fixed.
+- RING-enabled graph construction is the normal first graph setting. Use the
+  playbook's radius-only ablation only when intentionally testing that ablation.
+- Saved `Only-GVP` configs may show a fusion-mode field even though ESM fusion
+  is irrelevant for `only_gvp`; interpret that as a display artifact.

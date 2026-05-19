@@ -1,5 +1,10 @@
 # Prompt 0 Audit Report
 
+> Historical note: this report records the repository state at the time of the
+> audit. Several recommendations may have been implemented or superseded later.
+> For current policy and executable stage values, use `Plan.md`,
+> `EXPERIMENT_STATUS.md`, and the task-specific training playbooks.
+
 ## A. Executive Summary
 
 No source or documentation files were changed during the audit. The safest first changes are documentation-only: clean up documentation ownership drift, add missing Playbook output sections, and make stage naming/searchability consistent. After that, improve traceability by adding `active_run_config.json` / `active_run_config.md` and per-run command/config snapshots before touching ML behavior.

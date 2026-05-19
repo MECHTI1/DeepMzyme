@@ -392,6 +392,11 @@ Each run should save:
 - full config / hyperparameters
 - random seed
 - dataset paths and split identity
+- dataset bundle identifier and checksum for serious validation or final-test
+  runs, when the run uses a bundle
+- key library versions for serious validation or final-test runs, including
+  PyTorch, torch-geometric, ESM/ESMC, Optuna, NumPy, and scikit-learn when
+  available
 - model architecture
 - fusion mode
 - node feature set
@@ -403,6 +408,20 @@ Each run should save:
 - git commit hash, if available
 
 `src/report_runs.py` summarizes multiple run directories into one CSV table.
+
+Run tiers:
+
+| Tier | Purpose | Evidence status | Required record |
+| --- | --- | --- | --- |
+| Debug | Path, syntax, smoke, and plumbing checks | Not model-selection evidence | Enough config to reproduce the failure/smoke behavior |
+| Serious validation | Baseline comparison, HPO, grouped-fold confirmation, or validation ablation | Eligible for model-selection discussion if gates pass | Full config, split/group policy, seeds/folds, dataset bundle checksum, git commit, key library versions, and validation artifacts |
+| Final test | One-shot held-out reporting for a fixed validation-selected configuration | Final report only; never feeds back into selection | All serious-validation records plus source-run identity, checkpoint, primary-report declaration, calibration/CI settings, and no-test-selection statement |
+
+There is currently no checked-in environment specification file. Until one is
+added, serious validation and final-test records must capture enough key
+library versions to make environment drift visible. A future `environment.yml`,
+`requirements.txt`, or equivalent should complement this per-run record; it must
+not replace run-specific metadata.
 
 The summary table should include, when available:
 
@@ -448,6 +467,29 @@ Important rules:
   policy, fixed EC depth per EC study, and only features that are available or
   deliberately prepared.
 
+Statistical methodology:
+
+- Model and hyperparameter selection must be validation-only.
+- Single-split validation is useful for screening but should not be the final
+  promotion criterion when Stage 6 grouped-fold confirmation is available.
+- Stage 6 comparisons should use shared validation units and paired confidence
+  intervals, plus rare-class recall protection, before promoting a candidate.
+- Calibration, temperature scaling, ensemble membership, thresholds, and primary
+  report choice must be fixed from validation evidence before Stage 7.
+- Stage 7 reports uncertainty, calibration, and diagnostic views after the
+  held-out test is opened, but those reports must not change the selected
+  configuration.
+
+Limited-compute fallback:
+
+- Debug and medium validation runs may be used to identify promising directions,
+  but they are provisional unless they satisfy the relevant playbook decision
+  gate.
+- If compute is insufficient for the full serious route, stop at a labeled
+  validation-only result instead of launching Stage 7 from incomplete evidence.
+- A final held-out report still requires one fixed validation-selected
+  configuration and the one-shot Stage 7 policy.
+
 
 ---
 
@@ -462,6 +504,11 @@ Recommended order:
 3. GVP + simple late ESM fusion
 4. GVP + early residue-level ESM fusion
 5. More complex fusion modes only if simpler baselines justify them
+
+`GVP + early fusion` is a supported preset and may be used in ESM-ready manual
+comparisons. It is not a required stage in the canonical metal HPO route unless
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` defines an exact executable block for
+it.
 
 Complex fusion modes include:
 
@@ -492,6 +539,8 @@ For metal GVP/ESM fusion, the advanced-fusion order should be:
 3. Cross-modal attention last, starting with a narrow one-layer configuration, because it has the most tuning degrees of freedom and the greatest overfitting risk.
 
 `simple_gnn_esm` should be treated as an auxiliary architecture ablation, not the main next step in the best-pipeline search. Use it after the GVP and ESM baselines are stable when the question is whether GVP vector geometry is actually helping compared with a simpler scalar graph model.
+It is supported by the notebook/model stack, but it is not a required metal HPO
+stage unless the metal playbook adds a canonical executable block for it.
 
 For each task:
 

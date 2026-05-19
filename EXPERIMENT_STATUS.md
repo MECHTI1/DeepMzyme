@@ -74,15 +74,16 @@ evidence in saved outputs, not in stable workflow guides.
 - Node-level late-fusion status: Round 1 did not replace the selected GVP +
   late-fusion trial `49` anchor.
 - Hybrid fusion status: Round 1 is an exploratory joint-task batch only and
-  has not been confirmed at the project-standard 5-seed, 50-epoch
-  validation-only protocol. Its best single-seed `val_joint_balanced_acc`
+  has not been confirmed under the current Stage 6 grouped-fold, paired-
+  bootstrap validation standard. Its best single-seed `val_joint_balanced_acc`
   (trial 17 = `0.748343`) is not a metal anchor; the corresponding
   metal-side `val_metal_balanced_acc` was `0.672077`.
 - Hybrid+RING status: the `joint_hybrid_ring_optuna_50epoch_wide_v1`
   continuation log is also exploratory single-seed validation evidence. In the
   copied trials 105-176 artifact, trial `114` reached
   `val_metal_balanced_acc=0.7303469775006777`, but this has not been confirmed
-  with the project-standard 5-seed protocol and is not a replacement anchor.
+  under the current Stage 6 grouped-fold, paired-bootstrap validation standard
+  and is not a replacement anchor.
 
 For a cross-family snapshot of validation results and reliability tiers,
 see `docs/notebook_outputs/summaries/LEADERBOARD.md`.
@@ -389,7 +390,8 @@ Use, at minimum:
   fusion Round 1 are validation-only results. They are not held-out test
   results.
 - Hybrid fusion Round 1 used a 3-seed top-K repeat (seeds `42,123,2026`),
-  not the project-standard 5-seed set, its raw output is tagged with a
+  not the current Stage 6 grouped-fold confirmation standard, its raw output is
+  tagged with a
   `debug_smoke` batch id and a mixed-batch warning, and its selection metric
   is `val_joint_balanced_acc`, not pure metal balanced accuracy. Treat it as
   exploratory evidence only.

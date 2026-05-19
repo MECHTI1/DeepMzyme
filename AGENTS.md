@@ -132,9 +132,13 @@ claim or change.
   evidence.
 - `experiment_notes.md`: early experiment notes from initial learning-rate and
   epoch checks. Historical context only; not a design document.
-- `Documenation/`: dated session planning notes (e.g. `14May_26.md`). These
-  are informal scratch notes, not authoritative documents. Do not treat them
-  as design decisions unless they are reflected in Plan.md.
+- `Documenation/`: legacy misspelled directory name containing dated session
+  planning notes (e.g. `14May_26.md`). These are informal scratch notes, not
+  authoritative documents. Do not treat them as design decisions unless they
+  are reflected in Plan.md.
+- `docs/agents_report/`: checked-in agent audit/review reports. Treat these as
+  evidence of prior inspections, not as current design authority unless their
+  recommendations were promoted into Plan.md or the relevant playbook.
 - `DeepMzyme_Data/notebook_outputs/runs/`: local run outputs when present;
   treat these as measured evidence, not design intent.
 
@@ -377,6 +381,28 @@ configuration blocks into `Plan.md`, `AGENTS.md`, or
 `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable values belong in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` only.
 
+#### Documentation Coordination Protocol
+
+For future documentation edits:
+
+- Identify the full coupled document set before editing, including stable docs,
+  mutable status notes, run-evidence indexes, notebook context, and CLI examples
+  that restate the same facts.
+- Assign each fact to one owning document before changing it. Keep exact metal
+  executable values in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`, EC
+  equivalents in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`, notebook option
+  meanings in `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`, research policy in
+  `Plan.md`, and mutable status/results in `EXPERIMENT_STATUS.md`.
+- Update or re-point every cross-reference in the same change set instead of
+  leaving duplicated stale text behind.
+- Avoid copying current anchors, run IDs, transient trial numbers, local disk
+  state, or mutable best-result notes into stable docs.
+- Run a consistency sweep after edits for stage names, split policy, selection
+  metrics, held-out-test rules, Stage 6/7 safeguards, seed/bootstrap/pruning
+  wording, and notebook option names.
+- Report unresolved conflicts explicitly instead of silently choosing one source
+  when the repository evidence is insufficient.
+
 ---
 
 ### 2. Be careful with src/model.py
@@ -409,6 +435,9 @@ When adding or modifying training/evaluation code:
   - class weights or sampling strategy
   - learning rate and scheduler
   - checkpoint selection rule
+  - dataset bundle identifier/checksum for serious or final runs
+  - key library versions for serious or final runs, especially PyTorch,
+    torch-geometric, ESM/ESMC, Optuna, NumPy, and scikit-learn when available
 
 Prefer clear experiment names and structured output directories.
 

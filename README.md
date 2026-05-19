@@ -52,7 +52,7 @@ The Colab notebook supports three dataset input modes through `COLAB_DATA_SOURCE
 - `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive data path after Drive is mounted.
 
-Example trusted-split Only-GVP metal baseline:
+Example trusted-split Only-GVP metal validation run:
 
 ```bash
 PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
@@ -62,7 +62,6 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --summary-csv DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv \
   --test-structure-dir DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test \
   --test-summary-csv DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/test/final_data_summarazing_table_transition_metals_only_catalytic.csv \
-  --run-test-eval \
   --runs-dir DeepMzyme_Data/runs_baseline_first \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
@@ -77,7 +76,14 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --prepare-missing-ring-edges
 ```
 
-Detailed baseline-first commands are in `list_train_commands.md`. The interactive workflow is in `notebooks/DeepMzyme_training_colab.ipynb`.
+Do not add `--run-test-eval` to exploratory baselines, HPO, or grouped-fold
+confirmation. Held-out test evaluation is reserved for the final
+validation-selected configuration under the one-shot Stage 7 policy.
+
+Detailed validation-only command examples are in `list_train_commands.md`. The
+interactive workflow is in `notebooks/DeepMzyme_training_colab.ipynb`; exact
+metal stage blocks live in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`, and EC
+stage blocks live in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 For copied notebook-output evidence, start with the cross-family snapshot in
 `docs/notebook_outputs/summaries/LEADERBOARD.md`, then the concise run
@@ -86,7 +92,12 @@ outputs in `docs/notebook_outputs/raw/` when exact logs or run commands are
 needed. Current status, selected validation anchors, and next-step
 recommendations live in `EXPERIMENT_STATUS.md`.
 
-Generated ESM embeddings should normally live outside the Git repository, then be passed with `--esm-embeddings-dir`. Use validation metrics for model and hyperparameter choice; reserve the held-out test set for final reporting of the selected checkpoint. Previous DeepMzyme runs favored `learning_rate=3e-5` among tested values, while `1e-4` was also reasonable in some runs. Use `3e-5` as the project-specific serious baseline starting point so far, and use `1e-4` as the main follow-up confirmation value rather than treating any LR as universally best.
+Generated ESM embeddings should normally live outside the Git repository, then
+be passed with `--esm-embeddings-dir`. Use validation metrics for model and
+hyperparameter choice; reserve the held-out test set for final reporting of the
+selected checkpoint. Current mutable anchors and next-step recommendations live
+in `EXPERIMENT_STATUS.md`; exact current training values belong in the task
+playbooks, not in this README.
 
 Optional reproducibility and joint-loss controls include `--deterministic`, `--metal-loss-weight`, and `--ec-loss-weight`.
 

@@ -97,6 +97,58 @@ For all comparison, HPO, and Stage 6 confirmation stages:
   the relevant copied evidence and use it to narrow, continue, or repeat that
   prior configuration.
 
+## Run Tiers And Reproducibility Records
+
+| Tier | Playbook stages | Selection/reporting status | Required record |
+| --- | --- | --- | --- |
+| Debug | Stage 0, Stage 1, Stage 3 | Not model-selection evidence | Resolved notebook config, planned commands, run logs, and any failure context |
+| Serious validation | Stage 2, Stage 4, Stage 5, Stage 6 | Validation-only model-selection evidence if the stage gate passes | Full run config, split/fold identity, seeds, Optuna study metadata, dataset bundle ID/checksum, git commit, and key library versions |
+| Final test | Stage 7 | One-shot held-out reporting only | Source Stage 6 run/checkpoint, primary report declaration, calibration/CI settings, dataset bundle ID/checksum, git commit, key library versions, and no-test-selection statement |
+
+Serious validation and final-test records should capture key library versions
+when available: PyTorch, torch-geometric, ESM/ESMC, Optuna, NumPy, and
+scikit-learn. This repository currently has no checked-in environment spec, so
+per-run version records are required until an environment file is added.
+
+Limited-compute fallback: use Stage 4 instead of Stage 5 for candidate
+discovery, or stop after Stage 2 with a clearly labeled provisional
+validation-only result. Do not launch Stage 7 from a provisional result. A final
+held-out report still requires one fixed validation-selected configuration and
+the one-shot Stage 7 policy.
+
+`EPOCHS` and `MAX_EPOCHS_PER_TRIAL` have different roles:
+
+- `EPOCHS` is the normal training budget for manual comparison runs, Stage 6
+  grouped-fold confirmation runs, and final retraining/evaluation workflows.
+- `MAX_EPOCHS_PER_TRIAL` is the per-trial cap only inside
+  `RUN_MODE = "controlled_hpo_optuna"`.
+- If `MAX_EPOCHS_PER_TRIAL < EPOCHS`, Optuna ranks early-training behavior.
+  Stage 6 must then confirm candidates at the full validation budget before any
+  final selection.
+
+Bootstrap counts intentionally differ by stage. Stage 6 uses 10,000 paired
+bootstrap resamples over shared fold-level differences for candidate-promotion
+decisions. Stage 7 uses 1,000 stratified bootstrap resamples by default for
+held-out-test reporting uncertainty. Do not use Stage 7 CIs to change the
+selected model.
+
+Pruning is disabled by default in reportable blocks. When pruning is disabled,
+`OPTUNA_PRUNING_MIN_EPOCH` is inert but should remain documented for
+compatibility. Stage 3 may lower it for plumbing/debug. Serious HPO blocks use
+the notebook default or explicit `OPTUNA_PRUNING_MIN_EPOCH = 8`; if pruning is
+enabled, keep it at least 8 for 50-epoch HPO.
+
+Supported presets without canonical serious HPO blocks:
+
+- `GVP + early fusion` is implemented in the notebook/model preset map and may
+  be used in ESM-ready manual comparisons. This playbook does not currently own
+  a standalone serious HPO block for it.
+- `SimpleGNN + ESM` is implemented as an auxiliary scalar-graph ablation. This
+  playbook does not currently own a standalone serious HPO block for it.
+
+Do not present either preset as a required metal HPO stage unless an exact
+executable block is added here.
+
 ## Common Defaults
 
 Use these shared defaults unless a stage overrides them.
@@ -147,6 +199,7 @@ OPTUNA_SAMPLER_SEED = None
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_PRUNING_MIN_EPOCH = 8
 OPTUNA_TIMEOUT_MINUTES = 0
 OPTUNA_MULTIOBJECTIVE = False
 OPTUNA_POSITION_NOISE_STDS_CSV = "0.0"
@@ -468,6 +521,12 @@ test evaluation was requested. `active_run_config.json` and
 `active_run_config.md` are written by the notebook before launch from the live
 notebook variables and command configuration; they are especially useful for
 failed or pruned subprocess trials that may not reach `run_config.json`.
+
+For serious validation and Stage 7 final-test runs, verify that the run record
+also captures the dataset bundle filename/checksum when a bundle is used, the
+git commit, and key library versions. If a current artifact lacks one of these
+fields, note the gap in the run summary or `EXPERIMENT_STATUS.md` rather than
+inferring it later.
 
 For Optuna studies, the notebook also writes
 `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json` plus
@@ -1006,6 +1065,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_PRUNING_MIN_EPOCH = 8
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_medium.db"
@@ -1019,6 +1079,8 @@ OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 
@@ -1103,6 +1165,50 @@ the Stage 2A Only-GVP anchor by at least `0.01` mean
 `val_metal_balanced_acc`, and the paired bootstrap 95% CI for that improvement
 excludes zero. If Stage 5C does not clear that bar, do not launch 5D/5E/5F.
 
+### Shared Stage 5 Output, Config-Record, And Gate Template
+
+This template applies to Stage 5A-5F unless a substage states an addition or
+stricter rule.
+
+Expected outputs/files:
+
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
+- One complete validation-only per-trial run directory for every required
+  completed trial in the substage.
+- Per-trial `active_run_config.json`, `active_run_config.md`,
+  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`.
+- No `test_report.json`.
+
+Exact configuration record:
+
+- Study level: Optuna CSV/JSON/Markdown outputs listed above.
+- Per trial: `<run_dir>/active_run_config.json`,
+  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
+  `<run_dir>/run_metadata.json`.
+
+Common decision-gate requirements:
+
+- The expected Optuna files and per-trial run-level JSON files exist.
+- `all_trials.csv` contains the required number of `COMPLETE` trials for the
+  substage and one `MODEL_PRESET`; resume the same compatible study until that
+  count is reached.
+- No held-out test files were created.
+- `val_metal_balanced_acc` is the selection metric on all completed runs.
+- Diagnostics report every class present in both train and validation splits.
+- Rare-class recall protection passes: top candidates have available per-class
+  recall, and no candidate is promoted if any metal class has zero recall in
+  its validation artifact.
+- Top candidates remain review-only until Stage 6 grouped-fold confirmation.
+
 ### Stage 5A - Serious Only-GVP HPO
 
 Notebook configuration block:
@@ -1167,6 +1273,8 @@ OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
 OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1198,52 +1306,26 @@ hurts rare-class recall before promoting any candidate.
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
+- All shared Stage 5 Optuna and per-trial outputs.
 - If `OPTUNA_MULTIOBJECTIVE = True`: `pareto_front.csv`,
   `pareto_candidates.csv`, and `pareto_candidates_ranked_for_review.csv`
-- Two hundred complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- Two hundred complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5A
 
 Proceed to Stage 6 for Only-GVP candidates, or to Stage 5B/5C for family
 comparison, only if:
 
-- The study writes complete `all_trials.csv`, `top_trials.csv`, and
-  `best_trial.json`.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "Only-GVP"` and at least 200 `COMPLETE` trials.
 - For `OPTUNA_MULTIOBJECTIVE = True`, the study also writes complete
   `pareto_front.csv`, `pareto_candidates.csv`, and
   `pareto_candidates_ranked_for_review.csv`, and any convenience-ranked
   candidate is treated as review-only until Stage 6.
-- `all_trials.csv` contains at least 200 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `Only-GVP`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
 - Select top candidates for Stage 6 only if they do not degrade
   `val_metal_min_recall` by more than 0.05 versus the Stage 2A anchor, unless
   explicitly marked as exploratory.
@@ -1287,6 +1369,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_PRUNING_MIN_EPOCH = 8
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_esm_optuna_120_controlled.db"
@@ -1306,6 +1389,8 @@ OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
 OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2,3"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1314,47 +1399,21 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
-- One hundred twenty complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- All shared Stage 5 Optuna and per-trial outputs.
+- One hundred twenty complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
-- `active_run_config.json` / `active_run_config.md` are generated from the live
-  notebook configuration before launch.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5B
 
 Proceed to Stage 6 for Only-ESM candidates, or to Stage 5C, only if:
 
-- `all_trials.csv` contains at least 120 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "Only-ESM"` and at least 120 `COMPLETE` trials.
 - ESM coverage is valid and no run used missing ESM embeddings as a reportable
   fallback.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `Only-ESM`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
 
 If gate fails: fix ESM coverage or narrow the Only-ESM search before comparing
 ESM-informed model families.
@@ -1420,6 +1479,8 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1428,47 +1489,20 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
-- Two hundred complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- All shared Stage 5 Optuna and per-trial outputs.
+- Two hundred complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
-- `active_run_config.json` / `active_run_config.md` are generated from the live
-  notebook configuration before launch.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5C
 
 Proceed to Stage 6 only if:
 
-- The late-fusion study produces complete Optuna outputs and top candidates
-  have finite selected validation metrics.
-- `all_trials.csv` contains at least 200 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `GVP + late fusion`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "GVP + late fusion"` and at least 200 `COMPLETE` trials.
+- Top candidates have finite selected validation metrics.
 
 Proceed to Stage 5D/5E/5F only after Stage 6 confirms a late-fusion candidate
 that beats the Stage 2A Only-GVP anchor by at least 0.01 mean
@@ -1538,6 +1572,8 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1546,53 +1582,29 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
-- Two hundred complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- All shared Stage 5 Optuna and per-trial outputs.
+- Two hundred complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
-- `active_run_config.json` / `active_run_config.md` are generated from the live
-  notebook configuration before launch.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5D
 
 Proceed to Stage 6 only if:
 
 - Stage 5C previously cleared the advanced-fusion ordering gate.
-- `all_trials.csv` contains at least 200 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `GVP + node-level late fusion`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
-- Stage 6 comparison later confirms that this family beats the current best
-  confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
-  the paired bootstrap 95% CI for the improvement excludes zero.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "GVP + node-level late fusion"` and at least 200 `COMPLETE`
+  trials.
 
-If gate fails: do not advance to Stage 5E/5F because no candidate beats the
-current best confirmed comparator by the Stage 6 paired-bootstrap gate; revisit
-Stage 2A or Stage 5C.
+After Stage 6, promote a node-level late-fusion candidate only if it beats the
+current best confirmed comparator by at least 0.005 mean
+`val_metal_balanced_acc`, and the paired bootstrap 95% CI for the improvement
+excludes zero.
+
+If the Stage 5D launch gate or the later Stage 6 promotion gate fails, do not
+advance to Stage 5E/5F; revisit Stage 2A or Stage 5C.
 
 ### Stage 5E - GVP + Hybrid Fusion HPO
 
@@ -1657,6 +1669,8 @@ OPTUNA_EARLY_ESM_DIM_VALUES_CSV = "16,32,64"
 OPTUNA_EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1665,52 +1679,28 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
-- Two hundred complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- All shared Stage 5 Optuna and per-trial outputs.
+- Two hundred complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
-- `active_run_config.json` / `active_run_config.md` are generated from the live
-  notebook configuration before launch.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5E
 
 Proceed to Stage 6 only if:
 
 - Stage 5C previously cleared the advanced-fusion ordering gate.
-- `all_trials.csv` contains at least 200 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `GVP + hybrid fusion`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
-- Stage 6 comparison later confirms that this family beats the current best
-  confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
-  the paired bootstrap 95% CI for the improvement excludes zero.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "GVP + hybrid fusion"` and at least 200 `COMPLETE` trials.
 
-If gate fails: stop advanced fusion escalation and revisit the simpler
-late-fusion or Only-GVP anchors before cross-attention.
+After Stage 6, promote a hybrid-fusion candidate only if it beats the current
+best confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
+the paired bootstrap 95% CI for the improvement excludes zero.
+
+If the Stage 5E launch gate or the later Stage 6 promotion gate fails, stop
+advanced fusion escalation and revisit the simpler late-fusion or Only-GVP
+anchors before cross-attention.
 
 ### Stage 5F - GVP + Cross-Attention HPO
 
@@ -1749,6 +1739,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
+OPTUNA_PRUNING_MIN_EPOCH = 8
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_cross_attention_optuna_120_controlled.db"
@@ -1775,6 +1766,8 @@ OPTUNA_CROSS_ATTENTION_HEADS_CSV = "2,4"
 OPTUNA_CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
+# overlay owns reportable grouped-fold reevaluation settings.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1783,54 +1776,30 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/all_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_trials.csv`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_trial.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_metadata.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/active_run_config.md`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_best_config.json`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/best_config_command.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
-- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
-- One hundred twenty complete per-trial validation-only run directories under
-  `<RUNS_DIR>/`
-- Per-trial `active_run_config.json`, `active_run_config.md`,
-  `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
-- No `test_report.json`
+- All shared Stage 5 Optuna and per-trial outputs.
+- One hundred twenty complete per-trial validation-only run directories.
 
 Exact configuration record:
 
-- Study level: Optuna CSV/JSON/Markdown outputs listed above.
-- Per trial: `<run_dir>/active_run_config.json`,
-  `<run_dir>/active_run_config.md`, `<run_dir>/run_config.json`, and
-  `<run_dir>/run_metadata.json`.
-- `active_run_config.json` / `active_run_config.md` are generated from the live
-  notebook configuration before launch.
+- Use the shared Stage 5 exact-configuration record template.
 
 ### Decision gate after Stage 5F
 
 Proceed to Stage 6 only if:
 
 - Stage 5C previously cleared the advanced-fusion ordering gate.
-- `all_trials.csv` contains at least 120 `COMPLETE` trials for this
-  `MODEL_PRESET`; resume the same study until that count is reached.
-- The expected Optuna files and per-trial run-level JSON files exist.
-- No held-out test files were created.
-- `val_metal_balanced_acc` is the selection metric on all completed runs.
-- One `MODEL_PRESET` is used in the study: `GVP + cross-modal attention`.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class recall protection passes: top candidates have available
-  per-class recall, and no candidate is promoted if any metal class has zero
-  recall in its validation artifact.
+- The shared Stage 5 decision-gate requirements pass for
+  `MODEL_PRESET = "GVP + cross-modal attention"` and at least 120 `COMPLETE`
+  trials.
 - Attention candidates justify their extra complexity against the Stage 6
   late-fusion candidate.
-- Stage 6 comparison later confirms that this family beats the current best
-  confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
-  the paired bootstrap 95% CI for the improvement excludes zero.
 
-If gate fails: do not broaden cross-attention. Return to the best validated
-simpler fusion family.
+After Stage 6, promote a cross-attention candidate only if it beats the current
+best confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
+the paired bootstrap 95% CI for the improvement excludes zero.
+
+If the Stage 5F launch gate or the later Stage 6 promotion gate fails, do not
+broaden cross-attention. Return to the best validated simpler fusion family.
 
 ### Stage 5G - RING/Radius-Only Ablation
 

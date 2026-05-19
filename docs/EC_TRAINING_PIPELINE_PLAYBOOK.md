@@ -62,6 +62,31 @@ classes. Update the metric name when the label depth changes (e.g., use
 3. GVP + late fusion after both simple baselines are measured.
 4. Advanced fusion only if simpler models justify the added complexity.
 
+## EC Run Tiers And Reproducibility Records
+
+Use the same run-tier policy as the metal playbook:
+
+| Tier | EC stages | Selection/reporting status | Required record |
+| --- | --- | --- | --- |
+| Debug | Stage 1, Stage 3 | Not model-selection evidence | Resolved notebook config, planned commands, run logs, and failure context |
+| Serious validation | Stage 2, Stage 4, Stage 5, Stage 6 | Validation-only evidence if the stage gate passes | Full config, EC label depth, contrastive settings, split/seed identity, Optuna metadata, dataset bundle ID/checksum, git commit, and key library versions |
+| Final test | Stage 7 | One-shot held-out reporting only | Source validation run/checkpoint, EC depth, primary report declaration, dataset bundle ID/checksum, git commit, key library versions, and no-test-selection statement |
+
+Serious validation and final-test records should capture key library versions
+when available: PyTorch, torch-geometric, ESM/ESMC, Optuna, NumPy, and
+scikit-learn. This repository currently has no checked-in environment spec, so
+per-run version records are required until an environment file is added.
+
+Limited-compute fallback: stop at a clearly labeled validation-only result if
+Stage 6 cannot be completed. Do not launch Stage 7 from provisional EC evidence.
+Depth-2 or deeper EC cycles must restart the staged validation workflow instead
+of inheriting a depth-1 final-test decision.
+
+Pruning is disabled unless an EC stage explicitly opts into it. If pruning is
+enabled manually for a serious 50-epoch EC HPO run, use the notebook's serious
+minimum-epoch rule (`OPTUNA_PRUNING_MIN_EPOCH >= 8`) and record that override in
+the run summary.
+
 ## Common Defaults
 
 Use these shared defaults unless a stage overrides them.
