@@ -8,7 +8,8 @@ The main goals are:
 
 1. Predict metal type from protein structural pocket graphs and ESMC embeddings/models.
 2. Predict enzyme class / EC-level labels from protein structural pocket information and ESMC embeddings/models.
-3. Compare model variants fairly using validation metrics and held-out test metrics.
+3. Compare model variants fairly using validation metrics, with held-out test
+   metrics reserved for final reporting after validation-based selection.
 4. Keep the code reproducible, simple to run, and suitable for publication-quality experiments.
 
 
@@ -516,3 +517,52 @@ When working on this repository:
 When editing AGENTS.md itself, briefly summarize the changed sections in the
 response so the user can review the policy delta without re-reading the whole
 file.
+
+---
+
+## Review-only and prompt-safety guidance
+
+When the user asks for a comprehensive project review, architecture audit,
+MLOps/testing recommendations, or whether a proposed prompt is safe:
+
+- Treat the task as read-only unless the user explicitly asks for edits.
+- Inspect `Plan.md`, `EXPERIMENT_STATUS.md`,
+  `docs/notebook_outputs/README.md`, and the directly relevant source files
+  before making concrete claims.
+- Do not modify files, run training, launch Optuna, evaluate the held-out test
+  set, install dependencies, create commits, or reorganize experiment evidence
+  during a review-only task.
+- If `Plan.md`, `EXPERIMENT_STATUS.md`, source code, and run outputs conflict,
+  report the conflict clearly instead of resolving it silently.
+- Verify whether a feature already exists before recommending it as missing.
+  For example, check the implemented CLI/config before suggesting AMP,
+  gradient accumulation, schedulers, node feature sets, or tracking hooks.
+- When a proposed prompt lists project-improvement ideas, do not treat the
+  list as established fact until each claim has been checked against
+  `Plan.md`, `EXPERIMENT_STATUS.md`, `docs/notebook_outputs/README.md`, and
+  the directly relevant source files. Label each item as already implemented,
+  planned, stale, risky, or genuinely missing.
+- For each prompt-safety or project-improvement item, report the evidence,
+  whether the recommendation is safe, whether it is documentation-only,
+  validation-only, or implementation work, and any conflict between docs,
+  source code, and run outputs.
+- Rewrite unsafe or overconfident prompts as verification-first prompts. Safe
+  prompts should ask the agent to inspect evidence before making claims, avoid
+  broad implementation instructions unless explicitly requested, and preserve
+  the staged validation workflow.
+- Frame external experiment-tracking systems such as WandB, MLflow, or Neptune
+  as optional adapters unless the user explicitly asks to adopt one. Do not
+  make them mandatory project dependencies by default.
+- Treat automated tests and CI as complements to the staged validation
+  workflow. Do not suggest replacing Stage 1 smoke checks, Stage 6
+  confirmation, or Stage 7 held-out-test policy with CI-only checks.
+- For schema-safety concerns, prefer targeted dataset/preflight validation and
+  explicit model-mode requirements before proposing broad PyG data-class or
+  architecture rewrites.
+- Recommendations about model families, Optuna budgets, split policy, or
+  held-out testing must preserve the validation-only selection rules and the
+  one-shot Stage 7 policy unless the user explicitly requests a policy change.
+- A prompt is not safe for metal-stage recommendations if it silently permits
+  held-out test use before Stage 7, recommends Stage 7 before a fixed Stage 6
+  validation-selected source run exists, or weakens the current Stage 6
+  grouped-fold, paired-bootstrap, and rare-class recall requirements.
