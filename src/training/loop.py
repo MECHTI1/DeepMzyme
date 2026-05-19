@@ -100,18 +100,22 @@ def class_weights_from_labels(
     if not labels:
         return torch.ones(n_classes, dtype=torch.float32)
     counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=n_classes).float()
-    counts = torch.where(counts > 0, counts, torch.ones_like(counts))
     if mode == "none":
-        weights = torch.ones_like(counts)
-    elif mode == "inverse_frequency":
-        weights = counts.sum() / (counts * float(n_classes))
+        return torch.ones(n_classes, dtype=torch.float32)
+    present_mask = counts > 0
+    if not bool(present_mask.any().item()):
+        return torch.ones(n_classes, dtype=torch.float32)
+    safe_counts = torch.where(present_mask, counts, torch.ones_like(counts))
+    if mode == "inverse_frequency":
+        weights = safe_counts.sum() / (safe_counts * float(n_classes))
     elif mode == "inverse_sqrt_frequency":
-        weights = torch.rsqrt(counts)
+        weights = torch.rsqrt(safe_counts)
     else:
         beta = float(effective_number_beta)
-        effective_counts = (1.0 - torch.pow(torch.full_like(counts, beta), counts)) / (1.0 - beta)
+        effective_counts = (1.0 - torch.pow(torch.full_like(safe_counts, beta), safe_counts)) / (1.0 - beta)
         weights = 1.0 / effective_counts
-    return weights / weights.mean()
+    weights = torch.where(present_mask, weights, torch.zeros_like(weights))
+    return weights / weights[present_mask].mean().clamp_min(1e-12)
 
 
 def balanced_class_weights_from_labels(labels: list[int], n_classes: int) -> Tensor:

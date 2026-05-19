@@ -38,6 +38,16 @@ _GRAPH_EC_SAMPLE_WEIGHT_FIELD = "ec_sample_weight"
 _GRAPH_EC_GROUP_ID_FIELD = "ec_group_id"
 
 
+class PocketData(Data):
+    def __inc__(self, key, value, *args, **kwargs):
+        if key == "metal_edge_index":
+            return torch.tensor(
+                [[self.num_nodes], [self.metal_pos.size(0)]],
+                dtype=torch.long,
+            )
+        return super().__inc__(key, value, *args, **kwargs)
+
+
 def stack_node_features(node_dicts: List[Dict[str, Tensor]]) -> Dict[str, Tensor]:
     return {
         field_name: torch.stack([node[field_name] for node in node_dicts], dim=0)
@@ -103,7 +113,7 @@ def pocket_to_pyg_data(
         )
     )
 
-    data = Data(
+    data = PocketData(
         **node_features,
         **edge_features,
         **metal_edge_features,
