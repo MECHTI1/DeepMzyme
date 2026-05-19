@@ -16,6 +16,7 @@ All configuration blocks use variables that exist in
 any block at the end of the notebook's **Main configuration** cell before
 running **Build central CONFIG dictionary**.
 
+
 ## EC-Specific Rules Before You Start
 
 **Label depth.** Start with `EC_LABEL_DEPTHS_CSV = "1"` (first EC digit, seven

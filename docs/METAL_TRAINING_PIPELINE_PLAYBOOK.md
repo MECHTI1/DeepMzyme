@@ -463,6 +463,7 @@ the best validated simpler family.
 
 ### Final-selection rule
 
+
 The final selected model must come from Stage 6 grouped-fold validation, not
 from a single Optuna trial. Select by mean `val_metal_balanced_acc` only when
 the paired bootstrap 95% CI supports the improvement over the comparator, then

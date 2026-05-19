@@ -15,6 +15,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 
 ### Stage-to-option crosswalk
 
+
 | Playbook stage | Notebook variables most relevant to the stage | This guide's section to read |
 | --- | --- | --- |
 | Stage 0: environment/data readiness | Data source, bundle, Drive, `RUNS_DIR`, RING/ESM/external-feature path controls | "Starting Point", "RING options", "ESM options" |

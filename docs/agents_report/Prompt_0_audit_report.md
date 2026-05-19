@@ -9,6 +9,7 @@
 
 No source or documentation files were changed during the audit. The safest first changes are documentation-only: clean up documentation ownership drift, add missing Playbook output sections, and make stage naming/searchability consistent. After that, improve traceability by adding `active_run_config.json` / `active_run_config.md` and per-run command/config snapshots before touching ML behavior.
 
+
 Main risks found:
 
 - The Playbook owns exact stage values, but Stage 0, Stage 2A, and Stage 5A-F are missing explicit per-stage or per-substage expected-output lists.

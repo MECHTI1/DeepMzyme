@@ -605,6 +605,7 @@ If the exact PinMyMetal split is used as an optional metal-testing mode, the out
 
 Before final training/evaluation, validate train/test overlap by:
 
+
 - full structure filename
 - PDB ID
 - preferably PDB-chain or pocket ID when available
