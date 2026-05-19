@@ -62,6 +62,7 @@ TEST_CSV="DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymeta
 RUNS_DIR="DeepMzyme_Data/runs_baseline_first"
 ESM_EMBEDDINGS_DIR="/media/Data/DeepMzyme_Data/esm_embeddings"
 RING_FEATURES_DIR="DeepMzyme_Data/RING_features"
+METAL_LABEL_SCHEME="six_class"
 PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 ```
 
@@ -72,6 +73,11 @@ These examples use `learning_rate=3e-5` only as a simple fixed CLI value. For
 current recommended grids, Optuna budgets, and stage-specific learning-rate
 ranges, use the metal and EC playbooks. Choose LR by validation metrics, not by
 repeatedly checking the held-out test set.
+
+The examples use `METAL_LABEL_SCHEME="six_class"`, the default six separate
+metal targets. For an explicitly labeled five-class validation comparison, set
+`METAL_LABEL_SCHEME="five_class"`; this keeps Mn/Cu/Zn/Fe separate and groups
+Co/Ni. Use separate run names and separate Optuna studies when changing it.
 
 ---
 
@@ -92,6 +98,7 @@ This tests what the structural pocket graph can learn without an ESM branch.
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture only_gvp \
   --structure-dir "${TRAIN_DIR}" \
   --summary-csv "${TRAIN_CSV}" \
@@ -121,6 +128,7 @@ This tests how much signal comes from ESMC embeddings without graph message pass
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture only_esm \
   --structure-dir "${TRAIN_DIR}" \
   --summary-csv "${TRAIN_CSV}" \
@@ -148,6 +156,7 @@ This is the first combined graph + ESM model to test.
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture gvp \
   --fusion-mode late_fusion \
   --structure-dir "${TRAIN_DIR}" \
@@ -179,6 +188,7 @@ Run this only after the first three baselines are working and comparable.
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture gvp \
   --fusion-mode early_fusion \
   --structure-dir "${TRAIN_DIR}" \
@@ -216,6 +226,7 @@ Run these only if the simple baselines justify more complexity.
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture gvp \
   --fusion-mode node_level_late_fusion \
   --structure-dir "${TRAIN_DIR}" \
@@ -245,6 +256,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture gvp \
   --fusion-mode hybrid \
   --structure-dir "${TRAIN_DIR}" \
@@ -276,6 +288,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
 ```bash
 PYTHONPATH=src ${PYTHON} src/train.py \
   --task metal \
+  --metal-label-scheme "${METAL_LABEL_SCHEME}" \
   --model-architecture gvp \
   --fusion-mode cross_modal_attention \
   --structure-dir "${TRAIN_DIR}" \
@@ -493,6 +506,7 @@ Example for the GVP + late fusion metal model:
 for SEED in 42 123 777; do
   PYTHONPATH=src ${PYTHON} src/train.py \
     --task metal \
+    --metal-label-scheme "${METAL_LABEL_SCHEME}" \
     --model-architecture gvp \
     --fusion-mode late_fusion \
     --structure-dir "${TRAIN_DIR}" \

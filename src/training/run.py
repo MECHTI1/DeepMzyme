@@ -17,9 +17,10 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 from torch_geometric.loader import DataLoader
 
 from label_schemes import (
+    ACTIVE_METAL_LABEL_SCHEME,
     COLLAPSED_METAL_LABELS,
     METAL_TARGET_LABELS,
-    N_METAL_CLASSES,
+    configure_active_metal_label_scheme,
 )
 from metal_objectives import (
     collapse_metal_label_ids_to_4,
@@ -312,6 +313,7 @@ def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str,
 
 
 def validate_training_configuration(config: TrainConfig) -> None:
+    configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     if config.gvp_layers < 1:
         raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
@@ -775,6 +777,7 @@ def checkpoint_payload(
         "history": history,
         "config": config_payload,
         "metal_labels": METAL_TARGET_LABELS,
+        "metal_label_scheme": config_payload.get("metal_label_scheme", ACTIVE_METAL_LABEL_SCHEME),
         "ec_labels": ec_labels,
         "normalization_stats": normalization_stats_payload(normalization_stats),
         "dataset_summary": dataset_summary,
@@ -897,6 +900,7 @@ def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[fl
 
 
 def prepare_run(config: TrainConfig) -> PreparedRun:
+    configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     validate_training_configuration(config)
     config_payload = config_to_payload(config)
@@ -1145,7 +1149,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         ec_class_weights = None
         computed_metal_weights, computed_ec_weights = balanced_class_weights_from_pockets(
             split.train_pockets,
-            n_metal_classes=N_METAL_CLASSES,
+            n_metal_classes=len(METAL_TARGET_LABELS),
             n_ec_classes=max(1, len(load_result.ec_index_to_label)),
             metal_class_weight_mode=config.metal_class_weight_mode,
         )
@@ -1201,7 +1205,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             hidden_v=config.hidden_v,
             edge_hidden=config.edge_hidden,
             n_layers=config.gvp_layers,
-            n_metal=N_METAL_CLASSES,
+            n_metal=len(METAL_TARGET_LABELS),
             n_ec=max(1, len(load_result.ec_index_to_label)),
             esm_fusion_dim=config.esm_fusion_dim,
             head_mlp_layers=config.head_mlp_layers,
@@ -1594,6 +1598,7 @@ def persist_run_outputs(
             "esm_embedding_metadata"
         ),
         "metal_labels": METAL_TARGET_LABELS,
+        "metal_label_scheme": prepared.config_payload.get("metal_label_scheme", ACTIVE_METAL_LABEL_SCHEME),
         "ec_labels": prepared.ec_labels,
         "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
         "selection_metric": prepared.config_payload.get("selection_metric"),
@@ -1622,6 +1627,7 @@ def persist_run_outputs(
                 "esm_embedding_metadata"
             ),
             "metal_labels": METAL_TARGET_LABELS,
+            "metal_label_scheme": prepared.config_payload.get("metal_label_scheme", ACTIVE_METAL_LABEL_SCHEME),
             "ec_labels": prepared.ec_labels,
             "normalization_stats": normalization_stats_payload(prepared.normalization_stats),
             "selection_metric": prepared.config_payload.get("selection_metric"),
@@ -1647,6 +1653,7 @@ def persist_run_outputs(
 
 
 def run_training(config: TrainConfig) -> Path:
+    configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
@@ -1659,6 +1666,7 @@ def run_training(config: TrainConfig) -> Path:
 
 
 def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Path:
+    configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     if not config.run_test_eval:
         raise ValueError("evaluate_saved_checkpoint requires config.run_test_eval=True.")
@@ -1693,6 +1701,7 @@ def evaluate_softmax_mean_checkpoint_ensemble(
     single_checkpoint_report_paths: list[Path] | None = None,
 ) -> Path:
     """Write a Stage 7 softmax-mean ensemble report from five fixed prediction artifacts."""
+    configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     if not config.run_test_eval:
         raise ValueError("evaluate_softmax_mean_checkpoint_ensemble requires config.run_test_eval=True.")

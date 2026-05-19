@@ -157,6 +157,7 @@ Use these shared defaults unless a stage overrides them.
 
 ```python
 TASK = "metal"
+METAL_LABEL_SCHEME = "six_class"
 DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
@@ -246,8 +247,8 @@ serious Optuna stages must use:
   `OPTUNA_DIRECTION = "maximize"`.
 - `OPTUNA_MULTIOBJECTIVE = False` by default. Optional multi-objective studies
   are validation-only Stage 5A experiments and use NSGA-II over
-  `val_metal_balanced_acc` and six-class `val_metal_min_recall`; they do not
-  replace the normal single-objective path.
+  `val_metal_balanced_acc` and active metal-scheme `val_metal_min_recall`; they
+  do not replace the normal single-objective path.
 - Record both the split seed and the sampler seed in the notebook output, study
   summary, and per-run artifacts. If the sampler seed is `None`, record the
   effective sampler seed as the split seed.
@@ -388,6 +389,29 @@ Do not add this search axis automatically to Stage 5B-5F. Add it there only
 after a Stage 5A validation comparison and Stage 6 confirmation show that it
 improves six-class balanced accuracy without rare-class recall collapse.
 
+### Optional five-class metal target scheme
+
+The default reportable metal target is `METAL_LABEL_SCHEME = "six_class"`:
+`Mn`, `Cu`, `Zn`, `Fe`, `Co`, and `Ni`.
+
+For an explicitly labeled validation-only comparison, use:
+
+```python
+METAL_LABEL_SCHEME = "five_class"
+```
+
+This changes the training target to five classes: `Mn`, `Cu`, `Zn`, `Fe`, and a
+grouped Co/Ni class. It is not a display toggle and is not the same as
+`METAL_REPORT_VIEW = "collapsed4"`. When using it, create a new
+`RUN_BATCH_ID`, `SUMMARY_BASENAME`, `RUN_NAME_PREFIX`, `OPTUNA_STUDY_NAME`, and
+persistent storage file so five-class evidence cannot mix with six-class
+evidence. Keep `SELECTION_METRIC = "val_metal_balanced_acc"`; that metric is
+then balanced accuracy over the active five-class target.
+
+Do not use five-class validation numbers to replace or rank six-class anchors
+without a separately documented comparison goal. Stage 6 and Stage 7 source
+runs must all use the same `METAL_LABEL_SCHEME`.
+
 ### Optional multi-objective Optuna
 
 `OPTUNA_MULTIOBJECTIVE = True` creates a validation-only multi-objective Optuna
@@ -396,10 +420,13 @@ study with objectives:
 - maximize `val_metal_balanced_acc`
 - maximize `val_metal_min_recall`
 
-The second objective is six-class minimum recall across validation classes with
-support > 0. Do not use `val_metal_collapsed4_min_recall` as the default
-rare-class objective, because it can hide Fe/Co/Ni failures. Collapsed-4 minimum
-recall is still reported as supplemental context.
+The second objective is minimum recall across active metal-scheme validation
+classes with support > 0. For default reportable runs this is six-class
+minimum recall; for explicitly labeled `five_class` runs it is five-class
+minimum recall over `Mn`, `Cu`, `Zn`, `Fe`, and grouped Co/Ni. Do not use
+`val_metal_collapsed4_min_recall` as the default rare-class objective, because
+it can hide Fe/Co/Ni failures in six-class runs. Collapsed-4 minimum recall is
+still reported as supplemental context.
 
 Multi-objective HPO writes Pareto review files:
 
@@ -494,7 +521,7 @@ study name; do not delete the `.db` unless you mean to discard history.
 Resume policy for reportable HPO:
 
 - Resume only into the same `MODEL_PRESET`, task, split policy, selection
-  metric, search space, and storage URL.
+  metric, metal label scheme, search space, and storage URL.
 - If any of those values changed, use a new `OPTUNA_STUDY_NAME` and new SQLite
   file.
 - If a study was interrupted, resume until the requested number of `COMPLETE`
@@ -523,8 +550,8 @@ configuration that actually ran. The current training code writes:
 
 These artifacts are the authoritative record for completed training and
 validation runs. They include the resolved config, selection metric, selected
-checkpoint metadata, history, split identity, and embedded test information when
-test evaluation was requested. `active_run_config.json` and
+checkpoint metadata, history, metal label scheme, split identity, and embedded
+test information when test evaluation was requested. `active_run_config.json` and
 `active_run_config.md` are written by the notebook before launch from the live
 notebook variables and command configuration; they are especially useful for
 failed or pruned subprocess trials that may not reach `run_config.json`.
@@ -622,8 +649,8 @@ Proceed to Stage 1 only if:
 - The expected planned-run CSV and dictionary exist.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on the planned run.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class protection passes at the split level: no metal class is missing
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
+- Rare-class protection passes at the split level: no active metal-scheme class is missing
   from train or validation diagnostics.
 
 If gate fails: fix paths, Drive mounting, bundle selection, RING coverage, or
@@ -705,8 +732,8 @@ Proceed to Stage 2A only if:
 - The expected planned files and run-level JSON files exist.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
-- Rare-class protection passes at the split level: no metal class is missing
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
+- Rare-class protection passes at the split level: no active metal-scheme class is missing
   from train or validation diagnostics. Do not use the 1-epoch recall values as
   model-quality evidence.
 
@@ -796,7 +823,7 @@ Proceed to Stage 2B or Stage 4 only if:
 - The expected planned files, summary files, and run-level JSON files exist.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: `val_metal_min_recall` and per-class
   recall are available in the run artifacts, and no candidate is promoted if a
   metal class has zero recall across the completed validation runs.
@@ -892,7 +919,7 @@ Proceed to Stage 3 or Stage 4 only if:
 - The expected planned files, summary files, and run-level JSON files exist.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: per-class recall is available for each
   completed run, and no family is promoted if its seed mean has zero recall for
   any metal class.
@@ -1014,7 +1041,7 @@ Proceed to Stage 4 or Stage 5A only if:
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed trials.
 - One `MODEL_PRESET` is used in the study: `Only-GVP`.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class protection passes at the split/diagnostic level. Do not promote
   any Stage 3 hyperparameter result as model-selection evidence.
 
@@ -1135,7 +1162,7 @@ Proceed to Stage 5 or Stage 6 only if:
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
 - One `MODEL_PRESET` is used in the study: `Only-GVP`.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: top candidates have available
   per-class recall, and no candidate is promoted if any metal class has zero
   recall in its validation artifact.
@@ -1210,7 +1237,7 @@ Common decision-gate requirements:
   count is reached.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: top candidates have available per-class
   recall, and no candidate is promoted if any metal class has zero recall in
   its validation artifact.
@@ -1898,7 +1925,7 @@ Proceed to Stage 6 only if:
 - The expected planned files, summary files, and run-level JSON files exist.
 - No held-out test files were created.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: per-class recall is available for each
   completed run, and the ablation is not promoted if any metal class has zero
   seed-mean recall.
@@ -2019,7 +2046,7 @@ Success criteria:
   10,000 resamples. Candidate A beats candidate B only if mean A-B is positive,
   the 95% CI excludes zero on the positive side, and the raw improvement meets
   the applicable threshold.
-- Diagnostics do not show leakage, missing validation classes, or invalid
+- Diagnostics do not show leakage, missing active metal-scheme validation classes, or invalid
   feature coverage.
 
 ### Decision gate after Stage 6
@@ -2033,7 +2060,7 @@ Proceed to Stage 7 only if:
 - The selected candidate has all planned folds/splits completed.
 - No held-out test files were created anywhere in the validation chain.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
-- Diagnostics report every class present in both train and validation splits.
+- Diagnostics report every active metal-scheme class present in both train and validation splits.
 - Rare-class recall protection passes: the selected candidate has available
   mean per-class recall across folds and acceptable `val_metal_min_recall`; no
   metal class has zero mean recall.
@@ -2070,8 +2097,9 @@ A candidate is considered stable enough for final selection only if:
 
 - all 5 grouped-fold runs complete, or failures are explained and not biased;
 - no held-out test report was created;
+- all source runs use the same `METAL_LABEL_SCHEME`;
 - all runs use `selection_metric = val_metal_balanced_acc`;
-- no validation class is missing;
+- no active metal-scheme validation class is missing;
 - rare-class recall is acceptable;
 - paired bootstrap comparisons support the improvement over the relevant
   comparator.
@@ -2267,7 +2295,7 @@ Bootstrap confidence intervals:
   `FINAL_TEST_BOOTSTRAP_SEED = 20260518`.
 - Stratification is by true class, preserving every class present in the
   original held-out test labels.
-- Report CIs for six-class balanced accuracy, per-class recall, collapsed-4
+- Report CIs for active-scheme balanced accuracy, per-class recall, collapsed-4
   balanced accuracy and collapsed per-class recall, plus ECE when available.
 
 Success criteria:
@@ -2276,7 +2304,7 @@ Success criteria:
 - The final-test run uses `best_model_checkpoint.pt` or the explicitly selected
   validation checkpoint.
 - The output folder is separate from the source validation run.
-- The test report includes six-class metal metrics and collapsed-4 metrics.
+- The test report includes active metal-scheme metrics and collapsed-4 metrics.
 - `final_test_primary_report` and `final_test_ensemble_mode` were declared in
   preview before launch.
 - Ensemble mode used exactly five fixed source run directories/checkpoints from

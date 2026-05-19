@@ -5,7 +5,17 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-from label_schemes import METAL_TARGET_LABELS, map_site_metal_symbols
+from label_schemes import (
+    METAL_LABEL_SCHEME_ALIASES,
+    METAL_LABEL_SCHEMES,
+    METAL_TARGET_LABELS,
+    active_metal_label_scheme_name,
+    configure_active_metal_label_scheme,
+    map_site_metal_symbols,
+    normalize_metal_label_scheme_name,
+)
+
+VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 
 
 def parse_args() -> argparse.Namespace:
@@ -16,6 +26,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--summary-csv", type=Path, required=True)
     parser.add_argument("--output-csv", type=Path, required=True)
     parser.add_argument("--allow-multi-metal-structures", action="store_true")
+    parser.add_argument(
+        "--metal-label-scheme",
+        type=normalize_metal_label_scheme_name,
+        default=None,
+        choices=VALID_METAL_LABEL_SCHEME_CHOICES,
+        help=(
+            "Metal target scheme for generated metal_type labels. "
+            "Use five_class to keep Mn/Cu/Zn/Fe separate and group Co/Ni. "
+            "If omitted, DEEPGM_METAL_LABEL_SCHEME is used, defaulting to split_all_metals. "
+            f"Accepted aliases include: {', '.join(sorted(METAL_LABEL_SCHEME_ALIASES))}."
+        ),
+    )
     parser.add_argument("--ec-label-depth", type=int, default=1)
     return parser.parse_args()
 
@@ -26,8 +48,12 @@ def build_structure_rows(
     summary_csv: Path,
     allow_multi_metal_structures: bool,
     ec_label_depth: int,
+    metal_label_scheme: str | None = None,
 ) -> list[dict[str, str]]:
     from training.data import load_training_pockets_with_report_from_dir
+
+    if metal_label_scheme is not None:
+        configure_active_metal_label_scheme(metal_label_scheme)
 
     load_result = load_training_pockets_with_report_from_dir(
         structure_dir=structure_dir,
@@ -132,16 +158,20 @@ def validate_rows_match_structure_dir(
 
 def main() -> None:
     args = parse_args()
+    metal_label_scheme = configure_active_metal_label_scheme(
+        args.metal_label_scheme or active_metal_label_scheme_name()
+    )
     rows = build_structure_rows(
         structure_dir=args.structure_dir,
         summary_csv=args.summary_csv,
         allow_multi_metal_structures=args.allow_multi_metal_structures,
         ec_label_depth=args.ec_label_depth,
+        metal_label_scheme=metal_label_scheme,
     )
     validate_rows(rows)
     validate_rows_match_structure_dir(structure_dir=args.structure_dir, rows=rows)
     write_rows(args.output_csv, rows)
-    print(f"Wrote {len(rows)} rows to {args.output_csv}")
+    print(f"Wrote {len(rows)} rows to {args.output_csv} using metal label scheme {metal_label_scheme}")
 
 
 if __name__ == "__main__":

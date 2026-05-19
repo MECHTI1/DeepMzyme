@@ -479,6 +479,7 @@ def build_split_diagnostics(
 
     return {
         "task": config.task,
+        "metal_label_scheme": config.metal_label_scheme,
         "split_by": split_by,
         "val_fraction": config.val_fraction,
         "split_seed": config.split_seed,
@@ -572,6 +573,7 @@ def build_dataset_summary(
         "n_train_pockets": len(split.train_pockets),
         "n_val_pockets": len(split.val_pockets),
         "task": config.task,
+        "metal_label_scheme": config.metal_label_scheme,
         "node_feature_set": config.node_feature_set,
         "omit_node_features": list(config.omit_node_features),
         "val_fraction": config.val_fraction,

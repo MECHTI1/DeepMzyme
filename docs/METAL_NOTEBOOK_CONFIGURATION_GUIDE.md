@@ -80,6 +80,7 @@ Before launching a run, verify these resolved notebook values:
 | Check | Required value for reportable metal runs |
 | --- | --- |
 | Task | `TASK = "metal"` |
+| Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
 | Split | `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"` |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Split grouping | `SPLIT_BY = "pdbid"` |
@@ -117,6 +118,10 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 - `active_run_config.json` / `active_run_config.md`: notebook-generated records
   of the resolved live configuration before a subprocess starts. Completed
   runs still rely on `run_config.json` and `run_metadata.json`.
+- `five-class`: optional metal target scheme where `Mn`, `Cu`, `Zn`, and `Fe`
+  stay separate while `Co` and `Ni` share the fifth class. This changes the
+  model output classes; use a separate run batch and Optuna study when enabling
+  it.
 - `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
   merged into `Class VIII`. Six-class metal classification remains primary.
 
@@ -461,7 +466,8 @@ For useful Colab HPO:
 - Keep `OPTUNA_DIRECTION = "maximize"`.
 - Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
   When set to `True`, the notebook creates a validation-only multi-objective
-  study over `val_metal_balanced_acc` and six-class `val_metal_min_recall`.
+  study over `val_metal_balanced_acc` and active metal-scheme
+  `val_metal_min_recall`.
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
@@ -508,12 +514,15 @@ defined per stage in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use
 `OPTUNA_INTENSITY = "custom"` and persistent Drive-backed storage for every
 reportable run on the G4 GPU.
 
-In multi-objective mode, Optuna uses six-class minimum recall for rare-class
-protection. Collapsed-4 minimum recall is reported as supplemental information,
-not as the default second objective. If pruning is incompatible with the
-multi-objective study, the notebook disables pruning and warns before launch.
-Inspect Pareto candidates as review inputs, then run Stage 6 grouped-fold
-confirmation before promoting any candidate.
+In multi-objective mode, Optuna uses minimum recall over the active metal label
+scheme for rare-class protection. For default reportable runs that is six-class
+minimum recall; for explicitly labeled `five_class` runs it is five-class
+minimum recall over `Mn`, `Cu`, `Zn`, `Fe`, and grouped Co/Ni. Collapsed-4
+minimum recall is reported as supplemental information, not as the default
+second objective. If pruning is incompatible with the multi-objective study,
+the notebook disables pruning and warns before launch. Inspect Pareto
+candidates as review inputs, then run Stage 6 grouped-fold confirmation before
+promoting any candidate.
 
 `OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
 
@@ -643,6 +652,11 @@ default `use_METAL_REPORT_VIEW` follows the main notebook setting. These are
 display/reporting controls only. They do not change the model targets, training
 loss, checkpoint-selection metric, or held-out test policy.
 
+`METAL_LABEL_SCHEME` is different: it changes the training targets before the
+commands are built. `six_class` is the default, `five_class` groups only Co/Ni,
+and `four_class` groups Fe/Co/Ni. Changing this field creates a different
+prediction problem and must use a separately named validation batch/study.
+
 `FINAL_TEST_BATCH_METRICS` controls only which metric columns are emphasized in
 batch final-test summaries and plots. It does not change which metrics are
 computed or saved in `test_report.json`.
@@ -673,11 +687,14 @@ The notebook records primary versus secondary/diagnostic reports in
 metrics. The full Stage 7 policy and executable blocks live in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
-Metal evaluation always keeps the six-class prediction problem
-`Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`. For every metal or joint test report, the
-code also computes collapsed-4 metrics by merging `Fe`, `Co`, and `Ni` into
-`Class VIII`, giving `Mn`, `Cu`, `Zn`, and `Class VIII`. Use the toggle to choose
-which view is emphasized in notebook output, not to rerun a different test.
+Metal evaluation normally keeps the default six-class prediction problem
+`Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`. If `METAL_LABEL_SCHEME = "five_class"` is
+selected, the active metal metrics are five-class metrics over
+`Mn`, `Cu`, `Zn`, `Fe`, and grouped `Co/Ni`. For every metal or joint test
+report, the code also computes collapsed-4 metrics by merging `Fe`, `Co`, and
+`Ni` into `Class VIII`, giving `Mn`, `Cu`, `Zn`, and `Class VIII`. Use
+`METAL_REPORT_VIEW` to choose which view is emphasized in notebook output, not
+to rerun a different test.
 
 After Optuna:
 
@@ -715,7 +732,8 @@ For a validation-only manual comparison:
 1. Open `<SUMMARY_BASENAME>.csv` and filter to `status = completed`.
 2. Filter to `result_stage = validation-only`, `group-kfold validation`, or
    `seed-repeat validation`, not final-test rows.
-3. Filter to the intended `task = metal`, split type, epoch budget, and model comparison group.
+3. Filter to the intended `task = metal`, `metal_label_scheme`, split type,
+   epoch budget, and model comparison group.
 4. Rank by `selected_best_validation_metric_value` or `best_validation_metric_used_for_checkpoint_selection`, using `selection_metric = val_metal_balanced_acc`.
 5. Check diagnostics for missing validation metal classes and train/validation overlap.
 6. Check per-class recall and collapsed-4 balanced accuracy as secondary evidence.
@@ -761,8 +779,8 @@ For final reporting:
   grouped-fold confirmation.
 - Do not run serious Optuna with missing or nonpersistent `OPTUNA_STORAGE`.
 - Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
-  or incompatible search spaces; let the default study-compatibility guard stop
-  the run.
+  metal label schemes, or incompatible search spaces; let the default
+  study-compatibility guard stop the run.
 - Do not compare old mixed folders silently. Treat local run directories as
   historical evidence unless the current task explicitly includes them; use
   `EXPERIMENT_STATUS.md` and `docs/notebook_outputs/` to identify trusted

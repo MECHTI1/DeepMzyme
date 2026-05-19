@@ -8,6 +8,12 @@ DeepMzyme is a deep-learning framework for predicting metalloenzyme metal type a
 2. EC/function classification
 3. Joint metal + EC prediction
 
+Metal training defaults to the six-class target scheme (`Mn`, `Cu`, `Zn`, `Fe`,
+`Co`, `Ni`). For explicitly labeled validation-only comparisons, use
+`--metal-label-scheme five_class` to train five targets:
+`Mn`, `Cu`, `Zn`, `Fe`, and grouped `Co/Ni`. The Colab notebook exposes the
+same choice as `METAL_LABEL_SCHEME = "five_class"`.
+
 ## Recommended Split
 
 Current experiment evidence uses the legacy **Non-overlapped PinMyMetal** split (`DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`) for final held-out evaluation. Select checkpoints and model variants with validation metrics only; use the held-out test set for final reporting of the selected checkpoint.
@@ -58,6 +64,7 @@ Example trusted-split Only-GVP metal validation run:
 ```bash
 PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --task metal \
+  --metal-label-scheme six_class \
   --model-architecture only_gvp \
   --structure-dir DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train \
   --summary-csv DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv \

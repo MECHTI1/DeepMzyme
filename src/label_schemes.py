@@ -29,33 +29,30 @@ EC_TOP_LEVEL_LABELS = {
 N_EC_CLASSES = len(EC_TOP_LEVEL_LABELS)
 
 METAL_LABEL_SCHEME_ALIASES = {
-    "split_fe": "split_fe",
-    "split_fe_co_ni": "split_fe",
+    "six_class": "split_all_metals",
+    "6_class": "split_all_metals",
+    "six": "split_all_metals",
     "split_all_metals": "split_all_metals",
     "split_by_metal": "split_all_metals",
     "split_each_metal": "split_all_metals",
+    "five_class": "five_class",
+    "5_class": "five_class",
+    "five": "five_class",
+    "split_co_ni": "five_class",
+    "split_ni_co": "five_class",
+    "merge_co_ni": "five_class",
+    "merged_co_ni": "five_class",
+    "co_ni_merged": "five_class",
+    "split_fe": "five_class",
+    "split_fe_co_ni": "five_class",
+    "four_class": "merge_fe_class_viii",
+    "4_class": "merge_fe_class_viii",
+    "four": "merge_fe_class_viii",
     "merge_fe_class_viii": "merge_fe_class_viii",
     "merged_fe": "merge_fe_class_viii",
 }
 
 METAL_LABEL_SCHEMES = {
-    "split_fe": (
-        {
-            0: "Mn",
-            1: "Cu",
-            2: "Zn",
-            3: "Fe",
-            4: "Class VIII",
-        },
-        {
-            "MN": 0,
-            "CU": 1,
-            "ZN": 2,
-            "FE": 3,
-            "CO": 4,
-            "NI": 4,
-        },
-    ),
     "split_all_metals": (
         {
             0: "Mn",
@@ -72,6 +69,23 @@ METAL_LABEL_SCHEMES = {
             "FE": 3,
             "CO": 4,
             "NI": 5,
+        },
+    ),
+    "five_class": (
+        {
+            0: "Mn",
+            1: "Cu",
+            2: "Zn",
+            3: "Fe",
+            4: "Class VIII",
+        },
+        {
+            "MN": 0,
+            "CU": 1,
+            "ZN": 2,
+            "FE": 3,
+            "CO": 4,
+            "NI": 4,
         },
     ),
     "merge_fe_class_viii": (
@@ -159,6 +173,26 @@ def metal_symbol_to_target_for_scheme(scheme_name: str) -> dict[str, int]:
     normalized = normalize_metal_label_scheme_name(scheme_name)
     _labels, symbol_to_target = METAL_LABEL_SCHEMES[normalized]
     return dict(symbol_to_target)
+
+
+def configure_active_metal_label_scheme(scheme_name: str) -> str:
+    normalized = normalize_metal_label_scheme_name(scheme_name)
+    labels = metal_labels_for_scheme(normalized)
+    symbol_to_target = metal_symbol_to_target_for_scheme(normalized)
+    os.environ["DEEPGM_METAL_LABEL_SCHEME"] = normalized
+    globals()["ACTIVE_METAL_LABEL_SCHEME"] = normalized
+    if "METAL_TARGET_LABELS" in globals():
+        globals()["METAL_TARGET_LABELS"].clear()
+        globals()["METAL_TARGET_LABELS"].update(labels)
+    else:
+        globals()["METAL_TARGET_LABELS"] = labels
+    if "METAL_SYMBOL_TO_TARGET" in globals():
+        globals()["METAL_SYMBOL_TO_TARGET"].clear()
+        globals()["METAL_SYMBOL_TO_TARGET"].update(symbol_to_target)
+    else:
+        globals()["METAL_SYMBOL_TO_TARGET"] = symbol_to_target
+    globals()["N_METAL_CLASSES"] = len(labels)
+    return normalized
 
 
 def map_site_metal_symbols_with_mapping(

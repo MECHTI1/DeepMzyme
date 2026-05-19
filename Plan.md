@@ -61,6 +61,15 @@ Train and validate on six metal classes: Mn, Fe, Zn, Cu, Co, Ni.
 Best checkpoint selection: highest validation balanced accuracy
 (`val_metal_balanced_acc`).
 
+The default and main reportable target scheme is six-class. An explicit
+five-class scheme is available for validation-only comparison runs:
+`--metal-label-scheme five_class` in the CLI or
+`METAL_LABEL_SCHEME = "five_class"` in the notebook. It keeps Mn, Cu, Zn, and
+Fe separate while grouping Co and Ni into the fifth class. Use a separate run
+name and separate Optuna study when changing the metal label scheme, and do not
+compare five-class validation numbers directly against six-class validation
+numbers without labeling the scheme.
+
 Final test reporting: six-class metrics and collapsed-4 metrics, where Fe, Co,
 and Ni are merged into Class VIII.
 
@@ -103,8 +112,9 @@ Authoritative rules for the pipeline:
   evidence.
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
-  six-class `val_metal_min_recall`; collapsed-4 recall is supplemental and must
-  not hide Fe/Co/Ni failures.
+  active metal-scheme `val_metal_min_recall`; for default reportable runs that
+  is six-class minimum recall. Collapsed-4 recall is supplemental and must not
+  hide Fe/Co/Ni failures.
 - Serious validation-only metal Optuna searches should keep the current
   validated batch size in scope and compare the next larger practical batch
   size; reserve very small batches for smoke/debug or memory fallback, and
@@ -191,6 +201,7 @@ can reproduce a command-line run.
 | Runtime | `--num-workers` | `0` | Number of DataLoader worker processes. Default preserves single-process loading. | Advanced |
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. | Expose |
+| Target labels | `--metal-label-scheme` | `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. Changing this creates a different prediction problem. | Expose |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of pocket graphs per mini-batch. | Expose / sweep |
 | Training | `--learning-rate` | `3e-4` | Optimizer step size. Previous serious baselines often start at `3e-5`. | Expose / sweep |
@@ -246,7 +257,7 @@ can reproduce a command-line run.
 | RING edges | `--require-ring-edges` | false | Fails if RING edge files are missing for requested structures. | Expose with warning |
 | RING edges | `--prepare-missing-ring-edges` | false flag, but current config prepares by default unless disabled | Generate missing RING edge files during preflight when RING is active. Notebook default is `with_ring`, with `REQUIRE_RING_EDGES=False` and missing-edge preparation enabled. | Expose |
 | RING edges | `--no-prepare-missing-ring-edges` | false | Prevents RING generation during preflight. | Expose as prepare-missing toggle |
-| Metal loss | `--balance-metal-site-symbols` | false | Uses a weighted sampler to balance metal classes and Co/Ni symbols inside Class VIII. | Expose |
+| Metal loss | `--balance-metal-site-symbols` | false | Uses a weighted sampler to balance metal classes and, when Co/Ni are grouped, Co/Ni site symbols inside the grouped class. | Expose |
 | Metal loss | `--metal-loss-function` | `cross_entropy`; choices `cross_entropy`, `focal` | Loss function for metal classification. | Expose |
 | Metal loss | `--metal-focal-gamma` | `2.0` | Focal-loss gamma when focal loss is selected. | Expose |
 | Metal loss | `--metal-label-smoothing` | `0.0` | Label smoothing for metal cross-entropy. | Expose |
@@ -391,6 +402,7 @@ result.
 Each run should save:
 
 - full config / hyperparameters
+- metal label scheme
 - random seed
 - dataset paths and split identity
 - dataset bundle identifier and checksum for serious validation or final-test
@@ -428,6 +440,7 @@ The summary table should include, when available:
 
 - run name
 - task
+- metal label scheme
 - model architecture
 - fusion mode
 - seed
@@ -437,7 +450,8 @@ The summary table should include, when available:
 - best validation metrics
 - final held-out test metrics
 - final held-out calibration metrics and bootstrap confidence intervals
-- metal 6-class metrics
+- metal active-scheme metrics, including six-class metrics for default runs and
+  five-class metrics for explicitly labeled five-class runs
 - metal collapsed-4 metrics
 - EC level-1 / level-2 metrics
 - split name/type used for the run

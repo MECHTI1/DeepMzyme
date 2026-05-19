@@ -6,6 +6,13 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from data_structures import DEFAULT_EDGE_RADIUS, NODE_FEATURE_SET_CHOICES, validate_node_feature_omissions
+from label_schemes import (
+    METAL_LABEL_SCHEME_ALIASES,
+    METAL_LABEL_SCHEMES,
+    active_metal_label_scheme_name,
+    configure_active_metal_label_scheme,
+    normalize_metal_label_scheme_name,
+)
 from model_variants import FUSION_MODE_CHOICES, MODEL_ARCHITECTURE_CHOICES
 from model_variants.factory import normalize_fusion_mode, normalize_model_architecture
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
@@ -16,6 +23,7 @@ VALID_SPLIT_BY_CHOICES = ("pdbid", "pdbid_chain", "structure_id", "pocket_id")
 VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
 VALID_INVALID_STRUCTURE_POLICY_CHOICES = ("error", "skip")
 VALID_TASK_CHOICES = ("joint", "metal", "ec")
+VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
@@ -89,6 +97,7 @@ class TrainConfig:
     device: str = "cpu"
     deterministic: bool = False
     task: str = "joint"
+    metal_label_scheme: str = "split_all_metals"
     epochs: int = 10
     batch_size: int = 8
     learning_rate: float = 3e-4
@@ -222,6 +231,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--task", type=str, default="joint", choices=VALID_TASK_CHOICES)
+    parser.add_argument(
+        "--metal-label-scheme",
+        type=normalize_metal_label_scheme_name,
+        default=None,
+        choices=VALID_METAL_LABEL_SCHEME_CHOICES,
+        help=(
+            "Metal target scheme. split_all_metals/six_class keeps Mn, Cu, Zn, Fe, Co, Ni separate; "
+            "five_class keeps Mn, Cu, Zn, Fe separate and groups Co/Ni; "
+            "merge_fe_class_viii/four_class groups Fe/Co/Ni. "
+            "If omitted, DEEPGM_METAL_LABEL_SCHEME is used, defaulting to split_all_metals. "
+            f"Accepted aliases include: {', '.join(sorted(METAL_LABEL_SCHEME_ALIASES))}."
+        ),
+    )
     parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--esm-dim", type=int, default=DEFAULT_ESMC_EMBED_DIM)
@@ -672,6 +694,9 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         )
     model_uses_esm_inputs = args.model_architecture != "only_gvp"
     joint_loss_weighting = resolve_joint_loss_weighting(args.task, args.joint_loss_weighting)
+    metal_label_scheme = configure_active_metal_label_scheme(
+        args.metal_label_scheme or active_metal_label_scheme_name()
+    )
     return TrainConfig(
         structure_dir=args.structure_dir,
         summary_csv=args.summary_csv,
@@ -688,6 +713,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         device=args.device,
         deterministic=args.deterministic,
         task=args.task,
+        metal_label_scheme=metal_label_scheme,
         epochs=args.epochs,
         batch_size=args.batch_size,
         esm_dim=args.esm_dim,

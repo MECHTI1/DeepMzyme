@@ -66,6 +66,10 @@ evidence in saved outputs, not in stable workflow guides.
   for model selection. New Harsh Split PinMyMetal and Common-PDBID 70/30 Split
   PinMyMetal variants exist for future comparisons but are not the basis of the
   current reported anchors.
+- Trusted metal label scheme for current anchors: default six-class
+  `split_all_metals` / `six_class`. The new `five_class` Co/Ni-grouped target
+  scheme is available for explicitly labeled validation-only comparisons, but
+  existing anchors below should not be reinterpreted as five-class evidence.
 - Test-set policy: held-out test remains unused for model, checkpoint,
   hyperparameter, architecture, and fusion decisions. Use it once after the
   validation-selected anchor is fixed.

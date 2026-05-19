@@ -68,6 +68,7 @@ def check_training_cli_help() -> None:
     expected_options = (
         "--deterministic",
         "--joint-loss-weighting",
+        "--metal-label-scheme",
         "--metal-loss-weight",
         "--metal-collapsed-loss-weight",
         "--ec-loss-weight",
@@ -168,6 +169,7 @@ def check_loss_weight_validation() -> None:
         raise AssertionError(f"Expected default metal_loss_weight=1.0, got {default_config.metal_loss_weight}")
     if default_config.ec_loss_weight != 1.0:
         raise AssertionError(f"Expected default ec_loss_weight=1.0, got {default_config.ec_loss_weight}")
+
     metal_config = parse_args(["--task", "metal"])
     if metal_config.joint_loss_weighting != "fixed":
         raise AssertionError(
@@ -234,6 +236,33 @@ def check_loss_weight_validation() -> None:
             raise AssertionError(f"Unexpected second-shell dropout validation error: {exc}") from exc
     else:
         raise AssertionError("--second-shell-dropout accepted a value outside [0, 1].")
+
+
+def check_metal_label_scheme_options() -> None:
+    from label_schemes import (
+        configure_active_metal_label_scheme,
+        metal_labels_for_scheme,
+        metal_symbol_to_target_for_scheme,
+    )
+
+    five_class_labels = metal_labels_for_scheme("five_class")
+    five_class_targets = metal_symbol_to_target_for_scheme("five_class")
+    if five_class_labels != {0: "Mn", 1: "Cu", 2: "Zn", 3: "Fe", 4: "Class VIII"}:
+        raise AssertionError(f"Unexpected five_class labels: {five_class_labels}")
+    if five_class_targets["CO"] != five_class_targets["NI"]:
+        raise AssertionError("five_class should map Co and Ni to the same target id.")
+    if five_class_targets["FE"] == five_class_targets["CO"]:
+        raise AssertionError("five_class should keep Fe separate from the grouped Co/Ni class.")
+
+    try:
+        five_class_config = parse_args(["--metal-label-scheme", "five_class"])
+        if five_class_config.metal_label_scheme != "five_class":
+            raise AssertionError(
+                "Expected --metal-label-scheme five_class to normalize to 'five_class', "
+                f"got {five_class_config.metal_label_scheme!r}."
+            )
+    finally:
+        configure_active_metal_label_scheme("split_all_metals")
 
 
 def check_training_efficiency_defaults_and_validation() -> None:
@@ -1371,6 +1400,7 @@ def main() -> int:
         check_test_eval_safety,
         check_prelaunch_run_dir_reuse,
         check_loss_weight_validation,
+        check_metal_label_scheme_options,
         check_training_efficiency_defaults_and_validation,
         check_grad_accum_final_partial_window,
         check_uncertainty_task_loss_weighter,

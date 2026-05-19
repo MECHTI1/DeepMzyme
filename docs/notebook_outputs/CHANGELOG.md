@@ -10,6 +10,10 @@
   notebook-output folder name from copied run summaries; canonical copied
   evidence remains under
   `docs/notebook_outputs/`.
+- Added the explicit metal target scheme option across CLI, notebook, and
+  documentation: default six-class remains reportable, while `five_class`
+  keeps `Mn`, `Cu`, `Zn`, and `Fe` separate and groups `Co/Ni` for labeled
+  validation-only comparisons.
 
 ## 2026-05-18
 
