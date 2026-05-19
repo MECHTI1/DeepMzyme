@@ -15,6 +15,8 @@ from build_dataset_csv import (
     write_rows,
 )
 from project_paths import CATALYTIC_ONLY_SUMMARY_CSV, COLAB_BUNDLES_DIR, DATA_DIR
+from training.runtime_preparation import discover_missing_esm_embeddings
+from training.structure_loading import find_structure_files
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -44,6 +46,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--test-csv", type=Path, default=None)
     parser.add_argument("--csv-output-dir", type=Path, default=None)
     parser.add_argument("--output-bundle", type=Path, default=None)
+    parser.add_argument(
+        "--include-esm-embeddings",
+        action="store_true",
+        help="Include the ESM embeddings directory in the Colab bundle.",
+    )
+    parser.add_argument(
+        "--esm-embeddings-dir",
+        type=Path,
+        default=DATA_DIR / "esm_embeddings",
+        help="Directory containing *_esmc.pt files to include when --include-esm-embeddings is set.",
+    )
+    parser.add_argument(
+        "--allow-incomplete-esm-coverage",
+        action="store_true",
+        help=(
+            "Allow bundling ESM embeddings even if some train/test structures do not "
+            "have matching embedding files. By default, incomplete ESM coverage fails."
+        ),
+    )
     parser.set_defaults(allow_multi_metal_structures=True)
     parser.add_argument(
         "--allow-multi-metal-structures",
@@ -163,6 +184,32 @@ def append_unique_path(paths: list[Path], path: Path) -> None:
     resolved = path.resolve()
     if all(existing.resolve() != resolved for existing in paths):
         paths.append(path)
+
+
+def validate_esm_embedding_coverage(
+    *,
+    train_dir: Path,
+    test_dir: Path,
+    esm_embeddings_dir: Path,
+    allow_incomplete: bool,
+) -> None:
+    if not esm_embeddings_dir.exists():
+        raise FileNotFoundError(f"ESM embeddings directory not found: {esm_embeddings_dir}")
+
+    train_structures = find_structure_files(train_dir)
+    test_structures = find_structure_files(test_dir)
+    missing_train = discover_missing_esm_embeddings(train_structures, esm_embeddings_dir)
+    missing_test = discover_missing_esm_embeddings(test_structures, esm_embeddings_dir)
+    if (missing_train or missing_test) and not allow_incomplete:
+        raise ValueError(
+            "ESM embedding coverage is incomplete. "
+            f"Missing train structures: {len(missing_train)}; "
+            f"missing test structures: {len(missing_test)}. "
+            f"Sample train: {[path.name for path in missing_train[:3]]}; "
+            f"sample test: {[path.name for path in missing_test[:3]]}. "
+            "Generate the missing embeddings or pass --allow-incomplete-esm-coverage "
+            "only for a deliberately partial/debug bundle."
+        )
 
 
 def generate_structure_csv(
@@ -305,6 +352,15 @@ def main() -> None:
     if ring_runtime_dir.exists():
         append_unique_path(selected_paths, ring_runtime_dir)
 
+    if args.include_esm_embeddings:
+        validate_esm_embedding_coverage(
+            train_dir=train_dir,
+            test_dir=test_dir,
+            esm_embeddings_dir=args.esm_embeddings_dir,
+            allow_incomplete=args.allow_incomplete_esm_coverage,
+        )
+        append_unique_path(selected_paths, args.esm_embeddings_dir)
+
     if args.skip_bundle:
         print(f"Prepared train directory: {train_dir}")
         print(f"Prepared test directory: {test_dir}")
@@ -326,6 +382,8 @@ def main() -> None:
             print(f"Prepared RING runtime directory: {ring_runtime_dir}")
         else:
             print(f"Note: ring-4.0 not found at {ring_runtime_dir}, will not be bundled.")
+        if args.include_esm_embeddings:
+            print(f"Prepared ESM embeddings directory: {args.esm_embeddings_dir}")
         return
 
     output_bundle = args.output_bundle or default_output_bundle(dataset_root)
@@ -345,6 +403,8 @@ def main() -> None:
         print(f"Included RING runtime: {ring_runtime_dir}")
     else:
         print(f"Note: ring-4.0 not found at {ring_runtime_dir}, not included in bundle.")
+    if args.include_esm_embeddings:
+        print(f"Included ESM embeddings: {args.esm_embeddings_dir}")
     if train_csv is not None:
         print(f"Included train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
     if test_csv is not None:

@@ -40,22 +40,23 @@ Show the training CLI:
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --help
 ```
 
-Build the default Colab bundle from the trusted non-overlapped split:
+Build the current full Colab bundle from the trusted non-overlapped split:
 
 ```bash
-PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab_bundle.py
+PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab_bundle.py --include-esm-embeddings
 ```
 
 The bundle includes the site-level MAHOMES summary CSVs used by training. It also includes structure-level CSV artifacts for inspection; structures with multiple catalytic metal sites are represented there with semicolon-joined metal labels such as `Co;Cu`.
 
-Current bundles should also include `updated_feature_extraction/`,
-`RING_features/`, and `ring-4.0/` when those directories exist locally, because
-the metal notebook defaults to strict updated external features and RING-enabled
-graph construction.
+Current bundles should also include `esm_embeddings/`,
+`updated_feature_extraction/`, `RING_features/`, and `ring-4.0/` when those
+directories exist locally, because ESM/fusion presets require precomputed ESMC
+embeddings and the metal notebook defaults to strict updated external features
+and RING-enabled graph construction.
 
 The Colab notebook supports three dataset input modes through `COLAB_DATA_SOURCE`:
 
-- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-18_ring_external.tar.zst`, verifies SHA256, and unpacks it under `/content`.
+- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_runtime_local_2026-05-20_esm_ring_external.tar.zst`, verifies SHA256, and unpacks it under `/content`.
 - `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive data path after Drive is mounted.
 
