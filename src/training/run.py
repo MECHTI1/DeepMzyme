@@ -1208,6 +1208,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             node_rbf_sigma=config.node_rbf_sigma,
             edge_rbf_sigma=config.edge_rbf_sigma,
             node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,
+            normalize_message_aggregation=config.normalize_message_aggregation,
             use_esm_branch=config.use_esm_branch,
             fusion_mode=config.fusion_mode,
             cross_attention_layers=config.cross_attention_layers,

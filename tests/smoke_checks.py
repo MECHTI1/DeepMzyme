@@ -244,6 +244,7 @@ def check_training_efficiency_defaults_and_validation() -> None:
         "grad_accum_steps": 1,
         "num_workers": 0,
         "pin_memory": False,
+        "normalize_message_aggregation": False,
     }
     for field_name, expected_value in expected_defaults.items():
         observed_value = getattr(default_config, field_name)
@@ -274,6 +275,24 @@ def check_training_efficiency_defaults_and_validation() -> None:
             raise AssertionError(f"Unexpected num-workers validation error: {exc}") from exc
     else:
         raise AssertionError("--num-workers accepted a negative value.")
+
+    normalized_gvp = parse_args(["--gvp-normalize-message-aggregation"])
+    if not normalized_gvp.normalize_message_aggregation:
+        raise AssertionError("GVP message aggregation normalization flag was not parsed.")
+
+    disabled_reporting = parse_args(
+        [
+            "--disable-final-test-calibration",
+            "--disable-final-test-temperature-scaling",
+            "--disable-final-test-bootstrap-ci",
+        ]
+    )
+    if (
+        disabled_reporting.final_test_enable_calibration
+        or disabled_reporting.final_test_enable_temperature_scaling
+        or disabled_reporting.final_test_enable_bootstrap_ci
+    ):
+        raise AssertionError("Final-test disable aliases did not map to affirmative config fields.")
 
 
 class LinearLossModel(torch.nn.Module):

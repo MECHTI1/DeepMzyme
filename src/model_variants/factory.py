@@ -125,6 +125,7 @@ def build_pocket_classifier(
         resolved_kwargs.pop("node_rbf_sigma", None)
         resolved_kwargs.pop("edge_rbf_sigma", None)
         resolved_kwargs.pop("node_rbf_use_raw_distances", None)
+        resolved_kwargs.pop("normalize_message_aggregation", None)
         resolved_kwargs.pop("hidden_v", None)
         resolved_kwargs.pop("edge_hidden", None)
         resolved_kwargs.pop("n_layers", None)
@@ -134,5 +135,6 @@ def build_pocket_classifier(
 
         resolved_kwargs.pop("hidden_v", None)
         resolved_kwargs.pop("node_rbf_use_raw_distances", None)
+        resolved_kwargs.pop("normalize_message_aggregation", None)
         return SimpleGNNPocketClassifier(**resolved_kwargs)
     raise AssertionError(f"Unhandled model architecture: {architecture!r}")

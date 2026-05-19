@@ -262,6 +262,36 @@ def _metric_ci(values: list[float], confidence_level: float) -> list[float]:
     ]
 
 
+def metal_bootstrap_support_report(
+    targets: torch.Tensor,
+    *,
+    low_support_threshold: int = 3,
+) -> dict[str, Any]:
+    targets = _to_cpu_tensor(targets).long().view(-1)
+    counts = torch.bincount(targets, minlength=len(METAL_TARGET_LABELS))
+    support_by_class = {
+        label_name: int(counts[int(label_idx)].item())
+        for label_idx, label_name in METAL_TARGET_LABELS.items()
+    }
+    low_support_classes = {
+        label_name: count
+        for label_name, count in support_by_class.items()
+        if 0 < count < int(low_support_threshold)
+    }
+    warning = None
+    if low_support_classes:
+        warning = (
+            "One or more metal classes have very low held-out support; "
+            "stratified bootstrap confidence intervals may understate minority-class uncertainty."
+        )
+    return {
+        "support_by_class": support_by_class,
+        "low_support_threshold": int(low_support_threshold),
+        "low_support_classes": low_support_classes,
+        "low_support_warning": warning,
+    }
+
+
 def bootstrap_metric_cis(
     probabilities: torch.Tensor,
     targets: torch.Tensor,
@@ -564,6 +594,7 @@ def build_metal_final_reporting_payload(
         "confidence_level": float(confidence_level),
         "seed": int(bootstrap_seed),
         "missing_class_rule": "stratified resampling preserves every class present in the original test labels",
+        **metal_bootstrap_support_report(test_targets),
     }
     if enable_bootstrap_ci:
         metrics.update(
@@ -764,6 +795,7 @@ def build_softmax_mean_ensemble_payload(
         "confidence_level": float(confidence_level),
         "seed": int(bootstrap_seed),
         "missing_class_rule": "stratified resampling preserves every class present in the original test labels",
+        **metal_bootstrap_support_report(target),
     }
     if enable_bootstrap_ci:
         metrics.update(

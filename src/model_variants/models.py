@@ -14,6 +14,8 @@ from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
 from metal_objectives import metal_loss_with_optional_collapsed4
 from model import (
     AttentionPool,
+    DEFAULT_SITE_FEATURE_DIM,
+    DEFAULT_SITE_FEATURE_INPUT_DIM,
     ESMGraphEncoder,
     EarlyESMEncoder,
     EdgeScalarEncoder,
@@ -258,8 +260,12 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         ec_contrastive_temperature: float = 0.1,
         predict_metal: bool = True,
         predict_ec: bool = True,
+        site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
     ):
         super().__init__()
+        self.site_feature_dim = int(site_feature_dim)
+        if self.site_feature_dim < 1:
+            raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
         self.esm_fusion_proj = nn.Sequential(
             nn.Linear(2 * esm_fusion_dim, hidden_s),
@@ -267,12 +273,12 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             nn.SiLU(),
         )
         self.site_feature_encoder = nn.Sequential(
-            nn.Linear(4, 32),
-            nn.LayerNorm(32),
+            nn.Linear(DEFAULT_SITE_FEATURE_INPUT_DIM, self.site_feature_dim),
+            nn.LayerNorm(self.site_feature_dim),
             nn.SiLU(),
         )
         self._initialize_prediction_heads(
-            fused_dim=hidden_s + 32,
+            fused_dim=hidden_s + self.site_feature_dim,
             hidden_dim=hidden_s,
             n_metal=n_metal,
             n_ec=n_ec,
@@ -357,6 +363,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         early_esm_scope: str = "all",
         ec_contrastive_weight: float = 0.0,
         ec_contrastive_temperature: float = 0.1,
+        site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
     ):
         super().__init__()
         self.use_esm_branch = bool(use_esm_branch)
@@ -365,6 +372,9 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         self.early_esm_scope = str(early_esm_scope)
         self.fusion_mode = str(fusion_mode)
         self.cross_attention_neighborhood = str(cross_attention_neighborhood)
+        self.site_feature_dim = int(site_feature_dim)
+        if self.site_feature_dim < 1:
+            raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         early_scalar_dim = 0
         if self.use_early_esm:
             early_scalar_dim = esm_dim if self.early_esm_raw else int(early_esm_dim)
@@ -453,8 +463,8 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             self.node_level_esm_proj = None
             self.node_level_gate = None
         self.site_feature_encoder = nn.Sequential(
-            nn.Linear(4, 32),
-            nn.LayerNorm(32),
+            nn.Linear(DEFAULT_SITE_FEATURE_INPUT_DIM, self.site_feature_dim),
+            nn.LayerNorm(self.site_feature_dim),
             nn.SiLU(),
         )
         self.fusion_gate = nn.Sequential(
@@ -462,7 +472,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             nn.Sigmoid(),
         )
         self._initialize_prediction_heads(
-            fused_dim=(2 * hidden_s) + 32,
+            fused_dim=(2 * hidden_s) + self.site_feature_dim,
             hidden_dim=hidden_s,
             n_metal=n_metal,
             n_ec=n_ec,

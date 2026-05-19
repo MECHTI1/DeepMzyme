@@ -114,6 +114,7 @@ class TrainConfig:
     node_rbf_sigma: float = 0.75
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
+    normalize_message_aggregation: bool = False
     position_noise_std: float = 0.0
     second_shell_dropout: float = 0.0
     node_feature_set: str = "conservative"
@@ -280,6 +281,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--node-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--edge-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--node-rbf-use-raw-distances", action="store_true")
+    parser.add_argument(
+        "--gvp-normalize-message-aggregation",
+        dest="normalize_message_aggregation",
+        action="store_true",
+        help=(
+            "Normalize each GVP layer's summed incoming messages by destination node degree. "
+            "Default off preserves existing validation comparisons."
+        ),
+    )
     parser.add_argument(
         "--position-noise-std",
         type=float,
@@ -567,20 +577,52 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default="",
         help="Comma-separated model seed values recorded in test_report.json.",
     )
+    parser.set_defaults(
+        final_test_enable_calibration=True,
+        final_test_enable_temperature_scaling=True,
+        final_test_enable_bootstrap_ci=True,
+    )
+    parser.add_argument(
+        "--enable-final-test-calibration",
+        "--final-test-calibration",
+        dest="final_test_enable_calibration",
+        action="store_true",
+        help="Enable Stage 7 calibration metrics and plots.",
+    )
     parser.add_argument(
         "--disable-final-test-calibration",
-        action="store_true",
+        "--no-final-test-calibration",
+        dest="final_test_enable_calibration",
+        action="store_false",
         help="Disable Stage 7 calibration metrics and plots.",
     )
     parser.add_argument(
-        "--disable-final-test-temperature-scaling",
+        "--enable-final-test-temperature-scaling",
+        "--final-test-temperature-scaling",
+        dest="final_test_enable_temperature_scaling",
         action="store_true",
+        help="Enable validation-fitted temperature scaling for Stage 7 reporting.",
+    )
+    parser.add_argument(
+        "--disable-final-test-temperature-scaling",
+        "--no-final-test-temperature-scaling",
+        dest="final_test_enable_temperature_scaling",
+        action="store_false",
         help="Disable validation-fitted temperature scaling for Stage 7 reporting.",
     )
     parser.add_argument("--final-test-calibration-bins", type=int, default=15)
     parser.add_argument(
-        "--disable-final-test-bootstrap-ci",
+        "--enable-final-test-bootstrap-ci",
+        "--final-test-bootstrap-ci",
+        dest="final_test_enable_bootstrap_ci",
         action="store_true",
+        help="Enable Stage 7 bootstrap confidence intervals.",
+    )
+    parser.add_argument(
+        "--disable-final-test-bootstrap-ci",
+        "--no-final-test-bootstrap-ci",
+        dest="final_test_enable_bootstrap_ci",
+        action="store_false",
         help="Disable Stage 7 bootstrap confidence intervals.",
     )
     parser.add_argument("--final-test-bootstrap-resamples", type=int, default=1000)
@@ -669,6 +711,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         node_rbf_sigma=args.node_rbf_sigma,
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
+        normalize_message_aggregation=args.normalize_message_aggregation,
         position_noise_std=args.position_noise_std,
         second_shell_dropout=args.second_shell_dropout,
         node_feature_set=args.node_feature_set,
@@ -730,10 +773,10 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         final_test_source_run_dirs=parse_string_tuple(args.final_test_source_run_dirs),
         final_test_checkpoint_paths=parse_string_tuple(args.final_test_checkpoint_paths),
         final_test_seed_values=parse_int_tuple(args.final_test_seed_values),
-        final_test_enable_calibration=not args.disable_final_test_calibration,
-        final_test_enable_temperature_scaling=not args.disable_final_test_temperature_scaling,
+        final_test_enable_calibration=args.final_test_enable_calibration,
+        final_test_enable_temperature_scaling=args.final_test_enable_temperature_scaling,
         final_test_calibration_bins=args.final_test_calibration_bins,
-        final_test_enable_bootstrap_ci=not args.disable_final_test_bootstrap_ci,
+        final_test_enable_bootstrap_ci=args.final_test_enable_bootstrap_ci,
         final_test_bootstrap_resamples=args.final_test_bootstrap_resamples,
         final_test_bootstrap_confidence_level=args.final_test_bootstrap_confidence_level,
         final_test_bootstrap_seed=args.final_test_bootstrap_seed,

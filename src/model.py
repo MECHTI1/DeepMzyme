@@ -10,7 +10,7 @@ from torch_geometric.data import Data
 from torch_geometric.nn import global_add_pool, global_mean_pool
 from torch_geometric.utils import softmax
 
-from data_structures import EDGE_SOURCE_TYPES, INTERACTION_SUMMARIES_OPTIONAL_WITH_RING
+from data_structures import AA_ORDER, EDGE_SOURCE_TYPES, INTERACTION_SUMMARIES_OPTIONAL_WITH_RING
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
 from metal_objectives import metal_loss_with_optional_collapsed4
@@ -23,6 +23,16 @@ VALID_FUSION_MODES = {
     "cross_modal_attention",
 }
 VALID_TASK_LOSS_WEIGHTING_MODES = {"fixed", "uncertainty"}
+DEFAULT_SITE_FEATURE_INPUT_DIM = 4
+DEFAULT_SITE_FEATURE_DIM = 32
+DEFAULT_NODE_RESCHEM_DIM = len(AA_ORDER) + 5
+DEFAULT_NODE_HYDROPHOBICITY_DIM = 1
+DEFAULT_NODE_ROLE_DIM = 2
+DEFAULT_NODE_MISC_DIM = 1
+DEFAULT_NODE_BURIAL_INPUT_DIM = 1
+DEFAULT_NODE_BURIAL_LATENT_DIM = 4
+DEFAULT_NODE_ELECTROSTATICS_DIM = 2
+DEFAULT_NODE_DISTANCE_FEATURE_COUNT = 3
 
 
 class TaskLossWeighter(nn.Module):
@@ -129,14 +139,42 @@ class NodeScalarEncoder(nn.Module):
         out_dim: int = 128,
         distance_sigma: float = 0.75,
         extra_scalar_dim: int = 0,
+        reschem_dim: int = DEFAULT_NODE_RESCHEM_DIM,
+        hydrophobicity_dim: int = DEFAULT_NODE_HYDROPHOBICITY_DIM,
+        role_dim: int = DEFAULT_NODE_ROLE_DIM,
+        misc_dim: int = DEFAULT_NODE_MISC_DIM,
+        burial_input_dim: int = DEFAULT_NODE_BURIAL_INPUT_DIM,
+        burial_latent_dim: int = DEFAULT_NODE_BURIAL_LATENT_DIM,
+        electrostatics_dim: int = DEFAULT_NODE_ELECTROSTATICS_DIM,
+        distance_feature_count: int = DEFAULT_NODE_DISTANCE_FEATURE_COUNT,
     ):
         super().__init__()
+        self.reschem_dim = int(reschem_dim)
+        self.hydrophobicity_dim = int(hydrophobicity_dim)
+        self.role_dim = int(role_dim)
+        self.misc_dim = int(misc_dim)
+        self.burial_input_dim = int(burial_input_dim)
+        self.burial_latent_dim = int(burial_latent_dim)
+        self.electrostatics_dim = int(electrostatics_dim)
+        self.distance_feature_count = int(distance_feature_count)
         self.dist_rbf = RBFExpansion(n_rbf=n_rbf, d_min=0.0, d_max=12.0, sigma=distance_sigma)
-        self.burial_encoder = TinyFeatureGroupMLP(in_dim=1, hidden_dim=4, out_dim=4)
+        self.burial_encoder = TinyFeatureGroupMLP(
+            in_dim=self.burial_input_dim,
+            hidden_dim=max(1, self.burial_latent_dim),
+            out_dim=self.burial_latent_dim,
+        )
 
         # Keep the heuristic q1*q2/r-style proxy and the PROPKA-derived
         # dpka_titr contribution as separate scalars rather than summing them.
-        self.base_in_dim = 25 + 1 + 2 + 1 + 4 + 2 + 3 * n_rbf
+        self.base_in_dim = (
+            self.reschem_dim
+            + self.hydrophobicity_dim
+            + self.role_dim
+            + self.misc_dim
+            + self.burial_latent_dim
+            + self.electrostatics_dim
+            + self.distance_feature_count * int(n_rbf)
+        )
         self.extra_scalar_dim = int(extra_scalar_dim)
         self.in_dim = self.base_in_dim + self.extra_scalar_dim
         self.out_proj = nn.Sequential(
@@ -382,8 +420,9 @@ class SimpleGVP(nn.Module):
 
 
 class SimpleGVPLayer(nn.Module):
-    def __init__(self, s_dim: int, v_dim: int, e_dim: int):
+    def __init__(self, s_dim: int, v_dim: int, e_dim: int, *, normalize_message_aggregation: bool = False):
         super().__init__()
+        self.normalize_message_aggregation = bool(normalize_message_aggregation)
 
         self.message_gvp = SimpleGVP(
             s_in=2 * s_dim + e_dim + 1,
@@ -418,6 +457,11 @@ class SimpleGVPLayer(nn.Module):
 
         agg_v = torch.zeros_like(v)
         agg_v.index_add_(0, dst, m_v)
+
+        if self.normalize_message_aggregation and dst.numel() > 0:
+            degree = torch.bincount(dst, minlength=s.size(0)).clamp_min(1).to(device=s.device)
+            agg_s = agg_s / degree.to(dtype=agg_s.dtype).unsqueeze(-1)
+            agg_v = agg_v / degree.to(dtype=agg_v.dtype).view(-1, 1, 1)
 
         u_s_in = torch.cat([s, agg_s], dim=-1)
         u_v_in = torch.cat([v, agg_v], dim=1)
@@ -531,6 +575,8 @@ class GVPPocketClassifier(nn.Module):
         early_esm_scope: str = "all",
         ec_contrastive_weight: float = 0.0,
         ec_contrastive_temperature: float = 0.1,
+        normalize_message_aggregation: bool = False,
+        site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
     ):
         super().__init__()
         # Current supervised targets:
@@ -545,6 +591,10 @@ class GVPPocketClassifier(nn.Module):
         self.fusion_mode = str(fusion_mode)
         self.cross_attention_neighborhood = str(cross_attention_neighborhood)
         self.cross_attention_bidirectional = bool(cross_attention_bidirectional)
+        self.normalize_message_aggregation = bool(normalize_message_aggregation)
+        self.site_feature_dim = int(site_feature_dim)
+        if self.site_feature_dim < 1:
+            raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         early_scalar_dim = 0
         if self.use_early_esm:
             early_scalar_dim = esm_dim if self.early_esm_raw else self.early_esm_dim
@@ -573,7 +623,15 @@ class GVPPocketClassifier(nn.Module):
         self.init_vec_proj = nn.Linear(2, hidden_v, bias=False)
 
         self.layers = nn.ModuleList(
-            [SimpleGVPLayer(s_dim=hidden_s, v_dim=hidden_v, e_dim=edge_hidden) for _ in range(n_layers)]
+            [
+                SimpleGVPLayer(
+                    s_dim=hidden_s,
+                    v_dim=hidden_v,
+                    e_dim=edge_hidden,
+                    normalize_message_aggregation=self.normalize_message_aggregation,
+                )
+                for _ in range(n_layers)
+            ]
         )
 
         gvp_graph_dim = 2 * hidden_s
@@ -631,15 +689,15 @@ class GVPPocketClassifier(nn.Module):
             self.node_level_esm_proj = None
             self.node_level_gate = None
         self.site_feature_encoder = nn.Sequential(
-            nn.Linear(4, 32),
-            nn.LayerNorm(32),
+            nn.Linear(DEFAULT_SITE_FEATURE_INPUT_DIM, self.site_feature_dim),
+            nn.LayerNorm(self.site_feature_dim),
             nn.SiLU(),
         )
         self.fusion_gate = nn.Sequential(
             nn.Linear(2 * hidden_s, hidden_s),
             nn.Sigmoid(),
         )
-        fused_dim = 2 * hidden_s + 32
+        fused_dim = 2 * hidden_s + self.site_feature_dim
         self.predict_metal = bool(predict_metal)
         self.predict_ec = bool(predict_ec)
         self.use_esm_branch = bool(use_esm_branch)
