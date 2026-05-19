@@ -92,6 +92,11 @@ class TrainConfig:
     epochs: int = 10
     batch_size: int = 8
     learning_rate: float = 3e-4
+    grad_clip_norm: float = 1.0
+    use_amp: bool = False
+    grad_accum_steps: int = 1
+    num_workers: int = 0
+    pin_memory: bool = False
     # `0.0` is useful for smoke runs; real training should usually use a nonzero validation split.
     val_fraction: float = 0.0
     esm_dim: int = DEFAULT_ESMC_EMBED_DIM
@@ -161,7 +166,7 @@ class TrainConfig:
     lr_step_size: int = 0
     lr_decay_gamma: float = 0.5
     save_epoch_checkpoints: bool = False
-    selection_metric: str = "train_loss"
+    selection_metric: str | None = None
     final_test_primary_report: str = "single_checkpoint"
     final_test_ensemble_mode: str = "single_checkpoint"
     final_test_result_role: str = "primary_final_report"
@@ -227,6 +232,34 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--edge-radius", type=float, default=DEFAULT_EDGE_RADIUS)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument(
+        "--grad-clip-norm",
+        type=float,
+        default=1.0,
+        help="Gradient clipping max norm. Values <= 0 disable clipping.",
+    )
+    parser.add_argument(
+        "--amp",
+        action="store_true",
+        help="Enable CUDA automatic mixed precision for training. No-op on CPU; evaluation stays FP32.",
+    )
+    parser.add_argument(
+        "--grad-accum-steps",
+        type=int,
+        default=1,
+        help="Number of mini-batches to accumulate before each optimizer step. Must be >= 1.",
+    )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=0,
+        help="Number of DataLoader worker processes. Default 0 preserves single-process loading.",
+    )
+    parser.add_argument(
+        "--pin-memory",
+        action="store_true",
+        help="Request pinned host memory for CUDA DataLoaders. Ignored on CPU.",
+    )
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
@@ -619,6 +652,11 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         model_architecture=args.model_architecture,
         edge_radius=args.edge_radius,
         learning_rate=args.learning_rate,
+        grad_clip_norm=args.grad_clip_norm,
+        use_amp=args.amp,
+        grad_accum_steps=args.grad_accum_steps,
+        num_workers=args.num_workers,
+        pin_memory=args.pin_memory,
         weight_decay=args.weight_decay,
         seed=args.seed,
         split_seed=args.split_seed,

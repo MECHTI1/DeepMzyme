@@ -19,14 +19,19 @@ from torch_geometric.loader import DataLoader
 
 from data_structures import PocketRecord, ResidueRecord
 from statistical_validation import paired_bootstrap_ci
-from training.config import default_selection_metric_for_task, parse_args, required_targets_for_task
+from training.config import TrainConfig, default_selection_metric_for_task, parse_args, required_targets_for_task
 from training.final_test_reporting import (
     equal_mass_ece,
     fit_temperature_from_logits,
     metal_bootstrap_metric_cis,
 )
-from training.loop import balanced_class_weights_from_pockets, class_weights_from_labels
-from training.run import build_run_dir, ec_group_metrics_from_logits, validate_training_configuration
+from training.loop import balanced_class_weights_from_pockets, class_weights_from_labels, train_epoch
+from training.run import (
+    build_run_dir,
+    ec_group_metrics_from_logits,
+    resolve_selection_metric,
+    validate_training_configuration,
+)
 from training.splits import assign_ec_group_metadata, split_pockets_k_fold
 from metal_objectives import (
     collapse_metal_logits_to_4,
@@ -76,6 +81,11 @@ def check_training_cli_help() -> None:
         "--cross-attention-bidirectional",
         "--position-noise-std",
         "--second-shell-dropout",
+        "--grad-clip-norm",
+        "--amp",
+        "--grad-accum-steps",
+        "--num-workers",
+        "--pin-memory",
         "--allow-train-loss-test-eval-debug",
     )
     missing = [option for option in expected_options if option not in help_text]
@@ -224,6 +234,88 @@ def check_loss_weight_validation() -> None:
             raise AssertionError(f"Unexpected second-shell dropout validation error: {exc}") from exc
     else:
         raise AssertionError("--second-shell-dropout accepted a value outside [0, 1].")
+
+
+def check_training_efficiency_defaults_and_validation() -> None:
+    default_config = parse_args([])
+    expected_defaults = {
+        "grad_clip_norm": 1.0,
+        "use_amp": False,
+        "grad_accum_steps": 1,
+        "num_workers": 0,
+        "pin_memory": False,
+    }
+    for field_name, expected_value in expected_defaults.items():
+        observed_value = getattr(default_config, field_name)
+        if observed_value != expected_value:
+            raise AssertionError(f"Expected default {field_name}={expected_value!r}, got {observed_value!r}")
+
+    resolved_metal = resolve_selection_metric(TrainConfig(task="metal", val_fraction=0.15))
+    if resolved_metal.selection_metric != "val_metal_balanced_acc":
+        raise AssertionError(f"Metal validation selection metric resolved incorrectly: {resolved_metal.selection_metric}")
+    resolved_no_val = resolve_selection_metric(TrainConfig(task="metal", val_fraction=0.0))
+    if resolved_no_val.selection_metric != "train_loss":
+        raise AssertionError(f"No-validation selection metric resolved incorrectly: {resolved_no_val.selection_metric}")
+
+    invalid_accum = parse_args(["--grad-accum-steps", "0"])
+    try:
+        validate_training_configuration(invalid_accum)
+    except ValueError as exc:
+        if "--grad-accum-steps" not in str(exc):
+            raise AssertionError(f"Unexpected grad-accum validation error: {exc}") from exc
+    else:
+        raise AssertionError("--grad-accum-steps accepted a value below 1.")
+
+    invalid_workers = parse_args(["--num-workers", "-1"])
+    try:
+        validate_training_configuration(invalid_workers)
+    except ValueError as exc:
+        if "--num-workers" not in str(exc):
+            raise AssertionError(f"Unexpected num-workers validation error: {exc}") from exc
+    else:
+        raise AssertionError("--num-workers accepted a negative value.")
+
+
+class LinearLossModel(torch.nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.tensor(0.0))
+
+    def forward(self, batch):
+        return {"loss": (self.weight * batch.loss_scale.float()).sum()}
+
+
+def check_grad_accum_final_partial_window() -> None:
+    loader = DataLoader(
+        [
+            Data(x=torch.zeros(1, 1), loss_scale=torch.tensor([2.0])),
+            Data(x=torch.zeros(1, 1), loss_scale=torch.tensor([4.0])),
+            Data(x=torch.zeros(1, 1), loss_scale=torch.tensor([8.0])),
+        ],
+        batch_size=1,
+        shuffle=False,
+    )
+    model = LinearLossModel()
+    optimizer = torch.optim.SGD(model.parameters(), lr=1.0)
+    loss = train_epoch(
+        model,
+        loader,
+        optimizer,
+        device="cpu",
+        grad_clip_norm=0.0,
+        grad_accum_steps=2,
+    )
+    expected_weight = torch.tensor(-11.0)
+    if not torch.allclose(model.weight.detach(), expected_weight, atol=1e-6):
+        raise AssertionError(
+            "Gradient accumulation did not flush/scale the final partial window correctly: "
+            f"weight={float(model.weight.detach())}, expected={float(expected_weight)}"
+        )
+    expected_loss = -8.0
+    if abs(loss - expected_loss) > 1e-8:
+        raise AssertionError(
+            f"Expected reported mean loss to use undivided batch losses, got {loss}, expected {expected_loss}"
+        )
 
 
 def check_uncertainty_task_loss_weighter() -> None:
@@ -598,8 +690,8 @@ def check_colab_notebook_sweep_source() -> None:
         "CONFIG = {",
         "COLAB_DATA_SOURCE",
         "huggingface_link",
-        "DeepMzyme_Data_runtime_local_2026-05-17.tar.zst",
-        "7543187fd5d5f0da994866ebcf2e8698b53e26f50ce8f527d1bbd77fc218d8fb",
+        "DeepMzyme_Data_runtime_local_2026-05-18_ring_external.tar.zst",
+        "740598ca2e657a016de81d5286f0fe6ff43d3f2504d26c3db022627ac0f8c8fa",
         "site-level MAHOMES summary CSV",
         "structure-level inspection CSV",
         "MODEL_PRESET_MAP",
@@ -1260,6 +1352,8 @@ def main() -> int:
         check_test_eval_safety,
         check_prelaunch_run_dir_reuse,
         check_loss_weight_validation,
+        check_training_efficiency_defaults_and_validation,
+        check_grad_accum_final_partial_window,
         check_uncertainty_task_loss_weighter,
         check_collapsed4_metal_loss_helpers,
         check_ec_group_weighting_config,

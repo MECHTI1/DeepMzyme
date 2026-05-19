@@ -187,10 +187,15 @@ can reproduce a command-line run.
 | Output/reporting | `--allow-train-loss-test-eval-debug` | false | Debug-only override allowing held-out test evaluation without validation selection. | Advanced warning |
 | Runtime | `--device` | `cpu` | PyTorch device such as `cuda` or `cpu`. | Expose |
 | Runtime | `--deterministic` | false | Enables stricter deterministic PyTorch behavior for reproducibility, possibly slower. | Expose |
+| Runtime | `--num-workers` | `0` | Number of DataLoader worker processes. Default preserves single-process loading. | Advanced |
+| Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. | Expose |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of pocket graphs per mini-batch. | Expose / sweep |
 | Training | `--learning-rate` | `3e-4` | Optimizer step size. Previous serious baselines often start at `3e-5`. | Expose / sweep |
+| Training | `--grad-clip-norm` | `1.0` | Gradient clipping max norm. Values `<= 0` disable clipping. | Advanced |
+| Training | `--amp` | false | Optional CUDA automatic mixed precision for training only; evaluation stays FP32. | Advanced |
+| Training | `--grad-accum-steps` | `1` | Number of mini-batches accumulated before each optimizer step. | Advanced |
 | Training | `--weight-decay` | `1e-4` | L2-style optimizer regularization. | Expose / sweep |
 | Training | `--seed` | `42` | Random seed for split/sampling/model initialization. | Expose / sweep |
 | Training | `--lr-schedule` | `fixed`; choices `fixed`, `cosine`, `step` | Learning-rate schedule. | Expose / sweep |

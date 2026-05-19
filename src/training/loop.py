@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -16,23 +18,67 @@ def train_epoch(
     loader: DataLoader,
     optimizer: torch.optim.Optimizer,
     device: str = "cpu",
+    *,
+    grad_clip_norm: float = 1.0,
+    grad_accum_steps: int = 1,
+    use_amp: bool = False,
+    scaler: torch.amp.GradScaler | None = None,
 ) -> float:
+    if grad_accum_steps < 1:
+        raise ValueError(f"grad_accum_steps must be >= 1, got {grad_accum_steps}.")
     model.train()
     total = 0.0
+    n_batches = len(loader)
+    amp_active = bool(use_amp) and torch.cuda.is_available() and str(device).startswith("cuda")
+    if amp_active and scaler is None:
+        scaler = torch.amp.GradScaler("cuda")
 
-    for batch in loader:
+    def _autocast_context():
+        if amp_active:
+            return torch.autocast(device_type="cuda")
+        return contextlib.nullcontext()
+
+    def _optimizer_step() -> None:
+        if amp_active:
+            assert scaler is not None
+            if grad_clip_norm > 0.0:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            if grad_clip_norm > 0.0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+            optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+
+    optimizer.zero_grad(set_to_none=True)
+    pending = 0
+    for batch_idx, batch in enumerate(loader):
         batch = batch.to(device)
-        optimizer.zero_grad()
-        model_outputs = model(batch)
-        loss = model_outputs["loss"]
+        window_start = (batch_idx // grad_accum_steps) * grad_accum_steps
+        window_size = min(grad_accum_steps, n_batches - window_start)
+        with _autocast_context():
+            model_outputs = model(batch)
+            loss = model_outputs["loss"]
         if not bool(torch.isfinite(loss).item()):
             raise FloatingPointError(f"Non-finite training loss detected: {float(loss.item())}")
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        optimizer.step()
         total += float(loss.item())
+        loss_for_backward = loss / window_size
+        if amp_active:
+            assert scaler is not None
+            scaler.scale(loss_for_backward).backward()
+        else:
+            loss_for_backward.backward()
+        pending += 1
+        if pending == window_size:
+            _optimizer_step()
+            pending = 0
 
-    return total / max(1, len(loader))
+    if pending > 0:
+        _optimizer_step()
+
+    return total / max(1, n_batches)
 
 
 @torch.no_grad()

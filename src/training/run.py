@@ -30,7 +30,12 @@ from metal_objectives import (
 from model_variants import build_pocket_classifier
 from project_paths import resolve_runs_dir
 from training.labels import ec_prefix_from_label_token, parse_structure_identity
-from training.config import TrainConfig, config_to_payload, required_targets_for_task
+from training.config import (
+    TrainConfig,
+    config_to_payload,
+    default_selection_metric_for_task,
+    required_targets_for_task,
+)
 from training.data import load_training_pockets_with_report_from_dir
 from training.final_test_reporting import (
     build_metal_final_reporting_payload,
@@ -109,6 +114,27 @@ def set_seed(seed: int, *, deterministic: bool = False) -> None:
 
 def split_seed_for_config(config: TrainConfig) -> int:
     return int(config.seed if config.split_seed is None else config.split_seed)
+
+
+def resolve_selection_metric(config: TrainConfig) -> TrainConfig:
+    if config.selection_metric is not None:
+        return config
+    metric = default_selection_metric_for_task(
+        config.task,
+        has_validation=config.val_fraction > 0.0 or config.n_folds is not None,
+    )
+    return replace(config, selection_metric=metric)
+
+
+def dataloader_runtime_kwargs(config: TrainConfig) -> dict[str, Any]:
+    effective_pin_memory = bool(config.pin_memory) and str(config.device).startswith("cuda")
+    kwargs: dict[str, Any] = {
+        "num_workers": int(config.num_workers),
+        "pin_memory": effective_pin_memory,
+    }
+    if config.num_workers > 0:
+        kwargs["persistent_workers"] = True
+    return kwargs
 
 
 PRELAUNCH_RUN_DIR_FILENAMES = frozenset(
@@ -286,12 +312,17 @@ def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str,
 
 
 def validate_training_configuration(config: TrainConfig) -> None:
+    config = resolve_selection_metric(config)
     if config.gvp_layers < 1:
         raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
     if config.head_mlp_layers < 1:
         raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
     if config.ec_label_depth < 1:
         raise ValueError(f"--ec-label-depth must be at least 1, got {config.ec_label_depth}")
+    if config.grad_accum_steps < 1:
+        raise ValueError(f"--grad-accum-steps must be at least 1, got {config.grad_accum_steps}.")
+    if config.num_workers < 0:
+        raise ValueError(f"--num-workers must be >= 0, got {config.num_workers}.")
     ec_grouping_mode_for_metrics(config.ec_group_weighting)
     if config.ec_contrastive_weight < 0.0:
         raise ValueError(
@@ -343,6 +374,12 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "Selection metric "
             f"{config.selection_metric!r} requires validation, but --val-fraction is 0. "
             "Either enable validation or choose a train-based metric such as 'train_loss'."
+        )
+    if has_validation and config.selection_metric == "train_loss":
+        warnings.warn(
+            "selection_metric is 'train_loss' but a validation split is configured; "
+            "model selection should normally use a validation metric.",
+            RuntimeWarning,
         )
     if config.run_test_eval and not config.allow_train_loss_test_eval_debug:
         if not has_validation:
@@ -860,6 +897,7 @@ def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[fl
 
 
 def prepare_run(config: TrainConfig) -> PreparedRun:
+    config = resolve_selection_metric(config)
     validate_training_configuration(config)
     config_payload = config_to_payload(config)
     config_payload.update(infer_split_identity(config))
@@ -1061,6 +1099,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 split.train_pockets,
                 generator=sampler_generator,
             )
+        loader_worker_kwargs = dataloader_runtime_kwargs(config)
         train_loader = DataLoader(
             PocketGraphDataset(
                 split.train_pockets,
@@ -1078,6 +1117,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
             sampler=train_sampler,
+            **loader_worker_kwargs,
         )
         val_loader = (
             DataLoader(
@@ -1094,6 +1134,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 ),
                 batch_size=config.batch_size,
                 shuffle=False,
+                **loader_worker_kwargs,
             )
             if split.val_pockets
             else None
@@ -1235,11 +1276,23 @@ def train_and_select_checkpoint(
     prepared: PreparedRun,
     config: TrainConfig,
 ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    config = resolve_selection_metric(config)
     history: list[dict[str, Any]] = []
     best_metric: float | None = None
     best_checkpoint = None
+    amp_active = bool(config.use_amp) and torch.cuda.is_available() and str(config.device).startswith("cuda")
+    grad_scaler = torch.amp.GradScaler("cuda") if amp_active else None
     for epoch in range(1, config.epochs + 1):
-        train_loss = train_epoch(prepared.model, prepared.train_loader, prepared.optimizer, device=config.device)
+        train_loss = train_epoch(
+            prepared.model,
+            prepared.train_loader,
+            prepared.optimizer,
+            device=config.device,
+            grad_clip_norm=config.grad_clip_norm,
+            grad_accum_steps=config.grad_accum_steps,
+            use_amp=config.use_amp,
+            scaler=grad_scaler,
+        )
         train_metrics = evaluate_split_metrics(
             prepared.model,
             prepared.train_loader,
@@ -1377,6 +1430,7 @@ def evaluate_held_out_test_split(
             ),
             batch_size=config.batch_size,
             shuffle=False,
+            **dataloader_runtime_kwargs(config),
         )
         test_predictions = evaluate_epoch_with_predictions(prepared.model, test_loader, device=config.device)
         metrics = metrics_from_predictions(
@@ -1592,6 +1646,7 @@ def persist_run_outputs(
 
 
 def run_training(config: TrainConfig) -> Path:
+    config = resolve_selection_metric(config)
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
         print("Omitting conservative node features:", ", ".join(config.omit_node_features))
@@ -1603,6 +1658,7 @@ def run_training(config: TrainConfig) -> Path:
 
 
 def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Path:
+    config = resolve_selection_metric(config)
     if not config.run_test_eval:
         raise ValueError("evaluate_saved_checkpoint requires config.run_test_eval=True.")
     if config.test_structure_dir is None or config.test_summary_csv is None:
@@ -1636,6 +1692,7 @@ def evaluate_softmax_mean_checkpoint_ensemble(
     single_checkpoint_report_paths: list[Path] | None = None,
 ) -> Path:
     """Write a Stage 7 softmax-mean ensemble report from five fixed prediction artifacts."""
+    config = resolve_selection_metric(config)
     if not config.run_test_eval:
         raise ValueError("evaluate_softmax_mean_checkpoint_ensemble requires config.run_test_eval=True.")
     if config.final_test_ensemble_mode != "softmax_mean_5_seeds":
