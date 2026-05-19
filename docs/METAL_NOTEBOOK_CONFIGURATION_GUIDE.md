@@ -311,16 +311,20 @@ Default first baseline:
 - `RING_EDGE_MODE = "with_ring"`
 - `REQUIRE_RING_EDGES = False`
 - `PREPARE_MISSING_RING_EDGES = True`
+- `RING_FEATURES_DIR = ""`
+- `RING_EXE_PATH = "DeepMzyme_Data/ring-4.0/out/bin/ring"`
 - `ALLOW_MISSING_EXTERNAL_FEATURES = False`
 - `PREPARE_MISSING_EXTERNAL_FEATURES = True`
 
 The notebook now starts from RING-enabled graph construction and strict updated
 external features by default. Existing RING files are reused; missing files are
-generated when the corresponding preparation tool is available. Missing updated
-external features are not allowed to fall back to default-filled values. If
-`REQUIRE_RING_EDGES = True`, incomplete RING coverage should fail instead of
-silently mixing graph types. To run a radius-only ablation, set
-`RING_EDGE_MODE = "without_ring"`.
+generated when the corresponding preparation tool is available. The default
+empty `RING_FEATURES_DIR` resolves to the dataset-adjacent `RING_features/`
+directory, and the default `RING_EXE_PATH` resolves to the bundled/local
+`ring-4.0/out/bin/ring` executable. Missing updated external features are not
+allowed to fall back to default-filled values. If `REQUIRE_RING_EDGES = True`,
+incomplete RING coverage should fail instead of silently mixing graph types. To
+run a radius-only ablation, set `RING_EDGE_MODE = "without_ring"`.
 
 ### Training hyperparameters
 

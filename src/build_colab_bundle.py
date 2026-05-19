@@ -297,6 +297,14 @@ def main() -> None:
     if external_features_dir.exists():
         append_unique_path(selected_paths, external_features_dir)
 
+    ring_features_dir = dataset_root.parent / "RING_features"
+    if ring_features_dir.exists():
+        append_unique_path(selected_paths, ring_features_dir)
+
+    ring_runtime_dir = dataset_root.parent / "ring-4.0"
+    if ring_runtime_dir.exists():
+        append_unique_path(selected_paths, ring_runtime_dir)
+
     if args.skip_bundle:
         print(f"Prepared train directory: {train_dir}")
         print(f"Prepared test directory: {test_dir}")
@@ -310,6 +318,14 @@ def main() -> None:
             print(f"Prepared external features directory: {external_features_dir}")
         else:
             print(f"Note: updated_feature_extraction not found at {external_features_dir}, will not be bundled.")
+        if ring_features_dir.exists():
+            print(f"Prepared RING features directory: {ring_features_dir}")
+        else:
+            print(f"Note: RING_features not found at {ring_features_dir}, will not be bundled.")
+        if ring_runtime_dir.exists():
+            print(f"Prepared RING runtime directory: {ring_runtime_dir}")
+        else:
+            print(f"Note: ring-4.0 not found at {ring_runtime_dir}, will not be bundled.")
         return
 
     output_bundle = args.output_bundle or default_output_bundle(dataset_root)
@@ -321,6 +337,14 @@ def main() -> None:
         print(f"Included updated external features: {external_features_dir}")
     else:
         print(f"Note: updated_feature_extraction not found at {external_features_dir}, not included in bundle.")
+    if ring_features_dir.exists():
+        print(f"Included RING features: {ring_features_dir}")
+    else:
+        print(f"Note: RING_features not found at {ring_features_dir}, not included in bundle.")
+    if ring_runtime_dir.exists():
+        print(f"Included RING runtime: {ring_runtime_dir}")
+    else:
+        print(f"Note: ring-4.0 not found at {ring_runtime_dir}, not included in bundle.")
     if train_csv is not None:
         print(f"Included train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
     if test_csv is not None:
