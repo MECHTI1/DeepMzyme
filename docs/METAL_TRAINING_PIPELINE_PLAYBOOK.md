@@ -412,6 +412,103 @@ Do not use five-class validation numbers to replace or rank six-class anchors
 without a separately documented comparison goal. Stage 6 and Stage 7 source
 runs must all use the same `METAL_LABEL_SCHEME`.
 
+#### Five-class joint hybrid metal-target overlay
+
+Use this overlay for an explicitly labeled pocket-level validation diagnostic
+of the joint-task GVP + hybrid fusion family while selecting checkpoints by
+metal balanced accuracy. It keeps the five-class target separate from six-class
+evidence and applies additional metal-loss multipliers to Fe and Mn on top of
+the selected training-split metal class-weight mode.
+
+Notebook configuration block:
+
+```python
+TASK = "joint"
+METAL_LABEL_SCHEME = "five_class"
+RUN_MODE = "single"
+RECOMMENDED_RUN_SET = "custom"
+MODEL_PRESET = "GVP + hybrid fusion"
+RUN_BATCH_ID = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket_single"
+SUMMARY_BASENAME = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket_single"
+RUN_NAME_PREFIX = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket"
+
+EPOCHS = 50
+VAL_FRACTION = 0.15
+SPLIT_BY = "pocket_id"
+SELECTION_METRIC = "val_metal_balanced_acc"
+RING_EDGE_MODE = "with_ring"
+
+ESM_EMBEDDINGS_DIR = ""  # set to your embeddings folder when available
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = True
+
+LEARNING_RATES_CSV = "3.705631497756492e-05"
+WEIGHT_DECAYS_CSV = "3e-07"
+BATCH_SIZES_CSV = "12"
+SEEDS_CSV = "42"
+LR_SCHEDULES_CSV = "fixed"
+
+HIDDEN_S_VALUES_CSV = "320"
+HIDDEN_V_VALUES_CSV = "16"
+EDGE_HIDDEN_VALUES_CSV = "192"
+GVP_LAYERS_VALUES_CSV = "4"
+HEAD_MLP_LAYERS_VALUES_CSV = "2"
+EDGE_RADIUS_VALUES_CSV = "7.0"
+ESM_FUSION_DIM_VALUES_CSV = "256"
+EARLY_ESM_DIM_VALUES_CSV = "48"
+EARLY_ESM_DROPOUT = 0.05
+
+METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"
+BALANCE_METAL_SITE_SYMBOLS = False
+METAL_LOSS_FUNCTION = "cross_entropy"
+METAL_LABEL_SMOOTHING = 0.0
+METAL_COLLAPSED_LOSS_WEIGHT = 0.0
+MN_LOSS_MULTIPLIER = 1.5
+FE_LOSS_MULTIPLIER = 1.7
+CU_LOSS_MULTIPLIER = 1.0
+ZN_LOSS_MULTIPLIER = 1.0
+CO_LOSS_MULTIPLIER = 1.0
+NI_LOSS_MULTIPLIER = 1.0
+CLASS_VIII_LOSS_MULTIPLIER = 1.0
+
+METAL_LOSS_WEIGHT = 2.0
+EC_LOSS_WEIGHT = 0.25
+EC_LABEL_DEPTHS_CSV = "1"
+EC_CONTRASTIVE_WEIGHTS_CSV = "0.0"
+EC_GROUP_WEIGHTING = "structure_id"
+
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+```
+
+Expected outputs/files:
+
+- One validation-only run directory under
+  `<RUNS_DIR>/<RUN_BATCH_ID>/<RUN_NAME_PREFIX>...`.
+- `best_model_checkpoint.pt`, `metrics_history.csv`, `run_config.json`,
+  `run_metadata.json`, and split/validation artifacts in the run directory.
+- Notebook-generated `active_run_config.json` and `active_run_config.md` before
+  launch.
+- Summary artifacts using `SUMMARY_BASENAME` after the notebook summary cells.
+
+Decision gate:
+
+- Treat this as a one-off validation-only pocket-level diagnostic, not a
+  replacement anchor.
+- Proceed to Stage 6 only if the run completes without held-out-test output,
+  uses `METAL_LABEL_SCHEME = "five_class"`, `TASK = "joint"`,
+  `MODEL_PRESET = "GVP + hybrid fusion"`,
+  `SELECTION_METRIC = "val_metal_balanced_acc"`, `VAL_FRACTION = 0.15`,
+  `SPLIT_BY = "pocket_id"`, and the saved configs show
+  `MN_LOSS_MULTIPLIER = 1.5` and `FE_LOSS_MULTIPLIER = 1.7`.
+- Do not compare this pocket-level validation value directly against grouped
+  `pdbid` validation anchors, because `SPLIT_BY = "pocket_id"` is a different
+  and less conservative split policy.
+- Do not compare the five-class validation value directly against six-class
+  anchors. Any promotion requires same-scheme Stage 6 grouped-fold
+  confirmation with shared folds, paired bootstrap confidence intervals, and
+  rare-class recall protection.
+
 ### Optional multi-objective Optuna
 
 `OPTUNA_MULTIOBJECTIVE = True` creates a validation-only multi-objective Optuna
