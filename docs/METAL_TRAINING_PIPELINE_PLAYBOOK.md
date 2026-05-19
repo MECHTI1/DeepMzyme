@@ -458,6 +458,7 @@ Do not launch Stage 5D, Stage 5E, or Stage 5F until Stage 5C has produced a
 Stage 6 grouped-fold candidate that clears the paired validation-improvement
 threshold defined in this playbook's Stage 5C decision gate.
 
+
 If this gate is not passed, stop advanced fusion escalation and continue with
 the best validated simpler family.
 

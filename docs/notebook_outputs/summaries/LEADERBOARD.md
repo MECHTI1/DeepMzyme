@@ -8,6 +8,7 @@ Tiers reflect reliability: **A** = 5-seed 50-epoch seed-repeat, **B** = 3-seed o
 
 ## Tier A — 5-seed, 50-epoch seed-repeat (most reliable)
 
+
 | Model | Round | Best single val | Best seed | Mean val (5 seeds) | Summary |
 |---|---|---|---|---|---|
 | GVP + late fusion | Round 4 | **0.6880** (seed 2026) | trial49 seed2026 | 0.6354 | [summary](summary_run_gvp_late_fusion_round4_top3_seedrepeat_50epoch.md) |

@@ -274,6 +274,7 @@ To answer "what is the next metal-training step", the agent must:
 Use the playbook stage names exactly:
 
 
+
 - Stage 0: environment/data readiness
 - Stage 1: 1-epoch smoke
 - Stage 2A: Only-GVP validation anchor

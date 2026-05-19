@@ -5,6 +5,7 @@ evidence in saved outputs, not in stable workflow guides.
 
 ## Authority And Evidence Rules
 
+
 - `Plan.md` remains the design authority for intended architecture, training
   logic, experiment policy, and project direction.
 - Source code under `src/` is evidence of implemented behavior.

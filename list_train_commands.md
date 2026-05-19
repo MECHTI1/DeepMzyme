@@ -6,6 +6,7 @@ search spaces, Stage 6 confirmation, and Stage 7 final-test policy.
 
 The main policy is:
 
+
 1. Use the legacy **Non-overlapped PinMyMetal** split for final held-out testing unless a planned comparison explicitly selects another named split.
 2. Select checkpoints by **validation metrics**, not by the held-out test set.
 3. Run simple baselines before complex fusion models.
