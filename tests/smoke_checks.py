@@ -26,7 +26,7 @@ from training.final_test_reporting import (
     metal_bootstrap_metric_cis,
 )
 from training.loop import balanced_class_weights_from_pockets, class_weights_from_labels
-from training.run import ec_group_metrics_from_logits, validate_training_configuration
+from training.run import build_run_dir, ec_group_metrics_from_logits, validate_training_configuration
 from training.splits import assign_ec_group_metadata, split_pockets_k_fold
 from metal_objectives import (
     collapse_metal_logits_to_4,
@@ -117,6 +117,34 @@ def check_test_eval_safety() -> None:
         ]
     )
     validate_training_configuration(debug_config)
+
+
+def check_prelaunch_run_dir_reuse() -> None:
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_run_dir_") as tmp:
+        runs_dir = Path(tmp) / "runs"
+        prelaunch_dir = runs_dir / "trial_0000"
+        prelaunch_dir.mkdir(parents=True)
+        (prelaunch_dir / "active_run_config.json").write_text("{}", encoding="utf-8")
+        (prelaunch_dir / "active_run_config.md").write_text("# Active Run Configuration\n", encoding="utf-8")
+        (prelaunch_dir / "optuna_trial_status.json").write_text('{"status": "failed"}', encoding="utf-8")
+
+        config = parse_args(["--runs-dir", str(runs_dir), "--run-name", "trial_0000"])
+        if build_run_dir(config) != prelaunch_dir:
+            raise AssertionError("Prelaunch notebook run directory was not reused.")
+        if (prelaunch_dir / "optuna_trial_status.json").exists():
+            raise AssertionError("Stale Optuna trial status was not removed before retrying the run.")
+
+        completed_dir = runs_dir / "completed_run"
+        completed_dir.mkdir()
+        (completed_dir / "run_config.json").write_text("{}", encoding="utf-8")
+        completed_config = parse_args(["--runs-dir", str(runs_dir), "--run-name", "completed_run"])
+        try:
+            build_run_dir(completed_config)
+        except FileExistsError as exc:
+            if "not an empty/notebook prelaunch directory" not in str(exc):
+                raise AssertionError(f"Existing run directory failed with an unclear error: {exc}") from exc
+        else:
+            raise AssertionError("Existing completed run directory was reused.")
 
 
 def check_loss_weight_validation() -> None:
@@ -1230,6 +1258,7 @@ def main() -> int:
     checks = (
         check_training_cli_help,
         check_test_eval_safety,
+        check_prelaunch_run_dir_reuse,
         check_loss_weight_validation,
         check_uncertainty_task_loss_weighter,
         check_collapsed4_metal_loss_helpers,

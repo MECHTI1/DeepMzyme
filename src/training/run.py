@@ -111,11 +111,40 @@ def split_seed_for_config(config: TrainConfig) -> int:
     return int(config.seed if config.split_seed is None else config.split_seed)
 
 
+PRELAUNCH_RUN_DIR_FILENAMES = frozenset(
+    {
+        "active_run_config.json",
+        "active_run_config.md",
+        "optuna_trial_status.json",
+    }
+)
+
+
+def reusable_prelaunch_run_dir(run_dir: Path) -> bool:
+    if not run_dir.is_dir():
+        return False
+    existing_names = {path.name for path in run_dir.iterdir()}
+    return existing_names.issubset(PRELAUNCH_RUN_DIR_FILENAMES)
+
+
 def build_run_dir(config: TrainConfig) -> Path:
     runs_dir = resolve_runs_dir(config.runs_dir, create=True)
     effective_name = config.run_name or datetime.now().strftime("run_%Y%m%d_%H%M%S")
     run_dir = runs_dir / effective_name
-    run_dir.mkdir(parents=True, exist_ok=False)
+    try:
+        run_dir.mkdir(parents=True, exist_ok=False)
+    except FileExistsError as exc:
+        if reusable_prelaunch_run_dir(run_dir):
+            stale_status_path = run_dir / "optuna_trial_status.json"
+            if stale_status_path.exists():
+                stale_status_path.unlink()
+            return run_dir
+        existing_names = sorted(path.name for path in run_dir.iterdir()) if run_dir.is_dir() else []
+        detail = f" Existing entries: {', '.join(existing_names[:10])}." if existing_names else ""
+        raise FileExistsError(
+            f"Run directory already exists and is not an empty/notebook prelaunch directory: {run_dir}.{detail} "
+            "Choose a new --run-name or remove the existing run directory."
+        ) from exc
     return run_dir
 
 
