@@ -63,9 +63,11 @@ evidence in saved outputs, not in stable workflow guides.
   Optuna + 3-seed top-K repeat for the joint task.
 - Trusted split policy for current evidence: legacy Non-overlapped PinMyMetal
   train/test split, with validation split by `pdbid` and `VAL_FRACTION=0.15`
-  for model selection. New Harsh Split PinMyMetal and Common-PDBID 70/30 Split
-  PinMyMetal variants exist for future comparisons but are not the basis of the
-  current reported anchors.
+  for model selection. The `pdbid` validation grouping also prevents
+  `pdbid_chain` train/validation overlap, guarding repeated or binuclear
+  same-chain metal sites from leaking into validation. New Harsh Split
+  PinMyMetal and Common-PDBID 70/30 Split PinMyMetal variants exist for future
+  comparisons but are not the basis of the current reported anchors.
 - Trusted metal label scheme for current anchors: default six-class
   `split_all_metals` / `six_class`. The new `five_class` Co/Ni-grouped target
   scheme is available for explicitly labeled validation-only comparisons, but

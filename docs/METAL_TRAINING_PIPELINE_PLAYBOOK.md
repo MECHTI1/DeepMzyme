@@ -83,8 +83,11 @@ For all comparison, HPO, and Stage 6 confirmation stages:
 
 - Keep `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`.
 - Keep `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless a new split
-  experiment is explicitly being labeled. Stage 6 grouped-fold confirmation is
-  the planned exception: it sets `VAL_FRACTION = 0.0`, `SPLIT_BY = "pdbid"`,
+  experiment is explicitly being labeled. `pdbid` grouping is stricter than
+  `pdbid_chain` grouping: it keeps all chains and pockets from one PDB entry on
+  one side, so binuclear or repeated same-chain metal sites cannot leak across
+  train/validation. Stage 6 grouped-fold confirmation is the planned exception:
+  it sets `VAL_FRACTION = 0.0`, `SPLIT_BY = "pdbid"`,
   `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED`.
 - Use validation metrics, usually `val_metal_balanced_acc`, for checkpoint,
   hyperparameter, architecture, and fusion decisions.

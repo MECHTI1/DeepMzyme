@@ -90,6 +90,7 @@ def check_training_cli_help() -> None:
         "--num-workers",
         "--pin-memory",
         "--allow-train-loss-test-eval-debug",
+        "--split-by",
     )
     missing = [option for option in expected_options if option not in help_text]
     if missing:
@@ -276,6 +277,7 @@ def check_training_efficiency_defaults_and_validation() -> None:
         "num_workers": 0,
         "pin_memory": False,
         "normalize_message_aggregation": False,
+        "split_by": "pdbid",
     }
     for field_name, expected_value in expected_defaults.items():
         observed_value = getattr(default_config, field_name)

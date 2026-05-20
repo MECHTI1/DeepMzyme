@@ -83,7 +83,7 @@ Before launching a run, verify these resolved notebook values:
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
 | Split | `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"` |
 | Validation split | `VAL_FRACTION = 0.15` |
-| Split grouping | `SPLIT_BY = "pdbid"` |
+| Split grouping | `SPLIT_BY = "pdbid"`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
 | Held-out test during training | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
 | Device on G4 | `DEVICE = "cuda"` |

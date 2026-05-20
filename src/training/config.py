@@ -709,6 +709,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=str,
         default="pdbid",
         choices=VALID_SPLIT_BY_CHOICES,
+        help=(
+            "Group identity used for train/validation splitting. Default 'pdbid' keeps "
+            "all chains and pockets from one PDB entry on the same side, so there is no "
+            "pdbid_chain train/validation overlap; this guards repeated or binuclear "
+            "same-chain metal sites from leaking into validation."
+        ),
     )
     return parser
 

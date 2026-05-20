@@ -214,7 +214,7 @@ can reproduce a command-line run.
 | Training | `--lr-step-size` | `0`; required positive for `step` | Epoch interval for step LR decay. | Expose |
 | Training | `--lr-decay-gamma` | `0.5` | Multiplicative LR decay for step schedule. | Expose |
 | Split/validation | `--val-fraction` | `0.0` in CLI | Fraction of training data reserved for validation when not using folds. Real model selection should use validation. | Expose |
-| Split/validation | `--split-by` | `pdbid`; choices `pdbid`, `pdbid_chain`, `structure_id`, `pocket_id` | Group identity used to avoid leakage when splitting train/validation. | Expose |
+| Split/validation | `--split-by` | `pdbid`; choices `pdbid`, `pdbid_chain`, `structure_id`, `pocket_id` | Group identity used to avoid leakage when splitting train/validation. Default `pdbid` is stricter than `pdbid_chain`, so same-chain repeated or binuclear metal sites cannot cross train/validation. | Expose |
 | Split/validation | `--n-folds`, `--fold-index` | optional pair | Enables one fold of grouped cross-validation instead of a simple validation fraction. | Advanced |
 | Data policy | `--unsupported-metal-policy` | `error`; choices `error`, `skip` | Whether unsupported metal labels should fail or be skipped during loading. | Advanced |
 | Data policy | `--invalid-structure-policy` | `skip`; choices `error`, `skip` | Whether unreadable/invalid structures should fail or be skipped. | Advanced |

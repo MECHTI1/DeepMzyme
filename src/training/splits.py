@@ -497,6 +497,7 @@ def build_split_diagnostics(
         "train_val_overlap_pdbid": overlap_counts["pdbid"],
         "train_val_overlap_counts": overlap_counts,
         "train_val_overlap_examples": overlap_examples,
+        "split_leakage_guard": split_leakage_guard_explanation(split_by),
         "train_metal_distribution": train_metal_distribution,
         "val_metal_distribution": val_metal_distribution,
         "train_ec_distribution": train_ec_distribution,
@@ -516,6 +517,27 @@ def _format_distribution(distribution: dict[str, int]) -> str:
 
 def _format_missing(classes: list[str]) -> str:
     return ", ".join(classes) if classes else "none"
+
+
+def split_leakage_guard_explanation(split_by: str) -> str:
+    split_by = validate_split_by(split_by)
+    if split_by == "pdbid":
+        return (
+            "split_by=pdbid keeps every chain and pocket from the same PDB entry on one "
+            "side of train/validation, so pdbid_chain overlap is also blocked. This "
+            "guards repeated or binuclear same-chain metal sites from leaking into validation."
+        )
+    if split_by == "pdbid_chain":
+        return (
+            "split_by=pdbid_chain keeps all pockets from the same PDB chain on one side "
+            "of train/validation. Different chains from the same PDB entry may still be "
+            "split across train/validation."
+        )
+    return (
+        f"split_by={split_by} is less strict than pdbid_chain for metal-site leakage. "
+        "Use split_by=pdbid for the default reportable workflow unless this overlap risk "
+        "is intentional."
+    )
 
 
 def format_split_diagnostics(report: dict[str, Any]) -> str:
@@ -543,6 +565,7 @@ def format_split_diagnostics(report: dict[str, Any]) -> str:
             f"structure_id={report.get('train_val_overlap_structure_id')}, "
             f"pocket_id={report.get('train_val_overlap_pocket_id')}"
         ),
+        f"leakage guard: {report.get('split_leakage_guard')}",
         f"train metal distribution: {_format_distribution(report.get('train_metal_distribution', {}))}",
         f"validation metal distribution: {_format_distribution(report.get('val_metal_distribution', {}))}",
         f"missing train metal classes: {_format_missing(report.get('missing_train_metal_classes', []))}",
