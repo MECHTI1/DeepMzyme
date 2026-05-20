@@ -660,6 +660,10 @@ def metrics_from_predictions(
                     label_name: ec_metrics["per_class_recall"][label_idx]
                     for label_idx, label_name in ec_label_map.items()
                 },
+                f"{prefix}_ec_per_class_support": {
+                    label_name: ec_metrics["per_class_support"][label_idx]
+                    for label_idx, label_name in ec_label_map.items()
+                },
             }
         )
         for level in range(1, ec_label_depth + 1):
@@ -865,7 +869,28 @@ def write_epoch_metric_files(run_dir: Path, history: list[dict[str, Any]]) -> No
     _write_metrics_csv(run_dir / "val_metrics.csv", history, val_fields)
 
 
-def format_epoch_log(record: dict[str, Any]) -> str:
+def format_per_class_metric_block(record: dict[str, Any], key: str, support_key: str) -> str | None:
+    values = record.get(key)
+    if not isinstance(values, dict) or not values:
+        return None
+    supports = record.get(support_key)
+    if not isinstance(supports, dict):
+        supports = {}
+    formatted = []
+    for label, value in values.items():
+        if value is None:
+            value_text = "NA"
+        else:
+            value_text = f"{float(value):.4f}"
+        support = supports.get(label)
+        if support is None:
+            formatted.append(f"{label}:{value_text}")
+        else:
+            formatted.append(f"{label}:{value_text}(n={support})")
+    return ",".join(formatted)
+
+
+def format_epoch_log(record: dict[str, Any], *, include_per_class: bool = False) -> str:
     parts = [
         f"epoch={record['epoch']}",
         f"train_loss={record['train_loss']:.4f}",
@@ -900,6 +925,26 @@ def format_epoch_log(record: dict[str, Any]) -> str:
     if record.get("metal_loss_scale") is not None and record.get("ec_loss_scale") is not None:
         parts.append(f"metal_loss_scale={record['metal_loss_scale']:.4f}")
         parts.append(f"ec_loss_scale={record['ec_loss_scale']:.4f}")
+    if include_per_class:
+        for label, key, support_key in (
+            ("train_metal_class_recall", "train_metal_per_class_recall", "train_metal_per_class_support"),
+            ("val_metal_class_recall", "val_metal_per_class_recall", "val_metal_per_class_support"),
+            (
+                "train_metal_collapsed4_class_recall",
+                "train_metal_collapsed4_per_class_recall",
+                "train_metal_collapsed4_per_class_support",
+            ),
+            (
+                "val_metal_collapsed4_class_recall",
+                "val_metal_collapsed4_per_class_recall",
+                "val_metal_collapsed4_per_class_support",
+            ),
+            ("train_ec_class_recall", "train_ec_per_class_recall", "train_ec_per_class_support"),
+            ("val_ec_class_recall", "val_ec_per_class_recall", "val_ec_per_class_support"),
+        ):
+            block = format_per_class_metric_block(record, key, support_key)
+            if block:
+                parts.append(f"{label}=[{block}]")
     return " ".join(parts)
 
 
@@ -1384,7 +1429,7 @@ def train_and_select_checkpoint(
             )
         if prepared.scheduler is not None:
             prepared.scheduler.step()
-        print(format_epoch_log(record))
+        print(format_epoch_log(record, include_per_class=config.log_per_class_metrics))
     return history, best_checkpoint
 
 

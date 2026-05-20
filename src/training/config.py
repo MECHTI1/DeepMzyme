@@ -177,6 +177,7 @@ class TrainConfig:
     lr_step_size: int = 0
     lr_decay_gamma: float = 0.5
     save_epoch_checkpoints: bool = False
+    log_per_class_metrics: bool = False
     selection_metric: str | None = None
     final_test_primary_report: str = "single_checkpoint"
     final_test_ensemble_mode: str = "single_checkpoint"
@@ -394,6 +395,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr-step-size", type=int, default=0)
     parser.add_argument("--lr-decay-gamma", type=float, default=0.5)
     parser.add_argument("--save-epoch-checkpoints", action="store_true")
+    parser.add_argument(
+        "--log-per-class-metrics",
+        action="store_true",
+        help=(
+            "Expand each epoch log line with per-class recall/support summaries. "
+            "Metrics are already saved to epoch_metrics.csv; this only changes stdout."
+        ),
+    )
     parser.add_argument("--val-fraction", type=float, default=0.0)
     parser.add_argument("--n-folds", type=int, default=None)
     parser.add_argument("--fold-index", type=int, default=None)
@@ -794,6 +803,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         lr_step_size=args.lr_step_size,
         lr_decay_gamma=args.lr_decay_gamma,
         save_epoch_checkpoints=args.save_epoch_checkpoints,
+        log_per_class_metrics=args.log_per_class_metrics,
         selection_metric=selection_metric,
         final_test_primary_report=args.final_test_primary_report,
         final_test_ensemble_mode=args.final_test_ensemble_mode,
