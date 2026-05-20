@@ -856,7 +856,7 @@ def check_colab_notebook_sweep_source() -> None:
         'RING_EDGE_MODE = "with_ring"',
         'METAL_NODE_MODE = "none"',
         'STRUCTURAL_READOUT_SCOPE = "auto"',
-        "CLASSIFIER_POOL_DISTANCE_CUTOFF = 0.0",
+        'CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
         'ALLOW_MISSING_EXTERNAL_FEATURES = False',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
@@ -889,6 +889,7 @@ def check_colab_notebook_sweep_source() -> None:
         "METAL_COLLAPSED_LOSS_WEIGHT = 0.0",
         "OPTUNA_MULTIOBJECTIVE = False",
         'OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
+        'OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
         "RING_EXE_PATH",
         '"src" / "report_runs.py"',
         "Recommended First Runs",
@@ -917,6 +918,16 @@ def check_colab_generated_training_commands_parse() -> None:
     )
     if command_builder_source is None:
         raise AssertionError("Could not find the Colab command-builder cell.")
+    optuna_runner_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code" and "def sample_optuna_config" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if optuna_runner_source is None:
+        raise AssertionError("Could not find the Colab Optuna runner cell.")
 
     import contextlib
     import copy
@@ -946,10 +957,62 @@ def check_colab_generated_training_commands_parse() -> None:
                 "allow_single_mode_to_truncate_comparison": False,
             },
             "optuna": {
+                "intensity": "debug",
+                "search_preset": "first_useful_only_gvp_narrow",
+                "n_trials": 4,
+                "timeout_minutes": 0,
+                "max_epochs_per_trial": 3,
+                "multiobjective": False,
+                "selection_metric": "task_default",
+                "direction": "maximize",
+                "study_name": "smoke_optuna",
+                "split_seed": 42,
+                "sampler_seed": None,
+                "storage": "",
+                "allow_incompatible_study_reuse": False,
+                "use_pruning": False,
+                "pruner_type": "none",
+                "pruning_min_epoch": 8,
+                "pruner_min_resource": 8,
+                "pruner_reduction_factor": 3,
+                "auto_configure_budget": False,
+                "retrain_best_config_after_hpo": False,
                 "run_seed_repeat_evaluation": False,
                 "top_k_configs_for_seed_repeat": 3,
+                "top_k": 3,
+                "repeat_seeds": "42",
+                "top_config_reevaluation_mode": "group_kfold",
+                "seed_repeat_n_folds": 5,
+                "seed_repeat_split_seed": 42,
+                "stage6_raw_improvement_threshold": 0.0,
+                "allow_seed_repeat_model_preset_mismatch": False,
+                "learning_rate_range": "1e-5,3e-4",
+                "lr_schedules_csv": "fixed",
+                "weight_decays_csv": "0.0,1e-5",
+                "batch_sizes_csv": "4",
+                "hidden_s_values_csv": "64,128",
+                "hidden_v_values_csv": "8,16",
+                "gvp_layers_values_csv": "2,3",
+                "head_mlp_layers_values_csv": "1,2",
+                "edge_hidden_values_csv": "32,64",
+                "edge_radius_values_csv": "6.0,8.0",
+                "esm_fusion_dim_values_csv": "64,128",
+                "early_esm_dim_values_csv": "16,32",
+                "cross_attention_layers_csv": "1",
+                "cross_attention_heads_csv": "2,4",
+                "metal_focal_gamma_values_csv": "1.5,2.0",
+                "metal_loss_weight_values_csv": "1.0",
+                "ec_loss_weight_values_csv": "1.0",
+                "metal_class_weight_modes_csv": "none,inverse_frequency",
+                "metal_loss_functions_csv": "cross_entropy",
+                "metal_label_smoothing_values_csv": "0.0",
+                "metal_collapsed_loss_weights_csv": "0.0",
+                "balance_metal_site_symbols_csv": "False",
                 "position_noise_stds_csv": "0.0",
                 "second_shell_dropouts_csv": "0.0",
+                "classifier_pool_distance_cutoff_values_csv": "0.0",
+                "early_esm_dropout_values_csv": "0.0",
+                "cross_attention_dropout_values_csv": "0.0",
             },
             "data": {"colab_data_source": "huggingface_link"},
             "esm": {
@@ -987,7 +1050,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "node_rbf_use_raw_distances": False,
                 "metal_node_mode": "none",
                 "structural_readout_scope": "auto",
-                "classifier_pool_distance_cutoff": 0.0,
+                "classifier_pool_distance_cutoff_values_csv": "0.0",
                 "position_noise_std": 0.0,
                 "second_shell_dropout": 0.0,
                 "early_esm_dim": 32,
@@ -1037,7 +1100,7 @@ def check_colab_generated_training_commands_parse() -> None:
             },
         }
 
-    def run_builder(config_updates: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+    def run_builder(config_updates: dict[str, dict[str, object]], *, return_namespace: bool = False):
         with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
             tmp_root = Path(tmp)
             config = base_config(tmp_root)
@@ -1078,6 +1141,10 @@ def check_colab_generated_training_commands_parse() -> None:
             }
             with contextlib.redirect_stdout(io.StringIO()):
                 exec(command_builder_source, namespace)
+            if return_namespace:
+                with contextlib.redirect_stdout(io.StringIO()):
+                    exec(optuna_runner_source, namespace)
+                return namespace
             return copy.deepcopy(namespace["planned_runs"])
 
     def assert_training_command_parses(cmd: list[object]) -> None:
@@ -1125,6 +1192,59 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Metal-only readout notebook command did not pass --structural-readout-scope.")
     if metal_only_readout_cmd[metal_only_readout_cmd.index("--structural-readout-scope") + 1] != "metal_only":
         raise AssertionError("Metal-only readout notebook command passed the wrong scope.")
+
+    pool_cutoff_runs = run_builder(
+        {
+            "basic": {"run_mode": "manual_configurations"},
+            "advanced": {"classifier_pool_distance_cutoff_values_csv": "0.0,6.0"},
+        }
+    )
+    if len(pool_cutoff_runs) != 2:
+        raise AssertionError(f"Expected two classifier-pool cutoff planned commands, got {len(pool_cutoff_runs)}")
+    pool_cutoff_values = [float(run["classifier_pool_distance_cutoff"]) for run in pool_cutoff_runs]
+    if pool_cutoff_values != [0.0, 6.0]:
+        raise AssertionError(f"Classifier-pool cutoff grid produced wrong values: {pool_cutoff_values}")
+    pool_cutoff_cmds = [[str(part) for part in run["command"]] for run in pool_cutoff_runs]
+    for expected_value, command in zip(("0.0", "6.0"), pool_cutoff_cmds):
+        assert_training_command_parses(command)
+        if "--classifier-pool-distance-cutoff" not in command:
+            raise AssertionError("Classifier-pool cutoff command did not pass --classifier-pool-distance-cutoff.")
+        actual_value = command[command.index("--classifier-pool-distance-cutoff") + 1]
+        if actual_value != expected_value:
+            raise AssertionError(f"Classifier-pool cutoff command passed {actual_value}, expected {expected_value}.")
+
+    optuna_namespace = run_builder(
+        {
+            "basic": {"run_mode": "controlled_hpo_optuna"},
+            "optuna": {
+                "search_preset": "custom",
+                "selection_metric": "val_metal_balanced_acc",
+                "classifier_pool_distance_cutoff_values_csv": "0.0,6.0",
+            },
+        },
+        return_namespace=True,
+    )
+
+    class FakeTrial:
+        number = 7
+
+        def suggest_float(self, name, low, high, log=False):
+            return low
+
+        def suggest_categorical(self, name, values):
+            return values[-1]
+
+    trial_config, sampled = optuna_namespace["sample_optuna_config"](
+        FakeTrial(),
+        optuna_namespace["all_planned_runs"][0],
+    )
+    if float(sampled.get("classifier_pool_distance_cutoff")) != 6.0:
+        raise AssertionError(f"Optuna did not sample classifier_pool_distance_cutoff: {sampled}")
+    optuna_cmd = [str(part) for part in trial_config["command"]]
+    assert_training_command_parses(optuna_cmd)
+    actual_optuna_cutoff = optuna_cmd[optuna_cmd.index("--classifier-pool-distance-cutoff") + 1]
+    if actual_optuna_cutoff != "6.0":
+        raise AssertionError(f"Optuna command passed classifier-pool cutoff {actual_optuna_cutoff}, expected 6.0.")
 
     collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weight": 0.3}})
     collapsed_loss_cmd = [str(part) for part in collapsed_loss_runs[0]["command"]]
