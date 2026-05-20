@@ -852,6 +852,8 @@ def check_colab_notebook_sweep_source() -> None:
         'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
         'MODEL_PRESET = "Only-GVP"',
         'RING_EDGE_MODE = "with_ring"',
+        'METAL_NODE_MODE = "none"',
+        'STRUCTURAL_READOUT_SCOPE = "auto"',
         'ALLOW_MISSING_EXTERNAL_FEATURES = False',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
@@ -870,10 +872,14 @@ def check_colab_notebook_sweep_source() -> None:
         "validate_node_feature_omissions",
         "def build_train_command",
         "ring_mode",
+        "metal_node_mode",
+        "structural_readout_scope",
         "omit_node_features",
         "--omit-node-features",
         "--use-ring-edges",
         "--ring-features-dir",
+        "--metal-node-mode",
+        "--structural-readout-scope",
         "--prepare-missing-ring-edges",
         "--no-prepare-missing-ring-edges",
         "--no-prepare-missing-esm-embeddings",
@@ -976,6 +982,8 @@ def check_colab_generated_training_commands_parse() -> None:
                 "node_rbf_sigma": 0.75,
                 "edge_rbf_sigma": 0.75,
                 "node_rbf_use_raw_distances": False,
+                "metal_node_mode": "none",
+                "structural_readout_scope": "auto",
                 "position_noise_std": 0.0,
                 "second_shell_dropout": 0.0,
                 "early_esm_dim": 32,
@@ -1089,6 +1097,30 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Only-GVP default command should not require an ESM embeddings directory.")
     if "--omit-node-features" in default_cmd:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
+    if "--metal-node-mode" in default_cmd or "--structural-readout-scope" in default_cmd:
+        raise AssertionError("Default graph command should leave metal-node mode disabled.")
+
+    metal_node_runs = run_builder({"advanced": {"metal_node_mode": "per_metal"}})
+    if len(metal_node_runs) != 1:
+        raise AssertionError(f"Expected one metal-node planned command, got {len(metal_node_runs)}")
+    metal_node_cmd = [str(part) for part in metal_node_runs[0]["command"]]
+    assert_training_command_parses(metal_node_cmd)
+    if "--metal-node-mode" not in metal_node_cmd:
+        raise AssertionError("Metal-node notebook command did not pass --metal-node-mode.")
+    if metal_node_cmd[metal_node_cmd.index("--metal-node-mode") + 1] != "per_metal":
+        raise AssertionError("Metal-node notebook command passed the wrong mode.")
+    if "--structural-readout-scope" in metal_node_cmd:
+        raise AssertionError("Default auto structural readout should not be passed explicitly.")
+
+    metal_only_readout_runs = run_builder(
+        {"advanced": {"metal_node_mode": "per_metal", "structural_readout_scope": "metal_only"}}
+    )
+    metal_only_readout_cmd = [str(part) for part in metal_only_readout_runs[0]["command"]]
+    assert_training_command_parses(metal_only_readout_cmd)
+    if "--structural-readout-scope" not in metal_only_readout_cmd:
+        raise AssertionError("Metal-only readout notebook command did not pass --structural-readout-scope.")
+    if metal_only_readout_cmd[metal_only_readout_cmd.index("--structural-readout-scope") + 1] != "metal_only":
+        raise AssertionError("Metal-only readout notebook command passed the wrong scope.")
 
     collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weight": 0.3}})
     collapsed_loss_cmd = [str(part) for part in collapsed_loss_runs[0]["command"]]
