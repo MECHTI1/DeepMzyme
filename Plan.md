@@ -226,11 +226,13 @@ can reproduce a command-line run.
 | Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. Default/recommended search spaces should cap this at 4 unless a deeper-depth ablation is explicitly labeled. | Expose / sweep |
 | Model size | `--head-mlp-layers` | `2` | Number of linear layers in metal/EC classifier heads. | Expose / sweep |
 | Graph construction | `--edge-radius` | project default currently `8.0` in code | Residue-neighbor radius for graph edges before optional RING edges. | Expose / sweep |
+| Graph construction | `--metal-node-mode` | `none`; choices `none`, `per_metal` | Opt-in GVP graph variant that appends one generic metal anchor node per metal coordinate, promotes metal-ligand edges into message passing, and adds metal-centered angle summaries. Must not encode the true metal element. | Advanced / validation-only ablation |
 | Node/edge encoders | `--node-feature-set` | `conservative` only | Named set of residue/node features. Only `conservative` is currently implemented. | Expose |
 | Node/edge encoders | `--node-rbf-sigma` | `0.75` | Width of distance radial-basis features for node distance features. | Advanced |
 | Node/edge encoders | `--edge-rbf-sigma` | `0.75` | Width of distance radial-basis features for edge distance features. | Advanced |
 | Node/edge encoders | `--node-rbf-use-raw-distances` | false | Uses raw, unnormalized node distances for node RBF expansion when available. | Advanced |
 | Classifier pooling | `--classifier-pool-distance-cutoff` | `0.0` | If positive, pools only residues within this CA-to-metal Angstrom cutoff before the final classifier head; `0.0` keeps all residues. | Advanced |
+| Classifier pooling | `--structural-readout-scope` | `auto`; choices `auto`, `residue_only`, `residue_and_metal`, `metal_only` | Controls which GVP structural nodes are pooled. `auto` preserves residue-only readout for standard graphs and uses residue-plus-metal readout when `--metal-node-mode per_metal` is enabled. | Advanced |
 | Training augmentation | `--position-noise-std` | `0.0` | Training-only Gaussian coordinate noise. Validation and held-out test graphs stay unaugmented. | Advanced / optional sweep |
 | Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. | Advanced / optional sweep |
 | ESM inputs | `--esm-embeddings-dir` | optional path | Directory containing precomputed ESMC residue embeddings. Needed by ESM-using models unless generation/missing behavior is enabled. | Expose |
@@ -287,6 +289,13 @@ For `gvp` and `simple_gnn_esm`, supported fusion modes are:
 - `node_level_late_fusion`: inject ESM into node states after graph message passing and before pooling.
 - `hybrid`: use both early residue-level ESM and late graph-level ESM.
 - `cross_modal_attention`: advanced graph/ESM attention fusion; use only after simpler baselines are stable.
+
+The `--metal-node-mode per_metal` option is currently a GVP-only validation
+ablation (`gvp` and `only_gvp`). It adds generic metal anchor nodes and
+metal-ligand message-passing edges, plus metal-centered ligand-angle summary
+features. These graph features must remain identity-safe: they may use geometry
+and a generic metal-node type, but not the true metal symbol, atomic number, or
+class-specific chemistry.
 
 #### Desired future work not currently supported
 

@@ -342,6 +342,13 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "--classifier-pool-distance-cutoff must be non-negative, "
             f"got {config.classifier_pool_distance_cutoff}"
         )
+    if config.metal_node_mode != "none" and config.model_architecture not in {"gvp", "only_gvp"}:
+        raise ValueError(
+            "--metal-node-mode is currently implemented only for GVP graph models "
+            "(--model-architecture gvp or only_gvp)."
+        )
+    if config.structural_readout_scope == "metal_only" and config.metal_node_mode == "none":
+        raise ValueError("--structural-readout-scope metal_only requires --metal-node-mode per_metal.")
     if not 0.0 <= config.second_shell_dropout <= 1.0:
         raise ValueError(
             "--second-shell-dropout must be in [0, 1], "
@@ -1115,6 +1122,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
             omit_node_features=config.omit_node_features,
+            metal_node_mode=config.metal_node_mode,
         )
         val_graphs = (
             build_graph_data_list(
@@ -1125,6 +1133,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 require_ring_edges=config.require_ring_edges,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
+                metal_node_mode=config.metal_node_mode,
             )
             if split.val_pockets
             else None
@@ -1178,6 +1187,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 precomputed_data=train_graphs,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
+                metal_node_mode=config.metal_node_mode,
                 position_noise_std=config.position_noise_std,
                 second_shell_dropout=config.second_shell_dropout,
             ),
@@ -1198,6 +1208,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                     precomputed_data=val_graphs,
                     node_feature_set=config.node_feature_set,
                     omit_node_features=config.omit_node_features,
+                    metal_node_mode=config.metal_node_mode,
                 ),
                 batch_size=config.batch_size,
                 shuffle=False,
@@ -1276,6 +1287,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             edge_rbf_sigma=config.edge_rbf_sigma,
             node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,
             classifier_pool_distance_cutoff=config.classifier_pool_distance_cutoff,
+            structural_readout_scope=config.structural_readout_scope,
+            use_node_type_embedding=config.metal_node_mode != "none",
+            use_site_angle_features=config.metal_node_mode != "none",
             normalize_message_aggregation=config.normalize_message_aggregation,
             use_esm_branch=config.use_esm_branch,
             fusion_mode=config.fusion_mode,
@@ -1484,6 +1498,7 @@ def evaluate_held_out_test_split(
             require_ring_edges=config.require_ring_edges,
             node_feature_set=config.node_feature_set,
             omit_node_features=config.omit_node_features,
+            metal_node_mode=config.metal_node_mode,
         )
         test_loader = DataLoader(
             PocketGraphDataset(
@@ -1496,6 +1511,7 @@ def evaluate_held_out_test_split(
                 precomputed_data=test_graphs,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
+                metal_node_mode=config.metal_node_mode,
             ),
             batch_size=config.batch_size,
             shuffle=False,

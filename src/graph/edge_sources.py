@@ -5,6 +5,7 @@ import csv
 import torch
 
 from data_structures import (
+    DEFAULT_FIRST_SHELL_CUTOFF,
     EDGE_SOURCE_TO_INDEX,
     EDGE_SOURCE_TYPES,
     RING_INTERACTION_ALIASES,
@@ -14,7 +15,7 @@ from data_structures import (
     RING_INTERACTION_TO_INDEX,
     RING_INTERACTION_TYPES,
 )
-from featurization import one_hot_index, safe_norm
+from featurization import residue_metal_ligand_geometries, one_hot_index, safe_norm
 from graph.edge_geometry import (
     build_pair_edge_geometry,
     build_radius_pair_geometries,
@@ -100,6 +101,7 @@ def _build_residue_metal_edge_record(
     residue_coord,
     metal_coord,
     interaction: str,
+    source_type_name: str = "ring",
 ) -> ResidueMetalEdgeRecord:
     vector_raw = (metal_coord.float() - residue_coord.float()).float()
     contact_distance = float(safe_norm(vector_raw, dim=-1).item())
@@ -113,11 +115,37 @@ def _build_residue_metal_edge_record(
             len(INTERACTION_SUMMARIES_OPTIONAL_WITH_RING),
         ),
         source_type=one_hot_index(
-            EDGE_SOURCE_TO_INDEX["ring"],
+            EDGE_SOURCE_TO_INDEX[source_type_name],
             len(EDGE_SOURCE_TYPES),
         ),
         geometry_label="residue_to_metal",
     )
+
+
+def build_geometric_metal_edge_records(
+    pocket: PocketRecord,
+    *,
+    shell_roles: list[tuple[bool, bool]] | None = None,
+    ligand_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
+) -> list[ResidueMetalEdgeRecord]:
+    records: list[ResidueMetalEdgeRecord] = []
+    for geometry in residue_metal_ligand_geometries(
+        pocket,
+        shell_roles=shell_roles,
+        ligand_cutoff=ligand_cutoff,
+        ensure_each_metal=True,
+    ):
+        records.append(
+            _build_residue_metal_edge_record(
+                residue_idx=geometry.residue_idx,
+                metal_idx=geometry.metal_idx,
+                residue_coord=geometry.residue_coord,
+                metal_coord=geometry.metal_coord,
+                interaction=METAL_ION_RING_INTERACTION,
+                source_type_name="radius",
+            )
+        )
+    return records
 
 
 def _resolve_metal_index(

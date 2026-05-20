@@ -5,7 +5,13 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from data_structures import DEFAULT_EDGE_RADIUS, NODE_FEATURE_SET_CHOICES, validate_node_feature_omissions
+from data_structures import (
+    DEFAULT_EDGE_RADIUS,
+    METAL_NODE_MODE_CHOICES,
+    NODE_FEATURE_SET_CHOICES,
+    STRUCTURAL_READOUT_SCOPE_CHOICES,
+    validate_node_feature_omissions,
+)
 from label_schemes import (
     METAL_LABEL_SCHEME_ALIASES,
     METAL_LABEL_SCHEMES,
@@ -25,6 +31,8 @@ VALID_INVALID_STRUCTURE_POLICY_CHOICES = ("error", "skip")
 VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
+VALID_METAL_NODE_MODE_CHOICES = METAL_NODE_MODE_CHOICES
+VALID_STRUCTURAL_READOUT_SCOPE_CHOICES = STRUCTURAL_READOUT_SCOPE_CHOICES
 VALID_MODEL_ARCHITECTURE_CHOICES = MODEL_ARCHITECTURE_CHOICES
 VALID_METAL_LOSS_FUNCTION_CHOICES = ("cross_entropy", "focal")
 VALID_METAL_CLASS_WEIGHT_MODE_CHOICES = (
@@ -125,6 +133,8 @@ class TrainConfig:
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
     classifier_pool_distance_cutoff: float = 0.0
+    metal_node_mode: str = "none"
+    structural_readout_scope: str = "residue_only"
     normalize_message_aggregation: bool = False
     position_noise_std: float = 0.0
     second_shell_dropout: float = 0.0
@@ -313,6 +323,28 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "If > 0, pool only residues with CA-to-metal distance within this "
             "Angstrom cutoff before the final classifier head. 0 disables the filter."
+        ),
+    )
+    parser.add_argument(
+        "--metal-node-mode",
+        type=str,
+        default="none",
+        choices=VALID_METAL_NODE_MODE_CHOICES,
+        help=(
+            "Opt-in GVP graph construction mode for adding generic metal-site nodes. "
+            "'none' preserves residue-only graphs; 'per_metal' appends one generic "
+            "metal node per metal coordinate and promotes metal-ligand edges into edge_index."
+        ),
+    )
+    parser.add_argument(
+        "--structural-readout-scope",
+        type=str,
+        default="auto",
+        choices=VALID_STRUCTURAL_READOUT_SCOPE_CHOICES,
+        help=(
+            "Which structural nodes are pooled for the GVP classifier. 'auto' uses "
+            "residue_only for residue-only graphs and residue_and_metal when "
+            "--metal-node-mode per_metal is enabled."
         ),
     )
     parser.add_argument(
@@ -701,6 +733,12 @@ def parse_int_tuple(value: str | None) -> tuple[int, ...]:
     return tuple(parsed)
 
 
+def resolve_structural_readout_scope(metal_node_mode: str, requested_scope: str) -> str:
+    if requested_scope != "auto":
+        return requested_scope
+    return "residue_and_metal" if metal_node_mode != "none" else "residue_only"
+
+
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
@@ -718,6 +756,10 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     joint_loss_weighting = resolve_joint_loss_weighting(args.task, args.joint_loss_weighting)
     metal_label_scheme = configure_active_metal_label_scheme(
         args.metal_label_scheme or active_metal_label_scheme_name()
+    )
+    structural_readout_scope = resolve_structural_readout_scope(
+        args.metal_node_mode,
+        args.structural_readout_scope,
     )
     return TrainConfig(
         structure_dir=args.structure_dir,
@@ -760,6 +802,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
         classifier_pool_distance_cutoff=args.classifier_pool_distance_cutoff,
+        metal_node_mode=args.metal_node_mode,
+        structural_readout_scope=structural_readout_scope,
         normalize_message_aggregation=args.normalize_message_aggregation,
         position_noise_std=args.position_noise_std,
         second_shell_dropout=args.second_shell_dropout,

@@ -82,6 +82,8 @@ def check_training_cli_help() -> None:
         "--cross-attention-bidirectional",
         "--position-noise-std",
         "--second-shell-dropout",
+        "--metal-node-mode",
+        "--structural-readout-scope",
         "--grad-clip-norm",
         "--amp",
         "--grad-accum-steps",
@@ -538,6 +540,12 @@ def check_ring_edge_cli_config() -> None:
     if not disabled_prepare_config.use_ring_edges or disabled_prepare_config.prepare_missing_ring_edges:
         raise AssertionError("Expected --no-prepare-missing-ring-edges to disable automatic RING generation.")
 
+    metal_node_config = parse_args(["--model-architecture", "only_gvp", "--metal-node-mode", "per_metal"])
+    if metal_node_config.metal_node_mode != "per_metal":
+        raise AssertionError("Expected --metal-node-mode per_metal to reach TrainConfig.")
+    if metal_node_config.structural_readout_scope != "residue_and_metal":
+        raise AssertionError("Expected structural readout auto mode to include metal nodes.")
+
 
 def augmentation_fixture_pocket() -> PocketRecord:
     return PocketRecord(
@@ -719,6 +727,118 @@ def check_graph_ring_edges_are_opt_in() -> None:
         ring_graph = pocket_to_pyg_data(pocket, esm_dim=2, use_ring_edges=True)
         if int((ring_graph.edge_source_type[:, ring_idx] > 0.5).sum().item()) == 0:
             raise AssertionError("--use-ring-edges path did not include available RING edges.")
+
+
+def check_metal_node_graph_and_gvp_forward() -> None:
+    from data_structures import NODE_TYPE_GENERIC_METAL, NODE_TYPE_RESIDUE
+    from graph.construction import pocket_to_pyg_data
+    from model_variants import build_pocket_classifier
+    from training.graph_dataset import (
+        PocketGraphDataset,
+        compute_feature_normalization_stats,
+    )
+
+    pocket = PocketRecord(
+        structure_id="metal_node_fixture",
+        pocket_id="metal_node_fixture_site0",
+        metal_element="ZN",
+        metal_coords=[torch.tensor([0.0, 0.0, 0.0])],
+        residues=[
+            ResidueRecord(
+                chain_id="A",
+                resseq=1,
+                icode="",
+                resname="CYS",
+                atoms={
+                    "CA": torch.tensor([1.0, 0.0, 0.0]),
+                    "CB": torch.tensor([1.1, 0.0, 0.0]),
+                    "SG": torch.tensor([1.5, 0.0, 0.0]),
+                },
+            ),
+            ResidueRecord(
+                chain_id="A",
+                resseq=2,
+                icode="",
+                resname="HIS",
+                atoms={
+                    "CA": torch.tensor([0.0, 1.0, 0.0]),
+                    "CB": torch.tensor([0.0, 1.1, 0.0]),
+                    "ND1": torch.tensor([0.0, 1.5, 0.0]),
+                },
+            ),
+            ResidueRecord(
+                chain_id="A",
+                resseq=3,
+                icode="",
+                resname="ASP",
+                atoms={
+                    "CA": torch.tensor([0.0, 0.0, 1.0]),
+                    "CB": torch.tensor([0.0, 0.0, 1.1]),
+                    "OD1": torch.tensor([0.0, 0.0, 1.5]),
+                },
+            ),
+        ],
+        y_metal=0,
+    )
+
+    graph = pocket_to_pyg_data(pocket, esm_dim=2, metal_node_mode="per_metal")
+    if graph.num_nodes != 4:
+        raise AssertionError(f"Expected 3 residue nodes + 1 metal node, got {graph.num_nodes}.")
+    if int(graph.residue_node_mask.sum().item()) != 3 or int(graph.metal_node_mask.sum().item()) != 1:
+        raise AssertionError(
+            f"Unexpected residue/metal masks: {graph.residue_node_mask.tolist()}, {graph.metal_node_mask.tolist()}"
+        )
+    if graph.node_type_id[:3].tolist() != [NODE_TYPE_RESIDUE] * 3:
+        raise AssertionError(f"Residue node_type_id values are wrong: {graph.node_type_id.tolist()}")
+    if int(graph.node_type_id[3].item()) != NODE_TYPE_GENERIC_METAL:
+        raise AssertionError(f"Metal node_type_id should be generic metal, got {graph.node_type_id.tolist()}")
+    if not torch.allclose(graph.x_reschem[3], torch.zeros_like(graph.x_reschem[3])):
+        raise AssertionError("Generic metal node leaked residue/element chemistry into x_reschem.")
+    edge_pairs = set(zip(graph.edge_index[0].tolist(), graph.edge_index[1].tolist()))
+    for residue_idx in range(3):
+        if (residue_idx, 3) not in edge_pairs or (3, residue_idx) not in edge_pairs:
+            raise AssertionError(f"Missing bidirectional residue-metal edge for residue {residue_idx}: {edge_pairs}")
+    angle_stats = graph.site_ligand_angle_stats.view(-1)
+    if int(angle_stats[0].item()) != 3 or int(angle_stats[1].item()) != 3:
+        raise AssertionError(f"Unexpected ligand/angle counts in site_ligand_angle_stats: {angle_stats.tolist()}")
+    if not 89.0 <= float(angle_stats[3].item()) <= 91.0:
+        raise AssertionError(f"Expected mean ligand-metal-ligand angle near 90 degrees, got {angle_stats.tolist()}")
+
+    normalization_stats = compute_feature_normalization_stats([graph], clamp_value=5.0)
+    normalized_graph = PocketGraphDataset(
+        [pocket],
+        esm_dim=2,
+        normalization_stats=normalization_stats,
+        precomputed_data=[graph],
+        metal_node_mode="per_metal",
+    )[0]
+    metal_mask = normalized_graph.metal_node_mask.to(dtype=torch.bool)
+    for field_name in ("hydrophobicity_kd", "x_dist_raw", "x_misc", "x_env_burial", "x_env_electrostatics"):
+        values = getattr(normalized_graph, field_name)[metal_mask]
+        if not torch.allclose(values, torch.zeros_like(values)):
+            raise AssertionError(f"Metal dummy node feature {field_name} was not kept at zero after normalization.")
+
+    batch = next(iter(DataLoader([normalized_graph], batch_size=1)))
+    model = build_pocket_classifier(
+        model_architecture="only_gvp",
+        esm_dim=2,
+        hidden_s=16,
+        hidden_v=4,
+        edge_hidden=8,
+        n_layers=1,
+        n_metal=6,
+        n_ec=1,
+        predict_metal=True,
+        predict_ec=False,
+        structural_readout_scope="residue_and_metal",
+        use_node_type_embedding=True,
+        use_site_angle_features=True,
+    )
+    outputs = model(batch)
+    if tuple(outputs["logits_metal"].shape) != (1, 6):
+        raise AssertionError(f"Unexpected metal logits shape for metal-node GVP: {outputs['logits_metal'].shape}")
+    if "loss" not in outputs:
+        raise AssertionError("Metal-node GVP forward pass did not compute supervised loss.")
 
 
 def check_colab_notebook_sweep_source() -> None:
@@ -1412,6 +1532,7 @@ def main() -> int:
         check_esm_embedding_metadata_sidecar,
         check_only_gvp_does_not_require_esm,
         check_graph_ring_edges_are_opt_in,
+        check_metal_node_graph_and_gvp_forward,
         check_colab_notebook_sweep_source,
         check_colab_generated_training_commands_parse,
         check_ring_environment_overrides,

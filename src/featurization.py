@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import torch
@@ -11,6 +12,7 @@ from data_structures import (
     ACCEPTOR_CAPABLE,
     AROMATIC,
     BACKBONE_ATOMS,
+    DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM,
     DEFAULT_FIRST_SHELL_CUTOFF,
     DONOR_ATOMS_BY_RESIDUE,
     DONOR_CAPABLE,
@@ -31,6 +33,19 @@ ELECTROSTATIC_FEATURE_NAMES = (
     EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY,
     EXTERNAL_FEATURE_DPKA_TITR,
 )
+
+
+@dataclass(frozen=True)
+class ResidueMetalLigandGeometry:
+    residue_idx: int
+    metal_idx: int
+    residue_coord: Tensor
+    metal_coord: Tensor
+    distance: float
+
+    @property
+    def metal_to_ligand_vector(self) -> Tensor:
+        return (self.residue_coord.float() - self.metal_coord.float()).float()
 
 
 def safe_norm(x: Tensor, dim: int = -1, keepdim: bool = False, eps: float = 1e-8) -> Tensor:
@@ -99,6 +114,148 @@ def donor_coords_and_mask(residue: ResidueRecord, max_donors: int = 2) -> Tuple[
             mask[i] = True
 
     return coords, mask
+
+
+def ligand_candidate_coords(residue: ResidueRecord) -> Tensor:
+    donor_coords, donor_mask = donor_coords_and_mask(residue, max_donors=2)
+    if donor_mask.any():
+        return donor_coords[donor_mask].float()
+    return functional_group_centroid(residue).float().unsqueeze(0)
+
+
+def residue_metal_ligand_geometries(
+    pocket: PocketRecord,
+    shell_roles: list[tuple[bool, bool]] | None = None,
+    *,
+    ligand_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
+    ensure_each_metal: bool = True,
+) -> list[ResidueMetalLigandGeometry]:
+    """Build generic metal-ligand geometry without exposing metal identity."""
+    metal_coords = MultinuclearSiteHandler.metal_coords_for_pocket(pocket)
+    geometries: list[ResidueMetalLigandGeometry] = []
+    seen_pairs: set[tuple[int, int]] = set()
+
+    for residue_idx, residue in enumerate(pocket.residues):
+        candidate_coords = ligand_candidate_coords(residue)
+        if candidate_coords.numel() == 0:
+            continue
+        is_first_shell = (
+            bool(shell_roles[residue_idx][0])
+            if shell_roles is not None and residue_idx < len(shell_roles)
+            else bool(residue.is_first_shell)
+        )
+        distances = safe_norm(candidate_coords[:, None, :] - metal_coords[None, :, :], dim=-1)
+        for metal_idx in range(metal_coords.size(0)):
+            metal_distances = distances[:, metal_idx]
+            closest_idx = int(torch.argmin(metal_distances).item())
+            closest_distance = float(metal_distances[closest_idx].item())
+            keep = closest_distance <= float(ligand_cutoff)
+            if not keep and is_first_shell:
+                nearest_metal_idx = int(torch.argmin(distances.min(dim=0).values).item())
+                keep = metal_idx == nearest_metal_idx
+            if not keep:
+                continue
+            pair_key = (residue_idx, metal_idx)
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+            geometries.append(
+                ResidueMetalLigandGeometry(
+                    residue_idx=residue_idx,
+                    metal_idx=metal_idx,
+                    residue_coord=candidate_coords[closest_idx].float(),
+                    metal_coord=metal_coords[metal_idx].float(),
+                    distance=closest_distance,
+                )
+            )
+
+    if ensure_each_metal and pocket.residues:
+        connected_metals = {geometry.metal_idx for geometry in geometries}
+        for metal_idx, metal_coord in enumerate(metal_coords):
+            if metal_idx in connected_metals:
+                continue
+            best: tuple[float, int, Tensor] | None = None
+            for residue_idx, residue in enumerate(pocket.residues):
+                candidate_coords = ligand_candidate_coords(residue)
+                distances = safe_norm(candidate_coords - metal_coord.unsqueeze(0), dim=-1)
+                closest_idx = int(torch.argmin(distances).item())
+                distance = float(distances[closest_idx].item())
+                if best is None or distance < best[0]:
+                    best = (distance, residue_idx, candidate_coords[closest_idx].float())
+            if best is None:
+                continue
+            distance, residue_idx, residue_coord = best
+            pair_key = (residue_idx, metal_idx)
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
+            geometries.append(
+                ResidueMetalLigandGeometry(
+                    residue_idx=residue_idx,
+                    metal_idx=metal_idx,
+                    residue_coord=residue_coord,
+                    metal_coord=metal_coord.float(),
+                    distance=distance,
+                )
+            )
+
+    return geometries
+
+
+def compute_site_ligand_angle_stats(
+    pocket: PocketRecord,
+    shell_roles: list[tuple[bool, bool]] | None = None,
+    *,
+    ligand_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
+) -> Tensor:
+    geometries = residue_metal_ligand_geometries(
+        pocket,
+        shell_roles=shell_roles,
+        ligand_cutoff=ligand_cutoff,
+        ensure_each_metal=False,
+    )
+    angles: list[float] = []
+    metal_to_vectors: dict[int, list[Tensor]] = {}
+    for geometry in geometries:
+        metal_to_vectors.setdefault(geometry.metal_idx, []).append(geometry.metal_to_ligand_vector)
+
+    for vectors in metal_to_vectors.values():
+        if len(vectors) < 2:
+            continue
+        for i, vec_i in enumerate(vectors):
+            for vec_j in vectors[i + 1 :]:
+                denom = safe_norm(vec_i, dim=-1) * safe_norm(vec_j, dim=-1)
+                cosine = torch.clamp(torch.dot(vec_i, vec_j) / denom.clamp_min(1e-8), min=-1.0, max=1.0)
+                angles.append(float(torch.rad2deg(torch.acos(cosine)).item()))
+
+    ligand_count = float(len(geometries))
+    angle_pair_count = float(len(angles))
+    if not angles:
+        values = [ligand_count, angle_pair_count, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        return torch.tensor(values, dtype=torch.float32)
+
+    angle_tensor = torch.tensor(angles, dtype=torch.float32)
+    tetrahedral_target = angle_tensor.new_tensor(109.47)
+    octahedral_targets = torch.stack(
+        [
+            (angle_tensor - 90.0).abs(),
+            (angle_tensor - 180.0).abs(),
+        ],
+        dim=-1,
+    )
+    values = [
+        ligand_count,
+        angle_pair_count,
+        float(angle_tensor.min().item()),
+        float(angle_tensor.mean().item()),
+        float(angle_tensor.max().item()),
+        float(angle_tensor.std(unbiased=False).item()) if angle_tensor.numel() > 1 else 0.0,
+        float((angle_tensor - tetrahedral_target).abs().mean().item()),
+        float(octahedral_targets.min(dim=-1).values.mean().item()),
+    ]
+    if len(values) != DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM:
+        raise AssertionError("Site ligand angle feature dimension changed without updating the schema.")
+    return torch.tensor(values, dtype=torch.float32)
 
 
 def sidechain_atoms(residue: ResidueRecord) -> List[Tensor]:

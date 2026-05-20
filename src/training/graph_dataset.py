@@ -159,6 +159,7 @@ def build_graph_data_list(
     require_ring_edges: bool = False,
     node_feature_set: str = "conservative",
     omit_node_features: tuple[str, ...] | list[str] = (),
+    metal_node_mode: str = "none",
 ) -> list[Data]:
     return [
         pocket_to_pyg_data(
@@ -169,9 +170,31 @@ def build_graph_data_list(
             require_ring_edges=require_ring_edges,
             node_feature_set=node_feature_set,
             omit_node_features=omit_node_features,
+            metal_node_mode=metal_node_mode,
         )
         for pocket in pockets
     ]
+
+
+def _normalization_tensor_for_feature(data: Data, feature_name: str) -> Tensor | None:
+    if not hasattr(data, feature_name):
+        return None
+    value = getattr(data, feature_name).float()
+    if (
+        hasattr(data, "residue_node_mask")
+        and value.ndim > 0
+        and value.size(0) == int(data.residue_node_mask.numel())
+        and feature_name
+        in {
+            "hydrophobicity_kd",
+            "x_dist_raw",
+            "x_misc",
+            "x_env_burial",
+            "x_env_electrostatics",
+        }
+    ):
+        return value[data.residue_node_mask.to(dtype=torch.bool, device=value.device)]
+    return value
 
 
 def compute_feature_normalization_stats(
@@ -182,7 +205,12 @@ def compute_feature_normalization_stats(
     stds: dict[str, Tensor] = {}
 
     for feature_name in NORMALIZABLE_FEATURE_NAMES:
-        tensors = [getattr(data, feature_name) for data in data_list if hasattr(data, feature_name)]
+        tensors = [
+            tensor
+            for data in data_list
+            for tensor in [_normalization_tensor_for_feature(data, feature_name)]
+            if tensor is not None and tensor.numel() > 0
+        ]
         if not tensors:
             continue
         merged = torch.cat([tensor.float() for tensor in tensors], dim=0)
@@ -207,6 +235,21 @@ def apply_feature_normalization(data: Data, stats: FeatureNormalizationStats | N
             setattr(data, "x_dist_raw_raw", value.clone())
         std = stats.stds[feature_name].to(value.device)
         normalized = (value - mean.to(value.device)) / std
+        if (
+            hasattr(data, "metal_node_mask")
+            and normalized.ndim > 0
+            and normalized.size(0) == int(data.metal_node_mask.numel())
+            and feature_name
+            in {
+                "hydrophobicity_kd",
+                "x_dist_raw",
+                "x_misc",
+                "x_env_burial",
+                "x_env_electrostatics",
+            }
+        ):
+            normalized = normalized.clone()
+            normalized[data.metal_node_mask.to(dtype=torch.bool, device=normalized.device)] = 0.0
         setattr(data, feature_name, normalized.clamp(-stats.clamp_value, stats.clamp_value))
     return data
 
@@ -219,6 +262,7 @@ def summarize_graph_dataset(
     require_ring_edges: bool = False,
     node_feature_set: str = "conservative",
     omit_node_features: tuple[str, ...] | list[str] = (),
+    metal_node_mode: str = "none",
 ) -> list[dict[str, Any]]:
     report: list[dict[str, Any]] = []
     ring_idx = EDGE_SOURCE_TO_INDEX["ring"]
@@ -232,6 +276,7 @@ def summarize_graph_dataset(
             require_ring_edges=require_ring_edges,
             node_feature_set=node_feature_set,
             omit_node_features=omit_node_features,
+            metal_node_mode=metal_node_mode,
         )
         edge_index = getattr(data, _GRAPH_EDGE_INDEX_FIELD)
         edge_source_type = getattr(data, _GRAPH_EDGE_SOURCE_TYPE_FIELD)
@@ -239,12 +284,24 @@ def summarize_graph_dataset(
         radius_idx = EDGE_SOURCE_TO_INDEX["radius"]
         ring_mask = edge_source_type[:, ring_idx] > 0.5
         radius_mask = edge_source_type[:, radius_idx] > 0.5
+        residue_node_mask = (
+            data.residue_node_mask.to(dtype=torch.bool)
+            if hasattr(data, "residue_node_mask")
+            else torch.ones(getattr(data, _GRAPH_POS_FIELD).size(0), dtype=torch.bool)
+        )
+        metal_node_mask = (
+            data.metal_node_mask.to(dtype=torch.bool)
+            if hasattr(data, "metal_node_mask")
+            else torch.zeros(getattr(data, _GRAPH_POS_FIELD).size(0), dtype=torch.bool)
+        )
         report.append(
             {
                 "pocket_id": pocket.pocket_id,
                 "metal_count": int(getattr(data, _GRAPH_METAL_COUNT_FIELD).view(-1)[0].item()),
                 "is_multinuclear": bool(getattr(data, _GRAPH_IS_MULTINUCLEAR_FIELD).view(-1)[0].item()),
-                "n_residues": int(getattr(data, _GRAPH_POS_FIELD).size(0)),
+                "n_nodes": int(getattr(data, _GRAPH_POS_FIELD).size(0)),
+                "n_residues": int(residue_node_mask.sum().item()),
+                "n_metal_nodes": int(metal_node_mask.sum().item()),
                 "n_edges": int(edge_index.size(1)),
                 "n_metal_edges": int(getattr(data, _GRAPH_METAL_EDGE_INDEX_FIELD).size(1)) if hasattr(data, _GRAPH_METAL_EDGE_INDEX_FIELD) else 0,
                 "n_radius_edges": int(radius_mask.sum().item()),
@@ -269,6 +326,7 @@ class PocketGraphDataset(Dataset):
         omit_node_features: tuple[str, ...] | list[str] = (),
         position_noise_std: float = 0.0,
         second_shell_dropout: float = 0.0,
+        metal_node_mode: str = "none",
     ):
         self.pockets = pockets
         self.esm_dim = esm_dim
@@ -278,6 +336,7 @@ class PocketGraphDataset(Dataset):
         self.require_ring_edges = require_ring_edges
         self.node_feature_set = node_feature_set
         self.omit_node_features = tuple(omit_node_features)
+        self.metal_node_mode = str(metal_node_mode)
         self.position_noise_std = float(position_noise_std)
         self.second_shell_dropout = float(second_shell_dropout)
         if precomputed_data is not None and len(precomputed_data) != len(pockets):
@@ -296,6 +355,7 @@ class PocketGraphDataset(Dataset):
         precomputed_data: list[Data] | None = None,
         node_feature_set: str = "conservative",
         omit_node_features: tuple[str, ...] | list[str] = (),
+        metal_node_mode: str = "none",
     ) -> FeatureNormalizationStats:
         data_list = precomputed_data
         if data_list is None:
@@ -307,6 +367,7 @@ class PocketGraphDataset(Dataset):
                 require_ring_edges=require_ring_edges,
                 node_feature_set=node_feature_set,
                 omit_node_features=omit_node_features,
+                metal_node_mode=metal_node_mode,
             )
         return compute_feature_normalization_stats(data_list, clamp_value=clamp_value)
 
@@ -331,6 +392,7 @@ class PocketGraphDataset(Dataset):
                 require_ring_edges=self.require_ring_edges,
                 node_feature_set=self.node_feature_set,
                 omit_node_features=self.omit_node_features,
+                metal_node_mode=self.metal_node_mode,
             )
         elif self.precomputed_data is not None:
             data = self.precomputed_data[idx].clone()
@@ -343,5 +405,6 @@ class PocketGraphDataset(Dataset):
                 require_ring_edges=self.require_ring_edges,
                 node_feature_set=self.node_feature_set,
                 omit_node_features=self.omit_node_features,
+                metal_node_mode=self.metal_node_mode,
             )
         return apply_feature_normalization(data, self.normalization_stats)

@@ -10,7 +10,13 @@ from torch_geometric.data import Data
 from torch_geometric.nn import global_add_pool, global_mean_pool
 from torch_geometric.utils import softmax
 
-from data_structures import AA_ORDER, EDGE_SOURCE_TYPES, INTERACTION_SUMMARIES_OPTIONAL_WITH_RING
+from data_structures import (
+    AA_ORDER,
+    DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM,
+    EDGE_SOURCE_TYPES,
+    INTERACTION_SUMMARIES_OPTIONAL_WITH_RING,
+    STRUCTURAL_READOUT_SCOPE_CHOICES,
+)
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
 from metal_objectives import metal_loss_with_optional_collapsed4
@@ -33,6 +39,7 @@ DEFAULT_NODE_BURIAL_INPUT_DIM = 1
 DEFAULT_NODE_BURIAL_LATENT_DIM = 4
 DEFAULT_NODE_ELECTROSTATICS_DIM = 2
 DEFAULT_NODE_DISTANCE_FEATURE_COUNT = 3
+VALID_STRUCTURAL_READOUT_SCOPES = set(STRUCTURAL_READOUT_SCOPE_CHOICES) - {"auto"}
 
 
 class TaskLossWeighter(nn.Module):
@@ -293,17 +300,32 @@ def ensure_nonempty_pool_mask(mask: Tensor, batch: Tensor) -> Tensor:
     return mask
 
 
-def metal_distance_pool_mask(data: Data, cutoff: float) -> Tensor | None:
+def residue_node_mask(data: Data) -> Tensor:
+    if hasattr(data, "residue_node_mask"):
+        return data.residue_node_mask.to(dtype=torch.bool, device=data.batch.device)
+    return torch.ones(data.batch.size(0), dtype=torch.bool, device=data.batch.device)
+
+
+def metal_node_mask(data: Data) -> Tensor:
+    if hasattr(data, "metal_node_mask"):
+        return data.metal_node_mask.to(dtype=torch.bool, device=data.batch.device)
+    return torch.zeros(data.batch.size(0), dtype=torch.bool, device=data.batch.device)
+
+
+def metal_distance_pool_mask(data: Data, cutoff: float, base_mask: Tensor | None = None) -> Tensor | None:
     cutoff = float(cutoff)
     if cutoff <= 0.0:
-        return None
+        return ensure_nonempty_pool_mask(base_mask, data.batch) if base_mask is not None else None
     distance_features = (
         data.x_dist_raw_raw.float()
         if hasattr(data, "x_dist_raw_raw")
         else data.x_dist_raw.float()
     )
     ca_to_metal = distance_features if distance_features.ndim == 1 else distance_features[:, 0]
-    return ensure_nonempty_pool_mask(ca_to_metal <= cutoff, data.batch)
+    mask = ca_to_metal <= cutoff
+    if base_mask is not None:
+        mask = mask & base_mask.to(dtype=torch.bool, device=mask.device)
+    return ensure_nonempty_pool_mask(mask, data.batch)
 
 
 def masked_global_mean_pool(x: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
@@ -618,6 +640,9 @@ class GVPPocketClassifier(nn.Module):
         normalize_message_aggregation: bool = False,
         site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
         classifier_pool_distance_cutoff: float = 0.0,
+        structural_readout_scope: str = "residue_only",
+        use_node_type_embedding: bool = False,
+        use_site_angle_features: bool = False,
     ):
         super().__init__()
         # Current supervised targets:
@@ -635,6 +660,9 @@ class GVPPocketClassifier(nn.Module):
         self.normalize_message_aggregation = bool(normalize_message_aggregation)
         self.site_feature_dim = int(site_feature_dim)
         self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
+        self.structural_readout_scope = str(structural_readout_scope)
+        self.use_node_type_embedding = bool(use_node_type_embedding)
+        self.use_site_angle_features = bool(use_site_angle_features)
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         if self.classifier_pool_distance_cutoff < 0.0:
@@ -642,6 +670,8 @@ class GVPPocketClassifier(nn.Module):
                 "classifier_pool_distance_cutoff must be non-negative, "
                 f"got {self.classifier_pool_distance_cutoff}."
             )
+        if self.structural_readout_scope not in VALID_STRUCTURAL_READOUT_SCOPES:
+            raise ValueError(f"Unsupported structural_readout_scope {self.structural_readout_scope!r}.")
         early_scalar_dim = 0
         if self.use_early_esm:
             early_scalar_dim = esm_dim if self.early_esm_raw else self.early_esm_dim
@@ -668,6 +698,7 @@ class GVPPocketClassifier(nn.Module):
         self.edge_scalar_encoder = EdgeScalarEncoder(n_rbf=16, out_dim=edge_hidden, distance_sigma=edge_rbf_sigma)
         self.gvp_attn_pool = AttentionPool(hidden_s)
         self.init_vec_proj = nn.Linear(2, hidden_v, bias=False)
+        self.node_type_embedding = nn.Embedding(2, hidden_s) if self.use_node_type_embedding else None
 
         self.layers = nn.ModuleList(
             [
@@ -735,8 +766,11 @@ class GVPPocketClassifier(nn.Module):
         else:
             self.node_level_esm_proj = None
             self.node_level_gate = None
+        site_feature_input_dim = DEFAULT_SITE_FEATURE_INPUT_DIM + (
+            DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM if self.use_site_angle_features else 0
+        )
         self.site_feature_encoder = nn.Sequential(
-            nn.Linear(DEFAULT_SITE_FEATURE_INPUT_DIM, self.site_feature_dim),
+            nn.Linear(site_feature_input_dim, self.site_feature_dim),
             nn.LayerNorm(self.site_feature_dim),
             nn.SiLU(),
         )
@@ -830,8 +864,67 @@ class GVPPocketClassifier(nn.Module):
         early_esm = self._early_esm_scalar_features(data.x_esm)
         if early_esm is None:
             return None
-        scope_mask = shell_mask_from_roles(data.x_role, self.early_esm_scope).unsqueeze(-1).to(dtype=early_esm.dtype)
+        scope_mask = shell_mask_from_roles(data.x_role, self.early_esm_scope)
+        scope_mask = scope_mask & residue_node_mask(data)
+        scope_mask = scope_mask.unsqueeze(-1).to(dtype=early_esm.dtype)
         return early_esm * scope_mask
+
+    def _add_node_type_embedding(self, s: Tensor, data: Data) -> Tensor:
+        if self.node_type_embedding is None:
+            return s
+        if hasattr(data, "node_type_id"):
+            node_type_id = data.node_type_id.to(dtype=torch.long, device=s.device).clamp(0, 1)
+        else:
+            node_type_id = torch.zeros(s.size(0), dtype=torch.long, device=s.device)
+        return s + self.node_type_embedding(node_type_id)
+
+    def _structural_pool_mask(self, data: Data) -> Tensor | None:
+        residue_mask = residue_node_mask(data)
+        metal_mask = metal_node_mask(data)
+        if self.structural_readout_scope == "residue_only":
+            base_mask = residue_mask
+        elif self.structural_readout_scope == "metal_only":
+            base_mask = metal_mask
+        elif self.structural_readout_scope == "residue_and_metal":
+            base_mask = residue_mask | metal_mask
+        else:
+            raise ValueError(f"Unsupported structural_readout_scope {self.structural_readout_scope!r}.")
+
+        if self.classifier_pool_distance_cutoff <= 0.0:
+            if bool(base_mask.all().item()):
+                return None
+            return ensure_nonempty_pool_mask(base_mask, data.batch)
+
+        if self.structural_readout_scope == "residue_and_metal":
+            residue_cutoff_mask = metal_distance_pool_mask(
+                data,
+                self.classifier_pool_distance_cutoff,
+                base_mask=residue_mask,
+            )
+            return ensure_nonempty_pool_mask(residue_cutoff_mask | metal_mask, data.batch)
+        return metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff, base_mask=base_mask)
+
+    def _esm_pool_mask(self, data: Data) -> Tensor | None:
+        residue_mask = residue_node_mask(data)
+        return metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff, base_mask=residue_mask)
+
+    def _site_feature_tensor(self, data: Data, batch_size: int, dtype: torch.dtype, device: torch.device) -> Tensor:
+        if hasattr(data, "site_metal_stats"):
+            site_features = [data.site_metal_stats.float().to(device=device)]
+        else:
+            site_features = [torch.zeros(batch_size, DEFAULT_SITE_FEATURE_INPUT_DIM, dtype=dtype, device=device)]
+        if self.use_site_angle_features:
+            if hasattr(data, "site_ligand_angle_stats"):
+                angle_stats = data.site_ligand_angle_stats.float().to(device=device)
+            else:
+                angle_stats = torch.zeros(
+                    batch_size,
+                    DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM,
+                    dtype=dtype,
+                    device=device,
+                )
+            site_features.append(angle_stats)
+        return torch.cat(site_features, dim=-1)
 
     @staticmethod
     def _supervised_mask(target: Tensor) -> Tensor:
@@ -968,6 +1061,7 @@ class GVPPocketClassifier(nn.Module):
             data.x_env_electrostatics,
             extra_scalar_features=early_esm,
         )
+        s = self._add_node_type_embedding(s, data)
         v = self._init_vector_channels(data.x_vec)
 
         edge_s = self.edge_scalar_encoder(
@@ -982,35 +1076,40 @@ class GVPPocketClassifier(nn.Module):
         for layer in self.layers:
             s, v = layer(s, v, data.edge_index, edge_s, edge_v)
 
-        classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
+        structural_pool_mask = self._structural_pool_mask(data)
+        esm_pool_mask = self._esm_pool_mask(data)
 
-        # Structural branch: pool the residue-level GVP states into one graph embedding.
+        # Structural branch: pool the GVP states into one graph embedding.
+        # Metal-node experiments may include generic metal anchor nodes in this
+        # readout; ESM pooling below remains residue-only.
         if self.node_level_esm_proj is not None and self.node_level_gate is not None and self.use_esm_branch:
             node_level_esm = self.node_level_esm_proj(data.x_esm)
             node_level_gate = self.node_level_gate(torch.cat([s, node_level_esm], dim=-1))
-            s = s + (node_level_gate * node_level_esm)
+            residue_gate_mask = residue_node_mask(data).unsqueeze(-1).to(dtype=s.dtype)
+            s = s + (node_level_gate * node_level_esm * residue_gate_mask)
 
         if self.fusion_mode == "cross_modal_attention" and self.use_esm_branch:
             esm_residue_states = self.esm_residue_proj(data.x_esm)
             active_mask = shell_mask_from_roles(data.x_role, self.cross_attention_neighborhood)
+            active_mask = active_mask & residue_node_mask(data)
             for block in self.cross_attention_blocks:
                 s, esm_residue_states = block(s, esm_residue_states, data.batch, active_mask)
-            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, classifier_pool_mask)
+            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, structural_pool_mask)
             esm_graph_embed = pool_graph_states(
                 esm_residue_states,
                 data.batch,
                 self.cross_attn_esm_pool,
-                classifier_pool_mask,
+                esm_pool_mask,
             )
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             esm_fused = self.cross_attn_esm_fusion_proj(esm_graph_embed)
         else:
-            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, classifier_pool_mask)
+            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, structural_pool_mask)
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             if self.use_esm_branch:
                 # Late ESM fusion: pool residue ESM embeddings separately, then inject the
                 # graph-level sequence signal near the classifier head.
-                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, classifier_pool_mask)
+                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, esm_pool_mask)
                 esm_fused = self.esm_fusion_proj(esm_graph_embed)
             else:
                 batch_size = int(data.batch.max().item()) + 1
@@ -1021,11 +1120,13 @@ class GVPPocketClassifier(nn.Module):
                     device=gvp_fused.device,
                 )
                 esm_fused = torch.zeros_like(gvp_fused)
-        if hasattr(data, "site_metal_stats"):
-            site_stats = data.site_metal_stats.float()
-        else:
-            batch_size = int(data.batch.max().item()) + 1
-            site_stats = torch.zeros(batch_size, 4, dtype=torch.float32, device=gvp_fused.device)
+        batch_size = int(data.batch.max().item()) + 1 if data.batch.numel() > 0 else 0
+        site_stats = self._site_feature_tensor(
+            data,
+            batch_size,
+            dtype=gvp_fused.dtype,
+            device=gvp_fused.device,
+        )
         site_fused = self.site_feature_encoder(site_stats)
         # The gate lets the model decide how much ESM information to inject per pocket.
         fusion_gate = self.fusion_gate(torch.cat([gvp_fused, esm_fused], dim=-1))

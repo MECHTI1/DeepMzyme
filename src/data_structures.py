@@ -67,6 +67,11 @@ DEFAULT_EDGE_RADIUS = 8.0 #Try also 6-8, or even more
 DEFAULT_MULTINUCLEAR_MERGE_DISTANCE = 4.5
 GENERIC_METAL_ELEMENT = "METAL"
 MISSING_CLASS_LABEL = -1
+NODE_TYPE_RESIDUE = 0
+NODE_TYPE_GENERIC_METAL = 1
+METAL_NODE_MODE_CHOICES = ("none", "per_metal")
+STRUCTURAL_READOUT_SCOPE_CHOICES = ("auto", "residue_only", "residue_and_metal", "metal_only")
+DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM = 8
 
 # Used only to detect the metal-centered sites currently supported by the
 # training label policy; the true metal identity should stay out of the model
@@ -181,6 +186,7 @@ NORMALIZABLE_FEATURE_NAMES = (
     "edge_dist_raw",
     "edge_seqsep",
     "site_metal_stats",
+    "site_ligand_angle_stats",
 )
 
 GRAPH_NODE_TENSOR_FIELDS = (
@@ -223,6 +229,16 @@ GRAPH_SITE_TENSOR_FIELDS = (
     "metal_count",
     "is_multinuclear",
     "site_metal_stats",
+)
+
+GRAPH_NODE_MASK_FIELDS = (
+    "residue_node_mask",
+    "metal_node_mask",
+    "node_type_id",
+)
+
+GRAPH_SITE_GEOMETRY_TENSOR_FIELDS = (
+    "site_ligand_angle_stats",
 )
 
 GRAPH_TARGET_FIELDS = (

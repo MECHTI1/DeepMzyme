@@ -30,6 +30,7 @@ def validate_graphs(
                 require_ring_edges=config.require_ring_edges,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
+                metal_node_mode=config.metal_node_mode,
             )
         except Exception as exc:
             raise ValueError(f"Graph preflight failed for pocket {pocket.pocket_id!r}: {exc}") from exc
