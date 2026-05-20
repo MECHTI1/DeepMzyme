@@ -300,6 +300,9 @@ The main capacity fields are:
 - `GVP_LAYERS_VALUES_CSV`: graph message-passing depth.
 - `HEAD_MLP_LAYERS_VALUES_CSV`: classifier-head depth.
 - `EDGE_RADIUS_VALUES_CSV`: graph radius cutoff.
+- `CLASSIFIER_POOL_DISTANCE_CUTOFF`: optional CA-to-metal residue cutoff for
+  the pooling step that feeds the final classifier head; `0.0` keeps all
+  residues.
 
 Do not vary all capacity fields at once in the first baseline. Use the playbook
 for the exact first baseline and HPO search spaces; use

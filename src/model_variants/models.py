@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 from torch_geometric.data import Data
-from torch_geometric.nn import GINEConv, global_mean_pool
+from torch_geometric.nn import GINEConv
 
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
@@ -23,6 +23,7 @@ from model import (
     NodeScalarEncoder,
     TaskLossWeighter,
     build_classifier_head,
+    metal_distance_pool_mask,
     pool_graph_states,
     shell_mask_from_roles,
     supervised_contrastive_loss,
@@ -261,11 +262,18 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         predict_metal: bool = True,
         predict_ec: bool = True,
         site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
+        classifier_pool_distance_cutoff: float = 0.0,
     ):
         super().__init__()
         self.site_feature_dim = int(site_feature_dim)
+        self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
+        if self.classifier_pool_distance_cutoff < 0.0:
+            raise ValueError(
+                "classifier_pool_distance_cutoff must be non-negative, "
+                f"got {self.classifier_pool_distance_cutoff}."
+            )
         self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
         self.esm_fusion_proj = nn.Sequential(
             nn.Linear(2 * esm_fusion_dim, hidden_s),
@@ -300,7 +308,8 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         )
 
     def forward(self, data: Data) -> dict[str, Tensor]:
-        esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch)
+        classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
+        esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, classifier_pool_mask)
         esm_fused = self.esm_fusion_proj(esm_graph_embed)
         site_stats = (
             data.site_metal_stats.float()
@@ -364,6 +373,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         ec_contrastive_weight: float = 0.0,
         ec_contrastive_temperature: float = 0.1,
         site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
+        classifier_pool_distance_cutoff: float = 0.0,
     ):
         super().__init__()
         self.use_esm_branch = bool(use_esm_branch)
@@ -373,8 +383,14 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         self.fusion_mode = str(fusion_mode)
         self.cross_attention_neighborhood = str(cross_attention_neighborhood)
         self.site_feature_dim = int(site_feature_dim)
+        self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
+        if self.classifier_pool_distance_cutoff < 0.0:
+            raise ValueError(
+                "classifier_pool_distance_cutoff must be non-negative, "
+                f"got {self.classifier_pool_distance_cutoff}."
+            )
         early_scalar_dim = 0
         if self.use_early_esm:
             early_scalar_dim = esm_dim if self.early_esm_raw else int(early_esm_dim)
@@ -531,6 +547,8 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         for conv, norm in zip(self.gnn_layers, self.layer_norms):
             x = norm(x + conv(x, data.edge_index, edge_attr=edge_attr))
 
+        classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
+
         if self.node_level_esm_proj is not None and self.node_level_gate is not None and self.use_esm_branch:
             node_level_esm = self.node_level_esm_proj(data.x_esm)
             node_level_gate = self.node_level_gate(torch.cat([x, node_level_esm], dim=-1))
@@ -541,15 +559,20 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             active_mask = shell_mask_from_roles(data.x_role, self.cross_attention_neighborhood)
             for block in self.cross_attention_blocks:
                 x, esm_residue_states = block(x, esm_residue_states, data.batch, active_mask)
-            struct_embed = pool_graph_states(x, data.batch, self.struct_attn_pool)
-            esm_graph_embed = pool_graph_states(esm_residue_states, data.batch, self.cross_attn_esm_pool)
+            struct_embed = pool_graph_states(x, data.batch, self.struct_attn_pool, classifier_pool_mask)
+            esm_graph_embed = pool_graph_states(
+                esm_residue_states,
+                data.batch,
+                self.cross_attn_esm_pool,
+                classifier_pool_mask,
+            )
             struct_fused = self.gnn_fusion_proj(struct_embed)
             esm_fused = self.cross_attn_esm_fusion_proj(esm_graph_embed)
         else:
-            struct_embed = torch.cat([global_mean_pool(x, data.batch), self.struct_attn_pool(x, data.batch)], dim=-1)
+            struct_embed = pool_graph_states(x, data.batch, self.struct_attn_pool, classifier_pool_mask)
             struct_fused = self.gnn_fusion_proj(struct_embed)
             if self.use_esm_branch:
-                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch)
+                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, classifier_pool_mask)
                 esm_fused = self.esm_fusion_proj(esm_graph_embed)
             else:
                 batch_size = int(data.batch.max().item()) + 1 if data.batch.numel() > 0 else 0

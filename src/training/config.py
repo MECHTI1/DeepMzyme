@@ -124,6 +124,7 @@ class TrainConfig:
     node_rbf_sigma: float = 0.75
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
+    classifier_pool_distance_cutoff: float = 0.0
     normalize_message_aggregation: bool = False
     position_noise_std: float = 0.0
     second_shell_dropout: float = 0.0
@@ -305,6 +306,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--node-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--edge-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--node-rbf-use-raw-distances", action="store_true")
+    parser.add_argument(
+        "--classifier-pool-distance-cutoff",
+        type=float,
+        default=0.0,
+        help=(
+            "If > 0, pool only residues with CA-to-metal distance within this "
+            "Angstrom cutoff before the final classifier head. 0 disables the filter."
+        ),
+    )
     parser.add_argument(
         "--gvp-normalize-message-aggregation",
         dest="normalize_message_aggregation",
@@ -749,6 +759,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         node_rbf_sigma=args.node_rbf_sigma,
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
+        classifier_pool_distance_cutoff=args.classifier_pool_distance_cutoff,
         normalize_message_aggregation=args.normalize_message_aggregation,
         position_noise_std=args.position_noise_std,
         second_shell_dropout=args.second_shell_dropout,

@@ -337,6 +337,11 @@ def validate_training_configuration(config: TrainConfig) -> None:
         )
     if config.position_noise_std < 0.0:
         raise ValueError(f"--position-noise-std must be non-negative, got {config.position_noise_std}")
+    if config.classifier_pool_distance_cutoff < 0.0:
+        raise ValueError(
+            "--classifier-pool-distance-cutoff must be non-negative, "
+            f"got {config.classifier_pool_distance_cutoff}"
+        )
     if not 0.0 <= config.second_shell_dropout <= 1.0:
         raise ValueError(
             "--second-shell-dropout must be in [0, 1], "
@@ -1270,6 +1275,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             node_rbf_sigma=config.node_rbf_sigma,
             edge_rbf_sigma=config.edge_rbf_sigma,
             node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,
+            classifier_pool_distance_cutoff=config.classifier_pool_distance_cutoff,
             normalize_message_aggregation=config.normalize_message_aggregation,
             use_esm_branch=config.use_esm_branch,
             fusion_mode=config.fusion_mode,

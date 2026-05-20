@@ -230,6 +230,7 @@ can reproduce a command-line run.
 | Node/edge encoders | `--node-rbf-sigma` | `0.75` | Width of distance radial-basis features for node distance features. | Advanced |
 | Node/edge encoders | `--edge-rbf-sigma` | `0.75` | Width of distance radial-basis features for edge distance features. | Advanced |
 | Node/edge encoders | `--node-rbf-use-raw-distances` | false | Uses raw, unnormalized node distances for node RBF expansion when available. | Advanced |
+| Classifier pooling | `--classifier-pool-distance-cutoff` | `0.0` | If positive, pools only residues within this CA-to-metal Angstrom cutoff before the final classifier head; `0.0` keeps all residues. | Advanced |
 | Training augmentation | `--position-noise-std` | `0.0` | Training-only Gaussian coordinate noise. Validation and held-out test graphs stay unaugmented. | Advanced / optional sweep |
 | Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. | Advanced / optional sweep |
 | ESM inputs | `--esm-embeddings-dir` | optional path | Directory containing precomputed ESMC residue embeddings. Needed by ESM-using models unless generation/missing behavior is enabled. | Expose |

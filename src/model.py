@@ -241,10 +241,15 @@ class AttentionPool(nn.Module):
             nn.Linear(hidden_dim, 1),
         )
 
-    def forward(self, x: Tensor, batch: Tensor) -> Tensor:
+    def forward(self, x: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
+        batch_size = int(batch.max().item()) + 1 if batch.numel() > 0 else 0
+        if mask is not None:
+            mask = mask.to(dtype=torch.bool, device=x.device)
+            x = x[mask]
+            batch = batch[mask]
         logits = self.score(x).squeeze(-1)
-        weights = softmax(logits, batch)
-        return global_add_pool(x * weights.unsqueeze(-1), batch)
+        weights = softmax(logits, batch, num_nodes=batch_size)
+        return global_add_pool(x * weights.unsqueeze(-1), batch, size=batch_size)
 
 
 class ESMGraphEncoder(nn.Module):
@@ -258,10 +263,10 @@ class ESMGraphEncoder(nn.Module):
         )
         self.attn_pool = AttentionPool(proj_dim)
 
-    def forward(self, x_esm: Tensor, batch: Tensor) -> Tensor:
+    def forward(self, x_esm: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
         z = self.esm_proj(x_esm)
-        z_mean = global_mean_pool(z, batch)
-        z_attn = self.attn_pool(z, batch)
+        z_mean = masked_global_mean_pool(z, batch, mask)
+        z_attn = self.attn_pool(z, batch, mask)
         return torch.cat([z_mean, z_attn], dim=-1)
 
 
@@ -275,8 +280,43 @@ def shell_mask_from_roles(x_role: Tensor, scope: str) -> Tensor:
     raise ValueError(f"Unsupported shell scope {scope!r}.")
 
 
-def pool_graph_states(x: Tensor, batch: Tensor, attn_pool: AttentionPool) -> Tensor:
-    return torch.cat([global_mean_pool(x, batch), attn_pool(x, batch)], dim=-1)
+def ensure_nonempty_pool_mask(mask: Tensor, batch: Tensor) -> Tensor:
+    mask = mask.to(dtype=torch.bool, device=batch.device).clone()
+    if batch.numel() == 0:
+        return mask
+    batch_size = int(batch.max().item()) + 1
+    counts = global_add_pool(mask.float().unsqueeze(-1), batch, size=batch_size).view(-1)
+    for graph_idx in torch.nonzero(counts <= 0.0, as_tuple=False).view(-1).tolist():
+        node_indices = torch.nonzero(batch == int(graph_idx), as_tuple=False).view(-1)
+        if node_indices.numel() > 0:
+            mask[node_indices[0]] = True
+    return mask
+
+
+def metal_distance_pool_mask(data: Data, cutoff: float) -> Tensor | None:
+    cutoff = float(cutoff)
+    if cutoff <= 0.0:
+        return None
+    distance_features = (
+        data.x_dist_raw_raw.float()
+        if hasattr(data, "x_dist_raw_raw")
+        else data.x_dist_raw.float()
+    )
+    ca_to_metal = distance_features if distance_features.ndim == 1 else distance_features[:, 0]
+    return ensure_nonempty_pool_mask(ca_to_metal <= cutoff, data.batch)
+
+
+def masked_global_mean_pool(x: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
+    batch_size = int(batch.max().item()) + 1 if batch.numel() > 0 else 0
+    if mask is not None:
+        mask = mask.to(dtype=torch.bool, device=x.device)
+        x = x[mask]
+        batch = batch[mask]
+    return global_mean_pool(x, batch, size=batch_size)
+
+
+def pool_graph_states(x: Tensor, batch: Tensor, attn_pool: AttentionPool, mask: Tensor | None = None) -> Tensor:
+    return torch.cat([masked_global_mean_pool(x, batch, mask), attn_pool(x, batch, mask)], dim=-1)
 
 
 class LocalizedCrossAttentionBlock(nn.Module):
@@ -577,6 +617,7 @@ class GVPPocketClassifier(nn.Module):
         ec_contrastive_temperature: float = 0.1,
         normalize_message_aggregation: bool = False,
         site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
+        classifier_pool_distance_cutoff: float = 0.0,
     ):
         super().__init__()
         # Current supervised targets:
@@ -593,8 +634,14 @@ class GVPPocketClassifier(nn.Module):
         self.cross_attention_bidirectional = bool(cross_attention_bidirectional)
         self.normalize_message_aggregation = bool(normalize_message_aggregation)
         self.site_feature_dim = int(site_feature_dim)
+        self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
+        if self.classifier_pool_distance_cutoff < 0.0:
+            raise ValueError(
+                "classifier_pool_distance_cutoff must be non-negative, "
+                f"got {self.classifier_pool_distance_cutoff}."
+            )
         early_scalar_dim = 0
         if self.use_early_esm:
             early_scalar_dim = esm_dim if self.early_esm_raw else self.early_esm_dim
@@ -935,6 +982,8 @@ class GVPPocketClassifier(nn.Module):
         for layer in self.layers:
             s, v = layer(s, v, data.edge_index, edge_s, edge_v)
 
+        classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
+
         # Structural branch: pool the residue-level GVP states into one graph embedding.
         if self.node_level_esm_proj is not None and self.node_level_gate is not None and self.use_esm_branch:
             node_level_esm = self.node_level_esm_proj(data.x_esm)
@@ -946,17 +995,22 @@ class GVPPocketClassifier(nn.Module):
             active_mask = shell_mask_from_roles(data.x_role, self.cross_attention_neighborhood)
             for block in self.cross_attention_blocks:
                 s, esm_residue_states = block(s, esm_residue_states, data.batch, active_mask)
-            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool)
-            esm_graph_embed = pool_graph_states(esm_residue_states, data.batch, self.cross_attn_esm_pool)
+            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, classifier_pool_mask)
+            esm_graph_embed = pool_graph_states(
+                esm_residue_states,
+                data.batch,
+                self.cross_attn_esm_pool,
+                classifier_pool_mask,
+            )
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             esm_fused = self.cross_attn_esm_fusion_proj(esm_graph_embed)
         else:
-            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool)
+            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, classifier_pool_mask)
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             if self.use_esm_branch:
                 # Late ESM fusion: pool residue ESM embeddings separately, then inject the
                 # graph-level sequence signal near the classifier head.
-                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch)
+                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, classifier_pool_mask)
                 esm_fused = self.esm_fusion_proj(esm_graph_embed)
             else:
                 batch_size = int(data.batch.max().item()) + 1

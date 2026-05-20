@@ -203,6 +203,8 @@ def apply_feature_normalization(data: Data, stats: FeatureNormalizationStats | N
         if not hasattr(data, feature_name):
             continue
         value = getattr(data, feature_name).float()
+        if feature_name == "x_dist_raw" and not hasattr(data, "x_dist_raw_raw"):
+            setattr(data, "x_dist_raw_raw", value.clone())
         std = stats.stds[feature_name].to(value.device)
         normalized = (value - mean.to(value.device)) / std
         setattr(data, feature_name, normalized.clamp(-stats.clamp_value, stats.clamp_value))
