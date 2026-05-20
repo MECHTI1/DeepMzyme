@@ -81,7 +81,7 @@ Before launching a run, verify these resolved notebook values:
 | --- | --- |
 | Task | `TASK = "metal"` |
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
-| Split | `DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"` |
+| Split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; for reportable final runs prefer `train_and_test_sets_structures_non_overlapped_pinmymetal` unless the exact split is explicitly labeled as possibly overlapped |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Split grouping | `SPLIT_BY = "pdbid"`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
