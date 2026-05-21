@@ -78,9 +78,11 @@ Notebook execution order:
 2. Main configuration cell with one block from this playbook.
 3. Build central `CONFIG`.
 4. Planning/preflight cells.
-5. Optional training execution cell.
+5. Optional training execution cell for ordinary runs or HPO.
 6. Summarize/report cell for the current `RUN_BATCH_ID`.
-7. For final testing only: select final run, preview final held-out test, then
+7. For Stage 6 only: Stage 6 controls/checklist, then
+   **Launch Stage 6 top-K grouped-fold confirmation**.
+8. For final testing only: select final run, preview final held-out test, then
    launch once.
 
 For all comparison, HPO, and Stage 6 confirmation stages:
@@ -1233,8 +1235,8 @@ OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequ
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 
@@ -1427,8 +1429,8 @@ OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
 OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1542,8 +1544,8 @@ OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
 OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2,3"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1632,8 +1634,8 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1725,8 +1727,8 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1822,8 +1824,8 @@ OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 OPTUNA_EARLY_ESM_DIM_VALUES_CSV = "16,32,64"
 OPTUNA_EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1919,8 +1921,8 @@ OPTUNA_CROSS_ATTENTION_LAYERS_CSV = "1"
 OPTUNA_CROSS_ATTENTION_HEADS_CSV = "2,4"
 OPTUNA_CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+# Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -2066,11 +2068,13 @@ candidates, and before any candidate is treated as final-selection evidence.
 Expected scale/runtime: serious run, long or overnight. Runtime is roughly
 `TOP_K_CONFIGS_FOR_SEED_REPEAT x SEED_REPEAT_N_FOLDS x EPOCHS`.
 
-Preferred notebook-integrated configuration: paste this overlay together with
-the exact Stage 5 block whose top trials should be repeated. Keep that Stage 5
-block's `MODEL_PRESET`, `OPTUNA_STUDY_NAME`, `OPTUNA_STORAGE`, search space,
-and persistent-storage settings unchanged. The notebook writes top commands and
-then runs grouped-fold confirmation after the study finishes.
+Preferred notebook-integrated configuration: run the exact Stage 5 HPO block
+first with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes,
+use this Stage 6 overlay and the dedicated **Launch Stage 6 top-K grouped-fold
+confirmation** cell to import the previous validation-only HPO candidates,
+write the top-K commands, and optionally launch grouped-fold confirmation.
+Keep the Stage 5 block's `MODEL_PRESET`, `OPTUNA_STUDY_NAME`, `OPTUNA_STORAGE`,
+search space, and persistent-storage settings unchanged.
 The current notebook exposes these Stage 6 values both in **Main
 configuration** and in the later **Stage 6 controls and existing Optuna/HPO
 reuse** panel. When resuming an interrupted Stage 6, keep the values identical
@@ -2099,6 +2103,22 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
+In the **Launch Stage 6 top-K grouped-fold confirmation** cell, first preview
+the imported candidates and generated commands:
+
+```python
+LAUNCH_STAGE6_TOP_K_CONFIRMATION = False
+STAGE6_SOURCE_RUNS_DIR = ""  # blank = configured Stage 6 source, then current runs_dir fallback
+```
+
+After confirming the import report and generated top-K commands are correct,
+launch:
+
+```python
+LAUNCH_STAGE6_TOP_K_CONFIRMATION = True
+STAGE6_SOURCE_RUNS_DIR = ""  # or a full old HPO RUN_BATCH_ID path
+```
+
 Notes:
 
 - `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is the default reportable
@@ -2115,19 +2135,22 @@ Notes:
   available for exploratory checks only. It measures combined initialization
   and split variance, not isolated initialization variance.
 
-If the Optuna study is already complete and you did not enable
-`RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, inspect:
+If the Optuna study is already complete, use the Stage 6 launch cell in preview
+mode first and inspect:
 
 ```text
 <RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt
 ```
 
-Those commands intentionally omit held-out test evaluation. Run only the top-K
-commands you predeclare, with the same fold definitions for every compared
-candidate, and keep the results as validation-only evidence.
+Those commands intentionally omit held-out test evaluation. Launch only the
+top-K commands you predeclare, with the same fold definitions for every
+compared candidate, and keep the results as validation-only evidence.
 
 Expected outputs/files:
 
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_existing_trials_import_report.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_existing_trials_import_report.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_results.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.json`
@@ -2193,6 +2216,10 @@ Success criteria:
 Proceed to Stage 7 only if:
 
 - The Stage 6 success criteria are met.
+- `stage6_existing_trials_import_report.csv`,
+  `stage6_existing_trials_import_report.json`, and
+  `top_reevaluation_commands.txt` exist and point to validation-only HPO
+  candidates.
 - `seed_repeat_results.csv`, `seed_repeat_summary.csv`,
   `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`,
   `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, and
@@ -2261,9 +2288,10 @@ on checkpoint loading and evaluation mode.
 First run the **Select final run and show saved outputs** cell. Use:
 
 ```python
-FINAL_RUN_SELECTION_MODE = "auto_best_validation"
+FINAL_RUN_SELECTION_MODE = "stage6_selected_candidate"
 FINAL_RUN_TABLE_INDEX = 1
 FINAL_RUN_DIR = ""
+FINAL_RUN_STAGE6_SELECTED_CANDIDATE_JSON = ""
 FINAL_REPORT_BASENAME = "deepmzyme_final_selected_run"
 ```
 
