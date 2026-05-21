@@ -50,7 +50,12 @@ VALID_EARLY_ESM_SCOPE_CHOICES = ("all", "first_shell", "first_second_shell")
 VALID_CROSS_ATTENTION_NEIGHBORHOOD_CHOICES = ("all", "first_shell", "first_second_shell")
 VALID_FINAL_TEST_REPORT_CHOICES = ("single_checkpoint", "softmax_mean_5_seeds")
 VALID_FINAL_TEST_ENSEMBLE_MODE_CHOICES = ("single_checkpoint", "softmax_mean_5_seeds")
-VALID_FINAL_TEST_RESULT_ROLE_CHOICES = ("primary_final_report", "secondary_diagnostic_report")
+VALID_FINAL_TEST_RESULT_ROLE_CHOICES = (
+    "primary_final_report",
+    "secondary_diagnostic_report",
+    "primary_preselected",
+    "exploratory_posthoc",
+)
 VALID_SELECTION_METRIC_CHOICES = (
     "train_loss",
     "val_loss",
@@ -632,7 +637,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=str,
         default="primary_final_report",
         choices=VALID_FINAL_TEST_RESULT_ROLE_CHOICES,
-        help="Whether this final-test report is the primary result or a secondary diagnostic.",
+        help="Whether this final-test report is the primary preselected result or a secondary/post-hoc diagnostic.",
     )
     parser.add_argument("--final-test-selected-config-id", type=str, default=None)
     parser.add_argument(

@@ -584,6 +584,15 @@ The non-overlapped PinMyMetal split remains the historically trusted split for
 final held-out evaluation unless a new experiment explicitly switches to a
 newer split variant.
 
+The metal Colab notebook currently defaults `DATASET_NAME` to the exact
+PinMyMetal split for new serious metal-validation workflows, and the playbook
+owns that executable default. That default changes the external dataset split
+used by the notebook; it does not weaken the held-out-test policy below. Exact
+split results must remain labeled as exact/possibly-overlapped when train/test
+PDB-ID overlap exists, and the non-overlapped split remains the historically
+trusted final held-out reference unless an experiment explicitly chooses and
+documents another final split.
+
 Named split variants:
 
 - **Harsh Split PinMyMetal**:

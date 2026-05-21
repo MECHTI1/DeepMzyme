@@ -53,7 +53,7 @@ what to run next:
 | Stage 5E | GVP + hybrid fusion HPO | Yes | 36-60 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5F | GVP + cross-attention HPO | Yes | 30-55 h | Stage 5C gate passed, then one hundred twenty complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5G | RING/radius-only ablation | Yes, ablation budget | 6-10 h | Matching radius-only validation runs complete and are labeled as ablation | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
-| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h | All predeclared top-K x 5 grouped-fold runs complete; one source run selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, run dirs |
+| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h | All predeclared top-K x 5 grouped-fold runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
 | Stage 7 | One-shot held-out test | Yes, final only | 20-60 min | Source is the Stage 6 validation-selected run and one-shot policy is confirmed | Separate final-test run dir, `test_report.json`, final-test summary |
 
 All configuration blocks below use variables that exist in
@@ -161,7 +161,7 @@ Use these shared defaults unless a stage overrides them.
 ```python
 TASK = "metal"
 METAL_LABEL_SCHEME = "six_class"
-DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"
+DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_metal_balanced_acc"
@@ -214,6 +214,21 @@ OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
 ```
+
+`DATASET_NAME` chooses the external train/test dataset split. The notebook
+default for new serious metal runs is the exact PinMyMetal split, while the
+non-overlapped, harsh, and common-PDBID 70/30 splits remain explicitly
+selectable. `SPLIT_BY` controls only the internal train/validation grouping
+inside the selected external train split. When the exact split is requested,
+the notebook must stop if that dataset root is missing; it must not silently
+fall back to the non-overlapped split.
+
+Summary CSV/PNG basenames are generated from the live provenance by default:
+task, metal label scheme, model preset or run set, `DATASET_NAME`,
+`RUN_BATCH_ID`, `SPLIT_BY`, and validation mode. A manual `SUMMARY_BASENAME`
+override is still allowed, but the notebook warns and records metadata when
+the manual name appears inconsistent with the resolved dataset, batch, or split
+policy.
 
 ESM/fusion stages currently assume canonical ESMC `esmc_300m` residue
 embeddings with `embedding_dim=960`. Newly generated embeddings write a
@@ -434,7 +449,7 @@ RUN_MODE = "single"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + hybrid fusion"
 RUN_BATCH_ID = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket_single"
-SUMMARY_BASENAME = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket_single"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket"
 
 EPOCHS = 50
@@ -688,7 +703,7 @@ RUN_MODE = "single"
 RECOMMENDED_RUN_SET = "only_gvp_smoke"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "stage0_environment_check"
-SUMMARY_BASENAME = "stage0_environment_check"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "stage0_env"
 
 EPOCHS = 1
@@ -697,7 +712,7 @@ LEARNING_RATES_CSV = "3e-5"
 WEIGHT_DECAYS_CSV = "1e-4"
 SEEDS_CSV = "42"
 
-DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"
+DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_metal_balanced_acc"
@@ -776,7 +791,7 @@ RUN_MODE = "single"
 RECOMMENDED_RUN_SET = "only_gvp_smoke"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_smoke_readiness"
-SUMMARY_BASENAME = "metal_smoke_readiness"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_smoke"
 
 EPOCHS = 1
@@ -865,7 +880,7 @@ RUN_MODE = "manual_configurations"
 RECOMMENDED_RUN_SET = "only_gvp_broad_comparison"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_baseline_lr_seed"
-SUMMARY_BASENAME = "metal_only_gvp_baseline_lr_seed"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_gvp_baseline"
 
 EPOCHS = 50
@@ -954,7 +969,7 @@ RUN_MODE = "manual_configurations"
 RECOMMENDED_RUN_SET = "baseline_model_comparison"
 # MODEL_PRESET is overridden by baseline_model_comparison (runs Only-GVP, Only-ESM, GVP + late fusion)
 RUN_BATCH_ID = "metal_baseline_model_comparison"
-SUMMARY_BASENAME = "metal_baseline_model_comparison"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_baseline"
 
 EPOCHS = 50
@@ -1055,7 +1070,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_debug"
-SUMMARY_BASENAME = "metal_only_gvp_optuna_debug"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_gvp_optuna_debug"
 
 EPOCHS = 10
@@ -1168,7 +1183,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_medium"
-SUMMARY_BASENAME = "metal_only_gvp_optuna_medium"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_gvp_optuna_medium"
 
 EPOCHS = 50
@@ -1214,10 +1229,9 @@ OPTUNA_METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequ
 OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.05"
 OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1355,7 +1369,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_200_capacity"
-SUMMARY_BASENAME = "metal_only_gvp_optuna_200_capacity"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_gvp_optuna_200_capacity"
 
 EPOCHS = 50
@@ -1409,10 +1423,9 @@ OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
 OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1484,7 +1497,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-ESM"
 RUN_BATCH_ID = "metal_only_esm_optuna_120_controlled"
-SUMMARY_BASENAME = "metal_only_esm_optuna_120_controlled"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_esm_optuna_120"
 
 EPOCHS = 50
@@ -1525,10 +1538,9 @@ OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 OPTUNA_HIDDEN_S_VALUES_CSV = "128,256"
 OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV = "1,2,3"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1568,7 +1580,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + late fusion"
 RUN_BATCH_ID = "metal_late_fusion_optuna_200_controlled"
-SUMMARY_BASENAME = "metal_late_fusion_optuna_200_controlled"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_late_fusion_optuna_200"
 
 EPOCHS = 50
@@ -1616,10 +1628,9 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1662,7 +1673,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + node-level late fusion"
 RUN_BATCH_ID = "metal_node_late_fusion_optuna_200_controlled"
-SUMMARY_BASENAME = "metal_node_late_fusion_optuna_200_controlled"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_node_late_fusion_optuna_200"
 
 EPOCHS = 50
@@ -1710,10 +1721,9 @@ OPTUNA_EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1758,7 +1768,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + hybrid fusion"
 RUN_BATCH_ID = "metal_hybrid_fusion_optuna_200_controlled"
-SUMMARY_BASENAME = "metal_hybrid_fusion_optuna_200_controlled"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_hybrid_fusion_optuna_200"
 
 EPOCHS = 50
@@ -1808,10 +1818,9 @@ OPTUNA_ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 OPTUNA_EARLY_ESM_DIM_VALUES_CSV = "16,32,64"
 OPTUNA_EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1855,7 +1864,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + cross-modal attention"
 RUN_BATCH_ID = "metal_cross_attention_optuna_120_controlled"
-SUMMARY_BASENAME = "metal_cross_attention_optuna_120_controlled"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_cross_attention_optuna_120"
 
 EPOCHS = 50
@@ -1906,10 +1915,9 @@ OPTUNA_CROSS_ATTENTION_LAYERS_CSV = "1"
 OPTUNA_CROSS_ATTENTION_HEADS_CSV = "2,4"
 OPTUNA_CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
-RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
-# Inactive unless RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION is changed; Stage 6
-# overlay owns reportable grouped-fold reevaluation settings.
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
+# Serious controlled HPO launches Stage 6 grouped-fold confirmation by default.
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42,123,2026,43,44"
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
@@ -1956,7 +1964,7 @@ RUN_MODE = "manual_configurations"
 RECOMMENDED_RUN_SET = "only_gvp_broad_comparison"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_radius_only_ablation"
-SUMMARY_BASENAME = "metal_only_gvp_radius_only_ablation"
+SUMMARY_BASENAME = ""  # auto from provenance
 RUN_NAME_PREFIX = "metal_only_gvp_radius_only"
 
 EPOCHS = 50
@@ -2065,7 +2073,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
 TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
 SEED_REPEAT_SPLIT_SEED = 42
@@ -2086,6 +2094,10 @@ Notes:
 
 - `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is the default reportable
   Stage 6 mode.
+- `TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"` resolves from completed Optuna
+  trials: fewer than 50 completed trials repeats up to 5 candidates, fewer than
+  150 repeats up to 10, and 150 or more repeats up to 20. A predeclared integer
+  is allowed, including 20, but it should be chosen before Stage 6 launches.
 - `REPEAT_SEEDS = "42"` is the model-initialization seed used for each fold in
   the standard grouped-fold confirmation.
 - `SEED_REPEAT_SPLIT_SEED = 42` fixes the grouped fold definitions. Keep it
@@ -2112,6 +2124,8 @@ Expected outputs/files:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.json`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_ranked_candidates.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_selected_final_candidate.json`
 - One validation-only run directory per top-K/fold pair
 - Per-fold `run_config.json`, `run_metadata.json`, and
   `split_diagnostics.json`
@@ -2134,6 +2148,9 @@ Stage 6 result rows include:
 Exact configuration record:
 
 - Grouped-fold summary: CSV/JSON files listed above.
+- Stage 6 ranking and frozen final-candidate selection:
+  `stage6_ranked_candidates.csv` and
+  `stage6_selected_final_candidate.json`.
 - Per repeated run: `<run_dir>/run_config.json` and
   `<run_dir>/run_metadata.json`.
 - `active_run_config.json` / `active_run_config.md` are generated from the live
@@ -2143,12 +2160,18 @@ Success criteria:
 
 - All predeclared top-K/fold runs complete.
 - The number of completed validation-only runs equals
-  `TOP_K_CONFIGS_FOR_SEED_REPEAT x SEED_REPEAT_N_FOLDS`.
+  the resolved `TOP_K_CONFIGS_FOR_SEED_REPEAT` value times
+  `SEED_REPEAT_N_FOLDS`.
 - Every candidate has the same validation units: `fold_0` through `fold_4`.
 - No held-out test files were created.
-- The selected candidate has the best supported mean `val_metal_balanced_acc`;
-  a lower-mean candidate may be selected only with documented better
-  rare-class recall and a clear reason.
+- Candidate ranking uses validation/CV metrics only: highest mean
+  `val_metal_balanced_acc`, then higher mean `val_metal_min_recall`, then
+  lower fold-to-fold standard deviation of `val_metal_balanced_acc`, then a
+  simpler/smaller model if still tied.
+- `stage6_selected_final_candidate.json` records the selected configuration
+  ID, selected source run directories, model preset, selected hyperparameters,
+  ranking metrics, and the frozen primary source run/checkpoint used by the
+  simplified Stage 7 primary workflow.
 - Pairwise comparisons use paired bootstrap over fold-level differences with
   10,000 resamples. Candidate A beats candidate B only if mean A-B is positive,
   the 95% CI excludes zero on the positive side, and the raw improvement meets
@@ -2162,8 +2185,9 @@ Proceed to Stage 7 only if:
 
 - The Stage 6 success criteria are met.
 - `seed_repeat_results.csv`, `seed_repeat_summary.csv`,
-  `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, and
-  `seed_repeat_pairwise_bootstrap.json` exist.
+  `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`,
+  `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, and
+  `stage6_selected_final_candidate.json` exist.
 - The selected candidate has all planned folds/splits completed.
 - No held-out test files were created anywhere in the validation chain.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
@@ -2173,9 +2197,9 @@ Proceed to Stage 7 only if:
   metal class has zero mean recall.
 - Any claimed improvement over a comparator is supported by the paired
   bootstrap 95% CI and the relevant raw-improvement threshold.
-- One final configuration is selected using validation evidence only.
-- The exact Stage 6 source run directory/checkpoint for Stage 7 is recorded
-  before any held-out test launch.
+- One final configuration is selected using validation/CV evidence only.
+- The exact Stage 6 source run directories/checkpoints and final source mode
+  for Stage 7 are recorded before any held-out test launch.
 
 If gate fails: report the top candidates, paired bootstrap rows,
 `val_metal_min_recall`, per-class recall, split seed, fold indices, and epoch
@@ -2183,11 +2207,11 @@ budget. Do not launch held-out test evaluation.
 
 ### Recommended Stage 6 candidate policy
 
-For each completed Optuna study, repeat the top 3 candidates across:
+For each completed Optuna study, repeat the auto-selected top candidates across:
 
 ```python
 TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
-TOP_K_CONFIGS_FOR_SEED_REPEAT = 3
+TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
 SEED_REPEAT_SPLIT_SEED = 42
@@ -2196,9 +2220,11 @@ RETRAIN_BEST_CONFIG_AFTER_HPO = False
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ```
 
-Use top 5 only when the top trials are tightly clustered or when the top 3
-contain different model-capacity regimes that are scientifically important to
-compare.
+The default auto rule repeats up to 5 candidates below 50 completed trials, up
+to 10 below 150 completed trials, and up to 20 for 150 or more completed
+trials. Use a fixed integer only when the top-K count is predeclared before
+launch; integer 20 is allowed for serious large HPO but implies
+`20 x 5 = 100` extra validation-only runs.
 
 A candidate is considered stable enough for final selection only if:
 
@@ -2232,102 +2258,52 @@ FINAL_RUN_DIR = ""
 FINAL_REPORT_BASENAME = "deepmzyme_final_selected_run"
 ```
 
-Then run the **Optional final held-out test evaluation** cell in preview mode:
+Then run the **Optional final held-out test evaluation** cell with launch still
+disabled:
 
 ```python
-FINAL_TEST_WORKFLOW = "preview_only"
-FINAL_TEST_PRIMARY_REPORT = "single_checkpoint"
-FINAL_TEST_ENSEMBLE_MODE = "single_checkpoint"
-FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS = ""
-FINAL_TEST_SELECTED_CONFIG_ID = ""
+FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"
 LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False
-CONFIRM_ONE_SHOT_POLICY = False
-FINAL_TEST_SOURCE_RUN_DIR = ""
-FINAL_TEST_SOURCE_CHOICE_INDEX = 0
-FINAL_TEST_BATCH_PARENT_DIR = ""
-FINAL_TEST_BATCH_RUN_GLOB = "*"
-FINAL_TEST_RUN_NAME_PREFIX = "final_test"
-FINAL_TEST_BATCH_SUMMARY_BASENAME = "final_test_batch_summary"
-FINAL_TEST_METAL_REPORT_VIEW = "use_METAL_REPORT_VIEW"
-ALLOW_REPEAT_FINAL_TEST_EVAL = False
-ALLOW_MIXED_FINAL_TEST_BATCH = False
-FINAL_TEST_CALIBRATION_BINS = 15
-FINAL_TEST_ENABLE_TEMPERATURE_SCALING = True
-FINAL_TEST_ENABLE_BOOTSTRAP_CI = True
-FINAL_TEST_BOOTSTRAP_RESAMPLES = 1000
-FINAL_TEST_BOOTSTRAP_SEED = 20260518
 ```
 
-Inspect the printed pre-flight checklist. Before launch, choose one primary
-reporting mode:
+Inspect the printed pre-flight checklist. The final-test cell supports exactly
+two workflow values:
 
-- `FINAL_TEST_PRIMARY_REPORT = "single_checkpoint"`: the selected checkpoint is
-  the primary final report.
-- `FINAL_TEST_PRIMARY_REPORT = "softmax_mean_5_seeds"`: the predeclared
-  five-checkpoint softmax ensemble is the primary final report.
+- `evaluate_stage6_selected_candidate`: primary serious final-test mode. It
+  requires `stage6_selected_final_candidate.json` and evaluates only the frozen
+  Stage-6-selected rank #1 source/checkpoint. The output role is
+  `primary_preselected`.
+- `exploratory_evaluate_all_stage6_ranked_candidates`: optional post-hoc
+  diagnostic mode. It requires both `stage6_ranked_candidates.csv` and
+  `stage6_selected_final_candidate.json`, evaluates candidates in Stage 6 rank
+  order, labels rank #1 as `primary_preselected`, labels every other row as
+  `exploratory_posthoc`, and cannot be used to select or replace the primary
+  model after held-out metrics are seen.
 
-Do not change `FINAL_TEST_PRIMARY_REPORT` after seeing held-out test metrics.
-
-For the single-checkpoint primary report, if the selected source run is the
-final validation-selected run and this is final reporting, switch to launch:
+For the single-checkpoint primary report, if `stage6_selected_final_candidate.json`
+declares a single selected source run, switch to launch:
 
 ```python
-FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"
-FINAL_TEST_PRIMARY_REPORT = "single_checkpoint"
-FINAL_TEST_ENSEMBLE_MODE = "single_checkpoint"
-FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS = ""
-FINAL_TEST_SELECTED_CONFIG_ID = ""
+FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"
 LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True
-CONFIRM_ONE_SHOT_POLICY = True
-FINAL_TEST_SOURCE_RUN_DIR = ""
-FINAL_TEST_SOURCE_CHOICE_INDEX = 0
-FINAL_TEST_RUN_NAME_PREFIX = "final_test"
-FINAL_TEST_METAL_REPORT_VIEW = "use_METAL_REPORT_VIEW"
-ALLOW_REPEAT_FINAL_TEST_EVAL = False
-ALLOW_MIXED_FINAL_TEST_BATCH = False
-FINAL_TEST_CALIBRATION_BINS = 15
-FINAL_TEST_ENABLE_TEMPERATURE_SCALING = True
-FINAL_TEST_ENABLE_BOOTSTRAP_CI = True
-FINAL_TEST_BOOTSTRAP_RESAMPLES = 1000
-FINAL_TEST_BOOTSTRAP_SEED = 20260518
 ```
 
-For the optional five-seed deep ensemble primary report, list exactly the five
-Stage 6 source run directories before launch. The notebook prints the resolved
-run directories, checkpoint paths, seeds, and selected configuration identity
-before any test evaluation starts:
+For optional exploratory diagnostics after the primary selected model is fixed:
 
 ```python
-FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"
-FINAL_TEST_PRIMARY_REPORT = "softmax_mean_5_seeds"
-FINAL_TEST_ENSEMBLE_MODE = "softmax_mean_5_seeds"
-FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS = """
-/path/to/stage6_seed_or_fold_run_1
-/path/to/stage6_seed_or_fold_run_2
-/path/to/stage6_seed_or_fold_run_3
-/path/to/stage6_seed_or_fold_run_4
-/path/to/stage6_seed_or_fold_run_5
-"""
-FINAL_TEST_SELECTED_CONFIG_ID = "validation_selected_config_<label>"
+FINAL_TEST_WORKFLOW = "exploratory_evaluate_all_stage6_ranked_candidates"
 LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True
-CONFIRM_ONE_SHOT_POLICY = True
-FINAL_TEST_RUN_NAME_PREFIX = "final_test"
-FINAL_TEST_METAL_REPORT_VIEW = "use_METAL_REPORT_VIEW"
-ALLOW_REPEAT_FINAL_TEST_EVAL = False
-ALLOW_MIXED_FINAL_TEST_BATCH = False
-FINAL_TEST_CALIBRATION_BINS = 15
-FINAL_TEST_ENABLE_TEMPERATURE_SCALING = True
-FINAL_TEST_ENABLE_BOOTSTRAP_CI = True
-FINAL_TEST_BOOTSTRAP_RESAMPLES = 1000
-FINAL_TEST_BOOTSTRAP_SEED = 20260518
 ```
+
+The exploratory mode prints and saves a strong warning. The primary model
+remains the Stage-6-selected candidate regardless of exploratory held-out test
+scores.
 
 Expected outputs/files:
 
-- Single-checkpoint mode: a new final-test run folder under the resolved
-  `RUNS_DIR`
-- Ensemble mode: five single-checkpoint diagnostic final-test run folders plus
-  one ensemble final-test report folder under `RUNS_DIR`
+- Primary mode: a new final-test run folder under the resolved `RUNS_DIR`
+- Exploratory all-candidates mode: one new final-test run folder per Stage-6
+  ranked candidate, evaluated in Stage 6 rank order
 - `run_config.json` and `run_metadata.json` in the final-test output folder
 - `test_report.json` in the final-test output folder
 - `<final_run_dir>/test_predictions.pt`
@@ -2339,9 +2315,10 @@ Expected outputs/files:
   temperature scaling is available
 - `<final_run_dir>/test_temperature_scaled_confidence_histogram.png`, when
   temperature scaling is available
-- Ensemble mode additionally writes `<ensemble_run_dir>/ensemble_predictions.pt`,
-  `<ensemble_run_dir>/ensemble_reliability_diagram.png`, and
-  `<ensemble_run_dir>/ensemble_confidence_histogram.png`
+- Exploratory mode additionally writes
+  `<RUNS_DIR>/exploratory_final_test_all_stage6_ranked_candidates.csv`,
+  `<RUNS_DIR>/exploratory_final_test_all_stage6_ranked_candidates.json`, and
+  `<RUNS_DIR>/exploratory_final_test_warning.txt`
 - Updated final-test summary CSV/PNG when plotting succeeds
 - The source validation run remains unchanged
 
@@ -2411,12 +2388,15 @@ Success criteria:
 - The final-test run uses `best_model_checkpoint.pt` or the explicitly selected
   validation checkpoint.
 - The output folder is separate from the source validation run.
+- Primary mode loads the selected candidate from
+  `stage6_selected_final_candidate.json` and does not inspect or evaluate other
+  candidates.
+- Exploratory mode loads `stage6_ranked_candidates.csv` and
+  `stage6_selected_final_candidate.json`, preserves Stage 6 rank order, labels
+  rank #1 as `primary_preselected`, labels all other rows as
+  `exploratory_posthoc`, and does not modify either Stage 6 file.
 - The test report includes active metal-scheme metrics and collapsed-4 metrics.
-- `final_test_primary_report` and `final_test_ensemble_mode` were declared in
-  preview before launch.
-- Ensemble mode used exactly five fixed source run directories/checkpoints from
-  the same validation-selected configuration.
-- Primary and secondary/diagnostic reports are labeled clearly.
+- Primary and exploratory/post-hoc reports are labeled clearly.
 
 ### Decision gate after Stage 7
 
@@ -2428,10 +2408,10 @@ Final reporting is complete only if:
 - The final-test output is a separate folder from the source validation run.
 - `test_report.json`, `run_config.json`, and `run_metadata.json` exist in the
   final-test output folder.
-- `test_report.json` records `final_test_primary_report`,
-  `final_test_ensemble_mode`, selected configuration identity, checkpoint
-  path(s), seed values, run directories, calibration settings, bootstrap
-  settings, plot paths, and the no-test-selection policy statement.
+- `test_report.json` records `final_test_result_role` / `role`, selected
+  configuration identity, checkpoint path(s), seed values, run directories,
+  calibration settings, bootstrap settings, plot paths, and the
+  no-test-selection policy statement.
 - Temperature scaling, if present, was fitted only on validation logits from
   the fixed validation-selected configuration.
 - Bootstrap CI fields are present for the requested final-test metrics, or the
@@ -2453,16 +2433,19 @@ held-out test score; return to validation-only experiments for new development.
 Before any reportable comparison or HPO launch, confirm:
 
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
-- `FINAL_TEST_WORKFLOW = "preview_only"` or the final-test cell has not been
-  run
-- `FINAL_TEST_PRIMARY_REPORT` is declared before Stage 7 launch and is not
-  changed after viewing held-out metrics
-- `FINAL_TEST_ENSEMBLE_MODE = "single_checkpoint"` or, for ensemble reporting,
-  `FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS` lists exactly five fixed Stage 6 source
-  runs before launch
+- `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for primary
+  final reporting, or the final-test cell has not been run
+- `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False` until the separate Stage 7 cell is
+  intentionally launched
+- `stage6_selected_final_candidate.json` exists and freezes the primary source
+  before launch
+- Exploratory all-candidates mode is explicitly selected only for post-hoc
+  diagnostics and cannot change the primary selected model
 - `VAL_FRACTION > 0` or a fold split is explicitly configured
 - `SELECTION_METRIC = "val_metal_balanced_acc"` for metal model selection
-- `RUN_BATCH_ID` and `SUMMARY_BASENAME` identify the experiment batch clearly
+- `RUN_BATCH_ID` identifies the experiment batch clearly, and the default
+  `SUMMARY_BASENAME` is derived from live provenance rather than stale manual
+  labels
 - `ALLOW_SHORT_TRAINING_FOR_DEBUG = False` for reportable runs
 - `ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = False`
 - `ALLOW_MIXED_FINAL_TEST_BATCH = False`

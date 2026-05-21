@@ -327,6 +327,12 @@ def check_training_efficiency_defaults_and_validation() -> None:
     ):
         raise AssertionError("Final-test disable aliases did not map to affirmative config fields.")
 
+    for role in ("primary_preselected", "exploratory_posthoc"):
+        role_config = parse_args(["--final-test-result-role", role])
+        validate_training_configuration(role_config)
+        if role_config.final_test_result_role != role:
+            raise AssertionError(f"Final-test role {role!r} was not preserved by config parsing.")
+
 
 class LinearLossModel(torch.nn.Module):
     def __init__(self) -> None:
@@ -852,7 +858,11 @@ def check_colab_notebook_sweep_source() -> None:
         'LAUNCH_PLANNED_TRAINING_RUNS = False',
         'INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False',
         'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
-        'MODEL_PRESET = "Only-GVP"',
+        'DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"',
+        "train_and_test_sets_structures_non_overlapped_pinmymetal",
+        "train_and_test_sets_structures_harsh_pinmymetal",
+        "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal",
+        "MODEL_PRESET =",
         'RING_EDGE_MODE = "with_ring"',
         'METAL_NODE_MODE = "none"',
         'STRUCTURAL_READOUT_SCOPE = "auto"',
@@ -890,6 +900,54 @@ def check_colab_notebook_sweep_source() -> None:
         "OPTUNA_MULTIOBJECTIVE = False",
         'OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
         'OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
+        'RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True',
+        'TOP_CONFIG_REEVALUATION_MODE = "group_kfold"',
+        'TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"',
+        'USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False',
+        'EXISTING_OPTUNA_TRIALS_RUNS_DIR = ""',
+        "Reuse existing Optuna trials for Stage 6",
+        "Existing Optuna/HPO runs directory",
+        "SEED_REPEAT_N_FOLDS = 5",
+        "SEED_REPEAT_SPLIT_SEED = 42",
+        "completed_trial_count < 50",
+        "completed_trial_count < 150",
+        "min(20, completed_trial_count)",
+        "stage6_existing_trials_import_report.csv",
+        "stage6_existing_trials_import_report.json",
+        "original_validation_metric",
+        "original_val_metal_balanced_acc",
+        "import_existing_optuna_trials_for_stage6",
+        "selected_from_imported_existing_optuna_hpo_trials",
+        "total extra runs",
+        "validation-only Stage 6",
+        "def build_summary_basename",
+        "AUTO_SUMMARY_BASENAME",
+        "SUMMARY_BASENAME_WARNINGS",
+        "summary_metadata_json",
+        "stage6_ranked_candidates.csv",
+        "stage6_selected_final_candidate.json",
+        '"DATASET_NAME":',
+        '"RESOLVED_DATASET_ROOT":',
+        '"TRAIN_DIR":',
+        '"TEST_DIR":',
+        '"TRAIN_SITE_SUMMARY_CSV":',
+        '"TEST_SITE_SUMMARY_CSV":',
+        '"SPLIT_BY":',
+        '"VAL_FRACTION":',
+        '"SPLIT_SEED":',
+        '"N_FOLDS":',
+        '"FOLD_INDEX":',
+        '"RUN_BATCH_ID":',
+        'FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"',
+        "evaluate_stage6_selected_candidate",
+        "exploratory_evaluate_all_stage6_ranked_candidates",
+        "exploratory_final_test_all_stage6_ranked_candidates.csv",
+        "exploratory_final_test_all_stage6_ranked_candidates.json",
+        "exploratory_final_test_warning.txt",
+        "primary_preselected",
+        "exploratory_posthoc",
+        "held-out test performance",
+        "Do not choose the best held-out test result as the primary model.",
         "RING_EXE_PATH",
         '"src" / "report_runs.py"',
         "Recommended First Runs",
@@ -901,8 +959,175 @@ def check_colab_notebook_sweep_source() -> None:
     present = [token for token in forbidden_tokens if token in source]
     if present:
         raise AssertionError(f"Colab notebook still contains retired widget/old-runner tokens: {present}")
+    forbidden_fallback_tokens = ("choose_dataset_root_fallback", "FALLBACK_DATASET_NAME")
+    present_fallbacks = [token for token in forbidden_fallback_tokens if token in source]
+    if present_fallbacks:
+        raise AssertionError(f"Colab notebook still contains exact-split fallback tokens: {present_fallbacks}")
+    forbidden_final_test_tokens = (
+        "EXPLORATORY_FINAL_TEST_TOP_K",
+        "EXPLORATORY_FINAL_TEST_CANDIDATE_SCOPE",
+        "ALLOW_EXPLORATORY_FINAL_TEST_BATCH",
+        "exploratory_batch_evaluate_stage6_ranked_candidates",
+        "loop_over_trials_results",
+    )
+    present_final_test_tokens = [token for token in forbidden_final_test_tokens if token in source]
+    if present_final_test_tokens:
+        raise AssertionError(f"Colab notebook still exposes retired final-test controls: {present_final_test_tokens}")
     if "sweep" in source.lower():
         raise AssertionError("Colab notebook should not contain user-facing sweep terminology.")
+
+
+def check_colab_final_test_workflow_controls() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    final_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code"
+            and "#@title Optional final held-out test evaluation" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if final_source is None:
+        raise AssertionError("Could not find the Colab final held-out test cell.")
+
+    expected_workflow_line = (
+        'FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"  #@param '
+        '["evaluate_stage6_selected_candidate", "exploratory_evaluate_all_stage6_ranked_candidates"]'
+    )
+    if expected_workflow_line not in final_source:
+        raise AssertionError("FINAL_TEST_WORKFLOW default or dropdown choices changed unexpectedly.")
+    if 'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False  #@param {type:"boolean"}' not in final_source:
+        raise AssertionError("Final held-out test launch is not disabled by default.")
+
+    forbidden = (
+        "EXPLORATORY_FINAL_TEST_TOP_K",
+        "EXPLORATORY_FINAL_TEST_CANDIDATE_SCOPE",
+        "ALLOW_EXPLORATORY_FINAL_TEST_BATCH",
+    )
+    present = [token for token in forbidden if token in final_source]
+    if present:
+        raise AssertionError(f"Final-test cell still exposes retired exploratory controls: {present}")
+
+    required_tokens = (
+        "Exploratory all-candidates mode requires stage6_ranked_candidates.csv",
+        "Exploratory all-candidates mode requires stage6_selected_final_candidate.json",
+        'role = "primary_preselected" if rank == 1 else "exploratory_posthoc"',
+        "stage6_ranked_candidates.csv: {ranked_path}",
+        "stage6_selected_final_candidate.json: {selected_path}",
+        "Stage-6 selection will not be changed.",
+        "exploratory_final_test_all_stage6_ranked_candidates.csv",
+        "exploratory_final_test_all_stage6_ranked_candidates.json",
+        "exploratory_final_test_warning.txt",
+        "Stage 6 rank order; not sorted by held-out test performance",
+    )
+    missing = [token for token in required_tokens if token not in final_source]
+    if missing:
+        raise AssertionError(f"Final-test cell is missing expected workflow safeguards: {missing}")
+
+    protected_write_tokens = (
+        "stage6_selected_final_candidate_json.write_text",
+        "stage6_ranked_candidates_csv.write_text",
+        "stage6_selected_final_candidate.json\", \"w\"",
+        "stage6_ranked_candidates.csv\", \"w\"",
+    )
+    present_writes = [token for token in protected_write_tokens if token in final_source]
+    if present_writes:
+        raise AssertionError(f"Final-test cell appears to modify Stage 6 source files: {present_writes}")
+
+
+def check_colab_notebook_provenance_helpers() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    config_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code" and "def build_summary_basename" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if config_source is None:
+        raise AssertionError("Could not find the Colab provenance helper cell.")
+    helper_source = config_source.split("TOP_K_CONFIGS_FOR_SEED_REPEAT_RESOLVED =", 1)[0]
+    namespace: dict[str, object] = {}
+    exec(helper_source, namespace)
+    basename = namespace["build_summary_basename"](
+        "metal",
+        "five_class",
+        "GVP + hybrid fusion",
+        "train_and_test_sets_structures_exact_pinmymetal",
+        "pleasev3",
+        "pdbid",
+        "stage6-groupkfold",
+    )
+    required_fragments = ("metal", "five_class", "gvp_hybrid", "exact_pinmymetal", "batch-pleasev3", "split-pdbid", "stage6-groupkfold")
+    missing = [fragment for fragment in required_fragments if fragment not in basename]
+    if missing:
+        raise AssertionError(f"Generated SUMMARY_BASENAME is missing provenance fragments {missing}: {basename}")
+
+    warnings = namespace["summary_basename_consistency_warnings"](
+        manual_summary_basename="splitpocket_single",
+        dataset_name="train_and_test_sets_structures_exact_pinmymetal",
+        run_batch_id="pleasev3",
+        split_by="pdbid",
+    )
+    if len(warnings) < 3:
+        raise AssertionError(f"Manual stale SUMMARY_BASENAME did not trigger strong provenance warnings: {warnings}")
+
+    top_k_auto = namespace["parse_top_k_configs_for_seed_repeat"]("auto")
+    top_k_int = namespace["parse_top_k_configs_for_seed_repeat"]("20")
+    if top_k_auto != "auto" or top_k_int != 20:
+        raise AssertionError(f"TOP_K parser failed for auto/integer values: {top_k_auto!r}, {top_k_int!r}")
+
+
+def check_colab_exact_split_no_fallback() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    dataset_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code" and "def find_dataset_root" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if dataset_source is None:
+        raise AssertionError("Could not find the Colab dataset-resolution cell.")
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_exact_split_guard_") as tmp:
+        tmp_root = Path(tmp)
+        non_overlapped = tmp_root / "train_and_test_sets_structures_non_overlapped_pinmymetal"
+        (non_overlapped / "train").mkdir(parents=True)
+        (non_overlapped / "test").mkdir()
+        namespace = {
+            "CONFIG": {
+                "data": {
+                    "dataset_name": "train_and_test_sets_structures_exact_pinmymetal",
+                    "train_dir_override": "",
+                    "test_dir_override": "",
+                    "train_csv_override": "",
+                    "test_csv_override": "",
+                }
+            },
+            "DATA_ROOT_CANDIDATES": [tmp_root],
+        }
+        try:
+            exec(dataset_source, namespace)
+        except FileNotFoundError as exc:
+            message = str(exc)
+            required_phrases = (
+                "Exact PinMyMetal split was requested",
+                "train_and_test_sets_structures_exact_pinmymetal",
+                "train_and_test_sets_structures_non_overlapped_pinmymetal",
+                "explicitly rerun the Main configuration cell with another DATASET_NAME",
+            )
+            missing = [phrase for phrase in required_phrases if phrase not in message]
+            if missing:
+                raise AssertionError(f"Exact-split guard error is missing {missing}: {message}") from exc
+        else:
+            raise AssertionError("Exact split request silently resolved despite only non-overlapped split being present.")
 
 
 def check_colab_generated_training_commands_parse() -> None:
@@ -977,15 +1202,17 @@ def check_colab_generated_training_commands_parse() -> None:
                 "pruner_reduction_factor": 3,
                 "auto_configure_budget": False,
                 "retrain_best_config_after_hpo": False,
-                "run_seed_repeat_evaluation": False,
-                "top_k_configs_for_seed_repeat": 3,
-                "top_k": 3,
+                "run_seed_repeat_evaluation": True,
+                "top_k_configs_for_seed_repeat": "auto",
+                "top_k": "auto",
                 "repeat_seeds": "42",
                 "top_config_reevaluation_mode": "group_kfold",
                 "seed_repeat_n_folds": 5,
                 "seed_repeat_split_seed": 42,
                 "stage6_raw_improvement_threshold": 0.0,
                 "allow_seed_repeat_model_preset_mismatch": False,
+                "use_existing_optuna_trials_for_stage6": False,
+                "existing_optuna_trials_runs_dir": "",
                 "learning_rate_range": "1e-5,3e-4",
                 "lr_schedules_csv": "fixed",
                 "weight_decays_csv": "0.0,1e-5",
@@ -1014,7 +1241,10 @@ def check_colab_generated_training_commands_parse() -> None:
                 "early_esm_dropout_values_csv": "0.0",
                 "cross_attention_dropout_values_csv": "0.0",
             },
-            "data": {"colab_data_source": "huggingface_link"},
+            "data": {
+                "colab_data_source": "huggingface_link",
+                "dataset_name": "train_and_test_sets_structures_exact_pinmymetal",
+            },
             "esm": {
                 "esm_embeddings_dir": "",
                 "allow_missing_esm_embeddings": False,
@@ -1171,6 +1401,31 @@ def check_colab_generated_training_commands_parse() -> None:
     if "--metal-node-mode" in default_cmd or "--structural-readout-scope" in default_cmd:
         raise AssertionError("Default graph command should leave metal-node mode disabled.")
 
+    group_kfold_runs = run_builder(
+        {"advanced": {"val_fraction": 0.0, "n_folds": 5, "fold_index": 2, "split_by": "pdbid", "split_seed": 42}}
+    )
+    if len(group_kfold_runs) != 1:
+        raise AssertionError(f"Expected one group-kfold planned command, got {len(group_kfold_runs)}")
+    group_kfold_cmd = [str(part) for part in group_kfold_runs[0]["command"]]
+    assert_training_command_parses(group_kfold_cmd)
+    expected_flag_values = {
+        "--n-folds": "5",
+        "--fold-index": "2",
+        "--split-by": "pdbid",
+        "--split-seed": "42",
+        "--val-fraction": "0.0",
+    }
+    for expected_flag, expected_value in expected_flag_values.items():
+        if expected_flag not in group_kfold_cmd:
+            raise AssertionError(f"Stage 6 group-kfold command is missing {expected_flag}: {group_kfold_cmd}")
+        actual_value = group_kfold_cmd[group_kfold_cmd.index(expected_flag) + 1]
+        if actual_value != expected_value:
+            raise AssertionError(
+                f"Stage 6 group-kfold command passed {expected_flag} {actual_value}, expected {expected_value}."
+            )
+    if "--run-test-eval" in group_kfold_cmd or "--allow-train-loss-test-eval-debug" in group_kfold_cmd:
+        raise AssertionError("Stage 6 group-kfold command unexpectedly includes held-out test evaluation.")
+
     metal_node_runs = run_builder({"advanced": {"metal_node_mode": "per_metal"}})
     if len(metal_node_runs) != 1:
         raise AssertionError(f"Expected one metal-node planned command, got {len(metal_node_runs)}")
@@ -1245,6 +1500,241 @@ def check_colab_generated_training_commands_parse() -> None:
     actual_optuna_cutoff = optuna_cmd[optuna_cmd.index("--classifier-pool-distance-cutoff") + 1]
     if actual_optuna_cutoff != "6.0":
         raise AssertionError(f"Optuna command passed classifier-pool cutoff {actual_optuna_cutoff}, expected 6.0.")
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_stage6_import_") as tmp:
+        tmp_root = Path(tmp)
+        existing_dir = tmp_root / "existing_hpo"
+        existing_dir.mkdir()
+        stage6_optuna_dir = tmp_root / "stage6_outputs"
+        stage6_optuna_dir.mkdir()
+        imported_base = copy.deepcopy(optuna_namespace["all_planned_runs"][0])
+        imported_base.update(
+            {
+                "epochs": 50,
+                "val_fraction": 0.15,
+                "n_folds": None,
+                "fold_index": None,
+                "selection_metric": "val_metal_balanced_acc",
+            }
+        )
+
+        def write_imported_trial(
+            *,
+            trial_number: int,
+            validation_metric: float,
+            min_recall: float,
+            dataset_name: str | None = None,
+            final_test: bool = False,
+        ) -> Path:
+            run_dir = existing_dir / f"optuna_existing_trial{trial_number:04d}"
+            run_dir.mkdir()
+            cfg = copy.deepcopy(imported_base)
+            cfg.update(
+                {
+                    "run_name": run_dir.name,
+                    "run_dir": str(run_dir),
+                    "dataset_name": dataset_name or imported_base["dataset_name"],
+                    "learning_rate": 1e-4 * trial_number,
+                    "weight_decay": 1e-5,
+                    "epochs": 50,
+                    "n_folds": None,
+                    "fold_index": None,
+                    "val_fraction": 0.15,
+                }
+            )
+            active_payload = {
+                "source_mode": "optuna trial",
+                "result_stage": "validation-only",
+                "run_config": cfg,
+                "extra": {
+                    "trial_number": trial_number,
+                    "sampled_params": {
+                        "learning_rate": cfg["learning_rate"],
+                        "weight_decay": cfg["weight_decay"],
+                    },
+                },
+                "command": "python train.py --selection-metric val_metal_balanced_acc",
+            }
+            (run_dir / "active_run_config.json").write_text(json.dumps(active_payload, default=str), encoding="utf-8")
+            (run_dir / "run_config.json").write_text(json.dumps({"config": cfg}, default=str), encoding="utf-8")
+            (run_dir / "run_metadata.json").write_text(
+                json.dumps(
+                    {
+                        "selection_metric": "val_metal_balanced_acc",
+                        "selected_metric_value": validation_metric,
+                        "selected_checkpoint": str(run_dir / "best_model_checkpoint.pt"),
+                        "history": [
+                            {
+                                "epoch": 50,
+                                "val_metal_balanced_acc": validation_metric,
+                                "val_metal_min_recall": min_recall,
+                                "val_loss": 1.0 - validation_metric,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (run_dir / "val_metrics.csv").write_text(
+                "epoch,val_metal_balanced_acc,val_metal_min_recall,val_loss\n"
+                f"50,{validation_metric},{min_recall},{1.0 - validation_metric}\n",
+                encoding="utf-8",
+            )
+            if final_test:
+                (run_dir / "test_report.json").write_text('{"test_metric": 0.99}', encoding="utf-8")
+            return run_dir
+
+        low_val_high_test = write_imported_trial(trial_number=1, validation_metric=0.61, min_recall=0.42)
+        high_val_low_test = write_imported_trial(trial_number=2, validation_metric=0.70, min_recall=0.39)
+        final_test_run = write_imported_trial(trial_number=3, validation_metric=0.99, min_recall=0.99, final_test=True)
+        mismatch_run = write_imported_trial(
+            trial_number=4,
+            validation_metric=0.98,
+            min_recall=0.98,
+            dataset_name="train_and_test_sets_structures_non_overlapped_pinmymetal",
+        )
+        (existing_dir / "top_trials.csv").write_text(
+            "rank,candidate_id,trial_number,state,run_dir,selection_metric,validation_metric,val_metal_balanced_acc,val_metal_min_recall,held_out_test_metric_value\n"
+            f"1,trial0001,1,COMPLETE,{low_val_high_test},val_metal_balanced_acc,0.61,0.61,0.42,0.99\n"
+            f"2,trial0002,2,COMPLETE,{high_val_low_test},val_metal_balanced_acc,0.70,0.70,0.39,0.10\n"
+            f"3,trial0003,3,COMPLETE,{final_test_run},val_metal_balanced_acc,0.99,0.99,0.99,0.99\n"
+            f"4,trial0004,4,COMPLETE,{mismatch_run},val_metal_balanced_acc,0.98,0.98,0.98,0.98\n",
+            encoding="utf-8",
+        )
+
+        import_optuna_config = copy.deepcopy(optuna_namespace["CONFIG"]["optuna"])
+        import_optuna_config.update(
+            {
+                "study_name": "stage6_import_smoke",
+                "top_k_configs_for_seed_repeat": "auto",
+                "top_k": "auto",
+                "seed_repeat_n_folds": 5,
+                "seed_repeat_split_seed": 42,
+            }
+        )
+        try:
+            optuna_namespace["import_existing_optuna_trials_for_stage6"](
+                tmp_root / "missing",
+                imported_base,
+                import_optuna_config,
+                stage6_optuna_dir,
+            )
+        except RuntimeError as exc:
+            if "does not exist" not in str(exc):
+                raise AssertionError(f"Missing existing-trials directory failed unclearly: {exc}") from exc
+        else:
+            raise AssertionError("Missing existing-trials directory was accepted.")
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            import_result = optuna_namespace["import_existing_optuna_trials_for_stage6"](
+                existing_dir,
+                imported_base,
+                import_optuna_config,
+                stage6_optuna_dir,
+            )
+        selected = import_result["selected_candidates"]
+        if len(selected) != 2:
+            raise AssertionError(f"Expected two compatible imported candidates, got {len(selected)}")
+        if selected[0]["trial_number"] != 2:
+            raise AssertionError("Imported candidates were not ranked by validation metrics only.")
+        report_text = (stage6_optuna_dir / "stage6_existing_trials_import_report.csv").read_text(encoding="utf-8")
+        if "held-out test artifact" not in report_text or "metadata mismatch" not in report_text:
+            raise AssertionError("Import report did not record skipped final-test and incompatible-dataset candidates.")
+
+        reevaluation_units = [
+            {"validation_unit": "fold_0", "model_seed": 42, "split_seed": 42, "n_folds": 5, "fold_index": 0}
+        ]
+        with contextlib.redirect_stdout(io.StringIO()):
+            top_rows, top_payload, rerun_configs, _commands = optuna_namespace["build_stage6_imported_rerun_configs"](
+                import_result,
+                imported_base,
+                import_optuna_config,
+                stage6_optuna_dir,
+                reevaluation_units,
+            )
+        if len(top_rows) != 2 or len(top_payload) != 2 or len(rerun_configs) != 2:
+            raise AssertionError("Imported Stage 6 top-K command generation produced the wrong number of rows.")
+        for rerun_config in rerun_configs:
+            cmd = [str(part) for part in rerun_config["command"]]
+            for expected_flag, expected_value in {
+                "--n-folds": "5",
+                "--fold-index": "0",
+                "--split-by": "pdbid",
+                "--split-seed": "42",
+                "--val-fraction": "0.0",
+            }.items():
+                if expected_flag not in cmd:
+                    raise AssertionError(f"Imported Stage 6 command is missing {expected_flag}: {cmd}")
+                if cmd[cmd.index(expected_flag) + 1] != expected_value:
+                    raise AssertionError(f"Imported Stage 6 command passed wrong {expected_flag}: {cmd}")
+            if "--run-test-eval" in cmd:
+                raise AssertionError("Imported Stage 6 command unexpectedly includes held-out test evaluation.")
+            if "original_source_run_dir" not in rerun_config:
+                raise AssertionError("Imported Stage 6 rerun config did not preserve original source run directory.")
+
+        records = []
+        for rerun_config in rerun_configs:
+            fold_metric = 0.72 if rerun_config["original_trial_number"] == 2 else 0.60
+            records.append(
+                {
+                    "candidate_id": rerun_config["candidate_id"],
+                    "imported_candidate_id": rerun_config["imported_candidate_id"],
+                    "source_top_rank": rerun_config["seed_repeat_rank"],
+                    "source_trial_number": rerun_config["seed_repeat_trial_number"],
+                    "original_trial_number": rerun_config["original_trial_number"],
+                    "original_source_run_dir": rerun_config["original_source_run_dir"],
+                    "original_validation_metric": rerun_config["original_validation_metric"],
+                    "original_val_metal_balanced_acc": rerun_config["original_val_metal_balanced_acc"],
+                    "original_val_metal_min_recall": rerun_config["original_val_metal_min_recall"],
+                    "original_val_loss": rerun_config["original_val_loss"],
+                    "run_dir": rerun_config["run_dir"],
+                    "selected_checkpoint": str(Path(rerun_config["run_dir"]) / "best_model_checkpoint.pt"),
+                    "validation_unit": rerun_config["validation_unit"],
+                    "selected_best_validation_metric_value": fold_metric,
+                    "val_metal_balanced_acc": fold_metric,
+                    "val_metal_min_recall": 0.40,
+                    "model_preset": rerun_config["model_preset"],
+                    "model_architecture": rerun_config["model_architecture"],
+                    "fusion_mode": rerun_config["fusion_mode"],
+                    "learning_rate": rerun_config["learning_rate"],
+                    "weight_decay": rerun_config["weight_decay"],
+                    "batch_size": rerun_config["batch_size"],
+                    "hidden_s": rerun_config["hidden_s"],
+                    "hidden_v": rerun_config["hidden_v"],
+                    "edge_hidden": rerun_config["edge_hidden"],
+                    "gvp_layers": rerun_config["gvp_layers"],
+                    "head_mlp_layers": rerun_config["head_mlp_layers"],
+                    "metal_class_weight_mode": rerun_config["metal_class_weight_mode"],
+                    "metal_loss_function": rerun_config["metal_loss_function"],
+                    "metal_label_smoothing": rerun_config["metal_label_smoothing"],
+                }
+            )
+        with contextlib.redirect_stdout(io.StringIO()):
+            optuna_namespace["write_stage6_imported_summary_outputs"](
+                records,
+                stage6_optuna_dir,
+                import_optuna_config,
+                reevaluation_units,
+                import_result,
+                stage6_optuna_dir / "top_trial_configs.json",
+                stage6_optuna_dir / "top_trials.csv",
+                stage6_optuna_dir / "seed_repeat_results.csv",
+                stage6_optuna_dir / "seed_repeat_summary.csv",
+                stage6_optuna_dir / "seed_repeat_summary.json",
+                stage6_optuna_dir / "seed_repeat_pairwise_bootstrap.csv",
+                stage6_optuna_dir / "seed_repeat_pairwise_bootstrap.json",
+                stage6_optuna_dir / "stage6_ranked_candidates.csv",
+                stage6_optuna_dir / "stage6_selected_final_candidate.json",
+                0.0,
+            )
+        selected_payload = json.loads((stage6_optuna_dir / "stage6_selected_final_candidate.json").read_text(encoding="utf-8"))
+        ranked_text = (stage6_optuna_dir / "stage6_ranked_candidates.csv").read_text(encoding="utf-8")
+        if "original_validation_metric" not in ranked_text or "original_val_metal_balanced_acc" not in ranked_text:
+            raise AssertionError("Stage 6 ranked candidates CSV did not include original imported validation metrics.")
+        if not selected_payload.get("selected_from_imported_existing_optuna_hpo_trials"):
+            raise AssertionError("Stage 6 selected-candidate JSON did not record imported-HPO source mode.")
+        if selected_payload.get("held_out_test_metrics_used") is not False:
+            raise AssertionError("Stage 6 selected-candidate JSON did not explicitly exclude held-out test metrics.")
 
     collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weight": 0.3}})
     collapsed_loss_cmd = [str(part) for part in collapsed_loss_runs[0]["command"]]
@@ -1690,6 +2180,9 @@ def main() -> int:
         check_graph_ring_edges_are_opt_in,
         check_metal_node_graph_and_gvp_forward,
         check_colab_notebook_sweep_source,
+        check_colab_final_test_workflow_controls,
+        check_colab_notebook_provenance_helpers,
+        check_colab_exact_split_no_fallback,
         check_colab_generated_training_commands_parse,
         check_ring_environment_overrides,
         check_ec_group_weights_sum_per_group,

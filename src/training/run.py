@@ -453,7 +453,13 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"Unsupported final_test_primary_report={config.final_test_primary_report!r}.")
     if config.final_test_ensemble_mode not in {"single_checkpoint", "softmax_mean_5_seeds"}:
         raise ValueError(f"Unsupported final_test_ensemble_mode={config.final_test_ensemble_mode!r}.")
-    if config.final_test_result_role not in {"primary_final_report", "secondary_diagnostic_report"}:
+    valid_final_test_roles = {
+        "primary_final_report",
+        "secondary_diagnostic_report",
+        "primary_preselected",
+        "exploratory_posthoc",
+    }
+    if config.final_test_result_role not in valid_final_test_roles:
         raise ValueError(f"Unsupported final_test_result_role={config.final_test_result_role!r}.")
     if config.final_test_calibration_bins < 1:
         raise ValueError("--final-test-calibration-bins must be positive.")
@@ -1579,8 +1585,10 @@ def evaluate_held_out_test_split(
             "final_test_primary_report": config.final_test_primary_report,
             "final_test_ensemble_mode": config.final_test_ensemble_mode,
             "final_test_result_role": config.final_test_result_role,
-            "primary_final_report": config.final_test_result_role == "primary_final_report",
-            "secondary_diagnostic_report": config.final_test_result_role == "secondary_diagnostic_report",
+            "primary_final_report": config.final_test_result_role in {"primary_final_report", "primary_preselected"},
+            "secondary_diagnostic_report": config.final_test_result_role in {"secondary_diagnostic_report", "exploratory_posthoc"},
+            "primary_preselected": config.final_test_result_role == "primary_preselected",
+            "exploratory_posthoc": config.final_test_result_role == "exploratory_posthoc",
             "selected_config_id": config.final_test_selected_config_id,
             "selected_run_id": (
                 Path(config.final_test_source_run_dirs[0]).name
@@ -1820,8 +1828,10 @@ def evaluate_softmax_mean_checkpoint_ensemble(
         "final_test_primary_report": config.final_test_primary_report,
         "final_test_ensemble_mode": config.final_test_ensemble_mode,
         "final_test_result_role": config.final_test_result_role,
-        "primary_final_report": config.final_test_result_role == "primary_final_report",
-        "secondary_diagnostic_report": config.final_test_result_role == "secondary_diagnostic_report",
+        "primary_final_report": config.final_test_result_role in {"primary_final_report", "primary_preselected"},
+        "secondary_diagnostic_report": config.final_test_result_role in {"secondary_diagnostic_report", "exploratory_posthoc"},
+        "primary_preselected": config.final_test_result_role == "primary_preselected",
+        "exploratory_posthoc": config.final_test_result_role == "exploratory_posthoc",
         "selected_config_id": config.final_test_selected_config_id,
         "selected_run_id": config.final_test_selected_config_id,
         "checkpoint_paths": list(config.final_test_checkpoint_paths),

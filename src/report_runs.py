@@ -752,7 +752,7 @@ def write_figure(rows: list[dict[str, Any]], out_figure: Path) -> None:
             title_fontsize=8,
         )
 
-    fig.suptitle("DeepMzyme run comparison", y=1.08, fontsize=12)
+    fig.suptitle(f"DeepMzyme run comparison - {out_figure.stem}", y=1.08, fontsize=12)
     fig.tight_layout()
     out_figure.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_figure, dpi=150, bbox_inches="tight")

@@ -81,9 +81,9 @@ Before launching a run, verify these resolved notebook values:
 | --- | --- |
 | Task | `TASK = "metal"` |
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
-| Split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_non_overlapped_pinmymetal`; use the exact split only for explicitly labeled secondary comparisons because it may contain train/test PDB-ID overlap |
+| External split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; non-overlapped, harsh, and common-PDBID 70/30 splits remain explicit choices |
 | Validation split | `VAL_FRACTION = 0.15` |
-| Split grouping | `SPLIT_BY = "pdbid"`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
+| Internal split grouping | `SPLIT_BY = "pdbid"`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
 | Held-out test during training | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
 | Device on G4 | `DEVICE = "cuda"` |
@@ -99,6 +99,22 @@ Before launching a run, verify these resolved notebook values:
 Stage 6 grouped-fold confirmation is the exception to the `VAL_FRACTION`
 default: it sets `VAL_FRACTION = 0.0` and uses `SEED_REPEAT_N_FOLDS = 5` with
 `SPLIT_BY = "pdbid"`.
+
+`DATASET_NAME` controls which external train/test dataset root is resolved.
+`SPLIT_BY` controls only how the selected external train split is partitioned
+for validation. Exact PinMyMetal runs must stay clearly labeled because that
+split can contain train/test PDB-ID overlap; the non-overlapped split remains a
+separate explicit option when that final-test policy is required.
+If the exact split is requested and the exact dataset root is missing, the
+notebook stops with a clear error instead of silently falling back to
+non-overlapped.
+
+Notebook summary CSV/PNG basenames are generated from live provenance by
+default: task, metal label scheme, model preset or run set, `DATASET_NAME`,
+`RUN_BATCH_ID`, `SPLIT_BY`, and validation mode. Manual `SUMMARY_BASENAME`
+overrides are allowed, but the notebook prints a strong warning and writes the
+warning into summary metadata if the manual name appears inconsistent with the
+resolved dataset, batch, or split policy.
 
 Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 
@@ -512,12 +528,18 @@ For useful Colab HPO:
   settings, batch-size choices, LR schedule choices, class-weight choices, and
   run batch ID in study metadata, then stops if a persistent study is reused
   incompatibly.
-- Use `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` only after you are ready
-  to rerun the top configurations through the Stage 6 confirmation plan.
+- Serious controlled-HPO stage blocks use
+  `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` so the top configurations are
+  rerun through the Stage 6 confirmation plan by default. Turn it off only for
+  plumbing/debug HPO or an explicitly labeled validation-only pause point.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` for project-standard
   metal confirmation. The playbook Stage 6 block uses one model seed,
   `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED` so every
   candidate sees the same `pdbid` folds.
+- Use `TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"` for serious controlled-HPO
+  defaults. Auto repeats up to 5 candidates below 50 completed trials, up to 10
+  below 150, and up to 20 for 150 or more completed trials. A fixed integer,
+  including 20, is allowed only when predeclared before Stage 6 starts.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` only for explicitly
   labeled exploratory checks; it measures combined initialization and split
   variance.
@@ -603,30 +625,25 @@ folders are saved beside the validation/HPO/seed-repeat run folders. If Drive
 cannot be mounted, the notebook prints a warning and falls back to local Colab
 storage.
 
-The "Optional final held-out test evaluation" cell has two different folder
-roles:
+The "Optional final held-out test evaluation" cell is driven by two widget
+controls: `LAUNCH_FINAL_HELD_OUT_TEST_EVAL` and `FINAL_TEST_WORKFLOW`.
 
-- **Source run folder**: the validation run that supplies the saved config and
-  `best_model_checkpoint.pt`. In single-checkpoint mode, a blank
-  `FINAL_TEST_SOURCE_RUN_DIR` means "use `selected_final_run_dir` from the
-  previous Select final run cell" when `FINAL_TEST_SOURCE_CHOICE_INDEX = 0`. If
-  `FINAL_TEST_SOURCE_RUN_DIR` is filled, the cell uses that folder instead. If
-  `FINAL_TEST_SOURCE_CHOICE_INDEX` is positive, the cell uses that numbered row
-  from its printed source-run picker table.
-- **Batch parent folder**: the folder scanned in `evaluate_all_seeds_batch`
-  mode. A filled `FINAL_TEST_BATCH_PARENT_DIR` is used directly. If it is blank,
-  the cell uses the parent folder of the selected source run.
-- **Final-test output folder**: a new run folder written under the same
-  `RUNS_DIR`, named from `FINAL_TEST_RUN_NAME_PREFIX` plus the source run name.
-  The original validation run folder is not overwritten.
+- **Primary source**: `evaluate_stage6_selected_candidate` loads
+  `stage6_selected_final_candidate.json` and evaluates only its frozen
+  Stage-6-selected primary source/checkpoint.
+- **Exploratory source list**:
+  `exploratory_evaluate_all_stage6_ranked_candidates` loads both
+  `stage6_ranked_candidates.csv` and
+  `stage6_selected_final_candidate.json`, then evaluates every ranked candidate
+  in Stage 6 rank order for diagnostics only.
+- **Final-test output folder**: each held-out evaluation writes a new run folder
+  under the same `RUNS_DIR`, named from `FINAL_TEST_RUN_NAME_PREFIX` plus the
+  source run name. The original validation run folder is not overwritten.
 
-The final-test cell prints a pre-flight checklist before launch. For a single
-source run, it checks that validation selection exists, the checkpoint exists,
-the held-out test paths exist, repeat policy is satisfied, and the output folder
-is separate from the source run. For batch mode, it also checks that all source
-runs share the same `task`, `model_architecture`, `fusion_mode`, and
-`selection_metric`. Leave `ALLOW_MIXED_FINAL_TEST_BATCH = False` unless a mixed
-folder is being evaluated deliberately.
+The final-test cell prints a pre-flight checklist before launch. It checks that
+the Stage 6 source files exist, that the source checkpoint exists, that the
+held-out test paths exist, that repeat policy is satisfied, and that Stage 6
+ranking/selection files will not be modified.
 
 After planning:
 
@@ -657,6 +674,9 @@ After the summarize/report cell:
 - `<RUNS_DIR>/<SUMMARY_BASENAME>_completed_only.csv`: summary generated from completed run directories.
 - `<RUNS_DIR>/<SUMMARY_BASENAME>.csv`: comparison table combining planned/executed run information.
 - `<RUNS_DIR>/<SUMMARY_BASENAME>.png`: comparison figure when plotting succeeds.
+- `<RUNS_DIR>/<SUMMARY_BASENAME>_metadata.json`: summary provenance,
+  resolved dataset/split identity, basename source, and any manual-name
+  warnings.
 - `<RUNS_DIR>/<SUMMARY_BASENAME>_execution_records.json`: execution status, logs, failures.
 
 For metal reports, `METAL_REPORT_VIEW` controls which already-computed metrics
@@ -675,30 +695,24 @@ prediction problem and must use a separately named validation batch/study.
 batch final-test summaries and plots. It does not change which metrics are
 computed or saved in `test_report.json`.
 
-Stage 7 also has explicit final-reporting controls:
+Stage 7 exposes only two user-facing final-test controls:
 
-- `FINAL_TEST_PRIMARY_REPORT`: predeclares the primary final result before the
-  held-out test is opened. Use `single_checkpoint` for the selected checkpoint
-  or `softmax_mean_5_seeds` for the optional five-checkpoint ensemble.
-- `FINAL_TEST_ENSEMBLE_MODE`: use `single_checkpoint` for current behavior or
-  `softmax_mean_5_seeds` to average probabilities from exactly five fixed
-  Stage 6 source checkpoints.
-- `FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS`: comma- or newline-separated list of
-  the five source run directories for ensemble mode. This list must be fixed in
-  preview before launch.
-- `FINAL_TEST_SELECTED_CONFIG_ID`: optional human-readable identifier for the
-  validation-selected configuration.
-- `FINAL_TEST_CALIBRATION_BINS`, `FINAL_TEST_ENABLE_TEMPERATURE_SCALING`,
-  `FINAL_TEST_ENABLE_BOOTSTRAP_CI`, `FINAL_TEST_BOOTSTRAP_RESAMPLES`, and
-  `FINAL_TEST_BOOTSTRAP_SEED`: reporting controls for calibration plots,
-  validation-fitted temperature scaling, and bootstrap confidence intervals.
+- `LAUNCH_FINAL_HELD_OUT_TEST_EVAL`: default `False`; no held-out test
+  evaluation runs unless this is set to `True`.
+- `FINAL_TEST_WORKFLOW`: supported values are exactly
+  `evaluate_stage6_selected_candidate` and
+  `exploratory_evaluate_all_stage6_ranked_candidates`.
+
+The notebook keeps calibration, temperature-scaling, bootstrap, source-path,
+and repeat-guard defaults internal to the final-test cell. They are not separate
+workflow widgets.
 
 Temperature scaling is fitted only on validation logits from the already fixed
-configuration. In ensemble mode, the fixed rule is one validation-fitted
-temperature per checkpoint, then averaging calibrated softmax probabilities.
-The notebook records primary versus secondary/diagnostic reports in
-`test_report.json`; do not change the primary report after viewing held-out
-metrics. The full Stage 7 policy and executable blocks live in
+configuration.
+The notebook records `role = "primary_preselected"` for the Stage-6-selected
+rank #1 candidate and `role = "exploratory_posthoc"` for any additional
+ranked-candidate diagnostics. Do not change the primary report after viewing
+held-out metrics. The full Stage 7 policy and executable blocks live in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 Metal evaluation normally keeps the default six-class prediction problem
@@ -730,8 +744,11 @@ After Optuna:
   `OPTUNA_MULTIOBJECTIVE = True`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_results.csv`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.csv`, if Stage 6 top-config reevaluation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_summary.json`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.csv`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`, if Stage 6 top-config reevaluation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_ranked_candidates.csv`, if Stage 6 grouped-fold confirmation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_selected_final_candidate.json`, if Stage 6 grouped-fold confirmation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
 
 Each launched run directory also gets `active_run_config.json` and
@@ -759,20 +776,26 @@ For Optuna:
 1. Inspect `top_trials.csv` for single-objective studies, or
    `pareto_candidates_ranked_for_review.csv` for multi-objective studies.
 2. Inspect `optuna_study_summary.md`.
-3. Run top-k grouped-fold validation.
+3. Run top-k grouped-fold validation with shared `pdbid` folds. Serious
+   controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
 4. Select by grouped-fold mean, paired bootstrap CI, and rare-class recall on
    `val_metal_balanced_acc`, not by a single trial.
-5. Retrain or evaluate the final selected validation-best checkpoint only after selection is complete.
+5. Use `stage6_ranked_candidates.csv` and
+   `stage6_selected_final_candidate.json` to freeze the Stage 7 source before
+   any held-out test launch.
 
 For final reporting:
 
-1. Use the notebook's "Select final run and show saved outputs" cell to choose the validation-best run.
-2. In preview, set `FINAL_TEST_PRIMARY_REPORT` and, if using the ensemble,
-   list exactly five fixed source runs in `FINAL_TEST_ENSEMBLE_SOURCE_RUN_DIRS`.
+1. Use the Stage 6 selected-candidate JSON or one explicitly selected
+   validation-only checkpoint as the final source.
+2. Confirm that `stage6_selected_final_candidate.json` records the frozen
+   Stage-6-selected rank #1 source/checkpoint before launch.
 3. Use the "Optional final held-out test evaluation" cell with
    `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True` only after the preview is correct.
-4. Prefer `FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"` unless you
-   intentionally want a retrain from the selected config.
+4. Use `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for the
+   primary final report. Use
+   `FINAL_TEST_WORKFLOW = "exploratory_evaluate_all_stage6_ranked_candidates"`
+   only for labeled post-hoc diagnostics that cannot replace the primary model.
 5. Record `test_metal_balanced_acc`, `test_metal_macro_f1`,
    `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`,
    calibration metrics, plot paths, bootstrap CI fields, and
