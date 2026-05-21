@@ -532,6 +532,10 @@ For useful Colab HPO:
   `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True` so the top configurations are
   rerun through the Stage 6 confirmation plan by default. Turn it off only for
   plumbing/debug HPO or an explicitly labeled validation-only pause point.
+- Stage 6 grouped-fold controls are visible in both **Main configuration** and
+  the later **Stage 6 controls and existing Optuna/HPO reuse** panel. Use the
+  later panel when resuming an interrupted Stage 6 or importing old HPO trials,
+  then rerun the planning cells so generated commands match the visible values.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` for project-standard
   metal confirmation. The playbook Stage 6 block uses one model seed,
   `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED` so every
@@ -543,6 +547,10 @@ For useful Colab HPO:
 - Use `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` only for explicitly
   labeled exploratory checks; it measures combined initialization and split
   variance.
+- To resume Stage 6 without repeating completed folds, keep
+  `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True`, keep all Stage 6 fold/top-K
+  values unchanged, and keep `SKIP_EXISTING_RUNS = True`. Runs with
+  `run_metadata.json` are reused; incomplete fold directories may be rerun.
 
 Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are

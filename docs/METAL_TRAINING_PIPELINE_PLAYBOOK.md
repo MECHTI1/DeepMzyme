@@ -61,6 +61,10 @@ All configuration blocks below use variables that exist in
 block, edit the notebook's **Main configuration** cell directly or paste the
 block at the end of that cell before running **Build central CONFIG
 dictionary**.
+For Stage 6, the notebook also exposes the same grouped-fold confirmation
+fields in the **Stage 6 controls and existing Optuna/HPO reuse** panel for
+resume/import use. If you change Stage 6 values there, rerun the planning cells
+before launch so the generated commands match the visible controls.
 
 ## How To Use This Playbook
 
@@ -2067,6 +2071,11 @@ the exact Stage 5 block whose top trials should be repeated. Keep that Stage 5
 block's `MODEL_PRESET`, `OPTUNA_STUDY_NAME`, `OPTUNA_STORAGE`, search space,
 and persistent-storage settings unchanged. The notebook writes top commands and
 then runs grouped-fold confirmation after the study finishes.
+The current notebook exposes these Stage 6 values both in **Main
+configuration** and in the later **Stage 6 controls and existing Optuna/HPO
+reuse** panel. When resuming an interrupted Stage 6, keep the values identical
+and keep `SKIP_EXISTING_RUNS = True` so completed folds are reused while missing
+folds continue.
 
 ```python
 RUN_MODE = "controlled_hpo_optuna"
