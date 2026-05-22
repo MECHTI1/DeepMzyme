@@ -241,7 +241,8 @@ def infer_split_identity(config: TrainConfig) -> dict[str, Any]:
             "split_name": "Metal Split PinMyMetal",
             "split_type": "metal_split_pinmymetal_possibly_overlapped",
             "overlap_warning": (
-                "Metal Split PinMyMetal follows the exact PinMyMetal split and may contain train/test overlap. "
+                "Metal Split PinMyMetal follows the exact PinMyMetal train/test PDB-ID membership "
+                "for available supported structures and may contain train/test overlap. "
                 "It should "
                 "be interpreted only as a secondary/reference result."
             ),

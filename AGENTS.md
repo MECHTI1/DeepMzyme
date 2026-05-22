@@ -214,11 +214,14 @@ claim or change.
   legacy trusted final held-out split. Use for all reportable final evaluations
   unless an experiment explicitly switches to another named split.
 - `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/`:
-  exact PinMyMetal split; may contain train/test PDB-ID overlap.
+  exact PinMyMetal train/test PDB-ID membership for available supported
+  structures; may contain train/test PDB-ID overlap.
 - `DeepMzyme_Data/train_and_test_sets_structures_harsh_pinmymetal/`:
   harsh split where all common PDB IDs are assigned to test.
 - `DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal/`:
-  custom 70/30 comparison split; not the main final held-out split.
+  custom comparison split where train-only PDB IDs stay train, test-only PDB
+  IDs stay test, and only common exact-split PDB IDs are assigned as whole
+  groups at a 70/30 train/test ratio; not the main final held-out split.
 - `DeepMzyme_Data/esm_embeddings/`: precomputed ESMC residue embeddings.
   Pass this path via `--esm-embeddings-dir` or the notebook `ESM_EMBEDDINGS_DIR`
   variable. Do not commit embeddings to git.

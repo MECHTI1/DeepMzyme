@@ -65,7 +65,12 @@ def parse_args() -> argparse.Namespace:
         default="common-pdbid-70-30",
     )
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--test-common-fraction", type=float, default=0.3)
+    parser.add_argument(
+        "--test-common-fraction",
+        type=float,
+        default=0.3,
+        help="Fraction of common exact-split PDB IDs assigned to test in common-pdbid-70-30 mode.",
+    )
     parser.add_argument(
         "--link-mode",
         choices=("hardlink", "copy"),
@@ -316,8 +321,12 @@ def write_metadata(output_dir: Path, payload: dict[str, object]) -> None:
         "split defined in `Plan.md`.",
         "",
         f"Seed: `{payload['seed']}`",
-        f"Common PDB IDs assigned to train: `{payload['n_common_pdbids_train']}`",
-        f"Common PDB IDs assigned to test: `{payload['n_common_pdbids_test']}`",
+        f"Assignment scope: `{payload['assignment_scope']}`",
+        f"Test common-PDB-ID fraction: `{payload['test_common_fraction']}`",
+        f"Final PDB IDs assigned to train: `{payload['n_assigned_pdbids_train']}`",
+        f"Final PDB IDs assigned to test: `{payload['n_assigned_pdbids_test']}`",
+        f"Common exact-split PDB IDs assigned to train: `{payload['n_common_pdbids_train']}`",
+        f"Common exact-split PDB IDs assigned to test: `{payload['n_common_pdbids_test']}`",
         f"Final train/test PDB-ID overlap: `{payload['final_overlap_pdbids']}`",
         "",
     ]
@@ -343,11 +352,13 @@ def main() -> None:
     train_scan = scan_structure_dir(train_dir)
     test_scan = scan_structure_dir(test_dir)
     common_pdbids = train_scan.pdbids & test_scan.pdbids
+
     if args.mode == "harsh":
         train_common: set[str] = set()
         test_common = set(common_pdbids)
         split_name = "Harsh Split PinMyMetal"
         split_type = "harsh_pinmymetal"
+        assignment_scope = "common_exact_split_pdbids"
         split_description = (
             "Train-only PDB IDs stay in train, test-only PDB IDs stay in test, and every "
             "PDB ID that appears in both exact train and exact test is assigned as a whole "
@@ -362,6 +373,7 @@ def main() -> None:
         )
         split_name = "Common-PDBID 70/30 Split PinMyMetal"
         split_type = "common_pdbid_70_30_pinmymetal"
+        assignment_scope = "common_exact_split_pdbids"
         split_description = (
             "Train-only PDB IDs stay in train, test-only PDB IDs stay in test, and PDB IDs "
             "that appear in both exact train and exact test are assigned as whole PDB-ID "
@@ -407,6 +419,7 @@ def main() -> None:
         "split_description": split_description,
         "source_split": str(exact_dir),
         "mode": args.mode,
+        "assignment_scope": assignment_scope,
         "seed": args.seed,
         "test_common_fraction": args.test_common_fraction,
         "link_mode": args.link_mode,
@@ -417,6 +430,8 @@ def main() -> None:
         "n_common_pdbids": len(common_pdbids),
         "n_common_pdbids_train": len(train_common),
         "n_common_pdbids_test": len(test_common),
+        "n_assigned_pdbids_train": len(train_pdbids),
+        "n_assigned_pdbids_test": len(test_pdbids),
         "n_final_train_files": len(final_train_scan.files),
         "n_final_test_files": len(final_test_scan.files),
         "n_final_train_pdbids": len(final_train_scan.pdbids),
@@ -433,7 +448,10 @@ def main() -> None:
 
     print(f"Created {split_name}")
     print(f"Output directory: {output_dir}")
+    print(f"Assignment scope: {assignment_scope}")
     print(f"Exact train/test PDB-ID overlap: {len(common_pdbids)}")
+    print(f"PDB IDs assigned to train: {len(train_pdbids)}")
+    print(f"PDB IDs assigned to test: {len(test_pdbids)}")
     print(f"Common PDB IDs assigned to train: {len(train_common)}")
     print(f"Common PDB IDs assigned to test: {len(test_common)}")
     print(f"Final train files: {len(final_train_scan.files)}")
