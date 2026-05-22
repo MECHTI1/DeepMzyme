@@ -36,7 +36,19 @@ SITE_SUMMARY_COLUMN_ALIASES = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create a compressed Colab bundle for train/test structures and CSVs.")
-    parser.add_argument("--dataset-root", type=Path, default=BASE_DATA_DIR)
+    parser.add_argument(
+        "--dataset-root",
+        type=Path,
+        action="append",
+        default=None,
+        help=(
+            "Train/test split directory to bundle. Repeat the flag to bundle multiple splits "
+            "(e.g. exact, non_overlapped, harsh, and common_pdbid_70_30 PinMyMetal). "
+            "Defaults to the non-overlapped PinMyMetal split when not provided. "
+            "Per-split override flags (--train-dir, --test-dir, --summary-csv, --train-summary-csv, "
+            "--test-summary-csv, --train-csv, --test-csv, --csv-output-dir) require a single --dataset-root."
+        ),
+    )
     parser.add_argument("--train-dir", type=Path, default=None)
     parser.add_argument("--test-dir", type=Path, default=None)
     parser.add_argument("--summary-csv", type=Path, default=None)
@@ -97,8 +109,7 @@ def validate_inputs(paths: list[Path]) -> None:
         )
 
 
-def resolve_split_dirs(args: argparse.Namespace) -> tuple[Path, Path]:
-    dataset_root = args.dataset_root
+def resolve_split_dirs(dataset_root: Path, args: argparse.Namespace) -> tuple[Path, Path]:
     train_dir = args.train_dir if args.train_dir is not None else dataset_root / "train"
     test_dir = args.test_dir if args.test_dir is not None else dataset_root / "test"
     return train_dir, test_dir
@@ -160,6 +171,24 @@ def default_csv_output_dir(dataset_root: Path) -> Path:
 
 def default_output_bundle(dataset_root: Path) -> Path:
     return OUTPUT_DIR / f"{dataset_root.name}_colab_bundle_structures.tar.zst"
+
+
+def default_output_bundle_for_roots(dataset_roots: list[Path]) -> Path:
+    if len(dataset_roots) == 1:
+        return default_output_bundle(dataset_roots[0])
+    return OUTPUT_DIR / f"{len(dataset_roots)}_splits_colab_bundle_structures.tar.zst"
+
+
+PER_SPLIT_OVERRIDE_FLAGS = (
+    ("train_dir", "--train-dir"),
+    ("test_dir", "--test-dir"),
+    ("summary_csv", "--summary-csv"),
+    ("train_summary_csv", "--train-summary-csv"),
+    ("test_summary_csv", "--test-summary-csv"),
+    ("train_csv", "--train-csv"),
+    ("test_csv", "--test-csv"),
+    ("csv_output_dir", "--csv-output-dir"),
+)
 
 
 def ensure_project_relative(path: Path) -> str:
@@ -303,21 +332,19 @@ def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
     return output_bundle
 
 
-def main() -> None:
-    args = parse_args()
-    train_dir, test_dir = resolve_split_dirs(args)
+def process_dataset_root(
+    dataset_root: Path,
+    args: argparse.Namespace,
+) -> dict:
+    train_dir, test_dir = resolve_split_dirs(dataset_root, args)
     train_summary_csv, test_summary_csv = resolve_summary_csv_paths(args, train_dir=train_dir, test_dir=test_dir)
-    dataset_root = args.dataset_root
-    required_paths = [dataset_root, train_dir, test_dir]
-    if train_summary_csv is not None:
-        required_paths.append(train_summary_csv)
-    if test_summary_csv is not None:
-        required_paths.append(test_summary_csv)
-    for path in required_paths:
+    for path in (dataset_root, train_dir, test_dir):
         if not path.exists():
             raise FileNotFoundError(f"Required bundle input path not found: {path}")
     if train_summary_csv is None or test_summary_csv is None:
-        raise ValueError("Train and test site-level summary CSVs are required for a runnable Colab bundle.")
+        raise ValueError(
+            f"Train and test site-level summary CSVs are required for {dataset_root}."
+        )
     validate_site_level_summary_csv(train_summary_csv, split_name="train")
     validate_site_level_summary_csv(test_summary_csv, split_name="test")
 
@@ -329,86 +356,110 @@ def main() -> None:
         train_summary_csv=train_summary_csv,
         test_summary_csv=test_summary_csv,
     )
+    return {
+        "dataset_root": dataset_root,
+        "train_dir": train_dir,
+        "test_dir": test_dir,
+        "train_summary_csv": train_summary_csv,
+        "test_summary_csv": test_summary_csv,
+        "train_csv": train_csv,
+        "test_csv": test_csv,
+        "train_multi_metal_rows": train_multi_metal_rows,
+        "test_multi_metal_rows": test_multi_metal_rows,
+    }
 
-    selected_paths = [train_dir, test_dir]
-    if not path_is_inside(train_summary_csv, train_dir):
-        append_unique_path(selected_paths, train_summary_csv)
-    if not path_is_inside(test_summary_csv, test_dir):
-        append_unique_path(selected_paths, test_summary_csv)
-    if train_csv is not None:
-        append_unique_path(selected_paths, train_csv)
-    if test_csv is not None:
-        append_unique_path(selected_paths, test_csv)
 
-    external_features_dir = dataset_root.parent / "updated_feature_extraction"
+def main() -> None:
+    args = parse_args()
+    dataset_roots = args.dataset_root if args.dataset_root else [BASE_DATA_DIR]
+
+    if len(dataset_roots) > 1:
+        active_overrides = [
+            flag for attr, flag in PER_SPLIT_OVERRIDE_FLAGS if getattr(args, attr) is not None
+        ]
+        if active_overrides:
+            raise ValueError(
+                "Per-split overrides cannot be combined with multiple --dataset-root values. "
+                f"Conflicting overrides: {', '.join(active_overrides)}. "
+                "Pass a single --dataset-root, or omit these overrides so defaults derive from each split."
+            )
+
+    per_root_results = [process_dataset_root(dataset_root, args) for dataset_root in dataset_roots]
+
+    selected_paths: list[Path] = []
+    for result in per_root_results:
+        append_unique_path(selected_paths, result["train_dir"])
+        append_unique_path(selected_paths, result["test_dir"])
+        if not path_is_inside(result["train_summary_csv"], result["train_dir"]):
+            append_unique_path(selected_paths, result["train_summary_csv"])
+        if not path_is_inside(result["test_summary_csv"], result["test_dir"]):
+            append_unique_path(selected_paths, result["test_summary_csv"])
+        if result["train_csv"] is not None:
+            append_unique_path(selected_paths, result["train_csv"])
+        if result["test_csv"] is not None:
+            append_unique_path(selected_paths, result["test_csv"])
+
+    shared_parent = dataset_roots[0].parent
+    external_features_dir = shared_parent / "updated_feature_extraction"
     if external_features_dir.exists():
         append_unique_path(selected_paths, external_features_dir)
 
-    ring_features_dir = dataset_root.parent / "RING_features"
+    ring_features_dir = shared_parent / "RING_features"
     if ring_features_dir.exists():
         append_unique_path(selected_paths, ring_features_dir)
 
-    ring_runtime_dir = dataset_root.parent / "ring-4.0"
+    ring_runtime_dir = shared_parent / "ring-4.0"
     if ring_runtime_dir.exists():
         append_unique_path(selected_paths, ring_runtime_dir)
 
     if args.include_esm_embeddings:
-        validate_esm_embedding_coverage(
-            train_dir=train_dir,
-            test_dir=test_dir,
-            esm_embeddings_dir=args.esm_embeddings_dir,
-            allow_incomplete=args.allow_incomplete_esm_coverage,
-        )
+        for result in per_root_results:
+            validate_esm_embedding_coverage(
+                train_dir=result["train_dir"],
+                test_dir=result["test_dir"],
+                esm_embeddings_dir=args.esm_embeddings_dir,
+                allow_incomplete=args.allow_incomplete_esm_coverage,
+            )
         append_unique_path(selected_paths, args.esm_embeddings_dir)
 
-    if args.skip_bundle:
-        print(f"Prepared train directory: {train_dir}")
-        print(f"Prepared test directory: {test_dir}")
-        print(f"Verified train site-level summary CSV: {train_summary_csv}")
-        print(f"Verified test site-level summary CSV: {test_summary_csv}")
-        if train_csv is not None:
-            print(f"Prepared train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
-        if test_csv is not None:
-            print(f"Prepared test CSV: {test_csv}{format_multi_metal_note(test_multi_metal_rows)}")
+    def print_shared_summary(verb: str) -> None:
         if external_features_dir.exists():
-            print(f"Prepared external features directory: {external_features_dir}")
+            print(f"{verb} updated external features: {external_features_dir}")
         else:
             print(f"Note: updated_feature_extraction not found at {external_features_dir}, will not be bundled.")
         if ring_features_dir.exists():
-            print(f"Prepared RING features directory: {ring_features_dir}")
+            print(f"{verb} RING features: {ring_features_dir}")
         else:
             print(f"Note: RING_features not found at {ring_features_dir}, will not be bundled.")
         if ring_runtime_dir.exists():
-            print(f"Prepared RING runtime directory: {ring_runtime_dir}")
+            print(f"{verb} RING runtime: {ring_runtime_dir}")
         else:
             print(f"Note: ring-4.0 not found at {ring_runtime_dir}, will not be bundled.")
         if args.include_esm_embeddings:
-            print(f"Prepared ESM embeddings directory: {args.esm_embeddings_dir}")
+            print(f"{verb} ESM embeddings: {args.esm_embeddings_dir}")
+
+    def print_per_root_summary(verb_present: str) -> None:
+        for result in per_root_results:
+            print(f"{verb_present} split: {result['dataset_root'].name}")
+            print(f"  train directory: {result['train_dir']}")
+            print(f"  test directory:  {result['test_dir']}")
+            print(f"  train site-summary CSV: {result['train_summary_csv']}")
+            print(f"  test site-summary CSV:  {result['test_summary_csv']}")
+            if result["train_csv"] is not None:
+                print(f"  train CSV: {result['train_csv']}{format_multi_metal_note(result['train_multi_metal_rows'])}")
+            if result["test_csv"] is not None:
+                print(f"  test CSV:  {result['test_csv']}{format_multi_metal_note(result['test_multi_metal_rows'])}")
+
+    if args.skip_bundle:
+        print_per_root_summary("Prepared")
+        print_shared_summary("Prepared")
         return
 
-    output_bundle = args.output_bundle or default_output_bundle(dataset_root)
+    output_bundle = args.output_bundle or default_output_bundle_for_roots(dataset_roots)
     output_bundle = build_bundle(selected_paths, output_bundle=output_bundle)
     print(f"Created bundle: {output_bundle}")
-    print(f"Verified train site-level summary CSV: {train_summary_csv}")
-    print(f"Verified test site-level summary CSV: {test_summary_csv}")
-    if external_features_dir.exists():
-        print(f"Included updated external features: {external_features_dir}")
-    else:
-        print(f"Note: updated_feature_extraction not found at {external_features_dir}, not included in bundle.")
-    if ring_features_dir.exists():
-        print(f"Included RING features: {ring_features_dir}")
-    else:
-        print(f"Note: RING_features not found at {ring_features_dir}, not included in bundle.")
-    if ring_runtime_dir.exists():
-        print(f"Included RING runtime: {ring_runtime_dir}")
-    else:
-        print(f"Note: ring-4.0 not found at {ring_runtime_dir}, not included in bundle.")
-    if args.include_esm_embeddings:
-        print(f"Included ESM embeddings: {args.esm_embeddings_dir}")
-    if train_csv is not None:
-        print(f"Included train CSV: {train_csv}{format_multi_metal_note(train_multi_metal_rows)}")
-    if test_csv is not None:
-        print(f"Included test CSV: {test_csv}{format_multi_metal_note(test_multi_metal_rows)}")
+    print_per_root_summary("Included")
+    print_shared_summary("Included")
 
 
 if __name__ == "__main__":
