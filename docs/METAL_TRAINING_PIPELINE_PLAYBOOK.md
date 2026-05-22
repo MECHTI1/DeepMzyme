@@ -358,9 +358,10 @@ Serious LR schedule choices:
 | Stage 5E | `fixed,cosine` |
 
 Do not add `step` to Optuna LR-schedule search until `lr_step_size` and
-`lr_decay_gamma` are also exposed and searched. TODO: warmup is not currently a
-training CLI/config option, so do not add warmup choices until a real warmup
-implementation exists.
+`lr_decay_gamma` are also part of the Optuna search space. The notebook exposes
+manual step-decay controls, but Optuna currently searches only `fixed` and
+`cosine`. TODO: warmup is not currently a training CLI/config option, so do not
+add warmup choices until a real warmup implementation exists.
 
 Serious class-weight and loss search ranges:
 

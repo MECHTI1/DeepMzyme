@@ -387,7 +387,10 @@ for each stage. Use this guide only to understand what those fields mean:
   `MAX_EPOCHS_PER_TRIAL`.
 - `BATCH_SIZES_CSV`, `LEARNING_RATES_CSV`, and `WEIGHT_DECAYS_CSV` define
   manual comparison grids when `RUN_MODE = "manual_configurations"`.
-- `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs.
+- `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs. The
+  notebook exposes a dropdown with `cosine` as the recommended single-schedule
+  default for fresh planned runs, plus `fixed`, `fixed,cosine` for explicit
+  comparisons, and `step` for manual step-decay checks.
 - `SEEDS_CSV` controls both initialization and the validation split when using
   the simple grouped split path.
 
@@ -521,8 +524,10 @@ For useful Colab HPO:
   Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 8` for serious 50-epoch
   HPO; lower values are debug/plumbing-only.
 - Use `OPTUNA_LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
-  enables LR-schedule search. Do not include `step` in Optuna schedule search
-  unless step size and gamma are also explicitly searched.
+  enables LR-schedule search. The notebook dropdown defaults to `fixed,cosine`
+  so Optuna can choose between the historical fixed schedule and cosine. Do not
+  include `step` in Optuna schedule search unless step size and gamma are also
+  explicitly searched by Optuna.
 - Use `OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV` only for deliberate
   classifier-pooling ablations. The default `0.0` keeps all residues in the
   final classifier pooling step; comma-separated non-negative values are
