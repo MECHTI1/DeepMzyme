@@ -157,8 +157,8 @@ selected model.
 Pruning is disabled by default in reportable blocks. When pruning is disabled,
 `OPTUNA_PRUNING_MIN_EPOCH` is inert but should remain documented for
 compatibility. Stage 3 may lower it for plumbing/debug. Serious HPO blocks use
-the notebook default or explicit `OPTUNA_PRUNING_MIN_EPOCH = 8`; if pruning is
-enabled, keep it at least 8 for 50-epoch HPO.
+the notebook default or explicit `OPTUNA_PRUNING_MIN_EPOCH = 20`; if pruning is
+enabled, keep it at least 20 for 50-epoch HPO.
 
 Supported presets without canonical serious HPO blocks:
 
@@ -223,7 +223,7 @@ OPTUNA_SAMPLER_SEED = None
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_TIMEOUT_MINUTES = 0
 OPTUNA_MULTIOBJECTIVE = False
 OPTUNA_POSITION_NOISE_STDS_CSV = "0.0"
@@ -271,7 +271,7 @@ serious Optuna stages must use:
   When explicitly enabled, the notebook now monitors real per-epoch metric CSVs
   from each trial run directory, reports intermediate values to Optuna, and
   terminates pruned subprocess process groups. Serious 50-epoch HPO must use
-  `OPTUNA_PRUNING_MIN_EPOCH >= 8`.
+  `OPTUNA_PRUNING_MIN_EPOCH >= 20`.
 - Persistent SQLite storage in Drive:
   `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
 - Startup trials: use the stage table below. The default rule is at least
@@ -1251,7 +1251,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_medium.db"
@@ -1429,7 +1429,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "later_capacity"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_200_capacity"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_200_capacity.db"
@@ -1554,7 +1554,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_esm_optuna_120_controlled.db"
@@ -1637,7 +1637,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_late_fusion_optuna_200_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_late_fusion_optuna_200_controlled.db"
@@ -1730,7 +1730,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_node_late_fusion_optuna_200_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_node_late_fusion_optuna_200_controlled.db"
@@ -1825,7 +1825,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_hybrid_fusion_optuna_200_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
@@ -1923,7 +1923,7 @@ OPTUNA_TPE_GROUP = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
-OPTUNA_PRUNING_MIN_EPOCH = 8
+OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
 OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_cross_attention_optuna_120_controlled.db"

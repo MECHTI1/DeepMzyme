@@ -91,7 +91,7 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
 | Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
-| Serious Optuna pruning | optional; if enabled, use real per-epoch metrics and `OPTUNA_PRUNING_MIN_EPOCH >= 8` for 50-epoch HPO |
+| Serious Optuna pruning | optional; if enabled, use real per-epoch metrics and `OPTUNA_PRUNING_MIN_EPOCH >= 20` for 50-epoch HPO |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
 | Final test | Stage 7 only, after Stage 6 grouped-fold validation |
@@ -535,7 +535,7 @@ For useful Colab HPO:
 - `OPTUNA_USE_PRUNING` is now real but optional: the notebook monitors
   `val_metrics.csv` / `train_metrics.csv` in each trial run directory, calls
   `trial.report(...)`, and terminates the trial subprocess process group when
-  Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 8` for serious 50-epoch
+  Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 20` for serious 50-epoch
   HPO; lower values are debug/plumbing-only.
 - Use `LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
   enables LR-schedule search. The notebook default for ordinary planned runs is
@@ -611,6 +611,10 @@ candidates as review inputs, then run Stage 6 grouped-fold confirmation before
 promoting any candidate.
 
 `OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
+
+The notebook default is `OPTUNA_SEARCH_PRESET = "custom"`, which is the
+manual/CSV-driven Optuna mode. Use the narrower preset only when a playbook
+stage block explicitly asks for it.
 
 Stage 3 is plumbing/debug only. If `OPTUNA_TARGET_COMPLETE_TRIALS` equals
 `OPTUNA_N_STARTUP_TRIALS`, all trials are startup trials and the run is
