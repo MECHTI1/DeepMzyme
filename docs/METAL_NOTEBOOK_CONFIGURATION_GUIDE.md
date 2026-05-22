@@ -35,7 +35,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 5E: GVP + hybrid fusion HPO | Early+late ESM controls, early ESM dimensions/dropout, advanced-fusion gate | "Advanced fusion policy", "ESM options" |
 | Stage 5F: GVP + cross-attention HPO | Cross-attention controls, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "Model architecture and fusion" |
 | Stage 5G: RING/radius-only ablation | `RING_EDGE_MODE`, RING requirement/preparation flags, ablation labeling | "RING options" |
-| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold"`, top-K controls, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, repeat model seed, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
+| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold"`, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
 | Stage 7: one-shot held-out test | final-run selector, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
 
 ## Current Status Pointer
@@ -128,9 +128,11 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
   behavior rather than a full training budget.
 - `seed_repeat*`: historical notebook naming for top-config reevaluation. In
   reportable metal Stage 6, these variables now drive grouped-fold validation:
-  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"`, one fixed `REPEAT_SEEDS`
-  model seed, `SEED_REPEAT_N_FOLDS = 5`, and a fixed
-  `SEED_REPEAT_SPLIT_SEED`. The legacy `seed_repeat` mode remains exploratory.
+  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"`,
+  `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT` top configs, a
+  comma-separated `REPEAT_SEEDS` model-seed list, `SEED_REPEAT_N_FOLDS = 5`,
+  and a fixed `SEED_REPEAT_SPLIT_SEED`. The legacy `seed_repeat` mode remains
+  exploratory.
 - `active_run_config.json` / `active_run_config.md`: notebook-generated records
   of the resolved live configuration before a subprocess starts. Completed
   runs still rely on `run_config.json` and `run_metadata.json`.
@@ -537,20 +539,24 @@ For useful Colab HPO:
   later panel when resuming an interrupted Stage 6 or importing old HPO trials,
   then rerun the planning cells so generated commands match the visible values.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` for project-standard
-  metal confirmation. The playbook Stage 6 block uses one model seed,
-  `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED` so every
-  candidate sees the same `pdbid` folds.
-- Use `TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"` for serious controlled-HPO
-  defaults. Auto repeats up to 5 candidates below 50 completed trials, up to 10
-  below 150, and up to 20 for 150 or more completed trials. A fixed integer,
-  including 20, is allowed only when predeclared before Stage 6 starts.
+  metal confirmation. The playbook Stage 6 block uses shared grouped folds,
+  shared `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS = 5`, and a fixed
+  `SEED_REPEAT_SPLIT_SEED` so every candidate sees the same `pdbid` folds and
+  model-seed list.
+- Use `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"` for serious
+  controlled-HPO defaults. Auto repeats up to 5 candidates below 50 completed
+  trials, up to 10 below 150, and up to 20 for 150 or more completed trials. A
+  fixed integer, including 20, is allowed only when predeclared before Stage 6
+  starts. The older `TOP_K_CONFIGS_FOR_SEED_REPEAT` name remains a
+  backward-compatible alias.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` only for explicitly
   labeled exploratory checks; it measures combined initialization and split
   variance.
-- To resume Stage 6 without repeating completed folds, keep
+- To resume Stage 6 without repeating completed fold/seed runs, keep
   `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True`, keep all Stage 6 fold/top-K
-  values unchanged, and keep `SKIP_EXISTING_RUNS = True`. Runs with
-  `run_metadata.json` are reused; incomplete fold directories may be rerun.
+  and seed values unchanged, and keep `SKIP_EXISTING_RUNS = True`. Runs with
+  `run_metadata.json` are reused; incomplete fold/seed directories may be
+  rerun.
 
 Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
@@ -784,9 +790,11 @@ For Optuna:
 1. Inspect `top_trials.csv` for single-objective studies, or
    `pareto_candidates_ranked_for_review.csv` for multi-objective studies.
 2. Inspect `optuna_study_summary.md`.
-3. Run top-k grouped-fold validation with shared `pdbid` folds. Serious
-   controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
-4. Select by grouped-fold mean, paired bootstrap CI, and rare-class recall on
+3. Run top-k grouped-fold validation with shared `pdbid` folds and the
+   configured `REPEAT_SEEDS`. Serious controlled-HPO defaults use auto top-K up
+   to 20 and five grouped folds.
+4. Select by the mean selected metric over all fold x seed runs, paired
+   bootstrap CI over seed-averaged fold means, and rare-class recall on
    `val_metal_balanced_acc`, not by a single trial.
 5. Use `stage6_ranked_candidates.csv` and
    `stage6_selected_final_candidate.json` to freeze the Stage 7 source before

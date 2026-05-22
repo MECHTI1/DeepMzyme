@@ -53,7 +53,7 @@ what to run next:
 | Stage 5E | GVP + hybrid fusion HPO | Yes | 36-60 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5F | GVP + cross-attention HPO | Yes | 30-55 h | Stage 5C gate passed, then one hundred twenty complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5G | RING/radius-only ablation | Yes, ablation budget | 6-10 h | Matching radius-only validation runs complete and are labeled as ablation | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
-| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h | All predeclared top-K x 5 grouped-fold runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
+| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h for one seed; more with extra seeds | All predeclared top-K x fold x seed validation runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
 | Stage 7 | One-shot held-out test | Yes, final only | 20-60 min | Source is the Stage 6 validation-selected run and one-shot policy is confirmed | Separate final-test run dir, `test_report.json`, final-test summary |
 
 All configuration blocks below use variables that exist in
@@ -94,7 +94,8 @@ For all comparison, HPO, and Stage 6 confirmation stages:
   one side, so binuclear or repeated same-chain metal sites cannot leak across
   train/validation. Stage 6 grouped-fold confirmation is the planned exception:
   it sets `VAL_FRACTION = 0.0`, `SPLIT_BY = "pdbid"`,
-  `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED`.
+  `SEED_REPEAT_N_FOLDS = 5`, a fixed `SEED_REPEAT_SPLIT_SEED`, and the
+  predeclared `REPEAT_SEEDS` model-seed list.
 - Use validation metrics, usually `val_metal_balanced_acc`, for checkpoint,
   hyperparameter, architecture, and fusion decisions.
 - Do not run the optional final held-out test cell until the final
@@ -2058,15 +2059,19 @@ a raw single-batch ranking alone.
 ## Stage 6 - Top-K Seed/Split Confirmation
 
 Purpose: confirm whether top HPO candidates are stable across validation data
-partitions. The standard Stage 6 design is grouped 5-fold validation by
-`pdbid`; every compared candidate uses the same fold definitions, so the
-summary can use paired fold-level differences.
+partitions and model-initialization seeds. The standard Stage 6 design is
+grouped 5-fold validation by `pdbid` crossed with the configured `REPEAT_SEEDS`;
+every compared candidate uses the same fold definitions and seed list. Candidate
+ranking uses one primary score, the mean selected validation metric over all
+completed fold x seed runs. Paired comparisons remain conservative by averaging
+common seeds within each fold and bootstrapping fold-level differences.
 
 When to use it: after a medium or large Optuna search has produced top
 candidates, and before any candidate is treated as final-selection evidence.
 
-Expected scale/runtime: serious run, long or overnight. Runtime is roughly
-`TOP_K_CONFIGS_FOR_SEED_REPEAT x SEED_REPEAT_N_FOLDS x EPOCHS`.
+Expected scale/runtime: serious run, long or overnight. Training count is
+roughly `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT x SEED_REPEAT_N_FOLDS x
+len(REPEAT_SEEDS)`; runtime then scales with that count and `EPOCHS`.
 
 Preferred notebook-integrated configuration: run the exact Stage 5 HPO block
 first with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes,
@@ -2086,7 +2091,7 @@ RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
 TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
-TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
+TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
 SEED_REPEAT_SPLIT_SEED = 42
@@ -2123,12 +2128,15 @@ Notes:
 
 - `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is the default reportable
   Stage 6 mode.
-- `TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"` resolves from completed Optuna
-  trials: fewer than 50 completed trials repeats up to 5 candidates, fewer than
-  150 repeats up to 10, and 150 or more repeats up to 20. A predeclared integer
-  is allowed, including 20, but it should be chosen before Stage 6 launches.
-- `REPEAT_SEEDS = "42"` is the model-initialization seed used for each fold in
-  the standard grouped-fold confirmation.
+- `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"` resolves from
+  completed Optuna trials: fewer than 50 completed trials repeats up to 5
+  candidates, fewer than 150 repeats up to 10, and 150 or more repeats up to
+  20. A predeclared integer is allowed, including 20, but it should be chosen
+  before Stage 6 launches. The older notebook variable
+  `TOP_K_CONFIGS_FOR_SEED_REPEAT` remains a backward-compatible alias.
+- `REPEAT_SEEDS = "42"` is the comma-separated model-initialization seed list
+  crossed with every grouped fold. Add more seeds only when the resulting
+  `top_k x folds x seeds` training count is practical and predeclared.
 - `SEED_REPEAT_SPLIT_SEED = 42` fixes the grouped fold definitions. Keep it
   identical for every candidate in the same comparison.
 - The legacy `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` mode remains
@@ -2158,7 +2166,7 @@ Expected outputs/files:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_ranked_candidates.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_selected_final_candidate.json`
-- One validation-only run directory per top-K/fold pair
+- One validation-only run directory per top-K/fold/seed unit
 - Per-fold `run_config.json`, `run_metadata.json`, and
   `split_diagnostics.json`
 - No `test_report.json`
@@ -2170,6 +2178,7 @@ Stage 6 result rows include:
 - model seed
 - split seed
 - fold index / validation unit
+- fold unit and model seed when grouped-fold confirmation uses multiple seeds
 - validation balanced accuracy
 - validation minimum per-class recall
 - per-class recall when available
@@ -2190,24 +2199,26 @@ Exact configuration record:
 
 Success criteria:
 
-- All predeclared top-K/fold runs complete.
+- All predeclared top-K/fold/seed runs complete.
 - The number of completed validation-only runs equals
-  the resolved `TOP_K_CONFIGS_FOR_SEED_REPEAT` value times
-  `SEED_REPEAT_N_FOLDS`.
-- Every candidate has the same validation units: `fold_0` through `fold_4`.
+  the resolved `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT` value times
+  `SEED_REPEAT_N_FOLDS` times `len(REPEAT_SEEDS)`.
+- Every candidate has the same fold definitions and the same model-seed list.
 - No held-out test files were created.
 - Candidate ranking uses validation/CV metrics only: highest mean
-  `val_metal_balanced_acc`, then higher mean `val_metal_min_recall`, then
-  lower fold-to-fold standard deviation of `val_metal_balanced_acc`, then a
-  simpler/smaller model if still tied.
+  `val_metal_balanced_acc` over all completed fold x seed runs, then higher
+  mean `val_metal_min_recall`, then lower fold-to-fold standard deviation of
+  seed-averaged `val_metal_balanced_acc`, then a simpler/smaller model if still
+  tied.
 - `stage6_selected_final_candidate.json` records the selected configuration
   ID, selected source run directories, model preset, selected hyperparameters,
   ranking metrics, and the frozen primary source run/checkpoint used by the
   simplified Stage 7 primary workflow.
 - Pairwise comparisons use paired bootstrap over fold-level differences with
-  10,000 resamples. Candidate A beats candidate B only if mean A-B is positive,
-  the 95% CI excludes zero on the positive side, and the raw improvement meets
-  the applicable threshold.
+  10,000 resamples. When multiple seeds are configured, the notebook averages
+  common seeds within each fold before bootstrapping. Candidate A beats
+  candidate B only if mean A-B is positive, the 95% CI excludes zero on the
+  positive side, and the raw improvement meets the applicable threshold.
 - Diagnostics do not show leakage, missing active metal-scheme validation classes, or invalid
   feature coverage.
 
@@ -2224,7 +2235,7 @@ Proceed to Stage 7 only if:
   `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`,
   `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, and
   `stage6_selected_final_candidate.json` exist.
-- The selected candidate has all planned folds/splits completed.
+- The selected candidate has all planned fold/seed units completed.
 - No held-out test files were created anywhere in the validation chain.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
 - Diagnostics report every active metal-scheme class present in both train and validation splits.
@@ -2247,7 +2258,7 @@ For each completed Optuna study, repeat the auto-selected top candidates across:
 
 ```python
 TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
-TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
+TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
 SEED_REPEAT_SPLIT_SEED = 42

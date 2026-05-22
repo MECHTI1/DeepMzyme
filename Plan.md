@@ -107,9 +107,11 @@ Authoritative rules for the pipeline:
   additions only and must not feed back into model/configuration/checkpoint
   selection.
 - Stage 6 model promotion uses paired comparisons over shared validation
-  folds/splits, paired bootstrap 95% confidence intervals, and rare-class
-  recall protection. Raw validation deltas alone are not sufficient promotion
-  evidence.
+  folds/splits and, when configured, shared model-seed repeats. Candidate
+  ranking uses validation means over the declared fold/seed units; paired
+  bootstrap 95% confidence intervals stay fold-level, averaging seeds within
+  each fold. Rare-class recall protection is required. Raw validation deltas
+  alone are not sufficient promotion evidence.
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
   active metal-scheme `val_metal_min_recall`; for default reportable runs that
@@ -498,8 +500,9 @@ Statistical methodology:
 - Model and hyperparameter selection must be validation-only.
 - Single-split validation is useful for screening but should not be the final
   promotion criterion when Stage 6 grouped-fold confirmation is available.
-- Stage 6 comparisons should use shared validation units and paired confidence
-  intervals, plus rare-class recall protection, before promoting a candidate.
+- Stage 6 comparisons should use shared validation units, shared seed lists when
+  configured, fold-level paired confidence intervals, and rare-class recall
+  protection before promoting a candidate.
 - Calibration, temperature scaling, ensemble membership, thresholds, and primary
   report choice must be fixed from validation evidence before Stage 7.
 - Stage 7 reports uncertainty, calibration, and diagnostic views after the
