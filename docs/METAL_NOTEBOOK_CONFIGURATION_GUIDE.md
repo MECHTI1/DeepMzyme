@@ -35,7 +35,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 5E: GVP + hybrid fusion HPO | Early+late ESM controls, early ESM dimensions/dropout, advanced-fusion gate | "Advanced fusion policy", "ESM options" |
 | Stage 5F: GVP + cross-attention HPO | Cross-attention controls, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "Model architecture and fusion" |
 | Stage 5G: RING/radius-only ablation | `RING_EDGE_MODE`, RING requirement/preparation flags, ablation labeling | "RING options" |
-| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold"`, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
+| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold_seed_repeat"` for fold-plus-seed confirmation, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
 | Stage 7: one-shot held-out test | final-run selector, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
 
 ## Current Status Pointer
@@ -127,11 +127,13 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
   debug or medium HPO, but then the Optuna ranking reflects early-training
   behavior rather than a full training budget.
 - `seed_repeat*`: historical notebook naming for top-config reevaluation. In
-  reportable metal Stage 6, these variables now drive grouped-fold validation:
-  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"`,
+  reportable metal Stage 6, these variables now drive grouped-fold validation.
+  Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` for the
+  explicit top-K x folds x seeds confirmation mode,
   `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT` top configs, a
   comma-separated `REPEAT_SEEDS` model-seed list, `SEED_REPEAT_N_FOLDS = 5`,
-  and a fixed `SEED_REPEAT_SPLIT_SEED`. The legacy `seed_repeat` mode remains
+  and a fixed `SEED_REPEAT_SPLIT_SEED`. Plain `group_kfold` uses grouped folds
+  with only the first listed seed. The legacy `seed_repeat` mode remains
   exploratory.
 - `active_run_config.json` / `active_run_config.md`: notebook-generated records
   of the resolved live configuration before a subprocess starts. Completed
@@ -538,11 +540,13 @@ For useful Colab HPO:
   the later **Stage 6 controls and existing Optuna/HPO reuse** panel. Use the
   later panel when resuming an interrupted Stage 6 or importing old HPO trials,
   then rerun the planning cells so generated commands match the visible values.
-- Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` for project-standard
-  metal confirmation. The playbook Stage 6 block uses shared grouped folds,
-  shared `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS = 5`, and a fixed
-  `SEED_REPEAT_SPLIT_SEED` so every candidate sees the same `pdbid` folds and
-  model-seed list.
+- Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` for
+  project-standard fold-plus-seed metal confirmation. The playbook Stage 6
+  block uses shared grouped folds, shared `REPEAT_SEEDS`,
+  `SEED_REPEAT_N_FOLDS = 5`, and a fixed `SEED_REPEAT_SPLIT_SEED` so every
+  candidate sees the same `pdbid` folds and model-seed list.
+- Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` only when you want
+  grouped folds with the first `REPEAT_SEEDS` value rather than every seed.
 - Use `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"` for serious
   controlled-HPO defaults. Auto repeats up to 5 candidates below 50 completed
   trials, up to 10 below 150, and up to 20 for 150 or more completed trials. A
@@ -791,8 +795,8 @@ For Optuna:
    `pareto_candidates_ranked_for_review.csv` for multi-objective studies.
 2. Inspect `optuna_study_summary.md`.
 3. Run top-k grouped-fold validation with shared `pdbid` folds and the
-   configured `REPEAT_SEEDS`. Serious controlled-HPO defaults use auto top-K up
-   to 20 and five grouped folds.
+   configured `REPEAT_SEEDS` via `group_kfold_seed_repeat`. Serious
+   controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
 4. Select by the mean selected metric over all fold x seed runs, paired
    bootstrap CI over seed-averaged fold means, and rare-class recall on
    `val_metal_balanced_acc`, not by a single trial.

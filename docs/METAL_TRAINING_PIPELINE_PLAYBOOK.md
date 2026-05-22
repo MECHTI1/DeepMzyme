@@ -53,7 +53,7 @@ what to run next:
 | Stage 5E | GVP + hybrid fusion HPO | Yes | 36-60 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5F | GVP + cross-attention HPO | Yes | 30-55 h | Stage 5C gate passed, then one hundred twenty complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5G | RING/radius-only ablation | Yes, ablation budget | 6-10 h | Matching radius-only validation runs complete and are labeled as ablation | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
-| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h for one seed; more with extra seeds | All predeclared top-K x fold x seed validation runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
+| Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h for one seed; more with extra seeds | All predeclared top-K x fold x active-seed validation runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
 | Stage 7 | One-shot held-out test | Yes, final only | 20-60 min | Source is the Stage 6 validation-selected run and one-shot policy is confirmed | Separate final-test run dir, `test_report.json`, final-test summary |
 
 All configuration blocks below use variables that exist in
@@ -2059,19 +2059,22 @@ a raw single-batch ranking alone.
 ## Stage 6 - Top-K Seed/Split Confirmation
 
 Purpose: confirm whether top HPO candidates are stable across validation data
-partitions and model-initialization seeds. The standard Stage 6 design is
-grouped 5-fold validation by `pdbid` crossed with the configured `REPEAT_SEEDS`;
-every compared candidate uses the same fold definitions and seed list. Candidate
-ranking uses one primary score, the mean selected validation metric over all
-completed fold x seed runs. Paired comparisons remain conservative by averaging
-common seeds within each fold and bootstrapping fold-level differences.
+partitions and model-initialization seeds. The standard fold-plus-seed Stage 6
+design uses `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"`:
+grouped 5-fold validation by `pdbid` crossed with the configured
+`REPEAT_SEEDS`; every compared candidate uses the same fold definitions and
+seed list. Candidate ranking uses one primary score, the mean selected
+validation metric over all completed fold x seed runs. Paired comparisons
+remain conservative by averaging common seeds within each fold and bootstrapping
+fold-level differences.
 
 When to use it: after a medium or large Optuna search has produced top
 candidates, and before any candidate is treated as final-selection evidence.
 
 Expected scale/runtime: serious run, long or overnight. Training count is
 roughly `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT x SEED_REPEAT_N_FOLDS x
-len(REPEAT_SEEDS)`; runtime then scales with that count and `EPOCHS`.
+len(REPEAT_SEEDS)` in `group_kfold_seed_repeat` mode, or top-K x folds in
+plain `group_kfold` mode; runtime then scales with that count and `EPOCHS`.
 
 Preferred notebook-integrated configuration: run the exact Stage 5 HPO block
 first with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes,
@@ -2090,7 +2093,7 @@ folds continue.
 RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
-TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
+TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"
 TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
@@ -2126,17 +2129,22 @@ STAGE6_SOURCE_RUNS_DIR = ""  # or a full old HPO RUN_BATCH_ID path
 
 Notes:
 
-- `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is the default reportable
-  Stage 6 mode.
+- `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` is the explicit
+  reportable fold-plus-seed Stage 6 mode.
+- `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is grouped-fold confirmation
+  with only the first `REPEAT_SEEDS` value. Use it for one-seed confirmation or
+  backward-compatible reruns where seed crossing was not intended.
 - `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"` resolves from
   completed Optuna trials: fewer than 50 completed trials repeats up to 5
   candidates, fewer than 150 repeats up to 10, and 150 or more repeats up to
   20. A predeclared integer is allowed, including 20, but it should be chosen
   before Stage 6 launches. The older notebook variable
   `TOP_K_CONFIGS_FOR_SEED_REPEAT` remains a backward-compatible alias.
-- `REPEAT_SEEDS = "42"` is the comma-separated model-initialization seed list
-  crossed with every grouped fold. Add more seeds only when the resulting
-  `top_k x folds x seeds` training count is practical and predeclared.
+- `REPEAT_SEEDS = "42"` is the comma-separated model-initialization seed list.
+  In `group_kfold_seed_repeat`, every seed is crossed with every grouped fold.
+  In `group_kfold`, only the first listed seed is used. Add more seeds only
+  when the resulting `top_k x folds x seeds` training count is practical and
+  predeclared.
 - `SEED_REPEAT_SPLIT_SEED = 42` fixes the grouped fold definitions. Keep it
   identical for every candidate in the same comparison.
 - The legacy `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` mode remains
@@ -2199,11 +2207,13 @@ Exact configuration record:
 
 Success criteria:
 
-- All predeclared top-K/fold/seed runs complete.
+- All predeclared top-K/fold/active-seed runs complete.
 - The number of completed validation-only runs equals
   the resolved `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT` value times
-  `SEED_REPEAT_N_FOLDS` times `len(REPEAT_SEEDS)`.
-- Every candidate has the same fold definitions and the same model-seed list.
+  `SEED_REPEAT_N_FOLDS` times `len(REPEAT_SEEDS)` for
+  `group_kfold_seed_repeat`, or times one active model seed for `group_kfold`.
+- Every candidate has the same fold definitions and the same active model-seed
+  list.
 - No held-out test files were created.
 - Candidate ranking uses validation/CV metrics only: highest mean
   `val_metal_balanced_acc` over all completed fold x seed runs, then higher
@@ -2235,7 +2245,7 @@ Proceed to Stage 7 only if:
   `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`,
   `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, and
   `stage6_selected_final_candidate.json` exist.
-- The selected candidate has all planned fold/seed units completed.
+- The selected candidate has all planned fold/active-seed units completed.
 - No held-out test files were created anywhere in the validation chain.
 - `val_metal_balanced_acc` is the selection metric on all completed runs.
 - Diagnostics report every active metal-scheme class present in both train and validation splits.
@@ -2257,7 +2267,7 @@ budget. Do not launch held-out test evaluation.
 For each completed Optuna study, repeat the auto-selected top candidates across:
 
 ```python
-TOP_CONFIG_REEVALUATION_MODE = "group_kfold"
+TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"
 TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
@@ -2270,12 +2280,13 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 The default auto rule repeats up to 5 candidates below 50 completed trials, up
 to 10 below 150 completed trials, and up to 20 for 150 or more completed
 trials. Use a fixed integer only when the top-K count is predeclared before
-launch; integer 20 is allowed for serious large HPO but implies
-`20 x 5 = 100` extra validation-only runs.
+launch; integer 20 is allowed for serious large HPO and with the default single
+seed implies `20 x 5 x 1 = 100` extra validation-only runs.
 
 A candidate is considered stable enough for final selection only if:
 
-- all 5 grouped-fold runs complete, or failures are explained and not biased;
+- all planned grouped-fold/active-seed runs complete, or failures are explained
+  and not biased;
 - no held-out test report was created;
 - all source runs use the same `METAL_LABEL_SCHEME`;
 - all runs use `selection_metric = val_metal_balanced_acc`;

@@ -107,11 +107,13 @@ Authoritative rules for the pipeline:
   additions only and must not feed back into model/configuration/checkpoint
   selection.
 - Stage 6 model promotion uses paired comparisons over shared validation
-  folds/splits and, when configured, shared model-seed repeats. Candidate
-  ranking uses validation means over the declared fold/seed units; paired
-  bootstrap 95% confidence intervals stay fold-level, averaging seeds within
-  each fold. Rare-class recall protection is required. Raw validation deltas
-  alone are not sufficient promotion evidence.
+  folds/splits and, when configured, shared model-seed repeats. The notebook's
+  explicit fold-plus-seed mode is `group_kfold_seed_repeat`; plain
+  `group_kfold` is a one-seed grouped-fold option. Candidate ranking uses
+  validation means over the declared fold/seed units; paired bootstrap 95%
+  confidence intervals stay fold-level, averaging seeds within each fold when
+  multiple seeds are configured. Rare-class recall protection is required. Raw
+  validation deltas alone are not sufficient promotion evidence.
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
   active metal-scheme `val_metal_min_recall`; for default reportable runs that

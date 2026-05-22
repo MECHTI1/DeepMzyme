@@ -19,12 +19,15 @@ evidence in saved outputs, not in stable workflow guides.
   option meanings and workflow explanation.
 - For validation/testing order, Drive/local output placement, and copied
   evidence folder ownership, use `docs/README.md`.
-- As of the Stage 6 statistical-validation update, reportable Stage 6
-  confirmation uses top-K 5-fold grouped validation by `pdbid`, crossed with
-  the predeclared `REPEAT_SEEDS` model-seed list, paired fold-level bootstrap
-  confidence intervals over seed-averaged fold means, and rare-class recall
-  protection. Older non-folded 5-seed validation-only repeats remain historical
-  evidence, not the current Stage 6 standard for new promotions.
+- As of the Stage 6 statistical-validation update, reportable fold-plus-seed
+  Stage 6 confirmation uses
+  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"`: top-K 5-fold
+  grouped validation by `pdbid` crossed with the predeclared `REPEAT_SEEDS`
+  model-seed list, paired fold-level bootstrap confidence intervals over
+  seed-averaged fold means, and rare-class recall protection. Plain
+  `group_kfold` is available for one-seed grouped-fold confirmation. Older
+  non-folded 5-seed validation-only repeats remain historical evidence, not the
+  current Stage 6 standard for new promotions.
 - If this file conflicts with `Plan.md`, source code, or run outputs, report the
   conflict instead of silently trusting this file.
 - Do not invent missing values or exact experiment numbers.

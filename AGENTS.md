@@ -324,10 +324,14 @@ Operational assumptions for this project:
   report, ensemble source list, averaging rule, and calibration rule must be
   fixed before opening the held-out test, and test metrics must never be used to
   switch the primary report or choose a different checkpoint/configuration.
-- Stage 6 defaults to top-K 5-fold grouped validation by `pdbid`, with the
-  same fold definitions for every compared candidate. Candidate promotion uses
-  paired bootstrap confidence intervals and rare-class recall protection, not
-  raw validation deltas alone.
+- Stage 6 defaults to
+  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` for top-K 5-fold
+  grouped validation by `pdbid` crossed with the configured `REPEAT_SEEDS`
+  model-seed list, with the same fold definitions and active seed list for
+  every compared candidate. Plain `group_kfold` is a one-seed grouped-fold
+  option, and `seed_repeat` is exploratory. Candidate promotion uses paired
+  bootstrap confidence intervals and rare-class recall protection, not raw
+  validation deltas alone.
 - Exact executable values, Optuna budgets, search spaces, seed lists, expected
   outputs, and decision gates live only in
   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
@@ -356,9 +360,13 @@ format:
    - Confirm `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless the stage is
      Stage 6 grouped-fold confirmation or an explicitly labeled new split
      experiment.
-   - For Stage 6, confirm `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"`,
+   - For Stage 6 fold-plus-seed confirmation, confirm
+     `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"`,
      `SEED_REPEAT_N_FOLDS = 5`, a fixed `SEED_REPEAT_SPLIT_SEED`, and shared
-     fold definitions for every compared candidate.
+     fold definitions and active seed list for every compared candidate. If
+     `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is used, label it as
+     one-seed grouped-fold confirmation because only the first `REPEAT_SEEDS`
+     value is active.
    - Confirm one `MODEL_PRESET` per Optuna study.
    - Confirm persistent Drive SQLite storage for serious Optuna stages.
    - Confirm incompatible persistent-study reuse remains blocked unless an
