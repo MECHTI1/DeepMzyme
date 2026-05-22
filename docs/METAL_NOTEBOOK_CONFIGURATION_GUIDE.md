@@ -504,17 +504,18 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
-- Set `OPTUNA_N_STARTUP_TRIALS` below `N_OPTUNA_TRIALS`. `N_OPTUNA_TRIALS` is
-  the target number of completed trials in the study; with persistent storage,
-  reruns launch only the remaining trials needed to reach that target. If
-  startup trials are greater than or equal to the completed-trial target, the
-  run is effectively random search. The playbook owns the exact startup-trial
-  value for each stage.
+- Set `OPTUNA_N_STARTUP_TRIALS` below `OPTUNA_TARGET_COMPLETE_TRIALS`.
+  `OPTUNA_TARGET_COMPLETE_TRIALS` is the target number of completed Optuna
+  trials in the study; with persistent storage, reruns launch only the remaining
+  trials needed to reach that target. `N_OPTUNA_TRIALS` is still accepted as a
+  backward-compatible alias in older snippets. If startup trials are greater
+  than or equal to the completed-trial target, the run is effectively random
+  search. The playbook owns the exact startup-trial value for each stage.
 - Keep `OPTUNA_AUTO_CONFIGURE_BUDGET = False` when using a playbook block with
   explicit trial counts. If enabled, the notebook may raise trial counts to the
   advisor's minimum recommendation.
 - If the final launch-time `OPTUNA_N_STARTUP_TRIALS` or completed-trial target
-  `N_OPTUNA_TRIALS` is below the advisor recommendation, the notebook asks for
+  `OPTUNA_TARGET_COMPLETE_TRIALS` is below the advisor recommendation, the notebook asks for
   terminal-style confirmation with `input()`. Type `Y` to continue an
   intentionally under-budgeted smoke/debug run, or `N`/Enter to stop before
   Optuna launches.
@@ -593,7 +594,7 @@ promoting any candidate.
 
 `OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
 
-Stage 3 is plumbing/debug only. If `N_OPTUNA_TRIALS` equals
+Stage 3 is plumbing/debug only. If `OPTUNA_TARGET_COMPLETE_TRIALS` equals
 `OPTUNA_N_STARTUP_TRIALS`, all trials are startup trials and the run is
 effectively random search. Do not treat Stage 3 rankings as model-selection
 evidence.

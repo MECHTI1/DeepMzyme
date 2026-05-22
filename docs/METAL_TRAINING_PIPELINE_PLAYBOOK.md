@@ -275,7 +275,7 @@ serious Optuna stages must use:
 - Persistent SQLite storage in Drive:
   `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
 - Startup trials: use the stage table below. The default rule is at least
-  `max(20, 0.2 x N_OPTUNA_TRIALS)`; 120-trial ESM/fusion studies use 30 startup
+  `max(20, 0.2 x OPTUNA_TARGET_COMPLETE_TRIALS)`; 120-trial ESM/fusion studies use 30 startup
   trials to cover their conditional spaces.
 - `OPTUNA_SPLIT_SEED = 42` for every study. Stage 6 uses a separate fixed
   `SEED_REPEAT_SPLIT_SEED` for grouped-fold definitions, so every compared
@@ -324,7 +324,7 @@ Batch-size policy for serious stages:
 
 Recommended G4 budgets (canonical):
 
-| Stage | `N_OPTUNA_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
+| Stage | `OPTUNA_TARGET_COMPLETE_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
 | --- | --- | --- | --- |
 | Stage 3 (debug) | 4 | 3 | 4 |
 | Stage 4 (medium per family) | 64 | 35 | 20 |
@@ -650,8 +650,10 @@ file per study. Never share a study DB across different `MODEL_PRESET` values.
 
 Resumption rule: re-running the notebook with the same `OPTUNA_STUDY_NAME` and
 storage URL resumes the persistent study and launches only the remaining trials
-needed to reach `N_OPTUNA_TRIALS` completed trials. To start fresh, change the
-study name; do not delete the `.db` unless you mean to discard history.
+needed to reach `OPTUNA_TARGET_COMPLETE_TRIALS` completed trials. `N_OPTUNA_TRIALS`
+is still accepted as a backward-compatible alias in older snippets. To start
+fresh, change the study name; do not delete the `.db` unless you mean to discard
+history.
 
 Resume policy for reportable HPO:
 
@@ -662,7 +664,7 @@ Resume policy for reportable HPO:
 - If a study was interrupted, resume until the requested number of `COMPLETE`
   trials in the stage gate is reached. Failed/pruned/incomplete trials do not
   count toward the required completed-trial count, so they may make the stored
-  total trial count exceed `N_OPTUNA_TRIALS` while the completed-trial count
+  total trial count exceed `OPTUNA_TARGET_COMPLETE_TRIALS` while the completed-trial count
   reaches the target.
 - The notebook records compatibility metadata and a search-space hash in each
   study. Reusing a persistent study with incompatible metadata stops with a
@@ -1083,7 +1085,7 @@ configuration fields.
 Expected scale/runtime: smoke/debug, minutes to under an hour.
 
 Stage 3 caveat: this is a plumbing/debug Optuna run. With the canonical
-`N_OPTUNA_TRIALS = 4` and `OPTUNA_N_STARTUP_TRIALS = 4`, every trial is a TPE
+`OPTUNA_TARGET_COMPLETE_TRIALS = 4` and `OPTUNA_N_STARTUP_TRIALS = 4`, every trial is a TPE
 startup trial, so Stage 3 is effectively random search. Stage 3 results are not
 model-selection evidence; serious model-selection evidence comes from serious
 HPO, validation-only comparison, and Stage 6 grouped-fold confirmation.
@@ -1113,7 +1115,7 @@ EDGE_RADIUS_VALUES_CSV = "8.0"
 RING_EDGE_MODE = "with_ring"
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 4
+OPTUNA_TARGET_COMPLETE_TRIALS = 4
 MAX_EPOCHS_PER_TRIAL = 3
 OPTUNA_N_STARTUP_TRIALS = 4
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1235,7 +1237,7 @@ PREPARE_MISSING_EXTERNAL_FEATURES = True
 EXTERNAL_FEATURES_ROOT_DIR = ""
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 64
+OPTUNA_TARGET_COMPLETE_TRIALS = 64
 MAX_EPOCHS_PER_TRIAL = 35
 OPTUNA_N_STARTUP_TRIALS = 20
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1413,7 +1415,7 @@ PREPARE_MISSING_EXTERNAL_FEATURES = True
 EXTERNAL_FEATURES_ROOT_DIR = ""
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1538,7 +1540,7 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 120
+OPTUNA_TARGET_COMPLETE_TRIALS = 120
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 30
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1621,7 +1623,7 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1714,7 +1716,7 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1809,7 +1811,7 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 200
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
@@ -1907,7 +1909,7 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-N_OPTUNA_TRIALS = 120
+OPTUNA_TARGET_COMPLETE_TRIALS = 120
 MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 30
 OPTUNA_TPE_MULTIVARIATE = True

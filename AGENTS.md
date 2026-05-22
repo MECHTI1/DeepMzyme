@@ -353,8 +353,9 @@ format:
 2. Exact notebook block:
    - Copy the block from `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
    - Do not invent budgets.
-   - Do not silently change `N_OPTUNA_TRIALS`, `MAX_EPOCHS_PER_TRIAL`,
-     `OPTUNA_N_STARTUP_TRIALS`, search ranges, seed lists, or final-test flags.
+   - Do not silently change `OPTUNA_TARGET_COMPLETE_TRIALS`,
+     `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`, search ranges, seed
+     lists, or final-test flags.
 
 3. Safety checks:
    - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final

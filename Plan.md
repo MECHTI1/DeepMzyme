@@ -335,7 +335,7 @@ For the metal notebook pipeline, the playbook must keep exact values for:
   ESM embedding flags, and external-feature strictness
 - baseline budgets: epochs, batch sizes, learning rates, weight decay, seeds,
   and maximum planned rows
-- Optuna budgets and sampler controls: `N_OPTUNA_TRIALS`,
+- Optuna budgets and sampler controls: `OPTUNA_TARGET_COMPLETE_TRIALS`,
   `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`,
   `OPTUNA_TPE_MULTIVARIATE`, `OPTUNA_TPE_GROUP`,
   `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage, search preset, and search ranges
