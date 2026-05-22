@@ -130,8 +130,6 @@ def sanitize_cofactor_analysis_table(path: Path) -> tuple[int, int]:
     if missing:
         raise ValueError(f"Missing required columns in {path}: {missing}")
 
-    filtered_rows: list[dict[str, str]] = []
-    removed_row_count = 0
     removed_cofactor_count = 0
 
     for row in rows:
@@ -152,20 +150,15 @@ def sanitize_cofactor_analysis_table(path: Path) -> tuple[int, int]:
         row[ANNOTATED_COFACTORS_COLUMN] = "; ".join(filtered_cofactors)
         row[ANNOTATED_METAL_SYMBOLS_COLUMN] = ";".join(supported_symbols)
 
-        if not supported_symbols:
-            removed_row_count += 1
-            continue
-        filtered_rows.append(row)
-
-    write_csv_rows(path, fieldnames, filtered_rows)
-    if removed_row_count or removed_cofactor_count:
+    write_csv_rows(path, fieldnames, rows)
+    if removed_cofactor_count:
         print(
-            f"[INFO] Sanitized {path.name}: removed {removed_row_count} rows with no supported metals and "
-            f"{removed_cofactor_count} unsupported cofactor entries."
+            f"[INFO] Sanitized {path.name}: removed {removed_cofactor_count} unsupported cofactor entries. "
+            "Rows with no supported cofactor symbols were preserved as unknown/insufficient annotation."
         )
     else:
         print(f"[INFO] No unsupported cofactor annotations found in {path.name}")
-    return removed_row_count, removed_cofactor_count
+    return 0, removed_cofactor_count
 
 
 def sanitize_split_dir(split_dir: Path) -> None:

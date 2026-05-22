@@ -99,14 +99,13 @@ def copy_file(source_path: Path, dest_path: Path) -> None:
     shutil.copy2(source_path, dest_path)
 
 
-def clear_existing_destination_files(dest_dir: Path, csv_name: str) -> None:
+def clear_existing_destination_files(dest_dir: Path) -> None:
     if not dest_dir.exists():
         return
     for path in dest_dir.glob("*.pdb"):
         path.unlink()
-    csv_path = dest_dir / csv_name
-    if csv_path.exists():
-        csv_path.unlink()
+    for path in dest_dir.glob("*.csv"):
+        path.unlink()
 
 
 def validate_csv_against_copied_structures(csv_path: Path, structure_dir: Path) -> None:
@@ -175,7 +174,7 @@ def main() -> None:
         raise FileNotFoundError(f"Missing source PDB files after EC normalization: {preview}{suffix}")
 
     DEST_DIR.mkdir(parents=True, exist_ok=True)
-    clear_existing_destination_files(DEST_DIR, SOURCE_CSV.name)
+    clear_existing_destination_files(DEST_DIR)
     copied_structure_count = 0
     for source_path in source_paths:
         copy_file(source_path, DEST_DIR / source_path.name)

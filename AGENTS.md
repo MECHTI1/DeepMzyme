@@ -233,9 +233,9 @@ claim or change.
 
 #### Internal and staging
 
-- `internal/codex_suggested/`: staging area for code suggested by AI tools
-  that has not yet been reviewed, tested, or merged into `src/`. Do not treat
-  this as production code.
+- No `internal/` workflow is part of the active pipeline. If an
+  `internal/codex_suggested/` directory is reintroduced later, treat it as
+  unreviewed staging material only, not production code.
 
 **Read by default** (small, high-leverage): `Plan.md`, `EXPERIMENT_STATUS.md`,
 `docs/README.md`, and `docs/notebook_outputs/README.md`.

@@ -24,6 +24,21 @@ Other named split variants are available for secondary comparisons:
 - **Metal Split PinMyMetal**: `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal`, matching the exact PinMyMetal train/test PDB-ID membership for available supported structures and possibly containing train/test overlap; the summary CSVs do not retain the original PinMyMetal site-row identifiers.
 - **Common-PDBID 70/30 Split PinMyMetal**: `DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal`, where train-only PDB IDs stay in train, test-only PDB IDs stay in test, and only common exact-split PDB IDs are assigned as whole PDB-ID groups with 70% to train and 30% to test.
 
+To regenerate the exact and Common-PDBID 70/30 folders from local preparation
+outputs, rebuild the exact train/test folders first, rerun the Step 5 train/test
+notebooks if biological-metal support CSVs are needed, refresh the exact split
+metadata, and then recreate the derived common-PDBID split:
+
+```bash
+PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python prepare_training_and_test_set/step4_moveto_repo_data_train_structures_and_csv.py
+PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python prepare_training_and_test_set/step4b_moveto_repo_data_test_structures_and_csv.py
+# Run prepare_training_and_test_set/step5_add_verified_only_biologicalmetal_to_datacsvtrain.ipynb
+# Run prepare_training_and_test_set/step5b_add_verified_only_biologicalmetal_to_datacsvtest.ipynb
+PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python prepare_training_and_test_set/step5c_filter_exact_pinmymetal_tables_to_supported_transition_metals.py
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python prepare_training_and_test_set/step4c_write_exact_pinmymetal_metadata.py
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python prepare_training_and_test_set/step6b_create_pinmymetal_split_variants.py --mode common-pdbid-70-30 --overwrite
+```
+
 
 
 ## Quick Start
