@@ -57,32 +57,39 @@ what to run next:
 | Stage 7 | One-shot held-out test | Yes, final only | 20-60 min | Source is the Stage 6 validation-selected run and one-shot policy is confirmed | Separate final-test run dir, `test_report.json`, final-test summary |
 
 All configuration blocks below use variables that exist in
-`notebooks/DeepMzyme_training_colab.ipynb` as of this repository state. To use a
-block, edit the notebook's **Main configuration** cell directly or paste the
-block at the end of that cell before running **Build central CONFIG
-dictionary**.
-For Stage 6, the notebook also exposes the same grouped-fold confirmation
-fields in the **Stage 6 controls and existing Optuna/HPO reuse** panel for
-resume/import use. If you change Stage 6 values there, rerun the planning cells
-before launch so the generated commands match the visible controls.
+`notebooks/DeepMzyme_training_colab.ipynb` as of this repository state. For
+ordinary planned training and HPO stages, edit the notebook's **Main
+configuration** cell directly or paste the block at the end of that cell before
+running **Build central CONFIG dictionary**. Stage 6 grouped-fold confirmation
+uses the dedicated **Stage 6 controls and existing Optuna/HPO reuse** panel; for
+an already completed HPO directory, Stage 6 can run in standalone existing-HPO
+mode independently of the Main configuration cell.
 
 ## How To Use This Playbook
 
-Use exactly one stage block at a time. After editing the notebook's **Main
-configuration** cell, run the CONFIG/planning cells and inspect the resolved
-commands before setting `LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True` in the
-dedicated launch-switch cell.
+Use exactly one stage block at a time. For ordinary planned training or HPO,
+after editing the notebook's **Main configuration** cell, run the CONFIG/planning
+cells and inspect the resolved commands before setting
+`LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True` in the dedicated launch-switch cell.
+For Stage 6 from an already completed HPO directory, keep that switch `False`,
+fill the Stage 6 controls, and use the dedicated Stage 6 launch cell. It is now
+safe to use Colab **Run all** for this path: setup/clone/data cells run, the
+ordinary main training/HPO cell no-ops, and the Stage 6 launch cell switches to
+standalone existing-HPO mode when an old HPO source is configured. If no Stage 6
+source is configured, the Stage 6 launch cell no-ops with a message instead of
+trying to import from an empty current run folder.
 
 Notebook execution order:
 
 1. Setup/install and data-source cells.
 2. Main planned-training launch switch. Keep it `False` while planning or
    loading helpers; set it `True` only before ordinary planned runs or HPO.
-3. Main configuration cell with one block from this playbook.
-4. Build central `CONFIG`.
-5. Planning/preflight cells.
-6. Optional training execution cell for ordinary runs or HPO.
-7. Summarize/report cell for the current `RUN_BATCH_ID`.
+3. For ordinary planned runs/HPO: Main configuration cell with one block from
+   this playbook.
+4. For ordinary planned runs/HPO: Build central `CONFIG`.
+5. For ordinary planned runs/HPO: Planning/preflight cells.
+6. For ordinary planned runs/HPO: Optional training execution cell.
+7. Summarize/report cell for the current `RUN_BATCH_ID` when relevant.
 8. For Stage 6 only: Stage 6 controls/checklist, then
    **Launch Stage 6 top-K grouped-fold confirmation**.
 9. For final testing only: select final run, preview final held-out test, then
@@ -2089,22 +2096,28 @@ roughly `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT x SEED_REPEAT_N_FOLDS x
 len(REPEAT_SEEDS)` in `group_kfold_seed_repeat` mode, or top-K x folds in
 plain `group_kfold` mode; runtime then scales with that count and `EPOCHS`.
 
-Preferred notebook-integrated configuration: run the exact Stage 5 HPO block
-first with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes,
-use this Stage 6 overlay and the dedicated **Launch Stage 6 top-K grouped-fold
-confirmation** cell to import the previous validation-only HPO candidates,
-write the top-K commands, and optionally launch grouped-fold confirmation.
-Keep the Stage 5 block's `MODEL_PRESET`, `OPTUNA_STUDY_NAME`, `OPTUNA_STORAGE`,
-search space, and persistent-storage settings unchanged.
-The current notebook exposes these Stage 6 values both in **Main
-configuration** and in the later **Stage 6 controls and existing Optuna/HPO
-reuse** panel. When resuming an interrupted Stage 6, keep the values identical
-and keep `SKIP_EXISTING_RUNS = True` so completed folds are reused while missing
-folds continue.
+Preferred same-runtime configuration: run the exact Stage 5 HPO block first
+with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes, use
+the dedicated **Stage 6 controls and existing Optuna/HPO reuse** panel plus the
+**Launch Stage 6 top-K grouped-fold confirmation** cell to import the previous
+validation-only HPO candidates, write the top-K commands, and optionally launch
+grouped-fold confirmation. Keep the Stage 5 block's `MODEL_PRESET`,
+`OPTUNA_STUDY_NAME`, `OPTUNA_STORAGE`, search space, and persistent-storage
+settings unchanged.
+
+Existing-HPO standalone configuration: when the HPO directory already exists
+from a previous Colab/runtime, keep `LAUNCH_PLANNED_MAIN_TRAINING_RUNS = False`,
+set the old HPO source in the Stage 6 controls, and use the Stage 6 launch cell.
+You can press **Run all** so the required setup/clone cells execute before Stage
+6; ordinary main training/HPO remains skipped. This imports saved run metadata
+from the old directory and launches only the new Stage 6 fold/seed runs. When
+resuming an interrupted Stage 6, keep the values identical and keep
+`SKIP_EXISTING_RUNS = True` so completed folds are reused while missing folds
+continue.
+
+Set these values in the dedicated Stage 6 controls panel:
 
 ```python
-RUN_MODE = "controlled_hpo_optuna"
-RECOMMENDED_RUN_SET = "custom"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
 TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"
 TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
@@ -2113,16 +2126,23 @@ SEED_REPEAT_N_FOLDS = 5
 SEED_REPEAT_SPLIT_SEED = 42
 STAGE6_RAW_IMPROVEMENT_THRESHOLD = 0.0
 ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = False
-RETRAIN_BEST_CONFIG_AFTER_HPO = False
-
-EPOCHS = 50
-VAL_FRACTION = 0.0
-SPLIT_BY = "pdbid"
-SELECTION_METRIC = "val_metal_balanced_acc"
-OPTUNA_SELECTION_METRIC = "val_metal_balanced_acc"
-INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
-ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+SKIP_EXISTING_RUNS = True
+USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False
+EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR = "/content/drive/MyDrive/DeepMzyme/notebook_outputs/runs"
+EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID = ""
+EXISTING_OPTUNA_TRIALS_RUNS_DIR = ""
+STAGE6_OUTPUT_RUNS_DIR = ""      # blank = sibling <OLD_HPO_RUN_BATCH_ID>_stage6 directory
+STAGE6_OUTPUT_STUDY_NAME = ""    # blank = auto-name from the old HPO directory
+STAGE6_EPOCHS = 50
+STAGE6_DEVICE = "auto"
+STAGE6_SELECTION_METRIC = "val_metal_balanced_acc"
 ```
+
+For same-runtime HPO, leave `USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False` so
+the Stage 6 launch cell imports from the current notebook run directory. For a
+previous HPO directory, set `USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = True` plus
+either `EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR / EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID`
+or the explicit `EXISTING_OPTUNA_TRIALS_RUNS_DIR`.
 
 In the **Launch Stage 6 top-K grouped-fold confirmation** cell, first preview
 the imported candidates and generated commands:
