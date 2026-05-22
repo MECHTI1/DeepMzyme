@@ -176,6 +176,15 @@ explicitly labeled.
 
 Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
 
+### Main Configuration Review Marker
+
+`EDIT_INTERNAL_DEFAULTS` is a review marker, not a mode switch. Leave it
+`False` for ordinary playbook runs. Set it to `True` only when you deliberately
+changed the notebook's section 8 internal defaults and want that intent recorded
+in the print summary and saved config metadata. It does not enable hidden
+controls, gate execution, or change which section 8 values are applied. Older
+saved configs may store the same value as `advanced_mode`.
+
 ## What To Run First
 
 ### 1. Minimal smoke test
@@ -323,7 +332,8 @@ The main capacity fields are:
 - `CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV`: optional CA-to-metal residue
   cutoff values for the pooling step that feeds the final classifier head;
   `0.0` keeps all residues. In `manual_configurations`, comma-separated values
-  create one planned row per cutoff.
+  create one planned row per cutoff. In `controlled_hpo_optuna`, these same
+  CSV values are sampled when the field is active.
 
 Do not vary all capacity fields at once in the first baseline. Use the playbook
 for the exact first baseline and HPO search spaces; use
@@ -385,9 +395,12 @@ for each stage. Use this guide only to understand what those fields mean:
 - `EPOCHS` controls the maximum training duration for normal/manual runs and
   Stage 6/final workflows; Optuna trial duration is controlled by
   `MAX_EPOCHS_PER_TRIAL`.
-- `BATCH_SIZES_CSV`, `LEARNING_RATES_CSV`, and `WEIGHT_DECAYS_CSV` define
-  manual comparison grids when `RUN_MODE = "manual_configurations"`.
-- `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs. The
+- `BATCH_SIZES_CSV` and `WEIGHT_DECAYS_CSV` define manual comparison grids and
+  are also sampled by Optuna when those fields are active.
+- `LEARNING_RATES_CSV` defines manual comparison grids; Optuna learning rate
+  search remains continuous/log-sampled from `OPTUNA_LEARNING_RATE_RANGE`.
+- `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs and
+  active Optuna schedule search. The
   notebook exposes a dropdown with `cosine` as the recommended single-schedule
   default for fresh planned runs, plus `fixed`, `fixed,cosine` for explicit
   comparisons, and `step` for manual step-decay checks.
@@ -524,15 +537,20 @@ For useful Colab HPO:
   `trial.report(...)`, and terminates the trial subprocess process group when
   Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 8` for serious 50-epoch
   HPO; lower values are debug/plumbing-only.
-- Use `OPTUNA_LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
-  enables LR-schedule search. The notebook dropdown defaults to `fixed,cosine`
-  so Optuna can choose between the historical fixed schedule and cosine. Do not
+- Use `LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
+  enables LR-schedule search. The notebook default for ordinary planned runs is
+  `cosine`; serious HPO playbook blocks set `fixed,cosine` when Optuna should
+  choose between the historical fixed schedule and cosine. Do not
   include `step` in Optuna schedule search unless step size and gamma are also
   explicitly searched by Optuna.
-- Use `OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV` only for deliberate
+- Use `CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV` only for deliberate
   classifier-pooling ablations. The default `0.0` keeps all residues in the
   final classifier pooling step; comma-separated non-negative values are
   sampled by Optuna.
+- For fields that already have normal CSV controls, Optuna uses those same CSV
+  values when the field is active. For example, `GVP_LAYERS_VALUES_CSV =
+  "2,3,4"` is the layer search space under `later_capacity`/`custom`, while it
+  remains a fixed base value under `first_useful_only_gvp_narrow`.
 - Keep `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False`. The notebook records
   model preset, task, split, metric, search-space hash, sampler seed, pruning
   settings, batch-size choices, LR schedule choices, class-weight choices, and
