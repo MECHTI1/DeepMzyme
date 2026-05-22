@@ -70,19 +70,22 @@ before launch so the generated commands match the visible controls.
 
 Use exactly one stage block at a time. After editing the notebook's **Main
 configuration** cell, run the CONFIG/planning cells and inspect the resolved
-commands before setting `LAUNCH_PLANNED_TRAINING_RUNS = True`.
+commands before setting `LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True` in the
+dedicated launch-switch cell.
 
 Notebook execution order:
 
 1. Setup/install and data-source cells.
-2. Main configuration cell with one block from this playbook.
-3. Build central `CONFIG`.
-4. Planning/preflight cells.
-5. Optional training execution cell for ordinary runs or HPO.
-6. Summarize/report cell for the current `RUN_BATCH_ID`.
-7. For Stage 6 only: Stage 6 controls/checklist, then
+2. Main planned-training launch switch. Keep it `False` while planning or
+   loading helpers; set it `True` only before ordinary planned runs or HPO.
+3. Main configuration cell with one block from this playbook.
+4. Build central `CONFIG`.
+5. Planning/preflight cells.
+6. Optional training execution cell for ordinary runs or HPO.
+7. Summarize/report cell for the current `RUN_BATCH_ID`.
+8. For Stage 6 only: Stage 6 controls/checklist, then
    **Launch Stage 6 top-K grouped-fold confirmation**.
-8. For final testing only: select final run, preview final held-out test, then
+9. For final testing only: select final run, preview final held-out test, then
    launch once.
 
 For all comparison, HPO, and Stage 6 confirmation stages:
@@ -736,7 +739,12 @@ ALLOW_MISSING_EXTERNAL_FEATURES = False
 PREPARE_MISSING_EXTERNAL_FEATURES = True
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
-LAUNCH_PLANNED_TRAINING_RUNS = False   # planning only; do NOT train at Stage 0
+```
+
+In the dedicated **Main planned training launch switch** cell:
+
+```python
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = False   # planning/helper loading only; do NOT train at Stage 0
 ```
 
 Success criteria for Stage 0:
@@ -819,10 +827,11 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 MAX_CONFIGURATION_RUNS = 1
 ```
 
-In the **Optional training execution** cell:
+In the dedicated **Main planned training launch switch** cell, then run
+**Optional training execution**:
 
 ```python
-LAUNCH_PLANNED_TRAINING_RUNS = True
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True
 ```
 
 Expected outputs/files:
@@ -912,10 +921,11 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-In the **Optional training execution** cell:
+In the dedicated **Main planned training launch switch** cell, then run
+**Optional training execution**:
 
 ```python
-LAUNCH_PLANNED_TRAINING_RUNS = True
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True
 ```
 
 Expected outputs/files:
@@ -1003,10 +1013,11 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-In the **Optional training execution** cell:
+In the dedicated **Main planned training launch switch** cell, then run
+**Optional training execution**:
 
 ```python
-LAUNCH_PLANNED_TRAINING_RUNS = True
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True
 ```
 
 Expected outputs/files:
@@ -1121,10 +1132,11 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-In the **Optional training execution** cell:
+In the dedicated **Main planned training launch switch** cell, then run
+**Optional training execution**:
 
 ```python
-LAUNCH_PLANNED_TRAINING_RUNS = True
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True
 ```
 
 Expected outputs/files:
@@ -2003,10 +2015,11 @@ INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
 ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 ```
 
-In the **Optional training execution** cell:
+In the dedicated **Main planned training launch switch** cell, then run
+**Optional training execution**:
 
 ```python
-LAUNCH_PLANNED_TRAINING_RUNS = True
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = True
 ```
 
 Expected outputs/files:
