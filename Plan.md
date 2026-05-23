@@ -346,7 +346,10 @@ For the metal notebook pipeline, the playbook must keep exact values for:
 - Optuna budgets and sampler controls: `OPTUNA_TARGET_COMPLETE_TRIALS`,
   `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`,
   `OPTUNA_TPE_MULTIVARIATE`, `OPTUNA_TPE_GROUP`,
-  `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage, search preset, and search ranges
+  `OPTUNA_TPE_CONSTANT_LIAR`, `OPTUNA_PARALLEL_WORKERS`,
+  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS`,
+  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM`, `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage,
+  search preset, and search ranges
 - Optional validation-only objective controls:
   `METAL_COLLAPSED_LOSS_WEIGHT`,
   `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV`, and

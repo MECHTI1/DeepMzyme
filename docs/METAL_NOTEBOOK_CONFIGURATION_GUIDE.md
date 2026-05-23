@@ -91,7 +91,8 @@ Before launching a run, verify these resolved notebook values:
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
 | Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
-| Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
+| Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
+| Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; optional G4 acceleration override `2` only after a debug run confirms CUDA memory headroom |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
@@ -526,6 +527,23 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
+- Keep `OPTUNA_TPE_CONSTANT_LIAR = True` for shared-storage HPO so multiple
+  Optuna workers can run in parallel without repeatedly sampling in-flight
+  configurations. Sequential runs remain supported.
+- Keep `OPTUNA_PARALLEL_WORKERS = 1` for canonical reportable stage blocks
+  unless you deliberately choose a validation-only acceleration override. To
+  use parallel workers on G4, first prove memory headroom with a short debug
+  study, then try `OPTUNA_PARALLEL_WORKERS = 2` with persistent storage,
+  `OPTUNA_TPE_CONSTANT_LIAR = True`,
+  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0`, and
+  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True`. If CUDA OOM occurs, reduce the
+  worker count or the active batch-size/model-capacity range; do not treat the
+  OOM as a model-quality signal.
+- With `OPTUNA_PARALLEL_WORKERS > 1`, the notebook launches parallel trial
+  subprocesses through `study.optimize(..., n_jobs=...)`. Per-trial stdout and
+  stderr still go to each trial's log files; the notebook suppresses live
+  per-line trial streaming to avoid interleaved output. Trial completion
+  progress remains printed and recorded in the Optuna trial log.
 - Set `OPTUNA_N_STARTUP_TRIALS` below `OPTUNA_TARGET_COMPLETE_TRIALS`.
   `OPTUNA_TARGET_COMPLETE_TRIALS` is the target number of completed Optuna
   trials in the study; with persistent storage, reruns launch only the remaining
@@ -882,6 +900,8 @@ For final reporting:
 - Do not use multi-objective Pareto review as a substitute for Stage 6
   grouped-fold confirmation.
 - Do not run serious Optuna with missing or nonpersistent `OPTUNA_STORAGE`.
+- Do not run serious parallel Optuna with blank/nonpersistent `OPTUNA_STORAGE`
+  or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
 - Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
   metal label schemes, or incompatible search spaces; let the default
   study-compatibility guard stop the run.

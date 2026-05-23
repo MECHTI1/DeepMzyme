@@ -225,7 +225,10 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 OPTUNA_DIRECTION = "maximize"
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
-OPTUNA_TPE_CONSTANT_LIAR = False
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
@@ -273,7 +276,15 @@ serious Optuna stages must use:
 - `OPTUNA_INTENSITY = "custom"` - never rely on `first_useful`/`serious`
   notebook presets for reportable HPO.
 - `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`,
-  `OPTUNA_TPE_CONSTANT_LIAR = False`.
+  `OPTUNA_TPE_CONSTANT_LIAR = True` so shared-storage studies support multiple
+  parallel workers without duplicate/in-flight TPE suggestions.
+- `OPTUNA_PARALLEL_WORKERS = 1` is the canonical default and preserves
+  historical serial trial execution. On a G4/T4 16 GB GPU, `2` is an optional
+  validation-only acceleration override after Stage 3 or another short debug
+  study confirms there is CUDA memory headroom for the active model family,
+  batch-size range, and feature set. Keep `OPTUNA_TPE_CONSTANT_LIAR = True`,
+  keep persistent storage enabled, and keep
+  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True` when using more than one worker.
 - `OPTUNA_SAMPLER_SEED = None` unless deliberately re-exploring the same split
   with a different Optuna trajectory. With `None`, the sampler seed follows
   `OPTUNA_SPLIT_SEED`.
@@ -309,6 +320,10 @@ serious Optuna stages must use:
 - Record both the split seed and the sampler seed in the notebook output, study
   summary, and per-run artifacts. If the sampler seed is `None`, record the
   effective sampler seed as the split seed.
+- Record `OPTUNA_PARALLEL_WORKERS`, startup stagger seconds, and CUDA-OOM stop
+  behavior in the study metadata. Parallel trial order is inherently
+  nondeterministic, so Stage 6 grouped-fold confirmation remains mandatory
+  before promotion.
 
 Forbidden in serious stages:
 
@@ -327,6 +342,8 @@ Forbidden in serious stages:
   this; do not override).
 - Reportable HPO with `OPTUNA_INTENSITY != "custom"` or blank/nonpersistent
   `OPTUNA_STORAGE`.
+- Reportable HPO with `OPTUNA_PARALLEL_WORKERS > 1` and blank/nonpersistent
+  `OPTUNA_STORAGE`, or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
 - `ALLOW_MISSING_ESM_EMBEDDINGS = True` for ESM or fusion stages.
 
 Batch-size policy for serious stages:
@@ -1136,6 +1153,10 @@ MAX_EPOCHS_PER_TRIAL = 3
 OPTUNA_N_STARTUP_TRIALS = 4
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
@@ -1257,6 +1278,10 @@ MAX_EPOCHS_PER_TRIAL = 35
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
@@ -1437,6 +1462,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
@@ -1564,6 +1593,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 30
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
@@ -1646,6 +1679,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
@@ -1742,6 +1779,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
@@ -1840,6 +1881,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
@@ -1941,6 +1986,10 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
