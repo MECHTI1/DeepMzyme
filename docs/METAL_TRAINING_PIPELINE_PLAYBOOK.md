@@ -240,10 +240,12 @@ OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The notebook
-default for new serious metal runs is the exact PinMyMetal split, while the
-non-overlapped, harsh, and common-PDBID 70/30 splits remain explicitly
-selectable. `SPLIT_BY` controls only the internal train/validation grouping
-inside the selected external train split and is emitted to the CLI as
+default for new serious metal runs is the exact PinMyMetal split, and the
+current Colab bundle exposes exact PinMyMetal plus Common-PDBID 70/30
+PinMyMetal choices. Non-overlapped and harsh split roots remain named variants
+in Plan.md, but they require supplying a bundle or Drive folder that contains
+those dataset roots. `SPLIT_BY` controls only the internal train/validation
+grouping inside the selected external train split and is emitted to the CLI as
 `--train-val-split-by`; it never changes the external test directory or test
 CSV. When the exact split is requested, the notebook must stop if that dataset
 root is missing; it must not silently fall back to the non-overlapped split.
