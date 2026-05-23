@@ -134,6 +134,8 @@ class TrainConfig:
     gvp_layers: int = 4
     esm_fusion_dim: int = 128
     head_mlp_layers: int = 2
+    head_mlp_dropout: float = 0.2
+    esm_graph_encoder_dropout: float = 0.1
     node_rbf_sigma: float = 0.75
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
@@ -143,6 +145,7 @@ class TrainConfig:
     normalize_message_aggregation: bool = False
     position_noise_std: float = 0.0
     second_shell_dropout: float = 0.0
+    outer_residue_dropout: float = 0.0
     node_feature_set: str = "conservative"
     omit_node_features: tuple[str, ...] = ()
     use_esm_branch: bool = True
@@ -318,6 +321,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--gvp-layers", type=int, default=4)
     parser.add_argument("--esm-fusion-dim", type=int, default=128)
     parser.add_argument("--head-mlp-layers", type=int, default=2)
+    parser.add_argument(
+        "--head-mlp-dropout",
+        type=float,
+        default=0.2,
+        help=(
+            "Dropout probability between hidden layers in classifier MLP heads. "
+            "Default 0.2 preserves the previous hardcoded behavior."
+        ),
+    )
+    parser.add_argument(
+        "--esm-graph-encoder-dropout",
+        type=float,
+        default=0.1,
+        help=(
+            "Dropout probability inside the ESM graph encoder branch. "
+            "Default 0.1 preserves the previous hardcoded behavior."
+        ),
+    )
     parser.add_argument("--node-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--edge-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--node-rbf-use-raw-distances", action="store_true")
@@ -377,6 +398,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Training-only probability of dropping second-shell residues from each "
             "in-memory graph. Default 0.0 disables the augmentation."
+        ),
+    )
+    parser.add_argument(
+        "--outer-residue-dropout",
+        type=float,
+        default=0.0,
+        help=(
+            "Training-only probability of dropping pocket residues that are neither "
+            "first-shell nor second-shell residues. Default 0.0 disables the augmentation."
         ),
     )
     parser.add_argument(
@@ -809,6 +839,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         gvp_layers=args.gvp_layers,
         esm_fusion_dim=args.esm_fusion_dim,
         head_mlp_layers=args.head_mlp_layers,
+        head_mlp_dropout=args.head_mlp_dropout,
+        esm_graph_encoder_dropout=args.esm_graph_encoder_dropout,
         node_rbf_sigma=args.node_rbf_sigma,
         edge_rbf_sigma=args.edge_rbf_sigma,
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
@@ -818,6 +850,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         normalize_message_aggregation=args.normalize_message_aggregation,
         position_noise_std=args.position_noise_std,
         second_shell_dropout=args.second_shell_dropout,
+        outer_residue_dropout=args.outer_residue_dropout,
         node_feature_set=args.node_feature_set,
         omit_node_features=omit_node_features,
         use_esm_branch=model_uses_esm_inputs and not args.disable_esm_branch,

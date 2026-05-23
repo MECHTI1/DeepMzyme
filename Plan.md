@@ -230,6 +230,7 @@ can reproduce a command-line run.
 | Model size | `--edge-hidden` | `64` | Hidden width for encoded edge features. | Expose / sweep |
 | Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. Default/recommended search spaces should cap this at 4 unless a deeper-depth ablation is explicitly labeled. | Expose / sweep |
 | Model size | `--head-mlp-layers` | `2` | Number of linear layers in metal/EC classifier heads. | Expose / sweep |
+| Model regularization | `--head-mlp-dropout` | `0.2` | Dropout between hidden layers in classifier heads. Default preserves the previous hardcoded head dropout. | Expose / optional sweep |
 | Graph construction | `--edge-radius` | project default currently `8.0` in code | Residue-neighbor radius for graph edges before optional RING edges. | Expose / sweep |
 | Graph construction | `--metal-node-mode` | `none`; choices `none`, `per_metal` | Opt-in GVP graph variant that appends one generic metal anchor node per metal coordinate, promotes metal-ligand edges into message passing, and adds metal-centered angle summaries. Must not encode the true metal element. | Advanced / validation-only ablation |
 | Node/edge encoders | `--node-feature-set` | `conservative` only | Named set of residue/node features. Only `conservative` is currently implemented. | Expose |
@@ -240,6 +241,7 @@ can reproduce a command-line run.
 | Classifier pooling | `--structural-readout-scope` | `auto`; choices `auto`, `residue_only`, `residue_and_metal`, `metal_only` | Controls which GVP structural nodes are pooled. `auto` preserves residue-only readout for standard graphs and uses residue-plus-metal readout when `--metal-node-mode per_metal` is enabled. | Advanced |
 | Training augmentation | `--position-noise-std` | `0.0` | Training-only Gaussian coordinate noise. Validation and held-out test graphs stay unaugmented. | Advanced / optional sweep |
 | Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. | Advanced / optional sweep |
+| Training augmentation | `--outer-residue-dropout` | `0.0` | Training-only dropout probability for pocket residues that are neither first-shell nor second-shell. Labels and cached source structures are unchanged. | Advanced / optional sweep |
 | ESM inputs | `--esm-embeddings-dir` | optional path | Directory containing precomputed ESMC residue embeddings. Needed by ESM-using models unless generation/missing behavior is enabled. | Expose |
 | ESM inputs | `--esm-dim` | code default ESMC dimension | Expected dimension of residue ESM embeddings. | Advanced |
 | ESM inputs | `--allow-missing-esm-embeddings` | false | Allows ESM-using runs to continue when embeddings are missing; use only for explicit debugging/ablation. | Expose with warning |
@@ -250,6 +252,7 @@ can reproduce a command-line run.
 | External features | `--allow-missing-external-features` | false | Allows training if external feature files are missing, filling defaults where possible. | Expose |
 | ESM fusion | `--fusion-mode` | `late_fusion`; choices `late_fusion`, `early_fusion`, `node_level_late_fusion`, `hybrid`, `cross_modal_attention` | Controls where ESM information is combined with graph states. | Expose via presets |
 | ESM fusion | `--esm-fusion-dim` | `128` | Projection width for graph-level ESM pooling/fusion. | Expose / sweep |
+| ESM fusion | `--esm-graph-encoder-dropout` | `0.1` | Dropout inside the graph-level ESM encoder branch. Default preserves the previous hardcoded ESM encoder dropout. | Expose / optional sweep |
 | Early ESM | `--use-early-esm` | false | Adds residue-level ESM features before graph message passing. Automatically implied by early/hybrid fusion presets. | Preset/advanced |
 | Early ESM | `--early-esm-dim` | `32` | Bottleneck dimension for early residue-level ESM projection. | Expose |
 | Early ESM | `--early-esm-dropout` | `0.2` | Dropout in the early ESM projection. | Expose |

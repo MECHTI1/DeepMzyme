@@ -82,6 +82,9 @@ def check_training_cli_help() -> None:
         "--cross-attention-bidirectional",
         "--position-noise-std",
         "--second-shell-dropout",
+        "--outer-residue-dropout",
+        "--head-mlp-dropout",
+        "--esm-graph-encoder-dropout",
         "--metal-node-mode",
         "--structural-readout-scope",
         "--grad-clip-norm",
@@ -239,6 +242,33 @@ def check_loss_weight_validation() -> None:
             raise AssertionError(f"Unexpected second-shell dropout validation error: {exc}") from exc
     else:
         raise AssertionError("--second-shell-dropout accepted a value outside [0, 1].")
+
+    invalid_outer_dropout_config = parse_args(["--outer-residue-dropout", "1.1"])
+    try:
+        validate_training_configuration(invalid_outer_dropout_config)
+    except ValueError as exc:
+        if "--outer-residue-dropout" not in str(exc):
+            raise AssertionError(f"Unexpected outer-residue dropout validation error: {exc}") from exc
+    else:
+        raise AssertionError("--outer-residue-dropout accepted a value outside [0, 1].")
+
+    invalid_head_dropout_config = parse_args(["--head-mlp-dropout", "-0.1"])
+    try:
+        validate_training_configuration(invalid_head_dropout_config)
+    except ValueError as exc:
+        if "--head-mlp-dropout" not in str(exc):
+            raise AssertionError(f"Unexpected head MLP dropout validation error: {exc}") from exc
+    else:
+        raise AssertionError("--head-mlp-dropout accepted a value outside [0, 1].")
+
+    invalid_esm_dropout_config = parse_args(["--esm-graph-encoder-dropout", "1.1"])
+    try:
+        validate_training_configuration(invalid_esm_dropout_config)
+    except ValueError as exc:
+        if "--esm-graph-encoder-dropout" not in str(exc):
+            raise AssertionError(f"Unexpected ESM graph encoder dropout validation error: {exc}") from exc
+    else:
+        raise AssertionError("--esm-graph-encoder-dropout accepted a value outside [0, 1].")
 
 
 def check_metal_label_scheme_options() -> None:
@@ -637,6 +667,33 @@ def check_training_graph_augmentation() -> None:
     if (1.0, 0.0, 0.0) not in kept_positions or (10.0, 0.0, 0.0) not in kept_positions:
         raise AssertionError("Second-shell dropout removed a first-shell or non-second-shell residue.")
 
+    outer_default_dataset = PocketGraphDataset(
+        [pocket],
+        esm_dim=2,
+        edge_radius=12.0,
+        position_noise_std=0.0,
+        second_shell_dropout=0.0,
+        outer_residue_dropout=0.0,
+    )
+    outer_default_graph = outer_default_dataset[0]
+    if not torch.allclose(outer_default_graph.pos, reference.pos):
+        raise AssertionError("outer_residue_dropout=0.0 unexpectedly changed the graph.")
+
+    outer_dropout_dataset = PocketGraphDataset(
+        [pocket],
+        esm_dim=2,
+        edge_radius=12.0,
+        position_noise_std=0.0,
+        second_shell_dropout=0.0,
+        outer_residue_dropout=1.0,
+    )
+    outer_dropout_graph = outer_dropout_dataset[0]
+    outer_kept_positions = {tuple(float(value) for value in row) for row in outer_dropout_graph.pos.tolist()}
+    if (10.0, 0.0, 0.0) in outer_kept_positions:
+        raise AssertionError("Outer-residue dropout failed to remove the outer residue.")
+    if (1.0, 0.0, 0.0) not in outer_kept_positions or (4.0, 0.0, 0.0) not in outer_kept_positions:
+        raise AssertionError("Outer-residue dropout removed a first-shell or second-shell residue.")
+
 
 def check_esm_embedding_metadata_sidecar() -> None:
     from training.esm_feature_loading import (
@@ -888,8 +945,17 @@ def check_colab_notebook_sweep_source() -> None:
         "ring_mode",
         "metal_node_mode",
         "structural_readout_scope",
+        "HEAD_MLP_DROPOUT = 0.2",
+        "ESM_GRAPH_ENCODER_DROPOUT = 0.1",
+        "OUTER_RESIDUE_DROPOUT = 0.0",
+        'OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"',
+        'OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"',
+        'OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0"',
         "omit_node_features",
         "--omit-node-features",
+        "--head-mlp-dropout",
+        "--esm-graph-encoder-dropout",
+        "--outer-residue-dropout",
         "--use-ring-edges",
         "--ring-features-dir",
         "--metal-node-mode",
@@ -900,7 +966,6 @@ def check_colab_notebook_sweep_source() -> None:
         "METAL_COLLAPSED_LOSS_WEIGHT = 0.0",
         "OPTUNA_MULTIOBJECTIVE = False",
         'OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
-        'OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
         'RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True',
         'TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"',
         'TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"',
@@ -1224,6 +1289,8 @@ def check_colab_generated_training_commands_parse() -> None:
                 "hidden_v_values_csv": "8,16",
                 "gvp_layers_values_csv": "2,3",
                 "head_mlp_layers_values_csv": "1,2",
+                "head_mlp_dropout_values_csv": "0.2",
+                "esm_graph_encoder_dropout_values_csv": "0.1",
                 "edge_hidden_values_csv": "32,64",
                 "edge_radius_values_csv": "6.0,8.0",
                 "esm_fusion_dim_values_csv": "64,128",
@@ -1240,6 +1307,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "balance_metal_site_symbols_csv": "False",
                 "position_noise_stds_csv": "0.0",
                 "second_shell_dropouts_csv": "0.0",
+                "outer_residue_dropouts_csv": "0.0",
                 "classifier_pool_distance_cutoff_values_csv": "0.0",
                 "early_esm_dropout_values_csv": "0.0",
                 "cross_attention_dropout_values_csv": "0.0",
@@ -1273,6 +1341,8 @@ def check_colab_generated_training_commands_parse() -> None:
                 "edge_hidden_values_csv": "64",
                 "gvp_layers_values_csv": "4",
                 "head_mlp_layers_values_csv": "2",
+                "head_mlp_dropout": 0.2,
+                "esm_graph_encoder_dropout": 0.1,
                 "edge_radius_values_csv": "8.0",
                 "esm_fusion_dim_values_csv": "128",
                 "lr_schedules_csv": "fixed",
@@ -1286,6 +1356,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "classifier_pool_distance_cutoff_values_csv": "0.0",
                 "position_noise_std": 0.0,
                 "second_shell_dropout": 0.0,
+                "outer_residue_dropout": 0.0,
                 "early_esm_dim": 32,
                 "early_esm_dropout": 0.2,
                 "early_esm_raw": False,
@@ -1403,6 +1474,33 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
     if "--metal-node-mode" in default_cmd or "--structural-readout-scope" in default_cmd:
         raise AssertionError("Default graph command should leave metal-node mode disabled.")
+    if "--head-mlp-dropout" not in default_cmd:
+        raise AssertionError("Default notebook command did not record --head-mlp-dropout.")
+    if default_cmd[default_cmd.index("--head-mlp-dropout") + 1] != "0.2":
+        raise AssertionError("Default notebook command changed the head MLP dropout default.")
+    if "--esm-graph-encoder-dropout" in default_cmd:
+        raise AssertionError("Only-GVP default command should keep ESM graph encoder dropout inactive.")
+
+    outer_dropout_runs = run_builder({"advanced": {"outer_residue_dropout": 0.4}})
+    outer_dropout_cmd = [str(part) for part in outer_dropout_runs[0]["command"]]
+    assert_training_command_parses(outer_dropout_cmd)
+    if "--outer-residue-dropout" not in outer_dropout_cmd:
+        raise AssertionError("Outer-residue dropout notebook command did not pass --outer-residue-dropout.")
+    if outer_dropout_cmd[outer_dropout_cmd.index("--outer-residue-dropout") + 1] != "0.4":
+        raise AssertionError("Outer-residue dropout notebook command passed the wrong value.")
+
+    late_fusion_runs = run_builder(
+        {
+            "configuration_comparison": {"model_preset": "GVP + late fusion"},
+            "esm": {"allow_missing_esm_embeddings": True},
+        }
+    )
+    late_fusion_cmd = [str(part) for part in late_fusion_runs[0]["command"]]
+    assert_training_command_parses(late_fusion_cmd)
+    if "--esm-graph-encoder-dropout" not in late_fusion_cmd:
+        raise AssertionError("ESM graph encoder command did not record --esm-graph-encoder-dropout for late fusion.")
+    if late_fusion_cmd[late_fusion_cmd.index("--esm-graph-encoder-dropout") + 1] != "0.1":
+        raise AssertionError("Late-fusion notebook command changed the ESM graph encoder dropout default.")
 
     group_kfold_runs = run_builder(
         {"advanced": {"val_fraction": 0.0, "n_folds": 5, "fold_index": 2, "split_by": "pdbid", "split_seed": 42}}

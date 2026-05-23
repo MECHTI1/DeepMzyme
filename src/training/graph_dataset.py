@@ -41,8 +41,13 @@ def graph_augmentation_enabled(
     *,
     position_noise_std: float = 0.0,
     second_shell_dropout: float = 0.0,
+    outer_residue_dropout: float = 0.0,
 ) -> bool:
-    return float(position_noise_std) > 0.0 or float(second_shell_dropout) > 0.0
+    return (
+        float(position_noise_std) > 0.0
+        or float(second_shell_dropout) > 0.0
+        or float(outer_residue_dropout) > 0.0
+    )
 
 
 def _clone_residue_with_atoms(residue: ResidueRecord, atoms: dict[str, Tensor]) -> ResidueRecord:
@@ -81,19 +86,22 @@ def _clone_metadata_with_metal_coords(
     return cloned
 
 
-def _filter_second_shell_residues(
+def _filter_residues_by_shell_role(
     pocket: PocketRecord,
     *,
     second_shell_dropout: float,
+    outer_residue_dropout: float,
     use_ring_edges: bool,
 ) -> list[ResidueRecord]:
-    if second_shell_dropout <= 0.0:
+    if second_shell_dropout <= 0.0 and outer_residue_dropout <= 0.0:
         return list(pocket.residues)
 
     shell_roles = compute_shell_roles(pocket, use_ring_edges=use_ring_edges)
     keep_residues: list[ResidueRecord] = []
     for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
         if is_second_shell and not is_first_shell and bool(torch.rand(()) < float(second_shell_dropout)):
+            continue
+        if not is_first_shell and not is_second_shell and bool(torch.rand(()) < float(outer_residue_dropout)):
             continue
         keep_residues.append(residue)
     return keep_residues or list(pocket.residues)
@@ -104,18 +112,21 @@ def augment_pocket_for_training(
     *,
     position_noise_std: float = 0.0,
     second_shell_dropout: float = 0.0,
+    outer_residue_dropout: float = 0.0,
     use_ring_edges: bool = False,
 ) -> PocketRecord:
     """Return an in-memory augmented pocket without mutating the loaded records."""
     if not graph_augmentation_enabled(
         position_noise_std=position_noise_std,
         second_shell_dropout=second_shell_dropout,
+        outer_residue_dropout=outer_residue_dropout,
     ):
         return pocket
 
-    residues = _filter_second_shell_residues(
+    residues = _filter_residues_by_shell_role(
         pocket,
         second_shell_dropout=float(second_shell_dropout),
+        outer_residue_dropout=float(outer_residue_dropout),
         use_ring_edges=use_ring_edges,
     )
     if position_noise_std > 0.0:
@@ -326,6 +337,7 @@ class PocketGraphDataset(Dataset):
         omit_node_features: tuple[str, ...] | list[str] = (),
         position_noise_std: float = 0.0,
         second_shell_dropout: float = 0.0,
+        outer_residue_dropout: float = 0.0,
         metal_node_mode: str = "none",
     ):
         self.pockets = pockets
@@ -339,6 +351,7 @@ class PocketGraphDataset(Dataset):
         self.metal_node_mode = str(metal_node_mode)
         self.position_noise_std = float(position_noise_std)
         self.second_shell_dropout = float(second_shell_dropout)
+        self.outer_residue_dropout = float(outer_residue_dropout)
         if precomputed_data is not None and len(precomputed_data) != len(pockets):
             raise ValueError("precomputed_data length must match pockets length.")
         self.precomputed_data = precomputed_data
@@ -378,12 +391,14 @@ class PocketGraphDataset(Dataset):
         if graph_augmentation_enabled(
             position_noise_std=self.position_noise_std,
             second_shell_dropout=self.second_shell_dropout,
+            outer_residue_dropout=self.outer_residue_dropout,
         ):
             data = pocket_to_pyg_data(
                 augment_pocket_for_training(
                     self.pockets[idx],
                     position_noise_std=self.position_noise_std,
                     second_shell_dropout=self.second_shell_dropout,
+                    outer_residue_dropout=self.outer_residue_dropout,
                     use_ring_edges=self.use_ring_edges or self.require_ring_edges,
                 ),
                 esm_dim=self.esm_dim,

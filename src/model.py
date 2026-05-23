@@ -540,9 +540,12 @@ def build_classifier_head(
     hidden_dim: int,
     out_dim: int,
     n_linear_layers: int,
+    dropout: float = 0.2,
 ) -> nn.Sequential:
     if n_linear_layers < 1:
         raise ValueError(f"Classifier head requires at least 1 linear layer, got {n_linear_layers}.")
+    if not 0.0 <= float(dropout) <= 1.0:
+        raise ValueError(f"Classifier head dropout must be in [0, 1], got {dropout}.")
     if n_linear_layers == 1:
         return nn.Sequential(nn.Linear(in_dim, out_dim))
 
@@ -553,7 +556,7 @@ def build_classifier_head(
             [
                 nn.Linear(current_dim, hidden_dim),
                 nn.SiLU(),
-                nn.Dropout(0.2),
+                nn.Dropout(float(dropout)),
             ]
         )
         current_dim = hidden_dim
@@ -608,6 +611,8 @@ class GVPPocketClassifier(nn.Module):
         n_ec: int = N_EC_CLASSES,
         esm_fusion_dim: int = 128,
         head_mlp_layers: int = 2,
+        head_mlp_dropout: float = 0.2,
+        esm_graph_encoder_dropout: float = 0.1,
         node_rbf_sigma: float = 0.75,
         edge_rbf_sigma: float = 0.75,
         node_rbf_use_raw_distances: bool = False,
@@ -694,7 +699,11 @@ class GVPPocketClassifier(nn.Module):
                 early_esm_dropout=self.early_esm_dropout,
             )
         )
-        self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
+        self.esm_graph_encoder = ESMGraphEncoder(
+            esm_dim=esm_dim,
+            proj_dim=esm_fusion_dim,
+            dropout=esm_graph_encoder_dropout,
+        )
         self.edge_scalar_encoder = EdgeScalarEncoder(n_rbf=16, out_dim=edge_hidden, distance_sigma=edge_rbf_sigma)
         self.gvp_attn_pool = AttentionPool(hidden_s)
         self.init_vec_proj = nn.Linear(2, hidden_v, bias=False)
@@ -803,6 +812,7 @@ class GVPPocketClassifier(nn.Module):
                 hidden_dim=hidden_s,
                 out_dim=n_metal,
                 n_linear_layers=head_mlp_layers,
+                dropout=head_mlp_dropout,
             )
             if self.predict_metal
             else None
@@ -813,6 +823,7 @@ class GVPPocketClassifier(nn.Module):
                 hidden_dim=hidden_s,
                 out_dim=n_ec,
                 n_linear_layers=head_mlp_layers,
+                dropout=head_mlp_dropout,
             )
             if self.predict_ec
             else None

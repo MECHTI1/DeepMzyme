@@ -320,6 +320,16 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
     if config.head_mlp_layers < 1:
         raise ValueError(f"--head-mlp-layers must be at least 1, got {config.head_mlp_layers}")
+    if not 0.0 <= config.head_mlp_dropout <= 1.0:
+        raise ValueError(
+            "--head-mlp-dropout must be in [0, 1], "
+            f"got {config.head_mlp_dropout}"
+        )
+    if not 0.0 <= config.esm_graph_encoder_dropout <= 1.0:
+        raise ValueError(
+            "--esm-graph-encoder-dropout must be in [0, 1], "
+            f"got {config.esm_graph_encoder_dropout}"
+        )
     if config.ec_label_depth < 1:
         raise ValueError(f"--ec-label-depth must be at least 1, got {config.ec_label_depth}")
     if config.grad_accum_steps < 1:
@@ -354,6 +364,11 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError(
             "--second-shell-dropout must be in [0, 1], "
             f"got {config.second_shell_dropout}"
+        )
+    if not 0.0 <= config.outer_residue_dropout <= 1.0:
+        raise ValueError(
+            "--outer-residue-dropout must be in [0, 1], "
+            f"got {config.outer_residue_dropout}"
         )
     if config.metal_loss_weight < 0.0:
         raise ValueError(f"--metal-loss-weight must be non-negative, got {config.metal_loss_weight}")
@@ -987,6 +1002,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
     config_payload["training_graph_augmentation"] = {
         "position_noise_std": float(config.position_noise_std),
         "second_shell_dropout": float(config.second_shell_dropout),
+        "outer_residue_dropout": float(config.outer_residue_dropout),
         "training_only": True,
         "validation_and_test_unchanged": True,
     }
@@ -1197,6 +1213,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 metal_node_mode=config.metal_node_mode,
                 position_noise_std=config.position_noise_std,
                 second_shell_dropout=config.second_shell_dropout,
+                outer_residue_dropout=config.outer_residue_dropout,
             ),
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
@@ -1290,6 +1307,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             n_ec=max(1, len(load_result.ec_index_to_label)),
             esm_fusion_dim=config.esm_fusion_dim,
             head_mlp_layers=config.head_mlp_layers,
+            head_mlp_dropout=config.head_mlp_dropout,
+            esm_graph_encoder_dropout=config.esm_graph_encoder_dropout,
             node_rbf_sigma=config.node_rbf_sigma,
             edge_rbf_sigma=config.edge_rbf_sigma,
             node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,

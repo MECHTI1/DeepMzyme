@@ -42,6 +42,7 @@ class PocketClassifierBase(nn.Module):
         n_metal: int,
         n_ec: int,
         head_mlp_layers: int,
+        head_mlp_dropout: float,
         predict_metal: bool,
         predict_ec: bool,
         joint_loss_weighting: str,
@@ -67,6 +68,7 @@ class PocketClassifierBase(nn.Module):
                 hidden_dim=hidden_dim,
                 out_dim=n_metal,
                 n_linear_layers=head_mlp_layers,
+                dropout=head_mlp_dropout,
             )
             if self.predict_metal
             else None
@@ -77,6 +79,7 @@ class PocketClassifierBase(nn.Module):
                 hidden_dim=hidden_dim,
                 out_dim=n_ec,
                 n_linear_layers=head_mlp_layers,
+                dropout=head_mlp_dropout,
             )
             if self.predict_ec
             else None
@@ -247,6 +250,8 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         n_ec: int = N_EC_CLASSES,
         esm_fusion_dim: int = 128,
         head_mlp_layers: int = 2,
+        head_mlp_dropout: float = 0.2,
+        esm_graph_encoder_dropout: float = 0.1,
         joint_loss_weighting: str = "fixed",
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
@@ -274,7 +279,11 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
                 "classifier_pool_distance_cutoff must be non-negative, "
                 f"got {self.classifier_pool_distance_cutoff}."
             )
-        self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
+        self.esm_graph_encoder = ESMGraphEncoder(
+            esm_dim=esm_dim,
+            proj_dim=esm_fusion_dim,
+            dropout=esm_graph_encoder_dropout,
+        )
         self.esm_fusion_proj = nn.Sequential(
             nn.Linear(2 * esm_fusion_dim, hidden_s),
             nn.LayerNorm(hidden_s),
@@ -291,6 +300,7 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             n_metal=n_metal,
             n_ec=n_ec,
             head_mlp_layers=head_mlp_layers,
+            head_mlp_dropout=head_mlp_dropout,
             predict_metal=predict_metal,
             predict_ec=predict_ec,
             joint_loss_weighting=joint_loss_weighting,
@@ -344,6 +354,8 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         n_ec: int = N_EC_CLASSES,
         esm_fusion_dim: int = 128,
         head_mlp_layers: int = 2,
+        head_mlp_dropout: float = 0.2,
+        esm_graph_encoder_dropout: float = 0.1,
         node_rbf_sigma: float = 0.75,
         edge_rbf_sigma: float = 0.75,
         joint_loss_weighting: str = "fixed",
@@ -425,7 +437,11 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
         )
         self.layer_norms = nn.ModuleList([nn.LayerNorm(hidden_s) for _ in range(n_layers)])
         self.struct_attn_pool = AttentionPool(hidden_s)
-        self.esm_graph_encoder = ESMGraphEncoder(esm_dim=esm_dim, proj_dim=esm_fusion_dim, dropout=0.1)
+        self.esm_graph_encoder = ESMGraphEncoder(
+            esm_dim=esm_dim,
+            proj_dim=esm_fusion_dim,
+            dropout=esm_graph_encoder_dropout,
+        )
         self.gnn_fusion_proj = nn.Sequential(
             nn.Linear(2 * hidden_s, hidden_s),
             nn.LayerNorm(hidden_s),
@@ -493,6 +509,7 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
             n_metal=n_metal,
             n_ec=n_ec,
             head_mlp_layers=head_mlp_layers,
+            head_mlp_dropout=head_mlp_dropout,
             predict_metal=predict_metal,
             predict_ec=predict_ec,
             joint_loss_weighting=joint_loss_weighting,
