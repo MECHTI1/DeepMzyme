@@ -93,6 +93,7 @@ def check_training_cli_help() -> None:
         "--num-workers",
         "--pin-memory",
         "--allow-train-loss-test-eval-debug",
+        "--train-val-split-by",
         "--split-by",
     )
     missing = [option for option in expected_options if option not in help_text]
@@ -307,6 +308,7 @@ def check_training_efficiency_defaults_and_validation() -> None:
         "num_workers": 0,
         "pin_memory": False,
         "normalize_message_aggregation": False,
+        "train_val_split_by": "pdbid",
         "split_by": "pdbid",
     }
     for field_name, expected_value in expected_defaults.items():
@@ -1512,7 +1514,7 @@ def check_colab_generated_training_commands_parse() -> None:
     expected_flag_values = {
         "--n-folds": "5",
         "--fold-index": "2",
-        "--split-by": "pdbid",
+        "--train-val-split-by": "pdbid",
         "--split-seed": "42",
         "--val-fraction": "0.0",
     }
@@ -1760,7 +1762,7 @@ def check_colab_generated_training_commands_parse() -> None:
             for expected_flag, expected_value in {
                 "--n-folds": "5",
                 "--fold-index": "0",
-                "--split-by": "pdbid",
+                "--train-val-split-by": "pdbid",
                 "--split-seed": "42",
                 "--val-fraction": "0.0",
             }.items():

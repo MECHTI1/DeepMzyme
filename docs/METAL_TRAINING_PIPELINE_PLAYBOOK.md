@@ -243,9 +243,10 @@ OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
 default for new serious metal runs is the exact PinMyMetal split, while the
 non-overlapped, harsh, and common-PDBID 70/30 splits remain explicitly
 selectable. `SPLIT_BY` controls only the internal train/validation grouping
-inside the selected external train split. When the exact split is requested,
-the notebook must stop if that dataset root is missing; it must not silently
-fall back to the non-overlapped split.
+inside the selected external train split and is emitted to the CLI as
+`--train-val-split-by`; it never changes the external test directory or test
+CSV. When the exact split is requested, the notebook must stop if that dataset
+root is missing; it must not silently fall back to the non-overlapped split.
 
 Summary CSV/PNG basenames are generated from the live provenance by default:
 task, metal label scheme, model preset or run set, `DATASET_NAME`,

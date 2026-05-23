@@ -99,7 +99,7 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \

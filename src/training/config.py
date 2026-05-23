@@ -163,6 +163,7 @@ class TrainConfig:
     use_ring_edges: bool = False
     require_ring_edges: bool = False
     split_by: str = "pdbid"
+    train_val_split_by: str | None = None
     n_folds: int | None = None
     fold_index: int | None = None
     balance_metal_site_symbols: bool = False
@@ -212,6 +213,16 @@ class TrainConfig:
     final_test_bootstrap_resamples: int = 1000
     final_test_bootstrap_confidence_level: float = 0.95
     final_test_bootstrap_seed: int = 20260518
+
+    def __post_init__(self) -> None:
+        effective_split_by = self.train_val_split_by or self.split_by
+        if effective_split_by not in VALID_SPLIT_BY_CHOICES:
+            raise ValueError(
+                f"Unsupported train/validation split grouping: {effective_split_by!r}. "
+                f"Expected one of: {', '.join(repr(choice) for choice in VALID_SPLIT_BY_CHOICES)}."
+            )
+        object.__setattr__(self, "train_val_split_by", effective_split_by)
+        object.__setattr__(self, "split_by", effective_split_by)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -740,15 +751,29 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--final-test-bootstrap-confidence-level", type=float, default=0.95)
     parser.add_argument("--final-test-bootstrap-seed", type=int, default=20260518)
     parser.add_argument(
-        "--split-by",
+        "--train-val-split-by",
+        dest="train_val_split_by",
         type=str,
-        default="pdbid",
+        default=None,
         choices=VALID_SPLIT_BY_CHOICES,
         help=(
-            "Group identity used for train/validation splitting. Default 'pdbid' keeps "
-            "all chains and pockets from one PDB entry on the same side, so there is no "
-            "pdbid_chain train/validation overlap; this guards repeated or binuclear "
-            "same-chain metal sites from leaking into validation."
+            "Group identity used only for splitting the configured training source into "
+            "train/validation. It never moves or filters the explicit held-out test "
+            "source passed via --test-structure-dir and --test-summary-csv. Default "
+            "'pdbid' keeps all chains and pockets from one PDB entry on the same side, "
+            "so there is no pdbid_chain train/validation overlap."
+        ),
+    )
+    parser.add_argument(
+        "--split-by",
+        dest="split_by",
+        type=str,
+        default=None,
+        choices=VALID_SPLIT_BY_CHOICES,
+        help=(
+            "Backward-compatible alias for --train-val-split-by. This option affects "
+            "only train/validation grouping inside --structure-dir; it does not affect "
+            "the held-out test source."
         ),
     )
     return parser
@@ -772,6 +797,18 @@ def parse_int_tuple(value: str | None) -> tuple[int, ...]:
     for token in parse_string_tuple(value):
         parsed.append(int(token))
     return tuple(parsed)
+
+
+def resolve_train_val_split_by_arg(args: argparse.Namespace) -> str:
+    if args.train_val_split_by is not None and args.split_by is not None:
+        if args.train_val_split_by != args.split_by:
+            raise ValueError(
+                "--train-val-split-by and legacy --split-by were both provided with "
+                f"different values ({args.train_val_split_by!r} vs {args.split_by!r}). "
+                "Use one value for train/validation grouping."
+            )
+        return args.train_val_split_by
+    return args.train_val_split_by or args.split_by or "pdbid"
 
 
 def resolve_structural_readout_scope(metal_node_mode: str, requested_scope: str) -> str:
@@ -798,6 +835,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     metal_label_scheme = configure_active_metal_label_scheme(
         args.metal_label_scheme or active_metal_label_scheme_name()
     )
+    train_val_split_by = resolve_train_val_split_by_arg(args)
     structural_readout_scope = resolve_structural_readout_scope(
         args.metal_node_mode,
         args.structural_readout_scope,
@@ -868,7 +906,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         use_ring_edges=args.use_ring_edges or args.require_ring_edges or args.prepare_missing_ring_edges,
         require_ring_edges=args.require_ring_edges,
         val_fraction=args.val_fraction,
-        split_by=args.split_by,
+        split_by=train_val_split_by,
+        train_val_split_by=train_val_split_by,
         n_folds=args.n_folds,
         fold_index=args.fold_index,
         balance_metal_site_symbols=args.balance_metal_site_symbols,

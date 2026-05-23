@@ -1098,7 +1098,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 pockets,
                 n_folds=config.n_folds,
                 fold_index=int(config.fold_index),
-                split_by=config.split_by,
+                split_by=config.train_val_split_by,
                 seed=split_seed_for_config(config),
                 task=config.task,
             )
@@ -1106,7 +1106,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             split = split_pockets(
                 pockets,
                 val_fraction=config.val_fraction,
-                split_by=config.split_by,
+                split_by=config.train_val_split_by,
                 seed=split_seed_for_config(config),
                 task=config.task,
             )
@@ -1620,6 +1620,10 @@ def evaluate_held_out_test_split(
             "run_directories": list(config.final_test_source_run_dirs),
             "test_structure_dir": str(config.test_structure_dir),
             "test_summary_csv": str(config.test_summary_csv),
+            "train_val_split_by": config.train_val_split_by,
+            "split_by": config.train_val_split_by,
+            "split_by_scope": "train_validation_only",
+            "test_split_source": "explicit_test_structure_dir_and_test_summary_csv",
             "metrics": final_reporting_payload["metrics"],
             "calibrated_metrics": final_reporting_payload["calibrated_metrics"],
             "fitted_temperatures": final_reporting_payload["fitted_temperatures"],

@@ -83,7 +83,7 @@ Before launching a run, verify these resolved notebook values:
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
 | External split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; non-overlapped, harsh, and common-PDBID 70/30 splits remain explicit choices |
 | Validation split | `VAL_FRACTION = 0.15` |
-| Internal split grouping | `SPLIT_BY = "pdbid"`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
+| Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
 | Held-out test during training | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
 | Device on G4 | `DEVICE = "cuda"` |
@@ -102,9 +102,11 @@ default: it sets `VAL_FRACTION = 0.0` and uses `SEED_REPEAT_N_FOLDS = 5` with
 
 `DATASET_NAME` controls which external train/test dataset root is resolved.
 `SPLIT_BY` controls only how the selected external train split is partitioned
-for validation. Exact PinMyMetal runs must stay clearly labeled because that
-split can contain train/test PDB-ID overlap; the non-overlapped split remains a
-separate explicit option when that final-test policy is required.
+for validation; the CLI records this as `train_val_split_by`. It never changes
+the explicit external test directory or CSV used for Stage 7. Exact PinMyMetal
+runs must stay clearly labeled because that split can contain train/test PDB-ID
+overlap; the non-overlapped split remains a separate explicit option when that
+final-test policy is required.
 If the exact split is requested and the exact dataset root is missing, the
 notebook stops with a clear error instead of silently falling back to
 non-overlapped.

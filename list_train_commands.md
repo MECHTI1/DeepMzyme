@@ -108,7 +108,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -138,7 +138,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_only_esm_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -167,7 +167,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_gvp_late_fusion_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -199,7 +199,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_gvp_early_fusion_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -237,7 +237,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_gvp_node_level_late_fusion_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -267,7 +267,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_gvp_hybrid_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -299,7 +299,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name metal_gvp_cross_modal_attention_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -346,7 +346,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name ec_level1_only_gvp_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -374,7 +374,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name ec_level1_only_esm_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -401,7 +401,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name ec_level1_gvp_late_fusion_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_ec_group_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -442,7 +442,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name joint_level1_only_gvp_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_joint_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -471,7 +471,7 @@ PYTHONPATH=src ${PYTHON} src/train.py \
   --run-name joint_level1_gvp_late_fusion_seed42 \
   --seed 42 \
   --val-fraction 0.15 \
-  --split-by pdbid \
+  --train-val-split-by pdbid \
   --selection-metric val_joint_balanced_acc \
   --epochs 50 \
   --batch-size 8 \
@@ -517,7 +517,7 @@ for SEED in 42 123 777; do
     --run-name "metal_gvp_late_fusion_seed${SEED}" \
     --seed "${SEED}" \
     --val-fraction 0.15 \
-    --split-by pdbid \
+    --train-val-split-by pdbid \
     --selection-metric val_metal_balanced_acc \
     --epochs 50 \
     --batch-size 8 \

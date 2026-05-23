@@ -27,7 +27,7 @@ class PocketSplit:
 def validate_split_by(split_by: str) -> str:
     if split_by not in VALID_SPLIT_BY_CHOICES:
         raise ValueError(
-            f"Unsupported --split-by value: {split_by!r}. "
+            f"Unsupported --train-val-split-by value: {split_by!r}. "
             f"Expected one of: {', '.join(repr(choice) for choice in VALID_SPLIT_BY_CHOICES)}."
         )
     return split_by
@@ -197,7 +197,7 @@ def split_pockets(
     if not train_pockets or not val_pockets:
         raise ValueError(
             "Validation split produced an empty train or validation set. "
-            "Adjust --val-fraction or --split-by."
+            "Adjust --val-fraction or --train-val-split-by."
         )
 
     return PocketSplit(train_pockets=train_pockets, val_pockets=val_pockets)
@@ -268,7 +268,7 @@ def split_pockets_k_fold(
     if not train_pockets or not val_pockets:
         raise ValueError(
             "K-fold split produced an empty train or validation set. "
-            "Adjust --n-folds or --split-by."
+            "Adjust --n-folds or --train-val-split-by."
         )
     return PocketSplit(train_pockets=train_pockets, val_pockets=val_pockets)
 
@@ -454,7 +454,7 @@ def build_split_diagnostics(
     config: TrainConfig,
     ec_label_map: dict[int, str],
 ) -> dict[str, Any]:
-    split_by = validate_split_by(config.split_by)
+    split_by = validate_split_by(config.train_val_split_by)
     train_groups = {
         _safe_pocket_split_key(pocket, split_by)
         for pocket in split.train_pockets
@@ -480,7 +480,10 @@ def build_split_diagnostics(
     return {
         "task": config.task,
         "metal_label_scheme": config.metal_label_scheme,
+        "train_val_split_by": split_by,
         "split_by": split_by,
+        "split_by_scope": "train_validation_only",
+        "test_split_source": "explicit_test_structure_dir_and_test_summary_csv",
         "val_fraction": config.val_fraction,
         "split_seed": config.split_seed,
         "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
@@ -541,11 +544,12 @@ def split_leakage_guard_explanation(split_by: str) -> str:
 
 
 def format_split_diagnostics(report: dict[str, Any]) -> str:
+    train_val_split_by = report.get("train_val_split_by", report.get("split_by"))
     lines = [
         "",
         "=== Split diagnostics (passive; training behavior unchanged) ===",
         (
-            f"task={report.get('task')} split_by={report.get('split_by')} "
+            f"task={report.get('task')} train_val_split_by={train_val_split_by} "
             f"val_fraction={report.get('val_fraction')} "
             f"n_folds={report.get('n_folds')} fold_index={report.get('fold_index')} "
             f"model_seed={report.get('model_seed')} split_seed={report.get('effective_split_seed')}"
@@ -555,7 +559,7 @@ def format_split_diagnostics(report: dict[str, Any]) -> str:
             f"validation={report.get('n_val_pockets')}"
         ),
         (
-            f"groups by {report.get('split_by')}: train={report.get('n_train_groups')} "
+            f"groups by {train_val_split_by}: train={report.get('n_train_groups')} "
             f"validation={report.get('n_val_groups')}"
         ),
         (
@@ -600,7 +604,9 @@ def build_dataset_summary(
         "node_feature_set": config.node_feature_set,
         "omit_node_features": list(config.omit_node_features),
         "val_fraction": config.val_fraction,
-        "split_by": config.split_by,
+        "train_val_split_by": config.train_val_split_by,
+        "split_by": config.train_val_split_by,
+        "split_by_scope": "train_validation_only",
         "split_seed": config.split_seed,
         "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
         "model_seed": config.seed,

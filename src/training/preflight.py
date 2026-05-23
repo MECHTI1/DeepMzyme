@@ -93,14 +93,14 @@ def run_preflight_checks(
             )
 
     overlap = sorted(
-        {pocket_split_key(pocket, config.split_by) for pocket in split.train_pockets}.intersection(
-            pocket_split_key(pocket, config.split_by) for pocket in split.val_pockets
+        {pocket_split_key(pocket, config.train_val_split_by) for pocket in split.train_pockets}.intersection(
+            pocket_split_key(pocket, config.train_val_split_by) for pocket in split.val_pockets
         )
     )
     if overlap:
         raise ValueError(
             "Preflight failed: train/validation leakage detected under "
-            f"--split-by {config.split_by!r}: {overlap[:5]}"
+            f"--train-val-split-by {config.train_val_split_by!r}: {overlap[:5]}"
         )
 
     validate_graphs(split.train_pockets, config, precomputed_graphs=train_graphs)
