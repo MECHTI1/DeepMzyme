@@ -302,9 +302,10 @@ Use the playbook stage names exactly:
 When the task touches the metal-training notebook, configuring a stage, or
 planning the next Optuna sweep:
 
-- Treat `notebooks/DeepMzyme_training_colab.ipynb` as implemented behavior.
-- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact-parameters
-  recipe; it owns all numeric budgets, search spaces, and stage decision gates.
+- Treat `notebooks/DeepMzyme_training_colab.ipynb` as implemented behavior and
+  the live notebook-default surface.
+- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact stage-parameter
+  recipe; it owns canonical stage budgets, search spaces, and decision gates.
 - Treat `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` as the option-meaning
   reference and stage-to-option crosswalk.
 - Treat `Plan.md` as design authority and policy (selection metric, split
@@ -335,9 +336,10 @@ Operational assumptions for this project:
   option, and `seed_repeat` is exploratory. Candidate promotion uses paired
   bootstrap confidence intervals and rare-class recall protection, not raw
   validation deltas alone.
-- Exact executable values, Optuna budgets, search spaces, seed lists, expected
-  outputs, and decision gates live only in
-  `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+- Exact executable stage values, Optuna budgets, search spaces, seed lists,
+  expected outputs, and decision gates are owned by
+  `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults should be kept
+  coordinated when they are intended to represent the current canonical workflow.
 
 #### Required answer format for metal notebook stage requests
 
@@ -393,10 +395,11 @@ If the requested stage block is missing or incomplete, update
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` first instead of patching the answer
 with undocumented values.
 
-When editing the four metal-pipeline documents together, never copy full
+When editing the metal-pipeline documents together, never copy full
 configuration blocks into `Plan.md`, `AGENTS.md`, or
-`docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable values belong in
-`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` only.
+`docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable stage blocks
+belong in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults may be
+updated separately to match the canonical workflow.
 
 #### Documentation Coordination Protocol
 
@@ -406,10 +409,11 @@ For future documentation edits:
   mutable status notes, run-evidence indexes, notebook context, and CLI examples
   that restate the same facts.
 - Assign each fact to one owning document before changing it. Keep exact metal
-  executable values in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`, EC
-  equivalents in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`, notebook option
-  meanings in `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`, research policy in
-  `Plan.md`, and mutable status/results in `EXPERIMENT_STATUS.md`.
+  executable stage values in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`, EC
+  equivalents in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`, live notebook defaults
+  in `notebooks/DeepMzyme_training_colab.ipynb`, notebook option meanings in
+  `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`, research policy in `Plan.md`,
+  and mutable status/results in `EXPERIMENT_STATUS.md`.
 - Update or re-point every cross-reference in the same change set instead of
   leaving duplicated stale text behind.
 - Avoid copying current anchors, run IDs, transient trial numbers, local disk

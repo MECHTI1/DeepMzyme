@@ -129,8 +129,10 @@ Authoritative rules for the pipeline:
 
 ### Metal Colab Parameter Ownership Rule
 
-Exact notebook parameter values for the metal-training pipeline must live only
-in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+Exact executable stage-block values for the metal-training pipeline must be
+owned by `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The notebook may expose
+coordinated UI defaults for the current canonical workflow, but those defaults
+are not a substitute for the stage block being run.
 
 `Plan.md` defines the research policy and stage ordering, including
 validation-only selection, held-out-test protection, `val_metal_balanced_acc`
@@ -142,12 +144,15 @@ exact stage values.
 When a stage budget, Optuna search space, Stage 6 confirmation policy, or
 final-test configuration changes, update the files in this order:
 
-1. `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` - exact executable values.
-2. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
+1. `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` - exact executable stage values.
+2. `notebooks/DeepMzyme_training_colab.ipynb` - implemented notebook defaults
+   and behavior when the live UI/defaults need to match the canonical workflow.
+3. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
    crosswalk, only if the meaning or stage mapping changed.
-3. `AGENTS.md` - agent instructions, only if the expected agent behavior
+4. `AGENTS.md` - agent instructions, only if the expected agent behavior
    changed.
-4. `Plan.md` - only if the research policy or stage ordering changed.
+5. `Plan.md` - only if the research policy, ownership policy, or stage ordering
+   changed.
 
 Do not add full Stage 0-7 blocks to `Plan.md`.
 
@@ -228,7 +233,7 @@ can reproduce a command-line run.
 | Model size | `--hidden-s` | `128` | Scalar hidden channel width used by GVP/GNN and classifier projections. | Expose / sweep |
 | Model size | `--hidden-v` | `16` | Vector hidden channel width for GVP models. Ignored by non-GVP variants. | Expose / sweep |
 | Model size | `--edge-hidden` | `64` | Hidden width for encoded edge features. | Expose / sweep |
-| Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. Default/recommended search spaces should cap this at 4 unless a deeper-depth ablation is explicitly labeled. | Expose / sweep |
+| Model size | `--gvp-layers` | `4` | Number of graph message-passing layers. The raw CLI default is independent of the canonical notebook Optuna search space; use the playbook for current reportable metal HPO capacity ceilings and label any outside-space depth check explicitly. | Expose / sweep |
 | Model size | `--head-mlp-layers` | `2` | Number of linear layers in metal/EC classifier heads. | Expose / sweep |
 | Model regularization | `--head-mlp-dropout` | `0.2` | Dropout between hidden layers in classifier heads. Default preserves the previous hardcoded head dropout. | Expose / optional sweep |
 | Graph construction | `--edge-radius` | project default currently `8.0` in code | Residue-neighbor radius for graph edges before optional RING edges. | Expose / sweep |
@@ -240,8 +245,8 @@ can reproduce a command-line run.
 | Classifier pooling | `--classifier-pool-distance-cutoff` | `0.0` | If positive, pools only residues within this CA-to-metal Angstrom cutoff before the final classifier head; `0.0` keeps all residues. | Advanced |
 | Classifier pooling | `--structural-readout-scope` | `auto`; choices `auto`, `residue_only`, `residue_and_metal`, `metal_only` | Controls which GVP structural nodes are pooled. `auto` preserves residue-only readout for standard graphs and uses residue-plus-metal readout when `--metal-node-mode per_metal` is enabled. | Advanced |
 | Training augmentation | `--position-noise-std` | `0.0` | Training-only Gaussian coordinate noise. Validation and held-out test graphs stay unaugmented. | Advanced / optional sweep |
-| Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. | Advanced / optional sweep |
-| Training augmentation | `--outer-residue-dropout` | `0.0` | Training-only dropout probability for pocket residues that are neither first-shell nor second-shell. Labels and cached source structures are unchanged. | Advanced / optional sweep |
+| Training augmentation | `--second-shell-dropout` | `0.0` | Training-only dropout probability for second-shell residues. Labels and cached source structures are unchanged. Canonical metal HPO keeps this fixed off; use only for explicitly labeled out-of-search-space ablations. | Advanced / manual ablation only |
+| Training augmentation | `--outer-residue-dropout` | `0.0` | Training-only dropout probability for pocket residues that are neither first-shell nor second-shell. Labels and cached source structures are unchanged. This is the canonical residue-dropout sweep axis for metal HPO. | Expose / canonical Optuna sweep |
 | ESM inputs | `--esm-embeddings-dir` | optional path | Directory containing precomputed ESMC residue embeddings. Needed by ESM-using models unless generation/missing behavior is enabled. | Expose |
 | ESM inputs | `--esm-dim` | code default ESMC dimension | Expected dimension of residue ESM embeddings. | Advanced |
 | ESM inputs | `--allow-missing-esm-embeddings` | false | Allows ESM-using runs to continue when embeddings are missing; use only for explicit debugging/ablation. | Expose with warning |
@@ -360,11 +365,14 @@ Keep current best-result notes and mutable next-step status in
 
 Pipeline governance:
 
-- The playbook holds the exact parameter values for every stage. Plan.md does
-  not duplicate them.
-- Changes to stage budgets or stage ordering must update the playbook first,
-  then this section, then `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`'s crosswalk
-  table.
+- The playbook owns the exact parameter values for every stage. The notebook may
+  expose coordinated defaults for convenience, but the playbook remains the
+  canonical copy-paste recipe. Plan.md does not duplicate stage blocks.
+- Changes to stage budgets, search spaces, or stage ordering must update the
+  playbook first, then the notebook if live defaults should match the canonical
+  workflow, then `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`'s crosswalk if the
+  option meanings or stage map changed, and this section only if governance or
+  stage policy changed.
 - Changes to the held-out test policy must update Plan.md first and propagate
   to the playbook's Stage 7.
 

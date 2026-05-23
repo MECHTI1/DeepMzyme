@@ -17,6 +17,15 @@ evidence in saved outputs, not in stable workflow guides.
   the only source of exact executable values, budgets, search spaces, expected
   outputs, and gates. Use `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` for
   option meanings and workflow explanation.
+- As of 2026-05-23, the Stage 4 / 5A / 5C / 5D / 5E / 5F metal search space is
+  narrowed from the top and extended with explicit dropout, position-noise, and
+  outer-residue-dropout sampling; median pruning at
+  `OPTUNA_PRUNING_MIN_EPOCH = 25` is enabled by default. The motivation is
+  architectural: input feature dimensions on the current featurization do not
+  justify a larger capacity ceiling under the available training budget. Any
+  configuration outside the new search space is no longer reproducible by the
+  canonical playbook blocks; if it needs to be re-evaluated, run it as an
+  explicitly labeled out-of-search-space study.
 - For validation/testing order, Drive/local output placement, and copied
   evidence folder ownership, use `docs/README.md`.
 - As of the Stage 6 statistical-validation update, reportable fold-plus-seed

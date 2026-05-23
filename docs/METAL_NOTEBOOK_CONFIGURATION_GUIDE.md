@@ -91,7 +91,7 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
 | Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
-| Serious Optuna pruning | optional; if enabled, use real per-epoch metrics and `OPTUNA_PRUNING_MIN_EPOCH >= 20` for 50-epoch HPO |
+| Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
 | Final test | Stage 7 only, after Stage 6 grouped-fold validation |
@@ -411,15 +411,23 @@ Do not compare 1-epoch runs as if they are model-quality evidence.
 
 ### Training-only graph augmentation
 
-`POSITION_NOISE_STD` and `SECOND_SHELL_DROPOUT` map to
-`--position-noise-std` and `--second-shell-dropout`. Both default to `0.0`.
-They are applied only by the training dataset when nonzero; validation,
-grouped-fold confirmation, and held-out test inference use unaugmented
-coordinates and graph membership.
+`POSITION_NOISE_STD` and `OUTER_RESIDUE_DROPOUT` are the canonical
+training-only graph augmentation knobs for metal HPO. They map to
+`--position-noise-std` and `--outer-residue-dropout`. Outer-residue dropout
+affects only pocket residues that are neither first-shell nor second-shell;
+first-shell and second-shell residues remain protected by this canonical
+dropout axis. Both defaults are `0.0` and are applied only by the training
+dataset when nonzero; validation, grouped-fold confirmation, and held-out test
+inference use unaugmented coordinates and graph membership.
 
-For serious Stage 5A-and-later HPO, the playbook may opt into
+The training CLI still supports `--second-shell-dropout` for explicitly labeled
+manual or out-of-search-space ablations, but canonical notebook/playbook metal
+HPO keeps `SECOND_SHELL_DROPOUT = 0.0` and
+`OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0"`.
+
+For serious Stage 4/5A/5C/5D/5E/5F HPO, the playbook opts into
 `OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
-`OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
+`OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
 augmentation search so the unaugmented baseline remains directly comparable.
 
 ### Joint-loss weighting caution
@@ -532,11 +540,13 @@ For useful Colab HPO:
   terminal-style confirmation with `input()`. Type `Y` to continue an
   intentionally under-budgeted smoke/debug run, or `N`/Enter to stop before
   Optuna launches.
-- `OPTUNA_USE_PRUNING` is now real but optional: the notebook monitors
-  `val_metrics.csv` / `train_metrics.csv` in each trial run directory, calls
-  `trial.report(...)`, and terminates the trial subprocess process group when
-  Optuna prunes it. Use `OPTUNA_PRUNING_MIN_EPOCH >= 20` for serious 50-epoch
-  HPO; lower values are debug/plumbing-only.
+- `OPTUNA_USE_PRUNING` is real and is enabled by default in the canonical
+  reportable metal Stage 4/5A/5C/5D/5E/5F blocks with
+  `OPTUNA_PRUNER_TYPE = "median"` and `OPTUNA_PRUNING_MIN_EPOCH = 25`. The
+  notebook monitors `val_metrics.csv` / `train_metrics.csv` in each trial run
+  directory, calls `trial.report(...)`, and terminates the trial subprocess
+  process group when Optuna prunes it. Pruned attempts do not count toward
+  `OPTUNA_TARGET_COMPLETE_TRIALS`; plan total trial attempts accordingly.
 - Use `LR_SCHEDULES_CSV` to search `fixed,cosine` where the playbook
   enables LR-schedule search. The notebook default for ordinary planned runs is
   `cosine`; serious HPO playbook blocks set `fixed,cosine` when Optuna should
