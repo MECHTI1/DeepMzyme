@@ -8,6 +8,7 @@ playbook.
 
 For the cross-document run order and output-folder map, see `docs/README.md`.
 
+
 ## Quick-Paste Stage Selector
 
 This playbook is the operational pipeline for

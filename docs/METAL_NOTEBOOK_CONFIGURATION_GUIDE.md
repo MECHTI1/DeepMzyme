@@ -17,6 +17,7 @@ For staged, copy-paste-ready notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. This guide explains option meaning
 and safe workflow principles; the playbook is the practical execution recipe.
 
+
 ### Stage-to-option crosswalk
 
 
