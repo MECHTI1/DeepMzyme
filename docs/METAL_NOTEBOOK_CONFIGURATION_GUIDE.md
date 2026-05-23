@@ -86,7 +86,7 @@ Before launching a run, verify these resolved notebook values:
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
-| Held-out test during training | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
+| Held-out test during training | Fixed off in the main configuration cell; use the final-test cells only |
 | Device on G4 | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
@@ -179,14 +179,12 @@ explicitly labeled.
 
 Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
 
-### Main Configuration Review Marker
+### Internal Defaults
 
-`EDIT_INTERNAL_DEFAULTS` is a review marker, not a mode switch. Leave it
-`False` for ordinary playbook runs. Set it to `True` only when you deliberately
-changed the notebook's section 8 internal defaults and want that intent recorded
-in the print summary and saved config metadata. It does not enable hidden
-controls, gate execution, or change which section 8 values are applied. Older
-saved configs may store the same value as `advanced_mode`.
+Section 8 internal defaults are plain Python values in the main configuration
+cell. The old `EDIT_INTERNAL_DEFAULTS` review marker was removed because it did
+not enable hidden controls, gate execution, or change which section 8 values
+were applied. Older saved configs may still include `advanced_mode` metadata.
 
 ## What To Run First
 
@@ -875,7 +873,7 @@ For final reporting:
 ## Mistakes To Avoid
 
 - Do not select models based on held-out test metrics.
-- Do not enable `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` for comparison, HPO,
+- Do not use inline held-out-test evaluation for comparison, HPO,
   grouped-fold confirmation, or seed-repeat runs.
 - Do not run reportable Optuna with notebook preset budgets; use the playbook's
   `OPTUNA_INTENSITY = "custom"` stage blocks.
@@ -911,9 +909,9 @@ These are stable usage cautions, not an implementation backlog:
   should paste the playbook block so the resolved training budget is explicit.
 - `RECOMMENDED_RUN_SET` may override `MODEL_PRESET`; inspect the resolved
   planning table before launch.
-- `INCLUDE_HELD_OUT_TEST_DURING_TRAINING` remains visible for compatibility, but
-  reportable workflows must keep it `False` and use Stage 7 only after
-  validation selection is fixed.
+- Inline held-out-test evaluation is fixed off in the main configuration cell;
+  reportable workflows must use Stage 7 only after validation selection is
+  fixed.
 - RING-enabled graph construction is the normal first graph setting. Use the
   playbook's radius-only ablation only when intentionally testing that ablation.
 - Saved `Only-GVP` configs may show a fusion-mode field even though ESM fusion

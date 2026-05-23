@@ -463,10 +463,11 @@ METAL_LABEL_SCHEME = "five_class"
 This changes the training target to five classes: `Mn`, `Cu`, `Zn`, `Fe`, and a
 grouped Co/Ni class. It is not a display toggle and is not the same as
 `METAL_REPORT_VIEW = "collapsed4"`. When using it, create a new
-`RUN_BATCH_ID`, `SUMMARY_BASENAME`, `RUN_NAME_PREFIX`, `OPTUNA_STUDY_NAME`, and
-persistent storage file so five-class evidence cannot mix with six-class
-evidence. Keep `SELECTION_METRIC = "val_metal_balanced_acc"`; that metric is
-then balanced accuracy over the active five-class target.
+`RUN_BATCH_ID`, `SUMMARY_BASENAME`, `OPTUNA_STUDY_NAME`, and persistent storage
+file so five-class evidence cannot mix with six-class evidence. The notebook
+auto-derives the run-name prefix from `RUN_BATCH_ID`. Keep
+`SELECTION_METRIC = "val_metal_balanced_acc"`; that metric is then balanced
+accuracy over the active five-class target.
 
 Do not use five-class validation numbers to replace or rank six-class anchors
 without a separately documented comparison goal. Stage 6 and Stage 7 source
@@ -490,7 +491,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + hybrid fusion"
 RUN_BATCH_ID = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket_single"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "joint_fiveclass_hybrid_metal_target_fe1p7_mn1p5_splitpocket"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -543,8 +543,7 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 
 Expected outputs/files:
 
-- One validation-only run directory under
-  `<RUNS_DIR>/<RUN_BATCH_ID>/<RUN_NAME_PREFIX>...`.
+- One validation-only run directory under `<RUNS_DIR>/<RUN_BATCH_ID>/...`.
 - `best_model_checkpoint.pt`, `metrics_history.csv`, `run_config.json`,
   `run_metadata.json`, and split/validation artifacts in the run directory.
 - Notebook-generated `active_run_config.json` and `active_run_config.md` before
@@ -746,7 +745,6 @@ RECOMMENDED_RUN_SET = "only_gvp_smoke"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "stage0_environment_check"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "stage0_env"
 
 EPOCHS = 1
 BATCH_SIZES_CSV = "4"
@@ -839,7 +837,6 @@ RECOMMENDED_RUN_SET = "only_gvp_smoke"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_smoke_readiness"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_smoke"
 
 EPOCHS = 1
 BATCH_SIZES_CSV = "4"
@@ -929,7 +926,6 @@ RECOMMENDED_RUN_SET = "only_gvp_broad_comparison"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_baseline_lr_seed"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_gvp_baseline"
 
 EPOCHS = 50
 BATCH_SIZES_CSV = "8"
@@ -1019,7 +1015,6 @@ RECOMMENDED_RUN_SET = "baseline_model_comparison"
 # MODEL_PRESET is overridden by baseline_model_comparison (runs Only-GVP, Only-ESM, GVP + late fusion)
 RUN_BATCH_ID = "metal_baseline_model_comparison"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_baseline"
 
 EPOCHS = 50
 BATCH_SIZES_CSV = "8"
@@ -1121,7 +1116,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_debug"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_gvp_optuna_debug"
 
 EPOCHS = 10
 VAL_FRACTION = 0.15
@@ -1235,7 +1229,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_medium"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_gvp_optuna_medium"
 
 EPOCHS = 50
 BATCH_SIZES_CSV = "8"
@@ -1424,7 +1417,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_optuna_200_capacity"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_gvp_optuna_200_capacity"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -1555,7 +1547,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "Only-ESM"
 RUN_BATCH_ID = "metal_only_esm_optuna_120_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_esm_optuna_120"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -1638,7 +1629,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + late fusion"
 RUN_BATCH_ID = "metal_late_fusion_optuna_200_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_late_fusion_optuna_200"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -1735,7 +1725,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + node-level late fusion"
 RUN_BATCH_ID = "metal_node_late_fusion_optuna_200_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_node_late_fusion_optuna_200"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -1834,7 +1823,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + hybrid fusion"
 RUN_BATCH_ID = "metal_hybrid_fusion_optuna_200_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_hybrid_fusion_optuna_200"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -1934,7 +1922,6 @@ RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + cross-modal attention"
 RUN_BATCH_ID = "metal_cross_attention_optuna_200_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_cross_attention_optuna_200"
 
 EPOCHS = 50
 VAL_FRACTION = 0.15
@@ -2037,7 +2024,6 @@ RECOMMENDED_RUN_SET = "only_gvp_broad_comparison"
 MODEL_PRESET = "Only-GVP"
 RUN_BATCH_ID = "metal_only_gvp_radius_only_ablation"
 SUMMARY_BASENAME = ""  # auto from provenance
-RUN_NAME_PREFIX = "metal_only_gvp_radius_only"
 
 EPOCHS = 50
 BATCH_SIZES_CSV = "8"
