@@ -24,13 +24,6 @@ default recipe for the next fresh experiment. When planning a new check or new
 Optuna sweep, rely on raw outputs heavily only if the user explicitly asks to
 use previous running/results/raws. Otherwise use summaries and status as
 context, then prefer a fresh, broad-but-sensible validation-only search space.
-The live notebook default snapshot is tracked in the root `README.md`; as of
-the current notebook variables, new default notebook runs use
-`VAL_FRACTION = 0.18`, `METAL_LABEL_SCHEME = "five_class"`, and
-`METAL_NODE_MODE = "per_metal"`. Older copied outputs that used
-`VAL_FRACTION = 0.15`, six-class labels, or residue-only graphs remain valid
-historical evidence, but they are not the current default recipe and must not
-be merged into the same comparison without labeling those differences.
 
 Canonical path rule: this folder is `docs/notebook_outputs/` with an
 underscore. Do not create or use a parallel `docs/notebook outputs/` folder with
@@ -43,9 +36,6 @@ summaries should go under `summaries/`.
   and HPO decisions.
 - Keep the held-out test set reserved for final reporting after a validation
   selected configuration is fixed.
-- Record `VAL_FRACTION`, `METAL_LABEL_SCHEME`, `METAL_NODE_MODE`, and
-  `SPLIT_BY` in copied summaries, because changing any of these values changes
-  the comparison identity.
 - Do not change or reinterpret experiment results when reorganizing these files.
 - If a summary field is unclear in the raw output, it should say
   `Not clearly available in source file`.
