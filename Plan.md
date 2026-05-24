@@ -351,8 +351,7 @@ For the metal notebook pipeline, the playbook must keep exact values for:
   `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM`, `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage,
   search preset, and search ranges
 - Optional validation-only objective controls:
-  `METAL_COLLAPSED_LOSS_WEIGHT`,
-  `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV`, and
+  `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` and
   `OPTUNA_MULTIOBJECTIVE`
 - Stage 6 confirmation controls: top-K, grouped-fold count, split seed, model
   seed list for fallback repeats, mismatch guard, paired-bootstrap comparison,
@@ -371,6 +370,11 @@ Pipeline governance:
 - The playbook owns the exact parameter values for every stage. The notebook may
   expose coordinated defaults for convenience, but the playbook remains the
   canonical copy-paste recipe. Plan.md does not duplicate stage blocks.
+- Current notebook defaults, conservative first-pass GVP/HPO profiles, and
+  canonical extended G4 HPO budgets are separate concepts. Treat notebook
+  defaults as the live launch surface, not as held-out-test-selected evidence.
+  Keep exact conservative-profile values and exact stage budgets in the metal
+  playbook.
 - Changes to stage budgets, search spaces, or stage ordering must update the
   playbook first, then the notebook if live defaults should match the canonical
   workflow, then `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`'s crosswalk if the
