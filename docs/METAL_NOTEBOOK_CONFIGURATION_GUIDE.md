@@ -28,7 +28,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
 | Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
 | Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
-| Stage 4: medium per-family Optuna, optional medium HPO | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
+| Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
 | Stage 5A: serious Only-GVP HPO | One `MODEL_PRESET`, serious Optuna search controls, graph capacity controls, imbalance controls | "Model architecture and fusion", "Metal class weighting", "Optuna storage and Stage 6 confirmation" |
 | Stage 5B: Only-ESM HPO | ESM path/generation controls, ESM-only preset, serious Optuna controls | "ESM options", "Optuna storage and Stage 6 confirmation" |
 | Stage 5C: GVP + late fusion HPO | ESM fusion controls, serious Optuna controls, validation gate for advanced fusion | "Advanced fusion policy", "Optuna storage and Stage 6 confirmation" |
@@ -87,12 +87,12 @@ Before launching a run, verify these resolved notebook values:
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
 | Held-out test during training | Fixed off in the main configuration cell; use the final-test cells only |
-| Device on high-memory GPU | `DEVICE = "cuda"` |
+| Device on G4 | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
-| Serious Optuna storage | local-scratch SQLite via `OPTUNA_STORAGE_OVERRIDE`, with Drive SQLite copy-back; the live notebook defaults `USE_PERSISTENT_OPTUNA_STORAGE = True` |
+| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
-| Parallel Optuna workers | `1` cleanest/reproducibility-first; `2` conservative high-memory acceleration; `3` recommended high-memory acceleration after a debug benchmark; `4+` benchmark/debug only |
+| Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; optional G4 acceleration override `2` only after a debug run confirms CUDA memory headroom |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
@@ -149,26 +149,22 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 - `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
   merged into `Class VIII`. Six-class metal classification remains primary.
 
-## High-Memory Training Profile
+## G4-Oriented Training Profile
 
-The exact high-memory single-GPU Optuna budgets, sampler settings, storage URLs, and search
-spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "High-Memory Single-GPU Optuna
+The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
+spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "G4-Class Optuna
 Policy". This guide does not duplicate them. The high-level posture is:
-persistent SQLite Optuna on local scratch with Drive copy-back, multivariate/group TPE, one `MODEL_PRESET`
+persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
 per study, validation-only objective, and predeclared grouped-fold confirmation
 before any held-out test. The playbook owns the exact trial counts, startup
 trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
 batch-size search space, and seed list.
 
-The current resource assumption is roughly 80-96 GB GPU RAM and 167-177 GB
-system RAM on one GPU. Worker recommendations below are based on that resource
-profile, not on GPU model names.
-
 Keep three concepts separate:
 
 - Current notebook defaults are the values visible in the notebook UI. They are
   a launch surface and may be exploratory.
-- Canonical serious high-memory HPO budgets are the stage-owned values in the playbook.
+- Canonical serious G4 HPO budgets are the stage-owned values in the playbook.
 - The conservative first-pass anti-overfitting GVP profile is a recommended
   low-capacity search posture for GVP-based metal-focused runs, not a claim
   that the values are optimal.
@@ -572,10 +568,9 @@ For debug only:
 For useful Colab HPO:
 
 - Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
-  budget. The playbook uses this for high-memory serious searches.
-- Use persistent SQLite storage on fast local scratch via
-  `OPTUNA_STORAGE_OVERRIDE`; the playbook gives the exact scratch storage and
-  Drive-backup path for each serious stage.
+  budget. The playbook uses this for G4-oriented serious searches.
+- Use persistent SQLite storage in Drive. The playbook gives the exact storage
+  path for each serious stage.
 - Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
 - Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
@@ -588,43 +583,19 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_CONSTANT_LIAR = True` for shared-storage HPO so multiple
   Optuna workers can run in parallel without repeatedly sampling in-flight
   configurations. Sequential runs remain supported.
-- The live notebook defaults to `USE_PERSISTENT_OPTUNA_STORAGE = True` and a
-  local-scratch `OPTUNA_STORAGE_OVERRIDE`, so changing only
-  `OPTUNA_PARALLEL_WORKERS` from `1` to `2` or `3` has the required shared
-  SQLite study database without using Drive/FUSE as the live database. Set it
-  to `False` only for deliberately temporary/non-resumable debug studies.
-- Worker policy is resource-based for the current high-memory single-GPU
-  environment: `1` is cleanest/reproducibility-first, `2` is conservative
-  acceleration, `3` is the recommended validation-only acceleration target
-  after a debug benchmark, and `4+` is benchmark/debug only.
-- With `OPTUNA_PARALLEL_WORKERS > 1`, keep persistent/shared storage,
+- Keep `OPTUNA_PARALLEL_WORKERS = 1` for canonical reportable stage blocks
+  unless you deliberately choose a validation-only acceleration override. To
+  use parallel workers on G4, first prove memory headroom with a short debug
+  study, then try `OPTUNA_PARALLEL_WORKERS = 2` with persistent storage,
   `OPTUNA_TPE_CONSTANT_LIAR = True`,
-  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS > 0`, and
+  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0`, and
   `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True`. If CUDA OOM occurs, reduce the
   worker count or the active batch-size/model-capacity range; do not treat the
   OOM as a model-quality signal.
-- SQLite storage on Drive can hit lock contention under parallel optimization,
-  especially at `OPTUNA_PARALLEL_WORKERS >= 3`, so the active database should
-  stay on scratch. Keep `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` to restore
-  from Drive at launch when scratch is empty and copy a SQLite snapshot back to
-  Drive after trial completion. Run a tiny validation-only debug benchmark for
-  workers `2`, `3`, `4`, and `6`, then compare wall time while monitoring GPU
-  utilization, GPU memory, CPU/RAM, disk I/O, and SQLite lock errors.
-- PyTorch `DataLoader(num_workers > 0)` uses multiprocessing. Total data-loader
-  pressure is approximately `OPTUNA_PARALLEL_WORKERS x DATALOADER_NUM_WORKERS`;
-  with three Optuna workers, start around `DATALOADER_NUM_WORKERS = 1` or `2`
-  and avoid high totals such as `3 x 8` unless benchmarked.
 - With `OPTUNA_PARALLEL_WORKERS > 1`, the notebook launches parallel trial
-  subprocesses through an Optuna `study.optimize(..., n_jobs=...)` call. Optuna
-  manages parallel trial scheduling in the notebook process, while each trial
-  objective launches `src/train.py` as its own subprocess. Robust parallel
-  optimization therefore depends on shared storage. Per-trial stdout and stderr
-  still go to each trial's log files; the notebook suppresses live per-line
-  trial streaming to avoid interleaved output. The hidden
-  `OPTUNA_PRINT_PARALLEL_TRIAL_EPOCH_LOG_AFTER_FINISH = True` display flag
-  prints each finished trial's collected `epoch=` lines as one completed block,
-  so parallel runs show full-trial epoch progress after each trial finishes
-  without mixing lines from concurrently running trials. Trial completion
+  subprocesses through `study.optimize(..., n_jobs=...)`. Per-trial stdout and
+  stderr still go to each trial's log files; the notebook suppresses live
+  per-line trial streaming to avoid interleaved output. Trial completion
   progress remains printed and recorded in the Optuna trial log.
 - Set `OPTUNA_N_STARTUP_TRIALS` below `OPTUNA_TARGET_COMPLETE_TRIALS`.
   `OPTUNA_TARGET_COMPLETE_TRIALS` is the target number of completed Optuna
@@ -709,7 +680,7 @@ Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
 defined per stage in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use
 `OPTUNA_INTENSITY = "custom"` and persistent Drive-backed storage for every
-reportable run on the high-memory GPU.
+reportable run on the G4 GPU.
 
 Budget interpretation:
 
@@ -998,9 +969,6 @@ For final reporting:
 - Do not run serious Optuna with missing or nonpersistent `OPTUNA_STORAGE`.
 - Do not run serious parallel Optuna with blank/nonpersistent `OPTUNA_STORAGE`
   or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
-- Do not run serious Optuna with `OPTUNA_PARALLEL_WORKERS >= 4` unless an
-  explicitly labeled benchmark/debug run has already confirmed stable memory,
-  storage, CPU/RAM, and disk behavior.
 - Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
   metal label schemes, or incompatible search spaces; let the default
   study-compatibility guard stop the run.

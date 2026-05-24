@@ -18,7 +18,7 @@ clearly contains newer working logic that should be preserved.
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
-| High-memory single-GPU Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("High-Memory Single-GPU Optuna Policy") |
+| G4-class Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("G4-Class Optuna Policy") |
 | Copy-paste-ready EC training stages | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Raw experiment results | `docs/notebook_outputs/` |
 | Current best-configuration snapshot | `docs/notebook_outputs/summaries/LEADERBOARD.md` |
@@ -98,9 +98,8 @@ Stage 7 (one-shot held-out test).
 Authoritative rules for the pipeline:
 
 - One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
-- Hardware target is a high-memory single-GPU environment; the playbook defines
-  exact budgets, storage, search spaces, parallel-worker policy, seed lists,
-  and decision gates.
+- Hardware target is a G4-class GPU; the playbook defines exact budgets,
+  storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
   Stage 6 grouped-fold confirmation evidence.
 - Stage 7 remains a one-shot held-out test event for a fixed
@@ -372,7 +371,7 @@ Pipeline governance:
   expose coordinated defaults for convenience, but the playbook remains the
   canonical copy-paste recipe. Plan.md does not duplicate stage blocks.
 - Current notebook defaults, conservative first-pass GVP/HPO profiles, and
-  canonical extended high-memory HPO budgets are separate concepts. Treat notebook
+  canonical extended G4 HPO budgets are separate concepts. Treat notebook
   defaults as the live launch surface, not as held-out-test-selected evidence.
   Keep exact conservative-profile values and exact stage budgets in the metal
   playbook.
