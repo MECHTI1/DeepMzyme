@@ -919,10 +919,12 @@ def check_colab_notebook_sweep_source() -> None:
         'INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False',
         'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
         'DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"',
+        "train_and_test_sets_structures_non_overlapped_pinmymetal",
+        "train_and_test_sets_structures_harsh_pinmymetal",
         "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal",
         "MODEL_PRESET =",
         'RING_EDGE_MODE = "with_ring"',
-        'METAL_NODE_MODE = "per_metal"',
+        'METAL_NODE_MODE = "none"',
         'STRUCTURAL_READOUT_SCOPE = "auto"',
         'CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
         'ALLOW_MISSING_EXTERNAL_FEATURES = False',
@@ -945,9 +947,12 @@ def check_colab_notebook_sweep_source() -> None:
         "ring_mode",
         "metal_node_mode",
         "structural_readout_scope",
-        'HEAD_MLP_DROPOUT_VALUES_CSV = "0.2,0.3"',
-        'ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1,0.2"',
-        'OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"',
+        "HEAD_MLP_DROPOUT = 0.2",
+        "ESM_GRAPH_ENCODER_DROPOUT = 0.1",
+        "OUTER_RESIDUE_DROPOUT = 0.0",
+        'OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"',
+        'OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"',
+        'OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0"',
         "omit_node_features",
         "--omit-node-features",
         "--head-mlp-dropout",
@@ -960,8 +965,9 @@ def check_colab_notebook_sweep_source() -> None:
         "--prepare-missing-ring-edges",
         "--no-prepare-missing-ring-edges",
         "--no-prepare-missing-esm-embeddings",
-        'METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
+        "METAL_COLLAPSED_LOSS_WEIGHT = 0.0",
         "OPTUNA_MULTIOBJECTIVE = False",
+        'OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
         'RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True',
         'TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"',
         'TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"',
@@ -1162,9 +1168,9 @@ def check_colab_exact_split_no_fallback() -> None:
 
     with tempfile.TemporaryDirectory(prefix="deepmzyme_exact_split_guard_") as tmp:
         tmp_root = Path(tmp)
-        common_split = tmp_root / "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal"
-        (common_split / "train").mkdir(parents=True)
-        (common_split / "test").mkdir()
+        non_overlapped = tmp_root / "train_and_test_sets_structures_non_overlapped_pinmymetal"
+        (non_overlapped / "train").mkdir(parents=True)
+        (non_overlapped / "test").mkdir()
         namespace = {
             "CONFIG": {
                 "data": {
@@ -1184,14 +1190,14 @@ def check_colab_exact_split_no_fallback() -> None:
             required_phrases = (
                 "Exact PinMyMetal split was requested",
                 "train_and_test_sets_structures_exact_pinmymetal",
-                "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal",
-                "explicitly rerun the Main configuration cell with DATASET_NAME='train_and_test_sets_structures_common_pdbid_70_30_pinmymetal'",
+                "train_and_test_sets_structures_non_overlapped_pinmymetal",
+                "explicitly rerun the Main configuration cell with another DATASET_NAME",
             )
             missing = [phrase for phrase in required_phrases if phrase not in message]
             if missing:
                 raise AssertionError(f"Exact-split guard error is missing {missing}: {message}") from exc
         else:
-            raise AssertionError("Exact split request silently resolved despite only the Common-PDBID split being present.")
+            raise AssertionError("Exact split request silently resolved despite only non-overlapped split being present.")
 
 
 def check_colab_generated_training_commands_parse() -> None:
@@ -1477,7 +1483,7 @@ def check_colab_generated_training_commands_parse() -> None:
     if "--esm-graph-encoder-dropout" in default_cmd:
         raise AssertionError("Only-GVP default command should keep ESM graph encoder dropout inactive.")
 
-    outer_dropout_runs = run_builder({"advanced": {"outer_residue_dropouts_csv": "0.4"}})
+    outer_dropout_runs = run_builder({"advanced": {"outer_residue_dropout": 0.4}})
     outer_dropout_cmd = [str(part) for part in outer_dropout_runs[0]["command"]]
     assert_training_command_parses(outer_dropout_cmd)
     if "--outer-residue-dropout" not in outer_dropout_cmd:
@@ -1833,7 +1839,7 @@ def check_colab_generated_training_commands_parse() -> None:
         if selected_payload.get("held_out_test_metrics_used") is not False:
             raise AssertionError("Stage 6 selected-candidate JSON did not explicitly exclude held-out test metrics.")
 
-    collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weights_csv": "0.3"}})
+    collapsed_loss_runs = run_builder({"advanced": {"metal_collapsed_loss_weight": 0.3}})
     collapsed_loss_cmd = [str(part) for part in collapsed_loss_runs[0]["command"]]
     assert_training_command_parses(collapsed_loss_cmd)
     if "--metal-collapsed-loss-weight" not in collapsed_loss_cmd:

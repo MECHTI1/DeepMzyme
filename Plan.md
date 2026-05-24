@@ -18,7 +18,7 @@ clearly contains newer working logic that should be preserved.
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
-| High-memory single-GPU Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("High-Memory Single-GPU Optuna Policy") |
+| G4-class Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("G4-Class Optuna Policy") |
 | Copy-paste-ready EC training stages | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Raw experiment results | `docs/notebook_outputs/` |
 | Current best-configuration snapshot | `docs/notebook_outputs/summaries/LEADERBOARD.md` |
@@ -98,9 +98,8 @@ Stage 7 (one-shot held-out test).
 Authoritative rules for the pipeline:
 
 - One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
-- Hardware target is a high-memory single-GPU environment; the playbook defines
-  exact budgets, storage, search spaces, parallel-worker policy, seed lists,
-  and decision gates.
+- Hardware target is a G4-class GPU; the playbook defines exact budgets,
+  storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
   Stage 6 grouped-fold confirmation evidence.
 - Stage 7 remains a one-shot held-out test event for a fixed
@@ -347,12 +346,10 @@ For the metal notebook pipeline, the playbook must keep exact values for:
 - Optuna budgets and sampler controls: `OPTUNA_TARGET_COMPLETE_TRIALS`,
   `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`,
   `OPTUNA_TPE_MULTIVARIATE`, `OPTUNA_TPE_GROUP`,
-  `OPTUNA_TPE_CONSTANT_LIAR`, `OPTUNA_PARALLEL_WORKERS`,
-  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS`,
-  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM`, `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage,
-  search preset, and search ranges
+  `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage, search preset, and search ranges
 - Optional validation-only objective controls:
-  `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` and
+  `METAL_COLLAPSED_LOSS_WEIGHT`,
+  `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV`, and
   `OPTUNA_MULTIOBJECTIVE`
 - Stage 6 confirmation controls: top-K, grouped-fold count, split seed, model
   seed list for fallback repeats, mismatch guard, paired-bootstrap comparison,
@@ -371,11 +368,6 @@ Pipeline governance:
 - The playbook owns the exact parameter values for every stage. The notebook may
   expose coordinated defaults for convenience, but the playbook remains the
   canonical copy-paste recipe. Plan.md does not duplicate stage blocks.
-- Current notebook defaults, conservative first-pass GVP/HPO profiles, and
-  canonical extended high-memory HPO budgets are separate concepts. Treat notebook
-  defaults as the live launch surface, not as held-out-test-selected evidence.
-  Keep exact conservative-profile values and exact stage budgets in the metal
-  playbook.
 - Changes to stage budgets, search spaces, or stage ordering must update the
   playbook first, then the notebook if live defaults should match the canonical
   workflow, then `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`'s crosswalk if the
