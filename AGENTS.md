@@ -113,8 +113,8 @@ claim or change.
   configuration blocks for metal classification. Use this as the practical
   execution recipe and exact parameter source for each training stage (smoke,
   baseline, Optuna, Stage 6 grouped-fold confirmation, final test). For
-  G4-class GPU planning, this is where serious/custom Optuna budgets and search
-  spaces should be recorded.
+  high-memory single-GPU planning, this is where serious/custom Optuna budgets,
+  parallel-worker policy, and search spaces should be recorded.
 - `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`: same staged structure as the metal
   playbook, covering EC-number classification. Covers EC label depth, group
   weighting, contrastive loss progression, and 200-trial Optuna examples.
@@ -286,7 +286,7 @@ Use the playbook stage names exactly:
 - Stage 2A: Only-GVP validation anchor
 - Stage 2B: baseline family comparison
 - Stage 3: Optuna plumbing debug
-- Stage 4: medium per-family Optuna, optional on G4
+- Stage 4: medium per-family Optuna, optional medium HPO
 - Stage 5A: serious Only-GVP HPO
 - Stage 5B: Only-ESM HPO
 - Stage 5C: GVP + late fusion HPO
@@ -314,8 +314,9 @@ planning the next Optuna sweep:
 
 Operational assumptions for this project:
 
-- Hardware: G4-class GPU. All serious Optuna runs use the budgets in the
-  playbook's "G4-Class Optuna Policy" subsection.
+- Hardware: high-memory single-GPU environment. All serious Optuna runs use the
+  budgets and worker policy in the playbook's "High-Memory Single-GPU Optuna
+  Policy" subsection.
 - Persistent Optuna storage in Drive is mandatory for Stage 4 and Stage 5.
 - Persistent Optuna studies must not silently mix incompatible `MODEL_PRESET`
   values or incompatible search spaces. Keep

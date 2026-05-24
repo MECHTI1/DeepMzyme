@@ -26,7 +26,7 @@ what to run next:
 - Stage 2A: Only-GVP validation anchor
 - Stage 2B: baseline family comparison
 - Stage 3: Optuna plumbing debug
-- Stage 4: medium per-family Optuna, optional on G4
+- Stage 4: medium per-family Optuna, optional medium HPO
 - Stage 5A: serious Only-GVP HPO
 - Stage 5B: Only-ESM HPO
 - Stage 5C: GVP + late fusion HPO
@@ -39,20 +39,20 @@ what to run next:
 
 ## Pipeline Overview At A Glance
 
-| Stage | Purpose | Owns exact budget? | G4 wall-time (approx.) | Pass/fail decision gate | Required outputs |
+| Stage | Purpose | Owns exact budget? | Wall-time (approx.) | Pass/fail decision gate | Required outputs |
 | --- | --- | --- | --- | --- | --- |
 | Stage 0 | Environment, Drive, data bundle, RING/ESM/external-feature readiness | Yes, planning-only | 10-20 min | Planned config resolves under Drive, coverage diagnostics pass, no test artifacts | Planned-run CSV/dictionary, optional metal-weight diagnostics |
 | Stage 1 | 1-epoch smoke to prove notebook and training path | Yes, smoke budget | 5-15 min | One validation-only run completes; no missing paths/classes; no test artifacts | Planned files, one run dir, `run_config.json`, `run_metadata.json`, `split_diagnostics.json` |
 | Stage 2A | Only-GVP validation anchor | Yes | 10-16 h | All planned validation runs complete and rare-class diagnostics are usable | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
 | Stage 2B | Baseline family comparison after ESM is ready | Yes | 8-14 h | All planned validation runs complete and ESM coverage is valid | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
 | Stage 3 | Optuna plumbing debug | Yes, debug only | 20-40 min | Four complete validation-only trials and valid persistent-storage plumbing | Optuna `all_trials.csv`, `top_trials.csv`, `best_trial.json`, study summary |
-| Stage 4 | Medium per-family Optuna, optional on G4 | Yes | 18-28 h | Two hundred complete validation-only trials in one `MODEL_PRESET` | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
+| Stage 4 | Medium per-family Optuna, optional medium HPO | Yes | 8-16 h | Sixty-four complete validation-only trials in one `MODEL_PRESET` | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5A | Serious Only-GVP HPO | Yes | 36-60 h | Two hundred complete validation-only trials in the Only-GVP study | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5B | Only-ESM HPO | Yes | 24-48 h | One hundred twenty complete validation-only trials with valid ESM coverage | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5C | GVP + late fusion HPO | Yes | 36-60 h | Two hundred complete validation-only trials with valid ESM coverage | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5D | GVP + node-level late fusion HPO | Yes | 36-60 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5E | GVP + hybrid fusion HPO | Yes | 36-60 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
-| Stage 5F | GVP + cross-attention HPO | Yes | 30-55 h | Stage 5C gate passed, then two hundred complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
+| Stage 5F | GVP + cross-attention HPO | Yes | 30-55 h | Stage 5C gate passed, then one hundred twenty complete validation-only trials | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5G | RING/radius-only ablation | Yes, ablation budget | 6-10 h | Matching radius-only validation runs complete and are labeled as ablation | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
 | Stage 6 | Top-K seed/split confirmation | Yes | 15-25 h for one seed; more with extra seeds | All predeclared top-K x fold x active-seed validation runs complete; one candidate selected by paired validation evidence | `seed_repeat_results.csv`, `seed_repeat_summary.csv`, `seed_repeat_summary.json`, `seed_repeat_pairwise_bootstrap.csv`, `seed_repeat_pairwise_bootstrap.json`, `stage6_ranked_candidates.csv`, `stage6_selected_final_candidate.json`, run dirs |
 | Stage 7 | One-shot held-out test | Yes, final only | 20-60 min | Source is the Stage 6 validation-selected run and one-shot policy is confirmed | Separate final-test run dir, `test_report.json`, final-test summary |
@@ -202,15 +202,15 @@ PREPARE_MISSING_EXTERNAL_FEATURES = True
 EXTERNAL_FEATURES_ROOT_DIR = ""
 
 CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
-POSITION_NOISE_STD = 0.0
-SECOND_SHELL_DROPOUT = 0.0  # Fixed off for canonical HPO; use outer-residue dropout instead.
-OUTER_RESIDUE_DROPOUT = 0.0
+POSITION_NOISE_STDS_CSV = "0.0"
+SECOND_SHELL_DROPOUTS_CSV = "0.0"  # Fixed off for canonical HPO; use outer-residue dropout instead.
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0"
 
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"
-METAL_LOSS_FUNCTION = "cross_entropy"
-METAL_LABEL_SMOOTHING = 0.0
-METAL_COLLAPSED_LOSS_WEIGHT = 0.0
-BALANCE_METAL_SITE_SYMBOLS = False
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
 
 COPY_OUTPUTS_TO_DRIVE = True
 METAL_REPORT_VIEW = "both"
@@ -225,7 +225,10 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 OPTUNA_DIRECTION = "maximize"
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
-OPTUNA_TPE_CONSTANT_LIAR = False
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
@@ -233,11 +236,6 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_TIMEOUT_MINUTES = 0
 OPTUNA_MULTIOBJECTIVE = False
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0"
-OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0"  # Fixed off for canonical HPO.
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0"
-CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
-OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The notebook
@@ -265,15 +263,37 @@ version, and source structure/sequence metadata. Older embeddings without
 sidecars must be labeled as `unknown_in_older_embeddings` in run metadata and
 status notes rather than guessed.
 
-## G4-Class Optuna Policy
+## High-Memory Single-GPU Optuna Policy
 
-This project runs on a G4-class GPU (16 GB VRAM, persistent runtime). All
-serious Optuna stages must use:
+This project currently targets a high-memory single-GPU environment with roughly
+80-96 GB GPU RAM and 167-177 GB system RAM. All serious Optuna stages must use:
 
 - `OPTUNA_INTENSITY = "custom"` - never rely on `first_useful`/`serious`
   notebook presets for reportable HPO.
 - `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`,
-  `OPTUNA_TPE_CONSTANT_LIAR = False`.
+  `OPTUNA_TPE_CONSTANT_LIAR = True` so shared-storage studies support multiple
+  parallel workers without duplicate/in-flight TPE suggestions.
+- `OPTUNA_PARALLEL_WORKERS = 1` is the cleanest/reproducibility-first setting
+  and preserves historical serial trial execution.
+- `OPTUNA_PARALLEL_WORKERS = 2` is conservative high-memory acceleration.
+- `OPTUNA_PARALLEL_WORKERS = 3` is the recommended high-memory acceleration
+  target for validation-only HPO after Stage 3 or another short debug benchmark
+  confirms no CUDA OOM, no severe slowdown, no storage-lock instability, and
+  acceptable CPU/RAM/disk behavior.
+- `OPTUNA_PARALLEL_WORKERS >= 4` is aggressive benchmark/debug territory only.
+  Do not use it for serious HPO until the active model family, batch-size
+  range, feature set, and storage path have been explicitly benchmarked.
+- Keep `OPTUNA_TPE_CONSTANT_LIAR = True`, keep persistent/shared storage
+  enabled, keep `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS > 0`, and keep
+  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True` when using more than one worker.
+- The notebook calls Optuna with `study.optimize(..., n_jobs=...)`; Optuna
+  schedules parallel trial objectives in the notebook process, and each
+  objective launches one `src/train.py` subprocess. Robust parallel HPO depends
+  on shared storage rather than temporary in-memory storage.
+- With `OPTUNA_PARALLEL_WORKERS = 3`, start per-trial DataLoader workers around
+  `1` or `2`. PyTorch DataLoader workers multiply by Optuna workers, so avoid
+  combinations like `3 x 8` loader workers unless an explicit debug benchmark
+  shows CPU/RAM/disk behavior is acceptable.
 - `OPTUNA_SAMPLER_SEED = None` unless deliberately re-exploring the same split
   with a different Optuna trajectory. With `None`, the sampler seed follows
   `OPTUNA_SPLIT_SEED`.
@@ -286,8 +306,18 @@ serious Optuna stages must use:
   study because pruner decisions can bias the TPE trajectory. Consequence:
   `OPTUNA_TARGET_COMPLETE_TRIALS` counts only non-pruned completions, so total
   trial attempts will be larger than the target -- plan compute accordingly.
-- Persistent SQLite storage in Drive:
-  `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
+- Persistent SQLite storage on fast local scratch:
+  `OPTUNA_STORAGE_OVERRIDE =
+  "sqlite:////mnt/local-scratch/optuna/<study_name>.db"`, with
+  `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`. Keep
+  `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` so the notebook restores from
+  `<DRIVE_ROOT>/optuna/<study_name>.db` when scratch is empty and snapshots the
+  scratch SQLite DB back to Drive after trial completion. SQLite can suffer lock
+  contention under parallel optimization, especially on Drive or slower/networked
+  storage, so Drive must not be the live Optuna database for high-memory
+  parallel HPO. Worker count `3` is allowed, but check wall-time speedup
+  empirically and monitor GPU utilization, GPU memory, CPU/RAM, disk I/O, and
+  SQLite lock errors before serious HPO.
 - Startup trials: use the stage table below. The default rule is at least
   `max(20, 0.2 x OPTUNA_TARGET_COMPLETE_TRIALS)`; the 120-trial Only-ESM study
   uses 30 startup trials to cover its conditional space.
@@ -309,6 +339,11 @@ serious Optuna stages must use:
 - Record both the split seed and the sampler seed in the notebook output, study
   summary, and per-run artifacts. If the sampler seed is `None`, record the
   effective sampler seed as the split seed.
+- Record `OPTUNA_PARALLEL_WORKERS`, startup stagger seconds, CUDA-OOM stop
+  behavior, `OPTUNA_TPE_CONSTANT_LIAR`, `OPTUNA_STORAGE`, effective sampler
+  seed, and per-trial DataLoader workers in the study metadata. Parallel trial
+  order is inherently nondeterministic, so Stage 6 grouped-fold confirmation
+  remains mandatory before promotion.
 
 Forbidden in serious stages:
 
@@ -327,6 +362,11 @@ Forbidden in serious stages:
   this; do not override).
 - Reportable HPO with `OPTUNA_INTENSITY != "custom"` or blank/nonpersistent
   `OPTUNA_STORAGE`.
+- Reportable HPO with `OPTUNA_PARALLEL_WORKERS > 1` and blank/nonpersistent
+  `OPTUNA_STORAGE`, or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
+- Reportable HPO with `OPTUNA_PARALLEL_WORKERS >= 4` unless an explicitly
+  labeled benchmark/debug run has already confirmed no CUDA OOM, no severe
+  slowdown, no storage-lock instability, and acceptable CPU/RAM/disk behavior.
 - `ALLOW_MISSING_ESM_EMBEDDINGS = True` for ESM or fusion stages.
 
 Batch-size policy for serious stages:
@@ -342,7 +382,7 @@ Batch-size policy for serious stages:
 - Do not include `32` in fusion stages unless a separate memory/quality ablation
   explicitly justifies it.
 
-Recommended G4 budgets (canonical):
+Recommended canonical budgets:
 
 | Stage | `OPTUNA_TARGET_COMPLETE_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
 | --- | --- | --- | --- |
@@ -413,6 +453,100 @@ Serious capacity/search-space policy:
   outer-residue dropout inside one model-family study. Augmentation never runs
   for validation or held-out test inference.
 
+## Conservative First-Pass Anti-Overfitting GVP Profile
+
+Use this profile as a recommended conservative starting point for GVP-based
+metal-focused runs when the goal is to reduce overfitting risk before a wider
+second-stage expansion. It is not a universal optimum, not held-out-test
+selected evidence, and not a replacement for Stage 6 confirmation.
+
+The current GVP input is already information-rich. Node scalar inputs include
+amino-acid chemistry, hydrophobicity, donor/acceptor/aromatic/acidic/basic
+flags, shell role, distance/RBF-derived terms, and burial/SASA/electrostatics/
+PROPKA-like features where available. The graph also has explicit residue
+vector channels plus edge scalar, RING, and radius features. Because the
+dataset is modest, first-stage capacity should stay conservative.
+
+Main capacity knobs:
+
+- `HIDDEN_S_VALUES_CSV`
+- `HIDDEN_V_VALUES_CSV`
+- `EDGE_HIDDEN_VALUES_CSV`
+- `GVP_LAYERS_VALUES_CSV`
+- `EDGE_RADIUS_VALUES_CSV`
+- `ESM_FUSION_DIM_VALUES_CSV`
+- `EARLY_ESM_DIM_VALUES_CSV`
+- `HEAD_MLP_LAYERS_VALUES_CSV`
+
+Notebook profile:
+
+```python
+RING_EDGE_MODE = "with_ring"
+METAL_NODE_MODE = "per_metal"
+STRUCTURAL_READOUT_SCOPE = "auto"
+
+CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
+HIDDEN_S_VALUES_CSV = "128"
+HIDDEN_V_VALUES_CSV = "8,16"
+EDGE_HIDDEN_VALUES_CSV = "64"
+GVP_LAYERS_VALUES_CSV = "2,3"
+HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
+EDGE_RADIUS_VALUES_CSV = "6,8"
+ESM_FUSION_DIM_VALUES_CSV = "64,128"
+EARLY_ESM_DIM_VALUES_CSV = "32,48"
+
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"
+EARLY_ESM_DROPOUT_VALUES_CSV = "0.05"  # 0.1 is also acceptable for the first pass.
+CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1"
+
+POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"
+SECOND_SHELL_DROPOUTS_CSV = "0.0"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"
+```
+
+Rationale:
+
+- `hidden_s=128`, `hidden_v=8/16`, `edge_hidden=64`, and 2-3 GVP layers are
+  appropriate low-capacity starting values for roughly one thousand samples.
+- `edge_radius=6/8` keeps the radius graph local; radius `10` or higher is a
+  second-stage option.
+- `esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`,
+  `edge_hidden>=128`, and `gvp_layers>=4` are higher-capacity options and
+  should not be first-stage anti-overfitting defaults.
+- Position noise and residue dropout are training-only robustness tools. Keep
+  coordinate noise mild for metal-site geometry. If using AlphaFold structures,
+  mild training-only coordinate noise can be considered, but validation and
+  held-out test graphs must remain unchanged.
+- Do not claim that coordinate noise or residue dropout improves performance
+  without validation evidence.
+
+Budget tiers:
+
+| Profile | `OPTUNA_TARGET_COMPLETE_TRIALS` | `MAX_EPOCHS_PER_TRIAL` / `OPTUNA_SEARCH_HPO_TRIAL_EPOCHS` | `OPTUNA_N_STARTUP_TRIALS` |
+| --- | --- | --- | --- |
+| Conservative first pass | 64 or 80 | 35-40 | 15-20 |
+| Strong controlled | 100 | 50 | 20 |
+| Extended serious | Use the canonical Stage 5 table above | Use the canonical Stage 5 table above | Use the canonical Stage 5 table above |
+
+Two hundred complete trials is an extended serious search, not a simple
+first-pass anti-overfitting search. Two-hundred-trial studies are acceptable
+only when followed by predeclared Stage 6 top-K grouped-fold/seed
+confirmation. Do not interpret one validation split or the best single Optuna
+trial as conclusive.
+
+This profile applies broadly to GVP-based metal-focused DeepMzyme runs. It is
+not specific to `TASK = "joint"`, `METAL_LABEL_SCHEME = "five_class"`,
+`MODEL_PRESET = "GVP + hybrid fusion"`, or
+`SELECTION_METRIC = "val_metal_balanced_acc"`. If `TASK = "joint"` and
+`SELECTION_METRIC = "val_metal_balanced_acc"`, model selection is primarily
+metal-optimized and the EC branch is auxiliary. If the goal is EC prediction,
+use an EC validation metric instead.
+
+Feature-omission ablations use notebook `OMIT_NODE_FEATURE_SETS`; the CLI flag
+is `--omit-node-features`. Do not invent additional notebook omission
+variables.
+
 ## Optional Objective Experiments
 
 These objective variants are experimental validation-only tools. They are not
@@ -421,8 +555,9 @@ one-shot held-out test policy.
 
 ### Optional collapsed-4 auxiliary metal loss
 
-`METAL_COLLAPSED_LOSS_WEIGHT` maps to the CLI flag
-`--metal-collapsed-loss-weight`. The default is `0.0`, which preserves the
+`METAL_COLLAPSED_LOSS_WEIGHTS_CSV` maps to the CLI flag
+`--metal-collapsed-loss-weight`; in single mode the first CSV value is used.
+The default is `0.0`, which preserves the
 standard six-class objective exactly. When enabled with cross-entropy metal
 loss, the training objective is:
 
@@ -440,9 +575,8 @@ First-use rule: test this only against the current validation baseline before
 using it broadly. For a Stage 5A-only validation experiment, use:
 
 ```python
-METAL_COLLAPSED_LOSS_WEIGHT = 0.0
-OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 ```
 
 Do not add this search axis automatically to Stage 5B-5F. Add it there only
@@ -516,13 +650,13 @@ HEAD_MLP_LAYERS_VALUES_CSV = "2"
 EDGE_RADIUS_VALUES_CSV = "7.0"
 ESM_FUSION_DIM_VALUES_CSV = "256"
 EARLY_ESM_DIM_VALUES_CSV = "48"
-EARLY_ESM_DROPOUT = 0.05
+EARLY_ESM_DROPOUT_VALUES_CSV = "0.05"
 
 METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"
-BALANCE_METAL_SITE_SYMBOLS = False
-METAL_LOSS_FUNCTION = "cross_entropy"
-METAL_LABEL_SMOOTHING = 0.0
-METAL_COLLAPSED_LOSS_WEIGHT = 0.0
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
 MN_LOSS_MULTIPLIER = 1.5
 FE_LOSS_MULTIPLIER = 1.7
 CU_LOSS_MULTIPLIER = 1.0
@@ -531,8 +665,8 @@ CO_LOSS_MULTIPLIER = 1.0
 NI_LOSS_MULTIPLIER = 1.0
 CLASS_VIII_LOSS_MULTIPLIER = 1.0
 
-METAL_LOSS_WEIGHT = 2.0
-EC_LOSS_WEIGHT = 0.25
+METAL_LOSS_WEIGHT_VALUES_CSV = "2.0"
+EC_LOSS_WEIGHT_VALUES_CSV = "0.25"
 EC_LABEL_DEPTHS_CSV = "1"
 EC_CONTRASTIVE_WEIGHTS_CSV = "0.0"
 EC_GROUP_WEIGHTING = "structure_id"
@@ -603,14 +737,14 @@ OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
 ```
 
-## Canonical G4 Metal Training Route
+## Canonical High-Memory Metal Training Route
 
 Use this route when starting a clean, serious metal-classification campaign in
 `notebooks/DeepMzyme_training_colab.ipynb`.
 
 ### Required order
 
-Recommended linear G4 route:
+Recommended linear high-memory route:
 
 Stage 0 -> Stage 1 -> Stage 2A -> Stage 2B if ESM is ready -> Stage 3 ->
 Stage 5A -> Stage 6 -> Stage 5B/5C/5D/5E/5F only if their gates pass ->
@@ -633,9 +767,9 @@ Interpretation:
 11. Stage 7: one-shot held-out test for the single final validation-selected
     configuration.
 
-Stage 4 is optional on a G4 GPU and mainly for sanity HPO, search-space
+Stage 4 is optional on a high-memory GPU and mainly for sanity HPO, search-space
 debugging at useful scale, or limited-compute campaigns. For a serious fresh
-G4 search, Stage 5 is preferred after Stage 3 passes.
+high-memory search, Stage 5 is preferred after Stage 3 passes.
 
 ### Advanced fusion gate
 
@@ -665,16 +799,26 @@ Study naming: `metal_<preset_slug>_<size>_<purpose>`, for example
 `metal_only_gvp_200_capacity` or `metal_late_fusion_200_controlled`. Always use
 lowercase, underscore-separated names.
 
-Storage path template:
-`sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`. Use one
+Active storage path template:
+`sqlite:////mnt/local-scratch/optuna/<study_name>.db`. Use this via
+`OPTUNA_STORAGE_OVERRIDE`, then set `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`
+in paste blocks so the active Optuna SQLite database stays on local scratch.
+
+Drive backup path template:
+`/content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`. Keep
+`OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` and
+`OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1` for reportable HPO. The
+notebook restores scratch from this backup if scratch is empty before study
+creation, then snapshots scratch back to Drive after trial completion. Use one
 file per study. Never share a study DB across different `MODEL_PRESET` values.
 
 Resumption rule: re-running the notebook with the same `OPTUNA_STUDY_NAME` and
 storage URL resumes the persistent study and launches only the remaining trials
-needed to reach `OPTUNA_TARGET_COMPLETE_TRIALS` completed trials. `N_OPTUNA_TRIALS`
-is still accepted as a backward-compatible alias in older snippets. To start
-fresh, change the study name; do not delete the `.db` unless you mean to discard
-history.
+needed to reach `OPTUNA_TARGET_COMPLETE_TRIALS` completed trials. With scratch
+storage, the notebook first restores the scratch DB from the matching Drive
+backup when scratch is empty. `N_OPTUNA_TRIALS` is still accepted as a
+backward-compatible alias in older snippets. To start fresh, change the study
+name; do not delete the `.db` unless you mean to discard history.
 
 Resume policy for reportable HPO:
 
@@ -989,7 +1133,7 @@ Proceed to Stage 2B or Stage 4 only if:
 - Rare-class recall protection passes: `val_metal_min_recall` and per-class
   recall are available in the run artifacts, and no candidate is promoted if a
   metal class has zero recall across the completed validation runs.
-- Stage 2A anchor reliability is sufficient: the standard G4 block uses five
+- Stage 2A anchor reliability is sufficient: the standard high-memory block uses five
   seeds, `42,123,2026,7,2718`. If a compute-constrained run uses fewer seeds,
   mark the Stage 2A anchor as provisional and record the reason in
   `EXPERIMENT_STATUS.md`.
@@ -1136,22 +1280,30 @@ MAX_EPOCHS_PER_TRIAL = 3
 OPTUNA_N_STARTUP_TRIALS = 4
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 2
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_debug"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
 WEIGHT_DECAYS_CSV = "0.0,1e-5,1e-4"
 BATCH_SIZES_CSV = "4,8"
 METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
 
 INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
@@ -1211,14 +1363,14 @@ If gate fails: fix Optuna storage, search-space parsing, command generation, or
 feature paths before launching Stage 4. Do not choose hyperparameters from this
 debug run.
 
-## Stage 4 - Medium Per-Family Optuna, Optional On G4
+## Stage 4 - Medium Per-Family Optuna, Optional Medium HPO
 
 Purpose: run a useful but bounded HPO pass inside one selected model family.
 
 When to use it: after baseline behavior is understood and you have selected a
 model family to tune, usually Only-GVP first.
 
-Expected scale/runtime: useful serious run on a G4-class GPU, usually hours.
+Expected scale/runtime: useful serious run on the high-memory single-GPU environment, usually hours.
 
 Notebook configuration block for first useful Only-GVP HPO:
 
@@ -1252,30 +1404,38 @@ PREPARE_MISSING_EXTERNAL_FEATURES = True
 EXTERNAL_FEATURES_ROOT_DIR = ""
 
 OPTUNA_INTENSITY = "custom"
-OPTUNA_TARGET_COMPLETE_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 64
 MAX_EPOCHS_PER_TRIAL = 35
-OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_N_STARTUP_TRIALS = 20
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_medium.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_medium.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
 # Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
 TOP_K_CONFIGS_FOR_SEED_REPEAT = "auto"
@@ -1292,7 +1452,7 @@ Expected outputs/files:
 - `optuna_best_config.json`, `best_config_command.txt`
 - `top_reevaluation_commands.txt`
 - `optuna_study_summary.md`
-- Two hundred per-trial validation-only run directories under `<RUNS_DIR>/`
+- Sixty-four per-trial validation-only run directories under `<RUNS_DIR>/`
 - Per-trial `active_run_config.json`, `active_run_config.md`,
   `run_config.json`, `run_metadata.json`, and `split_diagnostics.json`
 - No `test_report.json`
@@ -1308,7 +1468,7 @@ Exact configuration record:
 
 Success criteria:
 
-- The study completes the requested trial count.
+- The study completes the requested 64-trial count.
 - The best-trial summary is based on `val_metal_balanced_acc`.
 - Trial logs show validation-only runs, not final-test runs.
 - Top candidates have finite selected validation metrics and no missing-class
@@ -1319,7 +1479,7 @@ Success criteria:
 Proceed to Stage 5 or Stage 6 only if:
 
 - The Stage 4 success criteria are met.
-- `all_trials.csv` contains at least 200 `COMPLETE` trials for this
+- `all_trials.csv` contains at least 64 `COMPLETE` trials for this
   `MODEL_PRESET`; resume the same study until that count is reached.
 - The expected Optuna files and per-trial run-level JSON files exist.
 - No held-out test files were created.
@@ -1437,13 +1597,21 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "later_capacity"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_200_capacity"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_200_capacity.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_200_capacity.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1454,15 +1622,14 @@ LR_SCHEDULES_CSV = "fixed,cosine"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16,32"
 METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy,focal"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-METAL_COLLAPSED_LOSS_WEIGHT = 0.0
-OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-OPTUNA_METAL_FOCAL_GAMMA_VALUES_CSV = "1.5,2.0,2.5"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy,focal"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+METAL_FOCAL_GAMMA_VALUES_CSV = "1.5,2.0,2.5"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "8,16"
@@ -1484,9 +1651,8 @@ Optional Stage 5A validation-only objective overlay:
 
 ```python
 # Collapsed-4 auxiliary-loss probe; keep this out of initial baselines.
-METAL_COLLAPSED_LOSS_WEIGHT = 0.0
-OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 
 # Optional rare-class-protection Pareto search.
 OPTUNA_MULTIOBJECTIVE = True
@@ -1564,13 +1730,21 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 30
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1579,9 +1753,9 @@ OPTUNA_LEARNING_RATE_RANGE = "5e-6,2e-4"
 WEIGHT_DECAYS_CSV = "0.0,1e-6,1e-5,1e-4"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "none,inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
 
 HIDDEN_S_VALUES_CSV = "128,256"
 HEAD_MLP_LAYERS_VALUES_CSV = "1,2,3"
@@ -1646,13 +1820,21 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1662,13 +1844,13 @@ LR_SCHEDULES_CSV = "fixed,cosine"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "8,16"
@@ -1742,13 +1924,21 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_node_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1758,13 +1948,13 @@ LR_SCHEDULES_CSV = "fixed,cosine"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "8,16"
@@ -1840,13 +2030,21 @@ MAX_EPOCHS_PER_TRIAL = 50
 OPTUNA_N_STARTUP_TRIALS = 40
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_hybrid_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1856,13 +2054,13 @@ LR_SCHEDULES_CSV = "fixed,cosine"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False,True"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "8,16"
@@ -1873,7 +2071,7 @@ EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 ESM_FUSION_DIM_VALUES_CSV = "64,128,256"
 EARLY_ESM_DIM_VALUES_CSV = "16,32,64"
-OPTUNA_EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+EARLY_ESM_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
 # Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
@@ -1920,7 +2118,7 @@ TASK = "metal"
 RUN_MODE = "controlled_hpo_optuna"
 RECOMMENDED_RUN_SET = "custom"
 MODEL_PRESET = "GVP + cross-modal attention"
-RUN_BATCH_ID = "metal_cross_attention_optuna_200_controlled"
+RUN_BATCH_ID = "metal_cross_attention_optuna_120_controlled"
 SUMMARY_BASENAME = ""  # auto from provenance
 
 EPOCHS = 50
@@ -1936,18 +2134,26 @@ ALLOW_MISSING_ESM_EMBEDDINGS = False
 PREPARE_MISSING_ESM_EMBEDDINGS = True
 
 OPTUNA_INTENSITY = "custom"
-OPTUNA_TARGET_COMPLETE_TRIALS = 200
+OPTUNA_TARGET_COMPLETE_TRIALS = 120
 MAX_EPOCHS_PER_TRIAL = 50
-OPTUNA_N_STARTUP_TRIALS = 40
+OPTUNA_N_STARTUP_TRIALS = 30
 OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
+OPTUNA_TPE_CONSTANT_LIAR = True
+OPTUNA_PARALLEL_WORKERS = 1
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
+OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
 OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
-OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_cross_attention_optuna_200_controlled.db"
+OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_cross_attention_optuna_120_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1956,12 +2162,12 @@ OPTUNA_LEARNING_RATE_RANGE = "5e-6,1e-4"
 WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"
 BATCH_SIZES_CSV = "8,16"
 METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency,inverse_sqrt_frequency,effective_number"
-OPTUNA_METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
-OPTUNA_METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
-OPTUNA_BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
-OPTUNA_HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0,0.03,0.05,0.1"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.1,0.2,0.3"
+POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"
 
 HIDDEN_S_VALUES_CSV = "128"
 HIDDEN_V_VALUES_CSV = "8,16"
@@ -1972,7 +2178,7 @@ EDGE_RADIUS_VALUES_CSV = "6.0,8.0,10.0"
 CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
 CROSS_ATTENTION_LAYERS_CSV = "1"
 CROSS_ATTENTION_HEADS_CSV = "2,4"
-OPTUNA_CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
+CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0,0.1,0.2"
 
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
 # Run Stage 6 later from the dedicated Stage 6 launch cell after HPO completes.
@@ -1985,7 +2191,7 @@ ALLOW_SHORT_TRAINING_FOR_DEBUG = False
 Expected outputs/files:
 
 - All shared Stage 5 Optuna and per-trial outputs.
-- Two hundred complete per-trial validation-only run directories.
+- One hundred twenty complete per-trial validation-only run directories.
 
 Exact configuration record:
 
@@ -1997,7 +2203,7 @@ Proceed to Stage 6 only if:
 
 - Stage 5C previously cleared the advanced-fusion ordering gate.
 - The shared Stage 5 decision-gate requirements pass for
-  `MODEL_PRESET = "GVP + cross-modal attention"` and at least 200 `COMPLETE`
+  `MODEL_PRESET = "GVP + cross-modal attention"` and at least 120 `COMPLETE`
   trials.
 - Attention candidates justify their extra complexity against the Stage 6
   late-fusion candidate.

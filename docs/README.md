@@ -22,7 +22,9 @@ meanings, not exact stage values.
 | --- | --- |
 | Policy and held-out-test rules | `../Plan.md` |
 | Current mutable experiment status | `../EXPERIMENT_STATUS.md` |
+| Current live notebook-default snapshot | `../README.md` |
 | Exact metal stage blocks | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
+| Conservative first-pass GVP/HPO profile | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Exact EC stage blocks | `EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Notebook option meanings | `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copied raw outputs | `notebook_outputs/raw/<model-family>/` |
@@ -35,9 +37,17 @@ meanings, not exact stage values.
 - Do not use held-out test data before Stage 7.
 - Stage 7 must use a fixed validation-selected configuration and a separate
   final-test output folder.
-- Treat `METAL_LABEL_SCHEME` as part of the experiment identity. The default is
-  six-class; five-class Co/Ni-grouped runs must use separate run/study names and
-  must not be mixed with six-class evidence.
+- Keep current notebook defaults, conservative first-pass GVP/HPO profiles,
+  and canonical extended G4 HPO budgets distinct. Current defaults are a live
+  launch surface; stage budgets and decision gates belong in the playbooks.
+- Treat `METAL_LABEL_SCHEME` and `VAL_FRACTION` as part of the experiment
+  identity. The live notebook currently defaults to
+  `METAL_LABEL_SCHEME = "five_class"` and `VAL_FRACTION = 0.18`; older
+  six-class or `0.15` validation evidence must use separate run/study names and
+  must not be mixed with the current notebook-default evidence.
+- Treat `METAL_NODE_MODE = "per_metal"` as part of the current notebook default
+  configuration. It changes the graph/readout contract and should be recorded
+  explicitly in summaries and run names when possible.
 - Do not create a second notebook-output folder with a space in its name.
 - When copying Drive/Colab evidence into the repo, add raw output under
   `notebook_outputs/raw/`, add a short summary under `notebook_outputs/summaries/`,

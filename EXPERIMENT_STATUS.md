@@ -363,6 +363,11 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
   fallback, and test `32` only as a separately labeled validation-only
   ablation. Keep final reporting tied to the selected run's own batch size
   unless a validation-only batch-size ablation selects a replacement.
+- For a fresh anti-overfitting GVP/ESM first pass, use the playbook's
+  "Conservative First-Pass Anti-Overfitting GVP Profile" as a labeled
+  validation-only starting profile. Keep it distinct from the canonical
+  extended G4 Stage 5 budgets, and do not treat one Optuna split as final
+  evidence without Stage 6 confirmation.
 
 ## Recommended Next Notebook Action
 

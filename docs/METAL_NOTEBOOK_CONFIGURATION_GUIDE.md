@@ -28,7 +28,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
 | Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
 | Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
-| Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
+| Stage 4: medium per-family Optuna, optional medium HPO | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
 | Stage 5A: serious Only-GVP HPO | One `MODEL_PRESET`, serious Optuna search controls, graph capacity controls, imbalance controls | "Model architecture and fusion", "Metal class weighting", "Optuna storage and Stage 6 confirmation" |
 | Stage 5B: Only-ESM HPO | ESM path/generation controls, ESM-only preset, serious Optuna controls | "ESM options", "Optuna storage and Stage 6 confirmation" |
 | Stage 5C: GVP + late fusion HPO | ESM fusion controls, serious Optuna controls, validation gate for advanced fusion | "Advanced fusion policy", "Optuna storage and Stage 6 confirmation" |
@@ -87,13 +87,14 @@ Before launching a run, verify these resolved notebook values:
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
 | Held-out test during training | Fixed off in the main configuration cell; use the final-test cells only |
-| Device on G4 | `DEVICE = "cuda"` |
+| Device on high-memory GPU | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
-| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
-| Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True` |
+| Serious Optuna storage | local-scratch SQLite via `OPTUNA_STORAGE_OVERRIDE`, with Drive SQLite copy-back; the live notebook defaults `USE_PERSISTENT_OPTUNA_STORAGE = True` |
+| Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
+| Parallel Optuna workers | `1` cleanest/reproducibility-first; `2` conservative high-memory acceleration; `3` recommended high-memory acceleration after a debug benchmark; `4+` benchmark/debug only |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
-| Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
+| Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
 | Final test | Stage 7 only, after Stage 6 grouped-fold validation |
 
@@ -148,16 +149,35 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 - `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
   merged into `Class VIII`. Six-class metal classification remains primary.
 
-## G4-Oriented Training Profile
+## High-Memory Training Profile
 
-The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
-spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "G4-Class Optuna
+The exact high-memory single-GPU Optuna budgets, sampler settings, storage URLs, and search
+spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "High-Memory Single-GPU Optuna
 Policy". This guide does not duplicate them. The high-level posture is:
-persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
+persistent SQLite Optuna on local scratch with Drive copy-back, multivariate/group TPE, one `MODEL_PRESET`
 per study, validation-only objective, and predeclared grouped-fold confirmation
 before any held-out test. The playbook owns the exact trial counts, startup
 trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
 batch-size search space, and seed list.
+
+The current resource assumption is roughly 80-96 GB GPU RAM and 167-177 GB
+system RAM on one GPU. Worker recommendations below are based on that resource
+profile, not on GPU model names.
+
+Keep three concepts separate:
+
+- Current notebook defaults are the values visible in the notebook UI. They are
+  a launch surface and may be exploratory.
+- Canonical serious high-memory HPO budgets are the stage-owned values in the playbook.
+- The conservative first-pass anti-overfitting GVP profile is a recommended
+  low-capacity search posture for GVP-based metal-focused runs, not a claim
+  that the values are optimal.
+
+`RUN_MODE` controls whether HPO fields are active. `single` runs one resolved
+configuration. `manual_configurations` expands planned CSV/grid settings.
+`controlled_hpo_optuna` is required for Optuna HPO; Optuna fields should not be
+interpreted as active unless this mode is selected or a stage explicitly
+launches HPO.
 
 ## Starting Point
 
@@ -336,6 +356,26 @@ The main capacity fields are:
   create one planned row per cutoff. In `controlled_hpo_optuna`, these same
   CSV values are sampled when the field is active.
 
+Current GVP node scalar input is already rich: amino-acid chemistry,
+hydrophobicity, donor/acceptor/aromatic/acidic/basic flags, shell role,
+distance/RBF-derived terms, and burial/SASA/electrostatics/PROPKA-like
+features where available. The graph also has explicit residue vector channels
+and edge scalar/RING/radius features. Because this feature set is already
+informative and the dataset is modest, first-stage GVP capacity should stay
+conservative.
+
+For roughly one thousand metal-site samples, `hidden_s=128`, `hidden_v=8/16`,
+`edge_hidden=64`, and 2-3 GVP layers are appropriate low-capacity starting
+values. `edge_radius=6/8` keeps the radius graph local. Treat `edge_radius=10`
+or higher, `esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`,
+`edge_hidden>=128`, and `gvp_layers>=4` as second-stage expansion options when
+validation stability checks suggest underfitting, not as first-pass
+anti-overfitting defaults.
+
+The notebook exposes feature omission through `OMIT_NODE_FEATURE_SETS`; the CLI
+flag is `--omit-node-features`. Use feature omission only for explicitly
+labeled ablations.
+
 Do not vary all capacity fields at once in the first baseline. Use the playbook
 for the exact first baseline and HPO search spaces; use
 `only_gvp_architecture_grid` or `only_gvp_geometry_grid` only after simpler
@@ -412,8 +452,9 @@ Do not compare 1-epoch runs as if they are model-quality evidence.
 
 ### Training-only graph augmentation
 
-`POSITION_NOISE_STD` and `OUTER_RESIDUE_DROPOUT` are the canonical
-training-only graph augmentation knobs for metal HPO. They map to
+`POSITION_NOISE_STDS_CSV` and `OUTER_RESIDUE_DROPOUTS_CSV` are the canonical
+training-only graph augmentation knobs for metal HPO. In single mode, the
+notebook takes the first CSV value and maps it to
 `--position-noise-std` and `--outer-residue-dropout`. Outer-residue dropout
 affects only pocket residues that are neither first-shell nor second-shell;
 first-shell and second-shell residues remain protected by this canonical
@@ -423,13 +464,30 @@ inference use unaugmented coordinates and graph membership.
 
 The training CLI still supports `--second-shell-dropout` for explicitly labeled
 manual or out-of-search-space ablations, but canonical notebook/playbook metal
-HPO keeps `SECOND_SHELL_DROPOUT = 0.0` and
-`OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0"`.
+HPO keeps `SECOND_SHELL_DROPOUTS_CSV = "0.0"`.
 
 For serious Stage 4/5A/5C/5D/5E/5F HPO, the playbook opts into
-`OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
-`OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
+`POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
+`OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
 augmentation search so the unaugmented baseline remains directly comparable.
+The conservative first-pass anti-overfitting profile is narrower:
+`POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"` and
+`OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"`, with
+`SECOND_SHELL_DROPOUTS_CSV = "0.0"` as the protected-shell default.
+
+Recommended first-pass dropout values are
+`HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"`,
+`ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"`,
+`EARLY_ESM_DROPOUT_VALUES_CSV = "0.05"` or `"0.1"`, and
+`CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1"`. Do not add internal GVP-layer dropout unless
+the training code explicitly supports it and a future task asks for that code
+change.
+
+Coordinate noise and residue dropout are training-only robustness tools. Keep
+coordinate noise mild for metal-site geometry. If using AlphaFold structures,
+mild training-only coordinate noise can be considered, but validation and
+held-out test graphs must remain unchanged. Do not claim augmentation improves
+performance without validation evidence.
 
 ### Joint-loss weighting caution
 
@@ -468,15 +526,15 @@ Current code supports:
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_sqrt_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`
-- `BALANCE_METAL_SITE_SYMBOLS = True` or `False`
-- `METAL_LOSS_FUNCTION = "cross_entropy"` or `"focal"`
-- `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` by default
+- `BALANCE_METAL_SITE_SYMBOLS_CSV = "False"` or `"False,True"`
+- `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` or `"cross_entropy,focal"`
+- `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` by default
 
 Start cautiously:
 
 1. Use the source-code/notebook default `inverse_frequency` for the first baseline, because existing DeepMzyme runs used it.
 2. Compare `none,inverse_frequency,inverse_sqrt_frequency,effective_number` only after the baseline is stable.
-3. Keep `METAL_LOSS_FUNCTION = "cross_entropy"` first.
+3. Keep `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` first.
 4. Treat `focal` and per-class loss multipliers as later ablations, not first-line defaults.
 5. Do not decide class weighting from one seed.
 
@@ -489,7 +547,7 @@ destroying common-class performance.
 
 ### Collapsed-4 Auxiliary Loss
 
-`METAL_COLLAPSED_LOSS_WEIGHT` is an experimental metal-only objective option.
+`METAL_COLLAPSED_LOSS_WEIGHTS_CSV` is an experimental metal-only objective option.
 The default `0.0` preserves the existing six-class loss. Nonzero values add an
 auxiliary collapsed-4 cross-entropy term where `Fe`, `Co`, and `Ni` are merged
 into `Class VIII` only for that auxiliary view.
@@ -514,9 +572,10 @@ For debug only:
 For useful Colab HPO:
 
 - Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
-  budget. The playbook uses this for G4-oriented serious searches.
-- Use persistent SQLite storage in Drive. The playbook gives the exact storage
-  path for each serious stage.
+  budget. The playbook uses this for high-memory serious searches.
+- Use persistent SQLite storage on fast local scratch via
+  `OPTUNA_STORAGE_OVERRIDE`; the playbook gives the exact scratch storage and
+  Drive-backup path for each serious stage.
 - Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
 - Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
@@ -526,6 +585,47 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_MULTIVARIATE = True` and `OPTUNA_TPE_GROUP = True` so TPE
   can model correlated parameters such as hidden width, vector width, graph
   depth, and fusion dimension.
+- Keep `OPTUNA_TPE_CONSTANT_LIAR = True` for shared-storage HPO so multiple
+  Optuna workers can run in parallel without repeatedly sampling in-flight
+  configurations. Sequential runs remain supported.
+- The live notebook defaults to `USE_PERSISTENT_OPTUNA_STORAGE = True` and a
+  local-scratch `OPTUNA_STORAGE_OVERRIDE`, so changing only
+  `OPTUNA_PARALLEL_WORKERS` from `1` to `2` or `3` has the required shared
+  SQLite study database without using Drive/FUSE as the live database. Set it
+  to `False` only for deliberately temporary/non-resumable debug studies.
+- Worker policy is resource-based for the current high-memory single-GPU
+  environment: `1` is cleanest/reproducibility-first, `2` is conservative
+  acceleration, `3` is the recommended validation-only acceleration target
+  after a debug benchmark, and `4+` is benchmark/debug only.
+- With `OPTUNA_PARALLEL_WORKERS > 1`, keep persistent/shared storage,
+  `OPTUNA_TPE_CONSTANT_LIAR = True`,
+  `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS > 0`, and
+  `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True`. If CUDA OOM occurs, reduce the
+  worker count or the active batch-size/model-capacity range; do not treat the
+  OOM as a model-quality signal.
+- SQLite storage on Drive can hit lock contention under parallel optimization,
+  especially at `OPTUNA_PARALLEL_WORKERS >= 3`, so the active database should
+  stay on scratch. Keep `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` to restore
+  from Drive at launch when scratch is empty and copy a SQLite snapshot back to
+  Drive after trial completion. Run a tiny validation-only debug benchmark for
+  workers `2`, `3`, `4`, and `6`, then compare wall time while monitoring GPU
+  utilization, GPU memory, CPU/RAM, disk I/O, and SQLite lock errors.
+- PyTorch `DataLoader(num_workers > 0)` uses multiprocessing. Total data-loader
+  pressure is approximately `OPTUNA_PARALLEL_WORKERS x DATALOADER_NUM_WORKERS`;
+  with three Optuna workers, start around `DATALOADER_NUM_WORKERS = 1` or `2`
+  and avoid high totals such as `3 x 8` unless benchmarked.
+- With `OPTUNA_PARALLEL_WORKERS > 1`, the notebook launches parallel trial
+  subprocesses through an Optuna `study.optimize(..., n_jobs=...)` call. Optuna
+  manages parallel trial scheduling in the notebook process, while each trial
+  objective launches `src/train.py` as its own subprocess. Robust parallel
+  optimization therefore depends on shared storage. Per-trial stdout and stderr
+  still go to each trial's log files; the notebook suppresses live per-line
+  trial streaming to avoid interleaved output. The hidden
+  `OPTUNA_PRINT_PARALLEL_TRIAL_EPOCH_LOG_AFTER_FINISH = True` display flag
+  prints each finished trial's collected `epoch=` lines as one completed block,
+  so parallel runs show full-trial epoch progress after each trial finishes
+  without mixing lines from concurrently running trials. Trial completion
+  progress remains printed and recorded in the Optuna trial log.
 - Set `OPTUNA_N_STARTUP_TRIALS` below `OPTUNA_TARGET_COMPLETE_TRIALS`.
   `OPTUNA_TARGET_COMPLETE_TRIALS` is the target number of completed Optuna
   trials in the study; with persistent storage, reruns launch only the remaining
@@ -609,7 +709,21 @@ Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
 defined per stage in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use
 `OPTUNA_INTENSITY = "custom"` and persistent Drive-backed storage for every
-reportable run on the G4 GPU.
+reportable run on the high-memory GPU.
+
+Budget interpretation:
+
+- Conservative first-pass anti-overfitting HPO: 64 or 80 complete trials,
+  35-40 epochs per trial, and 15-20 startup trials.
+- Strong controlled HPO: 100 complete trials, 50 epochs per trial, and 20
+  startup trials.
+- Extended serious HPO: the canonical playbook Stage 5 budgets, including
+  200-complete-trial studies where specified.
+
+A 200-complete-trial study is an extended serious search, not a simple
+first-pass anti-overfitting search. It is acceptable only when followed by
+predeclared Stage 6 top-K grouped-fold/seed confirmation. Do not treat the best
+single Optuna validation split as final evidence.
 
 In multi-objective mode, Optuna uses minimum recall over the active metal label
 scheme for rare-class protection. For default reportable runs that is six-class
@@ -877,11 +991,16 @@ For final reporting:
   grouped-fold confirmation, or seed-repeat runs.
 - Do not run reportable Optuna with notebook preset budgets; use the playbook's
   `OPTUNA_INTENSITY = "custom"` stage blocks.
-- Do not enable `METAL_COLLAPSED_LOSS_WEIGHT > 0` in initial baselines or final
+- Do not enable `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` values above `0.0` in initial baselines or final
   held-out test workflows.
 - Do not use multi-objective Pareto review as a substitute for Stage 6
   grouped-fold confirmation.
 - Do not run serious Optuna with missing or nonpersistent `OPTUNA_STORAGE`.
+- Do not run serious parallel Optuna with blank/nonpersistent `OPTUNA_STORAGE`
+  or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
+- Do not run serious Optuna with `OPTUNA_PARALLEL_WORKERS >= 4` unless an
+  explicitly labeled benchmark/debug run has already confirmed stable memory,
+  storage, CPU/RAM, and disk behavior.
 - Do not reuse one persistent Optuna study for multiple `MODEL_PRESET` values
   metal label schemes, or incompatible search spaces; let the default
   study-compatibility guard stop the run.
