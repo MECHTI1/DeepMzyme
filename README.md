@@ -29,11 +29,11 @@ evidence.
 | Graph defaults | `RING_EDGE_MODE = "with_ring"`, `METAL_NODE_MODE = "per_metal"`, `STRUCTURAL_READOUT_SCOPE = "auto"` | Same. |
 | Capacity/search CSVs | `HIDDEN_S_VALUES_CSV = "128"`, `HIDDEN_V_VALUES_CSV = "8,16"`, `EDGE_HIDDEN_VALUES_CSV = "64"`, `GVP_LAYERS_VALUES_CSV = "2,3"`, `HEAD_MLP_LAYERS_VALUES_CSV = "1,2"` | Same. |
 | Geometry/fusion CSVs | `EDGE_RADIUS_VALUES_CSV = "6, 8"`, `ESM_FUSION_DIM_VALUES_CSV = "64,128"`, `EARLY_ESM_DIM_VALUES_CSV = "32,48"` | Same. |
-| Regularization/augmentation | `HEAD_MLP_DROPOUT = 0.2`, `ESM_GRAPH_ENCODER_DROPOUT = 0.1`, `EARLY_ESM_DROPOUT = 0.05`, `CROSS_ATTENTION_DROPOUT = 0.1`, `POSITION_NOISE_STD = 0.0`, `OUTER_RESIDUE_DROPOUT = 0.0`, `OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"`, `OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"` | Same. |
+| Regularization/augmentation | `HEAD_MLP_DROPOUT_VALUES_CSV = "0.2,0.3"`, `ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1,0.2"`, `EARLY_ESM_DROPOUT_VALUES_CSV = "0.05,0.1,0.2"`, `CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1,0.2"`, `POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"`, `SECOND_SHELL_DROPOUTS_CSV = "0.0"`, `OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"` | Same. |
 | Training | `EPOCHS = 50`, `BATCH_SIZES_CSV = "12"`, `LEARNING_RATES_CSV = "3.705631497756492e-05"`, `WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"` | Use the playbook stage budget; conservative first-pass HPO is 64 or 80 complete trials at 35-40 epochs per trial. |
 | Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` | Use validation-only selection. For reportable metal stages, use the playbook's declared split and `val_metal_balanced_acc`; use an EC metric when optimizing EC. |
-| Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTION = "cross_entropy"` | Keep within the stage block and one compatible Optuna study. |
-| Task weights | `METAL_LOSS_WEIGHT = 2.0`, `EC_LOSS_WEIGHT = 0.25` | For joint metal-selected runs, document EC as auxiliary. |
+| Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` | Keep within the stage block and one compatible Optuna study. |
+| Task weights | `METAL_LOSS_WEIGHT_VALUES_CSV = "2.0"`, `EC_LOSS_WEIGHT_VALUES_CSV = "0.25"` | For joint metal-selected runs, document EC as auxiliary. |
 | Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` | Same; final held-out test only after Stage 6 confirmation. |
 
 These are current notebook defaults, not evidence that the listed values are
@@ -83,15 +83,13 @@ EDGE_RADIUS_VALUES_CSV = "6,8"
 ESM_FUSION_DIM_VALUES_CSV = "64,128"
 EARLY_ESM_DIM_VALUES_CSV = "32,48"
 
-HEAD_MLP_DROPOUT = 0.2
-ESM_GRAPH_ENCODER_DROPOUT = 0.1
-EARLY_ESM_DROPOUT = 0.05  # 0.1 is also a reasonable first-pass value.
-CROSS_ATTENTION_DROPOUT = 0.1
-POSITION_NOISE_STD = 0.0
-OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"
-SECOND_SHELL_DROPOUT = 0.0
-OUTER_RESIDUE_DROPOUT = 0.0
-OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"
+EARLY_ESM_DROPOUT_VALUES_CSV = "0.05"  # 0.1 is also a reasonable first-pass value.
+CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1"
+POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"
+SECOND_SHELL_DROPOUTS_CSV = "0.0"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"
 ```
 
 `hidden_s=128`, `hidden_v=8/16`, `edge_hidden=64`, and 2-3 GVP layers are

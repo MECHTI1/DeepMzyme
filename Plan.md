@@ -351,8 +351,7 @@ For the metal notebook pipeline, the playbook must keep exact values for:
   `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM`, `OPTUNA_AUTO_CONFIGURE_BUDGET`, storage,
   search preset, and search ranges
 - Optional validation-only objective controls:
-  `METAL_COLLAPSED_LOSS_WEIGHT`,
-  `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHTS_CSV`, and
+  `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` and
   `OPTUNA_MULTIOBJECTIVE`
 - Stage 6 confirmation controls: top-K, grouped-fold count, split seed, model
   seed list for fallback repeats, mismatch guard, paired-bootstrap comparison,

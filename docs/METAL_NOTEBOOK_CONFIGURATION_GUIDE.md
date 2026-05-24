@@ -94,7 +94,7 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
 | Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; optional G4 acceleration override `2` only after a debug run confirms CUDA memory headroom |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
-| Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` unless running an explicitly labeled validation-only objective probe |
+| Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
 | Final test | Stage 7 only, after Stage 6 grouped-fold validation |
 
@@ -448,8 +448,9 @@ Do not compare 1-epoch runs as if they are model-quality evidence.
 
 ### Training-only graph augmentation
 
-`POSITION_NOISE_STD` and `OUTER_RESIDUE_DROPOUT` are the canonical
-training-only graph augmentation knobs for metal HPO. They map to
+`POSITION_NOISE_STDS_CSV` and `OUTER_RESIDUE_DROPOUTS_CSV` are the canonical
+training-only graph augmentation knobs for metal HPO. In single mode, the
+notebook takes the first CSV value and maps it to
 `--position-noise-std` and `--outer-residue-dropout`. Outer-residue dropout
 affects only pocket residues that are neither first-shell nor second-shell;
 first-shell and second-shell residues remain protected by this canonical
@@ -459,22 +460,22 @@ inference use unaugmented coordinates and graph membership.
 
 The training CLI still supports `--second-shell-dropout` for explicitly labeled
 manual or out-of-search-space ablations, but canonical notebook/playbook metal
-HPO keeps `SECOND_SHELL_DROPOUT = 0.0` and
-`OPTUNA_SECOND_SHELL_DROPOUTS_CSV = "0.0"`.
+HPO keeps `SECOND_SHELL_DROPOUTS_CSV = "0.0"`.
 
 For serious Stage 4/5A/5C/5D/5E/5F HPO, the playbook opts into
-`OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
-`OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
+`POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
+`OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
 augmentation search so the unaugmented baseline remains directly comparable.
 The conservative first-pass anti-overfitting profile is narrower:
-`OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"` and
-`OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"`, with
-`POSITION_NOISE_STD = 0.0`, `SECOND_SHELL_DROPOUT = 0.0`, and
-`OUTER_RESIDUE_DROPOUT = 0.0` as non-HPO defaults.
+`POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"` and
+`OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"`, with
+`SECOND_SHELL_DROPOUTS_CSV = "0.0"` as the protected-shell default.
 
-Recommended first-pass dropout values are `HEAD_MLP_DROPOUT = 0.2`,
-`ESM_GRAPH_ENCODER_DROPOUT = 0.1`, `EARLY_ESM_DROPOUT = 0.05` or `0.1`, and
-`CROSS_ATTENTION_DROPOUT = 0.1`. Do not add internal GVP-layer dropout unless
+Recommended first-pass dropout values are
+`HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"`,
+`ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"`,
+`EARLY_ESM_DROPOUT_VALUES_CSV = "0.05"` or `"0.1"`, and
+`CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1"`. Do not add internal GVP-layer dropout unless
 the training code explicitly supports it and a future task asks for that code
 change.
 
@@ -521,15 +522,15 @@ Current code supports:
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "inverse_sqrt_frequency"`
 - `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`
-- `BALANCE_METAL_SITE_SYMBOLS = True` or `False`
-- `METAL_LOSS_FUNCTION = "cross_entropy"` or `"focal"`
-- `METAL_COLLAPSED_LOSS_WEIGHT = 0.0` by default
+- `BALANCE_METAL_SITE_SYMBOLS_CSV = "False"` or `"False,True"`
+- `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` or `"cross_entropy,focal"`
+- `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` by default
 
 Start cautiously:
 
 1. Use the source-code/notebook default `inverse_frequency` for the first baseline, because existing DeepMzyme runs used it.
 2. Compare `none,inverse_frequency,inverse_sqrt_frequency,effective_number` only after the baseline is stable.
-3. Keep `METAL_LOSS_FUNCTION = "cross_entropy"` first.
+3. Keep `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` first.
 4. Treat `focal` and per-class loss multipliers as later ablations, not first-line defaults.
 5. Do not decide class weighting from one seed.
 
@@ -542,7 +543,7 @@ destroying common-class performance.
 
 ### Collapsed-4 Auxiliary Loss
 
-`METAL_COLLAPSED_LOSS_WEIGHT` is an experimental metal-only objective option.
+`METAL_COLLAPSED_LOSS_WEIGHTS_CSV` is an experimental metal-only objective option.
 The default `0.0` preserves the existing six-class loss. Nonzero values add an
 auxiliary collapsed-4 cross-entropy term where `Fe`, `Co`, and `Ni` are merged
 into `Class VIII` only for that auxiliary view.
@@ -961,7 +962,7 @@ For final reporting:
   grouped-fold confirmation, or seed-repeat runs.
 - Do not run reportable Optuna with notebook preset budgets; use the playbook's
   `OPTUNA_INTENSITY = "custom"` stage blocks.
-- Do not enable `METAL_COLLAPSED_LOSS_WEIGHT > 0` in initial baselines or final
+- Do not enable `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` values above `0.0` in initial baselines or final
   held-out test workflows.
 - Do not use multi-objective Pareto review as a substitute for Stage 6
   grouped-fold confirmation.
