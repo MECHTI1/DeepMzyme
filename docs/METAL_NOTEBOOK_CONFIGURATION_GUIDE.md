@@ -90,7 +90,7 @@ Before launching a run, verify these resolved notebook values:
 | Device on G4 | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
-| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
+| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE`; the live notebook defaults `USE_PERSISTENT_OPTUNA_STORAGE = True` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
 | Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; optional G4 acceleration override `2` only after a debug run confirms CUDA memory headroom |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
@@ -583,6 +583,10 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_CONSTANT_LIAR = True` for shared-storage HPO so multiple
   Optuna workers can run in parallel without repeatedly sampling in-flight
   configurations. Sequential runs remain supported.
+- The live notebook defaults to `USE_PERSISTENT_OPTUNA_STORAGE = True`, so
+  changing only `OPTUNA_PARALLEL_WORKERS` from `1` to `2` has the required
+  shared SQLite study database. Set it to `False` only for deliberately
+  temporary/non-resumable debug studies.
 - Keep `OPTUNA_PARALLEL_WORKERS = 1` for canonical reportable stage blocks
   unless you deliberately choose a validation-only acceleration override. To
   use parallel workers on G4, first prove memory headroom with a short debug
