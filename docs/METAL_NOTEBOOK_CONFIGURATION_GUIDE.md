@@ -599,7 +599,11 @@ For useful Colab HPO:
 - With `OPTUNA_PARALLEL_WORKERS > 1`, the notebook launches parallel trial
   subprocesses through `study.optimize(..., n_jobs=...)`. Per-trial stdout and
   stderr still go to each trial's log files; the notebook suppresses live
-  per-line trial streaming to avoid interleaved output. Trial completion
+  per-line trial streaming to avoid interleaved output. The hidden
+  `OPTUNA_PRINT_PARALLEL_TRIAL_EPOCH_LOG_AFTER_FINISH = True` display flag
+  prints each finished trial's collected `epoch=` lines as one completed block,
+  so parallel runs show full-trial epoch progress after each trial finishes
+  without mixing lines from concurrently running trials. Trial completion
   progress remains printed and recorded in the Optuna trial log.
 - Set `OPTUNA_N_STARTUP_TRIALS` below `OPTUNA_TARGET_COMPLETE_TRIALS`.
   `OPTUNA_TARGET_COMPLETE_TRIALS` is the target number of completed Optuna
