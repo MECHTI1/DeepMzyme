@@ -26,7 +26,7 @@ what to run next:
 - Stage 2A: Only-GVP validation anchor
 - Stage 2B: baseline family comparison
 - Stage 3: Optuna plumbing debug
-- Stage 4: medium per-family Optuna, optional on G4
+- Stage 4: medium per-family Optuna, optional medium HPO
 - Stage 5A: serious Only-GVP HPO
 - Stage 5B: Only-ESM HPO
 - Stage 5C: GVP + late fusion HPO
@@ -39,14 +39,14 @@ what to run next:
 
 ## Pipeline Overview At A Glance
 
-| Stage | Purpose | Owns exact budget? | G4 wall-time (approx.) | Pass/fail decision gate | Required outputs |
+| Stage | Purpose | Owns exact budget? | Wall-time (approx.) | Pass/fail decision gate | Required outputs |
 | --- | --- | --- | --- | --- | --- |
 | Stage 0 | Environment, Drive, data bundle, RING/ESM/external-feature readiness | Yes, planning-only | 10-20 min | Planned config resolves under Drive, coverage diagnostics pass, no test artifacts | Planned-run CSV/dictionary, optional metal-weight diagnostics |
 | Stage 1 | 1-epoch smoke to prove notebook and training path | Yes, smoke budget | 5-15 min | One validation-only run completes; no missing paths/classes; no test artifacts | Planned files, one run dir, `run_config.json`, `run_metadata.json`, `split_diagnostics.json` |
 | Stage 2A | Only-GVP validation anchor | Yes | 10-16 h | All planned validation runs complete and rare-class diagnostics are usable | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
 | Stage 2B | Baseline family comparison after ESM is ready | Yes | 8-14 h | All planned validation runs complete and ESM coverage is valid | Planned files, run dirs, summary CSV/PNG, no `test_report.json` |
 | Stage 3 | Optuna plumbing debug | Yes, debug only | 20-40 min | Four complete validation-only trials and valid persistent-storage plumbing | Optuna `all_trials.csv`, `top_trials.csv`, `best_trial.json`, study summary |
-| Stage 4 | Medium per-family Optuna, optional on G4 | Yes | 8-16 h | Sixty-four complete validation-only trials in one `MODEL_PRESET` | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
+| Stage 4 | Medium per-family Optuna, optional medium HPO | Yes | 8-16 h | Sixty-four complete validation-only trials in one `MODEL_PRESET` | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5A | Serious Only-GVP HPO | Yes | 36-60 h | Two hundred complete validation-only trials in the Only-GVP study | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5B | Only-ESM HPO | Yes | 24-48 h | One hundred twenty complete validation-only trials with valid ESM coverage | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
 | Stage 5C | GVP + late fusion HPO | Yes | 36-60 h | Two hundred complete validation-only trials with valid ESM coverage | Optuna CSV/JSON/Markdown outputs and per-trial run dirs |
@@ -263,23 +263,37 @@ version, and source structure/sequence metadata. Older embeddings without
 sidecars must be labeled as `unknown_in_older_embeddings` in run metadata and
 status notes rather than guessed.
 
-## G4-Class Optuna Policy
+## High-Memory Single-GPU Optuna Policy
 
-This project runs on a G4-class GPU (16 GB VRAM, persistent runtime). All
-serious Optuna stages must use:
+This project currently targets a high-memory single-GPU environment with roughly
+80-96 GB GPU RAM and 167-177 GB system RAM. All serious Optuna stages must use:
 
 - `OPTUNA_INTENSITY = "custom"` - never rely on `first_useful`/`serious`
   notebook presets for reportable HPO.
 - `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`,
   `OPTUNA_TPE_CONSTANT_LIAR = True` so shared-storage studies support multiple
   parallel workers without duplicate/in-flight TPE suggestions.
-- `OPTUNA_PARALLEL_WORKERS = 1` is the canonical default and preserves
-  historical serial trial execution. On a G4/T4 16 GB GPU, `2` is an optional
-  validation-only acceleration override after Stage 3 or another short debug
-  study confirms there is CUDA memory headroom for the active model family,
-  batch-size range, and feature set. Keep `OPTUNA_TPE_CONSTANT_LIAR = True`,
-  keep persistent storage enabled, and keep
+- `OPTUNA_PARALLEL_WORKERS = 1` is the cleanest/reproducibility-first setting
+  and preserves historical serial trial execution.
+- `OPTUNA_PARALLEL_WORKERS = 2` is conservative high-memory acceleration.
+- `OPTUNA_PARALLEL_WORKERS = 3` is the recommended high-memory acceleration
+  target for validation-only HPO after Stage 3 or another short debug benchmark
+  confirms no CUDA OOM, no severe slowdown, no storage-lock instability, and
+  acceptable CPU/RAM/disk behavior.
+- `OPTUNA_PARALLEL_WORKERS >= 4` is aggressive benchmark/debug territory only.
+  Do not use it for serious HPO until the active model family, batch-size
+  range, feature set, and storage path have been explicitly benchmarked.
+- Keep `OPTUNA_TPE_CONSTANT_LIAR = True`, keep persistent/shared storage
+  enabled, keep `OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS > 0`, and keep
   `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True` when using more than one worker.
+- The notebook calls Optuna with `study.optimize(..., n_jobs=...)`; Optuna
+  schedules parallel trial objectives in the notebook process, and each
+  objective launches one `src/train.py` subprocess. Robust parallel HPO depends
+  on shared storage rather than temporary in-memory storage.
+- With `OPTUNA_PARALLEL_WORKERS = 3`, start per-trial DataLoader workers around
+  `1` or `2`. PyTorch DataLoader workers multiply by Optuna workers, so avoid
+  combinations like `3 x 8` loader workers unless an explicit debug benchmark
+  shows CPU/RAM/disk behavior is acceptable.
 - `OPTUNA_SAMPLER_SEED = None` unless deliberately re-exploring the same split
   with a different Optuna trajectory. With `None`, the sampler seed follows
   `OPTUNA_SPLIT_SEED`.
@@ -294,6 +308,10 @@ serious Optuna stages must use:
   trial attempts will be larger than the target -- plan compute accordingly.
 - Persistent SQLite storage in Drive:
   `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
+  SQLite can suffer lock contention under parallel optimization, especially on
+  Drive or slower/networked storage. Worker count `3` is allowed, but check
+  wall-time speedup empirically and monitor GPU utilization, GPU memory,
+  CPU/RAM, disk I/O, and SQLite lock errors before serious HPO.
 - Startup trials: use the stage table below. The default rule is at least
   `max(20, 0.2 x OPTUNA_TARGET_COMPLETE_TRIALS)`; the 120-trial Only-ESM study
   uses 30 startup trials to cover its conditional space.
@@ -315,10 +333,11 @@ serious Optuna stages must use:
 - Record both the split seed and the sampler seed in the notebook output, study
   summary, and per-run artifacts. If the sampler seed is `None`, record the
   effective sampler seed as the split seed.
-- Record `OPTUNA_PARALLEL_WORKERS`, startup stagger seconds, and CUDA-OOM stop
-  behavior in the study metadata. Parallel trial order is inherently
-  nondeterministic, so Stage 6 grouped-fold confirmation remains mandatory
-  before promotion.
+- Record `OPTUNA_PARALLEL_WORKERS`, startup stagger seconds, CUDA-OOM stop
+  behavior, `OPTUNA_TPE_CONSTANT_LIAR`, `OPTUNA_STORAGE`, effective sampler
+  seed, and per-trial DataLoader workers in the study metadata. Parallel trial
+  order is inherently nondeterministic, so Stage 6 grouped-fold confirmation
+  remains mandatory before promotion.
 
 Forbidden in serious stages:
 
@@ -339,6 +358,9 @@ Forbidden in serious stages:
   `OPTUNA_STORAGE`.
 - Reportable HPO with `OPTUNA_PARALLEL_WORKERS > 1` and blank/nonpersistent
   `OPTUNA_STORAGE`, or with `OPTUNA_TPE_CONSTANT_LIAR = False`.
+- Reportable HPO with `OPTUNA_PARALLEL_WORKERS >= 4` unless an explicitly
+  labeled benchmark/debug run has already confirmed no CUDA OOM, no severe
+  slowdown, no storage-lock instability, and acceptable CPU/RAM/disk behavior.
 - `ALLOW_MISSING_ESM_EMBEDDINGS = True` for ESM or fusion stages.
 
 Batch-size policy for serious stages:
@@ -354,7 +376,7 @@ Batch-size policy for serious stages:
 - Do not include `32` in fusion stages unless a separate memory/quality ablation
   explicitly justifies it.
 
-Recommended G4 budgets (canonical):
+Recommended canonical budgets:
 
 | Stage | `OPTUNA_TARGET_COMPLETE_TRIALS` | `MAX_EPOCHS_PER_TRIAL` | `OPTUNA_N_STARTUP_TRIALS` |
 | --- | --- | --- | --- |
@@ -709,14 +731,14 @@ OPTUNA_USE_PRUNING = False
 OPTUNA_PRUNER_TYPE = "none"
 ```
 
-## Canonical G4 Metal Training Route
+## Canonical High-Memory Metal Training Route
 
 Use this route when starting a clean, serious metal-classification campaign in
 `notebooks/DeepMzyme_training_colab.ipynb`.
 
 ### Required order
 
-Recommended linear G4 route:
+Recommended linear high-memory route:
 
 Stage 0 -> Stage 1 -> Stage 2A -> Stage 2B if ESM is ready -> Stage 3 ->
 Stage 5A -> Stage 6 -> Stage 5B/5C/5D/5E/5F only if their gates pass ->
@@ -739,9 +761,9 @@ Interpretation:
 11. Stage 7: one-shot held-out test for the single final validation-selected
     configuration.
 
-Stage 4 is optional on a G4 GPU and mainly for sanity HPO, search-space
+Stage 4 is optional on a high-memory GPU and mainly for sanity HPO, search-space
 debugging at useful scale, or limited-compute campaigns. For a serious fresh
-G4 search, Stage 5 is preferred after Stage 3 passes.
+high-memory search, Stage 5 is preferred after Stage 3 passes.
 
 ### Advanced fusion gate
 
@@ -1095,7 +1117,7 @@ Proceed to Stage 2B or Stage 4 only if:
 - Rare-class recall protection passes: `val_metal_min_recall` and per-class
   recall are available in the run artifacts, and no candidate is promoted if a
   metal class has zero recall across the completed validation runs.
-- Stage 2A anchor reliability is sufficient: the standard G4 block uses five
+- Stage 2A anchor reliability is sufficient: the standard high-memory block uses five
   seeds, `42,123,2026,7,2718`. If a compute-constrained run uses fewer seeds,
   mark the Stage 2A anchor as provisional and record the reason in
   `EXPERIMENT_STATUS.md`.
@@ -1321,14 +1343,14 @@ If gate fails: fix Optuna storage, search-space parsing, command generation, or
 feature paths before launching Stage 4. Do not choose hyperparameters from this
 debug run.
 
-## Stage 4 - Medium Per-Family Optuna, Optional On G4
+## Stage 4 - Medium Per-Family Optuna, Optional Medium HPO
 
 Purpose: run a useful but bounded HPO pass inside one selected model family.
 
 When to use it: after baseline behavior is understood and you have selected a
 model family to tune, usually Only-GVP first.
 
-Expected scale/runtime: useful serious run on a G4-class GPU, usually hours.
+Expected scale/runtime: useful serious run on the high-memory single-GPU environment, usually hours.
 
 Notebook configuration block for first useful Only-GVP HPO:
 

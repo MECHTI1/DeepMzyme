@@ -32,7 +32,7 @@ evidence.
 | Regularization/augmentation | `HEAD_MLP_DROPOUT_VALUES_CSV = "0.2,0.3"`, `ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1,0.2"`, `EARLY_ESM_DROPOUT_VALUES_CSV = "0.05,0.1,0.2"`, `CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.1,0.2"`, `POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"`, `SECOND_SHELL_DROPOUTS_CSV = "0.0"`, `OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"` | Same. |
 | Training | `EPOCHS = 50`, `BATCH_SIZES_CSV = "12"`, `LEARNING_RATES_CSV = "3.705631497756492e-05"`, `WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"` | Use the playbook stage budget; conservative first-pass HPO is 64 or 80 complete trials at 35-40 epochs per trial. |
 | Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` | Use validation-only selection. For reportable metal stages, use the playbook's declared split and `val_metal_balanced_acc`; use an EC metric when optimizing EC. |
-| Optuna runtime | `USE_PERSISTENT_OPTUNA_STORAGE = True`, `OPTUNA_TPE_CONSTANT_LIAR = True`, `OPTUNA_PARALLEL_WORKERS = 1` | Keep `1` worker by default. After a short memory-headroom debug check, `OPTUNA_PARALLEL_WORKERS = 2` can use the default shared SQLite storage. |
+| Optuna runtime | `USE_PERSISTENT_OPTUNA_STORAGE = True`, `OPTUNA_TPE_CONSTANT_LIAR = True`, `OPTUNA_PARALLEL_WORKERS = 1` | `1` is cleanest/reproducibility-first; `2` is conservative high-memory acceleration; `3` is the recommended high-memory acceleration target after a short validation-only debug benchmark. Use `4+` only after explicit benchmark/debug confirmation. |
 | Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` | Keep within the stage block and one compatible Optuna study. |
 | Task weights | `METAL_LOSS_WEIGHT_VALUES_CSV = "2.0"`, `EC_LOSS_WEIGHT_VALUES_CSV = "0.25"` | For joint metal-selected runs, document EC as auxiliary. |
 | Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` | Same; final held-out test only after Stage 6 confirmation. |
@@ -114,7 +114,8 @@ Budget guidance:
 - Strong controlled pass: `OPTUNA_TARGET_COMPLETE_TRIALS = 100`,
   `MAX_EPOCHS_PER_TRIAL` / `OPTUNA_SEARCH_HPO_TRIAL_EPOCHS = 50`, and
   `OPTUNA_N_STARTUP_TRIALS = 20`.
-- Extended serious searches use the canonical G4 budgets in
+- Extended serious searches use the canonical high-memory budgets and Optuna
+  parallel-worker policy in
   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. A 200-complete-trial study is an
   extended serious search, not a simple first-pass anti-overfitting search.
 
