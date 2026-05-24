@@ -8,11 +8,36 @@ DeepMzyme is a deep-learning framework for predicting metalloenzyme metal type a
 2. EC/function classification
 3. Joint metal + EC prediction
 
-Metal training defaults to the six-class target scheme (`Mn`, `Cu`, `Zn`, `Fe`,
-`Co`, `Ni`). For explicitly labeled validation-only comparisons, use
-`--metal-label-scheme five_class` to train five targets:
-`Mn`, `Cu`, `Zn`, `Fe`, and grouped `Co/Ni`. The Colab notebook exposes the
-same choice as `METAL_LABEL_SCHEME = "five_class"`.
+The live Colab notebook currently defaults to the five-class target scheme for
+the active exploratory joint run: `Mn`, `Cu`, `Zn`, `Fe`, and grouped `Co/Ni`
+via `METAL_LABEL_SCHEME = "five_class"` / `--metal-label-scheme five_class`.
+Six-class metal runs (`Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`) remain supported and
+must be labeled separately from five-class evidence.
+
+## Current Notebook Defaults
+
+The current notebook default variables are an exploratory validation-side joint
+configuration. Treat them as the current launch surface, not as held-out test
+evidence.
+
+| Area | Current value |
+| --- | --- |
+| Task / target | `TASK = "joint"`, `METAL_LABEL_SCHEME = "five_class"` |
+| Run mode | `RUN_MODE = "single"`, `RECOMMENDED_RUN_SET = "custom"` |
+| Model preset | `MODEL_PRESET = "GVP + hybrid fusion"` |
+| Dataset | `DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"` |
+| Graph defaults | `RING_EDGE_MODE = "with_ring"`, `METAL_NODE_MODE = "per_metal"`, `STRUCTURAL_READOUT_SCOPE = "auto"` |
+| Capacity/search CSVs | `HIDDEN_S_VALUES_CSV = "128"`, `HIDDEN_V_VALUES_CSV = "8,16"`, `EDGE_HIDDEN_VALUES_CSV = "64"`, `GVP_LAYERS_VALUES_CSV = "2,3"` |
+| Geometry/fusion CSVs | `EDGE_RADIUS_VALUES_CSV = "6, 8, 10"`, `ESM_FUSION_DIM_VALUES_CSV = "64,128,256"`, `EARLY_ESM_DIM_VALUES_CSV = "48"` |
+| Training | `EPOCHS = 50`, `BATCH_SIZES_CSV = "12"`, `LEARNING_RATES_CSV = "3.705631497756492e-05"`, `WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"` |
+| Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` |
+| Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTION = "cross_entropy"` |
+| Task weights | `METAL_LOSS_WEIGHT = 2.0`, `EC_LOSS_WEIGHT = 0.25` |
+| Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
+
+Older validation anchors and copied outputs may use `VAL_FRACTION = 0.15` and
+six-class metal labels. Do not mix those results with the current `0.18`
+five-class notebook-default runs without labeling the difference.
 
 ## Recommended Split
 
@@ -98,7 +123,7 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --runs-dir DeepMzyme_Data/runs_baseline_first \
   --run-name metal_only_gvp_seed42 \
   --seed 42 \
-  --val-fraction 0.15 \
+  --val-fraction 0.18 \
   --train-val-split-by pdbid \
   --selection-metric val_metal_balanced_acc \
   --epochs 50 \
