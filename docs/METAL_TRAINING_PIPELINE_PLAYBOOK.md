@@ -308,7 +308,7 @@ This project currently targets a high-memory single-GPU environment with roughly
   trial attempts will be larger than the target -- plan compute accordingly.
 - Persistent SQLite storage on fast local scratch:
   `OPTUNA_STORAGE_OVERRIDE =
-  "sqlite:////local-scratch/optuna/<study_name>.db"`, with
+  "sqlite:////mnt/local-scratch/optuna/<study_name>.db"`, with
   `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`. Keep
   `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` so the notebook restores from
   `<DRIVE_ROOT>/optuna/<study_name>.db` when scratch is empty and snapshots the
@@ -800,7 +800,7 @@ Study naming: `metal_<preset_slug>_<size>_<purpose>`, for example
 lowercase, underscore-separated names.
 
 Active storage path template:
-`sqlite:////local-scratch/optuna/<study_name>.db`. Use this via
+`sqlite:////mnt/local-scratch/optuna/<study_name>.db`. Use this via
 `OPTUNA_STORAGE_OVERRIDE`, then set `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`
 in paste blocks so the active Optuna SQLite database stays on local scratch.
 
@@ -1290,7 +1290,7 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 2
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_debug"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_debug.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -1419,7 +1419,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_medium.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_medium.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -1607,7 +1607,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "later_capacity"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_200_capacity"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_200_capacity.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_gvp_optuna_200_capacity.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -1740,7 +1740,7 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_only_esm_optuna_120_controlled.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -1830,7 +1830,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_late_fusion_optuna_200_controlled.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -1934,7 +1934,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_node_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_node_late_fusion_optuna_200_controlled.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -2040,7 +2040,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_hybrid_fusion_optuna_200_controlled"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
@@ -2149,7 +2149,7 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
-OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_cross_attention_optuna_120_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////mnt/local-scratch/optuna/metal_cross_attention_optuna_120_controlled.db"
 OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
 OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
 OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
