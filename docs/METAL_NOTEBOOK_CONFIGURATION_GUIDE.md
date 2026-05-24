@@ -160,6 +160,21 @@ before any held-out test. The playbook owns the exact trial counts, startup
 trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
 batch-size search space, and seed list.
 
+Keep three concepts separate:
+
+- Current notebook defaults are the values visible in the notebook UI. They are
+  a launch surface and may be exploratory.
+- Canonical serious G4 HPO budgets are the stage-owned values in the playbook.
+- The conservative first-pass anti-overfitting GVP profile is a recommended
+  low-capacity search posture for GVP-based metal-focused runs, not a claim
+  that the values are optimal.
+
+`RUN_MODE` controls whether HPO fields are active. `single` runs one resolved
+configuration. `manual_configurations` expands planned CSV/grid settings.
+`controlled_hpo_optuna` is required for Optuna HPO; Optuna fields should not be
+interpreted as active unless this mode is selected or a stage explicitly
+launches HPO.
+
 ## Starting Point
 
 Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
@@ -337,6 +352,26 @@ The main capacity fields are:
   create one planned row per cutoff. In `controlled_hpo_optuna`, these same
   CSV values are sampled when the field is active.
 
+Current GVP node scalar input is already rich: amino-acid chemistry,
+hydrophobicity, donor/acceptor/aromatic/acidic/basic flags, shell role,
+distance/RBF-derived terms, and burial/SASA/electrostatics/PROPKA-like
+features where available. The graph also has explicit residue vector channels
+and edge scalar/RING/radius features. Because this feature set is already
+informative and the dataset is modest, first-stage GVP capacity should stay
+conservative.
+
+For roughly one thousand metal-site samples, `hidden_s=128`, `hidden_v=8/16`,
+`edge_hidden=64`, and 2-3 GVP layers are appropriate low-capacity starting
+values. `edge_radius=6/8` keeps the radius graph local. Treat `edge_radius=10`
+or higher, `esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`,
+`edge_hidden>=128`, and `gvp_layers>=4` as second-stage expansion options when
+validation stability checks suggest underfitting, not as first-pass
+anti-overfitting defaults.
+
+The notebook exposes feature omission through `OMIT_NODE_FEATURE_SETS`; the CLI
+flag is `--omit-node-features`. Use feature omission only for explicitly
+labeled ablations.
+
 Do not vary all capacity fields at once in the first baseline. Use the playbook
 for the exact first baseline and HPO search spaces; use
 `only_gvp_architecture_grid` or `only_gvp_geometry_grid` only after simpler
@@ -431,6 +466,23 @@ For serious Stage 4/5A/5C/5D/5E/5F HPO, the playbook opts into
 `OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.05,0.1"` and
 `OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1,0.2"`. Keep `0.0` in every
 augmentation search so the unaugmented baseline remains directly comparable.
+The conservative first-pass anti-overfitting profile is narrower:
+`OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"` and
+`OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"`, with
+`POSITION_NOISE_STD = 0.0`, `SECOND_SHELL_DROPOUT = 0.0`, and
+`OUTER_RESIDUE_DROPOUT = 0.0` as non-HPO defaults.
+
+Recommended first-pass dropout values are `HEAD_MLP_DROPOUT = 0.2`,
+`ESM_GRAPH_ENCODER_DROPOUT = 0.1`, `EARLY_ESM_DROPOUT = 0.05` or `0.1`, and
+`CROSS_ATTENTION_DROPOUT = 0.1`. Do not add internal GVP-layer dropout unless
+the training code explicitly supports it and a future task asks for that code
+change.
+
+Coordinate noise and residue dropout are training-only robustness tools. Keep
+coordinate noise mild for metal-site geometry. If using AlphaFold structures,
+mild training-only coordinate noise can be considered, but validation and
+held-out test graphs must remain unchanged. Do not claim augmentation improves
+performance without validation evidence.
 
 ### Joint-loss weighting caution
 
@@ -628,6 +680,20 @@ learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
 defined per stage in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Use
 `OPTUNA_INTENSITY = "custom"` and persistent Drive-backed storage for every
 reportable run on the G4 GPU.
+
+Budget interpretation:
+
+- Conservative first-pass anti-overfitting HPO: 64 or 80 complete trials,
+  35-40 epochs per trial, and 15-20 startup trials.
+- Strong controlled HPO: 100 complete trials, 50 epochs per trial, and 20
+  startup trials.
+- Extended serious HPO: the canonical playbook Stage 5 budgets, including
+  200-complete-trial studies where specified.
+
+A 200-complete-trial study is an extended serious search, not a simple
+first-pass anti-overfitting search. It is acceptable only when followed by
+predeclared Stage 6 top-K grouped-fold/seed confirmation. Do not treat the best
+single Optuna validation split as final evidence.
 
 In multi-objective mode, Optuna uses minimum recall over the active metal label
 scheme for rare-class protection. For default reportable runs that is six-class

@@ -20,24 +20,108 @@ The current notebook default variables are an exploratory validation-side joint
 configuration. Treat them as the current launch surface, not as held-out test
 evidence.
 
-| Area | Current value |
-| --- | --- |
-| Task / target | `TASK = "joint"`, `METAL_LABEL_SCHEME = "five_class"` |
-| Run mode | `RUN_MODE = "single"`, `RECOMMENDED_RUN_SET = "custom"` |
-| Model preset | `MODEL_PRESET = "GVP + hybrid fusion"` |
-| Dataset | `DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"` |
-| Graph defaults | `RING_EDGE_MODE = "with_ring"`, `METAL_NODE_MODE = "per_metal"`, `STRUCTURAL_READOUT_SCOPE = "auto"` |
-| Capacity/search CSVs | `HIDDEN_S_VALUES_CSV = "128"`, `HIDDEN_V_VALUES_CSV = "8,16"`, `EDGE_HIDDEN_VALUES_CSV = "64"`, `GVP_LAYERS_VALUES_CSV = "2,3"` |
-| Geometry/fusion CSVs | `EDGE_RADIUS_VALUES_CSV = "6, 8, 10"`, `ESM_FUSION_DIM_VALUES_CSV = "64,128,256"`, `EARLY_ESM_DIM_VALUES_CSV = "48"` |
-| Training | `EPOCHS = 50`, `BATCH_SIZES_CSV = "12"`, `LEARNING_RATES_CSV = "3.705631497756492e-05"`, `WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"` |
-| Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` |
-| Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTION = "cross_entropy"` |
-| Task weights | `METAL_LOSS_WEIGHT = 2.0`, `EC_LOSS_WEIGHT = 0.25` |
-| Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` |
+| Area | Current notebook default | Conservative first-pass profile |
+| --- | --- | --- |
+| Task / target | `TASK = "joint"`, `METAL_LABEL_SCHEME = "five_class"` | Not task-specific; for `TASK = "joint"` with `SELECTION_METRIC = "val_metal_balanced_acc"`, EC is auxiliary. |
+| Run mode | `RUN_MODE = "single"`, `RECOMMENDED_RUN_SET = "custom"` | `RUN_MODE = "controlled_hpo_optuna"` for HPO; `manual_configurations` only for planned grids. |
+| Model preset | `MODEL_PRESET = "GVP + hybrid fusion"` | Applies broadly to GVP-based metal-focused presets; not specific to hybrid fusion. |
+| Dataset | `DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"` | Use the stage block's declared dataset and keep split identity labeled. |
+| Graph defaults | `RING_EDGE_MODE = "with_ring"`, `METAL_NODE_MODE = "per_metal"`, `STRUCTURAL_READOUT_SCOPE = "auto"` | Same. |
+| Capacity/search CSVs | `HIDDEN_S_VALUES_CSV = "128"`, `HIDDEN_V_VALUES_CSV = "8,16"`, `EDGE_HIDDEN_VALUES_CSV = "64"`, `GVP_LAYERS_VALUES_CSV = "2,3"`, `HEAD_MLP_LAYERS_VALUES_CSV = "1,2"` | Same. |
+| Geometry/fusion CSVs | `EDGE_RADIUS_VALUES_CSV = "6, 8"`, `ESM_FUSION_DIM_VALUES_CSV = "64,128"`, `EARLY_ESM_DIM_VALUES_CSV = "32,48"` | Same. |
+| Regularization/augmentation | `HEAD_MLP_DROPOUT = 0.2`, `ESM_GRAPH_ENCODER_DROPOUT = 0.1`, `EARLY_ESM_DROPOUT = 0.05`, `CROSS_ATTENTION_DROPOUT = 0.1`, `POSITION_NOISE_STD = 0.0`, `OUTER_RESIDUE_DROPOUT = 0.0`, `OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"`, `OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"` | Same. |
+| Training | `EPOCHS = 50`, `BATCH_SIZES_CSV = "12"`, `LEARNING_RATES_CSV = "3.705631497756492e-05"`, `WEIGHT_DECAYS_CSV = "1e-5,1e-4,1e-3"` | Use the playbook stage budget; conservative first-pass HPO is 64 or 80 complete trials at 35-40 epochs per trial. |
+| Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` | Use validation-only selection. For reportable metal stages, use the playbook's declared split and `val_metal_balanced_acc`; use an EC metric when optimizing EC. |
+| Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTION = "cross_entropy"` | Keep within the stage block and one compatible Optuna study. |
+| Task weights | `METAL_LOSS_WEIGHT = 2.0`, `EC_LOSS_WEIGHT = 0.25` | For joint metal-selected runs, document EC as auxiliary. |
+| Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` | Same; final held-out test only after Stage 6 confirmation. |
+
+These are current notebook defaults, not evidence that the listed values are
+globally optimal. With `RUN_MODE = "single"`, the notebook runs one resolved
+configuration and Optuna fields are not active. Use
+`RUN_MODE = "manual_configurations"` for planned CSV/grid expansion and
+`RUN_MODE = "controlled_hpo_optuna"` for Optuna HPO.
 
 Older validation anchors and copied outputs may use `VAL_FRACTION = 0.15` and
 six-class metal labels. Do not mix those results with the current `0.18`
 five-class notebook-default runs without labeling the difference.
+
+## GVP Capacity And HPO Guidance
+
+DeepMzyme's current GVP input is already information-rich: node scalar features
+include amino-acid chemistry, hydrophobicity, donor/acceptor/aromatic/acidic/
+basic flags, shell role, distance/RBF-derived terms, and burial/SASA/
+electrostatics/PROPKA-like features where available. The graph also carries
+explicit residue vector channels plus edge scalar, radius, and optional RING
+features.
+
+Because the metal dataset is modest, first-stage GVP and GVP+ESM searches
+should start conservatively. The main capacity knobs are `hidden_s`, `hidden_v`,
+`edge_hidden`, `gvp_layers`, `edge_radius`, ESM fusion dimension, early ESM
+bottleneck dimension, and classifier head depth. Larger values should be a
+second-stage expansion only if validation stability checks suggest underfitting.
+Feature-omission ablations use notebook `OMIT_NODE_FEATURE_SETS` or CLI
+`--omit-node-features`; they are ablations, not default training settings.
+
+### Conservative first-pass anti-overfitting GVP profile
+
+This is a recommended conservative starting point for GVP-based metal-focused
+runs, not a universal optimum and not held-out-test-selected evidence:
+
+```python
+RING_EDGE_MODE = "with_ring"
+METAL_NODE_MODE = "per_metal"
+STRUCTURAL_READOUT_SCOPE = "auto"
+
+CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
+HIDDEN_S_VALUES_CSV = "128"
+HIDDEN_V_VALUES_CSV = "8,16"
+EDGE_HIDDEN_VALUES_CSV = "64"
+GVP_LAYERS_VALUES_CSV = "2,3"
+HEAD_MLP_LAYERS_VALUES_CSV = "1,2"
+EDGE_RADIUS_VALUES_CSV = "6,8"
+ESM_FUSION_DIM_VALUES_CSV = "64,128"
+EARLY_ESM_DIM_VALUES_CSV = "32,48"
+
+HEAD_MLP_DROPOUT = 0.2
+ESM_GRAPH_ENCODER_DROPOUT = 0.1
+EARLY_ESM_DROPOUT = 0.05  # 0.1 is also a reasonable first-pass value.
+CROSS_ATTENTION_DROPOUT = 0.1
+POSITION_NOISE_STD = 0.0
+OPTUNA_POSITION_NOISE_STDS_CSV = "0.0,0.03,0.05"
+SECOND_SHELL_DROPOUT = 0.0
+OUTER_RESIDUE_DROPOUT = 0.0
+OPTUNA_OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"
+```
+
+`hidden_s=128`, `hidden_v=8/16`, `edge_hidden=64`, and 2-3 GVP layers are
+appropriate low-capacity starting values for roughly one thousand samples.
+`edge_radius=6/8` keeps the radius graph local. `edge_radius=10` or higher,
+`esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`, `edge_hidden>=128`, and
+`gvp_layers>=4` are higher-capacity options for a controlled second-stage
+expansion, not first-pass anti-overfitting defaults.
+
+Position noise and residue dropout are training-only robustness tools. Keep
+coordinate noise mild for metal-site geometry; if using AlphaFold models,
+training-only coordinate noise can be considered, but validation and held-out
+test graphs must remain unchanged. Do not assume augmentation improves
+performance without validation evidence.
+
+Budget guidance:
+
+- Conservative first pass: `OPTUNA_TARGET_COMPLETE_TRIALS = 64` or `80`,
+  `MAX_EPOCHS_PER_TRIAL` / `OPTUNA_SEARCH_HPO_TRIAL_EPOCHS = 35-40`, and
+  `OPTUNA_N_STARTUP_TRIALS = 15-20`.
+- Strong controlled pass: `OPTUNA_TARGET_COMPLETE_TRIALS = 100`,
+  `MAX_EPOCHS_PER_TRIAL` / `OPTUNA_SEARCH_HPO_TRIAL_EPOCHS = 50`, and
+  `OPTUNA_N_STARTUP_TRIALS = 20`.
+- Extended serious searches use the canonical G4 budgets in
+  `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. A 200-complete-trial study is an
+  extended serious search, not a simple first-pass anti-overfitting search.
+
+Do not interpret the best single Optuna validation split as final evidence.
+Two-hundred-trial studies are acceptable only when followed by predeclared
+Stage 6 top-K grouped-fold/seed confirmation.
 
 ## Recommended Split
 

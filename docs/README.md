@@ -24,6 +24,7 @@ meanings, not exact stage values.
 | Current mutable experiment status | `../EXPERIMENT_STATUS.md` |
 | Current live notebook-default snapshot | `../README.md` |
 | Exact metal stage blocks | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
+| Conservative first-pass GVP/HPO profile | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Exact EC stage blocks | `EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Notebook option meanings | `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copied raw outputs | `notebook_outputs/raw/<model-family>/` |
@@ -36,6 +37,9 @@ meanings, not exact stage values.
 - Do not use held-out test data before Stage 7.
 - Stage 7 must use a fixed validation-selected configuration and a separate
   final-test output folder.
+- Keep current notebook defaults, conservative first-pass GVP/HPO profiles,
+  and canonical extended G4 HPO budgets distinct. Current defaults are a live
+  launch surface; stage budgets and decision gates belong in the playbooks.
 - Treat `METAL_LABEL_SCHEME` and `VAL_FRACTION` as part of the experiment
   identity. The live notebook currently defaults to
   `METAL_LABEL_SCHEME = "five_class"` and `VAL_FRACTION = 0.18`; older
