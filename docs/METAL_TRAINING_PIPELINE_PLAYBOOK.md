@@ -227,7 +227,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
@@ -306,12 +306,18 @@ This project currently targets a high-memory single-GPU environment with roughly
   study because pruner decisions can bias the TPE trajectory. Consequence:
   `OPTUNA_TARGET_COMPLETE_TRIALS` counts only non-pruned completions, so total
   trial attempts will be larger than the target -- plan compute accordingly.
-- Persistent SQLite storage in Drive:
-  `sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`.
-  SQLite can suffer lock contention under parallel optimization, especially on
-  Drive or slower/networked storage. Worker count `3` is allowed, but check
-  wall-time speedup empirically and monitor GPU utilization, GPU memory,
-  CPU/RAM, disk I/O, and SQLite lock errors before serious HPO.
+- Persistent SQLite storage on fast local scratch:
+  `OPTUNA_STORAGE_OVERRIDE =
+  "sqlite:////local-scratch/optuna/<study_name>.db"`, with
+  `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`. Keep
+  `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` so the notebook restores from
+  `<DRIVE_ROOT>/optuna/<study_name>.db` when scratch is empty and snapshots the
+  scratch SQLite DB back to Drive after trial completion. SQLite can suffer lock
+  contention under parallel optimization, especially on Drive or slower/networked
+  storage, so Drive must not be the live Optuna database for high-memory
+  parallel HPO. Worker count `3` is allowed, but check wall-time speedup
+  empirically and monitor GPU utilization, GPU memory, CPU/RAM, disk I/O, and
+  SQLite lock errors before serious HPO.
 - Startup trials: use the stage table below. The default rule is at least
   `max(20, 0.2 x OPTUNA_TARGET_COMPLETE_TRIALS)`; the 120-trial Only-ESM study
   uses 30 startup trials to cover its conditional space.
@@ -793,16 +799,26 @@ Study naming: `metal_<preset_slug>_<size>_<purpose>`, for example
 `metal_only_gvp_200_capacity` or `metal_late_fusion_200_controlled`. Always use
 lowercase, underscore-separated names.
 
-Storage path template:
-`sqlite:////content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`. Use one
+Active storage path template:
+`sqlite:////local-scratch/optuna/<study_name>.db`. Use this via
+`OPTUNA_STORAGE_OVERRIDE`, then set `OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE`
+in paste blocks so the active Optuna SQLite database stays on local scratch.
+
+Drive backup path template:
+`/content/drive/MyDrive/DeepMzyme/optuna/<study_name>.db`. Keep
+`OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` and
+`OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1` for reportable HPO. The
+notebook restores scratch from this backup if scratch is empty before study
+creation, then snapshots scratch back to Drive after trial completion. Use one
 file per study. Never share a study DB across different `MODEL_PRESET` values.
 
 Resumption rule: re-running the notebook with the same `OPTUNA_STUDY_NAME` and
 storage URL resumes the persistent study and launches only the remaining trials
-needed to reach `OPTUNA_TARGET_COMPLETE_TRIALS` completed trials. `N_OPTUNA_TRIALS`
-is still accepted as a backward-compatible alias in older snippets. To start
-fresh, change the study name; do not delete the `.db` unless you mean to discard
-history.
+needed to reach `OPTUNA_TARGET_COMPLETE_TRIALS` completed trials. With scratch
+storage, the notebook first restores the scratch DB from the matching Drive
+backup when scratch is empty. `N_OPTUNA_TRIALS` is still accepted as a
+backward-compatible alias in older snippets. To start fresh, change the study
+name; do not delete the `.db` unless you mean to discard history.
 
 Resume policy for reportable HPO:
 
@@ -1266,7 +1282,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
@@ -1274,7 +1290,11 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 2
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_debug"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_debug.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
@@ -1391,7 +1411,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -1399,7 +1419,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_medium"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_medium.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_medium.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_LEARNING_RATE_RANGE = "1e-5,3e-4"
@@ -1575,7 +1599,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -1583,7 +1607,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "later_capacity"
 OPTUNA_STUDY_NAME = "metal_only_gvp_optuna_200_capacity"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_gvp_optuna_200_capacity.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_gvp_optuna_200_capacity.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1704,7 +1732,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = False
@@ -1712,7 +1740,11 @@ OPTUNA_PRUNER_TYPE = "none"
 OPTUNA_PRUNING_MIN_EPOCH = 20
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_only_esm_optuna_120_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_only_esm_optuna_120_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1790,7 +1822,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -1798,7 +1830,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1890,7 +1926,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -1898,7 +1934,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_node_late_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_node_late_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -1992,7 +2032,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -2000,7 +2040,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_hybrid_fusion_optuna_200_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_hybrid_fusion_optuna_200_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0
@@ -2097,7 +2141,7 @@ OPTUNA_TPE_MULTIVARIATE = True
 OPTUNA_TPE_GROUP = True
 OPTUNA_TPE_CONSTANT_LIAR = True
 OPTUNA_PARALLEL_WORKERS = 1
-OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 10.0
+OPTUNA_PARALLEL_STARTUP_STAGGER_SECONDS = 2.0
 OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True
 OPTUNA_AUTO_CONFIGURE_BUDGET = False
 OPTUNA_USE_PRUNING = True
@@ -2105,7 +2149,11 @@ OPTUNA_PRUNER_TYPE = "median"
 OPTUNA_PRUNING_MIN_EPOCH = 25
 OPTUNA_SEARCH_PRESET = "custom"
 OPTUNA_STUDY_NAME = "metal_cross_attention_optuna_120_controlled"
-OPTUNA_STORAGE = "sqlite:////content/drive/MyDrive/DeepMzyme/optuna/metal_cross_attention_optuna_120_controlled.db"
+OPTUNA_STORAGE_OVERRIDE = "sqlite:////local-scratch/optuna/metal_cross_attention_optuna_120_controlled.db"
+OPTUNA_STORAGE = OPTUNA_STORAGE_OVERRIDE
+OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True
+OPTUNA_DRIVE_SQLITE_BACKUP_DIR = "/content/drive/MyDrive/DeepMzyme/optuna"
+OPTUNA_DRIVE_SQLITE_BACKUP_EVERY_N_TRIALS = 1
 OPTUNA_SPLIT_SEED = 42
 OPTUNA_SAMPLER_SEED = None
 OPTUNA_TIMEOUT_MINUTES = 0

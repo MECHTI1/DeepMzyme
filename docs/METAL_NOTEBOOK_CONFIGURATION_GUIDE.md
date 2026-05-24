@@ -90,7 +90,7 @@ Before launching a run, verify these resolved notebook values:
 | Device on high-memory GPU | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
-| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE`; the live notebook defaults `USE_PERSISTENT_OPTUNA_STORAGE = True` |
+| Serious Optuna storage | local-scratch SQLite via `OPTUNA_STORAGE_OVERRIDE`, with Drive SQLite copy-back; the live notebook defaults `USE_PERSISTENT_OPTUNA_STORAGE = True` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
 | Parallel Optuna workers | `1` cleanest/reproducibility-first; `2` conservative high-memory acceleration; `3` recommended high-memory acceleration after a debug benchmark; `4+` benchmark/debug only |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
@@ -154,7 +154,7 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 The exact high-memory single-GPU Optuna budgets, sampler settings, storage URLs, and search
 spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "High-Memory Single-GPU Optuna
 Policy". This guide does not duplicate them. The high-level posture is:
-persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
+persistent SQLite Optuna on local scratch with Drive copy-back, multivariate/group TPE, one `MODEL_PRESET`
 per study, validation-only objective, and predeclared grouped-fold confirmation
 before any held-out test. The playbook owns the exact trial counts, startup
 trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
@@ -573,8 +573,9 @@ For useful Colab HPO:
 
 - Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
   budget. The playbook uses this for high-memory serious searches.
-- Use persistent SQLite storage in Drive. The playbook gives the exact storage
-  path for each serious stage.
+- Use persistent SQLite storage on fast local scratch via
+  `OPTUNA_STORAGE_OVERRIDE`; the playbook gives the exact scratch storage and
+  Drive-backup path for each serious stage.
 - Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
 - Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
@@ -587,10 +588,11 @@ For useful Colab HPO:
 - Keep `OPTUNA_TPE_CONSTANT_LIAR = True` for shared-storage HPO so multiple
   Optuna workers can run in parallel without repeatedly sampling in-flight
   configurations. Sequential runs remain supported.
-- The live notebook defaults to `USE_PERSISTENT_OPTUNA_STORAGE = True`, so
-  changing only `OPTUNA_PARALLEL_WORKERS` from `1` to `2` or `3` has the
-  required shared SQLite study database. Set it to `False` only for
-  deliberately temporary/non-resumable debug studies.
+- The live notebook defaults to `USE_PERSISTENT_OPTUNA_STORAGE = True` and a
+  local-scratch `OPTUNA_STORAGE_OVERRIDE`, so changing only
+  `OPTUNA_PARALLEL_WORKERS` from `1` to `2` or `3` has the required shared
+  SQLite study database without using Drive/FUSE as the live database. Set it
+  to `False` only for deliberately temporary/non-resumable debug studies.
 - Worker policy is resource-based for the current high-memory single-GPU
   environment: `1` is cleanest/reproducibility-first, `2` is conservative
   acceleration, `3` is the recommended validation-only acceleration target
@@ -602,10 +604,12 @@ For useful Colab HPO:
   worker count or the active batch-size/model-capacity range; do not treat the
   OOM as a model-quality signal.
 - SQLite storage on Drive can hit lock contention under parallel optimization,
-  especially at `OPTUNA_PARALLEL_WORKERS >= 3`. Run a tiny validation-only
-  debug benchmark for workers `1`, `2`, and `3`, then compare wall time while
-  monitoring GPU utilization, GPU memory, CPU/RAM, disk I/O, and SQLite lock
-  errors.
+  especially at `OPTUNA_PARALLEL_WORKERS >= 3`, so the active database should
+  stay on scratch. Keep `OPTUNA_DRIVE_SQLITE_BACKUP_ENABLED = True` to restore
+  from Drive at launch when scratch is empty and copy a SQLite snapshot back to
+  Drive after trial completion. Run a tiny validation-only debug benchmark for
+  workers `2`, `3`, `4`, and `6`, then compare wall time while monitoring GPU
+  utilization, GPU memory, CPU/RAM, disk I/O, and SQLite lock errors.
 - PyTorch `DataLoader(num_workers > 0)` uses multiprocessing. Total data-loader
   pressure is approximately `OPTUNA_PARALLEL_WORKERS x DATALOADER_NUM_WORKERS`;
   with three Optuna workers, start around `DATALOADER_NUM_WORKERS = 1` or `2`
