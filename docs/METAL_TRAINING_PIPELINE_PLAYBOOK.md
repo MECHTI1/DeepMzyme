@@ -319,6 +319,10 @@ serious Optuna stages must use:
   behavior in the study metadata. Parallel trial order is inherently
   nondeterministic, so Stage 6 grouped-fold confirmation remains mandatory
   before promotion.
+- Record `DATALOADER_NUM_WORKERS` and `DATALOADER_PIN_MEMORY` in the generated
+  run configuration. These are runtime-throughput controls, not model-selection
+  knobs; keep them fixed within a comparable study unless a run is explicitly
+  labeled as a DataLoader throughput/debug check.
 
 Forbidden in serious stages:
 

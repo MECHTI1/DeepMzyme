@@ -434,6 +434,13 @@ for each stage. Use this guide only to understand what those fields mean:
   `MAX_EPOCHS_PER_TRIAL`.
 - `BATCH_SIZES_CSV` and `WEIGHT_DECAYS_CSV` define manual comparison grids and
   are also sampled by Optuna when those fields are active.
+- `DATALOADER_NUM_WORKERS` is passed to `src/train.py` as `--num-workers`.
+  The notebook default `4` lets background worker processes prepare graph
+  batches while the GPU trains; set it to `0` to preserve the raw CLI default
+  or to debug worker-process issues.
+- `DATALOADER_PIN_MEMORY` is passed as `--pin-memory` when enabled. It can
+  improve CUDA host-to-device batch transfer and is ignored by the training
+  code on CPU.
 - `LEARNING_RATES_CSV` defines manual comparison grids; Optuna learning rate
   search remains continuous/log-sampled from `OPTUNA_LEARNING_RATE_RANGE`.
 - `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs and
