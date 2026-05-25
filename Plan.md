@@ -415,11 +415,12 @@ Colab data input modes (controlled by `COLAB_DATA_SOURCE`):
 - `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive path after Drive is mounted.
 
-The current uploaded notebook bundle is `DeepMzyme_Data_v2.tar.zst` in the
-project HuggingFace dataset. It is built with explicit dataset roots for the
-exact PinMyMetal split and the Common-PDBID 70/30 split. The legacy
-non-overlapped split remains the historically trusted final held-out reference
-unless an experiment explicitly chooses and documents another final split.
+The current uploaded notebook bundle is
+`DeepMzyme_Data_v3_exact_clean_esm.tar.zst` in the project HuggingFace dataset.
+It is built from the exact PinMyMetal split with regenerated ESM embeddings and
+strict feature-alignment validation. The legacy non-overlapped split remains the
+historically trusted final held-out reference unless an experiment explicitly
+chooses and documents another final split.
 
 Colab bundles include:
 

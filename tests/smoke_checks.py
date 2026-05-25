@@ -924,15 +924,15 @@ def check_colab_notebook_sweep_source() -> None:
         'RING_EDGE_MODE = "with_ring"',
         'METAL_NODE_MODE = "per_metal"',
         'STRUCTURAL_READOUT_SCOPE = "auto"',
-        'CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"',
+        'CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0,4.0"',
         'ALLOW_MISSING_EXTERNAL_FEATURES = False',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
         "CONFIG = {",
         "COLAB_DATA_SOURCE",
         "huggingface_link",
-        "DeepMzyme_Data_v2.tar.zst",
-        "12181d6bd7cb8e853cc0ea1d69dc50482dffe60392ad97089ccb3a5466059ba3",
+        "DeepMzyme_Data_v3_exact_clean_esm.tar.zst",
+        "1902c91ad31c183c4e264cab608f761a18c396bf39b2d8ddeb0b0812052372ba",
         "site-level MAHOMES summary CSV",
         "structure-level inspection CSV",
         "MODEL_PRESET_MAP",
@@ -2128,6 +2128,7 @@ def check_bundle_cli_help() -> None:
     expected_options = (
         "--allow-multi-metal-structures",
         "--strict-single-metal-structures",
+        "--skip-strict-feature-alignment-check",
     )
     missing = [option for option in expected_options if option not in help_text]
     if missing:
@@ -2161,6 +2162,55 @@ def check_bundle_artifact_can_be_labeled_subset() -> None:
             rows=rows,
             allow_missing_structure_rows=True,
         )
+
+
+def check_hetero_amino_acid_residues_are_excluded() -> None:
+    from graph.structure_parsing import residue_record_from_biopython_residue
+
+    class FakeAtom:
+        def __init__(self, name: str, altloc: str = " ") -> None:
+            self._name = name
+            self._altloc = altloc
+            self.coord = [0.0, 0.0, 0.0]
+
+        def get_name(self) -> str:
+            return self._name
+
+        def get_altloc(self) -> str:
+            return self._altloc
+
+    class FakeChain:
+        id = "A"
+
+    class FakeResidue:
+        def __init__(self, hetflag: str, resseq: int, resname: str, altlocs: tuple[str, ...] = (" ", " ", " ")) -> None:
+            self.id = (hetflag, resseq, " ")
+            self.resname = resname
+            self._altlocs = altlocs
+
+        def get_atoms(self):
+            return [
+                FakeAtom("N", self._altlocs[0]),
+                FakeAtom("CA", self._altlocs[1]),
+                FakeAtom("C", self._altlocs[2]),
+            ]
+
+        def get_parent(self):
+            return FakeChain()
+
+    normal_residue = residue_record_from_biopython_residue(FakeResidue(" ", 440, "GLN"))
+    if normal_residue is None or normal_residue.residue_id() != ("A", 440, ""):
+        raise AssertionError(f"Normal polymer residue was not parsed correctly: {normal_residue}")
+
+    hetero_residue = residue_record_from_biopython_residue(FakeResidue("H_PRO", 441, "PRO"))
+    if hetero_residue is not None:
+        raise AssertionError(f"HETATM amino-acid-like residue should be excluded, got {hetero_residue}")
+
+    mixed_altloc_residue = residue_record_from_biopython_residue(
+        FakeResidue(" ", 572, "SER", altlocs=("A", "C", "A"))
+    )
+    if mixed_altloc_residue is not None:
+        raise AssertionError(f"Mixed-altloc residue should be excluded, got {mixed_altloc_residue}")
 
 
 def check_docs_do_not_use_broken_training_command() -> None:
@@ -2293,6 +2343,7 @@ def main() -> int:
         check_conflicting_ec_group_metrics_are_skipped,
         check_bundle_cli_help,
         check_bundle_artifact_can_be_labeled_subset,
+        check_hetero_amino_acid_residues_are_excluded,
         check_docs_do_not_use_broken_training_command,
         check_multi_metal_site_level_granularity,
     )

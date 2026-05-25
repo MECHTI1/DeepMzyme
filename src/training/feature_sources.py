@@ -124,7 +124,15 @@ def load_structure_feature_sources(
                 )
             )
         except Exception as exc:
-            raise ValueError(f"Invalid ESM embeddings for {structure_path}: {exc}") from exc
+            if require_esm_embeddings:
+                raise ValueError(f"Invalid ESM embeddings for {structure_path}: {exc}") from exc
+            feature_fallbacks.append(
+                feature_fallback_record(
+                    structure_path,
+                    feature_name="esm_embeddings",
+                    detail=f"Optional ESM embeddings were ignored because they are invalid: {exc}",
+                )
+            )
 
     try:
         external_feature_lookup = load_external_feature_lookup_for_structure(

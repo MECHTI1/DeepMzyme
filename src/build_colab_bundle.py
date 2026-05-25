@@ -77,6 +77,16 @@ def parse_args() -> argparse.Namespace:
             "have matching embedding files. By default, incomplete ESM coverage fails."
         ),
     )
+    parser.add_argument(
+        "--skip-strict-feature-alignment-check",
+        action="store_true",
+        help=(
+            "Skip the full training-loader feature alignment check before bundling. "
+            "By default, bundles that include ESM embeddings or updated external "
+            "features must prove that present feature files load and align to "
+            "extracted pocket residues."
+        ),
+    )
     parser.set_defaults(allow_multi_metal_structures=True)
     parser.add_argument(
         "--allow-multi-metal-structures",
@@ -238,6 +248,44 @@ def validate_esm_embedding_coverage(
             f"sample test: {[path.name for path in missing_test[:3]]}. "
             "Generate the missing embeddings or pass --allow-incomplete-esm-coverage "
             "only for a deliberately partial/debug bundle."
+        )
+
+
+def validate_training_feature_alignment(
+    *,
+    structure_dir: Path,
+    summary_csv: Path,
+    esm_embeddings_dir: Path,
+    require_esm_embeddings: bool,
+    external_features_root_dir: Path | None,
+    require_external_features: bool,
+    split_name: str,
+) -> None:
+    from training.data import load_labeled_pockets_with_report_from_dir
+
+    disabled_external_features_dir = structure_dir / "__deepmzyme_no_external_feature_validation__"
+    result = load_labeled_pockets_with_report_from_dir(
+        structure_dir=structure_dir,
+        require_full_labels=False,
+        required_targets=("metal",),
+        summary_csv=summary_csv,
+        esm_embeddings_dir=esm_embeddings_dir,
+        require_esm_embeddings=require_esm_embeddings,
+        external_features_root_dir=(
+            external_features_root_dir
+            if external_features_root_dir is not None
+            else disabled_external_features_dir
+        ),
+        external_feature_source="updated",
+        require_external_features=require_external_features,
+        invalid_structure_policy="skip",
+    )
+    invalid_structures = list(result.feature_report.get("invalid_structures", []))
+    if invalid_structures:
+        raise ValueError(
+            f"Strict feature alignment check failed for {split_name}: "
+            f"{len(invalid_structures)} invalid structure(s). "
+            f"Sample: {invalid_structures[:5]}"
         )
 
 
@@ -421,6 +469,33 @@ def main() -> None:
                 allow_incomplete=args.allow_incomplete_esm_coverage,
             )
         append_unique_path(selected_paths, args.esm_embeddings_dir)
+
+    if not args.skip_strict_feature_alignment_check and (
+        args.include_esm_embeddings or external_features_dir.exists()
+    ):
+        for result in per_root_results:
+            validate_training_feature_alignment(
+                structure_dir=result["train_dir"],
+                summary_csv=result["train_summary_csv"],
+                esm_embeddings_dir=args.esm_embeddings_dir,
+                require_esm_embeddings=(
+                    args.include_esm_embeddings and not args.allow_incomplete_esm_coverage
+                ),
+                external_features_root_dir=external_features_dir if external_features_dir.exists() else None,
+                require_external_features=external_features_dir.exists(),
+                split_name=f"{result['dataset_root'].name}/train",
+            )
+            validate_training_feature_alignment(
+                structure_dir=result["test_dir"],
+                summary_csv=result["test_summary_csv"],
+                esm_embeddings_dir=args.esm_embeddings_dir,
+                require_esm_embeddings=(
+                    args.include_esm_embeddings and not args.allow_incomplete_esm_coverage
+                ),
+                external_features_root_dir=external_features_dir if external_features_dir.exists() else None,
+                require_external_features=external_features_dir.exists(),
+                split_name=f"{result['dataset_root'].name}/test",
+            )
 
     def print_shared_summary(verb: str) -> None:
         if external_features_dir.exists():

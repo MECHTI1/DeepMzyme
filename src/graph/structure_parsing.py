@@ -36,12 +36,21 @@ def parse_structure_file(filepath: str, structure_id: Optional[str] = None):
 
 def residue_record_from_biopython_residue(residue) -> Optional[ResidueRecord]:
     hetflag, resseq, icode = residue.id
-    if hetflag.strip() not in {"", "W"} and residue.resname.strip() not in AA_ORDER:
+    if hetflag.strip():
+        return None
+    if residue.resname.strip() not in AA_ORDER:
         return None
 
     atoms = {}
+    selected_altloc_ids = set()
     for atom in residue.get_atoms():
+        altloc = str(getattr(atom, "get_altloc", lambda: " ")()).strip()
+        if altloc:
+            selected_altloc_ids.add(altloc)
         atoms[atom.get_name().strip()] = torch.tensor(atom.coord, dtype=torch.float32)
+
+    if len(selected_altloc_ids) > 1:
+        return None
 
     if "CA" not in atoms:
         return None

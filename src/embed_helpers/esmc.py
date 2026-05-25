@@ -22,6 +22,7 @@ from training.structure_loading import find_structure_files
 from training.esm_feature_loading import (
     build_embedding_payload,
     embedding_metadata_from_payload,
+    embedding_tensor_and_keys_from_payload,
     residue_keys_for_structure_chain,
     write_embedding_metadata_sidecar,
 )
@@ -123,6 +124,29 @@ def expected_embedding_path(structure_file: Path, chain_id: str, out_dir: Path) 
     return out_dir / f"{structure_file.stem}_chain_{chain_id}_esmc.pt"
 
 
+def validate_existing_embedding_file(
+    embedding_path: Path,
+    *,
+    structure,
+    chain_id: str,
+) -> tuple[bool, str | None]:
+    try:
+        payload = torch.load(embedding_path, map_location="cpu", weights_only=True)
+        embeddings, residue_ids = embedding_tensor_and_keys_from_payload(
+            payload,
+            structure=structure,
+            candidate_path=embedding_path,
+            fallback_chain_id=chain_id,
+        )
+        if embeddings.dim() != 2:
+            return False, f"expected a 2D tensor, got shape {tuple(embeddings.shape)}"
+        if embeddings.size(0) != len(residue_ids):
+            return False, f"{embeddings.size(0)} embedding rows for {len(residue_ids)} residue ids"
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+    return True, None
+
+
 def create_resi_embed_pt(
     structure_file,
     out_dir: Path | None = None,
@@ -153,9 +177,17 @@ def create_resi_embed_pt(
         for chain_id, sequence in chain_sequences.items():
             out_file = expected_embedding_path(structure_file, chain_id, out_dir)
             if out_file.exists() and not overwrite:
-                print(f"skipping existing: {out_file}")
-                saved_files.append(out_file)
-                continue
+                is_valid, invalid_reason = validate_existing_embedding_file(
+                    out_file,
+                    structure=structure,
+                    chain_id=chain_id,
+                )
+                if is_valid:
+                    print(f"skipping valid existing: {out_file}")
+                    saved_files.append(out_file)
+                    continue
+                print(f"regenerating invalid existing embedding: {out_file}")
+                print(f"invalid reason: {invalid_reason}")
 
             print(f"\nProcessing chain {chain_id} | sequence length = {len(sequence)}")
 
@@ -260,10 +292,23 @@ def create_resi_embed_batch(
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate canonical ESMC residue embeddings.")
     parser.add_argument("structure_files", nargs="*", help="Specific structure files to embed.")
+    parser.add_argument(
+        "--structure-list",
+        type=Path,
+        default=None,
+        help="Text file containing one structure path per line. Blank lines and lines starting with # are ignored.",
+    )
     parser.add_argument("--structure-dir", type=Path, default=None, help="Recursively scan for structure files.")
     parser.add_argument("--out-dir", type=Path, default=None, help="Output embeddings directory.")
     parser.add_argument("--limit", type=int, default=None, help="Optional limit on scanned structure files.")
-    parser.add_argument("--overwrite", action="store_true", help="Regenerate outputs even if they already exist.")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help=(
+            "Regenerate outputs even if they already exist. Without this flag, valid existing "
+            "outputs are skipped and invalid existing outputs are regenerated."
+        ),
+    )
     parser.add_argument("--device", type=str, default=None, help="Torch device, e.g. cpu or cuda.")
     parser.add_argument(
         "--model-name",
@@ -275,14 +320,31 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def resolve_cli_structure_files(args: argparse.Namespace) -> list[Path]:
+    structure_files: list[Path] = []
     if args.structure_files:
-        return [Path(path) for path in args.structure_files]
-    if args.structure_dir is None:
-        raise ValueError("Provide structure files or --structure-dir.")
+        structure_files.extend(Path(path) for path in args.structure_files)
+    if args.structure_list is not None:
+        for raw_line in args.structure_list.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            structure_files.append(Path(line))
+    if args.structure_dir is not None:
+        structure_files.extend(find_structure_files(args.structure_dir))
 
-    structure_files = find_structure_files(args.structure_dir)
+    unique_structure_files: list[Path] = []
+    seen: set[Path] = set()
+    for structure_file in structure_files:
+        if structure_file in seen:
+            continue
+        seen.add(structure_file)
+        unique_structure_files.append(structure_file)
+    structure_files = unique_structure_files
+
     if args.limit is not None:
         structure_files = structure_files[: args.limit]
+    if not structure_files:
+        raise ValueError("Provide structure files, --structure-list, or --structure-dir.")
     return structure_files
 
 
