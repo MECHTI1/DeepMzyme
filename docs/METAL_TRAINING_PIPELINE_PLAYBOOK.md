@@ -304,10 +304,14 @@ serious Optuna stages must use:
   `OPTUNA_DIRECTION = "maximize"`.
 - When `RUN_MODE = "controlled_hpo_optuna"`, active Optuna categorical choices
   reuse the normal CSV fields where those fields exist. This includes
-  `LR_SCHEDULES_CSV`, `WEIGHT_DECAYS_CSV`, `BATCH_SIZES_CSV`,
-  `METAL_CLASS_WEIGHT_MODES_CSV`, graph/fusion capacity CSVs, and
-  `CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV`. `OPTUNA_SEARCH_PRESET` still
-  decides whether each model-capacity field is sampled or fixed.
+  `LR_SCHEDULES_CSV`, `BATCH_SIZES_CSV`, `METAL_CLASS_WEIGHT_MODES_CSV`, loss
+  mode fields, booleans, and `CROSS_ATTENTION_HEADS_CSV`.
+- Numeric Optuna fields can optionally use explicit `OPTUNA_*_RANGE`
+  overrides. Blank range fields keep the CSV behavior. Nonblank float ranges
+  use `low,high`; nonblank integer ranges use `low,high,step`; weight decay is
+  log-sampled. Use a fresh Optuna study name for any range-enabled experiment.
+  `OPTUNA_SEARCH_PRESET` still decides whether each model-capacity field is
+  sampled or fixed.
 - `OPTUNA_MULTIOBJECTIVE = False` by default. Optional multi-objective studies
   are validation-only Stage 5A experiments and use NSGA-II over
   `val_metal_balanced_acc` and active metal-scheme `val_metal_min_recall`; they
@@ -453,6 +457,25 @@ Main capacity knobs:
 - `ESM_FUSION_DIM_VALUES_CSV`
 - `EARLY_ESM_DIM_VALUES_CSV`
 - `HEAD_MLP_LAYERS_VALUES_CSV`
+
+Optional range overrides for a deliberately labeled range-search experiment:
+
+- `OPTUNA_WEIGHT_DECAY_RANGE`
+- `OPTUNA_HIDDEN_S_RANGE`, `OPTUNA_HIDDEN_V_RANGE`, `OPTUNA_EDGE_HIDDEN_RANGE`
+- `OPTUNA_GVP_LAYERS_RANGE`, `OPTUNA_HEAD_MLP_LAYERS_RANGE`
+- `OPTUNA_EDGE_RADIUS_RANGE`, `OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_RANGE`
+- `OPTUNA_HEAD_MLP_DROPOUT_RANGE`, `OPTUNA_ESM_GRAPH_ENCODER_DROPOUT_RANGE`
+- `OPTUNA_POSITION_NOISE_STD_RANGE`, `OPTUNA_SECOND_SHELL_DROPOUT_RANGE`,
+  `OPTUNA_OUTER_RESIDUE_DROPOUT_RANGE`
+- `OPTUNA_ESM_FUSION_DIM_RANGE`, `OPTUNA_EARLY_ESM_DIM_RANGE`
+- `OPTUNA_CROSS_ATTENTION_LAYERS_RANGE`, `OPTUNA_EARLY_ESM_DROPOUT_RANGE`,
+  `OPTUNA_CROSS_ATTENTION_DROPOUT_RANGE`
+- `OPTUNA_METAL_LABEL_SMOOTHING_RANGE`, `OPTUNA_METAL_FOCAL_GAMMA_RANGE`
+- `OPTUNA_METAL_COLLAPSED_LOSS_WEIGHT_RANGE`,
+  `OPTUNA_METAL_LOSS_WEIGHT_RANGE`, `OPTUNA_EC_LOSS_WEIGHT_RANGE`
+
+Leave these blank for the canonical CSV-based stage blocks below unless the run
+is explicitly named and documented as a validation-only range-search variant.
 
 Notebook profile:
 

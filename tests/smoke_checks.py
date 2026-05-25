@@ -925,6 +925,9 @@ def check_colab_notebook_sweep_source() -> None:
         'METAL_NODE_MODE = "per_metal"',
         'STRUCTURAL_READOUT_SCOPE = "auto"',
         'CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0,4.0"',
+        'OPTUNA_WEIGHT_DECAY_RANGE = ""',
+        'OPTUNA_HIDDEN_S_RANGE = ""',
+        'OPTUNA_EDGE_RADIUS_RANGE = ""',
         'ALLOW_MISSING_EXTERNAL_FEATURES = False',
         'OMIT_NODE_FEATURE_SETS = ""',
         'MAX_CONFIGURATION_RUNS',
@@ -948,6 +951,10 @@ def check_colab_notebook_sweep_source() -> None:
         'HEAD_MLP_DROPOUT_VALUES_CSV = "0.2,0.3"',
         'ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1,0.2"',
         'OUTER_RESIDUE_DROPOUTS_CSV = "0.0,0.1"',
+        '"weight_decay_range": OPTUNA_WEIGHT_DECAY_RANGE',
+        "def suggest_float_or_choice",
+        "def suggest_int_or_choice",
+        "optuna_range_override_preview",
         "omit_node_features",
         "--omit-node-features",
         "--head-mlp-dropout",
@@ -1597,6 +1604,43 @@ def check_colab_generated_training_commands_parse() -> None:
     actual_optuna_cutoff = optuna_cmd[optuna_cmd.index("--classifier-pool-distance-cutoff") + 1]
     if actual_optuna_cutoff != "6.0":
         raise AssertionError(f"Optuna command passed classifier-pool cutoff {actual_optuna_cutoff}, expected 6.0.")
+
+    range_namespace = run_builder(
+        {
+            "basic": {"run_mode": "controlled_hpo_optuna"},
+            "optuna": {
+                "search_preset": "custom",
+                "selection_metric": "val_metal_balanced_acc",
+                "weight_decay_range": "1e-6,1e-4",
+                "hidden_s_range": "64,96,16",
+                "edge_radius_range": "5.0,9.0",
+                "head_mlp_dropout_range": "0.05,0.15",
+                "classifier_pool_distance_cutoff_range": "2.0,7.0",
+            },
+        },
+        return_namespace=True,
+    )
+
+    class FakeRangeTrial(FakeTrial):
+        def suggest_int(self, name, low, high, step=1):
+            return high
+
+    range_trial_config, range_sampled = range_namespace["sample_optuna_config"](
+        FakeRangeTrial(),
+        range_namespace["all_planned_runs"][0],
+    )
+    expected_range_samples = {
+        "weight_decay": 1e-6,
+        "hidden_s": 96,
+        "edge_radius": 5.0,
+        "head_mlp_dropout": 0.05,
+        "classifier_pool_distance_cutoff": 2.0,
+    }
+    for key, expected_value in expected_range_samples.items():
+        actual_value = range_sampled.get(key)
+        if actual_value != expected_value:
+            raise AssertionError(f"Range-based Optuna sampling produced {key}={actual_value}, expected {expected_value}.")
+    assert_training_command_parses([str(part) for part in range_trial_config["command"]])
 
     with tempfile.TemporaryDirectory(prefix="deepmzyme_stage6_import_") as tmp:
         tmp_root = Path(tmp)

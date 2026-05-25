@@ -443,6 +443,11 @@ for each stage. Use this guide only to understand what those fields mean:
   code on CPU.
 - `LEARNING_RATES_CSV` defines manual comparison grids; Optuna learning rate
   search remains continuous/log-sampled from `OPTUNA_LEARNING_RATE_RANGE`.
+- Optional `OPTUNA_*_RANGE` fields override matching numeric Optuna CSV fields
+  only when non-empty. Float ranges use `low,high`; integer ranges use
+  `low,high,step`; `OPTUNA_WEIGHT_DECAY_RANGE` is log-sampled. Blank range
+  fields keep the existing CSV/categorical behavior and do not by themselves
+  define a new search space.
 - `LR_SCHEDULES_CSV` controls the learning-rate schedule for manual runs and
   active Optuna schedule search. The
   notebook exposes a dropdown with `cosine` as the recommended single-schedule
@@ -635,11 +640,15 @@ For useful Colab HPO:
 - Use `CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV` only for deliberate
   classifier-pooling ablations. The default `0.0` keeps all residues in the
   final classifier pooling step; comma-separated non-negative values are
-  sampled by Optuna.
+  sampled by Optuna. A nonnegative
+  `OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_RANGE` is available, but CSV is safer
+  when `0.0` must remain an explicit disable option.
 - For fields that already have normal CSV controls, Optuna uses those same CSV
-  values when the field is active. For example, `GVP_LAYERS_VALUES_CSV =
-  "2,3,4"` is the layer search space under `later_capacity`/`custom`, while it
-  remains a fixed base value under `first_useful_only_gvp_narrow`.
+  values when the matching range override is blank. For example,
+  `GVP_LAYERS_VALUES_CSV = "2,3,4"` is the layer search space under
+  `later_capacity`/`custom`, while `OPTUNA_GVP_LAYERS_RANGE = "2,5,1"` would
+  replace that CSV with stepped integer sampling for an explicitly labeled
+  range-search run.
 - Keep `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False`. The notebook records
   model preset, task, split, metric, search-space hash, sampler seed, pruning
   settings, batch-size choices, LR schedule choices, class-weight choices, and
