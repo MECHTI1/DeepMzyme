@@ -1,5 +1,12 @@
 # Notebook Output And Pipeline Changelog
 
+## 2026-05-26
+
+- Documentation and notebook policy update: Stage 6/cross-validation now
+  selects the best configuration only. Stage 6B applies paired-CI, rare-recall,
+  and tie-breaker promotion gates, then performs the final full-train refit
+  before the one-shot Stage 7 held-out test.
+
 ## 2026-05-19
 
 - Added `docs/README.md` as the documentation-folder entry point, including

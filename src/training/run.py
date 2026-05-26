@@ -424,7 +424,16 @@ def validate_training_configuration(config: TrainConfig) -> None:
             "model selection should normally use a validation metric.",
             RuntimeWarning,
         )
-    if config.run_test_eval and not config.allow_train_loss_test_eval_debug:
+    if config.run_test_eval and config.allow_final_refit_test_eval and not config.final_test_selected_config_id:
+        raise ValueError(
+            "--allow-final-refit-test-eval requires --final-test-selected-config-id so the "
+            "validation-selected configuration is recorded with the held-out test report."
+        )
+    if (
+        config.run_test_eval
+        and not config.allow_train_loss_test_eval_debug
+        and not config.allow_final_refit_test_eval
+    ):
         if not has_validation:
             raise ValueError(
                 "--run-test-eval is for held-out reporting and must use a validation-selected "

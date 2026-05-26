@@ -37,6 +37,10 @@ evidence in saved outputs, not in stable workflow guides.
   `group_kfold` is available for one-seed grouped-fold confirmation. Older
   non-folded 5-seed validation-only repeats remain historical evidence, not the
   current Stage 6 standard for new promotions.
+- Stage 6B is now the required bridge from Stage 6 evidence to final testing:
+  rank by mean `val_metal_balanced_acc`, apply paired-CI and rare-recall gates
+  plus configured tie-breakers, then train/refit one final model on the full
+  non-test training set before Stage 7.
 - If this file conflicts with `Plan.md`, source code, or run outputs, report the
   conflict instead of silently trusting this file.
 - Do not invent missing values or exact experiment numbers.
@@ -92,8 +96,9 @@ evidence in saved outputs, not in stable workflow guides.
   scheme is available for explicitly labeled validation-only comparisons, but
   existing anchors below should not be reinterpreted as five-class evidence.
 - Test-set policy: held-out test remains unused for model, checkpoint,
-  hyperparameter, architecture, and fusion decisions. Use it once after the
-  validation-selected anchor is fixed.
+  hyperparameter, architecture, and fusion decisions. Use it once only after the
+  validation-selected anchor is fixed and a Stage 6B final-refit run derived
+  from that anchor has been completed and frozen.
 - Selected stable Only-ESM anchor: confirmed original `3e-5` +
   `inverse_frequency` configuration from 5-seed validation evidence.
 - Selected GVP + late-fusion anchor: trial `49`, selected from the historical
@@ -357,7 +362,8 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
   late-fusion (trial `49`) anchors with paired bootstrap CIs and rare-class
   recall protection.
 - Do not run held-out test yet unless the validation architecture search is
-  explicitly declared complete.
+  explicitly declared complete and the Stage 6B final-refit run for the
+  selected configuration has been completed and frozen.
 - Do not spend another broad Only-ESM search now.
 - For any new validation-side metal Optuna search, use the playbook's updated
   serious batch-size policy: search `8,16`, keep `4` for smoke/debug or memory
@@ -373,10 +379,11 @@ The confirmed Only-ESM anchor remains the stable ESM-only baseline.
 ## Recommended Next Notebook Action
 
 Decide whether validation-side architecture selection is complete. If it is
-complete, the next notebook action should be an explicit final-reporting step
-using the held-out test exactly once for the selected anchors. If it is not
-complete, run only narrowly scoped validation-side ablations; do not use the
-held-out test for those decisions.
+complete, the next notebook action should be Stage 6B promotion plus final
+full-train refit from the selected anchor, followed by an explicit
+final-reporting step using the held-out test exactly once for the frozen Stage
+6B final-refit run. If it is not complete, run only narrowly scoped
+validation-side ablations; do not use the held-out test for those decisions.
 
 Current selected validation anchor for metal:
 
@@ -388,8 +395,8 @@ Current non-selected recent architecture check:
 
 ## Decision Rule
 
-Choose model and fusion anchors by Stage 6 grouped-fold/seed mean, paired
-bootstrap comparison over seed-averaged fold means, and per-class diagnostics,
+Choose model and fusion anchors by Stage 6 grouped-fold/seed mean plus Stage 6B
+paired-CI promotion, rare-class recall protection, and configured tie-breakers,
 not by one lucky seed or raw single-run delta.
 
 Use, at minimum:
@@ -405,6 +412,8 @@ Use, at minimum:
 - Held-out test is for final reporting only.
 - Do not use held-out test to choose model, hyperparameters, checkpoint,
   architecture, fusion mode, or seed.
+- After Stage 6/cross-validation selects the configuration, complete and freeze
+  the Stage 6B final-refit run before any held-out test launch.
 - The copied Round 4 GVP + late-fusion summary reports `test_report` absent /
   null for all runs.
 - The copied node-level late-fusion summary reports held-out test during

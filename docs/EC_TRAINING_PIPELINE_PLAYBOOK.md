@@ -39,8 +39,10 @@ EC held-out testing. The exact PinMyMetal split must not be used as the main
 final EC held-out split if train/test structures overlap (see Plan.md section 8).
 
 **Held-out test policy.** Identical to metal: never use the held-out test set
-for model comparison, Optuna HPO, or seed-repeat validation. Use only
-validation metrics for all selection decisions.
+for model comparison, Optuna HPO, seed-repeat validation, or cross-validation.
+Use only validation metrics for all selection decisions. After Stage 6 selects
+one EC configuration, train/refit the final EC model with that frozen
+configuration, then use the held-out test once for final reporting.
 
 **Fresh-check default.** If the user asks for a new check, new run, or fresh
 Optuna sweep without explicitly asking to rely on previous raws/results, use
@@ -72,7 +74,7 @@ Use the same run-tier policy as the metal playbook:
 | --- | --- | --- | --- |
 | Debug | Stage 1, Stage 3 | Not model-selection evidence | Resolved notebook config, planned commands, run logs, and failure context |
 | Serious validation | Stage 2, Stage 4, Stage 5, Stage 6 | Validation-only evidence if the stage gate passes | Full config, EC label depth, contrastive settings, split/seed identity, Optuna metadata, dataset bundle ID/checksum, git commit, and key library versions |
-| Final test | Stage 7 | One-shot held-out reporting only | Source validation run/checkpoint, EC depth, primary report declaration, dataset bundle ID/checksum, git commit, key library versions, and no-test-selection statement |
+| Final test | Stage 7 | One-shot held-out reporting only | Stage 6 selection evidence, final training/refit source run/checkpoint, EC depth, primary report declaration, dataset bundle ID/checksum, git commit, key library versions, and no-test-selection statement |
 
 Serious validation and final-test records should capture key library versions
 when available: PyTorch, torch-geometric, ESM/ESMC, Optuna, NumPy, and
@@ -80,9 +82,10 @@ scikit-learn. This repository currently has no checked-in environment spec, so
 per-run version records are required until an environment file is added.
 
 Limited-compute fallback: stop at a clearly labeled validation-only result if
-Stage 6 cannot be completed. Do not launch Stage 7 from provisional EC evidence.
-Depth-2 or deeper EC cycles must restart the staged validation workflow instead
-of inheriting a depth-1 final-test decision.
+Stage 6 cannot be completed. Do not launch Stage 7 from provisional EC evidence,
+and do not launch it before the selected EC configuration has been trained/refit
+as a frozen final source run. Depth-2 or deeper EC cycles must restart the
+staged validation workflow instead of inheriting a depth-1 final-test decision.
 
 Pruning is disabled unless an EC stage explicitly opts into it. If pruning is
 enabled manually for a serious 50-epoch EC HPO run, use the notebook's serious
@@ -679,16 +682,19 @@ Decision after this stage:
 - Select one final configuration using validation evidence only.
 - Record the mean validation score, variability, per-class diagnostics, split,
   seed list, depth, and epoch budget.
-- Only then move to Stage 7.
+- Train/refit one final EC model from that frozen configuration. The final
+  training/refit run must not include held-out test evaluation and must record
+  `run_config.json` and `run_metadata.json`.
+- Only after that final training/refit run is frozen, move to Stage 7.
 
 ## Stage 7 — Final Held-Out Test Evaluation
 
-Purpose: report held-out test performance for the final validation-selected
-EC configuration.
+Purpose: report held-out test performance for the frozen final training/refit
+run produced from the final validation-selected EC configuration.
 
 When to use it: only after model family, hyperparameters, EC label depth,
-contrastive weight, checkpoint-selection metric, seed-repeat interpretation, and
-final source run are fixed.
+contrastive weight, checkpoint-selection metric, seed-repeat interpretation,
+final training/refit run, and final source checkpoint are fixed.
 
 **EC split policy reminder**: the non-overlapped PinMyMetal split is mandatory
 for final EC held-out reporting. Do not report the exact/possibly-overlapped
@@ -721,7 +727,8 @@ ALLOW_MIXED_FINAL_TEST_BATCH = False
 ```
 
 Inspect the pre-flight checklist. If the selected source run is the final
-validation-selected run and this is final reporting, switch to launch:
+training/refit run derived from the validation-selected EC configuration and
+this is final reporting, switch to launch:
 
 ```python
 FINAL_TEST_WORKFLOW = "evaluate_selected_checkpoint"
@@ -740,13 +747,18 @@ Expected outputs/files:
 - A new final-test run folder under the resolved `RUNS_DIR`
 - `test_report.json` in the final-test output folder
 - Updated final-test summary CSV/PNG
-- The source validation run remains unchanged
+- The source final training/refit run remains unchanged
 
 Success criteria:
 
-- The source run has validation-selected checkpoint metadata.
-- The final-test run uses `best_model_checkpoint.pt`.
-- The output folder is separate from the source validation run.
+- The source run has validation-selected checkpoint metadata, or a documented
+  Stage-6-fixed epoch/checkpoint rule if a future full-train refit path is used.
+- The final-test run uses `best_model_checkpoint.pt` or the explicitly selected
+  fixed checkpoint.
+- The output folder is separate from the source final training/refit run.
+- The source run is the final training/refit run derived from Stage 6 evidence,
+  not a raw Optuna trial, arbitrary seed-repeat run, or provisional validation
+  checkpoint.
 - The test report includes EC level-1 metrics (and deeper levels when trained).
 - The split in `dataset_summary.json` confirms non-overlapped PinMyMetal.
 

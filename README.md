@@ -34,7 +34,7 @@ evidence.
 | Validation | `VAL_FRACTION = 0.18`, `SPLIT_BY = "pdbid"`, `SELECTION_METRIC = "val_metal_balanced_acc"` | Use validation-only selection. For reportable metal stages, use the playbook's declared split and `val_metal_balanced_acc`; use an EC metric when optimizing EC. |
 | Schedule/loss | `LR_SCHEDULES_CSV = "cosine"`, `METAL_CLASS_WEIGHT_MODES_CSV = "effective_number"`, `METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"` | Keep within the stage block and one compatible Optuna study. |
 | Task weights | `METAL_LOSS_WEIGHT_VALUES_CSV = "2.0"`, `EC_LOSS_WEIGHT_VALUES_CSV = "0.25"` | For joint metal-selected runs, document EC as auxiliary. |
-| Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` | Same; final held-out test only after Stage 6 confirmation. |
+| Held-out test | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` | Same; final held-out test only after Stage 6 confirmation, Stage 6B promotion/refit, and a frozen final-refit run from the selected configuration. |
 
 These are current notebook defaults, not evidence that the listed values are
 globally optimal. With `RUN_MODE = "single"`, the notebook runs one resolved
@@ -123,7 +123,7 @@ Stage 6 top-K grouped-fold/seed confirmation.
 
 ## Recommended Split
 
-Current experiment evidence uses the legacy **Non-overlapped PinMyMetal** split (`DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`) for final held-out evaluation. Select checkpoints and model variants with validation metrics only; use the held-out test set for final reporting of the selected checkpoint.
+Current experiment evidence uses the legacy **Non-overlapped PinMyMetal** split (`DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`) for final held-out evaluation. Select checkpoints, model variants, and the final configuration with validation/CV metrics only. After cross-validation, use Stage 6B to apply promotion gates and train/refit the selected configuration on the full non-test training set, then use the held-out test set once for final reporting of that frozen final-refit checkpoint.
 
 Other named split variants are available for secondary comparisons:
 
@@ -215,9 +215,10 @@ PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py \
   --prepare-missing-ring-edges
 ```
 
-Do not add `--run-test-eval` to exploratory baselines, HPO, or grouped-fold
-confirmation. Held-out test evaluation is reserved for the final
-validation-selected configuration under the one-shot Stage 7 policy.
+Do not add `--run-test-eval` to exploratory baselines, HPO, grouped-fold
+confirmation, or Stage 6B final refit. Held-out test evaluation is reserved for
+the frozen Stage 6B final-refit run derived from the validation-selected
+configuration under the one-shot Stage 7 policy.
 
 Detailed validation-only command examples are in `list_train_commands.md`. The
 documentation index, run-order map, and folder ownership rules are in
@@ -236,9 +237,9 @@ recommendations live in `EXPERIMENT_STATUS.md`.
 Generated ESM embeddings should normally live outside the Git repository, then
 be passed with `--esm-embeddings-dir`. Use validation metrics for model and
 hyperparameter choice; reserve the held-out test set for final reporting of the
-selected checkpoint. Current mutable anchors and next-step recommendations live
-in `EXPERIMENT_STATUS.md`; exact current training values belong in the task
-playbooks, not in this README.
+frozen final-training checkpoint selected from validation/CV evidence. Current
+mutable anchors and next-step recommendations live in `EXPERIMENT_STATUS.md`;
+exact current training values belong in the task playbooks, not in this README.
 
 Optional reproducibility and joint-loss controls include `--deterministic`, `--metal-loss-weight`, and `--ec-loss-weight`.
 

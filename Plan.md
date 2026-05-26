@@ -92,8 +92,9 @@ explicit decision gates: Stage 0 (environment/data readiness), Stage 1
 (1-epoch smoke), Stage 2A (Only-GVP validation anchor), Stage 2B (baseline
 family comparison), Stage 3 (Optuna plumbing debug), Stage 4 (optional medium
 per-family Optuna), Stage 5A-5F (serious per-family HPO), Stage 5G
-(RING/radius-only ablation), Stage 6 (top-K seed/split confirmation), and
-Stage 7 (one-shot held-out test).
+(RING/radius-only ablation), Stage 6 (top-K seed/split confirmation),
+Stage 6B (promotion gates and final full-train refit), and Stage 7
+(one-shot held-out test).
 
 Authoritative rules for the pipeline:
 
@@ -101,17 +102,27 @@ Authoritative rules for the pipeline:
 - Hardware target is a G4-class GPU; the playbook defines exact budgets,
   storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
-  Stage 6 grouped-fold confirmation evidence.
-- Stage 7 remains a one-shot held-out test event for a fixed
-  validation-selected configuration. Optional ensemble, calibration,
+  Stage 6 grouped-fold confirmation evidence plus a completed Stage 6B final
+  full-train refit selected from that evidence.
+- Stage 6 selects candidate configurations from validation/CV evidence only.
+  Stage 6B is the mandatory bridge to final training: it ranks candidates by
+  mean `val_metal_balanced_acc`, applies the predeclared paired-CI,
+  rare-class recall, and tie-breaker promotion policy, then trains/refits one
+  final model using the frozen selected configuration before opening the
+  held-out test. This final-training run must keep the model family,
+  hyperparameters, feature policy, label scheme, epoch budget,
+  checkpoint-selection rule, calibration rule, and optional ensemble rule fixed
+  from validation evidence.
+- Stage 7 remains a one-shot held-out test event for the fixed final-training
+  run derived from the validation-selected configuration. Optional ensemble, calibration,
   temperature-scaling, plot, or confidence-interval outputs are reporting
   additions only and must not feed back into model/configuration/checkpoint
   selection.
-- Stage 6 model promotion uses paired comparisons over shared validation
+- Stage 6/6B promotion uses paired comparisons over shared validation
   folds/splits and, when configured, shared model-seed repeats. The notebook's
   explicit fold-plus-seed mode is `group_kfold_seed_repeat`; plain
-  `group_kfold` is a one-seed grouped-fold option. Candidate ranking uses
-  validation means over the declared fold/seed units; paired bootstrap 95%
+  `group_kfold` is a one-seed grouped-fold option. Stage 6B candidate ranking
+  uses validation means over the declared fold/seed units; paired bootstrap 95%
   confidence intervals stay fold-level, averaging seeds within each fold when
   multiple seeds are configured. Rare-class recall protection is required. Raw
   validation deltas alone are not sufficient promotion evidence.
@@ -202,7 +213,7 @@ can reproduce a command-line run.
 | Data paths | `--test-summary-csv` | optional test summary CSV | Held-out site-level labels paired with `--test-structure-dir`. | Expose |
 | Output/reporting | `--runs-dir` | output root | Parent directory for all run folders and reports. | Expose |
 | Output/reporting | `--run-name` | optional | Human-readable run folder name; auto-generated if blank. | Expose |
-| Output/reporting | `--run-test-eval` | off by default in CLI | Runs held-out test reporting for the validation-selected checkpoint. | Expose with warnings |
+| Output/reporting | `--run-test-eval` | off by default in CLI | Runs held-out test reporting for a validation-selected checkpoint. For reportable final runs, the checkpoint must come from the frozen final-training/refit run derived from validation/CV selection. | Expose with warnings |
 | Output/reporting | `--selection-metric` | task-dependent default | Metric used to select the best checkpoint. Use validation metrics for real comparisons. | Expose |
 | Output/reporting | `--save-epoch-checkpoints` | false | Save every epoch checkpoint, not only the selected/best checkpoint. | Advanced |
 | Output/reporting | `--allow-train-loss-test-eval-debug` | false | Debug-only override allowing held-out test evaluation without validation selection. | Advanced warning |
@@ -470,7 +481,7 @@ Run tiers:
 | --- | --- | --- | --- |
 | Debug | Path, syntax, smoke, and plumbing checks | Not model-selection evidence | Enough config to reproduce the failure/smoke behavior |
 | Serious validation | Baseline comparison, HPO, grouped-fold confirmation, or validation ablation | Eligible for model-selection discussion if gates pass | Full config, split/group policy, seeds/folds, dataset bundle checksum, git commit, key library versions, and validation artifacts |
-| Final test | One-shot held-out reporting for a fixed validation-selected configuration | Final report only; never feeds back into selection | All serious-validation records plus source-run identity, checkpoint, primary-report declaration, calibration/CI settings, and no-test-selection statement |
+| Final test | One-shot held-out reporting for the fixed final-training run derived from a validation-selected configuration | Final report only; never feeds back into selection | All serious-validation records plus Stage 6 selection evidence, final-training source-run identity, checkpoint, primary-report declaration, calibration/CI settings, and no-test-selection statement |
 
 There is currently no checked-in environment specification file. Until one is
 added, serious validation and final-test records must capture enough key
@@ -502,6 +513,9 @@ The summary table should include, when available:
 Important rules:
 
 - Validation metrics are used for checkpoint selection and hyperparameter choice.
+- After cross-validation or Stage 6 grouped-fold confirmation, select exactly
+  one configuration from validation/CV evidence, train or refit the final model
+  with that frozen configuration, and only then run the held-out test once.
 - Held-out test metrics are used only for final reporting.
 - Do not choose models by repeatedly checking the held-out test set.
 - Stage 7 may report a predeclared five-checkpoint softmax-mean ensemble, but
@@ -529,9 +543,14 @@ Statistical methodology:
 - Model and hyperparameter selection must be validation-only.
 - Single-split validation is useful for screening but should not be the final
   promotion criterion when Stage 6 grouped-fold confirmation is available.
-- Stage 6 comparisons should use shared validation units, shared seed lists when
-  configured, fold-level paired confidence intervals, and rare-class recall
-  protection before promoting a candidate.
+- Stage 6 comparisons should use shared validation units and shared seed lists
+  when configured. Stage 6B then uses fold-level paired confidence intervals,
+  rare-class recall protection, and predeclared tie-breakers before promoting a
+  candidate.
+- Stage 6B promotes a configuration and produces the final full-train refit,
+  not a held-out-test-ready score. The final-training run cannot change model
+  family, hyperparameters, feature set, split policy, epoch/checkpoint rule,
+  calibration rule, ensemble membership, or primary report based on test data.
 - Calibration, temperature scaling, ensemble membership, thresholds, and primary
   report choice must be fixed from validation evidence before Stage 7.
 - Stage 7 reports uncertainty, calibration, and diagnostic views after the
@@ -546,7 +565,8 @@ Limited-compute fallback:
 - If compute is insufficient for the full serious route, stop at a labeled
   validation-only result instead of launching Stage 7 from incomplete evidence.
 - A final held-out report still requires one fixed validation-selected
-  configuration and the one-shot Stage 7 policy.
+  configuration, a frozen Stage 6B final-training run derived from it, and the
+  one-shot Stage 7 policy.
 
 
 ---

@@ -2,7 +2,8 @@
 
 This file lists conservative, baseline-first direct CLI examples. The staged
 notebook playbooks are the authoritative source for exact current budgets,
-search spaces, Stage 6 confirmation, and Stage 7 final-test policy.
+search spaces, Stage 6 confirmation, Stage 6B final refit, and Stage 7
+final-test policy.
 
 For the canonical validation/testing order and folder map, use `docs/README.md`.
 
@@ -13,8 +14,9 @@ The main policy is:
 3. Run simple baselines before complex fusion models.
 4. Keep run names explicit so results can be compared later with `src/report_runs.py`.
 5. The commands below are validation-only examples and intentionally omit
-   `--run-test-eval`. Add test evaluation only for the final validation-selected
-   configuration under the one-shot Stage 7 policy.
+   `--run-test-eval`. Add test evaluation only for the frozen Stage 6B
+   final-refit run derived from the validation-selected configuration under the
+   one-shot Stage 7 policy.
 
 ---
 
@@ -491,8 +493,9 @@ PYTHONPATH=src ${PYTHON} src/train.py \
 
 After the first pass, repeat only the most promising models with multiple seeds.
 For reportable metal promotion, prefer the current playbook Stage 6 grouped-fold
-confirmation. The direct CLI loop below is an exploratory validation-only
-fallback, not a replacement for grouped-fold Stage 6.
+confirmation followed by Stage 6B promotion/refit. The direct CLI loop below is
+an exploratory validation-only fallback, not a replacement for grouped-fold
+Stage 6 or Stage 6B.
 
 Example exploratory seeds:
 

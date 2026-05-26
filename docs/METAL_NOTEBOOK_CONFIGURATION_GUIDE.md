@@ -37,7 +37,8 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 5F: GVP + cross-attention HPO | Cross-attention controls, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "Model architecture and fusion" |
 | Stage 5G: RING/radius-only ablation | `RING_EDGE_MODE`, RING requirement/preparation flags, ablation labeling | "RING options" |
 | Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold_seed_repeat"` for fold-plus-seed confirmation, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
-| Stage 7: one-shot held-out test | final-run selector, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
+| Stage 6B: promotion gates and final full-train refit | `RUN_STAGE6B_FINAL_SELECTION`, paired-CI thresholds, rare-recall thresholds, configurable tie-breakers, final-refit seed/epoch/device controls | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
+| Stage 7: one-shot held-out test | Stage 6B final-refit source selection, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
 
 ## Current Status Pointer
 
@@ -60,7 +61,9 @@ For the current notebook execution order, use the playbook's "How To Use This
 Playbook" section. The invariant is: paste exactly one stage block, inspect the
 resolved planning table, launch only when the planned commands match the stage,
 summarize the current `RUN_BATCH_ID`, run Stage 6 before any final selection,
-and use Stage 7 only once after validation selection is frozen.
+run Stage 6B to apply promotion gates and train/refit the selected
+configuration once, and use Stage 7 only after that Stage 6B final-refit run is
+frozen.
 
 The notebook is intentionally staged. Smoke, baseline, HPO, grouped-fold
 confirmation, and final-test settings should not be mixed in one batch folder
@@ -96,11 +99,14 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
-| Final test | Stage 7 only, after Stage 6 grouped-fold validation |
+| Final refit | Stage 6B only, after Stage 6 grouped-fold validation and before held-out test |
+| Final test | Stage 7 only, after Stage 6B has frozen the final-refit run derived from the selected configuration |
 
-Stage 6 grouped-fold confirmation is the exception to the `VAL_FRACTION`
-default: it sets `VAL_FRACTION = 0.0` and uses `SEED_REPEAT_N_FOLDS = 5` with
-`SPLIT_BY = "pdbid"`.
+Stage 6 grouped-fold confirmation is the validation exception to the
+`VAL_FRACTION` default: it sets `VAL_FRACTION = 0.0` and uses
+`SEED_REPEAT_N_FOLDS = 5` with `SPLIT_BY = "pdbid"`. Stage 6B is the final-refit
+exception: it also uses `VAL_FRACTION = 0.0`, but only after validation/CV
+selection has already fixed the configuration.
 
 `DATASET_NAME` controls which external train/test dataset root is resolved.
 `SPLIT_BY` controls only how the selected external train split is partitioned
@@ -520,10 +526,12 @@ Keep `VAL_FRACTION > 0` for single-split reportable comparisons. Stage 6
 grouped-fold confirmation is the planned exception: it sets
 `VAL_FRACTION = 0` together with `N_FOLDS`/`FOLD_INDEX`, so validation still
 exists. If `VAL_FRACTION = 0` without a fold split, the training CLI falls
-back to `train_loss`, which is not a valid basis for model selection. The
-notebook prints a metal split diagnostic showing whether every metal class is
-present in train and validation; if any class is missing from validation, that
-run is not suitable for reportable model selection.
+back to `train_loss`, which is not a valid basis for model selection. Stage 6B
+is the exception because model selection has already happened and train loss is
+only the fixed full-train refit checkpoint rule. The notebook prints a metal
+split diagnostic showing whether every metal class is present in train and
+validation; if any class is missing from validation, that run is not suitable
+for reportable model selection.
 
 ### Metal class weighting
 
@@ -696,6 +704,21 @@ For useful Colab HPO:
   and seed values unchanged, and keep `SKIP_EXISTING_RUNS = True`. Runs with
   `run_metadata.json` are reused; incomplete fold/seed directories may be
   rerun.
+- Stage 6B controls live in the dedicated **Stage 6B - promotion gates and
+  final full-train refit** cell. Enable `RUN_STAGE6B_FINAL_SELECTION = True`
+  only after Stage 6 artifacts exist. Keep `LAUNCH_STAGE6B_FINAL_REFIT = False`
+  for the first pass so the notebook writes and displays
+  `stage6b_decision.json`, `stage6b_ranked_candidates.csv`, and
+  `stage6b_final_refit_command.txt` before training.
+- Stage 6B ranks by `STAGE6B_RANK_BY_METRIC =
+  "mean_val_metal_balanced_acc"`. Promotion is blocked unless the paired-CI
+  gate passes, rare-class recall thresholds pass, and the configured tie-breaker
+  policy is satisfied. The default tie-breaker order is mean minimum recall,
+  worst-fold validation metric, standard deviation, then model simplicity.
+- Stage 6B final refit uses the full non-test training set
+  (`VAL_FRACTION = 0.0`, no k-fold split) and `selection_metric = "train_loss"`
+  only as the predeclared checkpoint rule for the final refit. It must not
+  create `test_report.json`.
 
 Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
@@ -754,8 +777,11 @@ Use this controlled sequence:
    stable.
 6. Advance to Stage 5D/5E/5F only if the playbook's advanced-fusion gate is
    satisfied.
-7. Select one final configuration by validation evidence.
-8. Use Stage 7 once for that selected configuration.
+7. Use Stage 6B to select one final configuration by validation evidence,
+   paired-CI support, rare-recall protection, and predeclared tie-breakers.
+8. Use Stage 6B to train/refit one final full non-test model from that frozen
+   configuration without changing model-selection choices.
+9. Use Stage 7 once for that Stage 6B final-refit run.
 
 For the current metal task, check `EXPERIMENT_STATUS.md` before starting at any
 numbered step. If the current validation anchor is already recorded there, use
@@ -800,8 +826,10 @@ The "Optional final held-out test evaluation" cell is driven by two widget
 controls: `LAUNCH_FINAL_HELD_OUT_TEST_EVAL` and `FINAL_TEST_WORKFLOW`.
 
 - **Primary source**: `evaluate_stage6_selected_candidate` loads
-  `stage6_selected_final_candidate.json` and evaluates only its frozen
-  Stage-6-selected primary source/checkpoint.
+  `stage6b_selected_final_refit_candidate.json` when present, otherwise legacy
+  `stage6_selected_final_candidate.json`, and must evaluate only the frozen
+  Stage 6B final-refit run derived from the Stage-6-selected primary
+  configuration.
 - **Exploratory source list**:
   `exploratory_evaluate_all_stage6_ranked_candidates` loads both
   `stage6_ranked_candidates.csv` and
@@ -812,9 +840,12 @@ controls: `LAUNCH_FINAL_HELD_OUT_TEST_EVAL` and `FINAL_TEST_WORKFLOW`.
   source run name. The original validation run folder is not overwritten.
 
 The final-test cell prints a pre-flight checklist before launch. It checks that
-the Stage 6 source files exist, that the source checkpoint exists, that the
-held-out test paths exist, that repeat policy is satisfied, and that Stage 6
-ranking/selection files will not be modified.
+the Stage 6/6B source files exist, that the final-refit source checkpoint
+exists, that the held-out test paths exist, that repeat policy is satisfied,
+and that Stage 6/6B ranking/selection files will not be modified.
+If the notebook resolves the Stage 7 source to a Stage 6 fold/seed checkpoint
+instead of the Stage 6B final-refit run, stop before launching the held-out
+test.
 
 After planning:
 
@@ -876,12 +907,13 @@ Stage 7 exposes only two user-facing final-test controls:
 
 The notebook keeps calibration, temperature-scaling, bootstrap, source-path,
 and repeat-guard defaults internal to the final-test cell. They are not separate
-workflow widgets.
+workflow widgets. The source path must resolve to the Stage 6B final-refit run
+derived from the Stage-6-selected configuration before Stage 7 is launched.
 
 Temperature scaling is fitted only on validation logits from the already fixed
-configuration.
-The notebook records `role = "primary_preselected"` for the Stage-6-selected
-rank #1 candidate and `role = "exploratory_posthoc"` for any additional
+configuration or Stage 6B final-refit source run.
+The notebook records `role = "primary_preselected"` for the Stage 6B final
+candidate and `role = "exploratory_posthoc"` for any additional
 ranked-candidate diagnostics. Do not change the primary report after viewing
 held-out metrics. The full Stage 7 policy and executable blocks live in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
@@ -920,6 +952,10 @@ After Optuna:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_ranked_candidates.csv`, if Stage 6 grouped-fold confirmation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_selected_final_candidate.json`, if Stage 6 grouped-fold confirmation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_ranked_candidates.csv`, if Stage 6B promotion was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_decision.json`, if Stage 6B promotion was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_final_refit_command.txt`, if Stage 6B promotion approved a refit
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_selected_final_refit_candidate.json`, after Stage 6B final refit completes or is reused
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
 
 Each launched run directory also gets `active_run_config.json` and
@@ -950,30 +986,35 @@ For Optuna:
 3. Run top-k grouped-fold validation with shared `pdbid` folds and the
    configured `REPEAT_SEEDS` via `group_kfold_seed_repeat`. Serious
    controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
-4. Select by the mean selected metric over all fold x seed runs, paired
-   bootstrap CI over seed-averaged fold means, and rare-class recall on
-   `val_metal_balanced_acc`, not by a single trial.
-5. Use `stage6_ranked_candidates.csv` and
-   `stage6_selected_final_candidate.json` to freeze the Stage 7 source before
-   any held-out test launch.
+4. Run Stage 6B and select by mean `val_metal_balanced_acc`, paired bootstrap
+   CI over seed-averaged fold means, rare-class recall protection, and the
+   configured tie-breakers, not by a single trial.
+5. Use `stage6_ranked_candidates.csv`,
+   `stage6_selected_final_candidate.json`, `stage6b_decision.json`, and
+   `stage6b_selected_final_refit_candidate.json` to freeze the selected final
+   refit before any held-out test launch.
 
 For final reporting:
 
-1. Use the Stage 6 selected-candidate JSON or one explicitly selected
-   validation-only checkpoint as the final source.
-2. Confirm that `stage6_selected_final_candidate.json` records the frozen
-   Stage-6-selected rank #1 source/checkpoint before launch.
-3. Use the "Optional final held-out test evaluation" cell with
+1. Use Stage 6B to train/refit one final model from the Stage 6 selected
+   configuration before any held-out test launch.
+2. Use the Stage 6B final-refit run as the primary final-test source, with
+   Stage 6 and Stage 6B JSON files kept as the evidence for why that
+   configuration was selected.
+3. Confirm that the Stage 6B final-refit run's `run_config.json` and
+   `run_metadata.json` match the Stage-6-selected configuration and that no
+   `test_report.json` exists before Stage 7.
+4. Use the "Optional final held-out test evaluation" cell with
    `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True` only after the preview is correct.
-4. Use `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for the
+5. Use `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for the
    primary final report. Use
    `FINAL_TEST_WORKFLOW = "exploratory_evaluate_all_stage6_ranked_candidates"`
    only for labeled post-hoc diagnostics that cannot replace the primary model.
-5. Record `test_metal_balanced_acc`, `test_metal_macro_f1`,
+6. Record `test_metal_balanced_acc`, `test_metal_macro_f1`,
    `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`,
    calibration metrics, plot paths, bootstrap CI fields, and
    `calibrated_metrics` from `test_report.json`.
-6. Do not go back and choose a different configuration, ensemble subset,
+7. Do not go back and choose a different configuration, ensemble subset,
    temperature, or primary report because its test score is better.
 
 ## Mistakes To Avoid
@@ -1000,14 +1041,15 @@ For final reporting:
 - Do not mix incompatible `MODEL_PRESET` values in Stage 6 top-config
   reevaluation.
 - Do not set `ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = True` unless you are intentionally overriding the guard.
-- Do not launch Stage 7 from raw Optuna trial folders. Use a Stage 6
-  validation-selected source run.
+- Do not launch Stage 7 from raw Optuna trial folders or arbitrary Stage 6 fold
+  checkpoints. Use the Stage 6B final-refit run derived from the Stage 6
+  validation-selected configuration.
 - Do not trust one lucky seed.
 - Do not over-interpret 1-epoch or 3-epoch debug results.
 - Do not let missing ESM embeddings silently define an ESM baseline.
 - Do not present exact/possibly-overlapped split results as the main held-out result.
-- Do not use `VAL_FRACTION = 0` for reportable model selection unless Stage 6
-  grouped-fold validation is explicitly configured with `N_FOLDS`/`FOLD_INDEX`.
+- Do not use `VAL_FRACTION = 0` for reportable model selection. The exception
+  is Stage 6B final refit after Stage 6 has already fixed the configuration.
 
 ## Notebook Behavior Notes
 
@@ -1018,8 +1060,8 @@ These are stable usage cautions, not an implementation backlog:
 - `RECOMMENDED_RUN_SET` may override `MODEL_PRESET`; inspect the resolved
   planning table before launch.
 - Inline held-out-test evaluation is fixed off in the main configuration cell;
-  reportable workflows must use Stage 7 only after validation selection is
-  fixed.
+  reportable workflows must use Stage 7 only after validation selection and the
+  Stage 6B final refit are fixed.
 - RING-enabled graph construction is the normal first graph setting. Use the
   playbook's radius-only ablation only when intentionally testing that ablation.
 - Saved `Only-GVP` configs may show a fusion-mode field even though ESM fusion

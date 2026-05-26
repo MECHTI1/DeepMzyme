@@ -274,8 +274,10 @@ To answer "what is the next metal-training step", the agent must:
    expected outputs/files, (c) the decision gate that determines whether to
    proceed to the next stage. Do not invent budgets; cite the playbook stage.
 5. Never silently recommend held-out test evaluation before Stage 7, and never
-   recommend Stage 7 unless a Stage 6 validation-selected source run has been
-   chosen from grouped-fold confirmation or an explicitly labeled fallback.
+   recommend Stage 7 unless Stage 6 has selected one configuration from
+   grouped-fold confirmation or an explicitly labeled fallback, Stage 6B has
+   produced a completed/reused final full-train refit for that configuration,
+   and that refit is fixed as the Stage 7 source.
 
 Use the playbook stage names exactly:
 
@@ -295,6 +297,7 @@ Use the playbook stage names exactly:
 - Stage 5F: GVP + cross-attention HPO
 - Stage 5G: RING/radius-only ablation
 - Stage 6: top-K seed/split confirmation
+- Stage 6B: promotion gates and final full-train refit
 - Stage 7: one-shot held-out test
 
 #### Metal Colab pipeline documentation policy
@@ -321,13 +324,19 @@ Operational assumptions for this project:
   values or incompatible search spaces. Keep
   `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False` for reportable HPO unless the
   user explicitly asks for a labeled recovery/debug override.
-- Stage 7 (held-out test) is one-shot per final validation-selected
-  configuration.
+- Stage 7 (held-out test) is one-shot per final training/refit run derived from
+  a final validation-selected configuration.
+- After Stage 6/cross-validation, the selected configuration must be promoted
+  and trained/refit once before held-out testing. Stage 6 selects the
+  configuration, Stage 6B applies promotion gates and creates the final
+  full-train refit, and Stage 7 reports the frozen final-training
+  checkpoint/run.
 - Stage 7 reporting improvements (ensemble, calibration, temperature scaling,
   plots, bootstrap CIs) must not weaken the one-shot policy. The primary final
-  report, ensemble source list, averaging rule, and calibration rule must be
-  fixed before opening the held-out test, and test metrics must never be used to
-  switch the primary report or choose a different checkpoint/configuration.
+  report, final training/refit source run, ensemble source list, averaging rule,
+  and calibration rule must be fixed before opening the held-out test, and test
+  metrics must never be used to switch the primary report or choose a different
+  checkpoint/configuration.
 - Stage 6 defaults to
   `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` for top-K 5-fold
   grouped validation by `pdbid` crossed with the configured `REPEAT_SEEDS`
@@ -336,6 +345,13 @@ Operational assumptions for this project:
   option, and `seed_repeat` is exploratory. Candidate promotion uses paired
   bootstrap confidence intervals and rare-class recall protection, not raw
   validation deltas alone.
+- Stage 6B is the named validation-to-final-refit bridge. It ranks Stage 6
+  candidates by mean `val_metal_balanced_acc`, applies configurable paired-CI,
+  rare-class recall, and tie-breaker gates, then optionally trains one final
+  full non-test training-set refit for the selected configuration. Stage 6B
+  writes `stage6b_decision.json`, `stage6b_ranked_candidates.csv`,
+  `stage6b_final_refit_command.txt`, and, only after a completed/reused refit,
+  `stage6b_selected_final_refit_candidate.json`.
 - Exact executable stage values, Optuna budgets, search spaces, seed lists,
   expected outputs, and decision gates are owned by
   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults should be kept
@@ -373,6 +389,11 @@ format:
      `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is used, label it as
      one-seed grouped-fold confirmation because only the first `REPEAT_SEEDS`
      value is active.
+   - For Stage 6B, confirm the Stage 6 artifacts exist, promotion ranks by
+     mean `val_metal_balanced_acc`, paired-CI and rare-recall gates are
+     configured, `LAUNCH_STAGE6B_FINAL_REFIT` is still `False` during preview,
+     and the final refit uses the full non-test training set with no held-out
+     test evaluation.
    - Confirm one `MODEL_PRESET` per Optuna study.
    - Confirm persistent Drive SQLite storage for serious Optuna stages.
    - Confirm incompatible persistent-study reuse remains blocked unless an
@@ -390,6 +411,9 @@ format:
      `MODEL_PRESET`/Optuna-study compatibility where applicable, completed
      trial/run counts, paired bootstrap CI requirements where applicable, and
      rare-class recall protection.
+   - For Stage 6, Stage 6B, and Stage 7 transitions, include the required
+     Stage 6B final training/refit run between validation/CV selection and
+     held-out testing.
 
 If the requested stage block is missing or incomplete, update
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` first instead of patching the answer
@@ -611,8 +635,10 @@ MLOps/testing recommendations, or whether a proposed prompt is safe:
   architecture rewrites.
 - Recommendations about model families, Optuna budgets, split policy, or
   held-out testing must preserve the validation-only selection rules and the
-  one-shot Stage 7 policy unless the user explicitly requests a policy change.
+  required final training/refit step and one-shot Stage 7 policy unless the
+  user explicitly requests a policy change.
 - A prompt is not safe for metal-stage recommendations if it silently permits
-  held-out test use before Stage 7, recommends Stage 7 before a fixed Stage 6
-  validation-selected source run exists, or weakens the current Stage 6
-  grouped-fold, paired-bootstrap, and rare-class recall requirements.
+  held-out test use before Stage 7, recommends Stage 7 before a Stage
+  6-selected configuration and Stage 6B frozen final training/refit run exist,
+  or weakens the current Stage 6 grouped-fold, paired-bootstrap, rare-class
+  recall, and Stage 6B promotion-gate requirements.

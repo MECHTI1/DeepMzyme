@@ -35,8 +35,11 @@ meanings, not exact stage values.
 ## Coordination Rules
 
 - Do not use held-out test data before Stage 7.
-- Stage 7 must use a fixed validation-selected configuration and a separate
-  final-test output folder.
+- After Stage 6/cross-validation, choose exactly one best configuration from
+  validation evidence, run Stage 6B promotion gates, train/refit the final
+  model with that frozen configuration, and only then launch Stage 7.
+- Stage 7 must use the fixed Stage 6B final-refit run derived from the
+  validation-selected configuration and a separate final-test output folder.
 - Keep current notebook defaults, conservative first-pass GVP/HPO profiles,
   and canonical extended G4 HPO budgets distinct. Current defaults are a live
   launch surface; stage budgets and decision gates belong in the playbooks.

@@ -108,6 +108,7 @@ class TrainConfig:
     test_summary_csv: Path | None = None
     run_test_eval: bool = False
     allow_train_loss_test_eval_debug: bool = False
+    allow_final_refit_test_eval: bool = False
     device: str = "cpu"
     deterministic: bool = False
     task: str = "joint"
@@ -251,6 +252,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Debug/smoke override: allow held-out test evaluation without validation-selected "
             "checkpointing. Do not use for final or publication-quality reporting."
+        ),
+    )
+    parser.add_argument(
+        "--allow-final-refit-test-eval",
+        action="store_true",
+        help=(
+            "Allow Stage 7 evaluation of a checkpoint retrained on the full non-test "
+            "training set after a separate validation/CV-selected configuration was fixed. "
+            "This is not for model selection and should be paired with recorded validation evidence."
         ),
     )
     parser.add_argument("--device", type=str, default="cpu")
@@ -853,6 +863,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         test_summary_csv=args.test_summary_csv,
         run_test_eval=args.run_test_eval,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
+        allow_final_refit_test_eval=args.allow_final_refit_test_eval,
         device=args.device,
         deterministic=args.deterministic,
         task=args.task,

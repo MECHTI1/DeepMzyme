@@ -41,8 +41,9 @@ summaries should go under `summaries/`.
 
 - Use validation metrics for model, checkpoint, hyperparameter, architecture,
   and HPO decisions.
-- Keep the held-out test set reserved for final reporting after a validation
-  selected configuration is fixed.
+- Keep the held-out test set reserved for final reporting after a
+  validation-selected configuration is fixed and the corresponding Stage 6B
+  final-refit run has been completed and frozen.
 - Record `VAL_FRACTION`, `METAL_LABEL_SCHEME`, `METAL_NODE_MODE`, and
   `SPLIT_BY` in copied summaries, because changing any of these values changes
   the comparison identity.
