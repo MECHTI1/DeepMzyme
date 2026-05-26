@@ -2290,6 +2290,15 @@ Expected scale/runtime: serious run, long or overnight. Training count is
 roughly `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT x SEED_REPEAT_N_FOLDS x
 len(REPEAT_SEEDS)` in `group_kfold_seed_repeat` mode, or top-K x folds in
 plain `group_kfold` mode; runtime then scales with that count and `EPOCHS`.
+Optional Stage 6 parallelism is candidate-scoped: for each ranked top-K
+candidate, the notebook can run up to
+`STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES` fold/seed validation subprocesses
+at once, waits for that candidate's units to finish, and then moves to the
+next ranked candidate. The effective worker count is capped by
+`SEED_REPEAT_N_FOLDS` and by the number of remaining units for that candidate.
+Keep the default `1` for serial/reproducible behavior; set it to
+`SEED_REPEAT_N_FOLDS` only after confirming GPU memory headroom for the active
+model.
 
 Preferred same-runtime configuration: run the exact Stage 5 HPO block first
 with `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False`. After HPO finishes, use
@@ -2318,6 +2327,7 @@ TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"
 TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
+STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES = 1
 SEED_REPEAT_SPLIT_SEED = 42
 STAGE6_RAW_IMPROVEMENT_THRESHOLD = 0.0
 ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = False
@@ -2375,6 +2385,12 @@ Notes:
   predeclared.
 - `SEED_REPEAT_SPLIT_SEED = 42` fixes the grouped fold definitions. Keep it
   identical for every candidate in the same comparison.
+- `STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES = 1` preserves the original
+  serial Stage 6 launch. Values above `1` run fold/seed units in parallel
+  within the current ranked candidate only; all units for top-1 finish before
+  top-2 starts. On a single G4/T4-class GPU, set this no higher than
+  `SEED_REPEAT_N_FOLDS`; the launcher caps the effective worker count at the
+  fold count and only a short launch should confirm CUDA memory headroom.
 - The legacy `TOP_CONFIG_REEVALUATION_MODE = "seed_repeat"` mode remains
   available for exploratory checks only. It measures combined initialization
   and split variance, not isolated initialization variance.
@@ -2499,6 +2515,7 @@ TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"
 TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"
 REPEAT_SEEDS = "42"
 SEED_REPEAT_N_FOLDS = 5
+STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES = 1
 SEED_REPEAT_SPLIT_SEED = 42
 RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True
 RETRAIN_BEST_CONFIG_AFTER_HPO = False

@@ -36,7 +36,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 5E: GVP + hybrid fusion HPO | Early+late ESM controls, early ESM dimensions/dropout, advanced-fusion gate | "Advanced fusion policy", "ESM options" |
 | Stage 5F: GVP + cross-attention HPO | Cross-attention controls, ESM path controls, advanced-fusion gate | "Advanced fusion policy", "Model architecture and fusion" |
 | Stage 5G: RING/radius-only ablation | `RING_EDGE_MODE`, RING requirement/preparation flags, ablation labeling | "RING options" |
-| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold_seed_repeat"` for fold-plus-seed confirmation, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
+| Stage 6: top-K seed/split confirmation | `RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION`, `TOP_CONFIG_REEVALUATION_MODE="group_kfold_seed_repeat"` for fold-plus-seed confirmation, top-K controls, `REPEAT_SEEDS`, `SEED_REPEAT_N_FOLDS`, `STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES`, `SEED_REPEAT_SPLIT_SEED`, mismatch guard | "Optuna storage and Stage 6 confirmation", "How To Decide The Current Best Configuration" |
 | Stage 7: one-shot held-out test | final-run selector, preview/evaluate workflow, one-shot confirmation, repeat/mixed-batch guards | "Output Files To Inspect", "How To Decide The Current Best Configuration" |
 
 ## Current Status Pointer
@@ -677,6 +677,11 @@ For useful Colab HPO:
   candidate sees the same `pdbid` folds and model-seed list.
 - Use `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` only when you want
   grouped folds with the first `REPEAT_SEEDS` value rather than every seed.
+- Use `STAGE6_PARALLEL_CROSS_VALIDATION_PROCESSES = 1` for serial Stage 6
+  confirmation. Values above `1` run fold/seed units in parallel within the
+  current ranked top-K candidate only, capped at `SEED_REPEAT_N_FOLDS`; the
+  next ranked candidate starts only after the current candidate's units finish.
+  Set it to `SEED_REPEAT_N_FOLDS` only after confirming GPU memory headroom.
 - Use `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"` for serious
   controlled-HPO defaults. Auto repeats up to 5 candidates below 50 completed
   trials, up to 10 below 150, and up to 20 for 150 or more completed trials. A

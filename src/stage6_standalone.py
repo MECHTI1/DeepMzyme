@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import concurrent.futures
 import json
 import os
 import random
@@ -454,7 +455,14 @@ def _command_text(cmd: list[str], env: dict[str, str] | None = None) -> str:
     return " ".join(prefix + [shlex.join([str(part) for part in cmd])])
 
 
-def _stream_command(cmd: list[str], *, cwd: Path, stdout_log: Path, stderr_log: Path) -> tuple[int, str]:
+def _stream_command(
+    cmd: list[str],
+    *,
+    cwd: Path,
+    stdout_log: Path,
+    stderr_log: Path,
+    print_to_console: bool = True,
+) -> tuple[int, str]:
     stdout_log.parent.mkdir(parents=True, exist_ok=True)
     stderr_log.parent.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -473,7 +481,8 @@ def _stream_command(cmd: list[str], *, cwd: Path, stdout_log: Path, stderr_log: 
         )
         assert process.stdout is not None
         for line in process.stdout:
-            print(line, end="", flush=True)
+            if print_to_console:
+                print(line, end="", flush=True)
             out_handle.write(line)
             err_handle.write(line)
             out_handle.flush()
@@ -574,6 +583,18 @@ def _build_rerun_configs(
             cfg["original_val_metal_min_recall"] = candidate.val_metal_min_recall
             reruns.append(cfg)
     return reruns
+
+
+def _stage6_candidate_batches(configs: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    batches: list[list[dict[str, Any]]] = []
+    current_key: tuple[int, str] | None = None
+    for config in configs:
+        key = (int(config.get("top_rank", 0)), str(config.get("candidate_id") or ""))
+        if current_key != key:
+            batches.append([])
+            current_key = key
+        batches[-1].append(config)
+    return batches
 
 
 def _summary_rows(records: list[dict[str, Any]], selection_metric: str) -> list[dict[str, Any]]:
@@ -721,6 +742,7 @@ def run_stage6_standalone(
     selection_metric: str = "val_metal_balanced_acc",
     raw_improvement_threshold: float = 0.0,
     skip_existing_runs: bool = True,
+    parallel_cross_validation_processes: int = 1,
     launch: bool = False,
     repo_dir: str | Path | None = None,
 ) -> dict[str, Any]:
@@ -736,6 +758,9 @@ def run_stage6_standalone(
     study_name = _slug(output_study_name or f"{existing_dir.name}_stage6")
     optuna_dir = runs_dir / "optuna" / study_name
     optuna_dir.mkdir(parents=True, exist_ok=True)
+    parallel_processes = int(parallel_cross_validation_processes or 1)
+    if parallel_processes < 1:
+        raise ValueError("parallel_cross_validation_processes must be >= 1.")
     if device == "auto":
         try:
             import torch
@@ -835,70 +860,112 @@ def run_stage6_standalone(
     )
     commands_txt.write_text("\n".join(commands) + "\n", encoding="utf-8")
 
+    def _run_one_stage6_config(config: dict[str, Any], *, print_to_console: bool) -> dict[str, Any]:
+        run_dir = Path(config["run_dir"])
+        status = "planned"
+        return_code = None
+        error_tail = ""
+        if skip_existing_runs and (run_dir / "run_metadata.json").exists():
+            status = "existing"
+            print("Existing Stage 6 run:", run_dir)
+        else:
+            print("=" * 80)
+            print(f"[Standalone Stage 6 {config['candidate_id']} {config['validation_unit']}]")
+            print(config["shell_command"])
+            _write_active_snapshot(
+                run_dir,
+                config,
+                {
+                    "reevaluation_mode": reevaluation_mode,
+                    "existing_runs_dir": str(existing_dir),
+                    "original_source_run_dir": config.get("source_run_dir"),
+                    "stage6_parallel_cross_validation_processes": parallel_processes,
+                    "stage6_parallel_scope": "within one ranked candidate; next candidate waits for current candidate's units",
+                },
+            )
+            return_code, error_tail = _stream_command(
+                config["command"],
+                cwd=repo,
+                stdout_log=Path(config["stdout_log_path"]),
+                stderr_log=Path(config["stderr_log_path"]),
+                print_to_console=print_to_console,
+            )
+            status = "completed" if return_code == 0 else "failed"
+        candidate_metrics = _candidate_from_run_dir(run_dir, selection_metric) if status in {"completed", "existing"} else None
+        return {
+            "run_tag": f"{reevaluation_mode}_{config['candidate_id']}_{config['validation_unit']}",
+            "candidate_id": config["candidate_id"],
+            "imported_candidate_id": config["imported_candidate_id"],
+            "validation_unit": config["validation_unit"],
+            "fold_unit": config["fold_unit"],
+            "model_seed": config["seed"],
+            "split_seed": config["split_seed"],
+            "n_folds": config["n_folds"],
+            "fold_index": config["fold_index"],
+            "status": status,
+            "return_code": return_code,
+            "error_message": "" if status in {"completed", "existing"} else error_tail,
+            "selection_metric": selection_metric,
+            "selected_best_validation_metric_value": candidate_metrics.selected_metric_value if candidate_metrics else None,
+            "val_metal_balanced_acc": candidate_metrics.val_metal_balanced_acc if candidate_metrics else None,
+            "val_metal_min_recall": candidate_metrics.val_metal_min_recall if candidate_metrics else None,
+            "selected_checkpoint": candidate_metrics.selected_checkpoint if candidate_metrics else None,
+            "run_name": config["run_name"],
+            "run_dir": config["run_dir"],
+            "source_run_dir": config.get("source_run_dir"),
+            "top_config_reevaluation_mode": reevaluation_mode,
+            "model_architecture": config.get("model_architecture"),
+            "fusion_mode": config.get("fusion_mode"),
+            "model_preset": config.get("model_preset"),
+            "learning_rate": config.get("learning_rate"),
+            "weight_decay": config.get("weight_decay"),
+            "batch_size": config.get("batch_size"),
+            "stdout_log_path": config["stdout_log_path"],
+            "stderr_log_path": config["stderr_log_path"],
+            "stage6_parallel_cross_validation_processes": parallel_processes,
+            "stage6_parallel_scope": "candidate",
+        }
+
     records = []
     if launch:
         print("Running standalone Stage 6 grouped-fold confirmation")
-        for config in reruns:
-            run_dir = Path(config["run_dir"])
-            status = "planned"
-            return_code = None
-            error_tail = ""
-            if skip_existing_runs and (run_dir / "run_metadata.json").exists():
-                status = "existing"
-                print("Existing Stage 6 run:", run_dir)
+        print(
+            "Stage 6 parallel cross-validation processes:",
+            parallel_processes,
+            "(within each ranked candidate; the next candidate waits for the current candidate batch)",
+        )
+        for batch in _stage6_candidate_batches(reruns):
+            candidate_id = str(batch[0].get("candidate_id") or "")
+            workers = min(parallel_processes, int(n_folds), len(batch))
+            print(f"Starting Stage 6 candidate batch {candidate_id}: {len(batch)} validation unit(s), workers={workers}")
+            if workers == 1:
+                for config in batch:
+                    records.append(_run_one_stage6_config(config, print_to_console=True))
             else:
-                print("=" * 80)
-                print(f"[Standalone Stage 6 {config['candidate_id']} {config['validation_unit']}]")
-                print(config["shell_command"])
-                _write_active_snapshot(
-                    run_dir,
-                    config,
-                    {
-                        "reevaluation_mode": reevaluation_mode,
-                        "existing_runs_dir": str(existing_dir),
-                        "original_source_run_dir": config.get("source_run_dir"),
-                    },
-                )
-                return_code, error_tail = _stream_command(
-                    config["command"],
-                    cwd=repo,
-                    stdout_log=Path(config["stdout_log_path"]),
-                    stderr_log=Path(config["stderr_log_path"]),
-                )
-                status = "completed" if return_code == 0 else "failed"
-            candidate_metrics = _candidate_from_run_dir(run_dir, selection_metric) if status in {"completed", "existing"} else None
-            record = {
-                "run_tag": f"{reevaluation_mode}_{config['candidate_id']}_{config['validation_unit']}",
-                "candidate_id": config["candidate_id"],
-                "imported_candidate_id": config["imported_candidate_id"],
-                "validation_unit": config["validation_unit"],
-                "fold_unit": config["fold_unit"],
-                "model_seed": config["seed"],
-                "split_seed": config["split_seed"],
-                "n_folds": config["n_folds"],
-                "fold_index": config["fold_index"],
-                "status": status,
-                "return_code": return_code,
-                "error_message": "" if status in {"completed", "existing"} else error_tail,
-                "selection_metric": selection_metric,
-                "selected_best_validation_metric_value": candidate_metrics.selected_metric_value if candidate_metrics else None,
-                "val_metal_balanced_acc": candidate_metrics.val_metal_balanced_acc if candidate_metrics else None,
-                "val_metal_min_recall": candidate_metrics.val_metal_min_recall if candidate_metrics else None,
-                "selected_checkpoint": candidate_metrics.selected_checkpoint if candidate_metrics else None,
-                "run_name": config["run_name"],
-                "run_dir": config["run_dir"],
-                "source_run_dir": config.get("source_run_dir"),
-                "top_config_reevaluation_mode": reevaluation_mode,
-                "model_architecture": config.get("model_architecture"),
-                "fusion_mode": config.get("fusion_mode"),
-                "model_preset": config.get("model_preset"),
-                "learning_rate": config.get("learning_rate"),
-                "weight_decay": config.get("weight_decay"),
-                "batch_size": config.get("batch_size"),
-                "stdout_log_path": config["stdout_log_path"],
-                "stderr_log_path": config["stderr_log_path"],
-            }
-            records.append(record)
+                batch_records: list[dict[str, Any]] = []
+                with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+                    futures = {
+                        executor.submit(_run_one_stage6_config, config, print_to_console=False): config
+                        for config in batch
+                    }
+                    for future in concurrent.futures.as_completed(futures):
+                        config = futures[future]
+                        record = future.result()
+                        batch_records.append(record)
+                        print(
+                            "Finished Stage 6 unit:",
+                            config["candidate_id"],
+                            config["validation_unit"],
+                            "status=",
+                            record.get("status"),
+                            "metric=",
+                            record.get("selected_best_validation_metric_value"),
+                            "log=",
+                            config.get("stdout_log_path"),
+                        )
+                batch_records.sort(key=lambda row: (int(row.get("fold_index") or 0), int(row.get("model_seed") or 0), str(row.get("validation_unit") or "")))
+                records.extend(batch_records)
+            print(f"Finished Stage 6 candidate batch {candidate_id}")
     else:
         print("Standalone Stage 6 preview only. Commands were written but no runs were launched.")
 
@@ -944,6 +1011,8 @@ def run_stage6_standalone(
         "n_ranked_candidates": len(ranked),
         "top_k": chosen_k,
         "n_stage6_runs": len(reruns),
+        "parallel_cross_validation_processes": parallel_processes,
+        "parallel_scope": "within each ranked candidate; candidates run sequentially by Stage 6 rank",
         "launched": bool(launch),
         "records": records,
     }
