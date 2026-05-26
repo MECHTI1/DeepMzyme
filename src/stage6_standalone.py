@@ -6,6 +6,7 @@ import json
 import os
 import random
 import re
+import shutil
 import statistics
 import subprocess
 import sys
@@ -597,6 +598,104 @@ def _stage6_candidate_batches(configs: list[dict[str, Any]]) -> list[list[dict[s
     return batches
 
 
+def _path_contains(parent: Path, child: Path) -> bool:
+    try:
+        child.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _stage6_manifest_payload(
+    *,
+    existing_dir: Path,
+    runs_dir: Path,
+    optuna_dir: Path,
+    study_name: str,
+    top_k_requested: str | int,
+    top_k_resolved: int,
+    reevaluation_mode: str,
+    repeat_seeds: list[int],
+    n_folds: int,
+    split_seed: int,
+    epochs: int | None,
+    device: str,
+    selection_metric: str,
+    raw_improvement_threshold: float,
+    selected: list[Candidate],
+) -> dict[str, Any]:
+    return {
+        "created_by": "stage6_standalone.py",
+        "schema_version": 1,
+        "protocol_stage": "Stage 6",
+        "existing_runs_dir": str(existing_dir.resolve()),
+        "output_runs_dir": str(runs_dir.resolve()),
+        "optuna_dir": str(optuna_dir.resolve()),
+        "study_name": str(study_name),
+        "parameters": {
+            "top_k_requested": str(top_k_requested),
+            "top_k_resolved": int(top_k_resolved),
+            "reevaluation_mode": str(reevaluation_mode),
+            "repeat_seeds": [int(seed) for seed in repeat_seeds],
+            "n_folds": int(n_folds),
+            "split_seed": int(split_seed),
+            "epochs": int(epochs) if epochs is not None else None,
+            "device": str(device),
+            "selection_metric": str(selection_metric),
+            "raw_improvement_threshold": float(raw_improvement_threshold),
+        },
+        "selected_candidates": [
+            {
+                "rank": index,
+                "candidate_id": candidate.candidate_id,
+                "run_dir": str(candidate.run_dir),
+                "selected_checkpoint": candidate.selected_checkpoint,
+                "selection_metric_value": candidate.selected_metric_value,
+                "val_metal_balanced_acc": candidate.val_metal_balanced_acc,
+                "val_metal_min_recall": candidate.val_metal_min_recall,
+            }
+            for index, candidate in enumerate(selected, start=1)
+        ],
+        "compatibility_rule": (
+            "Standalone Stage 6 output may be continued only when this manifest "
+            "matches the requested source, output, parameters, and selected candidates."
+        ),
+    }
+
+
+def _stage6_manifest_mismatches(existing: dict[str, Any], requested: dict[str, Any]) -> list[dict[str, Any]]:
+    checks = [
+        ("existing_runs_dir", existing.get("existing_runs_dir"), requested.get("existing_runs_dir")),
+        ("study_name", existing.get("study_name"), requested.get("study_name")),
+        ("parameters", existing.get("parameters"), requested.get("parameters")),
+        ("selected_candidates", existing.get("selected_candidates"), requested.get("selected_candidates")),
+    ]
+    mismatches = []
+    if int(existing.get("schema_version") or 0) != int(requested.get("schema_version") or 0):
+        mismatches.append(
+            {
+                "field": "schema_version",
+                "existing": existing.get("schema_version"),
+                "requested": requested.get("schema_version"),
+            }
+        )
+    for field, old_value, new_value in checks:
+        if old_value != new_value:
+            mismatches.append({"field": field, "existing": old_value, "requested": new_value})
+    return mismatches
+
+
+def _format_stage6_manifest_mismatches(mismatches: list[dict[str, Any]]) -> str:
+    lines = []
+    for mismatch in mismatches[:20]:
+        lines.append(
+            f"- {mismatch['field']}: existing={mismatch.get('existing')!r}; requested={mismatch.get('requested')!r}"
+        )
+    if len(mismatches) > 20:
+        lines.append(f"- ... {len(mismatches) - 20} additional mismatch(es)")
+    return "\n".join(lines)
+
+
 def _summary_rows(records: list[dict[str, Any]], selection_metric: str) -> list[dict[str, Any]]:
     groups: dict[str, list[dict[str, Any]]] = {}
     for record in records:
@@ -742,6 +841,7 @@ def run_stage6_standalone(
     selection_metric: str = "val_metal_balanced_acc",
     raw_improvement_threshold: float = 0.0,
     skip_existing_runs: bool = True,
+    overwrite_output: bool = False,
     parallel_cross_validation_processes: int = 1,
     launch: bool = False,
     repo_dir: str | Path | None = None,
@@ -754,13 +854,20 @@ def run_stage6_standalone(
         runs_dir = Path(output_runs_dir).expanduser()
     else:
         runs_dir = existing_dir.parent / f"{existing_dir.name}_stage6"
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    study_name = _slug(output_study_name or f"{existing_dir.name}_stage6")
+    if _path_contains(runs_dir, existing_dir):
+        raise RuntimeError(
+            "Standalone Stage 6 output directory must not be the existing HPO source directory "
+            f"or a parent directory containing it. source={existing_dir}; output={runs_dir}"
+        )
+    if runs_dir.exists() and not runs_dir.is_dir():
+        raise RuntimeError(f"Standalone Stage 6 output path exists but is not a directory: {runs_dir}")
+    runs_dir_preexisting = runs_dir.exists()
+    study_name = _slug(output_study_name or runs_dir.name or f"{existing_dir.name}_stage6")
     optuna_dir = runs_dir / "optuna" / study_name
-    optuna_dir.mkdir(parents=True, exist_ok=True)
     parallel_processes = int(parallel_cross_validation_processes or 1)
     if parallel_processes < 1:
         raise ValueError("parallel_cross_validation_processes must be >= 1.")
+    requested_device = str(device)
     if device == "auto":
         try:
             import torch
@@ -781,8 +888,68 @@ def run_stage6_standalone(
             row["status"] = "selected_for_stage6"
 
     if not selected:
+        optuna_dir.mkdir(parents=True, exist_ok=True)
         _write_rows_csv(optuna_dir / "stage6_existing_trials_import_report.csv", report_rows)
         raise RuntimeError(f"No compatible completed validation-only candidates found in {existing_dir}.")
+
+    manifest = _stage6_manifest_payload(
+        existing_dir=existing_dir,
+        runs_dir=runs_dir,
+        optuna_dir=optuna_dir,
+        study_name=study_name,
+        top_k_requested=top_k,
+        top_k_resolved=chosen_k,
+        reevaluation_mode=reevaluation_mode,
+        repeat_seeds=seeds,
+        n_folds=int(n_folds),
+        split_seed=int(split_seed),
+        epochs=epochs,
+        device=requested_device,
+        selection_metric=selection_metric,
+        raw_improvement_threshold=float(raw_improvement_threshold),
+        selected=selected,
+    )
+    root_manifest_path = runs_dir / "stage6_manifest.json"
+    optuna_manifest_path = optuna_dir / "stage6_manifest.json"
+    existing_manifest = _read_json(root_manifest_path)
+    if not existing_manifest:
+        existing_manifest = _read_json(optuna_manifest_path)
+    output_has_contents = False
+    if runs_dir_preexisting:
+        try:
+            output_has_contents = any(runs_dir.iterdir())
+        except Exception:
+            output_has_contents = True
+    mismatches: list[dict[str, Any]] = []
+    if runs_dir_preexisting and existing_manifest:
+        mismatches = _stage6_manifest_mismatches(existing_manifest, manifest)
+    elif runs_dir_preexisting and output_has_contents:
+        mismatches = [
+            {
+                "field": "stage6_manifest.json",
+                "existing": "missing",
+                "requested": "required for continuing a non-empty standalone Stage 6 output directory",
+            }
+        ]
+    if mismatches:
+        mismatch_text = _format_stage6_manifest_mismatches(mismatches)
+        if not overwrite_output:
+            raise RuntimeError(
+                "Existing standalone Stage 6 output is not compatible with the requested settings. "
+                "Set STAGE6_OVERWRITE_OUTPUT=True only if you intentionally want to replace it.\n"
+                + mismatch_text
+            )
+        print("STAGE6_OVERWRITE_OUTPUT=True. Replacing incompatible standalone Stage 6 output directory:", runs_dir)
+        print(mismatch_text)
+        shutil.rmtree(runs_dir)
+        runs_dir_preexisting = False
+    elif runs_dir_preexisting and existing_manifest:
+        print("Existing standalone Stage 6 output manifest matches requested settings; continuing:", runs_dir)
+
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    optuna_dir.mkdir(parents=True, exist_ok=True)
+    root_manifest_path.write_text(json.dumps(_json_safe(manifest), indent=2, sort_keys=True), encoding="utf-8")
+    optuna_manifest_path.write_text(json.dumps(_json_safe(manifest), indent=2, sort_keys=True), encoding="utf-8")
 
     reruns = _build_rerun_configs(
         selected,
@@ -826,6 +993,7 @@ def run_stage6_standalone(
                     "created_by": "stage6_standalone.py",
                     "existing_runs_dir": str(existing_dir),
                     "output_runs_dir": str(runs_dir),
+                    "stage6_manifest_json": str(root_manifest_path),
                     "n_candidates_discovered": len(report_rows),
                     "n_compatible_completed_candidates": len(candidates),
                     "top_k_selected_for_stage6": chosen_k,
@@ -878,6 +1046,7 @@ def run_stage6_standalone(
                 {
                     "reevaluation_mode": reevaluation_mode,
                     "existing_runs_dir": str(existing_dir),
+                    "stage6_manifest_json": str(root_manifest_path),
                     "original_source_run_dir": config.get("source_run_dir"),
                     "stage6_parallel_cross_validation_processes": parallel_processes,
                     "stage6_parallel_scope": "within one ranked candidate; next candidate waits for current candidate's units",
@@ -1006,11 +1175,13 @@ def run_stage6_standalone(
         "existing_runs_dir": str(existing_dir),
         "output_runs_dir": str(runs_dir),
         "optuna_dir": str(optuna_dir),
+        "stage6_manifest_json": str(root_manifest_path),
         "import_report_csv": str(import_report_csv),
         "top_reevaluation_commands_txt": str(commands_txt),
         "n_ranked_candidates": len(ranked),
         "top_k": chosen_k,
         "n_stage6_runs": len(reruns),
+        "overwrite_output": bool(overwrite_output),
         "parallel_cross_validation_processes": parallel_processes,
         "parallel_scope": "within each ranked candidate; candidates run sequentially by Stage 6 rank",
         "launched": bool(launch),

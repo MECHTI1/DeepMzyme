@@ -2337,7 +2337,7 @@ EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR = "/content/drive/MyDrive/DeepMzyme/noteboo
 EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID = ""
 EXISTING_OPTUNA_TRIALS_RUNS_DIR = ""
 STAGE6_OUTPUT_RUNS_DIR = ""      # blank = sibling <OLD_HPO_RUN_BATCH_ID>_stage6 directory
-STAGE6_OUTPUT_STUDY_NAME = ""    # blank = auto-name from the old HPO directory
+STAGE6_OVERWRITE_OUTPUT = False  # False = continue compatible output or create; True = replace incompatible output
 STAGE6_EPOCHS = 50
 STAGE6_DEVICE = "auto"
 STAGE6_SELECTION_METRIC = "val_metal_balanced_acc"
@@ -2349,12 +2349,19 @@ previous HPO directory, set `USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = True` plus
 either `EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR / EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID`
 or the explicit `EXISTING_OPTUNA_TRIALS_RUNS_DIR`.
 
+For standalone existing-HPO Stage 6, leave `STAGE6_OUTPUT_RUNS_DIR` blank to
+write a sibling output directory named from the old HPO directory. If that
+output already contains a matching `stage6_manifest.json`, the notebook can
+continue it and reuse completed fold/seed units when `SKIP_EXISTING_RUNS=True`.
+If the output exists but the manifest does not match the requested source,
+top-K, folds, seeds, metric, epochs, or selected candidates, the launch stops
+unless `STAGE6_OVERWRITE_OUTPUT=True`.
+
 In the **Launch Stage 6 top-K grouped-fold confirmation** cell, first preview
 the imported candidates and generated commands:
 
 ```python
 LAUNCH_STAGE6_TOP_K_CONFIRMATION = False
-STAGE6_SOURCE_RUNS_DIR = ""  # blank = configured Stage 6 source, then current runs_dir fallback
 ```
 
 After confirming the import report and generated top-K commands are correct,
@@ -2362,7 +2369,6 @@ launch:
 
 ```python
 LAUNCH_STAGE6_TOP_K_CONFIRMATION = True
-STAGE6_SOURCE_RUNS_DIR = ""  # or a full old HPO RUN_BATCH_ID path
 ```
 
 Notes:
@@ -2408,6 +2414,8 @@ compared candidate, and keep the results as validation-only evidence.
 
 Expected outputs/files:
 
+- `<RUNS_DIR>/stage6_manifest.json` for standalone existing-HPO Stage 6
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_manifest.json` for standalone existing-HPO Stage 6
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_existing_trials_import_report.csv`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_existing_trials_import_report.json`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/top_reevaluation_commands.txt`
