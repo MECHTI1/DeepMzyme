@@ -719,6 +719,10 @@ For useful Colab HPO:
   (`VAL_FRACTION = 0.0`, no k-fold split) and `selection_metric = "train_loss"`
   only as the predeclared checkpoint rule for the final refit. It must not
   create `test_report.json`.
+- Stage 6B final refit uses one fixed predeclared integer seed,
+  `STAGE6B_FINAL_REFIT_SEED = 42`. It is intentionally not exposed as a Colab
+  input. Do not select the final refit seed from the winning Stage 6 source run
+  or from held-out test results.
 
 Numeric Optuna budgets, sampler seeds, split seeds, storage URLs,
 learning-rate ranges, class-weight/loss ranges, and batch-size search spaces are
