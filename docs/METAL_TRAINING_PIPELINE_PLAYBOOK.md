@@ -804,7 +804,7 @@ deviation, worst fold, and model simplicity.
 
 Stage 6 selects the configuration; Stage 6B creates the final test source. Keep
 `MODEL_PRESET`, model hyperparameters, feature policy, `METAL_LABEL_SCHEME`,
-training budget, final-refit seed policy, checkpoint rule, calibration rule, and
+training budget, fixed final-refit seed, checkpoint rule, calibration rule, and
 any ensemble rule fixed from validation evidence before the Stage 6B final
 refit starts. Do not choose any of these from held-out test results.
 
@@ -2354,7 +2354,6 @@ SKIP_EXISTING_RUNS = True
 USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False
 EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR = "/content/drive/MyDrive/DeepMzyme/notebook_outputs/runs"
 EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID = ""
-EXISTING_OPTUNA_TRIALS_RUNS_DIR = ""
 STAGE6_OUTPUT_RUNS_DIR = ""      # blank = sibling <OLD_HPO_RUN_BATCH_ID>_stage6 directory
 STAGE6_OVERWRITE_OUTPUT = False  # False = continue compatible output or create; True = replace incompatible output
 STAGE6_EPOCHS = 50
@@ -2365,8 +2364,10 @@ STAGE6_SELECTION_METRIC = "val_metal_balanced_acc"
 For same-runtime HPO, leave `USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False` so
 the Stage 6 launch cell imports from the current notebook run directory. For a
 previous HPO directory, set `USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = True` plus
-either `EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR / EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID`
-or the explicit `EXISTING_OPTUNA_TRIALS_RUNS_DIR`.
+`EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR / EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID`.
+If reuse is enabled but the old-HPO source is blank, the controls cell should
+warn without crashing; the Stage 6 launch still refuses to import candidates
+until a concrete validation HPO source path is provided.
 
 For standalone existing-HPO Stage 6, leave `STAGE6_OUTPUT_RUNS_DIR` blank to
 write a sibling output directory named from the old HPO directory. If that
@@ -2530,7 +2531,7 @@ Proceed to Stage 6B, and only then Stage 7, if:
 - The exact Stage 6 source run directories/checkpoints and selected
   configuration are recorded before Stage 6B launch.
 - Stage 6B promotion/refit policy is declared before running it: paired-CI
-  thresholds, rare-recall thresholds, tie-breakers, final-refit seed policy,
+  thresholds, rare-recall thresholds, tie-breakers, fixed final-refit seed,
   epoch/checkpoint rule, and output folder. None of these may be changed after
   held-out test metrics are seen.
 
@@ -2575,8 +2576,7 @@ STAGE6B_MIN_PER_CLASS_MEAN_RECALL = 0.0
 STAGE6B_MAX_MEAN_MIN_RECALL_DROP_VS_COMPARATOR = 0.03
 
 STAGE6B_FINAL_REFIT_EPOCHS = 50
-STAGE6B_FINAL_REFIT_SEED_POLICY = "fixed"
-STAGE6B_FINAL_REFIT_SEED = 42
+STAGE6B_FINAL_REFIT_SEED = 42  # fixed protocol seed; not a Colab UI input
 STAGE6B_FINAL_REFIT_DEVICE = "auto"
 STAGE6B_FINAL_REFIT_RUN_NAME_PREFIX = "stage6b_final_refit"
 STAGE6B_REUSE_EXISTING_REFIT_RUN = True
@@ -2617,9 +2617,10 @@ Final refit policy:
 - The checkpoint rule is fixed before launch: use the best train-loss
   checkpoint from the final refit. The held-out test is not evaluated during
   Stage 6B.
-- For reportable runs, prefer `STAGE6B_FINAL_REFIT_SEED_POLICY = "fixed"` so
-  the final model seed is predeclared rather than chosen after looking at
-  held-out metrics.
+- For reportable runs, the final refit seed is not a policy choice and is not
+  exposed as a Colab input. The notebook uses the fixed, predeclared integer
+  `STAGE6B_FINAL_REFIT_SEED = 42`, so the final model seed is known before
+  refit and cannot be chosen after looking at held-out metrics.
 
 Expected outputs/files:
 
@@ -2645,7 +2646,7 @@ Decision gate after Stage 6B:
 - The selected final-refit run directory exists and contains
   `run_config.json`, `run_metadata.json`, and a checkpoint.
 - The final-refit run used the selected Stage 6 configuration, full non-test
-  training set, fixed seed policy, fixed epoch budget, and no held-out test
+  training set, fixed final-refit seed, fixed epoch budget, and no held-out test
   evaluation.
 - Stage 7 points to `stage6b_selected_final_refit_candidate.json` for the
   primary report; if that file is absent, Stage 7 must not be launched as the

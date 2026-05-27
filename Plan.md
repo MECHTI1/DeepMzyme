@@ -110,9 +110,9 @@ Authoritative rules for the pipeline:
   rare-class recall, and tie-breaker promotion policy, then trains/refits one
   final model using the frozen selected configuration before opening the
   held-out test. This final-training run must keep the model family,
-  hyperparameters, feature policy, label scheme, epoch budget,
-  checkpoint-selection rule, calibration rule, and optional ensemble rule fixed
-  from validation evidence.
+  hyperparameters, feature policy, label scheme, fixed final-refit seed, epoch
+  budget, checkpoint-selection rule, calibration rule, and optional ensemble
+  rule fixed from validation evidence.
 - Stage 7 remains a one-shot held-out test event for the fixed final-training
   run derived from the validation-selected configuration. Optional ensemble, calibration,
   temperature-scaling, plot, or confidence-interval outputs are reporting
@@ -549,8 +549,9 @@ Statistical methodology:
   candidate.
 - Stage 6B promotes a configuration and produces the final full-train refit,
   not a held-out-test-ready score. The final-training run cannot change model
-  family, hyperparameters, feature set, split policy, epoch/checkpoint rule,
-  calibration rule, ensemble membership, or primary report based on test data.
+  family, hyperparameters, feature set, split policy, fixed final-refit seed,
+  epoch/checkpoint rule, calibration rule, ensemble membership, or primary
+  report based on test data.
 - Calibration, temperature scaling, ensemble membership, thresholds, and primary
   report choice must be fixed from validation evidence before Stage 7.
 - Stage 7 reports uncertainty, calibration, and diagnostic views after the

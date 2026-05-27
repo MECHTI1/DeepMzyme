@@ -981,7 +981,7 @@ def check_colab_notebook_sweep_source() -> None:
         'TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"',
         'TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"',
         'USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False',
-        'EXISTING_OPTUNA_TRIALS_RUNS_DIR = ""',
+        'EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID = ""',
         "Stage 6 controls and existing Optuna/HPO reuse",
         "Existing HPO candidate source",
         "Run All-safe no-op",
