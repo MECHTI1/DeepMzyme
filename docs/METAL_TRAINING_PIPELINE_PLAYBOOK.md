@@ -2336,7 +2336,10 @@ You can press **Run all** so the required setup/clone cells execute before Stage
 from the old directory and launches only the new Stage 6 fold/seed runs. When
 resuming an interrupted Stage 6, keep the values identical and keep
 `SKIP_EXISTING_RUNS = True` so completed folds are reused while missing folds
-continue.
+continue. During an incomplete run, Stage 6 may write a provisional
+`stage6_partial/` report. That report is safe to inspect and safe for Stage 6B
+preview mode, but it is not promotion evidence and does not replace the
+canonical Stage 6 files.
 
 Set these values in the dedicated Stage 6 controls panel:
 
@@ -2384,8 +2387,11 @@ the imported candidates and generated commands:
 LAUNCH_STAGE6_TOP_K_CONFIRMATION = False
 ```
 
-After confirming the import report and generated top-K commands are correct,
-launch:
+Preview mode does not launch missing folds. If compatible Stage 6 fold/seed
+run directories already exist, it scans those completed runs and refreshes the
+`stage6_partial/` progress report so Stage 6B partial preview can inspect the
+current state. After confirming the import report and generated top-K commands
+are correct, launch or resume the missing folds with:
 
 ```python
 LAUNCH_STAGE6_TOP_K_CONFIRMATION = True
@@ -2450,6 +2456,20 @@ Expected outputs/files:
 - Per-fold `run_config.json`, `run_metadata.json`, and
   `split_diagnostics.json`
 - No `test_report.json`
+
+While Stage 6 is still incomplete, provisional progress files are written
+under:
+
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_manifest.json`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_results.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_ranked_candidates.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_pairwise_bootstrap.csv`
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_report.md`
+
+These files are explicitly provisional. They include completion counts and are
+ignored by Stage 6 resume planning. Canonical `stage6_ranked_candidates.csv`
+and `stage6_selected_final_candidate.json` are written only after the planned
+candidate/fold/seed units are complete.
 
 Stage 6 result rows include:
 
@@ -2559,6 +2579,9 @@ LAUNCH_STAGE6B_FINAL_REFIT = False
 
 STAGE6B_STAGE6_OPTUNA_DIR = ""  # blank = current RUNS_DIR/optuna/<OPTUNA_STUDY_NAME>
 
+STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = False
+STAGE6B_PARTIAL_STAGE6_REPORT_DIR = ""  # blank = STAGE6B_STAGE6_OPTUNA_DIR/stage6_partial
+
 STAGE6B_RANK_BY_METRIC = "mean_val_metal_balanced_acc"
 STAGE6B_TIE_EPSILON = 0.002
 STAGE6B_TIE_BREAKERS = "mean_val_metal_min_recall_desc,min_validation_metric_desc,std_val_metal_balanced_acc_asc,model_complexity_proxy_asc"
@@ -2590,6 +2613,20 @@ matches the selected configuration, rerun the same cell with:
 ```python
 LAUNCH_STAGE6B_FINAL_REFIT = True
 ```
+
+If Stage 6 is incomplete but you want to inspect the provisional ordering, set
+`STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = True` and keep
+`LAUNCH_STAGE6B_FINAL_REFIT = False`. This reads `stage6_partial/` and writes
+only preview files:
+
+- `stage6b_partial_preview_ranked_candidates.csv`
+- `stage6b_partial_preview_decision.json`
+- `stage6b_partial_preview_final_refit_command_BLOCKED.txt`
+
+Partial preview never writes `stage6b_decision.json`,
+`stage6b_final_refit_command.txt`, or
+`stage6b_selected_final_refit_candidate.json`, and it cannot launch the final
+refit. Resume and complete Stage 6 before reportable Stage 6B.
 
 Promotion policy:
 
@@ -2639,6 +2676,8 @@ Expected outputs/files:
 Decision gate after Stage 6B:
 
 - `stage6b_decision.json` status is `selected_for_final_refit`.
+- Stage 6B used canonical completed Stage 6 artifacts, not `stage6_partial/`
+  preview artifacts.
 - `stage6b_selected_final_refit_candidate.json` exists and records
   `protocol_stage = "Stage 6B"`, `selected_before_held_out_test_evaluation =
   True`, `held_out_test_metrics_used = False`, and

@@ -704,12 +704,24 @@ For useful Colab HPO:
   and seed values unchanged, and keep `SKIP_EXISTING_RUNS = True`. Runs with
   `run_metadata.json` are reused; incomplete fold/seed directories may be
   rerun.
+- Incomplete Stage 6 runs may write a provisional `stage6_partial/` report.
+  It is safe for progress inspection and Stage 6B preview mode only; it is not
+  promotion evidence and does not replace canonical Stage 6 files.
+- With `LAUNCH_STAGE6_TOP_K_CONFIRMATION = False`, the Stage 6 launch cell can
+  refresh `stage6_partial/` from already completed planned fold/seed run
+  directories without launching missing folds. Set the launch switch back to
+  `True` when you want to resume the remaining planned units.
 - Stage 6B controls live in the dedicated **Stage 6B - promotion gates and
   final full-train refit** cell. Enable `RUN_STAGE6B_FINAL_SELECTION = True`
   only after Stage 6 artifacts exist. Keep `LAUNCH_STAGE6B_FINAL_REFIT = False`
   for the first pass so the notebook writes and displays
   `stage6b_decision.json`, `stage6b_ranked_candidates.csv`, and
   `stage6b_final_refit_command.txt` before training.
+- For partial progress inspection only, set
+  `STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = True` and keep
+  `LAUNCH_STAGE6B_FINAL_REFIT = False`. This reads `stage6_partial/`, writes
+  `stage6b_partial_preview_*` files, and cannot launch or approve the final
+  refit.
 - Stage 6B ranks by `STAGE6B_RANK_BY_METRIC =
   "mean_val_metal_balanced_acc"`. Promotion is blocked unless the paired-CI
   gate passes, rare-class recall thresholds pass, and the configured tie-breaker
@@ -956,10 +968,13 @@ After Optuna:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/seed_repeat_pairwise_bootstrap.json`, if Stage 6 top-config reevaluation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_ranked_candidates.csv`, if Stage 6 grouped-fold confirmation was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_selected_final_candidate.json`, if Stage 6 grouped-fold confirmation was run
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_report.md`, if Stage 6 grouped-fold confirmation has partial completed units
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_ranked_candidates.csv`, if Stage 6 grouped-fold confirmation has partial completed units
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_ranked_candidates.csv`, if Stage 6B promotion was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_decision.json`, if Stage 6B promotion was run
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_final_refit_command.txt`, if Stage 6B promotion approved a refit
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6b_selected_final_refit_candidate.json`, after Stage 6B final refit completes or is reused
+- `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6b_partial_preview_decision.json`, only for partial Stage 6B preview
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/optuna_study_summary.md`
 
 Each launched run directory also gets `active_run_config.json` and
@@ -992,7 +1007,8 @@ For Optuna:
    controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
 4. Run Stage 6B and select by mean `val_metal_balanced_acc`, paired bootstrap
    CI over seed-averaged fold means, rare-class recall protection, and the
-   configured tie-breakers, not by a single trial.
+   configured tie-breakers, not by a single trial. Use partial Stage 6B preview
+   only for progress inspection; resume Stage 6 before promotion/refit.
 5. Use `stage6_ranked_candidates.csv`,
    `stage6_selected_final_candidate.json`, `stage6b_decision.json`, and
    `stage6b_selected_final_refit_candidate.json` to freeze the selected final

@@ -1840,6 +1840,11 @@ def check_colab_generated_training_commands_parse() -> None:
                     "run_dir": rerun_config["run_dir"],
                     "selected_checkpoint": str(Path(rerun_config["run_dir"]) / "best_model_checkpoint.pt"),
                     "validation_unit": rerun_config["validation_unit"],
+                    "fold_unit": rerun_config.get("fold_unit"),
+                    "model_seed": rerun_config["seed"],
+                    "split_seed": rerun_config["split_seed"],
+                    "n_folds": rerun_config.get("n_folds"),
+                    "fold_index": rerun_config.get("fold_index"),
                     "selected_best_validation_metric_value": fold_metric,
                     "val_metal_balanced_acc": fold_metric,
                     "val_metal_min_recall": 0.40,
@@ -1879,6 +1884,9 @@ def check_colab_generated_training_commands_parse() -> None:
             )
         selected_payload = json.loads((stage6_optuna_dir / "stage6_selected_final_candidate.json").read_text(encoding="utf-8"))
         ranked_text = (stage6_optuna_dir / "stage6_ranked_candidates.csv").read_text(encoding="utf-8")
+        partial_report = stage6_optuna_dir / "stage6_partial" / "stage6_partial_report.md"
+        if not partial_report.exists():
+            raise AssertionError("Stage 6 did not write the provisional partial/progress report.")
         if "original_validation_metric" not in ranked_text or "original_val_metal_balanced_acc" not in ranked_text:
             raise AssertionError("Stage 6 ranked candidates CSV did not include original imported validation metrics.")
         if not selected_payload.get("selected_from_imported_existing_optuna_hpo_trials"):

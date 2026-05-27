@@ -696,8 +696,146 @@ def _format_stage6_manifest_mismatches(mismatches: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _summary_rows(records: list[dict[str, Any]], selection_metric: str) -> list[dict[str, Any]]:
+def _planned_stage6_counts(units: list[dict[str, Any]]) -> dict[str, Any]:
+    planned_units = {str(unit.get("validation_unit")) for unit in units if unit.get("validation_unit") not in (None, "")}
+    planned_folds = {str(unit.get("fold_unit")) for unit in units if unit.get("fold_unit") not in (None, "")}
+    planned_seeds = {str(unit.get("model_seed")) for unit in units if unit.get("model_seed") not in (None, "")}
+    planned_fold_seed_units = {
+        f"{unit.get('fold_unit')}|seed_{unit.get('model_seed')}"
+        for unit in units
+        if unit.get("fold_unit") not in (None, "") and unit.get("model_seed") not in (None, "")
+    }
+    return {
+        "n_planned_units": len(planned_units) or len(units),
+        "n_planned_fold_seed_units": len(planned_fold_seed_units) or len(units),
+        "n_planned_folds": len(planned_folds),
+        "n_planned_seeds": len(planned_seeds),
+        "planned_model_seeds": ",".join(sorted(planned_seeds)),
+    }
+
+
+def _stage6_completion_status(
+    summary_rows: list[dict[str, Any]],
+    *,
+    expected_candidate_count: int,
+    units: list[dict[str, Any]],
+) -> dict[str, Any]:
+    planned = _planned_stage6_counts(units)
+    annotated_rows = []
+    for row in summary_rows:
+        row = dict(row)
+        row.update({key: row.get(key, value) for key, value in planned.items()})
+        completed_units = int(_numeric(row.get("n_units_completed")) or 0)
+        planned_units = int(_numeric(row.get("n_planned_units")) or 0)
+        completed_fold_seed_units = int(_numeric(row.get("n_fold_seed_units_completed")) or completed_units)
+        planned_fold_seed_units = int(_numeric(row.get("n_planned_fold_seed_units")) or planned_units)
+        complete = (
+            planned_units > 0
+            and completed_units >= planned_units
+            and planned_fold_seed_units > 0
+            and completed_fold_seed_units >= planned_fold_seed_units
+        )
+        row["stage6_candidate_complete"] = complete
+        row["stage6_completion_status"] = "complete" if complete else "partial"
+        annotated_rows.append(row)
+    missing_candidate_count = max(0, int(expected_candidate_count) - len(annotated_rows))
+    complete = bool(annotated_rows) and missing_candidate_count == 0 and all(row.get("stage6_candidate_complete") for row in annotated_rows)
+    return {
+        "stage6_complete": complete,
+        "expected_candidate_count": int(expected_candidate_count),
+        "observed_candidate_count": len(annotated_rows),
+        "missing_candidate_count": missing_candidate_count,
+        "planned_counts": planned,
+        "rows": annotated_rows,
+    }
+
+
+def _write_stage6_partial_outputs(
+    *,
+    optuna_dir: Path,
+    records: list[dict[str, Any]],
+    summary_rows: list[dict[str, Any]],
+    pairwise_rows: list[dict[str, Any]],
+    completion: dict[str, Any],
+    manifest: dict[str, Any],
+    canonical_outputs_written: bool,
+) -> dict[str, Path]:
+    partial_dir = optuna_dir / "stage6_partial"
+    partial_dir.mkdir(parents=True, exist_ok=True)
+    results_csv = partial_dir / "stage6_partial_results.csv"
+    ranked_csv = partial_dir / "stage6_partial_ranked_candidates.csv"
+    pairwise_csv = partial_dir / "stage6_partial_pairwise_bootstrap.csv"
+    manifest_json = partial_dir / "stage6_partial_manifest.json"
+    report_md = partial_dir / "stage6_partial_report.md"
+
+    _write_rows_csv(results_csv, records)
+    _write_rows_csv(ranked_csv, summary_rows)
+    _write_rows_csv(pairwise_csv, pairwise_rows)
+    payload = {
+        "created_by": "stage6_standalone.py",
+        "protocol_stage": "Stage 6 partial progress report",
+        "selection_basis": "partial validation/CV metrics only; not final promotion evidence",
+        "canonical_outputs_written": bool(canonical_outputs_written),
+        "safe_to_resume_stage6": True,
+        "resume_rule": "Rerun Stage 6 with identical manifest/settings and SKIP_EXISTING_RUNS=True; this stage6_partial directory is ignored by resume planning.",
+        "completion": completion,
+        "stage6_manifest": manifest,
+        "files": {
+            "partial_results_csv": str(results_csv),
+            "partial_ranked_candidates_csv": str(ranked_csv),
+            "partial_pairwise_bootstrap_csv": str(pairwise_csv),
+            "partial_manifest_json": str(manifest_json),
+            "partial_report_md": str(report_md),
+        },
+    }
+    manifest_json.write_text(json.dumps(_json_safe(payload), indent=2, sort_keys=True), encoding="utf-8")
+
+    lines = [
+        "# Stage 6 Partial Progress Report",
+        "",
+        "This report is provisional validation-only evidence. It is safe to resume Stage 6 from the same output directory with identical settings and `SKIP_EXISTING_RUNS=True`.",
+        "",
+        f"- Canonical Stage 6 outputs written: `{bool(canonical_outputs_written)}`",
+        f"- Stage 6 complete: `{bool(completion.get('stage6_complete'))}`",
+        f"- Expected candidates: `{completion.get('expected_candidate_count')}`",
+        f"- Observed candidates with completed units: `{completion.get('observed_candidate_count')}`",
+        f"- Missing candidates: `{completion.get('missing_candidate_count')}`",
+        "",
+        "## Candidate Completion",
+        "",
+        "| candidate_id | status | units | fold_seed_units | folds | seeds | mean_val_metal_balanced_acc |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for row in summary_rows:
+        lines.append(
+            "| {candidate} | {status} | {units}/{planned_units} | {fold_units}/{planned_fold_units} | {folds}/{planned_folds} | {seeds}/{planned_seeds} | {score} |".format(
+                candidate=row.get("candidate_id", ""),
+                status=row.get("stage6_completion_status", "partial"),
+                units=row.get("n_units_completed", ""),
+                planned_units=row.get("n_planned_units", ""),
+                fold_units=row.get("n_fold_seed_units_completed", row.get("n_units_completed", "")),
+                planned_fold_units=row.get("n_planned_fold_seed_units", row.get("n_planned_units", "")),
+                folds=row.get("n_folds_completed", ""),
+                planned_folds=row.get("n_planned_folds", ""),
+                seeds=row.get("n_seeds_completed", ""),
+                planned_seeds=row.get("n_planned_seeds", ""),
+                score=row.get("mean_val_metal_balanced_acc", ""),
+            )
+        )
+    report_md.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return {
+        "partial_dir": partial_dir,
+        "partial_results_csv": results_csv,
+        "partial_ranked_candidates_csv": ranked_csv,
+        "partial_pairwise_bootstrap_csv": pairwise_csv,
+        "partial_manifest_json": manifest_json,
+        "partial_report_md": report_md,
+    }
+
+
+def _summary_rows(records: list[dict[str, Any]], selection_metric: str, units: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     groups: dict[str, list[dict[str, Any]]] = {}
+    planned = _planned_stage6_counts(units or [])
     for record in records:
         if record.get("status") not in {"completed", "existing"}:
             continue
@@ -706,11 +844,18 @@ def _summary_rows(records: list[dict[str, Any]], selection_metric: str) -> list[
     for candidate_id, items in groups.items():
         values = [_numeric(item.get("selected_best_validation_metric_value")) for item in items]
         values = [value for value in values if value is not None]
+        if not values:
+            continue
         balanced = [_numeric(item.get("val_metal_balanced_acc")) for item in items]
         balanced = [value for value in balanced if value is not None]
         min_recalls = [_numeric(item.get("val_metal_min_recall")) for item in items]
         min_recalls = [value for value in min_recalls if value is not None]
         source_dirs = sorted({str(item.get("run_dir")) for item in items if item.get("run_dir")})
+        fold_seed_units = {
+            f"{item.get('fold_unit')}|seed_{item.get('model_seed')}"
+            for item in items
+            if item.get("fold_unit") not in (None, "") and item.get("model_seed") not in (None, "")
+        }
         row = {
             "candidate_id": candidate_id,
             "selection_metric": selection_metric,
@@ -719,8 +864,14 @@ def _summary_rows(records: list[dict[str, Any]], selection_metric: str) -> list[
             "mean_val_metal_balanced_acc": statistics.mean(balanced) if balanced else None,
             "mean_val_metal_min_recall": statistics.mean(min_recalls) if min_recalls else None,
             "n_units_completed": len(items),
+            "n_planned_units": planned["n_planned_units"],
+            "n_fold_seed_units_completed": len(fold_seed_units),
+            "n_planned_fold_seed_units": planned["n_planned_fold_seed_units"],
             "n_folds_completed": len({item.get("fold_unit") for item in items if item.get("fold_unit")}),
+            "n_planned_folds": planned["n_planned_folds"],
             "n_seeds_completed": len({item.get("model_seed") for item in items if item.get("model_seed") is not None}),
+            "n_planned_seeds": planned["n_planned_seeds"],
+            "planned_model_seeds": planned["planned_model_seeds"],
             "validation_units": ",".join(str(item.get("validation_unit")) for item in items),
             "selected_stage6_source_run_dirs": ";".join(source_dirs),
             "primary_source_run_dir": source_dirs[0] if source_dirs else "",
@@ -1033,7 +1184,7 @@ def run_stage6_standalone(
         status = "planned"
         return_code = None
         error_tail = ""
-        if skip_existing_runs and (run_dir / "run_metadata.json").exists():
+        if (skip_existing_runs or not launch) and (run_dir / "run_metadata.json").exists():
             status = "existing"
             print("Existing Stage 6 run:", run_dir)
         else:
@@ -1137,6 +1288,12 @@ def run_stage6_standalone(
             print(f"Finished Stage 6 candidate batch {candidate_id}")
     else:
         print("Standalone Stage 6 preview only. Commands were written but no runs were launched.")
+        for config in reruns:
+            run_dir = Path(config["run_dir"])
+            if (run_dir / "run_metadata.json").exists():
+                records.append(_run_one_stage6_config(config, print_to_console=False))
+        if records:
+            print(f"Collected {len(records)} existing Stage 6 run(s) for partial progress reporting.")
 
     results_csv = optuna_dir / "seed_repeat_results.csv"
     summary_csv = optuna_dir / "seed_repeat_summary.csv"
@@ -1145,30 +1302,47 @@ def run_stage6_standalone(
     pairwise_json = optuna_dir / "seed_repeat_pairwise_bootstrap.json"
     ranked_csv = optuna_dir / "stage6_ranked_candidates.csv"
     selected_json = optuna_dir / "stage6_selected_final_candidate.json"
+    partial_outputs: dict[str, Path] = {}
     if records:
-        summary_rows = _summary_rows(records, selection_metric)
+        summary_rows = _summary_rows(records, selection_metric, units)
+        completion = _stage6_completion_status(summary_rows, expected_candidate_count=chosen_k, units=units)
+        summary_rows = completion["rows"]
         pairwise_rows = _pairwise_rows(records, summary_rows, selection_metric, float(raw_improvement_threshold))
-        _write_rows_csv(results_csv, records)
-        _write_rows_csv(summary_csv, summary_rows)
-        _write_rows_csv(ranked_csv, summary_rows)
-        summary_json.write_text(json.dumps(_json_safe(summary_rows), indent=2, sort_keys=True), encoding="utf-8")
-        _write_rows_csv(pairwise_csv, pairwise_rows)
-        pairwise_json.write_text(json.dumps(_json_safe(pairwise_rows), indent=2, sort_keys=True), encoding="utf-8")
-        selected_payload = {
-            "created_by": "stage6_standalone.py",
-            "protocol_stage": "Stage 6",
-            "selection_basis": "validation/CV metrics only; held-out test metrics were not used",
-            "selected_config_id": summary_rows[0]["candidate_id"] if summary_rows else None,
-            "primary_source_run_dir": summary_rows[0]["primary_source_run_dir"] if summary_rows else "",
-            "primary_source_checkpoint": summary_rows[0]["primary_source_checkpoint"] if summary_rows else "",
-            "selected_ranking_metrics": summary_rows[0] if summary_rows else {},
-            "import_report_csv": str(import_report_csv),
-            "final_test_policy": {
-                "primary_final_test": "Evaluate only this frozen Stage-6-selected candidate.",
-                "no_test_selection": "Do not choose among candidates based on held-out test performance.",
-            },
-        }
-        selected_json.write_text(json.dumps(_json_safe(selected_payload), indent=2, sort_keys=True), encoding="utf-8")
+        canonical_complete = bool(completion.get("stage6_complete"))
+        partial_outputs = _write_stage6_partial_outputs(
+            optuna_dir=optuna_dir,
+            records=records,
+            summary_rows=summary_rows,
+            pairwise_rows=pairwise_rows,
+            completion=completion,
+            manifest=manifest,
+            canonical_outputs_written=canonical_complete,
+        )
+        if canonical_complete:
+            _write_rows_csv(results_csv, records)
+            _write_rows_csv(summary_csv, summary_rows)
+            _write_rows_csv(ranked_csv, summary_rows)
+            summary_json.write_text(json.dumps(_json_safe(summary_rows), indent=2, sort_keys=True), encoding="utf-8")
+            _write_rows_csv(pairwise_csv, pairwise_rows)
+            pairwise_json.write_text(json.dumps(_json_safe(pairwise_rows), indent=2, sort_keys=True), encoding="utf-8")
+            selected_payload = {
+                "created_by": "stage6_standalone.py",
+                "protocol_stage": "Stage 6",
+                "selection_basis": "validation/CV metrics only; held-out test metrics were not used",
+                "selected_config_id": summary_rows[0]["candidate_id"] if summary_rows else None,
+                "primary_source_run_dir": summary_rows[0]["primary_source_run_dir"] if summary_rows else "",
+                "primary_source_checkpoint": summary_rows[0]["primary_source_checkpoint"] if summary_rows else "",
+                "selected_ranking_metrics": summary_rows[0] if summary_rows else {},
+                "import_report_csv": str(import_report_csv),
+                "final_test_policy": {
+                    "primary_final_test": "Evaluate only this frozen Stage-6-selected candidate after Stage 6B final refit.",
+                    "no_test_selection": "Do not choose among candidates based on held-out test performance.",
+                },
+            }
+            selected_json.write_text(json.dumps(_json_safe(selected_payload), indent=2, sort_keys=True), encoding="utf-8")
+        else:
+            print("Stage 6 is not complete; canonical Stage 6 selection files were not written.")
+            print("Partial Stage 6 progress report:", partial_outputs.get("partial_report_md"))
 
     return {
         "mode": "standalone",
@@ -1185,5 +1359,6 @@ def run_stage6_standalone(
         "parallel_cross_validation_processes": parallel_processes,
         "parallel_scope": "within each ranked candidate; candidates run sequentially by Stage 6 rank",
         "launched": bool(launch),
+        "partial_outputs": {key: str(value) for key, value in partial_outputs.items()},
         "records": records,
     }
