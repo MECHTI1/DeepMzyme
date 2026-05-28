@@ -2584,13 +2584,17 @@ full-train refit** cell:
 RUN_STAGE6B_FINAL_SELECTION = True
 LAUNCH_STAGE6B_FINAL_REFIT = False
 
-STAGE6B_STAGE6_OPTUNA_DIR = ""  # blank = current RUNS_DIR/optuna/<OPTUNA_STUDY_NAME>
+# Stage 6B uses STAGE6_OUTPUT_RUNS_DIR from the Stage 6 controls.
+# Blank = current RUNS_DIR in same-runtime mode, or auto sibling
+# <OLD_HPO_RUN_BATCH_ID>_stage6 in standalone existing-HPO mode.
+# Backward-compatible explicit optuna/<study> override:
+STAGE6B_STAGE6_OPTUNA_DIR = ""
 
 STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = False
-STAGE6B_PARTIAL_STAGE6_REPORT_DIR = ""  # blank = STAGE6B_STAGE6_OPTUNA_DIR/stage6_partial
+STAGE6B_PARTIAL_STAGE6_REPORT_DIR = ""  # blank = resolved Stage 6 optuna dir/stage6_partial
 
 STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = False
-STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR = ""  # blank = infer Stage 6 output root from STAGE6B_STAGE6_OPTUNA_DIR
+STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR = ""  # blank = infer Stage 6 output root from STAGE6_OUTPUT_RUNS_DIR/current source
 
 STAGE6B_RANK_BY_METRIC = "mean_val_metal_balanced_acc"
 STAGE6B_TIE_EPSILON = 0.002
@@ -2643,8 +2647,10 @@ reconstruct a preview-only `stage6_partial/` directory itself. Set
 `STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = True` while keeping
 `LAUNCH_STAGE6B_FINAL_REFIT = False`. If canonical completed Stage 6 files are
 missing, Stage 6B scans `STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR`, or the
-Stage 6 output root inferred from `STAGE6B_STAGE6_OPTUNA_DIR` when that source
-is blank. The reconstructed partial table includes only candidate/seed blocks
+Stage 6 output root from `STAGE6_OUTPUT_RUNS_DIR` when that source is blank.
+For a standalone existing-HPO Stage 6 run with blank `STAGE6_OUTPUT_RUNS_DIR`,
+Stage 6B infers the auto sibling `<OLD_HPO_RUN_BATCH_ID>_stage6` output root.
+The reconstructed partial table includes only candidate/seed blocks
 that have every detected grouped-CV fold; candidate/seed blocks missing any
 fold are dropped. This recovery path is still partial-preview evidence only:
 it does not create canonical Stage 6 files and cannot launch the final refit.

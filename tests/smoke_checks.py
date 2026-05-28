@@ -1864,6 +1864,7 @@ def check_colab_generated_training_commands_parse() -> None:
                     "metal_label_smoothing": rerun_config["metal_label_smoothing"],
                 }
             )
+        optuna_namespace["WRITE_STAGE6_PARTIAL_PROGRESS_REPORTS"] = True
         with contextlib.redirect_stdout(io.StringIO()):
             optuna_namespace["write_stage6_imported_summary_outputs"](
                 records,

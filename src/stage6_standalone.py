@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import csv
 import concurrent.futures
 import json
@@ -62,6 +63,44 @@ def _as_bool(value: object) -> bool | None:
     if text in {"false", "0", "no", "n", "none", ""}:
         return False
     return None
+
+
+def _empty_to_none(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        if text == "" or text.lower() in {"none", "null", "nan"}:
+            return None
+        return text
+    return value
+
+
+def _parse_literal(value: Any) -> Any:
+    value = _empty_to_none(value)
+    if value is None or not isinstance(value, str):
+        return value
+    text = value.strip()
+    if not text:
+        return None
+    if text[0] in "[{\"'(" or text.lower() in {"true", "false", "none", "null"}:
+        try:
+            return json.loads(text)
+        except Exception:
+            pass
+        try:
+            return ast.literal_eval(text)
+        except Exception:
+            pass
+    return value
+
+
+def _first_value(mapping: dict[str, Any], keys: tuple[str, ...], default: Any = None) -> Any:
+    for key in keys:
+        value = _empty_to_none(mapping.get(key))
+        if value is not None:
+            return value
+    return default
 
 
 def _write_rows_csv(path: Path, rows: list[dict[str, Any]], columns: list[str] | None = None) -> None:
@@ -177,6 +216,101 @@ class Candidate:
     val_loss: float | None
     selected_checkpoint: str | None
     skip_reason: str | None = None
+    source_kind: str = "run_dir"
+
+
+_SUMMARY_CONFIG_KEYS = {
+    "task",
+    "metal_label_scheme",
+    "structure_dir",
+    "summary_csv",
+    "esm_embeddings_dir",
+    "ring_features_dir",
+    "external_features_root_dir",
+    "external_feature_source",
+    "runs_dir",
+    "run_name",
+    "device",
+    "epochs",
+    "trial_epochs",
+    "batch_size",
+    "esm_dim",
+    "model_architecture",
+    "edge_radius",
+    "learning_rate",
+    "grad_clip_norm",
+    "grad_accum_steps",
+    "num_workers",
+    "weight_decay",
+    "seed",
+    "split_seed",
+    "hidden_s",
+    "hidden_v",
+    "edge_hidden",
+    "gvp_layers",
+    "esm_fusion_dim",
+    "head_mlp_layers",
+    "head_mlp_dropout",
+    "esm_graph_encoder_dropout",
+    "node_rbf_sigma",
+    "edge_rbf_sigma",
+    "classifier_pool_distance_cutoff",
+    "metal_node_mode",
+    "structural_readout_scope",
+    "position_noise_std",
+    "second_shell_dropout",
+    "outer_residue_dropout",
+    "node_feature_set",
+    "fusion_mode",
+    "cross_attention_layers",
+    "cross_attention_heads",
+    "cross_attention_dropout",
+    "cross_attention_neighborhood",
+    "early_esm_dim",
+    "early_esm_dropout",
+    "early_esm_scope",
+    "lr_schedule",
+    "lr_step_size",
+    "lr_decay_gamma",
+    "val_fraction",
+    "n_folds",
+    "fold_index",
+    "metal_class_weight_mode",
+    "metal_loss_function",
+    "metal_focal_gamma",
+    "metal_label_smoothing",
+    "metal_collapsed_loss_weight",
+    "unsupported_metal_policy",
+    "invalid_structure_policy",
+    "ec_label_depth",
+    "ec_group_weighting",
+    "ec_contrastive_weight",
+    "ec_contrastive_temperature",
+    "selection_metric",
+    "split_by",
+    "model_preset",
+    "run_test_eval",
+    "run_held_out_test_eval",
+    "deterministic",
+    "use_amp",
+    "pin_memory",
+    "node_rbf_use_raw_distances",
+    "normalize_message_aggregation",
+    "cross_attention_bidirectional",
+    "use_early_esm",
+    "early_esm_raw",
+    "use_ring_edges",
+    "require_ring_edges",
+    "allow_missing_esm_embeddings",
+    "allow_missing_external_features",
+    "prepare_missing_ring_edges",
+    "save_epoch_checkpoints",
+    "log_per_class_metrics",
+    "balance_metal_site_symbols",
+    "require_all_task_classes",
+    "use_esm_branch",
+    "prepare_missing_esm_embeddings",
+}
 
 
 def _candidate_from_run_dir(run_dir: Path, selection_metric: str) -> Candidate | None:
@@ -227,14 +361,215 @@ def _candidate_from_run_dir(run_dir: Path, selection_metric: str) -> Candidate |
         val_metal_min_recall=val_min_recall,
         val_loss=val_loss,
         selected_checkpoint=str(metadata.get("selected_checkpoint") or run_config_payload.get("selected_checkpoint") or "") or None,
+        source_kind="run_dir",
     )
+
+
+def _candidate_from_json_payload(payload: dict[str, Any], source_file: Path, selection_metric: str) -> Candidate | None:
+    config: dict[str, Any] = {}
+    sampled: dict[str, Any] = {}
+    for key in ("full_config", "config", "run_config"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            nested = value.get("config") if isinstance(value.get("config"), dict) else value
+            config.update(nested)
+    for key in ("sampled_params", "best_params", "params"):
+        value = payload.get(key)
+        if isinstance(value, dict):
+            sampled.update(value)
+    config.update(sampled)
+    metric = str(payload.get("selection_metric") or config.get("selection_metric") or selection_metric or "val_metal_balanced_acc")
+    selected = _numeric(
+        _first_value(
+            payload,
+            ("validation_metric", "best_validation_metric", "metric_value", "value", "values_0", "selected_metric_value"),
+        )
+    )
+    val_balanced = _numeric(
+        _first_value(payload, ("val_metal_balanced_acc", "objective_val_metal_balanced_acc", "values_0"))
+    )
+    if val_balanced is None and metric == "val_metal_balanced_acc":
+        val_balanced = selected
+    val_min_recall = _numeric(
+        _first_value(payload, ("val_metal_min_recall", "objective_val_metal_min_recall", "values_1"))
+    )
+    val_loss = _numeric(_first_value(payload, ("val_loss", "validation_loss")))
+    trial = _first_value(payload, ("trial_number", "best_trial_number", "number", "candidate_id"))
+    try:
+        trial_label = f"trial{int(float(trial)):04d}" if trial is not None else None
+    except Exception:
+        trial_label = None
+    candidate_id = str(_first_value(payload, ("candidate_id", "selected_config_id")) or trial_label or _slug(source_file.stem))
+    source_dir = _first_value(payload, ("run_dir", "best_run_dir", "source_run_dir")) or config.get("run_dir")
+    source_path = Path(str(source_dir)).expanduser() if source_dir else source_file
+    return Candidate(
+        candidate_id=candidate_id,
+        run_dir=source_path,
+        run_name=str(_first_value(payload, ("run_name", "best_run_name")) or config.get("run_name") or candidate_id),
+        config=config,
+        selection_metric=metric,
+        selected_metric_value=selected,
+        val_metal_balanced_acc=val_balanced,
+        val_metal_min_recall=val_min_recall,
+        val_loss=val_loss,
+        selected_checkpoint=str(_first_value(payload, ("selected_checkpoint", "best_checkpoint")) or "") or None,
+        source_kind="json_file",
+    )
+
+
+def _candidate_from_csv_row(row: dict[str, Any], source_file: Path, selection_metric: str) -> Candidate | None:
+    row = {str(key): _empty_to_none(value) for key, value in row.items()}
+    config: dict[str, Any] = {}
+    sampled: dict[str, Any] = {}
+    for key, value in row.items():
+        if value is None:
+            continue
+        parsed = _parse_literal(value)
+        if key.startswith("params_"):
+            sampled[key.removeprefix("params_")] = parsed
+        elif key.startswith("user_attrs_"):
+            attr = key.removeprefix("user_attrs_")
+            if attr == "sampled_params" and isinstance(parsed, dict):
+                sampled.update(parsed)
+            elif attr in _SUMMARY_CONFIG_KEYS:
+                config[attr] = parsed
+        elif key in {"full_config", "config", "run_config"} and isinstance(parsed, dict):
+            nested = parsed.get("config") if isinstance(parsed.get("config"), dict) else parsed
+            config.update(nested)
+        elif key in {"sampled_params", "best_params", "params"} and isinstance(parsed, dict):
+            sampled.update(parsed)
+        elif key in _SUMMARY_CONFIG_KEYS:
+            config[key] = parsed
+    config.update(sampled)
+    metric = str(_first_value(row, ("selection_metric", "user_attrs_selection_metric")) or config.get("selection_metric") or selection_metric or "val_metal_balanced_acc")
+    selected = _numeric(
+        _first_value(
+            row,
+            ("validation_metric", "best_validation_metric", "metric_value", "value", "user_attrs_metric_value", "values_0", "selected_metric_value"),
+        )
+    )
+    val_balanced = _numeric(
+        _first_value(
+            row,
+            ("val_metal_balanced_acc", "objective_val_metal_balanced_acc", "user_attrs_objective_val_metal_balanced_acc", "values_0"),
+        )
+    )
+    if val_balanced is None and metric == "val_metal_balanced_acc":
+        val_balanced = selected
+    val_min_recall = _numeric(
+        _first_value(
+            row,
+            ("val_metal_min_recall", "objective_val_metal_min_recall", "user_attrs_objective_val_metal_min_recall", "values_1"),
+        )
+    )
+    val_loss = _numeric(_first_value(row, ("val_loss", "validation_loss")))
+    trial = _first_value(row, ("trial_number", "number", "best_trial_number", "user_attrs_trial_number", "candidate_id", "run_name"))
+    try:
+        trial_label = f"trial{int(float(trial)):04d}" if trial is not None else None
+    except Exception:
+        match = re.search(r"trial[_-]?(\d+)", str(trial or ""), flags=re.IGNORECASE)
+        trial_label = f"trial{int(match.group(1)):04d}" if match else None
+    candidate_id = str(_first_value(row, ("candidate_id", "selected_config_id")) or trial_label or _slug(source_file.stem))
+    source_dir = (
+        _first_value(row, ("run_dir", "user_attrs_run_dir", "best_run_dir", "source_run_dir", "primary_source_run_dir"))
+        or config.get("run_dir")
+    )
+    source_path = Path(str(source_dir)).expanduser() if source_dir else source_file
+    return Candidate(
+        candidate_id=candidate_id,
+        run_dir=source_path,
+        run_name=str(_first_value(row, ("run_name", "user_attrs_run_name", "best_run_name")) or config.get("run_name") or candidate_id),
+        config=config,
+        selection_metric=metric,
+        selected_metric_value=selected,
+        val_metal_balanced_acc=val_balanced,
+        val_metal_min_recall=val_min_recall,
+        val_loss=val_loss,
+        selected_checkpoint=None,
+        source_kind="summary_file",
+    )
+
+
+def _existing_summary_paths(existing_dir: Path) -> list[Path]:
+    patterns = [
+        "all_trials.csv",
+        "optuna_trials.csv",
+        "top_trials.csv",
+        "completed_only.csv",
+        "*_completed_only.csv",
+        "pareto_candidates*.csv",
+    ]
+    paths: list[Path] = []
+    seen: set[Path] = set()
+    for pattern in patterns:
+        for path in sorted(existing_dir.rglob(pattern)):
+            lowered = str(path).lower()
+            if any(token in lowered for token in ("seed_repeat", "stage6", "final_test", "held_out")):
+                continue
+            if path.is_file() and path not in seen:
+                paths.append(path)
+                seen.add(path)
+    return paths
+
+
+def _existing_json_paths(existing_dir: Path) -> list[Path]:
+    patterns = ["top_trial_configs.json", "best_trial.json", "optuna_best_config.json"]
+    paths: list[Path] = []
+    seen: set[Path] = set()
+    for pattern in patterns:
+        for path in sorted(existing_dir.rglob(pattern)):
+            lowered = str(path).lower()
+            if any(token in lowered for token in ("seed_repeat", "stage6", "final_test", "held_out")):
+                continue
+            if path.is_file() and path not in seen:
+                paths.append(path)
+                seen.add(path)
+    return paths
+
+
+def _candidate_dedupe_key(candidate: Candidate) -> str:
+    text = " ".join([candidate.candidate_id, candidate.run_name, str(candidate.run_dir)])
+    match = re.search(r"trial[_-]?0*(\d+)", text, flags=re.IGNORECASE)
+    if match:
+        return f"trial:{int(match.group(1))}"
+    if candidate.run_dir.is_dir():
+        try:
+            return f"dir:{candidate.run_dir.resolve()}"
+        except Exception:
+            return f"dir:{candidate.run_dir}"
+    return f"id:{candidate.candidate_id}"
+
+
+def _candidate_completeness(candidate: Candidate) -> tuple[int, int, int]:
+    source_score = {"run_dir": 3, "json_file": 2, "summary_file": 1}.get(candidate.source_kind, 0)
+    metric_score = int(candidate.selected_metric_value is not None) + int(candidate.val_metal_balanced_acc is not None)
+    return (source_score, metric_score, len(candidate.config))
+
+
+def _merge_candidates(primary: Candidate, secondary: Candidate) -> Candidate:
+    if _candidate_completeness(secondary) > _candidate_completeness(primary):
+        primary, secondary = secondary, primary
+    merged_config = dict(secondary.config)
+    merged_config.update(primary.config)
+    primary.config = merged_config
+    if primary.selected_metric_value is None:
+        primary.selected_metric_value = secondary.selected_metric_value
+    if primary.val_metal_balanced_acc is None:
+        primary.val_metal_balanced_acc = secondary.val_metal_balanced_acc
+    if primary.val_metal_min_recall is None:
+        primary.val_metal_min_recall = secondary.val_metal_min_recall
+    if primary.val_loss is None:
+        primary.val_loss = secondary.val_loss
+    if primary.selected_checkpoint is None:
+        primary.selected_checkpoint = secondary.selected_checkpoint
+    return primary
 
 
 def _candidate_skip_reason(candidate: Candidate) -> str | None:
     label_text = " ".join([candidate.candidate_id, candidate.run_name, candidate.run_dir.name]).lower()
     full_text = " ".join([label_text, str(candidate.run_dir)]).lower()
     config = candidate.config
-    if (candidate.run_dir / "test_report.json").exists():
+    if candidate.run_dir.is_dir() and (candidate.run_dir / "test_report.json").exists():
         return "held-out test artifact: test_report.json exists"
     if any(token in full_text for token in ("final_test", "final-test", "held_out", "held-out", "test_eval", "test-eval")):
         return "held-out/final-test run name or path"
@@ -251,27 +586,67 @@ def _candidate_skip_reason(candidate: Candidate) -> str | None:
         return "debug-length trial (epochs <= 3)"
     if candidate.selected_metric_value is None and candidate.val_metal_balanced_acc is None:
         return "no validation metric found"
+    if candidate.source_kind != "run_dir":
+        missing = [
+            key
+            for key in ("task", "structure_dir", "summary_csv", "model_architecture")
+            if config.get(key) in (None, "", "None")
+        ]
+        if missing:
+            return (
+                "summary/config artifact is missing executable training config keys: "
+                + ", ".join(missing)
+                + "; provide the original run directory or top_trial_configs.json with full_config"
+            )
     return None
 
 
 def _discover_candidates(existing_dir: Path, selection_metric: str) -> tuple[list[Candidate], list[dict[str, Any]]]:
     run_dirs = sorted({path.parent for marker in ("run_config.json", "run_metadata.json") for path in existing_dir.rglob(marker)})
-    candidates = []
-    report_rows = []
-    seen_dirs = set()
-    for run_dir in run_dirs:
-        if run_dir in seen_dirs:
+    discovered: dict[str, Candidate] = {}
+    for path in _existing_json_paths(existing_dir):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
             continue
-        seen_dirs.add(run_dir)
+        items = payload if isinstance(payload, list) else [payload]
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            candidate = _candidate_from_json_payload(item, path, selection_metric)
+            if candidate is None:
+                continue
+            key = _candidate_dedupe_key(candidate)
+            discovered[key] = _merge_candidates(discovered[key], candidate) if key in discovered else candidate
+    for path in _existing_summary_paths(existing_dir):
+        try:
+            with path.open("r", encoding="utf-8", newline="") as handle:
+                rows = list(csv.DictReader(handle))
+        except Exception:
+            continue
+        for row in rows:
+            candidate = _candidate_from_csv_row(row, path, selection_metric)
+            if candidate is None:
+                continue
+            key = _candidate_dedupe_key(candidate)
+            discovered[key] = _merge_candidates(discovered[key], candidate) if key in discovered else candidate
+    for run_dir in run_dirs:
         candidate = _candidate_from_run_dir(run_dir, selection_metric)
         if candidate is None:
             continue
+        key = _candidate_dedupe_key(candidate)
+        discovered[key] = _merge_candidates(discovered[key], candidate) if key in discovered else candidate
+    discovered_candidates = sorted(discovered.values(), key=lambda item: (item.source_kind, str(item.run_dir), item.candidate_id))
+    candidates = []
+    report_rows = []
+    for candidate in discovered_candidates:
         reason = _candidate_skip_reason(candidate)
         candidate.skip_reason = reason
         report_rows.append(
             {
                 "candidate_id": candidate.candidate_id,
                 "source_run_dir": str(candidate.run_dir),
+                "source_kind": candidate.source_kind,
                 "run_name": candidate.run_name,
                 "status": "skipped" if reason else "compatible",
                 "reason": reason or "",
@@ -288,6 +663,75 @@ def _discover_candidates(existing_dir: Path, selection_metric: str) -> tuple[lis
         if reason is None:
             candidates.append(candidate)
     return candidates, report_rows
+
+
+def _status_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        status = str(row.get("status") or "unknown")
+        reason = str(row.get("reason") or "")
+        key = status if not reason else f"{status}: {reason}"
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+
+
+def _write_import_report(
+    *,
+    import_report_csv: Path,
+    import_report_json: Path,
+    existing_dir: Path,
+    runs_dir: Path,
+    stage6_manifest_json: Path | None,
+    report_rows: list[dict[str, Any]],
+    compatible_count: int,
+    top_k: int,
+    selection_metric: str,
+) -> None:
+    _write_rows_csv(
+        import_report_csv,
+        report_rows,
+        [
+            "candidate_id",
+            "source_run_dir",
+            "source_kind",
+            "run_name",
+            "status",
+            "reason",
+            "selection_metric",
+            "selected_metric_value",
+            "val_metal_balanced_acc",
+            "val_metal_min_recall",
+            "val_loss",
+            "model_architecture",
+            "fusion_mode",
+            "model_preset",
+        ],
+    )
+    summary_paths = _existing_summary_paths(existing_dir)
+    json_paths = _existing_json_paths(existing_dir)
+    run_dirs = sorted({path.parent for marker in ("run_config.json", "run_metadata.json") for path in existing_dir.rglob(marker)})
+    report_payload = {
+        "created_by": "stage6_standalone.py",
+        "protocol_stage": "Stage 6",
+        "source_mode": "standalone existing-HPO Stage 6 import",
+        "existing_runs_dir": str(existing_dir),
+        "output_runs_dir": str(runs_dir),
+        "stage6_manifest_json": str(stage6_manifest_json or ""),
+        "scanned_summary_files": [str(path) for path in summary_paths],
+        "scanned_json_files": [str(path) for path in json_paths],
+        "scanned_run_dirs": [str(path) for path in run_dirs],
+        "n_trial_or_run_folders_scanned": len(run_dirs),
+        "n_summary_files_scanned": len(summary_paths) + len(json_paths),
+        "n_candidates_discovered": len(report_rows),
+        "n_compatible_completed_candidates": compatible_count,
+        "top_k_selected_for_stage6": top_k,
+        "selection_metric": selection_metric,
+        "status_counts": _status_counts(report_rows),
+        "held_out_test_policy": "Held-out test artifacts are skipped and test metrics are not used for ranking.",
+        "rows": report_rows,
+    }
+    import_report_json.parent.mkdir(parents=True, exist_ok=True)
+    import_report_json.write_text(json.dumps(_json_safe(report_payload), indent=2, sort_keys=True), encoding="utf-8")
 
 
 def _ranking_value(candidate: Candidate, selection_metric: str) -> float | None:
@@ -1000,8 +1444,6 @@ def run_stage6_standalone(
 ) -> dict[str, Any]:
     repo = Path(repo_dir or Path.cwd()).expanduser().resolve()
     existing_dir = Path(existing_runs_dir).expanduser()
-    if not existing_dir.exists() or not existing_dir.is_dir():
-        raise RuntimeError(f"Existing HPO/training directory does not exist: {existing_dir}")
     if output_runs_dir:
         runs_dir = Path(output_runs_dir).expanduser()
     else:
@@ -1016,6 +1458,48 @@ def run_stage6_standalone(
     runs_dir_preexisting = runs_dir.exists()
     study_name = _slug(output_study_name or runs_dir.name or f"{existing_dir.name}_stage6")
     optuna_dir = runs_dir / "optuna" / study_name
+    import_report_csv = optuna_dir / "stage6_existing_trials_import_report.csv"
+    import_report_json = optuna_dir / "stage6_existing_trials_import_report.json"
+    commands_txt = optuna_dir / "top_reevaluation_commands.txt"
+    if not existing_dir.exists() or not existing_dir.is_dir():
+        message = f"Existing HPO/training directory does not exist: {existing_dir}"
+        if launch:
+            raise RuntimeError(message)
+        optuna_dir.mkdir(parents=True, exist_ok=True)
+        _write_import_report(
+            import_report_csv=import_report_csv,
+            import_report_json=import_report_json,
+            existing_dir=existing_dir,
+            runs_dir=runs_dir,
+            stage6_manifest_json=None,
+            report_rows=[],
+            compatible_count=0,
+            top_k=0,
+            selection_metric=selection_metric,
+        )
+        commands_txt.write_text(
+            f"# Standalone Stage 6 preview did not generate commands.\n# {message}\n",
+            encoding="utf-8",
+        )
+        print(message)
+        print("Standalone Stage 6 preview only; no commands were generated.")
+        print("Import report:", import_report_csv)
+        return {
+            "mode": "standalone",
+            "existing_runs_dir": str(existing_dir),
+            "output_runs_dir": str(runs_dir),
+            "optuna_dir": str(optuna_dir),
+            "import_report_csv": str(import_report_csv),
+            "import_report_json": str(import_report_json),
+            "top_reevaluation_commands_txt": str(commands_txt),
+            "n_ranked_candidates": 0,
+            "top_k": 0,
+            "n_stage6_runs": 0,
+            "launched": False,
+            "preview_status": "missing_existing_hpo_source",
+            "reason": message,
+            "records": [],
+        }
     parallel_processes = int(parallel_cross_validation_processes or 1)
     if parallel_processes < 1:
         raise ValueError("parallel_cross_validation_processes must be >= 1.")
@@ -1039,10 +1523,58 @@ def run_stage6_standalone(
         if row["candidate_id"] in selected_ids and row["status"] == "compatible":
             row["status"] = "selected_for_stage6"
 
+    import_report_csv = optuna_dir / "stage6_existing_trials_import_report.csv"
+    import_report_json = optuna_dir / "stage6_existing_trials_import_report.json"
     if not selected:
         optuna_dir.mkdir(parents=True, exist_ok=True)
-        _write_rows_csv(optuna_dir / "stage6_existing_trials_import_report.csv", report_rows)
-        raise RuntimeError(f"No compatible completed validation-only candidates found in {existing_dir}.")
+        _write_import_report(
+            import_report_csv=import_report_csv,
+            import_report_json=import_report_json,
+            existing_dir=existing_dir,
+            runs_dir=runs_dir,
+            stage6_manifest_json=None,
+            report_rows=report_rows,
+            compatible_count=len(candidates),
+            top_k=0,
+            selection_metric=selection_metric,
+        )
+        reason_summary = "; ".join(f"{count} x {reason}" for reason, count in _status_counts(report_rows).items())
+        if not reason_summary:
+            reason_summary = (
+                "no run_config.json/run_metadata.json folders or supported Optuna summary artifacts "
+                "(top_trial_configs.json, top_trials.csv, all_trials.csv) were found"
+            )
+        commands_txt.write_text(
+            "# Standalone Stage 6 preview did not generate commands.\n"
+            f"# No compatible completed validation-only candidates found in {existing_dir}.\n"
+            f"# Summary: {reason_summary}\n",
+            encoding="utf-8",
+        )
+        if not launch:
+            print(f"No compatible completed validation-only candidates found in {existing_dir}.")
+            print("Standalone Stage 6 preview only; no commands were generated.")
+            print("Import report:", import_report_csv)
+            print("Summary:", reason_summary)
+            return {
+                "mode": "standalone",
+                "existing_runs_dir": str(existing_dir),
+                "output_runs_dir": str(runs_dir),
+                "optuna_dir": str(optuna_dir),
+                "import_report_csv": str(import_report_csv),
+                "import_report_json": str(import_report_json),
+                "top_reevaluation_commands_txt": str(commands_txt),
+                "n_ranked_candidates": 0,
+                "top_k": 0,
+                "n_stage6_runs": 0,
+                "launched": False,
+                "preview_status": "no_compatible_candidates",
+                "reason": reason_summary,
+                "records": [],
+            }
+        raise RuntimeError(
+            f"No compatible completed validation-only candidates found in {existing_dir}. "
+            f"Import report: {import_report_csv}. Summary: {reason_summary}"
+        )
 
     manifest = _stage6_manifest_payload(
         existing_dir=existing_dir,
@@ -1132,32 +1664,19 @@ def run_stage6_standalone(
         "",
     ] + [str(config["shell_command"]) for config in reruns]
 
-    import_report_csv = optuna_dir / "stage6_existing_trials_import_report.csv"
-    import_report_json = optuna_dir / "stage6_existing_trials_import_report.json"
     top_trials_csv = optuna_dir / "top_trials.csv"
     top_trial_configs_json = optuna_dir / "top_trial_configs.json"
     commands_txt = optuna_dir / "top_reevaluation_commands.txt"
-    _write_rows_csv(import_report_csv, report_rows)
-    import_report_json.write_text(
-        json.dumps(
-            _json_safe(
-                {
-                    "created_by": "stage6_standalone.py",
-                    "existing_runs_dir": str(existing_dir),
-                    "output_runs_dir": str(runs_dir),
-                    "stage6_manifest_json": str(root_manifest_path),
-                    "n_candidates_discovered": len(report_rows),
-                    "n_compatible_completed_candidates": len(candidates),
-                    "top_k_selected_for_stage6": chosen_k,
-                    "selection_metric": selection_metric,
-                    "held_out_test_policy": "Held-out test artifacts are skipped and test metrics are not used for ranking.",
-                    "rows": report_rows,
-                }
-            ),
-            indent=2,
-            sort_keys=True,
-        ),
-        encoding="utf-8",
+    _write_import_report(
+        import_report_csv=import_report_csv,
+        import_report_json=import_report_json,
+        existing_dir=existing_dir,
+        runs_dir=runs_dir,
+        stage6_manifest_json=root_manifest_path,
+        report_rows=report_rows,
+        compatible_count=len(candidates),
+        top_k=chosen_k,
+        selection_metric=selection_metric,
     )
     _write_rows_csv(top_trials_csv, top_rows)
     top_trial_configs_json.write_text(
