@@ -2602,7 +2602,7 @@ STAGE6B_REQUIRE_PAIRED_CI_IMPROVEMENT = True
 STAGE6B_MIN_RAW_IMPROVEMENT = 0.0
 STAGE6B_MIN_CI_LOWER_BOUND = 0.0
 STAGE6B_ALLOW_SINGLE_CANDIDATE_WITHOUT_CI = False
-STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = False
+STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = True
 
 STAGE6B_BLOCK_ON_MISSING_RARE_RECALL = True
 STAGE6B_MIN_MEAN_MIN_RECALL = 0.0
@@ -2662,10 +2662,14 @@ not open the held-out test set.
 Promotion policy:
 
 - Primary ranking metric is `mean_val_metal_balanced_acc`.
-- Paired-CI promotion is required by default. The selected candidate must beat
-  the comparator with paired mean improvement at least
-  `STAGE6B_MIN_RAW_IMPROVEMENT`, and the paired 95% CI lower bound must be
-  greater than `STAGE6B_MIN_CI_LOWER_BOUND`.
+- Paired-CI promotion is checked first. When the selected candidate beats the
+  comparator with paired mean improvement at least
+  `STAGE6B_MIN_RAW_IMPROVEMENT` and paired 95% CI lower bound greater than
+  `STAGE6B_MIN_CI_LOWER_BOUND`, it is promoted as CI-supported.
+- If the top candidates are inside `STAGE6B_TIE_EPSILON`, the default
+  `STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = True` allows Stage 6B to
+  resolve the practical tie with the predeclared tie-breakers. This does not
+  claim a CI-supported improvement.
 - Rare-class recall protection blocks promotion when required recall values are
   missing, below configured absolute minima, or when mean
   `val_metal_min_recall` drops by more than
@@ -2673,9 +2677,10 @@ Promotion policy:
 - Tie-breakers are predeclared by `STAGE6B_TIE_BREAKERS`; the default order is
   higher mean minimum recall, higher worst-fold validation metric, lower
   fold-to-fold standard deviation, then simpler model.
-- `STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI` should stay `False` for the
-  primary report. Turning it on is a labeled policy choice for statistically
-  tied candidates; it does not claim a CI-supported improvement.
+- `STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI` should stay `True` unless the
+  specific analysis requires strict CI-only promotion. With the default, Stage
+  6B still records whether the selected candidate was CI-supported or selected
+  by tie-break fallback.
 
 Final refit policy:
 

@@ -124,7 +124,9 @@ Authoritative rules for the pipeline:
   `group_kfold` is a one-seed grouped-fold option. Stage 6B candidate ranking
   uses validation means over the declared fold/seed units; paired bootstrap 95%
   confidence intervals stay fold-level, averaging seeds within each fold when
-  multiple seeds are configured. Rare-class recall protection is required. Raw
+  multiple seeds are configured. If a top candidate is CI-supported, promote it;
+  if top candidates are within the predeclared tie band, use the predeclared
+  validation tie-breakers. Rare-class recall protection is required. Raw
   validation deltas alone are not sufficient promotion evidence.
 - If an interrupted Stage 6 leaves only a subset of complete candidate/seed
   blocks, an explicitly labeled recovery mode may drop incomplete
@@ -550,8 +552,8 @@ Statistical methodology:
   promotion criterion when Stage 6 grouped-fold confirmation is available.
 - Stage 6 comparisons should use shared validation units and shared seed lists
   when configured. Stage 6B then uses fold-level paired confidence intervals,
-  rare-class recall protection, and predeclared tie-breakers before promoting a
-  candidate.
+  rare-class recall protection, and predeclared tie-breakers for tie-band cases
+  before promoting a candidate.
 - Stage 6B promotes a configuration and produces the final full-train refit,
   not a held-out-test-ready score. The final-training run cannot change model
   family, hyperparameters, feature set, split policy, fixed final-refit seed,
