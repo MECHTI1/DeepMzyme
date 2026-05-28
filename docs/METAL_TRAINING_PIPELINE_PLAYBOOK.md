@@ -2642,18 +2642,26 @@ Partial preview never writes `stage6b_decision.json`,
 `stage6b_selected_final_refit_candidate.json`, and it cannot launch the final
 refit. Resume and complete Stage 6 before reportable Stage 6B.
 
-If an old Stage 6 CV run directory predates partial-table writing, Stage 6B can
-reconstruct a preview-only `stage6_partial/` directory itself. Set
+If an old Stage 6 CV run directory predates canonical/partial table writing,
+Stage 6B can reconstruct the tables from completed Stage 6 CV run folders. Set
 `STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = True` while keeping
-`LAUNCH_STAGE6B_FINAL_REFIT = False`. If canonical completed Stage 6 files are
-missing, Stage 6B scans `STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR`, or the
-Stage 6 output root from `STAGE6_OUTPUT_RUNS_DIR` when that source is blank.
-For a standalone existing-HPO Stage 6 run with blank `STAGE6_OUTPUT_RUNS_DIR`,
-Stage 6B infers the auto sibling `<OLD_HPO_RUN_BATCH_ID>_stage6` output root.
-The reconstructed partial table includes only candidate/seed blocks
-that have every detected grouped-CV fold; candidate/seed blocks missing any
-fold are dropped. This recovery path is still partial-preview evidence only:
-it does not create canonical Stage 6 files and cannot launch the final refit.
+`LAUNCH_STAGE6B_FINAL_REFIT = False` for a first preview. If canonical completed
+Stage 6 files are missing, Stage 6B scans
+`STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR`, or the Stage 6 output root from
+`STAGE6_OUTPUT_RUNS_DIR` when that source is blank. For a standalone
+existing-HPO Stage 6 run with blank `STAGE6_OUTPUT_RUNS_DIR`, Stage 6B infers
+the auto sibling `<OLD_HPO_RUN_BATCH_ID>_stage6` output root.
+
+When a Stage 6 manifest exists and reconstruction proves every manifest-declared
+candidate x fold x active-seed unit is present, Stage 6B writes the canonical
+Stage 6 files (`seed_repeat_results.csv`, `stage6_ranked_candidates.csv`,
+`stage6_selected_final_candidate.json`, and related JSON/CSV summaries), then
+normal Stage 6B promotion/refit may proceed. If the manifest is missing or any
+declared unit is missing, reconstruction writes only `stage6_partial/` preview
+files. Partial preview includes only candidate/seed blocks that have every
+detected grouped-CV fold; candidate/seed blocks missing any fold are dropped.
+Partial reconstruction is not promotion evidence and cannot launch the final
+refit.
 
 Promotion policy:
 
