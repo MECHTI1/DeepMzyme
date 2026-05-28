@@ -2592,6 +2592,7 @@ STAGE6B_STAGE6_OPTUNA_DIR = ""
 
 STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = False
 STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR = ""  # blank = infer Stage 6 output root from STAGE6_OUTPUT_RUNS_DIR/current source
+STAGE6B_ALLOW_COMPLETE_SEED_BLOCK_REFIT = False
 
 STAGE6B_RANK_BY_METRIC = "mean_val_metal_balanced_acc"
 STAGE6B_TIE_EPSILON = 0.002
@@ -2640,9 +2641,17 @@ candidate x fold x active-seed unit is present, Stage 6B writes the canonical
 Stage 6 files (`seed_repeat_results.csv`, `stage6_ranked_candidates.csv`,
 `stage6_selected_final_candidate.json`, and related JSON/CSV summaries), then
 normal Stage 6B promotion/refit may proceed. If the manifest is missing or any
-declared unit is missing, reconstruction blocks reportable Stage 6B/refit and
-writes `stage6_partial/` diagnostic files only. Those diagnostics are not
-promotion evidence.
+declared unit is missing, the default behavior is still to block reportable
+Stage 6B/refit and write `stage6_partial/` diagnostics only.
+
+If you explicitly accept a complete-seed-block subset, set
+`STAGE6B_ALLOW_COMPLETE_SEED_BLOCK_REFIT = True` with reconstruction enabled.
+In that mode Stage 6B drops any candidate/seed block missing one or more
+required folds, ranks the remaining candidate/seed blocks that contain the full
+fold set, and may launch the final refit from the winning configuration. The
+decision JSON records `stage6_evidence_mode = "complete_seed_block_subset"` and
+lists the dropped incomplete blocks. This mode is validation-only and still does
+not open the held-out test set.
 
 Promotion policy:
 
@@ -2692,8 +2701,9 @@ Expected outputs/files:
 Decision gate after Stage 6B:
 
 - `stage6b_decision.json` status is `selected_for_final_refit`.
-- Stage 6B used canonical completed Stage 6 artifacts, not `stage6_partial/`
-  preview artifacts.
+- Stage 6B used canonical completed Stage 6 artifacts, or explicitly recorded
+  `stage6_evidence_mode = "complete_seed_block_subset"` after dropping
+  incomplete candidate/seed blocks and keeping only complete fold sets.
 - `stage6b_selected_final_refit_candidate.json` exists and records
   `protocol_stage = "Stage 6B"`, `selected_before_held_out_test_evaluation =
   True`, `held_out_test_metrics_used = False`, and

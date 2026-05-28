@@ -977,7 +977,7 @@ def check_colab_notebook_sweep_source() -> None:
         "--no-prepare-missing-esm-embeddings",
         'METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"',
         "OPTUNA_MULTIOBJECTIVE = False",
-        'RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = True',
+        'RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False',
         'TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"',
         'TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT = "auto"',
         'USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False',

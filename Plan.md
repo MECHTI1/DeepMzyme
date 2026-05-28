@@ -126,6 +126,11 @@ Authoritative rules for the pipeline:
   confidence intervals stay fold-level, averaging seeds within each fold when
   multiple seeds are configured. Rare-class recall protection is required. Raw
   validation deltas alone are not sufficient promotion evidence.
+- If an interrupted Stage 6 leaves only a subset of complete candidate/seed
+  blocks, an explicitly labeled recovery mode may drop incomplete
+  candidate/seed blocks and rank/refit from the remaining complete fold sets.
+  The decision artifact must record that complete-seed-block subset basis before
+  any held-out test is opened.
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
   active metal-scheme `val_metal_min_recall`; for default reportable runs that
