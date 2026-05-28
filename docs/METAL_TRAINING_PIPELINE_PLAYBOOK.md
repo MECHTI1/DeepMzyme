@@ -2354,6 +2354,7 @@ SEED_REPEAT_SPLIT_SEED = 42
 STAGE6_RAW_IMPROVEMENT_THRESHOLD = 0.0
 ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = False
 SKIP_EXISTING_RUNS = True
+WRITE_STAGE6_PARTIAL_PROGRESS_REPORTS = False
 USE_EXISTING_OPTUNA_TRIALS_FOR_STAGE6 = False
 EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR = "/content/drive/MyDrive/DeepMzyme/notebook_outputs/runs"
 EXISTING_OPTUNA_TRIALS_RUN_BATCH_ID = ""
@@ -2388,10 +2389,13 @@ LAUNCH_STAGE6_TOP_K_CONFIRMATION = False
 ```
 
 Preview mode does not launch missing folds. If compatible Stage 6 fold/seed
-run directories already exist, it scans those completed runs and refreshes the
-`stage6_partial/` progress report so Stage 6B partial preview can inspect the
-current state. After confirming the import report and generated top-K commands
-are correct, launch or resume the missing folds with:
+run directories already exist and `WRITE_STAGE6_PARTIAL_PROGRESS_REPORTS=True`,
+it scans those completed runs and refreshes the `stage6_partial/` progress
+report. The current default is `False`: Stage 6 writes canonical files only
+when the declared Stage 6 grid is complete, and Stage 6B can reconstruct a
+preview-only partial table from existing CV run folders when complete Stage 6
+files are absent. After confirming the import report and generated top-K
+commands are correct, launch or resume the missing folds with:
 
 ```python
 LAUNCH_STAGE6_TOP_K_CONFIRMATION = True
@@ -2457,8 +2461,8 @@ Expected outputs/files:
   `split_diagnostics.json`
 - No `test_report.json`
 
-While Stage 6 is still incomplete, provisional progress files are written
-under:
+When `WRITE_STAGE6_PARTIAL_PROGRESS_REPORTS=True` and Stage 6 is still
+incomplete, provisional progress files are written under:
 
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_manifest.json`
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_results.csv`
@@ -2467,9 +2471,12 @@ under:
 - `<RUNS_DIR>/optuna/<OPTUNA_STUDY_NAME>/stage6_partial/stage6_partial_report.md`
 
 These files are explicitly provisional. They include completion counts and are
-ignored by Stage 6 resume planning. Canonical `stage6_ranked_candidates.csv`
-and `stage6_selected_final_candidate.json` are written only after the planned
-candidate/fold/seed units are complete.
+ignored by Stage 6 resume planning. With the default
+`WRITE_STAGE6_PARTIAL_PROGRESS_REPORTS=False`, these provisional files are not
+created by Stage 6; use Stage 6B's reconstruction option if a preview table is
+needed before all declared seeds complete. Canonical
+`stage6_ranked_candidates.csv` and `stage6_selected_final_candidate.json` are
+written only after the planned candidate/fold/seed units are complete.
 
 Stage 6 result rows include:
 
@@ -2582,6 +2589,9 @@ STAGE6B_STAGE6_OPTUNA_DIR = ""  # blank = current RUNS_DIR/optuna/<OPTUNA_STUDY_
 STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = False
 STAGE6B_PARTIAL_STAGE6_REPORT_DIR = ""  # blank = STAGE6B_STAGE6_OPTUNA_DIR/stage6_partial
 
+STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = False
+STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR = ""  # blank = infer Stage 6 output root from STAGE6B_STAGE6_OPTUNA_DIR
+
 STAGE6B_RANK_BY_METRIC = "mean_val_metal_balanced_acc"
 STAGE6B_TIE_EPSILON = 0.002
 STAGE6B_TIE_BREAKERS = "mean_val_metal_min_recall_desc,min_validation_metric_desc,std_val_metal_balanced_acc_asc,model_complexity_proxy_asc"
@@ -2627,6 +2637,17 @@ Partial preview never writes `stage6b_decision.json`,
 `stage6b_final_refit_command.txt`, or
 `stage6b_selected_final_refit_candidate.json`, and it cannot launch the final
 refit. Resume and complete Stage 6 before reportable Stage 6B.
+
+If an old Stage 6 CV run directory predates partial-table writing, Stage 6B can
+reconstruct a preview-only `stage6_partial/` directory itself. Set
+`STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = True` while keeping
+`LAUNCH_STAGE6B_FINAL_REFIT = False`. If canonical completed Stage 6 files are
+missing, Stage 6B scans `STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR`, or the
+Stage 6 output root inferred from `STAGE6B_STAGE6_OPTUNA_DIR` when that source
+is blank. The reconstructed partial table includes only candidate/seed blocks
+that have every detected grouped-CV fold; candidate/seed blocks missing any
+fold are dropped. This recovery path is still partial-preview evidence only:
+it does not create canonical Stage 6 files and cannot launch the final refit.
 
 Promotion policy:
 

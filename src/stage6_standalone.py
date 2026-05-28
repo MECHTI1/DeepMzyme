@@ -994,6 +994,7 @@ def run_stage6_standalone(
     skip_existing_runs: bool = True,
     overwrite_output: bool = False,
     parallel_cross_validation_processes: int = 1,
+    write_partial_progress: bool = False,
     launch: bool = False,
     repo_dir: str | Path | None = None,
 ) -> dict[str, Any]:
@@ -1309,15 +1310,16 @@ def run_stage6_standalone(
         summary_rows = completion["rows"]
         pairwise_rows = _pairwise_rows(records, summary_rows, selection_metric, float(raw_improvement_threshold))
         canonical_complete = bool(completion.get("stage6_complete"))
-        partial_outputs = _write_stage6_partial_outputs(
-            optuna_dir=optuna_dir,
-            records=records,
-            summary_rows=summary_rows,
-            pairwise_rows=pairwise_rows,
-            completion=completion,
-            manifest=manifest,
-            canonical_outputs_written=canonical_complete,
-        )
+        if write_partial_progress:
+            partial_outputs = _write_stage6_partial_outputs(
+                optuna_dir=optuna_dir,
+                records=records,
+                summary_rows=summary_rows,
+                pairwise_rows=pairwise_rows,
+                completion=completion,
+                manifest=manifest,
+                canonical_outputs_written=canonical_complete,
+            )
         if canonical_complete:
             _write_rows_csv(results_csv, records)
             _write_rows_csv(summary_csv, summary_rows)
@@ -1342,7 +1344,10 @@ def run_stage6_standalone(
             selected_json.write_text(json.dumps(_json_safe(selected_payload), indent=2, sort_keys=True), encoding="utf-8")
         else:
             print("Stage 6 is not complete; canonical Stage 6 selection files were not written.")
-            print("Partial Stage 6 progress report:", partial_outputs.get("partial_report_md"))
+            if partial_outputs:
+                print("Partial Stage 6 progress report:", partial_outputs.get("partial_report_md"))
+            else:
+                print("Partial Stage 6 progress report writing is disabled; Stage 6B can reconstruct preview-only partial artifacts if needed.")
 
     return {
         "mode": "standalone",
@@ -1359,6 +1364,7 @@ def run_stage6_standalone(
         "parallel_cross_validation_processes": parallel_processes,
         "parallel_scope": "within each ranked candidate; candidates run sequentially by Stage 6 rank",
         "launched": bool(launch),
+        "write_partial_progress": bool(write_partial_progress),
         "partial_outputs": {key: str(value) for key, value in partial_outputs.items()},
         "records": records,
     }
