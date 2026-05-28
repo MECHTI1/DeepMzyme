@@ -2636,6 +2636,12 @@ canonical completed Stage 6 files are missing, Stage 6B scans
 existing-HPO Stage 6 run with blank `STAGE6_OUTPUT_RUNS_DIR`, Stage 6B infers
 the auto sibling `<OLD_HPO_RUN_BATCH_ID>_stage6` output root.
 
+Reconstruction supports both current canonical run folders with
+`run_config.json` / `run_metadata.json` and older Study6-style active-config run
+folders with `active_run_config.json` plus validation metric CSVs. Discovery is
+validation-only: folders with `test_report.json` are skipped, `train_metrics.csv`
+is not used for candidate ranking, and broad parent directories are ignored.
+
 When a Stage 6 manifest exists and reconstruction proves every manifest-declared
 candidate x fold x active-seed unit is present, Stage 6B writes the canonical
 Stage 6 files (`seed_repeat_results.csv`, `stage6_ranked_candidates.csv`,
