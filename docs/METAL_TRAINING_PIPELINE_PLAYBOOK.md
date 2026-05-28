@@ -2590,9 +2590,6 @@ LAUNCH_STAGE6B_FINAL_REFIT = False
 # Backward-compatible explicit optuna/<study> override:
 STAGE6B_STAGE6_OPTUNA_DIR = ""
 
-STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = False
-STAGE6B_PARTIAL_STAGE6_REPORT_DIR = ""  # blank = resolved Stage 6 optuna dir/stage6_partial
-
 STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = False
 STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR = ""  # blank = infer Stage 6 output root from STAGE6_OUTPUT_RUNS_DIR/current source
 
@@ -2628,25 +2625,11 @@ matches the selected configuration, rerun the same cell with:
 LAUNCH_STAGE6B_FINAL_REFIT = True
 ```
 
-If Stage 6 is incomplete but you want to inspect the provisional ordering, set
-`STAGE6B_ALLOW_PARTIAL_STAGE6_PREVIEW = True` and keep
-`LAUNCH_STAGE6B_FINAL_REFIT = False`. This reads `stage6_partial/` and writes
-only preview files:
-
-- `stage6b_partial_preview_ranked_candidates.csv`
-- `stage6b_partial_preview_decision.json`
-- `stage6b_partial_preview_final_refit_command_BLOCKED.txt`
-
-Partial preview never writes `stage6b_decision.json`,
-`stage6b_final_refit_command.txt`, or
-`stage6b_selected_final_refit_candidate.json`, and it cannot launch the final
-refit. Resume and complete Stage 6 before reportable Stage 6B.
-
 If an old Stage 6 CV run directory predates canonical/partial table writing,
 Stage 6B can reconstruct the tables from completed Stage 6 CV run folders. Set
-`STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = True` while keeping
-`LAUNCH_STAGE6B_FINAL_REFIT = False` for a first preview. If canonical completed
-Stage 6 files are missing, Stage 6B scans
+`STAGE6B_RECONSTRUCT_PARTIAL_FROM_COMPLETE_SEED_CV = True` only when you need to
+rebuild missing canonical Stage 6 files from completed CV run folders. If
+canonical completed Stage 6 files are missing, Stage 6B scans
 `STAGE6B_RECONSTRUCT_PARTIAL_SOURCE_RUNS_DIR`, or the Stage 6 output root from
 `STAGE6_OUTPUT_RUNS_DIR` when that source is blank. For a standalone
 existing-HPO Stage 6 run with blank `STAGE6_OUTPUT_RUNS_DIR`, Stage 6B infers
@@ -2657,11 +2640,9 @@ candidate x fold x active-seed unit is present, Stage 6B writes the canonical
 Stage 6 files (`seed_repeat_results.csv`, `stage6_ranked_candidates.csv`,
 `stage6_selected_final_candidate.json`, and related JSON/CSV summaries), then
 normal Stage 6B promotion/refit may proceed. If the manifest is missing or any
-declared unit is missing, reconstruction writes only `stage6_partial/` preview
-files. Partial preview includes only candidate/seed blocks that have every
-detected grouped-CV fold; candidate/seed blocks missing any fold are dropped.
-Partial reconstruction is not promotion evidence and cannot launch the final
-refit.
+declared unit is missing, reconstruction blocks reportable Stage 6B/refit and
+writes `stage6_partial/` diagnostic files only. Those diagnostics are not
+promotion evidence.
 
 Promotion policy:
 
