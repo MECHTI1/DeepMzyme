@@ -85,12 +85,15 @@ evidence in saved outputs, not in stable workflow guides.
   same-chain metal sites from leaking into validation. Harsh Split PinMyMetal
   and Common-PDBID 70/30 Split PinMyMetal variants exist for future
   comparisons but are not the basis of the current reported anchors.
-- Current uploaded Colab bundle: `DeepMzyme_Data_v3_exact_clean_esm.tar.zst` in
-  the `GMBioinformatics/DeepMzyme` HuggingFace dataset. It contains the exact
-  PinMyMetal split, regenerated ESMC embeddings with strict feature-alignment
-  validation, updated external features, RING features, and the RING runtime.
-  SHA256:
-  `1902c91ad31c183c4e264cab608f761a18c396bf39b2d8ddeb0b0812052372ba`.
+- Current uploaded Colab bundle:
+  `DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` in the
+  `GMBioinformatics/DeepMzyme` HuggingFace dataset and locally under
+  `DeepMzyme_Data/DeepMzyme_Colab_Bundles/`. It contains the exact PinMyMetal
+  split, the Common-PDBID 70/30 PinMyMetal split, regenerated ESMC embeddings
+  with strict feature-alignment validation, updated external features, RING
+  features, and the RING runtime. SHA256:
+  `afb56b78dae5f283873db4ddae4f66e4f194eb4e36a08c1accffe1c6268403bb`.
+  Verified uploaded Hub commit: `24ddf86366a21e46b863fd606e64c4366eccd3cd`.
 - Trusted metal label scheme for current anchors: default six-class
   `split_all_metals` / `six_class`. The new `five_class` Co/Ni-grouped target
   scheme is available for explicitly labeled validation-only comparisons, but

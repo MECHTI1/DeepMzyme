@@ -252,14 +252,15 @@ OPTUNA_MULTIOBJECTIVE = False
 
 `DATASET_NAME` chooses the external train/test dataset split. The notebook
 default for new serious metal runs is the exact PinMyMetal split, and the
-current Colab bundle exposes exact PinMyMetal plus Common-PDBID 70/30
-PinMyMetal choices. Non-overlapped and harsh split roots remain named variants
-in Plan.md, but they require supplying a bundle or Drive folder that contains
-those dataset roots. `SPLIT_BY` controls only the internal train/validation
-grouping inside the selected external train split and is emitted to the CLI as
-`--train-val-split-by`; it never changes the external test directory or test
-CSV. When the exact split is requested, the notebook must stop if that dataset
-root is missing; it must not silently fall back to the non-overlapped split.
+`DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` bundle contains exact
+PinMyMetal and Common-PDBID 70/30 PinMyMetal. Non-overlapped and harsh split
+roots remain named variants in Plan.md, but they require `upload_file`,
+`drive`, or a custom bundle containing those dataset roots. `SPLIT_BY` controls
+only the internal train/validation grouping inside the selected external train
+split and is emitted to the CLI as `--train-val-split-by`; it never changes the
+external test directory or test CSV. When the exact split is requested, the
+notebook must stop if that dataset root is missing; it must not silently fall
+back to the non-overlapped split.
 
 Summary CSV/PNG basenames are generated from the live provenance by default:
 task, metal label scheme, model preset or run set, `DATASET_NAME`,

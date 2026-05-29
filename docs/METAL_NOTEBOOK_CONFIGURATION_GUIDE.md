@@ -85,7 +85,7 @@ Before launching a run, verify these resolved notebook values:
 | --- | --- |
 | Task | `TASK = "metal"` |
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
-| External split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; the current Colab bundle exposes exact PinMyMetal and Common-PDBID 70/30 PinMyMetal choices |
+| External split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; the `DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` bundle contains exact PinMyMetal and Common-PDBID 70/30 |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
