@@ -43,11 +43,13 @@ meanings, not exact stage values.
 - Keep current notebook defaults, conservative first-pass GVP/HPO profiles,
   and canonical extended G4 HPO budgets distinct. Current defaults are a live
   launch surface; stage budgets and decision gates belong in the playbooks.
-- Treat `METAL_LABEL_SCHEME` and `VAL_FRACTION` as part of the experiment
-  identity. The live notebook currently defaults to
-  `METAL_LABEL_SCHEME = "five_class"` and `VAL_FRACTION = 0.18`; older
-  six-class or `0.15` validation evidence must use separate run/study names and
-  must not be mixed with the current notebook-default evidence.
+- Treat `METAL_LABEL_SCHEME`, `VAL_FRACTION`, and the effective selection metric
+  as part of the experiment identity. The live notebook currently defaults to
+  `METAL_LABEL_SCHEME = "five_class"`, `VAL_FRACTION = 0.18`, and
+  `SELECTION_METRIC = "task_default"`; with the current `TASK = "joint"` launch
+  surface, that resolves to `val_joint_balanced_acc`. Older six-class,
+  `0.15`, or metal-selected validation evidence must use separate run/study
+  names and must not be mixed with the current notebook-default evidence.
 - Treat `METAL_NODE_MODE = "per_metal"` as part of the current notebook default
   configuration. It changes the graph/readout contract and should be recorded
   explicitly in summaries and run names when possible.

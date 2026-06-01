@@ -4,3 +4,4 @@ DeepMzyme_Data
 Documenation
 __pycache__/
 *.py[cod]
+read_training_results/

@@ -942,8 +942,8 @@ def check_colab_notebook_sweep_source() -> None:
         "CONFIG = {",
         "COLAB_DATA_SOURCE",
         "huggingface_link",
-        "DeepMzyme_Data_v3_exact_clean_esm.tar.zst",
-        "1902c91ad31c183c4e264cab608f761a18c396bf39b2d8ddeb0b0812052372ba",
+        "DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst",
+        "afb56b78dae5f283873db4ddae4f66e4f194eb4e36a08c1accffe1c6268403bb",
         "site-level MAHOMES summary CSV",
         "structure-level inspection CSV",
         "MODEL_PRESET_MAP",
@@ -985,7 +985,7 @@ def check_colab_notebook_sweep_source() -> None:
         "Stage 6 controls and existing Optuna/HPO reuse",
         "Existing HPO candidate source",
         "Run All-safe no-op",
-        "Rerun Build planned configuration commands after changing these controls.",
+        "Rerun Build planned configuration commands before Stage 6 launch.",
         "SEED_REPEAT_N_FOLDS = 5",
         "SEED_REPEAT_SPLIT_SEED = 42",
         "completed_trial_count < 50",
@@ -1130,7 +1130,7 @@ def check_colab_notebook_provenance_helpers() -> None:
     )
     if config_source is None:
         raise AssertionError("Could not find the Colab provenance helper cell.")
-    helper_source = config_source.split("TOP_K_CONFIGS_FOR_SEED_REPEAT_RESOLVED =", 1)[0]
+    helper_source = config_source.split("WORKFLOW_STAGE_CHOICES =", 1)[0]
     namespace: dict[str, object] = {}
     exec(helper_source, namespace)
     basename = namespace["build_summary_basename"](
@@ -1223,6 +1223,17 @@ def check_colab_generated_training_commands_parse() -> None:
     )
     if command_builder_source is None:
         raise AssertionError("Could not find the Colab command-builder cell.")
+    config_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code" and "def resolve_workflow_output_paths" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if config_source is None:
+        raise AssertionError("Could not find the Colab workflow path helper cell.")
+    workflow_helper_source = config_source.split("DEFAULT_EXISTING_OPTUNA_TRIALS_BASE_RUNS_DIR =", 1)[0]
     optuna_runner_source = next(
         (
             "".join(cell.get("source", []))
@@ -1454,8 +1465,10 @@ def check_colab_generated_training_commands_parse() -> None:
                 "DATA_ROOT": tmp_root,
                 "DATASET_ROOT": tmp_root / "dataset",
                 "DRIVE_DATA_DIR": tmp_root / "drive" / "DeepMzyme_Data",
+                "DRIVE_ROOT": str(tmp_root / "drive" / "DeepMzyme"),
             }
             with contextlib.redirect_stdout(io.StringIO()):
+                exec(workflow_helper_source, namespace)
                 exec(command_builder_source, namespace)
             if return_namespace:
                 with contextlib.redirect_stdout(io.StringIO()):

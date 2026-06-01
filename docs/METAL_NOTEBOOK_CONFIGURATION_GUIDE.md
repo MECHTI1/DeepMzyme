@@ -88,7 +88,7 @@ Before launching a run, verify these resolved notebook values:
 | External split | `DATASET_NAME` dropdown; notebook default `train_and_test_sets_structures_exact_pinmymetal`; the `DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` bundle contains exact PinMyMetal and Common-PDBID 70/30 |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
-| Selection metric | `SELECTION_METRIC = "val_metal_balanced_acc"` |
+| Selection metric | Effective metric `val_metal_balanced_acc`; either paste the playbook's explicit `SELECTION_METRIC = "val_metal_balanced_acc"` or leave notebook `task_default` only when `TASK = "metal"` |
 | Held-out test during training | Fixed off in the main configuration cell; use the final-test cells only |
 | Device on G4 | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
@@ -591,7 +591,8 @@ For useful Colab HPO:
   budget. The playbook uses this for G4-oriented serious searches.
 - Use persistent SQLite storage in Drive. The playbook gives the exact storage
   path for each serious stage.
-- Keep `OPTUNA_SELECTION_METRIC` blank or set it to `val_metal_balanced_acc`.
+- Keep `OPTUNA_SELECTION_METRIC` as `task_default`/blank for `TASK = "metal"`,
+  or set it explicitly to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.
 - Keep `OPTUNA_MULTIOBJECTIVE = False` for the normal single-objective path.
   When set to `True`, the notebook creates a validation-only multi-objective
@@ -722,11 +723,12 @@ For useful Colab HPO:
   `LAUNCH_STAGE6B_FINAL_REFIT = False`. This reads `stage6_partial/`, writes
   `stage6b_partial_preview_*` files, and cannot launch or approve the final
   refit.
-- Stage 6B ranks by `STAGE6B_RANK_BY_METRIC =
-  "mean_val_metal_balanced_acc"`. Promotion is blocked unless the paired-CI
-  gate passes, rare-class recall thresholds pass, and the configured tie-breaker
-  policy is satisfied. The default tie-breaker order is mean minimum recall,
-  worst-fold validation metric, standard deviation, then model simplicity.
+- Stage 6B ranks by `STAGE6B_RANK_BY_METRIC = "auto"` in the live notebook,
+  which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`.
+  Promotion is blocked unless the paired-CI gate passes, rare-class recall
+  thresholds pass, and the configured tie-breaker policy is satisfied. The
+  default metal tie-breaker order is mean minimum recall, worst-fold validation
+  metric, standard deviation, then model simplicity.
 - Stage 6B final refit uses the full non-test training set
   (`VAL_FRACTION = 0.0`, no k-fold split) and `selection_metric = "train_loss"`
   only as the predeclared checkpoint rule for the final refit. It must not
