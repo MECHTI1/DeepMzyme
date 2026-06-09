@@ -35,6 +35,14 @@ bash CLEAN_prepare_training_and_test_set/04_run_mahomes_train_split30_fold0.sh
 bash CLEAN_prepare_training_and_test_set/05_run_mahomes_test_split30_fold0.sh
 bash CLEAN_prepare_training_and_test_set/06_summarize_mahomes_split30_fold0.sh
 bash CLEAN_prepare_training_and_test_set/07_export_dataset_split30_fold0.sh
+bash CLEAN_prepare_training_and_test_set/09_generate_runtime_features_split30_fold0.sh
+bash CLEAN_prepare_training_and_test_set/10_validate_colab_inputs_split30_fold0.sh
+bash CLEAN_prepare_training_and_test_set/11_build_colab_bundle_split30_fold0.sh
+bash CLEAN_prepare_training_and_test_set/12_repartition_exported_split30_all_folds.sh
+bash CLEAN_prepare_training_and_test_set/13_validate_colab_inputs_split30_all_folds.sh
+bash CLEAN_prepare_training_and_test_set/14_build_colab_bundle_split30_all_folds.sh
+bash CLEAN_prepare_training_and_test_set/15_build_shared_clean_split30_layout.sh
+bash CLEAN_prepare_training_and_test_set/16_build_shared_clean_split30_bundle.sh
 ```
 
 Shared defaults live in `00_common_split30_fold0.sh`. Override values such as
@@ -193,6 +201,137 @@ DeepMzyme_Data/CLEAN_30_train_test_split_0/test/
 DeepMzyme_Data/CLEAN_30_train_test_split_0/metadata/
 DeepMzyme_Data/CLEAN_30_train_test_split_0/split_metadata.json
 ```
+
+## Step 6: Generate Runtime Features For Regular DeepMzyme Training
+
+The regular Colab notebook ESM/fusion pipeline expects complete ESMC residue
+embeddings. The current notebook graph defaults also expect updated external
+residue features and RING edge files. Generate all three feature families with:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/09_generate_runtime_features_split30_fold0.sh
+```
+
+Outputs are written under the standard shared DeepMzyme feature roots:
+
+```text
+DeepMzyme_Data/esm_embeddings/
+DeepMzyme_Data/updated_feature_extraction/
+DeepMzyme_Data/RING_features/
+```
+
+The script is resumable: existing valid ESM embeddings, external feature JSONs,
+and RING edge files are skipped. Override `CLEAN_EXTERNAL_FEATURE_JOBS` or
+`RING_EDGE_JOBS` before running if a different local parallelism level is
+needed. ESMC generation is intentionally single-process because it loads the
+ESMC model.
+
+## Step 7: Validate And Build The Full Colab Bundle
+
+Validate that the CLEAN split can be bundled with complete ESM coverage and
+strict feature alignment:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/10_validate_colab_inputs_split30_fold0.sh
+```
+
+Build the full Colab bundle:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/11_build_colab_bundle_split30_fold0.sh
+```
+
+By default the final bundle is written outside the nearly-full project
+filesystem:
+
+```text
+/media/Data/clean_sets/split30/fold0/bundles/DeepMzyme_Data_v6_clean30_split0_full_esm.tar.zst
+```
+
+Override `CLEAN_BUNDLE_OUTPUT` to place it elsewhere. The build step also writes
+a sibling `.sha256` file.
+
+## Step 8: Repartition The Completed CLEAN 30 Source Into All Five Folds
+
+After fold `0` has completed AlphaFill, MAHOMES, runtime-feature generation,
+and single-fold validation, the accepted structures can be repartitioned into
+the other CLEAN `split30` folds without rerunning AlphaFill or MAHOMES:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/12_repartition_exported_split30_all_folds.sh
+```
+
+This creates:
+
+```text
+DeepMzyme_Data/CLEAN_30_train_test_split_1/
+DeepMzyme_Data/CLEAN_30_train_test_split_2/
+DeepMzyme_Data/CLEAN_30_train_test_split_3/
+DeepMzyme_Data/CLEAN_30_train_test_split_4/
+```
+
+Fold `0` is left as the already completed source export. The repartition step
+keeps only accessions that are present in each target fold's official CLEAN
+membership files; it does not force fold-0-only accessions into other folds.
+
+Validate all five exported roots against the regular DeepMzyme ESM/RING/external
+feature pipeline:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/13_validate_colab_inputs_split30_all_folds.sh
+```
+
+Build one full all-fold Colab bundle:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/14_build_colab_bundle_split30_all_folds.sh
+```
+
+Default all-fold bundle output:
+
+```text
+/media/Data/clean_sets/split30/all_folds/bundles/DeepMzyme_Data_v7_clean30_all5_full_esm.tar.zst
+```
+
+The notebook can then select the fold with `CLEAN_FOLD_INDEX = 0..4`, which
+sets `DATASET_NAME` to `CLEAN_30_train_test_split_<fold>`.
+
+## Step 9: Preferred Compact Shared-Structure Bundle
+
+The duplicated all-fold bundle from Step 8 is compatibility-first. The preferred
+cleaner layout stores each structure once and stores fold membership as
+site-level CSVs only:
+
+```text
+DeepMzyme_Data/CLEAN_30_shared/structures/
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_train.csv
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_test.csv
+...
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_4_train.csv
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_4_test.csv
+```
+
+Build and validate that shared layout:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/15_build_shared_clean_split30_layout.sh
+```
+
+Build the compact Colab bundle:
+
+```bash
+bash CLEAN_prepare_training_and_test_set/16_build_shared_clean_split30_bundle.sh
+```
+
+Default compact bundle output:
+
+```text
+/media/Data/clean_sets/split30/shared/bundles/DeepMzyme_Data_v8_clean30_shared_full_esm.tar.zst
+```
+
+The notebook supports this layout directly: after unpacking, it materializes the
+selected `CLEAN_FOLD_INDEX` into the normal `CLEAN_30_train_test_split_<fold>/`
+`train/` and `test/` view expected by `src/train.py`.
 
 ## Interpretation Rules
 

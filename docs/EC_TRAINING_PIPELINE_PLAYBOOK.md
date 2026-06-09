@@ -128,6 +128,44 @@ runs.
 Update `SELECTION_METRIC` and `OPTUNA_SELECTION_METRIC` when running depth-2 or
 deeper EC experiments — change `level_1` to the matching level number.
 
+## CARE Task 1 30% Metallo Subset Configuration
+
+Use this block only after
+`CARE_prepare_training_and_test_set/07_export_dataset_care_task1_30.sh` has
+created `DeepMzyme_Data/CARE_task1_30_train_test_metallo` or after that root is
+available through the selected Colab data source. This is a CARE-derived
+AlphaFill-MAHOMES catalytic metalloenzyme subset, not the full CARE benchmark.
+
+```python
+TASK = "ec"
+DATASET_NAME = "care_task1_30_metallo_alphafill_mahomes"
+VAL_FRACTION = 0.15
+SPLIT_BY = "pdbid"
+SELECTION_METRIC = "val_ec_group_level_1_balanced_acc"
+OPTUNA_SELECTION_METRIC = "val_ec_group_level_1_balanced_acc"
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+
+EC_LABEL_DEPTHS_CSV = "1"
+EC_CONTRASTIVE_WEIGHTS_CSV = "0.0"
+EC_GROUP_WEIGHTING = "structure_id"
+
+RING_EDGE_MODE = "with_ring"
+REQUIRE_RING_EDGES = False
+PREPARE_MISSING_RING_EDGES = True
+```
+
+If the exported CARE root is not in the normal bundle, Drive, or repository
+search path, keep `DATASET_NAME` as above for provenance and set:
+
+```python
+DATASET_ROOT_OVERRIDE = "/absolute/path/to/CARE_task1_30_train_test_metallo"
+```
+
+Do not use the exported CARE test split during training, validation, HPO,
+seed-repeat selection, cross-validation, or model selection. The notebook should
+make the internal validation split only from the exported CARE `train/`
+directory and reserve exported CARE `test/` for final held-out reporting.
+
 ## Stage 1 — Smoke And Readiness Check
 
 Purpose: verify Colab setup, data paths, EC CSV detection, graph construction,

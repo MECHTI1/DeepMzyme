@@ -1,5 +1,8 @@
 .idea
 DeepMzyme_Data
+DeepMzyme_Data/CARE_dataset/
+DeepMzyme_Data/CARE_task1_30_train_test_metallo/
+/media/Data/care_sets/
 .md_files
 Documenation
 __pycache__/

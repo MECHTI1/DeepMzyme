@@ -109,6 +109,13 @@ exception: it also uses `VAL_FRACTION = 0.0`, but only after validation/CV
 selection has already fixed the configuration.
 
 `DATASET_NAME` controls which external train/test dataset root is resolved.
+The notebook also supports the CARE-derived aliases
+`care_task1_30_metallo_alphafill_mahomes` and
+`CARE_task1_30_train_test_metallo`, both resolving to the exported root
+`CARE_task1_30_train_test_metallo` when that root is present in the selected
+data source. `DATASET_ROOT_OVERRIDE` can point directly to a dataset root with
+`train/` and `test/` subdirectories; when non-empty, it bypasses root discovery
+while keeping `DATASET_NAME` as provenance.
 `SPLIT_BY` controls only how the selected external train split is partitioned
 for validation; the CLI records this as `train_val_split_by`. It never changes
 the explicit external test directory or CSV used for Stage 7. Exact PinMyMetal

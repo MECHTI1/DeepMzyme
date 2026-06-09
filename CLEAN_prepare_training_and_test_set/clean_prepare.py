@@ -41,7 +41,6 @@ COFACTOR_SYMBOL_PATTERNS = {
     "CO": (r"^CO(?:\(\d\+\))?$", r"\bCO CATION\b", r"COBALT"),
     "CU": (r"^CU(?:\(\d\+\))?$", r"\bCU CATION\b", r"COPPER"),
     "FE": (r"^FE(?:\(\d\+\))?$", r"\bFE CATION\b", r"IRON"),
-    "MG": (r"^MG(?:\(\d\+\))?$", r"\bMG CATION\b", r"MAGNESIUM"),
     "MN": (r"^MN(?:\(\d\+\))?$", r"\bMN CATION\b", r"MANGANESE"),
     "NI": (r"^NI(?:\(\d\+\))?$", r"\bNI CATION\b", r"NICKEL"),
     "ZN": (r"^ZN(?:\(\d\+\))?$", r"\bZN CATION\b", r"ZINC"),
@@ -207,6 +206,31 @@ def extract_annotated_metal_symbols_from_names(names: Iterable[str]) -> list[str
             if any(re.search(pattern, upper_name) for pattern in patterns):
                 symbols.add(symbol)
     return sorted(symbol for symbol in symbols if symbol in SUPPORTED_TRANSITION_METALS)
+
+
+def extract_uniprot_tsv_cofactor_names(cofactor_text: str) -> list[str]:
+    """Extract structured UniProt cofactor Name= values, excluding free-text notes."""
+    return [match.group(1).strip() for match in re.finditer(r"(?:^|;\s*|COFACTOR:\s*)Name=([^;]+)", cofactor_text or "")]
+
+
+def extract_uniprot_tsv_binding_ligand_names(binding_site_text: str) -> list[str]:
+    """Extract structured UniProt binding-site ligand names and ligand parts."""
+    names: list[str] = []
+    for match in re.finditer(r"/(?:ligand|ligand_part)=(?:\"([^\"]+)\"|([^;]+))", binding_site_text or ""):
+        names.append((match.group(1) or match.group(2) or "").strip())
+    return [name for name in names if name]
+
+
+def extract_uniprot_supported_transition_metals_from_tsv_fields(
+    *,
+    cofactor_text: str,
+    binding_site_text: str,
+) -> list[str]:
+    names = [
+        *extract_uniprot_tsv_cofactor_names(cofactor_text),
+        *extract_uniprot_tsv_binding_ligand_names(binding_site_text),
+    ]
+    return extract_annotated_metal_symbols_from_names(names)
 
 
 def extract_uniprot_supported_transition_metals(uniprot_json: Mapping[str, Any]) -> list[str]:
@@ -1372,6 +1396,357 @@ def command_export_dataset(args: argparse.Namespace) -> None:
     print(f"Wrote dataset metadata: {output_root / 'split_metadata.json'}")
 
 
+def clean_fold_membership(
+    clean_splits_root: Path,
+    *,
+    identity: str,
+    fold: int,
+) -> dict[str, set[str]]:
+    split_dir = clean_splits_root / f"split{identity}"
+    train_path = split_dir / f"split{identity}_train_split_{fold}.csv"
+    test_path = split_dir / f"split{identity}_test_split_{fold}_curate.csv"
+    if not train_path.exists():
+        raise FileNotFoundError(f"Missing CLEAN train split file: {train_path}")
+    if not test_path.exists():
+        raise FileNotFoundError(f"Missing CLEAN test split file: {test_path}")
+    train_rows = read_clean_split_file(train_path, clean_identity=identity, clean_fold=fold, split="train")
+    test_rows = read_clean_split_file(test_path, clean_identity=identity, clean_fold=fold, split="test")
+    membership = {
+        "train": {row.uniprot_id for row in train_rows},
+        "test": {row.uniprot_id for row in test_rows},
+    }
+    overlap = membership["train"] & membership["test"]
+    if overlap:
+        preview = ", ".join(sorted(overlap)[:10])
+        raise ValueError(f"Fold {fold} train/test UniProt overlap: {preview}")
+    return membership
+
+
+def load_exported_dataset_summary_rows(source_dataset_root: Path) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for source_split in ("train", "test"):
+        summary_csv = source_dataset_root / source_split / SUMMARY_CSV_NAME
+        if not summary_csv.exists():
+            raise FileNotFoundError(f"Source catalytic summary CSV not found: {summary_csv}")
+        split_rows = read_csv(summary_csv)
+        require_columns(FINAL_SUMMARY_FIELDS, FINAL_SUMMARY_FIELDS, summary_csv)
+        for row in split_rows:
+            copied = dict(row)
+            copied["_source_split"] = source_split
+            rows.append(copied)
+    if not rows:
+        raise ValueError(f"No catalytic summary rows found in source dataset root: {source_dataset_root}")
+    return rows
+
+
+def index_exported_structures(source_dataset_root: Path) -> dict[str, Path]:
+    index: dict[str, Path] = {}
+    for source_split in ("train", "test"):
+        split_dir = source_dataset_root / source_split
+        if not split_dir.exists():
+            raise FileNotFoundError(f"Source structure directory not found: {split_dir}")
+        for path in sorted(split_dir.glob("*.pdb")):
+            existing = index.get(path.name)
+            if existing is not None and existing.resolve() != path.resolve():
+                raise ValueError(f"Duplicate source structure filename across splits: {path.name}")
+            index[path.name] = path
+    if not index:
+        raise ValueError(f"No source PDB structures found in {source_dataset_root}")
+    return index
+
+
+def summary_row_accession(row: Mapping[str, str]) -> str:
+    accession = str(row.get("uniprot_id") or row.get("structure") or "").strip()
+    if not accession:
+        raise ValueError(f"Could not determine UniProt accession from summary row: {row}")
+    return accession
+
+
+def repartition_summary_rows(
+    rows: Sequence[Mapping[str, str]],
+    *,
+    membership: Mapping[str, set[str]],
+    identity: str,
+    fold: int,
+) -> tuple[dict[str, list[dict[str, str]]], list[str]]:
+    repartitioned = {"train": [], "test": []}
+    excluded: list[str] = []
+    for row in rows:
+        accession = summary_row_accession(row)
+        matched_splits = [split for split in ("train", "test") if accession in membership[split]]
+        if len(matched_splits) > 1:
+            raise ValueError(f"Accession {accession} appears in more than one CLEAN fold {fold} split.")
+        if not matched_splits:
+            excluded.append(accession)
+            continue
+        target_split = matched_splits[0]
+        output_row = {field: str(row.get(field, "")) for field in FINAL_SUMMARY_FIELDS}
+        output_row["clean_identity"] = str(identity)
+        output_row["clean_fold"] = str(fold)
+        output_row["clean_split"] = target_split
+        repartitioned[target_split].append(output_row)
+    for split_rows in repartitioned.values():
+        split_rows.sort(
+            key=lambda row: (
+                str(row["structure"]),
+                str(row["chain_resi"]),
+                str(row["metaltype"]),
+                str(row["ecnumber"]),
+            )
+        )
+    return repartitioned, sorted(set(excluded))
+
+
+def copy_repartitioned_split(
+    *,
+    output_root: Path,
+    split: str,
+    rows: Sequence[Mapping[str, str]],
+    structure_index: Mapping[str, Path],
+) -> dict[str, Any]:
+    dest_dir = output_root / split
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    summary_csv = dest_dir / SUMMARY_CSV_NAME
+    write_csv(summary_csv, FINAL_SUMMARY_FIELDS, rows)
+    required_names = {structure_stem_for_summary_row(row) + ".pdb" for row in rows}
+    missing = sorted(name for name in required_names if name not in structure_index)
+    if missing:
+        preview = ", ".join(missing[:10])
+        raise FileNotFoundError(f"Missing {len(missing)} source structure(s) for {split}: {preview}")
+    for name in sorted(required_names):
+        shutil.copy2(structure_index[name], dest_dir / name)
+    return {
+        "summary_csv": str(summary_csv),
+        "structure_count": len(required_names),
+        "site_count": len(rows),
+    }
+
+
+def command_repartition_exported_dataset(args: argparse.Namespace) -> None:
+    clean_splits_root = resolve_path(args.clean_splits_root)
+    source_dataset_root = resolve_path(args.source_dataset_root)
+    output_base = resolve_path(args.output_base)
+    identity = str(args.identity)
+    source_rows = load_exported_dataset_summary_rows(source_dataset_root)
+    structure_index = index_exported_structures(source_dataset_root)
+
+    for fold in args.fold:
+        membership = clean_fold_membership(clean_splits_root, identity=identity, fold=fold)
+        output_root = output_base / f"CLEAN_{identity}_train_test_split_{fold}"
+        if output_root.exists():
+            if args.skip_existing:
+                print(f"[fold {fold}] output exists; skipped: {output_root}")
+                continue
+            if output_root.resolve() == source_dataset_root.resolve():
+                raise ValueError(
+                    f"Refusing to overwrite the source dataset root {source_dataset_root}. "
+                    "Use --skip-existing for the source fold or select only target folds that do not exist."
+                )
+            if not args.overwrite:
+                raise FileExistsError(f"Output directory exists: {output_root}. Use --overwrite or --skip-existing.")
+            shutil.rmtree(output_root)
+        output_root.mkdir(parents=True, exist_ok=True)
+
+        repartitioned, excluded = repartition_summary_rows(
+            source_rows,
+            membership=membership,
+            identity=identity,
+            fold=fold,
+        )
+        split_stats = {}
+        for split in ("train", "test"):
+            split_stats[split] = copy_repartitioned_split(
+                output_root=output_root,
+                split=split,
+                rows=repartitioned[split],
+                structure_index=structure_index,
+            )
+            print(
+                f"[fold {fold} {split}] copied {split_stats[split]['structure_count']} structures "
+                f"and {split_stats[split]['site_count']} site rows"
+            )
+
+        metadata_dir = output_root / "metadata"
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+        repartition_metadata = {
+            "split_name": f"CLEAN split{identity} fold{fold} repartitioned AlphaFill-MAHOMES catalytic metalloenzyme subset",
+            "clean_identity": identity,
+            "clean_fold": int(fold),
+            "source_dataset_root": str(source_dataset_root),
+            "output_root": str(output_root),
+            "source_structure_count": len(structure_index),
+            "source_site_count": len(source_rows),
+            "excluded_source_accessions_not_in_fold": len(excluded),
+            "excluded_source_accession_preview": excluded[:20],
+            "note": (
+                "Repartitioned from the already completed CLEAN source dataset. "
+                "No AlphaFill or MAHOMES predictions were rerun for this fold; "
+                "only CLEAN train/test membership changed."
+            ),
+            "splits": split_stats,
+        }
+        (output_root / "split_metadata.json").write_text(json.dumps(repartition_metadata, indent=2) + "\n", encoding="utf-8")
+        write_csv(
+            metadata_dir / "repartition_source_rows.csv",
+            FINAL_SUMMARY_FIELDS + ["target_split"],
+            (
+                {**row, "target_split": split}
+                for split in ("train", "test")
+                for row in repartitioned[split]
+            ),
+        )
+        readme_lines = [
+            "# CLEAN AlphaFill-MAHOMES Repartitioned Split",
+            "",
+            "This dataset is a CLEAN-derived, computationally filtered metalloenzyme subset.",
+            "It was repartitioned from the already completed CLEAN source dataset; AlphaFill and MAHOMES were not rerun.",
+            "",
+            "## Contents",
+            "",
+        ]
+        for split, stats in split_stats.items():
+            readme_lines.append(f"- `{split}/`: {stats['structure_count']} structures, {stats['site_count']} catalytic site rows")
+        readme_lines.extend(["", "See `split_metadata.json` and `metadata/repartition_source_rows.csv` for source evidence.", ""])
+        (output_root / "README.md").write_text("\n".join(readme_lines), encoding="utf-8")
+        print(f"[fold {fold}] wrote dataset metadata: {output_root / 'split_metadata.json'}")
+
+
+def link_or_copy_file(source: Path, dest: Path, *, mode: str) -> str:
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        dest.unlink()
+    if mode == "copy":
+        shutil.copy2(source, dest)
+        return "copied"
+    if mode == "hardlink":
+        try:
+            dest.hardlink_to(source)
+            return "hardlinked"
+        except OSError:
+            shutil.copy2(source, dest)
+            return "copied_after_hardlink_failed"
+    if mode == "symlink":
+        dest.symlink_to(source.resolve())
+        return "symlinked"
+    raise ValueError(f"Unsupported link mode: {mode}")
+
+
+def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
+    identity = str(args.identity)
+    output_root = (
+        resolve_path(args.output_root)
+        if args.output_root is not None
+        else PROJECT_ROOT / "DeepMzyme_Data" / f"CLEAN_{identity}_shared"
+    )
+    source_base = resolve_path(args.source_base)
+    if output_root.exists():
+        if not args.overwrite:
+            raise FileExistsError(f"Output directory exists: {output_root}. Use --overwrite to replace it.")
+        shutil.rmtree(output_root)
+    structures_dir = output_root / "structures"
+    folds_dir = output_root / "folds"
+    metadata_dir = output_root / "metadata"
+    structures_dir.mkdir(parents=True, exist_ok=True)
+    folds_dir.mkdir(parents=True, exist_ok=True)
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+
+    structure_sources: dict[str, Path] = {}
+    fold_stats: dict[str, Any] = {}
+    structure_source_rows: list[dict[str, Any]] = []
+    link_status_counts: dict[str, int] = {}
+    for fold in args.fold:
+        dataset_name = f"CLEAN_{identity}_train_test_split_{fold}"
+        dataset_root = source_base / dataset_name
+        if not dataset_root.exists():
+            raise FileNotFoundError(f"Source fold dataset root not found: {dataset_root}")
+        fold_stats[dataset_name] = {}
+        for split in ("train", "test"):
+            source_summary = dataset_root / split / SUMMARY_CSV_NAME
+            source_split_dir = dataset_root / split
+            if not source_summary.exists():
+                raise FileNotFoundError(f"Source fold summary CSV not found: {source_summary}")
+            if not source_split_dir.exists():
+                raise FileNotFoundError(f"Source fold structure dir not found: {source_split_dir}")
+            rows = read_csv(source_summary)
+            require_columns(FINAL_SUMMARY_FIELDS, FINAL_SUMMARY_FIELDS, source_summary)
+            shared_summary = folds_dir / f"{dataset_name}_{split}.csv"
+            write_csv(shared_summary, FINAL_SUMMARY_FIELDS, rows)
+            required_names = {structure_stem_for_summary_row(row) + ".pdb" for row in rows}
+            missing = sorted(name for name in required_names if not (source_split_dir / name).exists())
+            if missing:
+                preview = ", ".join(missing[:10])
+                raise FileNotFoundError(f"Missing {len(missing)} source structures for {dataset_name}/{split}: {preview}")
+            for name in sorted(required_names):
+                source_path = source_split_dir / name
+                existing_source = structure_sources.get(name)
+                if existing_source is not None:
+                    if existing_source.read_bytes() != source_path.read_bytes():
+                        raise ValueError(f"Structure filename collision with different content: {name}")
+                    continue
+                dest_path = structures_dir / name
+                status = link_or_copy_file(source_path, dest_path, mode=args.link_mode)
+                link_status_counts[status] = link_status_counts.get(status, 0) + 1
+                structure_sources[name] = source_path
+                structure_source_rows.append(
+                    {
+                        "structure_file": name,
+                        "shared_structure_path": str(dest_path),
+                        "source_structure_path": str(source_path),
+                        "link_status": status,
+                    }
+                )
+            fold_stats[dataset_name][split] = {
+                "site_summary_csv": str(shared_summary),
+                "site_count": len(rows),
+                "structure_count": len(required_names),
+            }
+            print(
+                f"[{dataset_name} {split}] wrote {shared_summary} "
+                f"with {len(rows)} site rows over {len(required_names)} structures"
+            )
+
+    write_csv(
+        metadata_dir / "structure_sources.csv",
+        ["structure_file", "shared_structure_path", "source_structure_path", "link_status"],
+        structure_source_rows,
+    )
+    metadata = {
+        "layout_name": f"CLEAN {identity} shared structures with fold CSVs",
+        "clean_identity": identity,
+        "folds": [int(fold) for fold in args.fold],
+        "output_root": str(output_root),
+        "source_base": str(source_base),
+        "shared_structure_count": len(structure_sources),
+        "link_mode": args.link_mode,
+        "link_status_counts": link_status_counts,
+        "folds_dir": str(folds_dir),
+        "structures_dir": str(structures_dir),
+        "note": (
+            "CLEAN-native compact layout: structures are stored once under structures/, "
+            "and each CLEAN train/test fold is represented by site-level CSVs under folds/. "
+            "The Colab notebook materializes the selected fold into train/ and test/ views at runtime."
+        ),
+        "fold_stats": fold_stats,
+    }
+    (output_root / "split_metadata.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    readme_lines = [
+        "# CLEAN Shared Fold Layout",
+        "",
+        "This compact CLEAN layout stores structures once and fold membership as CSV files.",
+        "The regular DeepMzyme training code still expects `train/` and `test/` directories; the Colab notebook materializes those views at runtime for the selected fold.",
+        "",
+        "## Contents",
+        "",
+        f"- `structures/`: {len(structure_sources)} unique PDB structures",
+        "- `folds/`: site-level train/test CSVs for each CLEAN fold",
+        "- `metadata/structure_sources.csv`: source path for each shared structure",
+        "",
+    ]
+    (output_root / "README.md").write_text("\n".join(readme_lines), encoding="utf-8")
+    print(f"Wrote shared CLEAN layout: {output_root}")
+    print(f"Shared structures: {len(structure_sources)}")
+
+
 def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--work-root", type=Path, default=DEFAULT_WORK_ROOT)
     parser.add_argument("--identity", type=str, default="30", help="CLEAN identity split, e.g. 30")
@@ -1455,6 +1830,62 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--splits", nargs="+", choices=("train", "test"), default=["train", "test"])
     export.add_argument("--overwrite", action="store_true")
     export.set_defaults(func=command_export_dataset)
+
+    repartition = subparsers.add_parser(
+        "repartition-exported-dataset",
+        help="Create additional CLEAN fold roots by repartitioning an already exported CLEAN dataset.",
+    )
+    repartition.add_argument("--clean-splits-root", type=Path, default=DEFAULT_CLEAN_SPLITS_ROOT)
+    repartition.add_argument("--identity", type=str, default="30")
+    repartition.add_argument(
+        "--fold",
+        type=int,
+        action="append",
+        default=None,
+        help="Target fold index; repeat for multiple folds. Defaults to all five folds.",
+    )
+    repartition.add_argument(
+        "--source-dataset-root",
+        type=Path,
+        default=PROJECT_ROOT / "DeepMzyme_Data" / "CLEAN_30_train_test_split_0",
+    )
+    repartition.add_argument("--output-base", type=Path, default=PROJECT_ROOT / "DeepMzyme_Data")
+    repartition.add_argument("--overwrite", action="store_true")
+    repartition.add_argument("--skip-existing", action="store_true")
+    repartition.set_defaults(
+        func=lambda args: (
+            setattr(args, "fold", args.fold or [0, 1, 2, 3, 4]),
+            command_repartition_exported_dataset(args),
+        )[1]
+    )
+
+    shared = subparsers.add_parser(
+        "build-shared-fold-layout",
+        help="Create a compact CLEAN layout with shared structures and fold train/test CSVs.",
+    )
+    shared.add_argument("--identity", type=str, default="30")
+    shared.add_argument(
+        "--fold",
+        type=int,
+        action="append",
+        default=None,
+        help="Fold index to include; repeat for multiple folds. Defaults to all five folds.",
+    )
+    shared.add_argument("--source-base", type=Path, default=PROJECT_ROOT / "DeepMzyme_Data")
+    shared.add_argument("--output-root", type=Path, default=None)
+    shared.add_argument("--overwrite", action="store_true")
+    shared.add_argument(
+        "--link-mode",
+        choices=("hardlink", "copy", "symlink"),
+        default="hardlink",
+        help="How to populate shared structures locally. Bundles contain file content either way.",
+    )
+    shared.set_defaults(
+        func=lambda args: (
+            setattr(args, "fold", args.fold or [0, 1, 2, 3, 4]),
+            command_build_shared_fold_layout(args),
+        )[1]
+    )
     return parser
 
 
