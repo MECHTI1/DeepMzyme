@@ -162,17 +162,28 @@ Show the training CLI:
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --help
 ```
 
-Build the current Colab bundle used by the notebook.
-`DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` contains the exact
-PinMyMetal and Common-PDBID 70/30 PinMyMetal splits plus the shared ESM,
-external-feature, and RING assets when present:
+The current HuggingFace Colab bundle used by the notebook is
+`DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst`.
+It contains the exact PinMyMetal split, Common-PDBID 70/30 PinMyMetal split,
+`CLEAN_30` folds 0-4 via the compact `CLEAN_30_shared` root, CARE Task 1
+clusterRes30 train/test data, and the shared ESM, external-feature, and RING
+assets.
+
+The v9 bundle was assembled from these local roots:
 
 ```bash
-PYTHONPATH=src /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_colab_bundle.py \
-  --dataset-root DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal \
-  --dataset-root DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal \
-  --include-esm-embeddings \
-  --output-bundle DeepMzyme_Data/DeepMzyme_Colab_Bundles/DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst
+tar --zstd -cf /media/Data/deepmzyme_colab_bundles/DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst \
+  DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal \
+  DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal \
+  DeepMzyme_Data/CLEAN_30_shared \
+  DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo \
+  DeepMzyme_Data/DeepMzyme_Colab_Bundles/train_and_test_sets_structures_exact_pinmymetal \
+  DeepMzyme_Data/DeepMzyme_Colab_Bundles/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal \
+  DeepMzyme_Data/DeepMzyme_Colab_Bundles/CARE_task1_30_clusterRes30_train_test_metallo \
+  DeepMzyme_Data/esm_embeddings \
+  DeepMzyme_Data/updated_feature_extraction \
+  DeepMzyme_Data/RING_features \
+  DeepMzyme_Data/ring-4.0
 ```
 
 The bundle includes the site-level MAHOMES summary CSVs used by training. It also includes structure-level CSV artifacts for inspection; structures with multiple catalytic metal sites are represented there with semicolon-joined metal labels such as `Co;Cu`.
@@ -185,12 +196,12 @@ and RING-enabled graph construction.
 
 The Colab notebook supports three dataset input modes through `COLAB_DATA_SOURCE`:
 
-- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst`, verifies SHA256, and unpacks it under `/content`.
-- `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime. The current exact + Common-PDBID 70/30 bundle is `DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst`.
+- `huggingface_link`: downloads `https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst`, verifies SHA256, and unpacks it under `/content`.
+- `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime. The current combined bundle is `DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst`.
 - `drive`: uses the configured Google Drive data path after Drive is mounted.
 
-Current `DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` SHA256:
-`afb56b78dae5f283873db4ddae4f66e4f194eb4e36a08c1accffe1c6268403bb`.
+Current `DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst` SHA256:
+`5942cd8b4e92ae6ac5a190690b321bc044e9b845c7d4e327cc830417ac88c7e0`.
 
 Example trusted-split Only-GVP metal validation run:
 

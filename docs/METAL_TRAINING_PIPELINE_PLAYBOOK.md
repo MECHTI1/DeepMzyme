@@ -250,12 +250,12 @@ OPTUNA_TIMEOUT_MINUTES = 0
 OPTUNA_MULTIOBJECTIVE = False
 ```
 
-`DATASET_NAME` chooses the external train/test dataset split. The notebook
-default for new serious metal runs is the exact PinMyMetal split, and the
-`DeepMzyme_Data_v4_exact_common70_clean_esm.tar.zst` bundle contains exact
-PinMyMetal and Common-PDBID 70/30 PinMyMetal. Non-overlapped and harsh split
-roots remain named variants in Plan.md, but they require `upload_file`,
-`drive`, or a custom bundle containing those dataset roots. `SPLIT_BY` controls
+`DATASET_NAME` chooses the external train/test dataset split. The current
+`DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst`
+bundle contains exact PinMyMetal, Common-PDBID 70/30 PinMyMetal, `CLEAN_30`
+folds 0-4, and CARE Task 1 clusterRes30. Non-overlapped and harsh split roots
+remain named variants in Plan.md, but they require `upload_file`, `drive`, or a
+custom bundle containing those dataset roots. `SPLIT_BY` controls
 only the internal train/validation grouping inside the selected external train
 split and is emitted to the CLI as `--train-val-split-by`; it never changes the
 external test directory or test CSV. When the exact split is requested, the

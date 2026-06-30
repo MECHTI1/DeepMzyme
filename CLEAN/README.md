@@ -30,15 +30,44 @@ CLEAN/train_clean_predictor_baselines.ipynb
 The notebook does four things:
 
 1. Normalizes source splits to the tab-delimited format expected by the official CLEAN code: `Entry`, `EC number`, `Sequence`.
-2. Creates four CLEAN predictor train/test jobs:
+2. Creates the selected CLEAN predictor train/test job matrix:
    - `clean30_fold{fold}_metallo`: CLEAN trained on extracted CLEAN30 metalloenzymes.
-   - `clean30_fold{fold}_full`: CLEAN trained on the full original CLEAN30 split.
-   - `care30_metallo`: CLEAN trained on extracted CARE30 metalloenzymes.
+   - `clean30_fold{fold}_full`: CLEAN trained on the full original CLEAN30 split that the metalloenzyme subset was extracted from.
+   - `care30_metallo`: CLEAN trained on extracted CARE Task 1 clusterRes30 metalloenzymes.
    - `care30_full`: CLEAN trained on the full original CARE Task 1 train set.
 3. Optionally clones and installs the official CLEAN implementation from `https://github.com/tttianhao/CLEAN`.
 4. Optionally generates ESM-1b embeddings, trains CLEAN triplet models, runs max-separation inference, and scores EC1/EC2 predictions.
 
 The notebook defaults to preparing tables only. Long steps require explicit flags.
+The default matrix is 12 jobs: five CLEAN30 folds x two train scopes, plus two
+CARE30 train-scope jobs. Every job tests only on the extracted metalloenzyme
+test subset.
+
+## CLEAN-Only Source Bundle
+
+The notebook can use a separate CLEAN-only HuggingFace bundle:
+
+```text
+https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/CLEAN_predictor_baselines_v1_clean30x5_care30_sources.tar.zst
+```
+
+SHA256:
+
+```text
+7793bcf54a2d342d5e9c17ed21baee0a987972ae0db150441fe56c22ded1a468
+```
+
+This bundle contains only the sequence/split CSVs and extracted metalloenzyme
+summary CSVs needed by `train_clean_predictor_baselines.ipynb`. It deliberately
+does not include DeepMzyme structures, ESMC embeddings, RING files, or graph
+external-feature assets.
+
+Rebuild it locally with:
+
+```bash
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python CLEAN_prepare_training_and_test_set/build_clean_predictor_bundle.py \
+  --output-bundle /media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v1_clean30x5_care30_sources.tar.zst
+```
 
 ## Source Data
 
@@ -52,8 +81,8 @@ DeepMzyme_Data/CLEAN_all_train_valid_splits/split30/split30_test_split_{fold}_cu
 CLEAN30 metalloenzyme source:
 
 ```text
-DeepMzyme_Data/CLEAN_30_train_test_split_{fold}/train/final_data_summarazing_table_transition_metals_only_catalytic.csv
-DeepMzyme_Data/CLEAN_30_train_test_split_{fold}/test/final_data_summarazing_table_transition_metals_only_catalytic.csv
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_{fold}_train.csv
+DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_{fold}_test.csv
 ```
 
 CARE30 full split source:
@@ -66,11 +95,14 @@ DeepMzyme_Data/CARE_dataset/CARE_datasets/splits/task1/30_protein_test.csv
 CARE30 metalloenzyme source, after the CARE AlphaFill + MAHOMES2 export finishes:
 
 ```text
-/media/Data/care_sets/task1_30_clusterRes30/exported/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv
-/media/Data/care_sets/task1_30_clusterRes30/exported/CARE_task1_30_clusterRes30_train_test_metallo/test/final_data_summarazing_table_transition_metals_only_catalytic.csv
+DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv
+DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/test/final_data_summarazing_table_transition_metals_only_catalytic.csv
 ```
 
-If the CARE export is not finished, the notebook will prepare CLEAN30 jobs and skip/raise for CARE metalloenzyme jobs unless `ALLOW_PROVISIONAL_CARE_INPUTS = True` is set. The default is `False` to avoid accidentally using pre-MAHOMES candidate sites as final labels.
+If the CARE export is not present in the selected data source, the notebook
+raises for CARE jobs unless `ALLOW_PROVISIONAL_CARE_INPUTS = True` is set. The
+default is `False` to avoid accidentally using pre-MAHOMES candidate sites as
+final labels.
 
 ## Output Location
 

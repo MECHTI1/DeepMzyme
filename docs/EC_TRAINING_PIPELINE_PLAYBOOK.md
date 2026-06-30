@@ -131,14 +131,15 @@ deeper EC experiments — change `level_1` to the matching level number.
 ## CARE Task 1 30% Metallo Subset Configuration
 
 Use this block only after
-`CARE_prepare_training_and_test_set/07_export_dataset_care_task1_30.sh` has
-created `DeepMzyme_Data/CARE_task1_30_train_test_metallo` or after that root is
-available through the selected Colab data source. This is a CARE-derived
+`CARE_prepare_training_and_test_set/07_export_dataset_care_task1_30_clusterRes30.sh`
+has created `DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo` or
+after that root is available through the selected Colab data source. Legacy CARE
+dataset names remain notebook aliases for this root. This is a CARE-derived
 AlphaFill-MAHOMES catalytic metalloenzyme subset, not the full CARE benchmark.
 
 ```python
 TASK = "ec"
-DATASET_NAME = "care_task1_30_metallo_alphafill_mahomes"
+DATASET_NAME = "CARE_task1_30_clusterRes30_train_test_metallo"
 VAL_FRACTION = 0.15
 SPLIT_BY = "pdbid"
 SELECTION_METRIC = "val_ec_group_level_1_balanced_acc"
@@ -158,7 +159,7 @@ If the exported CARE root is not in the normal bundle, Drive, or repository
 search path, keep `DATASET_NAME` as above for provenance and set:
 
 ```python
-DATASET_ROOT_OVERRIDE = "/absolute/path/to/CARE_task1_30_train_test_metallo"
+DATASET_ROOT_OVERRIDE = "/absolute/path/to/CARE_task1_30_clusterRes30_train_test_metallo"
 ```
 
 Do not use the exported CARE test split during training, validation, HPO,
