@@ -68,6 +68,7 @@ from training.splits import (
     split_pockets,
     split_pockets_k_fold,
 )
+from training.structure_loading import find_structure_files
 
 
 @dataclass(frozen=True)
@@ -302,6 +303,69 @@ def train_test_overlap_report(train_like_pockets, test_pockets) -> dict[str, Any
     }
 
 
+def structure_file_identity_sets(structure_paths: list[Path]) -> dict[str, set[str]]:
+    filenames: set[str] = set()
+    structure_ids: set[str] = set()
+    pdb_ids: set[str] = set()
+    pdb_chain_ids: set[str] = set()
+    for path in structure_paths:
+        filenames.add(path.name.lower())
+        structure_id = path.stem
+        structure_ids.add(structure_id.lower())
+        try:
+            pdb_id, chain_id, _ec = parse_structure_identity(structure_id)
+        except ValueError as exc:
+            raise ValueError(
+                "Cannot verify held-out train/test group disjointness because a structure "
+                f"filename does not encode the expected PDB/chain/EC identity: {path}"
+            ) from exc
+        pdb_ids.add(pdb_id)
+        pdb_chain_ids.add(f"{pdb_id}__chain_{chain_id}")
+    return {
+        "filename": filenames,
+        "structure_id": structure_ids,
+        "pdb_id": pdb_ids,
+        "pdb_chain": pdb_chain_ids,
+    }
+
+
+def held_out_structure_overlap_report(
+    train_structure_dir: Path,
+    test_structure_dir: Path,
+) -> dict[str, Any]:
+    train_sets = structure_file_identity_sets(find_structure_files(Path(train_structure_dir)))
+    test_sets = structure_file_identity_sets(find_structure_files(Path(test_structure_dir)))
+    overlap_counts = {
+        key: len(train_sets[key].intersection(test_sets[key]))
+        for key in sorted(train_sets)
+    }
+    overlap_examples = {
+        key: sorted(train_sets[key].intersection(test_sets[key]))[:10]
+        for key in sorted(train_sets)
+    }
+    detected = any(count > 0 for count in overlap_counts.values())
+    return {
+        "train_test_overlap_detected": detected,
+        "overlap_counts": overlap_counts,
+        "overlap_examples": overlap_examples,
+        "overlap_warning": "Train/test structure-group overlap detected." if detected else None,
+    }
+
+
+def validate_held_out_structure_disjointness(config: TrainConfig) -> dict[str, Any] | None:
+    if not config.run_test_eval or config.test_structure_dir is None:
+        return None
+    report = held_out_structure_overlap_report(config.structure_dir, config.test_structure_dir)
+    if report["train_test_overlap_detected"]:
+        raise RuntimeError(
+            "Held-out evaluation blocked before inference because train/test structure groups overlap. "
+            f"overlap_counts={report['overlap_counts']}; "
+            f"overlap_examples={report['overlap_examples']}. "
+            "Resolve the dataset route or split membership before generating held-out predictions."
+        )
+    return report
+
+
 def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str, Any], extra: dict[str, Any] | None = None) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "stage": stage,
@@ -434,20 +498,12 @@ def validate_training_configuration(config: TrainConfig) -> None:
         and not config.allow_train_loss_test_eval_debug
         and not config.allow_final_refit_test_eval
     ):
-        if not has_validation:
-            raise ValueError(
-                "--run-test-eval is for held-out reporting and must use a validation-selected "
-                "checkpoint. Set --val-fraction > 0, or use --n-folds/--fold-index, so model "
-                "selection is based on validation metrics rather than train_loss. For a tiny "
-                "debug/smoke run only, pass --allow-train-loss-test-eval-debug explicitly."
-            )
-        if config.selection_metric == "train_loss":
-            raise ValueError(
-                "--run-test-eval cannot select the checkpoint with train_loss because that tunes "
-                "the final held-out report from the training objective. Use a validation metric "
-                "such as val_metal_balanced_acc, val_ec_group_balanced_acc, or val_joint_balanced_acc. "
-                "For a tiny debug/smoke run only, pass --allow-train-loss-test-eval-debug explicitly."
-            )
+        raise ValueError(
+            "Reportable --run-test-eval requires the frozen Stage 6B final full-train refit. "
+            "Pass --allow-final-refit-test-eval together with --final-test-selected-config-id "
+            "only after Stage 6B promotion/refit provenance has been verified. For a tiny, "
+            "non-reportable synthetic debug run only, use --allow-train-loss-test-eval-debug."
+        )
     if (config.n_folds is None) != (config.fold_index is None):
         raise ValueError("--n-folds and --fold-index must be provided together.")
     if config.n_folds is not None:
@@ -1496,6 +1552,7 @@ def evaluate_held_out_test_split(
 ) -> dict[str, Any] | None:
     if not config.run_test_eval or config.test_structure_dir is None or config.test_summary_csv is None:
         return None
+    structure_overlap_report = validate_held_out_structure_disjointness(config)
 
     current_state_dict = copy.deepcopy(prepared.model.state_dict())
     model_state_dict = (
@@ -1524,6 +1581,15 @@ def evaluate_held_out_test_split(
             raise ValueError("No held-out test pockets were loaded.")
         if task_predicts_ec(config.task):
             assign_ec_group_metadata(test_load_result.pockets, weighting_mode=config.ec_group_weighting)
+
+        train_like_pockets = prepared.split.train_pockets + prepared.split.val_pockets
+        overlap_report = train_test_overlap_report(train_like_pockets, test_load_result.pockets)
+        if overlap_report["train_test_overlap_detected"]:
+            raise RuntimeError(
+                "Held-out evaluation blocked before inference because loaded train/test pockets "
+                f"overlap: overlap_counts={overlap_report['overlap_counts']}; "
+                f"overlap_examples={overlap_report['overlap_examples']}."
+            )
 
         test_graphs = build_graph_data_list(
             test_load_result.pockets,
@@ -1605,8 +1671,6 @@ def evaluate_held_out_test_split(
                 confidence_level=config.final_test_bootstrap_confidence_level,
                 bootstrap_seed=config.final_test_bootstrap_seed,
             )
-        train_like_pockets = prepared.split.train_pockets + prepared.split.val_pockets
-        overlap_report = train_test_overlap_report(train_like_pockets, test_load_result.pockets)
         split_identity = infer_split_identity(config)
         overlap_warning = overlap_report.get("overlap_warning") or split_identity.get("overlap_warning")
         return {
@@ -1652,6 +1716,7 @@ def evaluate_held_out_test_split(
             "overlap_counts": overlap_report["overlap_counts"],
             "overlap_examples": overlap_report["overlap_examples"],
             "overlap_warning": overlap_warning,
+            "pre_inference_structure_overlap_report": structure_overlap_report,
             "timestamp": utc_timestamp(),
             "git_commit": git_commit_hash(),
             "code_version": git_commit_hash(),
@@ -1776,6 +1841,7 @@ def persist_run_outputs(
 def run_training(config: TrainConfig) -> Path:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    validate_held_out_structure_disjointness(config)
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
         print("Omitting conservative node features:", ", ".join(config.omit_node_features))
@@ -1796,6 +1862,7 @@ def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Pat
     if not checkpoint_path.is_file():
         raise FileNotFoundError(f"Checkpoint does not exist: {checkpoint_path}")
 
+    validate_held_out_structure_disjointness(config)
     set_seed(config.seed, deterministic=config.deterministic)
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     if not isinstance(checkpoint, dict) or "model_state_dict" not in checkpoint:

@@ -746,28 +746,26 @@ The "Optional final held-out test evaluation" cell is driven by two widget
 controls: `LAUNCH_FINAL_HELD_OUT_TEST_EVAL` and `FINAL_TEST_WORKFLOW`.
 
 - **Primary source**: `evaluate_stage6_selected_candidate` loads
-  `stage6b_selected_final_refit_candidate.json` when present, otherwise legacy
-  `stage6_selected_final_candidate.json`, and must evaluate only the frozen
+  `stage6b_selected_final_refit_candidate.json` and evaluates only the frozen
   Stage 6B final-refit run derived from the Stage-6-selected primary
-  configuration. The legacy fallback is a verified implementation/policy
-  concern recorded in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`; this cleanup does
-  not change it.
-- **Exploratory source list**:
-  `exploratory_evaluate_all_stage6_ranked_candidates` loads both
-  `stage6_ranked_candidates.csv` and
-  `stage6_selected_final_candidate.json`, then evaluates every ranked candidate
-  in Stage 6 rank order for diagnostics only.
+  configuration. There is no Stage 6 fallback. The cell verifies artifact
+  semantics, linked Stage 6/6B decisions, source run metadata/config,
+  checkpoint identity, full non-test refit scope, and absence of prior test
+  evidence before launch.
+- **Exploratory source list**: all-ranked-candidate evaluation is disabled in
+  the canonical primary-test cell because it would spend the primary held-out
+  set repeatedly. Any future diagnostic comparison requires a separately
+  approved secondary dataset/protocol.
 - **Final-test output folder**: each held-out evaluation writes a new run folder
   under the same `RUNS_DIR`, named from `FINAL_TEST_RUN_NAME_PREFIX` plus the
   source run name. The original validation run folder is not overwritten.
 
-The final-test cell prints a pre-flight checklist before launch. It checks that
-the Stage 6/6B source files exist, that the final-refit source checkpoint
-exists, that the held-out test paths exist, that repeat policy is satisfied,
-and that Stage 6/6B ranking/selection files will not be modified.
-If the notebook resolves the Stage 7 source to a Stage 6 fold/seed checkpoint
-instead of the Stage 6B final-refit run, stop before launching the held-out
-test.
+The final-test cell prints a pre-flight checklist before launch. It hard-blocks
+unless the completed/reused Stage 6B final-refit evidence is internally
+consistent. It then checks the held-out paths and repeat policy. Raw
+filename/structure/PDB/PDB-chain overlap is blocked before model preparation or
+inference, and loaded-pocket/group overlap is blocked again before graph
+construction.
 
 After planning:
 
@@ -823,9 +821,8 @@ Stage 7 exposes only two user-facing final-test controls:
 
 - `LAUNCH_FINAL_HELD_OUT_TEST_EVAL`: default `False`; no held-out test
   evaluation runs unless this is set to `True`.
-- `FINAL_TEST_WORKFLOW`: supported values are exactly
-  `evaluate_stage6_selected_candidate` and
-  `exploratory_evaluate_all_stage6_ranked_candidates`.
+- `FINAL_TEST_WORKFLOW`: the only supported value is
+  `evaluate_stage6_selected_candidate`.
 
 The notebook keeps calibration, temperature-scaling, bootstrap, source-path,
 and repeat-guard defaults internal to the final-test cell. They are not separate
@@ -835,9 +832,8 @@ derived from the Stage-6-selected configuration before Stage 7 is launched.
 Temperature scaling is fitted only on validation logits from the already fixed
 configuration or Stage 6B final-refit source run.
 The notebook records `role = "primary_preselected"` for the Stage 6B final
-candidate and `role = "exploratory_posthoc"` for any additional
-ranked-candidate diagnostics. Do not change the primary report after viewing
-held-out metrics. The full Stage 7 policy and executable blocks live in
+candidate and does not evaluate additional ranked candidates. Do not change the
+primary report after viewing held-out metrics. The full Stage 7 policy and executable blocks live in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 Metal evaluation normally keeps the default six-class prediction problem
@@ -926,6 +922,13 @@ The steps below describe the intended validation-to-refit mechanics only. They
 do not designate an external test dataset: **Primary final-test route:
 unresolved scientific decision required before final reporting.**
 
+Resolve and freeze that route before the reportable Stage 6 cycle, not only
+before Stage 7, because the route determines the non-test training membership
+used by Stage 6 confirmation and the Stage 6B full-train refit. Until then the
+Stage 7 cell remains fail-closed through its internal
+`FINAL_TEST_PRIMARY_DATASET_ROUTE_STATUS = "unresolved"`; this is not a normal
+user-facing toggle.
+
 1. Use Stage 6B to train/refit one final model from the Stage 6 selected
    configuration before any held-out test launch.
 2. Use the Stage 6B final-refit run as the primary final-test source, with
@@ -937,9 +940,8 @@ unresolved scientific decision required before final reporting.**
 4. Use the "Optional final held-out test evaluation" cell with
    `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True` only after the preview is correct.
 5. Use `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for the
-   primary final report. Use
-   `FINAL_TEST_WORKFLOW = "exploratory_evaluate_all_stage6_ranked_candidates"`
-   only for labeled post-hoc diagnostics that cannot replace the primary model.
+   primary final report. The canonical cell does not support repeated
+   all-ranked-candidate evaluation on the primary held-out set.
 6. Record `test_metal_balanced_acc`, `test_metal_macro_f1`,
    `test_metal_per_class_recall`, `test_metal_collapsed4_balanced_acc`,
    calibration metrics, plot paths, bootstrap CI fields, and
