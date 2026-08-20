@@ -7,6 +7,13 @@ The current project policy is baseline-first: use validation metrics for all mod
 For the cross-document validation/testing order, output-folder map, and Drive
 copying policy, read `docs/README.md` first.
 
+> Documentation boundary: this guide owns stable notebook option semantics only.
+> The metal playbook owns exact stage blocks; the notebook owns implemented
+> behavior; `EXPERIMENT_STATUS.md` owns the current campaign; and
+> `docs/DATASETS.md` owns dataset and test-use facts. The primary final-test
+> route remains an unresolved scientific decision. Verified workflow mismatches
+> are recorded in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md` and are not fixed here.
+
 ## Scope Of This Guide
 
 This guide describes stable workflow principles. Exact current experiment results and hyperparameters should not be duplicated here; those belong with the run evidence and current-status notes. For the current project state, read `EXPERIMENT_STATUS.md` if present. For raw copied notebook outputs, inspect `docs/notebook_outputs/raw/`; for concise run summaries, start with `docs/notebook_outputs/summaries/`.
@@ -23,12 +30,12 @@ and safe workflow principles; the playbook is the practical execution recipe.
 
 | Playbook stage | Notebook variables most relevant to the stage | This guide's section to read |
 | --- | --- | --- |
-| Stage 0: environment/data readiness | Data source, bundle, Drive, `RUNS_DIR`, RING/ESM/external-feature path controls | "Starting Point", "RING options", "ESM options" |
+| Stage 0: environment/data readiness | Data source, bundle, Drive, `RUNS_DIR`, RING/ESM/external-feature path controls | "Execution Sequence and Live Values", "RING options", "ESM options" |
 | Stage 1: 1-epoch smoke | `RUN_MODE`, `RECOMMENDED_RUN_SET`, launch toggle, smoke/debug guards | "Minimal smoke test" |
 | Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
 | Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
 | Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
-| Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Professional Configuration Search Strategy" |
+| Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Experiment-Sequence Ownership" |
 | Stage 5A: serious Only-GVP HPO | One `MODEL_PRESET`, serious Optuna search controls, graph capacity controls, imbalance controls | "Model architecture and fusion", "Metal class weighting", "Optuna storage and Stage 6 confirmation" |
 | Stage 5B: Only-ESM HPO | ESM path/generation controls, ESM-only preset, serious Optuna controls | "ESM options", "Optuna storage and Stage 6 confirmation" |
 | Stage 5C: GVP + late fusion HPO | ESM fusion controls, serious Optuna controls, validation gate for advanced fusion | "Advanced fusion policy", "Optuna storage and Stage 6 confirmation" |
@@ -85,7 +92,7 @@ Before launching a run, verify these resolved notebook values:
 | --- | --- |
 | Task | `TASK = "metal"` |
 | Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
-| External split | `DATASET_NAME` dropdown; the current `DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst` bundle contains exact PinMyMetal, Common-PDBID 70/30, `CLEAN_30` folds 0-4, and CARE Task 1 clusterRes30 |
+| External split | Use the stage block to select the intended named dataset; verify materialization, provenance, and test-access history in `docs/DATASETS.md`. No dataset is designated here as the primary final test. |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
 | Selection metric | Effective metric `val_metal_balanced_acc`; either paste the playbook's explicit `SELECTION_METRIC = "val_metal_balanced_acc"` or leave notebook `task_default` only when `TASK = "metal"` |
@@ -122,8 +129,9 @@ the selected data source. The canonical CARE option
 for validation; the CLI records this as `train_val_split_by`. It never changes
 the explicit external test directory or CSV used for Stage 7. Exact PinMyMetal
 runs must stay clearly labeled because that split can contain train/test PDB-ID
-overlap; the non-overlapped split remains the preferred final held-out policy
-when that dataset root is supplied explicitly.
+overlap. The non-overlapped PinMyMetal test was historically accessed, and the
+primary final-test route is unresolved. Use `docs/DATASETS.md` for the access
+ledger and current availability facts; this guide does not choose a replacement.
 If the exact split is requested and the exact dataset root is missing, the
 notebook stops with a clear error instead of silently falling back to
 non-overlapped.
@@ -164,115 +172,23 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 - `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
   merged into `Class VIII`. Six-class metal classification remains primary.
 
-## G4-Oriented Training Profile
+## Execution Sequence and Live Values
 
-The exact G4-class Optuna budgets, sampler settings, storage URLs, and search
-spaces live in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` under "G4-Class Optuna
-Policy". This guide does not duplicate them. The high-level posture is:
-persistent SQLite Optuna in Drive, multivariate/group TPE, one `MODEL_PRESET`
-per study, validation-only objective, and predeclared grouped-fold confirmation
-before any held-out test. The playbook owns the exact trial counts, startup
-trial counts, epoch budgets, learning-rate ranges, class-weight/loss ranges,
-batch-size search space, and seed list.
+This guide deliberately does not reproduce the G4 budgets, search spaces,
+stage order, current dataset choice, or current best model. Use:
 
-Keep three concepts separate:
+- `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` for exact, copy-paste-ready stage
+  values and decision gates;
+- `EXPERIMENT_STATUS.md` for the current stage and next action;
+- `docs/DATASETS.md` for dataset materialization, bundle identity, overlap, and
+  historical test access;
+- the notebook itself for implemented live defaults and command expansion.
 
-- Current notebook defaults are the values visible in the notebook UI. They are
-  a launch surface and may be exploratory.
-- Canonical serious G4 HPO budgets are the stage-owned values in the playbook.
-- The conservative first-pass anti-overfitting GVP profile is a recommended
-  low-capacity search posture for GVP-based metal-focused runs, not a claim
-  that the values are optimal.
-
-`RUN_MODE` controls whether HPO fields are active. `single` runs one resolved
-configuration. `manual_configurations` expands planned CSV/grid settings.
-`controlled_hpo_optuna` is required for Optuna HPO; Optuna fields should not be
-interpreted as active unless this mode is selected or a stage explicitly
-launches HPO.
-
-## Starting Point
-
-Use the legacy **Non-overlapped PinMyMetal** split for current benchmark continuity:
-
-- Use the playbook stage block for the exact dataset, task, validation split,
-  grouping, and selection metric values.
-- For reportable metal runs, the resolved configuration must use the trusted
-  non-overlapped PinMyMetal split, grouped validation splitting, metal balanced
-  accuracy for selection, and no held-out test during training.
-- Set a visible `RUN_BATCH_ID` for each real comparison batch. The notebook
-  writes into that batch folder when `RUN_BATCH_ID` is set; use the stage block
-  in the playbook for the canonical name.
-
-For detailed split-variant definitions and final split policy, use Plan.md
-section 8. This guide only repeats the operational rule: reportable metal runs
-use the trusted non-overlapped PinMyMetal split unless a new split experiment is
-explicitly labeled.
-
-Do not choose configurations from old mixed run folders unless you have verified that every run in the folder belongs to the same comparison, same task, same split, same epoch budget, and compatible model family. The notebook summary prints whether it is scanning only the current `RUN_BATCH_ID` folder or a broader `RUNS_DIR`, and it warns strongly when old or mixed run directories may be present.
-
-### Internal Defaults
-
-Section 8 internal defaults are plain Python values in the main configuration
-cell. The old `EDIT_INTERNAL_DEFAULTS` review marker was removed because it did
-not enable hidden controls, gate execution, or change which section 8 values
-were applied. Older saved configs may still include `advanced_mode` metadata.
-
-## What To Run First
-
-### 1. Minimal smoke test
-
-Use this to confirm that Colab setup, data paths, CSV detection, graph construction, and training execution work.
-
-Use the Stage 1 block in `METAL_TRAINING_PIPELINE_PLAYBOOK.md`; the playbook is
-the source of truth for exact smoke-test values. Then run the planning cells and
-launch only after the planned command matches Stage 1.
-
-Interpretation: a 1-epoch smoke run is not a performance result. It only proves the notebook and training loop run end to end. The notebook blocks accidental 1-3 epoch non-smoke launches unless `ALLOW_SHORT_TRAINING_FOR_DEBUG=True` is set deliberately.
-
-### 2. First real baseline
-
-After the smoke test succeeds, run a real Only-GVP baseline with the notebook's
-default RING-enabled graph construction and strict updated external features.
-Use Stage 2A in `METAL_TRAINING_PIPELINE_PLAYBOOK.md` for the exact baseline
-block. Treat it as the first useful validation ranking for the structure-only
-baseline, and do not copy older numeric examples from this guide.
-
-### 3. Recommended model order
-
-Use this order for metal:
-
-1. `Only-GVP`, RING-enabled, no ESM.
-2. `Only-ESM`, after ESM embeddings are present.
-3. `GVP + late fusion`, after both structure-only and ESM-only baselines are stable.
-4. `GVP + early fusion`, if late fusion or ESM-only looks promising.
-5. Advanced fusion only if simple baselines justify it: `GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention`.
-6. `SimpleGNN + ESM` as an auxiliary architecture ablation, not as the first best-pipeline candidate.
-
-`GVP + early fusion` and `SimpleGNN + ESM` are supported notebook presets, but
-the metal playbook does not currently define standalone serious HPO stage
-blocks for them. Treat them as optional manual comparisons or future candidate
-stages until exact executable blocks are added to the playbook.
-
-The corresponding notebook presets are:
-
-- `baseline_model_comparison`: `Only-GVP`, `Only-ESM`, `GVP + late fusion`.
-- `esm_ready_comparison`: `Only-ESM`, `GVP + late fusion`, `GVP + early fusion`.
-- `full_model_comparison`: all eight model presets. Use this only as a late-stage broad comparison after staged simpler comparisons justify advanced fusion.
-
-### 4. Sequential anchor protocol
-
-Do not treat each more complex model as a fresh, unrelated search. Use the best stable simpler model as the starting anchor for the next stage, then retune narrowly.
-
-Recommended protocol:
-
-1. Tune `Only-GVP` first using validation metrics only.
-2. Select a stable `Only-GVP` anchor from validation evidence across seeds, not from a single lucky run.
-3. Carry forward shared settings from that anchor when testing `GVP + late fusion`: split, epoch budget, seed list, graph radius, GVP capacity, class-weighting policy, and the selection metric.
-4. Retune only the settings likely affected by adding ESM, such as learning rate, weight decay, dropout/fusion dimension, and possibly batch size.
-5. Use the same idea for `GVP + early fusion`: start from the best validated late-fusion or ESM-informed baseline, then run a narrow validation-only comparison.
-6. Move to advanced fusion only if simpler graph-plus-ESM models give a real validation benefit over the simple baselines.
-
-This is a starting-anchor rule, not a freeze-everything rule. The best `Only-GVP` learning rate, regularization, or class weighting may change after ESM is added, so each added complexity still needs a small controlled validation search.
+A smoke run establishes execution only, not performance. For any real
+comparison, keep task, label scheme, dataset, validation design, epoch budget,
+selection metric, and feature availability explicit and comparable. Inspect the
+resolved planning table before launch because run-set presets can override
+individual fields.
 
 ## Important Notebook Options
 
@@ -788,42 +704,19 @@ Stage 3 is plumbing/debug only. If `OPTUNA_TARGET_COMPLETE_TRIALS` equals
 effectively random search. Do not treat Stage 3 rankings as model-selection
 evidence.
 
-## Professional Configuration Search Strategy
+## Experiment-Sequence Ownership
 
-Use this controlled sequence:
+The exact experiment sequence, budgets, candidate gates, Stage 6 confirmation,
+Stage 6B refit bridge, and Stage 7 recipe belong to the metal playbook. Before
+running any numbered stage, check `EXPERIMENT_STATUS.md`; do not restart an
+older example merely because it appears in this semantics guide.
 
-1. Run Stage 0 and Stage 1 from the playbook. Ignore smoke metrics except for
-   obvious failures.
-2. Run Stage 2A and Stage 2B as validation-only baselines. Choose by
-   `val_metal_balanced_acc`, not test.
-3. Run Stage 3 before the first Optuna batch in a new runtime.
-4. Run Stage 4 or Stage 5 inside one selected `MODEL_PRESET`. Use narrower
-   ranges only when deliberately continuing from an anchor; use the playbook's
-   broader large-search blocks when the user asks for a fresh broad check.
-5. Run Stage 6 grouped-fold validation before treating any HPO candidate as
-   stable.
-6. Advance to Stage 5D/5E/5F only if the playbook's advanced-fusion gate is
-   satisfied.
-7. Use Stage 6B to select one final configuration by validation evidence,
-   paired-CI support, rare-recall protection, and predeclared tie-breakers.
-8. Use Stage 6B to train/refit one final full non-test model from that frozen
-   configuration without changing model-selection choices.
-9. Use Stage 7 once for that Stage 6B final-refit run.
-
-For the current metal task, check `EXPERIMENT_STATUS.md` before starting at any
-numbered step. If the current validation anchor is already recorded there, use
-the status file's next planned action rather than restarting from an older
-workflow example in this guide.
-
-When comparing configurations, keep the comparison clean:
-
-- Same `TASK`.
-- Same split policy.
-- Same `EPOCHS`.
-- Same Stage 6 fold plan or explicitly labeled seed-repeat plan.
-- Same final selection metric.
-- Same test-set policy.
-- Same anchor configuration for shared settings when comparing a simple model to the next more complex model.
+For comparison reliability and promotion language, use the evidence grades and
+batch index in `docs/notebook_outputs/README.md`. For the unresolved
+final-test-route decision and historical access record, use
+`docs/DATASETS.md`. Any discrepancy between intended policy and implemented
+notebook behavior remains an open issue in
+`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`.
 
 ## Metal-Class Diagnostics
 
@@ -856,7 +749,9 @@ controls: `LAUNCH_FINAL_HELD_OUT_TEST_EVAL` and `FINAL_TEST_WORKFLOW`.
   `stage6b_selected_final_refit_candidate.json` when present, otherwise legacy
   `stage6_selected_final_candidate.json`, and must evaluate only the frozen
   Stage 6B final-refit run derived from the Stage-6-selected primary
-  configuration.
+  configuration. The legacy fallback is a verified implementation/policy
+  concern recorded in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`; this cleanup does
+  not change it.
 - **Exploratory source list**:
   `exploratory_evaluate_all_stage6_ranked_candidates` loads both
   `stage6_ranked_candidates.csv` and
@@ -1027,6 +922,10 @@ For Optuna:
 
 For final reporting:
 
+The steps below describe the intended validation-to-refit mechanics only. They
+do not designate an external test dataset: **Primary final-test route:
+unresolved scientific decision required before final reporting.**
+
 1. Use Stage 6B to train/refit one final model from the Stage 6 selected
    configuration before any held-out test launch.
 2. Use the Stage 6B final-refit run as the primary final-test source, with
@@ -1086,8 +985,9 @@ For final reporting:
 
 These are stable usage cautions, not an implementation backlog:
 
-- The notebook's visible default `EPOCHS = 1` is smoke-safe. Every real stage
-  should paste the playbook block so the resolved training budget is explicit.
+- Do not copy a mutable epoch value from this guide. Every real stage should
+  paste the playbook block and verify the resolved training budget. Live-default
+  drift is tracked in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`.
 - `RECOMMENDED_RUN_SET` may override `MODEL_PRESET`; inspect the resolved
   planning table before launch.
 - Inline held-out-test evaluation is fixed off in the main configuration cell;

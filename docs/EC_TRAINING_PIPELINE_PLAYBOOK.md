@@ -12,10 +12,43 @@ validation evidence belongs in `EXPERIMENT_STATUS.md` and
 
 For the cross-document run order and output-folder map, see `docs/README.md`.
 
-All configuration blocks use variables that exist in
-`notebooks/DeepMzyme_training_colab.ipynb` as of this repository state. Paste
-any block at the end of the notebook's **Main configuration** cell before
-running **Build central CONFIG dictionary**.
+## Compatibility Warning — Reconciliation Required
+
+This playbook preserves important EC budgets, ranges, label-depth progression,
+group weighting, and contrastive-loss intent, but affected blocks are **not
+currently certified executable** against
+`notebooks/DeepMzyme_training_colab.ipynb`.
+
+Static audit found these playbook assignments absent from the current notebook
+assignment surface:
+
+- `CONFIRM_ONE_SHOT_POLICY`
+- `OPTUNA_BATCH_SIZES_CSV`
+- `OPTUNA_EDGE_HIDDEN_VALUES_CSV`
+- `OPTUNA_EDGE_RADIUS_VALUES_CSV`
+- `OPTUNA_ESM_FUSION_DIM_VALUES_CSV`
+- `OPTUNA_GVP_LAYERS_VALUES_CSV`
+- `OPTUNA_HEAD_MLP_LAYERS_VALUES_CSV`
+- `OPTUNA_HIDDEN_S_VALUES_CSV`
+- `OPTUNA_HIDDEN_V_VALUES_CSV`
+- `OPTUNA_WEIGHT_DECAYS_CSV`
+
+Stage 7 examples also use `FINAL_TEST_WORKFLOW = "preview_only"` and
+`"evaluate_selected_checkpoint"`, while the current notebook recognizes
+`"evaluate_stage6_selected_candidate"` and
+`"exploratory_evaluate_all_stage6_ranked_candidates"`. The EC Stage 6/7
+sequence also predates the current metal-style named Stage 6B workflow.
+
+The existing blocks below are retained as historical/intended recipes so their
+scientific search spaces do not disappear. Do not rename controls or modernize
+the EC Stage 6/6B/7 flow piecemeal. Reconcile the complete pipeline in a
+separate task; see
+[`TECH-002`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface).
+
+> **Primary final-test route: unresolved scientific decision required before final reporting.**
+
+This documentary warning does not change any existing block or executable
+behavior.
 
 
 ## EC-Specific Rules Before You Start

@@ -6,6 +6,30 @@ CARE starts from protein/EC rows, UniProt IDs, and sequences. It does not provid
 
 This is a CARE-derived AlphaFill-MAHOMES catalytic metalloenzyme subset. It is not the full CARE benchmark.
 
+## Legacy And Current Preparation Tracks
+
+This directory contains two related but scientifically distinct script
+families:
+
+- the legacy `CARE_task1_30_train_test_metallo` route documented by the
+  commands below; and
+- the materialized/current `CARE_task1_30_clusterRes30_train_test_metallo`
+  route, whose scripts include the `_clusterRes30` suffix and start with
+  `00_common_care_task1_30_clusterRes30.sh`.
+
+The legacy name may be accepted as a notebook compatibility alias, but that
+does not make the two dataset constructions identical. The clusterRes30
+metadata, exact funnel counts, thresholds, missing-representative audit, and
+source-row records are preserved under
+[`provenance/clusterRes30/`](provenance/clusterRes30/). Dataset identity,
+materialization, bundle inclusion, and test-use state are owned by
+[`docs/DATASETS.md`](../docs/DATASETS.md).
+
+The remainder of this README is retained as the exact legacy procedure and
+command record. Do not silently substitute clusterRes30 paths into these
+commands; reconcile or document a dedicated clusterRes30 procedure separately
+if that execution route needs to be rerun.
+
 ## Difference From CLEAN
 
 The CLEAN pipeline starts from fold-specific CLEAN split files where rows are expected to be unique proteins. CARE Task 1 can contain protein-EC rows, so this pipeline writes two manifest levels:

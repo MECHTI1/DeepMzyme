@@ -1,59 +1,78 @@
-# DeepMzyme Docs
+# DeepMzyme Documentation Index
 
-This is the coordination page for documentation. It should stay short; exact
-commands, budgets, search spaces, and results belong in the files below.
+Use this page to locate the owner of a fact. Do not copy mutable values between
+documents when a link is sufficient.
 
-## Start Here
+## Start here
 
-1. `../Plan.md` - research policy, split policy, validation selection, and
-   held-out-test rules.
-2. `../EXPERIMENT_STATUS.md` - current status, trusted anchors, caveats, and
-   next planned action.
-3. `METAL_TRAINING_PIPELINE_PLAYBOOK.md` or
-   `EC_TRAINING_PIPELINE_PLAYBOOK.md` - exact notebook stage blocks and gates.
-4. `notebook_outputs/README.md` - copied experiment evidence and reading order.
+1. [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) — current objective,
+   anchors, blockers, and next actions.
+2. [`DATASETS.md`](DATASETS.md) — datasets, splits, bundles, provenance, and
+   historical test-use record.
+3. [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) — validation/HPO findings
+   with evidence grades.
+4. [`notebook_outputs/README.md`](notebook_outputs/README.md) — experiment-batch
+   index and links to summaries/configs/raw evidence.
 
-Use `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` only when you need notebook option
-meanings, not exact stage values.
+Scientific policy is in [`Plan.md`](../Plan.md).
 
 ## Ownership
 
-| Content | Owner |
-| --- | --- |
-| Policy and held-out-test rules | `../Plan.md` |
-| Current mutable experiment status | `../EXPERIMENT_STATUS.md` |
-| Current live notebook-default snapshot | `../README.md` |
-| Exact metal stage blocks | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
-| Conservative first-pass GVP/HPO profile | `METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
-| Exact EC stage blocks | `EC_TRAINING_PIPELINE_PLAYBOOK.md` |
-| Notebook option meanings | `METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
-| Copied raw outputs | `notebook_outputs/raw/<model-family>/` |
-| Copied run summaries | `notebook_outputs/summaries/` |
-| Validation leaderboard | `notebook_outputs/summaries/LEADERBOARD.md` |
-| Local live run outputs | `../DeepMzyme_Data/notebook_outputs/runs/` |
+| Information | Authority | Not its role |
+|---|---|---|
+| Public overview and minimal quick start | [`README.md`](../README.md) | Live defaults, status, or experiment history |
+| Current status and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
+| Scientific/design/test policy | [`Plan.md`](../Plan.md) | Dataset inventory or copied stage blocks |
+| Dataset identity, readiness, bundles, test use | [`DATASETS.md`](DATASETS.md) | Preparation procedure |
+| Empirical parameter/HPO knowledge | [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) | Future executable search-space prescription |
+| Experiment batches and evidence links | [`notebook_outputs/README.md`](notebook_outputs/README.md) | Current status |
+| Exact metal execution recipes | [`METAL_TRAINING_PIPELINE_PLAYBOOK.md`](METAL_TRAINING_PIPELINE_PLAYBOOK.md) | Measured results |
+| EC recipe intent and compatibility warning | [`EC_TRAINING_PIPELINE_PLAYBOOK.md`](EC_TRAINING_PIPELINE_PLAYBOOK.md) | A claim that all affected blocks currently execute |
+| Stable notebook option semantics | [`METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`](METAL_NOTEBOOK_CONFIGURATION_GUIDE.md) | Live cell-value snapshot |
+| Implemented notebook behavior | [`DeepMzyme_training_colab.ipynb`](../notebooks/DeepMzyme_training_colab.ipynb) | Scientific policy |
+| Verified but unfixed workflow issues | [`FOLLOW_UP_TECHNICAL_ISSUES.md`](FOLLOW_UP_TECHNICAL_ISSUES.md) | Status or policy |
+| Agent operating behavior | [`AGENTS.md`](../AGENTS.md) | Scientific evidence |
+| Cleanup execution contract | [`PROJECT_CLEANUP_PLAN.md`](PROJECT_CLEANUP_PLAN.md) | Permanent project authority |
 
-## Coordination Rules
+## Execution references
 
-- Do not use held-out test data before Stage 7.
-- After Stage 6/cross-validation, choose exactly one best configuration from
-  validation evidence, run Stage 6B promotion gates, train/refit the final
-  model with that frozen configuration, and only then launch Stage 7.
-- Stage 7 must use the fixed Stage 6B final-refit run derived from the
-  validation-selected configuration and a separate final-test output folder.
-- Keep current notebook defaults, conservative first-pass GVP/HPO profiles,
-  and canonical extended G4 HPO budgets distinct. Current defaults are a live
-  launch surface; stage budgets and decision gates belong in the playbooks.
-- Treat `METAL_LABEL_SCHEME`, `VAL_FRACTION`, and the effective selection metric
-  as part of the experiment identity. The live notebook currently defaults to
-  `METAL_LABEL_SCHEME = "five_class"`, `VAL_FRACTION = 0.18`, and
-  `SELECTION_METRIC = "task_default"`; with the current `TASK = "joint"` launch
-  surface, that resolves to `val_joint_balanced_acc`. Older six-class,
-  `0.15`, or metal-selected validation evidence must use separate run/study
-  names and must not be mixed with the current notebook-default evidence.
-- Treat `METAL_NODE_MODE = "per_metal"` as part of the current notebook default
-  configuration. It changes the graph/readout contract and should be recorded
-  explicitly in summaries and run names when possible.
-- Do not create a second notebook-output folder with a space in its name.
-- When copying Drive/Colab evidence into the repo, add raw output under
-  `notebook_outputs/raw/`, add a short summary under `notebook_outputs/summaries/`,
-  then update `notebook_outputs/README.md`.
+### Metal
+
+- Use the metal playbook for exact stage blocks, budgets, seeds, ranges,
+  expected artifacts, and gates.
+- Use the configuration guide for option meaning, precedence, study reuse, and
+  artifact interpretation.
+- Read current status before choosing a stage.
+- The primary final-test route is currently an unresolved scientific decision;
+  the playbook warning links to the dataset record.
+
+### EC
+
+The EC playbook preserves scientifically important historical budgets, ranges,
+label-depth progression, and contrastive-loss intent. Some variables and final
+workflow values do not match the current notebook. Read its warning and
+[`TECH-002`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface)
+before copying affected blocks. Reconciliation is a separate task.
+
+## Evidence storage
+
+- `notebook_outputs/summaries/`: immutable human-readable batch summaries.
+- `notebook_outputs/raw/`: copied outputs, exact configs, recovered metadata,
+  and historical test-access evidence.
+- `archive/`: recoverable historical documents that are no longer current.
+- CLEAN/CARE/PinMyMetal preparation `provenance/` directories: tracked
+  lightweight copies of generated dataset metadata.
+
+Read summary first, then exact raw/config evidence. If evidence is absent, use
+`MISSING — recovery required`; do not reconstruct unsupported details.
+
+## Coordination rules
+
+- Validation evidence owns model and hyperparameter decisions.
+- Historical held-out-test values are access evidence only.
+- Keep trial IDs namespaced by family, study/batch, and storage identity.
+- Update current status, parameter findings, experiment index, and dataset
+  authority in the same change when a new result affects them.
+- Preserve raw evidence and negative/incomplete findings.
+- Treat the current dirty worktree as user-owned.
+- Do not move working code/data paths as part of documentation cleanup.

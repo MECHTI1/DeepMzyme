@@ -98,8 +98,14 @@ claim or change.
   handling, and copied-evidence placement rules.
 - `EXPERIMENT_STATUS.md`: current experiment status, selected validation
   anchors, trusted evidence files, caveats, and next planned action.
-- `README.md`: public-facing overview, quick-start commands, and split
-  reference. Good entry point for understanding what the project does.
+- `docs/DATASETS.md`: authoritative dataset/split/bundle inventory, current
+  availability, provenance links, and historical test-use ledger.
+- `docs/PARAMETER_FINDINGS.md`: validation/HPO findings with evidence grades;
+  historical test metrics are excluded from parameter conclusions.
+- `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`: verified implementation/documentation
+  problems that remain deliberately unfixed pending separate authorization.
+- `README.md`: public-facing overview and minimal quick start. Good entry point
+  for understanding what the project does; it does not own live defaults.
 
 #### Notebook workflow and training recipes
 
@@ -118,30 +124,28 @@ claim or change.
 - `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`: same staged structure as the metal
   playbook, covering EC-number classification. Covers EC label depth, group
   weighting, contrastive loss progression, and 200-trial Optuna examples.
-- `list_train_commands.md`: baseline-first CLI command examples for
-  direct `src/train.py` invocations outside the notebook.
+  Read its compatibility warning before using affected HPO or final-test
+  blocks; reconciliation with the current notebook remains an open technical
+  task.
+- `docs/archive/workflows/list_train_commands_legacy.md`: historical direct
+  `src/train.py` command examples. Use `src/train.py --help` plus current
+  playbooks for live execution.
 
 #### Experiment evidence
 
-- `docs/notebook_outputs/README.md`: index for copied notebook-output evidence;
-  read this before browsing raw notebook output files.
-- `docs/notebook_outputs/summaries/LEADERBOARD.md`: cross-family validation
-  snapshot with reliability tiers (5-seed/50-epoch vs. partial); fastest entry
-  point for comparing model families at the validation level.
+- `docs/notebook_outputs/README.md`: authoritative experiment-batch index and
+  copied-evidence contract; read this before browsing raw files.
 - `docs/notebook_outputs/summaries/`: short human-readable run summaries and
   historical planning notes; read these before raw outputs when tracking
   experiment status.
 - `docs/notebook_outputs/raw/`: copied notebook outputs used as portable
   evidence.
-- `experiment_notes.md`: early experiment notes from initial learning-rate and
-  epoch checks. Historical context only; not a design document.
-- `Documenation/`: legacy misspelled directory name containing dated session
-  planning notes (e.g. `14May_26.md`). These are informal scratch notes, not
-  authoritative documents. Do not treat them as design decisions unless they
-  are reflected in Plan.md.
-- `docs/agents_report/`: checked-in agent audit/review reports. Treat these as
-  evidence of prior inspections, not as current design authority unless their
-  recommendations were promoted into Plan.md or the relevant playbook.
+- `docs/archive/experiments/experiment_notes_legacy.md`: intact early
+  learning-rate/epoch notes and historical test-access evidence; not a design
+  or current parameter-selection document.
+- `docs/archive/`: historical command references, audits, session notes,
+  experiment snapshots, and changelogs. They remain recoverable but are not
+  current authority.
 - `DeepMzyme_Data/notebook_outputs/runs/`: local run outputs when present;
   treat these as measured evidence, not design intent.
 
@@ -211,8 +215,10 @@ claim or change.
 #### Data directories
 
 - `DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/`:
-  legacy trusted final held-out split. Use for all reportable final evaluations
-  unless an experiment explicitly switches to another named split.
+  historical non-overlap split path. It was absent locally at the 2026-08-20
+  audit and its test was evaluated in seven early runs, so it is not pristine.
+  Do not recommend final reporting until the primary final-test route is
+  resolved scientifically; see `docs/DATASETS.md`.
 - `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/`:
   exact PinMyMetal train/test PDB-ID membership for available supported
   structures; may contain train/test PDB-ID overlap.
@@ -231,6 +237,10 @@ claim or change.
   Treat as measured evidence, not design intent.
 - `DeepMzyme_Data/DeepMzyme_Colab_Bundles/`: built `.tar.zst` data bundles.
 
+Current materialization and bundle inclusion can change. Verify them in
+`docs/DATASETS.md` and the filesystem instead of assuming every named path
+above exists.
+
 #### Internal and staging
 
 - No `internal/` workflow is part of the active pipeline. If an
@@ -238,7 +248,8 @@ claim or change.
   unreviewed staging material only, not production code.
 
 **Read by default** (small, high-leverage): `Plan.md`, `EXPERIMENT_STATUS.md`,
-`docs/README.md`, and `docs/notebook_outputs/README.md`.
+`docs/README.md`, `docs/DATASETS.md`, and
+`docs/notebook_outputs/README.md`.
 
 **On-demand only** (large; do not bulk-load):
 - `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` — only when editing or running
@@ -247,7 +258,8 @@ claim or change.
   executing a specific metal training stage.
 - `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` — only when setting up or executing
   a specific EC training stage.
-- `list_train_commands.md` — only when building or verifying CLI commands.
+- `docs/archive/workflows/list_train_commands_legacy.md` — historical context
+  only when recovering an old direct CLI invocation.
 - Files under `docs/notebook_outputs/raw/` — only when a summary cites the
   file or when exact logs / run commands are needed.
 - `notebooks/DeepMzyme_training_colab.ipynb` — only for notebook-behavior
@@ -437,7 +449,10 @@ For future documentation edits:
   equivalents in `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`, live notebook defaults
   in `notebooks/DeepMzyme_training_colab.ipynb`, notebook option meanings in
   `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`, research policy in `Plan.md`,
-  and mutable status/results in `EXPERIMENT_STATUS.md`.
+  mutable status in `EXPERIMENT_STATUS.md`, datasets/test-use in
+  `docs/DATASETS.md`, validation/HPO findings in
+  `docs/PARAMETER_FINDINGS.md`, and unresolved behavior problems in
+  `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`.
 - Update or re-point every cross-reference in the same change set instead of
   leaving duplicated stale text behind.
 - Avoid copying current anchors, run IDs, transient trial numbers, local disk

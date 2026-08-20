@@ -1,2 +1,1 @@
-Read and fol
-low the project instructions in @AGENTS.md.
+Read and follow the project instructions in @AGENTS.md.

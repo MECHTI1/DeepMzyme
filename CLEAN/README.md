@@ -48,25 +48,29 @@ test subset.
 The notebook can use a separate CLEAN-only HuggingFace bundle:
 
 ```text
-https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/CLEAN_predictor_baselines_v1_clean30x5_care30_sources.tar.zst
+https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst
 ```
 
 SHA256:
 
 ```text
-7793bcf54a2d342d5e9c17ed21baee0a987972ae0db150441fe56c22ded1a468
+5124b0b514b49affc158df121a87f5389ec1e027d14e0cf0a53cfb13a602c0f0
 ```
 
 This bundle contains only the sequence/split CSVs and extracted metalloenzyme
 summary CSVs needed by `train_clean_predictor_baselines.ipynb`. It deliberately
 does not include DeepMzyme structures, ESMC embeddings, RING files, or graph
-external-feature assets.
+external-feature assets. The v2 bundle includes both the original
+`CLEAN_30_shared` metallo summaries and the conservative
+`CLEAN_30_shared_single_donor_supported_metal_conservative` summaries. The
+notebook defaults `CLEAN_METALLO_SOURCE` to
+`single_donor_supported_metal_conservative`.
 
 Rebuild it locally with:
 
 ```bash
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python CLEAN_prepare_training_and_test_set/build_clean_predictor_bundle.py \
-  --output-bundle /media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v1_clean30x5_care30_sources.tar.zst
+  --output-bundle /media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst
 ```
 
 ## Source Data
@@ -81,6 +85,8 @@ DeepMzyme_Data/CLEAN_all_train_valid_splits/split30/split30_test_split_{fold}_cu
 CLEAN30 metalloenzyme source:
 
 ```text
+DeepMzyme_Data/CLEAN_30_shared_single_donor_supported_metal_conservative/folds/CLEAN_30_train_test_split_{fold}_train.csv
+DeepMzyme_Data/CLEAN_30_shared_single_donor_supported_metal_conservative/folds/CLEAN_30_train_test_split_{fold}_test.csv
 DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_{fold}_train.csv
 DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_{fold}_test.csv
 ```

@@ -6,6 +6,24 @@ CLEAN starts from UniProt IDs, EC labels, and sequences. It does not provide PDB
 
 Do not place CLEAN jobs or outputs under `prepare_training_and_test_set/` or any `*_pinmymetal` data directory.
 
+## Current Variant And Provenance Boundary
+
+The commands below document the original CLEAN30 preparation and shared-fold
+pipeline. Two scientifically distinct materialized views now exist:
+
+- `CLEAN_30_shared` is the original multi-donor shared layout.
+- `CLEAN_30_shared_single_donor_supported_metal_conservative` is the current
+  conservative one-donor-per-target derivative; `CLEAN_30_main` was a local
+  symlink to that derivative at audit time. It uses deterministic donor
+  selection and `2.0 Å` within-donor site deduplication.
+
+Tracked copies of the generated metadata and the conservative selection audit
+are under [`provenance/`](provenance/). Exact fold counts, bundle identities,
+materialization state, and interpretation caveats are owned by
+[`docs/DATASETS.md`](../docs/DATASETS.md). The historical bundle names below
+remain part of the procedure record; they are not a statement of the current
+bundle or active training dataset.
+
 ## Recommended Pilot
 
 Use CLEAN `split30` fold `0` first. The five `split30` pairs are folds, not additive partitions. Do not choose the best fold after looking at model results.

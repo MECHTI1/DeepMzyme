@@ -20,6 +20,19 @@ from pathlib import Path
 
 
 SUMMARY_CSV = "final_data_summarazing_table_transition_metals_only_catalytic.csv"
+DEFAULT_CLEAN_METALLO_VARIANTS = "shared,single_donor_supported_metal_conservative"
+CLEAN_METALLO_VARIANT_ROOTS = {
+    "shared": "CLEAN_{identity}_shared",
+    "single_donor_supported_metal_conservative": "CLEAN_{identity}_shared_single_donor_supported_metal_conservative",
+    "main": "CLEAN_{identity}_main",
+}
+CLEAN_METALLO_VARIANT_ALIASES = {
+    "original": "shared",
+    "multi_donor": "shared",
+    "conservative": "single_donor_supported_metal_conservative",
+    "single_donor": "single_donor_supported_metal_conservative",
+    "single_donor_conservative": "single_donor_supported_metal_conservative",
+}
 
 
 @dataclass(frozen=True)
@@ -40,6 +53,28 @@ def parse_csv_ints(value: str) -> list[int]:
     if not folds:
         raise argparse.ArgumentTypeError("expected at least one integer")
     return folds
+
+
+def parse_csv_tokens(value: str) -> list[str]:
+    tokens: list[str] = []
+    for item in str(value).split(","):
+        token = item.strip()
+        if not token:
+            continue
+        if token not in tokens:
+            tokens.append(token)
+    if not tokens:
+        raise argparse.ArgumentTypeError("expected at least one token")
+    return tokens
+
+
+def normalize_clean_metallo_variant(value: str) -> str:
+    key = str(value).strip().lower()
+    key = CLEAN_METALLO_VARIANT_ALIASES.get(key, key)
+    if key not in CLEAN_METALLO_VARIANT_ROOTS:
+        allowed = ", ".join(sorted(CLEAN_METALLO_VARIANT_ROOTS))
+        raise ValueError(f"Unsupported CLEAN metallo variant {value!r}; allowed values: {allowed}")
+    return key
 
 
 def sha256_file(path: Path) -> str:
@@ -83,15 +118,13 @@ def add_clean_identity_files(
     staging_root: Path,
     identity: int,
     folds: list[int],
+    metallo_variants: list[str],
     files: list[BundleFile],
 ) -> None:
     data_root = project_root / "DeepMzyme_Data"
     full_split_root = data_root / "CLEAN_all_train_valid_splits" / f"split{identity}"
-    shared_root = data_root / f"CLEAN_{identity}_shared"
     if not full_split_root.exists():
         raise FileNotFoundError(full_split_root)
-    if not shared_root.exists():
-        raise FileNotFoundError(shared_root)
 
     for fold in folds:
         add_file(
@@ -108,40 +141,53 @@ def add_clean_identity_files(
             role=f"clean{identity}_full_test_sequence_source_fold{fold}",
             files=files,
         )
-        add_file(
-            project_root=project_root,
-            staging_root=staging_root,
-            source=shared_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_train.csv",
-            role=f"clean{identity}_metallo_train_fold{fold}",
-            files=files,
-        )
-        add_file(
-            project_root=project_root,
-            staging_root=staging_root,
-            source=shared_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_test.csv",
-            role=f"clean{identity}_metallo_test_fold{fold}",
-            files=files,
-        )
 
-    for optional in ["README.md", "split_metadata.json"]:
-        path = shared_root / optional
-        if path.exists():
+    for variant in metallo_variants:
+        root_name = CLEAN_METALLO_VARIANT_ROOTS[variant].format(identity=identity)
+        shared_root = data_root / root_name
+        if not shared_root.exists():
+            raise FileNotFoundError(shared_root)
+        archive_root = Path("DeepMzyme_Data") / root_name
+        for fold in folds:
             add_file(
                 project_root=project_root,
                 staging_root=staging_root,
-                source=path,
-                role=f"clean{identity}_metadata",
+                source=shared_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_train.csv",
+                archive_path=archive_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_train.csv",
+                role=f"clean{identity}_{variant}_metallo_train_fold{fold}",
                 files=files,
             )
-    metadata = shared_root / "metadata" / "structure_sources.csv"
-    if metadata.exists():
-        add_file(
-            project_root=project_root,
-            staging_root=staging_root,
-            source=metadata,
-            role=f"clean{identity}_metadata",
-            files=files,
-        )
+            add_file(
+                project_root=project_root,
+                staging_root=staging_root,
+                source=shared_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_test.csv",
+                archive_path=archive_root / "folds" / f"CLEAN_{identity}_train_test_split_{fold}_test.csv",
+                role=f"clean{identity}_{variant}_metallo_test_fold{fold}",
+                files=files,
+            )
+
+        for optional in ["README.md", "split_metadata.json"]:
+            path = shared_root / optional
+            if path.exists():
+                add_file(
+                    project_root=project_root,
+                    staging_root=staging_root,
+                    source=path,
+                    archive_path=archive_root / optional,
+                    role=f"clean{identity}_{variant}_metadata",
+                    files=files,
+                )
+        metadata_root = shared_root / "metadata"
+        if metadata_root.exists():
+            for path in sorted(item for item in metadata_root.iterdir() if item.is_file()):
+                add_file(
+                    project_root=project_root,
+                    staging_root=staging_root,
+                    source=path,
+                    archive_path=archive_root / "metadata" / path.name,
+                    role=f"clean{identity}_{variant}_metadata",
+                    files=files,
+                )
 
 
 def add_care30_files(*, project_root: Path, staging_root: Path, files: list[BundleFile]) -> None:
@@ -210,6 +256,7 @@ def write_manifest(
     files: list[BundleFile],
     clean_identities: list[int],
     folds: list[int],
+    clean_metallo_variants: list[str],
     include_care30: bool,
 ) -> None:
     manifest_dir = staging_root / "DeepMzyme_Data" / "CLEAN_predictor_bundle"
@@ -223,6 +270,7 @@ def write_manifest(
         ),
         "clean_identities": clean_identities,
         "folds": folds,
+        "clean_metallo_variants": clean_metallo_variants,
         "include_care30": include_care30,
         "files": [asdict(item) for item in files],
     }
@@ -241,6 +289,7 @@ def build_bundle(args: argparse.Namespace) -> None:
     clean_identities = [int(item) for item in args.clean_identities.split(",") if item.strip()]
     if not clean_identities:
         raise ValueError("At least one CLEAN identity is required.")
+    clean_metallo_variants = [normalize_clean_metallo_variant(item) for item in parse_csv_tokens(args.clean_metallo_variants)]
 
     with tempfile.TemporaryDirectory(prefix="clean_predictor_bundle_") as tmp:
         staging_root = Path(tmp)
@@ -251,6 +300,7 @@ def build_bundle(args: argparse.Namespace) -> None:
                 staging_root=staging_root,
                 identity=identity,
                 folds=args.folds,
+                metallo_variants=clean_metallo_variants,
                 files=files,
             )
         if args.include_care30:
@@ -260,6 +310,7 @@ def build_bundle(args: argparse.Namespace) -> None:
             files=files,
             clean_identities=clean_identities,
             folds=args.folds,
+            clean_metallo_variants=clean_metallo_variants,
             include_care30=args.include_care30,
         )
         compression = args.compression
@@ -285,6 +336,7 @@ def build_bundle(args: argparse.Namespace) -> None:
         "bundle": str(output_bundle),
         "sha256": sha,
         "size_bytes": output_bundle.stat().st_size,
+        "clean_metallo_variants": clean_metallo_variants,
     }, indent=2, sort_keys=True))
 
 
@@ -298,10 +350,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-bundle",
         type=Path,
-        default=Path("/media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v1_clean30x5_care30_sources.tar.zst"),
+        default=Path("/media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst"),
     )
     parser.add_argument("--clean-identities", default="30", help="Comma-separated CLEAN identity thresholds to include.")
     parser.add_argument("--folds", type=parse_csv_ints, default=parse_csv_ints("0,1,2,3,4"))
+    parser.add_argument(
+        "--clean-metallo-variants",
+        default=DEFAULT_CLEAN_METALLO_VARIANTS,
+        help=(
+            "Comma-separated CLEAN metallo fold-source variants to include. "
+            "Supported values: shared, single_donor_supported_metal_conservative, main."
+        ),
+    )
     parser.add_argument("--include-care30", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--compression", default="zstd -T0 -19")
     return parser.parse_args()

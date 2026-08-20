@@ -8,6 +8,21 @@ playbook.
 
 For the cross-document run order and output-folder map, see `docs/README.md`.
 
+## Current Dataset/Final-Reporting Warning
+
+> **Primary final-test route: unresolved scientific decision required before final reporting.**
+
+The exact stage blocks below are preserved unchanged. Their common dataset
+default, current bundle availability, `Plan.md` final-split intent, and the
+historical access record for non-overlapped PinMyMetal do not currently define
+one unambiguous primary final-test route. Do not silently substitute exact
+PinMyMetal or describe the historical non-overlap test as pristine.
+
+Before any final reporting, read [`DATASETS.md`](DATASETS.md) and
+[`TECH-006`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-006--final-dataset-implementation-and-availability-conflict).
+This warning changes no stage value, budget, range, seed, gate, output name, or
+notebook behavior.
+
 
 ## Quick-Paste Stage Selector
 
@@ -251,11 +266,13 @@ OPTUNA_MULTIOBJECTIVE = False
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The current
-`DeepMzyme_Data_v9_exact_common70_clean30x5_care30_esm_ring_external.tar.zst`
+`DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst`
 bundle contains exact PinMyMetal, Common-PDBID 70/30 PinMyMetal, `CLEAN_30`
-folds 0-4, and CARE Task 1 clusterRes30. Non-overlapped and harsh split roots
-remain named variants in Plan.md, but they require `upload_file`, `drive`, or a
-custom bundle containing those dataset roots. `SPLIT_BY` controls
+folds 0-4 via the conservative `CLEAN_30_main` source and the original
+`CLEAN_30_shared` source, and CARE Task 1 clusterRes30. Non-overlapped and
+harsh split roots remain named variants in Plan.md, but they require
+`upload_file`, `drive`, or a custom bundle containing those dataset roots.
+`SPLIT_BY` controls
 only the internal train/validation grouping inside the selected external train
 split and is emitted to the CLI as `--train-val-split-by`; it never changes the
 external test directory or test CSV. When the exact split is requested, the

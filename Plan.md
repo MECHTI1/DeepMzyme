@@ -16,13 +16,16 @@ clearly contains newer working logic that should be preserved.
 | --- | --- |
 | Documentation index, validation/testing order, and output folder map | `docs/README.md` |
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
+| Dataset/split identity, bundle provenance, and test-use history | `docs/DATASETS.md` |
+| Validation/HPO parameter findings | `docs/PARAMETER_FINDINGS.md` |
+| Experiment-batch index and evidence links | `docs/notebook_outputs/README.md` |
+| Verified but deliberately unfixed technical issues | `docs/FOLLOW_UP_TECHNICAL_ISSUES.md` |
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
 | G4-class Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("G4-Class Optuna Policy") |
-| Copy-paste-ready EC training stages | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
-| Raw experiment results | `docs/notebook_outputs/` |
-| Current best-configuration snapshot | `docs/notebook_outputs/summaries/LEADERBOARD.md` |
-| CLI command examples | `list_train_commands.md` |
+| EC recipe intent and current compatibility status | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
+| Raw experiment results | `docs/notebook_outputs/raw/` |
+| Historical documents and commands | `docs/archive/` |
 | Public-facing overview and quick-start | `README.md` |
 
 ---
@@ -46,6 +49,11 @@ those in the CSV exactly, and vice versa.
 Preparation scripts live under `prepare_training_and_test_set/`. These scripts
 download structures, create non-redundant chain-level files, and run MAHOMES
 activation to produce the site-level summary CSVs used for training.
+
+The authoritative descriptive inventory of PinMyMetal, CLEAN, CARE, split
+membership, current materialization, bundles, and historical test access is
+`docs/DATASETS.md`. This section owns scientific data policy, not mutable
+dataset readiness or counts.
 
 Colab data bundles are built with `src/build_colab_bundle.py`. A bundle can pack
 one or more named split roots, their site-level summary CSVs, structure files,
@@ -433,12 +441,14 @@ Colab data input modes (controlled by `COLAB_DATA_SOURCE`):
 - `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive path after Drive is mounted.
 
-The current uploaded notebook bundle is
-`DeepMzyme_Data_v3_exact_clean_esm.tar.zst` in the project HuggingFace dataset.
-It is built from the exact PinMyMetal split with regenerated ESM embeddings and
-strict feature-alignment validation. The legacy non-overlapped split remains the
-historically trusted final held-out reference unless an experiment explicitly
-chooses and documents another final split.
+The notebook's `BUNDLE_FILENAME`, `BUNDLE_URL`, and `BUNDLE_SHA256` fields are
+the executable source of truth for the currently configured bundle. Keep the
+matching tracked bundle name, checksum, contents, and upload provenance in
+`docs/DATASETS.md` instead of pinning a versioned bundle filename in this
+design document. The
+legacy non-overlapped split remains the historically trusted final held-out
+reference unless an experiment explicitly chooses and documents another final
+split.
 
 Colab bundles include:
 
@@ -640,6 +650,17 @@ The goal is to avoid adding complex architecture before proving that it improves
 
 ## 8) Data Leakage and Split Policy
 
+This section preserves the intended scientific policy. Actual dataset
+availability, overlap counts, and historical access are recorded in
+`docs/DATASETS.md`. The legacy non-overlap test was historically evaluated in
+seven early runs, so “historically trusted” below must not be read as pristine
+or unopened. Those test values are not eligible current selection evidence.
+
+> **Primary final-test route: unresolved scientific decision required before final reporting.**
+
+This documentation cleanup does not designate a replacement test or change the
+policy below.
+
 The non-overlapped PinMyMetal split remains the historically trusted split for
 final held-out evaluation unless a new experiment explicitly switches to a
 newer split variant.
@@ -653,30 +674,11 @@ PDB-ID overlap exists, and the non-overlapped split remains the historically
 trusted final held-out reference unless an experiment explicitly chooses and
 documents another final split.
 
-Named split variants:
-
-- **Harsh Split PinMyMetal**:
-  `DeepMzyme_Data/train_and_test_sets_structures_harsh_pinmymetal`.
-  Every PDB ID shared by the exact PinMyMetal train and test inputs is assigned
-  as a whole PDB-ID group to test, including exact-train structures/rows for
-  that shared PDB ID.
-- **Non-overlapped PinMyMetal**:
-  `DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`.
-  This is the legacy trusted final held-out split used by current experiment
-  evidence. It removes shared PDB IDs from train and keeps the original exact
-  test structures in test.
-- **Metal Split PinMyMetal**:
-  `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal`.
-  This follows the exact `prepare_training_and_test_set/pinmymetal_files`
-  train/test PDB-ID membership for available supported structures and may
-  contain train/test PDB-ID overlap. The current DeepMzyme summary CSVs do not
-  retain the original PinMyMetal `residueid_ion` / `metalid` row identifiers.
-- **Common-PDBID 70/30 Split PinMyMetal**:
-  `DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal`.
-  Train-only PDB IDs remain train-only, test-only PDB IDs remain test-only, and
-  PDB IDs common to the exact train/test inputs are assigned as whole PDB-ID
-  groups with 70% to train and 30% to test. This is a custom comparison split,
-  not the main final held-out split.
+Named split definitions, exact counts, construction evidence, and current
+availability are maintained once in `docs/DATASETS.md`. The policy distinctions
+remain: exact PinMyMetal may overlap; non-overlapped and harsh variants are
+zero-overlap constructions with different assignment rules; Common-PDBID 70/30
+is a custom comparison rather than an automatically selected final test.
 
 For the EC-number classification task:
 
