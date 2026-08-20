@@ -1,0 +1,69 @@
+{
+  "source_dataset": "CARE",
+  "source_task": "task1",
+  "source_split_name": "30_identity_clusterRes30",
+  "care_train_file": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_dataset/CARE_datasets/splits/task1/protein_train.csv",
+  "care_test_file": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_dataset/CARE_datasets/splits/task1/30_protein_test.csv",
+  "work_root": "/media/Data/care_sets/task1_30_clusterRes30",
+  "output_root": "/media/Data/care_sets/task1_30_clusterRes30/exported/CARE_task1_30_clusterRes30_train_test_metallo",
+  "supported_transition_metals": [
+    "CO",
+    "CU",
+    "FE",
+    "MN",
+    "NI",
+    "ZN"
+  ],
+  "min_alphafill_identity": 0.3,
+  "min_alignment_length": 85,
+  "site_dedup_distance": 1.0,
+  "uniprot_metal_policy": "require_supported",
+  "counts": {
+    "by_split": {
+      "train": {
+        "input_care_rows": 10321,
+        "unique_proteins": 9466,
+        "uniprot_supported_transition_metal_proteins": 1769,
+        "alphafill_fetched_proteins": 1021,
+        "mahomes_input_structures": 1021,
+        "mahomes_catalytic_structures": 817,
+        "catalytic_sites": 1520,
+        "exported_structures": 817
+      },
+      "test": {
+        "input_care_rows": 432,
+        "unique_proteins": 432,
+        "uniprot_supported_transition_metal_proteins": 115,
+        "alphafill_fetched_proteins": 45,
+        "mahomes_input_structures": 45,
+        "mahomes_catalytic_structures": 34,
+        "catalytic_sites": 76,
+        "exported_structures": 34
+      }
+    },
+    "total": {
+      "input_care_rows": 10753,
+      "unique_proteins": 9898,
+      "uniprot_supported_transition_metal_proteins": 1884,
+      "alphafill_fetched_proteins": 1066,
+      "mahomes_input_structures": 1066,
+      "mahomes_catalytic_structures": 851,
+      "catalytic_sites": 1596,
+      "exported_train_structures": 817,
+      "exported_test_structures": 34
+    }
+  },
+  "note": "Computational CARE-derived AlphaFill-MAHOMES catalytic metalloenzyme subset. It is not the full CARE benchmark and is not experimental validation.",
+  "splits": {
+    "train": {
+      "summary_csv": "/media/Data/care_sets/task1_30_clusterRes30/exported/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv",
+      "structure_count": 817,
+      "site_count": 1520
+    },
+    "test": {
+      "summary_csv": "/media/Data/care_sets/task1_30_clusterRes30/exported/CARE_task1_30_clusterRes30_train_test_metallo/test/final_data_summarazing_table_transition_metals_only_catalytic.csv",
+      "structure_count": 34,
+      "site_count": 76
+    }
+  }
+}

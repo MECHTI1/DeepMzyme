@@ -1,0 +1,14 @@
+{
+  "min_alphafill_identity": 0.3,
+  "min_alignment_length": 85,
+  "site_dedup_distance": 1.0,
+  "uniprot_metal_policy": "require_supported",
+  "supported_transition_metals": [
+    "CO",
+    "CU",
+    "FE",
+    "MN",
+    "NI",
+    "ZN"
+  ]
+}

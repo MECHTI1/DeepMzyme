@@ -1,0 +1,10 @@
+{
+  "split": "test",
+  "candidate_csv": "/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/candidate_site_summary.csv",
+  "job_root": "/media/Data/care_sets/task1_30_clusterRes30/mahomes/test",
+  "prediction_rows_seen": 113,
+  "expanded_site_rows": 140,
+  "unique_site_rows": 140,
+  "catalytic_site_rows": 76,
+  "unmatched_prediction_site_rows": 0
+}

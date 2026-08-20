@@ -2322,6 +2322,12 @@ fold-level differences.
 
 When to use it: after a medium or large Optuna search has produced top
 candidates, and before any candidate is treated as final-selection evidence.
+For a reportable final-selection cycle, resolve and freeze the primary
+final-test dataset route before Stage 6 starts. The route determines which
+structures belong to the full non-test training set used in Stage 6/6B, so it
+cannot be chosen only at Stage 7. With the route currently unresolved, Stage 6
+may be exploratory validation evidence but is not yet the final reportable
+confirmation cycle.
 
 Expected scale/runtime: serious run, long or overnight. Training count is
 roughly `TOP_K_CONFIGS_FOR_SEED_AND_CROSS_FOLD_REPEAT x SEED_REPEAT_N_FOLDS x
@@ -2790,30 +2796,27 @@ the only stage that may open the held-out test set. The primary final report
 must be declared before test evaluation starts.
 
 When to use it: only after model family, hyperparameters, Stage 6
-interpretation, Stage 6B promotion decision, final-refit run, and final source
-checkpoint are fixed.
+interpretation, Stage 6B promotion decision, final-refit run, final source
+checkpoint, and the scientifically approved primary final-test dataset route
+are fixed. The dataset route is currently unresolved; do not launch this stage
+until `docs/DATASETS.md` and `EXPERIMENT_STATUS.md` record the decision and
+frozen provenance. The canonical cell is fail-closed with internal
+`FINAL_TEST_PRIMARY_DATASET_ROUTE_STATUS = "unresolved"`; it must be changed
+only as part of that coordinated decision, not as an ad-hoc run setting.
 
 Expected scale/runtime: final reporting run, usually minutes to hours depending
 on checkpoint loading and evaluation mode.
 
-First run the **Select final run and show saved outputs** cell. The selected
-source must be the Stage 6B final full-train refit derived from the Stage 6
-selected configuration. Do not use a raw Optuna trial or an arbitrary Stage 6
-fold checkpoint as the primary final-test source. Use:
-
-```python
-FINAL_RUN_SELECTION_MODE = "stage6_selected_candidate"
-FINAL_RUN_TABLE_INDEX = 1
-FINAL_RUN_DIR = ""
-FINAL_RUN_STAGE6_SELECTED_CANDIDATE_JSON = ""
-FINAL_REPORT_BASENAME = "deepmzyme_final_selected_run"
-```
-
-The notebook resolves `stage6b_selected_final_refit_candidate.json` first when
-it exists, then falls back to `stage6_selected_final_candidate.json` for legacy
-preview. If the current notebook resolves the primary source to a Stage 6
-fold/seed checkpoint instead of the Stage 6B final refit, stop before launching
-Stage 7. That direct CV-fold evaluation is not the primary reportable path.
+The cleaned notebook resolves the final source inside the **Optional final
+held-out test evaluation** cell; it does not have a separate live “Select final
+run” cell. The selected source must be the Stage 6B final full-train refit
+derived from the Stage 6 selected configuration, not a raw Optuna trial or an
+arbitrary Stage 6 fold checkpoint. The primary Stage 7 cell requires
+`stage6b_selected_final_refit_candidate.json`; there is no Stage 6 fallback.
+Its semantic pre-execution gate verifies the Stage 6/6B decision links,
+selected configuration identity, completed/reused full non-test refit status,
+source config/metadata, checkpoint, and absence of prior test evidence before
+it inspects held-out input paths.
 
 Then run the **Optional final held-out test evaluation** cell with launch still
 disabled:
@@ -2824,19 +2827,20 @@ LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False
 ```
 
 Inspect the printed pre-flight checklist. The final-test cell supports exactly
-two workflow values:
+one workflow value:
 
 - `evaluate_stage6_selected_candidate`: primary serious final-test mode. It
   requires `stage6b_selected_final_refit_candidate.json` as final-source
   evidence for the primary route and must resolve to the frozen Stage 6B
   final-refit run for the Stage-6-selected rank #1 configuration. The output
   role is `primary_preselected`.
-- `exploratory_evaluate_all_stage6_ranked_candidates`: optional post-hoc
-  diagnostic mode. It requires both `stage6_ranked_candidates.csv` and
-  `stage6_selected_final_candidate.json`, evaluates candidates in Stage 6 rank
-  order, labels rank #1 as `primary_preselected`, labels every other row as
-  `exploratory_posthoc`, and cannot be used to select or replace the primary
-  model after held-out metrics are seen.
+
+The former `exploratory_evaluate_all_stage6_ranked_candidates` option is
+disabled in the canonical primary-test cell. Evaluating every ranked candidate
+would consume the primary held-out set repeatedly and create a test-informed
+comparison even if labeled post-hoc. Any future diagnostic comparison requires
+a separately approved secondary dataset/protocol and must remain outside the
+primary Stage 7 workflow.
 
 For the single-checkpoint primary report, if the Stage 6 selection evidence,
 Stage 6B decision, and Stage 6B final-refit run are all frozen and point to the
@@ -2847,22 +2851,9 @@ FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"
 LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True
 ```
 
-For optional exploratory diagnostics after the primary selected model is fixed:
-
-```python
-FINAL_TEST_WORKFLOW = "exploratory_evaluate_all_stage6_ranked_candidates"
-LAUNCH_FINAL_HELD_OUT_TEST_EVAL = True
-```
-
-The exploratory mode prints and saves a strong warning. The primary model
-remains the Stage 6B final-refit candidate regardless of exploratory held-out
-test scores.
-
 Expected outputs/files:
 
-- Primary mode: a new final-test run folder under the resolved `RUNS_DIR`
-- Exploratory all-candidates mode: one new final-test run folder per Stage-6
-  ranked candidate, evaluated in Stage 6 rank order
+- One new primary final-test run folder under the resolved `RUNS_DIR`
 - `run_config.json` and `run_metadata.json` in the final-test output folder
 - `test_report.json` in the final-test output folder
 - `<final_run_dir>/test_predictions.pt`
@@ -2874,10 +2865,6 @@ Expected outputs/files:
   temperature scaling is available
 - `<final_run_dir>/test_temperature_scaled_confidence_histogram.png`, when
   temperature scaling is available
-- Exploratory mode additionally writes
-  `<RUNS_DIR>/exploratory_final_test_all_stage6_ranked_candidates.csv`,
-  `<RUNS_DIR>/exploratory_final_test_all_stage6_ranked_candidates.json`, and
-  `<RUNS_DIR>/exploratory_final_test_warning.txt`
 - Updated final-test summary CSV/PNG when plotting succeeds
 - The source Stage 6B final-refit run remains unchanged
 
@@ -2959,12 +2946,11 @@ Success criteria:
 - Primary mode loads the selected candidate from
   `stage6b_selected_final_refit_candidate.json` and does not inspect or
   evaluate other candidates.
-- Exploratory mode loads `stage6_ranked_candidates.csv` and
-  `stage6_selected_final_candidate.json`, preserves Stage 6 rank order, labels
-  rank #1 as `primary_preselected`, labels all other rows as
-  `exploratory_posthoc`, and does not modify either Stage 6 file.
+- Raw filename/structure/PDB/PDB-chain overlap is blocked before model
+  preparation or inference, and loaded-pocket/group overlap is blocked again
+  before graph construction.
 - The test report includes active metal-scheme metrics and collapsed-4 metrics.
-- Primary and exploratory/post-hoc reports are labeled clearly.
+- The result is labeled as the preselected primary report.
 
 ### Decision gate after Stage 7
 
@@ -3013,8 +2999,10 @@ Before any reportable comparison or HPO launch, confirm:
 - `stage6_selected_final_candidate.json` exists as Stage 6 evidence, and
   `stage6b_selected_final_refit_candidate.json` exists as the completed Stage
   6B final-refit source before primary Stage 7 launch
-- Exploratory all-candidates mode is explicitly selected only for post-hoc
-  diagnostics and cannot change the primary selected model
+- the primary final-test dataset route is scientifically approved and frozen;
+  the current unresolved route is a hard stop before Stage 7
+- no all-ranked-candidate evaluation is available against the primary held-out
+  set; future diagnostics require a separately approved secondary protocol
 - `VAL_FRACTION > 0` or a fold split is explicitly configured for validation
   stages; Stage 6B is the only reportable full-train refit path with
   `VAL_FRACTION = 0.0`
@@ -3027,8 +3015,9 @@ Before any reportable comparison or HPO launch, confirm:
 - `ALLOW_MIXED_FINAL_TEST_BATCH = False`
 - `ALLOW_REPEAT_FINAL_TEST_EVAL = False`
 
-The training code blocks ordinary held-out test evaluation when there is no
-validation split or when `train_loss` would be used for final-test checkpoint
-selection. The only reportable exception is the Stage 6B final-refit path,
-where validation/CV evidence has already fixed the configuration and the
-full-train checkpoint rule before Stage 7.
+The training code requires the explicit final-refit test-evaluation flag and a
+predeclared selected-configuration ID for every reportable held-out run. The
+canonical notebook additionally verifies the Stage 6B provenance artifact.
+Raw structure overlap is checked before preparation/inference and loaded-pocket
+overlap is checked before graph construction. The separate explicit debug flag
+is non-reportable and must never be pointed at the primary held-out set.

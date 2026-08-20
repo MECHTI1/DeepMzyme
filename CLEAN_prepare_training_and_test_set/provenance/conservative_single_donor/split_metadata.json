@@ -1,0 +1,137 @@
+{
+  "layout_name": "CLEAN 30 shared single AlphaFill donor supported-metal conservative subset",
+  "source_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared",
+  "output_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared_single_donor_supported_metal_conservative",
+  "stoichiometry_csv": null,
+  "stoichiometry_exact_counts_available": false,
+  "dedup_distance_angstrom": 2.0,
+  "exclude_stoichiometry_mismatches": false,
+  "exclude_no_clear_supported_metal": false,
+  "selected_structure_count": 740,
+  "structure_link_status_counts": {
+    "hardlinked": 740
+  },
+  "fold_stats": {
+    "CLEAN_30_train_test_split_0_test": {
+      "source_csv": "CLEAN_30_train_test_split_0_test.csv",
+      "output_csv": "CLEAN_30_train_test_split_0_test.csv",
+      "source_site_count": 229,
+      "output_site_count": 139,
+      "source_target_count": 118,
+      "output_target_count": 118,
+      "multi_donor_target_count": 40,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 118
+    },
+    "CLEAN_30_train_test_split_0_train": {
+      "source_csv": "CLEAN_30_train_test_split_0_train.csv",
+      "output_csv": "CLEAN_30_train_test_split_0_train.csv",
+      "source_site_count": 1102,
+      "output_site_count": 743,
+      "source_target_count": 622,
+      "output_target_count": 622,
+      "multi_donor_target_count": 190,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 622
+    },
+    "CLEAN_30_train_test_split_1_test": {
+      "source_csv": "CLEAN_30_train_test_split_1_test.csv",
+      "output_csv": "CLEAN_30_train_test_split_1_test.csv",
+      "source_site_count": 179,
+      "output_site_count": 128,
+      "source_target_count": 109,
+      "output_target_count": 109,
+      "multi_donor_target_count": 30,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 109
+    },
+    "CLEAN_30_train_test_split_1_train": {
+      "source_csv": "CLEAN_30_train_test_split_1_train.csv",
+      "output_csv": "CLEAN_30_train_test_split_1_train.csv",
+      "source_site_count": 1063,
+      "output_site_count": 698,
+      "source_target_count": 578,
+      "output_target_count": 578,
+      "multi_donor_target_count": 183,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 578
+    },
+    "CLEAN_30_train_test_split_2_test": {
+      "source_csv": "CLEAN_30_train_test_split_2_test.csv",
+      "output_csv": "CLEAN_30_train_test_split_2_test.csv",
+      "source_site_count": 220,
+      "output_site_count": 148,
+      "source_target_count": 121,
+      "output_target_count": 121,
+      "multi_donor_target_count": 41,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 121
+    },
+    "CLEAN_30_train_test_split_2_train": {
+      "source_csv": "CLEAN_30_train_test_split_2_train.csv",
+      "output_csv": "CLEAN_30_train_test_split_2_train.csv",
+      "source_site_count": 1024,
+      "output_site_count": 668,
+      "source_target_count": 562,
+      "output_target_count": 562,
+      "multi_donor_target_count": 178,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 562
+    },
+    "CLEAN_30_train_test_split_3_test": {
+      "source_csv": "CLEAN_30_train_test_split_3_test.csv",
+      "output_csv": "CLEAN_30_train_test_split_3_test.csv",
+      "source_site_count": 208,
+      "output_site_count": 119,
+      "source_target_count": 98,
+      "output_target_count": 98,
+      "multi_donor_target_count": 37,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 98
+    },
+    "CLEAN_30_train_test_split_3_train": {
+      "source_csv": "CLEAN_30_train_test_split_3_train.csv",
+      "output_csv": "CLEAN_30_train_test_split_3_train.csv",
+      "source_site_count": 1034,
+      "output_site_count": 696,
+      "source_target_count": 586,
+      "output_target_count": 586,
+      "multi_donor_target_count": 176,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 586
+    },
+    "CLEAN_30_train_test_split_4_test": {
+      "source_csv": "CLEAN_30_train_test_split_4_test.csv",
+      "output_csv": "CLEAN_30_train_test_split_4_test.csv",
+      "source_site_count": 187,
+      "output_site_count": 124,
+      "source_target_count": 99,
+      "output_target_count": 99,
+      "multi_donor_target_count": 31,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 99
+    },
+    "CLEAN_30_train_test_split_4_train": {
+      "source_csv": "CLEAN_30_train_test_split_4_train.csv",
+      "output_csv": "CLEAN_30_train_test_split_4_train.csv",
+      "source_site_count": 1101,
+      "output_site_count": 723,
+      "source_target_count": 612,
+      "output_target_count": 612,
+      "multi_donor_target_count": 193,
+      "excluded_target_count": 0,
+      "deduplicated_site_count": 0,
+      "status_metal_supported_but_count_unknown": 612
+    }
+  },
+  "note": "Exact stoichiometry is used only when supplied via --stoichiometry-csv. The bundled CLEAN_30_shared CSVs provide supported metal identities, not exact metal counts."
+}

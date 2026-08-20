@@ -1,0 +1,433 @@
+split,uniprot_id,source_dataset,source_task,source_split_name,source_record_ids,n_source_rows,status,raw_supported_candidate_count,selected_site_count,filtered_by_uniprot_candidate_count,uniprot_supported_transition_metals,output_pdb,detail
+test,A0A075BSX9,CARE,task1,30_identity_clusterRes30,test:106,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A075HNX4,CARE,task1,30_identity_clusterRes30,test:6,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A096ZED0,CARE,task1,30_identity_clusterRes30,test:248,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A0A2JP58,CARE,task1,30_identity_clusterRes30,test:326,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A0F5HNH9,CARE,task1,30_identity_clusterRes30,test:56,1,OK,1,1,0,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/A0A0F5HNH9__chain_A__EC_1.16.3.1.pdb,
+test,A0A0H2V8B5,CARE,task1,30_identity_clusterRes30,test:244,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A0H3GEM5,CARE,task1,30_identity_clusterRes30,test:222,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A0U5GNT1,CARE,task1,30_identity_clusterRes30,test:325,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A1D8PT03,CARE,task1,30_identity_clusterRes30,test:113,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A1V0HUU2,CARE,task1,30_identity_clusterRes30,test:246,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A1W7HCY1,CARE,task1,30_identity_clusterRes30,test:52,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing json/cif
+test,A0A2I2F2J6,CARE,task1,30_identity_clusterRes30,test:375,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A2U7XUH7,CARE,task1,30_identity_clusterRes30,test:376,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A345BJN2,CARE,task1,30_identity_clusterRes30,test:214,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0A5Q0QN66,CARE,task1,30_identity_clusterRes30,test:324,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0KYQ7,CARE,task1,30_identity_clusterRes30,test:291,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A0QIR4,CARE,task1,30_identity_clusterRes30,test:211,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,A1A6M1,CARE,task1,30_identity_clusterRes30,test:364,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A1XI30,CARE,task1,30_identity_clusterRes30,test:168,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A4VFY3,CARE,task1,30_identity_clusterRes30,test:191,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A5UK38,CARE,task1,30_identity_clusterRes30,test:398,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,MN,,missing cif
+test,A6BM06,CARE,task1,30_identity_clusterRes30,test:43,1,OK,3,1,2,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/A6BM06__chain_A__EC_1.14.17.4.pdb,
+test,A6LKE9,CARE,task1,30_identity_clusterRes30,test:163,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A7J2C6,CARE,task1,30_identity_clusterRes30,test:212,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,A7M907,CARE,task1,30_identity_clusterRes30,test:145,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing cif
+test,A8HQD7,CARE,task1,30_identity_clusterRes30,test:42,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing json/cif
+test,A9CH39,CARE,task1,30_identity_clusterRes30,test:317,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,A9FRJ0,CARE,task1,30_identity_clusterRes30,test:68,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B0G0Y8,CARE,task1,30_identity_clusterRes30,test:235,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B0R542,CARE,task1,30_identity_clusterRes30,test:286,1,OK,2,2,0,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/B0R542__chain_A__EC_3.5.3.8.pdb,
+test,B0R5G4,CARE,task1,30_identity_clusterRes30,test:432,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B0R753,CARE,task1,30_identity_clusterRes30,test:377,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B1AIC1,CARE,task1,30_identity_clusterRes30,test:415,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B2KZE7,CARE,task1,30_identity_clusterRes30,test:253,1,OK,6,5,1,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/B2KZE7__chain_A__EC_3.4.13.23.pdb,
+test,B2S303,CARE,task1,30_identity_clusterRes30,test:347,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B2S3D9,CARE,task1,30_identity_clusterRes30,test:65,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,B2ULP2,CARE,task1,30_identity_clusterRes30,test:72,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B2UNU8,CARE,task1,30_identity_clusterRes30,test:242,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B7J192,CARE,task1,30_identity_clusterRes30,test:348,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,B9K712,CARE,task1,30_identity_clusterRes30,test:79,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,C0HLG3,CARE,task1,30_identity_clusterRes30,test:340,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,C0HM52,CARE,task1,30_identity_clusterRes30,test:408,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,MN,,missing json/cif
+test,C0SPA0,CARE,task1,30_identity_clusterRes30,test:241,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,C4R360,CARE,task1,30_identity_clusterRes30,test:308,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,C8VC05,CARE,task1,30_identity_clusterRes30,test:329,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,C8WLE3,CARE,task1,30_identity_clusterRes30,test:97,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D0ZLR2,CARE,task1,30_identity_clusterRes30,test:312,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D2IYS2,CARE,task1,30_identity_clusterRes30,test:179,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D3RVD4,CARE,task1,30_identity_clusterRes30,test:124,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,D4APQ6,CARE,task1,30_identity_clusterRes30,test:123,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D4AXL1,CARE,task1,30_identity_clusterRes30,test:282,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D4GP40,CARE,task1,30_identity_clusterRes30,test:320,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D4GQN9,CARE,task1,30_identity_clusterRes30,test:218,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CU;FE;MN,,missing cif
+test,D4GWR6,CARE,task1,30_identity_clusterRes30,test:158,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,D5JAJ1,CARE,task1,30_identity_clusterRes30,test:15,1,OK,2,2,0,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/D5JAJ1__chain_A__EC_1.10.3.11.pdb,
+test,E3PY95,CARE,task1,30_identity_clusterRes30,test:369,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CO,,missing cif
+test,E3PY96,CARE,task1,30_identity_clusterRes30,test:367,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,E7DDH2,CARE,task1,30_identity_clusterRes30,test:339,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,E8PLM2,CARE,task1,30_identity_clusterRes30,test:217,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,MN,,missing json/cif
+test,E8WYN5,CARE,task1,30_identity_clusterRes30,test:311,1,OK,1,1,0,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/E8WYN5__chain_A__EC_4.1.2.10.pdb,
+test,E9FCP7,CARE,task1,30_identity_clusterRes30,test:310,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,F4K1R2,CARE,task1,30_identity_clusterRes30,test:296,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,F4KU78,CARE,task1,30_identity_clusterRes30,test:78,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,F5HB62,CARE,task1,30_identity_clusterRes30,test:176,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,G2IQS8,CARE,task1,30_identity_clusterRes30,test:105,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,G3F5K2,CARE,task1,30_identity_clusterRes30,test:48,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,G3XCZ8,CARE,task1,30_identity_clusterRes30,test:50,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,H6LC27,CARE,task1,30_identity_clusterRes30,test:418,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,H6LC30,CARE,task1,30_identity_clusterRes30,test:417,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,H6LC32,CARE,task1,30_identity_clusterRes30,test:419,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,I1SB12,CARE,task1,30_identity_clusterRes30,test:8,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,I3VE74,CARE,task1,30_identity_clusterRes30,test:373,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CO,,missing json/cif
+test,I7HD01,CARE,task1,30_identity_clusterRes30,test:54,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,L0DSL2,CARE,task1,30_identity_clusterRes30,test:118,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O05156,CARE,task1,30_identity_clusterRes30,test:274,1,OK,2,1,1,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O05156__chain_A__EC_3.4.24.75.pdb,
+test,O06291,CARE,task1,30_identity_clusterRes30,test:268,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O06335,CARE,task1,30_identity_clusterRes30,test:150,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O06728,CARE,task1,30_identity_clusterRes30,test:239,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O06927,CARE,task1,30_identity_clusterRes30,test:147,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O07587,CARE,task1,30_identity_clusterRes30,test:173,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O07717,CARE,task1,30_identity_clusterRes30,test:314,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O13629,CARE,task1,30_identity_clusterRes30,test:390,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O13737,CARE,task1,30_identity_clusterRes30,test:45,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O21280,CARE,task1,30_identity_clusterRes30,test:431,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O24926,CARE,task1,30_identity_clusterRes30,test:66,1,OK,1,1,0,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O24926__chain_A__EC_1.17.99.6.pdb,
+test,O26801,CARE,task1,30_identity_clusterRes30,test:76,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O27397,CARE,task1,30_identity_clusterRes30,test:327,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O29537,CARE,task1,30_identity_clusterRes30,test:343,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CO,,missing cif
+test,O31534,CARE,task1,30_identity_clusterRes30,test:40,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O31671,CARE,task1,30_identity_clusterRes30,test:186,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O31852,CARE,task1,30_identity_clusterRes30,test:264,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O32144,CARE,task1,30_identity_clusterRes30,test:57,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O32147,CARE,task1,30_identity_clusterRes30,test:59,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O32178,CARE,task1,30_identity_clusterRes30,test:2,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O33732,CARE,task1,30_identity_clusterRes30,test:120,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O34206,CARE,task1,30_identity_clusterRes30,test:187,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O34214,CARE,task1,30_identity_clusterRes30,test:12,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O51127,CARE,task1,30_identity_clusterRes30,test:346,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O52214,CARE,task1,30_identity_clusterRes30,test:370,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O52216,CARE,task1,30_identity_clusterRes30,test:371,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O53076,CARE,task1,30_identity_clusterRes30,test:386,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O53182,CARE,task1,30_identity_clusterRes30,test:77,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O53388,CARE,task1,30_identity_clusterRes30,test:247,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O54029,CARE,task1,30_identity_clusterRes30,test:423,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O55716,CARE,task1,30_identity_clusterRes30,test:61,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O58010,CARE,task1,30_identity_clusterRes30,test:352,1,OK,3,1,2,CO,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O58010__chain_A__EC_5.1.99.1.pdb,
+test,O64876,CARE,task1,30_identity_clusterRes30,test:279,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O66663,CARE,task1,30_identity_clusterRes30,test:167,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O67475,CARE,task1,30_identity_clusterRes30,test:60,1,OK,13,6,5,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O67475__chain_A__EC_1.17.4.1.pdb,
+test,O67879,CARE,task1,30_identity_clusterRes30,test:357,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O68252,CARE,task1,30_identity_clusterRes30,test:82,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O69721,CARE,task1,30_identity_clusterRes30,test:86,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O74038,CARE,task1,30_identity_clusterRes30,test:368,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O74524,CARE,task1,30_identity_clusterRes30,test:111,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O75521,CARE,task1,30_identity_clusterRes30,test:360,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O76454,CARE,task1,30_identity_clusterRes30,test:318,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O81027,CARE,task1,30_identity_clusterRes30,test:315,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O83641,CARE,task1,30_identity_clusterRes30,test:129,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O83759,CARE,task1,30_identity_clusterRes30,test:401,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O85304,CARE,task1,30_identity_clusterRes30,test:254,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O87697,CARE,task1,30_identity_clusterRes30,test:304,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O87876,CARE,task1,30_identity_clusterRes30,test:93,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O87877,CARE,task1,30_identity_clusterRes30,test:95,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,O94235,CARE,task1,30_identity_clusterRes30,test:184,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,O94603,CARE,task1,30_identity_clusterRes30,test:31,1,OK,6,2,3,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O94603__chain_A__EC_1.14.11.27.pdb,
+test,O97240,CARE,task1,30_identity_clusterRes30,test:216,1,OK,2,2,0,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/O97240__chain_A__EC_3.1.11.2.pdb,
+test,P00801,CARE,task1,30_identity_clusterRes30,test:275,1,OK,2,1,1,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P00801__chain_A__EC_3.4.24.32.pdb,
+test,P03627,CARE,task1,30_identity_clusterRes30,test:406,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P03631,CARE,task1,30_identity_clusterRes30,test:407,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P03697,CARE,task1,30_identity_clusterRes30,test:215,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P04069,CARE,task1,30_identity_clusterRes30,test:262,1,OK,15,14,1,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P04069__chain_A__EC_3.4.17.2.pdb,
+test,P04390,CARE,task1,30_identity_clusterRes30,test:226,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P05707,CARE,task1,30_identity_clusterRes30,test:4,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P08066,CARE,task1,30_identity_clusterRes30,test:92,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P08761,CARE,task1,30_identity_clusterRes30,test:128,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P08988,CARE,task1,30_identity_clusterRes30,test:154,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P09053,CARE,task1,30_identity_clusterRes30,test:171,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P09368,CARE,task1,30_identity_clusterRes30,test:110,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0AFV4,CARE,task1,30_identity_clusterRes30,test:263,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0AGG4,CARE,task1,30_identity_clusterRes30,test:122,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0C1J7,CARE,task1,30_identity_clusterRes30,test:355,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0C7B6,CARE,task1,30_identity_clusterRes30,test:389,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0CF21,CARE,task1,30_identity_clusterRes30,test:330,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0CF22,CARE,task1,30_identity_clusterRes30,test:331,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0CZ24,CARE,task1,30_identity_clusterRes30,test:89,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P0DTS9,CARE,task1,30_identity_clusterRes30,test:245,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P13650,CARE,task1,30_identity_clusterRes30,test:9,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P16218,CARE,task1,30_identity_clusterRes30,test:243,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P16639,CARE,task1,30_identity_clusterRes30,test:156,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P17296,CARE,task1,30_identity_clusterRes30,test:28,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P17489,CARE,task1,30_identity_clusterRes30,test:14,1,OK,25,16,7,CU,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P17489__chain_A__EC_1.10.3.2.pdb,
+test,P19409,CARE,task1,30_identity_clusterRes30,test:388,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P19968,CARE,task1,30_identity_clusterRes30,test:413,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P21147,CARE,task1,30_identity_clusterRes30,test:47,1,OK,4,2,2,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P21147__chain_A__EC_1.14.19.1.pdb,
+test,P22318,CARE,task1,30_identity_clusterRes30,test:20,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P22319,CARE,task1,30_identity_clusterRes30,test:21,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE;NI,,missing cif
+test,P22320,CARE,task1,30_identity_clusterRes30,test:22,1,OK,4,2,2,NI,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P22320__chain_A__EC_1.12.1.2.pdb,
+test,P23857,CARE,task1,30_identity_clusterRes30,test:204,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P24546,CARE,task1,30_identity_clusterRes30,test:224,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P25338,CARE,task1,30_identity_clusterRes30,test:44,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P26174,CARE,task1,30_identity_clusterRes30,test:411,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P28607,CARE,task1,30_identity_clusterRes30,test:237,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P29898,CARE,task1,30_identity_clusterRes30,test:5,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P29933,CARE,task1,30_identity_clusterRes30,test:409,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P29934,CARE,task1,30_identity_clusterRes30,test:410,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P30289,CARE,task1,30_identity_clusterRes30,test:341,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P30314,CARE,task1,30_identity_clusterRes30,test:200,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P30636,CARE,task1,30_identity_clusterRes30,test:196,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P30663,CARE,task1,30_identity_clusterRes30,test:188,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P30815,CARE,task1,30_identity_clusterRes30,test:412,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P31742,CARE,task1,30_identity_clusterRes30,test:427,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P32785,CARE,task1,30_identity_clusterRes30,test:144,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P32791,CARE,task1,30_identity_clusterRes30,test:53,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P34275,CARE,task1,30_identity_clusterRes30,test:96,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P34629,CARE,task1,30_identity_clusterRes30,test:252,1,OK,7,3,4,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P34629__chain_A__EC_3.4.11.1.pdb,
+test,P34808,CARE,task1,30_identity_clusterRes30,test:379,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P35150,CARE,task1,30_identity_clusterRes30,test:259,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P35202,CARE,task1,30_identity_clusterRes30,test:195,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P37024,CARE,task1,30_identity_clusterRes30,test:299,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P37112,CARE,task1,30_identity_clusterRes30,test:278,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CO,,missing cif
+test,P37646,CARE,task1,30_identity_clusterRes30,test:234,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P38049,CARE,task1,30_identity_clusterRes30,test:41,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P38254,CARE,task1,30_identity_clusterRes30,test:393,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P39042,CARE,task1,30_identity_clusterRes30,test:260,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P39730,CARE,task1,30_identity_clusterRes30,test:301,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P39840,CARE,task1,30_identity_clusterRes30,test:349,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P40099,CARE,task1,30_identity_clusterRes30,test:396,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P40384,CARE,task1,30_identity_clusterRes30,test:382,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P40526,CARE,task1,30_identity_clusterRes30,test:84,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P40580,CARE,task1,30_identity_clusterRes30,test:3,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P40601,CARE,task1,30_identity_clusterRes30,test:213,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P41469,CARE,task1,30_identity_clusterRes30,test:139,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P42106,CARE,task1,30_identity_clusterRes30,test:27,1,OK,5,2,3,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P42106__chain_A__EC_1.13.11.24.pdb,
+test,P42380,CARE,task1,30_identity_clusterRes30,test:269,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P42436,CARE,task1,30_identity_clusterRes30,test:116,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P42593,CARE,task1,30_identity_clusterRes30,test:85,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P43524,CARE,task1,30_identity_clusterRes30,test:342,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P44721,CARE,task1,30_identity_clusterRes30,test:354,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P45573,CARE,task1,30_identity_clusterRes30,test:135,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P46904,CARE,task1,30_identity_clusterRes30,test:420,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P50264,CARE,task1,30_identity_clusterRes30,test:107,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P51599,CARE,task1,30_identity_clusterRes30,test:288,1,OK,2,2,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P51599__chain_A__EC_3.5.4.16.pdb,
+test,P51691,CARE,task1,30_identity_clusterRes30,test:238,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P52073,CARE,task1,30_identity_clusterRes30,test:13,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P52422,CARE,task1,30_identity_clusterRes30,test:142,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P59807,CARE,task1,30_identity_clusterRes30,test:323,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P69741,CARE,task1,30_identity_clusterRes30,test:26,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P72449,CARE,task1,30_identity_clusterRes30,test:98,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P72736,CARE,task1,30_identity_clusterRes30,test:197,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P73270,CARE,task1,30_identity_clusterRes30,test:285,1,OK,3,1,2,NI,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P73270__chain_A__EC_3.5.3.11.pdb,
+test,P73735,CARE,task1,30_identity_clusterRes30,test:115,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P74268,CARE,task1,30_identity_clusterRes30,test:255,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing cif
+test,P74312,CARE,task1,30_identity_clusterRes30,test:114,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P75820,CARE,task1,30_identity_clusterRes30,test:280,1,OK,1,1,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P75820__chain_A__EC_3.5.1.28.pdb,
+test,P80563,CARE,task1,30_identity_clusterRes30,test:136,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P80564,CARE,task1,30_identity_clusterRes30,test:138,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,P82678,CARE,task1,30_identity_clusterRes30,test:284,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P91247,CARE,task1,30_identity_clusterRes30,test:205,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P96590,CARE,task1,30_identity_clusterRes30,test:295,1,OK,5,3,2,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/P96590__chain_A__EC_3.6.1.55.pdb,
+test,P97207,CARE,task1,30_identity_clusterRes30,test:133,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P97224,CARE,task1,30_identity_clusterRes30,test:131,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P9WF02,CARE,task1,30_identity_clusterRes30,test:74,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P9WG39,CARE,task1,30_identity_clusterRes30,test:151,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P9WJQ7,CARE,task1,30_identity_clusterRes30,test:148,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P9WKE1,CARE,task1,30_identity_clusterRes30,test:193,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,P9WM67,CARE,task1,30_identity_clusterRes30,test:223,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q00246,CARE,task1,30_identity_clusterRes30,test:302,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q01284,CARE,task1,30_identity_clusterRes30,test:30,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q01551,CARE,task1,30_identity_clusterRes30,test:37,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q02166,CARE,task1,30_identity_clusterRes30,test:165,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q02854,CARE,task1,30_identity_clusterRes30,test:414,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q03266,CARE,task1,30_identity_clusterRes30,test:316,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q03415,CARE,task1,30_identity_clusterRes30,test:265,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing cif
+test,Q04515,CARE,task1,30_identity_clusterRes30,test:104,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q05183,CARE,task1,30_identity_clusterRes30,test:34,1,OK,4,3,0,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q05183__chain_A__EC_1.14.12.7.pdb,
+test,Q05354,CARE,task1,30_identity_clusterRes30,test:362,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q05631,CARE,task1,30_identity_clusterRes30,test:306,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q06700,CARE,task1,30_identity_clusterRes30,test:422,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q07540,CARE,task1,30_identity_clusterRes30,test:55,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q08210,CARE,task1,30_identity_clusterRes30,test:91,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q09272,CARE,task1,30_identity_clusterRes30,test:208,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q09595,CARE,task1,30_identity_clusterRes30,test:182,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q09832,CARE,task1,30_identity_clusterRes30,test:170,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q09878,CARE,task1,30_identity_clusterRes30,test:121,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q0P887,CARE,task1,30_identity_clusterRes30,test:426,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q0PBX7,CARE,task1,30_identity_clusterRes30,test:336,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q0PKV7,CARE,task1,30_identity_clusterRes30,test:185,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q0QLF2,CARE,task1,30_identity_clusterRes30,test:58,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q0S8V5,CARE,task1,30_identity_clusterRes30,test:392,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q0V147,CARE,task1,30_identity_clusterRes30,test:251,1,OK,8,5,3,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q0V147__chain_A__EC_3.4.11.9.pdb,
+test,Q0WUA3,CARE,task1,30_identity_clusterRes30,test:169,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q10062,CARE,task1,30_identity_clusterRes30,test:88,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q10325,CARE,task1,30_identity_clusterRes30,test:152,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q11090,CARE,task1,30_identity_clusterRes30,test:181,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q11188,CARE,task1,30_identity_clusterRes30,test:228,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q12284,CARE,task1,30_identity_clusterRes30,test:127,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q12404,CARE,task1,30_identity_clusterRes30,test:363,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q187N7,CARE,task1,30_identity_clusterRes30,test:190,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q19238,CARE,task1,30_identity_clusterRes30,test:178,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q196W4,CARE,task1,30_identity_clusterRes30,test:125,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q1Q0T3,CARE,task1,30_identity_clusterRes30,test:119,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q22XZ3,CARE,task1,30_identity_clusterRes30,test:153,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q23122,CARE,task1,30_identity_clusterRes30,test:384,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing cif
+test,Q2FV99,CARE,task1,30_identity_clusterRes30,test:271,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q2IN45,CARE,task1,30_identity_clusterRes30,test:424,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q2LTE1,CARE,task1,30_identity_clusterRes30,test:159,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CO;MN,,missing cif
+test,Q2RI40,CARE,task1,30_identity_clusterRes30,test:75,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q2W9Z8,CARE,task1,30_identity_clusterRes30,test:294,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q338P6,CARE,task1,30_identity_clusterRes30,test:94,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q38YM3,CARE,task1,30_identity_clusterRes30,test:67,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q3EDG5,CARE,task1,30_identity_clusterRes30,test:209,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q3IYX7,CARE,task1,30_identity_clusterRes30,test:202,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q3IZP4,CARE,task1,30_identity_clusterRes30,test:353,1,OK,2,1,1,CO;MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q3IZP4__chain_A__EC_5.1.99.1.pdb,
+test,Q3JSI8,CARE,task1,30_identity_clusterRes30,test:430,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q3ZE13,CARE,task1,30_identity_clusterRes30,test:229,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q40784,CARE,task1,30_identity_clusterRes30,test:350,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q46871,CARE,task1,30_identity_clusterRes30,test:51,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q46DA4,CARE,task1,30_identity_clusterRes30,test:313,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q47417,CARE,task1,30_identity_clusterRes30,test:372,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q48677,CARE,task1,30_identity_clusterRes30,test:250,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q4P0N0,CARE,task1,30_identity_clusterRes30,test:36,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q4P7Y8,CARE,task1,30_identity_clusterRes30,test:112,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q4PNI0,CARE,task1,30_identity_clusterRes30,test:29,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q4QIU7,CARE,task1,30_identity_clusterRes30,test:90,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q4WGU1,CARE,task1,30_identity_clusterRes30,test:256,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q50925,CARE,task1,30_identity_clusterRes30,test:117,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q52556,CARE,task1,30_identity_clusterRes30,test:236,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing json/cif
+test,Q53692,CARE,task1,30_identity_clusterRes30,test:16,1,OK,28,21,2,CU,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q53692__chain_A__EC_1.10.3.4.pdb,
+test,Q54BW5,CARE,task1,30_identity_clusterRes30,test:293,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q54EP3,CARE,task1,30_identity_clusterRes30,test:227,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q54KQ7,CARE,task1,30_identity_clusterRes30,test:378,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q54QD9,CARE,task1,30_identity_clusterRes30,test:272,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q54TH6,CARE,task1,30_identity_clusterRes30,test:180,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q55368,CARE,task1,30_identity_clusterRes30,test:149,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q554D8,CARE,task1,30_identity_clusterRes30,test:175,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q55AX0,CARE,task1,30_identity_clusterRes30,test:303,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q55E32,CARE,task1,30_identity_clusterRes30,test:361,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q55E34,CARE,task1,30_identity_clusterRes30,test:103,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q55EI0,CARE,task1,30_identity_clusterRes30,test:157,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q56185,CARE,task1,30_identity_clusterRes30,test:19,1,OK,4,2,1,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q56185__chain_A__EC_1.11.1.23.pdb,
+test,Q56210,CARE,task1,30_identity_clusterRes30,test:206,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q56724,CARE,task1,30_identity_clusterRes30,test:421,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q57399,CARE,task1,30_identity_clusterRes30,test:425,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q57706,CARE,task1,30_identity_clusterRes30,test:405,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q57822,CARE,task1,30_identity_clusterRes30,test:220,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CU;FE;MN,,missing cif
+test,Q57I19,CARE,task1,30_identity_clusterRes30,test:433,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q58030,CARE,task1,30_identity_clusterRes30,test:328,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q58428,CARE,task1,30_identity_clusterRes30,test:172,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q58456,CARE,task1,30_identity_clusterRes30,test:400,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q58516,CARE,task1,30_identity_clusterRes30,test:402,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q58544,CARE,task1,30_identity_clusterRes30,test:305,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q59514,CARE,task1,30_identity_clusterRes30,test:283,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q59639,CARE,task1,30_identity_clusterRes30,test:321,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q59727,CARE,task1,30_identity_clusterRes30,test:309,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q59801,CARE,task1,30_identity_clusterRes30,test:322,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5B7I7,CARE,task1,30_identity_clusterRes30,test:277,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5HLM5,CARE,task1,30_identity_clusterRes30,test:203,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5I143,CARE,task1,30_identity_clusterRes30,test:231,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5JDJ7,CARE,task1,30_identity_clusterRes30,test:162,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5JIZ5,CARE,task1,30_identity_clusterRes30,test:267,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5LW89,CARE,task1,30_identity_clusterRes30,test:338,1,OK,5,2,3,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q5LW89__chain_A__EC_4.4.1.3.pdb,
+test,Q5NAZ7,CARE,task1,30_identity_clusterRes30,test:394,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5P5G6,CARE,task1,30_identity_clusterRes30,test:404,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,MN,,missing cif
+test,Q5UQ96,CARE,task1,30_identity_clusterRes30,test:300,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5UQD1,CARE,task1,30_identity_clusterRes30,test:298,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5UQI3,CARE,task1,30_identity_clusterRes30,test:39,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing json/cif
+test,Q5UZH5,CARE,task1,30_identity_clusterRes30,test:273,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5WCL2,CARE,task1,30_identity_clusterRes30,test:429,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q5ZU17,CARE,task1,30_identity_clusterRes30,test:249,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q60099,CARE,task1,30_identity_clusterRes30,test:307,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q609C2,CARE,task1,30_identity_clusterRes30,test:374,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q66I06,CARE,task1,30_identity_clusterRes30,test:333,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q69R21,CARE,task1,30_identity_clusterRes30,test:73,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q6GZN7,CARE,task1,30_identity_clusterRes30,test:126,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6IWZ0,CARE,task1,30_identity_clusterRes30,test:101,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6MEC8,CARE,task1,30_identity_clusterRes30,test:71,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6MQU0,CARE,task1,30_identity_clusterRes30,test:141,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6QGP4,CARE,task1,30_identity_clusterRes30,test:192,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6U6H1,CARE,task1,30_identity_clusterRes30,test:83,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q6ZUV0,CARE,task1,30_identity_clusterRes30,test:221,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q79FW5,CARE,task1,30_identity_clusterRes30,test:366,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7N8B1,CARE,task1,30_identity_clusterRes30,test:166,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7NBE9,CARE,task1,30_identity_clusterRes30,test:69,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7SIG4,CARE,task1,30_identity_clusterRes30,test:240,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7T6Y9,CARE,task1,30_identity_clusterRes30,test:62,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing json/cif
+test,Q7UNE1,CARE,task1,30_identity_clusterRes30,test:399,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7VSX3,CARE,task1,30_identity_clusterRes30,test:428,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q7ZAG8,CARE,task1,30_identity_clusterRes30,test:132,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q80TJ7,CARE,task1,30_identity_clusterRes30,test:33,1,OK,9,3,5,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q80TJ7__chain_A__EC_1.14.11.27.pdb,
+test,Q84JH7,CARE,task1,30_identity_clusterRes30,test:345,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q84WV9,CARE,task1,30_identity_clusterRes30,test:155,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q86B00,CARE,task1,30_identity_clusterRes30,test:391,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q86H28,CARE,task1,30_identity_clusterRes30,test:109,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q86I79,CARE,task1,30_identity_clusterRes30,test:261,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8EWY8,CARE,task1,30_identity_clusterRes30,test:416,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8EZ24,CARE,task1,30_identity_clusterRes30,test:335,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8FP91,CARE,task1,30_identity_clusterRes30,test:10,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8GUN2,CARE,task1,30_identity_clusterRes30,test:297,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8I0P7,CARE,task1,30_identity_clusterRes30,test:233,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8I295,CARE,task1,30_identity_clusterRes30,test:64,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8IIJ9,CARE,task1,30_identity_clusterRes30,test:257,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8J130,CARE,task1,30_identity_clusterRes30,test:46,1,OK,15,5,8,CU,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q8J130__chain_A__EC_1.14.18.1.pdb,
+test,Q8KFK3,CARE,task1,30_identity_clusterRes30,test:99,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing json/cif
+test,Q8KHS0,CARE,task1,30_identity_clusterRes30,test:102,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8KQN8,CARE,task1,30_identity_clusterRes30,test:258,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8L3A9,CARE,task1,30_identity_clusterRes30,test:70,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8L539,CARE,task1,30_identity_clusterRes30,test:395,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8MY85,CARE,task1,30_identity_clusterRes30,test:177,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8NM65,CARE,task1,30_identity_clusterRes30,test:194,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,MN,,missing cif
+test,Q8P3K1,CARE,task1,30_identity_clusterRes30,test:351,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8RI52,CARE,task1,30_identity_clusterRes30,test:63,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8RM02,CARE,task1,30_identity_clusterRes30,test:403,1,OK,1,1,0,FE;ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q8RM02__chain_A__EC_6.4.1.6.pdb,
+test,Q8TLB1,CARE,task1,30_identity_clusterRes30,test:134,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8U0Z6,CARE,task1,30_identity_clusterRes30,test:23,1,OK,6,1,4,NI,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q8U0Z6__chain_A__EC_1.12.7.2.pdb,
+test,Q8U0Z7,CARE,task1,30_identity_clusterRes30,test:25,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,NI,,missing cif
+test,Q8U0Z8,CARE,task1,30_identity_clusterRes30,test:24,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q8V3T6,CARE,task1,30_identity_clusterRes30,test:198,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8VYJ1,CARE,task1,30_identity_clusterRes30,test:387,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8ZTF9,CARE,task1,30_identity_clusterRes30,test:199,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q8ZW59,CARE,task1,30_identity_clusterRes30,test:319,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q93NH4,CARE,task1,30_identity_clusterRes30,test:108,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q93Z96,CARE,task1,30_identity_clusterRes30,test:87,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q94AQ9,CARE,task1,30_identity_clusterRes30,test:344,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q94JQ4,CARE,task1,30_identity_clusterRes30,test:290,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q95ZE2,CARE,task1,30_identity_clusterRes30,test:201,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q97ET8,CARE,task1,30_identity_clusterRes30,test:17,1,OK,15,3,9,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q97ET8__chain_A__EC_1.11.1.1.pdb,
+test,Q981V0,CARE,task1,30_identity_clusterRes30,test:334,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q98QW4,CARE,task1,30_identity_clusterRes30,test:189,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q99316,CARE,task1,30_identity_clusterRes30,test:365,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9AJF7,CARE,task1,30_identity_clusterRes30,test:130,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9FD71,CARE,task1,30_identity_clusterRes30,test:160,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9FI13,CARE,task1,30_identity_clusterRes30,test:358,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9FM84,CARE,task1,30_identity_clusterRes30,test:7,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9FT69,CARE,task1,30_identity_clusterRes30,test:381,1,OK,4,2,2,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9FT69__chain_A__EC_5.6.2.4.pdb,
+test,Q9FT74,CARE,task1,30_identity_clusterRes30,test:380,1,OK,4,2,2,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9FT74__chain_A__EC_5.6.2.4.pdb,
+test,Q9FXG2,CARE,task1,30_identity_clusterRes30,test:383,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9GRT1,CARE,task1,30_identity_clusterRes30,test:183,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9I060,CARE,task1,30_identity_clusterRes30,test:276,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,ZN,,missing cif
+test,Q9I2Q1,CARE,task1,30_identity_clusterRes30,test:266,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9JN69,CARE,task1,30_identity_clusterRes30,test:18,1,OK,4,2,1,FE,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9JN69__chain_A__EC_1.11.1.23.pdb,
+test,Q9KJF0,CARE,task1,30_identity_clusterRes30,test:210,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9KL41,CARE,task1,30_identity_clusterRes30,test:49,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q9KWS2,CARE,task1,30_identity_clusterRes30,test:292,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9LES4,CARE,task1,30_identity_clusterRes30,test:11,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9LVQ8,CARE,task1,30_identity_clusterRes30,test:232,1,OK,4,1,3,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9LVQ8__chain_A__EC_3.1.3.16.pdb,
+test,Q9M8R4,CARE,task1,30_identity_clusterRes30,test:337,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9MTL3,CARE,task1,30_identity_clusterRes30,test:146,1,OK,1,1,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9MTL3__chain_A__EC_2.1.3.15.pdb,
+test,Q9P903,CARE,task1,30_identity_clusterRes30,test:281,1,OK,11,5,6,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9P903__chain_A__EC_3.5.2.2.pdb,
+test,Q9RBG4,CARE,task1,30_identity_clusterRes30,test:35,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9RW45,CARE,task1,30_identity_clusterRes30,test:287,1,OK,2,2,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9RW45__chain_A__EC_3.5.4.40.pdb,
+test,Q9S1G7,CARE,task1,30_identity_clusterRes30,test:137,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q9S847,CARE,task1,30_identity_clusterRes30,test:289,1,OK,1,1,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9S847__chain_A__EC_3.5.4.5.pdb,
+test,Q9SCY3,CARE,task1,30_identity_clusterRes30,test:356,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9SKT4,CARE,task1,30_identity_clusterRes30,test:143,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9T010,CARE,task1,30_identity_clusterRes30,test:230,1,OK,2,2,0,MN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9T010__chain_A__EC_3.1.3.16.pdb,
+test,Q9T390,CARE,task1,30_identity_clusterRes30,test:397,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9TZI1,CARE,task1,30_identity_clusterRes30,test:174,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9U2Z2,CARE,task1,30_identity_clusterRes30,test:207,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9UAS6,CARE,task1,30_identity_clusterRes30,test:140,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9USX0,CARE,task1,30_identity_clusterRes30,test:161,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9W1L5,CARE,task1,30_identity_clusterRes30,test:332,1,OK,1,1,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9W1L5__chain_A__EC_4.3.2.5.pdb,
+test,Q9X895,CARE,task1,30_identity_clusterRes30,test:385,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9XA14,CARE,task1,30_identity_clusterRes30,test:270,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9XJ38,CARE,task1,30_identity_clusterRes30,test:38,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif
+test,Q9YAD8,CARE,task1,30_identity_clusterRes30,test:225,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9YCL9,CARE,task1,30_identity_clusterRes30,test:219,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,CU;FE;MN,,missing cif
+test,Q9Z4P6,CARE,task1,30_identity_clusterRes30,test:80,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9Z4Q7,CARE,task1,30_identity_clusterRes30,test:81,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9Z5B6,CARE,task1,30_identity_clusterRes30,test:359,1,OK,2,2,0,ZN,/media/Data/care_sets/task1_30_clusterRes30/mahomes_inputs/test/Q9Z5B6__chain_A__EC_5.3.1.28.pdb,
+test,Q9ZPY1,CARE,task1,30_identity_clusterRes30,test:100,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9ZQC6,CARE,task1,30_identity_clusterRes30,test:164,1,NO_UNIPROT_SUPPORTED_TRANSITION_METAL,0,0,0,,,skipped before AlphaFill parse by UniProt annotation
+test,Q9ZW86,CARE,task1,30_identity_clusterRes30,test:32,1,MISSING_ALPHAFILL_JSON_OR_CIF,0,0,0,FE,,missing cif

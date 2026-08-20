@@ -1,0 +1,83 @@
+{
+  "layout_name": "CLEAN 30 shared structures with fold CSVs",
+  "clean_identity": "30",
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "output_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared",
+  "source_base": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data",
+  "shared_structure_count": 740,
+  "link_mode": "hardlink",
+  "link_status_counts": {
+    "hardlinked": 740
+  },
+  "folds_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds",
+  "structures_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/structures",
+  "note": "CLEAN-native compact layout: structures are stored once under structures/, and each CLEAN train/test fold is represented by site-level CSVs under folds/. The Colab notebook materializes the selected fold into train/ and test/ views at runtime.",
+  "fold_stats": {
+    "CLEAN_30_train_test_split_0": {
+      "train": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_train.csv",
+        "site_count": 1102,
+        "structure_count": 622
+      },
+      "test": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_test.csv",
+        "site_count": 229,
+        "structure_count": 118
+      }
+    },
+    "CLEAN_30_train_test_split_1": {
+      "train": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_1_train.csv",
+        "site_count": 1063,
+        "structure_count": 578
+      },
+      "test": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_1_test.csv",
+        "site_count": 179,
+        "structure_count": 109
+      }
+    },
+    "CLEAN_30_train_test_split_2": {
+      "train": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_2_train.csv",
+        "site_count": 1024,
+        "structure_count": 562
+      },
+      "test": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_2_test.csv",
+        "site_count": 220,
+        "structure_count": 121
+      }
+    },
+    "CLEAN_30_train_test_split_3": {
+      "train": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_3_train.csv",
+        "site_count": 1034,
+        "structure_count": 586
+      },
+      "test": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_3_test.csv",
+        "site_count": 208,
+        "structure_count": 98
+      }
+    },
+    "CLEAN_30_train_test_split_4": {
+      "train": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_4_train.csv",
+        "site_count": 1101,
+        "structure_count": 612
+      },
+      "test": {
+        "site_summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_4_test.csv",
+        "site_count": 187,
+        "structure_count": 99
+      }
+    }
+  }
+}

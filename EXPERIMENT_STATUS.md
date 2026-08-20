@@ -98,6 +98,20 @@ validation-only and contain no held-out reports.
 This status does not designate a replacement test, substitute exact PinMyMetal,
 or change evaluation behavior.
 
+## Safety corrections implemented 2026-08-20
+
+- Primary Stage 7 now hard-requires semantically valid, completed/reused Stage
+  6B final-refit provenance; Stage 6 artifacts are not an executable fallback.
+- Raw structure-group overlap is blocked before held-out preparation/inference,
+  with a second loaded-pocket/group check before graph construction.
+- The canonical all-ranked-candidate primary-test workflow is disabled.
+- Stage 7 is additionally fail-closed while the primary dataset-route status
+  remains scientifically unresolved.
+- Strict RING planning now permits configured/available preparation to run and
+  enforces required completeness after preparation.
+
+These corrections do not resolve or select the primary final-test dataset.
+
 ## Current blockers
 
 1. The primary final-test route requires a separate scientific decision.
@@ -107,8 +121,6 @@ or change evaluation behavior.
 4. Hybrid Round-1 full configuration/search-space provenance is missing.
 5. The EC playbook has documented incompatibilities with the current notebook
    and is not certified executable in affected sections.
-6. Notebook Stage 7/Stage 6B fallback behavior conflicts with documented policy;
-   it was recorded, not changed.
 
 Open implementation issues:
 [`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`](docs/FOLLOW_UP_TECHNICAL_ISSUES.md).

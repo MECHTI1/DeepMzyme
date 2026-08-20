@@ -29,7 +29,9 @@ from training.loop import balanced_class_weights_from_pockets, class_weights_fro
 from training.run import (
     build_run_dir,
     ec_group_metrics_from_logits,
+    held_out_structure_overlap_report,
     resolve_selection_metric,
+    validate_held_out_structure_disjointness,
     validate_training_configuration,
 )
 from training.splits import assign_ec_group_metadata, split_pockets_k_fold
@@ -117,7 +119,7 @@ def check_test_eval_safety() -> None:
         validate_training_configuration(unsafe_config)
     except ValueError as exc:
         message = str(exc)
-        if "--run-test-eval is for held-out reporting" not in message:
+        if "Reportable --run-test-eval requires the frozen Stage 6B" not in message:
             raise AssertionError(f"Unsafe test-eval config failed with an unexpected error: {message}") from exc
     else:
         raise AssertionError("Unsafe test-eval config without validation was not rejected.")
@@ -135,6 +137,100 @@ def check_test_eval_safety() -> None:
         ]
     )
     validate_training_configuration(debug_config)
+
+    final_refit_config = parse_args(
+        [
+            "--task",
+            "metal",
+            "--val-fraction",
+            "0",
+            "--selection-metric",
+            "train_loss",
+            "--test-structure-dir",
+            "/tmp/deepmzyme_missing_test_structures",
+            "--test-summary-csv",
+            "/tmp/deepmzyme_missing_test_summary.csv",
+            "--run-test-eval",
+            "--allow-final-refit-test-eval",
+            "--final-test-selected-config-id",
+            "synthetic-stage6b-config",
+        ]
+    )
+    validate_training_configuration(final_refit_config)
+
+
+def check_held_out_overlap_blocks_before_inference() -> None:
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_overlap_gate_") as tmp:
+        root = Path(tmp)
+        train_dir = root / "train"
+        test_dir = root / "test"
+        train_dir.mkdir()
+        test_dir.mkdir()
+        train_summary = train_dir / "summary.csv"
+        test_summary = test_dir / "summary.csv"
+        train_summary.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
+        test_summary.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
+        (train_dir / "1abc__chain_A__EC_1.1.1.1.pdb").write_text("", encoding="utf-8")
+        overlapping_test_path = test_dir / "1abc__chain_B__EC_2.2.2.2.pdb"
+        overlapping_test_path.write_text("", encoding="utf-8")
+
+        report = held_out_structure_overlap_report(train_dir, test_dir)
+        if not report["train_test_overlap_detected"]:
+            raise AssertionError("Synthetic shared-PDB train/test membership was not detected.")
+        if report["overlap_counts"]["pdb_id"] != 1:
+            raise AssertionError(f"Expected one shared PDB ID, got {report}")
+
+        config = parse_args(
+            [
+                "--task",
+                "metal",
+                "--structure-dir",
+                str(train_dir),
+                "--summary-csv",
+                str(train_summary),
+                "--val-fraction",
+                "0",
+                "--selection-metric",
+                "train_loss",
+                "--test-structure-dir",
+                str(test_dir),
+                "--test-summary-csv",
+                str(test_summary),
+                "--run-test-eval",
+                "--allow-final-refit-test-eval",
+                "--final-test-selected-config-id",
+                "synthetic-stage6b-config",
+            ]
+        )
+        try:
+            validate_held_out_structure_disjointness(config)
+        except RuntimeError as exc:
+            if "blocked before inference" not in str(exc) or "pdb_id" not in str(exc):
+                raise AssertionError(f"Overlap gate failed with an unexpected message: {exc}") from exc
+        else:
+            raise AssertionError("Shared-PDB train/test membership did not block before inference.")
+
+        overlapping_test_path.unlink()
+        (test_dir / "2xyz__chain_A__EC_2.2.2.2.pdb").write_text("", encoding="utf-8")
+        disjoint_report = validate_held_out_structure_disjointness(config)
+        if disjoint_report is None or disjoint_report["train_test_overlap_detected"]:
+            raise AssertionError(f"Synthetic disjoint membership failed pre-inference validation: {disjoint_report}")
+
+    run_source = (REPO_ROOT / "src" / "training" / "run.py").read_text(encoding="utf-8")
+    eval_segment = run_source.split("def evaluate_held_out_test_split(", 1)[1].split("def persist_run_outputs(", 1)[0]
+    raw_gate_index = eval_segment.index("validate_held_out_structure_disjointness(config)")
+    test_load_index = eval_segment.index("load_training_pockets_with_report_from_dir(")
+    loaded_gate_index = eval_segment.index("train_test_overlap_report(train_like_pockets, test_load_result.pockets)")
+    graph_index = eval_segment.index("test_graphs = build_graph_data_list(")
+    prediction_index = eval_segment.index("evaluate_epoch_with_predictions(")
+    if not raw_gate_index < test_load_index:
+        raise AssertionError("Raw structure overlap is not checked before held-out data loading.")
+    if not loaded_gate_index < graph_index < prediction_index:
+        raise AssertionError("Loaded-pocket overlap is not checked before graph construction and inference.")
+
+    checkpoint_segment = run_source.split("def evaluate_saved_checkpoint(", 1)[1]
+    if checkpoint_segment.index("validate_held_out_structure_disjointness(config)") > checkpoint_segment.index("prepare_run(config)"):
+        raise AssertionError("Saved-checkpoint overlap validation occurs after run preparation.")
 
 
 def check_prelaunch_run_dir_reuse() -> None:
@@ -918,7 +1014,8 @@ def check_colab_notebook_sweep_source() -> None:
         'LAUNCH_PLANNED_TRAINING_RUNS = bool(LAUNCH_PLANNED_MAIN_TRAINING_RUNS)',
         'INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False',
         'LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False',
-        'DATASET_NAME = "train_and_test_sets_structures_exact_pinmymetal"',
+        'DATASET_NAME = "',
+        "train_and_test_sets_structures_exact_pinmymetal",
         "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal",
         "MODEL_PRESET =",
         'RING_EDGE_MODE = "with_ring"',
@@ -1019,17 +1116,14 @@ def check_colab_notebook_sweep_source() -> None:
         '"RUN_BATCH_ID":',
         'FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"',
         "evaluate_stage6_selected_candidate",
-        "exploratory_evaluate_all_stage6_ranked_candidates",
-        "exploratory_final_test_all_stage6_ranked_candidates.csv",
-        "exploratory_final_test_all_stage6_ranked_candidates.json",
-        "exploratory_final_test_warning.txt",
         "primary_preselected",
-        "exploratory_posthoc",
-        "held-out test performance",
-        "Do not choose the best held-out test result as the primary model.",
+        "Stage 7 primary pre-execution gate blocked",
+        "single frozen Stage-6B final full-train refit source",
         "RING_EXE_PATH",
         '"src" / "report_runs.py"',
-        "Recommended First Runs",
+        "from report_runs import discover_run_dirs",
+        "normalize_csv_value",
+        "Selection decisions belong in validation-only HPO artifacts",
     )
     missing = [token for token in required_tokens if token not in source]
     if missing:
@@ -1054,6 +1148,17 @@ def check_colab_notebook_sweep_source() -> None:
         raise AssertionError(f"Colab notebook still exposes retired final-test controls: {present_final_test_tokens}")
     if "sweep" in source.lower():
         raise AssertionError("Colab notebook should not contain user-facing sweep terminology.")
+    retired_report_heuristics = (
+        "Best learning-rate region:",
+        "Recommended next step:",
+        "Automatic interpretation",
+    )
+    present_report_heuristics = [token for token in retired_report_heuristics if token in source]
+    if present_report_heuristics:
+        raise AssertionError(
+            "Colab notebook still contains heuristic report guidance that can rank incompatible runs: "
+            f"{present_report_heuristics}"
+        )
 
 
 def check_colab_final_test_workflow_controls() -> None:
@@ -1073,7 +1178,7 @@ def check_colab_final_test_workflow_controls() -> None:
 
     expected_workflow_line = (
         'FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"  #@param '
-        '["evaluate_stage6_selected_candidate", "exploratory_evaluate_all_stage6_ranked_candidates"]'
+        '["evaluate_stage6_selected_candidate"]'
     )
     if expected_workflow_line not in final_source:
         raise AssertionError("FINAL_TEST_WORKFLOW default or dropdown choices changed unexpectedly.")
@@ -1084,23 +1189,32 @@ def check_colab_final_test_workflow_controls() -> None:
         "EXPLORATORY_FINAL_TEST_TOP_K",
         "EXPLORATORY_FINAL_TEST_CANDIDATE_SCOPE",
         "ALLOW_EXPLORATORY_FINAL_TEST_BATCH",
+        "_final_stage6_ranked_candidate_items",
+        "_final_write_exploratory_stage6_outputs",
+        "exploratory_final_test_all_stage6_ranked_candidates",
     )
     present = [token for token in forbidden if token in final_source]
     if present:
         raise AssertionError(f"Final-test cell still exposes retired exploratory controls: {present}")
 
     required_tokens = (
-        "Exploratory all-candidates mode requires stage6_ranked_candidates.csv",
-        "Exploratory all-candidates mode requires stage6_selected_final_candidate.json",
-        'role = "primary_preselected" if rank == 1 else "exploratory_posthoc"',
-        "stage6_ranked_candidates.csv: {ranked_path}",
+        "def _final_validate_stage6b_primary_artifact",
+        "Stage 7 primary pre-execution gate blocked",
+        'protocol_stage != "stage 6b"',
+        'top_status != "selected_for_final_refit"',
+        'str(refit.get("train_scope") or "") != "full_non_test_training_set"',
+        'refit.get("held_out_test_eval_during_refit") is not False',
+        'payload.get("held_out_test_metrics_used") is not False',
         "stage6b_selected_final_refit_candidate.json",
-        "selected_candidate_json: {selected_path}",
-        "Stage-6 selection will not be changed.",
-        "exploratory_final_test_all_stage6_ranked_candidates.csv",
-        "exploratory_final_test_all_stage6_ranked_candidates.json",
-        "exploratory_final_test_warning.txt",
-        "Stage 6 rank order; not sorted by held-out test performance",
+        "stage6_selected_final_candidate.json",
+        "stage6b_decision.json",
+        'source_run / "run_config.json"',
+        'source_run / "run_metadata.json"',
+        'source_run / "test_report.json"',
+        "Stage 6 selection evidence is not an eligible fallback.",
+        'FINAL_TEST_PRIMARY_DATASET_ROUTE_STATUS = "unresolved"',
+        "dataset route remains scientifically unresolved",
+        "Evaluating the single frozen Stage 6B final-refit candidate.",
     )
     missing = [token for token in required_tokens if token not in final_source]
     if missing:
@@ -1115,6 +1229,180 @@ def check_colab_final_test_workflow_controls() -> None:
     present_writes = [token for token in protected_write_tokens if token in final_source]
     if present_writes:
         raise AssertionError(f"Final-test cell appears to modify Stage 6 source files: {present_writes}")
+
+    choices_block = final_source.split("_FINAL_TEST_WORKFLOW_CHOICES =", 1)[1].split("_effective_workflow =", 1)[0]
+    if "exploratory_evaluate_all_stage6_ranked_candidates" in choices_block:
+        raise AssertionError("The canonical Stage 7 workflow still accepts all-candidate held-out evaluation.")
+    if "elif _IS_EXPLORATORY_STAGE6_BATCH:" in final_source:
+        raise AssertionError("The canonical Stage 7 launch path still contains an executable exploratory batch branch.")
+
+    resolver_block = final_source.split("def _final_stage6_selected_candidate_path", 1)[1].split(
+        "def _final_load_stage6_selected_candidate", 1
+    )[0]
+    forbidden_fallback_tokens = (
+        "generated_stage6 =",
+        'get("stage6_selected_candidate_json") or',
+        'stage6_selected_final_candidate_json")\n    if generated_stage6',
+    )
+    present_fallbacks = [token for token in forbidden_fallback_tokens if token in resolver_block]
+    if present_fallbacks:
+        raise AssertionError(f"Stage 7 resolver still contains a Stage 6 fallback: {present_fallbacks}")
+
+    launch_block = final_source.split("if not LAUNCH_FINAL_HELD_OUT_TEST_EVAL:", 1)[1]
+    stage6b_gate_index = launch_block.index("selected_payload = _final_load_stage6_selected_candidate()")
+    route_gate_index = launch_block.index('FINAL_TEST_PRIMARY_DATASET_ROUTE_STATUS != "resolved"')
+    held_out_path_index = launch_block.index("if not _FinalPath(TEST_DIR).is_dir()")
+    if not stage6b_gate_index < route_gate_index < held_out_path_index:
+        raise AssertionError(
+            "Stage 7 must validate Stage 6B and the approved dataset route before inspecting held-out paths."
+        )
+
+
+def check_colab_stage6b_primary_gate_synthetic() -> None:
+    notebook_path = REPO_ROOT / "notebooks" / "DeepMzyme_training_colab.ipynb"
+    nb = json.loads(notebook_path.read_text(encoding="utf-8"))
+    final_source = next(
+        (
+            "".join(cell.get("source", []))
+            for cell in nb.get("cells", [])
+            if cell.get("cell_type") == "code"
+            and "#@title Optional final held-out test evaluation" in "".join(cell.get("source", []))
+        ),
+        None,
+    )
+    if final_source is None:
+        raise AssertionError("Could not find the Colab final held-out test cell.")
+
+    import contextlib
+    import io
+
+    namespace: dict[str, object] = {}
+    definition_source = final_source.split(
+        'print("=" * 72)\nprint("FINAL HELD-OUT TEST - pre-flight summary")',
+        1,
+    )[0]
+    if definition_source == final_source:
+        raise AssertionError("Could not isolate Stage 7 helper definitions for synthetic validation.")
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(definition_source, namespace)
+    validator = namespace["_final_validate_stage6b_primary_artifact"]
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_stage6b_gate_") as tmp:
+        root = Path(tmp)
+        source_run = root / "stage6b_refit"
+        source_run.mkdir()
+        checkpoint = source_run / "best_model_checkpoint.pt"
+        checkpoint.write_bytes(b"synthetic checkpoint placeholder")
+        selected_config_id = "synthetic-selected-config"
+        source_config = {
+            "val_fraction": 0.0,
+            "n_folds": None,
+            "fold_index": None,
+            "selection_metric": "train_loss",
+            "run_test_eval": False,
+            "stage6b_selected_config_id": selected_config_id,
+        }
+        (source_run / "run_config.json").write_text(
+            json.dumps(
+                {
+                    "config": source_config,
+                    "selected_checkpoint": str(checkpoint),
+                    "stage6b_selected_config_id": selected_config_id,
+                }
+            ),
+            encoding="utf-8",
+        )
+        (source_run / "run_metadata.json").write_text(
+            json.dumps(
+                {
+                    "config": source_config,
+                    "selected_checkpoint": str(checkpoint),
+                    "stage6b_selected_config_id": selected_config_id,
+                    "result_stage": "stage6b-final-refit full non-test training",
+                }
+            ),
+            encoding="utf-8",
+        )
+        stage6_path = root / "stage6_selected_final_candidate.json"
+        stage6_path.write_text(json.dumps({"selected_config_id": selected_config_id}), encoding="utf-8")
+        decision_path = root / "stage6b_decision.json"
+        decision = {
+            "status": "selected_for_final_refit",
+            "selected_config_id": selected_config_id,
+        }
+        decision_path.write_text(json.dumps(decision), encoding="utf-8")
+        artifact_path = root / "stage6b_selected_final_refit_candidate.json"
+        artifact = {
+            "protocol_stage": "Stage 6B",
+            "selected_candidate_type": "stage6b_final_full_train_refit",
+            "selected_before_held_out_test_evaluation": True,
+            "held_out_test_metrics_used": False,
+            "selected_config_id": selected_config_id,
+            "selection_status": "selected_for_final_refit",
+            "stage6b_decision": decision,
+            "primary_source_run_dir": str(source_run),
+            "primary_source_checkpoint": str(checkpoint),
+            "final_refit_run_dir": str(source_run),
+            "final_refit_checkpoint": str(checkpoint),
+            "final_refit_status": "completed",
+            "stage6_selected_final_candidate_json": str(stage6_path),
+            "stage6b_decision_json": str(decision_path),
+            "final_training_refit": {
+                "status": "completed",
+                "train_scope": "full_non_test_training_set",
+                "run_dir": str(source_run),
+                "checkpoint": str(checkpoint),
+                "val_fraction": 0.0,
+                "selection_metric": "train_loss",
+                "held_out_test_eval_during_refit": False,
+            },
+        }
+        artifact_path.write_text(json.dumps(artifact), encoding="utf-8")
+        validator(artifact_path, artifact)
+
+        invalid_stage6 = dict(artifact)
+        invalid_stage6["protocol_stage"] = "Stage 6"
+        try:
+            validator(artifact_path, invalid_stage6)
+        except RuntimeError as exc:
+            if "protocol_stage" not in str(exc):
+                raise AssertionError(f"Stage 6 fallback was rejected for an unexpected reason: {exc}") from exc
+        else:
+            raise AssertionError("A Stage 6 artifact passed the Stage 6B semantic gate.")
+
+        not_launched = dict(artifact)
+        not_launched["final_refit_status"] = "not_launched"
+        not_launched["final_training_refit"] = dict(artifact["final_training_refit"])
+        not_launched["final_training_refit"]["status"] = "not_launched"
+        try:
+            validator(artifact_path, not_launched)
+        except RuntimeError as exc:
+            if "completed or existing" not in str(exc):
+                raise AssertionError(f"Unlaunched Stage 6B refit was rejected unexpectedly: {exc}") from exc
+        else:
+            raise AssertionError("A not-launched Stage 6B refit passed the primary gate.")
+
+        namespace["FINAL_TEST_STAGE6_SELECTED_CANDIDATE_JSON"] = str(stage6_path)
+        try:
+            namespace["_final_load_stage6_selected_candidate"]()
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("An explicit Stage 6 JSON override bypassed the Stage 6B semantic gate.")
+
+        namespace["FINAL_TEST_STAGE6_SELECTED_CANDIDATE_JSON"] = ""
+        namespace["stage6_selected_final_candidate_json"] = stage6_path
+        if namespace["_final_stage6_selected_candidate_path"]() is not None:
+            raise AssertionError("Missing Stage 6B evidence still fell back to generated Stage 6 evidence.")
+
+        (source_run / "test_report.json").write_text("{}", encoding="utf-8")
+        try:
+            validator(artifact_path, artifact)
+        except RuntimeError as exc:
+            if "already contains test_report.json" not in str(exc):
+                raise AssertionError(f"Already-tested Stage 6B source was rejected unexpectedly: {exc}") from exc
+        else:
+            raise AssertionError("An already-tested Stage 6B source passed the primary pre-execution gate.")
 
 
 def check_colab_notebook_provenance_helpers() -> None:
@@ -1427,7 +1715,13 @@ def check_colab_generated_training_commands_parse() -> None:
             },
         }
 
-    def run_builder(config_updates: dict[str, dict[str, object]], *, return_namespace: bool = False):
+    def run_builder(
+        config_updates: dict[str, dict[str, object]],
+        *,
+        return_namespace: bool = False,
+        missing_ring_structure: bool = False,
+        ring_executable_available: bool = True,
+    ):
         with tempfile.TemporaryDirectory(prefix="deepmzyme_colab_command_smoke_") as tmp:
             tmp_root = Path(tmp)
             config = base_config(tmp_root)
@@ -1440,12 +1734,18 @@ def check_colab_generated_training_commands_parse() -> None:
             ring_dir.mkdir(parents=True)
             (ring_dir / "example_ringEdges").write_text("NodeId1\tNodeId2\tInteraction\n", encoding="utf-8")
             ring_exe = Path(str(config["ring"]["ring_exe_path"]))
-            ring_exe.write_text("#!/bin/sh\n", encoding="utf-8")
-            ring_exe.chmod(0o755)
+            if ring_executable_available:
+                ring_exe.write_text("#!/bin/sh\n", encoding="utf-8")
+                ring_exe.chmod(0o755)
             train_dir = tmp_root / "train"
             test_dir = tmp_root / "test"
             train_dir.mkdir()
             test_dir.mkdir()
+            train_structures = []
+            if missing_ring_structure:
+                train_structure = train_dir / "1abc__chain_A__EC_1.1.1.1.pdb"
+                train_structure.write_text("", encoding="utf-8")
+                train_structures.append(train_structure)
             train_csv = train_dir / "summary.csv"
             test_csv = test_dir / "summary.csv"
             train_csv.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
@@ -1460,7 +1760,7 @@ def check_colab_generated_training_commands_parse() -> None:
                 "TEST_CSV": test_csv,
                 "TRAIN_SITE_SUMMARY_CSV": train_csv,
                 "TEST_SITE_SUMMARY_CSV": test_csv,
-                "TRAIN_STRUCTURES": [],
+                "TRAIN_STRUCTURES": train_structures,
                 "TEST_STRUCTURES": [],
                 "DATA_ROOT": tmp_root,
                 "DATASET_ROOT": tmp_root / "dataset",
@@ -1499,6 +1799,74 @@ def check_colab_generated_training_commands_parse() -> None:
         raise AssertionError("Full-feature default command unexpectedly omits node features.")
     if "--metal-node-mode" in default_cmd or "--structural-readout-scope" in default_cmd:
         raise AssertionError("Default graph command should leave metal-node mode disabled.")
+
+    strict_prepared_runs = run_builder(
+        {
+            "ring": {
+                "require_ring_edges": True,
+                "prepare_missing_ring_edges": True,
+            },
+            "advanced": {"allow_missing_external_features": True},
+        },
+        missing_ring_structure=True,
+    )
+    if len(strict_prepared_runs) != 1:
+        raise AssertionError(f"Expected one strict prepared-RING run, got {len(strict_prepared_runs)}")
+    strict_prepared = strict_prepared_runs[0]
+    strict_prepared_cmd = [str(part) for part in strict_prepared["command"]]
+    for expected_flag in ("--use-ring-edges", "--require-ring-edges", "--prepare-missing-ring-edges"):
+        if expected_flag not in strict_prepared_cmd:
+            raise AssertionError(f"Strict prepared-RING command is missing {expected_flag}: {strict_prepared_cmd}")
+    if int(strict_prepared.get("missing_ring_edge_structures_before") or 0) != 1:
+        raise AssertionError(f"Strict prepared-RING plan did not record one missing structure: {strict_prepared}")
+
+    for label, ring_updates, executable_available in (
+        (
+            "preparation disabled",
+            {"require_ring_edges": True, "prepare_missing_ring_edges": False},
+            True,
+        ),
+        (
+            "RING executable unavailable",
+            {"require_ring_edges": True, "prepare_missing_ring_edges": True},
+            False,
+        ),
+    ):
+        try:
+            run_builder(
+                {
+                    "ring": ring_updates,
+                    "advanced": {"allow_missing_external_features": True},
+                },
+                missing_ring_structure=True,
+                ring_executable_available=executable_available,
+            )
+        except RuntimeError as exc:
+            if "resolved preparation is unavailable or disabled" not in str(exc):
+                raise AssertionError(f"Strict RING {label} failed unexpectedly: {exc}") from exc
+        else:
+            raise AssertionError(f"Strict RING with {label} did not block planning.")
+
+    for task, selection_metric in (
+        ("ec", "val_ec_group_balanced_acc"),
+        ("joint", "val_joint_balanced_acc"),
+    ):
+        task_runs = run_builder(
+            {
+                "basic": {"task": task},
+                "advanced": {"selection_metric": selection_metric},
+            }
+        )
+        if len(task_runs) != 1:
+            raise AssertionError(f"Expected one {task} planned command, got {len(task_runs)}")
+        task_cmd = [str(part) for part in task_runs[0]["command"]]
+        assert_training_command_parses(task_cmd)
+        if task_cmd[task_cmd.index("--task") + 1] != task:
+            raise AssertionError(f"Notebook command did not preserve task={task!r}: {task_cmd}")
+        if task_cmd[task_cmd.index("--selection-metric") + 1] != selection_metric:
+            raise AssertionError(
+                f"Notebook command did not preserve {task} selection metric {selection_metric!r}: {task_cmd}"
+            )
     if "--head-mlp-dropout" not in default_cmd:
         raise AssertionError("Default notebook command did not record --head-mlp-dropout.")
     if default_cmd[default_cmd.index("--head-mlp-dropout") + 1] != "0.2":
@@ -2386,6 +2754,7 @@ def main() -> int:
     checks = (
         check_training_cli_help,
         check_test_eval_safety,
+        check_held_out_overlap_blocks_before_inference,
         check_prelaunch_run_dir_reuse,
         check_loss_weight_validation,
         check_metal_label_scheme_options,
@@ -2403,6 +2772,7 @@ def main() -> int:
         check_metal_node_graph_and_gvp_forward,
         check_colab_notebook_sweep_source,
         check_colab_final_test_workflow_controls,
+        check_colab_stage6b_primary_gate_synthetic,
         check_colab_notebook_provenance_helpers,
         check_colab_exact_split_no_fallback,
         check_colab_generated_training_commands_parse,
