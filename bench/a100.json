@@ -1,0 +1,210 @@
+{
+  "amp": false,
+  "benchmark": "DeepMzyme real GVP+ESM hybrid training step",
+  "capacity_probe_limit": 16384,
+  "capacity_probes": [
+    {
+      "batch_size": 24,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 460141056
+    },
+    {
+      "batch_size": 48,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 893133312
+    },
+    {
+      "batch_size": 96,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 1771237376
+    },
+    {
+      "batch_size": 192,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 3499242496
+    },
+    {
+      "batch_size": 384,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 6955287552
+    },
+    {
+      "batch_size": 768,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 13891902976
+    },
+    {
+      "batch_size": 1536,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 27738012160
+    },
+    {
+      "batch_size": 3072,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 6.04 GiB. GPU 0 has a total capacity of 39.49 GiB of which 2.40 GiB is free. Including non-PyTorch memory, this process has 37.08 GiB memory in use. Of the allocated memory 35.69 GiB is allocated by PyTorch, and 913.89 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2304,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 41614276096
+    },
+    {
+      "batch_size": 2688,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB. GPU 0 has a total capacity of 39.49 GiB of which 1.70 GiB is free. Including non-PyTorch memory, this process has 37.78 GiB memory in use. Of the allocated memory 36.51 GiB is allocated by PyTorch, and 780.66 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2496,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 1.86 GiB. GPU 0 has a total capacity of 39.49 GiB of which 645.44 MiB is free. Including non-PyTorch memory, this process has 38.85 GiB memory in use. Of the allocated memory 37.63 GiB is allocated by PyTorch, and 739.81 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2400,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 730.00 MiB. GPU 0 has a total capacity of 39.49 GiB of which 293.44 MiB is free. Including non-PyTorch memory, this process has 39.20 GiB memory in use. Of the allocated memory 37.96 GiB is allocated by PyTorch, and 752.94 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2352,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 336.00 MiB. GPU 0 has a total capacity of 39.49 GiB of which 81.44 MiB is free. Including non-PyTorch memory, this process has 39.40 GiB memory in use. Of the allocated memory 38.34 GiB is allocated by PyTorch, and 578.41 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2328,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 74.00 MiB. GPU 0 has a total capacity of 39.49 GiB of which 57.44 MiB is free. Including non-PyTorch memory, this process has 39.43 GiB memory in use. Of the allocated memory 38.85 GiB is allocated by PyTorch, and 78.56 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2316,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 74.00 MiB. GPU 0 has a total capacity of 39.49 GiB of which 59.44 MiB is free. Including non-PyTorch memory, this process has 39.42 GiB memory in use. Of the allocated memory 38.85 GiB is allocated by PyTorch, and 75.28 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    },
+    {
+      "batch_size": 2310,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 41710658560
+    },
+    {
+      "batch_size": 2313,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 41756260352
+    },
+    {
+      "batch_size": 2314,
+      "error": null,
+      "fits": true,
+      "peak_memory_bytes": 41774104576
+    },
+    {
+      "batch_size": 2315,
+      "error": "OutOfMemoryError: CUDA out of memory. Tried to allocate 14.00 MiB. GPU 0 has a total capacity of 39.49 GiB of which 11.44 MiB is free. Including non-PyTorch memory, this process has 39.47 GiB memory in use. Of the allocated memory 38.91 GiB is allocated by PyTorch, and 59.38 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)",
+      "fits": false,
+      "peak_memory_bytes": null
+    }
+  ],
+  "cuda_available": true,
+  "current_batch_size": 12,
+  "elapsed_seconds": 24.600375652313232,
+  "gpu_compute_capability": "8.0",
+  "gpu_name": "NVIDIA A100-SXM4-40GB",
+  "gpu_total_memory_bytes": 42405855232,
+  "graph_shape": {
+    "directed_neighbors_per_node": 24,
+    "esm_dim": 960,
+    "generic_metal_nodes_per_graph": 1,
+    "residue_nodes_per_graph": 64,
+    "synthetic_inputs": true
+  },
+  "largest_batch_size_capacity_censored": false,
+  "largest_batch_size_fit": 2314,
+  "last_loss": 3.2790887355804443,
+  "measured_steps": 20,
+  "median_step_time_seconds": 0.020189390499979254,
+  "model_class": "model.GVPPocketClassifier",
+  "model_config": {
+    "classifier_pool_distance_cutoff": 0.0,
+    "early_esm_dim": 32,
+    "early_esm_dropout": 0.05,
+    "early_esm_raw": false,
+    "early_esm_scope": "all",
+    "ec_contrastive_temperature": 0.1,
+    "ec_contrastive_weight": 0.0,
+    "ec_loss_weight": 0.25,
+    "edge_hidden": 64,
+    "edge_rbf_sigma": 0.75,
+    "esm_dim": 960,
+    "esm_fusion_dim": 64,
+    "esm_graph_encoder_dropout": 0.1,
+    "fusion_mode": "hybrid",
+    "head_mlp_dropout": 0.2,
+    "head_mlp_layers": 1,
+    "hidden_s": 128,
+    "hidden_v": 8,
+    "joint_loss_weighting": "uncertainty",
+    "metal_collapsed_loss_weight": 0.0,
+    "metal_focal_gamma": 2.0,
+    "metal_label_smoothing": 0.0,
+    "metal_loss_function": "cross_entropy",
+    "metal_loss_weight": 2.0,
+    "model_architecture": "gvp",
+    "n_ec": 7,
+    "n_layers": 2,
+    "n_metal": 5,
+    "node_rbf_sigma": 0.75,
+    "node_rbf_use_raw_distances": false,
+    "normalize_message_aggregation": false,
+    "predict_ec": true,
+    "predict_metal": true,
+    "structural_readout_scope": "residue_and_metal",
+    "use_early_esm": true,
+    "use_esm_branch": true,
+    "use_node_type_embedding": true,
+    "use_site_angle_features": true
+  },
+  "model_parameter_count": 437068,
+  "oom": false,
+  "peak_memory_allocated_bytes": 240369664,
+  "peak_memory_reserved_bytes": 274726912,
+  "precision": "fp32",
+  "step_times_seconds": [
+    0.020193099999971764,
+    0.020706199000017023,
+    0.020012542000017675,
+    0.02061502300000484,
+    0.01998827399995662,
+    0.02089780400001473,
+    0.020093729999985044,
+    0.02049893099996325,
+    0.0199370950000457,
+    0.020271819000015512,
+    0.020177662999969925,
+    0.020673119000036877,
+    0.020185680999986744,
+    0.02045065199996543,
+    0.020011793999969996,
+    0.02026793199996746,
+    0.019873107000023538,
+    0.020238575000007586,
+    0.019936619000020528,
+    0.0201419739999551
+  ],
+  "torch_cuda_version": "12.8",
+  "torch_version": "2.11.0+cu128",
+  "warmup_steps": 3
+}

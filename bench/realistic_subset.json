@@ -1,0 +1,37 @@
+{
+  "artifact": {
+    "filename": "realistic_subset.pt",
+    "huggingface_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt",
+    "sha256": "84e7e039f1df5b3a7b32dc3d4ac1b8fa21bba2827679b4d3f1650d394e2754bf",
+    "version": "v1"
+  },
+  "batch_size": 12,
+  "ec_class_count": 6,
+  "full_batches": 20,
+  "full_training_distribution": {
+    "count": 342,
+    "max": 69,
+    "median": 40.0,
+    "min": 22
+  },
+  "graph_config": {
+    "edge_radius": 6.0,
+    "esm_dim": 960,
+    "metal_node_mode": "per_metal",
+    "node_feature_set": "conservative",
+    "require_ring_edges": true,
+    "use_ring_edges": true
+  },
+  "held_out_test_used": false,
+  "sample_seed": 42,
+  "sample_size": 240,
+  "sampled_distribution": {
+    "count": 240,
+    "max": 69,
+    "median": 40.0,
+    "min": 22
+  },
+  "selection": "240 evenly spaced empirical residue-count quantiles, then seed-42 shuffle",
+  "serialized_bytes": 51844189,
+  "source": "actual CARE_task1_30_clusterRes30_train_test_metallo training pockets"
+}

@@ -8,3 +8,6 @@ Documenation
 __pycache__/
 *.py[cod]
 read_training_results/
+
+# Hosted in the GMBioinformatics/DeepMzyme Hugging Face dataset repository.
+bench/realistic_subset.pt
