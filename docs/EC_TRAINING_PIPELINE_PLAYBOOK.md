@@ -11,6 +11,8 @@ validation evidence belongs in `EXPERIMENT_STATUS.md` and
 `docs/notebook_outputs/`, not in this stable playbook.
 
 For the cross-document run order and output-folder map, see `docs/README.md`.
+For environment/data orientation use `docs/GETTING_STARTED.md`; for Colab GPU
+connection and dependency installation use `docs/COLAB_GPU_RUNBOOK.md`.
 
 ## Compatibility Warning — Reconciliation Required
 

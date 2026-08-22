@@ -5,13 +5,16 @@ documents when a link is sufficient.
 
 ## Start here
 
-1. [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) — current objective,
+1. [`GETTING_STARTED.md`](GETTING_STARTED.md) — execution paths, environment
+   limits, first checks, and repository navigation.
+2. [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) — current objective,
    anchors, blockers, and next actions.
-2. [`DATASETS.md`](DATASETS.md) — datasets, splits, bundles, provenance, and
+3. [`DATASETS.md`](DATASETS.md) — datasets, splits, Hugging Face files,
+   bundles, provenance, and
    historical test-use record.
-3. [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) — validation/HPO findings
+4. [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) — validation/HPO findings
    with evidence grades.
-4. [`notebook_outputs/README.md`](notebook_outputs/README.md) — experiment-batch
+5. [`notebook_outputs/README.md`](notebook_outputs/README.md) — experiment-batch
    index and links to summaries/configs/raw evidence.
 
 Scientific policy is in [`Plan.md`](../Plan.md).
@@ -21,6 +24,8 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Information | Authority | Not its role |
 |---|---|---|
 | Public overview and minimal quick start | [`README.md`](../README.md) | Live defaults, status, or experiment history |
+| Executable orientation and local setup limits | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Exact experiment budgets or mutable results |
+| Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | Current status and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
 | Scientific/design/test policy | [`Plan.md`](../Plan.md) | Dataset inventory or copied stage blocks |
 | Dataset identity, readiness, bundles, test use | [`DATASETS.md`](DATASETS.md) | Preparation procedure |
@@ -32,9 +37,15 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Implemented notebook behavior | [`DeepMzyme_training_colab.ipynb`](../notebooks/DeepMzyme_training_colab.ipynb) | Scientific policy |
 | Verified but unfixed workflow issues | [`FOLLOW_UP_TECHNICAL_ISSUES.md`](FOLLOW_UP_TECHNICAL_ISSUES.md) | Status or policy |
 | Agent operating behavior | [`AGENTS.md`](../AGENTS.md) | Scientific evidence |
-| Cleanup execution contract | [`PROJECT_CLEANUP_PLAN.md`](PROJECT_CLEANUP_PLAN.md) | Permanent project authority |
+| Completed 2026-08-20 cleanup plan | [`archive/plans/PROJECT_CLEANUP_PLAN_2026-08-20.md`](archive/plans/PROJECT_CLEANUP_PLAN_2026-08-20.md) | Active project authority |
 
 ## Execution references
+
+For the end-to-end entry path, start with
+[`GETTING_STARTED.md`](GETTING_STARTED.md). For Colab provisioning, stock
+PyTorch preservation, browser/CLI same-VM attachment, Drive authorization,
+artifact transfer, and teardown, use
+[`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md).
 
 ### Metal
 

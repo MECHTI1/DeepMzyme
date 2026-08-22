@@ -348,6 +348,47 @@ Tracked metadata:
 
 ## Current bundles
 
+### Hugging Face repository inventory
+
+Repository:
+[`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)
+
+The repository tree was enumerated through the Hugging Face dataset API on
+2026-08-22. The dataset-card `README.md` is only a 31-byte license header, so it
+is not currently a useful file or provenance index. This section is the
+human-readable inventory.
+
+| Hugging Face path | Size (bytes) | SHA256 / verification | Purpose |
+|---|---:|---|---|
+| `.gitattributes` | 2,504 | Not applicable | Git LFS rules |
+| `README.md` | 31 | Not recorded | License-only dataset card header |
+| `CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst` | 29,237,125 | `5124b0b514b49affc158df121a87f5389ec1e027d14e0cf0a53cfb13a602c0f0` | CLEAN predictor/baseline bundle described below |
+| `CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst.sha256` | 170 | Contains the archive checksum | Portable checksum sidecar |
+| `DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst` | 3,822,130,168 | `09525aad00d6c35e32a3601ff3ecf338978c465cec1ccfc18e47b9222b220aba` | Main Colab training/data bundle described below |
+| `DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst.sha256` | 155 | Contains the archive checksum | Portable checksum sidecar |
+| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.json` | 1,087 | Not separately recorded | Portable benchmark manifest |
+| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt` | 51,844,189 | `84e7e039f1df5b3a7b32dc3d4ac1b8fa21bba2827679b4d3f1650d394e2754bf` | Plain PyG-data benchmark subset for realistic GVP+ESM compute probes |
+
+Use the artifacts as follows:
+
+- normal Colab DeepMzyme training: the main v10 archive plus its SHA256;
+- CLEAN predictor baselines without graph assets: the CLEAN predictor archive
+  plus its SHA256;
+- G4/A100 throughput reproduction only: both files under
+  `benchmarks/gvp_esm_hybrid_realistic_subset_v1/`;
+- scientific dataset membership, bundle contents, and test-use interpretation:
+  the sections below, not the minimal Hugging Face dataset card.
+
+Direct benchmark downloads:
+[manifest JSON](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.json)
+and
+[portable PyG subset](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt).
+
+The benchmark subset is compute evidence only. It was derived from CARE
+clusterRes30 training pockets and does not authorize held-out evaluation or
+stand in for a model-quality dataset. Audited G4/A100 results are summarized in
+[`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+
 ### Main Colab bundle v10
 
 Filename:

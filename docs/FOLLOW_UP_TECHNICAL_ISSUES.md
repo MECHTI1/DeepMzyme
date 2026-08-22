@@ -282,3 +282,165 @@ Current documentation states:
 The 2026-08-20 safety corrections did not designate a replacement, alter split
 membership, or resolve this scientific decision. The canonical Stage 7 cell is
 fail-closed while its internal primary-route status remains `unresolved`.
+
+## TECH-007 — Smoke suite references a removed root document
+
+**Status:** Open; documentation workaround recorded 2026-08-22
+
+**Observed behavior**
+
+Running the documented smoke command with the configured interpreter prints 37
+passing checks, then fails in
+`check_docs_do_not_use_broken_training_command()` with:
+
+```text
+FileNotFoundError: .../DeepMzyme/list_train_commands.md
+```
+
+The check loops over `README.md` and the removed root path
+`list_train_commands.md`. The command reference was archived at
+`docs/archive/workflows/list_train_commands_legacy.md`, but the smoke check was
+not repointed. Because the exception stops the suite, the final optional
+multi-metal granularity check is not reached.
+
+**Risk**
+
+The repository advertises a fast smoke command that cannot finish even when the
+preceding implementation checks pass. A user can misinterpret the stale path as
+a training failure, and later smoke checks receive no result.
+
+**Current workaround**
+
+Treat the first 37 `PASS` lines as completed checks and the final traceback as
+this known documentation-path defect. `docs/GETTING_STARTED.md` records the
+expected outcome. Do not describe the full smoke suite as green.
+
+**Proposed implementation fix**
+
+Update `tests/smoke_checks.py` in a separately authorized code/test change so
+the documentation check references the archived command file, or deliberately
+scopes the assertion to active documentation only. Preserve the check for the
+broken `src.training.run` command pattern.
+
+**Required future tests**
+
+- Run the complete smoke suite to exit code 0.
+- Confirm the archived command document contains no broken active command
+  pattern if it remains in scope.
+- Confirm the final multi-metal check runs or reports its intended data-based
+  skip.
+
+No test source was changed in the 2026-08-22 documentation task.
+
+## TECH-008 — Interactive Drive mount blocks unattended CLI execution
+
+**Status:** Open; operational workaround documented 2026-08-22
+
+**Observed behavior**
+
+The notebook's editable live configuration currently has
+`MOUNT_DRIVE = True`. Its data setup cell calls
+`google.colab.drive.mount("/content/drive")` whenever mounting is enabled or
+the selected data source is `drive`.
+
+That authorization is appropriate in an interactive browser notebook, but an
+unattended `colab exec -f notebooks/DeepMzyme_training_colab.ipynb` can wait for
+human input. The CLI's `colab drivemount` command is also interactive and is not
+a headless repair.
+
+**Risk**
+
+A terminal user can mistake the wait for a failed download, hung kernel, or
+training stall. Long automated setup becomes unreliable, and a CLI transport
+timeout can obscure the real prompt.
+
+**Current workaround**
+
+Follow `docs/COLAB_GPU_RUNBOOK.md`: create the session with the CLI, use
+`colab url` to attach a browser to the same VM/kernel, authorize Drive once in
+the browser when persistence is required, and prevent a second mount attempt in
+the run-specific editable configuration. For ephemeral smoke work, use the
+Hugging Face data source with `MOUNT_DRIVE = False` and download artifacts
+before teardown.
+
+**Proposed implementation fix**
+
+In a separately authorized notebook change, make interactive mounting an
+explicit mode with a clear preflight failure for unattended execution. A
+headless path should accept an already-mounted Drive or local/Hugging Face
+output root without prompting. Coordinate notebook prose, live controls, and
+the Colab runbook.
+
+**Required future tests**
+
+- Browser run with interactive Drive authorization.
+- CLI planning run with Drive disabled and no prompt.
+- CLI planning run against an already-mounted same-kernel Drive.
+- Clear failure when persistent storage is required but unavailable.
+- Confirmation that serious Stage 4/5 Optuna still requires persistent Drive
+  SQLite and blocks incompatible study reuse.
+
+No notebook cell was changed in the 2026-08-22 documentation task.
+
+## TECH-009 — Environment specification and Colab PyTorch contract are incomplete
+
+**Status:** Open; runtime contract documented 2026-08-22
+
+**Observed behavior**
+
+`src/requirements.txt` is present, but it is a short direct-dependency list. It
+does not define the Python version, CUDA wheel source, transitive resolution,
+ESM/ESMC version, Optuna, NumPy, scikit-learn, or the complete
+notebook/reporting environment. It pins `torch==2.5.1` for the local project
+environment.
+
+On an audited Colab G4 runtime, an unfiltered requirements installation resolved
+that line to `torch==2.5.1+cu124`. Its compiled CUDA architectures stopped at
+`sm_90`, while the assigned NVIDIA RTX PRO 6000 Blackwell Server Edition
+required `sm_120`; GPU execution failed with `no kernel image is available for
+execution on the device`. A fresh stock Colab build, `2.11.0+cu128`, included
+`sm_120` and ran the audited workload. The A100 audit also succeeded with the
+stock build.
+
+The separately installed host CLI was audited as
+`google-colab-cli==0.6.0` with `jupyter-kernel-client==0.15.0`; the documented
+installation constrains `jupyter-kernel-client<1.0` for that CLI release. This
+host tool environment is not part of `src/requirements.txt`.
+
+**Risk**
+
+- A fresh local installation cannot be reproduced exactly from the repository.
+- Installing the local PyTorch pin in Colab can make an assigned GPU unusable.
+- A future stock Colab image may change, so a hard-coded historical version is
+  not a sufficient compatibility check.
+
+**Current workaround**
+
+Use the existing absolute interpreter on the project workstation. In Colab,
+preserve an importable stock PyTorch, filter only the top-level `torch`
+requirement, and run the version/CUDA/compute-capability/architecture preflight
+before GPU work and again after installation. Exact commands are in
+`docs/COLAB_GPU_RUNBOOK.md`.
+
+**Proposed implementation fix**
+
+Create separate, validated environment contracts for local development and
+Colab instead of forcing one PyTorch pin across both hardware contexts. Record
+the Python version and solve/lock the non-hardware-dependent dependencies;
+document the CUDA/PyTorch selection boundary explicitly. Keep serious-run
+library metadata even after locks are introduced.
+
+**Required future tests**
+
+- Fresh local environment creation from the proposed lock/specification.
+- CPU import and CLI-help check in that environment.
+- Colab T4/L4/G4/A100 preflight that compares device capability to
+  `torch.cuda.get_arch_list()`.
+- Verification that the Colab install never replaces stock PyTorch unless an
+  explicitly tested compatibility path is selected.
+- Imports for `torch`, `torch_geometric`, ESMC when requested, Optuna, NumPy,
+  scikit-learn, notebook reporting dependencies, and DeepMzyme training.
+- Capture of exact versions in a serious-run metadata artifact.
+
+No dependency file or executable setup cell was changed in the 2026-08-22
+documentation task.

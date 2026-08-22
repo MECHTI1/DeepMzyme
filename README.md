@@ -36,7 +36,12 @@ test values are not eligible current HPO or model-selection evidence.
 
 ## Quick start
 
-Use the configured project interpreter from the repository root:
+For a fresh checkout, Colab, data setup, known readiness failures, and the
+shortest route to the correct experiment stage, start with
+[`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).
+
+On the existing project workstation, use the configured interpreter from the
+repository root:
 
 ```bash
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python -c "import sys; print(sys.executable)"
@@ -63,6 +68,13 @@ Task entry points:
 
 Interactive workflow:
 [`notebooks/DeepMzyme_training_colab.ipynb`](notebooks/DeepMzyme_training_colab.ipynb).
+For browser and terminal access to the same Colab GPU VM, including the required
+PyTorch-preserving installation procedure, use
+[`docs/COLAB_GPU_RUNBOOK.md`](docs/COLAB_GPU_RUNBOOK.md).
+
+`src/requirements.txt` is a lightweight dependency list, not a solved
+cross-platform environment lock. In particular, do not install it unchanged in
+Colab: its `torch==2.5.1` line can replace the GPU-compatible stock build.
 
 Do not copy mutable notebook cell values from this README. The notebook is the
 implemented live surface; exact reportable metal stage recipes belong to the
@@ -72,6 +84,8 @@ metal playbook.
 
 | Question | Authority |
 |---|---|
+| How do I get oriented and execute the project safely? | [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) |
+| How do I use a Colab GPU through the browser and CLI? | [`docs/COLAB_GPU_RUNBOOK.md`](docs/COLAB_GPU_RUNBOOK.md) |
 | Where am I and what should I do next? | [`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md) |
 | What are the scientific/design rules? | [`Plan.md`](Plan.md) |
 | What datasets, splits, and bundles exist? | [`docs/DATASETS.md`](docs/DATASETS.md) |
@@ -93,6 +107,7 @@ metal playbook.
 | `CARE_prepare_training_and_test_set/` | CARE preparation and tracked provenance |
 | `CLEAN/` | CLEAN sequence-baseline workflow |
 | `docs/notebook_outputs/` | Experiment index, summaries, and copied raw evidence |
+| `bench/` | G4/A100 compute-throughput evidence; not model-quality evidence |
 | `DeepMzyme_Data/` | Local data, features, bundles, and runs; intentionally Git-ignored |
 
 Avoid moving these directories casually: notebooks, preparation scripts,

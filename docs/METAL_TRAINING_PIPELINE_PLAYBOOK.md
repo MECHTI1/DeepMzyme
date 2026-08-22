@@ -900,6 +900,14 @@ test evaluation without Stage 6 confirmation.
 
 ## Stage 0 - Environment/Data Readiness
 
+Runtime prerequisite: complete the browser or CLI procedure in
+[`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md), including the PyTorch/CUDA
+architecture preflight. Do not install `src/requirements.txt` unchanged in
+Colab. For a CLI-created VM, use `colab url` when interactive Drive
+authorization is required so the browser and CLI remain attached to the same
+kernel. The exact Stage 0 configuration below is unchanged by that operational
+setup.
+
 Purpose: confirm Drive is mounted, the bundle is present, RING/ESM/external
 features coverage is acceptable, and `RUNS_DIR` resolves under Drive.
 

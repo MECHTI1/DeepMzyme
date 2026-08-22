@@ -14,6 +14,8 @@ clearly contains newer working logic that should be preserved.
 
 | Need | Go to |
 | --- | --- |
+| Executable orientation, local setup limits, and project navigation | `docs/GETTING_STARTED.md` |
+| Colab browser/CLI runtime and environment procedure | `docs/COLAB_GPU_RUNBOOK.md` |
 | Documentation index, validation/testing order, and output folder map | `docs/README.md` |
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Dataset/split identity, bundle provenance, and test-use history | `docs/DATASETS.md` |
@@ -445,10 +447,18 @@ The notebook's `BUNDLE_FILENAME`, `BUNDLE_URL`, and `BUNDLE_SHA256` fields are
 the executable source of truth for the currently configured bundle. Keep the
 matching tracked bundle name, checksum, contents, and upload provenance in
 `docs/DATASETS.md` instead of pinning a versioned bundle filename in this
-design document. The
-legacy non-overlapped split remains the historically trusted final held-out
-reference unless an experiment explicitly chooses and documents another final
-split.
+design document. The historical design preference was the non-overlapped
+PinMyMetal route, but its test was accessed in seven early runs and the split is
+absent from the current bundle. Therefore the primary final-test route is an
+unresolved scientific decision; do not silently substitute exact PinMyMetal or
+another dataset. The current availability and access record is owned by
+`docs/DATASETS.md`.
+
+Browser and CLI access to Colab, including same-VM attachment, stock-PyTorch
+preservation, CUDA architecture preflight, Drive authorization, artifact
+transfer, and mandatory CLI teardown, are documented in
+`docs/COLAB_GPU_RUNBOOK.md`. These operational steps do not own stage budgets
+or scientific selection policy.
 
 Colab bundles include:
 
@@ -500,11 +510,15 @@ Run tiers:
 | Serious validation | Baseline comparison, HPO, grouped-fold confirmation, or validation ablation | Eligible for model-selection discussion if gates pass | Full config, split/group policy, seeds/folds, dataset bundle checksum, git commit, key library versions, and validation artifacts |
 | Final test | One-shot held-out reporting for the fixed final-training run derived from a validation-selected configuration | Final report only; never feeds back into selection | All serious-validation records plus Stage 6 selection evidence, final-training source-run identity, checkpoint, primary-report declaration, calibration/CI settings, and no-test-selection statement |
 
-There is currently no checked-in environment specification file. Until one is
-added, serious validation and final-test records must capture enough key
+The repository has `src/requirements.txt`, but it is a lightweight direct
+dependency list rather than a complete, hardware-portable environment
+specification. It does not fix the Python version, CUDA wheel source, or all
+transitive and experiment dependencies. Until a solved lock/environment record
+is added, serious validation and final-test records must capture enough key
 library versions to make environment drift visible. A future `environment.yml`,
-`requirements.txt`, or equivalent should complement this per-run record; it must
-not replace run-specific metadata.
+lockfile, or equivalent should complement this per-run record; it must not
+replace run-specific metadata. In Colab, preserve the stock importable PyTorch
+and use the filtered installation procedure in `docs/COLAB_GPU_RUNBOOK.md`.
 
 The summary table should include, when available:
 

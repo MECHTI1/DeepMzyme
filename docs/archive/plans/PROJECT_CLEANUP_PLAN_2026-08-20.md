@@ -1,7 +1,9 @@
 # DeepMzyme Documentation Cleanup and Scientific-Provenance Plan — Revised
 
-> Intended path: `docs/PROJECT_CLEANUP_PLAN.md`  
-> Status: complete replacement for the previous plan. The repository remains unchanged in this read-only planning session.
+> Historical path: `docs/PROJECT_CLEANUP_PLAN.md`  
+> Status: completed and archived. This file preserves the approved cleanup
+> plan and its original verification contract; it is not active project
+> authority.
 
 ## Revision delta
 

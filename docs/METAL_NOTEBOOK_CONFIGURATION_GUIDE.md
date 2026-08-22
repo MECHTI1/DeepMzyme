@@ -7,6 +7,11 @@ The current project policy is baseline-first: use validation metrics for all mod
 For the cross-document validation/testing order, output-folder map, and Drive
 copying policy, read `docs/README.md` first.
 
+For fresh-checkout setup and project navigation, read
+`docs/GETTING_STARTED.md`. For Colab browser/CLI provisioning, stock-PyTorch
+preservation, CUDA architecture checks, same-VM attachment, and teardown, read
+`docs/COLAB_GPU_RUNBOOK.md` before Stage 0.
+
 > Documentation boundary: this guide owns stable notebook option semantics only.
 > The metal playbook owns exact stage blocks; the notebook owns implemented
 > behavior; `EXPERIMENT_STATUS.md` owns the current campaign; and

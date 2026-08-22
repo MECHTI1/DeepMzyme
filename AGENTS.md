@@ -106,6 +106,12 @@ claim or change.
   problems that remain deliberately unfixed pending separate authorization.
 - `README.md`: public-facing overview and minimal quick start. Good entry point
   for understanding what the project does; it does not own live defaults.
+- `docs/GETTING_STARTED.md`: executable orientation, current local-environment
+  limits, first checks, and the shortest navigation route from checkout to the
+  correct stage/evidence owner.
+- `docs/COLAB_GPU_RUNBOOK.md`: browser/CLI same-VM connection, Colab
+  PyTorch-preserving dependency installation, CUDA architecture preflight,
+  Drive authorization boundary, artifact transfer, and teardown.
 
 #### Notebook workflow and training recipes
 
