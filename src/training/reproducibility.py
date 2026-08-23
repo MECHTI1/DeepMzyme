@@ -144,6 +144,12 @@ def _file_artifact(path: Path | None) -> dict[str, Any] | None:
     return payload
 
 
+def _split_manifest_for_structure_dir(structure_dir: Path | None) -> dict[str, Any] | None:
+    if structure_dir is None:
+        return None
+    return _file_artifact(Path(structure_dir).resolve().parent / "split_metadata.json")
+
+
 def source_artifacts_payload(config: Any) -> dict[str, Any]:
     bundle_id = getattr(config, "dataset_bundle_id", None)
     bundle_sha256 = getattr(config, "dataset_bundle_sha256", None)
@@ -153,13 +159,21 @@ def source_artifacts_payload(config: Any) -> dict[str, Any]:
             "sha256": bundle_sha256,
             "declared_by_user": bool(bundle_id or bundle_sha256),
         },
+        "evaluation_protocol": {
+            "identifier": getattr(config, "evaluation_protocol_id", None),
+            "held_out_overlap_policy": getattr(config, "held_out_overlap_policy", None),
+        },
         "training_source": {
             "structure_dir": str(config.structure_dir),
             "summary_csv": _file_artifact(Path(config.summary_csv)),
+            "split_manifest": _split_manifest_for_structure_dir(Path(config.structure_dir)),
         },
         "held_out_test_source": {
             "structure_dir": str(config.test_structure_dir) if config.test_structure_dir is not None else None,
             "summary_csv": _file_artifact(Path(config.test_summary_csv)) if config.test_summary_csv is not None else None,
+            "split_manifest": _split_manifest_for_structure_dir(
+                Path(config.test_structure_dir) if config.test_structure_dir is not None else None
+            ),
             "evaluation_requested": bool(config.run_test_eval),
         },
     }

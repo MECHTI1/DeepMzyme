@@ -37,6 +37,7 @@ from training.config import (
     required_targets_for_task,
 )
 from training.data import load_training_pockets_with_report_from_dir
+from training.evaluation_protocols import enforce_held_out_overlap_policy
 from training.final_test_reporting import (
     build_metal_final_reporting_payload,
     build_softmax_mean_ensemble_payload,
@@ -290,11 +291,16 @@ def train_test_overlap_report(train_like_pockets, test_pockets) -> dict[str, Any
         key: sorted(train_sets[key].intersection(test_sets[key]))[:10]
         for key in sorted(train_sets)
     }
+    overlap_identities = {
+        key: sorted(train_sets[key].intersection(test_sets[key]))
+        for key in sorted(train_sets)
+    }
     detected = any(count > 0 for count in overlap_counts.values())
     return {
         "train_test_overlap_detected": detected,
         "overlap_counts": overlap_counts,
         "overlap_examples": overlap_examples,
+        "overlap_identities": overlap_identities,
         "overlap_warning": "Train/test overlap detected." if detected else None,
     }
 
@@ -339,11 +345,16 @@ def held_out_structure_overlap_report(
         key: sorted(train_sets[key].intersection(test_sets[key]))[:10]
         for key in sorted(train_sets)
     }
+    overlap_identities = {
+        key: sorted(train_sets[key].intersection(test_sets[key]))
+        for key in sorted(train_sets)
+    }
     detected = any(count > 0 for count in overlap_counts.values())
     return {
         "train_test_overlap_detected": detected,
         "overlap_counts": overlap_counts,
         "overlap_examples": overlap_examples,
+        "overlap_identities": overlap_identities,
         "overlap_warning": "Train/test structure-group overlap detected." if detected else None,
     }
 
@@ -352,14 +363,7 @@ def validate_held_out_structure_disjointness(config: TrainConfig) -> dict[str, A
     if not config.run_test_eval or config.test_structure_dir is None:
         return None
     report = held_out_structure_overlap_report(config.structure_dir, config.test_structure_dir)
-    if report["train_test_overlap_detected"]:
-        raise RuntimeError(
-            "Held-out evaluation blocked before inference because train/test structure groups overlap. "
-            f"overlap_counts={report['overlap_counts']}; "
-            f"overlap_examples={report['overlap_examples']}. "
-            "Resolve the dataset route or split membership before generating held-out predictions."
-        )
-    return report
+    return enforce_held_out_overlap_policy(config, report, phase="structure_files_before_inference")
 
 
 def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str, Any], extra: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -1587,12 +1591,11 @@ def evaluate_held_out_test_split(
 
         train_like_pockets = prepared.split.train_pockets + prepared.split.val_pockets
         overlap_report = train_test_overlap_report(train_like_pockets, test_load_result.pockets)
-        if overlap_report["train_test_overlap_detected"]:
-            raise RuntimeError(
-                "Held-out evaluation blocked before inference because loaded train/test pockets "
-                f"overlap: overlap_counts={overlap_report['overlap_counts']}; "
-                f"overlap_examples={overlap_report['overlap_examples']}."
-            )
+        overlap_report = enforce_held_out_overlap_policy(
+            config,
+            overlap_report,
+            phase="loaded_pockets_before_inference",
+        )
 
         test_graphs = build_graph_data_list(
             test_load_result.pockets,
@@ -1653,6 +1656,15 @@ def evaluate_held_out_test_split(
             "prediction_artifact_path": None,
         }
         if task_predicts_metal(config.task) and "metal_logits" in test_predictions and "metal_y" in test_predictions:
+            metal_test_pockets = [
+                pocket for pocket in test_load_result.pockets if getattr(pocket, "y_metal", None) is not None
+            ]
+            metal_sample_ids = [str(pocket.pocket_id) for pocket in metal_test_pockets]
+            metal_pdb_ids = [parse_structure_identity(pocket.structure_id)[0] for pocket in metal_test_pockets]
+            if len(metal_sample_ids) != int(test_predictions["metal_y"].numel()):
+                raise RuntimeError(
+                    "Cannot persist aligned held-out prediction IDs: metal pocket count does not match target count."
+                )
             val_predictions = (
                 evaluate_epoch_with_predictions(prepared.model, prepared.val_loader, device=config.device)
                 if prepared.val_loader is not None
@@ -1673,6 +1685,8 @@ def evaluate_held_out_test_split(
                 n_bootstrap=config.final_test_bootstrap_resamples,
                 confidence_level=config.final_test_bootstrap_confidence_level,
                 bootstrap_seed=config.final_test_bootstrap_seed,
+                sample_ids=metal_sample_ids,
+                pdb_ids=metal_pdb_ids,
             )
         split_identity = infer_split_identity(config)
         overlap_warning = overlap_report.get("overlap_warning") or split_identity.get("overlap_warning")
@@ -1700,6 +1714,11 @@ def evaluate_held_out_test_split(
             "split_by": config.train_val_split_by,
             "split_by_scope": "train_validation_only",
             "test_split_source": "explicit_test_structure_dir_and_test_summary_csv",
+            "evaluation_protocol_id": config.evaluation_protocol_id,
+            "held_out_overlap_policy": config.held_out_overlap_policy,
+            "overlap_policy_decision": overlap_report.get("overlap_policy_decision"),
+            "overlap_exception_applied": overlap_report.get("overlap_exception_applied", False),
+            "validated_protocol_manifest": overlap_report.get("validated_protocol_manifest"),
             "metrics": final_reporting_payload["metrics"],
             "calibrated_metrics": final_reporting_payload["calibrated_metrics"],
             "fitted_temperatures": final_reporting_payload["fitted_temperatures"],

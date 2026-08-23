@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import random
+import json
 from pathlib import Path
 from typing import Any, Callable
 
@@ -435,6 +436,8 @@ def prediction_artifact_payload(
     metal_probabilities: torch.Tensor | None = None,
     metal_calibrated_probabilities: torch.Tensor | None = None,
     metal_temperature: float | None = None,
+    sample_ids: list[str] | tuple[str, ...] | None = None,
+    pdb_ids: list[str] | tuple[str, ...] | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {"task": task, "metadata": metadata or {}}
@@ -448,6 +451,19 @@ def prediction_artifact_payload(
         payload["metal_calibrated_probabilities"] = _to_cpu_tensor(metal_calibrated_probabilities).float()
     if metal_temperature is not None:
         payload["metal_temperature"] = float(metal_temperature)
+    expected_count = int(metal_y.numel()) if metal_y is not None else None
+    if sample_ids is not None:
+        normalized_sample_ids = [str(value) for value in sample_ids]
+        if expected_count is not None and len(normalized_sample_ids) != expected_count:
+            raise ValueError("sample_ids length must match metal_y length.")
+        if len(normalized_sample_ids) != len(set(normalized_sample_ids)):
+            raise ValueError("sample_ids must be unique so paired-route predictions can be aligned safely.")
+        payload["sample_ids"] = normalized_sample_ids
+    if pdb_ids is not None:
+        normalized_pdb_ids = [str(value).lower() for value in pdb_ids]
+        if expected_count is not None and len(normalized_pdb_ids) != expected_count:
+            raise ValueError("pdb_ids length must match metal_y length.")
+        payload["pdb_ids"] = normalized_pdb_ids
     return payload
 
 
@@ -481,6 +497,8 @@ def build_metal_final_reporting_payload(
     confidence_level: float = 0.95,
     bootstrap_seed: int = 20260518,
     artifact_prefix: str = "test",
+    sample_ids: list[str] | tuple[str, ...] | None = None,
+    pdb_ids: list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     test_logits = _to_cpu_tensor(test_logits).float()
@@ -631,6 +649,8 @@ def build_metal_final_reporting_payload(
             metal_probabilities=probabilities,
             metal_calibrated_probabilities=calibrated_probabilities,
             metal_temperature=temperature,
+            sample_ids=sample_ids,
+            pdb_ids=pdb_ids,
         ),
     )
 
@@ -692,6 +712,27 @@ def build_softmax_mean_ensemble_payload(
         current_target = _to_cpu_tensor(current_target).long()
         if current_target.numel() != target.numel() or not torch.equal(current_target, target):
             raise ValueError(f"Ensemble prediction artifact {index} has different target ordering.")
+
+    sample_id_lists = [artifact.get("sample_ids") for artifact in artifacts]
+    pdb_id_lists = [artifact.get("pdb_ids") for artifact in artifacts]
+    if any(item is not None for item in sample_id_lists) and not all(isinstance(item, list) for item in sample_id_lists):
+        raise ValueError("Either every ensemble artifact or no ensemble artifact must contain sample_ids.")
+    if any(item is not None for item in pdb_id_lists) and not all(isinstance(item, list) for item in pdb_id_lists):
+        raise ValueError("Either every ensemble artifact or no ensemble artifact must contain pdb_ids.")
+    if all(isinstance(item, list) for item in sample_id_lists):
+        first_sample_ids = sample_id_lists[0]
+        for index, current in enumerate(sample_id_lists[1:], start=2):
+            if current != first_sample_ids:
+                raise ValueError(f"Ensemble prediction artifact {index} has different sample_id ordering.")
+    else:
+        first_sample_ids = None
+    if all(isinstance(item, list) for item in pdb_id_lists):
+        first_pdb_ids = pdb_id_lists[0]
+        for index, current in enumerate(pdb_id_lists[1:], start=2):
+            if current != first_pdb_ids:
+                raise ValueError(f"Ensemble prediction artifact {index} has different pdb_id ordering.")
+    else:
+        first_pdb_ids = None
 
     stacked_probabilities = torch.stack([_to_cpu_tensor(item).float() for item in probabilities], dim=0)
     mean_probabilities = stacked_probabilities.mean(dim=0)
@@ -830,6 +871,8 @@ def build_softmax_mean_ensemble_payload(
             metal_y=target,
             metal_probabilities=mean_probabilities,
             metal_calibrated_probabilities=ensemble_calibrated_probabilities,
+            sample_ids=first_sample_ids,
+            pdb_ids=first_pdb_ids,
             metadata={"ensemble_rule": "unweighted arithmetic mean of five fixed softmax probability vectors"},
         ),
     )
@@ -858,3 +901,149 @@ def build_softmax_mean_ensemble_payload(
         "prediction_artifact_path": str(prediction_path),
         "n_test_pockets": int(target.numel()),
     }
+
+
+def _balanced_accuracy_from_predictions(predictions: torch.Tensor, targets: torch.Tensor) -> float:
+    recalls: list[float] = []
+    for class_id in sorted({int(value) for value in targets.tolist()}):
+        mask = targets == class_id
+        recalls.append(float((predictions[mask] == targets[mask]).float().mean().item()))
+    if not recalls:
+        raise ValueError("Cannot compute balanced accuracy for empty targets.")
+    return float(sum(recalls) / len(recalls))
+
+
+def paired_metal_route_comparison(
+    primary_artifact: dict[str, Any] | Path,
+    secondary_artifact: dict[str, Any] | Path,
+    *,
+    n_bootstrap: int = 1000,
+    confidence_level: float = 0.95,
+    seed: int = 20260518,
+) -> dict[str, Any]:
+    """Compare two routes on the same ordered test pockets with paired resampling."""
+
+    primary = load_prediction_artifact(primary_artifact) if isinstance(primary_artifact, Path) else primary_artifact
+    secondary = load_prediction_artifact(secondary_artifact) if isinstance(secondary_artifact, Path) else secondary_artifact
+    primary_ids = primary.get("sample_ids")
+    secondary_ids = secondary.get("sample_ids")
+    if not isinstance(primary_ids, list) or not isinstance(secondary_ids, list):
+        raise ValueError("Both paired-route artifacts must contain ordered sample_ids.")
+    if primary_ids != secondary_ids:
+        raise ValueError("Paired-route prediction artifacts have different sample_id ordering.")
+    if len(primary_ids) != len(set(primary_ids)):
+        raise ValueError("Paired-route sample_ids must be unique.")
+    primary_pdbids = primary.get("pdb_ids")
+    secondary_pdbids = secondary.get("pdb_ids")
+    if not isinstance(primary_pdbids, list) or not isinstance(secondary_pdbids, list):
+        raise ValueError("Both paired-route artifacts must contain ordered pdb_ids.")
+    if primary_pdbids != secondary_pdbids:
+        raise ValueError("Paired-route prediction artifacts have different pdb_id ordering.")
+
+    primary_targets = primary.get("metal_y")
+    secondary_targets = secondary.get("metal_y")
+    primary_probabilities = primary.get("metal_probabilities")
+    secondary_probabilities = secondary.get("metal_probabilities")
+    if not all(
+        isinstance(value, torch.Tensor)
+        for value in (primary_targets, secondary_targets, primary_probabilities, secondary_probabilities)
+    ):
+        raise ValueError("Both paired-route artifacts must contain metal_y and metal_probabilities tensors.")
+    targets = _to_cpu_tensor(primary_targets).long()
+    secondary_targets = _to_cpu_tensor(secondary_targets).long()
+    if not torch.equal(targets, secondary_targets):
+        raise ValueError("Paired-route prediction artifacts have different target ordering or labels.")
+    primary_probabilities = _to_cpu_tensor(primary_probabilities).float()
+    secondary_probabilities = _to_cpu_tensor(secondary_probabilities).float()
+    if primary_probabilities.shape != secondary_probabilities.shape:
+        raise ValueError("Paired-route probability tensors have different shapes.")
+    if len(primary_ids) != int(targets.numel()):
+        raise ValueError("Paired-route sample_id count does not match target count.")
+    if n_bootstrap < 1:
+        raise ValueError("n_bootstrap must be at least 1.")
+    if not 0.0 < confidence_level < 1.0:
+        raise ValueError("confidence_level must be in (0, 1).")
+
+    primary_predictions = primary_probabilities.argmax(dim=-1)
+    secondary_predictions = secondary_probabilities.argmax(dim=-1)
+    primary_accuracy = float((primary_predictions == targets).float().mean().item())
+    secondary_accuracy = float((secondary_predictions == targets).float().mean().item())
+    primary_balanced = _balanced_accuracy_from_predictions(primary_predictions, targets)
+    secondary_balanced = _balanced_accuracy_from_predictions(secondary_predictions, targets)
+
+    rng = random.Random(int(seed))
+    accuracy_deltas: list[float] = []
+    balanced_deltas: list[float] = []
+    for _ in range(int(n_bootstrap)):
+        indices = _stratified_bootstrap_indices(targets, rng)
+        sampled_targets = targets[indices]
+        sampled_primary = primary_predictions[indices]
+        sampled_secondary = secondary_predictions[indices]
+        accuracy_deltas.append(
+            float((sampled_secondary == sampled_targets).float().mean().item())
+            - float((sampled_primary == sampled_targets).float().mean().item())
+        )
+        balanced_deltas.append(
+            _balanced_accuracy_from_predictions(sampled_secondary, sampled_targets)
+            - _balanced_accuracy_from_predictions(sampled_primary, sampled_targets)
+        )
+
+    per_class_recall_delta: dict[str, float] = {}
+    for class_id in sorted({int(value) for value in targets.tolist()}):
+        mask = targets == class_id
+        label = METAL_TARGET_LABELS.get(class_id, str(class_id))
+        per_class_recall_delta[label] = (
+            float((secondary_predictions[mask] == targets[mask]).float().mean().item())
+            - float((primary_predictions[mask] == targets[mask]).float().mean().item())
+        )
+
+    return {
+        "comparison_type": "paired_same_test_membership",
+        "n_aligned_test_pockets": len(primary_ids),
+        "n_unique_test_pdbids": len(set(primary_pdbids)),
+        "sample_ids_aligned": True,
+        "targets_aligned": True,
+        "primary_route": {
+            "role": "primary_final_report",
+            "accuracy": primary_accuracy,
+            "balanced_accuracy": primary_balanced,
+        },
+        "secondary_route": {
+            "role": "secondary_diagnostic_report",
+            "accuracy": secondary_accuracy,
+            "balanced_accuracy": secondary_balanced,
+        },
+        "secondary_minus_primary": {
+            "accuracy": secondary_accuracy - primary_accuracy,
+            "accuracy_paired_bootstrap_ci": _metric_ci(accuracy_deltas, confidence_level),
+            "balanced_accuracy": secondary_balanced - primary_balanced,
+            "balanced_accuracy_paired_bootstrap_ci": _metric_ci(balanced_deltas, confidence_level),
+            "per_class_recall": per_class_recall_delta,
+        },
+        "bootstrap": {
+            "method": "paired_stratified_by_true_class",
+            "n_bootstrap": int(n_bootstrap),
+            "confidence_level": float(confidence_level),
+            "seed": int(seed),
+        },
+        "interpretation": (
+            "The two routes use the same held-out test membership and are paired, not independent. "
+            "The exact route is secondary and its metrics must not change the selected configuration or primary report."
+        ),
+    }
+
+
+def write_paired_metal_route_report(
+    output_path: Path,
+    primary_artifact: dict[str, Any] | Path,
+    secondary_artifact: dict[str, Any] | Path,
+    **comparison_kwargs: Any,
+) -> dict[str, Any]:
+    report = paired_metal_route_comparison(
+        primary_artifact,
+        secondary_artifact,
+        **comparison_kwargs,
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report

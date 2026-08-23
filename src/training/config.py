@@ -24,6 +24,13 @@ from model_variants import FUSION_MODE_CHOICES, MODEL_ARCHITECTURE_CHOICES
 from model_variants.factory import normalize_fusion_mode, normalize_model_architecture
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
+from training.evaluation_protocols import (
+    FORBID_HELD_OUT_OVERLAP,
+    STANDARD_DISJOINT_PROTOCOL_ID,
+    VALID_EVALUATION_PROTOCOL_IDS,
+    VALID_HELD_OUT_OVERLAP_POLICIES,
+    validate_evaluation_protocol_configuration,
+)
 from training.feature_paths import VALID_EXTERNAL_FEATURE_SOURCE_CHOICES
 
 VALID_SPLIT_BY_CHOICES = ("pdbid", "pdbid_chain", "structure_id", "pocket_id")
@@ -203,6 +210,8 @@ class TrainConfig:
     save_epoch_checkpoints: bool = False
     log_per_class_metrics: bool = False
     selection_metric: str | None = None
+    evaluation_protocol_id: str = STANDARD_DISJOINT_PROTOCOL_ID
+    held_out_overlap_policy: str = FORBID_HELD_OUT_OVERLAP
     final_test_primary_report: str = "single_checkpoint"
     final_test_ensemble_mode: str = "single_checkpoint"
     final_test_result_role: str = "primary_final_report"
@@ -231,6 +240,7 @@ class TrainConfig:
             r"[0-9a-fA-F]{64}", self.dataset_bundle_sha256
         ):
             raise ValueError("--dataset-bundle-sha256 must be exactly 64 hexadecimal characters.")
+        validate_evaluation_protocol_configuration(self)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -689,6 +699,26 @@ def build_arg_parser() -> argparse.ArgumentParser:
         choices=VALID_SELECTION_METRIC_CHOICES,
     )
     parser.add_argument(
+        "--evaluation-protocol-id",
+        type=str,
+        default=STANDARD_DISJOINT_PROTOCOL_ID,
+        choices=VALID_EVALUATION_PROTOCOL_IDS,
+        help=(
+            "Validated evaluation protocol. The default requires disjoint held-out data; "
+            "the PinMyMetal dual protocol is metal-only and keeps exact results secondary."
+        ),
+    )
+    parser.add_argument(
+        "--held-out-overlap-policy",
+        type=str,
+        default=FORBID_HELD_OUT_OVERLAP,
+        choices=VALID_HELD_OUT_OVERLAP_POLICIES,
+        help=(
+            "Held-out overlap gate. 'forbid' is the default. The exact-PinMyMetal exception "
+            "is accepted only with its validated metal dual protocol and secondary role."
+        ),
+    )
+    parser.add_argument(
         "--final-test-primary-report",
         type=str,
         default="single_checkpoint",
@@ -975,6 +1005,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         save_epoch_checkpoints=args.save_epoch_checkpoints,
         log_per_class_metrics=args.log_per_class_metrics,
         selection_metric=selection_metric,
+        evaluation_protocol_id=args.evaluation_protocol_id,
+        held_out_overlap_policy=args.held_out_overlap_policy,
         final_test_primary_report=args.final_test_primary_report,
         final_test_ensemble_mode=args.final_test_ensemble_mode,
         final_test_result_role=args.final_test_result_role,

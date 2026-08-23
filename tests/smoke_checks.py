@@ -95,6 +95,8 @@ def check_training_cli_help() -> None:
         "--num-workers",
         "--pin-memory",
         "--allow-train-loss-test-eval-debug",
+        "--evaluation-protocol-id",
+        "--held-out-overlap-policy",
         "--train-val-split-by",
         "--split-by",
         "--dataset-bundle-id",
