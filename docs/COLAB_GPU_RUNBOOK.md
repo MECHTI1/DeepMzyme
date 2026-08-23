@@ -16,8 +16,8 @@ runtime connection and environment procedure, not scientific stage budgets.
 ## Non-negotiable runtime rules
 
 1. Preserve the PyTorch build already supplied by Colab when it imports
-   cleanly. Do not run `colab install -r src/requirements.txt` and do not run
-   an unfiltered `pip install -r src/requirements.txt` on the VM.
+   cleanly. Install only `requirements/colab-overlay.txt`; do not install the
+   Linux CPU lock or `src/requirements.txt` on the VM.
 2. Print the PyTorch version, CUDA version, GPU compute capability, and compiled
    CUDA architecture list before any GPU workload.
 3. Use an explicit CLI session name on every command.
@@ -43,7 +43,7 @@ Then:
 2. Run the notebook's runtime/environment cell.
 3. Run the PyTorch/CUDA preflight below before a training or benchmark cell.
 4. Paste the exact Stage 0 block from the metal playbook.
-5. Let the notebook clone the repository and install its filtered requirements.
+5. Let the notebook clone the repository and install its PyTorch-free Colab overlay.
 6. Authorize Drive interactively if persistence is required.
 7. Keep launch controls off until the planning table matches the intended
    stage.
@@ -153,15 +153,13 @@ version number, is the acceptance gate.
 
 ## Clone the repository and install dependencies safely
 
-This setup intentionally duplicates the notebook's filtering rule: it removes
-only a top-level `torch` requirement and retains `torch-geometric` and every
-other requirement.
+This setup uses the same explicit PyTorch-free overlay as the notebook. The
+guard below fails if a future edit accidentally adds a top-level PyTorch line.
 
 ```bash
 colab exec -s deepmzyme-g4 --timeout 1200 <<'PY'
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 repo_dir = Path("/content/DeepMzyme")
@@ -190,36 +188,18 @@ except Exception as exc:
     ) from exc
 print("Preserving existing PyTorch:", torch.__version__)
 
-requirements_path = repo_dir / "src" / "requirements.txt"
+overlay_path = repo_dir / "requirements" / "colab-overlay.txt"
+overlay_lines = overlay_path.read_text(encoding="utf-8").splitlines()
+normalized = [line.split("#", 1)[0].strip().lower() for line in overlay_lines]
+if any(line == "torch" or line.startswith(("torch==", "torch>=", "torch<=")) for line in normalized):
+    raise RuntimeError("The managed Colab overlay must not contain a PyTorch requirement")
 
-def is_top_level_torch_requirement(line: str) -> bool:
-    package = line.split("#", 1)[0].strip().lower()
-    return package == "torch" or package.startswith(
-        ("torch==", "torch>=", "torch<=", "torch~=", "torch>", "torch<")
-    )
+subprocess.run(
+    [sys.executable, "-m", "pip", "install", "-r", str(overlay_path)],
+    check=True,
+)
 
-original_lines = requirements_path.read_text(encoding="utf-8").splitlines()
-filtered_lines = [
-    line for line in original_lines if not is_top_level_torch_requirement(line)
-]
-if len(filtered_lines) == len(original_lines):
-    raise RuntimeError("Expected a top-level torch requirement but did not find one")
-
-with tempfile.NamedTemporaryFile(
-    "w", suffix="_deepmzyme_requirements.txt", delete=False
-) as handle:
-    handle.write("\n".join(filtered_lines) + "\n")
-    filtered_path = Path(handle.name)
-
-try:
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-r", str(filtered_path)],
-        check=True,
-    )
-finally:
-    filtered_path.unlink(missing_ok=True)
-
-print("Installed filtered DeepMzyme requirements without replacing PyTorch.")
+print("Installed the DeepMzyme Colab overlay without replacing PyTorch.")
 PY
 ```
 
@@ -230,9 +210,8 @@ changed for any reason, restart the kernel before importing `torch`,
 The main v10 bundle already includes ESM embeddings. For normal runs, keep
 `PREPARE_MISSING_ESM_EMBEDDINGS = False` and avoid installing the optional ESM
 generation package. If missing embeddings must be generated, the current
-notebook can install `esm` when its explicit auto-install control is enabled;
-that package is not pinned in `src/requirements.txt`, so record its resolved
-version and treat the environment as a separately identified configuration.
+notebook can install the pinned `esm==3.2.3` package when its explicit
+auto-install control is enabled; record the resulting environment as usual.
 
 Do not replace the code above with:
 
@@ -318,11 +297,12 @@ Do not upload a pickle containing a project-defined Python class and expect it
 to deserialize in a remote runtime without the defining module on `sys.path`.
 An audited attempt failed with `ModuleNotFoundError: No module named 'graph'`.
 
-For portable graph artifacts, convert project subclasses to plain library
-types such as `torch_geometric.data.Data` before serialization, preserving the
-tensors, shapes, labels, and metadata needed by the workload. The Hugging Face
-benchmark artifact documented in [`DATASETS.md`](DATASETS.md) follows the
-portable benchmark route; it is separate from the main training bundle.
+The hosted benchmark v1 artifact does not satisfy that rule: it contains
+`graph.construction.PocketData` and is retained only as historical evidence.
+The v2 contract serializes mappings, lists, scalars, and tensors, proves
+`torch.load(..., weights_only=True)` succeeds, and reconstructs `PocketData`
+inside the runner after safe loading. No v2 artifact has been generated or
+uploaded yet. See [`bench/README.md`](../bench/README.md).
 
 ## Monitor, download, and stop
 
@@ -353,9 +333,9 @@ outside this CLI and must not be targeted or stopped by name.
 
 | Symptom | Meaning | Action |
 |---|---|---|
-| `no kernel image is available for execution on the device` on G4 | Installed PyTorch lacks `sm_120` kernels | Stop the run, restart with stock Colab PyTorch, use filtered requirements, rerun preflight |
+| `no kernel image is available for execution on the device` on G4 | Installed PyTorch lacks `sm_120` kernels | Stop the run, restart with stock Colab PyTorch, apply only the Colab overlay, rerun preflight |
 | `colab exec` ends near 30 seconds | CLI transport timeout, not an OOM | Repeat only after raising `--timeout`, or use browser/detached execution for long work |
-| `ModuleNotFoundError` while loading a pickle | Serialized project class is unavailable remotely | Convert to plain PyG `Data` or install/import the exact defining module before loading |
+| `ModuleNotFoundError` while loading a pickle | Serialized project class is unavailable remotely | Use the tensor-only v2 schema and reconstruct the project graph class only after `weights_only=True` loading |
 | Drive mount waits for input | Interactive authorization was triggered | Use the browser attached through `colab url`, authorize once, and avoid a second mount in CLI execution |
 | 401/403 from CLI | Host CLI authentication problem | Run `colab whoami`, report the result, and stop; do not use VM-side `colab auth` as a repair |
 | Requested GPU differs from status | Assignment mismatch | Do not start the workload; report the actual assignment |

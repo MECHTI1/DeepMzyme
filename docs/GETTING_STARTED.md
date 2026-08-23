@@ -16,7 +16,7 @@ configuration from examples in this guide.
 | Existing project workstation | The configured DeepMzyme Conda environment is already present | Directly executable with the interpreter below |
 | Colab browser notebook | You want the supported staged workflow and interactive Drive authorization | Recommended cloud entry point |
 | Colab CLI plus browser | You want terminal provisioning, environment checks, transfers, or monitoring while retaining the notebook UI on the same VM | Follow [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) |
-| Fresh local machine | You need a newly reconstructed environment | Not yet exactly reproducible: the repository has a dependency list, but no Python-version specification or solved lockfile |
+| Fresh Linux x86_64 machine | You need a newly reconstructed development/CPU-test environment | Python 3.12 and all resolved packages are pinned in `uv.lock`; follow the environment contract |
 
 ## Five-minute orientation
 
@@ -52,33 +52,43 @@ Then answer these questions in order:
 5. Are there known execution problems? Read
    [`FOLLOW_UP_TECHNICAL_ISSUES.md`](FOLLOW_UP_TECHNICAL_ISSUES.md).
 
-## Local environment contract
+## Local environment contracts
 
-The current repository expects this existing interpreter:
+For a fresh Linux x86_64 development and CPU-test environment, follow
+[`requirements/README.md`](../requirements/README.md):
+
+```bash
+uv python install 3.12
+uv sync --frozen
+uv run --frozen --no-sync python src/train.py --help
+uv run --frozen --no-sync pytest
+```
+
+`pyproject.toml` and `uv.lock` pin Python and the complete resolved CPU
+environment. The default groups include tests and reporting; ESMC generation is
+an explicit optional group. This contract does not select a local CUDA wheel.
+
+The existing workstation continues to use this interpreter:
 
 ```text
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python
 ```
 
-[`src/requirements.txt`](../src/requirements.txt) is a lightweight dependency
-list, not a complete environment lock. It currently pins `torch==2.5.1` and
-`torch-geometric==2.7.0`, but it does not record the Python version, CUDA wheel
-source, transitive versions, ESM/ESMC version, Optuna, NumPy, scikit-learn, or
-the full notebook/reporting stack. Therefore:
+That Conda prefix is a real local execution path, but its installed versions do
+not currently equal the canonical CPU lock. Therefore:
 
 - use the configured interpreter on the existing workstation;
-- do not claim that a fresh local environment is bit-for-bit reproducible from
-  `src/requirements.txt` alone;
+- identify workstation runs as using the existing non-canonical prefix;
 - record actual library versions in every serious validation or final-report
   run;
-- do not install the full requirements file unchanged in Colab. Its PyTorch
-  pin can replace a GPU-compatible Colab build. Use the
-  [Colab runbook](COLAB_GPU_RUNBOOK.md), which filters only the top-level
-  `torch` requirement just as the notebook does.
+- do not install the Linux lock or `src/requirements.txt` in Colab. Use the
+  PyTorch-free [Colab overlay](../requirements/colab-overlay.txt) and the
+  [Colab runbook](COLAB_GPU_RUNBOOK.md).
 
-If dependencies are intentionally being repaired in the existing configured
-environment, use that interpreter explicitly rather than a bare `python` or
-`pip`:
+`src/requirements.txt` remains a pinned compatibility file for older local pip
+commands, not the transitive reconstruction authority. If dependencies are
+intentionally being repaired in the existing prefix, use that interpreter
+explicitly:
 
 ```bash
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python -m pip install -r src/requirements.txt
@@ -128,6 +138,10 @@ Thin wrappers are also present:
 These help commands prove interface availability only. A training launch still
 requires explicit dataset, split, feature, output, and experiment settings.
 
+`src/training/smoke_test.py` is an internal dormant helper, not a supported CLI
+entry point: it has no executable main or current caller. Use
+`tests/smoke_checks.py` for the supported fast compatibility check.
+
 ## Notebook workflow
 
 The implemented workflow is
@@ -156,14 +170,14 @@ before attempting an EC stage.
 |---|---|---|
 | Configured interpreter | Present at the documented absolute path | Existing workstation path is usable |
 | `src/train.py --help` | Passes | Unified CLI can be imported and parsed |
-| `tests/smoke_checks.py` | 37 checks pass, then the suite stops on a removed root file path | The full smoke suite is not currently green; see [`TECH-007`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-007--smoke-suite-references-a-removed-root-document) |
-| Colab browser setup | Notebook clones the repository, preserves importable Colab PyTorch, and filters the top-level torch requirement | Supported with interactive Drive behavior noted in `TECH-008` |
-| Colab G4 PyTorch | Stock `2.11.0+cu128` was compatible with `sm_120`; installing the repository's `torch==2.5.1` resolved to `2.5.1+cu124` and failed on `sm_120` | Preserve stock Colab PyTorch and run the architecture preflight |
+| `tests/smoke_checks.py` | Compatibility wrapper now continues through all checks, reports optional local-data absence as a skip, and returns nonzero if any check fails | Also exposed as isolated pytest cases; see [`TECH-007`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-007--smoke-suite-references-a-removed-root-document) |
+| Colab browser setup | Notebook clones the repository, preserves importable Colab PyTorch, and installs the PyTorch-free Colab overlay | Supported with interactive Drive behavior noted in `TECH-008` |
+| Colab G4 PyTorch | Stock `2.11.0+cu128` was compatible with `sm_120`; the separate overlay omits PyTorch | Preserve stock Colab PyTorch and run the architecture preflight |
 | EC staged recipe | Code supports EC, but the EC playbook has notebook-surface mismatches | Not certified end-to-end in affected stages |
 
-The smoke failure is a stale documentation-path assertion, not evidence that
-the preceding 37 checks failed. The final optional multi-metal data check is
-not reached until `TECH-007` is fixed.
+The smoke wrapper now completes all checks even if an earlier check fails, and
+the optional multi-metal check reports a skip when its local fixture data is
+absent. Pytest exposes the same checks independently.
 
 ## Repository map
 
@@ -192,4 +206,3 @@ The current project has fixed-split metal anchors and exploratory joint
 results, but no Grade-1 or Grade-2 grouped-fold result, no completed Stage 6B
 final refit, and no approved primary final-test route. The concise current
 matrix and exact values live in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
-

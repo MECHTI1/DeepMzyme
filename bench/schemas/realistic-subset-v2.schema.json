@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GMBioinformatics/DeepMzyme/bench/schemas/realistic-subset-v2.schema.json",
+  "title": "DeepMzyme realistic subset v2 logical schema",
+  "type": "object",
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "graphs",
+    "normalization",
+    "metadata",
+    "provenance"
+  ],
+  "properties": {
+    "artifact_type": {"const": "deepmzyme.realistic_subset"},
+    "schema_version": {"const": 2},
+    "graphs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "object", "minProperties": 1}
+    },
+    "normalization": {
+      "type": "object",
+      "required": ["means", "stds", "clamp"],
+      "properties": {
+        "means": {"type": "object"},
+        "stds": {"type": "object"},
+        "clamp": {"type": "number"}
+      }
+    },
+    "metadata": {"type": "object"},
+    "provenance": {"type": "object"}
+  }
+}
+

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import gc
 import json
 import os
@@ -30,6 +31,17 @@ from torch_geometric.data import Data
 
 from data_structures import AA_ORDER, EDGE_SOURCE_TYPES, INTERACTION_SUMMARIES_OPTIONAL_WITH_RING
 from model_variants import build_pocket_classifier
+from benchmarking.artifacts import (
+    BENCHMARK_RESULT_ARTIFACT_TYPE,
+    BENCHMARK_RESULT_SCHEMA_VERSION,
+    validate_benchmark_result,
+)
+from training.reproducibility import (
+    runtime_environment_payload,
+    sha256_file,
+    source_control_payload,
+    utc_timestamp,
+)
 
 
 CURRENT_BATCH_SIZE = 12
@@ -40,7 +52,7 @@ METAL_NODES_PER_GRAPH = 1
 DIRECTED_NEIGHBORS_PER_NODE = 24
 MAX_CAPACITY_PROBE_BATCH = 16_384
 ESM_DIM = 960
-RESULT_PATH = Path(os.environ.get("DEEPMZYME_BENCHMARK_RESULT", "/content/benchmark_result.json"))
+RESULT_PATH = Path(os.environ.get("DEEPMZYME_BENCHMARK_RESULT", "/content/benchmark_result_synthetic_v2.json"))
 
 
 MODEL_CONFIG: dict[str, Any] = {
@@ -258,15 +270,55 @@ def find_largest_batch_size(
     return low, False, probes
 
 
-def write_result(payload: dict[str, Any]) -> None:
-    RESULT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RESULT_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Run the DeepMzyme synthetic compute benchmark v2.")
+    parser.add_argument("--result", type=Path, default=RESULT_PATH)
+    parser.add_argument("--source-commit", default=os.environ.get("DEEPMZYME_SOURCE_COMMIT"))
+    return parser
+
+
+def write_result(path: Path, payload: dict[str, Any]) -> None:
+    validate_benchmark_result(payload)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(payload, indent=2, sort_keys=True), flush=True)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
     started_at = time.time()
+    source_control = source_control_payload(REPO_ROOT)
+    source_commit = args.source_commit or source_control.get("commit")
+    runner_path = Path(__file__).resolve()
     payload: dict[str, Any] = {
+        "artifact_type": BENCHMARK_RESULT_ARTIFACT_TYPE,
+        "schema_version": BENCHMARK_RESULT_SCHEMA_VERSION,
+        "benchmark_id": "gvp_esm_hybrid_synthetic_training_step_v2",
+        "status": "error",
+        "created_at_utc": utc_timestamp(),
+        "invocation": {"argv": [sys.executable, *sys.argv], "working_directory": str(Path.cwd())},
+        "source_control": {**source_control, "commit": source_commit},
+        "runner": {"path": str(runner_path), "sha256": sha256_file(runner_path)},
+        "runtime_environment": runtime_environment_payload(),
+        "optimizer": {
+            "class": "torch.optim.AdamW",
+            "learning_rate": 3.705631497756492e-5,
+            "weight_decay": 1e-5,
+            "gradient_clip_norm": 1.0,
+        },
+        "seeds": {
+            "python": None,
+            "torch": 42,
+            "torch_cuda_all": 42,
+            "synthetic_tensor_generation": 42,
+            "deterministic_algorithms": False,
+        },
+        "timing": {
+            "step_times_seconds": [],
+            "median_step_time_seconds": None,
+            "samples_per_second": None,
+            "elapsed_seconds": None,
+        },
         "benchmark": "DeepMzyme real GVP+ESM hybrid training step",
         "current_batch_size": CURRENT_BATCH_SIZE,
         "measured_steps": MEASURED_STEPS,
@@ -287,11 +339,20 @@ def main() -> None:
         "oom": False,
     }
 
+    if not source_commit:
+        payload["error"] = {
+            "type": "ValueError",
+            "message": "A source commit is required; run in a Git checkout or pass --source-commit.",
+            "traceback": None,
+        }
+        payload["timing"]["elapsed_seconds"] = time.time() - started_at
+        write_result(args.result, payload)
+        return 1
     if not torch.cuda.is_available():
-        payload["runtime_error"] = "CUDA is not available."
-        payload["elapsed_seconds"] = time.time() - started_at
-        write_result(payload)
-        return
+        payload["error"] = {"type": "RuntimeError", "message": "CUDA is not available.", "traceback": None}
+        payload["timing"]["elapsed_seconds"] = time.time() - started_at
+        write_result(args.result, payload)
+        return 1
 
     device = torch.device("cuda:0")
     properties = torch.cuda.get_device_properties(device)
@@ -336,6 +397,14 @@ def main() -> None:
                 "peak_memory_reserved_bytes": int(torch.cuda.max_memory_reserved()),
             }
         )
+        median_step = statistics.median(step_times)
+        payload["timing"].update(
+            {
+                "step_times_seconds": step_times,
+                "median_step_time_seconds": median_step,
+                "samples_per_second": CURRENT_BATCH_SIZE / median_step,
+            }
+        )
         del current_batch
         clear_cuda_state(optimizer)
 
@@ -352,13 +421,23 @@ def main() -> None:
         payload["oom"] = is_oom_error(exc)
         payload["runtime_error"] = f"{type(exc).__name__}: {exc}"
         payload["traceback"] = traceback.format_exc()
+        payload["error"] = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "traceback": payload["traceback"],
+        }
         try:
             torch.cuda.empty_cache()
         except BaseException:
             pass
 
+    if "error" not in payload:
+        payload["status"] = "ok"
     payload["elapsed_seconds"] = time.time() - started_at
-    write_result(payload)
+    payload["timing"]["elapsed_seconds"] = payload["elapsed_seconds"]
+    write_result(args.result, payload)
+    return 0 if payload["status"] == "ok" else 1
 
 
-main()
+if __name__ == "__main__":
+    raise SystemExit(main())

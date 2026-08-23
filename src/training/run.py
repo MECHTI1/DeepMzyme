@@ -4,7 +4,6 @@ import copy
 import csv
 import json
 import random
-import subprocess
 import warnings
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -57,6 +56,11 @@ from training.loop import (
 )
 from training.preflight import run_preflight_checks
 from training.runtime_preparation import prepare_runtime_inputs
+from training.reproducibility import (
+    runtime_environment_payload,
+    source_artifacts_payload,
+    source_control_payload,
+)
 from training.splits import (
     PocketSplit,
     assign_ec_group_metadata,
@@ -74,6 +78,9 @@ from training.structure_loading import find_structure_files
 @dataclass(frozen=True)
 class PreparedRun:
     config_payload: dict[str, Any]
+    runtime_environment: dict[str, Any]
+    source_artifacts: dict[str, Any]
+    source_control: dict[str, Any]
     run_dir: Path
     split: PocketSplit
     dataset_summary: dict[str, Any]
@@ -195,18 +202,7 @@ def to_jsonable(value: Any) -> Any:
 
 
 def git_commit_hash() -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=Path(__file__).resolve().parents[2],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except Exception:
-        return None
-    commit = result.stdout.strip()
-    return commit or None
+    return source_control_payload(Path(__file__).resolve().parents[2]).get("commit")
 
 
 def utc_timestamp() -> str:
@@ -1076,7 +1072,11 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         if config.balance_metal_site_symbols and task_predicts_metal(config.task)
         else None
     )
-    config_payload["git_commit"] = git_commit_hash()
+    runtime_environment = runtime_environment_payload()
+    source_artifacts = source_artifacts_payload(config)
+    source_control = source_control_payload(Path(__file__).resolve().parents[2])
+    config_payload["git_commit"] = source_control.get("commit")
+    config_payload["git_dirty"] = source_control.get("dirty")
     run_dir = build_run_dir(config)
     save_json(
         run_dir / "prepare_status.json",
@@ -1421,6 +1421,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         )
         return PreparedRun(
             config_payload=config_payload,
+            runtime_environment=runtime_environment,
+            source_artifacts=source_artifacts,
+            source_control=source_control,
             run_dir=run_dir,
             split=split,
             dataset_summary=dataset_summary,
@@ -1779,6 +1782,9 @@ def persist_run_outputs(
 
     run_metadata = {
         "config": prepared.config_payload,
+        "runtime_environment": prepared.runtime_environment,
+        "source_artifacts": prepared.source_artifacts,
+        "source_control": prepared.source_control,
         "dataset_summary": prepared.dataset_summary,
         "esm_embedding_metadata": prepared.dataset_summary.get("runtime_preparation", {}).get(
             "esm_embedding_metadata"
@@ -1808,6 +1814,9 @@ def persist_run_outputs(
         prepared.run_dir / "run_config.json",
         {
             "config": prepared.config_payload,
+            "runtime_environment": prepared.runtime_environment,
+            "source_artifacts": prepared.source_artifacts,
+            "source_control": prepared.source_control,
             "dataset_summary": prepared.dataset_summary,
             "esm_embedding_metadata": prepared.dataset_summary.get("runtime_preparation", {}).get(
                 "esm_embedding_metadata"
@@ -1909,7 +1918,11 @@ def evaluate_softmax_mean_checkpoint_ensemble(
 
     config_payload = config_to_payload(config)
     config_payload.update(infer_split_identity(config))
-    config_payload["git_commit"] = git_commit_hash()
+    runtime_environment = runtime_environment_payload()
+    source_artifacts = source_artifacts_payload(config)
+    source_control = source_control_payload(Path(__file__).resolve().parents[2])
+    config_payload["git_commit"] = source_control.get("commit")
+    config_payload["git_dirty"] = source_control.get("dirty")
     run_dir = build_run_dir(config)
     ensemble_payload = build_softmax_mean_ensemble_payload(
         output_dir=run_dir,
@@ -1976,6 +1989,9 @@ def evaluate_softmax_mean_checkpoint_ensemble(
     }
     run_config_payload = {
         "config": config_payload,
+        "runtime_environment": runtime_environment,
+        "source_artifacts": source_artifacts,
+        "source_control": source_control,
         "selection_metric": config_payload.get("selection_metric"),
         "selected_checkpoint": None,
         "selected_checkpoint_epoch": None,
@@ -1984,6 +2000,9 @@ def evaluate_softmax_mean_checkpoint_ensemble(
     }
     run_metadata = {
         "config": config_payload,
+        "runtime_environment": runtime_environment,
+        "source_artifacts": source_artifacts,
+        "source_control": source_control,
         "selection_metric": config_payload.get("selection_metric"),
         "selected_checkpoint": None,
         "selected_checkpoint_epoch": None,

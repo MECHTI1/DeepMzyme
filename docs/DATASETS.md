@@ -366,8 +366,8 @@ human-readable inventory.
 | `CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst.sha256` | 170 | Contains the archive checksum | Portable checksum sidecar |
 | `DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst` | 3,822,130,168 | `09525aad00d6c35e32a3601ff3ecf338978c465cec1ccfc18e47b9222b220aba` | Main Colab training/data bundle described below |
 | `DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst.sha256` | 155 | Contains the archive checksum | Portable checksum sidecar |
-| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.json` | 1,087 | Not separately recorded | Portable benchmark manifest |
-| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt` | 51,844,189 | `84e7e039f1df5b3a7b32dc3d4ac1b8fa21bba2827679b4d3f1650d394e2754bf` | Plain PyG-data benchmark subset for realistic GVP+ESM compute probes |
+| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.json` | 1,087 | Local tracked copy SHA256 `f4660b80ffeeb4e6e158791943a0dc5ba771461b5cf2a0080fff158ab1e7e6b5` | Historical v1 manifest; incomplete cohort provenance |
+| `benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt` | 51,844,189 | `84e7e039f1df5b3a7b32dc3d4ac1b8fa21bba2827679b4d3f1650d394e2754bf` | Historical v1 `PocketData` pickle; requires DeepMzyme during unsafe loading and is not a plain portable PyG artifact |
 
 Use the artifacts as follows:
 
@@ -382,12 +382,25 @@ Use the artifacts as follows:
 Direct benchmark downloads:
 [manifest JSON](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.json)
 and
-[portable PyG subset](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt).
+[historical v1 subset](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/gvp_esm_hybrid_realistic_subset_v1/realistic_subset.pt).
 
-The benchmark subset is compute evidence only. It was derived from CARE
-clusterRes30 training pockets and does not authorize held-out evaluation or
-stand in for a model-quality dataset. Audited G4/A100 results are summarized in
-[`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+The hosted v1 subset contains the project-defined
+`graph.construction.PocketData` class and requires
+`torch.load(..., weights_only=False)` with the project importable. Preserve it
+and its hash as historical evidence; do not describe it as independently
+portable. The local v2 builder and runner now define a tensor-only safe-loading
+contract at [`bench/README.md`](../bench/README.md), but no v2 subset, G4/A100
+result, or Hugging Face upload exists yet because regeneration and external
+publication require separate authorization.
+
+The benchmark subset is compute evidence only. V1 selected 240 pockets from 342
+feature-complete eligible CARE training pockets; those 342 pockets are not the
+full CARE training source, whose tracked provenance contains 1,520 catalytic
+sites before the benchmark's strict label/ESM/RING/external-feature/structure
+eligibility filters. V1 discarded the load/skip report, so its exact reduction
+cannot be reconstructed from the manifest. It does not authorize held-out
+evaluation or stand in for a model-quality dataset. Audited legacy G4/A100
+results are summarized in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
 ### Main Colab bundle v10
 

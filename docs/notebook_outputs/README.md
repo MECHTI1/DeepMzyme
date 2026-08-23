@@ -113,6 +113,10 @@ directly against metal-only anchors.
   `unknown_in_older_embeddings`.
 - Historical run records generally lack proof tying them to the current bundle
   checksum. Do not retroactively assign a modern bundle hash.
+- The current late-fusion historical anchor is evidence-only, not an executable
+  reproduction package: its exact source bundle/checksum and checkpoint
+  binaries are unavailable. Retain its measured values with that limitation;
+  never backfill them with a modern environment or bundle identity.
 
 ## Storage contract
 

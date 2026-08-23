@@ -72,9 +72,12 @@ For browser and terminal access to the same Colab GPU VM, including the required
 PyTorch-preserving installation procedure, use
 [`docs/COLAB_GPU_RUNBOOK.md`](docs/COLAB_GPU_RUNBOOK.md).
 
-`src/requirements.txt` is a lightweight dependency list, not a solved
-cross-platform environment lock. In particular, do not install it unchanged in
-Colab: its `torch==2.5.1` line can replace the GPU-compatible stock build.
+Fresh Linux x86_64 development and CPU-test setup is locked to Python 3.12 by
+[`pyproject.toml`](pyproject.toml) and [`uv.lock`](uv.lock); exact commands and
+the optional ESM group are in the [environment contract](requirements/README.md).
+Colab uses the separate
+[`requirements/colab-overlay.txt`](requirements/colab-overlay.txt), which
+deliberately preserves the GPU-compatible stock PyTorch build.
 
 Do not copy mutable notebook cell values from this README. The notebook is the
 implemented live surface; exact reportable metal stage recipes belong to the
@@ -85,6 +88,8 @@ metal playbook.
 | Question | Authority |
 |---|---|
 | How do I get oriented and execute the project safely? | [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) |
+| How do I reconstruct the development/test environment? | [`requirements/README.md`](requirements/README.md) |
+| How do I reproduce or interpret compute benchmarks? | [`bench/README.md`](bench/README.md) |
 | How do I use a Colab GPU through the browser and CLI? | [`docs/COLAB_GPU_RUNBOOK.md`](docs/COLAB_GPU_RUNBOOK.md) |
 | Where am I and what should I do next? | [`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md) |
 | What are the scientific/design rules? | [`Plan.md`](Plan.md) |

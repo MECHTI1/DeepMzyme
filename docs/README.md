@@ -25,6 +25,9 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 |---|---|---|
 | Public overview and minimal quick start | [`README.md`](../README.md) | Live defaults, status, or experiment history |
 | Executable orientation and local setup limits | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Exact experiment budgets or mutable results |
+| Locked Linux environment and Colab overlay boundary | [`../requirements/README.md`](../requirements/README.md) | Scientific stage policy |
+| Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |
+| Reproducibility remediation decisions and verification | [`REPRODUCIBILITY_REMEDIATION_PLAN.md`](REPRODUCIBILITY_REMEDIATION_PLAN.md) | Scientific stage policy |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | Current status and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
 | Scientific/design/test policy | [`Plan.md`](../Plan.md) | Dataset inventory or copied stage blocks |

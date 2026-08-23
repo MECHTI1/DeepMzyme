@@ -1,0 +1,12 @@
+# Managed-Colab overlay. Deliberately excludes torch and CUDA packages.
+torch-geometric==2.7.0
+biopython==1.86
+biotite==1.6.0
+propka==3.5.1
+gemmi==0.7.3
+numpy==2.4.4
+scikit-learn==1.8.0
+optuna==4.8.0
+pandas==3.0.1
+matplotlib==3.10.9
+

@@ -16,6 +16,9 @@ clearly contains newer working logic that should be preserved.
 | --- | --- |
 | Executable orientation, local setup limits, and project navigation | `docs/GETTING_STARTED.md` |
 | Colab browser/CLI runtime and environment procedure | `docs/COLAB_GPU_RUNBOOK.md` |
+| Locked environment contracts | `requirements/README.md` |
+| Benchmark schemas, commands, and artifact inventory | `bench/README.md` |
+| Reproducibility remediation decisions and verification | `docs/REPRODUCIBILITY_REMEDIATION_PLAN.md` |
 | Documentation index, validation/testing order, and output folder map | `docs/README.md` |
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Dataset/split identity, bundle provenance, and test-use history | `docs/DATASETS.md` |
@@ -230,6 +233,8 @@ can reproduce a command-line run.
 | Data paths | `--test-summary-csv` | optional test summary CSV | Held-out site-level labels paired with `--test-structure-dir`. | Expose |
 | Output/reporting | `--runs-dir` | output root | Parent directory for all run folders and reports. | Expose |
 | Output/reporting | `--run-name` | optional | Human-readable run folder name; auto-generated if blank. | Expose |
+| Output/reporting | `--dataset-bundle-id` | optional | Stable bundle filename or identifier recorded for source provenance. | Notebook-generated |
+| Output/reporting | `--dataset-bundle-sha256` | optional 64-character SHA256 | Declared bundle checksum recorded for source provenance; never backfilled into historical runs. | Notebook-generated |
 | Output/reporting | `--run-test-eval` | off by default in CLI | Runs held-out test reporting for a validation-selected checkpoint. For reportable final runs, the checkpoint must come from the frozen final-training/refit run derived from validation/CV selection. | Expose with warnings |
 | Output/reporting | `--selection-metric` | task-dependent default | Metric used to select the best checkpoint. Use validation metrics for real comparisons. | Expose |
 | Output/reporting | `--save-epoch-checkpoints` | false | Save every epoch checkpoint, not only the selected/best checkpoint. | Advanced |
@@ -510,15 +515,16 @@ Run tiers:
 | Serious validation | Baseline comparison, HPO, grouped-fold confirmation, or validation ablation | Eligible for model-selection discussion if gates pass | Full config, split/group policy, seeds/folds, dataset bundle checksum, git commit, key library versions, and validation artifacts |
 | Final test | One-shot held-out reporting for the fixed final-training run derived from a validation-selected configuration | Final report only; never feeds back into selection | All serious-validation records plus Stage 6 selection evidence, final-training source-run identity, checkpoint, primary-report declaration, calibration/CI settings, and no-test-selection statement |
 
-The repository has `src/requirements.txt`, but it is a lightweight direct
-dependency list rather than a complete, hardware-portable environment
-specification. It does not fix the Python version, CUDA wheel source, or all
-transitive and experiment dependencies. Until a solved lock/environment record
-is added, serious validation and final-test records must capture enough key
-library versions to make environment drift visible. A future `environment.yml`,
-lockfile, or equivalent should complement this per-run record; it must not
-replace run-specific metadata. In Colab, preserve the stock importable PyTorch
-and use the filtered installation procedure in `docs/COLAB_GPU_RUNBOOK.md`.
+The repository has a solved Linux x86_64/Python 3.12 CPU development/test
+contract in `pyproject.toml` and `uv.lock`, plus optional test, reporting, and
+ESM groups documented in `requirements/README.md`. This lock is not a CUDA
+contract. Colab uses `requirements/colab-overlay.txt`, which deliberately omits
+PyTorch so the managed stock PyTorch/CUDA stack remains intact and is checked
+with the architecture preflight in `docs/COLAB_GPU_RUNBOOK.md`. A separately
+locked local CUDA environment is not currently supported. Per-run environment
+capture remains mandatory because a lock complements rather than replaces
+run-specific metadata, GPU/driver identity, commit/dirty state, and source
+artifact checksums.
 
 The summary table should include, when available:
 

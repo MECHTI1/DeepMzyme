@@ -25,6 +25,9 @@ standard.
   mean `val_metal_balanced_acc = 0.635468206972`.
 - Evidence grade: **3 — fixed validation split across seeds**, not grouped-fold
   confirmation.
+- Reproduction status: **historical/non-rerunnable from the current repository**.
+  The exact source bundle/checksum and checkpoint binaries are absent; do not
+  present the anchor as an executable reproduction package.
 - Stable comparison anchor: Only-ESM, LR `3e-5` with inverse-frequency
   weighting; five-seed mean `0.625325230595`.
 - The tested node-level late-fusion trial-49-derived configuration did not
@@ -49,7 +52,7 @@ Detailed parameters and confidence limits:
 | Dataset preparation | Exact/Common70 PinMyMetal, CLEAN30 variants, and CARE clusterRes30 are prepared; provenance is tracked | Materialization and bundle status are in `docs/DATASETS.md` | CLEAN10, current non-overlap/harsh roots, CARE upstream citation, and final-test route remain unresolved |
 | Metal confirmation | Stage 6 grouped folds × seeds, paired CI, and rare-class protection are implemented/documented | No completed current Stage 6 artifact found | Candidate set must be frozen and Stage 6 run |
 | Final refit/reporting | Stage 6B and fail-closed Stage 7 workflow exist | Safety behavior is documented and smoke-covered before the current suite failure point | No completed Stage 6B refit; Stage 7 scientifically blocked |
-| Colab execution | Unified notebook, main HF bundle, CLI/browser same-VM procedure, and G4/A100 compute probes exist | Stock Colab PyTorch worked on audited G4 and A100 runtimes | Fresh local environment is not locked; unattended Drive mount and smoke-path issues remain open |
+| Colab execution | Unified notebook, main HF bundle, CLI/browser same-VM procedure, and G4/A100 compute probes exist | Stock Colab PyTorch worked on audited G4 and A100 runtimes; a separate PyTorch-free overlay is implemented | Unattended Drive mount remains open; legacy benchmark provenance requires authorized v2 regeneration/reruns |
 
 For the shortest path through these owners, use
 [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).
@@ -131,8 +134,11 @@ FP32, and no held-out test data.
 | [`bench/g4_realistic.json`](bench/g4_realistic.json) | NVIDIA RTX PRO 6000 Blackwell Server Edition, compute 12.0 | `2.11.0+cu128` / CUDA 12.8, includes `sm_120` | `0.0120814975 s` | `993.254 samples/s` | No |
 | [`bench/a100_realistic.json`](bench/a100_realistic.json) | NVIDIA A100-SXM4-40GB, compute 8.0 | `2.11.0+cu128` / CUDA 12.8, includes `sm_80` | `0.0473745975 s` | `253.300 samples/s` | No |
 
-The corresponding portable subset is inventoried in
-[`docs/DATASETS.md`](docs/DATASETS.md). Re-run the architecture preflight in
+The corresponding historical v1 subset is inventoried in
+[`docs/DATASETS.md`](docs/DATASETS.md). These are immutable legacy result-schema
+files: they lack the current runner's required input-artifact, command, commit,
+runner-hash, and full environment fields, and the v1 subset contains a pickled
+project class. Re-run the architecture preflight in
 [`docs/COLAB_GPU_RUNBOOK.md`](docs/COLAB_GPU_RUNBOOK.md) because stock Colab
 versions can change.
 
@@ -180,12 +186,12 @@ These corrections do not resolve or select the primary final-test dataset.
 
 Execution-readiness issues that do not change the scientific next action:
 
-- the smoke suite reaches 37 passes and then stops on a stale removed-document
-  path (`TECH-007`);
+- the smoke path repair and pytest/CPU-CI conversion are implemented locally;
+  CI confirmation depends on running the new workflow (`TECH-007`);
 - the notebook's live `MOUNT_DRIVE = True` can block unattended CLI notebook
   execution (`TECH-008`);
-- `src/requirements.txt` is not a complete environment lock and its PyTorch pin
-  must be filtered in Colab (`TECH-009`).
+- a Python 3.12 Linux CPU lock and PyTorch-free Colab overlay now exist; Colab
+  hardware validation remains runtime-specific (`TECH-009`).
 
 Open implementation issues:
 [`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`](docs/FOLLOW_UP_TECHNICAL_ISSUES.md).

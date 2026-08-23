@@ -1,0 +1,46 @@
+[project]
+name = "deepmzyme-environment"
+version = "0.0.0"
+description = "Reproducible development and test environment for DeepMzyme"
+requires-python = "==3.12.*"
+dependencies = [
+    "biopython==1.86",
+    "biotite==1.6.0",
+    "gemmi==0.7.3",
+    "numpy==2.4.4",
+    "optuna==4.8.0",
+    "propka==3.5.1",
+    "scikit-learn==1.8.0",
+    "torch==2.5.1",
+    "torch-geometric==2.7.0",
+]
+
+[dependency-groups]
+test = [
+    "pytest==8.4.2",
+]
+reporting = [
+    "jupyterlab==4.5.7",
+    "matplotlib==3.10.9",
+    "pandas==3.0.1",
+]
+esm = [
+    "esm==3.2.3",
+]
+
+[tool.uv]
+default-groups = ["test", "reporting"]
+package = false
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+python_files = ["test_*.py", "*_checks.py"]
+testpaths = ["tests"]

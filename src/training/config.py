@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Sequence
@@ -104,6 +105,8 @@ class TrainConfig:
     external_feature_source: str = "auto"
     runs_dir: str | None = None
     run_name: str | None = None
+    dataset_bundle_id: str | None = None
+    dataset_bundle_sha256: str | None = None
     test_structure_dir: Path | None = None
     test_summary_csv: Path | None = None
     run_test_eval: bool = False
@@ -224,6 +227,10 @@ class TrainConfig:
             )
         object.__setattr__(self, "train_val_split_by", effective_split_by)
         object.__setattr__(self, "split_by", effective_split_by)
+        if self.dataset_bundle_sha256 is not None and not re.fullmatch(
+            r"[0-9a-fA-F]{64}", self.dataset_bundle_sha256
+        ):
+            raise ValueError("--dataset-bundle-sha256 must be exactly 64 hexadecimal characters.")
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -243,6 +250,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--runs-dir", type=str, default=None)
     parser.add_argument("--run-name", type=str, default=None)
+    parser.add_argument(
+        "--dataset-bundle-id",
+        type=str,
+        default=None,
+        help="Optional stable identifier or filename for the dataset bundle used by this run.",
+    )
+    parser.add_argument(
+        "--dataset-bundle-sha256",
+        type=str,
+        default=None,
+        help="Optional declared SHA256 for --dataset-bundle-id; recorded without backfilling old runs.",
+    )
     parser.add_argument("--test-structure-dir", type=Path, default=None)
     parser.add_argument("--test-summary-csv", type=Path, default=None)
     parser.add_argument("--run-test-eval", action="store_true")
@@ -859,6 +878,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         external_feature_source=args.external_feature_source,
         runs_dir=args.runs_dir,
         run_name=args.run_name,
+        dataset_bundle_id=args.dataset_bundle_id,
+        dataset_bundle_sha256=args.dataset_bundle_sha256,
         test_structure_dir=args.test_structure_dir,
         test_summary_csv=args.test_summary_csv,
         run_test_eval=args.run_test_eval,

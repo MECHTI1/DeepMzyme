@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GMBioinformatics/DeepMzyme/bench/schemas/benchmark-result-v2.schema.json",
+  "title": "DeepMzyme benchmark result v2",
+  "type": "object",
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "benchmark_id",
+    "status",
+    "invocation",
+    "source_control",
+    "runner",
+    "runtime_environment",
+    "optimizer",
+    "seeds",
+    "timing"
+  ],
+  "properties": {
+    "artifact_type": {"const": "deepmzyme.benchmark_result"},
+    "schema_version": {"const": 2},
+    "benchmark_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["ok", "error"]},
+    "invocation": {"type": "object"},
+    "source_control": {"type": "object"},
+    "runner": {"type": "object"},
+    "runtime_environment": {"type": "object"},
+    "input_artifact": {"type": "object"},
+    "optimizer": {"type": "object"},
+    "seeds": {"type": "object"},
+    "timing": {"type": "object"},
+    "error": {"type": ["object", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "error"}}},
+      "then": {"required": ["error"]}
+    }
+  ]
+}

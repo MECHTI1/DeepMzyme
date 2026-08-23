@@ -60,7 +60,7 @@ source rejection, and the single accepted workflow value.
 
 **Status:** Open
 
-**Observed behavior**
+**Pre-remediation observed behavior**
 
 Static comparison found EC playbook assignments absent from the current
 notebook assignment surface:
@@ -285,7 +285,7 @@ fail-closed while its internal primary-route status remains `unresolved`.
 
 ## TECH-007 — Smoke suite references a removed root document
 
-**Status:** Open; documentation workaround recorded 2026-08-22
+**Status:** Resolved in source 2026-08-23; CI run still external
 
 **Observed behavior**
 
@@ -309,28 +309,23 @@ The repository advertises a fast smoke command that cannot finish even when the
 preceding implementation checks pass. A user can misinterpret the stale path as
 a training failure, and later smoke checks receive no result.
 
-**Current workaround**
+**Implemented resolution**
 
-Treat the first 37 `PASS` lines as completed checks and the final traceback as
-this known documentation-path defect. `docs/GETTING_STARTED.md` records the
-expected outcome. Do not describe the full smoke suite as green.
+`tests/smoke_checks.py` now checks the archived command-document path, preserves
+the broken-command assertion, continues through all checks after individual
+failures, reports optional local-data absence as an explicit skip, and returns
+nonzero when any check fails. The same checks are exposed as isolated pytest
+cases, and `.github/workflows/cpu-ci.yml` runs CLI help, pytest, and the
+compatibility wrapper in the pinned CPU environment.
 
-**Proposed implementation fix**
+**Validation status**
 
-Update `tests/smoke_checks.py` in a separately authorized code/test change so
-the documentation check references the archived command file, or deliberately
-scopes the assertion to active documentation only. Preserve the check for the
-broken `src.training.run` command pattern.
-
-**Required future tests**
-
-- Run the complete smoke suite to exit code 0.
-- Confirm the archived command document contains no broken active command
-  pattern if it remains in scope.
-- Confirm the final multi-metal check runs or reports its intended data-based
-  skip.
-
-No test source was changed in the 2026-08-22 documentation task.
+The compatibility wrapper completed all 43 checks locally: 42 passed and the
+final optional multi-metal check reported its intended data-based skip. Pytest
+collected the same 43 isolated cases with the same result. The archived command
+document passed the retained broken-command assertion. The external GitHub
+Actions result is not available from this local change; the detailed local
+verification record belongs in the remediation plan.
 
 ## TECH-008 — Interactive Drive mount blocks unattended CLI execution
 
@@ -384,12 +379,12 @@ No notebook cell was changed in the 2026-08-22 documentation task.
 
 ## TECH-009 — Environment specification and Colab PyTorch contract are incomplete
 
-**Status:** Open; runtime contract documented 2026-08-22
+**Status:** Partially resolved 2026-08-23; local CPU contract implemented, GPU runtime checks remain
 
 **Observed behavior**
 
-`src/requirements.txt` is present, but it is a short direct-dependency list. It
-does not define the Python version, CUDA wheel source, transitive resolution,
+Before the 2026-08-23 remediation, `src/requirements.txt` was a short
+direct-dependency list. It did not define the Python version, CUDA wheel source, transitive resolution,
 ESM/ESMC version, Optuna, NumPy, scikit-learn, or the complete
 notebook/reporting environment. It pins `torch==2.5.1` for the local project
 environment.
@@ -407,40 +402,39 @@ The separately installed host CLI was audited as
 installation constrains `jupyter-kernel-client<1.0` for that CLI release. This
 host tool environment is not part of `src/requirements.txt`.
 
-**Risk**
+**Pre-remediation risk**
 
 - A fresh local installation cannot be reproduced exactly from the repository.
 - Installing the local PyTorch pin in Colab can make an assigned GPU unusable.
 - A future stock Colab image may change, so a hard-coded historical version is
   not a sufficient compatibility check.
 
-**Current workaround**
+**Implemented resolution**
 
-Use the existing absolute interpreter on the project workstation. In Colab,
-preserve an importable stock PyTorch, filter only the top-level `torch`
-requirement, and run the version/CUDA/compute-capability/architecture preflight
-before GPU work and again after installation. Exact commands are in
-`docs/COLAB_GPU_RUNBOOK.md`.
+`pyproject.toml` and `uv.lock` now define the Linux x86_64/Python 3.12 CPU
+development/test environment. Test, reporting, and optional ESM dependency
+groups are explicit. `requirements/colab-overlay.txt` is a separate managed
+Colab overlay that omits PyTorch, and the notebook now installs that overlay
+instead of filtering the local requirements file. `requirements/README.md`
+documents that the existing workstation prefix is real but non-canonical and
+that no separately locked local CUDA environment is supported yet.
 
-**Proposed implementation fix**
+Future training runs automatically record Python/platform/package versions,
+PyTorch/CUDA/GPU details, exact invocation, commit/dirty state, summary-CSV
+checksums, and optional dataset bundle ID/SHA256 in additive
+`runtime_environment`, `source_control`, and `source_artifacts` objects. The
+notebook passes its existing bundle values to every generated training command.
 
-Create separate, validated environment contracts for local development and
-Colab instead of forcing one PyTorch pin across both hardware contexts. Record
-the Python version and solve/lock the non-hardware-dependent dependencies;
-document the CUDA/PyTorch selection boundary explicitly. Keep serious-run
-library metadata even after locks are introduced.
+**Remaining runtime tests**
 
-**Required future tests**
-
-- Fresh local environment creation from the proposed lock/specification.
-- CPU import and CLI-help check in that environment.
 - Colab T4/L4/G4/A100 preflight that compares device capability to
   `torch.cuda.get_arch_list()`.
 - Verification that the Colab install never replaces stock PyTorch unless an
   explicitly tested compatibility path is selected.
-- Imports for `torch`, `torch_geometric`, ESMC when requested, Optuna, NumPy,
-  scikit-learn, notebook reporting dependencies, and DeepMzyme training.
 - Capture of exact versions in a serious-run metadata artifact.
 
-No dependency file or executable setup cell was changed in the 2026-08-22
-documentation task.
+Fresh CPU-lock reconstruction, CLI help, core dependency imports, reporting
+dependencies, and the optional ESM `3.2.3` imports are recorded in the
+remediation plan. Colab T4/L4/G4/A100 validation and a serious training-run
+metadata capture remain runtime actions and were not performed by this
+non-training remediation.

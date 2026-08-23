@@ -97,6 +97,8 @@ def check_training_cli_help() -> None:
         "--allow-train-loss-test-eval-debug",
         "--train-val-split-by",
         "--split-by",
+        "--dataset-bundle-id",
+        "--dataset-bundle-sha256",
     )
     missing = [option for option in expected_options if option not in help_text]
     if missing:
@@ -2659,7 +2661,7 @@ def check_hetero_amino_acid_residues_are_excluded() -> None:
 def check_docs_do_not_use_broken_training_command() -> None:
     broken_module = ".".join(("src", "training", "run"))
     broken_patterns = (f"python -m {broken_module}", broken_module)
-    for relative_path in ("README.md", "list_train_commands.md"):
+    for relative_path in ("README.md", "docs/archive/workflows/list_train_commands_legacy.md"):
         text = (REPO_ROOT / relative_path).read_text(encoding="utf-8")
         matches = [pattern for pattern in broken_patterns if pattern in text]
         if matches:
@@ -2750,8 +2752,162 @@ def check_multi_metal_site_level_granularity() -> None:
         raise AssertionError("Structure-level inspection CSV was accepted as a site-level training summary CSV.")
 
 
-def main() -> int:
-    checks = (
+def check_reproducibility_metadata_helpers() -> None:
+    from training.reproducibility import runtime_environment_payload, source_artifacts_payload, source_control_payload
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_repro_metadata_") as tmp:
+        root = Path(tmp)
+        summary_csv = root / "summary.csv"
+        summary_csv.write_text("pdbid,metal residue number,EC number,metal residue type\n", encoding="utf-8")
+        config = TrainConfig(
+            structure_dir=root,
+            summary_csv=summary_csv,
+            dataset_bundle_id="fixture-bundle.tar.zst",
+            dataset_bundle_sha256="a" * 64,
+        )
+        runtime = runtime_environment_payload(["src/train.py", "--help"])
+        if runtime["python"]["executable"] != sys.executable:
+            raise AssertionError("Runtime metadata did not capture the active interpreter.")
+        if runtime["invocation"][-2:] != ["src/train.py", "--help"]:
+            raise AssertionError(f"Runtime invocation was not captured exactly: {runtime['invocation']}")
+        artifacts = source_artifacts_payload(config)
+        if artifacts["dataset_bundle"]["sha256"] != "a" * 64:
+            raise AssertionError("Dataset bundle checksum was not retained in source artifacts.")
+        if artifacts["training_source"]["summary_csv"]["sha256"] is None:
+            raise AssertionError("Training summary CSV checksum was not calculated.")
+        source_control = source_control_payload(REPO_ROOT)
+        if not source_control.get("commit") or not isinstance(source_control.get("dirty"), bool):
+            raise AssertionError(f"Git commit/dirty state was not captured: {source_control}")
+
+
+def check_portable_benchmark_subset_v2_round_trip() -> None:
+    from benchmarking.artifacts import (
+        REALISTIC_SUBSET_ARTIFACT_TYPE,
+        REALISTIC_SUBSET_SCHEMA_VERSION,
+        graph_to_tensor_mapping,
+        load_portable_subset,
+        reconstruct_pocket_graphs,
+    )
+    from graph.construction import PocketData
+
+    graph = PocketData(
+        x_esm=torch.zeros((2, 3), dtype=torch.float32),
+        edge_index=torch.tensor([[0, 1], [1, 0]], dtype=torch.long),
+        metal_node_mask=torch.tensor([False, True]),
+        residue_node_mask=torch.tensor([True, False]),
+    )
+    payload = {
+        "artifact_type": REALISTIC_SUBSET_ARTIFACT_TYPE,
+        "schema_version": REALISTIC_SUBSET_SCHEMA_VERSION,
+        "graphs": [graph_to_tensor_mapping(graph)],
+        "normalization": {
+            "means": {"x_esm": torch.zeros(3)},
+            "stds": {"x_esm": torch.ones(3)},
+            "clamp": 5.0,
+        },
+        "metadata": {"sample_size": 1},
+        "provenance": {"fixture": True},
+    }
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_benchmark_v2_") as tmp:
+        artifact_path = Path(tmp) / "subset.pt"
+        torch.save(payload, artifact_path)
+        subprocess.run(
+            [
+                PYTHON,
+                "-I",
+                "-c",
+                "import sys, torch; torch.load(sys.argv[1], map_location='cpu', weights_only=True)",
+                str(artifact_path),
+            ],
+            cwd=tmp,
+            check=True,
+        )
+        loaded = load_portable_subset(artifact_path)
+        graphs = reconstruct_pocket_graphs(loaded)
+    if len(graphs) != 1 or not isinstance(graphs[0], PocketData):
+        raise AssertionError("Portable tensor mapping was not reconstructed as PocketData inside the project.")
+
+
+def check_benchmark_failure_exit_and_schema() -> None:
+    from benchmarking.artifacts import validate_benchmark_result
+
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_benchmark_failure_") as tmp:
+        root = Path(tmp)
+        result_path = root / "failed.json"
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(SRC_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+        commit = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        completed = subprocess.run(
+            [
+                PYTHON,
+                str(REPO_ROOT / "benchmark_step_realistic.py"),
+                "--subset",
+                str(root / "missing-v2.pt"),
+                "--subset-sha256",
+                "b" * 64,
+                "--source-commit",
+                commit,
+                "--result",
+                str(result_path),
+            ],
+            cwd=REPO_ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode == 0:
+            raise AssertionError("Failed realistic benchmark returned exit code 0.")
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+        validate_benchmark_result(result)
+        if result["status"] != "error" or not result.get("error"):
+            raise AssertionError(f"Failed benchmark did not preserve diagnostics: {result}")
+
+        synthetic_result_path = root / "failed-synthetic.json"
+        synthetic_env = dict(env)
+        synthetic_env["CUDA_VISIBLE_DEVICES"] = ""
+        synthetic = subprocess.run(
+            [
+                PYTHON,
+                str(REPO_ROOT / "benchmark_step.py"),
+                "--source-commit",
+                commit,
+                "--result",
+                str(synthetic_result_path),
+            ],
+            cwd=REPO_ROOT,
+            env=synthetic_env,
+            capture_output=True,
+            text=True,
+        )
+        if synthetic.returncode == 0:
+            raise AssertionError("Failed synthetic benchmark returned exit code 0.")
+        synthetic_result = json.loads(synthetic_result_path.read_text(encoding="utf-8"))
+        validate_benchmark_result(synthetic_result)
+        if synthetic_result["status"] != "error" or not synthetic_result.get("error"):
+            raise AssertionError(f"Failed synthetic benchmark did not preserve diagnostics: {synthetic_result}")
+
+
+def check_benchmark_inventory_links() -> None:
+    readme = REPO_ROOT / "bench" / "README.md"
+    if not readme.is_file():
+        raise AssertionError("bench/README.md is missing.")
+    for relative_path in (
+        "bench/schemas/realistic-subset-v2.schema.json",
+        "bench/schemas/benchmark-result-v2.schema.json",
+        "benchmark_step_realistic.py",
+        "build_realistic_benchmark_subset.py",
+    ):
+        if not (REPO_ROOT / relative_path).is_file():
+            raise AssertionError(f"Benchmark inventory target is missing: {relative_path}")
+
+
+SMOKE_CHECKS = (
         check_training_cli_help,
         check_test_eval_safety,
         check_held_out_overlap_blocks_before_inference,
@@ -2791,14 +2947,45 @@ def main() -> int:
         check_hetero_amino_acid_residues_are_excluded,
         check_docs_do_not_use_broken_training_command,
         check_multi_metal_site_level_granularity,
+        check_reproducibility_metadata_helpers,
+        check_portable_benchmark_subset_v2_round_trip,
+        check_benchmark_failure_exit_and_schema,
+        check_benchmark_inventory_links,
     )
-    for check in checks:
+
+
+try:
+    import pytest
+except ImportError:  # The compatibility wrapper remains runnable in minimal environments.
+    pytest = None
+
+
+if pytest is not None:
+
+    @pytest.mark.parametrize("check", SMOKE_CHECKS, ids=lambda check: check.__name__)
+    def test_smoke_check(check) -> None:
+        try:
+            check()
+        except SkipCheck as exc:
+            pytest.skip(str(exc))
+
+
+def main() -> int:
+    failures: list[tuple[str, BaseException]] = []
+    for check in SMOKE_CHECKS:
         try:
             check()
         except SkipCheck as exc:
             print(f"SKIP {check.__name__}: {exc}")
+        except Exception as exc:
+            failures.append((check.__name__, exc))
+            print(f"FAIL {check.__name__}: {type(exc).__name__}: {exc}")
         else:
             print(f"PASS {check.__name__}")
+    if failures:
+        print(f"FAILED {len(failures)} of {len(SMOKE_CHECKS)} smoke checks")
+        return 1
+    print(f"PASSED {len(SMOKE_CHECKS)} smoke checks")
     return 0
 
 
