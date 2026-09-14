@@ -5,6 +5,7 @@ import argparse
 import csv
 import json
 import re
+import sys
 from pathlib import Path
 
 
@@ -21,6 +22,11 @@ def find_project_root(start: Path) -> Path:
 
 
 PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from structure_store import resolve_structure_files
 DEFAULT_EXACT_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_exact_pinmymetal"
 DEFAULT_SOURCE_TRAIN = PROJECT_ROOT / "prepare_training_and_test_set" / "pinmymetal_files" / "classmodel_train_set"
 DEFAULT_SOURCE_TEST = PROJECT_ROOT / "prepare_training_and_test_set" / "pinmymetal_files" / "classmodel_test_set"
@@ -68,9 +74,7 @@ def read_csv_pdbids(path: Path, column: str) -> tuple[int, set[str]]:
 def scan_structure_pdbids(directory: Path) -> tuple[int, set[str]]:
     file_count = 0
     pdbids: set[str] = set()
-    for path in sorted(directory.iterdir()):
-        if not path.is_file() or path.suffix.lower() not in STRUCTURE_SUFFIXES:
-            continue
+    for path in resolve_structure_files(directory, recursive_legacy_scan=False):
         file_count += 1
         pdbid = extract_pdbid(path.name)
         if pdbid is not None:

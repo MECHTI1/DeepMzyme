@@ -8,9 +8,11 @@ MEDIA_DATA_ROOT_ENV = "DEEPGM_MEDIA_DATA_ROOT"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR_NAME = "DeepMzyme_Data"
 COLAB_BUNDLES_DIR_NAME = "DeepMzyme_Colab_Bundles"
+STRUCTURE_STORE_DIR_NAME = "structure_store"
 
 DATA_DIR = PROJECT_ROOT / DATA_DIR_NAME
 COLAB_BUNDLES_DIR = DATA_DIR / COLAB_BUNDLES_DIR_NAME
+STRUCTURE_STORE_DIR = DATA_DIR / STRUCTURE_STORE_DIR_NAME
 ESM_EMBEDDINGS_DIR = DATA_DIR / "esm_embeddings"
 EMBEDDINGS_DIR = ESM_EMBEDDINGS_DIR
 RING_FEATURES_DIR = DATA_DIR / "RING_features"
@@ -43,6 +45,10 @@ def get_default_updated_feature_extraction_dir() -> Path:
 
 def get_default_runs_dir() -> Path:
     return RUNS_DIR
+
+
+def get_default_structure_store_dir() -> Path:
+    return STRUCTURE_STORE_DIR
 
 
 def _resolve_project_dir(

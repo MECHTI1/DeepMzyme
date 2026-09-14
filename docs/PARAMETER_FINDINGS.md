@@ -39,6 +39,26 @@ Those test values are excluded from:
 The early LR batch contributes only its validation-side observation, explicitly
 labeled Grade 5/7. See [`DATASETS.md`](DATASETS.md) for the access record.
 
+## Target-scheme and cross-task evidence boundary
+
+The intended primary metal reporting endpoint is now Mn, Cu, Zn, and Class VIII
+= Fe+Co+Ni. The indexed metal anchors summarized below were trained under the
+historical six-class target unless a row explicitly says otherwise. They remain
+useful six-class evidence, but neither their six-class metrics nor a post-hoc
+collapsed-four report is evidence from a model trained directly on the
+four-class objective. No trusted completed direct four-class baseline batch is
+currently indexed. The plan requires a matched comparison of direct-four
+training against standard six-class training with collapsed-four evaluation
+across Only-GVP, Only-ESM, and graph-level late fusion. Historical six-class
+maxima cannot fill that requirement without matched direct-four arms on the
+same validation units.
+
+Likewise, the historical joint Hybrid and Hybrid+RING runs show that a joint
+code path was exercised in exploratory settings. They do not answer the
+controlled EC-primary question “Does metal supervision improve EC prediction?”
+because no matched EC-only versus EC-plus-auxiliary-metal comparison is indexed.
+Do not infer auxiliary-learning benefit or promotion from their raw maxima.
+
 ## Current validation anchors and challengers
 
 | Namespaced experiment/configuration | Main validation result | Grade | Current interpretation |
@@ -365,6 +385,23 @@ and
 
 Grade: 5 for completed individual trials; Grade 6 for the incomplete study
 record and causal RING question.
+
+## Required comparison conclusions still open
+
+The direct four-class metal research plan requires three controlled conclusions
+that the current evidence cannot yet support:
+
+| Comparison | Current limitation |
+|---|---|
+| Direct four-class training vs six-class training with collapsed-four evaluation | No matched paired campaign exists across the three initial metal baseline families; historical six-class results use unmatched contexts and no trusted direct-four batch is indexed |
+| Early vs late vs hybrid ESMC fusion | No indexed completed early-fusion result; late and hybrid evidence comes from different task/search contexts and historical target schemes |
+| Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Historical six-class fixed-split anchors exist, but no direct four-class shared grouped-fold Stage 6 comparison or paired confidence interval exists |
+| GVP with vs without RING | No direct four-class matched on/off run isolates RING; the Hybrid+RING maximum combines fusion, joint-task, HPO, and edge-source changes |
+
+Treat numerical differences as hypotheses until the candidates use the same
+dataset, label scheme, folds, active seeds, metric, and comparable training/HPO
+budgets. Publication claims of an advantage require the Stage 6 paired-CI and
+rare-class-recall policy in `Plan.md` and the metal playbook.
 
 ## Parameter-domain conclusions
 

@@ -1,16 +1,26 @@
 # DeepMzyme
 
-DeepMzyme is a deep-learning framework for predicting metalloenzyme metal type
-and EC/function labels from protein structural pocket graphs, residue-level
-features, and optional ESMC representations.
+DeepMzyme is a deep-learning framework with two primary missions: predicting
+metalloenzyme transition-metal type and predicting EC/function labels from
+protein structural pocket graphs, residue-level features, and optional ESMC
+representations. Each task remains independently trainable and reportable;
+shared metal-EC learning is an experimental challenger.
 
 ## What the project does
 
 DeepMzyme supports:
 
-1. metal-type classification;
-2. EC/function classification;
-3. joint metal + EC prediction.
+1. direct four-class metal prediction: Mn, Cu, Zn, and Class VIII = Fe+Co+Ni;
+2. EC/function classification, beginning scientifically at EC depth 1; and
+3. experimental joint metal + EC prediction with independent heads and a
+   shared learned representation.
+
+The scientific plan requires a controlled comparison between direct four-class
+training and six-class training evaluated after collapsing Fe/Co/Ni into Class
+VIII. Historical six-class results retain their original target and cannot
+substitute for that matched comparison; five-class results also remain
+separately labeled. The current EC path is single-label at a selected hierarchy
+depth and should not be described as full multi-label EC prediction.
 
 Model families include structure-only GVP variants, ESM-only baselines, and
 configurable graph/ESM fusion. Graph construction can use geometric radius edges
@@ -94,6 +104,7 @@ metal playbook.
 | Where am I and what should I do next? | [`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md) |
 | What are the scientific/design rules? | [`Plan.md`](Plan.md) |
 | What datasets, splits, and bundles exist? | [`docs/DATASETS.md`](docs/DATASETS.md) |
+| How are structure files deduplicated and resolved? | [`docs/STRUCTURE_STORE.md`](docs/STRUCTURE_STORE.md) |
 | What has validation/HPO taught us? | [`docs/PARAMETER_FINDINGS.md`](docs/PARAMETER_FINDINGS.md) |
 | Which experiment batches ran and where is their evidence? | [`docs/notebook_outputs/README.md`](docs/notebook_outputs/README.md) |
 | What exact metal stage block should be used? | [`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md) |
@@ -113,7 +124,7 @@ metal playbook.
 | `CLEAN/` | CLEAN sequence-baseline workflow |
 | `docs/notebook_outputs/` | Experiment index, summaries, and copied raw evidence |
 | `bench/` | G4/A100 compute-throughput evidence; not model-quality evidence |
-| `DeepMzyme_Data/` | Local data, features, bundles, and runs; intentionally Git-ignored |
+| `DeepMzyme_Data/` | Local manifest-backed data, content-addressed structures, features, bundles, and runs; intentionally Git-ignored |
 
 Avoid moving these directories casually: notebooks, preparation scripts,
 generated provenance, bundle layouts, and local run records refer to their

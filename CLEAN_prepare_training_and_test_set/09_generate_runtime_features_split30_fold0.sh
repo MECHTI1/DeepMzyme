@@ -12,9 +12,15 @@ export STRUCTURE_LIST="$WORK_ROOT/manifests/clean_split${CLEAN_IDENTITY}_fold${C
 run_logged "09_generate_runtime_features_split${CLEAN_IDENTITY}_fold${CLEAN_FOLD}" bash -c '
   set -euo pipefail
   mkdir -p "$(dirname "$STRUCTURE_LIST")"
-  find "$PROJECT_ROOT/DeepMzyme_Data/CLEAN_${CLEAN_IDENTITY}_train_test_split_${CLEAN_FOLD}/train" \
-       "$PROJECT_ROOT/DeepMzyme_Data/CLEAN_${CLEAN_IDENTITY}_train_test_split_${CLEAN_FOLD}/test" \
-       -maxdepth 1 -type f -name "*.pdb" | sort > "$STRUCTURE_LIST"
+  "$PYTHON_BIN" - <<PY > "$STRUCTURE_LIST"
+from pathlib import Path
+from training.structure_loading import find_structure_files
+
+root = Path("$PROJECT_ROOT/DeepMzyme_Data/CLEAN_${CLEAN_IDENTITY}_train_test_split_${CLEAN_FOLD}")
+paths = {path.resolve() for split in ("train", "test") for path in find_structure_files(root / split)}
+for path in sorted(paths):
+    print(path)
+PY
   echo "[INFO] structures=$(wc -l < "$STRUCTURE_LIST")"
   echo "[INFO] RING_EXE_PATH=$RING_EXE_PATH"
   echo "[INFO] RING_EDGE_JOBS=$RING_EDGE_JOBS"
@@ -64,9 +70,10 @@ from training.runtime_preparation import (
     discover_missing_ring_edges,
     discover_missing_updated_external_features,
 )
+from training.structure_loading import find_structure_files
 
 root = Path("$PROJECT_ROOT/DeepMzyme_Data/CLEAN_${CLEAN_IDENTITY}_train_test_split_${CLEAN_FOLD}")
-structures = sorted((root / "train").glob("*.pdb")) + sorted((root / "test").glob("*.pdb"))
+structures = sorted({path.resolve() for split in ("train", "test") for path in find_structure_files(root / split)})
 esm_dir = Path("$PROJECT_ROOT/DeepMzyme_Data/esm_embeddings")
 ring_dir = Path("$PROJECT_ROOT/DeepMzyme_Data/RING_features")
 external_dir = Path("$PROJECT_ROOT/DeepMzyme_Data/updated_feature_extraction")

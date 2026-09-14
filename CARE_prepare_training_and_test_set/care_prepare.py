@@ -25,6 +25,11 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from structure_store import store_structure, write_structure_manifest
 DEFAULT_CARE_ROOT = PROJECT_ROOT / "DeepMzyme_Data" / "CARE_dataset"
 DEFAULT_WORK_ROOT = Path("/media/Data/care_sets/task1_30")
 DEFAULT_OUTPUT_ROOT = PROJECT_ROOT / "DeepMzyme_Data" / "CARE_task1_30_train_test_metallo"
@@ -2074,18 +2079,23 @@ def command_export_dataset(args: argparse.Namespace) -> None:
         dest_dir = output_root / split
         clear_output_split_dir(dest_dir, overwrite=args.overwrite)
         required_names = collect_required_structure_names(summary_csv)
-        copied = 0
+        source_paths: list[Path] = []
         missing: list[str] = []
         for name in sorted(required_names):
             source = source_pdb_dir / name
             if not source.exists():
                 missing.append(name)
                 continue
-            shutil.copy2(source, dest_dir / name)
-            copied += 1
+            source_paths.append(source)
         if missing:
             preview = ", ".join(missing[:10])
             raise FileNotFoundError(f"Missing {len(missing)} structure(s) for {split}: {preview}")
+        references = [
+            store_structure(source, PROJECT_ROOT / "DeepMzyme_Data" / "structure_store")
+            for source in source_paths
+        ]
+        write_structure_manifest(dest_dir, references, verify_hashes=True)
+        copied = len(references)
         shutil.copy2(summary_csv, dest_dir / SUMMARY_CSV_NAME)
         metadata_dir = output_root / "metadata" / split
         metadata_dir.mkdir(parents=True, exist_ok=True)
@@ -2116,7 +2126,7 @@ def command_export_dataset(args: argparse.Namespace) -> None:
             "structure_count": copied,
             "site_count": count_rows(summary_csv),
         }
-        print(f"[{split}] copied {copied} structures and {split_stats[split]['site_count']} site rows")
+        print(f"[{split}] registered {copied} structures and {split_stats[split]['site_count']} site rows")
 
     metadata_dir = output_root / "metadata"
     metadata_dir.mkdir(parents=True, exist_ok=True)
@@ -2331,7 +2341,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument("--output-dir", type=Path, default=None, help="Single split override; normally omit.")
     summarize.set_defaults(func=command_summarize_mahomes)
 
-    export = subparsers.add_parser("export-dataset", help="Copy catalytic structures/CSVs into DeepMzyme_Data.")
+    export = subparsers.add_parser("export-dataset", help="Register catalytic structures and copy CSVs into DeepMzyme_Data.")
     add_work_root_arg(export)
     export.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     export.add_argument("--splits", nargs="+", choices=("train", "test"), default=["train", "test"])

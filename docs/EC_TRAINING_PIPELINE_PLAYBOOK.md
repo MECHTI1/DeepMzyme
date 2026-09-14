@@ -1,7 +1,8 @@
 # EC Training Pipeline Playbook
 
 This playbook is the practical, notebook-ready pipeline for DeepMzyme EC-number
-classification. It follows the same stage structure as
+classification, one of the project's two independent primary missions. It
+follows the same stage structure as
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. Read that playbook for the full
 rationale behind each stage; this document covers only the EC-specific
 differences.
@@ -60,6 +61,13 @@ classes). Add depth-2 and deeper runs only after depth-1 behavior is stable.
 Each depth level is a separate classification problem with its own class count
 and difficulty.
 
+**Target scope.** The current implementation assigns one categorical EC target
+at the selected depth. Multiple source EC annotations that share one prefix at
+that depth can map to the same class; annotations with multiple distinct
+prefixes receive no target. This is not full multi-label EC prediction. Keep
+depth-1 classification, deeper hierarchical classification, multiple source
+annotations, and a future full multi-label objective distinct.
+
 **Group weighting.** Always keep `EC_GROUP_WEIGHTING = "structure_id"`. EC
 supervision is at the protein/structure level. Multiple metal-pocket samples from
 the same structure share the same EC annotation; group weighting prevents those
@@ -69,9 +77,10 @@ structures from dominating the loss.
 first baselines. Contrastive loss is a secondary feature; enabling it before the
 plain supervised baseline is stable adds a confound.
 
-**Split policy.** The non-overlapped PinMyMetal split is mandatory for final
-EC held-out testing. The exact PinMyMetal split must not be used as the main
-final EC held-out split if train/test structures overlap (see Plan.md section 8).
+**Split policy.** The primary final-test route is unresolved and must be chosen
+in a separate scientific decision before Stage 7. The exact PinMyMetal split
+must not be used as the main final EC held-out split if train/test structures
+overlap (see Plan.md section 8 and `docs/DATASETS.md`).
 
 **Held-out test policy.** Identical to metal: never use the held-out test set
 for model comparison, Optuna HPO, seed-repeat validation, or cross-validation.
@@ -98,8 +107,71 @@ classes. Update the metric name when the label depth changes (e.g., use
 (ESM) may matter more than for metal. Still follow the baseline-first order:
 1. Only-GVP first (structure-only baseline).
 2. Only-ESM (sequence-only baseline, important reference for EC).
-3. GVP + late fusion after both simple baselines are measured.
+3. GVP + graph-level late fusion after both simple baselines are measured.
 4. Advanced fusion only if simpler models justify the added complexity.
+
+## Initial Auxiliary Metal-Supervision Boundary
+
+The first experiment connecting the two primary tasks asks whether metal
+supervision improves EC prediction. Compare a matched EC-only model with EC
+plus an auxiliary metal loss. Both variants must make independent predictions
+from a shared encoder; neither head's output is an input to the other head.
+Treat the auxiliary variant as a challenger and report negative transfer when
+it occurs.
+
+Limit that first comparison to GVP + graph-level late fusion. Keep Only-GVP
+and Only-ESM as standalone baselines. Do not add hybrid,
+node-level late fusion, cross-attention, soft predicted-metal conditioning, or
+a hard predicted-metal-to-EC cascade. Known-metal conditioning is a later
+diagnostic only when the observed, curated, computationally transferred, or
+model-predicted provenance is explicit.
+
+Metal labels are pocket/site-level and EC labels are protein/structure-level.
+Keep EC group weighting and build split membership across every task label
+source before training. A protein held out for EC cannot enter shared-encoder
+training through its metal label, and the reverse rule also applies. Held-out
+data cannot choose auxiliary loss weights, joint versus single-task training,
+features, thresholds, architecture, or HPO settings.
+
+No certified executable block for this controlled comparison exists here yet.
+Add it only after the EC notebook compatibility work and cross-task exclusion
+checks are complete; see
+[`TECH-011`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-011--controlled-ec-primary-auxiliary-learning-protocol-is-not-certified).
+The reverse metal-primary auxiliary question is optional and does not block
+completion of the EC mission.
+
+### Minimum CLI controls for a matched intersection comparison
+
+The opt-in `--controlled-ec-auxiliary` guard is implemented for `src/train.py`.
+It does not certify the notebook recipes or authorize an experiment. Both arms
+use `--task joint`, retaining the identical fully labelled intersection and
+both prediction heads, including when the metal loss weight is zero. The
+full-data standalone `--task ec` baseline is a separate comparison.
+
+Required common controls are `--metal-label-scheme four_class`,
+`--model-architecture gvp`, `--fusion-mode late_fusion`,
+`--joint-loss-weighting fixed`, `--ec-label-depth 1`, `--ec-loss-weight 1`,
+`--ec-contrastive-weight 0`, `--ec-group-weighting structure_id`,
+`--train-val-split-by pdbid`, and
+`--selection-metric val_ec_group_balanced_acc`. Validation must be enabled;
+held-out evaluation and test overrides are rejected. Early ESM is disabled.
+
+Construct arm B from the same resolved configuration as arm A, changing only
+`metal_loss_weight` from zero to a predeclared positive value, plus its output
+run name. Keep dataset, retained examples, features, architecture, optimizer,
+budget, folds and seeds identical. No auxiliary weight or budget is selected
+by this prerequisite change. Do not combine separate task datasets or holdouts:
+the single input root must already exclude every reserved protein for either
+task. That provenance still requires certification before execution.
+
+Compare `dataset_summary.json`'s `retained_split_identity` for both partitions:
+it records ordered example/target/group identities, SHA-256 fingerprints and
+exact example, structure and group counts. The summary is also embedded in
+`run_config.json` and `run_metadata.json`. Compare the saved config, source
+artifact hashes/bundle identity, runtime feature metadata and Git state too;
+matching example IDs alone does not establish matching structure/feature bytes.
+Report EC validation differences on paired folds/seeds, including negative
+transfer. These controls are prerequisites, not experimental evidence.
 
 ## EC Run Tiers And Reproducibility Records
 
@@ -770,9 +842,10 @@ When to use it: only after model family, hyperparameters, EC label depth,
 contrastive weight, checkpoint-selection metric, seed-repeat interpretation,
 final training/refit run, and final source checkpoint are fixed.
 
-**EC split policy reminder**: the non-overlapped PinMyMetal split is mandatory
-for final EC held-out reporting. Do not report the exact/possibly-overlapped
-split result as the main final EC result.
+**EC split policy reminder**: the primary final-test route remains unresolved.
+Do not launch this stage until a scientifically approved route is documented,
+and do not report the exact/possibly-overlapped split as the main final EC
+result.
 
 First run the **Select final run and show saved outputs** cell:
 
@@ -834,7 +907,8 @@ Success criteria:
   not a raw Optuna trial, arbitrary seed-repeat run, or provisional validation
   checkpoint.
 - The test report includes EC level-1 metrics (and deeper levels when trained).
-- The split in `dataset_summary.json` confirms non-overlapped PinMyMetal.
+- The split in `dataset_summary.json` confirms the scientifically approved
+  final route and its group-overlap checks.
 
 Decision after this stage:
 
@@ -847,9 +921,9 @@ Decision after this stage:
 
 ## EC Label Depth Progression
 
-After the depth-1 baseline is stable and the final test result is reported, a
-separate depth-2 experiment cycle starts from Stage 1 using the same structure
-but:
+After the depth-1 standalone validation baseline is stable and the depth-1
+scientific cycle has a predeclared reason to expand, a separate depth-2
+experiment cycle starts from Stage 1 using the same structure but:
 
 ```python
 EC_LABEL_DEPTHS_CSV = "2"
@@ -859,7 +933,9 @@ RUN_BATCH_ID = "ec_only_gvp_depth2_baseline_lr_seed"
 ```
 
 Keep depth-1 and depth-2 run batches separate. Do not compare depth-1 and
-depth-2 validation metrics directly.
+depth-2 validation metrics directly. Do not open a held-out test merely to
+authorize deeper development; each depth keeps its own validation-only
+selection and final-reporting policy.
 
 ## Contrastive Loss Exploration
 
@@ -891,5 +967,5 @@ Before any reportable comparison or HPO launch, confirm:
 - `ALLOW_SEED_REPEAT_MODEL_PRESET_MISMATCH = False`
 - `ALLOW_MIXED_FINAL_TEST_BATCH = False`
 - `ALLOW_REPEAT_FINAL_TEST_EVAL = False`
-- Final test uses the non-overlapped PinMyMetal split
-  (`DATASET_NAME = "train_and_test_sets_structures_non_overlapped_pinmymetal"`)
+- The primary final-test route has been resolved scientifically, and the saved
+  dataset identity and group-overlap checks match that approved route

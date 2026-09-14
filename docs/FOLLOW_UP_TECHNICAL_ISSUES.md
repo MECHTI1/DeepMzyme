@@ -241,8 +241,8 @@ Otherwise retain `MISSING — recovery required`.
 
 **Observed behavior**
 
-- `Plan.md` describes non-overlapped PinMyMetal as the historically preferred
-  primary final route.
+- `Plan.md` leaves the primary final route unresolved and records
+  non-overlapped PinMyMetal only as a historical reference.
 - The metal playbook's current common defaults use exact PinMyMetal.
 - Exact PinMyMetal contains 177 overlapping PDB IDs.
 - The notebook dropdown and current v10 bundle omit non-overlapped and harsh
@@ -438,3 +438,123 @@ dependencies, and the optional ESM `3.2.3` imports are recorded in the
 remediation plan. Colab T4/L4/G4/A100 validation and a serious training-run
 metadata capture remain runtime actions and were not performed by this
 non-training remediation.
+
+## TECH-010 — Four-class endpoint and paired metal target recipes are not reconciled
+
+**Status:** Open; policy recorded 2026-09-14
+
+**Observed state**
+
+- `src/label_schemes.py` implements `four_class` as the alias for
+  `merge_fe_class_viii`, mapping Mn, Cu, Zn, and Fe+Co+Ni to Class VIII.
+- `Plan.md` now designates the four-class endpoint as primary and requires a
+  matched comparison between direct four-class training and six-class training
+  with collapsed-four evaluation.
+- The raw source default still resolves to the six-class
+  `split_all_metals` scheme.
+- The metal playbook's retained common recipe still assigns
+  `METAL_LABEL_SCHEME = "six_class"`.
+- The audited notebook live value recorded in TECH-003 is a separate
+  `five_class` resume value.
+- Indexed performance anchors are historical six-class evidence; no trusted
+  completed direct-four baseline or matched target-formulation comparison is
+  indexed.
+
+**Risk**
+
+A future run may be launched under a stale six-class or five-class value and
+then described as direct four-class training. Conversely, an agent may run only
+the direct-four arm and omit the now-required six-class-trained/collapsed-four
+challenger, or treat unmatched historical six-class evidence as that challenger.
+
+**Future dedicated fix**
+
+Reconcile the metal playbook's exact Stage 0-7 recipes and the notebook launch
+surface together. Define paired direct-four and standard-six-class arms for
+Only-GVP, Only-ESM, and GVP + graph-level late fusion. Give them separate study
+and run identities, matched development splits/folds/seeds/features/budgets,
+and a common collapsed-four comparison table while retaining native six-class
+metrics for the six-class arm. Coordinate active-class metrics, rare-class
+gates, and Stage 6/6B/7 provenance checks. Preserve historical and five-class
+routes under clearly separate names. Do not change only one default or reuse an
+incompatible Optuna study.
+
+**Required future tests**
+
+- Static verification that each direct arm resolves `four_class` to
+  `merge_fe_class_viii` with exactly four outputs and each matched challenger
+  resolves `six_class` with exactly six outputs.
+- Planning/dry-run checks for all affected stage blocks without launching
+  training or held-out evaluation.
+- Separate study/run identity checks across four-, five-, and six-class tasks.
+- Matched-design checks for the required direct-four and
+  six-class-trained/collapsed-four arms in all three initial metal families.
+- Paired comparison checks using direct-four active metrics and the six-class
+  arm's collapsed-four metrics on identical validation units.
+- Active-scheme metric, class-weight, rare-recall, and report-column checks.
+- Confirmation that collapsed reporting from a six-class model cannot be
+  labeled as direct four-class training.
+
+This policy task did not alter the notebook, training code, or retained
+executable recipe values.
+
+## TECH-011 — Controlled EC-primary auxiliary-learning protocol is not certified
+
+**Status:** Open; scientific recipe and safeguards required
+
+**Minimum implementation update:** `--controlled-ec-auxiliary` now enforces
+the EC-primary, fixed-weight, direct-four, graph-level late-fusion intersection
+comparison with validation-only selection. Ordered retained-example identities
+and counts are saved for pair verification. A zero EC task weight now also
+disables EC contrastive supervision in both model loss paths. See the
+[minimum CLI controls](EC_TRAINING_PIPELINE_PLAYBOOK.md#minimum-cli-controls-for-a-matched-intersection-comparison).
+The notebook recipe, actual dataset/holdout certification, multi-source
+exclusion and experimental evaluation remain open; no partial-label loader
+redesign is included.
+
+**Observed state**
+
+- The current model path can form one shared pocket representation and send it
+  to independent metal and EC heads. The losses can both update shared
+  parameters; neither head's prediction is fed into the other head.
+- The current joint loader uses one structure root, requires both targets for a
+  joint sample, and applies one grouped train/validation split to that loaded
+  pocket set.
+- Historical joint Hybrid and Hybrid+RING results are exploratory and were not
+  a matched EC-only versus EC-plus-auxiliary-metal comparison.
+- No exact EC-playbook recipe currently defines that first controlled
+  auxiliary experiment.
+- The current single-root path does not by itself certify cross-task exclusion
+  if future work combines separate metal and EC label sources or task-specific
+  holdouts.
+
+**Risk**
+
+An unmatched joint result could be presented as proof of multi-task benefit, or
+a protein held out for one task could enter shared-encoder training through the
+other task when distinct label sources are combined.
+
+**Future dedicated fix**
+
+Define one EC-primary auxiliary recipe in the EC playbook after its existing
+notebook compatibility issues are reconciled. Compare EC-only with EC plus
+auxiliary metal in one of the initial standalone families (Only-GVP, Only-ESM,
+or GVP + graph-level late fusion), using matched eligibility, encoder capacity,
+features, folds/seeds, budget, and EC selection metric. Build group membership
+across the union of label sources and fail closed on cross-task overlap. Do not
+add a predicted-metal cascade or advanced interaction architecture to this
+first comparison. The reverse metal-primary experiment remains optional.
+
+**Required future tests**
+
+- Dry-run proof that the EC-only and auxiliary commands differ only in the
+  declared auxiliary-task controls.
+- Group-level overlap checks across every label source and primary-task split.
+- Verification that repeated pockets receive EC group weighting and stay in
+  one protein/structure split unit.
+- Validation-only selection and HPO checks with no held-out paths or reports.
+- Independent metal/EC head-output checks and explicit negative-transfer
+  reporting.
+
+No auxiliary experiment, association analysis, training, or held-out access was
+performed while recording this issue.

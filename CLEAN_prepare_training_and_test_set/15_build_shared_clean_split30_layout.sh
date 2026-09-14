@@ -24,8 +24,9 @@ from training.runtime_preparation import (
     discover_missing_ring_edges,
     discover_missing_updated_external_features,
 )
+from training.structure_loading import find_structure_files
 root = Path("$CLEAN_SHARED_ROOT")
-structures = sorted((root / "structures").glob("*.pdb"))
+structures = find_structure_files(root / "structures")
 missing_esm = discover_missing_esm_embeddings(structures, Path("$PROJECT_ROOT/DeepMzyme_Data/esm_embeddings"))
 missing_ring = discover_missing_ring_edges(structures, Path("$PROJECT_ROOT/DeepMzyme_Data/RING_features"))
 missing_external = discover_missing_updated_external_features(

@@ -19,6 +19,14 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 > route remains an unresolved scientific decision. Verified workflow mismatches
 > are recorded in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md` and are not fixed here.
 
+> Target-policy boundary: the intended primary reporting endpoint is now Mn,
+> Cu, Zn, and Class VIII = Fe+Co+Ni. The plan requires both direct
+> `four_class` training and a matched `six_class` arm evaluated through its
+> deterministic collapsed-four view. Current notebook and playbook defaults
+> have not yet been reconciled into that paired recipe. This semantics guide
+> does not change executable notebook values; see TECH-010 before planning a
+> new campaign.
+
 ## Scope Of This Guide
 
 This guide describes stable workflow principles. Exact current experiment results and hyperparameters should not be duplicated here; those belong with the run evidence and current-status notes. For the current project state, read `EXPERIMENT_STATUS.md` if present. For raw copied notebook outputs, inspect `docs/notebook_outputs/raw/`; for concise run summaries, start with `docs/notebook_outputs/summaries/`.
@@ -96,7 +104,7 @@ Before launching a run, verify these resolved notebook values:
 | Check | Required value for reportable metal runs |
 | --- | --- |
 | Task | `TASK = "metal"` |
-| Metal label scheme | `METAL_LABEL_SCHEME = "six_class"` for the default reportable target; use `"five_class"` only for explicitly labeled validation-only comparisons |
+| Metal label scheme | A new target-formulation campaign needs separate reconciled arms: `four_class` for direct training and `six_class` for the required collapsed-four challenger; keep separate run/study identities, and keep `five_class` as an alternative or historical target |
 | External split | Use the stage block to select the intended named dataset; verify materialization, provenance, and test-access history in `docs/DATASETS.md`. No dataset is designated here as the primary final test. |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
@@ -174,8 +182,13 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
   stay separate while `Co` and `Ni` share the fifth class. This changes the
   model output classes; use a separate run batch and Optuna study when enabling
   it.
-- `collapsed-4`: supplemental metal-reporting view where Fe, Co, and Ni are
-  merged into `Class VIII`. Six-class metal classification remains primary.
+- `four-class`: direct-training arm for the primary reporting endpoint, where
+  Mn, Cu, and Zn stay separate and Fe, Co, and Ni map to `Class VIII`;
+  canonical internal scheme name `merge_fe_class_viii`.
+- `collapsed-4`: deterministic reporting view from a six-class-trained model
+  where Fe, Co, and Ni are merged into `Class VIII`. It is not direct
+  four-class training. The controlled metal baseline campaign requires this
+  view for comparison with the direct-four arm.
 
 ## Execution Sequence and Live Values
 
@@ -187,6 +200,8 @@ stage order, current dataset choice, or current best model. Use:
 - `EXPERIMENT_STATUS.md` for the current stage and next action;
 - `docs/DATASETS.md` for dataset materialization, bundle identity, overlap, and
   historical test access;
+- `docs/STRUCTURE_STORE.md` for manifest-backed structure paths, byte-level
+  deduplication, and bundle dependency rules;
 - the notebook itself for implemented live defaults and command expansion.
 
 A smoke run establishes execution only, not performance. For any real
@@ -241,6 +256,19 @@ For `Only-GVP`, fusion fields are effectively irrelevant even if a saved config 
 ### Advanced fusion policy
 
 `GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention` are not recommended as part of the first best-pipeline search. Treat them as later ablations after simpler models have earned the extra complexity.
+
+The wider publication mission nevertheless requires a controlled
+early-versus-late-versus-hybrid ESMC comparison. Early fusion therefore remains
+a required comparison candidate even though the current canonical stage list
+does not yet give it a dedicated HPO stage. Define its exact runnable recipe in
+the metal playbook before launching it, then compare the frozen fusion
+candidates on shared Stage 6 folds and seeds.
+
+That wider metal-architecture mission is separate from the first metal-EC
+relationship experiment. The initial EC-primary auxiliary comparison is
+limited to Only-GVP, Only-ESM, or GVP + graph-level late fusion and uses
+independent heads with shared learning. Do not use advanced fusion or
+predicted-metal conditioning in that first comparison.
 
 Run advanced fusion only when all of the following are true:
 
@@ -494,19 +522,23 @@ destroying common-class performance.
 ### Collapsed-4 Auxiliary Loss
 
 `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` is an experimental metal-only objective option.
-The default `0.0` preserves the existing six-class loss. Nonzero values add an
-auxiliary collapsed-4 cross-entropy term where `Fe`, `Co`, and `Ni` are merged
-into `Class VIII` only for that auxiliary view.
+For an explicitly labeled six-class run, `0.0` preserves the six-class loss.
+That standard six-class objective is the required challenger to direct-four
+training; its collapsed-four evaluation is already deterministic. Nonzero
+values add an auxiliary collapsed-four cross-entropy term where `Fe`, `Co`, and
+`Ni` are merged into `Class VIII` for the auxiliary loss. This creates a third
+target-objective experiment and is not part of direct four-class training.
 
 Use it only as a validation-only probe after the initial baselines are stable.
 The playbook's optional-objective section owns the exact first-use values and
 the Stage 5A overlay. Keep this out of initial baselines unless that playbook
 block is being run deliberately.
 
-Do not use collapsed-4 loss in initial Stage 2 baselines, during final held-out
-test reporting, or as a reason to repeatedly inspect held-out test performance.
-Six-class reporting remains primary; collapsed-4 reporting is supplemental and
-must not hide Fe/Co/Ni failures.
+Do not use collapsed-four loss in the direct four-class Stage 2 baselines,
+during final held-out test reporting, or as a reason to repeatedly inspect
+held-out test performance. For the required standard six-class challenger,
+collapsed-four reporting is the common comparison view, while native six-class
+metrics and separate Fe/Co/Ni recalls remain mandatory.
 
 ### Optuna Storage And Stage 6 Confirmation
 
@@ -689,11 +721,11 @@ predeclared Stage 6 top-K grouped-fold/seed confirmation. Do not treat the best
 single Optuna validation split as final evidence.
 
 In multi-objective mode, Optuna uses minimum recall over the active metal label
-scheme for rare-class protection. For default reportable runs that is six-class
-minimum recall; for explicitly labeled `five_class` runs it is five-class
-minimum recall over `Mn`, `Cu`, `Zn`, `Fe`, and grouped Co/Ni. Collapsed-4
-minimum recall is reported as supplemental information, not as the default
-second objective. If pruning is incompatible with the multi-objective study,
+scheme for rare-class protection. For the direct four-class arm, this covers
+Mn, Cu, Zn, and Class VIII. The required standard six-class challenger uses all
+six active classes, and a five-class alternative uses its five classes. In a six-class run,
+collapsed-four minimum recall is supplemental information and cannot replace
+separate Fe/Co/Ni recall. If pruning is incompatible with the multi-objective study,
 the notebook disables pruning and warns before launch. Inspect Pareto
 candidates as review inputs, then run Stage 6 grouped-fold confirmation before
 promoting any candidate.
@@ -814,9 +846,12 @@ display/reporting controls only. They do not change the model targets, training
 loss, checkpoint-selection metric, or held-out test policy.
 
 `METAL_LABEL_SCHEME` is different: it changes the training targets before the
-commands are built. `six_class` is the default, `five_class` groups only Co/Ni,
-and `four_class` groups Fe/Co/Ni. Changing this field creates a different
-prediction problem and must use a separately named validation batch/study.
+commands are built. The current executable default may still resolve to
+`six_class` or a notebook resume value until TECH-010 is completed;
+`five_class` groups only Co/Ni, and the direct `four_class` arm groups Fe/Co/Ni.
+The required target-formulation comparison uses separately named `four_class`
+and `six_class` batches/studies. Changing this field creates a different
+prediction problem.
 
 `FINAL_TEST_BATCH_METRICS` controls only which metric columns are emphasized in
 batch final-test summaries and plots. It does not change which metrics are
@@ -841,14 +876,15 @@ candidate and does not evaluate additional ranked candidates. Do not change the
 primary report after viewing held-out metrics. The full Stage 7 policy and executable blocks live in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
-Metal evaluation normally keeps the default six-class prediction problem
-`Mn`, `Cu`, `Zn`, `Fe`, `Co`, `Ni`. If `METAL_LABEL_SCHEME = "five_class"` is
-selected, the active metal metrics are five-class metrics over
-`Mn`, `Cu`, `Zn`, `Fe`, and grouped `Co/Ni`. For every metal or joint test
-report, the code also computes collapsed-4 metrics by merging `Fe`, `Co`, and
-`Ni` into `Class VIII`, giving `Mn`, `Cu`, `Zn`, and `Class VIII`. Use
-`METAL_REPORT_VIEW` to choose which view is emphasized in notebook output, not
-to rerun a different test.
+For the direct `METAL_LABEL_SCHEME = "four_class"` arm, active metal metrics
+cover Mn, Cu, Zn, and Class VIII directly. The required standard `six_class`
+arm produces native six-class metrics plus collapsed-four metrics formed by
+merging Fe, Co, and Ni. Label the latter as collapsed reporting from a
+six-class-trained model; they are the common comparison view but are not direct
+four-class training metrics. A selected `five_class` scheme remains an
+alternative target. Use `METAL_REPORT_VIEW` to choose which already-computed
+view is emphasized in notebook output, not to change the target or rerun a
+test.
 
 After Optuna:
 

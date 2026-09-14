@@ -11,7 +11,8 @@ SRC_DIR = Path(__file__).resolve().parent.parent / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from project_paths import DATA_DIR, MEDIA_DATA_ROOT
+from project_paths import DATA_DIR, MEDIA_DATA_ROOT, STRUCTURE_STORE_DIR
+from structure_store import STRUCTURE_MANIFEST_FILENAME, store_structure, write_structure_manifest
 from structure_sync_utils import (
     SUPPORTED_TRANSITION_METALS,
     collect_supported_transition_metal_sites,
@@ -104,6 +105,7 @@ def clear_existing_destination_files(dest_dir: Path) -> None:
         return
     for path in dest_dir.glob("*.pdb"):
         path.unlink()
+    (dest_dir / STRUCTURE_MANIFEST_FILENAME).unlink(missing_ok=True)
     for path in dest_dir.glob("*.csv"):
         path.unlink()
 
@@ -175,17 +177,16 @@ def main() -> None:
 
     DEST_DIR.mkdir(parents=True, exist_ok=True)
     clear_existing_destination_files(DEST_DIR)
-    copied_structure_count = 0
-    for source_path in source_paths:
-        copy_file(source_path, DEST_DIR / source_path.name)
-        copied_structure_count += 1
+    references = [store_structure(source_path, STRUCTURE_STORE_DIR) for source_path in source_paths]
+    write_structure_manifest(DEST_DIR, references, verify_hashes=True)
+    copied_structure_count = len(references)
 
     dest_csv_path = DEST_DIR / SOURCE_CSV.name
     copy_file(SOURCE_CSV, dest_csv_path)
     validate_csv_against_copied_structures(dest_csv_path, DEST_DIR)
 
     print(f"Copied CSV to {dest_csv_path}")
-    print(f"Copied {copied_structure_count} structures to {DEST_DIR}")
+    print(f"Registered {copied_structure_count} structures in {DEST_DIR / STRUCTURE_MANIFEST_FILENAME}")
 
 
 if __name__ == "__main__":

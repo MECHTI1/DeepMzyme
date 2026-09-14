@@ -4,12 +4,13 @@ import argparse
 import csv
 import json
 import math
-import os
 import shutil
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+
+from structure_store import resolve_structure_files, store_structure, write_structure_manifest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -133,7 +134,7 @@ def parse_args() -> argparse.Namespace:
         "--link-mode",
         choices=("hardlink", "copy"),
         default="hardlink",
-        help="How to populate the output shared structures directory.",
+        help="Deprecated compatibility option; output structures are recorded in a manifest.",
     )
     parser.add_argument(
         "--overwrite",
@@ -277,7 +278,9 @@ def parse_structure_coordinates(structures_dir: Path) -> tuple[dict[tuple[str, s
 
     coordinates: dict[tuple[str, str], Coordinate] = {}
     structure_paths: dict[str, Path] = {}
-    for path in sorted(structures_dir.glob("*.pdb")):
+    for path in resolve_structure_files(structures_dir, recursive_legacy_scan=False):
+        if path.suffix.lower() != ".pdb":
+            continue
         structure_id = structure_id_from_path(path)
         structure_paths[structure_id] = path
         with path.open("r", encoding="utf-8") as handle:
@@ -705,19 +708,6 @@ def prepare_output_root(output_root: Path, *, overwrite: bool) -> None:
     (output_root / "structures").mkdir(parents=True, exist_ok=True)
 
 
-def link_or_copy_structure(source: Path, destination: Path, *, link_mode: str) -> str:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    if link_mode == "copy":
-        shutil.copy2(source, destination)
-        return "copied"
-    try:
-        os.link(source, destination)
-        return "hardlinked"
-    except OSError:
-        shutil.copy2(source, destination)
-        return "copied_after_hardlink_failed"
-
-
 def populate_structures(
     *,
     selected_structure_ids: set[str],
@@ -733,20 +723,27 @@ def populate_structures(
     if missing:
         raise FileNotFoundError(f"Missing structure files for selected structures: {missing[:10]}")
 
+    references = []
     for structure_id in sorted(selected_structure_ids):
         source_path = source_structure_paths[structure_id]
-        destination = output_structures_dir / source_path.name
-        status = link_or_copy_structure(source_path, destination, link_mode=link_mode)
+        stored = store_structure(
+            source_path,
+            PROJECT_ROOT / "DeepMzyme_Data" / "structure_store",
+        )
+        references.append(stored)
+        status = "manifest_reference"
         status_counts[status] += 1
         rows.append(
             {
                 "structure_file": source_path.name,
-                "shared_structure_path": str(destination.resolve()),
+                "shared_structure_path": str(stored.path),
                 "source_structure_path": str(source_path.resolve()),
                 "link_status": status,
             }
         )
 
+    del link_mode  # Retained for command-line compatibility with prior builders.
+    write_structure_manifest(output_structures_dir, references, verify_hashes=True)
     write_csv_rows(metadata_csv, list(fieldnames), rows)
     return dict(status_counts)
 
@@ -808,7 +805,8 @@ ID for deterministic ordering.
 
 ## Contents
 
-- `structures/`: selected shared structure files.
+- `structures/structure_manifest.csv`: selected references into the global
+  content-addressed structure store.
 - `folds/`: conservative site-level fold CSVs with the original CLEAN fold file
   names and additional audit columns.
 - `metadata/structure_sources.csv`: source path and link/copy status for each

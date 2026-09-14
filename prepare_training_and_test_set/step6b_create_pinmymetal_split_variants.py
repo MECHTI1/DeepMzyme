@@ -5,10 +5,10 @@ import argparse
 import csv
 import filecmp
 import json
-import os
 import random
 import re
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -42,6 +42,16 @@ def find_project_root(start: Path) -> Path:
 
 
 PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from structure_store import (
+    STRUCTURE_MANIFEST_FILENAME,
+    resolve_structure_files,
+    store_structure,
+    write_structure_manifest,
+)
 DEFAULT_EXACT_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_exact_pinmymetal"
 DEFAULT_HARSH_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_harsh_pinmymetal"
 DEFAULT_COMMON_70_30_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal"
@@ -75,7 +85,7 @@ def parse_args() -> argparse.Namespace:
         "--link-mode",
         choices=("hardlink", "copy"),
         default="hardlink",
-        help="Use hardlinks by default to avoid duplicating large structure files.",
+        help="Deprecated compatibility option; split structures are now recorded in manifests.",
     )
     parser.add_argument(
         "--overwrite",
@@ -118,11 +128,7 @@ def ensure_split_dir(path: Path, label: str) -> None:
 
 
 def scan_structure_dir(directory: Path) -> StructureScan:
-    files = sorted(
-        path
-        for path in directory.iterdir()
-        if path.is_file() and path.suffix.lower() in STRUCTURE_SUFFIXES
-    )
+    files = resolve_structure_files(directory, recursive_legacy_scan=False)
     pdbids: set[str] = set()
     pdbid_to_files: dict[str, list[Path]] = {}
     unknown_files: list[Path] = []
@@ -167,24 +173,6 @@ def choose_common_pdbids(
     return train_common, test_common
 
 
-def link_or_copy_file(source_path: Path, dest_path: Path, *, link_mode: str) -> bool:
-    if dest_path.exists():
-        if filecmp.cmp(source_path, dest_path, shallow=False):
-            return False
-        raise FileExistsError(f"Conflicting files with the same output name: {source_path} -> {dest_path}")
-
-    if link_mode == "hardlink":
-        try:
-            os.link(source_path, dest_path)
-            return True
-        except OSError:
-            shutil.copy2(source_path, dest_path)
-            return True
-
-    shutil.copy2(source_path, dest_path)
-    return True
-
-
 def copy_assigned_structures(
     source_dirs: Iterable[Path],
     *,
@@ -193,32 +181,49 @@ def copy_assigned_structures(
     train_out: Path,
     test_out: Path,
     link_mode: str,
+    store_root: Path,
 ) -> tuple[int, int, int]:
-    copied_train = 0
-    copied_test = 0
+    del link_mode  # Retained as a CLI compatibility option; manifests supersede per-split links.
+    assigned_train: dict[str, Path] = {}
+    assigned_test: dict[str, Path] = {}
     skipped_unknown = 0
     for source_dir in source_dirs:
-        for source_path in sorted(source_dir.iterdir()):
-            if not source_path.is_file() or source_path.suffix.lower() not in STRUCTURE_SUFFIXES:
-                continue
+        for source_path in resolve_structure_files(source_dir, recursive_legacy_scan=False):
             pdbid = extract_pdbid(source_path.name)
             if pdbid is None:
                 skipped_unknown += 1
                 continue
             if pdbid in train_pdbids:
-                copied_train += int(link_or_copy_file(source_path, train_out / source_path.name, link_mode=link_mode))
+                destination_index = assigned_train
             elif pdbid in test_pdbids:
-                copied_test += int(link_or_copy_file(source_path, test_out / source_path.name, link_mode=link_mode))
+                destination_index = assigned_test
             else:
                 raise RuntimeError(f"PDB ID {pdbid!r} has no assignment for {source_path}")
-    return copied_train, copied_test, skipped_unknown
+            existing = destination_index.get(source_path.name)
+            if existing is not None:
+                if not filecmp.cmp(existing, source_path, shallow=False):
+                    raise FileExistsError(
+                        f"Conflicting source structures with the same name: {existing} and {source_path}"
+                    )
+                continue
+            destination_index[source_path.name] = source_path
+
+    train_references = [store_structure(path, store_root) for path in assigned_train.values()]
+    test_references = [store_structure(path, store_root) for path in assigned_test.values()]
+    write_structure_manifest(train_out, train_references, verify_hashes=True)
+    write_structure_manifest(test_out, test_references, verify_hashes=True)
+    return len(train_references), len(test_references), skipped_unknown
 
 
 def autodetect_csv_files(*directories: Path) -> dict[str, list[Path]]:
     files_by_name: dict[str, list[Path]] = {}
     for directory in directories:
         for path in sorted(directory.iterdir()):
-            if path.is_file() and path.suffix.lower() == ".csv":
+            if (
+                path.is_file()
+                and path.suffix.lower() == ".csv"
+                and path.name != STRUCTURE_MANIFEST_FILENAME
+            ):
                 files_by_name.setdefault(path.name, []).append(path)
     return files_by_name
 
@@ -395,6 +400,7 @@ def main() -> None:
         train_out=train_out,
         test_out=test_out,
         link_mode=args.link_mode,
+        store_root=output_dir.parent / "structure_store",
     )
 
     csv_reports: dict[str, object] = {}
@@ -422,7 +428,7 @@ def main() -> None:
         "assignment_scope": assignment_scope,
         "seed": args.seed,
         "test_common_fraction": args.test_common_fraction,
-        "link_mode": args.link_mode,
+        "structure_membership_mode": "content_addressed_manifest",
         "n_exact_train_files": len(train_scan.files),
         "n_exact_test_files": len(test_scan.files),
         "n_exact_train_pdbids": len(train_scan.pdbids),
