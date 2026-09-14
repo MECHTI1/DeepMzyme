@@ -169,6 +169,10 @@ claim or change.
 - `docs/COLAB_GPU_RUNBOOK.md`: browser/CLI same-VM connection, Colab
   PyTorch-preserving dependency installation, CUDA architecture preflight,
   Drive authorization boundary, artifact transfer, and teardown.
+  Read it before Colab GPU work: it records verified hurdle fixes and an
+  optional Python 3.12 ESMC preparation route for Python 3.13 runtimes.
+  That route is a tested convenience, not a requirement; skip the extra
+  environment when the runtime already uses compatible Python 3.12.
 
 #### Notebook workflow and training recipes
 

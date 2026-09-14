@@ -217,10 +217,15 @@ auto-install control is enabled; record the resulting environment as usual.
 
 ### ESM generation on a Python 3.13 Colab runtime
 
-`esm==3.2.3` requires Python 3.12. Installing it into the current Python 3.13
-kernel fails before generation. Use a separate Python 3.12 environment for
-feature preparation, then use the stock Colab interpreter with precomputed
-caches for training. Do not disable the package's Python-version constraint.
+Check the actual runtime version first. The pinned `esm==3.2.3` requires
+Python 3.12; its installation failed in the audited Python 3.13 runtime.
+An **optional, tested workaround** is a separate Python 3.12 environment for
+ESMC feature preparation, followed by training with precomputed caches in the
+stock Colab interpreter. This is a suggested shortcut, not the only possible
+solution or a required runtime downgrade. If the runtime already uses
+compatible Python 3.12, skip the extra environment. Other compatible routes
+may work, but were not verified here; do not silently change the scientific
+model or bypass the package's Python-version constraint.
 
 The CARE repair used this setup on the same G4 VM, retaining stock PyTorch for
 the notebook training path:
@@ -243,6 +248,18 @@ It generates test-side features only; it never runs held-out model evaluation.
 The [CARE repair evidence](notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md)
 records the exact environment and commands used. A complete filename inventory
 alone is insufficient: verify PROPKA availability and exercise the ESM loader.
+
+Two additional failures were confirmed and resolved during that run:
+
+- Existing external JSON files concealed a failed PROPKA step (`pka:
+  unavailable`, `No module named propka`). Installing PROPKA in the generation
+  environment and regenerating the affected files resolved it. Check metadata,
+  not just file existence; the cache utility's `--repair-audit` handles this case.
+- Only-ESM failed on duplicate residue IDs because both exact and older
+  EC-annotation filenames were loaded. The fix in
+  `src/training/esm_feature_loading.py` prefers exact caches and uses the older
+  alias only when no exact cache exists. Use that updated loader; the final
+  three GPU smoke runs passed without deleting the older dataset's cache.
 
 For large CLI downloads, split archives into approximately 64 MiB chunks on
 the VM, download them separately, concatenate locally, and verify the original
