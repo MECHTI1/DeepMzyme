@@ -130,7 +130,7 @@ def resolve_selection_metric(config: TrainConfig) -> TrainConfig:
     if config.selection_metric is not None:
         return config
     metric = default_selection_metric_for_task(
-        config.task,
+        "ec" if config.controlled_ec_auxiliary else config.task,
         has_validation=config.val_fraction > 0.0 or config.n_folds is not None,
     )
     return replace(config, selection_metric=metric)
@@ -380,6 +380,32 @@ def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str,
 def validate_training_configuration(config: TrainConfig) -> None:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    if config.controlled_ec_auxiliary:
+        requirements = {
+            "--task joint": config.task == "joint",
+            "--metal-label-scheme four_class": config.metal_label_scheme in {"four_class", "merge_fe_class_viii"},
+            "GVP + graph-level late fusion": (
+                config.model_architecture == "gvp" and config.fusion_mode == "late_fusion"
+                and not config.use_early_esm
+            ),
+            "--joint-loss-weighting fixed": config.joint_loss_weighting == "fixed",
+            "--ec-label-depth 1": config.ec_label_depth == 1,
+            "--ec-loss-weight 1": config.ec_loss_weight == 1.0,
+            "--ec-contrastive-weight 0": config.ec_contrastive_weight == 0.0,
+            "--selection-metric val_ec_group_balanced_acc": config.selection_metric == "val_ec_group_balanced_acc",
+            "grouped validation by pdbid": (
+                config.train_val_split_by == "pdbid"
+                and (config.val_fraction > 0.0 or config.n_folds is not None)
+            ),
+            "--ec-group-weighting structure_id": config.ec_group_weighting == "structure_id",
+            "validation-only execution without test overrides": not (
+                config.run_test_eval or config.allow_train_loss_test_eval_debug
+                or config.allow_final_refit_test_eval
+            ),
+        }
+        failures = [name for name, valid in requirements.items() if not valid]
+        if failures:
+            raise ValueError("Controlled EC auxiliary comparison requires: " + "; ".join(failures))
     if config.gvp_layers < 1:
         raise ValueError(f"--gvp-layers must be at least 1, got {config.gvp_layers}")
     if config.head_mlp_layers < 1:
@@ -1869,6 +1895,7 @@ def persist_run_outputs(
 def run_training(config: TrainConfig) -> Path:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    validate_training_configuration(config)
     validate_held_out_structure_disjointness(config)
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
@@ -1883,6 +1910,7 @@ def run_training(config: TrainConfig) -> Path:
 def evaluate_saved_checkpoint(config: TrainConfig, checkpoint_path: Path) -> Path:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    validate_training_configuration(config)
     if not config.run_test_eval:
         raise ValueError("evaluate_saved_checkpoint requires config.run_test_eval=True.")
     if config.test_structure_dir is None or config.test_summary_csv is None:

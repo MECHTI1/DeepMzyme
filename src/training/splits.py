@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from collections import Counter
+import hashlib
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -584,6 +586,28 @@ def format_split_diagnostics(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def retained_split_identity(pockets: list[PocketRecord], split_by: str) -> dict[str, Any]:
+    """Record ordered retained examples, targets and groups for paired-run verification."""
+    examples = [
+        {
+            "structure_id": pocket.structure_id,
+            "pocket_id": pocket.pocket_id,
+            "group": pocket_split_key(pocket, split_by),
+            "y_metal": pocket.y_metal,
+            "y_ec": pocket.y_ec,
+        }
+        for pocket in pockets
+    ]
+    payload = json.dumps(examples, sort_keys=True, separators=(",", ":"))
+    return {
+        "n_examples": len(examples),
+        "n_structures": len({row["structure_id"] for row in examples}),
+        "n_groups": len({row["group"] for row in examples}),
+        "ordered_examples_sha256": hashlib.sha256(payload.encode("utf-8")).hexdigest(),
+        "examples": examples,
+    }
+
+
 def build_dataset_summary(
     split: PocketSplit,
     config: TrainConfig,
@@ -600,6 +624,12 @@ def build_dataset_summary(
         "n_train_pockets": len(split.train_pockets),
         "n_val_pockets": len(split.val_pockets),
         "task": config.task,
+        "eligibility": "fully_labelled_intersection" if config.task == "joint" else f"{config.task}_label_required",
+        "controlled_ec_auxiliary": config.controlled_ec_auxiliary,
+        "retained_split_identity": {
+            "train": retained_split_identity(split.train_pockets, config.train_val_split_by),
+            "validation": retained_split_identity(split.val_pockets, config.train_val_split_by),
+        },
         "metal_label_scheme": config.metal_label_scheme,
         "node_feature_set": config.node_feature_set,
         "omit_node_features": list(config.omit_node_features),

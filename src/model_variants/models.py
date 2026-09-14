@@ -187,7 +187,7 @@ class PocketClassifierBase(nn.Module):
                     ec_sample_weight = torch.ones_like(ec_ce)
                 ec_loss = (ec_ce * ec_sample_weight).sum() / ec_sample_weight.sum().clamp_min(1e-8)
                 task_losses["ec"] = ec_loss
-                if self.ec_contrastive_weight > 0.0:
+                if self.ec_contrastive_weight > 0.0 and self.ec_loss_weight > 0.0:
                     ec_contrastive = supervised_contrastive_loss(
                         pocket_embed[ec_mask],
                         data.y_ec[ec_mask],

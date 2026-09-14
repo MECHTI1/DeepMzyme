@@ -122,6 +122,7 @@ class TrainConfig:
     device: str = "cpu"
     deterministic: bool = False
     task: str = "joint"
+    controlled_ec_auxiliary: bool = False
     metal_label_scheme: str = "split_all_metals"
     epochs: int = 10
     batch_size: int = 8
@@ -302,6 +303,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument("--task", type=str, default="joint", choices=VALID_TASK_CHOICES)
+    parser.add_argument(
+        "--controlled-ec-auxiliary", action="store_true",
+        help="Require the matched EC-primary, joint intersection, graph-level late-fusion protocol.",
+    )
     parser.add_argument(
         "--metal-label-scheme",
         type=normalize_metal_label_scheme_name,
@@ -886,7 +891,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     selection_metric = args.selection_metric
     if selection_metric is None:
         selection_metric = default_selection_metric_for_task(
-            args.task,
+            "ec" if args.controlled_ec_auxiliary else args.task,
             has_validation=args.val_fraction > 0.0 or args.n_folds is not None,
         )
     model_uses_esm_inputs = args.model_architecture != "only_gvp"
@@ -918,6 +923,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         device=args.device,
         deterministic=args.deterministic,
         task=args.task,
+        controlled_ec_auxiliary=args.controlled_ec_auxiliary,
         metal_label_scheme=metal_label_scheme,
         epochs=args.epochs,
         batch_size=args.batch_size,
