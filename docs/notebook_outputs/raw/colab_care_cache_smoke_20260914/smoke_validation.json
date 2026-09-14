@@ -1,0 +1,193 @@
+{
+  "runs": [
+    {
+      "family": "only_gvp",
+      "run_name": "standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c",
+      "status": "passed",
+      "epochs": 1,
+      "train_pockets": 993,
+      "validation_pockets": 175,
+      "train_groups": 751,
+      "validation_groups": 42,
+      "split_identity": {
+        "train": "4a60b159bc4e76b3bb56a617a0fba4ece12c27bf094227be11e8534019bbffc7",
+        "validation": "8d206eaa23fb367063d18b4177f3fa24e1deb619796729348dee2c038828f3cf"
+      },
+      "train_loss": 0.4055536584741619,
+      "val_loss": 0.47234154848212545,
+      "val_ec1_group_balanced_accuracy": 0.16666666666666669,
+      "min_group_recall": 0.0,
+      "held_out_evaluated": false,
+      "feature_coverage_complete": true,
+      "artifacts": {
+        "run_config.json": {
+          "bytes": 504707,
+          "sha256": "03050f3f1dc5ee717f67a5859e094b2e442f87fd9b3c597bf57f9eeaba4d40f7"
+        },
+        "run_metadata.json": {
+          "bytes": 501393,
+          "sha256": "ae2f5016fa2f5b4941f2f62261159fcd608a2b8fdacaffc0ec56b8a03ae4a14c"
+        },
+        "dataset_summary.json": {
+          "bytes": 450024,
+          "sha256": "02212b7047ac9049e1a7e186818db81ff16b4d18289135437b650c840d297e6a"
+        },
+        "split_diagnostics.json": {
+          "bytes": 1738,
+          "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+        },
+        "prepare_status.json": {
+          "bytes": 5408,
+          "sha256": "21ba2ef937dacf1adad6bf676eae3a04e58212d7b22851a24e743a139593f0fe"
+        },
+        "epoch_metrics.csv": {
+          "bytes": 2039,
+          "sha256": "51f68b116345c924bb22bc72586a51dab2902d13e5e03218f0a589afd6e38d3c"
+        },
+        "train_metrics.csv": {
+          "bytes": 696,
+          "sha256": "63ecebbfacf2f4568ba479cb768f2a27310d79b14f05ab2a5a9e5c0325c98a70"
+        },
+        "val_metrics.csv": {
+          "bytes": 1362,
+          "sha256": "1acc9f9b011f2462e738bbe3d8c646124df4ea1e786a02307c2ddf2e3a4391d6"
+        },
+        "best_model_checkpoint.pt": {
+          "bytes": 8343515,
+          "sha256": "736fa6f1305691905a93b5f629e1b389d91d90d29c86ed4a2a88d40fd0ff6a10"
+        },
+        "last_model_checkpoint.pt": {
+          "bytes": 8343515,
+          "sha256": "7d04f257c3ba0b70f83952bb9160eec765daa2339d04703af1a62685dca18994"
+        }
+      }
+    },
+    {
+      "family": "only_esm",
+      "run_name": "standalone_ec1_care30_only_esm_smoke_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep1_lr3e_5c1d7b31",
+      "status": "passed",
+      "epochs": 1,
+      "train_pockets": 993,
+      "validation_pockets": 175,
+      "train_groups": 751,
+      "validation_groups": 42,
+      "split_identity": {
+        "train": "4a60b159bc4e76b3bb56a617a0fba4ece12c27bf094227be11e8534019bbffc7",
+        "validation": "8d206eaa23fb367063d18b4177f3fa24e1deb619796729348dee2c038828f3cf"
+      },
+      "train_loss": 0.40161654284321163,
+      "val_loss": 0.4658463519405235,
+      "val_ec1_group_balanced_accuracy": 0.20357142857142857,
+      "min_group_recall": 0.0,
+      "held_out_evaluated": false,
+      "feature_coverage_complete": true,
+      "artifacts": {
+        "run_config.json": {
+          "bytes": 504687,
+          "sha256": "e71291973734c5594483640f0e0a84255823952dc9718f1613d05ce85bd0e343"
+        },
+        "run_metadata.json": {
+          "bytes": 501345,
+          "sha256": "dad5e8dc033f110d1e0c7acde1599f3cbd9315f8e3c40f835796610c5676a41b"
+        },
+        "dataset_summary.json": {
+          "bytes": 450070,
+          "sha256": "608327ccba6fbc256a7bb0c8791d2ce7d957d15f2a7f5ab991fc1cb06e3d2bae"
+        },
+        "split_diagnostics.json": {
+          "bytes": 1738,
+          "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+        },
+        "prepare_status.json": {
+          "bytes": 5452,
+          "sha256": "7b259c918d856e8259bc6dc2f6c2778380c4eba96728a6b095cd6e139ff2355a"
+        },
+        "epoch_metrics.csv": {
+          "bytes": 2067,
+          "sha256": "ff5e7fd4ad888f1f512af3a2ee867f68643aada6e31c5dadbc4bb2776e54c5d8"
+        },
+        "train_metrics.csv": {
+          "bytes": 711,
+          "sha256": "d04ac31ed893fc7680f4c1d7faab76d47255842e48e24ef7e877d95daa5d5d38"
+        },
+        "val_metrics.csv": {
+          "bytes": 1375,
+          "sha256": "797b21da6e88c37d5220ade57d5573d9341f5acc66d224719aec9325df4f11b4"
+        },
+        "best_model_checkpoint.pt": {
+          "bytes": 2522255,
+          "sha256": "cf94399a7dd28a0d46fc41e91378a5e2e7f03bcc0402f3060368b34feb63d2bf"
+        },
+        "last_model_checkpoint.pt": {
+          "bytes": 2522191,
+          "sha256": "87eef5af0fede868d474f1d0316cb10d92bedc92c17abc029ca8ed499dddf93d"
+        }
+      }
+    },
+    {
+      "family": "late_fusion",
+      "run_name": "standalone_ec1_care30_late_fusion_smoke_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_fullfea_6af18d48",
+      "status": "passed",
+      "epochs": 1,
+      "train_pockets": 993,
+      "validation_pockets": 175,
+      "train_groups": 751,
+      "validation_groups": 42,
+      "split_identity": {
+        "train": "4a60b159bc4e76b3bb56a617a0fba4ece12c27bf094227be11e8534019bbffc7",
+        "validation": "8d206eaa23fb367063d18b4177f3fa24e1deb619796729348dee2c038828f3cf"
+      },
+      "train_loss": 0.4056918151886109,
+      "val_loss": 0.47850703803653066,
+      "val_ec1_group_balanced_accuracy": 0.26904761904761904,
+      "min_group_recall": 0.0,
+      "held_out_evaluated": false,
+      "feature_coverage_complete": true,
+      "artifacts": {
+        "run_config.json": {
+          "bytes": 504996,
+          "sha256": "b12bce0688fa42183676722c2eb4c42986fcab6fb4b6f0fee058f16ee8873771"
+        },
+        "run_metadata.json": {
+          "bytes": 501673,
+          "sha256": "c3fb55dd06e42fa8593b3840385767aadeb8e8d4e2a0d8264a82ef07ac79cd55"
+        },
+        "dataset_summary.json": {
+          "bytes": 450070,
+          "sha256": "608327ccba6fbc256a7bb0c8791d2ce7d957d15f2a7f5ab991fc1cb06e3d2bae"
+        },
+        "split_diagnostics.json": {
+          "bytes": 1738,
+          "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+        },
+        "prepare_status.json": {
+          "bytes": 5453,
+          "sha256": "46c55f451e62a8d01bca3d141de6fef4fca249a9d2e3f81fa4a61fc7326b5738"
+        },
+        "epoch_metrics.csv": {
+          "bytes": 2048,
+          "sha256": "f3d5f058297c44f4bdeb99d6cec5551b0a7fa895e72e96d08e632d5e174330a4"
+        },
+        "train_metrics.csv": {
+          "bytes": 692,
+          "sha256": "149712be994c75965d7fea18c8c0cc0dfd6ef58cf86ca147cd6999e6a8c60c25"
+        },
+        "val_metrics.csv": {
+          "bytes": 1375,
+          "sha256": "62b7099c7c8d0da8bd2d6834e0ddba402b1b2e73ed143d4e5240f064e1dd8227"
+        },
+        "best_model_checkpoint.pt": {
+          "bytes": 9672011,
+          "sha256": "276c5643e0e35bb940a1d718715c3442276cb59d9d7689be33d6a32ef99d9502"
+        },
+        "last_model_checkpoint.pt": {
+          "bytes": 9671947,
+          "sha256": "e00c41e2f90bbd1d9a1b61b9064d18c684024751b579cddeb1e5591b07ab95c5"
+        }
+      }
+    }
+  ],
+  "matched_cohort": true,
+  "evidence_grade": 6,
+  "promoted": false
+}

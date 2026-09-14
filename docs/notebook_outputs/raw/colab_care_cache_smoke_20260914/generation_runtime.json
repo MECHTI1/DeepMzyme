@@ -1,0 +1,23 @@
+{
+  "python": "3.12.14 (main, Sep  1 2026, 14:16:52) [Clang 22.1.3 ]",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "capability": [
+    12,
+    0
+  ],
+  "esm": "3.2.3",
+  "source_baseline": "d75219e",
+  "model_repository": "biohub/esmc-300m-2024-12",
+  "model_revision": "7f10b20ae75017b2dbc884070e03434515709a8d",
+  "base_bundle_sha256": "8f869b8aa78dd2dc2af5efb856d137c01ba289b8fe6327b66a8139b0166975c7",
+  "base_bundle_revision": "4c36d3bfbf5e0c892fb165cbf101184e4151dda2",
+  "source_archive_sha256": "4f9962f08b80df0abe8d1b4b52124887ac211768019a6c7492574e31cf8efef2",
+  "generation_scripts_sha256": {
+    "src/complete_care_caches.py": "54a826accf3c84b4cab18c9ceb9ca7e739b9724ff9d19d68a4f97ec1e183e218",
+    "src/embed_helpers/esmc.py": "30c617940966cf13ed4c504dcad32dd0d13d6e49e431b823d822079f8715c6dd",
+    "src/feature_extraction/core.py": "d174e8ba755c9aa4cb202b57708438949dbfd37aad47e2a1d289bf6143a95368"
+  },
+  "checkpoint_sha256": "323dff9fbf3fef297a74f4f18b6528e6f2e599b0bcf72b6927516804015becea"
+}

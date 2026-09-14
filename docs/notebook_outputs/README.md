@@ -32,6 +32,12 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 No copied model-family experiment currently has Grade-1 or Grade-2 confirmation.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
 
+## CARE cache completion and Colab execution checks
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `ec/care30/colab-g4-smoke/2026-09-14` | Exact standalone EC1 notebook smoke: Only-GVP, Only-ESM, graph-level late fusion; one epoch each; matched 993/175 training/validation pockets | All three GPU runs passed after cache completion and an exact-name ESM lookup fix; no baseline ranking or promotion | 6 | Feature preparation only; no held-out inference or metrics | [summary](summaries/summary_colab_care_cache_smoke_20260914.md); [cache and run evidence](raw/colab_care_cache_smoke_20260914/) |
+
 ## Comparison identity
 
 Never compare or rank rows without checking:

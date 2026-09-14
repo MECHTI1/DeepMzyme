@@ -241,12 +241,19 @@ def embedding_path_candidates(embeddings_dir: Path, structure_path: Path) -> Lis
     add_candidate(embeddings_dir / f"{structure_path.stem}_esmc.pt")
     add_candidate(embeddings_dir / structure_path.stem / f"{structure_path.stem}_esmc.pt")
 
-    for candidate in sorted(embeddings_dir.glob(f"{structure_path.stem}*_esmc.pt")):
+    for candidate in sorted(embeddings_dir.glob(f"{structure_path.stem}_chain_*_esmc.pt")):
         add_candidate(candidate)
 
     nested_dir = embeddings_dir / structure_path.stem
     if nested_dir.is_dir():
         for candidate in sorted(nested_dir.glob("*_esmc.pt")):
+            add_candidate(candidate)
+
+    # Older caches sometimes carry extra EC annotations in their filename.
+    # Use that compatibility fallback only when this structure has no exact
+    # cache; loading both aliases would duplicate every residue in the lookup.
+    if not any(candidate.is_file() for candidate in candidates):
+        for candidate in sorted(embeddings_dir.glob(f"{structure_path.stem}*_esmc.pt")):
             add_candidate(candidate)
 
     return candidates

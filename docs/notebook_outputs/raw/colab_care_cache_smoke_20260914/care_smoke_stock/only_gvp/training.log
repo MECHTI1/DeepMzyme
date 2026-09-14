@@ -1,0 +1,23 @@
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=ec train_val_split_by=pdbid val_fraction=0.15 n_folds=None fold_index=None model_seed=42 split_seed=42
+pockets: train=993 validation=175
+groups by pdbid: train=751 validation=42
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+leakage guard: split_by=pdbid keeps every chain and pocket from the same PDB entry on one side of train/validation, so pdbid_chain overlap is also blocked. This guards repeated or binuclear same-chain metal sites from leaking into validation.
+train metal distribution: Mn=344, Cu=34, Zn=416, Class VIII=189
+validation metal distribution: Mn=41, Cu=39, Zn=85, Class VIII=7
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 1=208, 2=128, 3=504, 4=83, 5=33, 6=32, 7=5
+validation EC distribution: 1=36, 2=22, 3=90, 4=15, 5=5, 6=5, 7=2
+missing train EC classes: none
+missing validation EC classes: none
+===============================================================
+
+epoch=1 train_loss=0.4056 lr=3e-05 train_ec_acc=0.3484 val_loss=0.4723 val_ec_acc=0.2629 val_ec_bal_acc=0.1788 val_ec_group_bal_acc=0.1667 val_joint_bal_acc=0.1788 val_joint_macro_f1=0.1249 metal_loss_scale=1.0000 ec_loss_scale=1.0000 train_ec_class_recall=[1:0.8221(n=208),2:0.3047(n=128),3:0.2698(n=504),4:0.0000(n=83),5:0.0000(n=33),6:0.0000(n=32),7:0.0000(n=5)] val_ec_class_recall=[1:0.8333(n=36),2:0.3182(n=22),3:0.1000(n=90),4:0.0000(n=15),5:0.0000(n=5),6:0.0000(n=5),7:0.0000(n=2)]
+Saved checkpoint to /content/care_smoke_stock/only_gvp/runs/standalone_ec1_care30_only_gvp_smoke_v1/standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c/last_model_checkpoint.pt
+Saved best checkpoint to /content/care_smoke_stock/only_gvp/runs/standalone_ec1_care30_only_gvp_smoke_v1/standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c/best_model_checkpoint.pt
+Saved dataset summary to /content/care_smoke_stock/only_gvp/runs/standalone_ec1_care30_only_gvp_smoke_v1/standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c/dataset_summary.json
+Saved run config to /content/care_smoke_stock/only_gvp/runs/standalone_ec1_care30_only_gvp_smoke_v1/standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c/run_config.json
+Saved run metadata to /content/care_smoke_stock/only_gvp/runs/standalone_ec1_care30_only_gvp_smoke_v1/standalone_ec1_care30_only_gvp_smoke_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep1_lr3e-_1540539c/run_metadata.json

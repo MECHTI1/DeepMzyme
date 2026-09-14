@@ -4,7 +4,7 @@ This is the sole concise answer to: **Where am I now, and what should I do
 next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
-Last experiment-evidence audit: 2026-08-20. Last execution audit: 2026-08-22.
+Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-14.
 Last scientific-policy documentation update: 2026-09-14.
 
 ## Current objective
@@ -37,7 +37,7 @@ standard.
 | Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii` and maps Fe/Co/Ni to Class VIII | No trusted completed direct four-class baseline batch is indexed | Four-class endpoint selected; baseline evidence and paired executable recipes still require reconciliation |
 | Required target-formulation challenger | `six_class` outputs and collapsed-four validation metrics are implemented | Historical six-class runs exist, but no matched direct-four versus six-trained/collapsed-four comparison is indexed | Required across the three initial metal baseline families; exact paired recipes still require reconciliation |
 | Historical metal targets | Six-class and five-class schemes remain implemented | Indexed metal anchors are principally historical six-class results; one five-class local smoke was prepare-only | Preserve under their original scheme; never relabel as direct four-class training |
-| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | No trusted completed EC model result is indexed | Start with EC depth 1; deeper hierarchical and full multi-label claims are unestablished |
+| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three CARE EC1 one-epoch Colab GPU smoke runs passed on 2026-09-14; no reportable baseline or promoted model | EC1 execution is smoke-tested; deeper hierarchical and full multi-label claims are unestablished |
 | Current EC multi-annotation handling | Multiple annotations with one shared prefix can map to one class; conflicting prefixes at the selected depth receive no target | No full multi-label experiment is indexed | Current code does not solve full multi-label EC prediction |
 | Shared-learning topology | A shared pocket representation feeds independent metal and EC heads, and both losses can update shared parameters | Exploratory joint runs exist under unmatched contexts | Implemented and explored; no controlled EC-only versus EC+auxiliary-metal result and no promotion |
 | Predicted-metal conditioning | Not part of the inspected shared-head path or a certified primary recipe | No promoted conditioning result | Deferred optional ablation after the simpler auxiliary-loss question |
@@ -89,7 +89,7 @@ Detailed parameters and confidence limits:
 | Workstream | What is implemented or prepared | Result/evidence state | What is not complete |
 |---|---|---|---|
 | Unified training core | `metal`, `ec`, and `joint` dispatch; configuration, preflight, grouped splitting, training, reporting, and guarded final-test code | CLI help imports and parses successfully | A passing end-to-end suite on all materialized datasets is not established |
-| Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | Current bundle contains ESM, external, and RING assets; CARE coverage is incomplete (see DATASETS) | Additional node feature sets beyond `conservative` remain future work |
+| Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | CARE caches are complete in the local v12 release; hosted v11 retains its earlier gaps (see DATASETS) | Additional node feature sets beyond `conservative` remain future work |
 | Metal modeling | Direct four-class, historical six-class/five-class targets; Only-GVP, Only-ESM, graph-level late fusion, node-level late fusion, hybrid, cross-attention, and RING/radius controls exist | Preserved anchors are historical six-class fixed-split evidence | Direct four-class baseline recipes/evidence must be reconciled; the advanced comparison matrix and Grade-1/2 promotion remain incomplete |
 | EC modeling | Single-label EC-depth handling, independent EC heads, group weighting, and optional contrastive loss exist | No trusted completed EC model result is indexed in the audited evidence | EC depth-1 standalone baselines, EC playbook reconciliation, and a certified staged run are not complete; full multi-label prediction is not implemented |
 | Auxiliary metal+EC modeling | Shared representation, independent heads, configurable task losses, and a joint task path exist | Hybrid and Hybrid+RING exploratory validation evidence exists | No matched EC-only versus EC+auxiliary-metal experiment, no promoted auxiliary configuration, and no certified cross-task protocol |
@@ -160,13 +160,29 @@ were Grade 1 or 2.
 | Common-PDBID 70/30 | Present locally and in v11; custom comparison split |
 | CLEAN30 original/conservative | Present; `CLEAN_30_main` points to conservative source |
 | CLEAN10 | Not present or documented |
-| CARE Task 1 clusterRes30 | Present locally and in current bundles; ESM/external/RING coverage is incomplete (see DATASETS) |
+| CARE Task 1 clusterRes30 | Complete audited ESM/external/RING caches locally; hosted v11 still contains the older incomplete caches (see DATASETS) |
 | CARE legacy base | Scripts/docs remain; distinct legacy output root not found |
 
 Bundle names, hashes, commits, split counts, preparation rules, and provenance:
 [`docs/DATASETS.md`](docs/DATASETS.md).
 
 ## Colab compute-readiness evidence
+
+On 2026-09-14, CARE cache completion and actual notebook-command GPU training
+were verified on Colab G4. All 817 train and 34 test structures have audited
+ESM/external/RING files locally. Generation added 586 ESM and 586 external/RING
+cache sets, and repaired 265 older external files whose original PROPKA step
+had failed. The loader now prefers exact ESM cache names over older aliases.
+
+Only-GVP, Only-ESM, and graph-level late fusion each completed the EC playbook's
+one-epoch smoke on stock Python 3.13.15 / PyTorch 2.11.0+cu128. All three used
+the same 993/175 training/validation pockets, full feature coverage, all seven
+EC1 classes, and zero protein-group overlap. No held-out model evaluation
+occurred. This is Grade 6 readiness evidence, not a family ranking or promotion;
+all minimum group recalls remain zero after one epoch. The Colab runtime was
+stopped. See the [cache/GPU evidence summary](docs/notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md).
+Hosted v11 remains unchanged; [DATASETS.md](docs/DATASETS.md) owns the completed
+local bundle's identity and publication state.
 
 The following results are throughput checks for one realistic
 GVP+ESM-hybrid training step, not validation accuracy, model selection, or an

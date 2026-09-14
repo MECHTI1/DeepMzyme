@@ -207,11 +207,47 @@ Run the mandatory PyTorch/CUDA preflight again. If PyTorch was deliberately
 changed for any reason, restart the kernel before importing `torch`,
 `torch_geometric`, or DeepMzyme training modules.
 
-The main v10 bundle already includes ESM embeddings. For normal runs, keep
+The hosted v11 bundle includes ESM embeddings, but its CARE coverage is partial;
+see the current local repair/release status in [DATASETS.md](DATASETS.md).
+For feature-complete normal runs, keep
 `PREPARE_MISSING_ESM_EMBEDDINGS = False` and avoid installing the optional ESM
 generation package. If missing embeddings must be generated, the current
 notebook can install the pinned `esm==3.2.3` package when its explicit
 auto-install control is enabled; record the resulting environment as usual.
+
+### ESM generation on a Python 3.13 Colab runtime
+
+`esm==3.2.3` requires Python 3.12. Installing it into the current Python 3.13
+kernel fails before generation. Use a separate Python 3.12 environment for
+feature preparation, then use the stock Colab interpreter with precomputed
+caches for training. Do not disable the package's Python-version constraint.
+
+The CARE repair used this setup on the same G4 VM, retaining stock PyTorch for
+the notebook training path:
+
+```bash
+python -m pip install uv
+uv python install 3.12
+uv venv --python 3.12 /content/deepmzyme-env
+uv pip install --python /content/deepmzyme-env/bin/python \
+  torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+uv pip install --python /content/deepmzyme-env/bin/python \
+  -r requirements/colab-overlay.txt esm==3.2.3
+```
+
+Recheck CUDA in that interpreter before generation. The pinned legacy
+ESMC-300m model revision and per-structure sequence hashes belong in the
+generation report. `src/complete_care_caches.py` implements inventory,
+resumable external/RING/ESM generation, and a final alignment/feature audit.
+It generates test-side features only; it never runs held-out model evaluation.
+The [CARE repair evidence](notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md)
+records the exact environment and commands used. A complete filename inventory
+alone is insufficient: verify PROPKA availability and exercise the ESM loader.
+
+For large CLI downloads, split archives into approximately 64 MiB chunks on
+the VM, download them separately, concatenate locally, and verify the original
+whole-archive SHA256. This bounds local CLI memory use. Always retrieve caches,
+run artifacts, and provenance before stopping the runtime.
 
 Do not replace the code above with:
 

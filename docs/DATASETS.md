@@ -368,6 +368,9 @@ Status:
 - Materialized locally: yes.
 - Included in v10 and CLEAN predictor v2: yes.
 - Test membership, structures, and labels: prepared and bundled.
+- CARE ESM/external/RING caches completed locally on 2026-09-14; three
+  validation-only EC1 Colab GPU smoke runs passed. See the
+  [repair and execution evidence](notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md).
 - Completed test evaluation found: no.
 - Selection use established: no.
 - Upstream CARE repository/source URL or formal citation: not found; provenance
@@ -445,7 +448,7 @@ cannot be reconstructed from the manifest. It does not authorize held-out
 evaluation or stand in for a model-quality dataset. Audited legacy G4/A100
 results are summarized in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
-### Main Colab bundle v11 (current)
+### Main Colab bundle v11 (current hosted release)
 
 - Filename: `DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz`
 - Download: [v11 gzip archive](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz)
@@ -476,14 +479,14 @@ adding it to the archive does not promote it as a scientific final-test route.
 **Cache readiness is dataset-specific.** All included PinMyMetal structures
 and all 740 shared CLEAN structures have ESM, external, and RING caches.
 Available embedding metadata identifies `esmc_300m`, dimension 960, with no
-missing sidecars. CARE has the following unresolved gaps:
+missing sidecars. The unchanged **hosted v11 archive** has these CARE gaps:
 
 | CARE side | Structures | Missing ESM | Missing external | Missing RING |
 |---|---:|---:|---:|---:|
 | Train | 817 | 571 | 572 | 572 |
 | Test | 34 | 14 | 14 | 14 |
 
-CARE is included for preservation and preparation, but is **not ready for
+CARE in the unchanged v11 archive is included for preservation and preparation, but is **not ready for
 full feature-dependent training without generation**. Repacking does not fill
 these gaps. Missing-feature allowances must not silently change comparison
 cohorts. Archive checks inspect data integrity and membership; they do not
@@ -494,13 +497,54 @@ structure manifests, every configured notebook dataset choice, and all five
 CLEAN folds for each source option. Forty-eight deterministic feature-complete
 structure samples loaded with no alignment errors (73 retained pockets).
 The isolated release checkout passed 61 regression tests plus nine subtests,
-and `src/train.py --help` succeeded. No Colab GPU training was run.
+and `src/train.py --help` succeeded. No Colab GPU training was run as part of
+that v11 publication check. The later local CARE repair and three actual GPU
+smoke runs are recorded separately below.
 
 The archive contains `DeepMzyme_Data/bundle_metadata/v11/bundle_manifest.json`.
 It records the exact input roots and per-file sizes/SHA256 values. Build with
 `build_colab_bundle.build_bundle(selected_paths, output_bundle=...)`, supplying
 the recorded roots plus that metadata directory. The builder now selects real
 gzip for `.tar.gz`/`.tgz` outputs and retains `.tar.zst` support.
+
+### Main Colab bundle v12 (local only; CARE complete)
+
+- Filename: `DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz`
+- Local directory: `DeepMzyme_Data/DeepMzyme_Colab_Bundles/releases/v12/`.
+- Size: `4731180661` bytes.
+- SHA256: `90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee`.
+- **Not published.** No GitHub or Hugging Face push was performed. The notebook
+  retains the valid hosted v11 URL; it must not point to an unpublished v12 URL.
+- Sidecars in the same directory: `.sha256`, `.manifest.json`, `.validation.json`.
+- Portable [validation receipt](notebook_outputs/raw/colab_care_cache_smoke_20260914/v12_bundle_validation.json)
+  and [checksum](notebook_outputs/raw/colab_care_cache_smoke_20260914/v12_bundle.sha256)
+  are tracked with the evidence.
+
+This successor preserves the v11 selected roots, all structure and membership
+bytes, and the conservative CLEAN alias. It adds 2,930 files and repairs 265
+existing external-feature files. All **18,058 archived regular files** and the
+alias symlink were checked against the rebuilt manifest. All 817 CARE training
+structures and 34 test structures have ESM, external, and RING caches with zero
+audit failures. See the [repair and GPU smoke summary](notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md)
+for the additional ESM alias, the older PROPKA failures, and actual Colab
+verification. Other dataset caches retain their prior feature-generation
+state, except for the 265 repaired files shared with CARE.
+
+Use the exact-cache ESM lookup fix in `src/training/esm_feature_loading.py`
+with this bundle: exact and historical EC-annotation filenames coexist, and
+the older loader could read both as duplicate residues. Three EC1 notebook
+smoke families passed with the corrected loader, full feature coverage, and
+matched validation membership. No held-out evaluation was performed.
+
+The archive and cache tensors are ignored by Git. **A GitHub push does not
+publish this data archive.** Upload it manually to Hugging Face or Drive, then
+coordinate the notebook's bundle filename, URL/path, and checksum with that
+actual location. The local v12 archive already contains the completed caches;
+unmodified hosted v11 does not.
+
+Rebuild with `src/rebuild_care_complete_bundle.py`, providing the immutable v11
+base manifest, the completed local CARE audit, and a new output archive path.
+The builder refuses to overwrite an existing archive and performs no upload.
 
 ### Main Colab bundle v10 (historical)
 

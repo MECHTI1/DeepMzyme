@@ -1,0 +1,10 @@
+{
+  "sha256": "90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee",
+  "bytes": 4731180661,
+  "verified_regular_files": 18058,
+  "verified_symlinks": {
+    "DeepMzyme_Data/CLEAN_30_main": "CLEAN_30_shared_single_donor_supported_metal_conservative"
+  },
+  "care_audit_complete": true,
+  "published": false
+}
