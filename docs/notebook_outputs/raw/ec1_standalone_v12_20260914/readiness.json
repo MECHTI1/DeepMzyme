@@ -1,0 +1,33 @@
+{
+  "plan_sha256": "b74cef96f3a0161158bc1ab6e2aaa94da905af3812b959ac766cde99cd32d263",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "python": "3.13.15 (main, Aug  6 2026, 11:06:22) [GCC 13.3.0]",
+  "compiled_architectures": [
+    "sm_75",
+    "sm_80",
+    "sm_86",
+    "sm_90",
+    "sm_100",
+    "sm_120"
+  ],
+  "versions": {
+    "torch": "2.11.0+cu128",
+    "torch-geometric": "2.7.0",
+    "numpy": "2.4.4",
+    "pandas": "3.0.1",
+    "scikit-learn": "1.8.0",
+    "optuna": "4.8.0"
+  },
+  "cuda_forward_backward": true,
+  "persistent_output": "/content/ec1_standalone_v12_20260914",
+  "training_structures": 817,
+  "train_pockets": 993,
+  "val_pockets": 175,
+  "train_groups": 751,
+  "val_groups": 42,
+  "matches_successful_smoke": true,
+  "held_out_evaluation": false,
+  "status": "passed"
+}

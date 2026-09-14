@@ -1,0 +1,80 @@
+{
+  "completed_runs": 3,
+  "runs": [
+    {
+      "family": "Only-GVP",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 29,
+      "balanced_accuracy": 0.41904761904761906,
+      "per_class_recall": {
+        "1": 0.25,
+        "2": 0.8333333333333334,
+        "3": 0.6,
+        "4": 0.75,
+        "5": 0.0,
+        "6": 0.5,
+        "7": 0.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_dd407a78"
+    },
+    {
+      "family": "Only-GVP",
+      "lr": 3e-05,
+      "seed": 43,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.3678571428571429,
+      "per_class_recall": {
+        "1": 0.875,
+        "2": 1.0,
+        "3": 0.45,
+        "4": 0.25,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 0.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_255b896f"
+    },
+    {
+      "family": "Only-GVP",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 23,
+      "balanced_accuracy": 0.555952380952381,
+      "per_class_recall": {
+        "1": 0.875,
+        "2": 0.6666666666666666,
+        "3": 0.6,
+        "4": 0.75,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff"
+    }
+  ],
+  "family_lr_summary": [
+    {
+      "family": "Only-GVP",
+      "lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.393452380952381,
+      "sd": 0.036197132846454205,
+      "minimum": 0.3678571428571429,
+      "per_class_recall_mean": {
+        "1": 0.5625,
+        "2": 0.9166666666666667,
+        "3": 0.525,
+        "4": 0.5,
+        "5": 0.0,
+        "6": 0.25,
+        "7": 0.0
+      }
+    }
+  ],
+  "evidence": "initial_fixed_split_two_seeds",
+  "promoted": false
+}

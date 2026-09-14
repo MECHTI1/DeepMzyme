@@ -1,0 +1,12 @@
+{
+  "index": 2,
+  "archive": "ec1_run_02.tar.gz",
+  "bytes": 14579650,
+  "sha256": "a38b5b5381d4699629e7156261ac8069d082c7e307e9abf36aa6e09073c5db2d",
+  "local_sha256_verified": true,
+  "drive_verified": true,
+  "drive_verification": "metadata_size",
+  "drive_file_id": "1bPptgDAhJEdojmmEufk8nKyHnDdJwWvy",
+  "drive_url": "https://drive.google.com/file/d/1bPptgDAhJEdojmmEufk8nKyHnDdJwWvy/view?usp=drivesdk",
+  "drive_folder_id": "1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y"
+}

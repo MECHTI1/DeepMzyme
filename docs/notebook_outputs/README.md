@@ -38,6 +38,12 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 |---|---|---|---:|---|---|
 | `ec/care30/colab-g4-smoke/2026-09-14` | Exact standalone EC1 notebook smoke: Only-GVP, Only-ESM, graph-level late fusion; one epoch each; matched 993/175 training/validation pockets | All three GPU runs passed after cache completion and an exact-name ESM lookup fix; no baseline ranking or promotion | 6 | Feature preparation only; no held-out inference or metrics | [summary](summaries/summary_colab_care_cache_smoke_20260914.md); [cache and run evidence](raw/colab_care_cache_smoke_20260914/) |
 
+## EC1 standalone baseline campaign
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `ec/care30/standalone-v12/2026-09-14` | Authorized 3 families × 2 LRs × seeds 42/43, 30 epochs, one shared protein split; 3 runs verified, run 4 unverified after Colab connection loss, runs 5–12 not launched | Only-GVP `3e-5` pair mean group EC1 BA 0.393452; `1e-4` pair incomplete; no completed family ranking or promotion | 6 overall; 3 for the completed two-seed pair | No held-out inference or metrics | [partial summary](summaries/summary_ec1_standalone_v12_20260914.md); [portable evidence](raw/ec1_standalone_v12_20260914/) |
+
 ## Comparison identity
 
 Never compare or rank rows without checking:

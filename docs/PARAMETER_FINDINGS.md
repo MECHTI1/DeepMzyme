@@ -61,6 +61,22 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ## Current validation anchors and challengers
 
+### EC1 standalone v12 campaign: partial evidence only
+
+Three of the twelve authorized CARE30 EC1 baselines completed and were
+archived before a Colab connection failure. Only-GVP at `3e-5` has group-level
+EC1 balanced accuracy `0.393452 ± 0.036197` (sample SD, seeds 42/43, one fixed
+protein split, 30 epochs). Both selected checkpoints have zero EC5 and EC7
+recall. Only-GVP at `1e-4` scored `0.555952` for seed 42, but its paired run
+is unverified. This does not establish a learning-rate preference or family
+ranking. The other families have not run, and the validation support is only
+one protein for EC5 and EC7. No promotion or auxiliary-learning conclusion is
+supported. See the [partial summary](notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
+and its exact per-class and split evidence. Held-out metrics were neither
+produced nor used.
+
+### Historical metal anchors
+
 | Namespaced experiment/configuration | Main validation result | Grade | Current interpretation |
 |---|---:|---:|---|
 | `metal/only-esm/round1+round3/original-anchor/fixed-split-5seed` | mean `0.625325230595`, SD `0.031449451169`, min `0.5902137453861592`, max `0.6722436454687976` | 3 | Stable historical ESM-only anchor |

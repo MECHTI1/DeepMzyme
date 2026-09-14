@@ -1,0 +1,10 @@
+{
+  "method": "verified_archive_transfer",
+  "drive_probe_verified": true,
+  "drive_probe_id": "16RITsUQbtNL_2RxwFtrSU6qgnT-rRdAN",
+  "drive_folder_id": "1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y",
+  "drive_folder_url": "https://drive.google.com/drive/folders/1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y",
+  "local_write_verified": true,
+  "local_persistent_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/runs/ec1_standalone_v12_20260914",
+  "policy": "Download and SHA256-verify each run archive, upload to Drive and verify metadata before next run; copy progress files during training."
+}

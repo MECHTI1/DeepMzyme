@@ -9,6 +9,20 @@ Last scientific-policy documentation update: 2026-09-14.
 
 ## Current objective
 
+**Current authorized execution priority (2026-09-14):** complete the v12 EC1
+standalone 12-run fixed-split campaign before preparing Chat 5; keep the metal
+campaign pending. Three Only-GVP runs completed and were verified locally and
+in Drive. The `3e-5` seed-42/43 pair has mean group EC1 balanced accuracy
+`0.393452` (sample SD `0.036197`); `1e-4` seed 42 scored `0.555952`, with its
+second seed unverified. Run 4 was launched before the Colab CLI lost its local
+session record; runs 5–12 have not launched. The same endpoint remained listed
+as `[?]`, and its shutdown is unconfirmed. Reconnection authorization is
+pending under the installed Colab skill's orphan-session rule. Recover run 4
+before restarting it. This partial campaign is not promotion evidence, and
+no held-out, auxiliary, or metal training was run. See the
+[partial campaign summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
+for exact configuration, recalls, persistence receipts and recovery state.
+
 Advance two independent primary missions: direct four-class transition-metal
 classification and EC/function classification, beginning at EC depth 1. The
 immediate cross-task roadmap starts with reconciling strong standalone models;
@@ -37,7 +51,7 @@ standard.
 | Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii` and maps Fe/Co/Ni to Class VIII | No trusted completed direct four-class baseline batch is indexed | Four-class endpoint selected; baseline evidence and paired executable recipes still require reconciliation |
 | Required target-formulation challenger | `six_class` outputs and collapsed-four validation metrics are implemented | Historical six-class runs exist, but no matched direct-four versus six-trained/collapsed-four comparison is indexed | Required across the three initial metal baseline families; exact paired recipes still require reconciliation |
 | Historical metal targets | Six-class and five-class schemes remain implemented | Indexed metal anchors are principally historical six-class results; one five-class local smoke was prepare-only | Preserve under their original scheme; never relabel as direct four-class training |
-| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three CARE EC1 one-epoch Colab GPU smoke runs passed on 2026-09-14; no reportable baseline or promoted model | EC1 execution is smoke-tested; deeper hierarchical and full multi-label claims are unestablished |
+| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three CARE EC1 GPU smokes passed; three of twelve authorized standalone baselines are completed and archived, with run 4 unverified after connection loss | Initial partial fixed-split evidence only; family comparison unfinished, no promoted model; deeper hierarchical and full multi-label claims are unestablished |
 | Current EC multi-annotation handling | Multiple annotations with one shared prefix can map to one class; conflicting prefixes at the selected depth receive no target | No full multi-label experiment is indexed | Current code does not solve full multi-label EC prediction |
 | Shared-learning topology | A shared pocket representation feeds independent metal and EC heads, and both losses can update shared parameters | Exploratory joint runs exist under unmatched contexts | Implemented and explored; no controlled EC-only versus EC+auxiliary-metal result and no promotion |
 | Predicted-metal conditioning | Not part of the inspected shared-head path or a certified primary recipe | No promoted conditioning result | Deferred optional ablation after the simpler auxiliary-loss question |

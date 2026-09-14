@@ -1,0 +1,11 @@
+{
+  "archive": "ec1_preparation_verified.tar.gz",
+  "sha256": "31a8cdeb883144c8ad98693708815a0a818d140b2c75b24984efab68e117e1c8",
+  "bytes": 574521,
+  "local_sha256_verified": true,
+  "drive_verified": true,
+  "drive_verification": "metadata_size",
+  "drive_file_id": "1jKmqyh31D193A9UGy7zgZC31-NEhrTjk",
+  "drive_folder_id": "1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y",
+  "supersedes_preparation_file_id": "1zigAnqmIaDe2oeUYU78aqV9Q7rshjpyG"
+}
