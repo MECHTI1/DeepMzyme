@@ -52,17 +52,26 @@ def _synthetic_exact_root(tmp_path: Path) -> tuple[Path, Path, Path]:
 def test_nonoverlap_builder_is_transactional_and_preserves_test_bytes(tmp_path: Path) -> None:
     _exact_root, train_dir, test_dir = _synthetic_exact_root(tmp_path)
     output_dir = tmp_path / "train_and_test_sets_structures_non_overlapped_pinmymetal"
-    source_test_bytes = {path.name: path.read_bytes() for path in test_dir.iterdir() if path.is_file()}
+    source_test_structure_bytes = {
+        path.name: path.read_bytes() for path in test_dir.glob("*.pdb")
+    }
+    source_test_csv_bytes = (test_dir / PRIMARY_CSV).read_bytes()
     metadata = BUILDER.build_split(
         train_dir=train_dir,
         test_dir=test_dir,
         output_dir=output_dir,
         enforce_current_exact_profile=False,
     )
-    assert sorted(path.name for path in (output_dir / "train").glob("*.pdb")) == [
+    assert sorted(path.name for path in BUILDER.resolve_structure_files(output_dir / "train")) == [
         "2def__chain_A__EC_1.1.1.1.pdb"
     ]
-    assert {path.name: path.read_bytes() for path in (output_dir / "test").iterdir() if path.is_file()} == source_test_bytes
+    assert {
+        path.name: path.read_bytes()
+        for path in BUILDER.resolve_structure_files(output_dir / "test")
+    } == source_test_structure_bytes
+    assert (output_dir / "test" / PRIMARY_CSV).read_bytes() == source_test_csv_bytes
+    assert (output_dir / "train" / "structure_manifest.csv").is_file()
+    assert (output_dir / "test" / "structure_manifest.csv").is_file()
     assert metadata["counts"]["output_overlap_pdbids"] == 0
     assert metadata["validation"]["test_tree_byte_identical_to_exact"] is True
     assert (output_dir / "removed_exact_test_pdbids_from_train.txt").read_text(encoding="utf-8") == "1abc\n"

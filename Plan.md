@@ -1,8 +1,12 @@
 # DeepMzyme — Research Design and Technical Authority
 
-DeepMzyme is a deep-learning framework for predicting metal type and enzyme class
-(EC number) from metalloenzyme structural pocket graphs and optional ESMC residue
-embeddings.
+DeepMzyme is a deep-learning framework with two separate primary missions:
+transition-metal classification and EC/function classification. Both may use
+metalloenzyme structural pocket graphs and optional ESMC residue embeddings.
+They share infrastructure and may share learned representations in controlled
+experiments, but each task remains independently trainable, selectable,
+reportable, publishable, and scientifically complete. Neither task is defined
+merely as a helper for the other.
 
 This document is the primary design and policy authority. Source code and run
 outputs are evidence of implemented behavior; this document states the intended
@@ -60,37 +64,100 @@ membership, current materialization, bundles, and historical test access is
 `docs/DATASETS.md`. This section owns scientific data policy, not mutable
 dataset readiness or counts.
 
+Physical structure storage is content-addressed. Each distinct byte sequence is
+stored once under `DeepMzyme_Data/structure_store/objects/`; dataset and fold
+directories declare membership with `structure_manifest.csv`. Hash-qualified
+paths preserve same-filename/different-content variants. This organization must
+not alter split membership or hide train/test overlap. The layout, schema,
+migration audit, and maintenance commands are documented in
+`docs/STRUCTURE_STORE.md`.
+
 Colab data bundles are built with `src/build_colab_bundle.py`. A bundle can pack
-one or more named split roots, their site-level summary CSVs, structure files,
-and optional shared feature assets into a compressed archive for upload to
-HuggingFace or for local use. The notebook consumes this bundle via
-`COLAB_DATA_SOURCE`.
+one or more named split roots, their site-level summary CSVs, referenced
+structure-store objects, and optional shared feature assets into a compressed
+archive for upload to HuggingFace or for local use. The notebook consumes this
+bundle via `COLAB_DATA_SOURCE`.
 
 ---
 
 ## 2) Train the Metal-Classification Model
 
-Train and validate on six metal classes: Mn, Fe, Zn, Cu, Co, Ni.
+The intended primary PinMyMetal-compatible reporting target is four-class
+classification:
 
-Best checkpoint selection: highest validation balanced accuracy
-(`val_metal_balanced_acc`).
+- Mn
+- Cu
+- Zn
+- Class VIII = Fe + Co + Ni
 
-The default and main reportable target scheme is six-class. An explicit
-five-class scheme is available for validation-only comparison runs:
-`--metal-label-scheme five_class` in the CLI or
-`METAL_LABEL_SCHEME = "five_class"` in the notebook. It keeps Mn, Cu, Zn, and
-Fe separate while grouping Co and Ni into the fifth class. Use a separate run
-name and separate Optuna study when changing the metal label scheme, and do not
-compare five-class validation numbers directly against six-class validation
-numbers without labeling the scheme.
+Use the implemented `four_class` label-scheme alias, whose canonical internal
+name is `merge_fe_class_viii`. `src/label_schemes.py` maps Fe, Co, and Ni to
+the same Class VIII target under that scheme. Do not create a new label scheme
+for this target.
 
-Final test reporting: six-class metrics and collapsed-4 metrics, where Fe, Co,
-and Ni are merged into Class VIII.
+For the direct-four arm, select the best checkpoint by highest validation
+balanced accuracy (`val_metal_balanced_acc`) over the active four-class target.
 
-Six-class metal classification remains the main task. Collapsed-4 is an
-auxiliary/supplemental view only: it may be used as an optional validation-only
-auxiliary loss experiment, but it must not replace six-class metrics, six-class
-confusion matrices, or six-class rare-class recall checks.
+The metal program must examine two training formulations for this four-class
+endpoint:
+
+1. direct four-class training with `four_class`; and
+2. six-class training with `six_class` / `split_all_metals`, followed by a
+   deterministic four-class evaluation that merges Fe, Co, and Ni into Class
+   VIII.
+
+Direct four-class training is the primary baseline. The six-class-trained,
+collapsed-four arm is a required challenger that tests whether finer Fe/Co/Ni
+supervision helps the four-class endpoint. It is not optional, and it must not
+be relabeled as direct four-class training.
+
+Run the two formulations as a controlled validation comparison across the
+initial metal baseline families: Only-GVP, Only-ESM, and GVP + graph-level late
+fusion. Within each family, keep eligible samples, grouping, folds, seeds,
+features, architecture capacity, optimization budget, and HPO opportunity
+matched; only the target formulation and unavoidable output/loss dimensions
+may differ. Keep separate run names and Optuna studies. Select checkpoints from
+validation only, using `val_metal_balanced_acc` over each arm's active target,
+then compare the direct-four metric with
+`val_metal_collapsed4_balanced_acc` from the six-class-trained arm on the same
+validation units. Use paired confidence intervals and four-class per-class
+recall protection before promotion. The six-class arm must also retain its
+native six-class metrics and separate Fe/Co/Ni recalls.
+
+Do not use held-out test results to select between these formulations. After
+validation confirmation, freeze the selected formulation and complete Stage 6B
+before its one-shot Stage 7 report. If both formulations are ever intended as
+final report models, that reporting set and its interpretation must be fixed
+before any held-out data are opened.
+
+The implemented five-class scheme (`five_class`) remains valid for explicitly
+labeled alternative experiments and for preserving historical evidence. It
+keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
+name and Optuna study whenever the target scheme changes.
+
+Historical six-class and five-class runs must retain their original target
+scheme in every table, comparison, and interpretation. Their scores are not
+direct four-class training scores. In particular, these are different
+experiments:
+
+1. training a four-class model directly; and
+2. training a six-class model and then collapsing its predictions and metrics to
+   Mn, Cu, Zn, and Class VIII.
+
+The direct-four arm reports its active four-class metrics, confusion matrix,
+and per-class recall. The required six-class challenger reports both its native
+six-class results and a deterministic collapsed-four view. That view must remain
+labeled as collapsed reporting from a six-class-trained model. If the
+six-class-trained arm is promoted as the source of the primary four-class
+endpoint, the final report must state that training formulation explicitly.
+The optional collapsed-four auxiliary loss is a third, separate six-class
+objective experiment; it is not the required standard six-class challenger and
+is not part of direct four-class training.
+
+Executable notebook or playbook defaults may temporarily lag this scientific
+policy. Record that mismatch in `EXPERIMENT_STATUS.md` and
+`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`; do not reinterpret a six-class or
+five-class recipe as a direct four-class run.
 
 For the staged training pipeline (smoke, baseline, HPO, grouped-fold
 confirmation, final test) with copy-paste notebook configuration blocks, use
@@ -148,15 +215,21 @@ Authoritative rules for the pipeline:
   any held-out test is opened.
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
-  active metal-scheme `val_metal_min_recall`; for default reportable runs that
-  is six-class minimum recall. Collapsed-4 recall is supplemental and must not
-  hide Fe/Co/Ni failures.
+  active metal-scheme `val_metal_min_recall`; for the direct-four arm, that is
+  minimum recall across Mn, Cu, Zn, and Class VIII. In the required six-class
+  challenger, collapsed-four recall is part of the common-endpoint comparison,
+  but it must not replace native six-class minimum recall or hide separate
+  Fe/Co/Ni failures.
 - Serious validation-only metal Optuna searches should keep the current
   validated batch size in scope and compare the next larger practical batch
   size; reserve very small batches for smoke/debug or memory fallback, and
   reserve much larger batches for explicitly labeled ablations.
 - The advanced fusion order is Stage 5C -> Stage 5D -> Stage 5E -> Stage 5F,
   gated by validation evidence and thresholds defined in the playbook.
+- The metal campaign must complete the controlled comparison matrix in
+  Section 7 before making publication claims about the value of ESMC, fusion
+  position, or RING edges. Separate HPO winners or unmatched historical runs
+  do not satisfy this requirement.
 
 ### Metal Colab Parameter Ownership Rule
 
@@ -191,10 +264,26 @@ Do not add full Stage 0-7 blocks to `Plan.md`.
 
 ## 3) Train the EC-Number Classification Model
 
-Train and validate on all EC first-digit classes, and progressively on deeper
-EC digits. The decision on maximum training depth is open; start with depth 1
-(`--ec-label-depth 1`) and expand to deeper digits after the depth-1 baseline
-is stable.
+EC/function classification is the second primary DeepMzyme mission. Train and
+validate on all EC first-digit classes, and progressively on deeper EC digits.
+The decision on maximum training depth is open; start with depth 1
+(`--ec-label-depth 1`) and expand to deeper digits only after the depth-1
+standalone baseline is stable.
+
+Keep these scopes distinct:
+
+- EC depth-1 classification predicts one first-digit class.
+- Deeper hierarchical EC classification predicts at a separately declared
+  depth and restarts the staged validation workflow for that target.
+- A protein may carry multiple EC annotations in the source data.
+- Full multi-label EC prediction would predict multiple distinct EC targets for
+  one protein and is not the current implemented objective.
+
+The current label path is single-label at the selected depth. Multiple EC
+annotations can share one prefix at that depth and therefore map to one class;
+if they produce more than one distinct prefix, the current implementation does
+not assign a target for that sample. Do not describe this behavior as a solved
+full multi-label EC problem.
 
 Use supervised contrastive learning as a secondary loss. Start with
 `--ec-contrastive-weight 0.0` for the clean baseline; explore non-zero
@@ -209,6 +298,116 @@ at each trained depth. Report deeper-level metrics when deeper depths are traine
 
 For the staged training pipeline with copy-paste notebook configuration blocks,
 use `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+### Metal-EC relationship and auxiliary-learning policy
+
+Transition-metal identity and enzymatic chemistry are biologically related,
+but the relationship is not deterministically one-to-one:
+
+```text
+metal type != EC number
+```
+
+This relationship motivates descriptive analysis and machine-learning
+experiments. It does not establish that one target determines the other, or
+that combining their supervision will improve either prediction task.
+
+Before claiming a benefit from shared learning, establish strong standalone
+depth-matched models for both primary missions. The initial model-family set for
+each task is:
+
+1. Only-GVP
+2. Only-ESM
+3. GVP + graph-level late fusion
+
+The first experiment connecting the tasks is auxiliary multi-task learning:
+
+```text
+                     -> Metal head -> metal prediction
+Input -> shared encoder
+                     -> EC head ----> EC prediction
+```
+
+This is **independent predictions with shared learning**. The output of one
+head is not fed into the other head. Each loss influences the shared trainable
+parameters, while each prediction head remains independently evaluated. The
+first controlled question is:
+
+> Does metal supervision improve EC prediction?
+
+Compare EC-only against EC plus auxiliary metal using matched data eligibility,
+model family, encoder capacity, features, split units, seeds/folds, training
+budget, and EC selection metric. Auxiliary learning is a challenger, not an
+assumed winner. Negative transfer is possible, and the standalone model for
+either primary task remains a valid final model when auxiliary learning does not
+improve its validation performance. The reverse question, “Does EC supervision
+improve metal prediction?”, is secondary and may be tested later; it is not
+required before DeepMzyme can be completed.
+
+Do not add hybrid fusion, node-level late fusion, cross-attention, or other
+interaction mechanisms to this first metal-EC experiment. Those remain
+separate architecture investigations. Do not make predicted metal a mandatory
+EC input or introduce a hard `protein -> predicted metal -> EC` cascade. Soft
+predicted-metal probabilities or learned metal embeddings may be studied later
+as optional ablations, after the simpler auxiliary-loss comparison is complete.
+
+Known-metal conditioning for EC is an optional diagnostic or special inference
+mode only when metal identity is actually available. Record its provenance as
+one of:
+
+- experimentally observed metal;
+- curated database annotation;
+- computationally transferred AlphaFill/MAHOMES assignment; or
+- model-predicted metal.
+
+Computationally transferred assignments must not be called perfect ground
+truth. Results from these provenance categories must remain separately labeled.
+
+Metal supervision is naturally site/pocket-level, whereas EC supervision is
+protein/structure-level. Multiple pockets from one protein are repeated views
+of one EC annotation, not independent EC labels. Preserve structure/protein
+grouping, `pdbid` split protection where applicable, and EC group weighting
+such as `structure_id` in standalone and auxiliary experiments.
+
+Cross-task leakage protection is mandatory. A protein held out for either
+primary task must be excluded from all shared-encoder training, including loss
+terms supplied by the other task. For example, a protein held out for EC
+validation or test cannot enter joint training because its metal label is
+known. Apply the same rule in the reverse direction. Build split membership at
+the protein/structure grouping level across the union of label sources before
+constructing any shared-learning training set.
+
+Before expensive auxiliary experiments, perform a descriptive association
+analysis using permitted training/development data only. Predeclare and report:
+
+- the metal x EC1 contingency table and sample counts;
+- `P(EC | metal)` and `P(metal | EC)`;
+- Cramer's V;
+- a chi-square analysis where its assumptions are appropriate; and
+- mutual information and normalized mutual information where appropriate.
+
+This analysis is descriptive. It cannot prove that auxiliary learning will
+help, and it must never use held-out test data.
+
+The approximate cross-task experimental order is:
+
+1. **Phase 1:** establish or reconcile the paired metal-only target-formulation
+   baselines: direct four-class training and matched six-class training with
+   collapsed-four evaluation.
+2. **Phase 2:** establish or reconcile EC depth-1 standalone baselines.
+3. **Phase 3:** measure the metal-EC association in permitted development data.
+4. **Phase 4:** run one controlled EC-primary comparison: EC-only versus EC
+   plus auxiliary metal.
+5. **Phase 5:** only if useful or scientifically worthwhile, compare metal-only
+   versus metal plus auxiliary EC.
+6. **Phase 6:** only after those experiments, consider soft metal conditioning,
+   cross-task attention, or more complicated interaction mechanisms.
+
+Use status terms precisely. **Planned** means specified but not implemented;
+**implemented** means a code path exists; **smoke-tested** means only execution
+or plumbing was checked; **experimentally evaluated** means a declared
+validation experiment completed; and **promoted** means its predeclared
+selection gate passed. Code existence alone is not scientific validation.
 
 ---
 
@@ -243,8 +442,8 @@ can reproduce a command-line run.
 | Runtime | `--deterministic` | false | Enables stricter deterministic PyTorch behavior for reproducibility, possibly slower. | Expose |
 | Runtime | `--num-workers` | `0` | Number of DataLoader worker processes. Default preserves single-process loading. | Advanced |
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
-| Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. | Expose |
-| Target labels | `--metal-label-scheme` | `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. Changing this creates a different prediction problem. | Expose |
+| Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. The raw CLI default is an implementation default, not scientific preference for joint training. | Expose |
+| Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the required challenger uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of pocket graphs per mini-batch. | Expose / sweep |
 | Training | `--learning-rate` | `3e-4` | Optimizer step size. Previous serious baselines often start at `3e-5`. | Expose / sweep |
@@ -310,7 +509,7 @@ can reproduce a command-line run.
 | Metal loss | `--metal-loss-function` | `cross_entropy`; choices `cross_entropy`, `focal` | Loss function for metal classification. | Expose |
 | Metal loss | `--metal-focal-gamma` | `2.0` | Focal-loss gamma when focal loss is selected. | Expose |
 | Metal loss | `--metal-label-smoothing` | `0.0` | Label smoothing for metal cross-entropy. | Expose |
-| Metal loss | `--metal-collapsed-loss-weight` | `0.0` | Optional validation-only collapsed-4 auxiliary metal loss weight. `0.0` preserves the standard six-class objective. | Advanced |
+| Metal loss | `--metal-collapsed-loss-weight` | `0.0` | Optional validation-only collapsed-four auxiliary loss for an explicitly labeled six-class objective. It is not part of direct four-class training. | Advanced |
 | Metal loss | `--metal-class-weight-mode` | `inverse_frequency`; choices `none`, `manual`, `inverse_frequency`, `inverse_sqrt_frequency`, `effective_number` | Controls class weights for the metal loss. `manual` starts from `1.0` for every class and uses the per-class loss multipliers as exact class weights. | Expose |
 | Metal loss | `--mn-loss-multiplier`, `--cu-loss-multiplier`, `--zn-loss-multiplier`, `--fe-loss-multiplier`, `--co-loss-multiplier`, `--ni-loss-multiplier`, `--class-viii-loss-multiplier` | `1.0` each | Per-class multipliers applied to computed metal class weights; with `--metal-class-weight-mode manual`, they are the exact manual class weights. | Advanced |
 | Joint loss | `--joint-loss-weighting` | `auto`; choices `auto`, `fixed`, `uncertainty` | Controls task-level metal/EC loss balancing. `auto` uses learned uncertainty weighting for joint runs and fixed weighting for single-task runs. | Expose |
@@ -428,10 +627,12 @@ more compute than selecting the single best trial directly, but it makes the
 analysis cleaner: HPO finds candidates, while shared-fold validation estimates
 whether a candidate is stable enough to promote.
 
-The non-overlapped PinMyMetal held-out test is useful as the current final
-reporting split. Stronger future claims may need additional splits, such as a
-temporal split, a sequence-identity-clustered split, or an EC-stratified split,
-so that generalization is not tied to one historical benchmark construction.
+The non-overlapped PinMyMetal split remains useful as a historical reference,
+but its held-out test was accessed in seven early runs and is not the current
+final-reporting route. A separate scientific decision may select a newly
+protected route such as a temporal, sequence-identity-clustered, or
+EC-stratified split so that generalization is not tied to one historical
+benchmark construction.
 
 ---
 
@@ -540,9 +741,11 @@ The summary table should include, when available:
 - best validation metrics
 - final held-out test metrics
 - final held-out calibration metrics and bootstrap confidence intervals
-- metal active-scheme metrics, including six-class metrics for default runs and
-  five-class metrics for explicitly labeled five-class runs
-- metal collapsed-4 metrics
+- metal active-scheme metrics, including direct four-class metrics, native
+  six-class metrics for the required challenger, and scheme-labeled five-class
+  metrics for alternatives
+- metal collapsed-four metrics labeled as reporting from a six-class-trained
+  model when applicable
 - EC level-1 / level-2 metrics
 - split name/type used for the run
 - whether train/test overlap was detected
@@ -611,20 +814,74 @@ Limited-compute fallback:
 
 ## 7) Baseline-First Model Comparison Policy
 
-Before testing complex fusion models, establish clean baselines.
+Before testing complex fusion models or cross-task learning, establish clean
+standalone baselines for each primary task.
 
-Recommended order:
+The initial baseline family set for both metal target formulations and for EC
+depth-1 prediction is:
 
 1. Only-GVP
 2. Only-ESM
-3. GVP + simple late ESM fusion
-4. GVP + early residue-level ESM fusion
-5. More complex fusion modes only if simpler baselines justify them
+3. GVP + graph-level late ESM fusion
 
-`GVP + early fusion` is a supported preset and may be used in ESM-ready manual
-comparisons. It is not a required stage in the canonical metal HPO route unless
-`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` defines an exact executable block for
-it.
+Use this same limited family set for the first EC-primary auxiliary-learning
+comparison. Keep its single-task and auxiliary variants matched within one
+family. Do not introduce early fusion, node-level late fusion, hybrid fusion,
+cross-modal attention, predicted-metal conditioning, or cross-task attention
+into that first relationship experiment.
+
+### Separate metal architecture investigations
+
+The broader metal-only architecture campaign may investigate early fusion and
+more complex fusion modes after the three standalone baselines are established.
+That architecture campaign is scientifically separate from the initial
+metal-EC auxiliary experiment and must not be used to smuggle extra complexity
+into its comparison.
+
+`GVP + early fusion` is a supported preset. It is required in the controlled
+fusion-position comparison below, although it is not currently a named stage
+in the canonical metal HPO route. Before launching that comparison, add or use
+an exact executable early-fusion recipe in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; do not invent its budget from the
+other fusion stages.
+
+### Required controlled metal-model comparison matrix
+
+The publication-facing metal campaign must answer all four questions below
+before making the corresponding scientific claims:
+
+1. **Which training target best supports the four-class endpoint?** Compare
+   direct four-class training against six-class training followed by
+   deterministic collapsed-four evaluation across the three initial baseline
+   families.
+2. **Where should ESMC enter the structural model?** Compare GVP + early ESMC
+   fusion, GVP + graph-level late ESMC fusion, and GVP + hybrid early-and-late
+   ESMC fusion.
+3. **Which input modality contributes useful information?** Compare the
+   `Only-ESM` preset using ESMC embeddings, Only-GVP, and a predeclared
+   combined GVP + ESMC model.
+4. **Do RING interaction edges help GVP?** Compare the same GVP-capable
+   configuration with radius-only edges and with radius + RING edges. At
+   minimum this comparison must be completed for Only-GVP. If the proposed
+   final combined GVP + ESMC model uses RING, repeat the same matched RING
+   ablation in that combined architecture.
+
+These are controlled ablations, not a ranking of unrelated historical maxima.
+For the target-formulation comparison, the label scheme and output dimension
+are the intended differences; compare both arms on the common four-class
+validation view while preserving the six-class arm's native metrics. For the
+other three comparisons, keep the direct four-class label scheme fixed. Within
+every comparison, keep the dataset, ESMC model and embedding coverage, GVP
+backbone, non-target features, training budget, grouped folds, and active model
+seeds identical wherever the question permits. Give separately tuned families
+comparable HPO budgets, then compare their frozen candidates on the shared
+Stage 6 fold/seed grid. Use paired bootstrap confidence intervals over shared
+folds and four-class rare-recall protection. A numerical difference from one
+split or one selected Optuna trial is not evidence of a significant advantage.
+
+The current completion state and evidence gaps for this matrix belong in
+`EXPERIMENT_STATUS.md`; exact runnable blocks and stage mapping belong in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 Complex fusion modes include:
 
@@ -658,13 +915,16 @@ For metal GVP/ESM fusion, the advanced-fusion order should be:
 It is supported by the notebook/model stack, but it is not a required metal HPO
 stage unless the metal playbook adds a canonical executable block for it.
 
-For each task:
+For each standalone task:
 
 - compare models using validation metrics first
 - select checkpoints using validation metrics
 - evaluate the selected model once on the held-out test set for final reporting
 
-The goal is to avoid adding complex architecture before proving that it improves over simple baselines.
+The goal is to avoid adding complex architecture before proving that it
+improves over simple baselines. A positive metal-only architecture result is
+not evidence that multi-task learning helps EC, and an exploratory joint result
+is not a substitute for a matched standalone comparison.
 
 ---
 
@@ -678,21 +938,18 @@ or unopened. Those test values are not eligible current selection evidence.
 
 > **Primary final-test route: unresolved scientific decision required before final reporting.**
 
-This documentation cleanup does not designate a replacement test or change the
-policy below.
-
-The non-overlapped PinMyMetal split remains the historically trusted split for
-final held-out evaluation unless a new experiment explicitly switches to a
-newer split variant.
+This documentation update does not designate a replacement test. Until a
+separate scientific decision resolves the route, no named PinMyMetal split is
+the current primary final held-out test. The legacy non-overlap split remains a
+historical reference. It is present locally, absent from the current v10
+bundle, and not pristine.
 
 The metal Colab notebook currently defaults `DATASET_NAME` to the exact
 PinMyMetal split for new serious metal-validation workflows, and the playbook
 owns that executable default. That default changes the external dataset split
-used by the notebook; it does not weaken the held-out-test policy below. Exact
-split results must remain labeled as exact/possibly-overlapped when train/test
-PDB-ID overlap exists, and the non-overlapped split remains the historically
-trusted final held-out reference unless an experiment explicitly chooses and
-documents another final split.
+used by the notebook; it does not select a final-reporting route or weaken the
+held-out-test policy below. Exact-split results must remain labeled as
+exact/possibly-overlapped when train/test PDB-ID overlap exists.
 
 Named split definitions, exact counts, construction evidence, and current
 availability are maintained once in `docs/DATASETS.md`. The policy distinctions
@@ -702,16 +959,32 @@ is a custom comparison rather than an automatically selected final test.
 
 For the EC-number classification task:
 
-- The non-overlapped PinMyMetal split should be treated as mandatory for final held-out testing.
+- No current primary final held-out route is designated. Resolve it in a
+  separate scientific decision before Stage 7.
 - The exact PinMyMetal split should not be used as the final EC held-out test split if train/test structures overlap.
 - EC supervision is structure/protein/chain-level even when extraction creates multiple separated metal-pocket samples for the same structure. EC cross-entropy should use group weighting, by default at `structure_id`, so such structures are not over-counted; this does not divide by raw metal atom count and does not downweight true multinuclear pockets.
 
 For the metal-type classification task:
 
-- The non-overlapped PinMyMetal split should be the preferred final held-out test split.
+- No current primary final held-out route is designated. Resolve it in a
+  separate scientific decision before Stage 7.
 - The exact PinMyMetal split may be kept as an optional secondary metal-testing mode.
 - If the exact PinMyMetal split is used for metal testing, the result must be clearly labeled as using the exact/possibly-overlapped split.
 - Metal results from the exact/possibly-overlapped split should not be presented as the main final held-out result if train/test overlap exists.
+
+For shared-encoder metal-EC experiments:
+
+- Construct train/validation/test membership across the union of all metal and
+  EC label sources before training.
+- If a protein or structure group is held out for metal or EC, exclude it from
+  every shared-encoder training loss, even when a label for the other task is
+  available.
+- Keep site/pocket metal labels nested under their protein/structure group so
+  repeated pockets cannot cross a primary-task boundary.
+- Apply the same group assignments, active fold definitions, and eligible
+  sample rules to the standalone and auxiliary variants being compared.
+- Treat any cross-task overlap as leakage and invalidate the affected
+  comparison until it is rebuilt.
 
 The code and/or result summary files should clearly record which split was used:
 
@@ -737,7 +1010,10 @@ Use only validation or cross-validation for:
 - hyperparameter choices
 - model architecture choices
 - fusion-mode choices
+- auxiliary-loss weights and joint-versus-single-task decisions
+- feature and conditioning choices
+- classification thresholds
 - temperature or calibration-method choices
-- ensemble membership, ensemble weighting, or threshold choices
+- ensemble membership or ensemble weighting
 
 Use the held-out test set only for final reporting of selected models.

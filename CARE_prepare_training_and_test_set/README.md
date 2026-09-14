@@ -59,6 +59,11 @@ Default exported DeepMzyme dataset root:
 DeepMzyme_Data/CARE_task1_30_train_test_metallo
 ```
 
+Dataset export registers structures in
+`DeepMzyme_Data/structure_store/objects/` and writes per-split
+`structure_manifest.csv` membership instead of copied PDB files. See
+[`docs/STRUCTURE_STORE.md`](../docs/STRUCTURE_STORE.md).
+
 Shared defaults live in `00_common_care_task1_30.sh`. Override values such as `WORK_ROOT`, `OUTPUT_ROOT`, `CARE_TRAIN_CSV`, `CARE_TEST_CSV`, or `MAHOMES_N_JOBS` by exporting them before running a step. Each step writes a matching log under `$WORK_ROOT/logs/`.
 
 ## CARE File Discovery
