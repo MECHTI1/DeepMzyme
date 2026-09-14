@@ -290,12 +290,13 @@ OPTUNA_MULTIOBJECTIVE = False
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The current
-`DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst`
-bundle contains exact PinMyMetal, Common-PDBID 70/30 PinMyMetal, `CLEAN_30`
-folds 0-4 via the conservative `CLEAN_30_main` source and the original
-`CLEAN_30_shared` source, and CARE Task 1 clusterRes30. Non-overlapped and
-harsh split roots remain named variants in Plan.md, but they require
-`upload_file`, `drive`, or a custom bundle containing those dataset roots.
+bundle and its verified checksum are listed in [DATASETS.md](DATASETS.md#main-colab-bundle-v11-current).
+It contains exact, Common-PDBID 70/30, and historical non-overlapped PinMyMetal;
+CLEAN30 folds 0-4 through conservative and original shared sources; and CARE
+clusterRes30 with incomplete cached features. Non-overlapped data requires an
+explicit dataset-root override because it is not a dropdown choice. Harsh
+PinMyMetal remains unavailable. See the dataset inventory for readiness and
+scientific-use limits.
 `SPLIT_BY` controls
 only the internal train/validation grouping inside the selected external train
 split and is emitted to the CLI as `--train-val-split-by`; it never changes the

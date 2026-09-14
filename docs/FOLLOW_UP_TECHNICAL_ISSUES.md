@@ -245,8 +245,9 @@ Otherwise retain `MISSING — recovery required`.
   non-overlapped PinMyMetal only as a historical reference.
 - The metal playbook's current common defaults use exact PinMyMetal.
 - Exact PinMyMetal contains 177 overlapping PDB IDs.
-- The notebook dropdown and current v10 bundle omit non-overlapped and harsh
-  roots.
+- The notebook dropdown omits non-overlapped and harsh roots. The current
+  bundle includes historical non-overlapped data, accessible through an explicit
+  dataset-root override; harsh data is still unavailable.
 - The historical non-overlap test was evaluated seven times and is not pristine.
 
 **Conflicting documentation/policy**
