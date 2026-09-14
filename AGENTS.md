@@ -707,6 +707,16 @@ file.
 
 ---
 
+## Git workflow
+
+- Do not push to GitHub or any other remote when work is finished. The user
+  will push changes themselves.
+- Do not stage modifications to existing tracked files. Use `git add` only for
+  completely new scripts or files when adding them to the local Git index is
+  needed for the task.
+
+---
+
 ## Review-only and prompt-safety guidance
 
 When the user asks for a comprehensive project review, architecture audit,
