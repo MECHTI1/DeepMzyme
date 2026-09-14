@@ -24,6 +24,18 @@ from typing import Any, Iterable, Mapping, Sequence
 from Bio.PDB import MMCIFParser
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from structure_store import (
+    StructureReference,
+    index_structure_files_by_name,
+    resolve_structure_files,
+    sha256_file,
+    store_structure,
+    write_structure_manifest,
+)
 DEFAULT_CLEAN_SPLITS_ROOT = PROJECT_ROOT / "DeepMzyme_Data" / "CLEAN_all_train_valid_splits"
 DEFAULT_WORK_ROOT = Path("/media/Data/clean_sets/split30/fold0")
 DEFAULT_OUTPUT_ROOT = None
@@ -1336,18 +1348,23 @@ def command_export_dataset(args: argparse.Namespace) -> None:
         dest_dir = output_root / split
         clear_output_split_dir(dest_dir, overwrite=args.overwrite)
         required_names = collect_required_structure_names(summary_csv)
-        copied = 0
+        source_paths: list[Path] = []
         missing: list[str] = []
         for name in sorted(required_names):
             source = source_pdb_dir / name
             if not source.exists():
                 missing.append(name)
                 continue
-            shutil.copy2(source, dest_dir / name)
-            copied += 1
+            source_paths.append(source)
         if missing:
             preview = ", ".join(missing[:10])
             raise FileNotFoundError(f"Missing {len(missing)} structure(s) for {split}: {preview}")
+        references = [
+            store_structure(source, PROJECT_ROOT / "DeepMzyme_Data" / "structure_store")
+            for source in source_paths
+        ]
+        write_structure_manifest(dest_dir, references, verify_hashes=True)
+        copied = len(references)
         shutil.copy2(summary_csv, dest_dir / SUMMARY_CSV_NAME)
         candidate_csv = source_pdb_dir / CANDIDATE_SITE_CSV_NAME
         metadata_dir = output_root / "metadata" / split
@@ -1362,7 +1379,7 @@ def command_export_dataset(args: argparse.Namespace) -> None:
             "structure_count": copied,
             "site_count": len(read_csv(summary_csv)),
         }
-        print(f"[{split}] copied {copied} structures and {split_stats[split]['site_count']} site rows")
+        print(f"[{split}] registered {copied} structures and {split_stats[split]['site_count']} site rows")
 
     metadata = {
         "split_name": f"CLEAN split{args.identity} fold{args.fold} AlphaFill-MAHOMES catalytic metalloenzyme subset",
@@ -1445,7 +1462,7 @@ def index_exported_structures(source_dataset_root: Path) -> dict[str, Path]:
         split_dir = source_dataset_root / source_split
         if not split_dir.exists():
             raise FileNotFoundError(f"Source structure directory not found: {split_dir}")
-        for path in sorted(split_dir.glob("*.pdb")):
+        for path in resolve_structure_files(split_dir, recursive_legacy_scan=False):
             existing = index.get(path.name)
             if existing is not None and existing.resolve() != path.resolve():
                 raise ValueError(f"Duplicate source structure filename across splits: {path.name}")
@@ -1513,8 +1530,9 @@ def copy_repartitioned_split(
     if missing:
         preview = ", ".join(missing[:10])
         raise FileNotFoundError(f"Missing {len(missing)} source structure(s) for {split}: {preview}")
-    for name in sorted(required_names):
-        shutil.copy2(structure_index[name], dest_dir / name)
+    store_root = PROJECT_ROOT / "DeepMzyme_Data" / "structure_store"
+    references = [store_structure(structure_index[name], store_root) for name in sorted(required_names)]
+    write_structure_manifest(dest_dir, references, verify_hashes=True)
     return {
         "summary_csv": str(summary_csv),
         "structure_count": len(required_names),
@@ -1611,26 +1629,6 @@ def command_repartition_exported_dataset(args: argparse.Namespace) -> None:
         print(f"[fold {fold}] wrote dataset metadata: {output_root / 'split_metadata.json'}")
 
 
-def link_or_copy_file(source: Path, dest: Path, *, mode: str) -> str:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.exists():
-        dest.unlink()
-    if mode == "copy":
-        shutil.copy2(source, dest)
-        return "copied"
-    if mode == "hardlink":
-        try:
-            dest.hardlink_to(source)
-            return "hardlinked"
-        except OSError:
-            shutil.copy2(source, dest)
-            return "copied_after_hardlink_failed"
-    if mode == "symlink":
-        dest.symlink_to(source.resolve())
-        return "symlinked"
-    raise ValueError(f"Unsupported link mode: {mode}")
-
-
 def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
     identity = str(args.identity)
     output_root = (
@@ -1650,7 +1648,7 @@ def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
     folds_dir.mkdir(parents=True, exist_ok=True)
     metadata_dir.mkdir(parents=True, exist_ok=True)
 
-    structure_sources: dict[str, Path] = {}
+    structure_sources: dict[str, StructureReference] = {}
     fold_stats: dict[str, Any] = {}
     structure_source_rows: list[dict[str, Any]] = []
     link_status_counts: dict[str, int] = {}
@@ -1672,25 +1670,29 @@ def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
             shared_summary = folds_dir / f"{dataset_name}_{split}.csv"
             write_csv(shared_summary, FINAL_SUMMARY_FIELDS, rows)
             required_names = {structure_stem_for_summary_row(row) + ".pdb" for row in rows}
-            missing = sorted(name for name in required_names if not (source_split_dir / name).exists())
+            source_index = index_structure_files_by_name(source_split_dir)
+            missing = sorted(name for name in required_names if name not in source_index)
             if missing:
                 preview = ", ".join(missing[:10])
                 raise FileNotFoundError(f"Missing {len(missing)} source structures for {dataset_name}/{split}: {preview}")
             for name in sorted(required_names):
-                source_path = source_split_dir / name
-                existing_source = structure_sources.get(name)
-                if existing_source is not None:
-                    if existing_source.read_bytes() != source_path.read_bytes():
+                source_path = source_index[name]
+                existing_reference = structure_sources.get(name)
+                if existing_reference is not None:
+                    if existing_reference.sha256 != sha256_file(source_path):
                         raise ValueError(f"Structure filename collision with different content: {name}")
                     continue
-                dest_path = structures_dir / name
-                status = link_or_copy_file(source_path, dest_path, mode=args.link_mode)
+                stored = store_structure(
+                    source_path,
+                    PROJECT_ROOT / "DeepMzyme_Data" / "structure_store",
+                )
+                status = "manifest_reference"
                 link_status_counts[status] = link_status_counts.get(status, 0) + 1
-                structure_sources[name] = source_path
+                structure_sources[name] = stored
                 structure_source_rows.append(
                     {
                         "structure_file": name,
-                        "shared_structure_path": str(dest_path),
+                        "shared_structure_path": str(stored.path),
                         "source_structure_path": str(source_path),
                         "link_status": status,
                     }
@@ -1705,6 +1707,11 @@ def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
                 f"with {len(rows)} site rows over {len(required_names)} structures"
             )
 
+    write_structure_manifest(
+        structures_dir,
+        list(structure_sources.values()),
+        verify_hashes=True,
+    )
     write_csv(
         metadata_dir / "structure_sources.csv",
         ["structure_file", "shared_structure_path", "source_structure_path", "link_status"],
@@ -1717,12 +1724,12 @@ def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
         "output_root": str(output_root),
         "source_base": str(source_base),
         "shared_structure_count": len(structure_sources),
-        "link_mode": args.link_mode,
+        "structure_membership_mode": "content_addressed_manifest",
         "link_status_counts": link_status_counts,
         "folds_dir": str(folds_dir),
         "structures_dir": str(structures_dir),
         "note": (
-            "CLEAN-native compact layout: structures are stored once under structures/, "
+            "CLEAN-native compact layout: structures/ contains a manifest into the global structure store, "
             "and each CLEAN train/test fold is represented by site-level CSVs under folds/. "
             "The Colab notebook materializes the selected fold into train/ and test/ views at runtime."
         ),
@@ -1732,12 +1739,12 @@ def command_build_shared_fold_layout(args: argparse.Namespace) -> None:
     readme_lines = [
         "# CLEAN Shared Fold Layout",
         "",
-        "This compact CLEAN layout stores structures once and fold membership as CSV files.",
-        "The regular DeepMzyme training code still expects `train/` and `test/` directories; the Colab notebook materializes those views at runtime for the selected fold.",
+        "This compact CLEAN layout references globally stored structures once and records fold membership as CSV files.",
+        "The Colab notebook materializes manifest-backed train/test views for the selected fold.",
         "",
         "## Contents",
         "",
-        f"- `structures/`: {len(structure_sources)} unique PDB structures",
+        f"- `structures/structure_manifest.csv`: {len(structure_sources)} structure references",
         "- `folds/`: site-level train/test CSVs for each CLEAN fold",
         "- `metadata/structure_sources.csv`: source path for each shared structure",
         "",
@@ -1822,7 +1829,7 @@ def build_parser() -> argparse.ArgumentParser:
     summarize.add_argument("--output-dir", type=Path, default=None, help="Single split override; normally omit.")
     summarize.set_defaults(func=command_summarize_mahomes)
 
-    export = subparsers.add_parser("export-dataset", help="Copy catalytic structures/CSVs into DeepMzyme_Data.")
+    export = subparsers.add_parser("export-dataset", help="Register catalytic structures and copy CSVs into DeepMzyme_Data.")
     export.add_argument("--work-root", type=Path, default=DEFAULT_WORK_ROOT)
     export.add_argument("--identity", type=str, default="30")
     export.add_argument("--fold", type=int, default=0)
@@ -1878,7 +1885,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--link-mode",
         choices=("hardlink", "copy", "symlink"),
         default="hardlink",
-        help="How to populate shared structures locally. Bundles contain file content either way.",
+        help="Deprecated compatibility option; the shared layout now writes a structure manifest.",
     )
     shared.set_defaults(
         func=lambda args: (

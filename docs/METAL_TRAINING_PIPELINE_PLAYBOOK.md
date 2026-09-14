@@ -23,6 +23,27 @@ Before any final reporting, read [`DATASETS.md`](DATASETS.md) and
 This warning changes no stage value, budget, range, seed, gate, output name, or
 notebook behavior.
 
+## Primary Four-Class Policy / Recipe Reconciliation Warning
+
+`Plan.md` now designates Mn, Cu, Zn, and Class VIII = Fe+Co+Ni as the intended
+primary PinMyMetal-compatible reporting endpoint. It requires a controlled
+comparison of direct `four_class` / `merge_fe_class_viii` training against
+matched `six_class` training followed by collapsed-four evaluation.
+
+The existing executable blocks in this playbook are retained with their
+six-class common recipe during this scientific-policy-only update. They remain
+exact six-class recipes and historical workflow references. They do not by
+themselves define the required matched challenger, and they must not be
+relabeled as direct four-class training.
+
+Before launching a new metal campaign, create and reconcile paired stage blocks
+for the direct-four arm and the six-class-trained/collapsed-four arm across the
+three initial baseline families. Coordinate study/run identities, common-view
+metrics, active-class metrics, rare-class gates, and Stage 6/6B/7 provenance
+with the notebook launch surface. Do not patch one label value in isolation or
+reuse an incompatible persistent study. This open work is tracked in
+[`TECH-010`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled).
+
 
 ## Quick-Paste Stage Selector
 
@@ -197,16 +218,19 @@ Supported presets without canonical serious HPO blocks:
 
 - `GVP + early fusion` is implemented in the notebook/model preset map and may
   be used in ESM-ready manual comparisons. This playbook does not currently own
-  a standalone serious HPO block for it.
+  a standalone serious HPO block for it. It remains a required candidate in the
+  separate metal fusion-position investigation once such a block exists.
 - `SimpleGNN + ESM` is implemented as an auxiliary scalar-graph ablation. This
   playbook does not currently own a standalone serious HPO block for it.
 
 Do not present either preset as a required metal HPO stage unless an exact
 executable block is added here.
 
-## Common Defaults
+## Retained Six-Class Common Defaults — Reconciliation Required
 
-Use these shared defaults unless a stage overrides them.
+These are the existing six-class shared recipe values. Use them only for an
+explicitly labeled six-class experiment. They must be reconciled with new
+direct-four blocks before the playbook can supply the required paired campaign.
 
 ```python
 TASK = "metal"
@@ -586,8 +610,8 @@ one-shot held-out test policy.
 
 `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` maps to the CLI flag
 `--metal-collapsed-loss-weight`; in single mode the first CSV value is used.
-The default is `0.0`, which preserves the
-standard six-class objective exactly. When enabled with cross-entropy metal
+For the retained six-class recipe, `0.0` preserves the
+six-class objective exactly. When enabled with cross-entropy metal
 loss, the training objective is:
 
 ```text
@@ -596,26 +620,33 @@ L_total = (1 - alpha) * CE_6class + alpha * CE_4class
 
 The collapsed view is deterministic: `Mn`, `Cu`, `Zn`, and `Class VIII`, where
 `Class VIII = Fe + Co + Ni`. The collapsed logits are computed by log-sum-exp
-marginalization from the six-class logits. Six-class metal classification
-remains the primary task and primary report; collapsed-4 metrics are
-supplemental and must not hide Fe/Co/Ni failures.
+marginalization from the six-class logits. This is a separate six-class
+objective experiment. It is not direct four-class training and cannot replace
+the intended primary four-class baseline. Within a six-class experiment,
+collapsed-four metrics are supplemental and must not hide Fe/Co/Ni failures.
 
-First-use rule: test this only against the current validation baseline before
-using it broadly. For a Stage 5A-only validation experiment, use:
+First-use rule: test this only against a same-scheme six-class validation
+baseline before using it broadly. For a separately labeled Stage 5A-only
+six-class validation experiment, use:
 
 ```python
 METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
 METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 ```
 
-Do not add this search axis automatically to Stage 5B-5F. Add it there only
-after a Stage 5A validation comparison and Stage 6 confirmation show that it
-improves six-class balanced accuracy without rare-class recall collapse.
+The required six-class-trained/collapsed-four challenger uses the standard
+six-class objective with this weight at `0.0`; deterministic collapsed-four
+evaluation does not require an auxiliary collapsed loss. Treat a nonzero weight
+as a third target-objective experiment. Do not add that search axis to direct
+four-class training or automatically to Stage 5B-5F. Add it only after a
+same-scheme Stage 5A validation comparison and Stage 6 confirmation justify it.
 
 ### Optional five-class metal target scheme
 
-The default reportable metal target is `METAL_LABEL_SCHEME = "six_class"`:
-`Mn`, `Cu`, `Zn`, `Fe`, `Co`, and `Ni`.
+The primary reporting endpoint is four-class. Its direct arm uses `four_class`,
+and its required standard six-class challenger uses the retained label scheme
+above pending TECH-010 reconciliation. `five_class` is a separate alternative
+target.
 
 For an explicitly labeled validation-only comparison, use:
 
@@ -643,6 +674,10 @@ of the joint-task GVP + hybrid fusion family while selecting checkpoints by
 metal balanced accuracy. It keeps the five-class target separate from six-class
 evidence and applies additional metal-loss multipliers to Fe and Mn on top of
 the selected training-split metal class-weight mode.
+
+This retained advanced diagnostic is not the first metal-EC relationship
+experiment. The first EC-primary auxiliary comparison is limited to Only-GVP,
+Only-ESM, or GVP + graph-level late fusion with a matched EC-only control.
 
 Notebook configuration block:
 
@@ -740,12 +775,13 @@ study with objectives:
 - maximize `val_metal_min_recall`
 
 The second objective is minimum recall across active metal-scheme validation
-classes with support > 0. For default reportable runs this is six-class
-minimum recall; for explicitly labeled `five_class` runs it is five-class
-minimum recall over `Mn`, `Cu`, `Zn`, `Fe`, and grouped Co/Ni. Do not use
-`val_metal_collapsed4_min_recall` as the default rare-class objective, because
-it can hide Fe/Co/Ni failures in six-class runs. Collapsed-4 minimum recall is
-still reported as supplemental context.
+classes with support > 0. For the direct four-class arm, this means Mn, Cu, Zn,
+and Class VIII. For an explicitly labeled `five_class` run it means Mn, Cu, Zn,
+Fe, and grouped Co/Ni; for the required standard `six_class` challenger it means
+all six classes. In six-class runs, do not substitute
+`val_metal_collapsed4_min_recall`, because it can hide separate Fe/Co/Ni
+failures. Collapsed-four minimum recall is supplemental context for that
+scheme.
 
 Multi-objective HPO writes Pareto review files:
 
@@ -796,6 +832,29 @@ Interpretation:
 11. Stage 6B: apply promotion gates and train/refit the single selected
     configuration on the full non-test training set.
 12. Stage 7: one-shot held-out test for the frozen Stage 6B final-refit run.
+
+### Required metal controlled-comparison matrix
+
+The full primary metal research mission is broader than selecting one best
+pipeline. After TECH-010 supplies reconciled paired target recipes and direct
+four-class architecture recipes, complete these matched comparisons before
+making the corresponding publication claims:
+
+| Question | Playbook coverage | Completion requirement |
+|---|---|---|
+| Direct four-class training vs six-class training with collapsed-four evaluation | No exact paired stage block exists yet | Run both arms for Only-GVP, Only-ESM, and graph-level late fusion with separate studies, matched data/folds/seeds/features/budgets, common four-class validation metrics, paired CIs, and four-class recall protection; retain native six-class metrics for the six-class arm |
+| Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Stages 2A/2B establish the simple baselines; Stages 5A/5B/5C tune the serious candidates | Confirm every eligible family on the same Stage 6 folds/seeds and compare with paired CIs and rare-class recall protection |
+| Early vs late vs hybrid ESMC fusion | Stage 5C covers late fusion and Stage 5E covers hybrid fusion | An exact early-fusion recipe is still required in this playbook before launch; then confirm early, late, and hybrid candidates on the shared Stage 6 grid |
+| GVP with vs without RING | Stage 2A supplies the RING-enabled Only-GVP anchor and Stage 5G supplies its radius-only counterpart | Keep all non-edge settings matched and confirm any claimed RING benefit on shared validation units; if the final combined model uses RING, also ablate RING in that same combined family |
+
+Do not fill the early-fusion gap by copying another stage's HPO budget. Add a
+reviewable executable block here first. Do not infer a RING effect by comparing
+the historical Hybrid+RING maximum with a separately tuned no-RING model.
+Historical six-class candidates may motivate the search but cannot complete the
+paired target-formulation comparison without matched direct-four arms. The
+other three rows remain direct-four architecture comparisons. Advanced
+candidates in this matrix also stay outside the first EC-primary
+auxiliary-learning experiment.
 
 Stage 4 is optional on a G4 GPU and mainly for sanity HPO, search-space
 debugging at useful scale, or limited-compute campaigns. For a serious fresh
@@ -2108,6 +2167,11 @@ After Stage 6, promote a hybrid-fusion candidate only if it beats the current
 best confirmed comparator by at least 0.005 mean `val_metal_balanced_acc`, and
 the paired bootstrap 95% CI for the improvement excludes zero.
 
+This Stage 5E result does not by itself complete the required fusion-position
+comparison. A final early-versus-late-versus-hybrid conclusion also requires
+the playbook-defined early-fusion candidate and a matched shared-fold Stage 6
+comparison across all three fusion modes.
+
 If the Stage 5E launch gate or the later Stage 6 promotion gate fails, stop
 advanced fusion escalation and revisit the simpler late-fusion or Only-GVP
 anchors before cross-attention.
@@ -2224,6 +2288,11 @@ graph setting. This does not make Optuna sample RING on/off; it fixes the base
 run to radius-only graph construction. This standalone block mirrors Stage 2A's
 Only-GVP validation anchor while changing only the graph-edge mode and labels
 the output as a radius-only ablation.
+
+This is the minimum required RING comparison: matched Only-GVP with radius-only
+edges versus radius + RING edges. If the proposed final GVP + ESMC model uses
+RING, add a second matched on/off ablation for that same combined architecture
+before attributing an improvement to RING.
 
 ```python
 TASK = "metal"
@@ -3000,6 +3069,10 @@ held-out test score; return to validation-only experiments for new development.
 Before any reportable comparison or HPO launch, confirm:
 
 - `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`
+- A new target-formulation campaign uses fully reconciled paired stage blocks:
+  a direct `METAL_LABEL_SCHEME = "four_class"` arm and a separately named
+  `six_class` arm with collapsed-four evaluation. The retained six-class common
+  recipe alone cannot satisfy this requirement until TECH-010 is resolved.
 - `FINAL_TEST_WORKFLOW = "evaluate_stage6_selected_candidate"` for primary
   final reporting, or the final-test cell has not been run
 - `LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False` until the separate Stage 7 cell is

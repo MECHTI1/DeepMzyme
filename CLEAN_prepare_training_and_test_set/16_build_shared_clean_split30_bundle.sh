@@ -21,6 +21,7 @@ run_logged "16_build_shared_clean_split${CLEAN_IDENTITY}_bundle" bash -c '
     -cf "$CLEAN_SHARED_BUNDLE_OUTPUT" \
     -C "$PROJECT_ROOT" \
     "DeepMzyme_Data/CLEAN_${CLEAN_IDENTITY}_shared" \
+    DeepMzyme_Data/structure_store \
     DeepMzyme_Data/updated_feature_extraction \
     DeepMzyme_Data/RING_features \
     DeepMzyme_Data/ring-4.0 \

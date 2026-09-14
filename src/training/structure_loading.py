@@ -7,6 +7,7 @@ from data_structures import PocketRecord
 from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_output_path
 from graph.structure_parsing import extract_metal_pockets_from_structure, parse_structure_file
 from label_schemes import map_site_metal_symbols
+from structure_store import STRUCTURE_MANIFEST_FILENAME, read_structure_manifest
 from training.feature_sources import (
     attach_structure_features_to_pocket,
     build_feature_load_report,
@@ -48,6 +49,10 @@ def is_auxiliary_structure_file(path: Path, structure_root: Path) -> bool:
 
 
 def find_structure_files(structure_dir: Path) -> list[Path]:
+    manifest_path = structure_dir / STRUCTURE_MANIFEST_FILENAME
+    if manifest_path.is_file():
+        return [reference.path for reference in read_structure_manifest(structure_dir)]
+
     structure_files: list[Path] = []
     for pattern in ("*.pdb", "*.cif", "*.mmcif"):
         structure_files.extend(structure_dir.rglob(pattern))

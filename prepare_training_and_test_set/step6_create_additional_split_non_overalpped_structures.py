@@ -16,6 +16,7 @@ import hashlib
 import json
 import re
 import shutil
+import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,6 +76,16 @@ def find_project_root(start: Path) -> Path:
 
 
 PROJECT_ROOT = find_project_root(Path(__file__).resolve())
+SRC_DIR = PROJECT_ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from structure_store import (
+    STRUCTURE_MANIFEST_FILENAME,
+    resolve_structure_files,
+    store_structure,
+    write_structure_manifest,
+)
 DEFAULT_BASE_DIR = PROJECT_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_exact_pinmymetal"
 DEFAULT_TRAIN_DIR = DEFAULT_BASE_DIR / "train"
 DEFAULT_TEST_DIR = DEFAULT_BASE_DIR / "test"
@@ -156,11 +167,11 @@ def membership_text(values: Iterable[str]) -> str:
 def tree_manifest(directory: Path) -> list[dict[str, object]]:
     return [
         {
-            "path": path.relative_to(directory).as_posix(),
+            "path": path.name,
             "size_bytes": path.stat().st_size,
             "sha256": sha256_file(path),
         }
-        for path in sorted(candidate for candidate in directory.rglob("*") if candidate.is_file())
+        for path in resolve_structure_files(directory, recursive_legacy_scan=False)
     ]
 
 
@@ -170,7 +181,7 @@ def tree_sha256(entries: Sequence[Mapping[str, object]]) -> str:
 
 
 def scan_structure_dir(directory: Path) -> ScanResult:
-    files = tuple(sorted(path for path in directory.iterdir() if path.is_file() and path.suffix.lower() in STRUCTURE_SUFFIXES))
+    files = tuple(resolve_structure_files(directory, recursive_legacy_scan=False))
     if not files:
         raise ValueError(f"No supported structure files found in {directory}")
     unknown = [path.name for path in files if extract_pdbid(path.name) is None]
@@ -189,7 +200,13 @@ def scan_structure_dir(directory: Path) -> ScanResult:
 
 
 def autodetect_csv_files(directory: Path) -> list[Path]:
-    return sorted(path for path in directory.iterdir() if path.is_file() and path.suffix.lower() == ".csv")
+    return sorted(
+        path
+        for path in directory.iterdir()
+        if path.is_file()
+        and path.suffix.lower() == ".csv"
+        and path.name != STRUCTURE_MANIFEST_FILENAME
+    )
 
 
 def resolve_csv_inputs(directory: Path, specific_csv: Path | None) -> list[Path]:
@@ -274,12 +291,15 @@ def read_csv_rows(source_csv: Path) -> tuple[dict[str, str], ...]:
         return tuple(csv.DictReader(handle))
 
 
-def copy_structure_files(paths: Iterable[Path], destination_dir: Path) -> int:
-    count = 0
-    for source_path in paths:
-        shutil.copy2(source_path, destination_dir / source_path.name)
-        count += 1
-    return count
+def register_structure_files(
+    paths: Iterable[Path],
+    destination_dir: Path,
+    *,
+    store_root: Path,
+) -> int:
+    references = [store_structure(source_path, store_root) for source_path in paths]
+    write_structure_manifest(destination_dir, references, verify_hashes=True)
+    return len(references)
 
 
 def write_filtered_csv(result: CsvFilterResult, destination: Path) -> None:
@@ -315,8 +335,8 @@ def build_readme(metadata: Mapping[str, object]) -> str:
     return f"""# Non-overlapped PinMyMetal split
 
 This is the primary PDB-disjoint metal benchmark derived from the locally
-materialized exact PinMyMetal projection. The test directory is a byte-identical
-copy of the exact split test directory. Every exact-test PDB ID was removed from
+materialized exact PinMyMetal projection. The test structure manifest resolves
+to byte-identical structure contents as the exact split test view. Every exact-test PDB ID was removed from
 the training structures and from every training summary CSV.
 
 - Train: {counts['output_train_structure_files']} structures, {counts['output_train_pdbids']} PDB IDs, {counts['output_train_primary_rows']} canonical site rows.
@@ -438,7 +458,7 @@ def build_split(
         "source_split_type": "metal_split_pinmymetal_possibly_overlapped",
         "source_exact_root": project_relative(train_dir.parent),
         "construction_program": project_relative(Path(__file__)),
-        "construction_rule": "copy exact test byte-for-byte; remove every exact-test PDB ID from exact train structures and rows",
+        "construction_rule": "reuse exact-test structure objects byte-for-byte; remove every exact-test PDB ID from exact train structures and rows",
         "test_membership_relationship": "same PDB-ID membership and byte-identical files as the exact PinMyMetal secondary-reference test",
         "counts": {**profile, "output_overlap_pdbids": 0},
         "canonical_metal_class_counts": {"train": train_metal_counts, "test": test_metal_counts},
@@ -491,8 +511,9 @@ def build_split(
         test_out = staging_dir / "test"
         train_out.mkdir(parents=True, exist_ok=False)
         test_out.mkdir(parents=True, exist_ok=False)
-        copy_structure_files(selected_train_files, train_out)
-        copy_structure_files(selected_test_files, test_out)
+        store_root = output_dir.parent / "structure_store"
+        register_structure_files(selected_train_files, train_out, store_root=store_root)
+        register_structure_files(selected_test_files, test_out, store_root=store_root)
         for source in train_csvs:
             write_filtered_csv(train_analyses[source.name], train_out / source.name)
         for source in test_csvs:

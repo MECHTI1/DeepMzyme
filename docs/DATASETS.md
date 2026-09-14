@@ -5,7 +5,7 @@ relationships, preparation status, bundle inclusion, and known test access.
 Scientific split and evaluation policy remains in [`Plan.md`](../Plan.md).
 Preparation procedures remain in their pipeline directories.
 
-Last evidence audit: 2026-08-20.
+Last evidence audit: 2026-09-14.
 
 ## Final-reporting status
 
@@ -16,8 +16,9 @@ Relevant facts:
 - The legacy non-overlap PinMyMetal test was historically evaluated in seven
   early Only-GVP runs and is not pristine or unopened.
 - Exact PinMyMetal contains train/test PDB-ID overlap.
-- Non-overlapped and harsh PinMyMetal roots are absent from the current local
-  data tree and current v10 bundle.
+- The non-overlapped PinMyMetal root is present locally but its historical test
+  was already accessed; it is absent from the current v10 bundle. The harsh
+  root is absent locally and from v10.
 - CLEAN and CARE datasets have different scientific purposes and cannot be
   silently designated as replacement final tests.
 - This documentation cleanup does not select a replacement dataset or change
@@ -40,13 +41,30 @@ model-selection evidence.
 artifacts did not show one. It does not prove that an evaluation never occurred
 elsewhere.
 
+## Metal-label provenance vocabulary
+
+Keep metal identity and its source explicit in dataset records and experiment
+reports:
+
+| Provenance category | Meaning | Required interpretation |
+|---|---|---|
+| Experimentally observed metal | Metal identity supported by an experimental structure or assay record | Describe the specific experimental source; availability still does not make metal type deterministically equivalent to EC |
+| Curated database annotation | Metal identity asserted by a curated database record | Name the database and accession or evidence field when available |
+| Computationally transferred assignment | AlphaFill/MAHOMES or another computational procedure transferred or inferred a metal/site assignment | Label the method and thresholds; do not call the assignment perfect ground truth |
+| Model-predicted metal | A trained model produced a metal label, probability vector, or embedding | Keep it separate from observed, curated, and transferred labels and record the source model/checkpoint |
+
+Known-metal-to-EC analyses may use an available category as an explicitly
+labeled diagnostic or special inference mode. Never merge these provenance
+categories silently. The scientific conditioning and auxiliary-learning policy
+is owned by [`Plan.md`](../Plan.md).
+
 ## Dataset overview
 
 | Dataset ID | Scientific purpose | Materialized locally | In current v10 bundle | Test/fold evaluation record | Current interpretation |
 |---|---|---:|---:|---|---|
 | `pinmymetal-source` | Original PinMyMetal class-model membership and site provenance | Source files tracked | No, source membership only | Not an executable split by itself | Primary membership evidence |
 | `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | No completed test evaluation found | Possibly overlapped comparison/validation route |
-| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | No | No | Seven early test evaluations found | Historically accessed; not pristine |
+| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | No | Seven early test evaluations found | Historically accessed; not pristine |
 | `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation found | Documented severe comparison variant |
 | `pinmymetal-common70` | Custom zero-overlap assignment of common PDB IDs, seed 42 | Yes | Yes | No evaluation found | Custom comparison split, not a selected final test |
 | `clean30-original` | CLEAN official split30 fold benchmark with shared multi-donor structures | Yes | Yes | Fold evaluation is the intended benchmark design | Five fold pairs; report aggregate across folds |
@@ -54,6 +72,24 @@ elsewhere.
 | `clean10` | Potential CLEAN 10%-identity benchmark | No | No | No evidence found | Not present or documented |
 | `care-task1-legacy30` | Older CARE Task 1 30%-identity preparation route | Scripts/docs only | No distinct legacy root in v10 | No evaluation found | Historical/secondary preparation track |
 | `care-task1-clusterres30` | Representative CARE Task 1 metallo subset for EC/joint work | Yes | Yes | Test prepared and bundled; no completed evaluation found | Current prepared CARE route |
+
+## Local structure storage
+
+The 2026-09-14 byte-level audit found 10,875 logical references across 20
+dataset/fold directories, backed by 3,211 distinct structure contents. The
+local data tree now stores those 3,211 objects once under
+`DeepMzyme_Data/structure_store/objects/`. Every dataset or CLEAN fold view uses
+`structure_manifest.csv` to declare membership. No structure file remains in a
+split directory, and no structure symlink remains.
+
+This deduplication does not rewrite scientific membership. In particular, 179
+byte-identical structure filenames remain members of both exact PinMyMetal
+sides, corresponding to 177 overlapping PDB-ID groups. Conversely, 265 CARE
+and CLEAN filenames have different bytes and are retained as separate
+hash-addressed objects. Their PDB coordinate/site records are identical; only
+their CARE/CLEAN `HEADER` and `COMPND` provenance text differs. See
+[`STRUCTURE_STORE.md`](STRUCTURE_STORE.md) for the full audit, manifest schema,
+pairwise interpretation, and verification command.
 
 ## PinMyMetal
 
@@ -90,6 +126,7 @@ structures without resolving PDB IDs that occur on both source sides.
 
 | Measure | Train | Test | Overlap |
 |---|---:|---:|---:|
+| Available structure files | 1,483 | 316 | 179 identical filenames |
 | Available unique PDB IDs | 1,472 | 313 | 177 |
 | Primary site-level rows | 2,144 | 490 | — |
 
@@ -113,7 +150,7 @@ Tracked generated metadata:
 
 ### Non-overlapped PinMyMetal
 
-Historical path:
+Path:
 `DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal`
 
 Construction intent: remove every exact-test PDB ID from train while retaining
@@ -122,7 +159,8 @@ the original exact test side. The intended PDB-ID overlap is zero.
 Status:
 
 - Membership construction code: tracked.
-- Materialized locally: no.
+- Materialized locally: yes; 1,304 train structures and 316 test structures
+  are represented by manifests in the shared structure store.
 - Included in v10: no.
 - Historical model evaluations found: exactly seven.
 - Test pockets per report: 352.
@@ -208,7 +246,8 @@ Path: `DeepMzyme_Data/CLEAN_30_shared`
 
 - Identity family: CLEAN `split30`.
 - Shared structures: 740.
-- Structure storage: one shared hardlinked copy.
+- Structure storage: 740 manifest references into the global content-addressed
+  store; no separate shared hardlink copy.
 - Scientific role: multi-donor reference.
 
 | Fold | Train sites/structures | Test sites/structures |
@@ -262,9 +301,11 @@ Procedure:
 [`CLEAN_prepare_training_and_test_set/README.md`](../CLEAN_prepare_training_and_test_set/README.md).
 
 The materialized roots named `CLEAN_30_train_test_split_0` through
-`CLEAN_30_train_test_split_4` currently contain marker records pointing to the
-original `CLEAN_30_shared` source. A fold directory name alone therefore does
-not identify whether original or conservative metadata was used.
+`CLEAN_30_train_test_split_4` contain train/test structure manifests. Their
+existing marker records point to the original `CLEAN_30_shared` source. A fold
+directory name alone therefore does not identify whether original or
+conservative metadata was used; the notebook rewrites these views from the
+selected shared source when its source/version marker changes.
 
 ### CLEAN10
 
@@ -340,7 +381,7 @@ Tracked metadata:
 | Dataset | Labels/membership materialized | Evaluation artifacts found | Selection influence established | Current record |
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | No | No | Possibly overlapped; label every use |
-| Non-overlapped PinMyMetal | Historical dataset absent now | Yes — seven early reports | Not established | Historically accessed; metrics excluded from current selection |
+| Non-overlapped PinMyMetal | Present locally; absent from v10 | Yes — seven early reports | Not established | Historically accessed; metrics excluded from current selection |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
@@ -429,6 +470,15 @@ Included scientific roots:
 
 Not included: non-overlapped or harsh PinMyMetal.
 
+This hosted v10 archive predates the content-addressed local migration and
+contains the legacy structure-directory layout. The manifest-aware loader keeps
+it usable. Do not rebuild different contents under the v10 filename or
+checksum. A newly versioned bundle built from the current local tree must also
+contain every referenced `DeepMzyme_Data/structure_store/objects/...` file;
+`src/build_colab_bundle.py` adds those dependencies automatically for supplied
+train/test roots. A direct `tar` assembly that includes manifest-backed shared
+CLEAN roots must include `DeepMzyme_Data/structure_store/` explicitly.
+
 Assembly command preserved from the previous README:
 
 ```bash
@@ -485,8 +535,9 @@ DeepMzyme structures, ESMC embeddings, RING files, and graph external features.
 
 - Primary final-test route requires a separate scientific decision.
 - CARE upstream source URL/citation is missing.
-- Non-overlapped and harsh PinMyMetal roots are unavailable in the current
-  local data/bundle.
+- The non-overlapped PinMyMetal root is present locally but absent from the
+  current hosted bundle; the harsh root is unavailable locally and in that
+  bundle.
 - Exact PinMyMetal retains 177 overlapping PDB IDs.
 - Historical non-overlap test access exists, but its influence on subsequent
   selection cannot be established.

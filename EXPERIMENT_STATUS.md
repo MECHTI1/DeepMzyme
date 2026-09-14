@@ -4,18 +4,47 @@ This is the sole concise answer to: **Where am I now, and what should I do
 next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
-Last experiment-evidence audit: 2026-08-20. Last execution/documentation audit:
-2026-08-22.
+Last experiment-evidence audit: 2026-08-20. Last execution audit: 2026-08-22.
+Last scientific-policy documentation update: 2026-09-14.
 
 ## Current objective
 
-Select and confirm a reliable metal-classification configuration using
-validation evidence, while keeping exploratory joint metal+EC candidates
-separate. Existing historical anchors use the six-class metal target and a
-fixed `pdbid`-grouped validation split.
+Advance two independent primary missions: direct four-class transition-metal
+classification and EC/function classification, beginning at EC depth 1. The
+immediate cross-task roadmap starts with reconciling strong standalone models;
+auxiliary shared learning remains a later challenger.
+
+The current Phase 1 action is to reconcile a paired metal-only target-formulation
+campaign for the four-class endpoint: (a) direct four-class training and (b)
+matched six-class training followed by deterministic collapsed-four evaluation.
+Both arms are required across Only-GVP, Only-ESM, and GVP + graph-level late
+fusion. Existing historical anchors use the six-class metal target and one fixed
+`pdbid`-grouped validation split. They remain historical evidence and do not
+constitute the required matched target-formulation comparison.
+
+The separate metal-architecture mission still includes: (a) early versus late
+versus hybrid ESMC fusion, (b) Only-ESM using ESMC versus Only-GVP versus
+combined GVP+ESMC, and (c) matched GVP runs with versus without RING edges.
+Those advanced comparisons are outside the first metal-EC auxiliary experiment.
 
 No copied candidate has yet passed the current grouped-fold Stage 6 promotion
 standard.
+
+## Scientific mission and target status
+
+| Item | Implemented state | Evidence state | Current interpretation |
+|---|---|---|---|
+| Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii` and maps Fe/Co/Ni to Class VIII | No trusted completed direct four-class baseline batch is indexed | Four-class endpoint selected; baseline evidence and paired executable recipes still require reconciliation |
+| Required target-formulation challenger | `six_class` outputs and collapsed-four validation metrics are implemented | Historical six-class runs exist, but no matched direct-four versus six-trained/collapsed-four comparison is indexed | Required across the three initial metal baseline families; exact paired recipes still require reconciliation |
+| Historical metal targets | Six-class and five-class schemes remain implemented | Indexed metal anchors are principally historical six-class results; one five-class local smoke was prepare-only | Preserve under their original scheme; never relabel as direct four-class training |
+| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | No trusted completed EC model result is indexed | Start with EC depth 1; deeper hierarchical and full multi-label claims are unestablished |
+| Current EC multi-annotation handling | Multiple annotations with one shared prefix can map to one class; conflicting prefixes at the selected depth receive no target | No full multi-label experiment is indexed | Current code does not solve full multi-label EC prediction |
+| Shared-learning topology | A shared pocket representation feeds independent metal and EC heads, and both losses can update shared parameters | Exploratory joint runs exist under unmatched contexts | Implemented and explored; no controlled EC-only versus EC+auxiliary-metal result and no promotion |
+| Predicted-metal conditioning | Not part of the inspected shared-head path or a certified primary recipe | No promoted conditioning result | Deferred optional ablation after the simpler auxiliary-loss question |
+
+Status words are literal: a path can be implemented without being smoke-tested,
+experimentally evaluated, or promoted. The existence of the joint code path
+does not establish that shared learning improves either primary task.
 
 ## Where the project is now
 
@@ -37,6 +66,21 @@ standard.
 - No current Stage 6 grouped-fold result, paired-CI promotion artifact, or
   completed Stage 6B final-refit artifact was found in the inspected evidence.
 
+## Required controlled-comparison coverage
+
+| Required question | Current evidence | What remains |
+|---|---|---|
+| Target formulation: direct four-class vs six-class training with collapsed-four evaluation | Historical six-class metrics and collapsed-four reporting exist; no trusted direct four-class baseline batch is indexed | No matched comparison across Only-GVP, Only-ESM, and graph-level late fusion on shared folds/seeds and the common four-class validation view |
+| ESMC fusion position: early vs late vs hybrid | Late fusion has a Grade-3 historical six-class fixed-split anchor; hybrid has exploratory joint-task evidence | No indexed completed early-fusion result and no direct four-class matched shared-fold comparison across all three modes |
+| Modality: Only-ESM (ESMC) vs Only-GVP vs combined GVP+ESMC | All three have historical six-class validation evidence, with late fusion representing the strongest established combined anchor | No direct four-class common Stage 6 fold/seed comparison with paired confidence intervals and rare-class recall protection |
+| GVP edge source: with RING vs without RING | Radius and RING controls are implemented; Hybrid+RING has a high exploratory six-class single-seed result | No direct four-class matched RING on/off comparison that isolates the RING contribution; Hybrid+RING cannot answer this alone |
+
+Do not claim a significant advantage for target formulation, ESMC fusion
+position, combined modalities, or RING until the applicable matched comparison
+is complete. Compare the target-formulation arms on the common four-class view;
+keep the other architecture comparisons direct-four. This matrix is separate
+from the first EC-primary auxiliary experiment.
+
 Detailed parameters and confidence limits:
 [`docs/PARAMETER_FINDINGS.md`](docs/PARAMETER_FINDINGS.md).
 
@@ -46,10 +90,10 @@ Detailed parameters and confidence limits:
 |---|---|---|---|
 | Unified training core | `metal`, `ec`, and `joint` dispatch; configuration, preflight, grouped splitting, training, reporting, and guarded final-test code | CLI help imports and parses successfully | A passing end-to-end suite on all materialized datasets is not established |
 | Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | Current v10 bundle contains ESM, external, and RING assets | Additional node feature sets beyond `conservative` remain future work |
-| Metal modeling | Only-GVP, Only-ESM, graph-level late fusion, node-level late fusion, hybrid, cross-attention, and RING/radius controls exist | Fixed-split anchors and exploratory/negative results are indexed below | No Grade-1/2 grouped-fold promotion result |
-| EC modeling | EC heads, EC-depth handling, group weighting, and optional contrastive loss exist | No trusted completed EC model result is indexed in the audited evidence | EC playbook reconciliation and a certified staged EC run are not complete |
-| Joint modeling | Joint metal+EC task and configurable loss weighting exist | Hybrid and Hybrid+RING exploratory validation evidence exists | No promoted joint configuration or reportable confirmation |
-| Dataset preparation | Exact/Common70 PinMyMetal, CLEAN30 variants, and CARE clusterRes30 are prepared; provenance is tracked | Materialization and bundle status are in `docs/DATASETS.md` | CLEAN10, current non-overlap/harsh roots, CARE upstream citation, and final-test route remain unresolved |
+| Metal modeling | Direct four-class, historical six-class/five-class targets; Only-GVP, Only-ESM, graph-level late fusion, node-level late fusion, hybrid, cross-attention, and RING/radius controls exist | Preserved anchors are historical six-class fixed-split evidence | Direct four-class baseline recipes/evidence must be reconciled; the advanced comparison matrix and Grade-1/2 promotion remain incomplete |
+| EC modeling | Single-label EC-depth handling, independent EC heads, group weighting, and optional contrastive loss exist | No trusted completed EC model result is indexed in the audited evidence | EC depth-1 standalone baselines, EC playbook reconciliation, and a certified staged run are not complete; full multi-label prediction is not implemented |
+| Auxiliary metal+EC modeling | Shared representation, independent heads, configurable task losses, and a joint task path exist | Hybrid and Hybrid+RING exploratory validation evidence exists | No matched EC-only versus EC+auxiliary-metal experiment, no promoted auxiliary configuration, and no certified cross-task protocol |
+| Dataset preparation | Exact/non-overlap/Common70 PinMyMetal, CLEAN30 variants, and CARE clusterRes30 are prepared; provenance is tracked; local structures are content-addressed with manifest-backed split membership | Materialization, storage audit, and bundle status are in `docs/DATASETS.md` and `docs/STRUCTURE_STORE.md` | CLEAN10, the harsh root, CARE upstream citation, and final-test route remain unresolved |
 | Metal confirmation | Stage 6 grouped folds × seeds, paired CI, and rare-class protection are implemented/documented | No completed current Stage 6 artifact found | Candidate set must be frozen and Stage 6 run |
 | Final refit/reporting | Stage 6B and fail-closed Stage 7 workflow exist | Safety behavior is documented and smoke-covered before the current suite failure point | No completed Stage 6B refit; Stage 7 scientifically blocked |
 | Colab execution | Unified notebook, main HF bundle, CLI/browser same-VM procedure, and G4/A100 compute probes exist | Stock Colab PyTorch worked on audited G4 and A100 runtimes; a separate PyTorch-free overlay is implemented | Unattended Drive mount remains open; legacy benchmark provenance requires authorized v2 regeneration/reruns |
@@ -61,8 +105,8 @@ For the shortest path through these owners, use
 
 | Role | Configuration | Main validation evidence | Grade | Status |
 |---|---|---|---:|---|
-| Historical metal anchor | Late-fusion trial 49 | mean `0.635468206972`, SD `0.043023727308`, five fixed-split seeds | 3 | Keep as anchor until stronger comparable evidence exists |
-| Stable baseline | Only-ESM `3e-5` + inverse-frequency | mean `0.625325230595`, SD `0.031449451169`, five fixed-split seeds | 3 | Retain |
+| Historical six-class metal anchor | Late-fusion trial 49 | mean `0.635468206972`, SD `0.043023727308`, five fixed-split seeds | 3 | Preserve as a six-class reference; it is not the direct four-class anchor |
+| Historical six-class stable baseline | Only-ESM `3e-5` + inverse-frequency | mean `0.625325230595`, SD `0.031449451169`, five fixed-split seeds | 3 | Preserve within six-class evidence only |
 | Rejected tested variant | Node-level late fusion derived from trial 49 | mean `0.606599196822`, five fixed-split seeds | 3 | Did not replace graph-level trial 49 |
 | Exploratory challenger | Joint Hybrid trial 17 | three-seed joint mean `0.697376`; different selection metric | 6 | Incomplete provenance; not directly rankable |
 | Exploratory challenger | Joint Hybrid+RING trial 114 | single-seed metal BA `0.7303469775006777` | 5 | Not confirmed; RING contribution inconclusive |
@@ -76,15 +120,16 @@ grouped-fold promotion evidence.
 
 | Model/task path | Implemented | Audited outcome | Standing |
 |---|---:|---|---|
-| Metal Only-GVP | Yes | Historical validation batches exist | Baseline evidence; not a current grouped-fold promotion |
-| Metal Only-ESM | Yes | Five-seed mean `0.625325230595` | Stable Grade-3 baseline |
-| Metal GVP + graph-level late fusion | Yes | Trial-49 five-seed mean `0.635468206972` | Historical Grade-3 anchor |
+| Metal Only-GVP | Yes | Historical six-class validation batches exist | Historical baseline evidence; no direct four-class grouped-fold promotion |
+| Metal Only-ESM | Yes | Historical six-class five-seed mean `0.625325230595` | Historical Grade-3 baseline; direct four-class result absent |
+| Metal GVP + graph-level late fusion | Yes | Historical six-class trial-49 five-seed mean `0.635468206972` | Historical Grade-3 anchor; direct four-class result absent |
 | Metal GVP + node-level late fusion | Yes | Five-seed mean `0.606599196822` | Tested negative result; rejected as anchor replacement |
 | Hybrid fusion | Yes | Joint trial-17 exploratory mean `0.697376` under a different selection metric | Incomplete provenance; not directly rankable |
 | Hybrid + RING | Yes | Trial-114 single-seed metal BA `0.7303469775006777` | Exploratory; RING effect not isolated |
 | Cross-attention | Yes | No indexed completed comparison found | Implemented but experimentally unestablished |
 | RING/radius-only causal ablation | Yes | No reportable causal comparison found | Not completed |
-| EC staged campaign | Partly | No trusted completed EC result indexed | Not certified end-to-end; playbook mismatch open |
+| EC depth-1 standalone campaign | Partly | No trusted completed EC result indexed | Not certified end-to-end; playbook mismatch open |
+| EC-primary auxiliary metal comparison | Joint topology exists | No matched controlled result indexed | Planned; recipe and cross-task safeguards not certified |
 | Stage 6 grouped-fold confirmation | Yes | No completed current artifact found | Not done |
 | Stage 6B full-train refit | Yes | No completed/reused artifact found | Not done |
 | Stage 7 final reporting | Guarded implementation exists | No approved current final report | Blocked by Stage 6/6B and dataset-route decisions |
@@ -110,7 +155,7 @@ were Grade 1 or 2.
 | Dataset | Current readiness |
 |---|---|
 | Exact PinMyMetal | Present locally and in v10; contains 177 overlapping PDB IDs |
-| Non-overlapped PinMyMetal | Absent locally and from v10; historically evaluated seven times |
+| Non-overlapped PinMyMetal | Present locally, absent from v10; historically evaluated seven times and not pristine |
 | Harsh PinMyMetal | Absent locally and from v10 |
 | Common-PDBID 70/30 | Present locally and in v10; custom comparison split |
 | CLEAN30 original/conservative | Present; `CLEAN_30_main` points to conservative source |
@@ -177,12 +222,24 @@ These corrections do not resolve or select the primary final-test dataset.
 ## Current blockers
 
 1. The primary final-test route requires a separate scientific decision.
-2. Current promotion policy calls for grouped-fold Stage 6 evidence, but no such
-   completed evidence was found for the historical anchor/challengers.
-3. A reportable Stage 6B final-refit artifact was not found.
-4. Hybrid Round-1 full configuration/search-space provenance is missing.
-5. The EC playbook has documented incompatibilities with the current notebook
+2. The intended primary metal reporting endpoint is four-class, and both direct
+   four-class training and a matched six-class-trained/collapsed-four challenger
+   are required. The metal playbook common recipe remains six-class, the
+   notebook live default is a separate five-class resume value, and no exact
+   paired recipe or trusted matched comparison is indexed.
+3. Current promotion policy calls for grouped-fold Stage 6 evidence, but no such
+   completed evidence was found for the historical six-class
+   anchor/challengers.
+4. The required controlled metal-model comparison matrix is incomplete: early
+   fusion lacks an indexed completed run, the modality comparison lacks shared
+   Stage 6 evidence, and RING lacks a matched on/off causal ablation.
+5. A reportable Stage 6B final-refit artifact was not found.
+6. Hybrid Round-1 full configuration/search-space provenance is missing.
+7. The EC playbook has documented incompatibilities with the current notebook
    and is not certified executable in affected sections.
+8. No exact, certified recipe or matched evidence exists for the first
+   EC-primary auxiliary comparison, and a future multi-source implementation
+   must enforce cross-task group exclusion before training.
 
 Execution-readiness issues that do not change the scientific next action:
 
@@ -198,24 +255,41 @@ Open implementation issues:
 
 ## Immediate next action
 
-In a separate scientific-planning task, freeze the set of configurations that
-should enter reportable comparison and resolve which dataset route may support
-final reporting. Do not use historical test metrics in that decision.
+In a separate implementation/recipe task, reconcile the metal playbook and
+notebook launch surface with both required target-formulation arms, then define
+the matched Phase 1 campaign for Only-GVP, Only-ESM, and GVP + graph-level late
+fusion. Each family needs a direct-four arm and a separately named six-class
+arm with collapsed-four evaluation. Preserve all historical six-class and
+five-class records under their original schemes. Do not use historical test
+metrics or open held-out data during that reconciliation.
 
-If architecture selection is declared complete, the next experiment stage is
-the current grouped-fold **Stage 6** comparison—not direct Stage 6B and not
-held-out evaluation.
+Do not launch the existing six-class playbook blocks alone and call the required
+paired comparison complete. Exact matched direct-four and six-to-collapsed-four
+stage blocks must be reviewed in the metal playbook first. If a later campaign
+reaches candidate confirmation, the next promotion stage remains grouped-fold
+**Stage 6**, then Stage 6B, never direct held-out evaluation.
 
 ## Next few actions
 
-1. Run the playbook-defined grouped-fold Stage 6 on the frozen candidate set,
-   using shared folds/seeds, validation metrics, paired comparisons, and
-   rare-class-recall protection.
-2. If Stage 6 selects a configuration under policy, run the separate Stage 6B
-   full non-test training/refit step without held-out evaluation.
-3. Resolve the primary final-test route scientifically before any final report.
-4. Only after those gates, consider Stage 7 under the then-approved policy and
-   implementation.
+1. **Phase 1:** reconcile and establish both metal target formulations for
+   Only-GVP, Only-ESM, and GVP + graph-level late fusion: direct four-class
+   training and matched six-class training with collapsed-four evaluation.
+2. **Phase 2:** reconcile the EC playbook and establish EC depth-1 standalone
+   baselines for the same three initial families.
+3. **Phase 3:** run the predeclared metal x EC1 descriptive association analysis
+   on permitted training/development data only.
+4. **Phase 4:** add and run one controlled EC-primary comparison: EC-only versus
+   EC plus auxiliary metal, using independent heads with shared learning and
+   cross-task group exclusion.
+5. **Phase 5:** test metal-only versus metal plus auxiliary EC only if useful or
+   scientifically worthwhile.
+6. **Phase 6:** only then consider soft metal conditioning or more complicated
+   cross-task interactions. Continue the separate direct four-class metal
+   architecture matrix when its standalone gates justify it.
+
+Any candidate intended for final reporting still requires shared-fold/seed
+validation, the applicable promotion gates, a frozen full non-test refit, and a
+scientifically resolved final-test route before one-shot held-out evaluation.
 
 Exact metal stage blocks remain in
 [`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md).

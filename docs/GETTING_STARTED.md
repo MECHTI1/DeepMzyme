@@ -102,6 +102,13 @@ Training needs more than the Git checkout. The large structures, embeddings,
 RING features, external features, and run outputs live under the Git-ignored
 `DeepMzyme_Data/` tree or in a Colab bundle.
 
+Local structure bytes live once in the content-addressed
+`DeepMzyme_Data/structure_store/`; split directories contain
+`structure_manifest.csv` membership files. Training and the notebook resolve
+them automatically, and older bundles with structure files directly inside
+train/test directories remain supported. See [`STRUCTURE_STORE.md`](STRUCTURE_STORE.md)
+for the schema, audit, and verification command.
+
 The main cloud bundle currently contains exact PinMyMetal, Common-PDBID 70/30,
 CLEAN30 material, CARE clusterRes30, ESM embeddings, external features, and
 RING assets. It does not contain the historical non-overlapped or harsh

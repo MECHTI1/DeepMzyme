@@ -40,6 +40,11 @@ Default exported DeepMzyme split root:
 DeepMzyme_Data/CLEAN_30_train_test_split_0
 ```
 
+Exports register each distinct structure in the global content-addressed
+`DeepMzyme_Data/structure_store/` and write `structure_manifest.csv` in each
+split directory. They do not create another PDB copy. The shared-store contract
+is documented in [`docs/STRUCTURE_STORE.md`](../docs/STRUCTURE_STORE.md).
+
 ## Step 0: Audit And Normalize CLEAN Fold
 
 Repeatable full-run scripts for `split30` fold `0` are provided in filename
@@ -314,14 +319,15 @@ Default all-fold bundle output:
 The notebook can then select the fold with `CLEAN_FOLD_INDEX = 0..4`, which
 sets `DATASET_NAME` to `CLEAN_30_train_test_split_<fold>`.
 
-## Step 9: Preferred Compact Shared-Structure Bundle
+## Step 9: Compact Shared-Fold Bundle
 
-The duplicated all-fold bundle from Step 8 is compatibility-first. The preferred
-cleaner layout stores each structure once and stores fold membership as
-site-level CSVs only:
+Both the all-fold and shared layouts now resolve structures through the global
+store. The shared layout keeps fold membership as site-level CSVs and a single
+manifest for the eligible CLEAN structure set:
 
 ```text
-DeepMzyme_Data/CLEAN_30_shared/structures/
+DeepMzyme_Data/structure_store/objects/...
+DeepMzyme_Data/CLEAN_30_shared/structures/structure_manifest.csv
 DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_train.csv
 DeepMzyme_Data/CLEAN_30_shared/folds/CLEAN_30_train_test_split_0_test.csv
 ...
@@ -347,9 +353,9 @@ Default compact bundle output:
 /media/Data/clean_sets/split30/shared/bundles/DeepMzyme_Data_v8_clean30_shared_full_esm.tar.zst
 ```
 
-The notebook supports this layout directly: after unpacking, it materializes the
-selected `CLEAN_FOLD_INDEX` into the normal `CLEAN_30_train_test_split_<fold>/`
-`train/` and `test/` view expected by `src/train.py`.
+The notebook supports this layout directly: after unpacking, it writes
+manifest-backed `train/` and `test/` views for the selected
+`CLEAN_FOLD_INDEX`. It does not create PDB copies or absolute symlinks.
 
 ## Interpretation Rules
 

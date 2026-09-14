@@ -6,11 +6,20 @@ This repository develops **DeepMzyme**, a deep-learning framework for metalloenz
 
 The main goals are:
 
-1. Predict metal type from protein structural pocket graphs and ESMC embeddings/models.
-2. Predict enzyme class / EC-level labels from protein structural pocket information and ESMC embeddings/models.
-3. Compare model variants fairly using validation metrics, with held-out test
+1. Predict the primary four-class transition-metal target (Mn, Cu, Zn, and
+   Class VIII = Fe+Co+Ni) from protein structural pocket graphs and ESMC
+   embeddings/models.
+2. Predict enzyme class / EC-level labels as a separate primary task, beginning
+   scientifically at EC depth 1.
+3. Evaluate shared metal-EC learning as a controlled challenger while keeping
+   both tasks independently trainable, selectable, reportable, and publishable.
+4. Compare model variants fairly using validation metrics, with held-out test
    metrics reserved for final reporting after validation-based selection.
-4. Keep the code reproducible, simple to run, and suitable for publication-quality experiments.
+5. Complete the separate controlled metal-model comparison matrix: direct
+   four-class training vs six-class training with collapsed-four evaluation;
+   early vs late vs hybrid ESMC fusion; Only-ESM (ESMC) vs Only-GVP vs combined
+   GVP+ESMC; and matched GVP with vs without RING edges.
+6. Keep the code reproducible, simple to run, and suitable for publication-quality experiments.
 
 
 ---
@@ -82,7 +91,55 @@ Default experiment-planning posture:
 
 ---
 
-### 1c. Key project files and directories
+### 1c. Preserve scientific task and target boundaries
+
+- Metal classification and EC/function classification are separate primary
+  missions. Joint learning is an experiment, not a scientific requirement or
+  an assumed improvement.
+- The intended primary PinMyMetal-compatible reporting endpoint is Mn, Cu, Zn,
+  and Class VIII = Fe+Co+Ni. Direct training uses `four_class`, canonical name
+  `merge_fe_class_viii`; do not invent another scheme. Keep historical
+  six-class and five-class evidence labeled exactly as run. Direct four-class
+  training is not equivalent to six-class training followed by collapsed-four
+  reporting.
+- Both metal training formulations are required in the controlled baseline
+  campaign: direct `four_class` training and matched `six_class` training with
+  deterministic collapsed-four evaluation. Run both for Only-GVP, Only-ESM,
+  and GVP + graph-level late fusion. Compare them on shared validation units
+  and the common four-class view; keep native six-class metrics and Fe/Co/Ni
+  recalls for the six-class arm. Use separate run/study identities and never
+  use held-out results to choose between them.
+- EC starts at depth 1. Keep depth-1 classification, deeper hierarchical
+  classification, multiple source EC annotations, and full multi-label EC
+  prediction distinct. The current target path is single-label at the selected
+  depth and is not a full multi-label solution.
+- Before cross-task claims, establish standalone Only-GVP, Only-ESM, and GVP +
+  graph-level late-fusion baselines for both tasks. Do not add hybrid,
+  node-level late fusion, cross-attention, or other complex fusion to the first
+  metal-EC relationship experiment.
+- The first cross-task question is whether auxiliary metal supervision improves
+  EC. Use independent metal and EC predictions from a shared encoder; neither
+  head's output feeds the other. Treat negative transfer as possible and retain
+  standalone models when they validate better. The reverse direction is
+  secondary and optional.
+- Do not make predicted metal a mandatory EC input. Soft predicted-metal
+  conditioning and known-metal EC diagnostics are later optional ablations.
+  Distinguish observed, curated, computationally transferred AlphaFill/MAHOMES,
+  and model-predicted metal; never call transferred assignments perfect ground
+  truth.
+- Metal labels are site/pocket-level; EC labels are protein/structure-level.
+  Preserve protein/structure grouping and EC group weighting. If any protein is
+  held out for either task, exclude it from every shared-encoder training loss,
+  including labels from the other task.
+- Any metal x EC1 association analysis is development-data-only and descriptive.
+  Plan counts, conditional probabilities, Cramer's V, appropriate chi-square,
+  mutual information, and normalized mutual information without using held-out
+  data or treating association as proof of learning benefit.
+- Use status labels literally: planned, implemented, smoke-tested,
+  experimentally evaluated, and promoted are different states. A code path is
+  not validation evidence.
+
+### 1d. Key project files and directories
 
 Use this as a navigation map when a task touches the relevant area. Do not read
 every file for every small request; inspect the applicable files before making a
@@ -205,6 +262,10 @@ claim or change.
 - `src/build_colab_bundle.py`: packs a Colab-ready `.tar.zst` data bundle from
   a specified split directory. Run this to produce the bundle uploaded to
   HuggingFace or used via Drive.
+- `src/structure_store.py`: manifest schema and resolver for the shared
+  content-addressed structure store.
+- `src/manage_structure_store.py`: audits, migrates, and verifies structure
+  storage without changing scientific split membership.
 - `prepare_training_and_test_set/`: original split preparation scripts.
   Downloads PDB structures, creates non-redundant chain files, and runs MAHOMES
   activation to produce site-level summary CSVs. Scripts are named
@@ -220,9 +281,15 @@ claim or change.
 
 #### Data directories
 
+- `DeepMzyme_Data/structure_store/`: one object per distinct structure-file
+  byte content, keyed by SHA-256. Split and CLEAN shared-structure directories
+  use `structure_manifest.csv` to reference these objects; see
+  `docs/STRUCTURE_STORE.md`.
+
 - `DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/`:
-  historical non-overlap split path. It was absent locally at the 2026-08-20
-  audit and its test was evaluated in seven early runs, so it is not pristine.
+  historical non-overlap split path. It is present locally in manifest-backed
+  form as of 2026-09-14, and its test was evaluated in seven early runs, so it
+  is not pristine.
   Do not recommend final reporting until the primary final-test route is
   resolved scientifically; see `docs/DATASETS.md`.
 - `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/`:
@@ -318,6 +385,20 @@ Use the playbook stage names exactly:
 - Stage 6B: promotion gates and final full-train refit
 - Stage 7: one-shot held-out test
 
+The controlled comparison matrix in `Plan.md` is a required research mission,
+not an optional interpretation of unmatched historical maxima. Before claiming
+that a target formulation, fusion position, combined modality, or RING edge
+source is better, verify that the applicable candidates were compared on shared
+validation folds/seeds with paired confidence intervals and rare-class recall
+protection. The target-formulation comparison uses the common four-class view;
+the other architecture comparisons keep direct four-class training fixed.
+This separate metal-architecture matrix does not expand the initial
+metal-EC auxiliary experiment beyond Only-GVP, Only-ESM, and graph-level late
+fusion.
+Use `EXPERIMENT_STATUS.md` for the current completion state and the metal
+playbook for exact runnable blocks. If a required block is missing, document it
+in the playbook before recommending execution.
+
 #### Metal Colab pipeline documentation policy
 
 When the task touches the metal-training notebook, configuring a stage, or
@@ -396,6 +477,13 @@ format:
 3. Safety checks:
    - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final
      stages.
+   - Confirm `METAL_LABEL_SCHEME = "four_class"` for the direct arm of a new
+     primary metal campaign. The required paired target-formulation challenger
+     uses a separately named `six_class` run/study and reports
+     `val_metal_collapsed4_balanced_acc` on the common endpoint while retaining
+     native six-class metrics. Treat `five_class` only as an explicitly labeled
+     alternative or historical scheme. If the paired playbook blocks have not
+     yet been reconciled, update the playbook before recommending execution.
    - Confirm `SELECTION_METRIC = "val_metal_balanced_acc"`.
    - Confirm `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless the stage is
      Stage 6 grouped-fold confirmation or an explicitly labeled new split
@@ -459,6 +547,10 @@ For future documentation edits:
   `docs/DATASETS.md`, validation/HPO findings in
   `docs/PARAMETER_FINDINGS.md`, and unresolved behavior problems in
   `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`.
+- Keep durable metal-EC auxiliary policy and phase order in `Plan.md`. Put an
+  exact EC-primary auxiliary recipe in the EC playbook only after its split and
+  leakage protocol is certified; put the optional reverse-direction recipe in
+  the applicable playbook if that experiment is later approved.
 - Update or re-point every cross-reference in the same change set instead of
   leaving duplicated stale text behind.
 - Avoid copying current anchors, run IDs, transient trial numbers, local disk

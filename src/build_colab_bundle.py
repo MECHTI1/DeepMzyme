@@ -6,6 +6,7 @@ import argparse
 import csv
 import subprocess
 import shutil
+import tempfile
 from pathlib import Path
 
 from build_dataset_csv import (
@@ -15,6 +16,7 @@ from build_dataset_csv import (
     write_rows,
 )
 from project_paths import CATALYTIC_ONLY_SUMMARY_CSV, COLAB_BUNDLES_DIR, DATA_DIR
+from structure_store import STRUCTURE_MANIFEST_FILENAME, read_structure_manifest
 from training.runtime_preparation import discover_missing_esm_embeddings
 from training.structure_loading import find_structure_files
 
@@ -367,17 +369,31 @@ def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
 
     output_bundle.parent.mkdir(parents=True, exist_ok=True)
     relative_paths = [ensure_project_relative(path) for path in selected_paths]
-    cmd = [
-        "tar",
-        "--use-compress-program=zstd -T0 -19",
-        "-cf",
-        str(output_bundle),
-        "-C",
-        str(PROJECT_ROOT),
-        *relative_paths,
-    ]
-    subprocess.run(cmd, check=True)
+    with tempfile.NamedTemporaryFile(mode="wb", prefix="deepmzyme_bundle_", suffix=".files") as handle:
+        for relative_path in relative_paths:
+            handle.write(relative_path.encode("utf-8") + b"\0")
+        handle.flush()
+        cmd = [
+            "tar",
+            "--use-compress-program=zstd -T0 -19",
+            "-cf",
+            str(output_bundle),
+            "-C",
+            str(PROJECT_ROOT),
+            "--null",
+            "--files-from",
+            handle.name,
+        ]
+        subprocess.run(cmd, check=True)
     return output_bundle
+
+
+def append_manifest_structure_dependencies(paths: list[Path], structure_dir: Path) -> None:
+    manifest_path = structure_dir / STRUCTURE_MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        return
+    for reference in read_structure_manifest(structure_dir):
+        append_unique_path(paths, reference.path)
 
 
 def process_dataset_root(
@@ -438,6 +454,8 @@ def main() -> None:
     for result in per_root_results:
         append_unique_path(selected_paths, result["train_dir"])
         append_unique_path(selected_paths, result["test_dir"])
+        append_manifest_structure_dependencies(selected_paths, result["train_dir"])
+        append_manifest_structure_dependencies(selected_paths, result["test_dir"])
         if not path_is_inside(result["train_summary_csv"], result["train_dir"]):
             append_unique_path(selected_paths, result["train_summary_csv"])
         if not path_is_inside(result["test_summary_csv"], result["test_dir"]):
