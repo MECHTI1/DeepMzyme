@@ -124,6 +124,7 @@ class TrainConfig:
     task: str = "joint"
     controlled_ec_auxiliary: bool = False
     metal_label_scheme: str = "split_all_metals"
+    metal_eligibility_scheme: str = "active"
     epochs: int = 10
     batch_size: int = 8
     learning_rate: float = 3e-4
@@ -140,6 +141,7 @@ class TrainConfig:
     weight_decay: float = 1e-4
     seed: int = 42
     split_seed: int | None = None
+    split_stratify_by: str = "active_targets"
     hidden_s: int = 128
     hidden_v: int = 16
     edge_hidden: int = 64
@@ -203,6 +205,7 @@ class TrainConfig:
     invalid_structure_policy: str = "skip"
     ec_label_depth: int = 1
     ec_group_weighting: str = "structure_id"
+    ec_class_weight_unit: str = "pocket"
     ec_contrastive_weight: float = 0.0
     ec_contrastive_temperature: float = 0.1
     lr_schedule: str = "fixed"
@@ -361,6 +364,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--metal-eligibility-scheme", choices=("active", "six_class"), default="active",
+        help="Require a single native-six metal target in both paired metal training arms.",
+    )
+    parser.add_argument(
+        "--ec-class-weight-unit", choices=("pocket", "group"), default="pocket",
+        help="Count training EC groups once for class weights, or retain historical pocket counts.",
+    )
+    parser.add_argument(
+        "--split-stratify-by", choices=("active_targets", "metal_site"),
+        default="active_targets",
+        help="Use original metal-site symbols for target-independent paired metal splits.",
+    )
     parser.add_argument(
         "--split-seed",
         type=int,
@@ -550,8 +566,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--require-all-task-classes",
         action="store_true",
         help=(
-            "Fail preflight if the training split is missing any label class required by "
-            "the selected task."
+            "Fail preflight if training or configured validation is missing any label "
+            "class required by the selected task."
         ),
     )
     parser.add_argument(
@@ -925,6 +941,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         task=args.task,
         controlled_ec_auxiliary=args.controlled_ec_auxiliary,
         metal_label_scheme=metal_label_scheme,
+        metal_eligibility_scheme=args.metal_eligibility_scheme,
         epochs=args.epochs,
         batch_size=args.batch_size,
         esm_dim=args.esm_dim,
@@ -939,6 +956,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         weight_decay=args.weight_decay,
         seed=args.seed,
         split_seed=args.split_seed,
+        split_stratify_by=args.split_stratify_by,
         hidden_s=args.hidden_s,
         hidden_v=args.hidden_v,
         edge_hidden=args.edge_hidden,
@@ -1003,6 +1021,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         invalid_structure_policy=args.invalid_structure_policy,
         ec_label_depth=args.ec_label_depth,
         ec_group_weighting=args.ec_group_weighting,
+        ec_class_weight_unit=args.ec_class_weight_unit,
         ec_contrastive_weight=args.ec_contrastive_weight,
         ec_contrastive_temperature=args.ec_contrastive_temperature,
         lr_schedule=args.lr_schedule,

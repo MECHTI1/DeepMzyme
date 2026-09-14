@@ -6,7 +6,7 @@ from typing import Any
 from data_structures import PocketRecord
 from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_output_path
 from graph.structure_parsing import extract_metal_pockets_from_structure, parse_structure_file
-from label_schemes import map_site_metal_symbols
+from label_schemes import map_site_metal_symbols, map_site_metal_symbols_for_scheme
 from structure_store import STRUCTURE_MANIFEST_FILENAME, read_structure_manifest
 from training.feature_sources import (
     attach_structure_features_to_pocket,
@@ -28,7 +28,15 @@ class StructureLoadError(ValueError):
 def pocket_has_required_supervision(
     pocket: PocketRecord,
     required_targets: tuple[str, ...] = ("metal", "ec"),
+    metal_eligibility_scheme: str = "active",
 ) -> bool:
+    if metal_eligibility_scheme not in {"active", "six_class"}:
+        raise ValueError(f"Unsupported metal eligibility scheme: {metal_eligibility_scheme!r}")
+    if "metal" in required_targets and metal_eligibility_scheme == "six_class":
+        symbols = (pocket.metadata.get("matched_summary_site_metal_types")
+                   or pocket.metadata.get("metal_symbols_observed") or [pocket.metal_element])
+        if map_site_metal_symbols_for_scheme(symbols, scheme_name="six_class") is None:
+            return False
     for target_name in required_targets:
         if target_name == "metal" and pocket.y_metal is None:
             return False

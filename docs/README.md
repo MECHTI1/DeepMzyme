@@ -67,7 +67,10 @@ The EC playbook preserves scientifically important historical budgets, ranges,
 label-depth progression, and contrastive-loss intent. Some variables and final
 workflow values do not match the current notebook. Read its warning and
 [`TECH-002`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface)
-before copying affected blocks. Reconciliation is a separate task.
+before copying affected blocks. The opening standalone Stage 0–2B recipe is
+reconciled against current command expansion; legacy HPO and final-test blocks
+remain outside that certification. The metal playbook likewise opens with the
+paired four-/six-class standalone recipe. Recipe checks are not model results.
 
 ## Evidence storage
 

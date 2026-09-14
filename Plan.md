@@ -646,7 +646,7 @@ Colab data input modes (controlled by `COLAB_DATA_SOURCE`):
 
 - `huggingface_link`: downloads and verifies the bundle from the project
   HuggingFace repository. Recommended default for cloud use.
-- `upload_file`: prompts for a local `.tar.zst` upload in the Colab runtime.
+- `upload_file`: prompts for a local `.tar.gz` or `.tar.zst` upload in the Colab runtime.
 - `drive`: uses the configured Google Drive path after Drive is mounted.
 
 The notebook's `BUNDLE_FILENAME`, `BUNDLE_URL`, and `BUNDLE_SHA256` fields are
@@ -654,8 +654,8 @@ the executable source of truth for the currently configured bundle. Keep the
 matching tracked bundle name, checksum, contents, and upload provenance in
 `docs/DATASETS.md` instead of pinning a versioned bundle filename in this
 design document. The historical design preference was the non-overlapped
-PinMyMetal route, but its test was accessed in seven early runs and the split is
-absent from the current bundle. Therefore the primary final-test route is an
+PinMyMetal route, but its test was accessed in seven early runs. Its bundle
+availability does not restore pristine status. The primary final-test route is an
 unresolved scientific decision; do not silently substitute exact PinMyMetal or
 another dataset. The current availability and access record is owned by
 `docs/DATASETS.md`.
@@ -941,8 +941,8 @@ or unopened. Those test values are not eligible current selection evidence.
 This documentation update does not designate a replacement test. Until a
 separate scientific decision resolves the route, no named PinMyMetal split is
 the current primary final held-out test. The legacy non-overlap split remains a
-historical reference. It is present locally, absent from the current v10
-bundle, and not pristine.
+historical reference and is not pristine. Current materialization and bundle
+availability are recorded in `docs/DATASETS.md`.
 
 The metal Colab notebook currently defaults `DATASET_NAME` to the exact
 PinMyMetal split for new serious metal-validation workflows, and the playbook

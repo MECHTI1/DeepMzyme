@@ -1,5 +1,243 @@
 # Metal Training Pipeline Playbook
 
+## Standalone validation campaign — Stage 0 through Stage 2B
+
+
+For the direct arm, selection is `val_metal_balanced_acc`. For the required
+six-class arm, selection is explicitly `val_metal_collapsed4_balanced_acc`
+so both arms optimize the common endpoint. This is a scoped exception to the
+retained six-class native-selection recipes below. The implementation sums
+Fe/Co/Ni probabilities before argmax; do not just collapse the six-way argmax.
+Retain native six-class BA, macro-F1 and Fe/Co/Ni recalls from the **same
+selected checkpoint**. Never compare native-six BA numerically against
+direct-four BA. Six variants × four runs = 24 baseline runs; six separate
+one-epoch smoke runs precede them. No Optuna study is created.
+
+This is the standalone-only preparation route. It supersedes the retained
+baseline examples below for this campaign; later HPO and final-reporting recipes
+are outside this certification. Keep all launch controls false while preparing.
+No comparison result or promotion is implied by a passing configuration check.
+
+Run the block once per family and (for metal) target arm. Stage 0 is the
+planning/data/feature pass with the smoke configuration and the launch switch
+off. Stage 1 is one epoch for each variant after readiness passes. Stage 2A
+establishes Only-GVP; Stage 2B completes Only-ESM and graph-level late fusion.
+For baselines change only `STANDALONE_PHASE` to `"baseline"`.
+Run Only-GVP first, Only-ESM second, and late fusion third. Do not run HPO yet.
+
+These are modest controlled baseline screens, not historical reproduction:
+two LRs × two model seeds per variant, fixed split seed 42, 15% internal
+validation from the named external **train** directory. The radius-6 choice
+uses validation context from PARAMETER_FINDINGS; it avoids repeating the weaker
+tested radius-10 family without claiming universal superiority. All families
+receive the same LR opportunities, seeds and epoch budget within a task.
+Only-ESM uses the current **pocket-residue ESMC pooling** implementation; do not
+describe it as an independently tested full-protein pooling model.
+
+The graph arms use the same conservative residue features, radius edges,
+residue-only readout, graph/head capacity, and no RING or augmentation.
+ESMC-300m embeddings must be 960-dimensional with matching residue alignment
+and source metadata. Require complete ESM and external-feature coverage for
+the whole campaign cohort before launching any family; do not let missing
+features silently produce different cohorts. The loader runs with invalid
+structures treated as errors. Preparation switches remain off: resolve missing
+features in an explicitly reviewed preparation step, then rerun readiness.
+
+EC uses structure-weighted cross-entropy and inverse-frequency class weights
+computed from **training groups**, with group-level logit averaging for
+validation. Metal uses training-only inverse-frequency class weights in each
+arm's native target space, unit manual multipliers, ordinary cross-entropy,
+and no collapsed auxiliary loss or site sampler. Native class balancing is a
+declared part of the target-formulation comparison.
+
+### Exact standalone notebook block
+
+```python
+# Paste at the END of Main configuration, before Build central CONFIG.
+# Use a fresh kernel when switching task/target, then rebuild CONFIG and the plan.
+STANDALONE_PHASE = "smoke"  # "smoke" first; "baseline" only after its gate passes.
+MODEL_PRESET = "Only-GVP"  # then "Only-ESM", then "GVP + late fusion"
+assert STANDALONE_PHASE in {"smoke", "baseline"}
+assert MODEL_PRESET in {"Only-GVP", "Only-ESM", "GVP + late fusion"}
+RUN_MODE = "single" if STANDALONE_PHASE == "smoke" else "manual_configurations"
+RECOMMENDED_RUN_SET = "custom"  # Named run sets can override the declared axes.
+SPLIT_BY = "pdbid"
+SPLIT_SEED = "42"
+VAL_FRACTION = 0.15
+N_FOLDS = ""
+FOLD_INDEX = ""
+SEEDS_CSV = "42" if STANDALONE_PHASE == "smoke" else "42,43"
+LEARNING_RATES_CSV = "3e-5" if STANDALONE_PHASE == "smoke" else "3e-5,1e-4"
+WEIGHT_DECAYS_CSV = "1e-4"
+MAX_CONFIGURATION_RUNS = 1 if STANDALONE_PHASE == "smoke" else 4
+LR_SCHEDULES_CSV = "fixed"
+HIDDEN_S_VALUES_CSV = "128"
+HIDDEN_V_VALUES_CSV = "16"
+EDGE_HIDDEN_VALUES_CSV = "64"
+GVP_LAYERS_VALUES_CSV = "4"
+HEAD_MLP_LAYERS_VALUES_CSV = "2"
+HEAD_MLP_DROPOUT_VALUES_CSV = "0.2"
+EDGE_RADIUS_VALUES_CSV = "6.0"
+ESM_FUSION_DIM_VALUES_CSV = "128"
+ESM_GRAPH_ENCODER_DROPOUT_VALUES_CSV = "0.1"
+EARLY_ESM_DIM_VALUES_CSV = "32"
+EARLY_ESM_DROPOUT_VALUES_CSV = "0.0"
+CROSS_ATTENTION_DROPOUT_VALUES_CSV = "0.0"
+CLASSIFIER_POOL_DISTANCE_CUTOFF_VALUES_CSV = "0.0"
+POSITION_NOISE_STDS_CSV = "0.0"
+SECOND_SHELL_DROPOUTS_CSV = "0.0"
+OUTER_RESIDUE_DROPOUTS_CSV = "0.0"
+OMIT_NODE_FEATURE_SETS = ""
+METAL_NODE_MODE = "none"
+STRUCTURAL_READOUT_SCOPE = "residue_only"
+RING_EDGE_MODE = "without_ring"
+REQUIRE_RING_EDGES = False
+PREPARE_MISSING_RING_EDGES = False
+ALLOW_MISSING_ESM_EMBEDDINGS = False
+PREPARE_MISSING_ESM_EMBEDDINGS = False
+ALLOW_MISSING_EXTERNAL_FEATURES = False
+PREPARE_MISSING_EXTERNAL_FEATURES = False
+ESM_EMBEDDINGS_DIR = ""  # Auto-resolve the selected bundle's esm_embeddings.
+EXTERNAL_FEATURES_ROOT_DIR = ""  # Auto-resolve updated_feature_extraction.
+METAL_CLASS_WEIGHT_MODES_CSV = "inverse_frequency"
+METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
+METAL_FOCAL_GAMMA_VALUES_CSV = "2.0"
+METAL_LABEL_SMOOTHING_VALUES_CSV = "0.0"
+METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"
+BALANCE_METAL_SITE_SYMBOLS_CSV = "False"
+MN_LOSS_MULTIPLIER = CU_LOSS_MULTIPLIER = ZN_LOSS_MULTIPLIER = 1.0
+FE_LOSS_MULTIPLIER = CO_LOSS_MULTIPLIER = NI_LOSS_MULTIPLIER = 1.0
+CLASS_VIII_LOSS_MULTIPLIER = 1.0
+EC_LABEL_DEPTHS_CSV = "1"
+EC_CONTRASTIVE_WEIGHTS_CSV = "0.0"
+EC_GROUP_WEIGHTING = "structure_id"
+EC_CLASS_WEIGHT_UNIT = "group"
+METAL_LOSS_WEIGHT_VALUES_CSV = "1.0"
+EC_LOSS_WEIGHT_VALUES_CSV = "1.0"
+REQUIRE_ALL_TASK_CLASSES = True
+INVALID_STRUCTURE_POLICY = "error"
+UNSUPPORTED_METAL_POLICY = "error"
+DATALOADER_NUM_WORKERS = 0
+DATALOADER_PIN_MEMORY = True
+DEVICE = "cuda"
+DETERMINISTIC = True
+LOG_PER_CLASS_EPOCH_METRICS = True
+INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False
+ALLOW_TRAIN_LOSS_TEST_EVAL_DEBUG = False
+ALLOW_SHORT_TRAINING_FOR_DEBUG = False
+ALLOW_MODEL_PRESET_MISMATCH = False
+ALLOW_SINGLE_MODE_TO_TRUNCATE_COMPARISON = False
+OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False
+RUN_TOP_CONFIG_SEED_REPEAT_VALIDATION = False
+LAUNCH_PLANNED_MAIN_TRAINING_RUNS = False
+LAUNCH_PLANNED_TRAINING_RUNS = False
+LAUNCH_STAGE6_TOP_K_CONFIRMATION = False
+LAUNCH_STAGE6B_FINAL_REFIT = False
+LAUNCH_FINAL_HELD_OUT_TEST_EVAL = False
+SKIP_EXISTING_RUNS = True
+STOP_ON_FIRST_FAILURE = True
+OUTPUT_LAYOUT = "classic_runs"
+WORKFLOW_OUTPUT_NAME = ""
+RUNS_DIR = ""
+COPY_OUTPUTS_TO_DRIVE = True
+SUMMARY_BASENAME = ""
+DATASET_ROOT_OVERRIDE = ""
+TRAIN_DIR_OVERRIDE = TRAIN_SITE_SUMMARY_CSV_OVERRIDE = ""
+TEST_DIR_OVERRIDE = TEST_SITE_SUMMARY_CSV_OVERRIDE = ""
+USE_CLEAN_FOLD_SELECTOR = False
+TASK = "metal"
+DATASET_NAME = "train_and_test_sets_structures_common_pdbid_70_30_pinmymetal"
+METAL_LABEL_SCHEME = "four_class"  # Repeat separately with "six_class"; BOTH are required.
+assert METAL_LABEL_SCHEME in {"four_class", "six_class"}
+SPLIT_STRATIFY_BY = "metal_site"
+METAL_ELIGIBILITY_SCHEME = "six_class"
+SELECTION_METRIC = ("val_metal_balanced_acc" if METAL_LABEL_SCHEME == "four_class"
+                    else "val_metal_collapsed4_balanced_acc")
+OPTUNA_SELECTION_METRIC = SELECTION_METRIC
+METAL_REPORT_VIEW = "both"
+SINGLE_AND_MANUAL_CONFIG_EPOCHS = 1 if STANDALONE_PHASE == "smoke" else 50
+EPOCHS = SINGLE_AND_MANUAL_CONFIG_EPOCHS
+BATCH_SIZES_CSV = "8"
+_family = {"Only-GVP": "only_gvp", "Only-ESM": "only_esm", "GVP + late fusion": "late_fusion"}[MODEL_PRESET]
+RUN_BATCH_ID = f"standalone_metal_common70_{METAL_LABEL_SCHEME}_{_family}_{STANDALONE_PHASE}_v1"
+RUN_NAME_PREFIX = RUN_BATCH_ID
+
+```
+
+### Readiness, outputs, and explicit launch gate
+
+`METAL_ELIGIBILITY_SCHEME="six_class"` fixes the shared eligible cohort:
+both arms require a uniquely defined native-six target. Mixed Fe/Co/Ni pockets
+that become single-label only after four-class merging are excluded from both
+arms and recorded as missing required supervision. This explicit intersection
+policy isolates training formulation; it is not a claim about a larger
+four-class-only cohort. The split-symbol control alone cannot enforce this.
+
+Before enabling training, inspect the printed shell-safe command and verify
+task, dataset path, scheme/depth, split seed, grouping, features, run count,
+epoch budget and selection metric. Generated commands must contain no
+`--run-test-eval`, `--test-structure-dir`, or `--test-summary-csv`.
+Inspect train/test **membership only** for overlap; no held-out model inference
+or metrics are authorized. All planned training inputs come from the train
+directory. Do not reinterpret the named dataset as the resolved primary final
+test.
+
+The notebook writes under `<DRIVE_ROOT>/notebook_outputs/runs/<RUN_BATCH_ID>/`:
+
+- `active_run_config.json`, `active_run_config.md`;
+- `<SUMMARY_BASENAME>_planned_runs.csv`;
+- `<SUMMARY_BASENAME>_planned_run_dictionary.json`;
+- metal weight diagnostics CSV when the metal head is enabled.
+
+The auto-generated summary basename is printed by the planner. After an
+authorized launch, each run must preserve `run_config.json`,
+`run_metadata.json`, `split_diagnostics.json`, `dataset_summary.json`,
+`prepare_status.json`, `epoch_metrics.csv`, `train_metrics.csv`,
+`val_metrics.csv`, and `best_model_checkpoint.pt`.
+The summary cell writes `<SUMMARY_BASENAME>.csv`,
+`<SUMMARY_BASENAME>_completed_only.csv`, and a PNG when plotting succeeds.
+No `test_report.json` may be created. Preserve actual code commit/dirty state,
+runtime versions, CSV checksums and the verified bundle identity; do not
+attribute the local materialization to a hosted bundle without verifying the actual input
+archive.
+
+The ordinary launch gate is the dedicated **Main planned training launch
+switch** cell: `LAUNCH_PLANNED_MAIN_TRAINING_RUNS`. Its legacy alias alone
+does not control the current execution cell. Leave it false for review; after
+explicit launch approval, enable that switch and run **Optional training
+execution**. Never enable Stage 6, Stage 6B or Stage 7 during this campaign.
+
+Stage 0 passes only when inputs, feature coverage and class support are valid.
+Stage 1 requires a completed one-epoch run of each variant with valid outputs,
+finite losses and no held-out report; ignore smoke accuracy for selection.
+Stage 2 requires all four baseline runs per variant and identical retained
+train/validation **example identities and groups** across the compared runs.
+Compare the identity fields in `dataset_summary.json`; the existing hash also
+contains targets, so its raw value is expected to differ between four- and
+six-class arms. Check identity tuples separately and verify the deterministic
+target mapping.
+
+Require every active class in both internal splits and inspect per-class
+recalls. A missing validation class blocks a reportable baseline even if the
+aggregate metric exists. No family is promoted with a zero seed-mean recall
+for an active class. Two model seeds on one fixed split are preliminary
+Grade-3 evidence, not fold confirmation. Do not claim formulation/modality
+superiority from this screen: shared grouped folds × seeds with paired
+bootstrap intervals and rare-class recall protection are still required.
+Stage 6B final refit must occur after eventual selection and before any
+one-shot Stage 7 reporting; neither transition is authorized here.
+
+Keep metal and EC summaries/rankings separate. Update EXPERIMENT_STATUS and
+the evidence index only when measured training/validation results exist.
+
+Within each task, summarize seed mean, sample SD, minimum and per-class recall
+for each family/target/LR configuration. Compare the metal arms at matched LR
+and seed first, using the common four-class metric. Select a provisional LR
+by seed-mean task metric with the recall gate; do not select a lucky seed or
+pool different learning rates into one family mean. Equal-budget per-family
+selection remains preliminary fixed-split evidence.
+
+
 This playbook is the practical, notebook-ready pipeline for DeepMzyme metal
 classification. It complements `Plan.md`, which remains the high-level research
 and design authority. Current best validation evidence belongs in
@@ -30,15 +268,13 @@ primary PinMyMetal-compatible reporting endpoint. It requires a controlled
 comparison of direct `four_class` / `merge_fe_class_viii` training against
 matched `six_class` training followed by collapsed-four evaluation.
 
-The existing executable blocks in this playbook are retained with their
-six-class common recipe during this scientific-policy-only update. They remain
-exact six-class recipes and historical workflow references. They do not by
-themselves define the required matched challenger, and they must not be
-relabeled as direct four-class training.
+The opening standalone Stage 0–2B recipe supplies both required target arms.
+The older blocks below retain their six-class common recipe as historical
+workflow references; they are not a direct-four campaign or a matched pair.
 
-Before launching a new metal campaign, create and reconcile paired stage blocks
-for the direct-four arm and the six-class-trained/collapsed-four arm across the
-three initial baseline families. Coordinate study/run identities, common-view
+For the standalone campaign use the opening block, including its common-view
+selection metrics and target-independent split control. Before extending it
+to HPO or final reporting, reconcile paired later-stage blocks. Coordinate study/run identities, common-view
 metrics, active-class metrics, rare-class gates, and Stage 6/6B/7 provenance
 with the notebook launch surface. Do not patch one label value in isolation or
 reuse an incompatible persistent study. This open work is tracked in
@@ -228,9 +464,9 @@ executable block is added here.
 
 ## Retained Six-Class Common Defaults — Reconciliation Required
 
-These are the existing six-class shared recipe values. Use them only for an
-explicitly labeled six-class experiment. They must be reconciled with new
-direct-four blocks before the playbook can supply the required paired campaign.
+These are retained six-class values for the older stage examples below.
+Use the opening standalone block for the paired baseline campaign. Later-stage
+paired HPO and final-reporting recipes still require reconciliation.
 
 ```python
 TASK = "metal"
@@ -290,12 +526,13 @@ OPTUNA_MULTIOBJECTIVE = False
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The current
-`DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst`
-bundle contains exact PinMyMetal, Common-PDBID 70/30 PinMyMetal, `CLEAN_30`
-folds 0-4 via the conservative `CLEAN_30_main` source and the original
-`CLEAN_30_shared` source, and CARE Task 1 clusterRes30. Non-overlapped and
-harsh split roots remain named variants in Plan.md, but they require
-`upload_file`, `drive`, or a custom bundle containing those dataset roots.
+bundle and its verified checksum are listed in [DATASETS.md](DATASETS.md#main-colab-bundle-v11-current).
+It contains exact, Common-PDBID 70/30, and historical non-overlapped PinMyMetal;
+CLEAN30 folds 0-4 through conservative and original shared sources; and CARE
+clusterRes30 with incomplete cached features. Non-overlapped data requires an
+explicit dataset-root override because it is not a dropdown choice. Harsh
+PinMyMetal remains unavailable. See the dataset inventory for readiness and
+scientific-use limits.
 `SPLIT_BY` controls
 only the internal train/validation grouping inside the selected external train
 split and is emitted to the CLI as `--train-val-split-by`; it never changes the

@@ -60,6 +60,14 @@ source rejection, and the single accepted workflow value.
 
 **Status:** Open
 
+**Standalone baseline reconciliation:** The opening Stage 0–2B block in the
+EC playbook now uses current notebook controls and the generic training CLI.
+Synthetic expansion tests cover all three families in smoke/baseline modes,
+with EC1 group-level selection, group-count class weights, and launch/test
+switches off. This is execution preparation, not measured EC model evidence.
+Legacy HPO controls and the complete EC Stage 6/6B/7 migration remain open;
+the opening recipe explicitly excludes those blocks.
+
 **Pre-remediation observed behavior**
 
 Static comparison found EC playbook assignments absent from the current
@@ -245,8 +253,9 @@ Otherwise retain `MISSING — recovery required`.
   non-overlapped PinMyMetal only as a historical reference.
 - The metal playbook's current common defaults use exact PinMyMetal.
 - Exact PinMyMetal contains 177 overlapping PDB IDs.
-- The notebook dropdown and current v10 bundle omit non-overlapped and harsh
-  roots.
+- The notebook dropdown omits non-overlapped and harsh roots. The current
+  bundle includes historical non-overlapped data, accessible through an explicit
+  dataset-root override; harsh data is still unavailable.
 - The historical non-overlap test was evaluated seven times and is not pristine.
 
 **Conflicting documentation/policy**
@@ -442,6 +451,15 @@ non-training remediation.
 ## TECH-010 — Four-class endpoint and paired metal target recipes are not reconciled
 
 **Status:** Open; policy recorded 2026-09-14
+
+**Standalone baseline reconciliation:** The opening metal Stage 0–2B block
+now covers direct-four and six-trained/collapsed-four arms for all three
+initial families, with separate identities and a shared metal-site-symbol
+stratification mode. A native-six eligibility requirement keeps mixed sites
+that become eligible only after merging out of both arms. Synthetic tests
+verify this eligibility boundary and equal validation membership under
+target relabeling and current notebook/CLI command expansion. This does not
+establish model evidence or certify later HPO/Stage 6/6B/7 paired recipes.
 
 **Observed state**
 

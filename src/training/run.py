@@ -691,6 +691,14 @@ def ec_group_metrics_from_logits(
             "accuracy": metrics["accuracy"],
             "balanced_accuracy": metrics["balanced_accuracy"],
             "macro_f1": metrics["macro_f1"],
+            "min_recall": min(present_metric_values(metrics["per_class_recall"])),
+            "per_class_recall": {
+                label: metrics["per_class_recall"][index] for index, label in ec_label_map.items()
+            },
+            "per_class_support": {
+                label: metrics["per_class_support"][index] for index, label in ec_label_map.items()
+            },
+            "confusion_matrix": metrics["confusion_matrix"],
         }
     )
     for level in range(1, ec_label_depth + 1):
@@ -820,6 +828,10 @@ def metrics_from_predictions(
                     f"{prefix}_ec_group_acc": group_metrics.get("accuracy"),
                     f"{prefix}_ec_group_balanced_acc": group_metrics.get("balanced_accuracy"),
                     f"{prefix}_ec_group_macro_f1": group_metrics.get("macro_f1"),
+                    f"{prefix}_ec_group_min_recall": group_metrics.get("min_recall"),
+                    f"{prefix}_ec_group_per_class_recall": group_metrics.get("per_class_recall"),
+                    f"{prefix}_ec_group_per_class_support": group_metrics.get("per_class_support"),
+                    f"{prefix}_ec_group_confusion_matrix": group_metrics.get("confusion_matrix"),
                     f"{prefix}_ec_group_n_groups": group_metrics["n_groups"],
                     f"{prefix}_ec_group_n_conflicting_groups": group_metrics["n_conflicting_groups"],
                 }
@@ -1158,6 +1170,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             structure_dir=config.structure_dir,
             require_full_labels=True,
             required_targets=required_targets_for_task(config.task),
+            metal_eligibility_scheme=config.metal_eligibility_scheme,
             summary_csv=config.summary_csv,
             esm_dim=config.esm_dim,
             esm_embeddings_dir=config.esm_embeddings_dir,
@@ -1196,6 +1209,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 split_by=config.train_val_split_by,
                 seed=split_seed_for_config(config),
                 task=config.task,
+                stratify_by=config.split_stratify_by,
             )
         else:
             split = split_pockets(
@@ -1204,6 +1218,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 split_by=config.train_val_split_by,
                 seed=split_seed_for_config(config),
                 task=config.task,
+                stratify_by=config.split_stratify_by,
             )
         if task_predicts_ec(config.task):
             assign_ec_group_metadata(split.train_pockets, weighting_mode=config.ec_group_weighting)
@@ -1345,6 +1360,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             n_metal_classes=len(METAL_TARGET_LABELS),
             n_ec_classes=max(1, len(load_result.ec_index_to_label)),
             metal_class_weight_mode=config.metal_class_weight_mode,
+            ec_class_weight_unit=config.ec_class_weight_unit if task_predicts_ec(config.task) else "pocket",
         )
         if task_predicts_metal(config.task) and config.metal_class_weight_mode != "none":
             metal_class_weights = computed_metal_weights

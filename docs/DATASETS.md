@@ -17,8 +17,8 @@ Relevant facts:
   early Only-GVP runs and is not pristine or unopened.
 - Exact PinMyMetal contains train/test PDB-ID overlap.
 - The non-overlapped PinMyMetal root is present locally but its historical test
-  was already accessed; it is absent from the current v10 bundle. The harsh
-  root is absent locally and from v10.
+  was already accessed; it is now included in v11 (absent from historical v10).
+  The harsh root is absent locally and from both bundles.
 - CLEAN and CARE datasets have different scientific purposes and cannot be
   silently designated as replacement final tests.
 - This documentation cleanup does not select a replacement dataset or change
@@ -60,17 +60,17 @@ is owned by [`Plan.md`](../Plan.md).
 
 ## Dataset overview
 
-| Dataset ID | Scientific purpose | Materialized locally | In current v10 bundle | Test/fold evaluation record | Current interpretation |
+| Dataset ID | Scientific purpose | Materialized locally | In current v11 bundle | Test/fold evaluation record | Current interpretation |
 |---|---|---:|---:|---|---|
 | `pinmymetal-source` | Original PinMyMetal class-model membership and site provenance | Source files tracked | No, source membership only | Not an executable split by itself | Primary membership evidence |
 | `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | No completed test evaluation found | Possibly overlapped comparison/validation route |
-| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | No | Seven early test evaluations found | Historically accessed; not pristine |
+| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | Yes | Seven early test evaluations found | Historically accessed; not pristine |
 | `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation found | Documented severe comparison variant |
 | `pinmymetal-common70` | Custom zero-overlap assignment of common PDB IDs, seed 42 | Yes | Yes | No evaluation found | Custom comparison split, not a selected final test |
 | `clean30-original` | CLEAN official split30 fold benchmark with shared multi-donor structures | Yes | Yes | Fold evaluation is the intended benchmark design | Five fold pairs; report aggregate across folds |
 | `clean30-conservative` | One deterministic supported-metal AlphaFill donor per CLEAN target/fold | Yes; current `CLEAN_30_main` | Yes | No completed DeepMzyme/CLEAN-predictor result found in inspected evidence | Current preferred CLEAN metallo source |
 | `clean10` | Potential CLEAN 10%-identity benchmark | No | No | No evidence found | Not present or documented |
-| `care-task1-legacy30` | Older CARE Task 1 30%-identity preparation route | Scripts/docs only | No distinct legacy root in v10 | No evaluation found | Historical/secondary preparation track |
+| `care-task1-legacy30` | Older CARE Task 1 30%-identity preparation route | Scripts/docs only | No distinct legacy root in v11 | No evaluation found | Historical/secondary preparation track |
 | `care-task1-clusterres30` | Representative CARE Task 1 metallo subset for EC/joint work | Yes | Yes | Test prepared and bundled; no completed evaluation found | Current prepared CARE route |
 
 ## Local structure storage
@@ -381,7 +381,7 @@ Tracked metadata:
 | Dataset | Labels/membership materialized | Evaluation artifacts found | Selection influence established | Current record |
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | No | No | Possibly overlapped; label every use |
-| Non-overlapped PinMyMetal | Present locally; absent from v10 | Yes — seven early reports | Not established | Historically accessed; metrics excluded from current selection |
+| Non-overlapped PinMyMetal | Present locally and in v11; absent from historical v10 | Yes — seven early reports | Not established | Historically accessed; metrics excluded from current selection |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
@@ -394,8 +394,9 @@ Tracked metadata:
 Repository:
 [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)
 
-The repository tree was enumerated through the Hugging Face dataset API on
-2026-08-22. The dataset-card `README.md` is only a 31-byte license header, so it
+The repository tree was rechecked through the Hugging Face dataset API on
+2026-09-14. The historical inventory below is retained; the current v11 release
+is listed in its own section. The dataset-card `README.md` is only a 31-byte license header, so it
 is not currently a useful file or provenance index. This section is the
 human-readable inventory.
 
@@ -412,7 +413,8 @@ human-readable inventory.
 
 Use the artifacts as follows:
 
-- normal Colab DeepMzyme training: the main v10 archive plus its SHA256;
+- normal Colab DeepMzyme training: the current v11 archive plus its SHA256;
+  check its dataset-specific cache-readiness table before training;
 - CLEAN predictor baselines without graph assets: the CLEAN predictor archive
   plus its SHA256;
 - G4/A100 throughput reproduction only: both files under
@@ -443,7 +445,64 @@ cannot be reconstructed from the manifest. It does not authorize held-out
 evaluation or stand in for a model-quality dataset. Audited legacy G4/A100
 results are summarized in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
-### Main Colab bundle v10
+### Main Colab bundle v11 (current)
+
+- Filename: `DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz`
+- Download: [v11 gzip archive](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz)
+- Size: `3808796819` bytes.
+- SHA256: `8f869b8aa78dd2dc2af5efb856d137c01ba289b8fe6327b66a8139b0166975c7`
+- Verified Hugging Face publication commit: `4c36d3bfbf5e0c892fb165cbf101184e4151dda2`.
+  Remote LFS SHA256 and byte size match the local archive; the downloaded
+  checksum sidecar also matches.
+- Sidecars: [checksum](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz.sha256), [file manifest and feature coverage](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz.manifest.json).
+- The release also publishes `DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz.validation.json` with extraction,
+  notebook dataset-resolution, CLEAN fold-materialization, and sampled loader checks.
+
+This gzip release packages the current manifest-backed data layout and all
+3,211 referenced structure-store objects. It includes exact, Common-PDBID
+70/30, and historical non-overlapped PinMyMetal; both CLEAN30 shared sources
+with the conservative `CLEAN_30_main` alias; CARE clusterRes30; and available
+ESMC, external, RING, and RING-runtime files. CLEAN fold directories are
+materialized from the selected shared source by the notebook. Harsh PinMyMetal
+is absent. This is a data archive; source code comes from the GitHub checkout.
+
+The publication repair adds the previously missing `structure_store.py`
+dependency to GitHub. Use the updated notebook and a fresh/updated checkout.
+The notebook already supports `.tar.gz`; its bundle filename, URL, and checksum
+now select v11. A separately saved older notebook requires updating those three
+values. Non-overlapped data remains accessible with `DATASET_ROOT_OVERRIDE`;
+adding it to the archive does not promote it as a scientific final-test route.
+
+**Cache readiness is dataset-specific.** All included PinMyMetal structures
+and all 740 shared CLEAN structures have ESM, external, and RING caches.
+Available embedding metadata identifies `esmc_300m`, dimension 960, with no
+missing sidecars. CARE has the following unresolved gaps:
+
+| CARE side | Structures | Missing ESM | Missing external | Missing RING |
+|---|---:|---:|---:|---:|
+| Train | 817 | 571 | 572 | 572 |
+| Test | 34 | 14 | 14 | 14 |
+
+CARE is included for preservation and preparation, but is **not ready for
+full feature-dependent training without generation**. Repacking does not fill
+these gaps. Missing-feature allowances must not silently change comparison
+cohorts. Archive checks inspect data integrity and membership; they do not
+train a model, evaluate held-out performance, or certify a GPU runtime.
+
+Verification passed for all 15,126 inventoried file hashes, all relocated
+structure manifests, every configured notebook dataset choice, and all five
+CLEAN folds for each source option. Forty-eight deterministic feature-complete
+structure samples loaded with no alignment errors (73 retained pockets).
+The isolated release checkout passed 61 regression tests plus nine subtests,
+and `src/train.py --help` succeeded. No Colab GPU training was run.
+
+The archive contains `DeepMzyme_Data/bundle_metadata/v11/bundle_manifest.json`.
+It records the exact input roots and per-file sizes/SHA256 values. Build with
+`build_colab_bundle.build_bundle(selected_paths, output_bundle=...)`, supplying
+the recorded roots plus that metadata directory. The builder now selects real
+gzip for `.tar.gz`/`.tgz` outputs and retains `.tar.zst` support.
+
+### Main Colab bundle v10 (historical)
 
 Filename:
 `DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst`
@@ -536,8 +595,8 @@ DeepMzyme structures, ESMC embeddings, RING files, and graph external features.
 - Primary final-test route requires a separate scientific decision.
 - CARE upstream source URL/citation is missing.
 - The non-overlapped PinMyMetal root is present locally but absent from the
-  current hosted bundle; the harsh root is unavailable locally and in that
-  bundle.
+  historical v10 bundle (included in v11); the harsh root is unavailable
+  locally and in either bundle.
 - Exact PinMyMetal retains 177 overlapping PDB IDs.
 - Historical non-overlap test access exists, but its influence on subsequent
   selection cannot be established.

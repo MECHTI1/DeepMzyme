@@ -143,7 +143,9 @@ def split_pockets(
     split_by: str,
     seed: int,
     task: str = "joint",
+    stratify_by: str = "active_targets",
 ) -> PocketSplit:
+    task = stratification_task(task, stratify_by)
     split_by = validate_split_by(split_by)
     if not 0.0 <= val_fraction < 1.0:
         raise ValueError(f"--val-fraction must be in [0, 1), got {val_fraction}")
@@ -213,7 +215,9 @@ def split_pockets_k_fold(
     split_by: str,
     seed: int,
     task: str = "joint",
+    stratify_by: str = "active_targets",
 ) -> PocketSplit:
+    task = stratification_task(task, stratify_by)
     split_by = validate_split_by(split_by)
     if n_folds < 2:
         raise ValueError(f"--n-folds must be at least 2, got {n_folds}")
@@ -275,7 +279,20 @@ def split_pockets_k_fold(
     return PocketSplit(train_pockets=train_pockets, val_pockets=val_pockets)
 
 
+def stratification_task(task: str, stratify_by: str) -> str:
+    if stratify_by == "active_targets":
+        return task
+    if stratify_by == "metal_site" and task == "metal":
+        return "metal_site"
+    raise ValueError("metal_site stratification requires task='metal'; otherwise use active_targets.")
+
+
 def task_label_keys_for_pocket(pocket: PocketRecord, task: str) -> list[str]:
+    if task == "metal_site":
+        symbol = metal_site_symbol_key_for_pocket(pocket)
+        if symbol is None:
+            raise ValueError(f"Missing metal-site symbols for paired split: {pocket.pocket_id}")
+        return [f"metal_site:{symbol}"]
     keys: list[str] = []
     if task in ("joint", "metal") and pocket.y_metal is not None:
         keys.append(f"metal:{int(pocket.y_metal)}")
@@ -489,6 +506,7 @@ def build_split_diagnostics(
         "val_fraction": config.val_fraction,
         "split_seed": config.split_seed,
         "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
+        "split_stratify_by": config.split_stratify_by,
         "model_seed": config.seed,
         "n_folds": config.n_folds,
         "fold_index": config.fold_index,
@@ -639,6 +657,7 @@ def build_dataset_summary(
         "split_by_scope": "train_validation_only",
         "split_seed": config.split_seed,
         "effective_split_seed": config.seed if config.split_seed is None else config.split_seed,
+        "split_stratify_by": config.split_stratify_by,
         "model_seed": config.seed,
         "n_folds": config.n_folds,
         "fold_index": config.fold_index,
@@ -648,6 +667,8 @@ def build_dataset_summary(
         "balance_metal_site_symbols": config.balance_metal_site_symbols,
         "ec_label_depth": config.ec_label_depth,
         "ec_group_weighting": config.ec_group_weighting,
+        "ec_class_weight_unit": config.ec_class_weight_unit,
+        "metal_eligibility_scheme": config.metal_eligibility_scheme,
         "ec_group_metric_mode": ec_group_mode,
         "ec_group_weighting_applies_to": "ec_cross_entropy_only",
         "ec_labels": ec_label_map,

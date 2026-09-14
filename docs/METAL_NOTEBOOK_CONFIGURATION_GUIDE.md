@@ -23,9 +23,30 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 > Cu, Zn, and Class VIII = Fe+Co+Ni. The plan requires both direct
 > `four_class` training and a matched `six_class` arm evaluated through its
 > deterministic collapsed-four view. Current notebook and playbook defaults
-> have not yet been reconciled into that paired recipe. This semantics guide
-> does not change executable notebook values; see TECH-010 before planning a
-> new campaign.
+> have an explicit paired standalone recipe at the start of the metal playbook.
+> Later-stage paired HPO/final recipes still require TECH-010 reconciliation.
+> Use that opening recipe for the standalone campaign.
+
+For paired metal baselines, `SPLIT_STRATIFY_BY="metal_site"` is passed as
+`--split-stratify-by metal_site`: it balances original site symbols, independent
+of the active training label scheme. Keep `SPLIT_SEED` fixed across model seeds
+and verify retained example identities. `active_targets` preserves historical
+split behavior. Six-class standalone checkpoints use the explicit collapsed-four
+selection metric from the playbook; direct-four checkpoints use native balanced
+accuracy. Both compare the same endpoint.
+
+`METAL_ELIGIBILITY_SCHEME="six_class"` requires a unique native-six metal
+target before either paired metal arm enters training. It excludes mixed-metal
+pockets that would become eligible only after four-class merging. This keeps
+the paired cohort fixed; `active` preserves historical task eligibility. The
+EC-only path does not require metal supervision.
+
+For EC, `EC_CLASS_WEIGHT_UNIT="group"` counts each training EC group once when
+computing inverse-frequency class weights. `EC_GROUP_WEIGHTING` still controls
+per-pocket loss weights and metric groups. The historical `pocket` class-count
+mode remains available. `REQUIRE_ALL_TASK_CLASSES=True` now fails preflight for
+missing classes in either training or validation, rather than only warning for
+validation. Exact values remain in the task playbooks.
 
 ## Scope Of This Guide
 

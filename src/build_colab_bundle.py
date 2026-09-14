@@ -113,12 +113,6 @@ def validate_inputs(paths: list[Path]) -> None:
     for path in paths:
         if not path.exists():
             raise FileNotFoundError(f"Bundle input path not found: {path}")
-    if shutil.which("zstd") is None:
-        raise RuntimeError(
-            "zstd is not installed or not found in PATH.\n"
-            "Install it on Ubuntu with:\n"
-            "sudo apt update && sudo apt install zstd"
-        )
 
 
 def resolve_split_dirs(dataset_root: Path, args: argparse.Namespace) -> tuple[Path, Path]:
@@ -206,7 +200,9 @@ PER_SPLIT_OVERRIDE_FLAGS = (
 def ensure_project_relative(path: Path) -> str:
     resolved_path = path.resolve()
     try:
-        return str(resolved_path.relative_to(PROJECT_ROOT))
+        resolved_path.relative_to(PROJECT_ROOT)
+        # Preserve named aliases such as CLEAN_30_main in the archive.
+        return str((path.parent.resolve() / path.name).relative_to(PROJECT_ROOT))
     except ValueError as exc:
         raise ValueError(
             f"Bundle input path must live under the project root {PROJECT_ROOT}: {resolved_path}"
@@ -366,6 +362,19 @@ def format_multi_metal_note(row_count: int) -> str:
 
 def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
     validate_inputs(selected_paths)
+    if output_bundle.name.endswith(".tar.zst"):
+        if shutil.which("zstd") is None:
+            raise RuntimeError("zstd is required to build a .tar.zst bundle.")
+        compression = ["--use-compress-program=zstd -T0 -19"]
+    elif output_bundle.name.endswith((".tar.gz", ".tgz")):
+        compression = (
+            ["--use-compress-program=pigz -p 4 -6 -n"]
+            if shutil.which("pigz") else ["-z"]
+        )
+    elif output_bundle.name.endswith(".tar"):
+        compression = []
+    else:
+        raise ValueError("Bundle output must end in .tar.zst, .tar.gz, .tgz, or .tar")
 
     output_bundle.parent.mkdir(parents=True, exist_ok=True)
     relative_paths = [ensure_project_relative(path) for path in selected_paths]
@@ -375,7 +384,7 @@ def build_bundle(selected_paths: list[Path], *, output_bundle: Path) -> Path:
         handle.flush()
         cmd = [
             "tar",
-            "--use-compress-program=zstd -T0 -19",
+            *compression,
             "-cf",
             str(output_bundle),
             "-C",

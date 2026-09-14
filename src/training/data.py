@@ -78,6 +78,7 @@ def load_labeled_pockets_with_report_from_dir(
     invalid_structure_policy: str = "skip",
     ec_label_depth: int = 1,
     ec_label_to_index: Dict[str, int] | None = None,
+    metal_eligibility_scheme: str = "active",
 ) -> PocketLoadResult:
     """Load labeled pockets from a structure directory and return them with a load report."""
     structure_root = Path(structure_dir)
@@ -145,6 +146,7 @@ def load_labeled_pockets_with_report_from_dir(
         if require_full_labels and not pocket_has_required_supervision(
             pocket,
             required_targets=required_targets,
+            metal_eligibility_scheme=metal_eligibility_scheme,
         ):
             skipped_pockets.append(
                 {
@@ -210,6 +212,7 @@ def load_training_pockets_with_report_from_dir(
     invalid_structure_policy: str = "skip",
     ec_label_depth: int = 1,
     ec_label_to_index: Dict[str, int] | None = None,
+    metal_eligibility_scheme: str = "active",
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
     return load_labeled_pockets_with_report_from_dir(
@@ -229,6 +232,7 @@ def load_training_pockets_with_report_from_dir(
         invalid_structure_policy=invalid_structure_policy,
         ec_label_depth=ec_label_depth,
         ec_label_to_index=ec_label_to_index,
+        metal_eligibility_scheme=metal_eligibility_scheme,
     )
 
 

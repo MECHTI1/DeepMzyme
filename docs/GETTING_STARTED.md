@@ -110,9 +110,10 @@ train/test directories remain supported. See [`STRUCTURE_STORE.md`](STRUCTURE_ST
 for the schema, audit, and verification command.
 
 The main cloud bundle currently contains exact PinMyMetal, Common-PDBID 70/30,
-CLEAN30 material, CARE clusterRes30, ESM embeddings, external features, and
-RING assets. It does not contain the historical non-overlapped or harsh
-PinMyMetal roots. Exact filenames, sizes, SHA256 values, Hugging Face paths,
+historical non-overlapped PinMyMetal, CLEAN30 material, CARE clusterRes30,
+ESM embeddings, external features, and RING assets. Harsh PinMyMetal is absent.
+CARE caches are incomplete; consult the cache-readiness table before running
+feature-dependent CARE training. Exact filenames, sizes, SHA256 values, Hugging Face paths,
 and contents are owned by [`DATASETS.md`](DATASETS.md).
 
 Before a run, confirm all of the following:

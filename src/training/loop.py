@@ -128,9 +128,25 @@ def balanced_class_weights_from_pockets(
     n_ec_classes: int,
     *,
     metal_class_weight_mode: str = "inverse_frequency",
+    ec_class_weight_unit: str = "pocket",
 ) -> tuple[Tensor, Tensor]:
     metal_labels = [int(pocket.y_metal) for pocket in pockets if pocket.y_metal is not None]
     ec_labels = [int(pocket.y_ec) for pocket in pockets if pocket.y_ec is not None]
+    if ec_class_weight_unit == "group":
+        group_labels: dict[str, int] = {}
+        for pocket in pockets:
+            if pocket.y_ec is None:
+                continue
+            group = pocket.metadata.get("ec_group_key")
+            if group is None:
+                raise ValueError("Assign EC group metadata before computing group class weights.")
+            label = int(pocket.y_ec)
+            if group in group_labels and group_labels[group] != label:
+                raise ValueError(f"Conflicting EC targets in training group {group!r}.")
+            group_labels[group] = label
+        ec_labels = list(group_labels.values())
+    elif ec_class_weight_unit != "pocket":
+        raise ValueError(f"Unsupported EC class weight unit: {ec_class_weight_unit!r}")
     metal_weights = class_weights_from_labels(
         metal_labels,
         n_metal_classes,

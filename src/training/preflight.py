@@ -103,26 +103,26 @@ def run_preflight_checks(
             f"--train-val-split-by {config.train_val_split_by!r}: {overlap[:5]}"
         )
 
+    if config.require_all_task_classes and has_validation and split.val_pockets:
+        missing_val_metal = missing_label_names(val_metal_ids, METAL_TARGET_LABELS)
+        missing_val_ec = missing_label_names(val_ec_ids, ec_label_map)
+        if config.task in ("joint", "metal") and missing_val_metal:
+            raise ValueError(
+                "Validation split is missing metal classes: "
+                f"{', '.join(missing_val_metal)}."
+            )
+        if config.task in ("joint", "ec") and missing_val_ec:
+            raise ValueError(
+                "Validation split is missing EC classes: "
+                f"{', '.join(missing_val_ec)}."
+            )
+
     validate_graphs(split.train_pockets, config, precomputed_graphs=train_graphs)
     validate_graphs(split.val_pockets, config, precomputed_graphs=val_graphs)
 
     train_feature_coverage = build_pocket_feature_coverage(split.train_pockets)
     val_feature_coverage = build_pocket_feature_coverage(split.val_pockets)
     warnings: list[str] = []
-    if config.require_all_task_classes and has_validation and split.val_pockets:
-        missing_val_metal = missing_label_names(val_metal_ids, METAL_TARGET_LABELS)
-        missing_val_ec = missing_label_names(val_ec_ids, ec_label_map)
-        if config.task in ("joint", "metal") and missing_val_metal:
-            warnings.append(
-                "Validation split is missing metal classes: "
-                f"{', '.join(missing_val_metal)}."
-            )
-        if config.task in ("joint", "ec") and missing_val_ec:
-            warnings.append(
-                "Validation split is missing EC classes: "
-                f"{', '.join(missing_val_ec)}."
-            )
-
     if config.task in ("joint", "metal") and has_validation and len(val_metal_ids) < 2:
         warnings.append("Validation split contains fewer than 2 metal classes.")
     if config.task in ("joint", "ec") and has_validation and len(val_ec_ids) < 2:
