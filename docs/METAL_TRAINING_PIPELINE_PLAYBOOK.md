@@ -166,6 +166,11 @@ RUN_NAME_PREFIX = RUN_BATCH_ID
 
 ### Readiness, outputs, and explicit launch gate
 
+For the current-code snapshot upload and exact browser cell order, follow the
+[Chat 4 Colab handoff](COLAB_GPU_RUNBOOK.md#chat-4-standalone-smoke-with-a-working-code-snapshot).
+Its optional notebook cell applies the standalone block above and preserves
+the data-bundle selection from Main configuration.
+
 `METAL_ELIGIBILITY_SCHEME="six_class"` fixes the shared eligible cohort:
 both arms require a uniquely defined native-six target. Mixed Fe/Co/Ni pockets
 that become single-label only after four-class merging are excluded from both

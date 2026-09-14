@@ -704,6 +704,9 @@ When working on this repository:
 4. Preserve existing useful options.
 5. Run syntax or smoke checks when possible.
 6. Clearly summarize what changed and what was not changed.
+7. Whenever files were added or edited, end the final response with
+   `Suggested commit name: <concise commit title>` describing the changes made
+   for the current task.
 
 When editing AGENTS.md itself, briefly summarize the changed sections in the
 response so the user can review the policy delta without re-reading the whole

@@ -180,3 +180,51 @@ def test_playbook_expands_through_current_notebook(tmp_path, task, scheme, famil
         assert config.ec_contrastive_weight == 0
     assert not ns["LAUNCH_PLANNED_MAIN_TRAINING_RUNS"]
     assert not ns["LAUNCH_FINAL_HELD_OUT_TEST_EVAL"]
+
+
+def test_chat4_snapshot_setup_preserves_main_bundle_selection(tmp_path, monkeypatch):
+    """Exercise the upload override without a GPU, network, Drive or training."""
+    import hashlib
+    import io
+    import tarfile
+    import tempfile
+    import types
+
+    root = Path(__file__).resolve().parents[1]
+    notebook = json.loads((root / "notebooks/DeepMzyme_training_colab.ipynb").read_text())
+    cells = {c["id"]: "".join(c["source"]) for c in notebook["cells"]}
+    name = "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"
+    data = (root / name).read_bytes()
+    manifest = json.dumps({"base_commit": "fixture", "files": {
+        name: hashlib.sha256(data).hexdigest()}}).encode()
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
+        for filename, payload in [(name, data), ("code_snapshot_manifest.json", manifest)]:
+            info = tarfile.TarInfo(filename)
+            info.size = len(payload)
+            archive.addfile(info, io.BytesIO(payload))
+    snapshot = buffer.getvalue()
+    colab = types.ModuleType("google.colab")
+    colab.files = types.SimpleNamespace(upload=lambda: {"snapshot.tar.gz": snapshot})
+    monkeypatch.setitem(sys.modules, "google.colab", colab)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    extracted = tmp_path / "extracted"
+    extracted.mkdir()
+    monkeypatch.setattr(tempfile, "mkdtemp", lambda **kwargs: str(extracted))
+    ns = {"IN_COLAB": False, "NOTEBOOK_START_CWD": root, "Path": Path}
+    exec(cells["eb4db512"], ns)
+    selected = {key: ns[key] for key in ("BUNDLE_FILENAME", "BUNDLE_URL", "BUNDLE_SHA256")}
+    assert "_v12_" in selected["BUNDLE_FILENAME"]
+    setup = cells["b16d9206c7e17d9e"].replace(
+        "PREPARE_CHAT4_METAL_SMOKE = False", "PREPARE_CHAT4_METAL_SMOKE = True"
+    ).replace('CHAT4_SNAPSHOT_SHA256 = ""',
+              f'CHAT4_SNAPSHOT_SHA256 = "{hashlib.sha256(snapshot).hexdigest()}"')
+    exec(setup, ns)
+    assert {key: ns[key] for key in selected} == selected
+    exec(cells["ba89d9f5"], ns)
+    assert ns["CONFIG"]["data"]["bundle_sha256"] == selected["BUNDLE_SHA256"]
+    assert ns["REPO_ROOT"] == str(extracted)
+    assert ns["DEVICE"] == "cuda" and ns["EPOCHS"] == 1
+    assert ns["MODEL_PRESET"] == "Only-GVP" and ns["TASK"] == "metal"
+    assert not ns["INCLUDE_HELD_OUT_TEST_DURING_TRAINING"]
+    assert not ns["LAUNCH_PLANNED_MAIN_TRAINING_RUNS"]

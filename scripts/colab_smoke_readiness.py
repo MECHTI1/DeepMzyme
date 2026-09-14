@@ -28,6 +28,7 @@ torch.cuda.synchronize()
 runtime = {
     "gpu": torch.cuda.get_device_name(0), "torch": torch.__version__,
     "cuda": torch.version.cuda, "capability": list(torch.cuda.get_device_capability(0)),
+    "compiled_cuda_architectures": torch.cuda.get_arch_list(),
     "cuda_forward_backward": bool(probe.grad.is_cuda),
     "nvidia_smi": subprocess.check_output(
         ["nvidia-smi", "--query-gpu=name,memory.total,driver_version", "--format=csv,noheader"], text=True).strip(),
@@ -62,6 +63,8 @@ metadata = summarize_esm_embedding_metadata(TRAIN_STRUCTURES, esm_root)
 report = {
     "kind": "Colab_input_and_CUDA_preflight_no_training_or_test_inference",
     "runtime": runtime, "snapshot_sha256": CHAT4_SNAPSHOT_DIGEST,
+    "bundle_filename": BUNDLE_FILENAME, "bundle_url": BUNDLE_URL,
+    "bundle_sha256": BUNDLE_SHA256,
     "train_csv_sha256": csv_digest, "train_structures": len(TRAIN_STRUCTURES),
     "train_groups": len(train_groups), "group_overlap": [],
     "missing_esm": [p.name for p in missing_esm],
@@ -91,7 +94,7 @@ if care.is_dir():
                 ec_structures, structure_root=care, external_features_root_dir=froot)],
         })
 (persist / "ec_storage_inventory.json").write_text(json.dumps(ec_report, indent=2) + "\n")
-print("EC remains blocked. Existing storage counts:", [
+print("EC training remains OFF. Existing storage counts (root, missing ESM, missing external):", [
     (r["root"], len(r["missing_esm"]), len(r["missing_external"]))
     for r in ec_report["storage_candidates"]])
 for filename in ("code_snapshot_manifest.json", "deepmzyme-chat4-code.tar.gz"):

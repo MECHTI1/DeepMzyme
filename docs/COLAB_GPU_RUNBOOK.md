@@ -51,6 +51,79 @@ Then:
 Browser Colab is interactive. `google.colab.drive.mount(...)` may request user
 authorization; that is expected in this route.
 
+## Chat 4 standalone smoke with a working-code snapshot
+
+This is the browser handoff for **Stage 0: environment/data readiness** and
+the gated **Stage 1: 1-epoch smoke**. The first standalone block in the
+[metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-standalone-notebook-block)
+owns the scientific configuration. Only the first Only-GVP/direct-four smoke
+is prepared by the optional Chat 4 cells; the full baseline campaign stays off.
+
+A GitHub clone omits uncommitted changes. Build a current snapshot without
+resetting, committing, pulling, pushing, or modifying the Git index:
+
+```bash
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python scripts/prepare_colab_smoke_snapshot.py
+```
+
+The archive, SHA256 sidecar and file/commit/dirty-state manifest are written to
+`DeepMzyme_Data/notebook_outputs/plans/standalone_v1/colab/`. Regenerate after
+further edits. Data and Git internals are excluded; the data bundle is fetched
+separately. **Main configuration is the single bundle selector**, including
+its immutable URL and checksum; the Chat 4 cell preserves that selection.
+See [DATASETS](DATASETS.md#main-colab-bundle-v12-current-hosted-release-care-complete)
+for the current v12 release.
+
+Use **File → Upload notebook** in Colab to open the current local
+`notebooks/DeepMzyme_training_colab.ipynb`, save a copy in Drive, and select a
+GPU under **Runtime → Change runtime type** (G4 when available). Run cells
+individually in this order; do not use Run all:
+
+1. **Runtime/environment checks**.
+2. **Main planned training launch switch**: leave it `False`.
+3. **Main configuration**: run once; the next cell applies the complete
+   standalone playbook override to its task/model defaults.
+4. **Chat 4: load prepared code and configure one metal smoke (optional)**:
+   set `PREPARE_CHAT4_METAL_SMOKE = True`, paste the archive's SHA256 into
+   `CHAT4_SNAPSHOT_SHA256`, then run and upload `deepmzyme-chat4-code.tar.gz`.
+   It verifies the archive and every file, creates a fresh
+   `/content/DeepMzyme_chat4_*` directory and sets `REPO_ROOT` to it.
+5. **Build central CONFIG dictionary**.
+6. **Clone or locate DeepMzyme repository and install dependencies**: verify
+   it uses the snapshot directory. Git diagnostics will say it is not a Git
+   repository; provenance is supplied by the snapshot manifest. The overlay
+   preserves stock PyTorch; precomputed ESM needs no generation environment.
+7. **Data source configuration and bundle/data setup**: authorize Google
+   Drive interactively. The cell verifies the data archive checksum and
+   extracts it to `/content/deepmzyme_bundle`.
+8. **Detect dataset paths and validate inputs**.
+9. **Chat 4: verify remote inputs, CUDA and persistent outputs**: must pass
+   the actual-GPU forward/backward check, prepared metal CSV/structure hash
+   checks, complete ESM/external coverage, ESMC-300m/960 metadata checks,
+   train/test group-membership separation, and Drive write/read check.
+   Existing CARE train caches are inventoried without regeneration or training.
+10. **Build planned configuration commands**: inspect exactly one CUDA
+    command, one epoch, Only-GVP, metal, `four_class`, with the playbook's
+    `pdbid`/seed-42/15% validation split, `metal_site` stratification and
+    `six_class` eligibility. The selection metric is
+    `val_metal_balanced_acc`. No test input or evaluation arguments may appear.
+
+**Stop at the normal launch gate.** After explicitly choosing to launch the
+reviewed smoke, set **Main planned training launch switch** to `True`, rerun
+only that switch cell, then run **Optional training execution**. The setup
+override resets launch to false, so do not rerun it at this step. After the
+run completes, run **Summarize completed runs**. Leave Stage 6/6B and final
+held-out cells off.
+
+Checkpoints and results write directly to
+`/content/drive/MyDrive/DeepMzyme/notebook_outputs/runs/standalone_metal_common70_four_class_only_gvp_smoke_v1/`.
+The readiness cell also saves `colab_smoke_readiness.json`,
+`ec_storage_inventory.json`, the code archive/manifest and `prepared_notebook.ipynb`.
+The playbook lists the standard command/config, checkpoint, metrics and summary
+artifacts. Confirm they are visible in Drive before disconnecting/deleting the
+runtime. Smoke accuracy is not model-selection evidence. EC training and the
+24-run metal campaign remain off during this handoff.
+
 ## Install the host CLI
 
 The audited host setup uses `google-colab-cli==0.6.0` in an isolated `uv` tool
