@@ -116,6 +116,6 @@ resolution, integrity failures, migration conflict preservation, matching retry,
 idempotence, symlink cleanup, relocation, and bundle dependency discovery.
 The v11 bundle publication additionally verified every archived file hash and
 all relocated structure-manifest targets, then exercised the notebook's CLEAN
-fold materialization. See [DATASETS.md](DATASETS.md#main-colab-bundle-v11-current)
+fold materialization. See [DATASETS.md](DATASETS.md#main-colab-bundle-v11-historical-hosted-release)
 for that release's validation scope and cache gaps. This publication did not
 rerun migration, train a model, or evaluate held-out performance.

@@ -89,7 +89,7 @@ Detailed parameters and confidence limits:
 | Workstream | What is implemented or prepared | Result/evidence state | What is not complete |
 |---|---|---|---|
 | Unified training core | `metal`, `ec`, and `joint` dispatch; configuration, preflight, grouped splitting, training, reporting, and guarded final-test code | CLI help imports and parses successfully | A passing end-to-end suite on all materialized datasets is not established |
-| Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | CARE caches are complete in the local v12 release; hosted v11 retains its earlier gaps (see DATASETS) | Additional node feature sets beyond `conservative` remain future work |
+| Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | CARE caches are complete locally and in hosted v12; see DATASETS for the verified release | Additional node feature sets beyond `conservative` remain future work |
 | Metal modeling | Direct four-class, historical six-class/five-class targets; Only-GVP, Only-ESM, graph-level late fusion, node-level late fusion, hybrid, cross-attention, and RING/radius controls exist | Preserved anchors are historical six-class fixed-split evidence | Direct four-class baseline recipes/evidence must be reconciled; the advanced comparison matrix and Grade-1/2 promotion remain incomplete |
 | EC modeling | Single-label EC-depth handling, independent EC heads, group weighting, and optional contrastive loss exist | No trusted completed EC model result is indexed in the audited evidence | EC depth-1 standalone baselines, EC playbook reconciliation, and a certified staged run are not complete; full multi-label prediction is not implemented |
 | Auxiliary metal+EC modeling | Shared representation, independent heads, configurable task losses, and a joint task path exist | Hybrid and Hybrid+RING exploratory validation evidence exists | No matched EC-only versus EC+auxiliary-metal experiment, no promoted auxiliary configuration, and no certified cross-task protocol |
@@ -154,13 +154,13 @@ were Grade 1 or 2.
 
 | Dataset | Current readiness |
 |---|---|
-| Exact PinMyMetal | Present locally and in v11; contains 177 overlapping PDB IDs |
-| Non-overlapped PinMyMetal | Present locally and in v11 (absent from historical v10); historically evaluated seven times and not pristine |
-| Harsh PinMyMetal | Absent locally and from v10/v11 |
-| Common-PDBID 70/30 | Present locally and in v11; custom comparison split |
+| Exact PinMyMetal | Present locally and in v12; contains 177 overlapping PDB IDs |
+| Non-overlapped PinMyMetal | Present locally and in v12 (absent from historical v10); historically evaluated seven times and not pristine |
+| Harsh PinMyMetal | Absent locally and from v10/v11/v12 |
+| Common-PDBID 70/30 | Present locally and in v12; custom comparison split |
 | CLEAN30 original/conservative | Present; `CLEAN_30_main` points to conservative source |
 | CLEAN10 | Not present or documented |
-| CARE Task 1 clusterRes30 | Complete audited ESM/external/RING caches locally; hosted v11 still contains the older incomplete caches (see DATASETS) |
+| CARE Task 1 clusterRes30 | Complete audited ESM/external/RING caches locally and in hosted v12 (see DATASETS) |
 | CARE legacy base | Scripts/docs remain; distinct legacy output root not found |
 
 Bundle names, hashes, commits, split counts, preparation rules, and provenance:
@@ -181,8 +181,9 @@ EC1 classes, and zero protein-group overlap. No held-out model evaluation
 occurred. This is Grade 6 readiness evidence, not a family ranking or promotion;
 all minimum group recalls remain zero after one epoch. The Colab runtime was
 stopped. See the [cache/GPU evidence summary](docs/notebook_outputs/summaries/summary_colab_care_cache_smoke_20260914.md).
-Hosted v11 remains unchanged; [DATASETS.md](docs/DATASETS.md) owns the completed
-local bundle's identity and publication state.
+The completed v12 bundle is now published on Hugging Face and selected by the
+local notebook; [DATASETS.md](docs/DATASETS.md) owns its identity and verification.
+Publication adds no new training or held-out evaluation evidence.
 
 The following results are throughput checks for one realistic
 GVP+ESM-hybrid training step, not validation accuracy, model selection, or an

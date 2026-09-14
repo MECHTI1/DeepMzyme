@@ -207,12 +207,15 @@ Run the mandatory PyTorch/CUDA preflight again. If PyTorch was deliberately
 changed for any reason, restart the kernel before importing `torch`,
 `torch_geometric`, or DeepMzyme training modules.
 
-The hosted v11 bundle includes ESM embeddings, but its CARE coverage is partial;
-see the current local repair/release status in [DATASETS.md](DATASETS.md).
+The current hosted bundle includes complete audited CARE ESM/external/RING
+caches; see the release identity and historical gaps in [DATASETS.md](DATASETS.md).
 For feature-complete normal runs, keep
-`PREPARE_MISSING_ESM_EMBEDDINGS = False` and avoid installing the optional ESM
-generation package. If missing embeddings must be generated, the current
-notebook can install the pinned `esm==3.2.3` package when its explicit
+`PREPARE_MISSING_ESM_EMBEDDINGS = False` and
+`AUTO_INSTALL_ESM_FOR_EMBEDDING_GENERATION = False`, as in the updated notebook.
+This avoids installing the optional ESM generation package during dependency
+setup, which otherwise runs before cache coverage is inspected. If missing
+embeddings must be generated, the current notebook can install the pinned
+`esm==3.2.3` package when its explicit
 auto-install control is enabled; record the resulting environment as usual.
 
 ### ESM generation on a Python 3.13 Colab runtime

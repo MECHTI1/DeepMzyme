@@ -3,8 +3,9 @@
 CARE cache preparation is complete locally. All three standalone EC1 notebook
 smoke runs passed on an actual Colab G4 GPU. This is **Grade 6 execution
 evidence**, not a baseline comparison, model promotion, or held-out result.
-Nothing was pushed or uploaded to a repository. The session was stopped and
-`colab sessions` confirmed no active runtimes.
+The cache/GPU preparation phase ended without a repository upload. A later
+Hugging Face publication is recorded below; no GitHub push was performed.
+The session was stopped and `colab sessions` confirmed no active runtimes.
 
 ## Cache completion
 
@@ -104,12 +105,16 @@ Checkpoint binaries and the complete initial/final run archive remain under
 Git payloads. Full run-archive SHA256:
 `ad16c1afafd9c0dbd6371c242241edb3c602784670b38e032f010dd676b7dca8`.
 
-## Local release and reproduction
+## Release and reproduction
 
 [DATASETS.md](../../DATASETS.md) owns the v12 filename, checksum, and publication
-state. The hosted v11 archive remains unchanged and incomplete for CARE.
-The new archive, embeddings, and checkpoint binaries are deliberately outside
-Git. A GitHub push alone does not publish a data bundle to Hugging Face/Drive.
+state. The complete v12 archive and its three sidecars were subsequently
+published on Hugging Face; the [publication receipt](../raw/colab_care_cache_smoke_20260914/v12_publication.json)
+records remote checksum/size and public-download verification. The local
+notebook selects the pinned release, with optional ESM generation disabled.
+The original v11 archive remains unchanged and incomplete for CARE. Immutable
+build receipts retain their pre-publication state. Archive, embedding, and
+checkpoint binaries remain outside Git; GitHub changes await the user's push.
 
 Run the cache utility with `--phase inventory`, then independent `external`,
 `ring`, and `esm` phases, and finally `audit`. Use `--model-revision` for the

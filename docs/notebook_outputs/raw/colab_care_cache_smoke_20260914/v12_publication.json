@@ -1,0 +1,48 @@
+{
+  "repo_id": "GMBioinformatics/DeepMzyme",
+  "repo_type": "dataset",
+  "commit": "0f9d1efb835bdd5597b2762b8608947d7b82cdf2",
+  "commit_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/commit/0f9d1efb835bdd5597b2762b8608947d7b82cdf2",
+  "verified_at_utc": "2026-09-14T13:11:02.709794+00:00",
+  "published": true,
+  "huggingface_hub_version": "0.36.2",
+  "upload_method": "HfApi.create_commit; four additions; streaming LFS; HF_HUB_DISABLE_XET=1; num_threads=1",
+  "parent_commit": "b718bc02693b1e9ebb620e96c23f04d7d5c07bca",
+  "github_push_performed": false,
+  "files": [
+    {
+      "path": "DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz",
+      "bytes": 4731180661,
+      "sha256": "90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee",
+      "remote_lfs_sha256_matches": true,
+      "public_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz",
+      "verification": "public HTTP HEAD 200 and remote LFS size/SHA256"
+    },
+    {
+      "path": "DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.sha256",
+      "bytes": 169,
+      "sha256": "b32f5ff9ab1c7e87b19a044a83c02f81c96a6206105f90af89ef433ce8b9ef4b",
+      "remote_lfs_sha256_matches": true,
+      "public_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.sha256",
+      "verification": "public download SHA256 and remote LFS size/SHA256"
+    },
+    {
+      "path": "DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.manifest.json",
+      "bytes": 4282468,
+      "sha256": "7d642405629d33c8c38d8bae1059a13bb3583c303f143ce4710ba89fcda6b644",
+      "remote_lfs_sha256_matches": true,
+      "public_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.manifest.json",
+      "verification": "public download SHA256 and remote LFS size/SHA256"
+    },
+    {
+      "path": "DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.validation.json",
+      "bytes": 320,
+      "sha256": "2480d52f27d15fe993ac939df5801b0fb586388176cad08c766a182931d873a1",
+      "remote_lfs_sha256_matches": true,
+      "public_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz.validation.json",
+      "verification": "public download SHA256 and remote LFS size/SHA256"
+    }
+  ],
+  "build_receipt_note": "The archive metadata and validation sidecar retain their immutable pre-publication state (including published=false). This receipt records subsequent verified publication.",
+  "validation_scope": "Publication integrity only. Complete local archive member verification and earlier Colab EC1 smoke evidence are recorded separately; no new GPU training or held-out evaluation was performed for publication."
+}

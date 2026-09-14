@@ -526,11 +526,11 @@ OPTUNA_MULTIOBJECTIVE = False
 ```
 
 `DATASET_NAME` chooses the external train/test dataset split. The current
-bundle and its verified checksum are listed in [DATASETS.md](DATASETS.md#main-colab-bundle-v11-current).
+bundle and its verified checksum are listed in [DATASETS.md](DATASETS.md#main-colab-bundle-v12-current-hosted-release-care-complete).
 It contains exact, Common-PDBID 70/30, and historical non-overlapped PinMyMetal;
 CLEAN30 folds 0-4 through conservative and original shared sources; and CARE
-clusterRes30 with incomplete cached features. Non-overlapped data requires an
-explicit dataset-root override because it is not a dropdown choice. Harsh
+clusterRes30 with complete audited ESM, external, and RING caches. Non-overlapped
+data requires an explicit dataset-root override because it is not a dropdown choice. Harsh
 PinMyMetal remains unavailable. See the dataset inventory for readiness and
 scientific-use limits.
 `SPLIT_BY` controls
