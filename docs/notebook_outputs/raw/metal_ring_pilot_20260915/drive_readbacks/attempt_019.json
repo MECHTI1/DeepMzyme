@@ -1,0 +1,33 @@
+{
+  "archive": {
+    "attempt_id": "attempt_019",
+    "local_sha256_verified": true,
+    "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_ring_pilot_v1_20260915/archives/attempt_019.tar.gz",
+    "archive_sha256": "aff5422df227f8fc4501348d2c0b129a6de6963e1038428bd896106e0899f18b",
+    "bytes": 18153714,
+    "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+    "verified_parts": 2
+  },
+  "drive_metadata": {
+    "id": "1OQssvclBXykZkqqYAGa3pWu-TY2qXPfO",
+    "title": "metal_ring_pilot_v1_20260915_attempt_019.tar.gz",
+    "mime_type": "application/gzip",
+    "size": "18153714",
+    "url": "https://drive.google.com/file/d/1OQssvclBXykZkqqYAGa3pWu-TY2qXPfO/view?usp=drivesdk",
+    "display_url": "https://drive.google.com/file/d/1OQssvclBXykZkqqYAGa3pWu-TY2qXPfO/view?usp=drivesdk",
+    "file_or_folder": "file",
+    "created_time": null,
+    "modified_time": null,
+    "parent_ids": [
+      "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I"
+    ],
+    "drive_id": null,
+    "current_user_can_share": null,
+    "has_augmented_permissions": null,
+    "shared": null,
+    "permissions": null,
+    "source_visibility_status": "access_not_verified"
+  },
+  "drive_id_size_parent_verified": true,
+  "drive_side_sha_verified": false
+}

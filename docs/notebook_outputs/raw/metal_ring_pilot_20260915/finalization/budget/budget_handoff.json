@@ -1,0 +1,39 @@
+{
+  "profile": "metal_ring_continuation_budget_v1",
+  "total_cap_seconds": 36000.0,
+  "training_cap_seconds": 34200.0,
+  "main_cap_seconds": 27000.0,
+  "prior_intervals": [
+    {
+      "started_epoch": 1789440733.8320558,
+      "observed_epoch": 1789444166.060942,
+      "ended_epoch": 1789444561.801127
+    },
+    {
+      "started_epoch": 1789456819.0405653,
+      "observed_epoch": 1789472254.5176592,
+      "ended_epoch": 1789472254.5176592
+    }
+  ],
+  "prior_allocated_seconds": 19263.44616508484,
+  "prior_main_seconds": 12561.789792060852,
+  "prior_retry_seconds": 308.3893711566925,
+  "source_artifact_hashes": {
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/allocation_ledger.json": "da2a05980f55fca64a1387269a0077a71d0685e24fa33d186749f74109e07c01",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/session_stopped.json": "d4688985eeb5b132e2e643de1df184953b3cbdf11959cf7da114f839ad2dd08a",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization/campaign_attempt_ledger.json": "ecd2dc8a12a50f5c5002fadfc108707951898b13d81f2c68fb4ada01e4d2e4fe",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization/coordination_geometry_budget_usage.json": "0733e9ce327fdc39c00789df8860c926c9b235dae5f2a5d0a2691c5e8a39ec85",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization/coordination_geometry_analysis_budget_usage.json": "9af57d698333ea02f2d125e86776cbe8c06f7a04a2f51074df98f7b47cce0747",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization/campaign_manifest.json": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization/expected_split.json": "1415562a2830710209e4689fc641ea1e82bf57dd40bb9ad17d75936d27737f42",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/ring_input_audit.json": "186fb0d918c428094aea41ae533bd5e29be264712d4d00dd0a77f26261014d8b",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/training_cache_audit.json": "b2414386f46e5372e631dc040f5f717c2674f957c04fd9058cd772814abe5189",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/audit_provenance.json": "bc855fac9483419fe075ff632cdc2097942b16c15f06f66f51f0f0480adedea5",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/expected_ring_files.json": "f3499038cbd61efed8aff32091d68e04c7aa694015e6550e68ff50c18e013e4c",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/expected_feature_files.json": "9098f235630c76198cc7ddec13139001a798eafb9845163296a6a545cc19068b",
+    "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_ring_pilot_v1/local_audit/expected_cache_inventory_provenance.json": "574b48b9cf2c4655a4c39c69a999425275ee18ba4d7ff88af2d0439ff72a32ba"
+  },
+  "parent_manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "expected_split_sha256": "1415562a2830710209e4689fc641ea1e82bf57dd40bb9ad17d75936d27737f42",
+  "previous_closed_receipts_preserved": true
+}

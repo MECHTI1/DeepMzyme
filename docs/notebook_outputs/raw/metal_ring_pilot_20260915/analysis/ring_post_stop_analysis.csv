@@ -1,0 +1,61 @@
+row_type,family,lr,seed,metric,ring_off_value,ring_on_value,delta_on_minus_off,ring_off_mean,ring_off_sample_sd,ring_on_mean,ring_on_sample_sd,mean_paired_delta,paired_delta_sample_sd,ring_off_run_id,ring_on_run_id
+paired_seed,Only-GVP,3e-05,42,balanced_accuracy,0.6471139390034364,0.6652357173539519,0.01812177835051554,,,,,,,GVP_GVP_ring0_lr3e-05_s42,GVP_GVP_ring1_lr3e-05_s42
+paired_seed,Only-GVP,3e-05,42,recall_Mn,0.6082474226804123,0.6494845360824743,0.04123711340206193,,,,,,,GVP_GVP_ring0_lr3e-05_s42,GVP_GVP_ring1_lr3e-05_s42
+paired_seed,Only-GVP,3e-05,42,recall_Cu,0.9333333333333333,0.9333333333333333,0.0,,,,,,,GVP_GVP_ring0_lr3e-05_s42,GVP_GVP_ring1_lr3e-05_s42
+paired_seed,Only-GVP,3e-05,42,recall_Zn,0.40625,0.4375,0.03125,,,,,,,GVP_GVP_ring0_lr3e-05_s42,GVP_GVP_ring1_lr3e-05_s42
+paired_seed,Only-GVP,3e-05,42,recall_Class VIII,0.640625,0.640625,0.0,,,,,,,GVP_GVP_ring0_lr3e-05_s42,GVP_GVP_ring1_lr3e-05_s42
+paired_seed,Only-GVP,3e-05,43,balanced_accuracy,0.7050633591065292,0.715453178694158,0.010389819587628857,,,,,,,GVP_GVP_ring0_lr3e-05_s43,GVP_GVP_ring1_lr3e-05_s43
+paired_seed,Only-GVP,3e-05,43,recall_Mn,0.8556701030927835,0.865979381443299,0.010309278350515538,,,,,,,GVP_GVP_ring0_lr3e-05_s43,GVP_GVP_ring1_lr3e-05_s43
+paired_seed,Only-GVP,3e-05,43,recall_Cu,0.9333333333333333,0.9333333333333333,0.0,,,,,,,GVP_GVP_ring0_lr3e-05_s43,GVP_GVP_ring1_lr3e-05_s43
+paired_seed,Only-GVP,3e-05,43,recall_Zn,0.3125,0.40625,0.09375,,,,,,,GVP_GVP_ring0_lr3e-05_s43,GVP_GVP_ring1_lr3e-05_s43
+paired_seed,Only-GVP,3e-05,43,recall_Class VIII,0.71875,0.65625,-0.0625,,,,,,,GVP_GVP_ring0_lr3e-05_s43,GVP_GVP_ring1_lr3e-05_s43
+two_seed_summary,Only-GVP,3e-05,,balanced_accuracy,,,,0.6760886490549828,0.04097642792072495,0.690344448024055,0.035509107447633026,0.014255798969072198,0.005467320473091921,,
+two_seed_summary,Only-GVP,3e-05,,recall_Mn,,,,0.7319587628865979,0.1749542551389396,0.7577319587628866,0.15308497324657214,0.025773195876288735,0.02186928189236745,,
+two_seed_summary,Only-GVP,3e-05,,recall_Cu,,,,0.9333333333333333,0.0,0.9333333333333333,0.0,0.0,0.0,,
+two_seed_summary,Only-GVP,3e-05,,recall_Zn,,,,0.359375,0.06629126073623882,0.421875,0.02209708691207961,0.0625,0.04419417382415922,,
+two_seed_summary,Only-GVP,3e-05,,recall_Class VIII,,,,0.6796875,0.05524271728019903,0.6484375,0.011048543456039806,-0.03125,0.04419417382415922,,
+paired_seed,Only-GVP,0.0001,42,balanced_accuracy,0.7089696091065292,0.7092112328178695,0.0002416237113402886,,,,,,,GVP_GVP_ring0_lr0.0001_s42,GVP_GVP_ring1_lr0.0001_s42
+paired_seed,Only-GVP,0.0001,42,recall_Mn,0.8556701030927835,0.7628865979381443,-0.09278350515463918,,,,,,,GVP_GVP_ring0_lr0.0001_s42,GVP_GVP_ring1_lr0.0001_s42
+paired_seed,Only-GVP,0.0001,42,recall_Cu,0.9333333333333333,0.9333333333333333,0.0,,,,,,,GVP_GVP_ring0_lr0.0001_s42,GVP_GVP_ring1_lr0.0001_s42
+paired_seed,Only-GVP,0.0001,42,recall_Zn,0.34375,0.46875,0.125,,,,,,,GVP_GVP_ring0_lr0.0001_s42,GVP_GVP_ring1_lr0.0001_s42
+paired_seed,Only-GVP,0.0001,42,recall_Class VIII,0.703125,0.671875,-0.03125,,,,,,,GVP_GVP_ring0_lr0.0001_s42,GVP_GVP_ring1_lr0.0001_s42
+paired_seed,Only-GVP,0.0001,43,balanced_accuracy,0.7324876503436426,0.739977985395189,0.007490335051546393,,,,,,,GVP_GVP_ring0_lr0.0001_s43,GVP_GVP_ring1_lr0.0001_s43
+paired_seed,Only-GVP,0.0001,43,recall_Mn,0.8247422680412371,0.9484536082474226,0.12371134020618557,,,,,,,GVP_GVP_ring0_lr0.0001_s43,GVP_GVP_ring1_lr0.0001_s43
+paired_seed,Only-GVP,0.0001,43,recall_Cu,0.9333333333333333,0.9333333333333333,0.0,,,,,,,GVP_GVP_ring0_lr0.0001_s43,GVP_GVP_ring1_lr0.0001_s43
+paired_seed,Only-GVP,0.0001,43,recall_Zn,0.46875,0.4375,-0.03125,,,,,,,GVP_GVP_ring0_lr0.0001_s43,GVP_GVP_ring1_lr0.0001_s43
+paired_seed,Only-GVP,0.0001,43,recall_Class VIII,0.703125,0.640625,-0.0625,,,,,,,GVP_GVP_ring0_lr0.0001_s43,GVP_GVP_ring1_lr0.0001_s43
+two_seed_summary,Only-GVP,0.0001,,balanced_accuracy,,,,0.7207286297250859,0.016629766438987767,0.7245946091065292,0.02175537938251133,0.0038659793814433407,0.005125612943523564,,
+two_seed_summary,Only-GVP,0.0001,,recall_Mn,,,,0.8402061855670102,0.02186928189236745,0.8556701030927835,0.1312156913542047,0.015463917525773196,0.15308497324657214,,
+two_seed_summary,Only-GVP,0.0001,,recall_Cu,,,,0.9333333333333333,0.0,0.9333333333333333,0.0,0.0,0.0,,
+two_seed_summary,Only-GVP,0.0001,,recall_Zn,,,,0.40625,0.08838834764831845,0.453125,0.02209708691207961,0.046875,0.11048543456039805,,
+two_seed_summary,Only-GVP,0.0001,,recall_Class VIII,,,,0.703125,0.0,0.65625,0.02209708691207961,-0.046875,0.02209708691207961,,
+paired_seed,GVP + late fusion,3e-05,42,balanced_accuracy,0.7178855240549828,0.7178855240549828,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s42,LATE_LATE_ring1_lr3e-05_s42
+paired_seed,GVP + late fusion,3e-05,42,recall_Mn,0.7319587628865979,0.7319587628865979,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s42,LATE_LATE_ring1_lr3e-05_s42
+paired_seed,GVP + late fusion,3e-05,42,recall_Cu,0.7333333333333333,0.7333333333333333,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s42,LATE_LATE_ring1_lr3e-05_s42
+paired_seed,GVP + late fusion,3e-05,42,recall_Zn,0.84375,0.84375,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s42,LATE_LATE_ring1_lr3e-05_s42
+paired_seed,GVP + late fusion,3e-05,42,recall_Class VIII,0.5625,0.5625,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s42,LATE_LATE_ring1_lr3e-05_s42
+paired_seed,GVP + late fusion,3e-05,43,balanced_accuracy,0.752880691580756,0.752880691580756,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s43,LATE_LATE_ring1_lr3e-05_s43
+paired_seed,GVP + late fusion,3e-05,43,recall_Mn,0.7938144329896907,0.7938144329896907,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s43,LATE_LATE_ring1_lr3e-05_s43
+paired_seed,GVP + late fusion,3e-05,43,recall_Cu,0.7333333333333333,0.7333333333333333,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s43,LATE_LATE_ring1_lr3e-05_s43
+paired_seed,GVP + late fusion,3e-05,43,recall_Zn,0.84375,0.84375,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s43,LATE_LATE_ring1_lr3e-05_s43
+paired_seed,GVP + late fusion,3e-05,43,recall_Class VIII,0.640625,0.640625,0.0,,,,,,,LATE_LATE_ring0_lr3e-05_s43,LATE_LATE_ring1_lr3e-05_s43
+two_seed_summary,GVP + late fusion,3e-05,,balanced_accuracy,,,,0.7353831078178694,0.024745320266233443,0.7353831078178694,0.024745320266233443,0.0,0.0,,
+two_seed_summary,GVP + late fusion,3e-05,,recall_Mn,,,,0.7628865979381443,0.0437385637847349,0.7628865979381443,0.0437385637847349,0.0,0.0,,
+two_seed_summary,GVP + late fusion,3e-05,,recall_Cu,,,,0.7333333333333333,0.0,0.7333333333333333,0.0,0.0,0.0,,
+two_seed_summary,GVP + late fusion,3e-05,,recall_Zn,,,,0.84375,0.0,0.84375,0.0,0.0,0.0,,
+two_seed_summary,GVP + late fusion,3e-05,,recall_Class VIII,,,,0.6015625,0.05524271728019903,0.6015625,0.05524271728019903,0.0,0.0,,
+paired_seed,GVP + late fusion,0.0001,42,balanced_accuracy,0.723120704467354,0.723120704467354,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s42,LATE_LATE_ring1_lr0.0001_s42
+paired_seed,GVP + late fusion,0.0001,42,recall_Mn,0.7216494845360825,0.7216494845360825,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s42,LATE_LATE_ring1_lr0.0001_s42
+paired_seed,GVP + late fusion,0.0001,42,recall_Cu,0.7333333333333333,0.7333333333333333,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s42,LATE_LATE_ring1_lr0.0001_s42
+paired_seed,GVP + late fusion,0.0001,42,recall_Zn,0.875,0.875,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s42,LATE_LATE_ring1_lr0.0001_s42
+paired_seed,GVP + late fusion,0.0001,42,recall_Class VIII,0.5625,0.5625,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s42,LATE_LATE_ring1_lr0.0001_s42
+paired_seed,GVP + late fusion,0.0001,43,balanced_accuracy,0.7256174828178694,0.7256174828178694,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s43,LATE_LATE_ring1_lr0.0001_s43
+paired_seed,GVP + late fusion,0.0001,43,recall_Mn,0.7628865979381443,0.7628865979381443,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s43,LATE_LATE_ring1_lr0.0001_s43
+paired_seed,GVP + late fusion,0.0001,43,recall_Cu,0.7333333333333333,0.7333333333333333,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s43,LATE_LATE_ring1_lr0.0001_s43
+paired_seed,GVP + late fusion,0.0001,43,recall_Zn,0.75,0.75,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s43,LATE_LATE_ring1_lr0.0001_s43
+paired_seed,GVP + late fusion,0.0001,43,recall_Class VIII,0.65625,0.65625,0.0,,,,,,,LATE_LATE_ring0_lr0.0001_s43,LATE_LATE_ring1_lr0.0001_s43
+two_seed_summary,GVP + late fusion,0.0001,,balanced_accuracy,,,,0.7243690936426117,0.0017654889027692213,0.7243690936426117,0.0017654889027692213,0.0,0.0,,
+two_seed_summary,GVP + late fusion,0.0001,,recall_Mn,,,,0.7422680412371134,0.029159042523156573,0.7422680412371134,0.029159042523156573,0.0,0.0,,
+two_seed_summary,GVP + late fusion,0.0001,,recall_Cu,,,,0.7333333333333333,0.0,0.7333333333333333,0.0,0.0,0.0,,
+two_seed_summary,GVP + late fusion,0.0001,,recall_Zn,,,,0.8125,0.08838834764831845,0.8125,0.08838834764831845,0.0,0.0,,
+two_seed_summary,GVP + late fusion,0.0001,,recall_Class VIII,,,,0.609375,0.06629126073623882,0.609375,0.06629126073623882,0.0,0.0,,

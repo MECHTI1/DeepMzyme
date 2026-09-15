@@ -1,0 +1,13 @@
+{
+  "pid": 35715,
+  "phase": "execute",
+  "started_epoch": 1789489145.45649,
+  "log": "/content/metal_ring_pilot_v1/host_step_022_execute.log",
+  "command": [
+    "/usr/bin/python3",
+    "/content/ring_control.py",
+    "worker",
+    "--phase",
+    "execute"
+  ]
+}

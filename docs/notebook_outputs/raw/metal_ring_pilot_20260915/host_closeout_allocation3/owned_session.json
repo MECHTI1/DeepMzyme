@@ -1,0 +1,8 @@
+{
+  "session_name": "deepmzyme-metal-ring-20260915",
+  "endpoint": "gpu-g4-s-kkb-euw4a2-25w93tc704is8",
+  "accelerator": "G4",
+  "variant": "GPU",
+  "history_file": "/home/mechti/.config/colab-cli/history/deepmzyme-metal-ring-20260915.jsonl",
+  "started_epoch": 1789482189.910627
+}

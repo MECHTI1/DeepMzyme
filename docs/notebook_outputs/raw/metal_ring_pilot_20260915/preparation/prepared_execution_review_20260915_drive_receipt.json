@@ -1,0 +1,26 @@
+{
+  "local_sha256": "c94464e6e0d6349f64d3d52a7f40d2bcf8ca73e0bb5e23b7c91c8a6e91b4bc60",
+  "local_bytes": 1840000,
+  "drive_metadata": {
+    "id": "1UAR0iA9emnJtbOKZMwa51kGC0rweHtC4",
+    "title": "metal_ring_pilot_v1_prepared_execution_review_20260915.tar.gz",
+    "mime_type": "application/gzip",
+    "size": "1840000",
+    "url": "https://drive.google.com/file/d/1UAR0iA9emnJtbOKZMwa51kGC0rweHtC4/view?usp=drivesdk",
+    "display_url": "https://drive.google.com/file/d/1UAR0iA9emnJtbOKZMwa51kGC0rweHtC4/view?usp=drivesdk",
+    "file_or_folder": "file",
+    "created_time": null,
+    "modified_time": null,
+    "parent_ids": [
+      "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I"
+    ],
+    "drive_id": null,
+    "current_user_can_share": null,
+    "has_augmented_permissions": null,
+    "shared": null,
+    "permissions": null,
+    "source_visibility_status": "access_not_verified"
+  },
+  "drive_id_size_parent_verified": true,
+  "drive_side_sha_verified": false
+}

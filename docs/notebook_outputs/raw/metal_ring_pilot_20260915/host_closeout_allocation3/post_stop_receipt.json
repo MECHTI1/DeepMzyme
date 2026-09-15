@@ -1,0 +1,28 @@
+{
+  "status": "stopped_verified_and_final_archive_preserved",
+  "cumulative_allocated_seconds": 26326.480157136917,
+  "remaining_seconds": 9673.519842863083,
+  "files": {
+    "session_stopped.json": "6fa8b8665114722032a198cd68a2368db9ea09fe73dd2a28272169a68662a53a",
+    "owned_session.json": "dd8982cb66432ed0cceb3df7af64d8d2afbd0575c2f4e8badda82c93b2065aa4",
+    "session_config.json": "c2c70669249dd3f4dd8f2e784dadf2af4331adc7770008e6693fd65455de18b1",
+    "session_preallocation_config.json": "5703a3ec739275efd9bd0753ac411b781b2379a3384de424789c3bff60e7cbba",
+    "budget_handoff.json": "c138d035477ca7b14c0eb8a9e81adab5f0334a8cf978931866e72207a7b4d5bf",
+    "operators/ring_common.py": "cbff71c3902b952ea2469aa2e3ddf95ef7921c256a6f10fbd2ca47858bb6f6c0",
+    "operators/ring_host.py": "63f49895d99ae617a15aa038997c57ac0e390f0862f6f9e94f64bf58892ada19",
+    "operators/ring_bootstrap.py": "02cfc40280a0dfa906b8b2fd69a9b3cf1a6e8961ff890f205b421382d37d670c",
+    "operators/ring_control.py": "7adfb0e25fa3e339e59a54a5862c5b02e76acbb66a679bc281c7155730499f18",
+    "operators/ring_finalization.py": "eb89d724ef0efe53969dfa4cf247bf135f870ffb9bfa74d5554fe783e87f7913",
+    "operators/ring_archive_verify.py": "47ffad565e3baac54d72917056cca31eedb4aa815c731cee6044f0cbf94e157c",
+    "operators/refresh_owned_proxy.py": "6f44734d2d89f0c5c8103072bdda13074dbb69352efb41d7d9e04f81fa237368",
+    "operators/watchdog.py": "f3dcdbd570669203f37c05062a5410ae1be3127ef0ca00877330077db25b5f80",
+    "operators/test_ring_operations.py": "6bddde6639978ae08d5c164be7e4ec94ce79052a05d51e6e80f6d6d657e16b50",
+    "allocation_ledger.json": "e8b62978148338f04bb44efae9916d7ea1f0ebb1704d1baf7e5741a262d216ed",
+    "final_transfer_receipt.json": "d479a8f2a44e6f391702fef763b85c2ea5b52000c66d889e2814d8d74595d112",
+    "final_archive_descriptor.json": "0b9941a7fa33eafdc123699f32a7803337ef0972bece064f321ff9ba4bda3e04",
+    "final_capture_receipt.json": "ade67b357dfe68ef4fe9aeb115754049983c7d71cad99efd610b8994616e7a66"
+  },
+  "final_archive_sha256": "e6ee056fb5e10831ded41eaff2cd31b69bd879273d7d54c0d149083736da5aeb",
+  "final_drive_file_id": "1xdUe0_hOCcZaA9yOB_uODlOpB4h84OfL",
+  "prior_allocation_evidence_preserved": true
+}

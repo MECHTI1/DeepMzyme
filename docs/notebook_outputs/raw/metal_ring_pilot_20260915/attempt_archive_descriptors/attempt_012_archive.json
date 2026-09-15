@@ -1,0 +1,14 @@
+{
+  "attempt_id": "attempt_012",
+  "archive": "/content/verified_exports/metal_ring_pilot_v1/attempt_012.tar.gz",
+  "archive_sha256": "7c876f2124ba0ecb28f3ffa25857ca2ab0084cea76d327676ce53a78bf7f36f8",
+  "bytes": 15307958,
+  "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+  "parts": [
+    {
+      "path": "/content/verified_exports/metal_ring_pilot_v1/attempt_012.tar.gz.part000",
+      "bytes": 15307958,
+      "sha256": "7c876f2124ba0ecb28f3ffa25857ca2ab0084cea76d327676ce53a78bf7f36f8"
+    }
+  ]
+}

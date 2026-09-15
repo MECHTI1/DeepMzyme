@@ -1,0 +1,8 @@
+{
+  "block": "LATE",
+  "full_run_count": 8,
+  "forecast_seconds": 4141.795608997345,
+  "available_seconds": 10907.827683448792,
+  "admitted_epoch": 1789486218.7613027,
+  "margin": 1.25
+}

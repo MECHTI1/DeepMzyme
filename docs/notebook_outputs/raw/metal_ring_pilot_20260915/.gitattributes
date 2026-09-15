@@ -1,0 +1,4 @@
+# Preserve exact copied evidence, including the line endings covered by hashes.
+* -text
+# Original CSV record separators are CRLF, not trailing-space mistakes.
+*.csv whitespace=cr-at-eol

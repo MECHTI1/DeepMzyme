@@ -1,0 +1,7 @@
+{
+  "normal_elapsed_seconds": 213.793625831604,
+  "started_epoch": 1789482189.910627,
+  "ended_epoch": 1789482403.7042565,
+  "status": "ready",
+  "includes_provisioning_upload_and_materialization": true
+}

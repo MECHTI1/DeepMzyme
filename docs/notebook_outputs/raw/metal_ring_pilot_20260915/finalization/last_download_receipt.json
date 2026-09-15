@@ -1,0 +1,9 @@
+{
+  "attempt_id": "finalization",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_ring_pilot_v1_20260915/finalization/archives/finalization.tar.gz",
+  "archive_sha256": "e6ee056fb5e10831ded41eaff2cd31b69bd879273d7d54c0d149083736da5aeb",
+  "bytes": 6207123,
+  "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+  "verified_parts": 1
+}

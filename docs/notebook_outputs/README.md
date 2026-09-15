@@ -57,6 +57,19 @@ allocations, including the first row's three complete fits; these are not
 |---|---|---|---:|---|---|
 | `metal/nonoverlap/coordination-geometry-pilot/2026-09-15` | Five direct-four Only-GVP arms; counts/angles/metal-node controls; two-LR seed-42 screen and selected-LR seed-43 repeats on the same PDB-grouped validation split | All five smokes, 15 full fits and prediction export verified; terminal state and shared runtime teardown verified; count/angle gains reverse between seeds, no promotion | 3 for selected-LR repeats; 5 for initial LR screen | No held-out inference or metrics; validation-only replay of selected checkpoints | [summary](summaries/summary_metal_coordination_geometry_pilot_20260915.md); [portable evidence](raw/metal_coordination_geometry_pilot_20260915/); [two-seed analysis](raw/metal_coordination_geometry_pilot_20260915/geometry_two_seed_analysis.json); [paired cases](raw/metal_coordination_geometry_pilot_20260915/geometry_paired_case_analysis.json); [terminal state](raw/metal_coordination_geometry_pilot_20260915/finalization/) |
 
+## Bounded matched RING pilot
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/nonoverlap/ring-pilot/2026-09-15` | Direct-four Only-GVP and graph-level late fusion; fresh RING off/on × two LRs × seeds 42/43, 50 epochs; geometry-fixed shell roles and audited existing-edge annotations | All four smokes and sixteen full fits, selected-checkpoint bindings, terminal state and actual teardown verified; GVP BA gains include class tradeoffs, all late-fusion pairs tie in selected BA/recalls; no promotion | 3 | No held-out inference or metrics | [summary](summaries/summary_metal_ring_pilot_20260915.md); [portable evidence](raw/metal_ring_pilot_20260915/README.md); [post-stop analysis](raw/metal_ring_pilot_20260915/analysis/ring_post_stop_analysis.json); [terminal capture](raw/metal_ring_pilot_20260915/finalization/final_capture_receipt.json); [actual stop](raw/metal_ring_pilot_20260915/host_closeout_allocation3/session_stopped.json) |
+
+This is a complete bounded fixed-split comparison, not Stage 6 confirmation.
+Observed RING changes annotate existing edges without expanding topology;
+normalization matches within every trained off/on pair. The third allocation
+closed with **7.312911 cumulative hours** used and **2.687089 hours** remaining
+under the original ten-hour cap. Earlier architecture/geometry batches remain
+closed historical evidence and were not rerun.
+
 ## CARE cache completion and Colab execution checks
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |

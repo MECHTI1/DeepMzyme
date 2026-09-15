@@ -1,0 +1,267 @@
+from __future__ import annotations
+
+import os
+import re
+
+VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
+TRAILING_METAL_CHARGE_RE = re.compile(r"(?P<base>[A-Z]+?)(?:[0-9]+[+-]?|[+-][0-9]*)$")
+
+
+def normalize_metal_label_scheme_name(raw_name: str) -> str:
+    normalized = raw_name.strip().lower()
+    try:
+        return METAL_LABEL_SCHEME_ALIASES[normalized]
+    except KeyError as exc:
+        raise ValueError(
+            f"Unsupported DEEPGM metal label scheme {raw_name!r}. "
+            f"Expected one of {sorted(METAL_LABEL_SCHEME_ALIASES)}."
+        ) from exc
+
+EC_TOP_LEVEL_LABELS = {
+    1: "Oxidoreductase",
+    2: "Transferase",
+    3: "Hydrolase",
+    4: "Lyase",
+    5: "Isomerase",
+    6: "Ligase",
+    7: "Translocase",
+}
+N_EC_CLASSES = len(EC_TOP_LEVEL_LABELS)
+
+METAL_LABEL_SCHEME_ALIASES = {
+    "six_class": "split_all_metals",
+    "6_class": "split_all_metals",
+    "six": "split_all_metals",
+    "split_all_metals": "split_all_metals",
+    "split_by_metal": "split_all_metals",
+    "split_each_metal": "split_all_metals",
+    "five_class": "five_class",
+    "5_class": "five_class",
+    "five": "five_class",
+    "split_co_ni": "five_class",
+    "split_ni_co": "five_class",
+    "merge_co_ni": "five_class",
+    "merged_co_ni": "five_class",
+    "co_ni_merged": "five_class",
+    "split_fe": "five_class",
+    "split_fe_co_ni": "five_class",
+    "four_class": "merge_fe_class_viii",
+    "4_class": "merge_fe_class_viii",
+    "four": "merge_fe_class_viii",
+    "merge_fe_class_viii": "merge_fe_class_viii",
+    "merged_fe": "merge_fe_class_viii",
+}
+
+METAL_LABEL_SCHEMES = {
+    "split_all_metals": (
+        {
+            0: "Mn",
+            1: "Cu",
+            2: "Zn",
+            3: "Fe",
+            4: "Co",
+            5: "Ni",
+        },
+        {
+            "MN": 0,
+            "CU": 1,
+            "ZN": 2,
+            "FE": 3,
+            "CO": 4,
+            "NI": 5,
+        },
+    ),
+    "five_class": (
+        {
+            0: "Mn",
+            1: "Cu",
+            2: "Zn",
+            3: "Fe",
+            4: "Class VIII",
+        },
+        {
+            "MN": 0,
+            "CU": 1,
+            "ZN": 2,
+            "FE": 3,
+            "CO": 4,
+            "NI": 4,
+        },
+    ),
+    "merge_fe_class_viii": (
+        {
+            0: "Mn",
+            1: "Cu",
+            2: "Zn",
+            3: "Class VIII",
+        },
+        {
+            "MN": 0,
+            "CU": 1,
+            "ZN": 2,
+            "FE": 3,
+            "CO": 3,
+            "NI": 3,
+        },
+    ),
+}
+
+COLLAPSED_METAL_LABELS = {
+    0: "Mn",
+    1: "Cu",
+    2: "Zn",
+    3: "Class VIII",
+}
+
+
+def _normalize_unsupported_metal_policy(policy: str) -> str:
+    normalized = policy.strip().lower()
+    if normalized not in VALID_UNSUPPORTED_METAL_POLICY_CHOICES:
+        raise ValueError(
+            f"Unsupported metal policy {policy!r}. "
+            f"Expected one of {list(VALID_UNSUPPORTED_METAL_POLICY_CHOICES)}."
+        )
+    return normalized
+
+
+def _normalize_site_metal_symbols(symbols: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
+    if isinstance(symbols, str):
+        symbols = (symbols,)
+    normalized_symbols: list[str] = []
+    for symbol in symbols:
+        normalized = symbol.strip().upper()
+        match = TRAILING_METAL_CHARGE_RE.match(normalized)
+        if match is not None:
+            normalized = match.group("base")
+        normalized_symbols.append(normalized)
+    return tuple(normalized_symbols)
+
+
+def _validate_metal_label_schemes() -> None:
+    for alias, scheme_name in METAL_LABEL_SCHEME_ALIASES.items():
+        if scheme_name not in METAL_LABEL_SCHEMES:
+            raise ValueError(f"Metal label scheme alias {alias!r} points to unknown scheme {scheme_name!r}.")
+
+    for scheme_name, (labels, symbol_to_target) in METAL_LABEL_SCHEMES.items():
+        expected_ids = set(range(len(labels)))
+        actual_ids = set(labels)
+        if actual_ids != expected_ids:
+            raise ValueError(
+                f"Metal label scheme {scheme_name!r} has non-contiguous label ids: "
+                f"expected {sorted(expected_ids)}, got {sorted(actual_ids)}."
+            )
+
+        unknown_target_ids = sorted(set(symbol_to_target.values()) - actual_ids)
+        if unknown_target_ids:
+            raise ValueError(
+                f"Metal label scheme {scheme_name!r} maps symbols to unknown target ids "
+                f"{unknown_target_ids}."
+            )
+
+
+def active_metal_label_scheme_name() -> str:
+    return normalize_metal_label_scheme_name(os.environ.get("DEEPGM_METAL_LABEL_SCHEME", "split_all_metals"))
+
+
+def metal_labels_for_scheme(scheme_name: str) -> dict[int, str]:
+    normalized = normalize_metal_label_scheme_name(scheme_name)
+    labels, _symbol_to_target = METAL_LABEL_SCHEMES[normalized]
+    return dict(labels)
+
+
+def metal_symbol_to_target_for_scheme(scheme_name: str) -> dict[str, int]:
+    normalized = normalize_metal_label_scheme_name(scheme_name)
+    _labels, symbol_to_target = METAL_LABEL_SCHEMES[normalized]
+    return dict(symbol_to_target)
+
+
+def configure_active_metal_label_scheme(scheme_name: str) -> str:
+    normalized = normalize_metal_label_scheme_name(scheme_name)
+    labels = metal_labels_for_scheme(normalized)
+    symbol_to_target = metal_symbol_to_target_for_scheme(normalized)
+    os.environ["DEEPGM_METAL_LABEL_SCHEME"] = normalized
+    globals()["ACTIVE_METAL_LABEL_SCHEME"] = normalized
+    if "METAL_TARGET_LABELS" in globals():
+        globals()["METAL_TARGET_LABELS"].clear()
+        globals()["METAL_TARGET_LABELS"].update(labels)
+    else:
+        globals()["METAL_TARGET_LABELS"] = labels
+    if "METAL_SYMBOL_TO_TARGET" in globals():
+        globals()["METAL_SYMBOL_TO_TARGET"].clear()
+        globals()["METAL_SYMBOL_TO_TARGET"].update(symbol_to_target)
+    else:
+        globals()["METAL_SYMBOL_TO_TARGET"] = symbol_to_target
+    globals()["N_METAL_CLASSES"] = len(labels)
+    return normalized
+
+
+def map_site_metal_symbols_with_mapping(
+    symbols: str | tuple[str, ...] | list[str],
+    *,
+    symbol_to_target: dict[str, int],
+    unsupported_metal_policy: str = "error",
+) -> int | None:
+    policy = _normalize_unsupported_metal_policy(unsupported_metal_policy)
+    normalized_symbols = _normalize_site_metal_symbols(symbols)
+
+    target_ids = set()
+    for normalized in normalized_symbols:
+        try:
+            target_ids.add(symbol_to_target[normalized])
+        except KeyError as exc:
+            if policy == "skip":
+                return None
+            raise ValueError(
+                f"Unsupported site metal symbol {normalized!r}. "
+                f"Expected one of {sorted(symbol_to_target)}."
+            ) from exc
+
+    return next(iter(target_ids)) if len(target_ids) == 1 else None
+
+
+def map_site_metal_symbols_for_scheme(
+    symbols: str | tuple[str, ...] | list[str],
+    *,
+    scheme_name: str,
+    unsupported_metal_policy: str = "error",
+) -> int | None:
+    return map_site_metal_symbols_with_mapping(
+        symbols,
+        symbol_to_target=metal_symbol_to_target_for_scheme(scheme_name),
+        unsupported_metal_policy=unsupported_metal_policy,
+    )
+
+_validate_metal_label_schemes()
+ACTIVE_METAL_LABEL_SCHEME = active_metal_label_scheme_name()
+METAL_TARGET_LABELS = metal_labels_for_scheme(ACTIVE_METAL_LABEL_SCHEME)
+METAL_SYMBOL_TO_TARGET = metal_symbol_to_target_for_scheme(ACTIVE_METAL_LABEL_SCHEME)
+N_METAL_CLASSES = len(METAL_TARGET_LABELS)
+
+
+def map_site_metal_symbols(
+    symbols: str | tuple[str, ...] | list[str],
+    *,
+    unsupported_metal_policy: str = "error",
+) -> int | None:
+    return map_site_metal_symbols_with_mapping(
+        symbols,
+        symbol_to_target=METAL_SYMBOL_TO_TARGET,
+        unsupported_metal_policy=unsupported_metal_policy,
+    )
+
+
+def collapsed_metal_target_for_label_name(label_name: str) -> int:
+    normalized = label_name.strip()
+    if normalized == "Mn":
+        return 0
+    if normalized == "Cu":
+        return 1
+    if normalized == "Zn":
+        return 2
+    if normalized in {"Fe", "Co", "Ni", "Class VIII"}:
+        return 3
+    raise ValueError(f"Unsupported metal label name for collapsed evaluation: {label_name!r}")
+
+
+def collapsed_metal_targets_from_ids(target_ids: list[int] | tuple[int, ...]) -> list[int]:
+    return [collapsed_metal_target_for_label_name(METAL_TARGET_LABELS[int(target_id)]) for target_id in target_ids]

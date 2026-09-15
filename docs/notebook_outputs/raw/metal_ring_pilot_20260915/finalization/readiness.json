@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+  "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "audit_cpu_threads": 1,
+  "audit_interop_threads": 1,
+  "actual_data_forward_backward_both_ring_modes": true,
+  "held_out_evaluation": false
+}

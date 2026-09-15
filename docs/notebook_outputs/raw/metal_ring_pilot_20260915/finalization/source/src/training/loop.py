@@ -1,0 +1,274 @@
+from __future__ import annotations
+
+import contextlib
+
+import torch
+import torch.nn as nn
+from torch import Tensor
+from torch_geometric.loader import DataLoader
+
+from data_structures import GRAPH_TARGET_FIELDS, MISSING_CLASS_LABEL, PocketRecord
+
+_GRAPH_Y_METAL_FIELD, _GRAPH_Y_EC_FIELD = GRAPH_TARGET_FIELDS
+_GRAPH_EC_GROUP_ID_FIELD = "ec_group_id"
+
+
+def train_epoch(
+    model: nn.Module,
+    loader: DataLoader,
+    optimizer: torch.optim.Optimizer,
+    device: str = "cpu",
+    *,
+    grad_clip_norm: float = 1.0,
+    grad_accum_steps: int = 1,
+    use_amp: bool = False,
+    scaler: torch.amp.GradScaler | None = None,
+) -> float:
+    if grad_accum_steps < 1:
+        raise ValueError(f"grad_accum_steps must be >= 1, got {grad_accum_steps}.")
+    model.train()
+    total = 0.0
+    n_batches = len(loader)
+    amp_active = bool(use_amp) and torch.cuda.is_available() and str(device).startswith("cuda")
+    if amp_active and scaler is None:
+        scaler = torch.amp.GradScaler("cuda")
+
+    def _autocast_context():
+        if amp_active:
+            return torch.autocast(device_type="cuda")
+        return contextlib.nullcontext()
+
+    def _optimizer_step() -> None:
+        if amp_active:
+            assert scaler is not None
+            if grad_clip_norm > 0.0:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            if grad_clip_norm > 0.0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip_norm)
+            optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+
+    optimizer.zero_grad(set_to_none=True)
+    pending = 0
+    for batch_idx, batch in enumerate(loader):
+        batch = batch.to(device)
+        window_start = (batch_idx // grad_accum_steps) * grad_accum_steps
+        window_size = min(grad_accum_steps, n_batches - window_start)
+        with _autocast_context():
+            model_outputs = model(batch)
+            loss = model_outputs["loss"]
+        if not bool(torch.isfinite(loss).item()):
+            raise FloatingPointError(f"Non-finite training loss detected: {float(loss.item())}")
+        total += float(loss.item())
+        loss_for_backward = loss / window_size
+        if amp_active:
+            assert scaler is not None
+            scaler.scale(loss_for_backward).backward()
+        else:
+            loss_for_backward.backward()
+        pending += 1
+        if pending == window_size:
+            _optimizer_step()
+            pending = 0
+
+    if pending > 0:
+        _optimizer_step()
+
+    return total / max(1, n_batches)
+
+
+@torch.no_grad()
+def evaluate_epoch(model: nn.Module, loader: DataLoader, device: str = "cpu") -> float:
+    return float(evaluate_epoch_with_predictions(model, loader, device=device)["loss"])
+
+
+def class_weights_from_labels(
+    labels: list[int],
+    n_classes: int,
+    *,
+    mode: str = "inverse_frequency",
+    effective_number_beta: float = 0.999,
+) -> Tensor:
+    if n_classes < 1:
+        raise ValueError(f"n_classes must be at least 1, got {n_classes}.")
+    if mode not in {"none", "manual", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
+        raise ValueError(f"Unsupported class weight mode {mode!r}.")
+    if not labels:
+        return torch.ones(n_classes, dtype=torch.float32)
+    counts = torch.bincount(torch.tensor(labels, dtype=torch.long), minlength=n_classes).float()
+    if mode in {"none", "manual"}:
+        return torch.ones(n_classes, dtype=torch.float32)
+    present_mask = counts > 0
+    if not bool(present_mask.any().item()):
+        return torch.ones(n_classes, dtype=torch.float32)
+    safe_counts = torch.where(present_mask, counts, torch.ones_like(counts))
+    if mode == "inverse_frequency":
+        weights = safe_counts.sum() / (safe_counts * float(n_classes))
+    elif mode == "inverse_sqrt_frequency":
+        weights = torch.rsqrt(safe_counts)
+    else:
+        beta = float(effective_number_beta)
+        effective_counts = (1.0 - torch.pow(torch.full_like(safe_counts, beta), safe_counts)) / (1.0 - beta)
+        weights = 1.0 / effective_counts
+    weights = torch.where(present_mask, weights, torch.zeros_like(weights))
+    return weights / weights[present_mask].mean().clamp_min(1e-12)
+
+
+def balanced_class_weights_from_labels(labels: list[int], n_classes: int) -> Tensor:
+    return class_weights_from_labels(labels, n_classes, mode="inverse_frequency")
+
+
+def balanced_class_weights_from_pockets(
+    pockets: list[PocketRecord],
+    n_metal_classes: int,
+    n_ec_classes: int,
+    *,
+    metal_class_weight_mode: str = "inverse_frequency",
+    ec_class_weight_unit: str = "pocket",
+) -> tuple[Tensor, Tensor]:
+    metal_labels = [int(pocket.y_metal) for pocket in pockets if pocket.y_metal is not None]
+    ec_labels = [int(pocket.y_ec) for pocket in pockets if pocket.y_ec is not None]
+    if ec_class_weight_unit == "group":
+        group_labels: dict[str, int] = {}
+        for pocket in pockets:
+            if pocket.y_ec is None:
+                continue
+            group = pocket.metadata.get("ec_group_key")
+            if group is None:
+                raise ValueError("Assign EC group metadata before computing group class weights.")
+            label = int(pocket.y_ec)
+            if group in group_labels and group_labels[group] != label:
+                raise ValueError(f"Conflicting EC targets in training group {group!r}.")
+            group_labels[group] = label
+        ec_labels = list(group_labels.values())
+    elif ec_class_weight_unit != "pocket":
+        raise ValueError(f"Unsupported EC class weight unit: {ec_class_weight_unit!r}")
+    metal_weights = class_weights_from_labels(
+        metal_labels,
+        n_metal_classes,
+        mode=metal_class_weight_mode,
+    )
+    ec_weights = balanced_class_weights_from_labels(ec_labels, n_ec_classes)
+    return metal_weights, ec_weights
+
+
+@torch.no_grad()
+def predict_batch(model: nn.Module, loader: DataLoader, device: str = "cpu") -> dict[str, Tensor]:
+    result = evaluate_epoch_with_predictions(model, loader, device=device)
+    result.pop("loss", None)
+    return result
+
+
+@torch.no_grad()
+def evaluate_epoch_with_predictions(
+    model: nn.Module,
+    loader: DataLoader,
+    device: str = "cpu",
+) -> dict[str, Tensor | float]:
+    model.eval()
+    metal_logits_all = []
+    ec_logits_all = []
+    metal_y_all = []
+    ec_y_all = []
+    ec_group_id_all = []
+    total = 0.0
+
+    for batch in loader:
+        batch = batch.to(device)
+        model_outputs = model(batch)
+        loss = model_outputs["loss"]
+        if not bool(torch.isfinite(loss).item()):
+            raise FloatingPointError(f"Non-finite evaluation loss detected: {float(loss.item())}")
+        total += float(loss.item())
+        if hasattr(batch, _GRAPH_Y_METAL_FIELD):
+            metal_targets = getattr(batch, _GRAPH_Y_METAL_FIELD)
+            metal_mask = metal_targets != MISSING_CLASS_LABEL
+            if bool(metal_mask.any().item()):
+                if "logits_metal" in model_outputs:
+                    metal_logits_all.append(model_outputs["logits_metal"][metal_mask].cpu())
+                metal_y_all.append(metal_targets[metal_mask].cpu())
+        elif "logits_metal" in model_outputs:
+            metal_logits_all.append(model_outputs["logits_metal"].cpu())
+        if hasattr(batch, _GRAPH_Y_EC_FIELD):
+            ec_targets = getattr(batch, _GRAPH_Y_EC_FIELD)
+            ec_mask = ec_targets != MISSING_CLASS_LABEL
+            if bool(ec_mask.any().item()):
+                if "logits_ec" in model_outputs:
+                    ec_logits_all.append(model_outputs["logits_ec"][ec_mask].cpu())
+                ec_y_all.append(ec_targets[ec_mask].cpu())
+                if hasattr(batch, _GRAPH_EC_GROUP_ID_FIELD):
+                    ec_group_id_all.append(getattr(batch, _GRAPH_EC_GROUP_ID_FIELD).view(-1)[ec_mask].cpu())
+        elif "logits_ec" in model_outputs:
+            ec_logits_all.append(model_outputs["logits_ec"].cpu())
+
+    result: dict[str, Tensor | float] = {}
+    if metal_logits_all:
+        result["metal_logits"] = torch.cat(metal_logits_all, dim=0)
+    if ec_logits_all:
+        result["ec_logits"] = torch.cat(ec_logits_all, dim=0)
+    if metal_y_all:
+        result["metal_y"] = torch.cat(metal_y_all, dim=0)
+    if ec_y_all:
+        result["ec_y"] = torch.cat(ec_y_all, dim=0)
+    if ec_group_id_all:
+        result["ec_group_id"] = torch.cat(ec_group_id_all, dim=0)
+    result["loss"] = total / max(1, len(loader))
+    return result
+
+
+@torch.no_grad()
+def accuracy_from_logits(logits: Tensor, y: Tensor) -> float:
+    pred = logits.argmax(dim=-1)
+    return float((pred == y).float().mean().item())
+
+
+@torch.no_grad()
+def classification_metrics_from_logits(logits: Tensor, y: Tensor) -> dict[str, float | list[float | None] | list[int] | list[list[int]]]:
+    if y.numel() == 0:
+        raise ValueError("Cannot compute classification metrics for an empty target tensor.")
+
+    pred = logits.argmax(dim=-1)
+    n_classes = int(logits.size(-1))
+    per_class_recall: list[float | None] = []
+    per_class_f1: list[float | None] = []
+    per_class_support: list[int] = []
+    confusion_matrix = torch.zeros((n_classes, n_classes), dtype=torch.long)
+    for true_idx, pred_idx in zip(y.detach().cpu().tolist(), pred.detach().cpu().tolist()):
+        confusion_matrix[int(true_idx), int(pred_idx)] += 1
+
+    for class_idx in range(n_classes):
+        true_mask = y == class_idx
+        pred_mask = pred == class_idx
+        support = int(true_mask.sum().item())
+        predicted = int(pred_mask.sum().item())
+        true_positive = int((true_mask & pred_mask).sum().item())
+        per_class_support.append(support)
+
+        if support == 0:
+            per_class_recall.append(None)
+            per_class_f1.append(None)
+            continue
+
+        recall = true_positive / support
+        precision = true_positive / predicted if predicted > 0 else 0.0
+        if precision + recall == 0.0:
+            f1 = 0.0
+        else:
+            f1 = (2.0 * precision * recall) / (precision + recall)
+        per_class_recall.append(float(recall))
+        per_class_f1.append(float(f1))
+
+    present_recalls = [value for value in per_class_recall if value is not None]
+    present_f1 = [value for value in per_class_f1 if value is not None]
+    return {
+        "accuracy": float((pred == y).float().mean().item()),
+        "balanced_accuracy": float(sum(present_recalls) / len(present_recalls)),
+        "macro_f1": float(sum(present_f1) / len(present_f1)),
+        "per_class_recall": per_class_recall,
+        "per_class_support": per_class_support,
+        "confusion_matrix": confusion_matrix.tolist(),
+    }

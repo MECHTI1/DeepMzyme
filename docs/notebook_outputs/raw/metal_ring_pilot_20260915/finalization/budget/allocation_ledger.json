@@ -1,0 +1,18 @@
+{
+  "intervals": [
+    {
+      "started_epoch": 1789440733.8320558,
+      "observed_epoch": 1789444166.060942,
+      "ended_epoch": 1789444561.801127
+    },
+    {
+      "started_epoch": 1789456819.0405653,
+      "observed_epoch": 1789472254.5176592,
+      "ended_epoch": 1789472254.5176592
+    },
+    {
+      "started_epoch": 1789482189.910627,
+      "observed_epoch": 1789489230.409248
+    }
+  ]
+}

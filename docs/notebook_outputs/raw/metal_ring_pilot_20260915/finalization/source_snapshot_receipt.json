@@ -1,0 +1,16 @@
+{
+  "source_archive": "/content/metal_ring_source.tar.gz",
+  "source_sha256": "7ad27026c2baaefe9b566d80025455d852c63d3acf8198113743f5685ae6523a",
+  "operator_files": {
+    "ring_common.py": "cbff71c3902b952ea2469aa2e3ddf95ef7921c256a6f10fbd2ca47858bb6f6c0",
+    "ring_host.py": "63f49895d99ae617a15aa038997c57ac0e390f0862f6f9e94f64bf58892ada19",
+    "ring_bootstrap.py": "02cfc40280a0dfa906b8b2fd69a9b3cf1a6e8961ff890f205b421382d37d670c",
+    "ring_control.py": "7adfb0e25fa3e339e59a54a5862c5b02e76acbb66a679bc281c7155730499f18",
+    "ring_finalization.py": "eb89d724ef0efe53969dfa4cf247bf135f870ffb9bfa74d5554fe783e87f7913",
+    "ring_archive_verify.py": "47ffad565e3baac54d72917056cca31eedb4aa815c731cee6044f0cbf94e157c",
+    "refresh_owned_proxy.py": "6f44734d2d89f0c5c8103072bdda13074dbb69352efb41d7d9e04f81fa237368",
+    "watchdog.py": "f3dcdbd570669203f37c05062a5410ae1be3127ef0ca00877330077db25b5f80",
+    "test_ring_operations.py": "6bddde6639978ae08d5c164be7e4ec94ce79052a05d51e6e80f6d6d657e16b50"
+  },
+  "budget_handoff_sha256": "c138d035477ca7b14c0eb8a9e81adab5f0334a8cf978931866e72207a7b4d5bf"
+}

@@ -1,0 +1,13 @@
+{
+  "attempt_id": "attempt_016",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_ring_pilot_v1_20260915/archives/attempt_016.tar.gz",
+  "archive_sha256": "6034a8da97881b2880a00e97ec6f3f4027c071963ada04ecc469ced8b0de8c90",
+  "bytes": 18123957,
+  "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+  "verified_parts": 2,
+  "drive_verified": true,
+  "drive_file_id": "1am0TNlx1VMsFfUjR5-FveSa9k1Kl9vni",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verification": "Operator supplied ID after connector readback of file, parent and byte size"
+}

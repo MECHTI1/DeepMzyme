@@ -1,0 +1,12 @@
+{
+  "status": "stopped_verified",
+  "session_name": "deepmzyme-metal-ring-20260915",
+  "endpoint": "gpu-g4-s-kkb-euw4a2-25w93tc704is8",
+  "started_epoch": 1789482189.910627,
+  "stopped_epoch": 1789489252.944619,
+  "stop_output": "[colab] Stopping session 'deepmzyme-metal-ring-20260915'...\n[colab] Session terminated.\n",
+  "sessions_output": "[colab] No active sessions found on server.\n",
+  "prior_allocated_seconds": 19263.44616508484,
+  "cumulative_allocated_seconds": 26326.480157136917,
+  "remaining_seconds": 9673.519842863083
+}

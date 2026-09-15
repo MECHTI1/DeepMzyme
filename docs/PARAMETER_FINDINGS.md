@@ -43,8 +43,9 @@ labeled Grade 5/7. See [`DATASETS.md`](DATASETS.md) for the access record.
 
 The intended primary metal reporting endpoint is Mn, Cu, Zn, and Class VIII
 = Fe+Co+Ni. Completed direct-four evidence now includes the eight-run A1/A2
-architecture screen, the four direct-four selected-LR repeats, and the separate
-15-run coordination-geometry comparison summarized below. Historical six-class metal anchors retain that original
+architecture screen, the four direct-four selected-LR repeats, the separate
+15-run coordination-geometry comparison, and the 16-run matched RING comparison
+summarized below. Historical six-class metal anchors retain that original
 identity. Neither their native metrics nor post-hoc collapsed-four reports
 are evidence from direct-four training, and their values must not be ranked
 against the new direct-four scores.
@@ -164,7 +165,8 @@ architectures generally.
 
 Findings:
 
-- Only-ESM has the largest direct-four mean. Its advantage over GVP appears
+- In the original architecture pilot, Only-ESM has the largest direct-four
+  selected-recipe mean. Its advantage over GVP appears
   in both seeds, but its mean Cu and VIII recalls are lower by 20.000 and
   10.938 points. Late fusion's tiny seed-42 lead over ESM reverses in seed
   43; the initial maximum did not predict the largest two-seed mean.
@@ -264,6 +266,78 @@ Evidence: [completed geometry summary](notebook_outputs/summaries/summary_metal_
 [normalization controls](notebook_outputs/raw/metal_coordination_geometry_pilot_20260915/geometry_normalization_controls.json),
 [paired-case audit](notebook_outputs/raw/metal_coordination_geometry_pilot_20260915/geometry_paired_case_analysis.json),
 and [verified copy inventory](notebook_outputs/raw/metal_coordination_geometry_pilot_20260915/portable_copy_manifest.tsv).
+
+### Matched RING pilot: completed bounded comparison
+
+Namespaced ID: `metal/nonoverlap/ring-pilot/2026-09-15`.
+All four one-epoch smokes and 16 full 50-epoch fits completed, with verified
+selected-checkpoint bindings, terminal capture and actual GPU teardown.
+Only-GVP and graph-level late fusion each received RING off/on at both
+LRs `3e-5`/`1e-4` and model seeds 42/43. Every control was freshly trained;
+all learning rates remain in the report. This is **Grade 3** on one shared
+validation partition, with no held-out evaluation or model promotion.
+
+The direct-four, native-six-eligible cohort remains 1,181 training pockets /
+1,151 PDB groups and 208 validation pockets / 110 PDB groups. Split seed 42,
+`pdbid` grouping, validation fraction 0.15, conservative features, radius-6
+edges, legacy site inputs and no augmentation remain fixed. Both edge arms
+use geometry-derived shell annotations. Each checkpoint is selected by
+`val_metal_balanced_acc` within its own complete 50-epoch history.
+
+BA values are percentages; differences are percentage points, RING on minus
+off. SD is the sample standard deviation across the two training seeds.
+
+| Family | LR | Off mean ± SD | On mean ± SD | Δ seed 42 | Δ seed 43 | Mean paired Δ |
+|---|---:|---:|---:|---:|---:|---:|
+| Only-GVP | 3e-5 | 67.609 ± 4.098 | 69.034 ± 3.551 | +1.812 | +1.039 | +1.426 |
+| Only-GVP | 1e-4 | 72.073 ± 1.663 | 72.459 ± 2.176 | +0.024 | +0.749 | +0.387 |
+| GVP + graph-level late fusion | 3e-5 | 73.538 ± 2.475 | 73.538 ± 2.475 | 0.000 | 0.000 | 0.000 |
+| GVP + graph-level late fusion | 1e-4 | 72.437 ± 0.177 | 72.437 ± 0.177 | 0.000 | 0.000 | 0.000 |
+
+Findings under this recipe:
+
+- Only-GVP's selected BA increases in all four matched pairs, but the mean
+  Class VIII recall falls by 3.125 points at `3e-5` and 4.688 points at
+  `1e-4`. Mean Zn recall increases by 6.250 and 4.688 points, respectively;
+  that mean does not protect every seed. Cu recall stays 14/15 in every GVP fit.
+- At `1e-4`, seed 42's +0.024-point BA difference accompanies Mn −9,
+  Zn +4 and Class VIII −2 correctly classified sites. Seed 43 has Mn +12,
+  Zn −1 and Class VIII −4; its minimum class recall falls from 46.875% to
+  43.750%. These are differences in marginal counts, not identified
+  case-level corrections or new errors.
+- All four late-fusion pairs tie in selected BA and every selected class
+  recall. This does not establish identical models or site predictions:
+  the reviewed `3e-5`, seed-42 pair has different training losses in every
+  epoch and different validation metrics in 22 epochs. No prediction export
+  or inference replay was performed. The ties do not establish universal
+  RING ineffectiveness or statistical equivalence.
+- The complete RING input audit finds no added undirected pairs. Instead,
+  34,573 training and 6,057 validation pairs already present in radius graphs
+  receive interaction annotations. Node/site inputs and shared-radius geometry
+  are unchanged, and all 16 full fits have identical fitted normalization
+  objects. The observed intervention is existing-edge interaction features,
+  with no topology expansion or on/off normalization difference. The general
+  recipe permits added edges and separately fitted normalization; this cohort
+  does not exercise those changes. Raw RING `Angle` is not consumed, and the
+  experiment adds neither coordination-angle summaries nor metal nodes.
+
+Validation support is Mn 97, Cu 15, Zn 32 and Class VIII 64. The same sites
+and PDB groups occur in every run; within-PDB sites are not independent.
+Two training seeds and their sample SD provide no new-data confirmation,
+paired grouped-fold CI, or rare-class promotion guarantee. Direct-four
+training provides no separate Fe/Co/Ni recalls. Stage 6 confirmation and its
+paired-CI/rare-class gates remain outstanding; no architecture is promoted.
+
+The new low-LR late-fusion seed-43 run was not an opportunity in the original
+selected-LR-repeat pilot. Keep that original pilot's Only-ESM reference claim
+scoped to its own compared recipes. Do not rank families using unmatched
+historical maxima or pool these two LRs into an architecture score.
+
+Evidence: [completed RING summary](notebook_outputs/summaries/summary_metal_ring_pilot_20260915.md),
+[post-stop analysis](notebook_outputs/raw/metal_ring_pilot_20260915/analysis/ring_post_stop_analysis.json),
+[paired metrics and seed summaries](notebook_outputs/raw/metal_ring_pilot_20260915/analysis/ring_post_stop_analysis.csv),
+[whole-cohort input audit](notebook_outputs/raw/metal_ring_pilot_20260915/finalization/ring_input_audit.json),
+and [verified terminal checkpoint bindings](notebook_outputs/raw/metal_ring_pilot_20260915/finalization/final_capture_receipt.json).
 
 ### Historical metal anchors
 
@@ -603,7 +677,7 @@ that the current evidence cannot yet support:
 | Direct four-class training vs six-class training with collapsed-four evaluation | Initial matched four/five/six screen and selected-LR repeats are complete; target preference depends on family/recipe. No grouped-fold paired CI or class-recall promotion gate is satisfied |
 | Early vs late vs hybrid ESMC fusion | Matched direct-four early/late two-LR screens and selected-LR repeats completed; hybrid was deferred. No full three-way grouped-fold/seed comparison or paired CI establishes an advantage |
 | Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Completed direct-four screen and selected-LR repeats provide Grade-3 evidence; no shared grouped-fold Stage 6 comparison or paired confidence interval exists |
-| GVP with vs without RING | No direct four-class matched on/off run isolates RING; the Hybrid+RING maximum combines fusion, joint-task, HPO, and edge-source changes |
+| GVP with vs without RING | The completed direct-four, two-LR/two-seed GVP and late-fusion comparison supplies Grade-3 existing-edge annotation evidence, with no observed topology or on/off normalization difference. Shared grouped-fold paired CIs and rare-class promotion gates remain outstanding |
 
 Treat numerical differences as hypotheses until the candidates use the same
 dataset, label scheme, folds, active seeds, metric, and comparable training/HPO
@@ -622,11 +696,11 @@ rare-class-recall policy in `Plan.md` and the metal playbook.
 | GVP capacity | Late-fusion trial 49 uses `256/32`, four layers, edge hidden 128; Only-GVP stability evidence favors smaller `128/32` candidates | Larger capacity is not confirmed better outside its model context |
 | Radius | Radius 6 appears in selected Only-GVP/late-fusion candidates; radius-10 trial-13 variants were weaker in their confirmation | Radius 10 is not universally harmful |
 | Fusion | Direct-four early has mean BA65.926%; late72.437%; the tested early recipe does not justify automatic hybrid escalation. Historical graph late outperformed one node-late variant | No general early/hybrid rejection, three-way promotion, or benefit from every fusion design is established |
-| ESM | New direct-four ESM mean74.342% exceeds late72.437%; late's small first-seed lead reverses in seed43. Historical six-class evidence remains separate | Mean advantage does not protect every class or supply grouped-fold promotion evidence |
+| ESM | In the original architecture pilot, direct-four ESM mean 74.342% exceeds the selected late recipe's 72.437%; late's small first-seed lead reverses in seed 43. Historical six-class evidence remains separate | This is the original selected-recipe comparison; it does not rank later LR/seed opportunities. Mean advantage does not protect every class or supply grouped-fold promotion evidence |
 | Target formulation | Late-five improves common-four BA over late-four in both seeds with class tradeoffs; GVP and ESM respond differently | No universal target winner; some selected target recipes use different LRs and native class weighting |
 | Coordination counts/angles | B−A and C−B reverse direction across the two high-LR training seeds; E−D is negative in both | Added geometric summaries have no consistent benefit established by this bounded pilot; GVP already receives geometric inputs |
 | Explicit metal nodes | D−B has lower BA in both high-LR seeds; metal-node arms have substantial Zn/other-class tradeoffs | This tests added representation, connectivity, and fitted edge normalization together, not topology alone or every metal-node design |
-| RING | Trial 114 is promising | Causal benefit is unestablished |
+| RING | The matched GVP pairs show mean BA gains of 1.426/0.387 points at the two LRs, with Class VIII recall losses; all four late-fusion pairs tie in selected BA/recalls | Existing-edge annotation evidence on one split does not establish universal benefit, identical predictions, equivalence, or Stage 6 promotion; added-edge effects were not exercised |
 | Regularization/augmentation | Current records contain candidate values but no clean matched confirmation | Do not claim dropout/noise settings helped or hurt without new evidence |
 
 ## Settings and conclusions not to repeat incorrectly
@@ -640,14 +714,16 @@ rare-class-recall policy in `Plan.md` and the metal playbook.
   identities.
 - Do not compare joint `val_joint_balanced_acc` directly with metal-only
   `val_metal_balanced_acc`.
-- Do not claim RING benefit without a matched ablation.
+- Do not generalize the bounded RING annotation findings beyond the matched
+  recipe or interpret late-fusion metric ties as identical predictions or
+  universal ineffectiveness. Stage 6 paired-CI and rare-class gates still apply.
 - Do not call the geometry A control “no geometry” or replace it with the
   earlier legacy GVP run; its masked inputs and node-type machinery are matched
   to B–E.
 - Do not describe seed-43 repeats on the same validation proteins as independent
   data confirmation, or report a higher BA without the class-recall tradeoffs.
-- Do not treat the completed bounded original/geometry pilots as proof that
-  the broader hybrid/RING research matrix or grouped-fold promotion is complete.
+- Do not treat the completed bounded architecture, geometry and RING pilots
+  as proof that the broader hybrid comparison or grouped-fold promotion is complete.
 - Do not promote trial 49, trial 17, or trial 114 as grouped-fold confirmed.
 - Do not use the historical PinMyMetal test metrics to support any parameter
   statement.

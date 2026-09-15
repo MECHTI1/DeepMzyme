@@ -1,0 +1,350 @@
+{
+  "status": "terminal_metadata_verified_gpu_not_stopped",
+  "captured_epoch": 1789489232.8552363,
+  "terminal_state": {
+    "status": "completed",
+    "allocated_seconds": 26219.386301517487
+  },
+  "manifest_sha256": "7ef050d611bc7eec7c0638ec4c8a76b1a32a1e90690bb135c33546e460c3127c",
+  "source_archive_sha256": "7ad27026c2baaefe9b566d80025455d852c63d3acf8198113743f5685ae6523a",
+  "operator_files": {
+    "ring_common.py": "cbff71c3902b952ea2469aa2e3ddf95ef7921c256a6f10fbd2ca47858bb6f6c0",
+    "ring_host.py": "63f49895d99ae617a15aa038997c57ac0e390f0862f6f9e94f64bf58892ada19",
+    "ring_bootstrap.py": "02cfc40280a0dfa906b8b2fd69a9b3cf1a6e8961ff890f205b421382d37d670c",
+    "ring_control.py": "7adfb0e25fa3e339e59a54a5862c5b02e76acbb66a679bc281c7155730499f18",
+    "ring_finalization.py": "eb89d724ef0efe53969dfa4cf247bf135f870ffb9bfa74d5554fe783e87f7913",
+    "ring_archive_verify.py": "47ffad565e3baac54d72917056cca31eedb4aa815c731cee6044f0cbf94e157c",
+    "refresh_owned_proxy.py": "6f44734d2d89f0c5c8103072bdda13074dbb69352efb41d7d9e04f81fa237368",
+    "watchdog.py": "f3dcdbd570669203f37c05062a5410ae1be3127ef0ca00877330077db25b5f80",
+    "test_ring_operations.py": "6bddde6639978ae08d5c164be7e4ec94ce79052a05d51e6e80f6d6d657e16b50"
+  },
+  "completed_smokes": 4,
+  "completed_full_runs": 16,
+  "required_gvp_complete": true,
+  "allocated_seconds_at_capture": 26303.944786310196,
+  "budget_handoff_sha256": "c138d035477ca7b14c0eb8a9e81adab5f0334a8cf978931866e72207a7b4d5bf",
+  "runs": [
+    {
+      "run_id": "S_GVP_ring0_lr3e-05_s42",
+      "block": "S",
+      "selected_epoch": 1,
+      "balanced_accuracy": 0.25,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "c259b7ab387b22ebd2dfe80e485dd2278d093071d8448ea78063db2c26c0667e",
+        "run_metadata.json": "d400d5453ffe1031b88b8b7258177ac9fe9ae844ef543cb029020fbd1fe3cf9a",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "56c317eb189dd077de9002a1cf9d9e9451281d3bd40d8b443e431a1a4608ce0a",
+        "best_model_checkpoint.pt": "15a51d039771fbaf60343581ce230b656c99c36e6190f9721eb26156ee4ec447",
+        "last_model_checkpoint.pt": "49344c40a87e07e6ebec325389dd545b35a9706c151b07058428f5720c43b522"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/S_GVP_ring0_lr3e-05_s42"
+    },
+    {
+      "run_id": "S_GVP_ring1_lr3e-05_s42",
+      "block": "S",
+      "selected_epoch": 1,
+      "balanced_accuracy": 0.25,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "594774317693588e50de8d6b557c4c8e5e2c02c23409d679a1e67bf9a6913b0f",
+        "run_metadata.json": "e02a102694fa329f2affb39f5bce73ec2f16fceb2708cd73d880973de293665b",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "7576e415f2aa0707458bb1068fbec17b7abf9bc4a8f850de5a60e2ff101bc062",
+        "best_model_checkpoint.pt": "6a9f0dd724f402e0082ce4eb6a2d408397d8ba15506ca0399356fd39f795489b",
+        "last_model_checkpoint.pt": "f992f98e3b4798f473da11782f5928bc20bbcd4e09609944e3d2071aed6a1ffa"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/S_GVP_ring1_lr3e-05_s42"
+    },
+    {
+      "run_id": "S_LATE_ring0_lr3e-05_s42",
+      "block": "S",
+      "selected_epoch": 1,
+      "balanced_accuracy": 0.3451594716494846,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "38ebf8ae527185dfdab8a90fae91c6358f935c355d366521b7c47ec3e5e86b96",
+        "run_metadata.json": "fcb4260113e034d93dd3d74b02acb5a57c7fcca41a6c63ce871a3a0427f0acd3",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "7520e0082e4d8b729e2565db979bf627aca39e797c1a74f465204224a3a22674",
+        "best_model_checkpoint.pt": "b3864616e1b64431d5624b0d2d66526708905b1a6f3d73a53e164aaf79e87f34",
+        "last_model_checkpoint.pt": "1ce8363df1802f1d6d27ceb586ad9199b684980f62533276a5316916fa7fa729"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/S_LATE_ring0_lr3e-05_s42"
+    },
+    {
+      "run_id": "S_LATE_ring1_lr3e-05_s42",
+      "block": "S",
+      "selected_epoch": 1,
+      "balanced_accuracy": 0.3451594716494846,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "430ce1a4071c61bfc716a58f1b91b269e1f3b360ef1473f115152afc74a720bb",
+        "run_metadata.json": "85bafb89aa3e274249ce34bbb72aee73d6134e0147cf7c8d7ca9ad463b51ed2a",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "94672a94da7a1dad99a5fdd6baea6612be6164d714423f0be0187e0f10a4fa84",
+        "best_model_checkpoint.pt": "e6b7805a20fddcd8505dd42e6f6ea06df204b11b018d18644cc5a0c32f8d3f11",
+        "last_model_checkpoint.pt": "e3addc9eb5dedcda67f824fcc08a1ca446d57e7a4ca4c5784a3af07192c52e91"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/S_LATE_ring1_lr3e-05_s42"
+    },
+    {
+      "run_id": "GVP_GVP_ring0_lr3e-05_s42",
+      "block": "GVP",
+      "selected_epoch": 44,
+      "balanced_accuracy": 0.6471139390034364,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "a9acca12be68d4696281bf5a1fdddfc9dbad062bdfc92035c237b72e16d97e65",
+        "run_metadata.json": "ed4aa16e660ef311c0eed9f0de1b1ca0a137785cadc0157db5f48032c80e8e74",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "4002205d87007b3e929e6217238bda43f605e8097c2a83dc7720e16321d95aea",
+        "best_model_checkpoint.pt": "b48a3749e8bc0e9332ba4186f4df84ca5dba08c2eed275fcff2cf34626cbd534",
+        "last_model_checkpoint.pt": "1ec7c402956dc60d1d5fe7c85b57bc3cbb28a2bcad52c57a852534540c6932fd"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring0_lr3e-05_s42"
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr3e-05_s42",
+      "block": "GVP",
+      "selected_epoch": 44,
+      "balanced_accuracy": 0.6652357173539519,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "945cef29662584b011125f27df71d1ba8e8cd58260a59e1f84b4cb8546430582",
+        "run_metadata.json": "e39d1f84bffb281067c19c2bfe6053808cc84d1cb79a771bfe943212fd5aafa4",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "fa4f5961b20064c2ecffd5d98f99a116d6830f3574a1b8bcc843fef095065154",
+        "best_model_checkpoint.pt": "2bc1a264ffc2560ca606a31019660c55c0fd9595fbad6ebdf74d6eb418fdb462",
+        "last_model_checkpoint.pt": "d3573fbf6e87998972bd8ee61a05c08a6ad679be24c1eb4d475169a02ca271d1"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring1_lr3e-05_s42"
+    },
+    {
+      "run_id": "GVP_GVP_ring0_lr3e-05_s43",
+      "block": "GVP",
+      "selected_epoch": 11,
+      "balanced_accuracy": 0.7050633591065292,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "ee435ee06d2caab6dce603e0e1521184e879e3d2006fef468734af8aa0f60fd6",
+        "run_metadata.json": "adbbaf68d404996c819bafddf8f7d6f520cfbb737aa3070443e1a06083a218e9",
+        "dataset_summary.json": "4e8f0e9e49becc90ef8918aa821ed45f30a74f16d5296987e457e22530cf1683",
+        "epoch_metrics.csv": "cf74ab541b6296d6994824c8244d9dbe33b583e7f203d663736a6076cf258a4b",
+        "best_model_checkpoint.pt": "2446c0c58b0b23fc1added7b48fafdec33a83d5bd57185f1200519f3ab2107b1",
+        "last_model_checkpoint.pt": "942d15f2bbe9fe90b421eaf2d9e42b1a18eb52d4df55ef6761469d4b94f79177"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring0_lr3e-05_s43"
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr3e-05_s43",
+      "block": "GVP",
+      "selected_epoch": 46,
+      "balanced_accuracy": 0.715453178694158,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "7cc778fa886e15ae563800bdad5e7da9937f41bd18356302c70eec89a10d4715",
+        "run_metadata.json": "ab2b2fcb3f19f8072573aa2d04e7ebbebfcf4655d698e3edc9d09cb682da52e8",
+        "dataset_summary.json": "4e8f0e9e49becc90ef8918aa821ed45f30a74f16d5296987e457e22530cf1683",
+        "epoch_metrics.csv": "8568deb21df3c7bf57f698de98061fb625bc63efc562ea6c6b6537f7c2fe7aa1",
+        "best_model_checkpoint.pt": "684d03419f3f2febda724e9efdfd11c576aa2f37786f5b953db3413ff1af1f83",
+        "last_model_checkpoint.pt": "acc09548e0cb252366628420096a5b13cba3a9b1580c2a278853848529012d19"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring1_lr3e-05_s43"
+    },
+    {
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "block": "GVP",
+      "selected_epoch": 35,
+      "balanced_accuracy": 0.7089696091065292,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "fdf81c45b289dba373f9da4b531da0b7d239ea5719aae2820b5c67c4d6980e84",
+        "run_metadata.json": "924c116f16a4197ac3738ec280f2863ae77240ad135e2047fef5640ffe556f35",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "bd7c37ee88e464be15367b5168d3d606bfe529c53137454f524017c9cc52d71f",
+        "best_model_checkpoint.pt": "0f8823fc0f046e35278f736c697c6d0b6d22896550c034c226664b3f7fe28e21",
+        "last_model_checkpoint.pt": "0840a83f3b19f9c0a20b506fcae692da02a8b9d6e0c24c0ecc9c194b62d06bb8"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring0_lr0.0001_s42"
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "block": "GVP",
+      "selected_epoch": 30,
+      "balanced_accuracy": 0.7092112328178695,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "ba92a858d1b08abd5a25d094b75a14a3a8cfc5ac16b5e838047d6b0d60febe64",
+        "run_metadata.json": "a35d3bf0bc5c887dcc6cd63ba3db41fb2695c38fefbd7f0d01461b242fe79d8d",
+        "dataset_summary.json": "9d93fe3d8751e2d92635e38cec3e8ebc7dd928fc3105c5982e2755377d65059d",
+        "epoch_metrics.csv": "1196ee08651fe623adc5d1c8f9f88c2d363afdf359c91365abd41fb435b641bc",
+        "best_model_checkpoint.pt": "09c6e0d58af1ec7af0079b7dcbd1d6da35662b1cf984f4fd65e6cd1fc547aa15",
+        "last_model_checkpoint.pt": "e08c0821a90e47d8a77ec167ad4d56c36afe5bb7dcb97dc510f98c452236669c"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring1_lr0.0001_s42"
+    },
+    {
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "block": "GVP",
+      "selected_epoch": 23,
+      "balanced_accuracy": 0.7324876503436426,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "b4e6cc5361ac488f0b6347ef525375cb05c345d35cbe8c8751673573b80a60dc",
+        "run_metadata.json": "16b8247fa6d404b251fac220b2a0b9baa98ed14606935d5f163ac4d3ade07c40",
+        "dataset_summary.json": "4e8f0e9e49becc90ef8918aa821ed45f30a74f16d5296987e457e22530cf1683",
+        "epoch_metrics.csv": "aa6442abc5116f2bab69eb2b45ef24600b9aba1e6ac7f77b481f3c31e70100c6",
+        "best_model_checkpoint.pt": "f373a2271180004b8ca45ec9a750b9192383538ba553dd76140bccb37bb7cbcc",
+        "last_model_checkpoint.pt": "f3fa2a62b3c19446bd01fca759cba3b4855a7979af5ce5b0f8b09531a3737b01"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring0_lr0.0001_s43"
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "block": "GVP",
+      "selected_epoch": 18,
+      "balanced_accuracy": 0.739977985395189,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "27c7eb685f8787edfe02071de8952d6f77e67252ff10714c39adf6cca34aa58e",
+        "run_metadata.json": "bf8a8b7e51c03426feb0a5a41aa74ba1fdc74986f1435f06e3486d897a26f45d",
+        "dataset_summary.json": "4e8f0e9e49becc90ef8918aa821ed45f30a74f16d5296987e457e22530cf1683",
+        "epoch_metrics.csv": "b4ddd42e8984f32db4d1d12b59c915ea366d2545a830b66e92e3bb59ca65116e",
+        "best_model_checkpoint.pt": "9f6cce96d2f721faa044f0f7619ea87800e2ccb2e5073f470780ba3cdc642231",
+        "last_model_checkpoint.pt": "c02335a7fee550a4d311ba64d9162f6fbe7ac4c979ba4167bfbf60d72b8fad98"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/GVP_GVP_ring1_lr0.0001_s43"
+    },
+    {
+      "run_id": "LATE_LATE_ring0_lr3e-05_s42",
+      "block": "LATE",
+      "selected_epoch": 17,
+      "balanced_accuracy": 0.7178855240549828,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "b9f2c19e8a2864c8ac16c1c9eac31c2d31c6b7c9015043110648264ab6dbd4e3",
+        "run_metadata.json": "d4c8f9a65ce3e554d9f7de0194b8d8ea3f3f10374ad3e44fc23ad10be330784b",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "2657f7214a7a7a5089881711463b777b55176beab28a3985e4e357a32bed582c",
+        "best_model_checkpoint.pt": "5b28b6f0c9bc58cd415f90aae51a68620edd3e6f4b4c7f6bb1d8e7447974a0c8",
+        "last_model_checkpoint.pt": "b05f207e4564d8f1797178f6b95e833a72fd6c76456fc6e03389069c2df490b9"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring0_lr3e-05_s42"
+    },
+    {
+      "run_id": "LATE_LATE_ring1_lr3e-05_s42",
+      "block": "LATE",
+      "selected_epoch": 17,
+      "balanced_accuracy": 0.7178855240549828,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "cdc48544a7b377172726a0e8990d67af9ff31934476e55cf1b2edb1a1a753c35",
+        "run_metadata.json": "373f62b4c9858d8d6f61ff40395666654e396801702e9d60d51494d5657a3f36",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "2c19a1eba3659a343a25056f64970e701293e05fafd8d1f95faddc72c9b04a23",
+        "best_model_checkpoint.pt": "99924a1e14db5c86a3ae4b07ec6b505c712ec637c38d4a562a59459d4d4a3777",
+        "last_model_checkpoint.pt": "047e1ba7721a071a56b7cf853faf13b7e1ca445cd503ad0b8c3eb78c7285a977"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring1_lr3e-05_s42"
+    },
+    {
+      "run_id": "LATE_LATE_ring0_lr3e-05_s43",
+      "block": "LATE",
+      "selected_epoch": 16,
+      "balanced_accuracy": 0.752880691580756,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "44dfde0fc2123ef625646867c35dde22011648af2a191eedadd0909c934b4771",
+        "run_metadata.json": "e8e04a77387789e28a2ec4753d7856ca9d0bed16b37088738c4306fbdc1dda62",
+        "dataset_summary.json": "a9e01bfd87714655c99fd230e23a628e0daef0ad4b2389ccd8455f1f34ccf61e",
+        "epoch_metrics.csv": "05cace8cdc4939b5a33c5d1d2e166087443d7a443c80e7895ec1f12689210e59",
+        "best_model_checkpoint.pt": "01791c26e4764047d81d421624207856cac91e48d9291034ee71347d4bb7a0a1",
+        "last_model_checkpoint.pt": "af5d0bf97929a6064cef6c3e0e5fee21e590670335364f289d8908c932dfaf0c"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring0_lr3e-05_s43"
+    },
+    {
+      "run_id": "LATE_LATE_ring1_lr3e-05_s43",
+      "block": "LATE",
+      "selected_epoch": 16,
+      "balanced_accuracy": 0.752880691580756,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "705201bec9f1ddee48b7a225e7bdff478157e3156d1bb04a5ff40aa815ff9c45",
+        "run_metadata.json": "e7a52109f402dcb51b7e9f216489cd2ece0fa502e6d4a24253b2e8af1a5f5642",
+        "dataset_summary.json": "a9e01bfd87714655c99fd230e23a628e0daef0ad4b2389ccd8455f1f34ccf61e",
+        "epoch_metrics.csv": "8cc3673d48d24f5b4ba1b4c58997ceae1ebd06df0d7bc06444896adede3bdb70",
+        "best_model_checkpoint.pt": "a0065f759e519ab4d643b57f655eda7281c91037b120f315cec5f4110fa1cbac",
+        "last_model_checkpoint.pt": "ffdc0edfb579032683f94031340b85f28bcf371b4bbbe332e530fe8562df3ee0"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring1_lr3e-05_s43"
+    },
+    {
+      "run_id": "LATE_LATE_ring0_lr0.0001_s42",
+      "block": "LATE",
+      "selected_epoch": 7,
+      "balanced_accuracy": 0.723120704467354,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "8fbdf64d617d94de7442cfe42a208efaa097582d85b09110dcb6a49ffc5e32a0",
+        "run_metadata.json": "cda37773accc5bc07df1924ca72b7c3169fd3376204d04914df9f25301b28dbd",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "67d43660401ec73dd0c4aaf6d3aa03968cc8f40d1b04e65f3d4b0b455471e03f",
+        "best_model_checkpoint.pt": "f7cc2636f2d6c18df9f1829cfa9fa2f2925edd475c04d8a3c26b34b42b0f0ab7",
+        "last_model_checkpoint.pt": "47d6d8577200dbd2459da29b5addcbb83a321f08e0a1e511bdc1f7e8ecaf88aa"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring0_lr0.0001_s42"
+    },
+    {
+      "run_id": "LATE_LATE_ring1_lr0.0001_s42",
+      "block": "LATE",
+      "selected_epoch": 7,
+      "balanced_accuracy": 0.723120704467354,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "50af8e2bc35957f826d5f1d8bb55c01e9e5c82b277c429ea226908bf45c0305e",
+        "run_metadata.json": "286315785a84c2e6c8455ee4234ffea4c4688a77d0ff8b54e4486357fe09be0f",
+        "dataset_summary.json": "00130a877f46158e3b87658ab865c114ef6c4f1eb0366bc262c63167c3c41ae8",
+        "epoch_metrics.csv": "f036dfd3dbea4692f6f4503b3e14ae4b06a15f035ac939bb3bb069bb5979f5e9",
+        "best_model_checkpoint.pt": "47f7819954eeb9261749111979b241e204fece93a95f94e659b5a3fbe09ad73d",
+        "last_model_checkpoint.pt": "0b30448581096ffbd08cd11d74b32143b27e5768324a8525eea9b23203eaf477"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring1_lr0.0001_s42"
+    },
+    {
+      "run_id": "LATE_LATE_ring0_lr0.0001_s43",
+      "block": "LATE",
+      "selected_epoch": 8,
+      "balanced_accuracy": 0.7256174828178694,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "758282387f06dc67fd100ec4b727af373ebefe64167d9d37fc7dd6787dd97045",
+        "run_metadata.json": "8fb9877617c5092b6544a926a19735e8a259b53ab4ddb3d73ccc931b17385035",
+        "dataset_summary.json": "a9e01bfd87714655c99fd230e23a628e0daef0ad4b2389ccd8455f1f34ccf61e",
+        "epoch_metrics.csv": "c5232ef3512d9f6e0ec01cfe060994b6c2b9cd5a6fff546f19d7bc08093e4e3f",
+        "best_model_checkpoint.pt": "e37bf7c391e6a54a9b23820ea27a89d7a4d4ec81f238d884dd09b2393f20d037",
+        "last_model_checkpoint.pt": "2273ae763b5f795d3e78af2fe5c6b13caf9bd6fdac15aa684e1c4921ec4a968c"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring0_lr0.0001_s43"
+    },
+    {
+      "run_id": "LATE_LATE_ring1_lr0.0001_s43",
+      "block": "LATE",
+      "selected_epoch": 8,
+      "balanced_accuracy": 0.7256174828178694,
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "1d566d230df2b0c3df208205d42f45b611f65c4cf6ea20e18e22703fa5286e4d",
+        "run_metadata.json": "22182e82ba3694c198bac3a9de2a8dd30b329538dcfbbdff7e80aafcf0655c3f",
+        "dataset_summary.json": "a9e01bfd87714655c99fd230e23a628e0daef0ad4b2389ccd8455f1f34ccf61e",
+        "epoch_metrics.csv": "56b6d1cdbf80d1e865e0b8ce3c7fae625ea4b2ce8896b83d300efb1491222a2b",
+        "best_model_checkpoint.pt": "a6fe293810915e74207f567889d7b16e8b5f015fe9290426903bcad557ccb0f6",
+        "last_model_checkpoint.pt": "e1bed32abbea7ff58e7273ae84d485a5394ff05907f3ab8ab77f95716ed7e77b"
+      },
+      "run_dir": "/content/metal_ring_pilot_v1/runs/LATE_LATE_ring1_lr0.0001_s43"
+    }
+  ],
+  "held_out_evaluation": false,
+  "checkpoint_inference_performed": false
+}

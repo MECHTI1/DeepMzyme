@@ -1,0 +1,31 @@
+{
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_ring_pilot_v1_20260915/host_closeout_allocation3.tar.gz",
+  "archive_sha256": "3d8d6bf51353ddb01de0203e0ff9aeb49cd466eaf64516560dab5f6b44bfe625",
+  "bytes": 37542,
+  "drive_metadata": {
+    "id": "1XJBAtdmLw2AdJQz-vVWI4D3WtAGiMWcQ",
+    "title": "metal_ring_pilot_v1_20260915_host_closeout_allocation3.tar.gz",
+    "mime_type": "application/gzip",
+    "size": "37542",
+    "url": "https://drive.google.com/file/d/1XJBAtdmLw2AdJQz-vVWI4D3WtAGiMWcQ/view?usp=drivesdk",
+    "display_url": "https://drive.google.com/file/d/1XJBAtdmLw2AdJQz-vVWI4D3WtAGiMWcQ/view?usp=drivesdk",
+    "file_or_folder": "file",
+    "created_time": null,
+    "modified_time": null,
+    "parent_ids": [
+      "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I"
+    ],
+    "drive_id": null,
+    "current_user_can_share": null,
+    "has_augmented_permissions": null,
+    "shared": null,
+    "permissions": null,
+    "source_visibility_status": "access_not_verified"
+  },
+  "drive_id_size_parent_verified": true,
+  "local_sha256_verified": true,
+  "drive_side_sha_verified": false,
+  "closeout_status": "stopped_verified_and_final_archive_preserved",
+  "cumulative_allocated_seconds": 26326.480157136917,
+  "remaining_seconds": 9673.519842863083
+}
