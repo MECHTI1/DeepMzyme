@@ -1,21 +1,24 @@
-# Partial EC1 standalone baseline evidence
+# Completed EC1 standalone v12 baseline evidence
 
-See the [campaign summary](../../summaries/summary_ec1_standalone_v12_20260914.md).
+All twelve authorized runs completed 30 epochs. See the
+[campaign summary](../../summaries/summary_ec1_standalone_v12_20260914.md).
 
-This folder contains three completed, verified 30-epoch Only-GVP runs from
-the authorized twelve-run v12 campaign. `validation_results.json` contains
-selected-checkpoint scores and group-level per-class recalls. The remaining
-matrix is planned, not measured: run 4 was launched but became unverified
-after Colab connection loss, and runs 5–12 were not launched.
+`campaign_plan.json`, `commands.txt` and `run_matrix.csv` describe the exact
+matrix. `readiness.json` and `expected_split.json` record CUDA and cohort
+checks. `per_run_validation.csv`, `family_lr_validation.csv`,
+`validation_results.json` and `report_tables.md` contain selected-checkpoint
+validation results. `verification.json` checks all runs' selection, recalls,
+shared split identities and persistence receipts.
 
-`campaign_plan.json`, `commands.txt`, and `run_matrix.csv` describe the full
-authorized matrix. Their existence is not proof of completed execution.
-`readiness.json` and `expected_split.json` record CUDA and shared-cohort
-checks. `artifact_manifest.json` hashes completed outputs, including
-checkpoint binaries kept outside git. `transfer_receipts/` records local
-SHA256 verification and Drive metadata/size verification for runs 1–3.
-`recovery_status.json` records the unresolved runtime state.
+`artifact_manifest.json` hashes original completed output bytes, including
+checkpoint binaries kept outside git. Git may normalize copied CSV line
+endings; archive checksums refer to the original archived bytes.
+`transfer_receipts/` records local archive SHA256 checks and Drive metadata
+and size checks. Full checkpoints and the exact source snapshot are in local
+persistent storage and the [Drive campaign folder](https://drive.google.com/drive/folders/1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y).
 
-Full checkpoints and the exact source snapshot are in local persistent
-storage and the [Drive campaign folder](https://drive.google.com/drive/folders/1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y).
-No held-out inference or metrics were produced. No model is promoted.
+`resume_receipt.json` records recovery of completed run 4 without repetition.
+`shutdown_receipt.json` confirms the campaign runtime was stopped after
+verification. These completed records supersede the earlier interruption
+state. No held-out inference or metrics were produced, and no model is
+promoted. The metal campaign and all auxiliary training remain pending.

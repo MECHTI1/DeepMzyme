@@ -9,19 +9,19 @@ Last scientific-policy documentation update: 2026-09-14.
 
 ## Current objective
 
-**Current authorized execution priority (2026-09-14):** complete the v12 EC1
-standalone 12-run fixed-split campaign before preparing Chat 5; keep the metal
-campaign pending. Three Only-GVP runs completed and were verified locally and
-in Drive. The `3e-5` seed-42/43 pair has mean group EC1 balanced accuracy
-`0.393452` (sample SD `0.036197`); `1e-4` seed 42 scored `0.555952`, with its
-second seed unverified. Run 4 was launched before the Colab CLI lost its local
-session record; runs 5–12 have not launched. The same endpoint remained listed
-as `[?]`, and its shutdown is unconfirmed. Reconnection authorization is
-pending under the installed Colab skill's orphan-session rule. Recover run 4
-before restarting it. This partial campaign is not promotion evidence, and
-no held-out, auxiliary, or metal training was run. See the
-[partial campaign summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
-for exact configuration, recalls, persistence receipts and recovery state.
+**Current authorized execution priority (2026-09-14):** the v12 EC1 standalone
+campaign is complete: all 12 runs (three families × two LRs × seeds 42/43)
+finished 30 epochs on the same fixed protein split. Every run was verified
+and archived locally and in Drive; the Colab session is stopped. The largest
+observed two-seed mean is Only-ESM at `0.0001`,
+`0.969643` (sample SD `0.017678`), using
+`val_ec_group_level_1_balanced_acc`. This is Grade-3 initial fixed-split
+evidence, not promotion. Chat 5 can now prepare its separate matched
+zero-auxiliary control and certify joint-cohort/holdout safeguards and
+development-only association analysis. Keep the metal campaign pending.
+No held-out evaluation, auxiliary training or broader HPO was run.
+See the [completed campaign summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
+for all family/LR results, recalls and exact provenance.
 
 Advance two independent primary missions: direct four-class transition-metal
 classification and EC/function classification, beginning at EC depth 1. The
@@ -51,7 +51,7 @@ standard.
 | Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii` and maps Fe/Co/Ni to Class VIII | No trusted completed direct four-class baseline batch is indexed | Four-class endpoint selected; baseline evidence and paired executable recipes still require reconciliation |
 | Required target-formulation challenger | `six_class` outputs and collapsed-four validation metrics are implemented | Historical six-class runs exist, but no matched direct-four versus six-trained/collapsed-four comparison is indexed | Required across the three initial metal baseline families; exact paired recipes still require reconciliation |
 | Historical metal targets | Six-class and five-class schemes remain implemented | Indexed metal anchors are principally historical six-class results; one five-class local smoke was prepare-only | Preserve under their original scheme; never relabel as direct four-class training |
-| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three CARE EC1 GPU smokes passed; three of twelve authorized standalone baselines are completed and archived, with run 4 unverified after connection loss | Initial partial fixed-split evidence only; family comparison unfinished, no promoted model; deeper hierarchical and full multi-label claims are unestablished |
+| Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three GPU smokes and all twelve CARE EC1 standalone baselines completed and archived | Experimentally evaluated on one fixed protein split across two seeds (Grade 3); no promoted model; deeper hierarchical and full multi-label claims remain unestablished |
 | Current EC multi-annotation handling | Multiple annotations with one shared prefix can map to one class; conflicting prefixes at the selected depth receive no target | No full multi-label experiment is indexed | Current code does not solve full multi-label EC prediction |
 | Shared-learning topology | A shared pocket representation feeds independent metal and EC heads, and both losses can update shared parameters | Exploratory joint runs exist under unmatched contexts | Implemented and explored; no controlled EC-only versus EC+auxiliary-metal result and no promotion |
 | Predicted-metal conditioning | Not part of the inspected shared-head path or a certified primary recipe | No promoted conditioning result | Deferred optional ablation after the simpler auxiliary-loss question |
@@ -142,7 +142,7 @@ grouped-fold promotion evidence.
 | Hybrid + RING | Yes | Trial-114 single-seed metal BA `0.7303469775006777` | Exploratory; RING effect not isolated |
 | Cross-attention | Yes | No indexed completed comparison found | Implemented but experimentally unestablished |
 | RING/radius-only causal ablation | Yes | No reportable causal comparison found | Not completed |
-| EC depth-1 standalone campaign | Partly | No trusted completed EC result indexed | Not certified end-to-end; playbook mismatch open |
+| EC depth-1 standalone campaign | Yes | All 12 CARE30 v12 runs completed, with matched cohort and two seeds per LR/family | Grade-3 initial fixed-split evidence; no promotion; later EC HPO/final-test recipes remain uncertified |
 | EC-primary auxiliary metal comparison | Joint topology exists | No matched controlled result indexed | Planned; recipe and cross-task safeguards not certified |
 | Stage 6 grouped-fold confirmation | Yes | No completed current artifact found | Not done |
 | Stage 6B full-train refit | Yes | No completed/reused artifact found | Not done |
@@ -198,6 +198,11 @@ stopped. See the [cache/GPU evidence summary](docs/notebook_outputs/summaries/su
 The completed v12 bundle is now published on Hugging Face and selected by the
 local notebook; [DATASETS.md](docs/DATASETS.md) owns its identity and verification.
 Publication adds no new training or held-out evaluation evidence.
+
+The subsequent v12 standalone campaign completed all twelve 30-epoch runs
+using these same caches and split identities. Its validation evidence is
+separate from the smoke and throughput checks above; see the
+[completed baseline summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md).
 
 The following results are throughput checks for one realistic
 GVP+ESM-hybrid training step, not validation accuracy, model selection, or an
@@ -266,8 +271,9 @@ These corrections do not resolve or select the primary final-test dataset.
    Stage 6 evidence, and RING lacks a matched on/off causal ablation.
 5. A reportable Stage 6B final-refit artifact was not found.
 6. Hybrid Round-1 full configuration/search-space provenance is missing.
-7. The EC playbook has documented incompatibilities with the current notebook
-   and is not certified executable in affected sections.
+7. The EC standalone Stage 0–2B recipe is executable and its twelve baselines
+   are completed. Later EC HPO and Stage 6/6B/7 sections still have documented
+   incompatibilities and are not certified executable.
 8. No exact, certified recipe or matched evidence exists for the first
    EC-primary auxiliary comparison, and a future multi-source implementation
    must enforce cross-task group exclusion before training.
@@ -305,8 +311,9 @@ reaches candidate confirmation, the next promotion stage remains grouped-fold
 1. **Phase 1:** reconcile and establish both metal target formulations for
    Only-GVP, Only-ESM, and GVP + graph-level late fusion: direct four-class
    training and matched six-class training with collapsed-four evaluation.
-2. **Phase 2:** reconcile the EC playbook and establish EC depth-1 standalone
-   baselines for the same three initial families.
+2. **Phase 2 — completed at the initial fixed-split level:** retain the twelve
+   EC1 standalone baselines for the three initial families. Grouped-fold
+   confirmation and final promotion remain future work.
 3. **Phase 3:** run the predeclared metal x EC1 descriptive association analysis
    on permitted training/development data only.
 4. **Phase 4:** add and run one controlled EC-primary comparison: EC-only versus

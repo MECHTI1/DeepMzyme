@@ -1,0 +1,12 @@
+{
+  "recorded_at_utc": "2026-09-14 15:13:20 UTC",
+  "session_name": "deepmzyme-ec1-baselines-v12",
+  "endpoint": "gpu-g4-s-kkb-use5c0-2sqteooltirnp",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "session_stopped": true,
+  "endpoint_absent_after_stop": true,
+  "stop_output": "Session terminated.",
+  "sessions_output": "No active sessions found on server.",
+  "completed_archived_runs": 12,
+  "held_out_evaluation": false
+}

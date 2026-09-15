@@ -1,0 +1,25 @@
+{
+  "completed_runs": 12,
+  "epochs_per_run": 30,
+  "total_epochs": 360,
+  "shared_ordered_train_validation_examples": true,
+  "checkpoint_selection_verified": true,
+  "recalls_verified_from_group_confusion_matrices": true,
+  "validation_group_support": {
+    "1": 8,
+    "2": 6,
+    "3": 20,
+    "4": 4,
+    "5": 1,
+    "6": 2,
+    "7": 1
+  },
+  "all_training_used_cuda": true,
+  "all_archives_sha256_verified": true,
+  "all_drive_receipts_verified": true,
+  "drive_verification": "metadata_size",
+  "held_out_evaluation": false,
+  "evidence_grade": 3,
+  "initial_fixed_split": true,
+  "promoted": false
+}

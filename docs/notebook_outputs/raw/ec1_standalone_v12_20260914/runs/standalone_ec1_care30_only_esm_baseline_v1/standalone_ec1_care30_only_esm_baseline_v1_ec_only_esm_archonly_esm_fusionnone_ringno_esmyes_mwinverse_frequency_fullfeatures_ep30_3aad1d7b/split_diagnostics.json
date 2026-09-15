@@ -1,0 +1,70 @@
+{
+  "task": "ec",
+  "metal_label_scheme": "merge_fe_class_viii",
+  "train_val_split_by": "pdbid",
+  "split_by": "pdbid",
+  "split_by_scope": "train_validation_only",
+  "test_split_source": "explicit_test_structure_dir_and_test_summary_csv",
+  "val_fraction": 0.15,
+  "split_seed": 42,
+  "effective_split_seed": 42,
+  "split_stratify_by": "active_targets",
+  "model_seed": 43,
+  "n_folds": null,
+  "fold_index": null,
+  "n_train_pockets": 993,
+  "n_val_pockets": 175,
+  "n_train_groups": 751,
+  "n_val_groups": 42,
+  "train_val_overlap_pocket_id": 0,
+  "train_val_overlap_structure_id": 0,
+  "train_val_overlap_pdbid_chain": 0,
+  "train_val_overlap_pdbid": 0,
+  "train_val_overlap_counts": {
+    "pocket_id": 0,
+    "structure_id": 0,
+    "pdbid_chain": 0,
+    "pdbid": 0
+  },
+  "train_val_overlap_examples": {
+    "pocket_id": [],
+    "structure_id": [],
+    "pdbid_chain": [],
+    "pdbid": []
+  },
+  "split_leakage_guard": "split_by=pdbid keeps every chain and pocket from the same PDB entry on one side of train/validation, so pdbid_chain overlap is also blocked. This guards repeated or binuclear same-chain metal sites from leaking into validation.",
+  "train_metal_distribution": {
+    "Mn": 344,
+    "Cu": 34,
+    "Zn": 416,
+    "Class VIII": 189
+  },
+  "val_metal_distribution": {
+    "Mn": 41,
+    "Cu": 39,
+    "Zn": 85,
+    "Class VIII": 7
+  },
+  "train_ec_distribution": {
+    "1": 208,
+    "2": 128,
+    "3": 504,
+    "4": 83,
+    "5": 33,
+    "6": 32,
+    "7": 5
+  },
+  "val_ec_distribution": {
+    "1": 36,
+    "2": 22,
+    "3": 90,
+    "4": 15,
+    "5": 5,
+    "6": 5,
+    "7": 2
+  },
+  "missing_train_metal_classes": [],
+  "missing_val_metal_classes": [],
+  "missing_train_ec_classes": [],
+  "missing_val_ec_classes": []
+}

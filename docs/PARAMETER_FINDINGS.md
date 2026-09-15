@@ -61,19 +61,34 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ## Current validation anchors and challengers
 
-### EC1 standalone v12 campaign: partial evidence only
+### EC1 standalone v12 campaign: initial fixed-split evidence
 
-Three of the twelve authorized CARE30 EC1 baselines completed and were
-archived before a Colab connection failure. Only-GVP at `3e-5` has group-level
-EC1 balanced accuracy `0.393452 ± 0.036197` (sample SD, seeds 42/43, one fixed
-protein split, 30 epochs). Both selected checkpoints have zero EC5 and EC7
-recall. Only-GVP at `1e-4` scored `0.555952` for seed 42, but its paired run
-is unverified. This does not establish a learning-rate preference or family
-ranking. The other families have not run, and the validation support is only
-one protein for EC5 and EC7. No promotion or auxiliary-learning conclusion is
-supported. See the [partial summary](notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
-and its exact per-class and split evidence. Held-out metrics were neither
-produced nor used.
+All twelve CARE30 EC1 standalone runs completed under the matched two-LR,
+two-seed, 30-epoch protocol. Selection uses
+`val_ec_group_level_1_balanced_acc`; held-out metrics were neither generated
+nor used. Scores below are means and sample SDs across seeds 42/43 on the
+same 42-protein validation partition. This is Grade 3, not promotion.
+
+| Family | LR | Seed 42 | Seed 43 | Mean ± sample SD | Minimum |
+|---|---:|---:|---:|---:|---:|
+| Only-GVP | 3e-05 | 0.4190 | 0.3679 | 0.3935 ± 0.0362 | 0.3679 |
+| Only-GVP | 0.0001 | 0.5560 | 0.5393 | 0.5476 ± 0.0118 | 0.5393 |
+| Only-ESM | 3e-05 | 0.8393 | 0.9036 | 0.8714 ± 0.0455 | 0.8393 |
+| Only-ESM | 0.0001 | 0.9821 | 0.9571 | 0.9696 ± 0.0177 | 0.9571 |
+| GVP + late fusion | 3e-05 | 0.8571 | 0.8571 | 0.8571 ± 0.0000 | 0.8571 |
+| GVP + late fusion | 0.0001 | 0.8571 | 0.9929 | 0.9250 ± 0.0960 | 0.8571 |
+
+
+The largest observed mean is Only-ESM at `0.0001`. Retain it
+as an initial standalone reference candidate, without inferring a general
+architecture advantage or auxiliary-learning benefit. Every family received
+the same LR, seed and epoch opportunities. Only-GVP retains zero seed-mean
+recall for some active classes; late fusion at `3e-5` misses EC5 in both
+seeds. EC5 and EC7 each have only one validation protein, limiting rare-class
+conclusions. Grouped folds and paired confidence intervals remain absent.
+See the [completed summary](notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
+for per-class recalls, per-seed selected epochs and full provenance. The
+metal comparison is still pending and has no new result from this campaign.
 
 ### Historical metal anchors
 

@@ -1,5 +1,5 @@
 {
-  "completed_runs": 3,
+  "completed_runs": 12,
   "runs": [
     {
       "family": "Only-GVP",
@@ -51,6 +51,159 @@
         "7": 1.0
       },
       "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff"
+    },
+    {
+      "family": "Only-GVP",
+      "lr": 0.0001,
+      "seed": 43,
+      "selected_epoch": 23,
+      "balanced_accuracy": 0.5392857142857143,
+      "per_class_recall": {
+        "1": 0.625,
+        "2": 1.0,
+        "3": 0.65,
+        "4": 0.5,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6"
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.8392857142857143,
+      "per_class_recall": {
+        "1": 0.875,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca"
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 3e-05,
+      "seed": 43,
+      "selected_epoch": 28,
+      "balanced_accuracy": 0.9035714285714286,
+      "per_class_recall": {
+        "1": 0.875,
+        "2": 1.0,
+        "3": 0.95,
+        "4": 0.5,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b"
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 10,
+      "balanced_accuracy": 0.9821428571428571,
+      "per_class_recall": {
+        "1": 0.875,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e"
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 0.0001,
+      "seed": 43,
+      "selected_epoch": 24,
+      "balanced_accuracy": 0.9571428571428572,
+      "per_class_recall": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.95,
+        "4": 0.75,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25"
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.8571428571428571,
+      "per_class_recall": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701"
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 3e-05,
+      "seed": 43,
+      "selected_epoch": 24,
+      "balanced_accuracy": 0.8571428571428571,
+      "per_class_recall": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7"
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 12,
+      "balanced_accuracy": 0.8571428571428571,
+      "per_class_recall": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21"
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 0.0001,
+      "seed": 43,
+      "selected_epoch": 27,
+      "balanced_accuracy": 0.9928571428571429,
+      "per_class_recall": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.95,
+        "4": 1.0,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      },
+      "run_dir": "/content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0"
     }
   ],
   "family_lr_summary": [
@@ -72,6 +225,106 @@
         "5": 0.0,
         "6": 0.25,
         "7": 0.0
+      }
+    },
+    {
+      "family": "Only-GVP",
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.5476190476190477,
+      "sd": 0.011785113019775828,
+      "minimum": 0.5392857142857143,
+      "per_class_recall_mean": {
+        "1": 0.75,
+        "2": 0.8333333333333333,
+        "3": 0.625,
+        "4": 0.625,
+        "5": 0.0,
+        "6": 0.0,
+        "7": 1.0
+      }
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.8714285714285714,
+      "sd": 0.04545686450484948,
+      "minimum": 0.8392857142857143,
+      "per_class_recall_mean": {
+        "1": 0.875,
+        "2": 1.0,
+        "3": 0.975,
+        "4": 0.75,
+        "5": 0.5,
+        "6": 1.0,
+        "7": 1.0
+      }
+    },
+    {
+      "family": "Only-ESM",
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.9696428571428571,
+      "sd": 0.017677669529663625,
+      "minimum": 0.9571428571428572,
+      "per_class_recall_mean": {
+        "1": 0.9375,
+        "2": 1.0,
+        "3": 0.975,
+        "4": 0.875,
+        "5": 1.0,
+        "6": 1.0,
+        "7": 1.0
+      }
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.8571428571428571,
+      "sd": 0.0,
+      "minimum": 0.8571428571428571,
+      "per_class_recall_mean": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 1.0,
+        "4": 1.0,
+        "5": 0.0,
+        "6": 1.0,
+        "7": 1.0
+      }
+    },
+    {
+      "family": "GVP + late fusion",
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "mean": 0.925,
+      "sd": 0.09596449173246008,
+      "minimum": 0.8571428571428571,
+      "per_class_recall_mean": {
+        "1": 1.0,
+        "2": 1.0,
+        "3": 0.975,
+        "4": 1.0,
+        "5": 0.5,
+        "6": 1.0,
+        "7": 1.0
       }
     }
   ],

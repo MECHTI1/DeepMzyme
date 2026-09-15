@@ -1,16 +1,40 @@
 {
-  "status": "awaiting_explicit_runtime_reconnection_exception",
-  "completed_archived_verified_runs": [1, 2, 3],
-  "run_4": "launched; completion unverified after CLI connection loss",
-  "runs_5_through_12": "not launched",
-  "session_name": "deepmzyme-ec1-baselines-v12",
-  "created_endpoint": "gpu-g4-s-kkb-use5c0-2sqteooltirnp",
-  "assigned_gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
-  "cli_error": "Session appears to be lost (404/401). Cleaning up.",
-  "authentication_check": "oauth2 valid with colaboratory scope",
-  "remote_sessions_check": "same endpoint still listed, but marked [?]",
-  "runtime_stopped": false,
+  "status": "completed_after_recovery",
+  "completed_archived_verified_runs": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12
+  ],
+  "run_4": "recovered complete without repetition",
+  "runtime_stopped": true,
   "held_out_evaluation": false,
-  "metal_campaign": "pending",
-  "auxiliary_training": "not launched"
+  "initial_interruption": {
+    "status": "awaiting_explicit_runtime_reconnection_exception",
+    "completed_archived_verified_runs": [
+      1,
+      2,
+      3
+    ],
+    "run_4": "launched; completion unverified after CLI connection loss",
+    "runs_5_through_12": "not launched",
+    "session_name": "deepmzyme-ec1-baselines-v12",
+    "created_endpoint": "gpu-g4-s-kkb-use5c0-2sqteooltirnp",
+    "assigned_gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "cli_error": "Session appears to be lost (404/401). Cleaning up.",
+    "authentication_check": "oauth2 valid with colaboratory scope",
+    "remote_sessions_check": "same endpoint still listed, but marked [?]",
+    "runtime_stopped": false,
+    "held_out_evaluation": false,
+    "metal_campaign": "pending",
+    "auxiliary_training": "not launched"
+  }
 }

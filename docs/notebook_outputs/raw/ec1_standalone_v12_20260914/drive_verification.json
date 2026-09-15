@@ -1,0 +1,77 @@
+{
+  "archives": [
+    {
+      "index": 1,
+      "id": "1xy9TiEBGBemQhvRIdIE9zOpjOLpSkYAf",
+      "bytes": 14587081,
+      "parent_verified": true
+    },
+    {
+      "index": 2,
+      "id": "1bPptgDAhJEdojmmEufk8nKyHnDdJwWvy",
+      "bytes": 14579650,
+      "parent_verified": true
+    },
+    {
+      "index": 3,
+      "id": "16i34w95JkXSXaq14UkcOS1zx8-E34saz",
+      "bytes": 14544496,
+      "parent_verified": true
+    },
+    {
+      "index": 4,
+      "id": "1C8vujvCVSL0e2bEZ-xcIQ7IrObLXZ46-",
+      "bytes": 14539973,
+      "parent_verified": true
+    },
+    {
+      "index": 5,
+      "id": "15869g4qyCNShdy8EJtssMrXETtgxFA1E",
+      "bytes": 4390307,
+      "parent_verified": true
+    },
+    {
+      "index": 6,
+      "id": "1PfKoyTgaQB2hgA7g_HzbsRT6N3SLurWt",
+      "bytes": 4391437,
+      "parent_verified": true
+    },
+    {
+      "index": 7,
+      "id": "17sCxrwyhspqFVQGs97pD1zKRfyFSKOFv",
+      "bytes": 4382667,
+      "parent_verified": true
+    },
+    {
+      "index": 8,
+      "id": "1QAUd5Bntlqf1hmHypT94wRkFN8Ri4a7a",
+      "bytes": 4391859,
+      "parent_verified": true
+    },
+    {
+      "index": 9,
+      "id": "1EtsWmyvsGWPXdMAOWC0pLHLs7TZOGQ30",
+      "bytes": 17558586,
+      "parent_verified": true
+    },
+    {
+      "index": 10,
+      "id": "1E_xLgJz9VyboPaXPRZ3KozI7b7pZPi4r",
+      "bytes": 17545841,
+      "parent_verified": true
+    },
+    {
+      "index": 11,
+      "id": "1CbPzEbFPy1IY-ufGbfNMG3KIWSul1Vov",
+      "bytes": 17536110,
+      "parent_verified": true
+    },
+    {
+      "index": 12,
+      "id": "1L_BUALsny6aPDi0Xc9m5kShzmEKtMnfO",
+      "bytes": 17557069,
+      "parent_verified": true
+    }
+  ],
+  "verification": "Drive file IDs, parent folders and byte sizes verified; local SHA256 checked separately."
+}

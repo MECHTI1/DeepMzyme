@@ -42,7 +42,7 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|
-| `ec/care30/standalone-v12/2026-09-14` | Authorized 3 families × 2 LRs × seeds 42/43, 30 epochs, one shared protein split; 3 runs verified, run 4 unverified after Colab connection loss, runs 5–12 not launched | Only-GVP `3e-5` pair mean group EC1 BA 0.393452; `1e-4` pair incomplete; no completed family ranking or promotion | 6 overall; 3 for the completed two-seed pair | No held-out inference or metrics | [partial summary](summaries/summary_ec1_standalone_v12_20260914.md); [portable evidence](raw/ec1_standalone_v12_20260914/) |
+| `ec/care30/standalone-v12/2026-09-14` | 3 families × 2 LRs × seeds 42/43, 30 epochs, one shared protein split; all 12 runs verified and archived | Initial standalone references; largest observed mean 0.969643 (Only-ESM, LR 0.0001); no promotion | 3 | No held-out inference or metrics | [summary](summaries/summary_ec1_standalone_v12_20260914.md); [portable evidence](raw/ec1_standalone_v12_20260914/) |
 
 ## Comparison identity
 

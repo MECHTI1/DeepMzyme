@@ -1,0 +1,28 @@
+# Active Run Configuration
+
+Source mode: notebook planning
+Result stage: manual_configurations
+Task: ec
+Run mode: manual_configurations
+Run batch ID: standalone_ec1_care30_only_esm_baseline_v1
+Dataset name: CARE_task1_30_clusterRes30_train_test_metallo
+Resolved dataset root: /content/deepmzyme_bundle/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo
+Train dir: /content/deepmzyme_bundle/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train
+Test dir: /content/ec1_standalone_v12_20260914/unused_test
+Train CSV: /content/deepmzyme_bundle/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv
+Test CSV: /content/ec1_standalone_v12_20260914/unused_test.csv
+Split policy: split_by=pdbid, val_fraction=0.15, split_seed=42, n_folds=, fold_index=
+Summary basename: ec_four_class_only_esm_care_task1_30_clusterres30_metallo_batch-standalone_ec1_care30_only_esm_baseline_v1_split-pdbid_fixedval (auto)
+Selection metric: val_ec_group_level_1_balanced_acc
+Model preset: Only-ESM
+Architecture/fusion: only_esm / none
+Run name: standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca
+Run directory: /content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca
+
+## Command
+```bash
+DEEPGM_METAL_LABEL_SCHEME=merge_fe_class_viii PYTHONPATH=/content/DeepMzyme_ec1_baselines/src:/env/python /usr/bin/python3 /content/DeepMzyme_ec1_baselines/src/train.py --task ec --metal-label-scheme merge_fe_class_viii --metal-eligibility-scheme active --structure-dir /content/deepmzyme_bundle/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train --summary-csv /content/deepmzyme_bundle/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv --runs-dir /content/ec1_standalone_v12_20260914/runs/standalone_ec1_care30_only_esm_baseline_v1 --run-name standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca --dataset-bundle-id DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz --dataset-bundle-sha256 90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee --model-architecture only_esm --epochs 30 --batch-size 4 --learning-rate 3e-05 --weight-decay 0.0001 --seed 42 --split-seed 42 --split-stratify-by active_targets --val-fraction 0.15 --train-val-split-by pdbid --selection-metric val_ec_group_level_1_balanced_acc --device cuda --num-workers 0 --pin-memory --node-feature-set conservative --hidden-s 128 --esm-fusion-dim 128 --head-mlp-layers 2 --head-mlp-dropout 0.2 --esm-graph-encoder-dropout 0.1 --classifier-pool-distance-cutoff 0.0 --external-feature-source updated --metal-loss-function cross_entropy --metal-focal-gamma 2.0 --metal-label-smoothing 0.0 --metal-collapsed-loss-weight 0.0 --metal-loss-weight 1.0 --ec-loss-weight 1.0 --metal-class-weight-mode inverse_frequency --mn-loss-multiplier 1.0 --cu-loss-multiplier 1.0 --zn-loss-multiplier 1.0 --fe-loss-multiplier 1.0 --co-loss-multiplier 1.0 --ni-loss-multiplier 1.0 --class-viii-loss-multiplier 1.0 --unsupported-metal-policy error --invalid-structure-policy error --lr-schedule fixed --deterministic --log-per-class-metrics --require-all-task-classes --external-features-root-dir /content/deepmzyme_bundle/DeepMzyme_Data/updated_feature_extraction --ec-label-depth 1 --ec-group-weighting structure_id --ec-class-weight-unit group --ec-contrastive-weight 0.0 --ec-contrastive-temperature 0.1 --esm-embeddings-dir /content/deepmzyme_bundle/DeepMzyme_Data/esm_embeddings --no-prepare-missing-esm-embeddings --no-prepare-missing-ring-edges
+```
+
+## Machine-Readable Payload
+See `active_run_config.json` in the same directory.

@@ -1,0 +1,16 @@
+{
+  "local_commit": "7b2f2d5bcade238ff30591ebacd15a8c80a2f101",
+  "session_name": "deepmzyme-ec1-baselines-v12",
+  "endpoint": "gpu-g4-s-kkb-use5c0-2sqteooltirnp",
+  "original_kernel_reused": true,
+  "recovery": "Restored campaign-owned CLI session record with a fresh runtime proxy credential after user authorized continuation.",
+  "local_source_notebook_playbook_hashes_match_frozen_plan": true,
+  "remote_source_and_readiness_hashes_match_frozen_plan": true,
+  "cuda_forward_backward_rechecked": true,
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "run_4_recovered_complete_without_rerunning": true,
+  "successful_smoke_repeated": false,
+  "protocol_changed": false,
+  "held_out_evaluation": false,
+  "recorded_at_utc": "2026-09-14 14:38:08 UTC"
+}

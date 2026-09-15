@@ -1,5 +1,4 @@
 {
-  "verified_completed_runs": 3,
   "files": [
     {
       "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_dd407a78/best_model_checkpoint.pt",
@@ -165,6 +164,501 @@
       "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff/val_metrics.csv",
       "bytes": 24554,
       "sha256": "53fd718ba1efc69900fd40493da873b30ba9b3b713fcd873cfbb366f51a54013"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/best_model_checkpoint.pt",
+      "bytes": 8663195,
+      "sha256": "5814e22d9ffe50e526ae3819cfeae7d5ed71e18d9c5b1f6949ece1763102f83b"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/dataset_summary.json",
+      "bytes": 769480,
+      "sha256": "a41a4f85c27bdb074e578297f715b8cfe5b54408f1beb3265edcb8bacdb84596"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/epoch_metrics.csv",
+      "bytes": 36657,
+      "sha256": "71f2a4a1872da0012c2bda75bece368667ad7844de1536d9617c65261ecc3b54"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/last_model_checkpoint.pt",
+      "bytes": 8677915,
+      "sha256": "e2e0cebd6c4fd6b1c145aa01273fb0bf126fea62e1cf810b98892ae77840d4a5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/prepare_status.json",
+      "bytes": 5492,
+      "sha256": "e6039cfd71b04c0c80e4fd68ae7048c50c3feb5fa8fae32bb2d892c4b4d5af4b"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/run_config.json",
+      "bytes": 924372,
+      "sha256": "f4683ed8dd9a73cca65bb70195b628e8c0b862320e1915b790f360d9212e3292"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/run_metadata.json",
+      "bytes": 819769,
+      "sha256": "cbed6075bb5f1cb0726346da701bb401979cf2dfb880c41cd225b2c12dcf5abb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "363c5b04e5f4795ac7cf7886c553f556b1257ce3d03af7e1ff8a216c7544671f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/train_metrics.csv",
+      "bytes": 12305,
+      "sha256": "50fee7d8c673ff637f66403f8125f77f0d4079e934d3b35836086286b1d4a074"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/training.log",
+      "bytes": 17141,
+      "sha256": "a2e370fd6d8554164b867139538340921b815e5115817c55519bd4afce6cce28"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_gvp_baseline_v1/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/val_metrics.csv",
+      "bytes": 24683,
+      "sha256": "3816e1528f597368946a240649ad91de8ccfc9ef165ac4de58361f619cd54ae8"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/best_model_checkpoint.pt",
+      "bytes": 2566735,
+      "sha256": "cea240829a5d239108f060c09fa9c243bb08be792ccd00267308dec5ba2d8508"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8c5da52db32bc69cbf0dc1818ecd9972ad178f2131d5af3ee657a8ce4888b0da"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/epoch_metrics.csv",
+      "bytes": 35678,
+      "sha256": "9a0d2ae42487dca10c5e244b8d22dee56f3cf1dae1a80b44b27d89d972bcd4a7"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/last_model_checkpoint.pt",
+      "bytes": 2583567,
+      "sha256": "08c299ce217e41bbafea34fba6caaad7c9a5486aabf67509691928afa86ae970"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/prepare_status.json",
+      "bytes": 5541,
+      "sha256": "f4c618d7f53c42a9ab192a883c3363868708f72a7f48b81057250db3f2ab00ee"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/run_config.json",
+      "bytes": 605382,
+      "sha256": "a2181489d2e4958eb119af6140544f420e5d595a45420f8ed9390fa154d99a3a"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/run_metadata.json",
+      "bytes": 501758,
+      "sha256": "afb951cad22175c45858af451adcf7f3832459f400d23d3d6a5c7ff6d99694f5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/train_metrics.csv",
+      "bytes": 12087,
+      "sha256": "e7a818454a2e34a3e7f8dea91400e7c568b16d9d294a1b8df1d62b5fb92e82c3"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/training.log",
+      "bytes": 17106,
+      "sha256": "b8d852a2016f37bf9af719c4799c473687d54d512810b7fa036b509600af3282"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_b7318aca/val_metrics.csv",
+      "bytes": 23892,
+      "sha256": "2eb6af215f0b8d0dc06d8e89ba4469878e7476a76c8d1db40be64bbd102ae92d"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/best_model_checkpoint.pt",
+      "bytes": 2579407,
+      "sha256": "e90af607d69a08aea6588096c5da8b06e981b8f8ceeecf6a14982d91a947d717"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8b308976ad6b2044d6872865788b2e7381151f16dd4d0053319497c674ac93cd"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/epoch_metrics.csv",
+      "bytes": 35660,
+      "sha256": "37fa2739f8534fba5883505fc57e7d618a9a91914e3c62248a3a3d7cfd7b4a24"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/last_model_checkpoint.pt",
+      "bytes": 2583567,
+      "sha256": "2048a4e49878ca3f9f78ec8668ddf5a7529d81b77cbbd4c07cbc49a3cdd6b8c3"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/prepare_status.json",
+      "bytes": 5541,
+      "sha256": "892c005e69a6c784d9e5e8b98275874457063def7eb96cfc59f1615b0975a191"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/run_config.json",
+      "bytes": 605364,
+      "sha256": "e981499648db5cfa24a5007e7c66a4e6d6dbacf62a1cdedb0c0edd1b9ed10f29"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/run_metadata.json",
+      "bytes": 501758,
+      "sha256": "c7fbd134b178b6ad6a746da9838aed7e24340ecbddebcdfc6c6e1ce94b7d29a9"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "363c5b04e5f4795ac7cf7886c553f556b1257ce3d03af7e1ff8a216c7544671f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/train_metrics.csv",
+      "bytes": 11999,
+      "sha256": "5fa12b7a28c6d66066e95f17ad5e42f8ca857968fb47aab35ff76b6f1256b10e"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/training.log",
+      "bytes": 17106,
+      "sha256": "eb1de95c29964a94a4208045f96e33b8aef2ebcdb4011f6a43ea069b535380df"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_3aad1d7b/val_metrics.csv",
+      "bytes": 23962,
+      "sha256": "9e1780b5494e42f542b56636b2acf1863aa5351118c6bacd3e2c17cd175dbafd"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/best_model_checkpoint.pt",
+      "bytes": 2541391,
+      "sha256": "271e02dbcda547e4ead81fd7e1a281f1d98a64f918f297d2157cda537a0e71f4"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8c5da52db32bc69cbf0dc1818ecd9972ad178f2131d5af3ee657a8ce4888b0da"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/epoch_metrics.csv",
+      "bytes": 32683,
+      "sha256": "749d1639ceb8d0e87b9199ba850db944c7bf256b317217a0bfa288ac7d0628e3"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/last_model_checkpoint.pt",
+      "bytes": 2583567,
+      "sha256": "5e1249db3c0566468758bda86b40893fb2e09d2765dfc0ad456e1325222556e5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/prepare_status.json",
+      "bytes": 5542,
+      "sha256": "00d9bab2d7b91521f2e17e05bcaf0bb8ef35f663038a353fee37767399e093e3"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/run_config.json",
+      "bytes": 602389,
+      "sha256": "020a5640700d1c8b0cd4eb9c9baa6cda08d1e4af5e52a5f0c2b34450330231c0"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/run_metadata.json",
+      "bytes": 501760,
+      "sha256": "ce3c4551a716947fa41a4a547d4a4c0310481df1f55e0d448fd4012822d3d76e"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/train_metrics.csv",
+      "bytes": 9037,
+      "sha256": "aad6c6a19873413f483a161a2be79843177586e6ef6bf7e03bcd2b90c6c4cbf5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/training.log",
+      "bytes": 17136,
+      "sha256": "10bc4a3ac33952969973015ab07ad9283880ef7609f127b30a0d316e3f8c619b"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/val_metrics.csv",
+      "bytes": 23977,
+      "sha256": "80d9cc9cf4a84dd5396ea774827e2517144e210bf89ca29382b2c20e3b457124"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/best_model_checkpoint.pt",
+      "bytes": 2570959,
+      "sha256": "3fcebd0811f991a0f7696f5fa22c57d5b714b7077e1e732cc0c57ff356891418"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8b308976ad6b2044d6872865788b2e7381151f16dd4d0053319497c674ac93cd"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/epoch_metrics.csv",
+      "bytes": 33761,
+      "sha256": "00510e197193e46c325dda49bb97f88901a83ac1b8f7bae4e1933f89cb69230d"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/last_model_checkpoint.pt",
+      "bytes": 2583567,
+      "sha256": "f9fe9db8458ddbfc4a6000094a2132da457d0a1cc49b6702238aed28c6c3a2eb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/prepare_status.json",
+      "bytes": 5542,
+      "sha256": "b5599ad16994751bd3460c3bbad0cbbf726b04fa9eba91fbc8fa92c904a3d623"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/run_config.json",
+      "bytes": 603467,
+      "sha256": "c1a8bb28b37815bec823658263cc1e50f3dd3e62c8d3d89089b1e02e6fe65a94"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/run_metadata.json",
+      "bytes": 501760,
+      "sha256": "310fe04eb214c19f0d3c349ebc70c09da10628ffce9cc989d12a41a41f448756"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "363c5b04e5f4795ac7cf7886c553f556b1257ce3d03af7e1ff8a216c7544671f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/train_metrics.csv",
+      "bytes": 9873,
+      "sha256": "ce921462af73d79a9680989cd13979a278b57db34ea356d988ee5075ff211590"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/training.log",
+      "bytes": 17136,
+      "sha256": "ea53d4b3b8294f4bcf41318cdafd088b62af1273a23f8612e6a1d7895934cc96"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_only_esm_baseline_v1/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/val_metrics.csv",
+      "bytes": 24219,
+      "sha256": "75c8b475cd4fb2bc784372a3e9e9335aecdb299a64d77b957cd770ddc9df0ea3"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/best_model_checkpoint.pt",
+      "bytes": 9716491,
+      "sha256": "0873cfdf5073656622623851bae5f6b9b62a795942a29cb244354e3306232d70"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8c5da52db32bc69cbf0dc1818ecd9972ad178f2131d5af3ee657a8ce4888b0da"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/epoch_metrics.csv",
+      "bytes": 35753,
+      "sha256": "6cf7e3f72bbb630244139a52d27eb1035361d841bd60db68685b74420aa86e42"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/last_model_checkpoint.pt",
+      "bytes": 9733323,
+      "sha256": "2fb1eb9e68e48fd0eb6c6f4b10d7676916ae61d29a0b250d614ff3ae5b4bc647"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/prepare_status.json",
+      "bytes": 5540,
+      "sha256": "dc64c93c5ea94af634f7b64ad32c97e4a4231f58469ea46320a3a480c0a22362"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/run_config.json",
+      "bytes": 605779,
+      "sha256": "5733bc293b7a535686d0d378a465a377a6f7b42c3456b5fe26d4dd84c97bc718"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/run_metadata.json",
+      "bytes": 502080,
+      "sha256": "4603ba2e495dbc6cb8eb318aaeb1fd91cc0fe90b816a3ff502512b3ca2b96670"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/train_metrics.csv",
+      "bytes": 11857,
+      "sha256": "3a73daccd76373070d1b82efca5aa9f9e7898ed81509472d77c66ff22b9b90a8"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/training.log",
+      "bytes": 17126,
+      "sha256": "813f9ff644f6897d413af380bdb91a3c95f493a59b56fbe4a20f0ecac04f7099"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_2f97f701/val_metrics.csv",
+      "bytes": 24197,
+      "sha256": "1e20b676a83e111561379194de11a6c6af8d99546d00d3fbb24d71fbf017b665"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/best_model_checkpoint.pt",
+      "bytes": 9720715,
+      "sha256": "36fcfb780a0c4c2a3e44aa37ecb9eeffe879d73ad083bc358120d80f6ee3ad9a"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8b308976ad6b2044d6872865788b2e7381151f16dd4d0053319497c674ac93cd"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/epoch_metrics.csv",
+      "bytes": 35654,
+      "sha256": "7e25677f65d7c94fceaafcb5ee3b582366ab7d4735ade3cbc7425788d28198c5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/last_model_checkpoint.pt",
+      "bytes": 9733323,
+      "sha256": "9ab26bb54a38078f3b012b44a0efddc6c4b877a220be114f9a1f02ba9249693f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/prepare_status.json",
+      "bytes": 5540,
+      "sha256": "5eb5bee91cd3658ce0bac93a9f2eb4f262556e9e4771fa5d55fd44e96aa3afe5"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/run_config.json",
+      "bytes": 605680,
+      "sha256": "e11ae5055c823b879f77c71b8455b6554c7fd5e102074c8bcc3b1f630d8f98ac"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/run_metadata.json",
+      "bytes": 502080,
+      "sha256": "b3a5115fc6a985ec029a3b8c6f45a473756f883f12ad4c594aae8c3c5d8c3949"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "363c5b04e5f4795ac7cf7886c553f556b1257ce3d03af7e1ff8a216c7544671f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/train_metrics.csv",
+      "bytes": 12063,
+      "sha256": "97e6c463c658460cc507a85df9e709ef695be984c6d2fcb151cfc504082f408b"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/training.log",
+      "bytes": 17126,
+      "sha256": "d58fca42e196b74e7cb74d25eb67ad1435ba7909cfdd71cd9cdebe4dcfc57a96"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_df54a5d7/val_metrics.csv",
+      "bytes": 23892,
+      "sha256": "c1403681f76812e8f54e8885d9b9faa52678a5f454fbfd4e2f2b008b62332304"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/best_model_checkpoint.pt",
+      "bytes": 9695371,
+      "sha256": "2eb416d24ce537ac7569a8349f577094667f90faf74c59b7e03705f7d6871a3a"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8c5da52db32bc69cbf0dc1818ecd9972ad178f2131d5af3ee657a8ce4888b0da"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/epoch_metrics.csv",
+      "bytes": 32923,
+      "sha256": "bbc3db536adaf10d76379db0a11ed9e9dbaa7bb3041d5cc764abca1def747034"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/last_model_checkpoint.pt",
+      "bytes": 9733323,
+      "sha256": "a6f8bb6c52d33d633a07fba793c39c19c500d808e094d9d7d921ad941f993750"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/prepare_status.json",
+      "bytes": 5541,
+      "sha256": "745b1768aa337f36fc44a96dd84f29e6c0135d041891dd83df1eb9aa9bcc49a8"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/run_config.json",
+      "bytes": 602951,
+      "sha256": "b7bd8857a62c7a06bd44c92c7b451b77088049f1972d947d38e45570734dd10f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/run_metadata.json",
+      "bytes": 502082,
+      "sha256": "b0ea6c5c77015b09c102d0dcd4671d61fbc6f5421fe976cf055f2abece9036e1"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "487ea3b6d591fa19beffbe3cf7b44924868454b98963a920b8904d942d09b7cb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/train_metrics.csv",
+      "bytes": 9275,
+      "sha256": "fe711b0e6a33ddf96895dd84f0ae4f717518dba71459620a28d72d2b6166f82d"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/training.log",
+      "bytes": 17156,
+      "sha256": "f52590cbd4cc10fc2a0f246a6732144962fed4499d4a1a3b998f1c78265368ab"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_b3899e21/val_metrics.csv",
+      "bytes": 23979,
+      "sha256": "d647a268382574724af4e75c2c5455a153f6f4b70f7cff46328970a351357920"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/best_model_checkpoint.pt",
+      "bytes": 9726987,
+      "sha256": "e0b6802ca11810e0ba37894e8f3b60c9cd28e5048eea74c9f8be5bb68714986b"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/dataset_summary.json",
+      "bytes": 450161,
+      "sha256": "8b308976ad6b2044d6872865788b2e7381151f16dd4d0053319497c674ac93cd"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/epoch_metrics.csv",
+      "bytes": 33228,
+      "sha256": "b2e662afa711734c97513d51a18ec0c8b0e4c5ac0a651e5e5b6babee72de4f65"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/last_model_checkpoint.pt",
+      "bytes": 9733323,
+      "sha256": "5643a1ddf16359e0424144d31c5f364a0cd561d43c287746ab726a8b633ec428"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/prepare_status.json",
+      "bytes": 5541,
+      "sha256": "d20ca9747fe7845ff7850757eec32dbfa08e3299ff8429d51deb823f462a75eb"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/run_config.json",
+      "bytes": 603256,
+      "sha256": "64eb5149665151b1d703f3e805fa011a646ea8d5be6b97f2ec383e4151447906"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/run_metadata.json",
+      "bytes": 502082,
+      "sha256": "280394bda8e6f187cfdb866e34af4de3cba1fcecf46d2264675837509a6439f2"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/split_diagnostics.json",
+      "bytes": 1738,
+      "sha256": "363c5b04e5f4795ac7cf7886c553f556b1257ce3d03af7e1ff8a216c7544671f"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/train_metrics.csv",
+      "bytes": 9373,
+      "sha256": "33722f4628c9dcd32177fa9fcf0a84f386446655beb10e287772a4d5a8d090c7"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/training.log",
+      "bytes": 17156,
+      "sha256": "50eaeb2f7020f889125ba82feec2631b667701af2b4b285a740dcf30344853e4"
+    },
+    {
+      "path": "runs/standalone_ec1_care30_late_fusion_baseline_v1/standalone_ec1_care30_late_fusion_baseline_v1_ec_gvp_+_late_fusion_archgvp_fusionlate_fusion_ringno_esmyes_mwinverse_frequency_full_876497e0/val_metrics.csv",
+      "bytes": 24186,
+      "sha256": "bbb5f92e8afe193d62c9c0ecf35872bd5ac142c2b091bbd899cefd69d1d25898"
     }
   ],
   "checkpoint_binaries_in_git": false

@@ -1,0 +1,11 @@
+{
+  "archive": "ec1_completed_evidence.tar.gz",
+  "sha256": "fa155a76ed983b62f15f9a79bdb90453ed2d0b1a5151c0ec3a415bf48ea5fdb4",
+  "bytes": 2177715,
+  "drive_file_id": "1j_uVPg5WvKfxH7jIEwMfdsWNviMsVgZq",
+  "drive_url": "https://drive.google.com/file/d/1j_uVPg5WvKfxH7jIEwMfdsWNviMsVgZq/view?usp=drivesdk",
+  "drive_folder_id": "1hhfLcjlTSA4i8VBY3LxCP6yCpycvHy9y",
+  "drive_verified": true,
+  "drive_verification": "metadata_size_and_parent",
+  "completed_runs": 12
+}
