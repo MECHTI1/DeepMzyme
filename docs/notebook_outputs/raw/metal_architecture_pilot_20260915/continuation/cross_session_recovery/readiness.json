@@ -1,0 +1,94 @@
+{
+  "status": "passed",
+  "original_manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+  "feature_content_identical": true,
+  "cache_timestamps_reaudited": true,
+  "verified_completed_runs": 10,
+  "allocated_seconds": 4207.172657012939,
+  "setup": {
+    "session_name": "deepmzyme-metal-geometry-20260915",
+    "allocation_started_epoch": 1789456819.0405653,
+    "repo_root": "/content/DeepMzyme_metal_pilot_v2",
+    "output_dir": "/content/metal_architecture_pilot_10h_v1",
+    "data_root": "/content/deepmzyme_bundle/DeepMzyme_Data",
+    "external_features_root_dir": "/content/metal_architecture_pilot_features/external_overlay",
+    "feature_overlay_manifest": "/content/metal_architecture_pilot_features/external_overlay/feature_overlay_manifest.json",
+    "source_archive": "/content/deepmzyme-metal-pilot-code-v2.tar.gz",
+    "source_sha256": "da596b8842fd72a0c3b1649eab53322225a1a6f3791add326ab0907d02faa516",
+    "overlay_archive": "/content/metal-pilot-feature-overlay.tar.gz",
+    "overlay_sha256": "a4a5347a2194800b448362bd27094ead37999d9e25aa8cba701d3291b6b14dd8",
+    "bundle_sha256": "90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee",
+    "bundle_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz",
+    "restoration_archive": "/content/original_campaign_restoration.tar.gz",
+    "restoration_sha256": "327ab6a7928af5115122d11cc5ecee0264da9469fa78b8889ce70c74659e1c6a",
+    "original_manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+    "recovery_setup_limit_seconds": 3600,
+    "prior_allocated_seconds": 3827.969071149826,
+    "restoration_parts": [
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part000",
+        "bytes": 16777216,
+        "sha256": "35db7eb40e4eb7a1f546024c2d20f32a1298502e874e7e5a8eb6fdba25706102"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part001",
+        "bytes": 16777216,
+        "sha256": "2e8a68ce3e973dec5f741effb8d3d1bed845697926543e575c2659d17df9983d"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part002",
+        "bytes": 16777216,
+        "sha256": "29de90856a8f491f2a5bf3214f80f63d686345f857a1b1e7c86a12f55d11e018"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part003",
+        "bytes": 16777216,
+        "sha256": "57f9a8702034d4c9dcf30671349346963a606aa3fdbe833f11014a257163accf"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part004",
+        "bytes": 16777216,
+        "sha256": "1579644b0f0c73b02b9abc03c02bf5592fd5f2952744efb2ed90ffe0ca818724"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part005",
+        "bytes": 16777216,
+        "sha256": "2cd13fe4892f54d7e0b434222deecc08babbeca4ea9ebd02f8ef354c9c1edeb8"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part006",
+        "bytes": 16777216,
+        "sha256": "f4b762eb35996d871d1d932c494dd4b62e1d3fd57c0176c8404fd6f765febc91"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part007",
+        "bytes": 16777216,
+        "sha256": "72d4d7fadca1ad9979d24657135751c0a45a2a078db9068d68f5a94a57cee037"
+      },
+      {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_coordination_geometry_pilot_v1/colab/original_campaign_restoration.tar.gz.part008",
+        "bytes": 772634,
+        "sha256": "2d7b38c69c4d36571fc1ec94978ed73c1b81cb14728626f7acb8825237fbc10b"
+      }
+    ]
+  },
+  "cuda": {
+    "python": "3.13.15 (main, Aug  6 2026, 11:06:22) [GCC 13.3.0]",
+    "executable": "/usr/bin/python3",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "required_architecture": "sm_120",
+    "compiled_architectures": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ]
+  },
+  "setup_seconds": 379.2045028209686,
+  "held_out_evaluation": false
+}

@@ -1,0 +1,230 @@
+[
+  {
+    "contrast": "B-A",
+    "seed": 42,
+    "candidate_run_id": "G1_B_counts_none_lr3e-05_s42",
+    "reference_run_id": "G1_A_none_none_lr3e-05_s42",
+    "candidate_lr": 3e-05,
+    "reference_lr": 3e-05,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.00048324742268046617,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 95,
+      "candidate_only_correct": 8,
+      "reference_only_correct": 22,
+      "both_wrong": 83
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "B-A",
+    "seed": 42,
+    "candidate_run_id": "G2_B_counts_none_lr0.0001_s42",
+    "reference_run_id": "G2_A_none_none_lr0.0001_s42",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.02057291666666672,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 124,
+      "candidate_only_correct": 22,
+      "reference_only_correct": 21,
+      "both_wrong": 41
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "B-A",
+    "seed": 43,
+    "candidate_run_id": "GR_B_counts_none_lr0.0001_s43",
+    "reference_run_id": "GR_A_none_none_lr0.0001_s43",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "validation-selected LR configurations; differing LRs do not isolate the feature change",
+    "balanced_accuracy_delta": -0.009670317869415745,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 131,
+      "candidate_only_correct": 21,
+      "reference_only_correct": 19,
+      "both_wrong": 37
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "C-B",
+    "seed": 42,
+    "candidate_run_id": "G1_C_counts_angles_none_lr3e-05_s42",
+    "reference_run_id": "G1_B_counts_none_lr3e-05_s42",
+    "candidate_lr": 3e-05,
+    "reference_lr": 3e-05,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.0011678479381442841,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 98,
+      "candidate_only_correct": 10,
+      "reference_only_correct": 5,
+      "both_wrong": 95
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "C-B",
+    "seed": 42,
+    "candidate_run_id": "G2_C_counts_angles_none_lr0.0001_s42",
+    "reference_run_id": "G2_B_counts_none_lr0.0001_s42",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.009060889175257714,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 127,
+      "candidate_only_correct": 22,
+      "reference_only_correct": 19,
+      "both_wrong": 40
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "C-B",
+    "seed": 43,
+    "candidate_run_id": "GR_C_counts_angles_none_lr0.0001_s43",
+    "reference_run_id": "GR_B_counts_none_lr0.0001_s43",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "validation-selected LR configurations; differing LRs do not isolate the feature change",
+    "balanced_accuracy_delta": -0.012644974226804107,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 130,
+      "candidate_only_correct": 12,
+      "reference_only_correct": 22,
+      "both_wrong": 44
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "D-B",
+    "seed": 42,
+    "candidate_run_id": "G1_D_counts_per_metal_lr3e-05_s42",
+    "reference_run_id": "G1_B_counts_none_lr3e-05_s42",
+    "candidate_lr": 3e-05,
+    "reference_lr": 3e-05,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.0013289304123711432,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 100,
+      "candidate_only_correct": 2,
+      "reference_only_correct": 3,
+      "both_wrong": 103
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "D-B",
+    "seed": 42,
+    "candidate_run_id": "G2_D_counts_per_metal_lr0.0001_s42",
+    "reference_run_id": "G2_B_counts_none_lr0.0001_s42",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": -0.00563788659793818,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 130,
+      "candidate_only_correct": 24,
+      "reference_only_correct": 16,
+      "both_wrong": 38
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "D-B",
+    "seed": 43,
+    "candidate_run_id": "GR_D_counts_per_metal_lr0.0001_s43",
+    "reference_run_id": "GR_B_counts_none_lr0.0001_s43",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "validation-selected LR configurations; differing LRs do not isolate the feature change",
+    "balanced_accuracy_delta": -0.020779639175257825,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 139,
+      "candidate_only_correct": 7,
+      "reference_only_correct": 13,
+      "both_wrong": 49
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "E-D",
+    "seed": 42,
+    "candidate_run_id": "G1_E_counts_angles_per_metal_lr3e-05_s42",
+    "reference_run_id": "G1_D_counts_per_metal_lr3e-05_s42",
+    "candidate_lr": 3e-05,
+    "reference_lr": 3e-05,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": 0.000684600515463929,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 85,
+      "candidate_only_correct": 26,
+      "reference_only_correct": 17,
+      "both_wrong": 80
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "E-D",
+    "seed": 42,
+    "candidate_run_id": "G2_E_counts_angles_per_metal_lr0.0001_s42",
+    "reference_run_id": "G2_D_counts_per_metal_lr0.0001_s42",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "shared-LR feature contrast",
+    "balanced_accuracy_delta": -0.004867375429553289,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 144,
+      "candidate_only_correct": 9,
+      "reference_only_correct": 10,
+      "both_wrong": 45
+    },
+    "descriptive_only": true
+  },
+  {
+    "contrast": "E-D",
+    "seed": 43,
+    "candidate_run_id": "GR_E_counts_angles_per_metal_lr0.0001_s43",
+    "reference_run_id": "GR_D_counts_per_metal_lr0.0001_s43",
+    "candidate_lr": 0.0001,
+    "reference_lr": 0.0001,
+    "matched_learning_rate": true,
+    "interpretation": "validation-selected LR configurations; differing LRs do not isolate the feature change",
+    "balanced_accuracy_delta": -0.011844931271477566,
+    "validation_sites": 208,
+    "counts": {
+      "both_correct": 129,
+      "candidate_only_correct": 15,
+      "reference_only_correct": 17,
+      "both_wrong": 47
+    },
+    "descriptive_only": true
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "status": "reconciled_for_linked_retry",
+  "attempt_id": "attempt_012",
+  "exact_attempt_timing_available": false,
+  "last_observed_epoch": 3,
+  "completed": false,
+  "cumulative_allocation_accounting": "Full original interval 3827.969071149826 seconds already counted.",
+  "historical_raw_evidence_preserved": true,
+  "original_manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5"
+}

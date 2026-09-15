@@ -1,0 +1,15 @@
+{
+  "pid": 46505,
+  "log": "/content/metal_coordination_geometry_pilot_v1/host_step_022.log",
+  "command": [
+    "/usr/bin/python3",
+    "/content/campaign_control.py",
+    "geometry",
+    "worker",
+    "--phase",
+    "execute",
+    "--allowed-blocks",
+    "S,G1,G2,GR"
+  ],
+  "started_epoch": 1789465125.1220496
+}

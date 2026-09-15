@@ -218,10 +218,15 @@ def pocket_to_pyg_data(
     node_feature_set: str = "conservative",
     omit_node_features: tuple[str, ...] | list[str] = (),
     metal_node_mode: str = "none",
+    shell_role_source: str = "edge_mode",
 ) -> Data:
     metal_node_mode = validate_metal_node_mode(metal_node_mode)
     effective_use_ring_edges = bool(use_ring_edges or require_ring_edges)
-    shell_roles = compute_shell_roles(pocket, use_ring_edges=effective_use_ring_edges)
+    shell_roles = compute_shell_roles(
+        pocket,
+        use_ring_edges=effective_use_ring_edges,
+        shell_role_source=shell_role_source,
+    )
     v_net = compute_net_ligand_vector(pocket)
     residue_node_dicts = [
         residue_to_stage1_node_features(

@@ -1,0 +1,20 @@
+{
+  "command": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m pytest tests/test_metal_ec_association.py -q",
+  "exit_code": 0,
+  "tests_passed": 10,
+  "pytest_reported_seconds": 5.18,
+  "evidence_origin": "Observed local pytest execution; this receipt records that output",
+  "analysis_source_sha256": "0566cfc58571fbfb5f4bf2427ef3dc3849a6dd37111bbd9d30a4a5fe98376ad0",
+  "test_source_sha256": "31e7ec0d280f9a5b45cf51ad68d6da43d3a2c3bbf796aab20cef21dd2b522e5b",
+  "python": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:20:58) [GCC 14.3.0]",
+  "executable": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python",
+  "interpreter_choice": "Explicit repository AGENTS interpreter; differs from IDE-reported .venv interpreter",
+  "packages": {
+    "numpy": "2.4.4",
+    "torch": "2.11.0",
+    "biopython": "1.86",
+    "pytest": "9.1.1"
+  },
+  "model_training": false,
+  "gpu_allocation": false
+}

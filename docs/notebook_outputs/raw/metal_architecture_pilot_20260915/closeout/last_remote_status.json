@@ -1,0 +1,40 @@
+{
+  "state": {
+    "status": "running",
+    "block": "A1",
+    "run_id": "A1_2_four_class_lr3e-05_s42",
+    "allocated_seconds": 3476.252614736557
+  },
+  "readiness": {
+    "status": "passed",
+    "manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "python": "3.13.15 (main, Aug  6 2026, 11:06:22) [GCC 13.3.0]",
+    "compiled_architectures": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "cuda_forward_backward": true,
+    "peak_allocated_bytes": 3113984,
+    "held_out_evaluation": false,
+    "data_root": "/content/deepmzyme_bundle/DeepMzyme_Data",
+    "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1"
+  },
+  "attempts": 12,
+  "latest": {
+    "attempt_id": "attempt_012",
+    "run_id": "A1_2_four_class_lr3e-05_s42",
+    "status": "running",
+    "elapsed_seconds": null,
+    "error": null
+  },
+  "epochs": 3,
+  "last_epoch_native_balanced_accuracy": "0.5471837414089347",
+  "log_tail": "metal_class_recall=[Mn:0.8893(n=551),Cu:0.0000(n=70),Zn:0.0000(n=175),Class VIII:0.4286(n=385)] val_metal_class_recall=[Mn:0.9588(n=97),Cu:0.0000(n=15),Zn:0.0000(n=32),Class VIII:0.4219(n=64)] train_metal_collapsed4_class_recall=[Mn:0.8893(n=551),Cu:0.0000(n=70),Zn:0.0000(n=175),Class VIII:0.4286(n=385)] val_metal_collapsed4_class_recall=[Mn:0.9588(n=97),Cu:0.0000(n=15),Zn:0.0000(n=32),Class VIII:0.4219(n=64)]\nepoch=2 train_loss=1.2682 lr=3e-05 train_metal_acc=0.6503 val_loss=1.2508 val_metal_acc=0.4327 val_metal_bal_acc=0.4671 val_metal_min_recall=0.3505 val_class_viii_recall=0.5156 val_joint_bal_acc=0.4671 val_joint_macro_f1=0.4881 metal_loss_scale=1.0000 ec_loss_scale=1.0000 train_metal_class_recall=[Mn:0.8457(n=551),Cu:0.4857(n=70),Zn:0.2571(n=175),Class VIII:0.5792(n=385)] val_metal_class_recall=[Mn:0.3505(n=97),Cu:0.5333(n=15),Zn:0.4688(n=32),Class VIII:0.5156(n=64)] train_metal_collapsed4_class_recall=[Mn:0.8457(n=551),Cu:0.4857(n=70),Zn:0.2571(n=175),Class VIII:0.5792(n=385)] val_metal_collapsed4_class_recall=[Mn:0.3505(n=97),Cu:0.5333(n=15),Zn:0.4688(n=32),Class VIII:0.5156(n=64)]\nepoch=3 train_loss=1.1403 lr=3e-05 train_metal_acc=0.6876 val_loss=1.1762 val_metal_acc=0.4808 val_metal_bal_acc=0.5472 val_metal_min_recall=0.3814 val_class_viii_recall=0.5156 val_joint_bal_acc=0.5472 val_joint_macro_f1=0.5249 metal_loss_scale=1.0000 ec_loss_scale=1.0000 train_metal_class_recall=[Mn:0.8530(n=551),Cu:0.8143(n=70),Zn:0.3257(n=175),Class VIII:0.5922(n=385)] val_metal_class_recall=[Mn:0.3814(n=97),Cu:0.6667(n=15),Zn:0.6250(n=32),Class VIII:0.5156(n=64)] train_metal_collapsed4_class_recall=[Mn:0.8530(n=551),Cu:0.8143(n=70),Zn:0.3257(n=175),Class VIII:0.5922(n=385)] val_metal_collapsed4_class_recall=[Mn:0.3814(n=97),Cu:0.6667(n=15),Zn:0.6250(n=32),Class VIII:0.5156(n=64)]\n"
+}

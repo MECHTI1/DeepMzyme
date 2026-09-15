@@ -1,0 +1,11 @@
+{
+  "arm_sha256": {
+    "A": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+    "B": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+    "C": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+    "D": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+    "E": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+  },
+  "same_graph_pairs_verified": true,
+  "metal_node_comparison": "Adding metal nodes also changes the fitted edge normalization distribution"
+}

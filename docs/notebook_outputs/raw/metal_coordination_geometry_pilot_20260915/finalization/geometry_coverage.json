@@ -1,0 +1,122 @@
+[
+  {
+    "id": "S_A_none_none_lr3e-05_s42",
+    "arm": "A",
+    "block": "S",
+    "completed": true
+  },
+  {
+    "id": "S_B_counts_none_lr3e-05_s42",
+    "arm": "B",
+    "block": "S",
+    "completed": true
+  },
+  {
+    "id": "S_C_counts_angles_none_lr3e-05_s42",
+    "arm": "C",
+    "block": "S",
+    "completed": true
+  },
+  {
+    "id": "S_D_counts_per_metal_lr3e-05_s42",
+    "arm": "D",
+    "block": "S",
+    "completed": true
+  },
+  {
+    "id": "S_E_counts_angles_per_metal_lr3e-05_s42",
+    "arm": "E",
+    "block": "S",
+    "completed": true
+  },
+  {
+    "id": "G1_A_none_none_lr3e-05_s42",
+    "arm": "A",
+    "block": "G1",
+    "completed": true
+  },
+  {
+    "id": "G1_B_counts_none_lr3e-05_s42",
+    "arm": "B",
+    "block": "G1",
+    "completed": true
+  },
+  {
+    "id": "G1_C_counts_angles_none_lr3e-05_s42",
+    "arm": "C",
+    "block": "G1",
+    "completed": true
+  },
+  {
+    "id": "G1_D_counts_per_metal_lr3e-05_s42",
+    "arm": "D",
+    "block": "G1",
+    "completed": true
+  },
+  {
+    "id": "G1_E_counts_angles_per_metal_lr3e-05_s42",
+    "arm": "E",
+    "block": "G1",
+    "completed": true
+  },
+  {
+    "id": "G2_A_none_none_lr0.0001_s42",
+    "arm": "A",
+    "block": "G2",
+    "completed": true
+  },
+  {
+    "id": "G2_B_counts_none_lr0.0001_s42",
+    "arm": "B",
+    "block": "G2",
+    "completed": true
+  },
+  {
+    "id": "G2_C_counts_angles_none_lr0.0001_s42",
+    "arm": "C",
+    "block": "G2",
+    "completed": true
+  },
+  {
+    "id": "G2_D_counts_per_metal_lr0.0001_s42",
+    "arm": "D",
+    "block": "G2",
+    "completed": true
+  },
+  {
+    "id": "G2_E_counts_angles_per_metal_lr0.0001_s42",
+    "arm": "E",
+    "block": "G2",
+    "completed": true
+  },
+  {
+    "id": "GR_A_none_none_lr0.0001_s43",
+    "arm": "A",
+    "block": "GR",
+    "completed": true
+  },
+  {
+    "id": "GR_B_counts_none_lr0.0001_s43",
+    "arm": "B",
+    "block": "GR",
+    "completed": true
+  },
+  {
+    "id": "GR_C_counts_angles_none_lr0.0001_s43",
+    "arm": "C",
+    "block": "GR",
+    "completed": true
+  },
+  {
+    "id": "GR_D_counts_per_metal_lr0.0001_s43",
+    "arm": "D",
+    "block": "GR",
+    "completed": true
+  },
+  {
+    "id": "GR_E_counts_angles_per_metal_lr0.0001_s43",
+    "arm": "E",
+    "block": "GR",
+    "completed": true
+  }
+]

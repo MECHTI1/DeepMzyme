@@ -439,6 +439,20 @@ Tracked metadata:
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
 | CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation |
 
+**2026-09-15 incidental CARE metadata access:** while locating a development
+PDB-to-UniProt mapping for the metal–EC association analysis, a broad source
+search printed snippets from
+`CARE_prepare_training_and_test_set/provenance/clusterRes30/metadata/test/candidate_site_summary.csv`.
+The truncated output included identifiers, metal and EC annotations, catalytic
+and selection fields, and AlphaFill/cluster provenance. It also printed the
+header of that directory's
+`data_summarazing_table_transition_metals_whether_catalytic.csv`. The exact
+number of displayed candidate rows was not retained. No test predictions,
+aggregate association statistics, training, or model selections used those
+snippets. Subsequent association inputs are explicitly allowlisted development
+artifacts. This records metadata exposure; it is not a held-out model
+evaluation or a claim that no test metadata has ever been viewed.
+
 ## Current bundles
 
 ### Hugging Face repository inventory

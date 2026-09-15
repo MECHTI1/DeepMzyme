@@ -770,6 +770,154 @@ playbook.
 
 For the cross-document run order and output-folder map, see `docs/README.md`.
 
+## Bounded matched RING continuation — Stage 2B
+
+This is a separately identified continuation after the architecture and
+coordination-geometry pilots have closed. It addresses one missing controlled
+comparison in `Plan.md`; it does not replace Stage 5G, serious HPO, or Stage 6.
+Use `src/run_metal_ring_pilot.py` with profile `metal_ring_pilot_v1`.
+
+### Fixed comparison and schedule
+
+Both arms use direct `four_class` training, canonical `merge_fe_class_viii`,
+with `metal_eligibility_scheme=six_class` to retain the original certified
+development cohort. Use only the external training partition of the
+non-overlapped PinMyMetal dataset, split internally by `pdbid`, validation
+fraction 0.15, split seed 42, and metal-site stratification. Freeze the parent
+manifest and ordered retained split by SHA-256 before preparing inputs.
+
+| Block | Family | RING | Learning rates | Model seeds | Epochs | Fits |
+|---|---|---|---|---|---|---|
+| S | Only-GVP and graph-level late fusion | Off, on | `3e-5` | 42 | 1 | 4 |
+| GVP | Only-GVP | Off, on | `3e-5`, `1e-4` | 42, 43 | 50 | 8 |
+| LATE, optional | GVP + graph-level late fusion | Off, on | `3e-5`, `1e-4` | 42, 43 | 50 | 8 |
+
+Train all controls freshly under the same frozen source. Do not reuse an old
+RING-off result as a cell in this matrix. Run each family in increasing LR,
+then seed, with RING off followed by on. No LR is selected to prune this matrix.
+
+Fixed controls: conservative node features, radius 6 Å, 10 Å pocket extraction,
+classifier pooling cutoff 0, residue-only readout, no explicit metal nodes,
+`site_geometry_features=legacy`, no augmentation, batch 8, weight decay
+`1e-4`, inverse-frequency weighted cross entropy, zero label smoothing, no
+collapsed auxiliary loss, deterministic fixed LR schedule. Select checkpoints
+by `val_metal_balanced_acc`. Preserve the baseline encoder dimensions and
+head settings resolved from the standalone notebook recipe; save every
+expanded CLI command and parsed configuration in the manifest.
+
+Set `--shell-role-source geometry` in **both** arms. The default `edge_mode`
+otherwise changes second-shell node annotations when RING is enabled, which
+would confound an edge comparison. This new option preserves old behavior by
+default and is explicitly set by this standalone runner; no notebook default
+is changed. The off arm omits `--use-ring-edges` and `--require-ring-edges`;
+the on arm requires both. Both disable missing-RING preparation. Missing,
+malformed, or inconsistent input features fail readiness.
+
+The comparison estimates RING edges and interaction features **with their
+training-fitted edge normalization**. Node inputs must match exactly in the
+full retained-cohort audit. Edge normalization may differ between arms and
+must be reported. RING can annotate existing radius edges and add pairs;
+record these separately. This recipe does not consume the raw RING `Angle`
+column and does not add a metal node or explicit coordination-angle inputs.
+
+### Original budget and persistence
+
+Use one named G4 Colab allocation at a time. Carry both closed earlier
+allocation intervals and exact category costs into a new immutable
+`budget_handoff.json` under profile `metal_ring_continuation_budget_v1`.
+Do not alter the original campaign receipts or restart its clock.
+
+- Original total allocation cap: 36,000 seconds; training cutoff: 34,200
+  cumulative seconds, retaining 1,800 seconds for closeout.
+- Original normal-work cap: 27,000 seconds; retry cap: 3,600 seconds. Deduct
+  earlier recorded usage before admitting any new work.
+- New provisioning, uploads and bootstrap: at most 1,800 seconds, charged
+  once to normal work through `bootstrap_budget_usage.json` and continuously
+  to the allocation clock.
+- New full-cohort readiness: at most 1,200 seconds per attempt, charged to
+  normal work, or retry allowance for its one linked retry. This is not a
+  renewed original first-hour profiling allowance. The ceiling accommodates
+  four complete model preparations plus full-cohort graph/cache checks;
+  ordinary prior single-fit setup timings are insufficient to budget this
+  combined audit. It does not increase the original cumulative caps.
+  Readiness uses one CPU thread for Torch/OMP/MKL/OpenBLAS to avoid excessive
+  threading overhead on many small graph operations. Full training keeps the
+  same runtime settings for both edge arms.
+- Admit a complete remaining eight-fit family block only when the sum of
+  measured per-family/per-RING setup plus epoch forecasts, multiplied by
+  1.25, fits both the remaining normal-work allowance and training deadline.
+  Recheck before each fit. A partial family block is incomplete evidence.
+- Persist each completed or failed attempt to local storage and Drive,
+  verify its archive hash locally and Drive ID/size/parent, and return the
+  receipt before the next attempt. Preserve failure logs and linked retries.
+- Stop the owned allocation on completion or failure and verify its absence.
+
+### Exact standalone execution
+
+Bootstrap prepares these explicit paths and verified persistence receipt.
+`SOURCE_COMMIT` identifies the Git base; the source archive and manifest
+separately hash the complete working snapshot, including uncommitted files.
+
+```bash
+python /content/DeepMzyme_ring_v1/src/run_metal_ring_pilot.py plan \
+  --data-root /content/deepmzyme_bundle/DeepMzyme_Data \
+  --output-dir /content/metal_ring_pilot_v1 \
+  --source-commit "$SOURCE_COMMIT" \
+  --parent-reference-dir /content/metal_ring_parent_reference \
+  --external-features-root-dir /content/metal_architecture_pilot_features/external_overlay \
+  --feature-overlay-manifest /content/metal_architecture_pilot_features/external_overlay/feature_overlay_manifest.json \
+  --budget-root /content/metal_ring_continuation_budget_v1
+
+python /content/DeepMzyme_ring_v1/src/run_metal_ring_pilot.py preflight \
+  --output-dir /content/metal_ring_pilot_v1 \
+  --budget-root /content/metal_ring_continuation_budget_v1 \
+  --allocation-started-epoch "$ALLOCATION_STARTED_EPOCH" \
+  --persistence-receipt /content/metal_ring_persistence_receipt.json
+
+# Invoke once per attempt, after archiving and verifying the previous attempt.
+python /content/DeepMzyme_ring_v1/src/run_metal_ring_pilot.py execute \
+  --output-dir /content/metal_ring_pilot_v1 \
+  --budget-root /content/metal_ring_continuation_budget_v1 \
+  --allocation-started-epoch "$ALLOCATION_STARTED_EPOCH" \
+  --persistence-receipt /content/metal_ring_persistence_receipt.json \
+  --max-runs 1
+
+python /content/DeepMzyme_ring_v1/src/run_metal_ring_pilot.py summarize \
+  --output-dir /content/metal_ring_pilot_v1
+```
+
+### Outputs and decision gate
+
+Before training require `campaign_manifest.json`, `commands.txt`,
+`run_matrix.csv`, `expected_split.json`, `ring_input_audit.json`,
+`training_cache_audit.json`, `readiness.json` and the cumulative budget
+handoff/ledger. Readiness certifies cohort equality, fixed node/site inputs,
+valid RING edges, feature availability, and actual-data CUDA forward/backward.
+All four one-epoch smoke runs must complete before full fits are admitted.
+
+Each fit saves `run_config.json`, `run_metadata.json`, `dataset_summary.json`,
+`epoch_metrics.csv`, `best_model_checkpoint.pt`, and
+`last_model_checkpoint.pt`. The runner also writes
+`campaign_attempt_ledger.json`, `campaign_attempt_ledger.csv`,
+`campaign_state.json`, `ring_validation_results.json`, `ring_coverage.json`,
+`ring_screen.csv`, and `ring_decision_record.md`. Family admission receipts
+are `gvp_admission.json` and, if admitted, `late_admission.json`.
+This standalone execution does not generate notebook `active_run_config.*`.
+
+Report on-minus-off validation balanced-accuracy differences separately at
+each matched LR and seed, selected epochs, class recalls, duration, memory
+measurement limits, and edge-normalization differences. Retain seed/LR
+disagreement and rare-class deterioration. Do not select a winning LR from
+the test set or average distinct LRs into one architecture score.
+
+The completed eight-fit block supports exploratory prioritization only.
+Two model seeds on one split do not supply independent validation folds or
+the paired bootstrap CIs required for promotion. Keep all held-out evaluation
+disabled (`INCLUDE_HELD_OUT_TEST_DURING_TRAINING=False` in notebook terms).
+Any later superiority claim requires matched Stage 6 grouped folds/seeds,
+paired-CI and rare-recall gates, followed by Stage 6B final refit before Stage
+7. Missing the optional LATE block leaves that comparison planned.
+
 ## Current Dataset/Final-Reporting Warning
 
 > **Primary final-test route: unresolved scientific decision required before final reporting.**

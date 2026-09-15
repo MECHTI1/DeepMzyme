@@ -1,0 +1,22 @@
+{
+  "status": "installed",
+  "verified_files": {
+    "export_geometry_validation.py": "ebd01031ebcb4ae1009293322dd5eb9d0134b3b8805698107d8e624841bb0e84",
+    "geometry_validation_control.py": "ae66a66f83c96b11b3b155346689766a2e826beec0cce1fa659cf9a9c77e74cd",
+    "campaign_control.py": "19efe40d9b69aacd7802b509d84dd61d105309fc34cacb255b0b020b5a60cbd5"
+  },
+  "campaigns": [
+    {
+      "campaign_dir": "/content/metal_architecture_pilot_10h_v1",
+      "history_entries": 1,
+      "history_sha256": "e102f807202879284605b5a76cb67cfc800079850e298fb09ab9d3dc03e4c746",
+      "source_receipt_preserved": true
+    },
+    {
+      "campaign_dir": "/content/metal_coordination_geometry_pilot_v1",
+      "history_entries": 1,
+      "history_sha256": "d761bc3c5045ff1affdb22be45090bee35cf8633948153661935ca4ddb8050e2",
+      "source_receipt_preserved": true
+    }
+  ]
+}

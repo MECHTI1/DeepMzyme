@@ -1,0 +1,17 @@
+{
+  "completed_smokes": 7,
+  "completed_main_runs": 30,
+  "hybrid_gate": {
+    "status": "deferred",
+    "balanced_accuracy_delta": -0.015302835051546393,
+    "minimum_recall_delta": 0.125,
+    "interpretation": "exploratory_prioritization_not_promotion"
+  },
+  "promoted": false,
+  "held_out_evaluation": false,
+  "evidence": "fixed_split_screen; incomplete blocks excluded from paired comparisons",
+  "state": {
+    "status": "completed",
+    "allocated_seconds": 19130.06236410141
+  }
+}

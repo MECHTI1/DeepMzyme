@@ -1,0 +1,2640 @@
+{
+  "scope": "Descriptive paired validation pocket errors at LR1e-4 for seeds42/43, one fixed PDB-grouped validation split; no causal inference or confidence intervals.",
+  "validation_sites": 208,
+  "validation_pdb_groups": 110,
+  "class_support": {
+    "Mn": 97,
+    "Cu": 15,
+    "Zn": 32,
+    "Class VIII": 64
+  },
+  "source": {
+    "export_report_sha256": "aab44baeb515cdd38a5ca20f3099d8bb2c5cb9cb864dde941a50b865779a4b8f",
+    "paired_validation_errors_sha256": "c5d65e6bb23ce0aaa9ce198b5b68038d22b286bbb30b15772f7d85cc9ac9aa8d",
+    "csv_files": {
+      "G1_A_none_none_lr3e-05_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G1_A_none_none_lr3e-05_s42_validation_predictions.csv",
+        "sha256": "ae49a17afcfca81167a47c580f0734ef35a33b14b6f561d74f1dea50ad46bbee"
+      },
+      "G1_B_counts_none_lr3e-05_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G1_B_counts_none_lr3e-05_s42_validation_predictions.csv",
+        "sha256": "b41836fe64224a6a1a7e22da5ed5f30ac7ff37c82256efcdc890a84c8db01153"
+      },
+      "G1_C_counts_angles_none_lr3e-05_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G1_C_counts_angles_none_lr3e-05_s42_validation_predictions.csv",
+        "sha256": "cc9642e1eccc86f47bb444053f8211e9cb77e21da95e9d5f113409227b1ce709"
+      },
+      "G2_A_none_none_lr0.0001_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G2_A_none_none_lr0.0001_s42_validation_predictions.csv",
+        "sha256": "ec8941f924feadfdb1d506e8dc16c6b1c4a3c2ba5cfe0494c92104bad00ad3ca"
+      },
+      "G2_B_counts_none_lr0.0001_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G2_B_counts_none_lr0.0001_s42_validation_predictions.csv",
+        "sha256": "b555aaf5b342b74ca6efdc419103774e03af0757579e55b7e5e1c1ee3ce2318c"
+      },
+      "G2_C_counts_angles_none_lr0.0001_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G2_C_counts_angles_none_lr0.0001_s42_validation_predictions.csv",
+        "sha256": "1ba6b617525d938e0c9f6c1a9f6bad7a9583f1faee04f5e3f57c187bc50f777e"
+      },
+      "GR_A_none_none_lr0.0001_s43": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/GR_A_none_none_lr0.0001_s43_validation_predictions.csv",
+        "sha256": "3e4a112195a6d6b5c00f8580c0b9e349eb2ec013a9d59b4b4f5a8c3cfb23dd72"
+      },
+      "GR_B_counts_none_lr0.0001_s43": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/GR_B_counts_none_lr0.0001_s43_validation_predictions.csv",
+        "sha256": "b918f304f9d9898bae470127a0aaeef7494bc4a612ed6bd43094d913673ab700"
+      },
+      "GR_C_counts_angles_none_lr0.0001_s43": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/GR_C_counts_angles_none_lr0.0001_s43_validation_predictions.csv",
+        "sha256": "59d9be402569545ffdfe095685530d1163ea2f5c71ca8b37996d1b90792b5fe9"
+      },
+      "G1_D_counts_per_metal_lr3e-05_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G1_D_counts_per_metal_lr3e-05_s42_validation_predictions.csv",
+        "sha256": "e73ff8a177c1ab146e9b15ebc1bd82d2afe470dabb9b262433cdb831a08fdc97"
+      },
+      "G1_E_counts_angles_per_metal_lr3e-05_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G1_E_counts_angles_per_metal_lr3e-05_s42_validation_predictions.csv",
+        "sha256": "ad2670fffc7b443cec2665b929531d58fd3c80e2720203a633e1c057c91e45cc"
+      },
+      "G2_D_counts_per_metal_lr0.0001_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G2_D_counts_per_metal_lr0.0001_s42_validation_predictions.csv",
+        "sha256": "0ace49589e20c5eb0a455be3a3e2c8b5e2f704f2ac5e63561a1578dfc17f08ab"
+      },
+      "G2_E_counts_angles_per_metal_lr0.0001_s42": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/G2_E_counts_angles_per_metal_lr0.0001_s42_validation_predictions.csv",
+        "sha256": "de232135679aaed54d88e3f5ccb8e2bf861b75a6f9a7282581a0dbeecf05e5ba"
+      },
+      "GR_D_counts_per_metal_lr0.0001_s43": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/GR_D_counts_per_metal_lr0.0001_s43_validation_predictions.csv",
+        "sha256": "087afdb4c3ebc3f34585702b31292691404a700238c1073ee6bfc0439897b682"
+      },
+      "GR_E_counts_angles_per_metal_lr0.0001_s43": {
+        "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/validation_prediction_export/GR_E_counts_angles_per_metal_lr0.0001_s43_validation_predictions.csv",
+        "sha256": "56ba60afa5b18e787ea0d59228da1437072435838b1aebfb0f53da27cdf17b12"
+      }
+    }
+  },
+  "paired_cases": [
+    {
+      "contrast": "C-B",
+      "seed": 42,
+      "lr": 0.0001,
+      "candidate_run_id": "G2_C_counts_angles_none_lr0.0001_s42",
+      "reference_run_id": "G2_B_counts_none_lr0.0001_s42",
+      "counts": {
+        "both_correct": 127,
+        "candidate_only_correct": 22,
+        "reference_only_correct": 19,
+        "both_wrong": 40
+      },
+      "net_correct_count": 3,
+      "balanced_accuracy_delta_pp": 0.9060889175257731,
+      "shared_error_fraction_of_error_union": 0.49382716049382713,
+      "candidate_only_correct_pdb_groups": 21,
+      "reference_only_correct_pdb_groups": 16,
+      "per_class": {
+        "Mn": {
+          "both_correct": 60,
+          "candidate_only_correct": 16,
+          "reference_only_correct": 14,
+          "both_wrong": 7,
+          "support": 97,
+          "prediction_disagreements": 30,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 2,
+          "recall_delta_pp": 2.0618556701030926
+        },
+        "Cu": {
+          "both_correct": 14,
+          "candidate_only_correct": 0,
+          "reference_only_correct": 0,
+          "both_wrong": 1,
+          "support": 15,
+          "prediction_disagreements": 0,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 0,
+          "recall_delta_pp": 0.0
+        },
+        "Zn": {
+          "both_correct": 10,
+          "candidate_only_correct": 4,
+          "reference_only_correct": 4,
+          "both_wrong": 14,
+          "support": 32,
+          "prediction_disagreements": 9,
+          "shared_errors_different_wrong_predictions": 1,
+          "net_correct_count": 0,
+          "recall_delta_pp": 0.0
+        },
+        "Class VIII": {
+          "both_correct": 43,
+          "candidate_only_correct": 2,
+          "reference_only_correct": 1,
+          "both_wrong": 18,
+          "support": 64,
+          "prediction_disagreements": 4,
+          "shared_errors_different_wrong_predictions": 1,
+          "net_correct_count": 1,
+          "recall_delta_pp": 1.5625
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "6dtk__chain_A__EC_1.15.1.1",
+          "pocket_id": "6dtk__chain_A__EC_1.15.1.1_METAL_2",
+          "group": "6dtk",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3un2__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un2__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3un2",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrf__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrf__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrd__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrd__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrd__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrd__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr9__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr9__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3uny__chain_A__EC_5.4.2.7",
+          "pocket_id": "3uny__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3uny",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr7__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr7__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr7",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3un3__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un3__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3un3",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3m8y__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8y__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3m8y",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3uo0__chain_A__EC_5.4.2.7",
+          "pocket_id": "3uo0__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3uo0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2bn7__chain_A__EC_3.4.11.9",
+          "pocket_id": "2bn7__chain_A__EC_3.4.11.9_METAL_1",
+          "group": "2bn7",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "5er8__chain_A__EC_4.2.3.43",
+          "pocket_id": "5er8__chain_A__EC_4.2.3.43_METAL_0",
+          "group": "5er8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5er8__chain_A__EC_4.2.3.43",
+          "pocket_id": "5er8__chain_A__EC_4.2.3.43_METAL_1",
+          "group": "5er8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3uu0__chain_A__EC_5.3.1.14",
+          "pocket_id": "3uu0__chain_A__EC_5.3.1.14_METAL_1",
+          "group": "3uu0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2jlp__chain_A__EC_1.15.1.1",
+          "pocket_id": "2jlp__chain_A__EC_1.15.1.1_METAL_1",
+          "group": "2jlp",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2evo__chain_A__EC_3.4.11.18",
+          "pocket_id": "2evo__chain_A__EC_3.4.11.18_METAL_1",
+          "group": "2evo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4cxy__chain_A__EC_1.14.11.-",
+          "pocket_id": "4cxy__chain_A__EC_1.14.11.-_METAL_1",
+          "group": "4cxy",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4cwm__chain_A__EC_3.1.30.1",
+          "pocket_id": "4cwm__chain_A__EC_3.1.30.1_METAL_1",
+          "group": "4cwm",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "7knf__chain_A__EC_5.4.2.12",
+          "pocket_id": "7knf__chain_A__EC_5.4.2.12_METAL_0",
+          "group": "7knf",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "5zyw__chain_A__EC_3.1.-.-",
+          "pocket_id": "5zyw__chain_A__EC_3.1.-.-_METAL_1",
+          "group": "5zyw",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "1els__chain_A__EC_4.2.1.11",
+          "pocket_id": "1els__chain_A__EC_4.2.1.11_METAL_0",
+          "group": "1els",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6iht__chain_A__EC_3.1.3.16",
+          "pocket_id": "6iht__chain_A__EC_3.1.3.16_METAL_1",
+          "group": "6iht",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "5f1m__chain_A__EC_3.1.3.16",
+          "pocket_id": "5f1m__chain_A__EC_3.1.3.16_METAL_0",
+          "group": "5f1m",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6juq__chain_F__EC_2.7.7.7",
+          "pocket_id": "6juq__chain_F__EC_2.7.7.7_METAL_0",
+          "group": "6juq",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2z4g__chain_A__EC_3.1.3.15",
+          "pocket_id": "2z4g__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2z4g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2yxo__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yxo__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yxo",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3a9t__chain_A__EC_5.3.1.3",
+          "pocket_id": "3a9t__chain_A__EC_5.3.1.3_METAL_1",
+          "group": "3a9t",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2yz5__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yz5__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yz5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6obn__chain_A__EC_3.1.3.16",
+          "pocket_id": "6obn__chain_A__EC_3.1.3.16_METAL_0",
+          "group": "6obn",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        }
+      ]
+    },
+    {
+      "contrast": "C-B",
+      "seed": 43,
+      "lr": 0.0001,
+      "candidate_run_id": "GR_C_counts_angles_none_lr0.0001_s43",
+      "reference_run_id": "GR_B_counts_none_lr0.0001_s43",
+      "counts": {
+        "both_correct": 130,
+        "candidate_only_correct": 12,
+        "reference_only_correct": 22,
+        "both_wrong": 44
+      },
+      "net_correct_count": -10,
+      "balanced_accuracy_delta_pp": -1.2644974226804124,
+      "shared_error_fraction_of_error_union": 0.5641025641025641,
+      "candidate_only_correct_pdb_groups": 11,
+      "reference_only_correct_pdb_groups": 20,
+      "per_class": {
+        "Mn": {
+          "both_correct": 71,
+          "candidate_only_correct": 3,
+          "reference_only_correct": 17,
+          "both_wrong": 6,
+          "support": 97,
+          "prediction_disagreements": 20,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": -14,
+          "recall_delta_pp": -14.43298969072165
+        },
+        "Cu": {
+          "both_correct": 13,
+          "candidate_only_correct": 1,
+          "reference_only_correct": 1,
+          "both_wrong": 0,
+          "support": 15,
+          "prediction_disagreements": 2,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 0,
+          "recall_delta_pp": 0.0
+        },
+        "Zn": {
+          "both_correct": 9,
+          "candidate_only_correct": 4,
+          "reference_only_correct": 2,
+          "both_wrong": 17,
+          "support": 32,
+          "prediction_disagreements": 12,
+          "shared_errors_different_wrong_predictions": 6,
+          "net_correct_count": 2,
+          "recall_delta_pp": 6.25
+        },
+        "Class VIII": {
+          "both_correct": 37,
+          "candidate_only_correct": 4,
+          "reference_only_correct": 2,
+          "both_wrong": 21,
+          "support": 64,
+          "prediction_disagreements": 6,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 2,
+          "recall_delta_pp": 3.125
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3f2d__chain_A__EC_2.7.7.7",
+          "pocket_id": "3f2d__chain_A__EC_2.7.7.7_METAL_1",
+          "group": "3f2d",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lre__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lre__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lre",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lrb__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrb__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrb",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lrd__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrd__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "7s4h__chain_A__EC_1.14.18.3",
+          "pocket_id": "7s4h__chain_A__EC_1.14.18.3_METAL_1",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "reference_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "7s4h__chain_C__EC_1.14.13.25",
+          "pocket_id": "7s4h__chain_C__EC_1.14.13.25_METAL_0",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "3ot9__chain_A__EC_5.4.2.7",
+          "pocket_id": "3ot9__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3ot9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4k1g__chain_A__EC_3.1.21.2",
+          "pocket_id": "4k1g__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "4k1g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2jlp__chain_A__EC_1.15.1.1",
+          "pocket_id": "2jlp__chain_A__EC_1.15.1.1_METAL_1",
+          "group": "2jlp",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "1els__chain_A__EC_4.2.1.11",
+          "pocket_id": "1els__chain_A__EC_4.2.1.11_METAL_0",
+          "group": "1els",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "1els__chain_A__EC_4.2.1.11",
+          "pocket_id": "1els__chain_A__EC_4.2.1.11_METAL_1",
+          "group": "1els",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3nvl__chain_A__EC_5.4.2.1",
+          "pocket_id": "3nvl__chain_A__EC_5.4.2.1_METAL_1",
+          "group": "3nvl",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2yav__chain_A__EC_1.13.11.55",
+          "pocket_id": "2yav__chain_A__EC_1.13.11.55_METAL_1",
+          "group": "2yav",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "6x76__chain_A__EC_2.7.7.-",
+          "pocket_id": "6x76__chain_A__EC_2.7.7.-_METAL_1",
+          "group": "6x76",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "8edd__chain_A__EC_3.1.21.2",
+          "pocket_id": "8edd__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "8edd",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "8f6t__chain_A__EC_1.14.15.3",
+          "pocket_id": "8f6t__chain_A__EC_1.14.15.3_METAL_0",
+          "group": "8f6t",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6xj5__chain_A__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_A__EC_3.4.17.11_METAL_0",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6xj5__chain_B__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_B__EC_3.4.17.11_METAL_1",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4zb0__chain_A__EC_5.3.1.5",
+          "pocket_id": "4zb0__chain_A__EC_5.3.1.5_METAL_0",
+          "group": "4zb0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3a9t__chain_A__EC_5.3.1.3",
+          "pocket_id": "3a9t__chain_A__EC_5.3.1.3_METAL_0",
+          "group": "3a9t",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5fzo__chain_A__EC_1.14.11.-",
+          "pocket_id": "5fzo__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "5fzo",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5fzo__chain_B__EC_1.14.11.-",
+          "pocket_id": "5fzo__chain_B__EC_1.14.11.-_METAL_0",
+          "group": "5fzo",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2dds__chain_A__EC_3.1.4.12",
+          "pocket_id": "2dds__chain_A__EC_3.1.4.12_METAL_0",
+          "group": "2dds",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "1z01__chain_A__EC_1.14.13.61",
+          "pocket_id": "1z01__chain_A__EC_1.14.13.61_METAL_0",
+          "group": "1z01",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4fag__chain_A__EC_1.13.11.4",
+          "pocket_id": "4fag__chain_A__EC_1.13.11.4_METAL_0",
+          "group": "4fag",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3o1v__chain_A__EC_1.14.11.-",
+          "pocket_id": "3o1v__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "3o1v",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        }
+      ]
+    },
+    {
+      "contrast": "E-D",
+      "seed": 42,
+      "lr": 0.0001,
+      "candidate_run_id": "G2_E_counts_angles_per_metal_lr0.0001_s42",
+      "reference_run_id": "G2_D_counts_per_metal_lr0.0001_s42",
+      "counts": {
+        "both_correct": 144,
+        "candidate_only_correct": 9,
+        "reference_only_correct": 10,
+        "both_wrong": 45
+      },
+      "net_correct_count": -1,
+      "balanced_accuracy_delta_pp": -0.48673754295532656,
+      "shared_error_fraction_of_error_union": 0.703125,
+      "candidate_only_correct_pdb_groups": 8,
+      "reference_only_correct_pdb_groups": 9,
+      "per_class": {
+        "Mn": {
+          "both_correct": 84,
+          "candidate_only_correct": 3,
+          "reference_only_correct": 6,
+          "both_wrong": 4,
+          "support": 97,
+          "prediction_disagreements": 9,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": -3,
+          "recall_delta_pp": -3.0927835051546393
+        },
+        "Cu": {
+          "both_correct": 13,
+          "candidate_only_correct": 0,
+          "reference_only_correct": 1,
+          "both_wrong": 1,
+          "support": 15,
+          "prediction_disagreements": 1,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": -1,
+          "recall_delta_pp": -6.666666666666667
+        },
+        "Zn": {
+          "both_correct": 8,
+          "candidate_only_correct": 4,
+          "reference_only_correct": 2,
+          "both_wrong": 18,
+          "support": 32,
+          "prediction_disagreements": 8,
+          "shared_errors_different_wrong_predictions": 2,
+          "net_correct_count": 2,
+          "recall_delta_pp": 6.25
+        },
+        "Class VIII": {
+          "both_correct": 39,
+          "candidate_only_correct": 2,
+          "reference_only_correct": 1,
+          "both_wrong": 22,
+          "support": 64,
+          "prediction_disagreements": 6,
+          "shared_errors_different_wrong_predictions": 3,
+          "net_correct_count": 1,
+          "recall_delta_pp": 1.5625
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "4lre__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lre__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lre",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "7s4h__chain_A__EC_1.14.18.3",
+          "pocket_id": "7s4h__chain_A__EC_1.14.18.3_METAL_1",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "reference_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3uny__chain_A__EC_5.4.2.7",
+          "pocket_id": "3uny__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3uny",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "5er8__chain_A__EC_4.2.3.43",
+          "pocket_id": "5er8__chain_A__EC_4.2.3.43_METAL_0",
+          "group": "5er8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5er8__chain_A__EC_4.2.3.43",
+          "pocket_id": "5er8__chain_A__EC_4.2.3.43_METAL_1",
+          "group": "5er8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "1b57__chain_A__EC_4.1.2.13",
+          "pocket_id": "1b57__chain_A__EC_4.1.2.13_METAL_0",
+          "group": "1b57",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2jlp__chain_A__EC_1.15.1.1",
+          "pocket_id": "2jlp__chain_A__EC_1.15.1.1_METAL_1",
+          "group": "2jlp",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2evo__chain_A__EC_3.4.11.18",
+          "pocket_id": "2evo__chain_A__EC_3.4.11.18_METAL_0",
+          "group": "2evo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4cwm__chain_A__EC_3.1.30.1",
+          "pocket_id": "4cwm__chain_A__EC_3.1.30.1_METAL_1",
+          "group": "4cwm",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "5zyw__chain_A__EC_3.1.-.-",
+          "pocket_id": "5zyw__chain_A__EC_3.1.-.-_METAL_1",
+          "group": "5zyw",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3nvl__chain_A__EC_5.4.2.1",
+          "pocket_id": "3nvl__chain_A__EC_5.4.2.1_METAL_1",
+          "group": "3nvl",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "1ddz__chain_A__EC_4.2.1.1",
+          "pocket_id": "1ddz__chain_A__EC_4.2.1.1_METAL_0",
+          "group": "1ddz",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "1ddz__chain_A__EC_4.2.1.1",
+          "pocket_id": "1ddz__chain_A__EC_4.2.1.1_METAL_1",
+          "group": "1ddz",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "6x76__chain_A__EC_2.7.7.-",
+          "pocket_id": "6x76__chain_A__EC_2.7.7.-_METAL_1",
+          "group": "6x76",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "8edd__chain_A__EC_3.1.21.2",
+          "pocket_id": "8edd__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "8edd",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "5bud__chain_A__EC_3.6.1.-",
+          "pocket_id": "5bud__chain_A__EC_3.6.1.-_METAL_1",
+          "group": "5bud",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3a9t__chain_A__EC_5.3.1.3",
+          "pocket_id": "3a9t__chain_A__EC_5.3.1.3_METAL_1",
+          "group": "3a9t",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2dds__chain_A__EC_3.1.4.12",
+          "pocket_id": "2dds__chain_A__EC_3.1.4.12_METAL_0",
+          "group": "2dds",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        }
+      ]
+    },
+    {
+      "contrast": "E-D",
+      "seed": 43,
+      "lr": 0.0001,
+      "candidate_run_id": "GR_E_counts_angles_per_metal_lr0.0001_s43",
+      "reference_run_id": "GR_D_counts_per_metal_lr0.0001_s43",
+      "counts": {
+        "both_correct": 129,
+        "candidate_only_correct": 15,
+        "reference_only_correct": 17,
+        "both_wrong": 47
+      },
+      "net_correct_count": -2,
+      "balanced_accuracy_delta_pp": -1.1844931271477663,
+      "shared_error_fraction_of_error_union": 0.5949367088607594,
+      "candidate_only_correct_pdb_groups": 14,
+      "reference_only_correct_pdb_groups": 14,
+      "per_class": {
+        "Mn": {
+          "both_correct": 77,
+          "candidate_only_correct": 4,
+          "reference_only_correct": 9,
+          "both_wrong": 7,
+          "support": 97,
+          "prediction_disagreements": 14,
+          "shared_errors_different_wrong_predictions": 1,
+          "net_correct_count": -5,
+          "recall_delta_pp": -5.154639175257732
+        },
+        "Cu": {
+          "both_correct": 14,
+          "candidate_only_correct": 1,
+          "reference_only_correct": 0,
+          "both_wrong": 0,
+          "support": 15,
+          "prediction_disagreements": 1,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 1,
+          "recall_delta_pp": 6.666666666666667
+        },
+        "Zn": {
+          "both_correct": 3,
+          "candidate_only_correct": 2,
+          "reference_only_correct": 8,
+          "both_wrong": 19,
+          "support": 32,
+          "prediction_disagreements": 15,
+          "shared_errors_different_wrong_predictions": 5,
+          "net_correct_count": -6,
+          "recall_delta_pp": -18.75
+        },
+        "Class VIII": {
+          "both_correct": 35,
+          "candidate_only_correct": 8,
+          "reference_only_correct": 0,
+          "both_wrong": 21,
+          "support": 64,
+          "prediction_disagreements": 10,
+          "shared_errors_different_wrong_predictions": 2,
+          "net_correct_count": 8,
+          "recall_delta_pp": 12.5
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "6dtk__chain_A__EC_1.15.1.1",
+          "pocket_id": "6dtk__chain_A__EC_1.15.1.1_METAL_0",
+          "group": "6dtk",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4lrb__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrb__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lrb",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "7s4h__chain_C__EC_1.14.13.25",
+          "pocket_id": "7s4h__chain_C__EC_1.14.13.25_METAL_0",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lr7__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr7__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lr7",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4k1g__chain_A__EC_3.1.21.2",
+          "pocket_id": "4k1g__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "4k1g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3eqn__chain_A__EC_3.2.1.58",
+          "pocket_id": "3eqn__chain_A__EC_3.2.1.58_METAL_2",
+          "group": "3eqn",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2evo__chain_A__EC_3.4.11.18",
+          "pocket_id": "2evo__chain_A__EC_3.4.11.18_METAL_0",
+          "group": "2evo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4cxy__chain_A__EC_1.14.11.-",
+          "pocket_id": "4cxy__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "4cxy",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "7knf__chain_A__EC_5.4.2.12",
+          "pocket_id": "7knf__chain_A__EC_5.4.2.12_METAL_1",
+          "group": "7knf",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "1els__chain_A__EC_4.2.1.11",
+          "pocket_id": "1els__chain_A__EC_4.2.1.11_METAL_0",
+          "group": "1els",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4n7t__chain_A__EC_5.4.2.7",
+          "pocket_id": "4n7t__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4n7t",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2yav__chain_A__EC_1.13.11.55",
+          "pocket_id": "2yav__chain_A__EC_1.13.11.55_METAL_1",
+          "group": "2yav",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2z4g__chain_A__EC_3.1.3.15",
+          "pocket_id": "2z4g__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2z4g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "2z4g__chain_A__EC_3.1.3.15",
+          "pocket_id": "2z4g__chain_A__EC_3.1.3.15_METAL_1",
+          "group": "2z4g",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "2yxo__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yxo__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yxo",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "2yxo__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yxo__chain_A__EC_3.1.3.15_METAL_1",
+          "group": "2yxo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6xj5__chain_A__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_A__EC_3.4.17.11_METAL_0",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6xj5__chain_B__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_B__EC_3.4.17.11_METAL_1",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4zb0__chain_A__EC_5.3.1.5",
+          "pocket_id": "4zb0__chain_A__EC_5.3.1.5_METAL_0",
+          "group": "4zb0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4zb0__chain_A__EC_5.3.1.5",
+          "pocket_id": "4zb0__chain_A__EC_5.3.1.5_METAL_2",
+          "group": "4zb0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5fzo__chain_B__EC_1.14.11.-",
+          "pocket_id": "5fzo__chain_B__EC_1.14.11.-_METAL_0",
+          "group": "5fzo",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2yz5__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yz5__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yz5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "2yz5__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yz5__chain_A__EC_3.1.3.15_METAL_1",
+          "group": "2yz5",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4fag__chain_A__EC_1.13.11.4",
+          "pocket_id": "4fag__chain_A__EC_1.13.11.4_METAL_0",
+          "group": "4fag",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "8dcb__chain_A__EC_6.5.1.8,6.5.1.8",
+          "pocket_id": "8dcb__chain_A__EC_6.5.1.8,6.5.1.8_METAL_0",
+          "group": "8dcb",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "3o1v__chain_A__EC_1.14.11.-",
+          "pocket_id": "3o1v__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "3o1v",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        }
+      ]
+    },
+    {
+      "contrast": "B-A",
+      "seed": 42,
+      "lr": 0.0001,
+      "candidate_run_id": "G2_B_counts_none_lr0.0001_s42",
+      "reference_run_id": "G2_A_none_none_lr0.0001_s42",
+      "counts": {
+        "both_correct": 124,
+        "candidate_only_correct": 22,
+        "reference_only_correct": 21,
+        "both_wrong": 41
+      },
+      "net_correct_count": 1,
+      "balanced_accuracy_delta_pp": 2.057291666666667,
+      "shared_error_fraction_of_error_union": 0.4880952380952381,
+      "candidate_only_correct_pdb_groups": 22,
+      "reference_only_correct_pdb_groups": 21,
+      "per_class": {
+        "Mn": {
+          "both_correct": 58,
+          "candidate_only_correct": 16,
+          "reference_only_correct": 16,
+          "both_wrong": 7,
+          "support": 97,
+          "prediction_disagreements": 33,
+          "shared_errors_different_wrong_predictions": 1,
+          "net_correct_count": 0,
+          "recall_delta_pp": 0.0
+        },
+        "Cu": {
+          "both_correct": 13,
+          "candidate_only_correct": 1,
+          "reference_only_correct": 0,
+          "both_wrong": 1,
+          "support": 15,
+          "prediction_disagreements": 1,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 1,
+          "recall_delta_pp": 6.666666666666667
+        },
+        "Zn": {
+          "both_correct": 11,
+          "candidate_only_correct": 3,
+          "reference_only_correct": 2,
+          "both_wrong": 16,
+          "support": 32,
+          "prediction_disagreements": 8,
+          "shared_errors_different_wrong_predictions": 3,
+          "net_correct_count": 1,
+          "recall_delta_pp": 3.125
+        },
+        "Class VIII": {
+          "both_correct": 42,
+          "candidate_only_correct": 2,
+          "reference_only_correct": 3,
+          "both_wrong": 17,
+          "support": 64,
+          "prediction_disagreements": 7,
+          "shared_errors_different_wrong_predictions": 2,
+          "net_correct_count": -1,
+          "recall_delta_pp": -1.5625
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "6dtk__chain_A__EC_1.15.1.1",
+          "pocket_id": "6dtk__chain_A__EC_1.15.1.1_METAL_2",
+          "group": "6dtk",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "3un2__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un2__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3un2",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3un2__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un2__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3un2",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lrf__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrf__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrf__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrf__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "3f2d__chain_A__EC_2.7.7.7",
+          "pocket_id": "3f2d__chain_A__EC_2.7.7.7_METAL_1",
+          "group": "3f2d",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4lre__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lre__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lre",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrb__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrb__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrb",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lrd__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrd__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lrd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "7s4h__chain_A__EC_1.14.18.3",
+          "pocket_id": "7s4h__chain_A__EC_1.14.18.3_METAL_1",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lr9__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr9__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr9__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr9__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3uny__chain_A__EC_5.4.2.7",
+          "pocket_id": "3uny__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3uny",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4lr7__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr7__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr7",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr7__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr7__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "4lr7",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "3un3__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un3__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "3un3",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3un3__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un3__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3un3",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "3ot9__chain_A__EC_5.4.2.7",
+          "pocket_id": "3ot9__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3ot9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3m8y__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8y__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3m8y",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3uo0__chain_A__EC_5.4.2.7",
+          "pocket_id": "3uo0__chain_A__EC_5.4.2.7_METAL_2",
+          "group": "3uo0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2bn7__chain_A__EC_3.4.11.9",
+          "pocket_id": "2bn7__chain_A__EC_3.4.11.9_METAL_1",
+          "group": "2bn7",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3aal__chain_A__EC_3.1.21.2",
+          "pocket_id": "3aal__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "3aal",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4k1g__chain_A__EC_3.1.21.2",
+          "pocket_id": "4k1g__chain_A__EC_3.1.21.2_METAL_1",
+          "group": "4k1g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2evo__chain_A__EC_3.4.11.18",
+          "pocket_id": "2evo__chain_A__EC_3.4.11.18_METAL_1",
+          "group": "2evo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "4cwm__chain_A__EC_3.1.30.1",
+          "pocket_id": "4cwm__chain_A__EC_3.1.30.1_METAL_1",
+          "group": "4cwm",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "5zyw__chain_A__EC_3.1.-.-",
+          "pocket_id": "5zyw__chain_A__EC_3.1.-.-_METAL_1",
+          "group": "5zyw",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2wje__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wje__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wje",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3nvl__chain_A__EC_5.4.2.1",
+          "pocket_id": "3nvl__chain_A__EC_5.4.2.1_METAL_0",
+          "group": "3nvl",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2wjf__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjf__chain_A__EC_3.1.3.48_METAL_1",
+          "group": "2wjf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4zb0__chain_A__EC_5.3.1.5",
+          "pocket_id": "4zb0__chain_A__EC_5.3.1.5_METAL_0",
+          "group": "4zb0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3a9t__chain_A__EC_5.3.1.3",
+          "pocket_id": "3a9t__chain_A__EC_5.3.1.3_METAL_1",
+          "group": "3a9t",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "7lc7__chain_A__EC_1.17.99.6",
+          "pocket_id": "7lc7__chain_A__EC_1.17.99.6_METAL_0",
+          "group": "7lc7",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "8dcb__chain_A__EC_6.5.1.8,6.5.1.8",
+          "pocket_id": "8dcb__chain_A__EC_6.5.1.8,6.5.1.8_METAL_0",
+          "group": "8dcb",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6obn__chain_A__EC_3.1.3.16",
+          "pocket_id": "6obn__chain_A__EC_3.1.3.16_METAL_0",
+          "group": "6obn",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        }
+      ]
+    },
+    {
+      "contrast": "B-A",
+      "seed": 43,
+      "lr": 0.0001,
+      "candidate_run_id": "GR_B_counts_none_lr0.0001_s43",
+      "reference_run_id": "GR_A_none_none_lr0.0001_s43",
+      "counts": {
+        "both_correct": 131,
+        "candidate_only_correct": 21,
+        "reference_only_correct": 19,
+        "both_wrong": 37
+      },
+      "net_correct_count": 2,
+      "balanced_accuracy_delta_pp": -0.9670317869415805,
+      "shared_error_fraction_of_error_union": 0.4805194805194805,
+      "candidate_only_correct_pdb_groups": 21,
+      "reference_only_correct_pdb_groups": 17,
+      "per_class": {
+        "Mn": {
+          "both_correct": 71,
+          "candidate_only_correct": 17,
+          "reference_only_correct": 6,
+          "both_wrong": 3,
+          "support": 97,
+          "prediction_disagreements": 23,
+          "shared_errors_different_wrong_predictions": 0,
+          "net_correct_count": 11,
+          "recall_delta_pp": 11.34020618556701
+        },
+        "Cu": {
+          "both_correct": 13,
+          "candidate_only_correct": 1,
+          "reference_only_correct": 0,
+          "both_wrong": 1,
+          "support": 15,
+          "prediction_disagreements": 2,
+          "shared_errors_different_wrong_predictions": 1,
+          "net_correct_count": 1,
+          "recall_delta_pp": 6.666666666666667
+        },
+        "Zn": {
+          "both_correct": 9,
+          "candidate_only_correct": 2,
+          "reference_only_correct": 6,
+          "both_wrong": 15,
+          "support": 32,
+          "prediction_disagreements": 12,
+          "shared_errors_different_wrong_predictions": 4,
+          "net_correct_count": -4,
+          "recall_delta_pp": -12.5
+        },
+        "Class VIII": {
+          "both_correct": 38,
+          "candidate_only_correct": 1,
+          "reference_only_correct": 7,
+          "both_wrong": 18,
+          "support": 64,
+          "prediction_disagreements": 12,
+          "shared_errors_different_wrong_predictions": 4,
+          "net_correct_count": -6,
+          "recall_delta_pp": -9.375
+        }
+      },
+      "changed_correctness_cases": [
+        {
+          "structure_id": "3un2__chain_A__EC_5.4.2.7",
+          "pocket_id": "3un2__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3un2",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr8__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr8__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lr8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3m8w__chain_A__EC_5.4.2.7",
+          "pocket_id": "3m8w__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3m8w",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrf__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrf__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrf",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lra__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lra__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lra",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3f2d__chain_A__EC_2.7.7.7",
+          "pocket_id": "3f2d__chain_A__EC_2.7.7.7_METAL_1",
+          "group": "3f2d",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "4lre__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lre__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lre",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrb__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrb__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrb",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrc__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrc__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "4lrc",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lrd__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lrd__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lrd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "7s4h__chain_A__EC_1.14.18.3",
+          "pocket_id": "7s4h__chain_A__EC_1.14.18.3_METAL_1",
+          "group": "7s4h",
+          "target_id": 1,
+          "target_label": "Cu",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4lr9__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr9__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4lr7__chain_A__EC_5.4.2.7",
+          "pocket_id": "4lr7__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "4lr7",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3ot9__chain_A__EC_5.4.2.7",
+          "pocket_id": "3ot9__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3ot9",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4k1g__chain_A__EC_3.1.21.2",
+          "pocket_id": "4k1g__chain_A__EC_3.1.21.2_METAL_0",
+          "group": "4k1g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3eqn__chain_A__EC_3.2.1.58",
+          "pocket_id": "3eqn__chain_A__EC_3.2.1.58_METAL_2",
+          "group": "3eqn",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "5er8__chain_A__EC_4.2.3.43",
+          "pocket_id": "5er8__chain_A__EC_4.2.3.43_METAL_1",
+          "group": "5er8",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3uu0__chain_A__EC_5.3.1.14",
+          "pocket_id": "3uu0__chain_A__EC_5.3.1.14_METAL_1",
+          "group": "3uu0",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2jlp__chain_A__EC_1.15.1.1",
+          "pocket_id": "2jlp__chain_A__EC_1.15.1.1_METAL_1",
+          "group": "2jlp",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2evo__chain_A__EC_3.4.11.18",
+          "pocket_id": "2evo__chain_A__EC_3.4.11.18_METAL_0",
+          "group": "2evo",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "3wei__chain_A__EC_2.5.1.21",
+          "pocket_id": "3wei__chain_A__EC_2.5.1.21_METAL_0",
+          "group": "3wei",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "6wf2__chain_A__EC_1.14.19.1",
+          "pocket_id": "6wf2__chain_A__EC_1.14.19.1_METAL_0",
+          "group": "6wf2",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Cu"
+        },
+        {
+          "structure_id": "4cxy__chain_A__EC_1.14.11.-",
+          "pocket_id": "4cxy__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "4cxy",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4cxy__chain_A__EC_1.14.11.-",
+          "pocket_id": "4cxy__chain_A__EC_1.14.11.-_METAL_1",
+          "group": "4cxy",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2wjd__chain_A__EC_3.1.3.48",
+          "pocket_id": "2wjd__chain_A__EC_3.1.3.48_METAL_0",
+          "group": "2wjd",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6iht__chain_A__EC_3.1.3.16",
+          "pocket_id": "6iht__chain_A__EC_3.1.3.16_METAL_1",
+          "group": "6iht",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_0",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3twz__chain_A__EC_5.4.2.7",
+          "pocket_id": "3twz__chain_A__EC_5.4.2.7_METAL_1",
+          "group": "3twz",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Mn",
+          "candidate_prediction": "Zn"
+        },
+        {
+          "structure_id": "2z4g__chain_A__EC_3.1.3.15",
+          "pocket_id": "2z4g__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2z4g",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6x76__chain_A__EC_2.7.7.-",
+          "pocket_id": "6x76__chain_A__EC_2.7.7.-_METAL_1",
+          "group": "6x76",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "8f6t__chain_A__EC_1.14.15.3",
+          "pocket_id": "8f6t__chain_A__EC_1.14.15.3_METAL_0",
+          "group": "8f6t",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Cu",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "2yxo__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yxo__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yxo",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "6xj5__chain_A__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_A__EC_3.4.17.11_METAL_0",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "6xj5__chain_B__EC_3.4.17.11",
+          "pocket_id": "6xj5__chain_B__EC_3.4.17.11_METAL_1",
+          "group": "6xj5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "5fzo__chain_A__EC_1.14.11.-",
+          "pocket_id": "5fzo__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "5fzo",
+          "target_id": 0,
+          "target_label": "Mn",
+          "status": "candidate_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "2yz5__chain_A__EC_3.1.3.15",
+          "pocket_id": "2yz5__chain_A__EC_3.1.3.15_METAL_0",
+          "group": "2yz5",
+          "target_id": 2,
+          "target_label": "Zn",
+          "status": "reference_only_correct",
+          "reference_prediction": "Zn",
+          "candidate_prediction": "Class VIII"
+        },
+        {
+          "structure_id": "7nyp__chain_A__EC_2.3.1.169",
+          "pocket_id": "7nyp__chain_A__EC_2.3.1.169_METAL_0",
+          "group": "7nyp",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "4fag__chain_A__EC_1.13.11.4",
+          "pocket_id": "4fag__chain_A__EC_1.13.11.4_METAL_0",
+          "group": "4fag",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        },
+        {
+          "structure_id": "3o1v__chain_A__EC_1.14.11.-",
+          "pocket_id": "3o1v__chain_A__EC_1.14.11.-_METAL_0",
+          "group": "3o1v",
+          "target_id": 3,
+          "target_label": "Class VIII",
+          "status": "reference_only_correct",
+          "reference_prediction": "Class VIII",
+          "candidate_prediction": "Mn"
+        }
+      ]
+    }
+  ],
+  "cross_seed_correctness_change_overlap": [
+    {
+      "contrast": "C-B",
+      "counts": {
+        "corrected_in_both_seeds": 0,
+        "newly_wrong_in_both_seeds": 5,
+        "corrected_seed42_newly_wrong_seed43": 2,
+        "newly_wrong_seed42_corrected_seed43": 1
+      },
+      "by_class": {
+        "corrected_in_both_seeds": {},
+        "newly_wrong_in_both_seeds": {
+          "Mn": 5
+        },
+        "corrected_seed42_newly_wrong_seed43": {
+          "Zn": 1,
+          "Mn": 1
+        },
+        "newly_wrong_seed42_corrected_seed43": {
+          "Mn": 1
+        }
+      }
+    },
+    {
+      "contrast": "E-D",
+      "counts": {
+        "corrected_in_both_seeds": 0,
+        "newly_wrong_in_both_seeds": 0,
+        "corrected_seed42_newly_wrong_seed43": 0,
+        "newly_wrong_seed42_corrected_seed43": 1
+      },
+      "by_class": {
+        "corrected_in_both_seeds": {},
+        "newly_wrong_in_both_seeds": {},
+        "corrected_seed42_newly_wrong_seed43": {},
+        "newly_wrong_seed42_corrected_seed43": {
+          "Class VIII": 1
+        }
+      }
+    },
+    {
+      "contrast": "B-A",
+      "counts": {
+        "corrected_in_both_seeds": 12,
+        "newly_wrong_in_both_seeds": 1,
+        "corrected_seed42_newly_wrong_seed43": 0,
+        "newly_wrong_seed42_corrected_seed43": 0
+      },
+      "by_class": {
+        "corrected_in_both_seeds": {
+          "Mn": 11,
+          "Cu": 1
+        },
+        "newly_wrong_in_both_seeds": {
+          "Mn": 1
+        },
+        "corrected_seed42_newly_wrong_seed43": {},
+        "newly_wrong_seed42_corrected_seed43": {}
+      }
+    }
+  ],
+  "checks": {
+    "all15_csv_hashes_verified": true,
+    "ten_high_lr_csv_confusion_matrices_and_native_labels_verified": true,
+    "ordered_identity_and_native_targets_verified": true,
+    "six_pair_records_match_export": true
+  },
+  "limitations": [
+    "Corrected/newly-wrong means relative to the paired trained configuration; it is not proof of a causal molecular feature effect.",
+    "208 pockets correspond to110 PDB groups and are not208 independent proteins.",
+    "Two seeds reuse the same validation cases and are not independent datasets.",
+    "Balanced accuracy weights classes equally, so a net gain in total correct pockets can coexist with a lower balanced accuracy.",
+    "A differs from the legacy Only-GVP baseline; metal-node contrasts also change fitted edge normalization.",
+    "No held-out test or model promotion."
+  ]
+}

@@ -326,6 +326,20 @@ do not promote an architecture or settle the required grouped-fold comparison.
 Keep geometry exploration separate from EC, joint learning, RING, fusion, and
 held-out reporting; do not multiply those axes into this pilot.
 
+### Controlled RING continuation
+
+After the bounded architecture and geometry queues close, a separately
+identified RING comparison may use the remaining original budget. Its
+[exact Stage 2B recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-matched-ring-continuation--stage-2b)
+uses fresh matched controls and complete per-family blocks. Fix residue shell
+annotations geometrically across RING on/off; otherwise RING changes both
+node features and edges. Report the contrast as RING edges/interaction
+features with their training-fitted edge normalization. Check full-cohort
+node-input equality and distinguish added pairs from annotations on existing
+radius edges. These fixed-split runs guide further evaluation; they do not
+replace grouped-fold confirmation, certify angle-specific benefit, or expand
+the initial metal–EC auxiliary experiment.
+
 ### Metal Colab Parameter Ownership Rule
 
 Exact executable stage-block values for the metal-training pipeline must be
@@ -483,6 +497,11 @@ analysis using permitted training/development data only. Predeclare and report:
 
 This analysis is descriptive. It cannot prove that auxiliary learning will
 help, and it must never use held-out test data.
+The exact training-only analysis recipe and its source, weighting, and
+statistical checks belong in the
+[EC playbook](docs/EC_TRAINING_PIPELINE_PLAYBOOK.md#phase-3--training-only-metal--ec1-association).
+Completing it does not replace the separate cross-source exclusion certificate
+required for shared training.
 
 The approximate cross-task experimental order is:
 

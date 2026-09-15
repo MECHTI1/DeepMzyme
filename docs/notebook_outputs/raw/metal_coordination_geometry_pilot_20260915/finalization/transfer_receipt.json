@@ -1,0 +1,25 @@
+{
+  "attempt_id": "attempt_001",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/host_closeout_allocation2/archives/attempt_001.tar.gz",
+  "archive_sha256": "be9aaf95392b96c88f649c06b732a6ec91980daf18c0a6829cf88e8b0f8a2e3e",
+  "bytes": 959205,
+  "manifest_sha256": "e852a60ab70f1adb2be2396d6b0607321e44c2d61506c8b6d48b46edde31d743",
+  "verified_parts": 1,
+  "capture_kind": "final_campaign_state_capture_v1",
+  "full_original_runs": 30,
+  "full_geometry_runs": 15,
+  "validation_prediction_runs": 15,
+  "captured_epoch": 1789472165.7245834,
+  "allocated_seconds_at_capture": 19174.653089284897,
+  "gpu_stopped": false,
+  "allocation_closed": false,
+  "finalization_dirs": {
+    "original": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/finalization",
+    "geometry": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/finalization"
+  },
+  "drive_verified": true,
+  "drive_file_id": "1lgvyKm5fm5436TdiU_VhmVhNqkHWaum0",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verification": "Operator supplied ID after connector readback confirmed file, parent, and byte size"
+}

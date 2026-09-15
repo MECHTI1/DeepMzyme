@@ -1,0 +1,600 @@
+{
+  "completed_smokes": 7,
+  "completed_main_runs": 20,
+  "hybrid_gate": {
+    "status": "deferred",
+    "balanced_accuracy_delta": -0.015302835051546393,
+    "minimum_recall_delta": 0.125,
+    "interpretation": "exploratory_prioritization_not_promotion"
+  },
+  "promoted": false,
+  "held_out_evaluation": false,
+  "evidence": "fixed_split_screen; incomplete blocks excluded from paired comparisons",
+  "state": {
+    "status": "awaiting_archive_transfer",
+    "block": "T2",
+    "run_id": "T2_2_six_class_lr0.0001_s42",
+    "attempt_id": "attempt_029",
+    "attempt_status": "completed"
+  },
+  "runs": [
+    {
+      "id": "A1_0_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 44,
+      "balanced_accuracy": 0.6471139390034364,
+      "collapsed4_balanced_accuracy": 0.6471139390034364,
+      "minimum_recall": 0.40625,
+      "collapsed4_minimum_recall": 0.40625,
+      "per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_0_four_class_lr3e-05_s42",
+      "elapsed_seconds": 270.3429877758026,
+      "block_complete": true
+    },
+    {
+      "id": "A1_1_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.721227985395189,
+      "collapsed4_balanced_accuracy": 0.721227985395189,
+      "minimum_recall": 0.59375,
+      "collapsed4_minimum_recall": 0.59375,
+      "per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_1_four_class_lr3e-05_s42",
+      "elapsed_seconds": 206.2681336402893,
+      "block_complete": true
+    },
+    {
+      "id": "A1_3_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 40,
+      "balanced_accuracy": 0.6936667740549828,
+      "collapsed4_balanced_accuracy": 0.6936667740549828,
+      "minimum_recall": 0.46875,
+      "collapsed4_minimum_recall": 0.46875,
+      "per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_3_four_class_lr3e-05_s42",
+      "elapsed_seconds": 290.364253282547,
+      "block_complete": true
+    },
+    {
+      "id": "A1_2_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 17,
+      "balanced_accuracy": 0.7178855240549828,
+      "collapsed4_balanced_accuracy": 0.7178855240549828,
+      "minimum_recall": 0.5625,
+      "collapsed4_minimum_recall": 0.5625,
+      "per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.84375,
+        "Class VIII": 0.5625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.84375,
+        "Class VIII": 0.5625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_2_four_class_lr3e-05_s42_retry1",
+      "elapsed_seconds": 308.3893711566925,
+      "block_complete": true
+    },
+    {
+      "id": "A2_0_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 35,
+      "balanced_accuracy": 0.7089696091065292,
+      "collapsed4_balanced_accuracy": 0.7089696091065292,
+      "minimum_recall": 0.34375,
+      "collapsed4_minimum_recall": 0.34375,
+      "per_class_recall": {
+        "Mn": 0.8556701030927835,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.34375,
+        "Class VIII": 0.703125
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.8556701030927835,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.34375,
+        "Class VIII": 0.703125
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A2_0_four_class_lr0.0001_s42",
+      "elapsed_seconds": 272.351998090744,
+      "block_complete": true
+    },
+    {
+      "id": "A2_1_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 18,
+      "balanced_accuracy": 0.7174828178694158,
+      "collapsed4_balanced_accuracy": 0.7174828178694158,
+      "minimum_recall": 0.5625,
+      "collapsed4_minimum_recall": 0.5625,
+      "per_class_recall": {
+        "Mn": 0.8865979381443299,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.6875,
+        "Class VIII": 0.5625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.8865979381443299,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.6875,
+        "Class VIII": 0.5625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A2_1_four_class_lr0.0001_s42",
+      "elapsed_seconds": 204.26730608940125,
+      "block_complete": true
+    },
+    {
+      "id": "A2_3_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 16,
+      "balanced_accuracy": 0.682385631443299,
+      "collapsed4_balanced_accuracy": 0.682385631443299,
+      "minimum_recall": 0.4639175257731959,
+      "collapsed4_minimum_recall": 0.4639175257731959,
+      "per_class_recall": {
+        "Mn": 0.4639175257731959,
+        "Cu": 1.0,
+        "Zn": 0.65625,
+        "Class VIII": 0.609375
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.4639175257731959,
+        "Cu": 1.0,
+        "Zn": 0.65625,
+        "Class VIII": 0.609375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A2_3_four_class_lr0.0001_s42",
+      "elapsed_seconds": 290.3654592037201,
+      "block_complete": true
+    },
+    {
+      "id": "A2_2_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 7,
+      "balanced_accuracy": 0.723120704467354,
+      "collapsed4_balanced_accuracy": 0.723120704467354,
+      "minimum_recall": 0.5625,
+      "collapsed4_minimum_recall": 0.5625,
+      "per_class_recall": {
+        "Mn": 0.7216494845360825,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.875,
+        "Class VIII": 0.5625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7216494845360825,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.875,
+        "Class VIII": 0.5625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A2_2_four_class_lr0.0001_s42",
+      "elapsed_seconds": 306.3874514102936,
+      "block_complete": true
+    },
+    {
+      "id": "T1_0_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 33,
+      "balanced_accuracy": 0.6094712589815683,
+      "collapsed4_balanced_accuracy": 0.6506174828178695,
+      "minimum_recall": 0.1875,
+      "collapsed4_minimum_recall": 0.1875,
+      "per_class_recall": {
+        "Mn": 0.7628865979381443,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.1875,
+        "Fe": 0.8636363636363636,
+        "Class VIII": 0.3
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7628865979381443,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.1875,
+        "Class VIII": 0.71875
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_0_five_class_lr3e-05_s42",
+      "elapsed_seconds": 270.3396921157837,
+      "block_complete": true
+    },
+    {
+      "id": "T1_1_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 20,
+      "balanced_accuracy": 0.6403955795064042,
+      "collapsed4_balanced_accuracy": 0.6828903565292096,
+      "minimum_recall": 0.35,
+      "collapsed4_minimum_recall": 0.640625,
+      "per_class_recall": {
+        "Mn": 0.7010309278350515,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.78125,
+        "Fe": 0.6363636363636364,
+        "Class VIII": 0.35
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.6701030927835051,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.6875,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_1_five_class_lr3e-05_s42",
+      "elapsed_seconds": 204.26696872711182,
+      "block_complete": true
+    },
+    {
+      "id": "T1_2_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 19,
+      "balanced_accuracy": 0.6799902374258044,
+      "collapsed4_balanced_accuracy": 0.7296042740549828,
+      "minimum_recall": 0.25,
+      "collapsed4_minimum_recall": 0.703125,
+      "per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.84375,
+        "Fe": 0.8409090909090909,
+        "Class VIII": 0.25
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.75,
+        "Class VIII": 0.703125
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_2_five_class_lr3e-05_s42",
+      "elapsed_seconds": 306.39005160331726,
+      "block_complete": true
+    },
+    {
+      "id": "T1_0_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 42,
+      "balanced_accuracy": 0.5805610161602429,
+      "collapsed4_balanced_accuracy": 0.6639067869415808,
+      "minimum_recall": 0.07692307692307693,
+      "collapsed4_minimum_recall": 0.28125,
+      "per_class_recall": {
+        "Mn": 0.711340206185567,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.28125,
+        "Fe": 0.9090909090909091,
+        "Co": 0.07692307692307693,
+        "Ni": 0.5714285714285714
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.6597938144329897,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.28125,
+        "Class VIII": 0.78125
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_0_six_class_lr3e-05_s42",
+      "elapsed_seconds": 268.3421666622162,
+      "block_complete": true
+    },
+    {
+      "id": "T1_1_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 36,
+      "balanced_accuracy": 0.6085633081122771,
+      "collapsed4_balanced_accuracy": 0.6939647766323024,
+      "minimum_recall": 0.15384615384615385,
+      "collapsed4_minimum_recall": 0.5,
+      "per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.5625,
+        "Fe": 0.6818181818181818,
+        "Co": 0.15384615384615385,
+        "Ni": 0.5714285714285714
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.9175257731958762,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.5,
+        "Class VIII": 0.625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_1_six_class_lr3e-05_s42",
+      "elapsed_seconds": 206.26824808120728,
+      "block_complete": true
+    },
+    {
+      "id": "T1_2_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 48,
+      "balanced_accuracy": 0.6446177283483985,
+      "collapsed4_balanced_accuracy": 0.7307721219931271,
+      "minimum_recall": 0.07692307692307693,
+      "collapsed4_minimum_recall": 0.6875,
+      "per_class_recall": {
+        "Mn": 0.7835051546391752,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.71875,
+        "Fe": 0.8409090909090909,
+        "Co": 0.07692307692307693,
+        "Ni": 0.7142857142857143
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7835051546391752,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.6875,
+        "Class VIII": 0.71875
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T1_2_six_class_lr3e-05_s42",
+      "elapsed_seconds": 304.388192653656,
+      "block_complete": true
+    },
+    {
+      "id": "T2_0_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 26,
+      "balanced_accuracy": 0.6317451577631991,
+      "collapsed4_balanced_accuracy": 0.6960024699312715,
+      "minimum_recall": 0.2,
+      "collapsed4_minimum_recall": 0.28125,
+      "per_class_recall": {
+        "Mn": 0.8350515463917526,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.28125,
+        "Fe": 0.9090909090909091,
+        "Class VIII": 0.2
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.8350515463917526,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.28125,
+        "Class VIII": 0.734375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_0_five_class_lr0.0001_s42",
+      "elapsed_seconds": 270.34020733833313,
+      "block_complete": true
+    },
+    {
+      "id": "T2_1_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 14,
+      "balanced_accuracy": 0.6346833020930959,
+      "collapsed4_balanced_accuracy": 0.7007705111683848,
+      "minimum_recall": 0.3,
+      "collapsed4_minimum_recall": 0.609375,
+      "per_class_recall": {
+        "Mn": 0.8247422680412371,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.65625,
+        "Fe": 0.6590909090909091,
+        "Class VIII": 0.3
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.8041237113402062,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.65625,
+        "Class VIII": 0.609375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_1_five_class_lr0.0001_s42",
+      "elapsed_seconds": 204.27065873146057,
+      "block_complete": true
+    },
+    {
+      "id": "T2_2_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 14,
+      "balanced_accuracy": 0.6524761793189628,
+      "collapsed4_balanced_accuracy": 0.7045156786941581,
+      "minimum_recall": 0.45,
+      "collapsed4_minimum_recall": 0.53125,
+      "per_class_recall": {
+        "Mn": 0.865979381443299,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.53125,
+        "Fe": 0.6818181818181818,
+        "Class VIII": 0.45
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.865979381443299,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.53125,
+        "Class VIII": 0.6875
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_2_five_class_lr0.0001_s42",
+      "elapsed_seconds": 306.3854191303253,
+      "block_complete": true
+    },
+    {
+      "id": "T2_0_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 32,
+      "balanced_accuracy": 0.5764753788593995,
+      "collapsed4_balanced_accuracy": 0.6703098152920962,
+      "minimum_recall": 0.07692307692307693,
+      "collapsed4_minimum_recall": 0.3125,
+      "per_class_recall": {
+        "Mn": 0.7010309278350515,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.3125,
+        "Fe": 0.8636363636363636,
+        "Co": 0.07692307692307693,
+        "Ni": 0.5714285714285714
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7010309278350515,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.3125,
+        "Class VIII": 0.734375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_0_six_class_lr0.0001_s42",
+      "elapsed_seconds": 268.3426926136017,
+      "block_complete": true
+    },
+    {
+      "id": "T2_1_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 10,
+      "balanced_accuracy": 0.6032355709868596,
+      "collapsed4_balanced_accuracy": 0.6853065936426117,
+      "minimum_recall": 0.07692307692307693,
+      "collapsed4_minimum_recall": 0.625,
+      "per_class_recall": {
+        "Mn": 0.8144329896907216,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.71875,
+        "Fe": 0.7045454545454546,
+        "Co": 0.07692307692307693,
+        "Ni": 0.5714285714285714
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7422680412371134,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.625,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_1_six_class_lr0.0001_s42",
+      "elapsed_seconds": 204.2672951221466,
+      "block_complete": true
+    },
+    {
+      "id": "T2_2_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "selected_epoch": 18,
+      "balanced_accuracy": 0.5974854147856725,
+      "collapsed4_balanced_accuracy": 0.7138987328178694,
+      "minimum_recall": 0.07692307692307693,
+      "collapsed4_minimum_recall": 0.578125,
+      "per_class_recall": {
+        "Mn": 0.7628865979381443,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.78125,
+        "Fe": 0.6590909090909091,
+        "Co": 0.07692307692307693,
+        "Ni": 0.5714285714285714
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7628865979381443,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.78125,
+        "Class VIII": 0.578125
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/T2_2_six_class_lr0.0001_s42",
+      "elapsed_seconds": 304.3875482082367,
+      "block_complete": true
+    }
+  ]
+}

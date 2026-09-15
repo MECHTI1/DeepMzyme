@@ -1,0 +1,3966 @@
+{
+  "profile": "metal_architecture_pilot_10h_v1",
+  "snapshot_through": "attempt_039",
+  "campaign_status": "completed_30_with_finalization_verified",
+  "full_runs": 30,
+  "smokes": 7,
+  "core_selected_recipe_pairs": 9,
+  "seeds": [
+    42,
+    43
+  ],
+  "selection_rule": "Within each family/target, seed42 native validation BA chooses LR, then native minimum recall, then lower LR. Each run checkpoint uses native validation BA. Common-four scores use those same saved checkpoints.",
+  "validation_sites": 208,
+  "validation_pdb_groups": 110,
+  "common4_validation_support": {
+    "Mn": 97,
+    "Cu": 15,
+    "Zn": 32,
+    "Class VIII": 64
+  },
+  "source": {
+    "snapshot_archive": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/archives/attempt_039.tar.gz",
+    "snapshot_archive_sha256": "2d1e43d3e225ff3631ee55ca55c6a2df80a35b4b2b3033ab01d2aab2c01e96a5",
+    "snapshot_drive_file_id": "1tgzaLn_KPArsgnHULVsZ9LhdXdYu9_B1",
+    "snapshot_transfer_receipt_sha256": "5e7bf898478e1863cb9733eb0f13e4f3b6eb1e51eba6bcdf839d80c45d035b5c",
+    "aggregate_files_in_verified_archive": {
+      "campaign_manifest.json": {
+        "sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+        "bytes": 485733
+      },
+      "campaign_attempt_ledger.json": {
+        "sha256": "ecd2dc8a12a50f5c5002fadfc108707951898b13d81f2c68fb4ada01e4d2e4fe",
+        "bytes": 148283
+      },
+      "validation_results.json": {
+        "sha256": "69ee9e9176941addb54f2b0262172558d676d8d2702cf127f3a249b8a526ab98",
+        "bytes": 27904
+      },
+      "target_formulation_screen.csv": {
+        "sha256": "f59510d3a95f037e8c1781d657ed4e56457680156992191db40cfe62726120f6",
+        "bytes": 12338
+      },
+      "architecture_screen.csv": {
+        "sha256": "af187e4265f3aa88d315dfd48a8b0a6d7fae0c54e353ae64eb62cb914196cc40",
+        "bytes": 5239
+      },
+      "expected_split.json": {
+        "sha256": "1415562a2830710209e4689fc641ea1e82bf57dd40bb9ad17d75936d27737f42",
+        "bytes": 371770
+      }
+    },
+    "frozen_source_files": {
+      "src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/benchmarking/__init__.py": "387e5dfd0f1e9624c0c3b7ad1bca85c36a0634517ec502d2adf04d4730a9ef06",
+      "src/benchmarking/artifacts.py": "6dbc3b449cf5ba98eea5e017ccba360add62d50fa19cde2fc4d7628d9d5a06aa",
+      "src/build_clean_single_donor_subset.py": "3a8f2771002e35029ac3416c74fedc94c78cc48d5c2829795ebe1ec36952d34c",
+      "src/build_colab_bundle.py": "b606f785286468de538ebd6e0cec3b2f52f4952f575fe8c81a21192a76cd1afc",
+      "src/build_dataset_csv.py": "60f0865ed6e79c0d2783dd5a81d815f2acd28d5781b229f28f11c69c2d646472",
+      "src/complete_care_caches.py": "e4d4e6021df33c26d5511c15c27ea8269d84d0c890d4897f8b71b90777609ad2",
+      "src/data_structures.py": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6",
+      "src/embed_helpers/Interaction_edge.py": "2a077ec1363c058c2bba45e25b5fc577c487e7d7ba309a2ce5b55b968974fea6",
+      "src/embed_helpers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/embed_helpers/esmc.py": "30c617940966cf13ed4c504dcad32dd0d13d6e49e431b823d822079f8715c6dd",
+      "src/embed_helpers/physicochemical_features.py": "07a2081751e5870402628c4c17b73d8abbe6d87f2cbb7f68a55d26251ff8f64c",
+      "src/feature_extraction/__init__.py": "7ee6c2919149c0fb74ca772a356fd426b801b4cca4c5b7f0ba6bfde13a1732b4",
+      "src/feature_extraction/constants.py": "35dfcd2d4a63a5306a1fe843578315702d76d80f89d2c14ad361eb2f6c8b815a",
+      "src/feature_extraction/core.py": "d174e8ba755c9aa4cb202b57708438949dbfd37aad47e2a1d289bf6143a95368",
+      "src/feature_extraction/generate_features.py": "72a5c24246c0f916961de09920082e4c01f3de4e22f66de90dafae900edb8d4d",
+      "src/feature_extraction/propka_support.py": "7dedaf4f2cfb467673155567005fe53eeed8f82284850323ba6f64a565eb5d2e",
+      "src/featurization.py": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d",
+      "src/graph/__init__.py": "9727f29a515573f7e0cbb0f052bb212d2182818466a3b548ba2a04702dfc7397",
+      "src/graph/construction.py": "92a044b56fa897b4635adb9721b3698ec1487e3f34d4f35891f628510ae3ff4f",
+      "src/graph/edge_geometry.py": "66811c344703a65111a0436cb21b0fb43905e5c1c45b4710f38fb69bdda557a8",
+      "src/graph/edge_postprocess.py": "88d3c31b4e37ce0b6d4310ffe5410d831153c8a3ad0a00ee62d0e68e9c04e111",
+      "src/graph/edge_records.py": "78cead0066f029e5f29ec00ffab191929df813cfb2014fbe97cec93c99408d39",
+      "src/graph/edge_sources.py": "91baeed8a75ba328104934f18d400cdabdd64a2caed9240f1c91f53a77e5dcf2",
+      "src/graph/feature_utils.py": "fd6d833e804d076df5f20be0074b62054fce6d8340e6ec4bca5d47dd3dd24bef",
+      "src/graph/ring_edges.py": "aa96cfe0a24a753bd6e34d7de857e90ddd2285cf8372d4cd1509a4ade217eb7c",
+      "src/graph/shell_roles.py": "713d833610a66c1aac700d5885f045d49fa563cb23d5efcb3ea97c8d8d6d9a4b",
+      "src/graph/structure_parsing.py": "6ad2951735029a0994a2b9ed7ce87e5f909ab58d4d0b60bd2ebff4db0c21e5c0",
+      "src/label_schemes.py": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99",
+      "src/manage_structure_store.py": "ed7949ec0c84826c53d2c971279e7ea4c5845e41c56971262e45dd1bb97a306e",
+      "src/metal_objectives.py": "298681c7ef6d4b88bb96ccf040b3fbc04bc6bc32dda9109cbb1312343bb6d4db",
+      "src/model.py": "3dad0d4e700676c6d304d2239a39c1f1bf713b8c03d17cdd4e0566e2c99fed5a",
+      "src/model_variants/__init__.py": "a7625910fbe38737e588b81ebdb0d36a919c3edb7814882c648e9b736d240c8b",
+      "src/model_variants/factory.py": "386294f7539f9b608008092b7b7ec7ea33597d6083fa04d4561b46bffd38d616",
+      "src/model_variants/models.py": "62953ab380cdc7f62ac455d01a39cd0d04afc5c096762565a36bb0bcb8cfc086",
+      "src/project_paths.py": "0ad35ff1e6312a15971fa29235f28ef9556ddfc149213fe3ffcc9f145f8c9b66",
+      "src/rebuild_care_complete_bundle.py": "8f1357dacc525c6e8419fa032758e68b79f1cf5ba44e9ece538900221293c600",
+      "src/report_paired_metal_routes.py": "f5bb7bf4b4b8da8e9b28b1bfe4deef6d0b644b6d576cfe2dd26cef3cbd250549",
+      "src/report_runs.py": "eb2fb9d00a3be927869ee93878ba9036c87f30033b4f0b1bb879399457a6c7ce",
+      "src/run_ec_baselines.py": "f9d778de108eb51f6c931433618e6ba8db4aa2ec85d33cec8929f68dafb2cbc7",
+      "src/run_metal_architecture_pilot.py": "7588fefade48b644c4cd07fd02aaa57355ffd51191fb370dbc9f70642f62bff1",
+      "src/stage6_standalone.py": "15f5ed0237dd93877db74dc745a3bb495a12a80b6e2628da20d873f9ba9d108a",
+      "src/statistical_validation.py": "fc441a45117dcc3d24c3b730b355e3b61f45b2f38495a47a53e527eb05995057",
+      "src/structure_store.py": "1d494a6b3f98e26032a8ead10b3d72efbd5ed4c27932a8b5ca58c384a48306ec",
+      "src/train.py": "3e0178f9acf0e182ab71dacf3efe4b65f099c6096806b1388916aad100a7c724",
+      "src/train_ec.py": "db76df9c299667262bdf240e725df32dc27f8c7bc639b28ec073cb51c9d46a1d",
+      "src/train_metal.py": "cc830557a5ef9d407ec398863a7633d2d7c93078ee45233520aa2358cb603439",
+      "src/training/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/training/config.py": "1c05a2535a37906a091a6c8d8c0425dff466eec4393d9c21ecca219bc89deebd",
+      "src/training/data.py": "465edf92ee44a7644373ae596be26a4c0aacbb2db07331401f94038d9b61b4fc",
+      "src/training/defaults.py": "6cfd115fd29bb4a7e3bfc88ec4ac2574234491e8418962553baaf982a6f6cccb",
+      "src/training/esm_feature_loading.py": "a95a15e71608c30571ee76ec2a8d9cfe4396aa66daac7ae8af23e058ab32b80e",
+      "src/training/evaluation_protocols.py": "3171a663e44a24a2a1a1a5970dbdac000157f714623eb7e5c42ce125a360ccff",
+      "src/training/external_feature_loading.py": "7295d366f15a2b8459c0213c32373036f0dfe1b7c1a8a21d8c31ced50607e898",
+      "src/training/feature_paths.py": "ea9587dc3b2b97e128777d7fe4794d348816ffb0f793b053e491744cbee27aef",
+      "src/training/feature_sources.py": "2d2dab5680c863292d413c1df3f072172e22611f722ef5bd700942a2617862f6",
+      "src/training/final_test_reporting.py": "bb4786238b344a159db93144db621ee0644ad87812ba76025cb0163bebdae7c2",
+      "src/training/graph_dataset.py": "62d579e3a2c7467d53209c196e606283f26807851c86470b16edd567d8b0dd20",
+      "src/training/labels.py": "000cc3820231891627c900b9b9ed9cb0b94138d78f141976d6290a429c37dcdc",
+      "src/training/loop.py": "f926bc78c117f9f1de8ce637f4ff006c7f6397ea25fd060ff1ae71aedd82eab1",
+      "src/training/pipeline_metric_policy.py": "6904a7f5a3ac5a256865275c7a95d0bbff01566d49312bcd25479dce505fc6cb",
+      "src/training/preflight.py": "21739799c93f543c2cb9aeef40ce3cb4ecb3663c582e30caf27eabff10be8785",
+      "src/training/reproducibility.py": "20449d096fee8575bda5e896f42c3d8c15753f31db49f590ffac29090d98c2d9",
+      "src/training/run.py": "da443bac103afcb360f7817c59e594372218d9839de54ec37ae3d7b2d6e91ca1",
+      "src/training/runtime_preparation.py": "f4f08666cf58d10148e4aa1574d4a5c21ea5767eba40599041433e3ae13a2e8f",
+      "src/training/site_filter.py": "528acbaad1578a61ab6cb51a6bb5ba7cc1e56915f6019fd152681969a5b5a83a",
+      "src/training/smoke_test.py": "0e21eac71d0748c95cf9c569a8da7cab161df8a8fed81ce771cdd0834425e956",
+      "src/training/splits.py": "8cf17b309e97fb4053b6652a543074f8c1db4913d125cce514eb452f57cf1473",
+      "src/training/structure_loading.py": "09d957e6114826d809088f24f86ea685872a1b5132f426567eadd1d4cabdafbf",
+      "src/training/task_entrypoint.py": "28b1d5d60ca616994b31cd8808f9d21a69c49c9ec5a0f7f789b0c01db3bea853",
+      "src/verify_colab_notebook_smoke.py": "cb5279ba0260b45c221777da7f3d070ef8ea353c9f1c64ddf78186df657baa7d",
+      "notebooks/DeepMzyme_training_colab.ipynb": "714a42dfe7f3b676ab9c6f3c9e93a87f5536b6797d38b3d1c3120dbe2bdaf0c7",
+      "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md": "f11d5ce647ff6676b77b05eb6be68555632e5bb90a6dead34cc7d8ce4d03040c"
+    },
+    "run_artifacts": {
+      "A1_0_four_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_009",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42/run_config.json",
+            "sha256": "2abc1edcbb478188e478d961d5afbc324b1e275524badda7ba243b2cf2bcaed4"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "e39ce8b61f7fe03415191e6ed18e4f849505e6a9194bb99551b54489c4ccefc6"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "32900e0318fa720fdf79e480c1ef2c5aa70bc55c1970295f8b698fe11ffe7d05"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "4002205d87007b3e929e6217238bda43f605e8097c2a83dc7720e16321d95aea"
+          }
+        }
+      },
+      "A1_1_four_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_010",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42/run_config.json",
+            "sha256": "32e26463589b8dab1e1c360de1273dd3e28590fc8480b3e11a04f16422a3c0ae"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "74e6eb93b3278a4e62e9d2dbab04c395f83cddfc0bddffd5ec52d076b90cd7cd"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "32820dd9256d3700764ef83e115b5450db5bc219ddd863e7da020a492788bc5a"
+          }
+        }
+      },
+      "A1_3_four_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_011",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42/run_config.json",
+            "sha256": "57f8578dfd1af318a50d53529b247e23c87850aea6d6f1e79d26789fba9f75e0"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "819079733da3f16f2089d12bec0bbed06ce45d042d6ea94a619fb5f5c1013046"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "489a929ca413d56371e259c84b3cf44e0614d57da051f13fcfb9d61e21c3d073"
+          }
+        }
+      },
+      "A1_2_four_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_013",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1/run_config.json",
+            "sha256": "d7ac5b1092df145da08ed34bd871a704ef35b881880f145fe51c7dcbd8e5c433"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1/run_metadata.json",
+            "sha256": "1e42263e756d499cef076d73940eda2a639ee3a07c56e34bede865b21a09b136"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1/epoch_metrics.csv",
+            "sha256": "2657f7214a7a7a5089881711463b777b55176beab28a3985e4e357a32bed582c"
+          }
+        }
+      },
+      "A2_0_four_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_014",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42/run_config.json",
+            "sha256": "9099bf4e197e2d1f1d3c72f81196715a6826e421856bafadbb333a79e1f28833"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "89d80354187a05bdccee4469e3eb55eba36551aa98904c7bcb8bb16a1831e443"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "32900e0318fa720fdf79e480c1ef2c5aa70bc55c1970295f8b698fe11ffe7d05"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "bd7c37ee88e464be15367b5168d3d606bfe529c53137454f524017c9cc52d71f"
+          }
+        }
+      },
+      "A2_1_four_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_015",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42/run_config.json",
+            "sha256": "e0b0af9fbe1680e29aabf400e020fbea5d5ff5fb5f2027c5d47f08eef82c1d19"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "aec9ca199bc2273f46441a20da735b619435eb81983adb01dfed118edde45f95"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "1ccb433365854b3bca24546ea14305d3cf0914c6badd7a4b7f123d186a19f232"
+          }
+        }
+      },
+      "A2_3_four_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_016",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42/run_config.json",
+            "sha256": "cadd48efd52d39af8f07827ced18e5ba7d977356c136463350a5859ccd411878"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "fe56c4dedc16124a13d6ffb1924def616f6db8b90d8762add206d20aa732887d"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "cf91405676cf81ed969bbc3a3290b2486edc0ec07ef0d0b06bed07069b2ba88d"
+          }
+        }
+      },
+      "A2_2_four_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_017",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42/run_config.json",
+            "sha256": "0e0bace4bf1c182fdcb7f484e0658bff0ec6c85df84482db60aa9b85c5ffc423"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "f007f8b4e5df537dec497675bdaa46ee160e0ccaabeacc3066b2d4ccef52c164"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "7227851ef200c5a32ce3f1314641a5b47a2dcb48821397deb5f7b7a55ecb9c3e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "67d43660401ec73dd0c4aaf6d3aa03968cc8f40d1b04e65f3d4b0b455471e03f"
+          }
+        }
+      },
+      "T1_0_five_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_018",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42/run_config.json",
+            "sha256": "4f0924c7319ec3656a325e54b4be69961e4964ee3a8c531fabf790babf853279"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "5fa9997140fb1253a978c5af280e8a62ffedb63f320b7b7f6cb6830ca383c6c9"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "bea4c03a9675ac423d7433db0994d69521c2b1acea76422763707049597eb9f7"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "5a8c1db0a3b2f458ab4f138a8a9f64b20f1e8cde631d5ff004d0ae5b03fd12a7"
+          }
+        }
+      },
+      "T1_1_five_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_019",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42/run_config.json",
+            "sha256": "b469512b2e59366c9a8de1b6b8172d56ac412e9a425a9bb6d88b324246c2f996"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "d4e9b35f6151559073967fe9e88e085cf6cd8a4738143fde1f9a57e2445991a3"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "6a3fd415f5affe9fe73cc53376bfa9c7f15e80db6d98ce7364a08e6ed180b250"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "16a040e3931788962735f3d9414ab0a4f2109af024397017c4703d982037d32d"
+          }
+        }
+      },
+      "T1_2_five_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_020",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42/run_config.json",
+            "sha256": "4ce2d2e2f92df9bc83ad9a03556df6a44bf7c9214f81b4cb642e65b0d28ceab7"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "7d702096a31c8125a975dfe653dc5724d7b495bb87d68f6fb1a4817f21b03779"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "6a3fd415f5affe9fe73cc53376bfa9c7f15e80db6d98ce7364a08e6ed180b250"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "5cdb253b6e6acd270a5bbf94ec30ff9486ed8faf5db197b0b07318bf80ea0abf"
+          }
+        }
+      },
+      "T1_0_six_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_021",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42/run_config.json",
+            "sha256": "5407b00bc14432bcdd4550a8f1fc10ca19ef3984088445e36b4d5b9ada56de8e"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "88b0e1e949dd50a6344c58fb0fffdbc428fa13d6a8d11d3af96a4579bf13450d"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "4bc552b2c67a806c85dbbe211f434017c1e386f0af26ec97e2d848cab78db5b7"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "0df97bc20145a045bc505c7b5b8a861f9c3f0357a052f674199b7a5b86844abe"
+          }
+        }
+      },
+      "T1_1_six_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_022",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42/run_config.json",
+            "sha256": "8c99baaa47293af9be48c33b703cd955c228d85503063fc7797536ef429704f0"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "3d2eb912025d965ae9e804b57ff726e63a69a136dcbb8a875454e6decc3c50c6"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "9bfa3caffa06d304f18ba2c0c23d12c26dd30e91fffd3cc6433ccfd6f4d4a453"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "7d81dbde44ae536a988236af99c2d93af5803be6b00e4a1797f2f5e0973e34c6"
+          }
+        }
+      },
+      "T1_2_six_class_lr3e-05_s42": {
+        "completed_attempt_id": "attempt_023",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42/run_config.json",
+            "sha256": "7e8bbe846920d9f3e79595c843f3ed65d81bba179d4a36ed56208d0330d498de"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42/run_metadata.json",
+            "sha256": "1961c10648addea627a42a8d771f8a35d41ce50e6d0dc6fd1390416d6dc0941d"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42/dataset_summary.json",
+            "sha256": "9bfa3caffa06d304f18ba2c0c23d12c26dd30e91fffd3cc6433ccfd6f4d4a453"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42/epoch_metrics.csv",
+            "sha256": "fd1efc059e86809e7e206a1bb6a3f0ab9372d481b077637131c9355303cadd28"
+          }
+        }
+      },
+      "T2_0_five_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_024",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42/run_config.json",
+            "sha256": "799d3fa1688db00869810e0a1086683c84946eb0b2196717770e19a65b16674c"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "46a38cfc09424a8a24048d353e24804bfb21b7ee21c2c4c6751d3e26e5b19927"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "bea4c03a9675ac423d7433db0994d69521c2b1acea76422763707049597eb9f7"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "90219c6a3020dc1e8790d928a523ce721071c017e54a48e4dd260de6718ca7a9"
+          }
+        }
+      },
+      "T2_1_five_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_025",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42/run_config.json",
+            "sha256": "693c5e68ab6ecfdd7da921d3af098ca6f13083c71adf6a7375a4e0b42876d163"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "a73727ad922edb651f1d2c74d325c8dc53e4b41fd7150bad56fa8259c0a0cbd6"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "6a3fd415f5affe9fe73cc53376bfa9c7f15e80db6d98ce7364a08e6ed180b250"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "254065e633d11a14dd08d2d6b397f9a1bc17c5fcc88cfecf33631bb385ca61dc"
+          }
+        }
+      },
+      "T2_2_five_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_026",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42/run_config.json",
+            "sha256": "90b9d2a3b6487948b9fb8e3bb37f0e993c2fef96f2ad6b339bf57fae771bee23"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "dd110263743f32ca82fcde64df56592d9e8a1ea06d4d48fa4e96b9810cff240b"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "6a3fd415f5affe9fe73cc53376bfa9c7f15e80db6d98ce7364a08e6ed180b250"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "bbb8a3b57bd550dcf45c6c4eb31ce594e8b45e733bf640ad20ffaba84ea0c734"
+          }
+        }
+      },
+      "T2_0_six_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_027",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42/run_config.json",
+            "sha256": "62f9f188d2e0aa5b9309e7f8fd0d125d15b8178d73d0bb70441a7599d4a47a90"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "f70c64771b236df66c6eb2c5f9fceef4edd033e29eaf85113e99433dee9ac6a6"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "4bc552b2c67a806c85dbbe211f434017c1e386f0af26ec97e2d848cab78db5b7"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "1169fdb597d98a81241bcbc624dccfaafd8c097961b820ff43d19ab8e2ac73fc"
+          }
+        }
+      },
+      "T2_1_six_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_028",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42/run_config.json",
+            "sha256": "a73a4a83b0f4bf0c5f2b45ce628de5f9c1eb8f2df1f9e9ca2433c775d0971a80"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "118405116789cfb4fb1c00ce58c53c24482e04722a7e35ac00ddfe871f15e451"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "9bfa3caffa06d304f18ba2c0c23d12c26dd30e91fffd3cc6433ccfd6f4d4a453"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "85ded3a9fc7fd908199151e624926b35c6e3d3a7c13b565a985ab27c9c0b4a8d"
+          }
+        }
+      },
+      "T2_2_six_class_lr0.0001_s42": {
+        "completed_attempt_id": "attempt_029",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42/run_config.json",
+            "sha256": "8820854aecaba6f65265ad5a927b095e08424d0b2ac90a6d6b428db4897d9cb2"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42/run_metadata.json",
+            "sha256": "2517fe8c551aac7017fbde34babe960aef73e2173005f38d2725d7b9b0f6ac84"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42/dataset_summary.json",
+            "sha256": "9bfa3caffa06d304f18ba2c0c23d12c26dd30e91fffd3cc6433ccfd6f4d4a453"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42/epoch_metrics.csv",
+            "sha256": "73019e3cc8abc7412ee11744f225c2dcecd2a551a1182fb200f2b3c1dacf1b1d"
+          }
+        }
+      },
+      "R_0_four_class_lr0.0001_s43": {
+        "completed_attempt_id": "attempt_030",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43/run_config.json",
+            "sha256": "aada09ce3c50182a24c05b78fa51b0d6870ccae16088893b5e5e5ead4ea018d5"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43/run_metadata.json",
+            "sha256": "a59e3399967a2c045606fa90b5f16e188959d6203ec5d1603bccf360bef89d00"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43/dataset_summary.json",
+            "sha256": "1401b059bdbf7b053e67b832bb1d91c81d7d1869b40839d7f3c67a97127d0ef8"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43/epoch_metrics.csv",
+            "sha256": "aa6442abc5116f2bab69eb2b45ef24600b9aba1e6ac7f77b481f3c31e70100c6"
+          }
+        }
+      },
+      "R_1_four_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_031",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43/run_config.json",
+            "sha256": "9e187758d92104dd0add1202e375fd7e1085f9b092341811aa36cf24fb68a151"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "60928de29cac259f37555b23db02fab0163f38463af4562085968e0d6cc9bf8d"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "c36a15b80678aa7b439b26db5f30393ac3a2f744cde5503f623ee9663203690e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "ed153d0f51939eb1410e70c0080bde948675bf0866f0ea695f7cf87337a98e2c"
+          }
+        }
+      },
+      "R_2_four_class_lr0.0001_s43": {
+        "completed_attempt_id": "attempt_032",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43/run_config.json",
+            "sha256": "b8e795e20c7be59990eabb92dd2216e81ede3258ed8fade34de4ed754d62cfa4"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43/run_metadata.json",
+            "sha256": "e7740b46413d2b1afe9cafec68cc99b975ad27aa4773d2ee919158d486d17458"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43/dataset_summary.json",
+            "sha256": "c36a15b80678aa7b439b26db5f30393ac3a2f744cde5503f623ee9663203690e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43/epoch_metrics.csv",
+            "sha256": "c5232ef3512d9f6e0ec01cfe060994b6c2b9cd5a6fff546f19d7bc08093e4e3f"
+          }
+        }
+      },
+      "R_0_five_class_lr0.0001_s43": {
+        "completed_attempt_id": "attempt_033",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43/run_config.json",
+            "sha256": "fd537dd3380f62a91f5e6260c8c99ffd99c74eb34b6be316aa54b460eb8689bc"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43/run_metadata.json",
+            "sha256": "aaf4d165ecac4666d01b28bc21f1e41e13fc599b2bfcccce78754655adcccc48"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43/dataset_summary.json",
+            "sha256": "36e2d365fa09a5a90ae420da726ad2de4d00e5cb59ea5a870dcd20656623446b"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43/epoch_metrics.csv",
+            "sha256": "d5a79472dad931aea606798435c21dab3fadecb0d75cd321988570c7324e3d18"
+          }
+        }
+      },
+      "R_1_five_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_034",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43/run_config.json",
+            "sha256": "17c75e27a4a75c1b76a6d72f2aa6d3fd9b7a2506aa89db73a05fad52baf8cffa"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "2de7eb5da9760ec3de897f91b35ff9fbec6926b1179526c668f3e6608f5cab29"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "b183748b96f2932147b3779d4d65976a3b5e807fe8b2eee588e55ab23070ae64"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "0166a463631cf7d098fa2e8af1f9120f48b5e21653f3dcff4fb7f3b4973335e2"
+          }
+        }
+      },
+      "R_2_five_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_035",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43/run_config.json",
+            "sha256": "2f6499d07a46e28a55acabfe653a6899dc363e765f62535e2b7ce02dd8dc8a0d"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "cb74d47d59d50d7b0695e53fe20cef155a1491df777323be01872b36fdce2baf"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "b183748b96f2932147b3779d4d65976a3b5e807fe8b2eee588e55ab23070ae64"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "a375417e3a0b79a5932bf3280d38aa9fcf2c46b31603297d4a50430317a47ece"
+          }
+        }
+      },
+      "R_0_six_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_036",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43/run_config.json",
+            "sha256": "730584ef2990112caa64686f795d45b0e1ee91b81cc7a9805e502505373512d7"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "f077a54e74ac7e72cecc3c84bf61b32fb3da85bd8b13dc7f0c6f0b7e38fb0fe8"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "e45fff3ba66d2d1b5b9dfbd7ff4fe920c0bc6233954949c867204f6ea8652caa"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "09437c3c3ac4013d9d15ea5121311bf691616cd10fa514a51ca792f5be1217b5"
+          }
+        }
+      },
+      "R_1_six_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_037",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43/run_config.json",
+            "sha256": "0bec10ba53b8aa16c54a07fbb45f4326f5998afa4855b3df7a2f062169c57eb3"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "9dbe2a193a1cf0df335c6c7de7bea2cb32169cd7fdbc9cf598b31ec8777d7dfd"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "abd01fbd9a59dbc871ad6c97230738cc754e00046f6a3dea1d8923225eb8c4cc"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "f8b97d7d1f6a87fb8ca1ce1d573e6e3d7c4750aafaba4c871cecc3291fce0913"
+          }
+        }
+      },
+      "R_2_six_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_038",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43/run_config.json",
+            "sha256": "e3c87e834196fe1d6730ec9abe08bce1e254dd82062cc7241296718d193e71b5"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "4a989628cc940dc8e49db0af708afb301e914be7a6b0803391a2c6ef89bb125b"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "abd01fbd9a59dbc871ad6c97230738cc754e00046f6a3dea1d8923225eb8c4cc"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "a726a23b6201372e50d387d15b7e6c221fb01688fb06f2195de16184a627ef26"
+          }
+        }
+      },
+      "RE_3_four_class_lr3e-05_s43": {
+        "completed_attempt_id": "attempt_039",
+        "files": {
+          "run_config.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43/run_config.json",
+            "sha256": "548317698120576b5282127ceb99ad4e981d6eaf634981287a0442b352f22a92"
+          },
+          "run_metadata.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43/run_metadata.json",
+            "sha256": "b8d18e649ea5cee294621269a98887137127d2f8b77c933c01fb00c1467d906d"
+          },
+          "dataset_summary.json": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43/dataset_summary.json",
+            "sha256": "c36a15b80678aa7b439b26db5f30393ac3a2f744cde5503f623ee9663203690e"
+          },
+          "epoch_metrics.csv": {
+            "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43/epoch_metrics.csv",
+            "sha256": "8a718d661639161c131b645ee9b68606e805b2f6de77d64a76a7d4231b3805d8"
+          }
+        }
+      }
+    },
+    "finalization_binding": {
+      "final_validation_results_sha256": "a1fb0d918698bee1bcaec5313fe324867e581865e734a28595e06e1a45cf1893",
+      "final_campaign_state_sha256": "a18858c90530aa0e12512dcf2db3e930f97dafacdbd082334d49c6109dec6cd6",
+      "capture_manifest_sha256": "e852a60ab70f1adb2be2396d6b0607321e44c2d61506c8b6d48b46edde31d743",
+      "capture_archive_sha256": "be9aaf95392b96c88f649c06b732a6ec91980daf18c0a6829cf88e8b0f8a2e3e",
+      "capture_drive_file_id": "1lgvyKm5fm5436TdiU_VhmVhNqkHWaum0",
+      "terminal_noop_states_verified": true,
+      "gpu_stop_is_separate_evidence": true
+    }
+  },
+  "all_full_run_metrics": [
+    {
+      "id": "A1_0_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 44,
+      "native_balanced_accuracy_pct": 64.71139390034364,
+      "common4_balanced_accuracy_pct": 64.71139390034364,
+      "native_minimum_recall_pct": 40.625,
+      "common4_minimum_recall_pct": 40.625,
+      "native_per_class_recall_pct": {
+        "Mn": 60.824742268041234,
+        "Cu": 93.33333333333333,
+        "Zn": 40.625,
+        "Class VIII": 64.0625
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 60.824742268041234,
+        "Cu": 93.33333333333333,
+        "Zn": 40.625,
+        "Class VIII": 64.0625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 59,
+        "Cu": 14,
+        "Zn": 13,
+        "Class VIII": 41
+      },
+      "common4_correct_counts": {
+        "Mn": 59,
+        "Cu": 14,
+        "Zn": 13,
+        "Class VIII": 41
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42"
+    },
+    {
+      "id": "A1_1_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 22,
+      "native_balanced_accuracy_pct": 72.1227985395189,
+      "common4_balanced_accuracy_pct": 72.1227985395189,
+      "native_minimum_recall_pct": 59.375,
+      "common4_minimum_recall_pct": 59.375,
+      "native_per_class_recall_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 60.9375
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 60.9375
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 92,
+        "Cu": 11,
+        "Zn": 19,
+        "Class VIII": 39
+      },
+      "common4_correct_counts": {
+        "Mn": 92,
+        "Cu": 11,
+        "Zn": 19,
+        "Class VIII": 39
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42"
+    },
+    {
+      "id": "A1_3_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 40,
+      "native_balanced_accuracy_pct": 69.36667740549828,
+      "common4_balanced_accuracy_pct": 69.36667740549828,
+      "native_minimum_recall_pct": 46.875,
+      "common4_minimum_recall_pct": 46.875,
+      "native_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 93.33333333333333,
+        "Zn": 46.875,
+        "Class VIII": 64.0625
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 93.33333333333333,
+        "Zn": 46.875,
+        "Class VIII": 64.0625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 71,
+        "Cu": 14,
+        "Zn": 15,
+        "Class VIII": 41
+      },
+      "common4_correct_counts": {
+        "Mn": 71,
+        "Cu": 14,
+        "Zn": 15,
+        "Class VIII": 41
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42"
+    },
+    {
+      "id": "A1_2_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 17,
+      "native_balanced_accuracy_pct": 71.78855240549828,
+      "common4_balanced_accuracy_pct": 71.78855240549828,
+      "native_minimum_recall_pct": 56.25,
+      "common4_minimum_recall_pct": 56.25,
+      "native_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Class VIII": 56.25
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Class VIII": 56.25
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 27,
+        "Class VIII": 36
+      },
+      "common4_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 27,
+        "Class VIII": 36
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1"
+    },
+    {
+      "id": "A2_0_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 35,
+      "native_balanced_accuracy_pct": 70.89696091065292,
+      "common4_balanced_accuracy_pct": 70.89696091065292,
+      "native_minimum_recall_pct": 34.375,
+      "common4_minimum_recall_pct": 34.375,
+      "native_per_class_recall_pct": {
+        "Mn": 85.56701030927834,
+        "Cu": 93.33333333333333,
+        "Zn": 34.375,
+        "Class VIII": 70.3125
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 85.56701030927834,
+        "Cu": 93.33333333333333,
+        "Zn": 34.375,
+        "Class VIII": 70.3125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 83,
+        "Cu": 14,
+        "Zn": 11,
+        "Class VIII": 45
+      },
+      "common4_correct_counts": {
+        "Mn": 83,
+        "Cu": 14,
+        "Zn": 11,
+        "Class VIII": 45
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42"
+    },
+    {
+      "id": "A2_1_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 18,
+      "native_balanced_accuracy_pct": 71.74828178694158,
+      "common4_balanced_accuracy_pct": 71.74828178694158,
+      "native_minimum_recall_pct": 56.25,
+      "common4_minimum_recall_pct": 56.25,
+      "native_per_class_recall_pct": {
+        "Mn": 88.65979381443299,
+        "Cu": 73.33333333333333,
+        "Zn": 68.75,
+        "Class VIII": 56.25
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 88.65979381443299,
+        "Cu": 73.33333333333333,
+        "Zn": 68.75,
+        "Class VIII": 56.25
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 86,
+        "Cu": 11,
+        "Zn": 22,
+        "Class VIII": 36
+      },
+      "common4_correct_counts": {
+        "Mn": 86,
+        "Cu": 11,
+        "Zn": 22,
+        "Class VIII": 36
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42"
+    },
+    {
+      "id": "A2_3_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 16,
+      "native_balanced_accuracy_pct": 68.2385631443299,
+      "common4_balanced_accuracy_pct": 68.2385631443299,
+      "native_minimum_recall_pct": 46.391752577319586,
+      "common4_minimum_recall_pct": 46.391752577319586,
+      "native_per_class_recall_pct": {
+        "Mn": 46.391752577319586,
+        "Cu": 100.0,
+        "Zn": 65.625,
+        "Class VIII": 60.9375
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 46.391752577319586,
+        "Cu": 100.0,
+        "Zn": 65.625,
+        "Class VIII": 60.9375
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 45,
+        "Cu": 15,
+        "Zn": 21,
+        "Class VIII": 39
+      },
+      "common4_correct_counts": {
+        "Mn": 45,
+        "Cu": 15,
+        "Zn": 21,
+        "Class VIII": 39
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42"
+    },
+    {
+      "id": "A2_2_four_class_lr0.0001_s42",
+      "block": "A2",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 7,
+      "native_balanced_accuracy_pct": 72.3120704467354,
+      "common4_balanced_accuracy_pct": 72.3120704467354,
+      "native_minimum_recall_pct": 56.25,
+      "common4_minimum_recall_pct": 56.25,
+      "native_per_class_recall_pct": {
+        "Mn": 72.16494845360825,
+        "Cu": 73.33333333333333,
+        "Zn": 87.5,
+        "Class VIII": 56.25
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 72.16494845360825,
+        "Cu": 73.33333333333333,
+        "Zn": 87.5,
+        "Class VIII": 56.25
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 70,
+        "Cu": 11,
+        "Zn": 28,
+        "Class VIII": 36
+      },
+      "common4_correct_counts": {
+        "Mn": 70,
+        "Cu": 11,
+        "Zn": 28,
+        "Class VIII": 36
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42"
+    },
+    {
+      "id": "T1_0_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 33,
+      "native_balanced_accuracy_pct": 60.94712589815683,
+      "common4_balanced_accuracy_pct": 65.06174828178695,
+      "native_minimum_recall_pct": 18.75,
+      "common4_minimum_recall_pct": 18.75,
+      "native_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 93.33333333333333,
+        "Zn": 18.75,
+        "Fe": 86.36363636363636,
+        "Class VIII": 30.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 93.33333333333333,
+        "Zn": 18.75,
+        "Class VIII": 71.875
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 74,
+        "Cu": 14,
+        "Zn": 6,
+        "Fe": 38,
+        "Class VIII": 6
+      },
+      "common4_correct_counts": {
+        "Mn": 74,
+        "Cu": 14,
+        "Zn": 6,
+        "Class VIII": 46
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42"
+    },
+    {
+      "id": "T1_1_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 20,
+      "native_balanced_accuracy_pct": 64.03955795064043,
+      "common4_balanced_accuracy_pct": 68.28903565292096,
+      "native_minimum_recall_pct": 35.0,
+      "common4_minimum_recall_pct": 64.0625,
+      "native_per_class_recall_pct": {
+        "Mn": 70.10309278350515,
+        "Cu": 73.33333333333333,
+        "Zn": 78.125,
+        "Fe": 63.63636363636363,
+        "Class VIII": 35.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 67.0103092783505,
+        "Cu": 73.33333333333333,
+        "Zn": 68.75,
+        "Class VIII": 64.0625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 68,
+        "Cu": 11,
+        "Zn": 25,
+        "Fe": 28,
+        "Class VIII": 7
+      },
+      "common4_correct_counts": {
+        "Mn": 65,
+        "Cu": 11,
+        "Zn": 22,
+        "Class VIII": 41
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42"
+    },
+    {
+      "id": "T1_2_five_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 19,
+      "native_balanced_accuracy_pct": 67.99902374258045,
+      "common4_balanced_accuracy_pct": 72.96042740549828,
+      "native_minimum_recall_pct": 25.0,
+      "common4_minimum_recall_pct": 70.3125,
+      "native_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Fe": 84.0909090909091,
+        "Class VIII": 25.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 70.3125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 27,
+        "Fe": 37,
+        "Class VIII": 5
+      },
+      "common4_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 24,
+        "Class VIII": 45
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42"
+    },
+    {
+      "id": "T1_0_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 42,
+      "native_balanced_accuracy_pct": 58.05610161602429,
+      "common4_balanced_accuracy_pct": 66.39067869415808,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 28.125,
+      "native_per_class_recall_pct": {
+        "Mn": 71.1340206185567,
+        "Cu": 93.33333333333333,
+        "Zn": 28.125,
+        "Fe": 90.9090909090909,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 65.97938144329896,
+        "Cu": 93.33333333333333,
+        "Zn": 28.125,
+        "Class VIII": 78.125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 69,
+        "Cu": 14,
+        "Zn": 9,
+        "Fe": 40,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 64,
+        "Cu": 14,
+        "Zn": 9,
+        "Class VIII": 50
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42"
+    },
+    {
+      "id": "T1_1_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 36,
+      "native_balanced_accuracy_pct": 60.85633081122771,
+      "common4_balanced_accuracy_pct": 69.39647766323024,
+      "native_minimum_recall_pct": 15.384615384615385,
+      "common4_minimum_recall_pct": 50.0,
+      "native_per_class_recall_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 56.25,
+        "Fe": 68.18181818181817,
+        "Co": 15.384615384615385,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 91.75257731958763,
+        "Cu": 73.33333333333333,
+        "Zn": 50.0,
+        "Class VIII": 62.5
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 92,
+        "Cu": 11,
+        "Zn": 18,
+        "Fe": 30,
+        "Co": 2,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 89,
+        "Cu": 11,
+        "Zn": 16,
+        "Class VIII": 40
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42"
+    },
+    {
+      "id": "T1_2_six_class_lr3e-05_s42",
+      "block": "T1",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "native_selected_epoch": 48,
+      "native_balanced_accuracy_pct": 64.46177283483985,
+      "common4_balanced_accuracy_pct": 73.07721219931271,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 68.75,
+      "native_per_class_recall_pct": {
+        "Mn": 78.35051546391753,
+        "Cu": 73.33333333333333,
+        "Zn": 71.875,
+        "Fe": 84.0909090909091,
+        "Co": 7.6923076923076925,
+        "Ni": 71.42857142857143
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 78.35051546391753,
+        "Cu": 73.33333333333333,
+        "Zn": 68.75,
+        "Class VIII": 71.875
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 76,
+        "Cu": 11,
+        "Zn": 23,
+        "Fe": 37,
+        "Co": 1,
+        "Ni": 5
+      },
+      "common4_correct_counts": {
+        "Mn": 76,
+        "Cu": 11,
+        "Zn": 22,
+        "Class VIII": 46
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42"
+    },
+    {
+      "id": "T2_0_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 26,
+      "native_balanced_accuracy_pct": 63.17451577631991,
+      "common4_balanced_accuracy_pct": 69.60024699312714,
+      "native_minimum_recall_pct": 20.0,
+      "common4_minimum_recall_pct": 28.125,
+      "native_per_class_recall_pct": {
+        "Mn": 83.50515463917526,
+        "Cu": 93.33333333333333,
+        "Zn": 28.125,
+        "Fe": 90.9090909090909,
+        "Class VIII": 20.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 83.50515463917526,
+        "Cu": 93.33333333333333,
+        "Zn": 28.125,
+        "Class VIII": 73.4375
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 81,
+        "Cu": 14,
+        "Zn": 9,
+        "Fe": 40,
+        "Class VIII": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 81,
+        "Cu": 14,
+        "Zn": 9,
+        "Class VIII": 47
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42"
+    },
+    {
+      "id": "T2_1_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 14,
+      "native_balanced_accuracy_pct": 63.468330209309585,
+      "common4_balanced_accuracy_pct": 70.07705111683849,
+      "native_minimum_recall_pct": 30.0,
+      "common4_minimum_recall_pct": 60.9375,
+      "native_per_class_recall_pct": {
+        "Mn": 82.4742268041237,
+        "Cu": 73.33333333333333,
+        "Zn": 65.625,
+        "Fe": 65.9090909090909,
+        "Class VIII": 30.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 80.41237113402062,
+        "Cu": 73.33333333333333,
+        "Zn": 65.625,
+        "Class VIII": 60.9375
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 80,
+        "Cu": 11,
+        "Zn": 21,
+        "Fe": 29,
+        "Class VIII": 6
+      },
+      "common4_correct_counts": {
+        "Mn": 78,
+        "Cu": 11,
+        "Zn": 21,
+        "Class VIII": 39
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42"
+    },
+    {
+      "id": "T2_2_five_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 14,
+      "native_balanced_accuracy_pct": 65.24761793189629,
+      "common4_balanced_accuracy_pct": 70.45156786941581,
+      "native_minimum_recall_pct": 45.0,
+      "common4_minimum_recall_pct": 53.125,
+      "native_per_class_recall_pct": {
+        "Mn": 86.5979381443299,
+        "Cu": 73.33333333333333,
+        "Zn": 53.125,
+        "Fe": 68.18181818181817,
+        "Class VIII": 45.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 86.5979381443299,
+        "Cu": 73.33333333333333,
+        "Zn": 53.125,
+        "Class VIII": 68.75
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 84,
+        "Cu": 11,
+        "Zn": 17,
+        "Fe": 30,
+        "Class VIII": 9
+      },
+      "common4_correct_counts": {
+        "Mn": 84,
+        "Cu": 11,
+        "Zn": 17,
+        "Class VIII": 44
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42"
+    },
+    {
+      "id": "T2_0_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 32,
+      "native_balanced_accuracy_pct": 57.64753788593995,
+      "common4_balanced_accuracy_pct": 67.03098152920963,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 31.25,
+      "native_per_class_recall_pct": {
+        "Mn": 70.10309278350515,
+        "Cu": 93.33333333333333,
+        "Zn": 31.25,
+        "Fe": 86.36363636363636,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 70.10309278350515,
+        "Cu": 93.33333333333333,
+        "Zn": 31.25,
+        "Class VIII": 73.4375
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 68,
+        "Cu": 14,
+        "Zn": 10,
+        "Fe": 38,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 68,
+        "Cu": 14,
+        "Zn": 10,
+        "Class VIII": 47
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42"
+    },
+    {
+      "id": "T2_1_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 10,
+      "native_balanced_accuracy_pct": 60.32355709868597,
+      "common4_balanced_accuracy_pct": 68.53065936426117,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 62.5,
+      "native_per_class_recall_pct": {
+        "Mn": 81.44329896907216,
+        "Cu": 73.33333333333333,
+        "Zn": 71.875,
+        "Fe": 70.45454545454545,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 74.22680412371135,
+        "Cu": 73.33333333333333,
+        "Zn": 62.5,
+        "Class VIII": 64.0625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 79,
+        "Cu": 11,
+        "Zn": 23,
+        "Fe": 31,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 72,
+        "Cu": 11,
+        "Zn": 20,
+        "Class VIII": 41
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42"
+    },
+    {
+      "id": "T2_2_six_class_lr0.0001_s42",
+      "block": "T2",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "lr": 0.0001,
+      "seed": 42,
+      "native_selected_epoch": 18,
+      "native_balanced_accuracy_pct": 59.748541478567255,
+      "common4_balanced_accuracy_pct": 71.38987328178695,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 57.8125,
+      "native_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 78.125,
+        "Fe": 65.9090909090909,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 78.125,
+        "Class VIII": 57.8125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 25,
+        "Fe": 29,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 25,
+        "Class VIII": 37
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 42,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42"
+    },
+    {
+      "id": "R_0_four_class_lr0.0001_s43",
+      "block": "R",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 43,
+      "native_selected_epoch": 23,
+      "native_balanced_accuracy_pct": 73.24876503436425,
+      "common4_balanced_accuracy_pct": 73.24876503436425,
+      "native_minimum_recall_pct": 46.875,
+      "common4_minimum_recall_pct": 46.875,
+      "native_per_class_recall_pct": {
+        "Mn": 82.4742268041237,
+        "Cu": 93.33333333333333,
+        "Zn": 46.875,
+        "Class VIII": 70.3125
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 82.4742268041237,
+        "Cu": 93.33333333333333,
+        "Zn": 46.875,
+        "Class VIII": 70.3125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 80,
+        "Cu": 14,
+        "Zn": 15,
+        "Class VIII": 45
+      },
+      "common4_correct_counts": {
+        "Mn": 80,
+        "Cu": 14,
+        "Zn": 15,
+        "Class VIII": 45
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43"
+    },
+    {
+      "id": "R_1_four_class_lr3e-05_s43",
+      "block": "R",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 27,
+      "native_balanced_accuracy_pct": 76.56062070446735,
+      "common4_balanced_accuracy_pct": 76.56062070446735,
+      "native_minimum_recall_pct": 57.8125,
+      "common4_minimum_recall_pct": 57.8125,
+      "native_per_class_recall_pct": {
+        "Mn": 90.72164948453609,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Class VIII": 57.8125
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 90.72164948453609,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Class VIII": 57.8125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 88,
+        "Cu": 11,
+        "Zn": 27,
+        "Class VIII": 37
+      },
+      "common4_correct_counts": {
+        "Mn": 88,
+        "Cu": 11,
+        "Zn": 27,
+        "Class VIII": 37
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43"
+    },
+    {
+      "id": "R_2_four_class_lr0.0001_s43",
+      "block": "R",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "lr": 0.0001,
+      "seed": 43,
+      "native_selected_epoch": 8,
+      "native_balanced_accuracy_pct": 72.56174828178695,
+      "common4_balanced_accuracy_pct": 72.56174828178695,
+      "native_minimum_recall_pct": 65.625,
+      "common4_minimum_recall_pct": 65.625,
+      "native_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 65.625
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 65.625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 24,
+        "Class VIII": 42
+      },
+      "common4_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 24,
+        "Class VIII": 42
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43"
+    },
+    {
+      "id": "R_0_five_class_lr0.0001_s43",
+      "block": "R",
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "lr": 0.0001,
+      "seed": 43,
+      "native_selected_epoch": 24,
+      "native_balanced_accuracy_pct": 60.48664479850048,
+      "common4_balanced_accuracy_pct": 61.62424828178694,
+      "native_minimum_recall_pct": 18.75,
+      "common4_minimum_recall_pct": 18.75,
+      "native_per_class_recall_pct": {
+        "Mn": 77.31958762886599,
+        "Cu": 80.0,
+        "Zn": 18.75,
+        "Fe": 86.36363636363636,
+        "Class VIII": 40.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 18.75,
+        "Class VIII": 78.125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 75,
+        "Cu": 12,
+        "Zn": 6,
+        "Fe": 38,
+        "Class VIII": 8
+      },
+      "common4_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 6,
+        "Class VIII": 50
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43"
+    },
+    {
+      "id": "R_1_five_class_lr3e-05_s43",
+      "block": "R",
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 30,
+      "native_balanced_accuracy_pct": 69.01882224304904,
+      "common4_balanced_accuracy_pct": 77.46670962199312,
+      "native_minimum_recall_pct": 25.0,
+      "common4_minimum_recall_pct": 62.5,
+      "native_per_class_recall_pct": {
+        "Mn": 92.78350515463917,
+        "Cu": 73.33333333333333,
+        "Zn": 81.25,
+        "Fe": 72.72727272727273,
+        "Class VIII": 25.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 92.78350515463917,
+        "Cu": 73.33333333333333,
+        "Zn": 81.25,
+        "Class VIII": 62.5
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 90,
+        "Cu": 11,
+        "Zn": 26,
+        "Fe": 32,
+        "Class VIII": 5
+      },
+      "common4_correct_counts": {
+        "Mn": 90,
+        "Cu": 11,
+        "Zn": 26,
+        "Class VIII": 40
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43"
+    },
+    {
+      "id": "R_2_five_class_lr3e-05_s43",
+      "block": "R",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 31,
+      "native_balanced_accuracy_pct": 70.99902374258045,
+      "common4_balanced_accuracy_pct": 76.47605240549828,
+      "native_minimum_recall_pct": 40.0,
+      "common4_minimum_recall_pct": 73.19587628865979,
+      "native_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Fe": 84.0909090909091,
+        "Class VIII": 40.0
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Class VIII": 75.0
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Class VIII": 20
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 27,
+        "Fe": 37,
+        "Class VIII": 8
+      },
+      "common4_correct_counts": {
+        "Mn": 71,
+        "Cu": 11,
+        "Zn": 27,
+        "Class VIII": 48
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43"
+    },
+    {
+      "id": "R_0_six_class_lr3e-05_s43",
+      "block": "R",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 42,
+      "native_balanced_accuracy_pct": 57.666574905621296,
+      "common4_balanced_accuracy_pct": 67.27260524054984,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 21.875,
+      "native_per_class_recall_pct": {
+        "Mn": 77.31958762886599,
+        "Cu": 93.33333333333333,
+        "Zn": 21.875,
+        "Fe": 88.63636363636364,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 77.31958762886599,
+        "Cu": 93.33333333333333,
+        "Zn": 21.875,
+        "Class VIII": 76.5625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 75,
+        "Cu": 14,
+        "Zn": 7,
+        "Fe": 39,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 75,
+        "Cu": 14,
+        "Zn": 7,
+        "Class VIII": 49
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43"
+    },
+    {
+      "id": "R_1_six_class_lr3e-05_s43",
+      "block": "R",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 30,
+      "native_balanced_accuracy_pct": 63.97768862008553,
+      "common4_balanced_accuracy_pct": 75.90420962199312,
+      "native_minimum_recall_pct": 7.6923076923076925,
+      "common4_minimum_recall_pct": 62.5,
+      "native_per_class_recall_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 78.125,
+        "Fe": 72.72727272727273,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 92.78350515463917,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 62.5
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 92,
+        "Cu": 11,
+        "Zn": 25,
+        "Fe": 32,
+        "Co": 1,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 90,
+        "Cu": 11,
+        "Zn": 24,
+        "Class VIII": 40
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43"
+    },
+    {
+      "id": "R_2_six_class_lr3e-05_s43",
+      "block": "R",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 27,
+      "native_balanced_accuracy_pct": 63.49635616388193,
+      "common4_balanced_accuracy_pct": 71.52276632302406,
+      "native_minimum_recall_pct": 23.076923076923077,
+      "common4_minimum_recall_pct": 59.375,
+      "native_per_class_recall_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 62.5,
+        "Fe": 88.63636363636364,
+        "Co": 23.076923076923077,
+        "Ni": 57.14285714285714
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 75.25773195876289,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 78.125
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Fe": 44,
+        "Co": 13,
+        "Ni": 7
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 74,
+        "Cu": 11,
+        "Zn": 20,
+        "Fe": 39,
+        "Co": 3,
+        "Ni": 4
+      },
+      "common4_correct_counts": {
+        "Mn": 73,
+        "Cu": 11,
+        "Zn": 19,
+        "Class VIII": 50
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43"
+    },
+    {
+      "id": "RE_3_four_class_lr3e-05_s43",
+      "block": "RE",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 43,
+      "native_selected_epoch": 21,
+      "native_balanced_accuracy_pct": 62.485502577319586,
+      "common4_balanced_accuracy_pct": 62.485502577319586,
+      "native_minimum_recall_pct": 18.75,
+      "common4_minimum_recall_pct": 18.75,
+      "native_per_class_recall_pct": {
+        "Mn": 85.56701030927834,
+        "Cu": 80.0,
+        "Zn": 18.75,
+        "Class VIII": 65.625
+      },
+      "common4_per_class_recall_pct": {
+        "Mn": 85.56701030927834,
+        "Cu": 80.0,
+        "Zn": 18.75,
+        "Class VIII": 65.625
+      },
+      "native_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "common4_validation_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "native_correct_counts": {
+        "Mn": 83,
+        "Cu": 12,
+        "Zn": 6,
+        "Class VIII": 42
+      },
+      "common4_correct_counts": {
+        "Mn": 83,
+        "Cu": 12,
+        "Zn": 6,
+        "Class VIII": 42
+      },
+      "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "model_seed": 43,
+      "effective_split_seed": 42,
+      "training_sampler_seed": null,
+      "native_class_weight_mode": "inverse_frequency",
+      "run_dir": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43"
+    }
+  ],
+  "selected_lr_two_seed_statistics": [
+    {
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "native_selected_lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "A2_0_four_class_lr0.0001_s42",
+        "R_0_four_class_lr0.0001_s43"
+      ],
+      "native_selected_epochs": [
+        35,
+        23
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 70.89696091065292,
+        "43": 73.24876503436425
+      },
+      "native_BA_mean_pct": 72.07286297250859,
+      "native_BA_sample_sd_pp": 1.6629766438987692,
+      "native_recall_mean_pct": {
+        "Mn": 84.02061855670102,
+        "Cu": 93.33333333333333,
+        "Zn": 40.625,
+        "Class VIII": 70.3125
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 2.186928189236747,
+        "Cu": 0.0,
+        "Zn": 8.838834764831844,
+        "Class VIII": 0.0
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 82.4742268041237,
+        "Cu": 93.33333333333333,
+        "Zn": 34.375,
+        "Class VIII": 70.3125
+      },
+      "native_minimum_of_mean_class_recalls_pct": 40.625,
+      "native_worst_observed_class_recall_pct": 34.375,
+      "common4_BA_pct_by_seed": {
+        "42": 70.89696091065292,
+        "43": 73.24876503436425
+      },
+      "common4_BA_mean_pct": 72.07286297250859,
+      "common4_BA_sample_sd_pp": 1.6629766438987692,
+      "common4_recall_mean_pct": {
+        "Mn": 84.02061855670102,
+        "Cu": 93.33333333333333,
+        "Zn": 40.625,
+        "Class VIII": 70.3125
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 2.186928189236747,
+        "Cu": 0.0,
+        "Zn": 8.838834764831844,
+        "Class VIII": 0.0
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 82.4742268041237,
+        "Cu": 93.33333333333333,
+        "Zn": 34.375,
+        "Class VIII": 70.3125
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 40.625,
+      "common4_worst_observed_class_recall_pct": 34.375
+    },
+    {
+      "family": "Only-GVP",
+      "scheme": "five_class",
+      "native_selected_lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T2_0_five_class_lr0.0001_s42",
+        "R_0_five_class_lr0.0001_s43"
+      ],
+      "native_selected_epochs": [
+        26,
+        24
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 63.17451577631991,
+        "43": 60.48664479850048
+      },
+      "native_BA_mean_pct": 61.83058028741019,
+      "native_BA_sample_sd_pp": 1.9006117953706347,
+      "native_recall_mean_pct": {
+        "Mn": 80.41237113402062,
+        "Cu": 86.66666666666666,
+        "Zn": 23.4375,
+        "Fe": 88.63636363636363,
+        "Class VIII": 30.0
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 4.3738563784734845,
+        "Cu": 9.42809041582063,
+        "Zn": 6.629126073623883,
+        "Fe": 3.214121732666126,
+        "Class VIII": 14.142135623730951
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 77.31958762886599,
+        "Cu": 80.0,
+        "Zn": 18.75,
+        "Fe": 86.36363636363636,
+        "Class VIII": 20.0
+      },
+      "native_minimum_of_mean_class_recalls_pct": 23.4375,
+      "native_worst_observed_class_recall_pct": 18.75,
+      "common4_BA_pct_by_seed": {
+        "42": 69.60024699312714,
+        "43": 61.62424828178694
+      },
+      "common4_BA_mean_pct": 65.61224763745705,
+      "common4_BA_sample_sd_pp": 5.639882775523822,
+      "common4_recall_mean_pct": {
+        "Mn": 79.89690721649484,
+        "Cu": 83.33333333333333,
+        "Zn": 23.4375,
+        "Class VIII": 75.78125
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 5.1028324415524065,
+        "Cu": 14.142135623730951,
+        "Zn": 6.629126073623883,
+        "Class VIII": 3.3145630368119416
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 18.75,
+        "Class VIII": 73.4375
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 23.4375,
+      "common4_worst_observed_class_recall_pct": 18.75
+    },
+    {
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T1_0_six_class_lr3e-05_s42",
+        "R_0_six_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        42,
+        42
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 58.05610161602429,
+        "43": 57.666574905621296
+      },
+      "native_BA_mean_pct": 57.86133826082279,
+      "native_BA_sample_sd_pp": 0.2754369783792476,
+      "native_recall_mean_pct": {
+        "Mn": 74.22680412371135,
+        "Cu": 93.33333333333333,
+        "Zn": 25.0,
+        "Fe": 89.77272727272728,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 4.373856378473494,
+        "Cu": 0.0,
+        "Zn": 4.419417382415922,
+        "Fe": 1.607060866333058,
+        "Co": 0.0,
+        "Ni": 0.0
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 71.1340206185567,
+        "Cu": 93.33333333333333,
+        "Zn": 21.875,
+        "Fe": 88.63636363636364,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "native_minimum_of_mean_class_recalls_pct": 7.6923076923076925,
+      "native_worst_observed_class_recall_pct": 7.6923076923076925,
+      "common4_BA_pct_by_seed": {
+        "42": 66.39067869415808,
+        "43": 67.27260524054984
+      },
+      "common4_BA_mean_pct": 66.83164196735396,
+      "common4_BA_sample_sd_pp": 0.623616241462041,
+      "common4_recall_mean_pct": {
+        "Mn": 71.64948453608247,
+        "Cu": 93.33333333333333,
+        "Zn": 25.0,
+        "Class VIII": 77.34375
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 8.018736693868076,
+        "Cu": 0.0,
+        "Zn": 4.419417382415922,
+        "Class VIII": 1.1048543456039805
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 65.97938144329896,
+        "Cu": 93.33333333333333,
+        "Zn": 21.875,
+        "Class VIII": 76.5625
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 25.0,
+      "common4_worst_observed_class_recall_pct": 21.875
+    },
+    {
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "A1_1_four_class_lr3e-05_s42",
+        "R_1_four_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        22,
+        27
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 72.1227985395189,
+        "43": 76.56062070446735
+      },
+      "native_BA_mean_pct": 74.34170962199312,
+      "native_BA_sample_sd_pp": 3.1380141465350193,
+      "native_recall_mean_pct": {
+        "Mn": 92.78350515463917,
+        "Cu": 73.33333333333333,
+        "Zn": 71.875,
+        "Class VIII": 59.375
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 2.9159042523156495,
+        "Cu": 0.0,
+        "Zn": 17.67766952966369,
+        "Class VIII": 2.209708691207961
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 90.72164948453609,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 57.8125
+      },
+      "native_minimum_of_mean_class_recalls_pct": 59.375,
+      "native_worst_observed_class_recall_pct": 57.8125,
+      "common4_BA_pct_by_seed": {
+        "42": 72.1227985395189,
+        "43": 76.56062070446735
+      },
+      "common4_BA_mean_pct": 74.34170962199312,
+      "common4_BA_sample_sd_pp": 3.1380141465350193,
+      "common4_recall_mean_pct": {
+        "Mn": 92.78350515463917,
+        "Cu": 73.33333333333333,
+        "Zn": 71.875,
+        "Class VIII": 59.375
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 2.9159042523156495,
+        "Cu": 0.0,
+        "Zn": 17.67766952966369,
+        "Class VIII": 2.209708691207961
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 90.72164948453609,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 57.8125
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 59.375,
+      "common4_worst_observed_class_recall_pct": 57.8125
+    },
+    {
+      "family": "Only-ESM",
+      "scheme": "five_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T1_1_five_class_lr3e-05_s42",
+        "R_1_five_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        20,
+        30
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 64.03955795064043,
+        "43": 69.01882224304904
+      },
+      "native_BA_mean_pct": 66.52919009684473,
+      "native_BA_sample_sd_pp": 3.520871546482168,
+      "native_recall_mean_pct": {
+        "Mn": 81.44329896907216,
+        "Cu": 73.33333333333333,
+        "Zn": 79.6875,
+        "Fe": 68.18181818181819,
+        "Class VIII": 30.0
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 16.03747338773613,
+        "Cu": 0.0,
+        "Zn": 2.209708691207961,
+        "Fe": 6.428243465332257,
+        "Class VIII": 7.0710678118654755
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 70.10309278350515,
+        "Cu": 73.33333333333333,
+        "Zn": 78.125,
+        "Fe": 63.63636363636363,
+        "Class VIII": 25.0
+      },
+      "native_minimum_of_mean_class_recalls_pct": 30.0,
+      "native_worst_observed_class_recall_pct": 25.0,
+      "common4_BA_pct_by_seed": {
+        "42": 68.28903565292096,
+        "43": 77.46670962199312
+      },
+      "common4_BA_mean_pct": 72.87787263745705,
+      "common4_BA_sample_sd_pp": 6.489595499050181,
+      "common4_recall_mean_pct": {
+        "Mn": 79.89690721649484,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 63.28125
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 18.22440157697288,
+        "Cu": 0.0,
+        "Zn": 8.838834764831844,
+        "Class VIII": 1.1048543456039805
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 67.0103092783505,
+        "Cu": 73.33333333333333,
+        "Zn": 68.75,
+        "Class VIII": 62.5
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 63.28125,
+      "common4_worst_observed_class_recall_pct": 62.5
+    },
+    {
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T1_1_six_class_lr3e-05_s42",
+        "R_1_six_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        36,
+        30
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 60.85633081122771,
+        "43": 63.97768862008553
+      },
+      "native_BA_mean_pct": 62.41700971565662,
+      "native_BA_sample_sd_pp": 2.2071332731529503,
+      "native_recall_mean_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 67.1875,
+        "Fe": 70.45454545454545,
+        "Co": 11.538461538461538,
+        "Ni": 57.14285714285714
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 15.467960838455728,
+        "Fe": 3.214121732666136,
+        "Co": 5.439282932204212,
+        "Ni": 0.0
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 94.84536082474226,
+        "Cu": 73.33333333333333,
+        "Zn": 56.25,
+        "Fe": 68.18181818181817,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "native_minimum_of_mean_class_recalls_pct": 11.538461538461538,
+      "native_worst_observed_class_recall_pct": 7.6923076923076925,
+      "common4_BA_pct_by_seed": {
+        "42": 69.39647766323024,
+        "43": 75.90420962199312
+      },
+      "common4_BA_mean_pct": 72.65034364261169,
+      "common4_BA_sample_sd_pp": 4.601661398185643,
+      "common4_recall_mean_pct": {
+        "Mn": 92.26804123711341,
+        "Cu": 73.33333333333333,
+        "Zn": 62.5,
+        "Class VIII": 62.5
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 0.7289760630789124,
+        "Cu": 0.0,
+        "Zn": 17.67766952966369,
+        "Class VIII": 0.0
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 91.75257731958763,
+        "Cu": 73.33333333333333,
+        "Zn": 50.0,
+        "Class VIII": 62.5
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 62.5,
+      "common4_worst_observed_class_recall_pct": 50.0
+    },
+    {
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "native_selected_lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "A2_2_four_class_lr0.0001_s42",
+        "R_2_four_class_lr0.0001_s43"
+      ],
+      "native_selected_epochs": [
+        7,
+        8
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 72.3120704467354,
+        "43": 72.56174828178695
+      },
+      "native_BA_mean_pct": 72.43690936426117,
+      "native_BA_sample_sd_pp": 0.17654889027692214,
+      "native_recall_mean_pct": {
+        "Mn": 74.22680412371133,
+        "Cu": 73.33333333333333,
+        "Zn": 81.25,
+        "Class VIII": 60.9375
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 2.9159042523156598,
+        "Cu": 0.0,
+        "Zn": 8.838834764831844,
+        "Class VIII": 6.629126073623883
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 72.16494845360825,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 56.25
+      },
+      "native_minimum_of_mean_class_recalls_pct": 60.9375,
+      "native_worst_observed_class_recall_pct": 56.25,
+      "common4_BA_pct_by_seed": {
+        "42": 72.3120704467354,
+        "43": 72.56174828178695
+      },
+      "common4_BA_mean_pct": 72.43690936426117,
+      "common4_BA_sample_sd_pp": 0.17654889027692214,
+      "common4_recall_mean_pct": {
+        "Mn": 74.22680412371133,
+        "Cu": 73.33333333333333,
+        "Zn": 81.25,
+        "Class VIII": 60.9375
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 2.9159042523156598,
+        "Cu": 0.0,
+        "Zn": 8.838834764831844,
+        "Class VIII": 6.629126073623883
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 72.16494845360825,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 56.25
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 60.9375,
+      "common4_worst_observed_class_recall_pct": 56.25
+    },
+    {
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T1_2_five_class_lr3e-05_s42",
+        "R_2_five_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        19,
+        31
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 67.99902374258045,
+        "43": 70.99902374258045
+      },
+      "native_BA_mean_pct": 69.49902374258045,
+      "native_BA_sample_sd_pp": 2.1213203435596424,
+      "native_recall_mean_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Fe": 84.0909090909091,
+        "Class VIII": 32.5
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 0.0,
+        "Fe": 0.0,
+        "Class VIII": 10.606601717798213
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 84.375,
+        "Fe": 84.0909090909091,
+        "Class VIII": 25.0
+      },
+      "native_minimum_of_mean_class_recalls_pct": 32.5,
+      "native_worst_observed_class_recall_pct": 25.0,
+      "common4_BA_pct_by_seed": {
+        "42": 72.96042740549828,
+        "43": 76.47605240549828
+      },
+      "common4_BA_mean_pct": 74.71823990549828,
+      "common4_BA_sample_sd_pp": 2.4859222776089562,
+      "common4_recall_mean_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 79.6875,
+        "Class VIII": 72.65625
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 6.629126073623883,
+        "Class VIII": 3.3145630368119416
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 73.19587628865979,
+        "Cu": 73.33333333333333,
+        "Zn": 75.0,
+        "Class VIII": 70.3125
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 72.65625,
+      "common4_worst_observed_class_recall_pct": 70.3125
+    },
+    {
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "native_selected_lr": 3e-05,
+      "seeds": [
+        42,
+        43
+      ],
+      "run_ids": [
+        "T1_2_six_class_lr3e-05_s42",
+        "R_2_six_class_lr3e-05_s43"
+      ],
+      "native_selected_epochs": [
+        48,
+        27
+      ],
+      "native_BA_pct_by_seed": {
+        "42": 64.46177283483985,
+        "43": 63.49635616388193
+      },
+      "native_BA_mean_pct": 63.97906449936089,
+      "native_BA_sample_sd_pp": 0.6826526747048881,
+      "native_recall_mean_pct": {
+        "Mn": 77.31958762886597,
+        "Cu": 73.33333333333333,
+        "Zn": 67.1875,
+        "Fe": 86.36363636363637,
+        "Co": 15.384615384615385,
+        "Ni": 64.28571428571428
+      },
+      "native_recall_sample_sd_pp": {
+        "Mn": 1.4579521261578348,
+        "Cu": 0.0,
+        "Zn": 6.629126073623883,
+        "Fe": 3.214121732666126,
+        "Co": 10.878565864408424,
+        "Ni": 10.101525445522112
+      },
+      "native_recall_min_across_seeds_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 73.33333333333333,
+        "Zn": 62.5,
+        "Fe": 84.0909090909091,
+        "Co": 7.6923076923076925,
+        "Ni": 57.14285714285714
+      },
+      "native_minimum_of_mean_class_recalls_pct": 15.384615384615385,
+      "native_worst_observed_class_recall_pct": 7.6923076923076925,
+      "common4_BA_pct_by_seed": {
+        "42": 73.07721219931271,
+        "43": 71.52276632302406
+      },
+      "common4_BA_mean_pct": 72.29998926116838,
+      "common4_BA_sample_sd_pp": 1.099159220111172,
+      "common4_recall_mean_pct": {
+        "Mn": 76.80412371134021,
+        "Cu": 73.33333333333333,
+        "Zn": 64.0625,
+        "Class VIII": 75.0
+      },
+      "common4_recall_sample_sd_pp": {
+        "Mn": 2.186928189236747,
+        "Cu": 0.0,
+        "Zn": 6.629126073623883,
+        "Class VIII": 4.419417382415922
+      },
+      "common4_recall_min_across_seeds_pct": {
+        "Mn": 75.25773195876289,
+        "Cu": 73.33333333333333,
+        "Zn": 59.375,
+        "Class VIII": 71.875
+      },
+      "common4_minimum_of_mean_class_recalls_pct": 64.0625,
+      "common4_worst_observed_class_recall_pct": 59.375
+    }
+  ],
+  "target_formulation_contrasts": [
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "Only-GVP",
+      "candidate_scheme": "five_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T2_0_five_class_lr0.0001_s42",
+          "reference_run_id": "A2_0_four_class_lr0.0001_s42",
+          "candidate_lr": 0.0001,
+          "reference_lr": 0.0001,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -1.2967139175257785,
+          "common4_recall_delta_pp": {
+            "Mn": -2.0618556701030855,
+            "Cu": 0.0,
+            "Zn": -6.25,
+            "Class VIII": 3.125
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_0_five_class_lr0.0001_s43",
+          "reference_run_id": "R_0_four_class_lr0.0001_s43",
+          "candidate_lr": 0.0001,
+          "reference_lr": 0.0001,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -11.624516752577314,
+          "common4_recall_delta_pp": {
+            "Mn": -6.185567010309271,
+            "Cu": -20.0,
+            "Zn": -28.125,
+            "Class VIII": 7.8125
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -6.460615335051546,
+      "sample_sd_of_paired_BA_delta_pp": 7.3028594194225915,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -4.123711340206178,
+        "Cu": -10.0,
+        "Zn": -17.1875,
+        "Class VIII": 5.46875
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": true,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "Only-GVP",
+      "candidate_scheme": "six_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_0_six_class_lr3e-05_s42",
+          "reference_run_id": "A2_0_four_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": -4.506282216494839,
+          "common4_recall_delta_pp": {
+            "Mn": -19.587628865979383,
+            "Cu": 0.0,
+            "Zn": -6.25,
+            "Class VIII": 7.8125
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_0_six_class_lr3e-05_s43",
+          "reference_run_id": "R_0_four_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": -5.976159793814418,
+          "common4_recall_delta_pp": {
+            "Mn": -5.154639175257714,
+            "Cu": 0.0,
+            "Zn": -25.0,
+            "Class VIII": 6.25
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -5.241221005154628,
+      "sample_sd_of_paired_BA_delta_pp": 1.0393604024367282,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -12.371134020618548,
+        "Cu": 0.0,
+        "Zn": -15.625,
+        "Class VIII": 7.03125
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": true,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "Only-ESM",
+      "candidate_scheme": "five_class",
+      "reference_family": "Only-ESM",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_1_five_class_lr3e-05_s42",
+          "reference_run_id": "A1_1_four_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -3.8337628865979383,
+          "common4_recall_delta_pp": {
+            "Mn": -27.835051546391753,
+            "Cu": 0.0,
+            "Zn": 9.375,
+            "Class VIII": 3.125
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_1_five_class_lr3e-05_s43",
+          "reference_run_id": "R_1_four_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 0.9060889175257643,
+          "common4_recall_delta_pp": {
+            "Mn": 2.0618556701030855,
+            "Cu": 0.0,
+            "Zn": -3.125,
+            "Class VIII": 4.6875
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -1.463836984536087,
+      "sample_sd_of_paired_BA_delta_pp": 3.3515813525151614,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -12.886597938144334,
+        "Cu": 0.0,
+        "Zn": 3.125,
+        "Class VIII": 3.90625
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "Only-ESM",
+      "candidate_scheme": "six_class",
+      "reference_family": "Only-ESM",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_1_six_class_lr3e-05_s42",
+          "reference_run_id": "A1_1_four_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -2.7263208762886535,
+          "common4_recall_delta_pp": {
+            "Mn": -3.092783505154628,
+            "Cu": 0.0,
+            "Zn": -9.375,
+            "Class VIII": 1.5625
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_1_six_class_lr3e-05_s43",
+          "reference_run_id": "R_1_four_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -0.6564110824742357,
+          "common4_recall_delta_pp": {
+            "Mn": 2.0618556701030855,
+            "Cu": 0.0,
+            "Zn": -9.375,
+            "Class VIII": 4.6875
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -1.6913659793814446,
+      "sample_sd_of_paired_BA_delta_pp": 1.4636472516506231,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -0.5154639175257714,
+        "Cu": 0.0,
+        "Zn": -9.375,
+        "Class VIII": 3.125
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": true,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "five_class",
+      "reference_family": "GVP + late fusion",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_five_class_lr3e-05_s42",
+          "reference_run_id": "A2_2_four_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 0.648356958762875,
+          "common4_recall_delta_pp": {
+            "Mn": 1.0309278350515427,
+            "Cu": 0.0,
+            "Zn": -12.5,
+            "Class VIII": 14.0625
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_five_class_lr3e-05_s43",
+          "reference_run_id": "R_2_four_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 3.9143041237113323,
+          "common4_recall_delta_pp": {
+            "Mn": -3.0927835051546424,
+            "Cu": 0.0,
+            "Zn": 9.375,
+            "Class VIII": 9.375
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 2.2813305412371037,
+      "sample_sd_of_paired_BA_delta_pp": 2.309373387332034,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -1.0309278350515498,
+        "Cu": 0.0,
+        "Zn": -1.5625,
+        "Class VIII": 11.71875
+      },
+      "both_seeds_positive": true,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "target_formulation_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "six_class",
+      "reference_family": "GVP + late fusion",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_six_class_lr3e-05_s42",
+          "reference_run_id": "A2_2_four_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 0.765141752577307,
+          "common4_recall_delta_pp": {
+            "Mn": 6.185567010309285,
+            "Cu": 0.0,
+            "Zn": -18.75,
+            "Class VIII": 15.625
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_six_class_lr3e-05_s43",
+          "reference_run_id": "R_2_four_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": -1.0389819587628892,
+          "common4_recall_delta_pp": {
+            "Mn": -1.0309278350515427,
+            "Cu": 0.0,
+            "Zn": -15.625,
+            "Class VIII": 12.5
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -0.13692010309279112,
+      "sample_sd_of_paired_BA_delta_pp": 1.275708110388094,
+      "mean_common4_recall_delta_pp": {
+        "Mn": 2.577319587628871,
+        "Cu": 0.0,
+        "Zn": -17.1875,
+        "Class VIII": 14.0625
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    }
+  ],
+  "model_family_contrasts": [
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "Only-ESM",
+      "candidate_scheme": "four_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "A1_1_four_class_lr3e-05_s42",
+          "reference_run_id": "A2_0_four_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 1.2258376288659747,
+          "common4_recall_delta_pp": {
+            "Mn": 9.278350515463913,
+            "Cu": -20.0,
+            "Zn": 25.0,
+            "Class VIII": -9.375
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_1_four_class_lr3e-05_s43",
+          "reference_run_id": "R_0_four_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 3.3118556701030997,
+          "common4_recall_delta_pp": {
+            "Mn": 8.247422680412384,
+            "Cu": -20.0,
+            "Zn": 37.5,
+            "Class VIII": -12.5
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 2.268846649484537,
+      "sample_sd_of_paired_BA_delta_pp": 1.47503750263625,
+      "mean_common4_recall_delta_pp": {
+        "Mn": 8.762886597938149,
+        "Cu": -20.0,
+        "Zn": 31.25,
+        "Class VIII": -10.9375
+      },
+      "both_seeds_positive": true,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "four_class",
+      "reference_family": "Only-ESM",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "A2_2_four_class_lr0.0001_s42",
+          "reference_run_id": "A1_1_four_class_lr3e-05_s42",
+          "candidate_lr": 0.0001,
+          "reference_lr": 3e-05,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 0.18927190721650788,
+          "common4_recall_delta_pp": {
+            "Mn": -22.68041237113401,
+            "Cu": 0.0,
+            "Zn": 28.125,
+            "Class VIII": -4.6875
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_four_class_lr0.0001_s43",
+          "reference_run_id": "R_1_four_class_lr3e-05_s43",
+          "candidate_lr": 0.0001,
+          "reference_lr": 3e-05,
+          "matched_lr": false,
+          "common4_BA_delta_pp": -3.9988724226804067,
+          "common4_recall_delta_pp": {
+            "Mn": -14.432989690721655,
+            "Cu": 0.0,
+            "Zn": -9.375,
+            "Class VIII": 7.8125
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -1.9048002577319494,
+      "sample_sd_of_paired_BA_delta_pp": 2.9614652562580974,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -18.556701030927833,
+        "Cu": 0.0,
+        "Zn": 9.375,
+        "Class VIII": 1.5625
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "four_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "four_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "A2_2_four_class_lr0.0001_s42",
+          "reference_run_id": "A2_0_four_class_lr0.0001_s42",
+          "candidate_lr": 0.0001,
+          "reference_lr": 0.0001,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 1.4151095360824826,
+          "common4_recall_delta_pp": {
+            "Mn": -13.402061855670098,
+            "Cu": -20.0,
+            "Zn": 53.125,
+            "Class VIII": -14.0625
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_four_class_lr0.0001_s43",
+          "reference_run_id": "R_0_four_class_lr0.0001_s43",
+          "candidate_lr": 0.0001,
+          "reference_lr": 0.0001,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -0.687016752577307,
+          "common4_recall_delta_pp": {
+            "Mn": -6.185567010309271,
+            "Cu": -20.0,
+            "Zn": 28.125,
+            "Class VIII": -4.6875
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 0.3640463917525878,
+      "sample_sd_of_paired_BA_delta_pp": 1.486427753621847,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -9.793814432989684,
+        "Cu": -20.0,
+        "Zn": 40.625,
+        "Class VIII": -9.375
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "Only-ESM",
+      "candidate_scheme": "five_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "five_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_1_five_class_lr3e-05_s42",
+          "reference_run_id": "T2_0_five_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": -1.3112113402061851,
+          "common4_recall_delta_pp": {
+            "Mn": -16.494845360824755,
+            "Cu": -20.0,
+            "Zn": 40.625,
+            "Class VIII": -9.375
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_1_five_class_lr3e-05_s43",
+          "reference_run_id": "R_0_five_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 15.842461340206178,
+          "common4_recall_delta_pp": {
+            "Mn": 16.49484536082474,
+            "Cu": 0.0,
+            "Zn": 62.5,
+            "Class VIII": -15.625
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 7.2656249999999964,
+      "sample_sd_of_paired_BA_delta_pp": 12.129478274574003,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -7.105427357601002e-15,
+        "Cu": -10.0,
+        "Zn": 51.5625,
+        "Class VIII": -12.5
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "five_class",
+      "reference_family": "Only-ESM",
+      "reference_scheme": "five_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_five_class_lr3e-05_s42",
+          "reference_run_id": "T1_1_five_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 4.671391752577321,
+          "common4_recall_delta_pp": {
+            "Mn": 6.185567010309285,
+            "Cu": 0.0,
+            "Zn": 6.25,
+            "Class VIII": 6.25
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_five_class_lr3e-05_s43",
+          "reference_run_id": "R_1_five_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -0.9906572164948386,
+          "common4_recall_delta_pp": {
+            "Mn": -19.587628865979383,
+            "Cu": 0.0,
+            "Zn": 3.125,
+            "Class VIII": 12.5
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 1.8403672680412413,
+      "sample_sd_of_paired_BA_delta_pp": 4.0036732214412245,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -6.701030927835049,
+        "Cu": 0.0,
+        "Zn": 4.6875,
+        "Class VIII": 9.375
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "five_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "five_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_five_class_lr3e-05_s42",
+          "reference_run_id": "T2_0_five_class_lr0.0001_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 3.360180412371136,
+          "common4_recall_delta_pp": {
+            "Mn": -10.30927835051547,
+            "Cu": -20.0,
+            "Zn": 46.875,
+            "Class VIII": -3.125
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_five_class_lr3e-05_s43",
+          "reference_run_id": "R_0_five_class_lr0.0001_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 0.0001,
+          "matched_lr": false,
+          "common4_BA_delta_pp": 14.85180412371134,
+          "common4_recall_delta_pp": {
+            "Mn": -3.0927835051546424,
+            "Cu": 0.0,
+            "Zn": 65.625,
+            "Class VIII": -3.125
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 9.105992268041238,
+      "sample_sd_of_paired_BA_delta_pp": 8.125805053132778,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -6.701030927835056,
+        "Cu": -10.0,
+        "Zn": 56.25,
+        "Class VIII": -3.125
+      },
+      "both_seeds_positive": true,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "Only-ESM",
+      "candidate_scheme": "six_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "six_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_1_six_class_lr3e-05_s42",
+          "reference_run_id": "T1_0_six_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 3.00579896907216,
+          "common4_recall_delta_pp": {
+            "Mn": 25.773195876288668,
+            "Cu": -20.0,
+            "Zn": 21.875,
+            "Class VIII": -15.625
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_1_six_class_lr3e-05_s43",
+          "reference_run_id": "R_0_six_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 8.631604381443282,
+          "common4_recall_delta_pp": {
+            "Mn": 15.463917525773184,
+            "Cu": -20.0,
+            "Zn": 53.125,
+            "Class VIII": -14.0625
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 5.818701675257721,
+      "sample_sd_of_paired_BA_delta_pp": 3.9780451567236015,
+      "mean_common4_recall_delta_pp": {
+        "Mn": 20.618556701030926,
+        "Cu": -20.0,
+        "Zn": 37.5,
+        "Class VIII": -14.84375
+      },
+      "both_seeds_positive": true,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "six_class",
+      "reference_family": "Only-ESM",
+      "reference_scheme": "six_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_six_class_lr3e-05_s42",
+          "reference_run_id": "T1_1_six_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 3.6807345360824684,
+          "common4_recall_delta_pp": {
+            "Mn": -13.402061855670098,
+            "Cu": 0.0,
+            "Zn": 18.75,
+            "Class VIII": 9.375
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_six_class_lr3e-05_s43",
+          "reference_run_id": "R_1_six_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": -4.38144329896906,
+          "common4_recall_delta_pp": {
+            "Mn": -17.525773195876283,
+            "Cu": 0.0,
+            "Zn": -15.625,
+            "Class VIII": 15.625
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": -0.3503543814432959,
+      "sample_sd_of_paired_BA_delta_pp": 5.700820618296815,
+      "mean_common4_recall_delta_pp": {
+        "Mn": -15.46391752577319,
+        "Cu": 0.0,
+        "Zn": 1.5625,
+        "Class VIII": 12.5
+      },
+      "both_seeds_positive": false,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    },
+    {
+      "kind": "model_family_selected_recipe",
+      "candidate_family": "GVP + late fusion",
+      "candidate_scheme": "six_class",
+      "reference_family": "Only-GVP",
+      "reference_scheme": "six_class",
+      "per_seed": {
+        "42": {
+          "candidate_run_id": "T1_2_six_class_lr3e-05_s42",
+          "reference_run_id": "T1_0_six_class_lr3e-05_s42",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 6.686533505154628,
+          "common4_recall_delta_pp": {
+            "Mn": 12.37113402061857,
+            "Cu": -20.0,
+            "Zn": 40.625,
+            "Class VIII": -6.25
+          }
+        },
+        "43": {
+          "candidate_run_id": "R_2_six_class_lr3e-05_s43",
+          "reference_run_id": "R_0_six_class_lr3e-05_s43",
+          "candidate_lr": 3e-05,
+          "reference_lr": 3e-05,
+          "matched_lr": true,
+          "common4_BA_delta_pp": 4.2501610824742215,
+          "common4_recall_delta_pp": {
+            "Mn": -2.0618556701030997,
+            "Cu": -20.0,
+            "Zn": 37.5,
+            "Class VIII": 1.5625
+          }
+        }
+      },
+      "mean_common4_BA_delta_pp": 5.468347293814425,
+      "sample_sd_of_paired_BA_delta_pp": 1.722775461573213,
+      "mean_common4_recall_delta_pp": {
+        "Mn": 5.154639175257735,
+        "Cu": -20.0,
+        "Zn": 39.0625,
+        "Class VIII": -2.34375
+      },
+      "both_seeds_positive": true,
+      "both_seeds_negative": false,
+      "case_level_pairing_available": false
+    }
+  ],
+  "early_fusion": {
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "native_selected_lr": 3e-05,
+    "seeds": [
+      42,
+      43
+    ],
+    "run_ids": [
+      "A1_3_four_class_lr3e-05_s42",
+      "RE_3_four_class_lr3e-05_s43"
+    ],
+    "native_selected_epochs": [
+      40,
+      21
+    ],
+    "native_BA_pct_by_seed": {
+      "42": 69.36667740549828,
+      "43": 62.485502577319586
+    },
+    "native_BA_mean_pct": 65.92608999140893,
+    "native_BA_sample_sd_pp": 4.86572538353533,
+    "native_recall_mean_pct": {
+      "Mn": 79.38144329896906,
+      "Cu": 86.66666666666666,
+      "Zn": 32.8125,
+      "Class VIII": 64.84375
+    },
+    "native_recall_sample_sd_pp": {
+      "Mn": 8.747712756946978,
+      "Cu": 9.42809041582063,
+      "Zn": 19.88737822087165,
+      "Class VIII": 1.1048543456039805
+    },
+    "native_recall_min_across_seeds_pct": {
+      "Mn": 73.19587628865979,
+      "Cu": 80.0,
+      "Zn": 18.75,
+      "Class VIII": 64.0625
+    },
+    "native_minimum_of_mean_class_recalls_pct": 32.8125,
+    "native_worst_observed_class_recall_pct": 18.75,
+    "common4_BA_pct_by_seed": {
+      "42": 69.36667740549828,
+      "43": 62.485502577319586
+    },
+    "common4_BA_mean_pct": 65.92608999140893,
+    "common4_BA_sample_sd_pp": 4.86572538353533,
+    "common4_recall_mean_pct": {
+      "Mn": 79.38144329896906,
+      "Cu": 86.66666666666666,
+      "Zn": 32.8125,
+      "Class VIII": 64.84375
+    },
+    "common4_recall_sample_sd_pp": {
+      "Mn": 8.747712756946978,
+      "Cu": 9.42809041582063,
+      "Zn": 19.88737822087165,
+      "Class VIII": 1.1048543456039805
+    },
+    "common4_recall_min_across_seeds_pct": {
+      "Mn": 73.19587628865979,
+      "Cu": 80.0,
+      "Zn": 18.75,
+      "Class VIII": 64.0625
+    },
+    "common4_minimum_of_mean_class_recalls_pct": 32.8125,
+    "common4_worst_observed_class_recall_pct": 18.75,
+    "status": "completed_two_seed_pair"
+  },
+  "checks": {
+    "native_checkpoint_and_lr_selections_verified": true,
+    "full_saved_histories_complete": true,
+    "same_pocket_order_and_group_membership": true,
+    "native_targets_collapse_to_same_common4_targets": true,
+    "normalization_identical_across_all_runs": true,
+    "held_out_access": false,
+    "promoted": false
+  },
+  "limitations": [
+    "Two model seeds reuse one fixed PDB-grouped validation split; sample SD measures model-seed variability and is not a confidence interval or grouped-fold result.",
+    "Target and family comparisons below pair nominal model seeds and validation cases but can use different per-variant native-selected LRs; they compare selected recipes, not a fixed-LR intervention.",
+    "Native 4/5/6 balanced accuracies average different classes; cross-target conclusions require common-four scores.",
+    "Native five-class Class VIII means Co+Ni; common-four VIII means Fe+Co+Ni.",
+    "Probability-sum collapse occurs before argmax; aggregate native confusion tables are not sufficient to reconstruct common-four predictions.",
+    "Native inverse-frequency weights, output heads and native selection objectives are part of each target recipe.",
+    "Common-four recall protection and native Fe/Co/Ni diagnostics answer different questions; weak Co recall does not invalidate the coarse endpoint but limits fine-metal claims.",
+    "No original-campaign per-pocket prediction export, paired case counts, confidence intervals, held-out evaluation or candidate promotion is claimed.",
+    "Original direct-four Only-GVP is the legacy architecture baseline, distinct from geometry arm A."
+  ]
+}

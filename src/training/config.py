@@ -13,6 +13,7 @@ from data_structures import (
     STRUCTURAL_READOUT_SCOPE_CHOICES,
     validate_node_feature_omissions,
 )
+from graph.shell_roles import SHELL_ROLE_SOURCE_CHOICES
 from label_schemes import (
     METAL_LABEL_SCHEME_ALIASES,
     METAL_LABEL_SCHEMES,
@@ -166,6 +167,7 @@ class TrainConfig:
     second_shell_dropout: float = 0.0
     outer_residue_dropout: float = 0.0
     node_feature_set: str = "conservative"
+    shell_role_source: str = "edge_mode"
     omit_node_features: tuple[str, ...] = ()
     use_esm_branch: bool = True
     fusion_mode: str = "late_fusion"
@@ -510,6 +512,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Comma-separated conservative node feature names to zero out for "
             "ablation runs. Leave blank to use the full node feature set."
+        ),
+    )
+    parser.add_argument(
+        "--shell-role-source",
+        choices=SHELL_ROLE_SOURCE_CHOICES,
+        default="edge_mode",
+        help=(
+            "Source of second-shell node roles: edge_mode preserves the RING-dependent "
+            "legacy behavior; geometry uses centroid distances regardless of RING edges."
         ),
     )
     parser.add_argument("--disable-esm-branch", action="store_true")
@@ -996,6 +1007,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         second_shell_dropout=args.second_shell_dropout,
         outer_residue_dropout=args.outer_residue_dropout,
         node_feature_set=args.node_feature_set,
+        shell_role_source=args.shell_role_source,
         omit_node_features=omit_node_features,
         use_esm_branch=model_uses_esm_inputs and not args.disable_esm_branch,
         fusion_mode=args.fusion_mode,

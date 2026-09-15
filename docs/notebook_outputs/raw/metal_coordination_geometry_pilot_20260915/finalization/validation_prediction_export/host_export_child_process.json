@@ -1,0 +1,20 @@
+{
+  "pid": 46644,
+  "started_epoch": 1789465158.417787,
+  "command": [
+    "/usr/bin/python3",
+    "/content/export_geometry_validation.py",
+    "--root",
+    "/content/DeepMzyme_geometry_v1",
+    "--campaign-dir",
+    "/content/metal_coordination_geometry_pilot_v1",
+    "--output-dir",
+    "/content/metal_coordination_geometry_pilot_v1/validation_prediction_export",
+    "--budget-root",
+    "/content/metal_architecture_pilot_10h_v1",
+    "--allocation-started-epoch",
+    "1789456819.0405653",
+    "--deadline-epoch",
+    "1789465756.0"
+  ]
+}

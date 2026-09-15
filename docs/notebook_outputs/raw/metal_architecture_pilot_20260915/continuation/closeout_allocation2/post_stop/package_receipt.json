@@ -1,0 +1,12 @@
+{
+  "kind": "metal_pilot_post_stop_closeout_v1",
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/host_closeout_allocation2/post_stop/post_stop_closeout.tar.gz",
+  "archive_sha256": "7aceea2f585081298e04d02cc692f86ef34f93ec82ae22b28f1113674ac79778",
+  "bytes": 50533,
+  "local_sha256_verified": true,
+  "stopped_epoch": 1789472254.5176592,
+  "cumulative_allocated_seconds": 19263.44616508484,
+  "cumulative_allocated_hours": 5.350957268079122,
+  "gpu_stopped": true,
+  "summary_sha256": "07d8bd8f6bb81a349bbc2eb57d9d6abb23a55c5f0c8e265c52264a47919406dc"
+}

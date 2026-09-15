@@ -1,0 +1,319 @@
+{
+  "profile": "metal_architecture_pilot_10h_v1",
+  "generated_utc": "2026-09-15T03:54:29.299034+00:00",
+  "campaign_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915",
+  "manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "completed_smokes": 7,
+  "completed_full_50_epoch_runs": 3,
+  "rejected_completed_attempts": [],
+  "failed_or_interrupted_attempts": [],
+  "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+  "held_out_evaluation": false,
+  "promoted": false,
+  "confidence_intervals_computed": false,
+  "interpretation": "validation-only fixed-split screening; two seeds provide descriptive repeats, not promotion evidence",
+  "block_coverage": {
+    "S": {
+      "status": "complete",
+      "expected_runs": 7,
+      "completed_runs": 7,
+      "complete": true,
+      "missing_ids": [],
+      "selected_template_count": 7
+    },
+    "A1": {
+      "status": "incomplete",
+      "expected_runs": 4,
+      "completed_runs": 3,
+      "complete": false,
+      "missing_ids": [
+        "A1_2_four_class_lr3e-05_s42"
+      ],
+      "selected_template_count": 4
+    },
+    "A2": {
+      "status": "pending",
+      "expected_runs": 4,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": [
+        "A2_0_four_class_lr0.0001_s42",
+        "A2_1_four_class_lr0.0001_s42",
+        "A2_3_four_class_lr0.0001_s42",
+        "A2_2_four_class_lr0.0001_s42"
+      ],
+      "selected_template_count": 4
+    },
+    "T1": {
+      "status": "pending",
+      "expected_runs": 6,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": [
+        "T1_0_five_class_lr3e-05_s42",
+        "T1_1_five_class_lr3e-05_s42",
+        "T1_2_five_class_lr3e-05_s42",
+        "T1_0_six_class_lr3e-05_s42",
+        "T1_1_six_class_lr3e-05_s42",
+        "T1_2_six_class_lr3e-05_s42"
+      ],
+      "selected_template_count": 6
+    },
+    "T2": {
+      "status": "pending",
+      "expected_runs": 6,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": [
+        "T2_0_five_class_lr0.0001_s42",
+        "T2_1_five_class_lr0.0001_s42",
+        "T2_2_five_class_lr0.0001_s42",
+        "T2_0_six_class_lr0.0001_s42",
+        "T2_1_six_class_lr0.0001_s42",
+        "T2_2_six_class_lr0.0001_s42"
+      ],
+      "selected_template_count": 6
+    },
+    "H": {
+      "status": "conditional_pending",
+      "expected_runs": 2,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": []
+    },
+    "R": {
+      "status": "pending",
+      "expected_runs": 9,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": [],
+      "selected_template_count": 0
+    },
+    "RE": {
+      "status": "pending",
+      "expected_runs": 1,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": [],
+      "selected_template_count": 0
+    },
+    "RH": {
+      "status": "conditional_pending",
+      "expected_runs": 1,
+      "completed_runs": 0,
+      "complete": false,
+      "missing_ids": []
+    }
+  },
+  "full_runs": [
+    {
+      "id": "A1_3_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 40,
+      "balanced_accuracy": 0.6936667740549828,
+      "collapsed4_balanced_accuracy": 0.6936667740549828,
+      "minimum_recall": 0.46875,
+      "collapsed4_minimum_recall": 0.46875,
+      "per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42",
+      "attempt_id": "attempt_011",
+      "epochs": 50,
+      "elapsed_seconds": 290.364253282547,
+      "all_attempts_elapsed_seconds": 290.364253282547,
+      "setup_seconds": 107.62630605697632,
+      "epoch_seconds": 3.6547589445114137,
+      "gpu_peak_used_mib": 841.0,
+      "per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "collapsed4_per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+      "configuration_without_seed_sha256": "31aac9cdb86e490f90bb168c1819b81e31f8e908fb0c93737d4a0d1e107f6ca5",
+      "local_run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42",
+      "remote_run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_3_four_class_lr3e-05_s42",
+      "block_complete": false,
+      "eligible_for_block_comparison": false
+    },
+    {
+      "id": "A1_1_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.721227985395189,
+      "collapsed4_balanced_accuracy": 0.721227985395189,
+      "minimum_recall": 0.59375,
+      "collapsed4_minimum_recall": 0.59375,
+      "per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42",
+      "attempt_id": "attempt_010",
+      "epochs": 50,
+      "elapsed_seconds": 206.2681336402893,
+      "all_attempts_elapsed_seconds": 206.2681336402893,
+      "setup_seconds": 107.94324445724487,
+      "epoch_seconds": 1.9664977836608886,
+      "gpu_peak_used_mib": 699.0,
+      "per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "collapsed4_per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+      "configuration_without_seed_sha256": "8e3f71952439764ea92efd887b958938585c9e7075ed306496ccad19006193b8",
+      "local_run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42",
+      "remote_run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_1_four_class_lr3e-05_s42",
+      "block_complete": false,
+      "eligible_for_block_comparison": false
+    },
+    {
+      "id": "A1_0_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 44,
+      "balanced_accuracy": 0.6471139390034364,
+      "collapsed4_balanced_accuracy": 0.6471139390034364,
+      "minimum_recall": 0.40625,
+      "collapsed4_minimum_recall": 0.40625,
+      "per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42",
+      "attempt_id": "attempt_009",
+      "epochs": 50,
+      "elapsed_seconds": 270.3429877758026,
+      "all_attempts_elapsed_seconds": 270.3429877758026,
+      "setup_seconds": 93.15577816963196,
+      "epoch_seconds": 3.543744192123413,
+      "gpu_peak_used_mib": 821.0,
+      "per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "collapsed4_per_class_support": {
+        "Mn": 97,
+        "Cu": 15,
+        "Zn": 32,
+        "Class VIII": 64
+      },
+      "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+      "configuration_without_seed_sha256": "3ee57ee34a3870aab81c64e0f275d5c41c41feb8a4866f84ebf5eba9905ae462",
+      "local_run_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42",
+      "remote_run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_0_four_class_lr3e-05_s42",
+      "block_complete": false,
+      "eligible_for_block_comparison": false
+    }
+  ],
+  "architecture_comparisons_by_lr": [
+    {
+      "lr": 3e-05,
+      "seed": 42,
+      "complete": false,
+      "interpretation": "incomplete_block_no_architecture_ranking",
+      "rows": [],
+      "observed_runs": 3
+    },
+    {
+      "lr": 0.0001,
+      "seed": 42,
+      "complete": false,
+      "interpretation": "incomplete_block_no_architecture_ranking",
+      "rows": [],
+      "observed_runs": 0
+    }
+  ],
+  "target_comparisons_by_shared_lr": [
+    {
+      "lr": 3e-05,
+      "seed": 42,
+      "complete": false,
+      "comparison_metric": "collapsed4_balanced_accuracy",
+      "expected_runs": 9,
+      "observed_runs": 2,
+      "interpretation": "incomplete_block_no_target_comparison",
+      "rows": []
+    },
+    {
+      "lr": 0.0001,
+      "seed": 42,
+      "complete": false,
+      "comparison_metric": "collapsed4_balanced_accuracy",
+      "expected_runs": 9,
+      "observed_runs": 0,
+      "interpretation": "incomplete_block_no_target_comparison",
+      "rows": []
+    }
+  ],
+  "both_target_learning_rate_blocks_complete": false,
+  "within_scheme_native_lr_selection": [],
+  "native_lr_selected_target_comparison": [],
+  "matched_two_seed_repeats": [],
+  "matched_two_seed_target_comparison": [],
+  "hybrid_prioritization": {
+    "status": "pending",
+    "interpretation": "exploratory_prioritization_not_promotion"
+  },
+  "source_campaign_state": {
+    "status": "awaiting_archive_transfer",
+    "block": "A1",
+    "run_id": "A1_3_four_class_lr3e-05_s42",
+    "attempt_id": "attempt_011",
+    "attempt_status": "completed"
+  }
+}

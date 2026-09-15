@@ -1,0 +1,10 @@
+{
+  "method": "verified_archive_transfer",
+  "drive_probe_verified": true,
+  "local_write_verified": true,
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_probe_file_id": "1qU0IiPLPLCAeMZsPzUPY9A0-iWq1bfa2",
+  "drive_probe_size_bytes": 234,
+  "drive_verification": "metadata confirmed file ID, destination parent and byte size",
+  "local_verification": "probe copied, read and compared byte-for-byte with source"
+}

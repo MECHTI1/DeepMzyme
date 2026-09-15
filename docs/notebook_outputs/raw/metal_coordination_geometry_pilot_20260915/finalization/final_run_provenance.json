@@ -1,0 +1,2186 @@
+{
+  "profile": "metal_coordination_geometry_pilot_v1",
+  "manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+  "source_root": "/content/DeepMzyme_geometry_v1",
+  "source_files": {
+    "src/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/benchmarking/__init__.py": "387e5dfd0f1e9624c0c3b7ad1bca85c36a0634517ec502d2adf04d4730a9ef06",
+    "src/benchmarking/artifacts.py": "6dbc3b449cf5ba98eea5e017ccba360add62d50fa19cde2fc4d7628d9d5a06aa",
+    "src/build_clean_single_donor_subset.py": "3a8f2771002e35029ac3416c74fedc94c78cc48d5c2829795ebe1ec36952d34c",
+    "src/build_colab_bundle.py": "b606f785286468de538ebd6e0cec3b2f52f4952f575fe8c81a21192a76cd1afc",
+    "src/build_dataset_csv.py": "60f0865ed6e79c0d2783dd5a81d815f2acd28d5781b229f28f11c69c2d646472",
+    "src/complete_care_caches.py": "e4d4e6021df33c26d5511c15c27ea8269d84d0c890d4897f8b71b90777609ad2",
+    "src/data_structures.py": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6",
+    "src/embed_helpers/Interaction_edge.py": "2a077ec1363c058c2bba45e25b5fc577c487e7d7ba309a2ce5b55b968974fea6",
+    "src/embed_helpers/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/embed_helpers/esmc.py": "30c617940966cf13ed4c504dcad32dd0d13d6e49e431b823d822079f8715c6dd",
+    "src/embed_helpers/physicochemical_features.py": "07a2081751e5870402628c4c17b73d8abbe6d87f2cbb7f68a55d26251ff8f64c",
+    "src/feature_extraction/__init__.py": "7ee6c2919149c0fb74ca772a356fd426b801b4cca4c5b7f0ba6bfde13a1732b4",
+    "src/feature_extraction/constants.py": "35dfcd2d4a63a5306a1fe843578315702d76d80f89d2c14ad361eb2f6c8b815a",
+    "src/feature_extraction/core.py": "d174e8ba755c9aa4cb202b57708438949dbfd37aad47e2a1d289bf6143a95368",
+    "src/feature_extraction/generate_features.py": "72a5c24246c0f916961de09920082e4c01f3de4e22f66de90dafae900edb8d4d",
+    "src/feature_extraction/propka_support.py": "7dedaf4f2cfb467673155567005fe53eeed8f82284850323ba6f64a565eb5d2e",
+    "src/featurization.py": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d",
+    "src/graph/__init__.py": "9727f29a515573f7e0cbb0f052bb212d2182818466a3b548ba2a04702dfc7397",
+    "src/graph/construction.py": "92a044b56fa897b4635adb9721b3698ec1487e3f34d4f35891f628510ae3ff4f",
+    "src/graph/edge_geometry.py": "66811c344703a65111a0436cb21b0fb43905e5c1c45b4710f38fb69bdda557a8",
+    "src/graph/edge_postprocess.py": "88d3c31b4e37ce0b6d4310ffe5410d831153c8a3ad0a00ee62d0e68e9c04e111",
+    "src/graph/edge_records.py": "78cead0066f029e5f29ec00ffab191929df813cfb2014fbe97cec93c99408d39",
+    "src/graph/edge_sources.py": "91baeed8a75ba328104934f18d400cdabdd64a2caed9240f1c91f53a77e5dcf2",
+    "src/graph/feature_utils.py": "fd6d833e804d076df5f20be0074b62054fce6d8340e6ec4bca5d47dd3dd24bef",
+    "src/graph/ring_edges.py": "aa96cfe0a24a753bd6e34d7de857e90ddd2285cf8372d4cd1509a4ade217eb7c",
+    "src/graph/shell_roles.py": "713d833610a66c1aac700d5885f045d49fa563cb23d5efcb3ea97c8d8d6d9a4b",
+    "src/graph/structure_parsing.py": "6ad2951735029a0994a2b9ed7ce87e5f909ab58d4d0b60bd2ebff4db0c21e5c0",
+    "src/label_schemes.py": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99",
+    "src/manage_structure_store.py": "ed7949ec0c84826c53d2c971279e7ea4c5845e41c56971262e45dd1bb97a306e",
+    "src/metal_objectives.py": "298681c7ef6d4b88bb96ccf040b3fbc04bc6bc32dda9109cbb1312343bb6d4db",
+    "src/model.py": "303a273cc675c45bb9993a1add1445762f3d56323505a70da98ab8e84f8947e6",
+    "src/model_variants/__init__.py": "a7625910fbe38737e588b81ebdb0d36a919c3edb7814882c648e9b736d240c8b",
+    "src/model_variants/factory.py": "383d81c1e7fedf9ac2899ef3ffcb8a74ff01056aa130f99f70f3493a2fdcaaa4",
+    "src/model_variants/models.py": "62953ab380cdc7f62ac455d01a39cd0d04afc5c096762565a36bb0bcb8cfc086",
+    "src/project_paths.py": "0ad35ff1e6312a15971fa29235f28ef9556ddfc149213fe3ffcc9f145f8c9b66",
+    "src/rebuild_care_complete_bundle.py": "8f1357dacc525c6e8419fa032758e68b79f1cf5ba44e9ece538900221293c600",
+    "src/report_paired_metal_routes.py": "f5bb7bf4b4b8da8e9b28b1bfe4deef6d0b644b6d576cfe2dd26cef3cbd250549",
+    "src/report_runs.py": "eb2fb9d00a3be927869ee93878ba9036c87f30033b4f0b1bb879399457a6c7ce",
+    "src/run_ec_baselines.py": "f9d778de108eb51f6c931433618e6ba8db4aa2ec85d33cec8929f68dafb2cbc7",
+    "src/run_metal_architecture_pilot.py": "7588fefade48b644c4cd07fd02aaa57355ffd51191fb370dbc9f70642f62bff1",
+    "src/run_metal_coordination_geometry_pilot.py": "08145f5d07aa943b0053d7a6f895b6938f00239670d87b70454066de01ff588a",
+    "src/stage6_standalone.py": "15f5ed0237dd93877db74dc745a3bb495a12a80b6e2628da20d873f9ba9d108a",
+    "src/statistical_validation.py": "fc441a45117dcc3d24c3b730b355e3b61f45b2f38495a47a53e527eb05995057",
+    "src/structure_store.py": "1d494a6b3f98e26032a8ead10b3d72efbd5ed4c27932a8b5ca58c384a48306ec",
+    "src/train.py": "3e0178f9acf0e182ab71dacf3efe4b65f099c6096806b1388916aad100a7c724",
+    "src/train_ec.py": "db76df9c299667262bdf240e725df32dc27f8c7bc639b28ec073cb51c9d46a1d",
+    "src/train_metal.py": "cc830557a5ef9d407ec398863a7633d2d7c93078ee45233520aa2358cb603439",
+    "src/training/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/training/config.py": "13efacf21ed0bbe098400095807b1a099751cf6514434efcbb64f6fa63c99d46",
+    "src/training/data.py": "465edf92ee44a7644373ae596be26a4c0aacbb2db07331401f94038d9b61b4fc",
+    "src/training/defaults.py": "6cfd115fd29bb4a7e3bfc88ec4ac2574234491e8418962553baaf982a6f6cccb",
+    "src/training/esm_feature_loading.py": "a95a15e71608c30571ee76ec2a8d9cfe4396aa66daac7ae8af23e058ab32b80e",
+    "src/training/evaluation_protocols.py": "3171a663e44a24a2a1a1a5970dbdac000157f714623eb7e5c42ce125a360ccff",
+    "src/training/external_feature_loading.py": "7295d366f15a2b8459c0213c32373036f0dfe1b7c1a8a21d8c31ced50607e898",
+    "src/training/feature_paths.py": "ea9587dc3b2b97e128777d7fe4794d348816ffb0f793b053e491744cbee27aef",
+    "src/training/feature_sources.py": "2d2dab5680c863292d413c1df3f072172e22611f722ef5bd700942a2617862f6",
+    "src/training/final_test_reporting.py": "bb4786238b344a159db93144db621ee0644ad87812ba76025cb0163bebdae7c2",
+    "src/training/graph_dataset.py": "434e26053962a2569671899e5faf1b2cdd257da0480e99ac1a3e6070ec4bc20e",
+    "src/training/labels.py": "000cc3820231891627c900b9b9ed9cb0b94138d78f141976d6290a429c37dcdc",
+    "src/training/loop.py": "f926bc78c117f9f1de8ce637f4ff006c7f6397ea25fd060ff1ae71aedd82eab1",
+    "src/training/pipeline_metric_policy.py": "6904a7f5a3ac5a256865275c7a95d0bbff01566d49312bcd25479dce505fc6cb",
+    "src/training/preflight.py": "21739799c93f543c2cb9aeef40ce3cb4ecb3663c582e30caf27eabff10be8785",
+    "src/training/reproducibility.py": "20449d096fee8575bda5e896f42c3d8c15753f31db49f590ffac29090d98c2d9",
+    "src/training/run.py": "f5f0272148712eb6a220c0b4e023c643feddc2613a6e4daaac26e4f6b46066f6",
+    "src/training/runtime_preparation.py": "f4f08666cf58d10148e4aa1574d4a5c21ea5767eba40599041433e3ae13a2e8f",
+    "src/training/site_filter.py": "528acbaad1578a61ab6cb51a6bb5ba7cc1e56915f6019fd152681969a5b5a83a",
+    "src/training/smoke_test.py": "0e21eac71d0748c95cf9c569a8da7cab161df8a8fed81ce771cdd0834425e956",
+    "src/training/splits.py": "8cf17b309e97fb4053b6652a543074f8c1db4913d125cce514eb452f57cf1473",
+    "src/training/structure_loading.py": "09d957e6114826d809088f24f86ea685872a1b5132f426567eadd1d4cabdafbf",
+    "src/training/task_entrypoint.py": "28b1d5d60ca616994b31cd8808f9d21a69c49c9ec5a0f7f789b0c01db3bea853",
+    "src/verify_colab_notebook_smoke.py": "cb5279ba0260b45c221777da7f3d070ef8ea353c9f1c64ddf78186df657baa7d",
+    "notebooks/DeepMzyme_training_colab.ipynb": "714a42dfe7f3b676ab9c6f3c9e93a87f5536b6797d38b3d1c3120dbe2bdaf0c7",
+    "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md": "c7cd6295e2aedbc79cfa575f15b8b11f767fdbe0aa6725dec225f1515d6df28d"
+  },
+  "full_runs": 15,
+  "smokes": 5,
+  "final_noop_state_verified": true,
+  "pending_runs": 0,
+  "latest_transfer_receipt": {
+    "attempt_id": "attempt_021",
+    "local_sha256_verified": true,
+    "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/archives/attempt_021.tar.gz",
+    "archive_sha256": "314d2c23c1eb4edd2c4cdd70a35cfb0a68903d18a5301430630b462340373a57",
+    "bytes": 15292082,
+    "manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+    "verified_parts": 1,
+    "drive_file_id": "1E85QQd-xhY76Ps0wcc9E3kL_HsWi-H4X",
+    "drive_verified": true,
+    "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+    "drive_verification": "Connector readback confirmed file ID, parent and byte size"
+  },
+  "latest_transfer_relative_path": "transfer_receipts/attempt_021.json",
+  "runs": [
+    {
+      "run_id": "G1_A_none_none_lr3e-05_s42",
+      "selected_epoch": 19,
+      "selected_native_balanced_accuracy": 0.6084541451890034,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "1f9f1529a297d99bd0651860682d65282a199f7c1a58a7fab5067721b1c2b376",
+        "run_metadata.json": "713c284908032e7de35070ea894204f2ca1084de9a0ccb35d1674cb09b365f40",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "a9040234bf9c5c35466e9944b2b866fe12575a253478fd7759fe710f061d8d32",
+        "best_model_checkpoint.pt": "bde855f01912aae51139b1bd5657d9f25347a6cbed2e02037d6021b2e7f1c566",
+        "last_model_checkpoint.pt": "979f78c91bee000647c2c7f0ae12934aac5835a9c7e40d06993082e7d00fb086"
+      }
+    },
+    {
+      "run_id": "G1_B_counts_none_lr3e-05_s42",
+      "selected_epoch": 44,
+      "selected_native_balanced_accuracy": 0.6089373926116839,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "219b0818922c10d1fd5f6dd916989dda9c608fad902a1c7a4c6505d2acd7a6ba",
+        "run_metadata.json": "32b84cba9db4c522f7eb6295400e5d1f61f13ee51e8636581e41d28cceb8a942",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "9097b279874982da88dd1e0401e2f3a6f2ede41bf94b9350feb2d5edc5172d0b",
+        "best_model_checkpoint.pt": "627052a55b22971b5870bb94f388a35b87b90e4bd9199c6ccc2e4493e6988263",
+        "last_model_checkpoint.pt": "4701584176b08d5fdc8d12709018421b42ced7d973f06e4153cd503b152e0632"
+      }
+    },
+    {
+      "run_id": "G1_C_counts_angles_none_lr3e-05_s42",
+      "selected_epoch": 45,
+      "selected_native_balanced_accuracy": 0.6101052405498282,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "38a7b6165b440c9db121227af36fa54cfb908f682f2f90fb5eb81b978ce4e4db",
+        "run_metadata.json": "ca1c7693eb69b65074e0ac3a84b1b0bc14a6ae8c8c9e3a93b1b5dcc88bf1bc2e",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "10f84d18a44157e64a3d1889513623f354173f40b301516f44d9e13bb89bfa7f",
+        "best_model_checkpoint.pt": "a421dc52de5201423284e00d7c834cc7ea45355c8a0b4d543069df5a0afe5d88",
+        "last_model_checkpoint.pt": "08864ec1d09f6527f239b463df433c4ea9ba94c3c9416fdef016fbca04df973d"
+      }
+    },
+    {
+      "run_id": "G1_D_counts_per_metal_lr3e-05_s42",
+      "selected_epoch": 44,
+      "selected_native_balanced_accuracy": 0.610266323024055,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "70b592e65fcb786d8af82b12b105fe48b2ef2b50808de939f1a5be4a7c4c9d85",
+        "run_metadata.json": "f8225d36c7db056492911ab314623a825c9236720bf85a662b671e854a593321",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "c09d1f73adefa6107d4b8295e246c06fcd038dd436c8f3e2369bfc462311dba4",
+        "best_model_checkpoint.pt": "b28751a080da9c122115552e72870fcbfc2ba9fe0764d55b777904efe6e107ac",
+        "last_model_checkpoint.pt": "cc7a37b7f77aa796d883fc9758dcd2b00ac1d9d790f19dcd2ce14240e616035e"
+      }
+    },
+    {
+      "run_id": "G1_E_counts_angles_per_metal_lr3e-05_s42",
+      "selected_epoch": 25,
+      "selected_native_balanced_accuracy": 0.610950923539519,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "b75c6a919f4b83a1cbc56795972198750dffcfcf9fc2647c5504730014967bd4",
+        "run_metadata.json": "dab976832547fa6bfb302c6d9dd688ed03e6319fcb6f00196aa2df11a4d8f375",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "d2448d469bb94eb5b1388408869e1c358e54578e57fc65a82b5673de2cf6c284",
+        "best_model_checkpoint.pt": "33090678ddb14ff17bf83a305363956a13f1eae694090b1daab8511f07850abb",
+        "last_model_checkpoint.pt": "e72db3b983260bf6461668f018bc346d233f2b3debbb39b3d160be491b2f79d2"
+      }
+    },
+    {
+      "run_id": "G2_A_none_none_lr0.0001_s42",
+      "selected_epoch": 35,
+      "selected_native_balanced_accuracy": 0.6847320661512027,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "bedda57f959ae2e7ad802e06dbb8f4036ed5fe99d35695a1a422a71dde8e0b03",
+        "run_metadata.json": "3e8d7542779ed35d15607027c62b267e2ea1ffe798b8a2766ae1a7668351dc92",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "36eec03a275106e8554f120a1397c81b512869596d58c5302746292ebb7321bc",
+        "best_model_checkpoint.pt": "0dc417c087d91acbb7e9e5b19b1f5c8fe697f39bf681521b8667c51b31b51f49",
+        "last_model_checkpoint.pt": "2e5e200fdcb52c603ad6fd8803a6b844a43584294d1e655a6c8cca836e36513c"
+      }
+    },
+    {
+      "run_id": "G2_B_counts_none_lr0.0001_s42",
+      "selected_epoch": 48,
+      "selected_native_balanced_accuracy": 0.7053049828178695,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "aed498855c85b24fb01290f02e5df38abf9ce9d7c70ea210aeaf56dd7aec3b3d",
+        "run_metadata.json": "300467843aec404c23a8aded401712979a291f37330576754d1a030143546177",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "94fbefe437abb2d08f25eb893139827ccf0ddc8b92e34be1073b017a4a070c43",
+        "best_model_checkpoint.pt": "b89f482b0528c692326d664093846b5fb548e50a26b7e965288fa892213755fb",
+        "last_model_checkpoint.pt": "1f7f679d27f27aef67c9c66d76cca401fb9a9111726e318e81b90739639541fe"
+      }
+    },
+    {
+      "run_id": "G2_C_counts_angles_none_lr0.0001_s42",
+      "selected_epoch": 34,
+      "selected_native_balanced_accuracy": 0.7143658719931272,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "3d00f5203359e1d716c43d5f2e4cb2c58e28b143cbaba46435bdeef3e7703fda",
+        "run_metadata.json": "5f463276e44be9a4f8969902dc57e30b0ef96bfacec45e5a8515ab77e3d59582",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "4aa95013ffdf58ed2298e225f8ea7ef35910e4d2ebf109d6fcd0d3702fddfbc3",
+        "best_model_checkpoint.pt": "a2ee8627223ad152b4f13208da0168fa1a917adb1384cd1122fa8e11922b9f72",
+        "last_model_checkpoint.pt": "4d7a7c97bf17da5a89c07a3724780c41b2407fac95e589f452b937de80919cb0"
+      }
+    },
+    {
+      "run_id": "G2_D_counts_per_metal_lr0.0001_s42",
+      "selected_epoch": 27,
+      "selected_native_balanced_accuracy": 0.6996670962199313,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "a5fe5687ff9b416fe132885111eb56d64267aedde9f072991d0b3c8998a8d084",
+        "run_metadata.json": "cf8bc40548ef50a57532611cfa1ee12f509b5cdf09777cccc5b17d092947bb1e",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "9ca31f93889c8176b8d89d0a307e336154ea934c8336f49496d6011d338795fc",
+        "best_model_checkpoint.pt": "7f1c9dae16aab11e192664aa085a8a2462f1e8fd99fb27fe455cb1f8bf02f8f9",
+        "last_model_checkpoint.pt": "16ad615a33575c185e51c9016ccf0585cdc1a57ce806605c4d0a6387404f6a25"
+      }
+    },
+    {
+      "run_id": "G2_E_counts_angles_per_metal_lr0.0001_s42",
+      "selected_epoch": 48,
+      "selected_native_balanced_accuracy": 0.694799720790378,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "c482a3270e9e62b77d99b4f8bafff83802072ecdb5dcab3ed93dc7301c22b790",
+        "run_metadata.json": "b85140bad123e6309dee955026a03998753e07db0d1ddede274824304eb2f3fb",
+        "dataset_summary.json": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08",
+        "epoch_metrics.csv": "b5f87ff5f22c781da8c930671488b8ac785de3213980bf82090d608cafafa622",
+        "best_model_checkpoint.pt": "977ff961fe3f6d3fee7f72cff3c838f5e95dfaa6b12d290cbd1c2dd63f1d0fa8",
+        "last_model_checkpoint.pt": "a1cf35983d3c70bfc744d9aea2bb2dfc7ea9a6546352f316feeffca2c776d502"
+      }
+    },
+    {
+      "run_id": "GR_A_none_none_lr0.0001_s43",
+      "selected_epoch": 23,
+      "selected_native_balanced_accuracy": 0.7080890249140893,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "4e9f689f38ac53ffbad9faa4060329b30d9c703742f45bdff9d6a6000a3d6b3b",
+        "run_metadata.json": "cfa210a351d6711ba3b1f6045eddf39fb5e1413de1dbb3f8dc08f380a715998e",
+        "dataset_summary.json": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853",
+        "epoch_metrics.csv": "8697146fed8a745edbfeb392b7d1256774f660053f0a56b12f51d8f7592af219",
+        "best_model_checkpoint.pt": "4959186b0e10a6e2c0578e5700fbc0b3e88c187a472d5d32315cc8df6b41d6a2",
+        "last_model_checkpoint.pt": "76bd97b3c6049f40d80fda8b7fb9d36f9c70ed2e04d7f9a0037e23dfd0be2211"
+      }
+    },
+    {
+      "run_id": "GR_B_counts_none_lr0.0001_s43",
+      "selected_epoch": 18,
+      "selected_native_balanced_accuracy": 0.6984187070446736,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "791a4c58e107df81bcf6584bc98312753995fbb730e85c6719c248713c8fa70f",
+        "run_metadata.json": "e374dabaece30d4a334c11a76c0196374309c4d55d48e918f0c73d5c3e7f2bb7",
+        "dataset_summary.json": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853",
+        "epoch_metrics.csv": "8059b78952437111be441f2db42c1c19057f0e59cc30f5f502cf5a316811f420",
+        "best_model_checkpoint.pt": "dda7a877889eeafe0033248140397b8b9c17267167567beb1973fad16689d040",
+        "last_model_checkpoint.pt": "2a631da6909ea11c32f4e4f749205dc646a30202a46859348c06c09862ac9dd9"
+      }
+    },
+    {
+      "run_id": "GR_C_counts_angles_none_lr0.0001_s43",
+      "selected_epoch": 31,
+      "selected_native_balanced_accuracy": 0.6857737328178695,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6626474857330322,
+              6.849111080169678
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              48.51190948486328
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.309462547302246,
+              2.2143211364746094
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              72.1638412475586
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be",
+      "files": {
+        "run_config.json": "d2e9e5328da2344846492c1241f070a0ed85723e62c6cf91e0beda88c322c272",
+        "run_metadata.json": "6a70e505d77560ccb306d0928d67a4e0b7eb63ced5e806682142c52695d7916d",
+        "dataset_summary.json": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853",
+        "epoch_metrics.csv": "683706b1ef85a52df7a8fd2867e914309c9fd1829535de37a2dd029ed23a44d7",
+        "best_model_checkpoint.pt": "326e70ae63471cc50cc1b8b3fa62c58ec4e5319f29c362e756dc58e39d10010a",
+        "last_model_checkpoint.pt": "869163db32f166fc57d1fbfeee24533a73296701722a5decc7e7c7ebbbcc8c61"
+      }
+    },
+    {
+      "run_id": "GR_D_counts_per_metal_lr0.0001_s43",
+      "selected_epoch": 18,
+      "selected_native_balanced_accuracy": 0.6776390678694157,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "62e24f4c74576e76e89482b6277ea0b4a7668f62d4c9f72400a6d6ae2f1f0d89",
+        "run_metadata.json": "7fe508402215578fb68f726b0b0a1efb0b65fe576d34f9a2a1ec2e01f9f689fd",
+        "dataset_summary.json": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853",
+        "epoch_metrics.csv": "3f63e27e4c1dc8e95caa4e254c54db13ff240b70898bf45595e0a61d206e89b2",
+        "best_model_checkpoint.pt": "f40a47c67fd12efa599f205ca11bda56dfd52e559ebc4e5d3b0508fd3cde8c56",
+        "last_model_checkpoint.pt": "863a01ae138438e1efe591ed940a1732f7295a2080bea3dd7d2a7069a9b39af7"
+      }
+    },
+    {
+      "run_id": "GR_E_counts_angles_per_metal_lr0.0001_s43",
+      "selected_epoch": 48,
+      "selected_native_balanced_accuracy": 0.6657941365979382,
+      "normalization_stats": {
+        "means": {
+          "hydrophobicity_kd": [
+            [
+              -0.196821928024292
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              9.130786895751953,
+              8.684382438659668,
+              461.0302734375
+            ]
+          ],
+          "x_misc": [
+            [
+              0.1062985509634018
+            ]
+          ],
+          "x_env_burial": [
+            [
+              20.23419189453125
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              -0.047253020107746124,
+              -0.5681509971618652
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              3.6333906650543213,
+              6.82174015045166
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              47.49760437011719
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.2658763825893402,
+              1.278577446937561,
+              0.9165797829627991,
+              0.9262194037437439
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              3.9220998287200928,
+              4.467400550842285,
+              86.13648986816406,
+              99.00525665283203,
+              124.77450561523438,
+              14.15031623840332,
+              17.836265563964844,
+              9.847099304199219
+            ]
+          ]
+        },
+        "stds": {
+          "hydrophobicity_kd": [
+            [
+              2.9984512329101562
+            ]
+          ],
+          "x_dist_raw": [
+            [
+              2.142991304397583,
+              2.8742282390594482,
+              493.8064270019531
+            ]
+          ],
+          "x_misc": [
+            [
+              0.5678883790969849
+            ]
+          ],
+          "x_env_burial": [
+            [
+              29.172182083129883
+            ]
+          ],
+          "x_env_electrostatics": [
+            [
+              0.36152923107147217,
+              2.146926164627075
+            ]
+          ],
+          "edge_dist_raw": [
+            [
+              1.3124005794525146,
+              2.203679084777832
+            ]
+          ],
+          "edge_seqsep": [
+            [
+              71.74199676513672
+            ]
+          ],
+          "site_metal_stats": [
+            [
+              0.44179874658584595,
+              0.47933414578437805,
+              1.534363865852356,
+              1.549649715423584
+            ]
+          ],
+          "site_ligand_angle_stats": [
+            [
+              1.661649227142334,
+              2.777981996536255,
+              15.56519889831543,
+              17.181636810302734,
+              34.96469497680664,
+              11.616660118103027,
+              7.673598766326904,
+              5.939505577087402
+            ]
+          ]
+        },
+        "clamp_value": 5.0
+      },
+      "normalization_stats_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5",
+      "files": {
+        "run_config.json": "7459d51fecb2b708fe8986c52882fdc7470b640fb1d41caf21c75970a818d69c",
+        "run_metadata.json": "088a91b3001a515a7a3848b08065818955d7b2d21a42ab6a30c9a1975f97549b",
+        "dataset_summary.json": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853",
+        "epoch_metrics.csv": "c49270e0101f48594bbec633bef64cd494c4fe9fc4d84b9f29114a09eb1a8240",
+        "best_model_checkpoint.pt": "bc837de934e3177e1ace9f6cbce8251c2115746069b448dbbcb45627ad9505d3",
+        "last_model_checkpoint.pt": "2f1d54409c5f9d27c59a7b8a8a340455c175f43874fc83fb0afbbbbe7ccadc47"
+      }
+    }
+  ]
+}

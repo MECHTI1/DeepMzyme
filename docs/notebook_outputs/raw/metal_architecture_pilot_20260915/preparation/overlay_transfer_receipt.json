@@ -1,0 +1,11 @@
+{
+  "archive": "metal-pilot-feature-overlay.tar.gz",
+  "sha256": "a4a5347a2194800b448362bd27094ead37999d9e25aa8cba701d3291b6b14dd8",
+  "manifest_sha256": "41ef6627ee3c1d1595de8d1ca1fe0f03f8453cea7d6d7fff2376f8ddfd3fdef7",
+  "bytes": 10778452,
+  "drive_file_id": "1thEazEdmE6EXJL5AKmXCUF4tog-D_rbh",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verified": true,
+  "drive_verification": "file ID, parent and byte size checked after upload",
+  "local_sha256_verified": true
+}

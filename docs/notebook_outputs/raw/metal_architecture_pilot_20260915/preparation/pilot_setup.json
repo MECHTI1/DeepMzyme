@@ -1,0 +1,15 @@
+{
+  "session_name": "deepmzyme-metal-pilot-20260915",
+  "allocation_started_epoch": 1789440733.8320558,
+  "repo_root": "/content/DeepMzyme_metal_pilot",
+  "output_dir": "/content/metal_architecture_pilot_10h_v1",
+  "data_root": "/content/deepmzyme_bundle/DeepMzyme_Data",
+  "external_features_root_dir": "/content/metal_architecture_pilot_features/external_overlay",
+  "feature_overlay_manifest": "/content/metal_architecture_pilot_features/external_overlay/feature_overlay_manifest.json",
+  "source_archive": "/content/deepmzyme-metal-pilot-code.tar.gz",
+  "source_sha256": "e7a7428902529d323b3ebf0b6740a2ccb9cc31fafe2ede194a21b566fb3753d2",
+  "overlay_archive": "/content/metal-pilot-feature-overlay.tar.gz",
+  "overlay_sha256": "a4a5347a2194800b448362bd27094ead37999d9e25aa8cba701d3291b6b14dd8",
+  "bundle_sha256": "90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee",
+  "bundle_url": "https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/0f9d1efb835bdd5597b2762b8608947d7b82cdf2/DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz"
+}

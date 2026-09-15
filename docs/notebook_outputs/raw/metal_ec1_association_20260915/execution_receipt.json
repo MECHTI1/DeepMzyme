@@ -1,0 +1,9 @@
+{
+  "completed_at": "2026-09-15T13:17:28.395802+00:00",
+  "contingencies_sha256": "eb4dbab6cf07af5cbd47f77ab6579550fb4a66c28c4cabeaa95ce3190de4bfa5",
+  "cross_source_union_certified": false,
+  "manifest_sha256": "ebc43f74add6233a871709f6175f77b9828b0294b58c32f9f1aeec921b22a655",
+  "model_training": false,
+  "results_sha256": "7695d1f8e87dfee359bac88ff5e7b187a9812d8f25ac06170764659abbbd61c2",
+  "test_inputs": []
+}

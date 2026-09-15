@@ -1,0 +1,15 @@
+{
+  "pid": 80172,
+  "log": "/content/metal_architecture_pilot_10h_v1/host_step_040.log",
+  "command": [
+    "/usr/bin/python3",
+    "/content/campaign_control.py",
+    "original",
+    "worker",
+    "--phase",
+    "execute",
+    "--allowed-blocks",
+    "T1,T2,H,R,RE,RH"
+  ],
+  "started_epoch": 1789472120.171835
+}

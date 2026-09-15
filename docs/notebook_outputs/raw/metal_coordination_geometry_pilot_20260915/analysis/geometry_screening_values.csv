@@ -1,0 +1,28 @@
+panel,condition,seed,lr,item,value,unit
+accuracy,G1,42,3e-05,A,60.84541451890034,percent balanced accuracy
+accuracy,G1,42,3e-05,B,60.89373926116839,percent balanced accuracy
+accuracy,G1,42,3e-05,C,61.01052405498282,percent balanced accuracy
+accuracy,G1,42,3e-05,D,61.0266323024055,percent balanced accuracy
+accuracy,G1,42,3e-05,E,61.0950923539519,percent balanced accuracy
+paired_difference,G1,42,3e-05,B-A,0.04832474226804662,percentage points
+paired_difference,G1,42,3e-05,C-B,0.11678479381442841,percentage points
+paired_difference,G1,42,3e-05,D-B,0.13289304123711432,percentage points
+paired_difference,G1,42,3e-05,E-D,0.0684600515463929,percentage points
+accuracy,G2,42,0.0001,A,68.47320661512028,percent balanced accuracy
+accuracy,G2,42,0.0001,B,70.53049828178695,percent balanced accuracy
+accuracy,G2,42,0.0001,C,71.43658719931271,percent balanced accuracy
+accuracy,G2,42,0.0001,D,69.96670962199313,percent balanced accuracy
+accuracy,G2,42,0.0001,E,69.4799720790378,percent balanced accuracy
+paired_difference,G2,42,0.0001,B-A,2.057291666666672,percentage points
+paired_difference,G2,42,0.0001,C-B,0.9060889175257714,percentage points
+paired_difference,G2,42,0.0001,D-B,-0.563788659793818,percentage points
+paired_difference,G2,42,0.0001,E-D,-0.4867375429553289,percentage points
+accuracy,GR,43,0.0001,A,70.80890249140893,percent balanced accuracy
+accuracy,GR,43,0.0001,B,69.84187070446735,percent balanced accuracy
+accuracy,GR,43,0.0001,C,68.57737328178695,percent balanced accuracy
+accuracy,GR,43,0.0001,D,67.76390678694158,percent balanced accuracy
+accuracy,GR,43,0.0001,E,66.57941365979381,percent balanced accuracy
+paired_difference,GR,43,0.0001,B-A,-0.9670317869415745,percentage points
+paired_difference,GR,43,0.0001,C-B,-1.2644974226804107,percentage points
+paired_difference,GR,43,0.0001,D-B,-2.0779639175257825,percentage points
+paired_difference,GR,43,0.0001,E-D,-1.1844931271477566,percentage points

@@ -1,0 +1,25 @@
+[
+  {
+    "attempt_id": "attempt_001",
+    "run_id": "readiness",
+    "block": "P",
+    "status": "completed",
+    "started_epoch": 1789441712.6926951,
+    "retry_of": null,
+    "run_dir": "/content/metal_architecture_pilot_10h_v1/preflight_run",
+    "log": "/content/metal_architecture_pilot_10h_v1/logs/attempt_001.log",
+    "command": [
+      "/usr/bin/python3",
+      "/content/DeepMzyme_metal_pilot_v2/src/run_metal_architecture_pilot.py",
+      "_preflight",
+      "--output-dir",
+      "/content/metal_architecture_pilot_10h_v1"
+    ],
+    "pid": 5736,
+    "gpu_peak_used_mib": 1300.0,
+    "gpu_memory_measurement": "whole_device_peak_sampled_every_10_seconds",
+    "returncode": 0,
+    "ended_epoch": 1789441836.8443508,
+    "elapsed_seconds": 124.15165567398071
+  }
+]

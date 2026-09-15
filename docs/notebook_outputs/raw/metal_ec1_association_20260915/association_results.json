@@ -1,0 +1,311 @@
+{
+  "limitations": [
+    "Separate source panels; no PDB-to-UniProt or sequence-homology union certificate",
+    "No shared-encoder split certification or inference of auxiliary-learning benefit",
+    "No test input opened by this analysis; existing train membership is inherited, not re-certified against external test identifiers",
+    "Source selection and homology can violate exchangeability even between protein groups"
+  ],
+  "manifest_sha256": "ebc43f74add6233a871709f6175f77b9828b0294b58c32f9f1aeec921b22a655",
+  "profile": "metal_ec1_development_association_v1",
+  "results": [
+    {
+      "eligibility": {
+        "eligible_groups": 1136,
+        "eligible_pockets": 1163,
+        "excluded_additional_native6_eligibility": 0,
+        "excluded_ambiguous_or_missing_view_metal": 0,
+        "excluded_missing_ec1": 18,
+        "excluded_total": 18,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 1181
+      },
+      "panel": "pinmymetal",
+      "partition": "train",
+      "permutation": {
+        "exceedances_including_ties": 0,
+        "holm_adjusted_p_value": 0.0004,
+        "interpretation": "Exploratory conditional on exchangeability; sequence homology and selection remain uncontrolled",
+        "p_value": 0.0001,
+        "permutations": 9999,
+        "seed": 42,
+        "statistic": "group-weighted MI",
+        "unit": "whole protein group"
+      },
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 466.2914285763245,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.286519739929156,
+        "degrees_of_freedom": 30,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.40476190476190477,
+        "expected_min": 0.045774647887323945,
+        "mi_nats": 0.20288315844885726,
+        "nmi": 0.14319175600994008,
+        "total_weight": 1136.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 483.8211515587451,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.28844802245986223,
+        "degrees_of_freedom": 30,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.40476190476190477,
+        "expected_min": 0.055030094582975066,
+        "mi_nats": 0.20854373014653407,
+        "nmi": 0.14657598653787787,
+        "total_weight": 1163.0
+      },
+      "view": "native6"
+    },
+    {
+      "eligibility": {
+        "eligible_groups": 1136,
+        "eligible_pockets": 1163,
+        "excluded_additional_native6_eligibility": 0,
+        "excluded_ambiguous_or_missing_view_metal": 0,
+        "excluded_missing_ec1": 18,
+        "excluded_total": 18,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 1181
+      },
+      "panel": "pinmymetal",
+      "partition": "train",
+      "permutation": {
+        "exceedances_including_ties": 0,
+        "holm_adjusted_p_value": 0.0004,
+        "interpretation": "Exploratory conditional on exchangeability; sequence homology and selection remain uncontrolled",
+        "p_value": 0.0001,
+        "permutations": 9999,
+        "seed": 42,
+        "statistic": "group-weighted MI",
+        "unit": "whole protein group"
+      },
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 363.68772191467366,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.32667396719589936,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.045774647887323945,
+        "mi_nats": 0.15777406030324775,
+        "nmi": 0.12473397624682933,
+        "total_weight": 1136.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 380.51348381238626,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.3302436995069336,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.055030094582975066,
+        "mi_nats": 0.1644818767558097,
+        "nmi": 0.1290744314011694,
+        "total_weight": 1163.0
+      },
+      "view": "common4"
+    },
+    {
+      "eligibility": {
+        "eligible_groups": 1136,
+        "eligible_pockets": 1163,
+        "excluded_additional_native6_eligibility": 0,
+        "excluded_ambiguous_or_missing_view_metal": 0,
+        "excluded_missing_ec1": 18,
+        "excluded_total": 18,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 1181
+      },
+      "panel": "pinmymetal",
+      "partition": "train",
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 363.68772191467366,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.32667396719589936,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.045774647887323945,
+        "mi_nats": 0.15777406030324775,
+        "nmi": 0.12473397624682933,
+        "total_weight": 1136.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 380.51348381238626,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.3302436995069336,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.055030094582975066,
+        "mi_nats": 0.1644818767558097,
+        "nmi": 0.1290744314011694,
+        "total_weight": 1163.0
+      },
+      "view": "common4_native6_eligible"
+    },
+    {
+      "eligibility": {
+        "eligible_groups": 742,
+        "eligible_pockets": 982,
+        "excluded_additional_native6_eligibility": 0,
+        "excluded_ambiguous_or_missing_view_metal": 11,
+        "excluded_missing_ec1": 0,
+        "excluded_total": 11,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 993
+      },
+      "panel": "care",
+      "partition": "train",
+      "permutation": {
+        "exceedances_including_ties": 0,
+        "holm_adjusted_p_value": 0.0004,
+        "interpretation": "Exploratory conditional on exchangeability; sequence homology and selection remain uncontrolled",
+        "p_value": 0.0001,
+        "permutations": 9999,
+        "seed": 42,
+        "statistic": "group-weighted MI",
+        "unit": "whole protein group"
+      },
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 633.2838666875814,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.4131542811391488,
+        "degrees_of_freedom": 30,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.5476190476190477,
+        "expected_min": 0.0673854447439353,
+        "mi_nats": 0.31171429571372994,
+        "nmi": 0.22934569642308092,
+        "total_weight": 742.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 736.5115680830476,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.38730137622407257,
+        "degrees_of_freedom": 30,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.47619047619047616,
+        "expected_min": 0.06109979633401222,
+        "mi_nats": 0.29571992388438506,
+        "nmi": 0.22136977482840997,
+        "total_weight": 982.0
+      },
+      "view": "native6"
+    },
+    {
+      "eligibility": {
+        "eligible_groups": 743,
+        "eligible_pockets": 983,
+        "excluded_additional_native6_eligibility": 0,
+        "excluded_ambiguous_or_missing_view_metal": 10,
+        "excluded_missing_ec1": 0,
+        "excluded_total": 10,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 993
+      },
+      "panel": "care",
+      "partition": "train",
+      "permutation": {
+        "exceedances_including_ties": 0,
+        "holm_adjusted_p_value": 0.0004,
+        "interpretation": "Exploratory conditional on exchangeability; sequence homology and selection remain uncontrolled",
+        "p_value": 0.0001,
+        "permutations": 9999,
+        "seed": 42,
+        "statistic": "group-weighted MI",
+        "unit": "whole protein group"
+      },
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 570.7119509904888,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.5060034165892953,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.13907581875280392,
+        "mi_nats": 0.2764912248932894,
+        "nmi": 0.2125118279113288,
+        "total_weight": 743.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 647.8743573118716,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.4687140902259662,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.2857142857142857,
+        "expected_min": 0.17293997965412003,
+        "mi_nats": 0.25876487262222037,
+        "nmi": 0.20171872569463245,
+        "total_weight": 983.0
+      },
+      "view": "common4"
+    },
+    {
+      "eligibility": {
+        "eligible_groups": 742,
+        "eligible_pockets": 982,
+        "excluded_additional_native6_eligibility": 1,
+        "excluded_ambiguous_or_missing_view_metal": 10,
+        "excluded_missing_ec1": 0,
+        "excluded_total": 11,
+        "exclusion_counts_can_overlap": true,
+        "retained_pockets": 993
+      },
+      "panel": "care",
+      "partition": "train",
+      "protein_group": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 568.5726351171077,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.5053943667183582,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.32142857142857145,
+        "expected_min": 0.13926325247079963,
+        "mi_nats": 0.27534995359381675,
+        "nmi": 0.211676517651939,
+        "total_weight": 742.0
+      },
+      "site": {
+        "asymptotic_chi_square_p_value": null,
+        "asymptotic_p_omission": "Repeated pockets/fractional weights are not independent multinomial counts",
+        "chi_square": 645.7515978854741,
+        "conventional_expected_cell_heuristic_passes": false,
+        "cramers_v": 0.4681837905564522,
+        "degrees_of_freedom": 18,
+        "expected_any_below_1": true,
+        "expected_fraction_below_5": 0.2857142857142857,
+        "expected_min": 0.17311608961303462,
+        "mi_nats": 0.25784305793460105,
+        "nmi": 0.20105123226005195,
+        "total_weight": 982.0
+      },
+      "view": "common4_native6_eligible"
+    }
+  ],
+  "status": "completed_descriptive_development_analysis"
+}

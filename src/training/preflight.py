@@ -28,6 +28,7 @@ def validate_graphs(
                 edge_radius=config.edge_radius,
                 use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
+                shell_role_source=config.shell_role_source,
                 node_feature_set=config.node_feature_set,
                 omit_node_features=config.omit_node_features,
                 metal_node_mode=config.metal_node_mode,

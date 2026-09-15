@@ -1,0 +1,48 @@
+{
+  "created_utc": "2026-09-15T09:41:24.573358+00:00",
+  "profile": "metal_coordination_geometry_pilot_v1",
+  "matplotlib_version": "3.10.9",
+  "source_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/geometry_screen.csv",
+  "source_csv_sha256": "68dfab39bc69145b5d341fd64058407905325d8049fcd4f997f57c31360b5a16",
+  "source_manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+  "selected_lr_sha256": "c51847822b382ff89e3e7a0a2fe855e339504514b4fef32576783ec839c93ce6",
+  "summary_sha256": "e98498688485f3847cd5d982678d211826d718f775b94ced6d70256a98499c7f",
+  "source_commit": "270fa90f68ee943541367f4ba62861047d713883:snapshot:42b492e9a07ba29fd3bb1adabb38acfad538d7e30c71f32dd22a545399c46652",
+  "plot_helper_sha256": "01fa668446cb5cd55508bc58be945f1b1e1e9d7b794d474ec83829b711fb9110",
+  "conditions": [
+    {
+      "block": "G1",
+      "seed": 42,
+      "lr": 3e-05
+    },
+    {
+      "block": "G2",
+      "seed": 42,
+      "lr": 0.0001
+    },
+    {
+      "block": "GR",
+      "seed": 43,
+      "lr": 0.0001
+    }
+  ],
+  "accuracy_points": 15,
+  "paired_difference_points": 12,
+  "confidence_intervals": false,
+  "promotion": false,
+  "held_out_evaluation": false,
+  "files": {
+    "geometry_screening.png": {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/analysis/geometry_screening.png",
+      "sha256": "4accff39b6ca704081d24ee6b3d0b7efae1e75f5b5a1323c914b8a6c92c065b6"
+    },
+    "geometry_screening.svg": {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/analysis/geometry_screening.svg",
+      "sha256": "56590b3f66bfa96194cbee5bf0748d0bb10c3438c75ab9e10035a2a252f9a147"
+    },
+    "geometry_screening_values.csv": {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/analysis/geometry_screening_values.csv",
+      "sha256": "65162fa78ca1763693216e7a2b5c81ffa74a723aa9a5661caabd1423fc6a9c80"
+    }
+  }
+}

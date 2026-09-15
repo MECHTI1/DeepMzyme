@@ -1,0 +1,13 @@
+{
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/archives/pilot_closeout_20260915.tar.gz",
+  "sha256": "16a7b31f9fda7337522b8573fdbf985a1f88ed691b13fa990cf0ac70ce82e9bf",
+  "bytes": 475774,
+  "verified_file_count": 54,
+  "status": "stopped_campaign_incomplete",
+  "note": "Original completed-run archives remain local and in Drive; remote snapshots may show pre-transfer states. Host closeout owns final allocation/session status. This snapshot precedes its own Drive upload receipt.",
+  "drive_file_id": "1Xmtpx1783uEwtm6W7fhgmr02LjETaIwn",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verified": true,
+  "local_sha256_verified": true,
+  "drive_verification": "ID, parent and byte size verified after uploading locally SHA-verified archive"
+}

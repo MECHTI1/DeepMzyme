@@ -1,0 +1,7 @@
+{
+  "source_archive": "/content/deepmzyme-metal-geometry-code-v1.tar.gz",
+  "source_sha256": "42b492e9a07ba29fd3bb1adabb38acfad538d7e30c71f32dd22a545399c46652",
+  "verified_files": 135,
+  "parent_manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "operator_control_sha256": "9adfa2f644fcaef59b1fa9830eaed5662713a4a09e8dead99381147f2d826d95"
+}

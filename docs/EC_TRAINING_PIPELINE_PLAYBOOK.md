@@ -348,6 +348,87 @@ classes. Update the metric name when the label depth changes (e.g., use
 3. GVP + graph-level late fusion after both simple baselines are measured.
 4. Advanced fusion only if simpler models justify the added complexity.
 
+## Phase 3 — training-only metal × EC1 association
+
+The executable profile `metal_ec1_development_association_v1` is a local CPU
+analysis of **separate** PinMyMetal and CARE source panels. It consumes the exact
+retained training membership from the metal pilot and EC standalone readiness
+artifacts. It does not train a model or certify a shared-encoder split.
+
+Preparation fixes the source hashes and analysis rules before calculating
+statistics. It reconstructs canonical metal clusters only for retained training
+pockets, matches the catalytic-site training summary, and requires equality
+with every saved source-scheme metal and EC1 target (native-six in metal
+readiness, common-four in EC readiness). Conflicting duplicate site labels,
+changed sources, unexpected targets, or training/internal-validation group
+overlap stop the analysis. Only group identifiers from saved internal validation
+are used for the exclusion check. No external test file is an input; external
+training membership is inherited from the audited standalone artifacts rather
+than independently re-certified against external test identities.
+
+Exact inputs are the non-overlap PinMyMetal `train` summary/structure manifest
+and CARE clusterRes30 `train` summary/structure manifest under `DATA_ROOT`, plus
+`docs/notebook_outputs/raw/metal_architecture_pilot_20260915/readiness/expected_split.json`
+and `docs/notebook_outputs/raw/ec1_standalone_v12_20260914/expected_split.json`.
+The latter artifacts own the retained pocket and split identities. PinMyMetal
+labels on experimentally resolved structures and computational AlphaFill/MAHOMES
+transfers in CARE remain separate provenance categories. Neither panel is an
+unselected sample of all metalloenzymes.
+
+```bash
+# Run from the repository root, using the configured project interpreter.
+PYTHON=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+DATA_ROOT=DeepMzyme_Data
+ASSOCIATION_OUTPUT=DeepMzyme_Data/notebook_outputs/analyses/metal_ec1_development_association_v1_20260915
+"$PYTHON" src/analyze_metal_ec_association.py prepare \
+  --data-root "$DATA_ROOT" --output-dir "$ASSOCIATION_OUTPUT" \
+  --permutations 9999 --seed 42
+"$PYTHON" src/analyze_metal_ec_association.py execute \
+  --output-dir "$ASSOCIATION_OUTPUT"
+```
+
+Use a fresh output directory. `prepare` writes `analysis_manifest.json` and its
+SHA-256, `retained_training_pairs.csv`, and `eligibility_audit.json` before
+`execute` computes any association statistics. Execution verifies their hashes
+and the source hashes, then writes `association_results.json`,
+`contingencies_and_conditionals.csv`, and `execution_receipt.json`.
+
+Each panel has native-six and inclusive common-four views. An additional
+common-four view restricted to native-six-eligible pockets is a descriptive
+cohort-composition sensitivity check. Missing EC1 and ambiguous/missing metal
+targets are excluded explicitly per view; exclusions can overlap. Multiple
+native metals within VIII can have a valid common-four target while lacking a
+single native-six target. No validation statistics are part of this recipe.
+
+For every view, report raw pocket counts and both conditional distributions,
+then a protein-group-weighted table: each eligible PDB group or full CARE
+UniProt accession contributes total weight one, divided among its eligible
+pockets. Groups must have a single retained EC1 target. This protects against
+repeated pocket annotations; PDB grouping does not establish sequence-homology
+independence or a cross-source PDB-to-UniProt identity union.
+
+Report Pearson's chi-square statistic and expected-cell diagnostics, Cramér's
+V, mutual information in natural-log units, and arithmetic-normalized mutual
+information `2 MI / (H(metal) + H(EC1))`. Empty or constant marginals produce
+undefined association measures, reported as null. The conventional expected
+cell heuristic is no expected cell below one and at most 20% below five; even
+passing it does not make repeated pockets independent. **No asymptotic
+site-level chi-square p-value is reported.**
+
+The exploratory inference uses 9,999 seed-42 permutations of whole-group EC1
+labels, retaining each group's metal profile and weight. Its statistic is
+group-weighted MI, with `(exceedances + 1) / (permutations + 1)` and Holm
+adjustment across the four primary panel × native-six/common-four tests. The
+matched-cohort sensitivity gets no additional permutation test. Exchangeability
+between groups is an assumption; homology and source selection remain possible
+violations. These p-values are not evidence that auxiliary supervision helps.
+
+**Completion gate:** all frozen-input checks pass; exclusion counts, both
+weighting views, conditionals, statistics, assumption diagnostics, provenance,
+and limitations are saved. Review these descriptive results before designing
+the auxiliary challenger. Joint training still requires its own certified
+cross-source identity and held-out exclusion protocol below.
+
 ## Initial Auxiliary Metal-Supervision Boundary
 
 The first experiment connecting the two primary tasks asks whether metal

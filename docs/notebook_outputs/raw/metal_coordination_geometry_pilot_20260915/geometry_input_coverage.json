@@ -1,0 +1,1219 @@
+{
+  "scope": "Development-data input coverage only; no model selection or held-out evaluation",
+  "diagnostic_mode_coverage": "A actual-data preflight; all A-E require a completed one-epoch smoke before full-run admission",
+  "raw_slot_names": [
+    "candidate_residue_metal_pair_count",
+    "within_metal_angle_pair_count",
+    "angle_min_degrees",
+    "angle_mean_degrees",
+    "angle_max_degrees",
+    "angle_population_std_degrees",
+    "mean_abs_deviation_from_109_47_degrees",
+    "mean_nearest_abs_deviation_from_90_or_180_degrees"
+  ],
+  "model_transforms": {
+    "counts": "log1p of first two raw slots",
+    "angles": "six raw degree summaries divided by 180",
+    "none": "all eight geometry slots masked to zero"
+  },
+  "first_shell_residue_counts_available": false,
+  "limitations": [
+    "Slot 0 counts candidate residue-metal pairs, not unique first-shell residues or certified coordination bonds; a bridging residue may count once for each center.",
+    "Candidates use at most two listed donor atoms per residue and retain the nearest one per residue-metal pair; when no listed donor is present, the functional-group centroid is used.",
+    "The 2.7 Angstrom candidate cutoff has a first-shell override for the nearest center; site statistics do not force a candidate for every metal.",
+    "Waters, cofactors, and noncanonical residues are omitted; intra-residue bidentate angles are absent.",
+    "Angles are formed within each metal center and then pooled across centers; site-level summaries lose per-center distributions.",
+    "Zero angle pairs mean the six angular slots are padding zeros, not observed zero-degree angles. Positive pair count alone does not prove chemically valid or nondegenerate bond geometry.",
+    "The 90/180 deviation is an ideal-angle proxy and cannot distinguish square-planar from octahedral coordination.",
+    "Diagnostics do not identify donor-versus-centroid frequency, unique first-shell residue counts, per-center counts, cutoff overrides, or degenerate vectors; those quantities cannot be recovered from these eight slots.",
+    "All reported angle-summary distributions weight pockets equally and condition on positive angle-pair count; they are not pooled individual-angle distributions.",
+    "These diagnostics come from the A actual-data preflight. Candidate counts need not equal metal-node graph edge counts, which can force a nearest candidate for an otherwise disconnected center."
+  ],
+  "all_development": {
+    "pockets": 1389,
+    "distinct_pocket_ids": 1389,
+    "zero_candidate_pairs": {
+      "count": 15,
+      "fraction": 0.01079913606911447
+    },
+    "zero_angle_pairs": {
+      "count": 41,
+      "fraction": 0.029517638588912886
+    },
+    "positive_angle_pairs": {
+      "count": 1348,
+      "fraction": 0.9704823614110871
+    },
+    "multi_metal_sites": {
+      "count": 348,
+      "fraction": 0.2505399568034557
+    },
+    "candidate_residue_metal_pair_count": {
+      "n": 1389,
+      "min": 0,
+      "p25": 3.0,
+      "median": 3,
+      "mean": 3.85097192224622,
+      "p75": 4.0,
+      "max": 14,
+      "histogram": {
+        "0": 15,
+        "1": 25,
+        "2": 100,
+        "3": 653,
+        "4": 257,
+        "5": 129,
+        "6": 47,
+        "7": 105,
+        "8": 54,
+        "9": 1,
+        "10": 2,
+        "14": 1
+      }
+    },
+    "within_metal_angle_pair_count": {
+      "n": 1389,
+      "min": 0,
+      "p25": 3.0,
+      "median": 3,
+      "mean": 4.3959683225341974,
+      "p75": 6.0,
+      "max": 18,
+      "histogram": {
+        "0": 41,
+        "1": 103,
+        "2": 7,
+        "3": 678,
+        "4": 103,
+        "6": 255,
+        "7": 8,
+        "9": 105,
+        "10": 33,
+        "12": 54,
+        "16": 1,
+        "18": 1
+      }
+    },
+    "site_metal_count": {
+      "n": 1389,
+      "min": 1,
+      "p25": 1.0,
+      "median": 1,
+      "mean": 1.2627789776817855,
+      "p75": 2.0,
+      "max": 4,
+      "histogram": {
+        "1": 1041,
+        "2": 333,
+        "3": 13,
+        "4": 2
+      }
+    },
+    "pocket_residue_count": {
+      "n": 1389,
+      "min": 20,
+      "p25": 36.0,
+      "median": 39,
+      "mean": 40.035277177825776,
+      "p75": 43.0,
+      "max": 65
+    },
+    "angular_summaries_degrees_given_positive_pairs": {
+      "angle_min_degrees": {
+        "n": 1348,
+        "min": 47.8434944152832,
+        "p25": 82.30750846862793,
+        "median": 87.62612533569336,
+        "mean": 88.23135173356144,
+        "p75": 93.26346206665039,
+        "max": 170.90042114257812
+      },
+      "angle_mean_degrees": {
+        "n": 1348,
+        "min": 68.41255187988281,
+        "p25": 95.05390167236328,
+        "median": 102.0986328125,
+        "mean": 101.64385100571268,
+        "p75": 107.39898490905762,
+        "max": 170.90042114257812
+      },
+      "angle_max_degrees": {
+        "n": 1348,
+        "min": 68.41255187988281,
+        "p25": 101.36554527282715,
+        "median": 118.22349548339844,
+        "mean": 127.9281091435373,
+        "p75": 159.35186767578125,
+        "max": 179.52853393554688
+      },
+      "angle_population_std_degrees": {
+        "n": 1348,
+        "min": 0.0,
+        "p25": 4.222658157348633,
+        "median": 11.032906532287598,
+        "mean": 14.573387695990437,
+        "p75": 25.757113456726074,
+        "max": 41.46470642089844
+      },
+      "mean_abs_deviation_from_109_47_degrees": {
+        "n": 1348,
+        "min": 0.43871307373046875,
+        "p25": 12.721118450164795,
+        "median": 17.824748992919922,
+        "mean": 18.02020315308599,
+        "p75": 23.394607543945312,
+        "max": 61.430419921875
+      },
+      "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+        "n": 1348,
+        "min": 0.05417633056640625,
+        "p25": 5.940881252288818,
+        "median": 9.19347620010376,
+        "mean": 10.523781412875262,
+        "p75": 14.109024047851562,
+        "max": 41.09785461425781
+      }
+    }
+  },
+  "splits": {
+    "train": {
+      "pockets": 1181,
+      "distinct_pocket_ids": 1181,
+      "zero_candidate_pairs": {
+        "count": 8,
+        "fraction": 0.006773920406435224
+      },
+      "zero_angle_pairs": {
+        "count": 25,
+        "fraction": 0.021168501270110076
+      },
+      "positive_angle_pairs": {
+        "count": 1156,
+        "fraction": 0.97883149872989
+      },
+      "multi_metal_sites": {
+        "count": 314,
+        "fraction": 0.26587637595258257
+      },
+      "candidate_residue_metal_pair_count": {
+        "n": 1181,
+        "min": 0,
+        "p25": 3.0,
+        "median": 3,
+        "mean": 3.922099915325995,
+        "p75": 5.0,
+        "max": 14,
+        "histogram": {
+          "0": 8,
+          "1": 17,
+          "2": 68,
+          "3": 578,
+          "4": 210,
+          "5": 111,
+          "6": 40,
+          "7": 93,
+          "8": 52,
+          "9": 1,
+          "10": 2,
+          "14": 1
+        }
+      },
+      "within_metal_angle_pair_count": {
+        "n": 1181,
+        "min": 0,
+        "p25": 3.0,
+        "median": 3,
+        "mean": 4.46740050804403,
+        "p75": 6.0,
+        "max": 18,
+        "histogram": {
+          "0": 25,
+          "1": 71,
+          "2": 6,
+          "3": 602,
+          "4": 93,
+          "6": 208,
+          "7": 6,
+          "9": 93,
+          "10": 23,
+          "12": 52,
+          "16": 1,
+          "18": 1
+        }
+      },
+      "site_metal_count": {
+        "n": 1181,
+        "min": 1,
+        "p25": 1.0,
+        "median": 1,
+        "mean": 1.2785774767146485,
+        "p75": 2.0,
+        "max": 4,
+        "histogram": {
+          "1": 867,
+          "2": 301,
+          "3": 11,
+          "4": 2
+        }
+      },
+      "pocket_residue_count": {
+        "n": 1181,
+        "min": 22,
+        "p25": 36.0,
+        "median": 39,
+        "mean": 40.28450465707028,
+        "p75": 44.0,
+        "max": 65
+      },
+      "angular_summaries_degrees_given_positive_pairs": {
+        "angle_min_degrees": {
+          "n": 1156,
+          "min": 60.478660583496094,
+          "p25": 82.30750846862793,
+          "median": 87.21086502075195,
+          "mean": 87.99930836172665,
+          "p75": 92.66573715209961,
+          "max": 170.90042114257812
+        },
+        "angle_mean_degrees": {
+          "n": 1156,
+          "min": 68.41255187988281,
+          "p25": 94.53447723388672,
+          "median": 101.22689437866211,
+          "mean": 101.14637298979974,
+          "p75": 106.8968391418457,
+          "max": 170.90042114257812
+        },
+        "angle_max_degrees": {
+          "n": 1156,
+          "min": 68.41255187988281,
+          "p25": 100.72535133361816,
+          "median": 116.72643280029297,
+          "mean": 127.4729076240302,
+          "p75": 159.72404861450195,
+          "max": 179.52853393554688
+        },
+        "angle_population_std_degrees": {
+          "n": 1156,
+          "min": 0.0,
+          "p25": 4.1746063232421875,
+          "median": 10.524579048156738,
+          "mean": 14.456335775708864,
+          "p75": 25.771918296813965,
+          "max": 41.19641876220703
+        },
+        "mean_abs_deviation_from_109_47_degrees": {
+          "n": 1156,
+          "min": 0.7739639282226562,
+          "p25": 13.057770252227783,
+          "median": 18.111692428588867,
+          "mean": 18.22199798218107,
+          "p75": 23.471283435821533,
+          "max": 61.430419921875
+        },
+        "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+          "n": 1156,
+          "min": 0.3862762451171875,
+          "p25": 5.721791744232178,
+          "median": 8.743835926055908,
+          "mean": 10.060055552572528,
+          "p75": 13.035783052444458,
+          "max": 35.53263854980469
+        }
+      },
+      "by_site_metal_multiplicity": {
+        "single_metal": {
+          "pockets": 867,
+          "distinct_pocket_ids": 867,
+          "zero_candidate_pairs": {
+            "count": 8,
+            "fraction": 0.00922722029988466
+          },
+          "zero_angle_pairs": {
+            "count": 24,
+            "fraction": 0.02768166089965398
+          },
+          "positive_angle_pairs": {
+            "count": 843,
+            "fraction": 0.972318339100346
+          },
+          "multi_metal_sites": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "candidate_residue_metal_pair_count": {
+            "n": 867,
+            "min": 0,
+            "p25": 3.0,
+            "median": 3,
+            "mean": 3.114186851211073,
+            "p75": 3.0,
+            "max": 5,
+            "histogram": {
+              "0": 8,
+              "1": 16,
+              "2": 68,
+              "3": 575,
+              "4": 177,
+              "5": 23
+            }
+          },
+          "within_metal_angle_pair_count": {
+            "n": 867,
+            "min": 0,
+            "p25": 3.0,
+            "median": 3,
+            "mean": 3.5582468281430217,
+            "p75": 3.0,
+            "max": 10,
+            "histogram": {
+              "0": 24,
+              "1": 68,
+              "3": 575,
+              "6": 177,
+              "10": 23
+            }
+          },
+          "site_metal_count": {
+            "n": 867,
+            "min": 1,
+            "p25": 1.0,
+            "median": 1,
+            "mean": 1.0,
+            "p75": 1.0,
+            "max": 1,
+            "histogram": {
+              "1": 867
+            }
+          },
+          "pocket_residue_count": {
+            "n": 867,
+            "min": 22,
+            "p25": 36.0,
+            "median": 38,
+            "mean": 37.905420991926185,
+            "p75": 41.0,
+            "max": 52
+          },
+          "angular_summaries_degrees_given_positive_pairs": {
+            "angle_min_degrees": {
+              "n": 843,
+              "min": 60.478660583496094,
+              "p25": 83.85052490234375,
+              "median": 88.25686645507812,
+              "mean": 89.27250822074049,
+              "p75": 94.02213668823242,
+              "max": 170.90042114257812
+            },
+            "angle_mean_degrees": {
+              "n": 843,
+              "min": 68.41255187988281,
+              "p25": 93.51225280761719,
+              "median": 100.3847427368164,
+              "mean": 100.97990549614704,
+              "p75": 107.29333114624023,
+              "max": 170.90042114257812
+            },
+            "angle_max_degrees": {
+              "n": 843,
+              "min": 68.41255187988281,
+              "p25": 99.12206268310547,
+              "median": 109.38616943359375,
+              "mean": 122.68644819338833,
+              "p75": 151.73673248291016,
+              "max": 179.31044006347656
+            },
+            "angle_population_std_degrees": {
+              "n": 843,
+              "min": 0.0,
+              "p25": 3.319843292236328,
+              "median": 7.883876323699951,
+              "mean": 12.876068804717997,
+              "p75": 24.766797065734863,
+              "max": 41.19641876220703
+            },
+            "mean_abs_deviation_from_109_47_degrees": {
+              "n": 843,
+              "min": 0.7739639282226562,
+              "p25": 12.371668338775635,
+              "median": 17.34685707092285,
+              "mean": 17.7214729298052,
+              "p75": 23.2685489654541,
+              "max": 61.430419921875
+            },
+            "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+              "n": 843,
+              "min": 0.5903472900390625,
+              "p25": 5.3955078125,
+              "median": 8.527958869934082,
+              "mean": 10.06777143902626,
+              "p75": 13.282875061035156,
+              "max": 35.53263854980469
+            }
+          }
+        },
+        "multi_metal": {
+          "pockets": 314,
+          "distinct_pocket_ids": 314,
+          "zero_candidate_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "zero_angle_pairs": {
+            "count": 1,
+            "fraction": 0.0031847133757961785
+          },
+          "positive_angle_pairs": {
+            "count": 313,
+            "fraction": 0.9968152866242038
+          },
+          "multi_metal_sites": {
+            "count": 314,
+            "fraction": 1.0
+          },
+          "candidate_residue_metal_pair_count": {
+            "n": 314,
+            "min": 1,
+            "p25": 5.0,
+            "median": 6.0,
+            "mean": 6.1528662420382165,
+            "p75": 7.0,
+            "max": 14,
+            "histogram": {
+              "1": 1,
+              "3": 3,
+              "4": 33,
+              "5": 88,
+              "6": 40,
+              "7": 93,
+              "8": 52,
+              "9": 1,
+              "10": 2,
+              "14": 1
+            }
+          },
+          "within_metal_angle_pair_count": {
+            "n": 314,
+            "min": 0,
+            "p25": 4.0,
+            "median": 6.0,
+            "mean": 6.977707006369426,
+            "p75": 9.0,
+            "max": 18,
+            "histogram": {
+              "0": 1,
+              "1": 3,
+              "2": 6,
+              "3": 27,
+              "4": 93,
+              "6": 31,
+              "7": 6,
+              "9": 93,
+              "12": 52,
+              "16": 1,
+              "18": 1
+            }
+          },
+          "site_metal_count": {
+            "n": 314,
+            "min": 2,
+            "p25": 2.0,
+            "median": 2.0,
+            "mean": 2.0477707006369426,
+            "p75": 2.0,
+            "max": 4,
+            "histogram": {
+              "2": 301,
+              "3": 11,
+              "4": 2
+            }
+          },
+          "pocket_residue_count": {
+            "n": 314,
+            "min": 32,
+            "p25": 40.0,
+            "median": 48.0,
+            "mean": 46.853503184713375,
+            "p75": 53.0,
+            "max": 65
+          },
+          "angular_summaries_degrees_given_positive_pairs": {
+            "angle_min_degrees": {
+              "n": 313,
+              "min": 64.65116882324219,
+              "p25": 80.2254638671875,
+              "median": 84.0697021484375,
+              "mean": 84.5702109778651,
+              "p75": 89.62249755859375,
+              "max": 105.10137939453125
+            },
+            "angle_mean_degrees": {
+              "n": 313,
+              "min": 83.19014739990234,
+              "p25": 97.25131225585938,
+              "median": 101.75582885742188,
+              "mean": 101.59471834810397,
+              "p75": 105.82219696044922,
+              "max": 124.19880676269531
+            },
+            "angle_max_degrees": {
+              "n": 313,
+              "min": 86.48031616210938,
+              "p25": 112.60004425048828,
+              "median": 152.9011688232422,
+              "mean": 140.36423446119022,
+              "p75": 165.71923828125,
+              "max": 179.52853393554688
+            },
+            "angle_population_std_degrees": {
+              "n": 313,
+              "min": 0.0,
+              "p25": 8.353901863098145,
+              "median": 22.615835189819336,
+              "mean": 18.712454167227396,
+              "p75": 26.177043914794922,
+              "max": 40.861873626708984
+            },
+            "mean_abs_deviation_from_109_47_degrees": {
+              "n": 313,
+              "min": 4.35167121887207,
+              "p25": 14.963193893432617,
+              "median": 19.717260360717773,
+              "mean": 19.570057468292433,
+              "p75": 23.74931526184082,
+              "max": 36.20659255981445
+            },
+            "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+              "n": 313,
+              "min": 0.3862762451171875,
+              "p25": 6.544414043426514,
+              "median": 9.502227783203125,
+              "mean": 10.039274427075737,
+              "p75": 12.5597505569458,
+              "max": 26.78531265258789
+            }
+          }
+        }
+      }
+    },
+    "validation": {
+      "pockets": 208,
+      "distinct_pocket_ids": 208,
+      "zero_candidate_pairs": {
+        "count": 7,
+        "fraction": 0.03365384615384615
+      },
+      "zero_angle_pairs": {
+        "count": 16,
+        "fraction": 0.07692307692307693
+      },
+      "positive_angle_pairs": {
+        "count": 192,
+        "fraction": 0.9230769230769231
+      },
+      "multi_metal_sites": {
+        "count": 34,
+        "fraction": 0.16346153846153846
+      },
+      "candidate_residue_metal_pair_count": {
+        "n": 208,
+        "min": 0,
+        "p25": 3.0,
+        "median": 3.0,
+        "mean": 3.4471153846153846,
+        "p75": 4.0,
+        "max": 8,
+        "histogram": {
+          "0": 7,
+          "1": 8,
+          "2": 32,
+          "3": 75,
+          "4": 47,
+          "5": 18,
+          "6": 7,
+          "7": 12,
+          "8": 2
+        }
+      },
+      "within_metal_angle_pair_count": {
+        "n": 208,
+        "min": 0,
+        "p25": 3.0,
+        "median": 3.0,
+        "mean": 3.9903846153846154,
+        "p75": 6.0,
+        "max": 12,
+        "histogram": {
+          "0": 16,
+          "1": 32,
+          "2": 1,
+          "3": 76,
+          "4": 10,
+          "6": 47,
+          "7": 2,
+          "9": 12,
+          "10": 10,
+          "12": 2
+        }
+      },
+      "site_metal_count": {
+        "n": 208,
+        "min": 1,
+        "p25": 1.0,
+        "median": 1.0,
+        "mean": 1.1730769230769231,
+        "p75": 1.0,
+        "max": 3,
+        "histogram": {
+          "1": 174,
+          "2": 32,
+          "3": 2
+        }
+      },
+      "pocket_residue_count": {
+        "n": 208,
+        "min": 20,
+        "p25": 35.0,
+        "median": 39.0,
+        "mean": 38.62019230769231,
+        "p75": 42.0,
+        "max": 55
+      },
+      "angular_summaries_degrees_given_positive_pairs": {
+        "angle_min_degrees": {
+          "n": 192,
+          "min": 47.8434944152832,
+          "p25": 82.2678279876709,
+          "median": 90.12131881713867,
+          "mean": 89.62844620148341,
+          "p75": 95.94384002685547,
+          "max": 138.9021453857422
+        },
+        "angle_mean_degrees": {
+          "n": 192,
+          "min": 73.63592529296875,
+          "p25": 101.27610397338867,
+          "median": 105.74728393554688,
+          "mean": 104.6390832265218,
+          "p75": 108.50255012512207,
+          "max": 138.9021453857422
+        },
+        "angle_max_degrees": {
+          "n": 192,
+          "min": 73.63592529296875,
+          "p25": 108.65973663330078,
+          "median": 126.88235473632812,
+          "mean": 130.66880162556967,
+          "p75": 155.01589584350586,
+          "max": 177.0881805419922
+        },
+        "angle_population_std_degrees": {
+          "n": 192,
+          "min": 0.0,
+          "p25": 5.860796928405762,
+          "median": 12.97007131576538,
+          "mean": 15.278137799352407,
+          "p75": 25.59806203842163,
+          "max": 41.46470642089844
+        },
+        "mean_abs_deviation_from_109_47_degrees": {
+          "n": 192,
+          "min": 0.43871307373046875,
+          "p25": 10.654977560043335,
+          "median": 16.486135482788086,
+          "mean": 16.805230119576056,
+          "p75": 22.130290508270264,
+          "max": 41.321937561035156
+        },
+        "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+          "n": 192,
+          "min": 0.05417633056640625,
+          "p25": 8.667624711990356,
+          "median": 13.354961395263672,
+          "mean": 13.31579753011465,
+          "p75": 17.484038829803467,
+          "max": 41.09785461425781
+        }
+      },
+      "by_site_metal_multiplicity": {
+        "single_metal": {
+          "pockets": 174,
+          "distinct_pocket_ids": 174,
+          "zero_candidate_pairs": {
+            "count": 7,
+            "fraction": 0.040229885057471264
+          },
+          "zero_angle_pairs": {
+            "count": 15,
+            "fraction": 0.08620689655172414
+          },
+          "positive_angle_pairs": {
+            "count": 159,
+            "fraction": 0.9137931034482759
+          },
+          "multi_metal_sites": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "candidate_residue_metal_pair_count": {
+            "n": 174,
+            "min": 0,
+            "p25": 2.0,
+            "median": 3.0,
+            "mean": 2.9770114942528734,
+            "p75": 4.0,
+            "max": 5,
+            "histogram": {
+              "0": 7,
+              "1": 8,
+              "2": 31,
+              "3": 74,
+              "4": 44,
+              "5": 10
+            }
+          },
+          "within_metal_angle_pair_count": {
+            "n": 174,
+            "min": 0,
+            "p25": 1.0,
+            "median": 3.0,
+            "mean": 3.545977011494253,
+            "p75": 6.0,
+            "max": 10,
+            "histogram": {
+              "0": 15,
+              "1": 31,
+              "3": 74,
+              "6": 44,
+              "10": 10
+            }
+          },
+          "site_metal_count": {
+            "n": 174,
+            "min": 1,
+            "p25": 1.0,
+            "median": 1.0,
+            "mean": 1.0,
+            "p75": 1.0,
+            "max": 1,
+            "histogram": {
+              "1": 174
+            }
+          },
+          "pocket_residue_count": {
+            "n": 174,
+            "min": 20,
+            "p25": 34.0,
+            "median": 39.0,
+            "mean": 37.01724137931034,
+            "p75": 41.0,
+            "max": 47
+          },
+          "angular_summaries_degrees_given_positive_pairs": {
+            "angle_min_degrees": {
+              "n": 159,
+              "min": 47.8434944152832,
+              "p25": 85.10886001586914,
+              "median": 91.40226745605469,
+              "mean": 91.3345922554064,
+              "p75": 96.93334197998047,
+              "max": 138.9021453857422
+            },
+            "angle_mean_degrees": {
+              "n": 159,
+              "min": 73.63592529296875,
+              "p25": 102.37535095214844,
+              "median": 106.3985366821289,
+              "mean": 104.94036457373662,
+              "p75": 108.92437744140625,
+              "max": 138.9021453857422
+            },
+            "angle_max_degrees": {
+              "n": 159,
+              "min": 73.63592529296875,
+              "p25": 106.29022216796875,
+              "median": 122.12643432617188,
+              "mean": 126.83519514551702,
+              "p75": 145.07036590576172,
+              "max": 176.20263671875
+            },
+            "angle_population_std_degrees": {
+              "n": 159,
+              "min": 0.0,
+              "p25": 4.273021459579468,
+              "median": 11.358864784240723,
+              "mean": 13.667403060685164,
+              "p75": 21.115846633911133,
+              "max": 40.17074966430664
+            },
+            "mean_abs_deviation_from_109_47_degrees": {
+              "n": 159,
+              "min": 0.43871307373046875,
+              "p25": 9.371939182281494,
+              "median": 14.784598350524902,
+              "mean": 15.777222451923778,
+              "p75": 21.288552284240723,
+              "max": 35.834075927734375
+            },
+            "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+              "n": 159,
+              "min": 0.05417633056640625,
+              "p25": 9.637290000915527,
+              "median": 13.886062622070312,
+              "mean": 13.853828295221868,
+              "p75": 17.61456298828125,
+              "max": 41.09785461425781
+            }
+          }
+        },
+        "multi_metal": {
+          "pockets": 34,
+          "distinct_pocket_ids": 34,
+          "zero_candidate_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "zero_angle_pairs": {
+            "count": 1,
+            "fraction": 0.029411764705882353
+          },
+          "positive_angle_pairs": {
+            "count": 33,
+            "fraction": 0.9705882352941176
+          },
+          "multi_metal_sites": {
+            "count": 34,
+            "fraction": 1.0
+          },
+          "candidate_residue_metal_pair_count": {
+            "n": 34,
+            "min": 2,
+            "p25": 5.0,
+            "median": 6.0,
+            "mean": 5.852941176470588,
+            "p75": 7.0,
+            "max": 8,
+            "histogram": {
+              "2": 1,
+              "3": 1,
+              "4": 3,
+              "5": 8,
+              "6": 7,
+              "7": 12,
+              "8": 2
+            }
+          },
+          "within_metal_angle_pair_count": {
+            "n": 34,
+            "min": 0,
+            "p25": 4.0,
+            "median": 6.0,
+            "mean": 6.264705882352941,
+            "p75": 9.0,
+            "max": 12,
+            "histogram": {
+              "0": 1,
+              "1": 1,
+              "2": 1,
+              "3": 2,
+              "4": 10,
+              "6": 3,
+              "7": 2,
+              "9": 12,
+              "12": 2
+            }
+          },
+          "site_metal_count": {
+            "n": 34,
+            "min": 2,
+            "p25": 2.0,
+            "median": 2.0,
+            "mean": 2.0588235294117645,
+            "p75": 2.0,
+            "max": 3,
+            "histogram": {
+              "2": 32,
+              "3": 2
+            }
+          },
+          "pocket_residue_count": {
+            "n": 34,
+            "min": 33,
+            "p25": 43.5,
+            "median": 48.5,
+            "mean": 46.8235294117647,
+            "p75": 51.75,
+            "max": 55
+          },
+          "angular_summaries_degrees_given_positive_pairs": {
+            "angle_min_degrees": {
+              "n": 33,
+              "min": 52.313079833984375,
+              "p25": 77.5516586303711,
+              "median": 81.84941864013672,
+              "mean": 81.40792430530895,
+              "p75": 84.24735260009766,
+              "max": 108.53467559814453
+            },
+            "angle_mean_degrees": {
+              "n": 33,
+              "min": 92.06419372558594,
+              "p25": 98.79751586914062,
+              "median": 103.4571304321289,
+              "mean": 103.18745491721414,
+              "p75": 105.94510650634766,
+              "max": 131.05316162109375
+            },
+            "angle_max_degrees": {
+              "n": 33,
+              "min": 95.4123306274414,
+              "p25": 125.42639923095703,
+              "median": 165.1103515625,
+              "mean": 149.13981466582328,
+              "p75": 168.6726531982422,
+              "max": 177.0881805419922
+            },
+            "angle_population_std_degrees": {
+              "n": 33,
+              "min": 0.0,
+              "p25": 15.294368743896484,
+              "median": 25.565279006958008,
+              "mean": 23.038950631112762,
+              "p75": 28.477130889892578,
+              "max": 41.46470642089844
+            },
+            "mean_abs_deviation_from_109_47_degrees": {
+              "n": 33,
+              "min": 0.9353256225585938,
+              "p25": 17.3505916595459,
+              "median": 21.954017639160156,
+              "mean": 21.758357972809762,
+              "p75": 25.235872268676758,
+              "max": 41.321937561035156
+            },
+            "mean_nearest_abs_deviation_from_90_or_180_degrees": {
+              "n": 33,
+              "min": 2.9072093963623047,
+              "p25": 6.5283355712890625,
+              "median": 9.771066665649414,
+              "mean": 10.723467480052602,
+              "p75": 13.81505012512207,
+              "max": 24.30059051513672
+            }
+          }
+        }
+      }
+    }
+  },
+  "validation_minus_train_fraction": {
+    "zero_candidate_pairs": 0.026879925747410927,
+    "zero_angle_pairs": 0.05575457565296685,
+    "multi_metal_sites": -0.1024148374910441
+  },
+  "four_class_target_coverage": {
+    "target_scheme": "merge_fe_class_viii",
+    "expected_identity_native_scheme": "split_all_metals",
+    "native_labels": {
+      "0": "Mn",
+      "1": "Cu",
+      "2": "Zn",
+      "3": "Fe",
+      "4": "Co",
+      "5": "Ni"
+    },
+    "four_class_labels": {
+      "0": "Mn",
+      "1": "Cu",
+      "2": "Zn",
+      "3": "Class VIII"
+    },
+    "native_to_four_class_id": {
+      "0": 0,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 3,
+      "5": 3
+    },
+    "cohort_sha256": "60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1",
+    "splits": {
+      "train": {
+        "Mn": {
+          "target_id": 0,
+          "pockets": 551,
+          "pdb_groups": 540,
+          "zero_angle_pairs": {
+            "count": 16,
+            "fraction": 0.029038112522686024
+          },
+          "zero_candidate_pairs": {
+            "count": 6,
+            "fraction": 0.010889292196007259
+          },
+          "multi_metal_sites": {
+            "count": 201,
+            "fraction": 0.3647912885662432
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 15
+        },
+        "Cu": {
+          "target_id": 1,
+          "pockets": 70,
+          "pdb_groups": 57,
+          "zero_angle_pairs": {
+            "count": 3,
+            "fraction": 0.04285714285714286
+          },
+          "zero_candidate_pairs": {
+            "count": 1,
+            "fraction": 0.014285714285714285
+          },
+          "multi_metal_sites": {
+            "count": 7,
+            "fraction": 0.1
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 3
+        },
+        "Zn": {
+          "target_id": 2,
+          "pockets": 175,
+          "pdb_groups": 170,
+          "zero_angle_pairs": {
+            "count": 1,
+            "fraction": 0.005714285714285714
+          },
+          "zero_candidate_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "multi_metal_sites": {
+            "count": 31,
+            "fraction": 0.17714285714285713
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 1
+        },
+        "Class VIII": {
+          "target_id": 3,
+          "pockets": 385,
+          "pdb_groups": 385,
+          "zero_angle_pairs": {
+            "count": 5,
+            "fraction": 0.012987012987012988
+          },
+          "zero_candidate_pairs": {
+            "count": 1,
+            "fraction": 0.0025974025974025974
+          },
+          "multi_metal_sites": {
+            "count": 75,
+            "fraction": 0.19480519480519481
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 5
+        }
+      },
+      "validation": {
+        "Mn": {
+          "target_id": 0,
+          "pockets": 97,
+          "pdb_groups": 41,
+          "zero_angle_pairs": {
+            "count": 7,
+            "fraction": 0.07216494845360824
+          },
+          "zero_candidate_pairs": {
+            "count": 4,
+            "fraction": 0.041237113402061855
+          },
+          "multi_metal_sites": {
+            "count": 17,
+            "fraction": 0.17525773195876287
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 7
+        },
+        "Cu": {
+          "target_id": 1,
+          "pockets": 15,
+          "pdb_groups": 8,
+          "zero_angle_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "zero_candidate_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "multi_metal_sites": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 0
+        },
+        "Zn": {
+          "target_id": 2,
+          "pockets": 32,
+          "pdb_groups": 21,
+          "zero_angle_pairs": {
+            "count": 3,
+            "fraction": 0.09375
+          },
+          "zero_candidate_pairs": {
+            "count": 0,
+            "fraction": 0.0
+          },
+          "multi_metal_sites": {
+            "count": 3,
+            "fraction": 0.09375
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 3
+        },
+        "Class VIII": {
+          "target_id": 3,
+          "pockets": 64,
+          "pdb_groups": 52,
+          "zero_angle_pairs": {
+            "count": 6,
+            "fraction": 0.09375
+          },
+          "zero_candidate_pairs": {
+            "count": 3,
+            "fraction": 0.046875
+          },
+          "multi_metal_sites": {
+            "count": 14,
+            "fraction": 0.21875
+          },
+          "pdb_groups_with_any_zero_angle_pairs": 6
+        }
+      }
+    },
+    "interpretation": "Descriptive site coverage; pockets within a PDB group are not independent. No causal or predictive-effect inference.",
+    "verification": {
+      "ordered_identity_join_verified": true,
+      "frozen_label_order_verified": true,
+      "sources": {
+        "expected_split": {
+          "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/expected_split.json",
+          "sha256": "1415562a2830710209e4689fc641ea1e82bf57dd40bb9ad17d75936d27737f42"
+        },
+        "manifest": {
+          "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/campaign_manifest.json",
+          "sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2"
+        },
+        "readiness": {
+          "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/readiness.json",
+          "sha256": "abebc4368a673f8cf2737cf75b5ba911138f9b424a205086328f74a4ed53f269"
+        },
+        "label_schemes": {
+          "path": "/home/mechti/PycharmProjects/DeepMzyme/src/label_schemes.py",
+          "sha256": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99"
+        }
+      }
+    }
+  },
+  "source": {
+    "diagnostics": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/geometry_diagnostics.json",
+    "sha256": "ee8019cae414f5dd22d3b5a06b61494dbadd35e11054462eae98dd6c53f2cd22",
+    "expected_sha256_matched": true,
+    "helper_sha256": "511b7da7ea10563570c00ee61dd2cdbfb44ee850ff357d19bc1d18b50e84bacc"
+  }
+}

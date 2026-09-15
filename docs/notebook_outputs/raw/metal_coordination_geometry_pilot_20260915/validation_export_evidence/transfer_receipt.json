@@ -1,0 +1,21 @@
+{
+  "attempt_id": "attempt_001",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence/archives/attempt_001.tar.gz",
+  "archive_sha256": "abe92f2aaf79507dcd37f70d1cf8b3ee8e255b3955160e18f36da2786fbccc71",
+  "bytes": 231126,
+  "manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+  "verified_parts": 1,
+  "verified_prediction_csvs": 15,
+  "verified_paired_records": 12,
+  "validation_sites": 208,
+  "prediction_report_sha256": "aab44baeb515cdd38a5ca20f3099d8bb2c5cb9cb864dde941a50b865779a4b8f",
+  "helper_sha256": "ebd01031ebcb4ae1009293322dd5eb9d0134b3b8805698107d8e624841bb0e84",
+  "analysis_kind": "geometry_validation_export",
+  "analysis_attempt_number": 1,
+  "local_evidence_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/validation_export_evidence",
+  "drive_file_id": "1bzT5SajnWr5ErjE_vg9OLWfJAuj88RDa",
+  "drive_verified": true,
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verification": "Operator supplied this ID after connector readback confirmed file, parent, and byte size"
+}

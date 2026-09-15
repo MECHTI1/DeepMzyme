@@ -8,6 +8,16 @@ from featurization import MultinuclearSiteHandler, donor_coords_and_mask, functi
 from graph.edge_sources import build_ring_edge_records
 from graph.ring_edges import resolve_ring_edges_path
 
+SHELL_ROLE_SOURCE_CHOICES = ("edge_mode", "geometry")
+
+
+def validate_shell_role_source(value: str) -> str:
+    if value not in SHELL_ROLE_SOURCE_CHOICES:
+        raise ValueError(
+            f"Unsupported shell_role_source {value!r}; expected one of {SHELL_ROLE_SOURCE_CHOICES}."
+        )
+    return value
+
 
 def _compute_first_shell_flags(
     pocket: PocketRecord,
@@ -83,7 +93,9 @@ def compute_shell_roles(
     first_shell_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
     second_shell_cutoff: float = 4.5,
     use_ring_edges: bool = True,
+    shell_role_source: str = "edge_mode",
 ) -> list[tuple[bool, bool]]:
+    shell_role_source = validate_shell_role_source(shell_role_source)
     first_shell_flags = _compute_first_shell_flags(
         pocket,
         first_shell_cutoff=first_shell_cutoff,
@@ -93,7 +105,7 @@ def compute_shell_roles(
             pocket,
             first_shell_flags=first_shell_flags,
         )
-        if use_ring_edges
+        if use_ring_edges and shell_role_source == "edge_mode"
         else None
     )
     if second_shell_flags is None:
@@ -111,12 +123,14 @@ def annotate_shell_roles(
     first_shell_cutoff: float = DEFAULT_FIRST_SHELL_CUTOFF,
     second_shell_cutoff: float = 4.5,
     use_ring_edges: bool = True,
+    shell_role_source: str = "edge_mode",
 ) -> None:
     shell_roles = compute_shell_roles(
         pocket,
         first_shell_cutoff=first_shell_cutoff,
         second_shell_cutoff=second_shell_cutoff,
         use_ring_edges=use_ring_edges,
+        shell_role_source=shell_role_source,
     )
     for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
         residue.is_first_shell = is_first_shell

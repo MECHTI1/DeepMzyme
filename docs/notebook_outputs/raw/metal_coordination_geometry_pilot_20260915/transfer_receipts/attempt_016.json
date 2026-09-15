@@ -1,0 +1,13 @@
+{
+  "attempt_id": "attempt_016",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_coordination_geometry_pilot_v1_20260915/archives/attempt_016.tar.gz",
+  "archive_sha256": "43a5b0d21dfbd6eeb4f0644e389932be47f7b9d9468405a1025c664bd42d2be9",
+  "bytes": 15293998,
+  "manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+  "verified_parts": 1,
+  "drive_file_id": "1DTaOB2W5Atq7J24DF5LPzlWKZLbv_un0",
+  "drive_verified": true,
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verification": "Connector readback confirmed file ID, parent and byte size"
+}

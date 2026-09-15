@@ -32,6 +32,12 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 No copied model-family experiment currently has Grade-1 or Grade-2 confirmation.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
 
+## Development-only metal × EC1 association
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal-ec1/development-association/2026-09-15` | Separate retained-training PinMyMetal and CARE panels; native-six/common-four tables, one-weight-per-protein view and 9,999 whole-group permutations | Descriptive association evaluated; 1,163 PinMyMetal pairs and 983 common-four CARE pairs. No model training, auxiliary-benefit claim, pooled-source comparison or joint-split certificate | 6 (descriptive development analysis) | Runner has no test input or test statistics; preceding incidental candidate-metadata exposure is a separate dataset access record | [summary](summaries/summary_metal_ec1_association_20260915.md); [portable evidence](raw/metal_ec1_association_20260915/README.md); [results](raw/metal_ec1_association_20260915/association_results.json) |
+
 ## Bounded metal architecture pilot
 
 The first row preserves the interrupted first allocation's historical closeout.

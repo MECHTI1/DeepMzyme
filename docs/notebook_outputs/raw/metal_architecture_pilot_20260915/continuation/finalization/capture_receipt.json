@@ -1,0 +1,8 @@
+{
+  "archive_sha256": "be9aaf95392b96c88f649c06b732a6ec91980daf18c0a6829cf88e8b0f8a2e3e",
+  "capture_manifest_sha256": "e852a60ab70f1adb2be2396d6b0607321e44c2d61506c8b6d48b46edde31d743",
+  "evidence_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/host_closeout_allocation2",
+  "captured_epoch": 1789472165.7245834,
+  "gpu_stopped": false,
+  "root_aggregate_snapshots_preserved": true
+}

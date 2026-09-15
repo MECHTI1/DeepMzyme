@@ -1,0 +1,13 @@
+{
+  "attempt_id": "attempt_017",
+  "local_sha256_verified": true,
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/archives/attempt_017.tar.gz",
+  "archive_sha256": "9d4f56c59caf499ea428fa8ef7600f73f6ff134232981996485ac25db77d1ea9",
+  "bytes": 18392212,
+  "manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "verified_parts": 2,
+  "drive_file_id": "1KydL4l8CMfdtK_5iD7h1nI_bmFz8KO6K",
+  "drive_verified": true,
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verification": "Connector readback confirmed file ID, parent and byte size"
+}

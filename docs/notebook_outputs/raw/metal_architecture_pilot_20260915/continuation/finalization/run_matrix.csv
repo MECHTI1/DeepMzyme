@@ -1,0 +1,52 @@
+id,block,family,scheme,lr,seed,epochs,run_dir
+S_0_four_class_lr3e-05_s42,S,Only-GVP,four_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_0_four_class_lr3e-05_s42
+S_0_five_class_lr3e-05_s42,S,Only-GVP,five_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_0_five_class_lr3e-05_s42
+S_0_six_class_lr3e-05_s42,S,Only-GVP,six_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_0_six_class_lr3e-05_s42
+S_1_four_class_lr3e-05_s42,S,Only-ESM,four_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_1_four_class_lr3e-05_s42
+S_3_four_class_lr3e-05_s42,S,GVP + early fusion,four_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_3_four_class_lr3e-05_s42
+S_2_four_class_lr3e-05_s42,S,GVP + late fusion,four_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_2_four_class_lr3e-05_s42
+S_4_four_class_lr3e-05_s42,S,GVP + hybrid fusion,four_class,3e-05,42,1,/content/metal_architecture_pilot_10h_v1/runs/S_4_four_class_lr3e-05_s42
+A1_0_four_class_lr3e-05_s42,A1,Only-GVP,four_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/A1_0_four_class_lr3e-05_s42
+A1_1_four_class_lr3e-05_s42,A1,Only-ESM,four_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/A1_1_four_class_lr3e-05_s42
+A1_3_four_class_lr3e-05_s42,A1,GVP + early fusion,four_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/A1_3_four_class_lr3e-05_s42
+A1_2_four_class_lr3e-05_s42,A1,GVP + late fusion,four_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/A1_2_four_class_lr3e-05_s42
+A2_0_four_class_lr0.0001_s42,A2,Only-GVP,four_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/A2_0_four_class_lr0.0001_s42
+A2_1_four_class_lr0.0001_s42,A2,Only-ESM,four_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/A2_1_four_class_lr0.0001_s42
+A2_3_four_class_lr0.0001_s42,A2,GVP + early fusion,four_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/A2_3_four_class_lr0.0001_s42
+A2_2_four_class_lr0.0001_s42,A2,GVP + late fusion,four_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/A2_2_four_class_lr0.0001_s42
+T1_0_five_class_lr3e-05_s42,T1,Only-GVP,five_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_0_five_class_lr3e-05_s42
+T1_1_five_class_lr3e-05_s42,T1,Only-ESM,five_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_1_five_class_lr3e-05_s42
+T1_2_five_class_lr3e-05_s42,T1,GVP + late fusion,five_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_2_five_class_lr3e-05_s42
+T1_0_six_class_lr3e-05_s42,T1,Only-GVP,six_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_0_six_class_lr3e-05_s42
+T1_1_six_class_lr3e-05_s42,T1,Only-ESM,six_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_1_six_class_lr3e-05_s42
+T1_2_six_class_lr3e-05_s42,T1,GVP + late fusion,six_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/T1_2_six_class_lr3e-05_s42
+T2_0_five_class_lr0.0001_s42,T2,Only-GVP,five_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_0_five_class_lr0.0001_s42
+T2_1_five_class_lr0.0001_s42,T2,Only-ESM,five_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_1_five_class_lr0.0001_s42
+T2_2_five_class_lr0.0001_s42,T2,GVP + late fusion,five_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_2_five_class_lr0.0001_s42
+T2_0_six_class_lr0.0001_s42,T2,Only-GVP,six_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_0_six_class_lr0.0001_s42
+T2_1_six_class_lr0.0001_s42,T2,Only-ESM,six_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_1_six_class_lr0.0001_s42
+T2_2_six_class_lr0.0001_s42,T2,GVP + late fusion,six_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/T2_2_six_class_lr0.0001_s42
+H_4_four_class_lr3e-05_s42,H,GVP + hybrid fusion,four_class,3e-05,42,50,/content/metal_architecture_pilot_10h_v1/runs/H_4_four_class_lr3e-05_s42
+H_4_four_class_lr0.0001_s42,H,GVP + hybrid fusion,four_class,0.0001,42,50,/content/metal_architecture_pilot_10h_v1/runs/H_4_four_class_lr0.0001_s42
+R_0_four_class_lr3e-05_s43,R,Only-GVP,four_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_four_class_lr3e-05_s43
+R_0_four_class_lr0.0001_s43,R,Only-GVP,four_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_four_class_lr0.0001_s43
+R_1_four_class_lr3e-05_s43,R,Only-ESM,four_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_four_class_lr3e-05_s43
+R_1_four_class_lr0.0001_s43,R,Only-ESM,four_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_four_class_lr0.0001_s43
+R_2_four_class_lr3e-05_s43,R,GVP + late fusion,four_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_four_class_lr3e-05_s43
+R_2_four_class_lr0.0001_s43,R,GVP + late fusion,four_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_four_class_lr0.0001_s43
+R_0_five_class_lr3e-05_s43,R,Only-GVP,five_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_five_class_lr3e-05_s43
+R_0_five_class_lr0.0001_s43,R,Only-GVP,five_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_five_class_lr0.0001_s43
+R_1_five_class_lr3e-05_s43,R,Only-ESM,five_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_five_class_lr3e-05_s43
+R_1_five_class_lr0.0001_s43,R,Only-ESM,five_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_five_class_lr0.0001_s43
+R_2_five_class_lr3e-05_s43,R,GVP + late fusion,five_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_five_class_lr3e-05_s43
+R_2_five_class_lr0.0001_s43,R,GVP + late fusion,five_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_five_class_lr0.0001_s43
+R_0_six_class_lr3e-05_s43,R,Only-GVP,six_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_six_class_lr3e-05_s43
+R_0_six_class_lr0.0001_s43,R,Only-GVP,six_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_0_six_class_lr0.0001_s43
+R_1_six_class_lr3e-05_s43,R,Only-ESM,six_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_six_class_lr3e-05_s43
+R_1_six_class_lr0.0001_s43,R,Only-ESM,six_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_1_six_class_lr0.0001_s43
+R_2_six_class_lr3e-05_s43,R,GVP + late fusion,six_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_six_class_lr3e-05_s43
+R_2_six_class_lr0.0001_s43,R,GVP + late fusion,six_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/R_2_six_class_lr0.0001_s43
+RE_3_four_class_lr3e-05_s43,RE,GVP + early fusion,four_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/RE_3_four_class_lr3e-05_s43
+RE_3_four_class_lr0.0001_s43,RE,GVP + early fusion,four_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/RE_3_four_class_lr0.0001_s43
+RH_4_four_class_lr3e-05_s43,RH,GVP + hybrid fusion,four_class,3e-05,43,50,/content/metal_architecture_pilot_10h_v1/runs/RH_4_four_class_lr3e-05_s43
+RH_4_four_class_lr0.0001_s43,RH,GVP + hybrid fusion,four_class,0.0001,43,50,/content/metal_architecture_pilot_10h_v1/runs/RH_4_four_class_lr0.0001_s43

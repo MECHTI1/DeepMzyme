@@ -80,6 +80,17 @@ block. Its execute step is bounded; orchestration repeats it until the queue
 finishes or its stop decision is reached. It does not launch HPO, Stage 6, a
 final refit, or a test run.
 
+### RING comparison controls
+
+For the separate RING continuation, use the
+[bounded matched RING recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-matched-ring-continuation--stage-2b).
+Its standalone runner sets `--shell-role-source geometry` in both edge arms
+to keep residue shell annotations fixed. The CLI default `edge_mode` preserves
+historical behavior, where RING may determine second-shell membership.
+This option is not a new notebook default. RING on/off can still change
+edge features and their training-fitted normalization; that is the declared
+comparison. Current readiness/results belong in `EXPERIMENT_STATUS.md`.
+
 ### Coordination-geometry controls
 
 The separate `metal_coordination_geometry_pilot_v1` is a standalone runner

@@ -9,6 +9,30 @@ Last scientific-policy documentation update: 2026-09-15.
 
 ## Current objective
 
+**Authorized continuation in preparation (2026-09-15):** implement and run the
+[bounded matched RING comparison](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-matched-ring-continuation--stage-2b),
+charging the remaining original allocation budget. The source control that
+fixes shell annotations across RING on/off is implemented and passed 43
+focused checks; the new runner passed 14 orchestration checks. Full-cohort
+input readiness and GPU execution are still pending. Four one-epoch smokes
+precede eight matched Only-GVP fits; eight late-fusion fits are optional only
+as a complete budget-admitted block. No new GPU has yet been allocated for
+this continuation. No auxiliary shared-encoder training is underway.
+
+**Phase 3 completed locally (2026-09-15):** separate retained-training
+PinMyMetal and CARE panels now have native-six/common-four counts, conditional
+probabilities, protein-group-weighted measures and 9,999 whole-group
+permutations. PinMyMetal contributes 1,163 usable pairs from 1,136 groups;
+CARE contributes 983 common-four pairs from 743 groups, or 982 native-six
+pairs from 742 groups. Common-four group-weighted Cramér's V is 0.32667 and
+0.50600 respectively, with no finite-sample bias correction. These are
+descriptive within-source associations, not evidence of auxiliary-learning
+benefit. No validation statistics, external test inputs or model training
+entered this analysis. Cross-source identity/homology and shared-training
+holdout certification remain required. See the
+[association summary](docs/notebook_outputs/summaries/summary_metal_ec1_association_20260915.md)
+and [verified portable evidence](docs/notebook_outputs/raw/metal_ec1_association_20260915/README.md).
+
 **Authorized metal pilots completed (2026-09-15):** all 30 original architecture
 fits and 15 geometry fits, each 50 epochs, plus 12 model smokes are verified
 locally and in Drive. Both queues passed genuine terminal-state verification;
@@ -76,10 +100,10 @@ and archived locally and in Drive; the Colab session is stopped. The largest
 observed two-seed mean is Only-ESM at `0.0001`,
 `0.969643` (sample SD `0.017678`), using
 `val_ec_group_level_1_balanced_acc`. This is Grade-3 initial fixed-split
-evidence, not promotion. The separate matched zero-auxiliary control,
-joint-cohort/holdout certification, and development-only association analysis
-remain later work; the current priority is reviewing the completed metal
-evidence and fixing the next controlled protocol.
+evidence, not promotion. The separate matched zero-auxiliary control and
+joint-cohort/holdout certification remain later work. The development-only
+association analysis is complete, as documented above; it does not certify
+the auxiliary-learning protocol.
 No held-out evaluation, auxiliary training or broader HPO was run.
 See the [completed campaign summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
 for all family/LR results, recalls and exact provenance.
@@ -429,8 +453,10 @@ remain to be reconciled; this pilot does not satisfy those broader gates.
 2. **Phase 2 — completed at the initial fixed-split level:** retain the twelve
    EC1 standalone baselines for the three initial families. Grouped-fold
    confirmation and final promotion remain future work.
-3. **Phase 3:** run the predeclared metal x EC1 descriptive association analysis
-   on permitted training/development data only.
+3. **Phase 3 — completed:** retain the predeclared training-only metal × EC1
+   association evidence as separate source panels. Review the descriptive
+   results; certify cross-source identity and held-out exclusion separately
+   before the auxiliary-learning experiment.
 4. **Phase 4:** add and run one controlled EC-primary comparison: EC-only versus
    EC plus auxiliary metal, using independent heads with shared learning and
    cross-task group exclusion.

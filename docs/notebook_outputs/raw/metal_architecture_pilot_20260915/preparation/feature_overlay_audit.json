@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "dataset": "train_and_test_sets_structures_non_overlapped_pinmymetal",
+  "split": "train",
+  "test_evaluation": false,
+  "checksums_verified": true,
+  "original_geometry_preserved": true,
+  "missingness_note": "Counts cover all residues, including non-titratable and structurally incomplete residues.",
+  "feature_overlay_manifest_sha256": "41ef6627ee3c1d1595de8d1ca1fe0f03f8453cea7d6d7fff2376f8ddfd3fdef7",
+  "structures": 1304,
+  "residue_rows": 484682,
+  "computed_pka_rows": 148607,
+  "missing_pka_rows": 336075,
+  "measured_zero_pka_rows": 13182,
+  "refreshed_structures": 47,
+  "insertion_renumbered_structures": 1
+}

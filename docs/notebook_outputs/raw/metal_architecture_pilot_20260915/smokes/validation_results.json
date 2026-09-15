@@ -1,0 +1,19 @@
+{
+  "completed_smokes": 7,
+  "completed_main_runs": 0,
+  "hybrid_gate": {
+    "status": "pending",
+    "interpretation": "exploratory_prioritization_not_promotion"
+  },
+  "promoted": false,
+  "held_out_evaluation": false,
+  "evidence": "fixed_split_screen; incomplete blocks excluded from paired comparisons",
+  "state": {
+    "status": "awaiting_archive_transfer",
+    "block": "S",
+    "run_id": "S_4_four_class_lr3e-05_s42",
+    "attempt_id": "attempt_008",
+    "attempt_status": "completed"
+  },
+  "runs": []
+}

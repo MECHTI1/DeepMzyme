@@ -1,0 +1,11 @@
+{
+  "attempt_id": "attempt_007",
+  "drive_verified": true,
+  "local_sha256_verified": true,
+  "archive_sha256": "f4bd36e40a6c0dc151519c81c0b76da604e5e7d603ac84ee006f6a85428ddb16",
+  "manifest_sha256": "14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5",
+  "drive_file_id": "1yKIzupfHJXceFNKsMbfzNDF1vJOoW9Ws",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "bytes": 17871187,
+  "drive_verification": "ID, parent and byte size verified after uploading locally SHA-verified archive"
+}

@@ -64,6 +64,10 @@ artifact transfer, and teardown, use
   for matched counts, angular-summary, and generic-metal-node comparisons. It
   shares the original cumulative budget before the remaining architecture
   blocks resume.
+- After those bounded queues close, the separate
+  [matched RING continuation](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-matched-ring-continuation--stage-2b)
+  fixes node shell annotations, trains fresh on/off controls, and admits
+  complete family blocks within the original remaining budget.
 - Use the configuration guide for option meaning, precedence, study reuse, and
   artifact interpretation.
 - Read current status before choosing a stage.
@@ -71,6 +75,10 @@ artifact transfer, and teardown, use
   the playbook warning links to the dataset record.
 
 ### EC
+
+The [Phase-3 training-only association recipe](EC_TRAINING_PIPELINE_PLAYBOOK.md#phase-3--training-only-metal--ec1-association)
+provides a local CPU metal × EC1 analysis with separate source panels and
+protein-group weighting. It does not certify the later shared-encoder experiment.
 
 The EC playbook preserves scientifically important historical budgets, ranges,
 label-depth progression, and contrastive-loss intent. Some variables and final

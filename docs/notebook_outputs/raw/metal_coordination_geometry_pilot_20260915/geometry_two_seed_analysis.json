@@ -1,0 +1,1045 @@
+{
+  "profile": "metal_coordination_geometry_pilot_v1",
+  "scope": "All15 full runs on one fixed PDB-grouped validation split. Descriptive LR screen and two matched model seeds; no promotion, CI, inference, or case-level error claim.",
+  "selected_learning_rates": {
+    "A": 0.0001,
+    "B": 0.0001,
+    "C": 0.0001,
+    "D": 0.0001,
+    "E": 0.0001
+  },
+  "source": {
+    "manifest_sha256": "80d434e805c8dd341960f4c0c67dfb886fa9152e6249c6d9f82d76aa6f988ba2",
+    "geometry_validation_results_sha256": "e98498688485f3847cd5d982678d211826d718f775b94ced6d70256a98499c7f",
+    "geometry_screen_sha256": "68dfab39bc69145b5d341fd64058407905325d8049fcd4f997f57c31360b5a16",
+    "run_artifacts": {
+      "G1_A_none_none_lr3e-05_s42": {
+        "run_config_sha256": "1f9f1529a297d99bd0651860682d65282a199f7c1a58a7fab5067721b1c2b376",
+        "run_metadata_sha256": "713c284908032e7de35070ea894204f2ca1084de9a0ccb35d1674cb09b365f40",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G1_B_counts_none_lr3e-05_s42": {
+        "run_config_sha256": "219b0818922c10d1fd5f6dd916989dda9c608fad902a1c7a4c6505d2acd7a6ba",
+        "run_metadata_sha256": "32b84cba9db4c522f7eb6295400e5d1f61f13ee51e8636581e41d28cceb8a942",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G1_C_counts_angles_none_lr3e-05_s42": {
+        "run_config_sha256": "38a7b6165b440c9db121227af36fa54cfb908f682f2f90fb5eb81b978ce4e4db",
+        "run_metadata_sha256": "ca1c7693eb69b65074e0ac3a84b1b0bc14a6ae8c8c9e3a93b1b5dcc88bf1bc2e",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G1_D_counts_per_metal_lr3e-05_s42": {
+        "run_config_sha256": "70b592e65fcb786d8af82b12b105fe48b2ef2b50808de939f1a5be4a7c4c9d85",
+        "run_metadata_sha256": "f8225d36c7db056492911ab314623a825c9236720bf85a662b671e854a593321",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G1_E_counts_angles_per_metal_lr3e-05_s42": {
+        "run_config_sha256": "b75c6a919f4b83a1cbc56795972198750dffcfcf9fc2647c5504730014967bd4",
+        "run_metadata_sha256": "dab976832547fa6bfb302c6d9dd688ed03e6319fcb6f00196aa2df11a4d8f375",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G2_A_none_none_lr0.0001_s42": {
+        "run_config_sha256": "bedda57f959ae2e7ad802e06dbb8f4036ed5fe99d35695a1a422a71dde8e0b03",
+        "run_metadata_sha256": "3e8d7542779ed35d15607027c62b267e2ea1ffe798b8a2766ae1a7668351dc92",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G2_B_counts_none_lr0.0001_s42": {
+        "run_config_sha256": "aed498855c85b24fb01290f02e5df38abf9ce9d7c70ea210aeaf56dd7aec3b3d",
+        "run_metadata_sha256": "300467843aec404c23a8aded401712979a291f37330576754d1a030143546177",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G2_C_counts_angles_none_lr0.0001_s42": {
+        "run_config_sha256": "3d00f5203359e1d716c43d5f2e4cb2c58e28b143cbaba46435bdeef3e7703fda",
+        "run_metadata_sha256": "5f463276e44be9a4f8969902dc57e30b0ef96bfacec45e5a8515ab77e3d59582",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G2_D_counts_per_metal_lr0.0001_s42": {
+        "run_config_sha256": "a5fe5687ff9b416fe132885111eb56d64267aedde9f072991d0b3c8998a8d084",
+        "run_metadata_sha256": "cf8bc40548ef50a57532611cfa1ee12f509b5cdf09777cccc5b17d092947bb1e",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "G2_E_counts_angles_per_metal_lr0.0001_s42": {
+        "run_config_sha256": "c482a3270e9e62b77d99b4f8bafff83802072ecdb5dcab3ed93dc7301c22b790",
+        "run_metadata_sha256": "b85140bad123e6309dee955026a03998753e07db0d1ddede274824304eb2f3fb",
+        "dataset_summary_sha256": "feefbedcb058a9052149d9067f52b2b56329a0334f5427093c769cf62b8cbf08"
+      },
+      "GR_A_none_none_lr0.0001_s43": {
+        "run_config_sha256": "4e9f689f38ac53ffbad9faa4060329b30d9c703742f45bdff9d6a6000a3d6b3b",
+        "run_metadata_sha256": "cfa210a351d6711ba3b1f6045eddf39fb5e1413de1dbb3f8dc08f380a715998e",
+        "dataset_summary_sha256": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853"
+      },
+      "GR_B_counts_none_lr0.0001_s43": {
+        "run_config_sha256": "791a4c58e107df81bcf6584bc98312753995fbb730e85c6719c248713c8fa70f",
+        "run_metadata_sha256": "e374dabaece30d4a334c11a76c0196374309c4d55d48e918f0c73d5c3e7f2bb7",
+        "dataset_summary_sha256": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853"
+      },
+      "GR_C_counts_angles_none_lr0.0001_s43": {
+        "run_config_sha256": "d2e9e5328da2344846492c1241f070a0ed85723e62c6cf91e0beda88c322c272",
+        "run_metadata_sha256": "6a70e505d77560ccb306d0928d67a4e0b7eb63ced5e806682142c52695d7916d",
+        "dataset_summary_sha256": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853"
+      },
+      "GR_D_counts_per_metal_lr0.0001_s43": {
+        "run_config_sha256": "62e24f4c74576e76e89482b6277ea0b4a7668f62d4c9f72400a6d6ae2f1f0d89",
+        "run_metadata_sha256": "7fe508402215578fb68f726b0b0a1efb0b65fe576d34f9a2a1ec2e01f9f689fd",
+        "dataset_summary_sha256": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853"
+      },
+      "GR_E_counts_angles_per_metal_lr0.0001_s43": {
+        "run_config_sha256": "7459d51fecb2b708fe8986c52882fdc7470b640fb1d41caf21c75970a818d69c",
+        "run_metadata_sha256": "088a91b3001a515a7a3848b08065818955d7b2d21a42ab6a30c9a1975f97549b",
+        "dataset_summary_sha256": "a242f28d7465a462eb7788e991b16b11796c54b76d5b973a11021a6525782853"
+      }
+    }
+  },
+  "validation_pockets": 208,
+  "validation_pdb_groups": 110,
+  "class_support": {
+    "Mn": 97,
+    "Cu": 15,
+    "Zn": 32,
+    "Class VIII": 64
+  },
+  "runs_by_block": {
+    "G1": {
+      "A": {
+        "run_id": "G1_A_none_none_lr3e-05_s42",
+        "arm": "A",
+        "block": "G1",
+        "lr": 3e-05,
+        "seed": 42,
+        "geometry": "none",
+        "metal_node_mode": "none",
+        "selected_epoch": 19,
+        "balanced_accuracy_pct": 60.84541451890034,
+        "minimum_recall_pct": 25.0,
+        "per_class_recall_pct": {
+          "Mn": 45.36082474226804,
+          "Cu": 93.33333333333333,
+          "Zn": 25.0,
+          "Class VIII": 79.6875
+        },
+        "class_correct_counts": {
+          "Mn": 44,
+          "Cu": 14,
+          "Zn": 8,
+          "Class VIII": 51
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "B": {
+        "run_id": "G1_B_counts_none_lr3e-05_s42",
+        "arm": "B",
+        "block": "G1",
+        "lr": 3e-05,
+        "seed": 42,
+        "geometry": "counts",
+        "metal_node_mode": "none",
+        "selected_epoch": 44,
+        "balanced_accuracy_pct": 60.89373926116839,
+        "minimum_recall_pct": 26.804123711340207,
+        "per_class_recall_pct": {
+          "Mn": 26.804123711340207,
+          "Cu": 93.33333333333333,
+          "Zn": 50.0,
+          "Class VIII": 73.4375
+        },
+        "class_correct_counts": {
+          "Mn": 26,
+          "Cu": 14,
+          "Zn": 16,
+          "Class VIII": 47
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "C": {
+        "run_id": "G1_C_counts_angles_none_lr3e-05_s42",
+        "arm": "C",
+        "block": "G1",
+        "lr": 3e-05,
+        "seed": 42,
+        "geometry": "counts_angles",
+        "metal_node_mode": "none",
+        "selected_epoch": 45,
+        "balanced_accuracy_pct": 61.01052405498282,
+        "minimum_recall_pct": 31.958762886597935,
+        "per_class_recall_pct": {
+          "Mn": 31.958762886597935,
+          "Cu": 93.33333333333333,
+          "Zn": 40.625,
+          "Class VIII": 78.125
+        },
+        "class_correct_counts": {
+          "Mn": 31,
+          "Cu": 14,
+          "Zn": 13,
+          "Class VIII": 50
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "D": {
+        "run_id": "G1_D_counts_per_metal_lr3e-05_s42",
+        "arm": "D",
+        "block": "G1",
+        "lr": 3e-05,
+        "seed": 42,
+        "geometry": "counts",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 44,
+        "balanced_accuracy_pct": 61.0266323024055,
+        "minimum_recall_pct": 25.773195876288657,
+        "per_class_recall_pct": {
+          "Mn": 25.773195876288657,
+          "Cu": 93.33333333333333,
+          "Zn": 53.125,
+          "Class VIII": 71.875
+        },
+        "class_correct_counts": {
+          "Mn": 25,
+          "Cu": 14,
+          "Zn": 17,
+          "Class VIII": 46
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      },
+      "E": {
+        "run_id": "G1_E_counts_angles_per_metal_lr3e-05_s42",
+        "arm": "E",
+        "block": "G1",
+        "lr": 3e-05,
+        "seed": 42,
+        "geometry": "counts_angles",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 25,
+        "balanced_accuracy_pct": 61.0950923539519,
+        "minimum_recall_pct": 49.48453608247423,
+        "per_class_recall_pct": {
+          "Mn": 49.48453608247423,
+          "Cu": 93.33333333333333,
+          "Zn": 50.0,
+          "Class VIII": 51.5625
+        },
+        "class_correct_counts": {
+          "Mn": 48,
+          "Cu": 14,
+          "Zn": 16,
+          "Class VIII": 33
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      }
+    },
+    "G2": {
+      "A": {
+        "run_id": "G2_A_none_none_lr0.0001_s42",
+        "arm": "A",
+        "block": "G2",
+        "lr": 0.0001,
+        "seed": 42,
+        "geometry": "none",
+        "metal_node_mode": "none",
+        "selected_epoch": 35,
+        "balanced_accuracy_pct": 68.47320661512028,
+        "minimum_recall_pct": 40.625,
+        "per_class_recall_pct": {
+          "Mn": 76.28865979381443,
+          "Cu": 86.66666666666667,
+          "Zn": 40.625,
+          "Class VIII": 70.3125
+        },
+        "class_correct_counts": {
+          "Mn": 74,
+          "Cu": 13,
+          "Zn": 13,
+          "Class VIII": 45
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "B": {
+        "run_id": "G2_B_counts_none_lr0.0001_s42",
+        "arm": "B",
+        "block": "G2",
+        "lr": 0.0001,
+        "seed": 42,
+        "geometry": "counts",
+        "metal_node_mode": "none",
+        "selected_epoch": 48,
+        "balanced_accuracy_pct": 70.53049828178695,
+        "minimum_recall_pct": 43.75,
+        "per_class_recall_pct": {
+          "Mn": 76.28865979381443,
+          "Cu": 93.33333333333333,
+          "Zn": 43.75,
+          "Class VIII": 68.75
+        },
+        "class_correct_counts": {
+          "Mn": 74,
+          "Cu": 14,
+          "Zn": 14,
+          "Class VIII": 44
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "C": {
+        "run_id": "G2_C_counts_angles_none_lr0.0001_s42",
+        "arm": "C",
+        "block": "G2",
+        "lr": 0.0001,
+        "seed": 42,
+        "geometry": "counts_angles",
+        "metal_node_mode": "none",
+        "selected_epoch": 34,
+        "balanced_accuracy_pct": 71.43658719931271,
+        "minimum_recall_pct": 43.75,
+        "per_class_recall_pct": {
+          "Mn": 78.35051546391753,
+          "Cu": 93.33333333333333,
+          "Zn": 43.75,
+          "Class VIII": 70.3125
+        },
+        "class_correct_counts": {
+          "Mn": 76,
+          "Cu": 14,
+          "Zn": 14,
+          "Class VIII": 45
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "D": {
+        "run_id": "G2_D_counts_per_metal_lr0.0001_s42",
+        "arm": "D",
+        "block": "G2",
+        "lr": 0.0001,
+        "seed": 42,
+        "geometry": "counts",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 27,
+        "balanced_accuracy_pct": 69.96670962199313,
+        "minimum_recall_pct": 31.25,
+        "per_class_recall_pct": {
+          "Mn": 92.78350515463917,
+          "Cu": 93.33333333333333,
+          "Zn": 31.25,
+          "Class VIII": 62.5
+        },
+        "class_correct_counts": {
+          "Mn": 90,
+          "Cu": 14,
+          "Zn": 10,
+          "Class VIII": 40
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      },
+      "E": {
+        "run_id": "G2_E_counts_angles_per_metal_lr0.0001_s42",
+        "arm": "E",
+        "block": "G2",
+        "lr": 0.0001,
+        "seed": 42,
+        "geometry": "counts_angles",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 48,
+        "balanced_accuracy_pct": 69.4799720790378,
+        "minimum_recall_pct": 37.5,
+        "per_class_recall_pct": {
+          "Mn": 89.69072164948454,
+          "Cu": 86.66666666666667,
+          "Zn": 37.5,
+          "Class VIII": 64.0625
+        },
+        "class_correct_counts": {
+          "Mn": 87,
+          "Cu": 13,
+          "Zn": 12,
+          "Class VIII": 41
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      }
+    },
+    "GR": {
+      "A": {
+        "run_id": "GR_A_none_none_lr0.0001_s43",
+        "arm": "A",
+        "block": "GR",
+        "lr": 0.0001,
+        "seed": 43,
+        "geometry": "none",
+        "metal_node_mode": "none",
+        "selected_epoch": 23,
+        "balanced_accuracy_pct": 70.80890249140893,
+        "minimum_recall_pct": 46.875,
+        "per_class_recall_pct": {
+          "Mn": 79.38144329896907,
+          "Cu": 86.66666666666667,
+          "Zn": 46.875,
+          "Class VIII": 70.3125
+        },
+        "class_correct_counts": {
+          "Mn": 77,
+          "Cu": 13,
+          "Zn": 15,
+          "Class VIII": 45
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "B": {
+        "run_id": "GR_B_counts_none_lr0.0001_s43",
+        "arm": "B",
+        "block": "GR",
+        "lr": 0.0001,
+        "seed": 43,
+        "geometry": "counts",
+        "metal_node_mode": "none",
+        "selected_epoch": 18,
+        "balanced_accuracy_pct": 69.84187070446735,
+        "minimum_recall_pct": 34.375,
+        "per_class_recall_pct": {
+          "Mn": 90.72164948453609,
+          "Cu": 93.33333333333333,
+          "Zn": 34.375,
+          "Class VIII": 60.9375
+        },
+        "class_correct_counts": {
+          "Mn": 88,
+          "Cu": 14,
+          "Zn": 11,
+          "Class VIII": 39
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "C": {
+        "run_id": "GR_C_counts_angles_none_lr0.0001_s43",
+        "arm": "C",
+        "block": "GR",
+        "lr": 0.0001,
+        "seed": 43,
+        "geometry": "counts_angles",
+        "metal_node_mode": "none",
+        "selected_epoch": 31,
+        "balanced_accuracy_pct": 68.57737328178695,
+        "minimum_recall_pct": 40.625,
+        "per_class_recall_pct": {
+          "Mn": 76.28865979381443,
+          "Cu": 93.33333333333333,
+          "Zn": 40.625,
+          "Class VIII": 64.0625
+        },
+        "class_correct_counts": {
+          "Mn": 74,
+          "Cu": 14,
+          "Zn": 13,
+          "Class VIII": 41
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "e541b2eea3b00528684e80457706d292da00c17fbe5953d6b1a5f37dbeb6f2be"
+      },
+      "D": {
+        "run_id": "GR_D_counts_per_metal_lr0.0001_s43",
+        "arm": "D",
+        "block": "GR",
+        "lr": 0.0001,
+        "seed": 43,
+        "geometry": "counts",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 18,
+        "balanced_accuracy_pct": 67.76390678694158,
+        "minimum_recall_pct": 34.375,
+        "per_class_recall_pct": {
+          "Mn": 88.65979381443299,
+          "Cu": 93.33333333333333,
+          "Zn": 34.375,
+          "Class VIII": 54.6875
+        },
+        "class_correct_counts": {
+          "Mn": 86,
+          "Cu": 14,
+          "Zn": 11,
+          "Class VIII": 35
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      },
+      "E": {
+        "run_id": "GR_E_counts_angles_per_metal_lr0.0001_s43",
+        "arm": "E",
+        "block": "GR",
+        "lr": 0.0001,
+        "seed": 43,
+        "geometry": "counts_angles",
+        "metal_node_mode": "per_metal",
+        "selected_epoch": 48,
+        "balanced_accuracy_pct": 66.57941365979381,
+        "minimum_recall_pct": 15.625,
+        "per_class_recall_pct": {
+          "Mn": 83.50515463917526,
+          "Cu": 100.0,
+          "Zn": 15.625,
+          "Class VIII": 67.1875
+        },
+        "class_correct_counts": {
+          "Mn": 81,
+          "Cu": 15,
+          "Zn": 5,
+          "Class VIII": 43
+        },
+        "class_support": {
+          "Mn": 97,
+          "Cu": 15,
+          "Zn": 32,
+          "Class VIII": 64
+        },
+        "normalization_sha256": "bc36872496dc65803a34191fe8be3a88d7a08dbad320ca2fa5deeb55c2d7aef5"
+      }
+    }
+  },
+  "matched_contrasts_by_block": {
+    "G1": {
+      "B-A": {
+        "balanced_accuracy_delta_pp": 0.04832474226805061,
+        "minimum_recall_delta_pp": 1.8041237113402069,
+        "per_class_recall_delta_pp": {
+          "Mn": -18.556701030927837,
+          "Cu": 0.0,
+          "Zn": 25.0,
+          "Class VIII": -6.25
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -18,
+          "Cu": 0,
+          "Zn": 8,
+          "Class VIII": -4
+        }
+      },
+      "C-B": {
+        "balanced_accuracy_delta_pp": 0.11678479381442486,
+        "minimum_recall_delta_pp": 5.154639175257728,
+        "per_class_recall_delta_pp": {
+          "Mn": 5.154639175257728,
+          "Cu": 0.0,
+          "Zn": -9.375,
+          "Class VIII": 4.6875
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 5,
+          "Cu": 0,
+          "Zn": -3,
+          "Class VIII": 3
+        }
+      },
+      "D-B": {
+        "balanced_accuracy_delta_pp": 0.13289304123711076,
+        "minimum_recall_delta_pp": -1.0309278350515498,
+        "per_class_recall_delta_pp": {
+          "Mn": -1.0309278350515498,
+          "Cu": 0.0,
+          "Zn": 3.125,
+          "Class VIII": -1.5625
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -1,
+          "Cu": 0,
+          "Zn": 1,
+          "Class VIII": -1
+        }
+      },
+      "E-D": {
+        "balanced_accuracy_delta_pp": 0.06846005154639556,
+        "minimum_recall_delta_pp": 23.71134020618557,
+        "per_class_recall_delta_pp": {
+          "Mn": 23.71134020618557,
+          "Cu": 0.0,
+          "Zn": -3.125,
+          "Class VIII": -20.3125
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 23,
+          "Cu": 0,
+          "Zn": -1,
+          "Class VIII": -13
+        }
+      }
+    },
+    "G2": {
+      "B-A": {
+        "balanced_accuracy_delta_pp": 2.0572916666666714,
+        "minimum_recall_delta_pp": 3.125,
+        "per_class_recall_delta_pp": {
+          "Mn": 0.0,
+          "Cu": 6.666666666666657,
+          "Zn": 3.125,
+          "Class VIII": -1.5625
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 0,
+          "Cu": 1,
+          "Zn": 1,
+          "Class VIII": -1
+        }
+      },
+      "C-B": {
+        "balanced_accuracy_delta_pp": 0.9060889175257643,
+        "minimum_recall_delta_pp": 0.0,
+        "per_class_recall_delta_pp": {
+          "Mn": 2.0618556701030997,
+          "Cu": 0.0,
+          "Zn": 0.0,
+          "Class VIII": 1.5625
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 2,
+          "Cu": 0,
+          "Zn": 0,
+          "Class VIII": 1
+        }
+      },
+      "D-B": {
+        "balanced_accuracy_delta_pp": -0.5637886597938149,
+        "minimum_recall_delta_pp": -12.5,
+        "per_class_recall_delta_pp": {
+          "Mn": 16.49484536082474,
+          "Cu": 0.0,
+          "Zn": -12.5,
+          "Class VIII": -6.25
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 16,
+          "Cu": 0,
+          "Zn": -4,
+          "Class VIII": -4
+        }
+      },
+      "E-D": {
+        "balanced_accuracy_delta_pp": -0.4867375429553391,
+        "minimum_recall_delta_pp": 6.25,
+        "per_class_recall_delta_pp": {
+          "Mn": -3.092783505154628,
+          "Cu": -6.666666666666657,
+          "Zn": 6.25,
+          "Class VIII": 1.5625
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -3,
+          "Cu": -1,
+          "Zn": 2,
+          "Class VIII": 1
+        }
+      }
+    },
+    "GR": {
+      "B-A": {
+        "balanced_accuracy_delta_pp": -0.9670317869415754,
+        "minimum_recall_delta_pp": -12.5,
+        "per_class_recall_delta_pp": {
+          "Mn": 11.340206185567013,
+          "Cu": 6.666666666666657,
+          "Zn": -12.5,
+          "Class VIII": -9.375
+        },
+        "net_class_correct_count_delta": {
+          "Mn": 11,
+          "Cu": 1,
+          "Zn": -4,
+          "Class VIII": -6
+        }
+      },
+      "C-B": {
+        "balanced_accuracy_delta_pp": -1.2644974226804067,
+        "minimum_recall_delta_pp": 6.25,
+        "per_class_recall_delta_pp": {
+          "Mn": -14.432989690721655,
+          "Cu": 0.0,
+          "Zn": 6.25,
+          "Class VIII": 3.125
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -14,
+          "Cu": 0,
+          "Zn": 2,
+          "Class VIII": 2
+        }
+      },
+      "D-B": {
+        "balanced_accuracy_delta_pp": -2.0779639175257785,
+        "minimum_recall_delta_pp": 0.0,
+        "per_class_recall_delta_pp": {
+          "Mn": -2.0618556701030997,
+          "Cu": 0.0,
+          "Zn": 0.0,
+          "Class VIII": -6.25
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -2,
+          "Cu": 0,
+          "Zn": 0,
+          "Class VIII": -4
+        }
+      },
+      "E-D": {
+        "balanced_accuracy_delta_pp": -1.1844931271477606,
+        "minimum_recall_delta_pp": -18.75,
+        "per_class_recall_delta_pp": {
+          "Mn": -5.154639175257728,
+          "Cu": 6.666666666666671,
+          "Zn": -18.75,
+          "Class VIII": 12.5
+        },
+        "net_class_correct_count_delta": {
+          "Mn": -5,
+          "Cu": 1,
+          "Zn": -6,
+          "Class VIII": 8
+        }
+      }
+    }
+  },
+  "higher_minus_lower_learning_rate_seed42": {
+    "A": {
+      "balanced_accuracy_delta_pp": 7.627792096219935,
+      "minimum_recall_delta_pp": 15.625,
+      "per_class_recall_delta_pp": {
+        "Mn": 30.92783505154639,
+        "Cu": -6.666666666666657,
+        "Zn": 15.625,
+        "Class VIII": -9.375
+      },
+      "net_class_correct_count_delta": {
+        "Mn": 30,
+        "Cu": -1,
+        "Zn": 5,
+        "Class VIII": -6
+      }
+    },
+    "B": {
+      "balanced_accuracy_delta_pp": 9.636759020618555,
+      "minimum_recall_delta_pp": 16.945876288659793,
+      "per_class_recall_delta_pp": {
+        "Mn": 49.48453608247422,
+        "Cu": 0.0,
+        "Zn": -6.25,
+        "Class VIII": -4.6875
+      },
+      "net_class_correct_count_delta": {
+        "Mn": 48,
+        "Cu": 0,
+        "Zn": -2,
+        "Class VIII": -3
+      }
+    },
+    "C": {
+      "balanced_accuracy_delta_pp": 10.426063144329895,
+      "minimum_recall_delta_pp": 11.791237113402065,
+      "per_class_recall_delta_pp": {
+        "Mn": 46.39175257731959,
+        "Cu": 0.0,
+        "Zn": 3.125,
+        "Class VIII": -7.8125
+      },
+      "net_class_correct_count_delta": {
+        "Mn": 45,
+        "Cu": 0,
+        "Zn": 1,
+        "Class VIII": -5
+      }
+    },
+    "D": {
+      "balanced_accuracy_delta_pp": 8.94007731958763,
+      "minimum_recall_delta_pp": 5.476804123711343,
+      "per_class_recall_delta_pp": {
+        "Mn": 67.01030927835052,
+        "Cu": 0.0,
+        "Zn": -21.875,
+        "Class VIII": -9.375
+      },
+      "net_class_correct_count_delta": {
+        "Mn": 65,
+        "Cu": 0,
+        "Zn": -7,
+        "Class VIII": -6
+      }
+    },
+    "E": {
+      "balanced_accuracy_delta_pp": 8.384879725085895,
+      "minimum_recall_delta_pp": -11.984536082474229,
+      "per_class_recall_delta_pp": {
+        "Mn": 40.206185567010316,
+        "Cu": -6.666666666666657,
+        "Zn": -12.5,
+        "Class VIII": 12.5
+      },
+      "net_class_correct_count_delta": {
+        "Mn": 39,
+        "Cu": -1,
+        "Zn": -4,
+        "Class VIII": 8
+      }
+    }
+  },
+  "selected_lr_two_seed_descriptive_means": {
+    "A": {
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "balanced_accuracy_mean_pct": 69.64105455326461,
+      "balanced_accuracy_seed_min_pct": 68.47320661512028,
+      "balanced_accuracy_seed_max_pct": 70.80890249140893,
+      "per_class_recall_mean_pct": {
+        "Mn": 77.83505154639175,
+        "Cu": 86.66666666666667,
+        "Zn": 43.75,
+        "Class VIII": 70.3125
+      },
+      "minimum_of_mean_class_recalls_pct": 43.75,
+      "mean_of_per_seed_minimum_recalls_pct": 43.75,
+      "per_class_recall_min_across_seeds_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 86.66666666666667,
+        "Zn": 40.625,
+        "Class VIII": 70.3125
+      }
+    },
+    "B": {
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "balanced_accuracy_mean_pct": 70.18618449312714,
+      "balanced_accuracy_seed_min_pct": 69.84187070446735,
+      "balanced_accuracy_seed_max_pct": 70.53049828178695,
+      "per_class_recall_mean_pct": {
+        "Mn": 83.50515463917526,
+        "Cu": 93.33333333333333,
+        "Zn": 39.0625,
+        "Class VIII": 64.84375
+      },
+      "minimum_of_mean_class_recalls_pct": 39.0625,
+      "mean_of_per_seed_minimum_recalls_pct": 39.0625,
+      "per_class_recall_min_across_seeds_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 93.33333333333333,
+        "Zn": 34.375,
+        "Class VIII": 60.9375
+      }
+    },
+    "C": {
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "balanced_accuracy_mean_pct": 70.00698024054984,
+      "balanced_accuracy_seed_min_pct": 68.57737328178695,
+      "balanced_accuracy_seed_max_pct": 71.43658719931271,
+      "per_class_recall_mean_pct": {
+        "Mn": 77.31958762886597,
+        "Cu": 93.33333333333333,
+        "Zn": 42.1875,
+        "Class VIII": 67.1875
+      },
+      "minimum_of_mean_class_recalls_pct": 42.1875,
+      "mean_of_per_seed_minimum_recalls_pct": 42.1875,
+      "per_class_recall_min_across_seeds_pct": {
+        "Mn": 76.28865979381443,
+        "Cu": 93.33333333333333,
+        "Zn": 40.625,
+        "Class VIII": 64.0625
+      }
+    },
+    "D": {
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "balanced_accuracy_mean_pct": 68.86530820446735,
+      "balanced_accuracy_seed_min_pct": 67.76390678694158,
+      "balanced_accuracy_seed_max_pct": 69.96670962199313,
+      "per_class_recall_mean_pct": {
+        "Mn": 90.72164948453607,
+        "Cu": 93.33333333333333,
+        "Zn": 32.8125,
+        "Class VIII": 58.59375
+      },
+      "minimum_of_mean_class_recalls_pct": 32.8125,
+      "mean_of_per_seed_minimum_recalls_pct": 32.8125,
+      "per_class_recall_min_across_seeds_pct": {
+        "Mn": 88.65979381443299,
+        "Cu": 93.33333333333333,
+        "Zn": 31.25,
+        "Class VIII": 54.6875
+      }
+    },
+    "E": {
+      "lr": 0.0001,
+      "seeds": [
+        42,
+        43
+      ],
+      "balanced_accuracy_mean_pct": 68.02969286941581,
+      "balanced_accuracy_seed_min_pct": 66.57941365979381,
+      "balanced_accuracy_seed_max_pct": 69.4799720790378,
+      "per_class_recall_mean_pct": {
+        "Mn": 86.5979381443299,
+        "Cu": 93.33333333333334,
+        "Zn": 26.5625,
+        "Class VIII": 65.625
+      },
+      "minimum_of_mean_class_recalls_pct": 26.5625,
+      "mean_of_per_seed_minimum_recalls_pct": 26.5625,
+      "per_class_recall_min_across_seeds_pct": {
+        "Mn": 83.50515463917526,
+        "Cu": 86.66666666666667,
+        "Zn": 15.625,
+        "Class VIII": 64.0625
+      }
+    }
+  },
+  "selected_lr_two_seed_contrasts": {
+    "B-A": {
+      "seed_42_delta_pp": 2.0572916666666714,
+      "seed_43_delta_pp": -0.9670317869415754,
+      "mean_balanced_accuracy_delta_pp": 0.545129939862548,
+      "both_seeds_positive": false,
+      "mean_per_class_recall_delta_pp": {
+        "Mn": 5.670103092783506,
+        "Cu": 6.666666666666657,
+        "Zn": -4.6875,
+        "Class VIII": -5.46875
+      },
+      "case_level_pairing_available": false
+    },
+    "C-B": {
+      "seed_42_delta_pp": 0.9060889175257643,
+      "seed_43_delta_pp": -1.2644974226804067,
+      "mean_balanced_accuracy_delta_pp": -0.1792042525773212,
+      "both_seeds_positive": false,
+      "mean_per_class_recall_delta_pp": {
+        "Mn": -6.185567010309278,
+        "Cu": 0.0,
+        "Zn": 3.125,
+        "Class VIII": 2.34375
+      },
+      "case_level_pairing_available": false
+    },
+    "D-B": {
+      "seed_42_delta_pp": -0.5637886597938149,
+      "seed_43_delta_pp": -2.0779639175257785,
+      "mean_balanced_accuracy_delta_pp": -1.3208762886597967,
+      "both_seeds_positive": false,
+      "mean_per_class_recall_delta_pp": {
+        "Mn": 7.21649484536082,
+        "Cu": 0.0,
+        "Zn": -6.25,
+        "Class VIII": -6.25
+      },
+      "case_level_pairing_available": false
+    },
+    "E-D": {
+      "seed_42_delta_pp": -0.4867375429553391,
+      "seed_43_delta_pp": -1.1844931271477606,
+      "mean_balanced_accuracy_delta_pp": -0.8356153350515498,
+      "both_seeds_positive": false,
+      "mean_per_class_recall_delta_pp": {
+        "Mn": -4.123711340206178,
+        "Cu": 7.105427357601002e-15,
+        "Zn": -6.25,
+        "Class VIII": 7.03125
+      },
+      "case_level_pairing_available": false
+    }
+  },
+  "checks": {
+    "all15_epoch_sequences_and_validation_selections_verified": true,
+    "same_validation_order_and_targets": true,
+    "normalization_equal_ABC_and_DE_across_all_blocks": true
+  },
+  "limitations": [
+    "Two model seeds on one fixed validation split do not establish grouped-fold generalization or confidence intervals.",
+    "Class supports are site counts; repeated sites within PDB groups are not independent.",
+    "These summaries contain aggregate correct counts, not matched case-level improvement counts.",
+    "A uses the new masked eight-slot and generic-node-type machinery; it is not identical to the legacy Only-GVP baseline.",
+    "Metal-node contrasts also change fitted edge normalization; angle contrasts retain topology and normalization.",
+    "No held-out evaluation or architecture promotion."
+  ]
+}

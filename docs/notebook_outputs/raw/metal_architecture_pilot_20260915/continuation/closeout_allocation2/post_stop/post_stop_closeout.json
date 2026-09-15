@@ -1,0 +1,95 @@
+{
+  "kind": "metal_pilot_post_stop_closeout_v1",
+  "status": "stopped_verified",
+  "session_name": "deepmzyme-metal-geometry-20260915",
+  "endpoint": "gpu-g4-s-kkb-euw4a2-3dx035hsttml0",
+  "allocation_started_epoch": 1789456819.0405653,
+  "stopped_epoch": 1789472254.5176592,
+  "stopped_at_utc": "2026-09-15T11:37:34.517659+00:00",
+  "prior_allocated_seconds": 3827.969071149826,
+  "current_allocated_seconds": 15435.477093935013,
+  "cumulative_allocated_seconds": 19263.44616508484,
+  "cumulative_allocated_hours": 5.350957268079122,
+  "remaining_budget_seconds": 16736.55383491516,
+  "within_10_hour_budget": true,
+  "absence_evidence": "Actual successful host_ops.stop sessions_output omits the owned name and endpoint",
+  "allocated_time_definition": "Elapsed wall time across both closed allocation intervals, including setup, transport and closeout",
+  "packaged_epoch": 1789472261.9707732,
+  "full_original_runs": 30,
+  "full_geometry_runs": 15,
+  "validation_prediction_runs": 15,
+  "final_capture_archive_sha256": "be9aaf95392b96c88f649c06b732a6ec91980daf18c0a6829cf88e8b0f8a2e3e",
+  "final_capture_drive_file_id": "1lgvyKm5fm5436TdiU_VhmVhNqkHWaum0",
+  "captured_epoch": 1789472165.7245834,
+  "first_allocation_artifacts_preserved": true,
+  "finalization_snapshots_preserved": true,
+  "optional_evidence": {
+    "runtime_proxy_refresh.json": {
+      "status": "included_sanitized",
+      "metadata_only": true,
+      "source_sha256": "a9e204ef7580d435686d97da11b0dbeca7f6860dc952229c109a28d91ae6de06",
+      "raw_tokens_or_urls_present": false,
+      "operation_recorded": "runtime_proxy_synchronized"
+    }
+  },
+  "stop_performed_by_this_helper": false,
+  "network_calls_performed_by_this_helper": false,
+  "inventory": {
+    "session_stopped.json": {
+      "sha256": "d4688985eeb5b132e2e643de1df184953b3cbdf11959cf7da114f839ad2dd08a",
+      "bytes": 460
+    },
+    "owned_session.json": {
+      "sha256": "a7b5acb39958d8c8cfb1a4550c4c6a11b2c2ddf706b271c6d3c837c9ebbaeee2",
+      "bytes": 291
+    },
+    "allocation_ledger.json": {
+      "sha256": "da2a05980f55fca64a1387269a0077a71d0685e24fa33d186749f74109e07c01",
+      "bytes": 302
+    },
+    "prior_allocation_session_stop_receipt.json": {
+      "sha256": "ced8a8b1ddbd08854ab944d87bcbf7a473e5478aad6a30ef99b3c3e3ba4527b7",
+      "bytes": 1631
+    },
+    "final_capture_manifest.json": {
+      "sha256": "e852a60ab70f1adb2be2396d6b0607321e44c2d61506c8b6d48b46edde31d743",
+      "bytes": 227612
+    },
+    "final_capture_download_receipt.json": {
+      "sha256": "5cc2cf5fe57780f405b564bc4faa94f2284adbd5458b12767f8a97599a45cadb",
+      "bytes": 1113
+    },
+    "final_capture_transfer_receipt.json": {
+      "sha256": "071600ac18794405b7e464fd3bf183a02f5861f5829d1cd2bd1735bca29fe5e3",
+      "bytes": 1364
+    },
+    "final_capture_archive_descriptor.json": {
+      "sha256": "656444708f14ed83073461234c5307e36f522dfb4b3ba50b30a4f21b278338e3",
+      "bytes": 602
+    },
+    "operators/host_ops.py": {
+      "sha256": "3f78396a0115708c98cda7af2d889832ca315f427bfba81846c23605d1ef6421",
+      "bytes": 10741
+    },
+    "operators/refresh_owned_proxy.py": {
+      "sha256": "9618f7a2921e3558aa5d7382ecd5c0a0172678ff906393a84472f2ee279cc0cf",
+      "bytes": 6422
+    },
+    "operators/watchdog.py": {
+      "sha256": "91bbc7003e75088d23268097f0a80952365b2e5be10eda3011375a8f93bf2d5b",
+      "bytes": 1136
+    },
+    "operators/validate_owned_proxy.py": {
+      "sha256": "c78a7f690b7b8035752a9115c51e4507e8864b0026517c4a080c028f64179a55",
+      "bytes": 6923
+    },
+    "operators/package_post_stop_closeout.py": {
+      "sha256": "0310fb23cc99bfbb25e2c32eca8ab239dcb670ddbd599859b3fb6e025f0d65f7",
+      "bytes": 16985
+    },
+    "runtime_proxy_refresh.json": {
+      "sha256": "a9e204ef7580d435686d97da11b0dbeca7f6860dc952229c109a28d91ae6de06",
+      "bytes": 433
+    }
+  }
+}

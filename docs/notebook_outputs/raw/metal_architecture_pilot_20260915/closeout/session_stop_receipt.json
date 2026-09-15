@@ -1,0 +1,33 @@
+{
+  "session_name": "deepmzyme-metal-pilot-20260915",
+  "endpoint": "gpu-g4-s-kkb-euw4a2-12hm8jhwgakm5",
+  "assigned_accelerator": "G4",
+  "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "status": "stopped_verified",
+  "started_epoch": 1789440733.8320558,
+  "stopped_at_utc": "2026-09-15T03:56:01.801127+00:00",
+  "stop_stdout": "[colab] Stopping session 'deepmzyme-metal-pilot-20260915'...\n[colab] Session terminated.",
+  "sessions_stdout": "[colab] No active sessions found on server.",
+  "failure_at_utc": "2026-09-15T03:53:09.345180+00:00",
+  "failure_message": "Session appears to be lost (404/401). Cleaning up.",
+  "auth_check": {
+    "provider": "oauth2",
+    "colaboratory_scope": true,
+    "expires_in": "59m",
+    "reauthentication_performed": false
+  },
+  "recovery": "Verified session_created ownership from CLI history; restored only the exact owned local name with empty runtime credentials via StateStore.add, then used named colab stop.",
+  "preserved_readiness": 1,
+  "preserved_smokes": 7,
+  "preserved_full_runs": 3,
+  "unverified_attempt": "attempt_012",
+  "unverified_run": "A1_2_four_class_lr3e-05_s42",
+  "last_observed_epochs": 3,
+  "held_out_evaluation": false,
+  "campaign_completed": false,
+  "remaining_action": "Resolve CLI connection-loss handling before another allocation; recover campaign with a linked retry for attempt_012, then finish A1, A2 and the remaining planned blocks. Preserve cumulative allocation time.",
+  "stopped_epoch": 1789444561.801127,
+  "allocated_seconds": 3827.969071149826,
+  "allocated_hours": 1.0633247419860627,
+  "remaining_budget_hours": 8.936675258013937
+}

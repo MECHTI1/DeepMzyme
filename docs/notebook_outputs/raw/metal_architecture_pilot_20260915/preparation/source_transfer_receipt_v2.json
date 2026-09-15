@@ -1,0 +1,13 @@
+{
+  "archive": "deepmzyme-metal-pilot-code-v2.tar.gz",
+  "sha256": "da596b8842fd72a0c3b1649eab53322225a1a6f3791add326ab0907d02faa516",
+  "bytes": 679002,
+  "drive_file_id": "1QlzmGosr_WOtHFvVNXm-O_njzEdP0SO_",
+  "drive_folder_id": "1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I",
+  "drive_verified": true,
+  "drive_verification": "file ID, parent and byte size checked after upload",
+  "local_sha256_verified": true,
+  "reason": "Supply the notebook planner's Drive-root context when /content exists during headless Colab execution",
+  "prior_model_training_runs": 0,
+  "original_allocation_started_epoch": 1789440733.8320558
+}

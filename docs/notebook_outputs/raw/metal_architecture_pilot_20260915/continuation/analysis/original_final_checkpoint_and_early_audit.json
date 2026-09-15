@@ -1,0 +1,244 @@
+{
+  "source_analysis_sha256": "4bd48c868133d9e053dcfb384c9db8380d8dfdfb85adeaa7ca5b8e07db64d80f",
+  "capture_manifest_sha256": "e852a60ab70f1adb2be2396d6b0607321e44c2d61506c8b6d48b46edde31d743",
+  "all_30_selected_checkpoints_and_four_metadata_files_match_final_capture": true,
+  "selected_checkpoint_files": {
+    "A1_0_four_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_0_four_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "eaa780aaec7026d9c65aea1e1757c92da8b89451e56e75fe843b5a1146245496",
+      "bytes": 8880603,
+      "selected_epoch": 44
+    },
+    "A1_1_four_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_1_four_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "f43dcab5023eabde8e259b9ca729a7fc434b4dc26ebebf9dced63c294166e590",
+      "bytes": 2556751,
+      "selected_epoch": 22
+    },
+    "A1_3_four_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_3_four_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "d985b43dfb8cd303aec694895accfebd6c0ae4ac40944f557b0d159b33042a23",
+      "bytes": 8866523,
+      "selected_epoch": 40
+    },
+    "A1_2_four_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A1_2_four_class_lr3e-05_s42_retry1/best_model_checkpoint.pt",
+      "sha256": "b43830c7204a472bcf8b28b987f67629737b23397cdabee72b72d24e8356d44c",
+      "bytes": 9691979,
+      "selected_epoch": 17
+    },
+    "A2_0_four_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_0_four_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "cc9096d8b2689cbd1b5dc585c51738c654b399a27df4448b5844c24b4d38c1dd",
+      "bytes": 8854427,
+      "selected_epoch": 35
+    },
+    "A2_1_four_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_1_four_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "14d2c3202a1930d2529de522c1fce79ec4d3debbcfc2fa4b61b602fda43e0991",
+      "bytes": 2545103,
+      "selected_epoch": 18
+    },
+    "A2_3_four_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_3_four_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "ce6d7fae899a2bbcdf4abed8d4124072a80d3e90bd6a1662fa76eb2d760519ec",
+      "bytes": 8796635,
+      "selected_epoch": 16
+    },
+    "A2_2_four_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/A2_2_four_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "1ba654c7e7f115864f361e9bb1a62c49d1728fd9eca77f7de6cfde1abb9c2ff4",
+      "bytes": 9662859,
+      "selected_epoch": 7
+    },
+    "T1_0_five_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_five_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "70327d2ea25fb408a6ee6a01c541df162abb4b0caadee11c7c7d72952440dcf9",
+      "bytes": 8853723,
+      "selected_epoch": 33
+    },
+    "T1_1_five_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_five_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "c2b326b652d2aebe7de003acfa5eefc3a2883da33cacb9e1113790e4ce837db6",
+      "bytes": 2554703,
+      "selected_epoch": 20
+    },
+    "T1_2_five_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_five_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "3b85d193a3c9460cbad55dcf8209c3a677452e46f7032a24d5a6f66d5c478b68",
+      "bytes": 9701387,
+      "selected_epoch": 19
+    },
+    "T1_0_six_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_0_six_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "beb2d5659215babc89f9a0485783f1118ea522fcfa9680bb2f364a66a80e817b",
+      "bytes": 8886107,
+      "selected_epoch": 42
+    },
+    "T1_1_six_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_1_six_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "e7d4505aa132ce36791718a1329f5d9fd32237586f927e5a3d141b7780db78dd",
+      "bytes": 2607695,
+      "selected_epoch": 36
+    },
+    "T1_2_six_class_lr3e-05_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T1_2_six_class_lr3e-05_s42/best_model_checkpoint.pt",
+      "sha256": "c38fe9f02d01c16ceda2d1cb94307f1751d9b5030f718ed934a4f2c1066e9f22",
+      "bytes": 9794699,
+      "selected_epoch": 48
+    },
+    "T2_0_five_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_five_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "b74a5eb955b9318481a5523c164c43db6d5bd7cc7a8d2493d44be9b16a34a119",
+      "bytes": 8832603,
+      "selected_epoch": 26
+    },
+    "T2_1_five_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_five_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "7a6b7c7a5aff87c8e5f36546ea31f954fc34c826d71b345e08e61159960fc05d",
+      "bytes": 2536591,
+      "selected_epoch": 14
+    },
+    "T2_2_five_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_five_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "a7557a99a5b44ae7c05070ee210f386060ecfedf84d54c2bfa2469f8a9f40978",
+      "bytes": 9686283,
+      "selected_epoch": 14
+    },
+    "T2_0_six_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_0_six_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "cf47c32df80374263bba92aef43786a3fad6e6fd07ac615ada297e416dddb72a",
+      "bytes": 8855067,
+      "selected_epoch": 32
+    },
+    "T2_1_six_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_1_six_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "710e9d763e6313bf2f2231f2e1fb5f95809f148ec97ed27c4ef6ad2736edff75",
+      "bytes": 2526927,
+      "selected_epoch": 10
+    },
+    "T2_2_six_class_lr0.0001_s42": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/T2_2_six_class_lr0.0001_s42/best_model_checkpoint.pt",
+      "sha256": "574b119775f4d31a2f39f3498478f9cd8ae642f56e3a5453aa24dc493739175a",
+      "bytes": 9701515,
+      "selected_epoch": 18
+    },
+    "R_0_four_class_lr0.0001_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_four_class_lr0.0001_s43/best_model_checkpoint.pt",
+      "sha256": "9a1d8aa095914da65852a56ef9838d2b16b9aa37932d58a5e4be8a131069a294",
+      "bytes": 8819483,
+      "selected_epoch": 23
+    },
+    "R_1_four_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_four_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "0046bf812c6bebe89ca9210092ccd2be3abf6c7680ecc2436f24f0d1f70a13bf",
+      "bytes": 2571343,
+      "selected_epoch": 27
+    },
+    "R_2_four_class_lr0.0001_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_four_class_lr0.0001_s43/best_model_checkpoint.pt",
+      "sha256": "0b01a96f1f131d49e1a011af56d88a1783242dd0c9f08974675af47bcc2a1410",
+      "bytes": 9665739,
+      "selected_epoch": 8
+    },
+    "R_0_five_class_lr0.0001_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_five_class_lr0.0001_s43/best_model_checkpoint.pt",
+      "sha256": "10b634f3a50c9bfceb862906e0ac155421c0d4dbbd12120c7fdee83b28565e1f",
+      "bytes": 8826587,
+      "selected_epoch": 24
+    },
+    "R_1_five_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_five_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "87f2c2c54d5d1b4c01906964f49872abfa1794aa0ac034bb175c66dd2ade7d0a",
+      "bytes": 2584847,
+      "selected_epoch": 30
+    },
+    "R_2_five_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_five_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "7fe43c760f01294c28dff188a19416d2038387790a41d5b7d55ce3c96f166afd",
+      "bytes": 9737611,
+      "selected_epoch": 31
+    },
+    "R_0_six_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_0_six_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "776028b4874762b0739f1e2b979e4b08297d0fe05205c8e065060753e4edd860",
+      "bytes": 8886107,
+      "selected_epoch": 42
+    },
+    "R_1_six_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_1_six_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "7bf80280c34530dc70308e53efaae3b75c1e8503c6ee4b163171b82b503e9709",
+      "bytes": 2589007,
+      "selected_epoch": 30
+    },
+    "R_2_six_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/R_2_six_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "25698f7ed212b614fc0fe375bc91ca6cd08484e591fe452608fd2b515622dca2",
+      "bytes": 9729483,
+      "selected_epoch": 27
+    },
+    "RE_3_four_class_lr3e-05_s43": {
+      "path": "DeepMzyme_Data/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1_20260915/runs/RE_3_four_class_lr3e-05_s43/best_model_checkpoint.pt",
+      "sha256": "ff825f326cd6de621905706e342a68a0cf47cedfde94c1054a6c5a006018d7fd",
+      "bytes": 8811227,
+      "selected_epoch": 21
+    }
+  },
+  "early_fusion_selected_recipe_contrasts": [
+    {
+      "candidate": "GVP + early fusion",
+      "reference": "Only-GVP",
+      "candidate_lr": 3e-05,
+      "reference_lr": 0.0001,
+      "matched_lr": false,
+      "common4_BA_delta_pp_by_seed": {
+        "42": -1.5302835051546424,
+        "43": -10.763262457044668
+      },
+      "common4_BA_mean_delta_pp": -6.146772981099655,
+      "common4_mean_recall_delta_pp": {
+        "Mn": -4.639175257731964,
+        "Cu": -6.666666666666671,
+        "Zn": -7.8125,
+        "Class VIII": -5.46875
+      }
+    },
+    {
+      "candidate": "GVP + early fusion",
+      "reference": "Only-ESM",
+      "candidate_lr": 3e-05,
+      "reference_lr": 3e-05,
+      "matched_lr": true,
+      "common4_BA_delta_pp_by_seed": {
+        "42": -2.756121134020617,
+        "43": -14.075118127147768
+      },
+      "common4_BA_mean_delta_pp": -8.415619630584192,
+      "common4_mean_recall_delta_pp": {
+        "Mn": -13.402061855670112,
+        "Cu": 13.333333333333329,
+        "Zn": -39.0625,
+        "Class VIII": 5.46875
+      }
+    },
+    {
+      "candidate": "GVP + early fusion",
+      "reference": "GVP + late fusion",
+      "candidate_lr": 3e-05,
+      "reference_lr": 0.0001,
+      "matched_lr": false,
+      "common4_BA_delta_pp_by_seed": {
+        "42": -2.945393041237125,
+        "43": -10.076245704467361
+      },
+      "common4_BA_mean_delta_pp": -6.510819372852243,
+      "common4_mean_recall_delta_pp": {
+        "Mn": 5.154639175257728,
+        "Cu": 13.333333333333329,
+        "Zn": -48.4375,
+        "Class VIII": 3.90625
+      }
+    }
+  ],
+  "caveat": "Descriptive comparisons of native-selected recipes on two model seeds and one validation split; no promotion or confidence intervals."
+}

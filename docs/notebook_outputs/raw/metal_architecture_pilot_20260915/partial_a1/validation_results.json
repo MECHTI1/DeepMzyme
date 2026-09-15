@@ -1,0 +1,104 @@
+{
+  "completed_smokes": 7,
+  "completed_main_runs": 3,
+  "hybrid_gate": {
+    "status": "pending",
+    "interpretation": "exploratory_prioritization_not_promotion"
+  },
+  "promoted": false,
+  "held_out_evaluation": false,
+  "evidence": "fixed_split_screen; incomplete blocks excluded from paired comparisons",
+  "state": {
+    "status": "awaiting_archive_transfer",
+    "block": "A1",
+    "run_id": "A1_3_four_class_lr3e-05_s42",
+    "attempt_id": "attempt_011",
+    "attempt_status": "completed"
+  },
+  "runs": [
+    {
+      "id": "A1_0_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 44,
+      "balanced_accuracy": 0.6471139390034364,
+      "collapsed4_balanced_accuracy": 0.6471139390034364,
+      "minimum_recall": 0.40625,
+      "collapsed4_minimum_recall": 0.40625,
+      "per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.6082474226804123,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.40625,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_0_four_class_lr3e-05_s42",
+      "elapsed_seconds": 270.3429877758026,
+      "block_complete": false
+    },
+    {
+      "id": "A1_1_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 22,
+      "balanced_accuracy": 0.721227985395189,
+      "collapsed4_balanced_accuracy": 0.721227985395189,
+      "minimum_recall": 0.59375,
+      "collapsed4_minimum_recall": 0.59375,
+      "per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.9484536082474226,
+        "Cu": 0.7333333333333333,
+        "Zn": 0.59375,
+        "Class VIII": 0.609375
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_1_four_class_lr3e-05_s42",
+      "elapsed_seconds": 206.2681336402893,
+      "block_complete": false
+    },
+    {
+      "id": "A1_3_four_class_lr3e-05_s42",
+      "block": "A1",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "lr": 3e-05,
+      "seed": 42,
+      "selected_epoch": 40,
+      "balanced_accuracy": 0.6936667740549828,
+      "collapsed4_balanced_accuracy": 0.6936667740549828,
+      "minimum_recall": 0.46875,
+      "collapsed4_minimum_recall": 0.46875,
+      "per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "collapsed4_per_class_recall": {
+        "Mn": 0.7319587628865979,
+        "Cu": 0.9333333333333333,
+        "Zn": 0.46875,
+        "Class VIII": 0.640625
+      },
+      "run_dir": "/content/metal_architecture_pilot_10h_v1/runs/A1_3_four_class_lr3e-05_s42",
+      "elapsed_seconds": 290.364253282547,
+      "block_complete": false
+    }
+  ]
+}

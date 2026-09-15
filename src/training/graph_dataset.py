@@ -20,7 +20,7 @@ from data_structures import (
     ResidueRecord,
 )
 from graph.construction import pocket_to_pyg_data
-from graph.shell_roles import compute_shell_roles
+from graph.shell_roles import compute_shell_roles, validate_shell_role_source
 
 _GRAPH_EDGE_INDEX_FIELD = GRAPH_EDGE_TENSOR_FIELDS[0]
 _GRAPH_EDGE_SOURCE_TYPE_FIELD = GRAPH_EDGE_TENSOR_FIELDS[-1]
@@ -92,11 +92,14 @@ def _filter_residues_by_shell_role(
     second_shell_dropout: float,
     outer_residue_dropout: float,
     use_ring_edges: bool,
+    shell_role_source: str,
 ) -> list[ResidueRecord]:
     if second_shell_dropout <= 0.0 and outer_residue_dropout <= 0.0:
         return list(pocket.residues)
 
-    shell_roles = compute_shell_roles(pocket, use_ring_edges=use_ring_edges)
+    shell_roles = compute_shell_roles(
+        pocket, use_ring_edges=use_ring_edges, shell_role_source=shell_role_source,
+    )
     keep_residues: list[ResidueRecord] = []
     for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
         if is_second_shell and not is_first_shell and bool(torch.rand(()) < float(second_shell_dropout)):
@@ -114,6 +117,7 @@ def augment_pocket_for_training(
     second_shell_dropout: float = 0.0,
     outer_residue_dropout: float = 0.0,
     use_ring_edges: bool = False,
+    shell_role_source: str = "edge_mode",
 ) -> PocketRecord:
     """Return an in-memory augmented pocket without mutating the loaded records."""
     if not graph_augmentation_enabled(
@@ -128,6 +132,7 @@ def augment_pocket_for_training(
         second_shell_dropout=float(second_shell_dropout),
         outer_residue_dropout=float(outer_residue_dropout),
         use_ring_edges=use_ring_edges,
+        shell_role_source=shell_role_source,
     )
     if position_noise_std > 0.0:
         noise_std = float(position_noise_std)
@@ -171,6 +176,7 @@ def build_graph_data_list(
     node_feature_set: str = "conservative",
     omit_node_features: tuple[str, ...] | list[str] = (),
     metal_node_mode: str = "none",
+    shell_role_source: str = "edge_mode",
 ) -> list[Data]:
     return [
         pocket_to_pyg_data(
@@ -182,6 +188,7 @@ def build_graph_data_list(
             node_feature_set=node_feature_set,
             omit_node_features=omit_node_features,
             metal_node_mode=metal_node_mode,
+            shell_role_source=shell_role_source,
         )
         for pocket in pockets
     ]
@@ -278,6 +285,7 @@ def summarize_graph_dataset(
     node_feature_set: str = "conservative",
     omit_node_features: tuple[str, ...] | list[str] = (),
     metal_node_mode: str = "none",
+    shell_role_source: str = "edge_mode",
 ) -> list[dict[str, Any]]:
     report: list[dict[str, Any]] = []
     ring_idx = EDGE_SOURCE_TO_INDEX["ring"]
@@ -292,6 +300,7 @@ def summarize_graph_dataset(
             node_feature_set=node_feature_set,
             omit_node_features=omit_node_features,
             metal_node_mode=metal_node_mode,
+            shell_role_source=shell_role_source,
         )
         edge_index = getattr(data, _GRAPH_EDGE_INDEX_FIELD)
         edge_source_type = getattr(data, _GRAPH_EDGE_SOURCE_TYPE_FIELD)
@@ -343,6 +352,7 @@ class PocketGraphDataset(Dataset):
         second_shell_dropout: float = 0.0,
         outer_residue_dropout: float = 0.0,
         metal_node_mode: str = "none",
+        shell_role_source: str = "edge_mode",
     ):
         self.pockets = pockets
         self.esm_dim = esm_dim
@@ -353,6 +363,7 @@ class PocketGraphDataset(Dataset):
         self.node_feature_set = node_feature_set
         self.omit_node_features = tuple(omit_node_features)
         self.metal_node_mode = str(metal_node_mode)
+        self.shell_role_source = validate_shell_role_source(shell_role_source)
         self.position_noise_std = float(position_noise_std)
         self.second_shell_dropout = float(second_shell_dropout)
         self.outer_residue_dropout = float(outer_residue_dropout)
@@ -373,6 +384,7 @@ class PocketGraphDataset(Dataset):
         node_feature_set: str = "conservative",
         omit_node_features: tuple[str, ...] | list[str] = (),
         metal_node_mode: str = "none",
+        shell_role_source: str = "edge_mode",
     ) -> FeatureNormalizationStats:
         data_list = precomputed_data
         if data_list is None:
@@ -385,6 +397,7 @@ class PocketGraphDataset(Dataset):
                 node_feature_set=node_feature_set,
                 omit_node_features=omit_node_features,
                 metal_node_mode=metal_node_mode,
+                shell_role_source=shell_role_source,
             )
         return compute_feature_normalization_stats(data_list, clamp_value=clamp_value)
 
@@ -404,6 +417,7 @@ class PocketGraphDataset(Dataset):
                     second_shell_dropout=self.second_shell_dropout,
                     outer_residue_dropout=self.outer_residue_dropout,
                     use_ring_edges=self.use_ring_edges or self.require_ring_edges,
+                    shell_role_source=self.shell_role_source,
                 ),
                 esm_dim=self.esm_dim,
                 edge_radius=self.edge_radius,
@@ -412,6 +426,7 @@ class PocketGraphDataset(Dataset):
                 node_feature_set=self.node_feature_set,
                 omit_node_features=self.omit_node_features,
                 metal_node_mode=self.metal_node_mode,
+                shell_role_source=self.shell_role_source,
             )
         elif self.precomputed_data is not None:
             data = self.precomputed_data[idx].clone()
@@ -425,5 +440,6 @@ class PocketGraphDataset(Dataset):
                 node_feature_set=self.node_feature_set,
                 omit_node_features=self.omit_node_features,
                 metal_node_mode=self.metal_node_mode,
+                shell_role_source=self.shell_role_source,
             )
         return apply_feature_normalization(data, self.normalization_stats)

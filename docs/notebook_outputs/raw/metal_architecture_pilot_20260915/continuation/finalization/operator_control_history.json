@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "installed_epoch": 1789459659.0485337,
+      "reason": "analysis-budget accounting and serial validation-export guard",
+      "campaign_control_sha256": "19efe40d9b69aacd7802b509d84dd61d105309fc34cacb255b0b020b5a60cbd5",
+      "operator_files": {
+        "export_geometry_validation.py": "ebd01031ebcb4ae1009293322dd5eb9d0134b3b8805698107d8e624841bb0e84",
+        "geometry_validation_control.py": "ae66a66f83c96b11b3b155346689766a2e826beec0cce1fa659cf9a9c77e74cd",
+        "campaign_control.py": "19efe40d9b69aacd7802b509d84dd61d105309fc34cacb255b0b020b5a60cbd5"
+      },
+      "host_wrapper_sha256": "4cfbfabce094d5727bdef4cb91cce1d43cb8274a6618da5e7f59e2bc8f89d725",
+      "scientific_source_changed": false,
+      "prior_source_snapshot_receipt_sha256": null
+    }
+  ]
+}

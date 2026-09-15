@@ -1,0 +1,13 @@
+{
+  "status": "runtime_proxy_synchronized",
+  "session_name": "deepmzyme-metal-geometry-20260915",
+  "endpoint": "gpu-g4-s-kkb-euw4a2-3dx035hsttml0",
+  "token_changed": true,
+  "url_changed": false,
+  "token_expires_in_seconds": 3600,
+  "requested_epoch": 1789469749.50891,
+  "observed_epoch": 1789469749.8118038,
+  "conservative_expiry_epoch": 1789473349.50891,
+  "allocation_unchanged": true,
+  "kernel_identity_preserved": true
+}

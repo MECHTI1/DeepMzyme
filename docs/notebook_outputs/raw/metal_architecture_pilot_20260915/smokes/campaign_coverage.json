@@ -1,0 +1,461 @@
+[
+  {
+    "id": "S_0_four_class_lr3e-05_s42",
+    "block": "S",
+    "family": "Only-GVP",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_0_five_class_lr3e-05_s42",
+    "block": "S",
+    "family": "Only-GVP",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_0_six_class_lr3e-05_s42",
+    "block": "S",
+    "family": "Only-GVP",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_1_four_class_lr3e-05_s42",
+    "block": "S",
+    "family": "Only-ESM",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_3_four_class_lr3e-05_s42",
+    "block": "S",
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_2_four_class_lr3e-05_s42",
+    "block": "S",
+    "family": "GVP + late fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "S_4_four_class_lr3e-05_s42",
+    "block": "S",
+    "family": "GVP + hybrid fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": true
+  },
+  {
+    "id": "A1_0_four_class_lr3e-05_s42",
+    "block": "A1",
+    "family": "Only-GVP",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A1_1_four_class_lr3e-05_s42",
+    "block": "A1",
+    "family": "Only-ESM",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A1_3_four_class_lr3e-05_s42",
+    "block": "A1",
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A1_2_four_class_lr3e-05_s42",
+    "block": "A1",
+    "family": "GVP + late fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A2_0_four_class_lr0.0001_s42",
+    "block": "A2",
+    "family": "Only-GVP",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A2_1_four_class_lr0.0001_s42",
+    "block": "A2",
+    "family": "Only-ESM",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A2_3_four_class_lr0.0001_s42",
+    "block": "A2",
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "A2_2_four_class_lr0.0001_s42",
+    "block": "A2",
+    "family": "GVP + late fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_0_five_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "Only-GVP",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_1_five_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "Only-ESM",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_2_five_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "GVP + late fusion",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_0_six_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "Only-GVP",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_1_six_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "Only-ESM",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T1_2_six_class_lr3e-05_s42",
+    "block": "T1",
+    "family": "GVP + late fusion",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_0_five_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "Only-GVP",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_1_five_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "Only-ESM",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_2_five_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "GVP + late fusion",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_0_six_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "Only-GVP",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_1_six_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "Only-ESM",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "T2_2_six_class_lr0.0001_s42",
+    "block": "T2",
+    "family": "GVP + late fusion",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "H_4_four_class_lr3e-05_s42",
+    "block": "H",
+    "family": "GVP + hybrid fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "H_4_four_class_lr0.0001_s42",
+    "block": "H",
+    "family": "GVP + hybrid fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 42,
+    "completed": false
+  },
+  {
+    "id": "R_0_four_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_0_four_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_four_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_four_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_four_class_lr3e-05_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_four_class_lr0.0001_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_0_five_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_0_five_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_five_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_five_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_five_class_lr3e-05_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "five_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_five_class_lr0.0001_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "five_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_0_six_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_0_six_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-GVP",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_six_class_lr3e-05_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_1_six_class_lr0.0001_s43",
+    "block": "R",
+    "family": "Only-ESM",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_six_class_lr3e-05_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "six_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "R_2_six_class_lr0.0001_s43",
+    "block": "R",
+    "family": "GVP + late fusion",
+    "scheme": "six_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "RE_3_four_class_lr3e-05_s43",
+    "block": "RE",
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "RE_3_four_class_lr0.0001_s43",
+    "block": "RE",
+    "family": "GVP + early fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "RH_4_four_class_lr3e-05_s43",
+    "block": "RH",
+    "family": "GVP + hybrid fusion",
+    "scheme": "four_class",
+    "lr": 3e-05,
+    "seed": 43,
+    "completed": false
+  },
+  {
+    "id": "RH_4_four_class_lr0.0001_s43",
+    "block": "RH",
+    "family": "GVP + hybrid fusion",
+    "scheme": "four_class",
+    "lr": 0.0001,
+    "seed": 43,
+    "completed": false
+  }
+]

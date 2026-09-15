@@ -1,0 +1,74 @@
+{
+  "A1": {
+    "run_ids": [
+      "A1_0_four_class_lr3e-05_s42",
+      "A1_1_four_class_lr3e-05_s42",
+      "A1_3_four_class_lr3e-05_s42",
+      "A1_2_four_class_lr3e-05_s42"
+    ],
+    "forecast_seconds": 1905.8263435959816,
+    "admitted_epoch": 1789443316.8202074,
+    "allocated_seconds": 2582.957278728485
+  },
+  "A2": {
+    "run_ids": [
+      "A2_0_four_class_lr0.0001_s42",
+      "A2_1_four_class_lr0.0001_s42",
+      "A2_3_four_class_lr0.0001_s42",
+      "A2_2_four_class_lr0.0001_s42"
+    ],
+    "forecast_seconds": 1905.8263435959816,
+    "admitted_epoch": 1789457737.7208524,
+    "allocated_seconds": 4745.929034233093
+  },
+  "T1": {
+    "run_ids": [
+      "T1_0_five_class_lr3e-05_s42",
+      "T1_1_five_class_lr3e-05_s42",
+      "T1_2_five_class_lr3e-05_s42",
+      "T1_0_six_class_lr3e-05_s42",
+      "T1_1_six_class_lr3e-05_s42",
+      "T1_2_six_class_lr3e-05_s42"
+    ],
+    "forecast_seconds": 2804.0268474817276,
+    "admitted_epoch": 1789465410.4253592,
+    "allocated_seconds": 12419.281198263168
+  },
+  "T2": {
+    "run_ids": [
+      "T2_0_five_class_lr0.0001_s42",
+      "T2_1_five_class_lr0.0001_s42",
+      "T2_2_five_class_lr0.0001_s42",
+      "T2_0_six_class_lr0.0001_s42",
+      "T2_1_six_class_lr0.0001_s42",
+      "T2_2_six_class_lr0.0001_s42"
+    ],
+    "forecast_seconds": 2804.0268474817276,
+    "admitted_epoch": 1789467236.059677,
+    "allocated_seconds": 14244.881499767303
+  },
+  "R": {
+    "run_ids": [
+      "R_0_four_class_lr0.0001_s43",
+      "R_1_four_class_lr3e-05_s43",
+      "R_2_four_class_lr0.0001_s43",
+      "R_0_five_class_lr0.0001_s43",
+      "R_1_five_class_lr3e-05_s43",
+      "R_2_five_class_lr3e-05_s43",
+      "R_0_six_class_lr3e-05_s43",
+      "R_1_six_class_lr3e-05_s43",
+      "R_2_six_class_lr3e-05_s43"
+    ],
+    "forecast_seconds": 4206.040271222591,
+    "admitted_epoch": 1789469089.7532406,
+    "allocated_seconds": 16098.53860092163
+  },
+  "RE": {
+    "run_ids": [
+      "RE_3_four_class_lr3e-05_s43"
+    ],
+    "forecast_seconds": 503.8129198551178,
+    "admitted_epoch": 1789471785.813422,
+    "allocated_seconds": 18794.549576997757
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "created_at": "2026-09-15T13:13:21.540201+00:00",
+  "definitions": {
+    "chi_square": "descriptive only; expected-cell audit does not establish independent pockets",
+    "cramers_v": "sqrt(Pearson chi2 / (total weight * min(active rows-1, active cols-1)))",
+    "group_weight": "one total weight per group divided among eligible pockets in this view",
+    "mi": "sum p(m,e) * ln[p(m,e)/(p(m)*p(e))], natural logarithms",
+    "multiplicity": "Holm correction across the four primary panel x native6/common4 permutation tests; matched sensitivity descriptive only",
+    "nmi": "2*MI/(H(metal)+H(EC1)); null if either marginal is constant"
+  },
+  "eligibility_audit_sha256": "ab13d74da9cf3ea341044f96a0950c240def8f9f4df63d4b9680202e39c211cf",
+  "limitations": [
+    "Separate source panels; no PDB-to-UniProt or sequence-homology union certificate",
+    "No shared-encoder split certification or inference of auxiliary-learning benefit",
+    "No test input opened by this analysis; existing train membership is inherited, not re-certified against external test identifiers",
+    "Source selection and homology can violate exchangeability even between protein groups"
+  ],
+  "pairs_sha256": "ce91892b4efb6505328983fe418bfe529b469e19d9dfb4e4343fd7e57e005806",
+  "panels": {
+    "care": {
+      "dataset": "CARE_task1_30_clusterRes30_train_test_metallo",
+      "provenance": "CARE/UniProt annotations with computational AlphaFill/MAHOMES metal-site transfer and selection",
+      "split": "docs/notebook_outputs/raw/ec1_standalone_v12_20260914/expected_split.json"
+    },
+    "pinmymetal": {
+      "dataset": "train_and_test_sets_structures_non_overlapped_pinmymetal",
+      "provenance": "PinMyMetal-derived labels on experimentally resolved structures; catalytic-site selection",
+      "split": "docs/notebook_outputs/raw/metal_architecture_pilot_20260915/readiness/expected_split.json"
+    }
+  },
+  "partitions": [
+    "train"
+  ],
+  "permutation_statistic": "group-weighted mutual information; EC1 labels shuffled between whole groups",
+  "permutations": 9999,
+  "phase": "prepared",
+  "profile": "metal_ec1_development_association_v1",
+  "seed": 42,
+  "sources": [
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/analyze_metal_ec_association.py",
+      "sha256": "0566cfc58571fbfb5f4bf2427ef3dc3849a6dd37111bbd9d30a4a5fe98376ad0"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/graph/structure_parsing.py",
+      "sha256": "6ad2951735029a0994a2b9ed7ce87e5f909ab58d4d0b60bd2ebff4db0c21e5c0"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/data_structures.py",
+      "sha256": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/featurization.py",
+      "sha256": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/label_schemes.py",
+      "sha256": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/structure_store.py",
+      "sha256": "1d494a6b3f98e26032a8ead10b3d72efbd5ed4c27932a8b5ca58c384a48306ec"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/training/labels.py",
+      "sha256": "000cc3820231891627c900b9b9ed9cb0b94138d78f141976d6290a429c37dcdc"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/src/training/site_filter.py",
+      "sha256": "528acbaad1578a61ab6cb51a6bb5ba7cc1e56915f6019fd152681969a5b5a83a"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/docs/notebook_outputs/raw/metal_architecture_pilot_20260915/readiness/expected_split.json",
+      "sha256": "1415562a2830710209e4689fc641ea1e82bf57dd40bb9ad17d75936d27737f42"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/structure_manifest.csv",
+      "sha256": "1fc6f903badd3d187cab5270026e08968d85cc0ea24484bafcd08f1138d02279"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv",
+      "sha256": "2695173abd0a7e7a7605603b7ad9c7ef2bb522d45b04b3d952510d5a84b39436"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/docs/notebook_outputs/raw/ec1_standalone_v12_20260914/expected_split.json",
+      "sha256": "428aa0bec00dd3967abe462b1b2206c325f066c17659537f9fbb283f7c8fddda"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/structure_manifest.csv",
+      "sha256": "31c655e13e3c0fe6b5f5143c3b5de8c09cb58a82872292bf5421231cf27c5830"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv",
+      "sha256": "6026d144bae57782cd37ad2d89ae5de45900a65e893632c83c3937ea574db613"
+    }
+  ],
+  "views": [
+    "native6",
+    "common4",
+    "common4_native6_eligible"
+  ],
+  "weighting": [
+    "site",
+    "protein_group"
+  ]
+}
