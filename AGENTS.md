@@ -704,9 +704,11 @@ When working on this repository:
 4. Preserve existing useful options.
 5. Run syntax or smoke checks when possible.
 6. Clearly summarize what changed and what was not changed.
-7. Whenever files were added or edited, end the final response with
-   `Suggested commit name: <concise commit title>` describing the changes made
-   for the current task.
+7. Whenever a completed task adds or edits files that belong in the repository,
+   create a local Git commit containing only the files changed for that task.
+8. End the final response with
+   `Local commit: <short hash> <concise commit title>` so the user can identify
+   the exact commit created for the task.
 
 When editing AGENTS.md itself, briefly summarize the changed sections in the
 response so the user can review the policy delta without re-reading the whole
@@ -716,11 +718,23 @@ file.
 
 ## Git workflow
 
-- Do not push to GitHub or any other remote when work is finished. The user
-  will push changes themselves.
-- Do not stage modifications to existing tracked files. Use `git add` only for
-  completely new scripts or files when adding them to the local Git index is
-  needed for the task.
+- After completing a task that adds or edits files intended for version
+  control, stage those exact paths with `git add` and create one descriptive
+  local Git commit before the final response. This includes every new file that
+  is meant to be part of the repository.
+- Keep pre-existing or user-owned staged and unstaged changes out of the
+  task's commit. Inspect the task diff and use path-limited staging and commits
+  when the worktree already contains unrelated changes.
+- Use a concise, descriptive commit message for the completed task. Report the
+  resulting short commit hash and message in the final response.
+- Do not add generated outputs, credentials, ignored local data, or temporary
+  files merely to make the worktree clean. Only add files that belong in the
+  repository.
+- Read-only tasks and tasks that do not change repository files require no
+  commit. If the user explicitly asks not to commit a task, follow that request
+  and report a suggested commit message instead.
+- Do not push to GitHub or any other remote unless the user explicitly asks.
+  Local `git add` and `git commit` do not authorize a remote push.
 
 ---
 
