@@ -21,7 +21,11 @@ from label_schemes import (
     normalize_metal_label_scheme_name,
 )
 from model_variants import FUSION_MODE_CHOICES, MODEL_ARCHITECTURE_CHOICES
-from model_variants.factory import normalize_fusion_mode, normalize_model_architecture
+from model_variants.factory import (
+    SITE_GEOMETRY_FEATURE_CHOICES,
+    normalize_fusion_mode,
+    normalize_model_architecture,
+)
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.evaluation_protocols import (
@@ -155,6 +159,7 @@ class TrainConfig:
     node_rbf_use_raw_distances: bool = False
     classifier_pool_distance_cutoff: float = 0.0
     metal_node_mode: str = "none"
+    site_geometry_features: str = "legacy"
     structural_readout_scope: str = "residue_only"
     normalize_message_aggregation: bool = False
     position_noise_std: float = 0.0
@@ -431,6 +436,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Opt-in GVP graph construction mode for adding generic metal-site nodes. "
             "'none' preserves residue-only graphs; 'per_metal' appends one generic "
             "metal node per metal coordinate and promotes metal-ligand edges into edge_index."
+        ),
+    )
+    parser.add_argument(
+        "--site-geometry-features",
+        choices=SITE_GEOMETRY_FEATURE_CHOICES,
+        default="legacy",
+        help=(
+            "GVP site geometry control independent of metal nodes. 'legacy' preserves "
+            "the existing metal-node-dependent geometry inputs. Explicit modes share "
+            "eight slots and generic node-type embeddings: 'none' masks all slots; "
+            "'counts' uses log1p ligand/angle-pair counts; 'counts_angles' also uses "
+            "the six angular summaries divided by 180."
         ),
     )
     parser.add_argument(
@@ -900,6 +917,8 @@ def resolve_structural_readout_scope(metal_node_mode: str, requested_scope: str)
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
+    if args.site_geometry_features != "legacy" and args.model_architecture not in {"gvp", "only_gvp"}:
+        parser.error("--site-geometry-features explicit modes require --model-architecture gvp or only_gvp")
     omit_node_features = validate_node_feature_omissions(
         args.node_feature_set,
         parse_omit_node_features(args.omit_node_features),
@@ -970,6 +989,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
         classifier_pool_distance_cutoff=args.classifier_pool_distance_cutoff,
         metal_node_mode=args.metal_node_mode,
+        site_geometry_features=args.site_geometry_features,
         structural_readout_scope=structural_readout_scope,
         normalize_message_aggregation=args.normalize_message_aggregation,
         position_noise_std=args.position_noise_std,

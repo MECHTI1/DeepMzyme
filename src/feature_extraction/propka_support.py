@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -22,6 +23,16 @@ class PropkaResidueFeatures:
 class PropkaRunResult:
     residues: Dict[tuple[str, int, str], PropkaResidueFeatures]
     warnings: list[str]
+
+
+COMPACT_RESIDUE_LABEL_RE = re.compile(r"(?<!\S)([A-Z]{3}|N\+|C-)([+-]?\d+)(?=\s|$)")
+
+
+def _detail_row_tokens(line: str) -> list[str]:
+    # PROPKA prints a 3-character name immediately before a 4-character
+    # residue number. Large/negative numbers therefore join the name, also in
+    # partner labels; expand every such label to keep determinant columns stable.
+    return COMPACT_RESIDUE_LABEL_RE.sub(r"\1 \2", line).split()
 
 
 def _parse_float_token(token: str) -> float | None:
@@ -72,7 +83,7 @@ def parse_propka_output_text(text: str) -> Dict[tuple[str, int, str], PropkaResi
         if stripped.startswith("Coupled residues") or stripped.startswith("Free energy of"):
             continue
 
-        tokens = stripped.split()
+        tokens = _detail_row_tokens(stripped)
         if in_detail_table:
             if not _looks_like_residue_key(tokens):
                 continue

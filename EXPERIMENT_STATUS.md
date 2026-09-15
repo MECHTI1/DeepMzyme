@@ -4,21 +4,82 @@ This is the sole concise answer to: **Where am I now, and what should I do
 next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
-Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-14.
-Last scientific-policy documentation update: 2026-09-14.
+Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
+Last scientific-policy documentation update: 2026-09-15.
 
 ## Current objective
 
-**Current authorized execution priority (2026-09-14):** the v12 EC1 standalone
-campaign is complete: all 12 runs (three families × two LRs × seeds 42/43)
-finished 30 epochs on the same fixed protein split. Every run was verified
+**Authorized metal pilots completed (2026-09-15):** all 30 original architecture
+fits and 15 geometry fits, each 50 epochs, plus 12 model smokes are verified
+locally and in Drive. Both queues passed genuine terminal-state verification;
+all 15 geometry prediction exports are verified. The owned G4 session
+`deepmzyme-metal-geometry-20260915` stopped at **11:37:34.517659 UTC**, and
+the server reported no active sessions. Total allocation across both sessions
+was **5.350957 hours of the original ten-hour cap**, including recovery,
+setup, transfer and analysis.
+
+Selected-LR direct-four means ± sample SD across training seeds 42/43 are
+Only-ESM **74.342 ± 3.138%**, late fusion **72.437 ± 0.177%**, Only-GVP
+**72.073 ± 1.663%**, and early fusion **65.926 ± 4.866%**. These are Grade-3
+results on the same validation data, with no promotion. Late-five's
+common-four mean is **74.718 ± 2.486%**, an exploratory target challenger
+with class tradeoffs; native and common-four results come from each
+native-selected checkpoint. See the [completed continuation report](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md)
+and [verified stop receipt](docs/notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/session_stopped.json).
+
+All geometry arms selected LR `1e-4`; increasing LR improved seed-42 BA by
+7.6–10.4 percentage points. Selected-LR means across training seeds 42/43 are
+A 69.641%, B 70.186%, C 70.007%, D 68.865%, and E 68.030%. B−A and C−B
+advantages reverse between seeds; D−B and E−D are negative in both high-LR
+seeds. This is Grade-3 repetition on the **same validation data**, with no
+architecture promotion or universal rejection. E's worst Zn recall is
+15.625% (5/32), illustrating the class tradeoffs hidden by aggregate BA.
+The fresh A control masks only the added coordination-count/angle slots: it
+retains the original GVP geometry and four base metal-site statistics
+(multinuclear flag, metal count, minimum/mean intermetal distances). Its
+matched explicit machinery differs from the original legacy GVP baseline.
+See the [completed geometry summary](docs/notebook_outputs/summaries/summary_metal_coordination_geometry_pilot_20260915.md)
+and its verified prediction/paired-error evidence.
+
+Fitted-normalization hashes match within A/B/C and within D/E, as required.
+Adding metal nodes changes representation, connectivity and fitted edge
+normalization together; those contrasts do not isolate topology alone.
+
+Recovery verified the original frozen source and manifest, all 1,389 retained
+pockets (1,181 train / 208 validation), unchanged feature contents and fresh
+cache timestamps. Seven original smokes and all eight A1/A2 results are now
+verified, including completed late-fusion linked retry `attempt_013`.
+The original interrupted `attempt_012` is reconciled as incomplete; its exact
+attempt duration is unknown and was not invented. The full first allocation
+of 3,827.969 seconds remains charged to the shared 600-minute cap, together
+with the second allocation and recovery. The final closed total is
+19,263.446 seconds; 16,736.554 seconds remain under the original cap.
+The geometry implementation and recovery controls passed 134 focused tests
+in 30.37 seconds; 11 separate owned-teardown tests also passed. Legacy model
+outputs remain bitwise unchanged in the checked compatibility comparison.
+These are implementation/readiness checks, not geometry-model results.
+The largest A1/A2 balanced accuracies are late fusion **0.723121** and
+Only-ESM **0.721228**, a gap of only **0.001893**. These are experimentally
+evaluated single-seed results, with no established architecture winner or
+promotion. Hybrid is **deferred under the budget scheduling gate**, not
+rejected: best early fusion did not exceed best Only-GVP by the required
+margin. The bounded target/seed matrix is complete; grouped-fold/paired-CI,
+hybrid and RING confirmation remain absent. No held-out evaluation occurred;
+historical multi-seed anchors remain separately labeled.
+See the [first-allocation summary](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md)
+and [geometry recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-coordination-geometry-pilot--stage-2b).
+
+**Completed EC reference (2026-09-14):** the v12 EC1 standalone campaign
+finished all 12 runs (three families × two LRs × seeds 42/43), each with
+30 epochs on the same fixed protein split. Every run was verified
 and archived locally and in Drive; the Colab session is stopped. The largest
 observed two-seed mean is Only-ESM at `0.0001`,
 `0.969643` (sample SD `0.017678`), using
 `val_ec_group_level_1_balanced_acc`. This is Grade-3 initial fixed-split
-evidence, not promotion. Chat 5 can now prepare its separate matched
-zero-auxiliary control and certify joint-cohort/holdout safeguards and
-development-only association analysis. Keep the metal campaign pending.
+evidence, not promotion. The separate matched zero-auxiliary control,
+joint-cohort/holdout certification, and development-only association analysis
+remain later work; the current priority is reviewing the completed metal
+evidence and fixing the next controlled protocol.
 No held-out evaluation, auxiliary training or broader HPO was run.
 See the [completed campaign summary](docs/notebook_outputs/summaries/summary_ec1_standalone_v12_20260914.md)
 for all family/LR results, recalls and exact provenance.
@@ -28,11 +89,16 @@ classification and EC/function classification, beginning at EC depth 1. The
 immediate cross-task roadmap starts with reconciling strong standalone models;
 auxiliary shared learning remains a later challenger.
 
-The current Phase 1 action is to reconcile a paired metal-only target-formulation
-campaign for the four-class endpoint: (a) direct four-class training and (b)
-matched six-class training followed by deterministic collapsed-four evaluation.
-Both arms are required across Only-GVP, Only-ESM, and GVP + graph-level late
-fusion. Existing historical anchors use the six-class metal target and one fixed
+The current Phase 1 pilot has reconciled recipes for the four-class endpoint:
+(a) direct four-class training and (b) matched six-class training followed by
+deterministic collapsed-four evaluation, plus a labeled five-class challenger.
+All three targets completed both LR opportunities at seed 42 and one
+native-selected-LR seed-43 repeat across Only-GVP, Only-ESM, and graph-level
+late fusion. Direct-four early fusion completed its two-LR screen and repeat;
+hybrid was deferred by the conditional scheduling gate. Every pilot arm selects
+checkpoints by native validation balanced
+accuracy and reports the common-four view from the same checkpoint. Existing
+historical anchors use the six-class metal target and one fixed
 `pdbid`-grouped validation split. They remain historical evidence and do not
 constitute the required matched target-formulation comparison.
 
@@ -48,8 +114,9 @@ standard.
 
 | Item | Implemented state | Evidence state | Current interpretation |
 |---|---|---|---|
-| Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii` and maps Fe/Co/Ni to Class VIII | No trusted completed direct four-class baseline batch is indexed | Four-class endpoint selected; baseline evidence and paired executable recipes still require reconciliation |
-| Required target-formulation challenger | `six_class` outputs and collapsed-four validation metrics are implemented | Historical six-class runs exist, but no matched direct-four versus six-trained/collapsed-four comparison is indexed | Required across the three initial metal baseline families; exact paired recipes still require reconciliation |
+| Primary metal reporting endpoint | `four_class` aliases `merge_fe_class_viii`; the bounded native-selected pilot recipe is implemented | A1/A2 screen and selected-LR repeats completed for all four families | Experimentally evaluated across two training seeds on one validation split; no promotion |
+| Coordination-geometry comparison | Independent masked/count/angle controls, fixed input shapes, five-arm runner, and shared budget are implemented | All five smokes, 15 full fits, and selected-checkpoint validation export verified | Experimentally evaluated across two training seeds on one validation split; class tradeoffs and inconsistent count/angle gains, no promotion |
+| Required target-formulation challenger | Native-six eligibility and same-checkpoint native/collapsed-four reports are implemented in the pilot | Three core families × four/five/six targets completed both seed-42 LRs and selected-LR seed-43 repeats | Initial matched fixed-split comparison complete; common-four comparisons remain exploratory, with grouped folds/paired CIs outstanding |
 | Historical metal targets | Six-class and five-class schemes remain implemented | Indexed metal anchors are principally historical six-class results; one five-class local smoke was prepare-only | Preserve under their original scheme; never relabel as direct four-class training |
 | Primary EC task | Depth-controlled single-label EC classification and structure-level group weighting exist | Three GPU smokes and all twelve CARE EC1 standalone baselines completed and archived | Experimentally evaluated on one fixed protein split across two seeds (Grade 3); no promoted model; deeper hierarchical and full multi-label claims remain unestablished |
 | Current EC multi-annotation handling | Multiple annotations with one shared prefix can map to one class; conflicting prefixes at the selected depth receive no target | No full multi-label experiment is indexed | Current code does not solve full multi-label EC prediction |
@@ -62,6 +129,11 @@ does not establish that shared learning improves either primary task.
 
 ## Where the project is now
 
+- New direct-four reference: Only-ESM at `3e-5` has the largest two-seed
+  mean BA, `0.743417096220`, sample SD `0.031380141465`; this is a fixed-split
+  reference candidate, not a promoted model. Late-five remains a separately
+  labeled common-four target challenger. Complete new evidence is in the
+  continuation report, distinct from the historical six-class anchors below.
 - Historical metal anchor: GVP + graph-level late fusion, namespaced candidate
   `metal/late-fusion/round4/trial49/fixed-split-5seed`.
 - Evidence for that anchor: five seeds and 50 epochs on one validation split;
@@ -84,9 +156,9 @@ does not establish that shared learning improves either primary task.
 
 | Required question | Current evidence | What remains |
 |---|---|---|
-| Target formulation: direct four-class vs six-class training with collapsed-four evaluation | Historical six-class metrics and collapsed-four reporting exist; no trusted direct four-class baseline batch is indexed | No matched comparison across Only-GVP, Only-ESM, and graph-level late fusion on shared folds/seeds and the common four-class validation view |
-| ESMC fusion position: early vs late vs hybrid | Late fusion has a Grade-3 historical six-class fixed-split anchor; hybrid has exploratory joint-task evidence | No indexed completed early-fusion result and no direct four-class matched shared-fold comparison across all three modes |
-| Modality: Only-ESM (ESMC) vs Only-GVP vs combined GVP+ESMC | All three have historical six-class validation evidence, with late fusion representing the strongest established combined anchor | No direct four-class common Stage 6 fold/seed comparison with paired confidence intervals and rare-class recall protection |
+| Target formulation: direct four-class vs six-class training with collapsed-four evaluation | Completed matched initial four/five/six screen and selected-LR repeats for all three core families, using the common-four view | Shared grouped folds/paired CIs and class-recall promotion gates remain outstanding; selected recipes can use different LRs |
+| ESMC fusion position: early vs late vs hybrid | Early/late completed direct-four two-LR screens and selected-LR repeats; hybrid smoke passed but full runs were deferred | Hybrid and grouped-fold comparisons remain absent; deferral does not establish that hybrid is ineffective |
+| Modality: Only-ESM (ESMC) vs Only-GVP vs combined GVP+ESMC | All three completed direct-four screens and selected-LR repeats on the same validation split | No shared Stage 6 fold/seed comparison with paired confidence intervals and rare-class recall protection |
 | GVP edge source: with RING vs without RING | Radius and RING controls are implemented; Hybrid+RING has a high exploratory six-class single-seed result | No direct four-class matched RING on/off comparison that isolates the RING contribution; Hybrid+RING cannot answer this alone |
 
 Do not claim a significant advantage for target formulation, ESMC fusion
@@ -103,9 +175,9 @@ Detailed parameters and confidence limits:
 | Workstream | What is implemented or prepared | Result/evidence state | What is not complete |
 |---|---|---|---|
 | Unified training core | `metal`, `ec`, and `joint` dispatch; configuration, preflight, grouped splitting, training, reporting, and guarded final-test code | CLI help imports and parses successfully | A passing end-to-end suite on all materialized datasets is not established |
-| Graph and feature pipeline | Pocket graphs, conservative residue features, optional metal nodes, ESMC embeddings, external features, radius edges, and RING edges | CARE caches are complete locally and in hosted v12; see DATASETS for the verified release | Additional node feature sets beyond `conservative` remain future work |
-| Metal modeling | Direct four-class, historical six-class/five-class targets; Only-GVP, Only-ESM, graph-level late fusion, node-level late fusion, hybrid, cross-attention, and RING/radius controls exist | Preserved anchors are historical six-class fixed-split evidence | Direct four-class baseline recipes/evidence must be reconciled; the advanced comparison matrix and Grade-1/2 promotion remain incomplete |
-| EC modeling | Single-label EC-depth handling, independent EC heads, group weighting, and optional contrastive loss exist | No trusted completed EC model result is indexed in the audited evidence | EC depth-1 standalone baselines, EC playbook reconciliation, and a certified staged run are not complete; full multi-label prediction is not implemented |
+| Graph and feature pipeline | Conservative graph features plus independent explicit site-count/angle controls and generic metal nodes | Original readiness, recovered input checks, all smokes, and complete geometry comparison passed operational checks | Broader confirmation and additional node feature sets beyond `conservative` remain future work |
+| Metal modeling | Original architecture pilot and separate five-arm geometry pilot with shared serial budget control | All 30 original and 15 geometry full fits, finalization and teardown verified | Grouped-fold confirmation and broader required comparisons remain; no architecture promotion |
+| EC modeling | Single-label EC-depth handling, independent EC heads, group weighting, and optional contrastive loss exist | All twelve CARE EC1 standalone baselines completed on the fixed protein split | Later EC HPO/confirmation/final-test recipes remain uncertified; full multi-label prediction is not implemented |
 | Auxiliary metal+EC modeling | Shared representation, independent heads, configurable task losses, and a joint task path exist | Hybrid and Hybrid+RING exploratory validation evidence exists | No matched EC-only versus EC+auxiliary-metal experiment, no promoted auxiliary configuration, and no certified cross-task protocol |
 | Dataset preparation | Exact/non-overlap/Common70 PinMyMetal, CLEAN30 variants, and CARE clusterRes30 are prepared; provenance is tracked; local structures are content-addressed with manifest-backed split membership | Materialization, storage audit, and bundle status are in `docs/DATASETS.md` and `docs/STRUCTURE_STORE.md` | CLEAN10, the harsh root, CARE upstream citation, and final-test route remain unresolved |
 | Metal confirmation | Stage 6 grouped folds × seeds, paired CI, and rare-class protection are implemented/documented | No completed current Stage 6 artifact found | Candidate set must be frozen and Stage 6 run |
@@ -119,6 +191,8 @@ For the shortest path through these owners, use
 
 | Role | Configuration | Main validation evidence | Grade | Status |
 |---|---|---|---:|---|
+| New direct-four reference candidate | Only-ESM `3e-5` | mean `0.743417096220`, sample SD `0.031380141465`, two fixed-split training seeds | 3 | Largest direct-four mean in this bounded pilot; no promotion |
+| New target challenger | Five-class late fusion `3e-5`, common-four reporting | mean `0.747182399055`, sample SD `0.024859222776`, two fixed-split training seeds | 3 | Native-selected recipe; class tradeoffs, no promoted target formulation |
 | Historical six-class metal anchor | Late-fusion trial 49 | mean `0.635468206972`, SD `0.043023727308`, five fixed-split seeds | 3 | Preserve as a six-class reference; it is not the direct four-class anchor |
 | Historical six-class stable baseline | Only-ESM `3e-5` + inverse-frequency | mean `0.625325230595`, SD `0.031449451169`, five fixed-split seeds | 3 | Preserve within six-class evidence only |
 | Rejected tested variant | Node-level late fusion derived from trial 49 | mean `0.606599196822`, five fixed-split seeds | 3 | Did not replace graph-level trial 49 |
@@ -134,11 +208,12 @@ grouped-fold promotion evidence.
 
 | Model/task path | Implemented | Audited outcome | Standing |
 |---|---:|---|---|
-| Metal Only-GVP | Yes | Historical six-class validation batches exist | Historical baseline evidence; no direct four-class grouped-fold promotion |
-| Metal Only-ESM | Yes | Historical six-class five-seed mean `0.625325230595` | Historical Grade-3 baseline; direct four-class result absent |
-| Metal GVP + graph-level late fusion | Yes | Historical six-class trial-49 five-seed mean `0.635468206972` | Historical Grade-3 anchor; direct four-class result absent |
+| Metal Only-GVP | Yes | Direct-four two-seed mean BA `0.720729`, sample SD `0.016630`, LR `1e-4`; worst class recall `0.343750` | Bounded screen/repeats complete; grouped-fold confirmation pending |
+| Metal Only-ESM | Yes | Direct-four two-seed mean BA `0.743417`, sample SD `0.031380`, LR `3e-5`; worst class recall `0.578125` | Reference candidate; historical six-class evidence remains separate |
+| Metal GVP + graph-level late fusion | Yes | Direct-four two-seed mean BA `0.724369`, sample SD `0.001765`, LR `1e-4`; worst class recall `0.562500` | Completed including linked A1 retry; relative advantage over ESM changes sign between seeds |
+| Metal GVP + early fusion | Yes | Direct-four two-seed mean BA `0.659261`, sample SD `0.048657`, LR `3e-5`; worst class recall `0.187500` | This tested configuration does not justify automatic hybrid escalation; no general architectural rejection |
 | Metal GVP + node-level late fusion | Yes | Five-seed mean `0.606599196822` | Tested negative result; rejected as anchor replacement |
-| Hybrid fusion | Yes | Joint trial-17 exploratory mean `0.697376` under a different selection metric | Incomplete provenance; not directly rankable |
+| Hybrid fusion | Yes | Joint trial-17 exploratory mean `0.697376`; pilot direct-four smoke passed | Historical joint evidence not directly rankable; pilot full screen deferred under the budget scheduling gate |
 | Hybrid + RING | Yes | Trial-114 single-seed metal BA `0.7303469775006777` | Exploratory; RING effect not isolated |
 | Cross-attention | Yes | No indexed completed comparison found | Implemented but experimentally unestablished |
 | RING/radius-only causal ablation | Yes | No reportable causal comparison found | Not completed |
@@ -169,7 +244,7 @@ were Grade 1 or 2.
 | Dataset | Current readiness |
 |---|---|
 | Exact PinMyMetal | Present locally and in v12; contains 177 overlapping PDB IDs |
-| Non-overlapped PinMyMetal | Present locally and in v12 (absent from historical v10); historically evaluated seven times and not pristine |
+| Non-overlapped PinMyMetal | Present locally/in v12, plus certified train-only PROPKA overlay for the pilot; the shared test was historically evaluated seven times and is not pristine |
 | Harsh PinMyMetal | Absent locally and from v10/v11/v12 |
 | Common-PDBID 70/30 | Present locally and in v12; custom comparison split |
 | CLEAN30 original/conservative | Present; `CLEAN_30_main` points to conservative source |
@@ -181,6 +256,39 @@ Bundle names, hashes, commits, split counts, preparation rules, and provenance:
 [`docs/DATASETS.md`](docs/DATASETS.md).
 
 ## Colab compute-readiness evidence
+
+The completed session `deepmzyme-metal-geometry-20260915` used G4 RTX PRO
+6000 Blackwell, stock PyTorch 2.11.0+cu128, and Python 3.13.15. Cross-session
+recovery preserved original manifest
+`14010a873801cdbc2d067b8e61137f5469afb4f5d9f833cdd2251fa84080cdd5`
+and cohort hash
+`60b8af63454883579a2e851fa9a1cc7ddecdc95c53d996240241a099c35bbbe1`.
+Fresh cache-timestamp auditing confirmed unchanged feature contents and all
+1,389 retained pockets. The old source remains frozen. Geometry source is a
+separate implementation. Its source-specific GPU preflight passed in 98.128
+seconds and all five geometry smokes passed. Matching normalization hashes
+within A/B/C and D/E were verified before admitting the full 15-run comparison,
+which is now complete along with selected-checkpoint prediction export. The
+same runtime completed all remaining original fits. Genuine finalization and
+[post-stop accounting](docs/notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/post_stop_closeout.json)
+verify both completed campaigns and shutdown within the shared budget.
+
+On 2026-09-15, the metal pilot allocated session
+`deepmzyme-metal-pilot-20260915` on a G4 RTX PRO 6000 Blackwell GPU, with
+Python 3.13.15 and PyTorch 2.11.0+cu128 including `sm_120`. Its CUDA probe
+passed. A first headless-planning failure was fixed with a versioned source-v2
+snapshot before any model training. V2 GPU readiness then passed in 124.15
+seconds: 1,181/208 train/validation pockets, 1,151/110 PDB groups, no overlap,
+and zero-cutoff pooling agreement on all 1,389 pockets. All seven subsequent
+one-epoch model smokes and three 50-epoch A1 runs passed and were archived.
+The session interruption left A1 late-fusion completion unverified; teardown
+was confirmed at 03:56:01.801127 UTC, with no server sessions remaining.
+Smoke timings establish operational planning inputs, not an
+architecture-quality ranking. The coarse 10-second GPU-memory sampler missed
+short training phases and does not establish reliable peak-memory comparisons.
+Source/overlay hashes, the
+unchanged allocation timestamp, and portable preparation receipts are in the
+[pilot summary](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md).
 
 On 2026-09-14, CARE cache completion and actual notebook-command GPU training
 were verified on Colab G4. All 817 train and 34 test structures have audited
@@ -257,18 +365,24 @@ These corrections do not resolve or select the primary final-test dataset.
 
 ## Current blockers
 
-1. The primary final-test route requires a separate scientific decision.
-2. The intended primary metal reporting endpoint is four-class, and both direct
-   four-class training and a matched six-class-trained/collapsed-four challenger
-   are required. The metal playbook common recipe remains six-class, the
-   notebook live default is a separate five-class resume value, and no exact
-   paired recipe or trusted matched comparison is indexed.
+1. The original mixed 404/401 connection loss is still under investigation.
+   Recovery and ownership-preserving teardown controls are implemented and
+   tested, and the second allocation is now stopped and verified. A later `whoami` refreshes OAuth
+   before reporting validity, so it cannot certify the pre-failure token state.
+   Proxy-token lifetime is a hypothesis, not an established cause. The primary
+   final-test route separately remains unresolved.
+2. The bounded metal pilot's exact four/five/six recipes and native-selection
+   policy are implemented; all seven original smokes and eight A1/A2 full runs
+   are verified, and all 15 geometry fits are complete. Original
+   target-formulation blocks and all ten selected-LR repeats are also complete.
+   The retained historical blocks are not the
+   pilot profile; later paired HPO/Stage 6/6B/7 recipes remain to be reconciled.
 3. Current promotion policy calls for grouped-fold Stage 6 evidence, but no such
    completed evidence was found for the historical six-class
    anchor/challengers.
-4. The required controlled metal-model comparison matrix is incomplete: early
-   fusion lacks an indexed completed run, the modality comparison lacks shared
-   Stage 6 evidence, and RING lacks a matched on/off causal ablation.
+4. The required controlled metal-model comparison matrix is incomplete despite
+   the completed bounded target/family/seed pilot. Shared Stage 6 evidence and a
+   matched RING on/off causal ablation remain absent.
 5. A reportable Stage 6B final-refit artifact was not found.
 6. Hybrid Round-1 full configuration/search-space provenance is missing.
 7. The EC standalone Stage 0–2B recipe is executable and its twelve baselines
@@ -292,25 +406,26 @@ Open implementation issues:
 
 ## Immediate next action
 
-In a separate implementation/recipe task, reconcile the metal playbook and
-notebook launch surface with both required target-formulation arms, then define
-the matched Phase 1 campaign for Only-GVP, Only-ESM, and GVP + graph-level late
-fusion. Each family needs a direct-four arm and a separately named six-class
-arm with collapsed-four evaluation. Preserve all historical six-class and
-five-class records under their original schemes. Do not use historical test
-metrics or open held-out data during that reconciliation.
+Review the completed [continuation](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md)
+and [geometry](docs/notebook_outputs/summaries/summary_metal_coordination_geometry_pilot_20260915.md)
+evidence, then freeze the scope and executable recipe for the next controlled
+comparison. Keep Only-ESM direct-four as a reference candidate and late-five
+as a separately labeled challenger; both have class tradeoffs. The current
+execution is finished and its GPU is stopped. No further training is launched
+by this closeout.
 
-Do not launch the existing six-class playbook blocks alone and call the required
-paired comparison complete. Exact matched direct-four and six-to-collapsed-four
-stage blocks must be reviewed in the metal playbook first. If a later campaign
-reaches candidate confirmation, the next promotion stage remains grouped-fold
-**Stage 6**, then Stage 6B, never direct held-out evaluation.
+Any future target comparison must retain native checkpoint/LR selection and
+same-checkpoint probability-collapsed-four reporting. Eventual promotion needs
+grouped-fold **Stage 6**, followed by Stage 6B and a scientifically resolved
+one-shot Stage 7 route. Required hybrid/RING evidence and later exact recipes
+remain to be reconciled; this pilot does not satisfy those broader gates.
 
 ## Next few actions
 
-1. **Phase 1:** reconcile and establish both metal target formulations for
-   Only-GVP, Only-ESM, and GVP + graph-level late fusion: direct four-class
-   training and matched six-class training with collapsed-four evaluation.
+1. **Phase 1 — initial bounded metal pilots complete:** preserve all 45 full
+   fits, 12 smokes, prediction export, finalization and closed allocation
+   receipts. Review the matched fixed-split results before choosing another
+   controlled comparison; hybrid remains deferred and no model is promoted.
 2. **Phase 2 — completed at the initial fixed-split level:** retain the twelve
    EC1 standalone baselines for the three initial families. Grouped-fold
    confirmation and final promotion remain future work.
@@ -340,6 +455,7 @@ Do not infer exact budgets from this status file.
 - [Experiment index](docs/notebook_outputs/README.md)
 - [Parameter/HPO findings](docs/PARAMETER_FINDINGS.md)
 - [Dataset and test-use authority](docs/DATASETS.md)
+- [Ongoing bounded metal pilot: preparation and provenance](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md)
 - [Late-fusion Round-4 summary](docs/notebook_outputs/summaries/summary_run_gvp_late_fusion_round4_top3_seedrepeat_50epoch.md)
 - [Recovered late-fusion Round-4 JSON evidence](<docs/notebook_outputs/raw/GVP + late fusion/metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1/>)
 - [Node-level negative-result summary](docs/notebook_outputs/summaries/summary_run_gvp_node_level_late_fusion_round1_from_latefusion_trial49_seedrepeat_50epoch.md)

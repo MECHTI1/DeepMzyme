@@ -135,6 +135,17 @@ labeled alternative experiments and for preserving historical evidence. It
 keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
 name and Optuna study whenever the target scheme changes.
 
+The bounded architecture pilot includes that five-class scheme as an additional
+matched challenger across the same three core families. For this pilot every
+arm selects checkpoints and its learning rate by native
+`val_metal_balanced_acc`; native and collapsed-four reports must come from that
+same selected checkpoint. Sum class probabilities before the collapsed-four
+argmax. Native four-, five-, and six-class balanced accuracies are different
+objectives and must not be ranked against one another. The common-four view
+answers the target-formulation comparison; native recalls retain the finer
+class diagnostics. Earlier explicitly collapsed-four-selected recipes and
+their outputs retain that historical identity.
+
 Historical six-class and five-class runs must retain their original target
 scheme in every table, comparison, and interpretation. Their scores are not
 direct four-class training scores. In particular, these are different
@@ -226,10 +237,94 @@ Authoritative rules for the pipeline:
   reserve much larger batches for explicitly labeled ablations.
 - The advanced fusion order is Stage 5C -> Stage 5D -> Stage 5E -> Stage 5F,
   gated by validation evidence and thresholds defined in the playbook.
+- This serious-HPO order does not prohibit bounded early/hybrid manual screens
+  during Stage 2B. The architecture pilot includes early fusion alongside the
+  three core families, then completes the required target-formulation coverage
+  before an optional hybrid screen. A weak early result may defer hybrid under
+  the budget; it cannot establish that hybrid is ineffective.
 - The metal campaign must complete the controlled comparison matrix in
   Section 7 before making publication claims about the value of ESMC, fusion
   position, or RING edges. Separate HPO winners or unmatched historical runs
   do not satisfy this requirement.
+
+### Bounded architecture exploration
+
+The `metal_architecture_pilot_10h_v1` profile is a separately budgeted Stage
+0–2B campaign. Its exact schedule, values, runnable block, outputs, and decision
+gates belong to the opening pilot section of the metal playbook. It does not
+automatically expand into the serious Optuna stages or Stage 6 confirmation.
+
+Use one GPU worker and persistent attempt accounting. Charge setup, training,
+failures, interruption losses, and artifact handling to the declared allocation
+budget. Forecast complete comparison blocks from measured costs on the current
+GPU before admitting them. Preserve completed attempts across reconnects;
+partial blocks are coverage evidence, not complete paired comparisons.
+
+Explore architecture families with equal small learning-rate opportunities
+before adding capacity, regularization, loss, or graph changes. Treat each
+group of changes as a separately budgeted question instead of multiplying all
+axes into one search. A later tuning cycle permits one specifically diagnosed
+rescue comparison within its budget; after that, park unsuccessful directions
+as not competitive under the tested budget. No architectural rejection follows
+from smoke results, one learning rate, or one seed. Freeze one configuration
+per required arm before separately costing grouped-fold confirmation; do not
+automatically send a large HPO shortlist into confirmation.
+
+The pilot uses internal `pdbid`-grouped validation from non-overlap PinMyMetal
+training membership. PDB-ID separation does not establish homology separation.
+Exact PinMyMetal is a later, separately labeled reference benchmark after
+validation choices and the reporting cohort are frozen. Its overlap and the
+historical use of the shared non-overlap test must remain visible; selecting
+this development route does not resolve the primary final-test route.
+
+Keep geometry controls distinct: pocket extraction selects residues around
+the supplied metal coordinates; edge radius determines residue connections;
+classifier pooling decides which graph states enter the final readout. A zero
+pooling-distance cutoff disables only that additional filter. Residue-only
+graphs without explicit metal nodes still use metal coordinates for pocket
+construction and geometric features. Localized pooling remains a separate
+matched ablation after the initial architecture screen.
+
+### Controlled coordination-geometry exploration
+
+The separate `metal_coordination_geometry_pilot_v1` profile tests whether
+candidate-ligand counts, angular summaries, and explicit generic metal nodes
+help direct-four Only-GVP prediction. Complete the original pilot's two
+learning-rate architecture blocks first, then run this geometry comparison,
+then return to the original remaining blocks. Both profiles share the original
+cumulative allocation cap, including recovery and setup across sessions; the
+geometry profile does not authorize a fresh budget. The metal playbook owns
+the [exact five-arm recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-coordination-geometry-pilot--stage-2b),
+admission forecast, and execution commands.
+
+Decouple site geometry inputs from metal-node construction. Compare masked
+geometry inputs, counts alone, and counts plus angles without metal nodes;
+then compare the latter two settings with metal nodes. All explicit geometry
+modes must use the same feature dimensions and generic node-type machinery.
+Hold the residue-only readout fixed so that adding metal nodes tests their
+effect without also changing the pooled node population. The existing pipeline
+fits edge-distance and sequence-distance normalization over all training edges;
+adding metal edges therefore changes those fitted statistics. Interpret the
+metal-node contrast as representation, connectivity, and edge-normalization
+changes together, not as a topology-only effect. Angle-only contrasts keep
+graphs and their normalization fixed.
+
+Retain the legacy mode for historical configurations; its earlier results are
+context, not a replacement for the new explicit masked control.
+
+Interpret the geometry summaries as features of a candidate-ligand heuristic,
+not chemically certified coordination numbers or coordination-shape labels.
+The existing helper omits water, cofactors, and noncanonical residues and can
+use a residue-centroid fallback. Aggregating within-center angles across metal
+centers loses center-specific detail. Keep those limitations and missing or
+degenerate geometry visible in diagnostics. Neither supplied metal coordinates
+nor generic metal-node types may encode the target element identity.
+
+Use matched learning-rate opportunities and a second model seed to assess
+whether each added component warrants further work. These fixed-split results
+do not promote an architecture or settle the required grouped-fold comparison.
+Keep geometry exploration separate from EC, joint learning, RING, fusion, and
+held-out reporting; do not multiply those axes into this pilot.
 
 ### Metal Colab Parameter Ownership Rule
 
@@ -469,7 +564,8 @@ can reproduce a command-line run.
 | Model size | `--head-mlp-layers` | `2` | Number of linear layers in metal/EC classifier heads. | Expose / sweep |
 | Model regularization | `--head-mlp-dropout` | `0.2` | Dropout between hidden layers in classifier heads. Default preserves the previous hardcoded head dropout. | Expose / optional sweep |
 | Graph construction | `--edge-radius` | project default currently `8.0` in code | Residue-neighbor radius for graph edges before optional RING edges. | Expose / sweep |
-| Graph construction | `--metal-node-mode` | `none`; choices `none`, `per_metal` | Opt-in GVP graph variant that appends one generic metal anchor node per metal coordinate, promotes metal-ligand edges into message passing, and adds metal-centered angle summaries. Must not encode the true metal element. | Advanced / validation-only ablation |
+| Graph construction | `--metal-node-mode` | `none`; choices `none`, `per_metal` | Opt-in GVP graph variant that appends one generic metal anchor node per metal coordinate and promotes metal-ligand edges into message passing. Explicit site-geometry modes control summary inputs independently; `legacy` retains the historical coupling. Must not encode the true metal element. | Advanced / validation-only ablation |
+| Site geometry | `--site-geometry-features` | `legacy`; choices `legacy`, `none`, `counts`, `counts_angles` | GVP summary-input control. Explicit modes share eight masked geometry slots and generic node-type embeddings; counts use `log1p`, and six angular summaries are divided by 180. `legacy` preserves historical behavior. | Advanced / validation-only ablation |
 | Node/edge encoders | `--node-feature-set` | `conservative` only | Named set of residue/node features. Only `conservative` is currently implemented. | Expose |
 | Node/edge encoders | `--node-rbf-sigma` | `0.75` | Width of distance radial-basis features for node distance features. | Advanced |
 | Node/edge encoders | `--edge-rbf-sigma` | `0.75` | Width of distance radial-basis features for edge distance features. | Advanced |
@@ -537,10 +633,13 @@ For `gvp` and `simple_gnn_esm`, supported fusion modes are:
 
 The `--metal-node-mode per_metal` option is currently a GVP-only validation
 ablation (`gvp` and `only_gvp`). It adds generic metal anchor nodes and
-metal-ligand message-passing edges, plus metal-centered ligand-angle summary
-features. These graph features must remain identity-safe: they may use geometry
-and a generic metal-node type, but not the true metal symbol, atomic number, or
-class-specific chemistry.
+metal-ligand message-passing edges. `--site-geometry-features legacy` preserves
+the historical ligand-angle-summary path with metal nodes, including its
+training-pipeline normalization; the
+explicit `none`, `counts`, and `counts_angles` modes control these inputs
+independently with fixed feature dimensions. These graph features must remain
+identity-safe: they may use geometry and a generic metal-node type, but not the
+true metal symbol, atomic number, or class-specific chemistry.
 
 #### Desired future work not currently supported
 
@@ -832,18 +931,18 @@ into that first relationship experiment.
 
 ### Separate metal architecture investigations
 
-The broader metal-only architecture campaign may investigate early fusion and
-more complex fusion modes after the three standalone baselines are established.
+The broader metal-only architecture campaign may screen early fusion alongside
+the three standalone baselines in a bounded Stage 2B comparison. Additional
+complexity is conditional on the declared budget and validation priority gates.
 That architecture campaign is scientifically separate from the initial
 metal-EC auxiliary experiment and must not be used to smuggle extra complexity
 into its comparison.
 
 `GVP + early fusion` is a supported preset. It is required in the controlled
-fusion-position comparison below, although it is not currently a named stage
-in the canonical metal HPO route. Before launching that comparison, add or use
-an exact executable early-fusion recipe in
-`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; do not invent its budget from the
-other fusion stages.
+fusion-position comparison below. The bounded architecture pilot provides its
+manual recipe in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; a dedicated serious
+early-fusion HPO block remains absent. Do not assign it the budget of another
+fusion stage or describe the pilot as a serious HPO campaign.
 
 ### Required controlled metal-model comparison matrix
 

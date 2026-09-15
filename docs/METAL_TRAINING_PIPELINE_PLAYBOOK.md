@@ -1,6 +1,11 @@
 # Metal Training Pipeline Playbook
 
-## Standalone validation campaign — Stage 0 through Stage 2B
+For the bounded, one-GPU metal campaign use
+[metal_architecture_pilot_10h_v1](#bounded-metal-architecture-pilot--stage-0-through-stage-2b).
+The earlier standalone block is retained first for compatibility and historical
+interpretation. It is not the active pilot profile.
+
+## Retained Common70 standalone validation campaign — Stage 0 through Stage 2B
 
 
 For the direct arm, selection is `val_metal_balanced_acc`. For the required
@@ -13,8 +18,10 @@ selected checkpoint**. Never compare native-six BA numerically against
 direct-four BA. Six variants × four runs = 24 baseline runs; six separate
 one-epoch smoke runs precede them. No Optuna study is created.
 
-This is the standalone-only preparation route. It supersedes the retained
-baseline examples below for this campaign; later HPO and final-reporting recipes
+This is the earlier standalone-only preparation route. Its six-class
+collapsed-four-selection exception is historical and is not the pilot's
+native-selection policy. It supersedes the older baseline examples below only
+for this retained campaign; later HPO and final-reporting recipes
 are outside this certification. Keep all launch controls false while preparing.
 No comparison result or promotion is implied by a passing configuration check.
 
@@ -242,6 +249,518 @@ by seed-mean task metric with the recall gate; do not select a lucky seed or
 pool different learning rates into one family mean. Equal-budget per-family
 selection remains preliminary fixed-split evidence.
 
+## Bounded metal architecture pilot — Stage 0 through Stage 2B
+
+Profile: **`metal_architecture_pilot_10h_v1`**. This is a fresh, bounded
+validation-only metal screen using existing architectures. It provides an
+early-fusion comparison immediately while protecting required target-formulation
+coverage before optional hybrid work. It is neither a serious Optuna stage nor
+Stage 6 promotion. Read `EXPERIMENT_STATUS.md` for actual execution state.
+
+### Exact fixed recipe
+
+The runner materializes these values in every planned command and records its
+source identity. Other notebook grid/HPO settings do not override this profile.
+
+| Area | Pilot value |
+|---|---|
+| Input | Non-overlap PinMyMetal **train** structures and train site summary only |
+| Task and selection | `metal`; native `val_metal_balanced_acc` in every target arm |
+| Targets | `four_class`, `five_class`, `six_class`; separate variant/run identities |
+| Eligibility and split | Native-six eligibility; `pdbid`; `metal_site` stratification; split seed 42; validation fraction 0.15 |
+| Training | 50 epochs; batch 8; LRs `3e-5,1e-4`; fixed schedule; weight decay `1e-4`; model seed 42, then selected-LR seed 43 |
+| Capacity | Hidden scalar/vector 128/16; edge hidden 64; 4 GVP layers; 2 head layers; head dropout 0.2 |
+| ESM | Frozen ESMC-300m residue embeddings, dimension 960; fusion dimension 128; graph-ESM dropout 0.1; early bottleneck 32; early dropout 0.0 |
+| Features | Conservative; complete ESM/external coverage over the shared cohort; certified PROPKA feature overlay; no automatic feature generation during training |
+| Loss | Cross-entropy; training-only inverse-frequency native class weights; unit manual multipliers; no site sampler, label smoothing, or collapsed auxiliary loss |
+| Geometry | Extraction 10 Å by any-atom-to-site-metal distance; edge radius 6 Å by closest residue atom distances; pooling cutoff 0.0; residue-only readout; no explicit metal nodes |
+| Edges and augmentation | Radius-only, no RING; position noise, second-shell dropout, outer-residue dropout all 0 |
+| Runtime | One CUDA worker; loader workers 0; deterministic; class-level metrics; invalid/unsupported structures are errors |
+| Test and HPO | Held-out inputs/evaluation disabled; no Optuna study, Stage 6, Stage 6B, or Stage 7 launch |
+
+Pooling cutoff zero includes **all residue nodes already extracted for the
+pocket**, using mean plus learned attention pooling. It does not make the edge
+radius the pocket radius, and it does not select the whole protein. Positive
+pooling cutoffs use Cα-to-metal distances after message passing. Disabling
+explicit metal nodes still leaves metal coordinates in pocket extraction and
+geometric features. Record extracted and pooled residue counts; they must match
+for this zero-cutoff residue-only profile. Only-ESM pools pocket-residue ESM
+features, not a separately established full-protein representation.
+
+Feature readiness must inspect availability/provenance masks as well as file
+existence: a present cache with unavailable PROPKA/pKa values is not complete
+measured feature coverage. This pilot requires a certified training-only
+external-feature overlay with `tooling.pka="propka"` and a hashed provenance
+manifest. Generate and verify it on CPU before allocating the GPU. Freeze and
+hash the overlay separately from the original bundle and use the same repaired
+inputs for every arm; never relabel modified caches as the unchanged published
+bundle. This requirement does not assert that every non-titratable residue has
+a measured pKa. Record missingness and tool failures explicitly.
+
+### Exact schedule and budget
+
+The overall allocation cap is **600 minutes**, including setup, interruption
+losses, verification, and shutdown. Planning allocations are profile/setup 60,
+main training 450, linked retry recovery 60, and closeout 30 minutes. Stop
+training no later than minute 570. Preserve the original allocation-start time
+across repeated calls and reconnects; a new call cannot reset the ledger.
+These original-runner commands use the timestamp of their live allocation.
+A later GPU allocation requires the verified recovery workflow described in
+the geometry execution prerequisites below, retaining prior closed intervals.
+
+Run seven one-epoch smoke configurations first: Only-GVP four/five/six; then
+Only-ESM, early, late, and hybrid with direct-four targets. Require finite
+training/validation outputs, every native class in both splits, matching retained
+example/group identities, complete required features, and no test report.
+Measure setup plus training/validation/save costs and peak GPU memory. Smoke
+scores are not architecture evidence.
+
+| Order | Block | Variants | LR | Model seed | Full runs |
+|---:|---|---|---|---:|---:|
+| 1 | A1 | Direct-four Only-GVP, Only-ESM, early, late | `3e-5` | 42 | 4 |
+| 2 | A2 | Same four variants | `1e-4` | 42 | 4 |
+| 3 | T1 | Five/six targets × Only-GVP, Only-ESM, late | `3e-5` | 42 | 6 |
+| 4 | T2 | Same six variants | `1e-4` | 42 | 6 |
+| 5 | H, conditional | Direct-four hybrid | Both LRs | 42 | 2 |
+| 6 | R | Four/five/six × three core families, each chosen LR | Chosen per variant | 43 | 9 |
+| 7 | RE | Direct-four early, chosen LR | Chosen | 43 | 1 |
+| 8 | RH, conditional | Direct-four hybrid, chosen LR | Chosen | 43 | 1 |
+
+The authorized coordination-geometry extension runs as a **separate profile
+after A1/A2 and before T1/T2**; see the [geometry recipe](#bounded-coordination-geometry-pilot--stage-2b).
+It shares this campaign's cumulative allocation cap. The table above preserves
+the original profile's block identities and internal order; the orchestration
+pause does not change completed runs or rewrite their frozen manifest.
+
+H is prioritized only if early's best native balanced accuracy is at least
+0.01 above Only-GVP's best and its minimum native recall is no more than 0.03
+below Only-GVP's. Choose each model's LR by native balanced accuracy, then
+native minimum recall; break a remaining tie deterministically by the lower
+LR. Apply the gate after A1/A2, but complete T1/T2 before spending optional
+hybrid time. If the gate fails, label hybrid **deferred under this budget**.
+This single-seed gate is a scheduling heuristic, not statistical evidence for
+promotion or rejection; hybrid's extra ESM pathway could still help.
+
+Admit a new block only when its full remaining cost forecast, multiplied by
+1.25, fits the remaining allowance. Update estimates from actual completed
+runs and changed hardware. Never shorten selected models' epochs to make a
+block appear complete. Preserve unfinished blocks and exclude them from
+paired comparison summaries. The maximum planned work is 33 full runs plus
+seven smokes when hybrid is included and all budget gates pass; completion
+within the allocation is not guaranteed.
+
+### Exact notebook preview block
+
+After normal repository and data setup, use the optional **Bounded metal
+architecture pilot** notebook cell. Its controls are:
+
+```python
+METAL_PILOT_PROFILE = "metal_architecture_pilot_10h_v1"
+METAL_PILOT_OUTPUT_DIR = "/content/drive/MyDrive/DeepMzyme/notebook_outputs/campaigns/metal_architecture_pilot_10h_v1"
+METAL_PILOT_EXTERNAL_FEATURES_ROOT_DIR = "/content/metal_architecture_pilot_features/external_overlay"
+METAL_PILOT_FEATURE_OVERLAY_MANIFEST = "/content/metal_architecture_pilot_features/external_overlay/feature_overlay_manifest.json"
+```
+
+These paths are explicit examples: use the actual mounted Drive root and the
+verified, extracted overlay/manifest locations. All three paths are required
+by the opt-in cell. It calls
+`plan(Path(REPO_DIR), Path(DATA_ROOT), output, "notebook_working_snapshot", external_features_root_dir=overlay_root, feature_overlay_manifest=overlay_manifest)`
+and previews the queue. It does not launch training. Keep ordinary notebook
+main/Optuna/Stage 6/6B/7 launch switches off. Do not replan a started campaign
+under changed source/data; preserve its original identity.
+
+### Execution and persistence contract
+
+Prepare the feature overlay and source snapshot on CPU before allocating the
+GPU. Run from the repository root, setting `PILOT_CPU_PYTHON` to the verified
+DeepMzyme development interpreter. The task-specific path below keeps generated
+files outside tracked source and preserves the original caches:
+
+```bash
+PILOT_PREP_DIR="DeepMzyme_Data/notebook_outputs/plans/metal_architecture_pilot_10h_v1"
+"${PILOT_CPU_PYTHON:?verified DeepMzyme interpreter required}" scripts/repair_metal_pka_cache.py \
+  --data-root DeepMzyme_Data \
+  --output-root "${PILOT_PREP_DIR}/external_overlay" \
+  --jobs 4
+```
+
+Require `external_overlay/feature_overlay_manifest.json` to report
+`status="complete"`, no failures, full training-structure coverage, and valid
+per-file hashes. `--limit` is a preparation probe only and does not certify a
+full campaign. Existing compatible repaired files are reusable. For an overlay
+generated before the compact PROPKA residue-token parser fix, refresh affected
+wide residue numbers using:
+
+```bash
+"${PILOT_CPU_PYTHON:?}" scripts/repair_metal_pka_cache.py \
+  --data-root DeepMzyme_Data \
+  --output-root "${PILOT_PREP_DIR:?}/external_overlay" \
+  --jobs 4 \
+  --refresh-wide-residue-numbers
+```
+
+The refresh targets structures with standard-residue numbers at least 1000 or
+at most -100, and structures with insertion codes. For insertions, temporary
+unique numbering and an explicit map preserve each original residue identity;
+unmeasurable sidechains retain their missing-value flags. The refresh reuses
+other compatible overlay files. Recheck the final manifest and transfer the
+overlay with that manifest before planning GPU runs.
+
+After code/documentation checks pass, package the working tree and the exact
+non-overlap training-membership receipt:
+
+```bash
+"${PILOT_CPU_PYTHON:?}" scripts/prepare_colab_smoke_snapshot.py \
+  --dataset train_and_test_sets_structures_non_overlapped_pinmymetal \
+  --output-dir "${PILOT_PREP_DIR:?}/colab" \
+  --archive-name deepmzyme-metal-pilot-code.tar.gz
+```
+
+This produces `deepmzyme-metal-pilot-code.tar.gz`, its `.sha256` sidecar, and
+`code_snapshot_manifest.json`; the archive includes
+`colab_expected_metal_inputs.json`. It captures working files, including
+uncommitted source, and does not create a clean Git commit. It excludes data
+and the feature overlay, which must be transferred and verified separately.
+Freeze this source snapshot before creating the campaign manifest. The
+snapshot script's historical defaults remain unchanged; the explicit dataset
+and archive arguments above select this pilot.
+
+Use `src/run_metal_architecture_pilot.py` through its importable `plan`,
+`preflight`, `execute`, and `summarize` entry points. `plan(root, data, output,
+source_commit)` takes `Path` arguments and writes the preview;
+`preflight(root, output, allocation_started_epoch, persistence_receipt=None)`
+checks the actual CUDA runtime and complete shared cohort.
+`execute(root, output, allocation_started_epoch, persistence_receipt=None,
+max_runs=1)` advances a bounded step in the persistent queue. `summarize(output)`
+refreshes the coverage/decision reports. Use the same paths, frozen source,
+original allocation timestamp, and verified persistence receipt on every step.
+
+For terminal execution from the repository root, set `PILOT_PYTHON` to the
+verified runtime interpreter, `PILOT_OUTPUT_DIR` to the planned output, and
+`PILOT_ALLOCATION_STARTED_EPOCH` to the recorded UTC epoch of GPU allocation
+(before setup, not the current time). The mounted-Drive path is:
+
+```bash
+"${PILOT_PYTHON:?verified interpreter required}" src/run_metal_architecture_pilot.py preflight \
+  --output-dir "${PILOT_OUTPUT_DIR:?planned output required}" \
+  --allocation-started-epoch "${PILOT_ALLOCATION_STARTED_EPOCH:?original allocation time required}"
+"${PILOT_PYTHON:?}" src/run_metal_architecture_pilot.py execute \
+  --output-dir "${PILOT_OUTPUT_DIR:?}" \
+  --allocation-started-epoch "${PILOT_ALLOCATION_STARTED_EPOCH:?}"
+"${PILOT_PYTHON:?}" src/run_metal_architecture_pilot.py summarize \
+  --output-dir "${PILOT_OUTPUT_DIR:?}"
+```
+
+For verified archive transfer, append `--persistence-receipt` with the path to
+the verified storage receipt to preflight and execute. Each execute call runs
+at most one attempt. Archive and verify it before the next call; inspect
+`campaign_state.json` and continue only while it requests the next step. Stop
+on a completed campaign, budget stop, or unresolved failure. For a separately
+prepared feature overlay, pass its root and manifest when initially calling
+`plan` through `external_features_root_dir` and `feature_overlay_manifest`;
+do not replace feature paths after planning.
+
+Execution requires durable artifacts, either a verified mounted Drive output
+directory or a verified transfer workflow. For the transfer workflow, copy and
+verify each completed attempt locally and in Drive before permitting the next
+attempt, and retain the receipt. A preview is not proof that persistence works.
+Charge every failed/interrupted attempt; allow one linked retry per
+configuration within the global 60-minute retry allowance.
+Completed-run reuse validates artifacts and the source/configuration/data
+identities. This supports campaign continuation, not mid-epoch training resume.
+Follow `COLAB_GPU_RUNBOOK.md` for runtime teardown after verified closeout.
+
+### Expected outputs and decision gate
+
+Expected campaign files are:
+
+- `campaign_manifest.json`, `commands.txt`, and `run_matrix.csv`;
+- `campaign_attempt_ledger.json`, `campaign_attempt_ledger.csv`, and
+  `allocation_ledger.json`;
+- `expected_split.json`, `pooling_diagnostics.json`, and `readiness.json`;
+- `architecture_screen.csv`, `target_formulation_screen.csv`,
+  `campaign_coverage.json`, `validation_results.json`, and `decision_record.md`;
+- `campaign_state.json` for the current queue/stop decision, plus
+  `transfer_receipts/attempt_NNN.json` when verified transfer is used.
+
+Each completed training run preserves `run_config.json`,
+`run_metadata.json`, `dataset_summary.json`, `split_diagnostics.json`,
+`prepare_status.json`, `epoch_metrics.csv`, `train_metrics.csv`,
+`val_metrics.csv`, and `best_model_checkpoint.pt`. The pilot manifest records
+each command's resolved configuration; the ordinary notebook planner's
+`active_run_config.json`/`.md` remain separate from this pilot manifest.
+No `test_report.json` may be present.
+
+Report native metrics and native per-class recalls from the checkpoint selected
+by `val_metal_balanced_acc`. Form common-four predictions by summing Fe/Co/Ni
+probabilities (or Fe with grouped Co+Ni for five classes) before argmax; report
+that view from the same checkpoint. Compare target formulations on the common
+four-class endpoint. Compare combined models with both unimodal baselines;
+keep runtime, incomplete coverage, zero-recall classes, and LR opportunities
+visible. Report chosen-LR seed repeats separately from unmatched discovery
+rows; never average different LRs into one family score.
+
+The screen ends with a **continue, rescue once, park, or confirm** decision
+based only on completed validation evidence. No model is promoted by this
+screen. A later cycle must be separately costed; freeze one configuration per
+required comparison arm before shared five-fold grouped confirmation crossed
+with model seeds 42/43. Paired fold-level confidence intervals, seeds averaged
+within folds, and rare-class recall protection are required for promotion.
+Final reporting still requires resolution of the final-test route, Stage 6
+confirmation, a completed Stage 6B full-train refit, and one-shot Stage 7.
+Exact PinMyMetal is a later separately labeled reference benchmark; its
+overlapping PDB IDs and the historical use of its shared test remain disclosed.
+
+## Bounded coordination-geometry pilot — Stage 2B
+
+Profile: **`metal_coordination_geometry_pilot_v1`**. This is a separate
+validation-only, direct-four Only-GVP comparison of added candidate-ligand
+counts, angular summaries, and generic metal nodes. It follows complete A1
+and A2 blocks of `metal_architecture_pilot_10h_v1`, then returns control to
+that profile's remaining blocks. Read `EXPERIMENT_STATUS.md` for measured
+completion and recovery status; this recipe defines authorized work, not
+execution evidence.
+
+### Exact arms and fixed controls
+
+| Arm | `--site-geometry-features` | `--metal-node-mode` | Added count slots | Added angular slots |
+|---|---|---|---|---|
+| A | `none` | `none` | Masked | Masked |
+| B | `counts` | `none` | `log1p` counts | Masked |
+| C | `counts_angles` | `none` | `log1p` counts | Six summaries / 180 |
+| D | `counts` | `per_metal` | `log1p` counts | Masked |
+| E | `counts_angles` | `per_metal` | `log1p` counts | Six summaries / 180 |
+
+All five arms use four existing site inputs plus the same eight geometry
+slots, the same generic residue/metal node-type embeddings, and identical
+model parameter shapes. `none` masks the added geometry slots; it does not
+remove the existing site inputs or other geometric features. Historical
+`legacy` Only-GVP results are context: run a fresh A control with the matched
+explicit machinery. No arm encodes the true metal symbol, atomic number, or
+target class as an input.
+
+| Control | Fixed geometry-pilot value |
+|---|---|
+| Task, architecture, target | `metal`; `only_gvp`; direct `four_class` (`merge_fe_class_viii`); no ESM branch |
+| Checkpoint selection | Native `val_metal_balanced_acc`; same selected checkpoint for all reported metrics |
+| Data and split | Original pilot's non-overlap training-only cohort and certified external overlay; native-six eligibility; `pdbid` groups; `metal_site` stratification; split seed 42; validation fraction 0.15 |
+| Training | 50 epochs; batch 8; LRs `3e-5,1e-4`; fixed schedule; weight decay `1e-4`; initial model seed 42, selected-LR repeat seed 43 |
+| Capacity | Hidden scalar/vector 128/16; edge hidden 64; 4 GVP layers; 2 head layers; head dropout 0.2 |
+| Features and loss | Conservative; required certified external features; cross-entropy; training-only inverse-frequency class weights; manual multipliers all 1; no label smoothing, site sampler, or collapsed auxiliary loss |
+| Extraction and edges | Pocket extraction 10 Å by any atom; residue edges 6 Å by closest atom; radius-only; RING disabled |
+| Readout | Explicit `--structural-readout-scope residue_only`; `--classifier-pool-distance-cutoff 0.0`; mean plus learned attention pooling over every extracted residue |
+| Runtime and augmentation | One CUDA worker; loader workers 0; deterministic; no position noise, second-shell dropout, or outer-residue dropout |
+| Excluded stages | No held-out inputs or evaluation, Optuna, Stage 6 confirmation, final refit, or promotion |
+
+With metal nodes enabled, their messages can change residue representations,
+but the nodes are excluded from final pooling. Do not use readout `auto` for
+this comparison: it would also change the pooled node types.
+Residue-node normalization excludes metal nodes. Edge-distance and
+sequence-distance normalization still uses all training edges, so adding
+metal edges changes the fitted edge statistics. Preserve this existing
+pipeline; the metal-node arms test representation, connectivity, and edge
+normalization together. They do not isolate a topology-only effect.
+
+The first two geometry slots are the number of residue–metal candidate
+geometries and the number of within-metal ligand-vector pairs. The other six
+are angle minimum, mean, maximum, population standard deviation, mean absolute
+deviation from 109.47°, and mean deviation from the nearer of 90°/180°. Apply
+`log1p` only to counts and divide each angular summary by 180. For counts-only
+arms, keep the angular slots zero rather than changing input width. These
+explicit modes consume separately preserved raw summaries; they do not
+transform the legacy pipeline's standardized summary tensor. Preserve that
+legacy normalization for historical configurations.
+
+The existing helper is unchanged. It chooses one nearest candidate per residue
+per metal from up to two listed donor atoms, with a functional-group-centroid
+fallback if no listed donor is available; this may ultimately use a sidechain
+centroid or Cα. It omits waters, cofactors, and noncanonical residues. A
+first-shell assignment can retain the nearest metal beyond the usual ligand
+cutoff. Angular pairs are formed within individual centers and then pooled
+across centers, so a bridging residue can count once per center. Metal-edge
+construction can force a nearest connection for an otherwise disconnected
+center; the summary helper does not. Record summary counts and graph edges
+separately. These are candidate-geometry features, not certified coordination
+numbers or full coordination-shape labels.
+
+### Matched schedule and shared budget
+
+Run five fresh one-epoch smokes, one per arm at LR `3e-5`, model seed 42.
+They must verify finite losses/metrics, all classes present, the exact shared
+cohort, expected masked/scaled site inputs, identical parameter shapes,
+generic node types, and residue-only pooling. Inspect empty/degenerate angle
+cases and metal-edge versus summary-count differences. Measure complete
+prepare/train/validation/save time on the current GPU; smoke scores do not
+rank arms.
+Require identical fitted-normalization hashes within A/B/C and within D/E,
+and preserve each arm's hash across its later runs. A cross-group difference
+is expected to be possible because metal edges participate in normalization.
+
+Then run all five arms for 50 epochs at LR `3e-5`, followed by all five at
+`1e-4`, with model seed 42:
+
+| Block | Arms | LR | Model seed | Epochs | Runs |
+|---|---|---|---:|---:|---:|
+| S | A–E | `3e-5` | 42 | 1 | 5 |
+| G1 | A–E | `3e-5` | 42 | 50 | 5 |
+| G2 | A–E | `1e-4` | 42 | 50 | 5 |
+| GR | A–E | Selected independently per arm | 43 | 50 | 5 |
+
+Choose one LR independently for each arm by native
+validation balanced accuracy, then minimum class recall, then lower LR for a
+remaining tie. Repeat that selected configuration with model seed 43. The
+maximum geometry work is **five smokes plus 15 full runs**: ten LR-screen
+runs and five repeats. Split seed and validation membership remain fixed.
+
+The geometry pilot shares the original **600-minute cumulative allocation
+cap**; it does not receive another ten hours. Preserve the original planning
+allowances: setup/profile 60, main training 450, retries 60, closeout 30
+minutes, with training ending by cumulative minute 570. Count prior closed
+allocations, new setup, transfers, failed attempts, recovery, and teardown.
+Read current usage from the original campaign's allocation ledger and verified
+closeout evidence rather than recalculating it from successful training time.
+Additional geometry readiness and smokes consume the shared main allowance;
+linked retries consume the shared retry allowance.
+
+Before the first full geometry fit, forecast **all 15 full runs**, including
+the selected-LR repeats, from fresh per-arm smoke costs on the allocated GPU.
+Update the estimate with full-run measurements and multiply the cost of all
+remaining full runs by **1.25** before each admission. If the remaining
+comparison does not fit, stop and report incomplete coverage. This protects
+the five-arm comparison and its seed repeats together. Do not selectively
+shorten epochs or silently drop arms to manufacture a complete comparison.
+Run one worker and archive each bounded attempt before advancing. The original
+remaining architecture blocks retain their identities and may also remain
+unfinished under the shared cap.
+
+### Exact standalone execution
+
+Use `src/run_metal_coordination_geometry_pilot.py`; no notebook mutation is
+required. Before the first geometry smoke or full fit, verify the original
+A1/A2 artifacts, their local and Drive copies, and the validated recovery of
+the original campaign ledger if a new GPU allocation is needed. Preserve the
+closed allocation usage.
+Freeze the new source snapshot separately, including the geometry runner and
+this recipe. Keep the original source and run receipts intact.
+
+The operational recovery route is `scripts/colab_metal_pilot_resume.py`,
+documented with the runtime workflow and current execution evidence. It checks
+the original manifest, cohort, and content hashes and writes
+`cross_session_recovery/readiness.json`; it does not add a new resume command
+to the frozen original runner. Require successful recovery evidence before
+advancing that original queue on a new allocation.
+
+CPU planning and bounded readiness may precede A1/A2 completion, but the
+execute gate requires both blocks complete and no active original training
+process. Keep all GPU work serial.
+
+From the verified checkout root, set `GEOMETRY_PYTHON` to its verified runtime
+interpreter, `GEOMETRY_DATA_ROOT` to the data root, `GEOMETRY_OUTPUT_DIR` to a
+new geometry campaign directory, and `GEOMETRY_PARENT_CAMPAIGN_DIR` to the
+restored original architecture campaign directory. The overlay variables
+identify the same certified training-only features used by the parent.
+`GEOMETRY_SOURCE_ID` identifies the new frozen source snapshot.
+
+```bash
+"${GEOMETRY_PYTHON:?verified interpreter required}" src/run_metal_coordination_geometry_pilot.py plan \
+  --data-root "${GEOMETRY_DATA_ROOT:?verified data root required}" \
+  --output-dir "${GEOMETRY_OUTPUT_DIR:?new geometry output required}" \
+  --source-commit "${GEOMETRY_SOURCE_ID:?frozen source identity required}" \
+  --parent-campaign-dir "${GEOMETRY_PARENT_CAMPAIGN_DIR:?original campaign required}" \
+  --external-features-root-dir "${GEOMETRY_EXTERNAL_FEATURES_ROOT_DIR:?certified overlay required}" \
+  --feature-overlay-manifest "${GEOMETRY_FEATURE_OVERLAY_MANIFEST:?verified overlay manifest required}"
+```
+
+Planning writes a reviewable queue; it is not permission to bypass the parent
+completion, budget, source, or storage checks. Set
+`GEOMETRY_ALLOCATION_STARTED_EPOCH` to the recorded start of the actual live
+allocation, including setup. Preserve it across calls within that allocation;
+record a new interval only through the validated recovery/allocation workflow.
+`--budget-root` always points to the original campaign so that switching
+profiles does not reset usage. For the verified archive-transfer route:
+
+```bash
+"${GEOMETRY_PYTHON:?}" src/run_metal_coordination_geometry_pilot.py preflight \
+  --output-dir "${GEOMETRY_OUTPUT_DIR:?}" \
+  --allocation-started-epoch "${GEOMETRY_ALLOCATION_STARTED_EPOCH:?recorded allocation start required}" \
+  --budget-root "${GEOMETRY_PARENT_CAMPAIGN_DIR:?}" \
+  --persistence-receipt "${GEOMETRY_PERSISTENCE_RECEIPT:?verified persistence receipt required}"
+"${GEOMETRY_PYTHON:?}" src/run_metal_coordination_geometry_pilot.py execute \
+  --output-dir "${GEOMETRY_OUTPUT_DIR:?}" \
+  --allocation-started-epoch "${GEOMETRY_ALLOCATION_STARTED_EPOCH:?}" \
+  --budget-root "${GEOMETRY_PARENT_CAMPAIGN_DIR:?}" \
+  --persistence-receipt "${GEOMETRY_PERSISTENCE_RECEIPT:?}" \
+  --max-runs 1
+"${GEOMETRY_PYTHON:?}" src/run_metal_coordination_geometry_pilot.py summarize \
+  --output-dir "${GEOMETRY_OUTPUT_DIR:?}"
+```
+
+Each execute call is bounded to one attempt. Verify its local and Drive
+archives and receipt before the next call. Inspect the persistent next-step
+decision after every attempt; do not use an unchecked shell loop. Mounted
+Drive output follows the runner's verified mounted-storage contract instead.
+Follow `COLAB_GPU_RUNBOOK.md` for connection handling and verified teardown.
+
+### Expected geometry outputs
+
+The separate geometry directory preserves:
+
+- `campaign_manifest.json`, `commands.txt`, `run_matrix.csv`, and
+  `expected_split.json`, with the parent manifest/cohort and new source hashes;
+- `readiness.json`, `geometry_diagnostics.json`, and
+  `training_cache_audit.json`;
+- `geometry_normalization_controls.json`, recording within-graph-group and
+  within-arm normalization checks before full-run admission;
+- `campaign_attempt_ledger.json`, `campaign_attempt_ledger.csv`,
+  `campaign_state.json`, and `transfer_receipts/attempt_NNN.json` when using
+  verified transfer;
+- `geometry_campaign_admission.json` after full-campaign admission and
+  `geometry_selected_learning_rates.json` before the seed-repeat block;
+- `geometry_screen.csv`, `geometry_validation_results.json`,
+  `geometry_coverage.json`, and `geometry_decision_record.md`.
+
+The manifest includes both LR alternatives as seed-43 templates; only the
+selected LR is active for each arm. Count completed runs from coverage and
+verified attempt artifacts, not the number of manifest templates. The original
+budget directory owns `allocation_ledger.json` and receives
+`coordination_geometry_budget_usage.json` so later original-profile block
+admission includes geometry costs. This handoff is enforced by the host
+orchestration; it does not modify the frozen original runner.
+
+Every completed fit preserves `run_config.json`, `run_metadata.json`,
+`dataset_summary.json`, `split_diagnostics.json`, `prepare_status.json`,
+`epoch_metrics.csv`, `train_metrics.csv`, `val_metrics.csv`, and
+`best_model_checkpoint.pt`. Keep checkpoint archives locally and in Drive;
+portable documentation copies contain lightweight evidence with the shared
+cohort recorded once. No `test_report.json` may be present. Notebook
+`active_run_config.json`/`.md` are not this standalone runner's resolved
+configuration; the campaign manifest and per-run files own that record.
+
+### Interpretation and decision gate
+
+Inspect B−A for counts without metal nodes; C−B for angular summaries without
+metal nodes; D−B for metal nodes with counts fixed; E−C for metal nodes with
+counts and angles fixed; and E−D for angular summaries with metal nodes.
+The node contrasts include the edge-normalization changes described above;
+C−B and E−D keep the graph and its fitted normalization fixed.
+A−E changes several components and cannot isolate one mechanism. The design
+does not include a nodes-only arm, so it does not estimate a node effect with
+all added geometry inputs masked.
+
+Report each completed run's selected native balanced accuracy, minimum and
+per-class recall, epoch, LR, seed, duration, and measured memory with its
+sampling limitations. Compare arms at matched LR/seed first. Keep discovery
+rows distinct from selected-LR repeats; do not average different LRs into one
+arm score. With two seeds, report mean and sample SD for the fixed selected
+configuration, including recall deterioration and disagreement between seeds.
+
+End with an exploratory continue, park, or separately costed confirmation
+decision. A single fixed split and two seeds cannot provide the grouped-fold
+evidence required for promotion. Do not select from held-out results or launch
+new fusion, RING, loss, capacity, or EC combinations from this queue. Continue
+the original remaining blocks only after the geometry queue reaches its
+completed or explicitly budget-stopped state and the shared budget permits
+the next complete block. Stage 6/6B/7 requirements remain unchanged.
 
 This playbook is the practical, notebook-ready pipeline for DeepMzyme metal
 classification. It complements `Plan.md`, which remains the high-level research
@@ -273,12 +792,15 @@ primary PinMyMetal-compatible reporting endpoint. It requires a controlled
 comparison of direct `four_class` / `merge_fe_class_viii` training against
 matched `six_class` training followed by collapsed-four evaluation.
 
-The opening standalone Stage 0–2B recipe supplies both required target arms.
+The bounded pilot supplies both required target arms and a labeled five-class
+challenger, with native-selection and same-checkpoint common-four reporting.
+The retained opening standalone Stage 0–2B recipe supplies its historical pair.
 The older blocks below retain their six-class common recipe as historical
 workflow references; they are not a direct-four campaign or a matched pair.
 
-For the standalone campaign use the opening block, including its common-view
-selection metrics and target-independent split control. Before extending it
+For the current metal campaign use the bounded pilot below the retained
+standalone block, including its native selection and target-independent split
+control. Before extending it
 to HPO or final reporting, reconcile paired later-stage blocks. Coordinate study/run identities, common-view
 metrics, active-class metrics, rare-class gates, and Stage 6/6B/7 provenance
 with the notebook launch surface. Do not patch one label value in isolation or
@@ -458,9 +980,10 @@ Stage 3 may lower the minimum epoch only for plumbing/debug.
 Supported presets without canonical serious HPO blocks:
 
 - `GVP + early fusion` is implemented in the notebook/model preset map and may
-  be used in ESM-ready manual comparisons. This playbook does not currently own
-  a standalone serious HPO block for it. It remains a required candidate in the
-  separate metal fusion-position investigation once such a block exists.
+  be used in ESM-ready manual comparisons. The bounded architecture pilot owns
+  its manual screen recipe. This playbook does not currently own a standalone
+  serious HPO block for it; the limited screen does not replace the required
+  matched fusion-position confirmation.
 - `SimpleGNN + ESM` is implemented as an auxiliary scalar-graph ablation. This
   playbook does not currently own a standalone serious HPO block for it.
 
@@ -470,7 +993,7 @@ executable block is added here.
 ## Retained Six-Class Common Defaults — Reconciliation Required
 
 These are retained six-class values for the older stage examples below.
-Use the opening standalone block for the paired baseline campaign. Later-stage
+Use the bounded architecture pilot for the current baseline campaign. Later-stage
 paired HPO and final-reporting recipes still require reconciliation.
 
 ```python
@@ -1084,13 +1607,13 @@ making the corresponding publication claims:
 
 | Question | Playbook coverage | Completion requirement |
 |---|---|---|
-| Direct four-class training vs six-class training with collapsed-four evaluation | No exact paired stage block exists yet | Run both arms for Only-GVP, Only-ESM, and graph-level late fusion with separate studies, matched data/folds/seeds/features/budgets, common four-class validation metrics, paired CIs, and four-class recall protection; retain native six-class metrics for the six-class arm |
+| Direct four-class training vs six-class training with collapsed-four evaluation | The bounded pilot supplies native-selected matched baseline arms and an additional five-class challenger; later-stage paired blocks remain open | Run both required arms for Only-GVP, Only-ESM, and graph-level late fusion with separate studies, matched data/folds/seeds/features/budgets, common four-class validation metrics, paired CIs, and four-class recall protection; retain native six-class metrics for the six-class arm |
 | Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Stages 2A/2B establish the simple baselines; Stages 5A/5B/5C tune the serious candidates | Confirm every eligible family on the same Stage 6 folds/seeds and compare with paired CIs and rare-class recall protection |
-| Early vs late vs hybrid ESMC fusion | Stage 5C covers late fusion and Stage 5E covers hybrid fusion | An exact early-fusion recipe is still required in this playbook before launch; then confirm early, late, and hybrid candidates on the shared Stage 6 grid |
+| Early vs late vs hybrid ESMC fusion | The bounded pilot screens early/late and conditionally hybrid; Stage 5C covers serious late HPO and Stage 5E serious hybrid HPO | A dedicated serious early-HPO recipe remains open; confirm early, late, and hybrid candidates on the shared Stage 6 grid before claiming a fusion-position advantage |
 | GVP with vs without RING | Stage 2A supplies the RING-enabled Only-GVP anchor and Stage 5G supplies its radius-only counterpart | Keep all non-edge settings matched and confirm any claimed RING benefit on shared validation units; if the final combined model uses RING, also ablate RING in that same combined family |
 
-Do not fill the early-fusion gap by copying another stage's HPO budget. Add a
-reviewable executable block here first. Do not infer a RING effect by comparing
+Do not fill the remaining serious early-HPO gap by copying another stage's
+budget. Add its reviewable executable block here first. Do not infer a RING effect by comparing
 the historical Hybrid+RING maximum with a separately tuned no-RING model.
 Historical six-class candidates may motivate the search but cannot complete the
 paired target-formulation comparison without matched direct-four arms. The

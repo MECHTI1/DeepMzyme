@@ -244,6 +244,10 @@ def apply_feature_normalization(data: Data, stats: FeatureNormalizationStats | N
         value = getattr(data, feature_name).float()
         if feature_name == "x_dist_raw" and not hasattr(data, "x_dist_raw_raw"):
             setattr(data, "x_dist_raw_raw", value.clone())
+        if feature_name == "site_ligand_angle_stats" and not hasattr(data, "site_ligand_angle_stats_raw"):
+            # Controlled geometry modes use deterministic physical-unit scaling;
+            # preserve the source values before legacy train-fitted z-scoring.
+            data.site_ligand_angle_stats_raw = value.clone()
         std = stats.stds[feature_name].to(value.device)
         normalized = (value - mean.to(value.device)) / std
         if (

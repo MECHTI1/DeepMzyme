@@ -452,6 +452,43 @@ non-training remediation.
 
 **Status:** Open; policy recorded 2026-09-14
 
+**Bounded pilot reconciliation (2026-09-15):** The separately named
+`metal_architecture_pilot_10h_v1` profile covers direct-four early/late and
+unimodal screens, and matched four-/five-/six-class core-family screens before
+an optional hybrid screen. It uses non-overlap train membership, native-six
+eligibility, native `val_metal_balanced_acc` checkpoint selection in every arm,
+and same-checkpoint collapsed-four reporting. Its exact recipe is at the start
+of the metal playbook. The older Common70 standalone block remains explicitly
+historical and retains its different six-class collapsed-four-selection rule.
+Pilot implementation, smoke outcomes, and experimental completion must be
+reported separately in `EXPERIMENT_STATUS.md`; this note is not run evidence.
+
+Early fusion now has a bounded manual pilot recipe. A dedicated serious early
+HPO block and later paired HPO/Stage 6/6B/7 recipes remain open. The pilot's
+conditional hybrid budget gate is not the serious Stage 5E promotion gate.
+
+**Feature-readiness qualification:** Cache-file coverage alone does not verify
+measured external channels. The pilot requires a separately hashed,
+training-only PROPKA overlay and checks its provenance rather than silently
+accepting unavailable pKa defaults. Preserve the published bundle and track
+overlay preparation/validation outcomes in the campaign evidence. No feature
+repair may silently change the matched cohort.
+
+**Completed pilot repair; broader cache audit remains open (2026-09-15):**
+The isolated overlay is complete and verified for all 1,304 non-overlap
+**training** structures. The underlying PROPKA path now handles compact
+wide-residue tokens and insertion-code alignment. The final overlay refresh
+covered 46 wide-number structures plus `3q6v`; all 47 were rechecked before
+freezing the overlay. File hashes, structure identities, and unchanged geometry
+passed the all-file audit. The original v12 caches were not rewritten.
+Other legacy caches were not audited or repaired by this scoped work; the
+parser fix does not retroactively correct cached values. Missing pKa masks
+remain explicit for non-titratable/incomplete residues rather than being
+described as fully measured channels. See the
+[preparation audit](notebook_outputs/raw/metal_architecture_pilot_20260915/preparation/feature_overlay_audit.json),
+[manifest](notebook_outputs/raw/metal_architecture_pilot_20260915/preparation/feature_overlay_manifest.json),
+and [pilot summary](notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md).
+
 **Standalone baseline reconciliation:** The opening metal Stage 0–2B block
 now covers direct-four and six-trained/collapsed-four arms for all three
 initial families, with separate identities and a shared metal-site-symbol
@@ -474,9 +511,12 @@ establish model evidence or certify later HPO/Stage 6/6B/7 paired recipes.
   `METAL_LABEL_SCHEME = "six_class"`.
 - The audited notebook live value recorded in TECH-003 is a separate
   `five_class` resume value.
-- Indexed performance anchors are historical six-class evidence; no trusted
-  completed direct-four baseline or matched target-formulation comparison is
-  indexed.
+- Historical performance anchors remain labeled six-class. The subsequent
+  [completed bounded pilot](notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md)
+  adds direct-four baselines and matched target-formulation screening across
+  the three core families, with selected-LR repeats on one validation split.
+  This initial evidence does not certify the later grouped-fold/HPO recipes
+  or establish target superiority.
 
 **Risk**
 
@@ -513,8 +553,19 @@ incompatible Optuna study.
 - Confirmation that collapsed reporting from a six-class model cannot be
   labeled as direct four-class training.
 
-This policy task did not alter the notebook, training code, or retained
-executable recipe values.
+The original policy-only update did not change executable recipes. The later
+pilot adds a separate execution profile while preserving those retained
+recipes and historical evidence. Later-stage reconciliation remains open.
+
+### Remaining PinMyMetal reference-benchmark integration
+
+Dual-protocol validation helpers do not establish an integrated, scientifically
+certified final benchmark. A later dedicated change must wire frozen refit
+identities, auditable original-site matching, overlap labels, the shared-test
+access history, and one-shot reporting into the notebook/reporting route.
+The primary final-test route is still unresolved. The bounded pilot reads
+non-overlap training membership only and does not implement or execute that
+final benchmark.
 
 ## TECH-011 — Controlled EC-primary auxiliary-learning protocol is not certified
 
@@ -576,3 +627,96 @@ first comparison. The reverse metal-primary experiment remains optional.
 
 No auxiliary experiment, association analysis, training, or held-out access was
 performed while recording this issue.
+
+## TECH-012 — Colab session access loss with valid authentication status
+
+**Status:** Partially resolved 2026-09-15. Owned-session teardown and
+cross-session recovery are implemented and tested; the original connection-loss
+cause remains under investigation. Both allocations are verified stopped;
+the authorized continuation and both bounded pilots are complete.
+
+During the bounded metal pilot, CLI access returned mixed 404/401 responses at
+03:53:09 UTC and removed the local session mapping, while the original runtime
+remained server-listed. `whoami` still reported OAuth2 credentials with Colab
+scope and about 59 minutes of validity. Subsequent CLI inspection established
+that `whoami` refreshes OAuth before reporting, so that response does not
+certify the token state before the failure. CLI proxy-token lifetime is a
+plausible mechanism under investigation, not a proven cause. Neither the
+mixed errors nor the later authentication report establish an upstream root
+cause.
+
+Further training stopped being orchestrated under the 401 stop rule. Cleanup
+verified ownership using the original CLI creation-history entry, restored
+only that owned session record with empty runtime credentials, then performed
+a named stop. During that cleanup, no reauthentication, new runtime allocation,
+or training restart occurred. Stop succeeded at 03:56:01.801127 UTC and a subsequent server session
+listing found no active sessions. The watchdog exited after the stop marker.
+
+The host watchdog originally knew only the local session name. Once the CLI
+pruned that mapping, its initial named stop could not find the session. Cleanup
+therefore required restoring the exact owned mapping from creation history.
+The updated host controls retain ownership-verified endpoint/name information
+and retry teardown with a five-minute margin. Eleven offline owned-teardown
+cases passed. These tests verify guarded behavior under simulated conditions;
+the continuation's subsequent teardown also passed actual server verification.
+
+Seven model smokes and three full A1 runs were already archived and verified.
+Late-fusion `attempt_012` was last seen at epoch 3 and is now reconciled as
+interrupted. Its final artifacts remain unverified; its exact attempt timing
+is unknown and was not fabricated. It cannot count as a completed result or
+architecture rejection. The entire first allocated interval, including the
+bootstrap failure and cleanup, remains charged at 3,827.969 seconds.
+
+**Verified continuation:** `scripts/colab_metal_pilot_resume.py` restored the
+frozen original source/manifest and verified all 1,389 retained pockets and
+unchanged feature content after fresh cache-timestamp auditing. Its
+`cross_session_recovery/readiness.json` passed; seven original smoke runs and
+three full runs were reverified. New session
+`deepmzyme-metal-geometry-20260915` began at epoch `1789456819.0405653` under
+the same cumulative budget. Linked late-fusion retry `attempt_013` completed
+and its archive was verified locally and in Drive. This recovery followed explicit
+authorization; restoring a mapping alone does not authorize a new allocation
+or training.
+
+**Proxy-credential mitigation:** Inspection of the installed CLI confirmed
+that ordinary session/status reads do not refresh its stored runtime proxy
+credentials. The owned-session helper now refreshes the exact endpoint's
+proxy URL/token from authenticated assignment metadata before expiry,
+preserving session and kernel identities. Fourteen offline checks passed,
+and scheduled refreshes succeeded on the completed continuation. This
+mitigates a verified credential-lifetime limitation; it does not establish
+the cause of the earlier mixed 404/401 failure. No interactive OAuth
+reauthentication is part of this helper, and a real 401/403 still stops
+orchestration under the existing rule.
+
+The combined geometry/recovery checks passed 134 focused tests in 30.37
+seconds, alongside the separate 11 owned-teardown cases. The new explicit
+geometry controls preserve legacy model outputs bitwise in the tested
+compatibility comparison. These are implementation checks, not evidence that
+a geometry arm improves validation performance.
+
+**Verified final closeout:** All 30 original full fits, 15 geometry full fits,
+12 smokes, and 15 selected-checkpoint geometry prediction exports were
+verified before teardown. The final capture preserves both terminal campaign
+states and was verified locally and in Drive. The owned continuation was
+stopped at epoch `1789472254.5176592`; the server then reported no active
+sessions. Both closed allocation intervals total 19,263.446 seconds
+(5.350957 hours), including the full interrupted first allocation. The
+post-stop package separately binds the actual stop receipt, allocation
+ledger, and final capture receipts. The host watchdog has exited.
+
+**Remaining work:** diagnose the original CLI/runtime mapping-loss path and
+distinguish OAuth credentials from runtime proxy credentials. Do not describe
+proxy-token expiry as
+the established cause or treat a refreshed `whoami` response as evidence of
+the pre-failure authentication state. Preserve both allocation intervals and
+linked-attempt identities in subsequent reports.
+
+Evidence: [verified stop receipt](notebook_outputs/raw/metal_architecture_pilot_20260915/closeout/session_stop_receipt.json),
+[last remote status](notebook_outputs/raw/metal_architecture_pilot_20260915/closeout/last_remote_status.json),
+[closed allocation ledger](notebook_outputs/raw/metal_architecture_pilot_20260915/closeout/allocation_ledger_closed.json),
+and [first-allocation summary](notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md).
+The continuation adds its [verified stop receipt](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/session_stopped.json),
+[complete allocation closeout](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/post_stop_closeout.json),
+[sanitized proxy-refresh receipt](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/runtime_proxy_refresh.json),
+and [completed continuation summary](notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md).

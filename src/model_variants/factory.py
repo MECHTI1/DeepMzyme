@@ -9,6 +9,8 @@ MODEL_ARCHITECTURE_CHOICES = (
     "simple_gnn_esm",
 )
 
+SITE_GEOMETRY_FEATURE_CHOICES = ("legacy", "none", "counts", "counts_angles")
+
 MODEL_ARCHITECTURE_ALIASES = {
     "gvp": "gvp",
     "gvp_esm": "gvp",
@@ -95,6 +97,16 @@ def build_pocket_classifier(
 ):
     architecture = normalize_model_architecture(model_architecture)
     resolved_kwargs = _apply_fusion_defaults(kwargs)
+    geometry_mode = resolved_kwargs.get("site_geometry_features", "legacy")
+    if geometry_mode not in SITE_GEOMETRY_FEATURE_CHOICES:
+        raise ValueError(f"Unsupported site_geometry_features {geometry_mode!r}.")
+    if architecture not in {"gvp", "only_gvp"}:
+        if geometry_mode != "legacy":
+            raise ValueError(
+                f"site_geometry_features={geometry_mode!r} requires gvp or only_gvp; "
+                f"{architecture!r} does not support these geometry controls."
+            )
+        resolved_kwargs.pop("site_geometry_features", None)
 
     if architecture == "gvp":
         from model import GVPPocketClassifier

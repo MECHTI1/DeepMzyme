@@ -1427,6 +1427,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             structural_readout_scope=config.structural_readout_scope,
             use_node_type_embedding=config.metal_node_mode != "none",
             use_site_angle_features=config.metal_node_mode != "none",
+            site_geometry_features=config.site_geometry_features,
             normalize_message_aggregation=config.normalize_message_aggregation,
             use_esm_branch=config.use_esm_branch,
             fusion_mode=config.fusion_mode,

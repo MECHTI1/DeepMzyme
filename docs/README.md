@@ -55,6 +55,15 @@ artifact transfer, and teardown, use
 
 - Use the metal playbook for exact stage blocks, budgets, seeds, ranges,
   expected artifacts, and gates.
+- For the bounded one-GPU architecture campaign, use the
+  [Stage 0–2B pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b):
+  CPU feature-overlay preparation, early/late and target-formulation screens,
+  conditional hybrid, persistent budget accounting, and validation-only reports.
+- After the original two architecture/LR blocks, use the separate
+  [Stage 2B coordination-geometry pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-coordination-geometry-pilot--stage-2b)
+  for matched counts, angular-summary, and generic-metal-node comparisons. It
+  shares the original cumulative budget before the remaining architecture
+  blocks resume.
 - Use the configuration guide for option meaning, precedence, study reuse, and
   artifact interpretation.
 - Read current status before choosing a stage.
@@ -69,8 +78,9 @@ workflow values do not match the current notebook. Read its warning and
 [`TECH-002`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface)
 before copying affected blocks. The opening standalone Stage 0–2B recipe is
 reconciled against current command expansion; legacy HPO and final-test blocks
-remain outside that certification. The metal playbook likewise opens with the
-paired four-/six-class standalone recipe. Recipe checks are not model results.
+remain outside that certification. The metal playbook retains its earlier
+paired four-/six-class standalone recipe, followed by the separate bounded
+architecture pilot. Recipe checks are not model results.
 
 ## Evidence storage
 

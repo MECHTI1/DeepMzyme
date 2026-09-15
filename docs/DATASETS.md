@@ -5,7 +5,7 @@ relationships, preparation status, bundle inclusion, and known test access.
 Scientific split and evaluation policy remains in [`Plan.md`](../Plan.md).
 Preparation procedures remain in their pipeline directories.
 
-Last evidence audit: 2026-09-14.
+Last broad evidence audit: 2026-09-14. Pilot PROPKA overlay audit: 2026-09-15.
 
 ## Final-reporting status
 
@@ -26,6 +26,51 @@ Relevant facts:
 
 The historical test values are preserved as access evidence, not parameter or
 model-selection evidence.
+
+### Bounded metal architecture pilot and later PinMyMetal comparison
+
+The bounded architecture pilot uses only the **train** membership of
+`train_and_test_sets_structures_non_overlapped_pinmymetal`, with internal
+`pdbid`-grouped validation and a shared native-six-eligible cohort across
+four-, five-, and six-class targets. Exact parameter values and the runnable
+profile are owned by the
+[metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b).
+This prevents exact-test PDB IDs from entering pilot training; it does not
+establish homology separation or resolve the primary final-test route.
+
+The pilot's repaired PROPKA external features form a training-only overlay with
+their own manifest/checksum. They do not change the archived v12 bundle or
+scientific split membership. Record both the immutable base-bundle identity
+and the overlay identity in the campaign; cache-file counts alone do not prove
+that an external channel was successfully measured.
+
+The 2026-09-15 overlay audit passed for **all 1,304 non-overlap training
+structures**, verifying file hashes and unchanged geometry/structure identities.
+It covers 484,682 residue rows: 148,607 have computed pKa-derived features and
+336,075 retain missingness, including non-titratable and structurally incomplete
+residues. Forty-seven structures were refreshed after parser/alignment repairs:
+46 for compact wide-residue tokens and `3q6v` for insertion-code handling.
+Original v12 cache files remain unchanged. This audit does **not** certify or
+repair other legacy datasets' caches or any held-out caches. The
+[audit](notebook_outputs/raw/metal_architecture_pilot_20260915/preparation/feature_overlay_audit.json),
+[overlay manifest](notebook_outputs/raw/metal_architecture_pilot_20260915/preparation/feature_overlay_manifest.json),
+and [pilot summary](notebook_outputs/summaries/summary_metal_architecture_pilot_20260915.md)
+preserve exact scope, missingness, hashes, and source provenance.
+
+Exact PinMyMetal remains a proposed secondary reference comparison after
+validation-based selection and final-refit/reporting choices are frozen.
+Reconstruct an auditable mapping from original site identifiers to evaluated
+DeepMzyme pockets, recording exact, ambiguous, and unmatched sites. Report on
+the traceably matched cohort with the same metric definition and disclose
+overlapping PDB IDs. DeepMzyme's supplied metal-centered pocket input must be
+distinguished from any benchmark that also predicts candidate sites/coordinates.
+
+Exact and non-overlap retain the same test structures. The absence of an
+exact-trained test report does not make that shared test newly untouched:
+the non-overlap access ledger still applies. A later comparison of frozen
+exact-trained and non-overlap-trained refits requires the final reporting
+protocol to be resolved and implemented first; neither test result may tune
+the other refit. The pilot does not launch these benchmark evaluations.
 
 ## Status vocabulary
 
@@ -144,6 +189,10 @@ Status:
 - Selection use established: no.
 - Protection: must remain labeled exact/possibly-overlapped; it is not silently
   interchangeable with a zero-overlap final split.
+
+"No completed test evaluation found" here means no exact-trained evaluation
+artifact was identified. The same test structures occur in the historically
+accessed non-overlap test; see the shared-test qualification above.
 
 Tracked generated metadata:
 [`prepare_training_and_test_set/provenance/exact/`](../prepare_training_and_test_set/provenance/exact/).

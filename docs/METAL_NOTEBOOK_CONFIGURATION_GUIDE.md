@@ -25,21 +25,124 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 > deterministic collapsed-four view. Current notebook and playbook defaults
 > have an explicit paired standalone recipe at the start of the metal playbook.
 > Later-stage paired HPO/final recipes still require TECH-010 reconciliation.
-> Use that opening recipe for the standalone campaign.
+> Use the opening bounded architecture pilot for the current metal campaign;
+> the earlier Common70 standalone recipe is retained and labeled separately.
 
 For paired metal baselines, `SPLIT_STRATIFY_BY="metal_site"` is passed as
 `--split-stratify-by metal_site`: it balances original site symbols, independent
 of the active training label scheme. Keep `SPLIT_SEED` fixed across model seeds
 and verify retained example identities. `active_targets` preserves historical
-split behavior. Six-class standalone checkpoints use the explicit collapsed-four
-selection metric from the playbook; direct-four checkpoints use native balanced
-accuracy. Both compare the same endpoint.
+split behavior. The bounded architecture pilot selects every four-, five-, and
+six-class checkpoint by native `val_metal_balanced_acc`, then compares target
+formulations through the common-four view from that same checkpoint. Its
+five-class reporting sums Fe and Co+Ni probabilities; six-class reporting sums
+Fe, Co, and Ni probabilities before argmax. The retained Common70 standalone
+recipe explicitly selects six-class checkpoints by collapsed-four accuracy;
+that historical policy must not be mixed silently into the pilot.
 
 `METAL_ELIGIBILITY_SCHEME="six_class"` requires a unique native-six metal
 target before either paired metal arm enters training. It excludes mixed-metal
 pockets that would become eligible only after four-class merging. This keeps
 the paired cohort fixed; `active` preserves historical task eligibility. The
 EC-only path does not require metal supervision.
+
+### Bounded architecture pilot
+
+The optional `metal_architecture_pilot_10h_v1` notebook cell uses
+`run_metal_architecture_pilot` to preview a persistent queue; the runner's
+separate execution step advances it. Its
+exact runnable cell, budget, paths, block order, and thresholds are owned by
+the [pilot recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b).
+This opt-in route does not depend on stale manual-grid or Optuna values in the
+ordinary notebook configuration. Inspect its generated commands and manifest.
+`METAL_PILOT_EXTERNAL_FEATURES_ROOT_DIR` selects the certified training-only
+external-feature overlay; `METAL_PILOT_FEATURE_OVERLAY_MANIFEST` fixes its
+provenance. Both are required together with the explicit output directory when
+the pilot profile is enabled. A present cache is not sufficient evidence of
+successful PROPKA generation.
+
+The queue first screens direct-four Only-GVP, Only-ESM, early, and late fusion.
+It then completes five-/six-class coverage for the three core families before
+prioritizing an optional hybrid screen. The early-result gate controls use of
+the remaining budget; it is not a statistical promotion or rejection rule.
+Smoke outcomes never decide architecture rank. Only complete, matched blocks
+enter paired summaries, and seed repeats retain their fixed split identity.
+The separately authorized coordination-geometry pilot is inserted after the
+two initial architecture/LR blocks and before the original remaining blocks;
+it retains a separate manifest and shares the original allocation budget.
+
+The budget counts allocated GPU time, including setup and failed attempts.
+The persistent ledger and a supplied allocation-start timestamp prevent a
+reconnect from resetting the budget. An interrupted run is retried as a linked
+attempt; this is not full mid-epoch checkpoint continuation. The runner uses
+one training worker and a forecast margin before admitting the next complete
+block. Its execute step is bounded; orchestration repeats it until the queue
+finishes or its stop decision is reached. It does not launch HPO, Stage 6, a
+final refit, or a test run.
+
+### Coordination-geometry controls
+
+The separate `metal_coordination_geometry_pilot_v1` is a standalone runner
+profile. Use its [exact playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-coordination-geometry-pilot--stage-2b)
+after the initial architecture comparison; it does not require another
+notebook launch path. Current implementation and execution evidence belong in
+`EXPERIMENT_STATUS.md`.
+
+`--metal-node-mode` controls graph construction, while
+`--site-geometry-features` controls the added site-summary inputs:
+
+| Site-geometry mode | Added geometry slots | Compatibility |
+|---|---|---|
+| `legacy` | Historical summaries enabled with metal nodes, with existing pipeline normalization | Preserves prior configurations |
+| `none` | All eight slots masked to zero | Explicit controlled baseline |
+| `counts` | First two slots contain `log1p` counts; six angular slots masked | Counts without angular summaries |
+| `counts_angles` | Same counts plus six angular summaries divided by 180 | Counts and angular summaries |
+
+Every explicit mode retains the four existing site inputs, eight geometry
+slots, and the same generic residue/metal node-type embeddings. This keeps
+parameter shapes and initialization machinery matched. The geometry baseline
+therefore needs a fresh run; an earlier `legacy` Only-GVP result is context.
+`none` masks this added geometry block, not metal coordinates or all other
+geometric information.
+
+The counts represent residue–metal candidate-ligand geometries and within-metal
+ligand-vector pairs. They are not independently curated coordination numbers.
+The angular slots summarize minimum, mean, maximum, standard deviation,
+mean absolute deviation from 109.47°, and mean deviation from the nearer of
+90°/180°. The existing
+helper chooses one nearest candidate per residue per metal from up to two
+listed donor atoms, with a functional-group-centroid fallback when candidates are
+absent. Waters, cofactors, and noncanonical residues are omitted. Angle pairs
+are formed within each metal center, then aggregated across centers; a
+bridging residue can contribute once per center. These summaries are limited
+shape proxies, not a full coordination-geometry classification.
+
+The helper can retain a first-shell residue's nearest metal beyond its usual
+ligand-distance cutoff. Summary counts do not force a connection for every
+metal center, whereas metal-edge construction can add a nearest-residue
+fallback for a center with no connection. Consequently summary ligand counts
+and graph metal-edge counts are different quantities. A site without angle
+pairs has zero angular summaries; counts retain that distinction from a
+measured zero angle.
+
+Explicit modes use separately preserved raw summary values before applying
+their fixed count/angle scaling. The legacy training path retains its previous
+normalization. Do not apply `log1p` to already standardized counts or divide
+already standardized angles by 180.
+
+The five-arm comparison explicitly fixes `--structural-readout-scope
+residue_only`. Metal nodes can affect residue representations through message
+passing but are excluded from final pooling. This avoids the CLI's `auto`
+readout changing to residue-plus-metal when metal nodes are enabled. Pooling
+cutoff zero still includes every extracted residue; edge and extraction radii
+remain separate controls.
+
+Residue-node normalization already excludes metal nodes, but the existing
+training pipeline fits edge-distance and sequence-distance normalization over
+all edges. Adding metal edges changes those fitted statistics. The metal-node
+contrast therefore includes representation, connectivity, and edge
+normalization together. The angle-only contrasts preserve the graph and its
+normalization; this pilot does not introduce another normalization variant.
 
 For EC, `EC_CLASS_WEIGHT_UNIT="group"` counts each training EC group once when
 computing inverse-frequency class weights. `EC_GROUP_WEIGHTING` still controls
@@ -68,6 +171,8 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 1: 1-epoch smoke | `RUN_MODE`, `RECOMMENDED_RUN_SET`, launch toggle, smoke/debug guards | "Minimal smoke test" |
 | Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
 | Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
+| Bounded Stage 0–2B architecture pilot | Optional pilot cell, persistent output directory, allocation-start timestamp, execution limit, persistence receipt | "Bounded architecture pilot"; exact values remain in the playbook |
+| Bounded Stage 2B coordination-geometry pilot | Standalone runner; site-geometry mode, metal-node mode, explicit residue-only readout, parent campaign budget | "Coordination-geometry controls"; exact values remain in the playbook |
 | Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
 | Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Experiment-Sequence Ownership" |
 | Stage 5A: serious Only-GVP HPO | One `MODEL_PRESET`, serious Optuna search controls, graph capacity controls, imbalance controls | "Model architecture and fusion", "Metal class weighting", "Optuna storage and Stage 6 confirmation" |
@@ -348,10 +453,11 @@ conservative.
 For roughly one thousand metal-site samples, `hidden_s=128`, `hidden_v=8/16`,
 `edge_hidden=64`, and 2-3 GVP layers are appropriate low-capacity starting
 values. `edge_radius=6/8` keeps the radius graph local. Treat `edge_radius=10`
-or higher, `esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`,
-`edge_hidden>=128`, and `gvp_layers>=4` as second-stage expansion options when
-validation stability checks suggest underfitting, not as first-pass
-anti-overfitting defaults.
+or higher, `esm_fusion_dim=256`, `hidden_s>=192`, `hidden_v>=24`, and
+`edge_hidden>=128` as expansion options when validation stability checks suggest
+underfitting. These are general capacity considerations; the bounded pilot
+keeps the existing baseline capacity fixed as declared in the playbook so that
+the first comparison isolates model family, target, and learning rate.
 
 The notebook exposes feature omission through `OMIT_NODE_FEATURE_SETS`; the CLI
 flag is `--omit-node-features`. Use feature omission only for explicitly
@@ -635,6 +741,14 @@ For useful Colab HPO:
   sampled by Optuna. A nonnegative
   `OPTUNA_CLASSIFIER_POOL_DISTANCE_CUTOFF_RANGE` is available, but CSV is safer
   when `0.0` must remain an explicit disable option.
+  Here "all residues" means all residue nodes already extracted for the pocket,
+  not every residue in the protein. Pocket extraction uses an any-atom distance
+  to the supplied site metal; the edge radius instead uses residue-to-residue
+  distances. A positive pooling cutoff uses Cα-to-metal distance after message
+  passing, so nodes outside the final pooling mask may still have influenced
+  pooled nodes. The residue readout concatenates mean and learned attention
+  pooling. `METAL_NODE_MODE="none"` removes explicit metal nodes but does not
+  remove the metal coordinates used in pocket construction or geometry.
 - For fields that already have normal CSV controls, Optuna uses those same CSV
   values when the matching range override is blank. For example,
   `GVP_LAYERS_VALUES_CSV = "2,3,4"` is the layer search space under

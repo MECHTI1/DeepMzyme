@@ -32,6 +32,25 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 No copied model-family experiment currently has Grade-1 or Grade-2 confirmation.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
 
+## Bounded metal architecture pilot
+
+The first row preserves the interrupted first allocation's historical closeout.
+The continuation row covers all 30 completed original fits across both
+allocations, including the first row's three complete fits; these are not
+33 distinct fits. Current project state remains in
+[`EXPERIMENT_STATUS.md`](../../EXPERIMENT_STATUS.md).
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/nonoverlap/architecture-pilot/2026-09-15` | Native-selected four/five/six core-family comparison, direct-four early/late screen and conditional hybrid; one GPU and fixed allocation budget | Interrupted, allocation stopped and verified: seven smokes plus three experimentally evaluated full A1 fits preserved; late-fusion final artifacts unverified after mixed 404/401 loss; incomplete matrix, no winner/promotion | 6 (partial campaign; completed individual fits are single-seed evidence) | No held-out inference or metrics; training-only feature repair | [summary](summaries/summary_metal_architecture_pilot_20260915.md); [preparation](raw/metal_architecture_pilot_20260915/preparation/); [readiness](raw/metal_architecture_pilot_20260915/readiness/); [smokes](raw/metal_architecture_pilot_20260915/smokes/); [partial A1](raw/metal_architecture_pilot_20260915/partial_a1/); [verified closeout](raw/metal_architecture_pilot_20260915/closeout/) |
+| `metal/nonoverlap/architecture-pilot-continuation/2026-09-15` | Four-family direct-four two-LR screen; native-selected four/five/six core targets; ten selected-LR seed-43 repeats on the same validation split | All 30 full fits and seven smokes verified; finalization and shared GPU teardown verified. Direct-four ESM has the largest mean; late-five is an exploratory common-four challenger. Hybrid deferred; no promotion | 3 for selected-LR repeats; 5 for LR screen | No held-out inference or metrics | [completed summary](summaries/summary_metal_architecture_pilot_continuation_20260915.md); [portable evidence](raw/metal_architecture_pilot_20260915/continuation/); [final analysis](raw/metal_architecture_pilot_20260915/continuation/analysis/original_final_two_seed_analysis.json); [terminal state](raw/metal_architecture_pilot_20260915/continuation/finalization/); [verified stop](raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/session_stopped.json) |
+
+## Coordination-geometry pilot
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/nonoverlap/coordination-geometry-pilot/2026-09-15` | Five direct-four Only-GVP arms; counts/angles/metal-node controls; two-LR seed-42 screen and selected-LR seed-43 repeats on the same PDB-grouped validation split | All five smokes, 15 full fits and prediction export verified; terminal state and shared runtime teardown verified; count/angle gains reverse between seeds, no promotion | 3 for selected-LR repeats; 5 for initial LR screen | No held-out inference or metrics; validation-only replay of selected checkpoints | [summary](summaries/summary_metal_coordination_geometry_pilot_20260915.md); [portable evidence](raw/metal_coordination_geometry_pilot_20260915/); [two-seed analysis](raw/metal_coordination_geometry_pilot_20260915/geometry_two_seed_analysis.json); [paired cases](raw/metal_coordination_geometry_pilot_20260915/geometry_paired_case_analysis.json); [terminal state](raw/metal_coordination_geometry_pilot_20260915/finalization/) |
+
 ## CARE cache completion and Colab execution checks
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |

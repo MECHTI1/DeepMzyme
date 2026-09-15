@@ -20,6 +20,7 @@ from data_structures import (
 from data_structures import MISSING_CLASS_LABEL
 from label_schemes import N_EC_CLASSES, N_METAL_CLASSES
 from metal_objectives import metal_loss_with_optional_collapsed4
+from model_variants.factory import SITE_GEOMETRY_FEATURE_CHOICES
 
 VALID_FUSION_MODES = {
     "late_fusion",
@@ -648,6 +649,7 @@ class GVPPocketClassifier(nn.Module):
         structural_readout_scope: str = "residue_only",
         use_node_type_embedding: bool = False,
         use_site_angle_features: bool = False,
+        site_geometry_features: str = "legacy",
     ):
         super().__init__()
         # Current supervised targets:
@@ -666,8 +668,16 @@ class GVPPocketClassifier(nn.Module):
         self.site_feature_dim = int(site_feature_dim)
         self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
         self.structural_readout_scope = str(structural_readout_scope)
-        self.use_node_type_embedding = bool(use_node_type_embedding)
-        self.use_site_angle_features = bool(use_site_angle_features)
+        if site_geometry_features not in SITE_GEOMETRY_FEATURE_CHOICES:
+            raise ValueError(f"Unsupported site_geometry_features {site_geometry_features!r}.")
+        self.site_geometry_features = site_geometry_features
+        explicit_geometry = site_geometry_features != "legacy"
+        # Controlled arms share parameter shapes and initialization, including
+        # residue/metal type embeddings when a graph has only residue nodes.
+        self.use_node_type_embedding = bool(use_node_type_embedding) or explicit_geometry
+        self.use_site_angle_features = (
+            site_geometry_features == "counts_angles" if explicit_geometry else bool(use_site_angle_features)
+        )
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         if self.classifier_pool_distance_cutoff < 0.0:
@@ -776,7 +786,8 @@ class GVPPocketClassifier(nn.Module):
             self.node_level_esm_proj = None
             self.node_level_gate = None
         site_feature_input_dim = DEFAULT_SITE_FEATURE_INPUT_DIM + (
-            DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM if self.use_site_angle_features else 0
+            DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM
+            if explicit_geometry or self.use_site_angle_features else 0
         )
         self.site_feature_encoder = nn.Sequential(
             nn.Linear(site_feature_input_dim, self.site_feature_dim),
@@ -924,7 +935,29 @@ class GVPPocketClassifier(nn.Module):
             site_features = [data.site_metal_stats.float().to(device=device)]
         else:
             site_features = [torch.zeros(batch_size, DEFAULT_SITE_FEATURE_INPUT_DIM, dtype=dtype, device=device)]
-        if self.use_site_angle_features:
+        if self.site_geometry_features != "legacy":
+            geometry_features = torch.zeros(
+                batch_size, DEFAULT_SITE_LIGAND_ANGLE_FEATURE_DIM, dtype=dtype, device=device,
+            )
+            if self.site_geometry_features != "none":
+                if not hasattr(data, "site_ligand_angle_stats_raw"):
+                    raise ValueError("Explicit site geometry features require site_ligand_angle_stats_raw before normalization.")
+                raw_geometry = data.site_ligand_angle_stats_raw.to(device=device, dtype=dtype)
+                if raw_geometry.shape != geometry_features.shape:
+                    raise ValueError(
+                        "site_ligand_angle_stats_raw must have shape "
+                        f"{tuple(geometry_features.shape)}, got {tuple(raw_geometry.shape)}."
+                    )
+                active_geometry = (
+                    raw_geometry if self.site_geometry_features == "counts_angles" else raw_geometry[:, :2]
+                )
+                if not torch.isfinite(active_geometry).all() or (raw_geometry[:, :2] < 0).any():
+                    raise ValueError("Site geometry features must be finite with non-negative counts.")
+                geometry_features[:, :2] = torch.log1p(raw_geometry[:, :2])
+                if self.site_geometry_features == "counts_angles":
+                    geometry_features[:, 2:] = raw_geometry[:, 2:] / 180.0
+            site_features.append(geometry_features)
+        elif self.use_site_angle_features:
             if hasattr(data, "site_ligand_angle_stats"):
                 angle_stats = data.site_ligand_angle_stats.float().to(device=device)
             else:
