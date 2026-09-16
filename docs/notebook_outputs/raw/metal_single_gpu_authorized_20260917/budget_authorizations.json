@@ -1,0 +1,52 @@
+[
+  {
+    "authorized_at": "2026-09-17T00:00:00+03:00",
+    "authorized_by": "user",
+    "authorized_limits_seconds": {
+      "closeout_seconds": 900,
+      "confirmation_seconds": 64800,
+      "discovery_seconds": 32400,
+      "operations_seconds": 21600,
+      "session_seconds": 14400,
+      "total_seconds": 118800
+    },
+    "decision": "continue_beyond_planned_ceiling",
+    "held_out_evaluation": false,
+    "previous_limits_seconds": {
+      "closeout_seconds": 900,
+      "confirmation_seconds": 36000,
+      "discovery_seconds": 21600,
+      "operations_seconds": 14400,
+      "session_seconds": 14400,
+      "total_seconds": 72000
+    },
+    "reason": "Finish the already accepted validation-only metal campaign beyond its original measured GPU ceilings.",
+    "sequence": 1,
+    "status": "authorized"
+  },
+  {
+    "authorized_at": "2026-09-16T21:37:46.951288+00:00",
+    "authorized_by": "user",
+    "authorized_limits_seconds": {
+      "closeout_seconds": 900,
+      "confirmation_seconds": 64800,
+      "discovery_seconds": 32400,
+      "operations_seconds": 32400,
+      "session_seconds": 14400,
+      "total_seconds": 129600
+    },
+    "decision": "continue_beyond_planned_ceiling",
+    "held_out_evaluation": false,
+    "previous_limits_seconds": {
+      "closeout_seconds": 900,
+      "confirmation_seconds": 64800,
+      "discovery_seconds": 32400,
+      "operations_seconds": 21600,
+      "session_seconds": 14400,
+      "total_seconds": 118800
+    },
+    "reason": "Standing user instruction: use additional Colab GPU budget needed to finish the accepted plan; the requested stop/continue choice was presented again. The first verified host persistence/next-launch cycle took about 44 seconds; reserve 8000 future persistence seconds, six session closeouts, setup, timing probes, audits and recovery. Apply after this allocation closes; no scientific grid change.",
+    "sequence": 2,
+    "status": "authorized"
+  }
+]

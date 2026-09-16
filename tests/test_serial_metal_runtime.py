@@ -27,6 +27,29 @@ def close_fixture(output, session_id, stopped):
         "provider_verified_stopped": True, "session_id": session_id, "stopped_epoch": stopped})
 
 
+def budget_authorization(*, sequence=1, previous=None, total=33*3600,
+                         discovery=9*3600, confirmation=18*3600, operations=6*3600):
+    previous = previous or runtime.DEFAULT_BUDGET_LIMITS
+    return {
+        "sequence": sequence,
+        "status": "authorized",
+        "authorized_by": "user",
+        "authorized_at": "2026-09-16T23:00:00+03:00",
+        "decision": "continue_beyond_planned_ceiling",
+        "reason": "Finish the already accepted validation-only campaign.",
+        "held_out_evaluation": False,
+        "previous_limits_seconds": previous,
+        "authorized_limits_seconds": {
+            "total_seconds": total,
+            "discovery_seconds": discovery,
+            "confirmation_seconds": confirmation,
+            "operations_seconds": operations,
+            "session_seconds": runtime.SESSION_SECONDS,
+            "closeout_seconds": runtime.CLOSEOUT_SECONDS,
+        },
+    }
+
+
 def command_run(output, run_id="run-1", behavior="success", stage="discovery"):
     code = """
 import argparse, json, pathlib, sys, time
@@ -115,6 +138,35 @@ def test_session_inputs_are_immutable_and_intervals_do_not_overlap(tmp_path):
         runtime.open_session(output, "two", 199, {"gpu": "fixture"}, now=300)
     runtime.open_session(output, "two", 210, {"gpu": "fixture"}, now=300)
     assert runtime.budget_status(output, now=310)["allocated_seconds"] == 200
+
+
+def test_user_authorization_can_raise_cumulative_but_not_session_safety_limits(tmp_path):
+    limits = runtime.authorize_budget(tmp_path, budget_authorization())
+    assert limits["total_seconds"] == 33 * 3600
+    assert limits["operations_seconds"] == 6 * 3600
+    assert limits["authorization_count"] == 1
+    status = runtime.budget_status(tmp_path, now=0)
+    assert status["caps_seconds"] == {
+        "discovery": 9 * 3600,
+        "confirmation": 18 * 3600,
+        "operations": 6 * 3600,
+    }
+    assert status["total_remaining_seconds"] == 33 * 3600
+
+    unsafe = budget_authorization()
+    unsafe["authorized_limits_seconds"]["session_seconds"] = 5 * 3600
+    with pytest.raises(ValueError, match="session or closeout"):
+        runtime.authorize_budget(tmp_path / "unsafe", unsafe)
+
+
+def test_budget_change_requires_user_record_and_inactive_allocation(tmp_path):
+    invalid = budget_authorization()
+    invalid["authorized_by"] = "agent"
+    with pytest.raises(ValueError, match="required user decision"):
+        runtime.authorize_budget(tmp_path, invalid)
+    runtime.open_session(tmp_path, "one", 0, {"gpu": "fixture"}, now=0)
+    with pytest.raises(RuntimeError, match="Close the active allocation"):
+        runtime.authorize_budget(tmp_path, budget_authorization())
 
 
 def test_failed_work_is_charged_and_only_closed_discovery_can_transfer(tmp_path):

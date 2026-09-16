@@ -167,6 +167,8 @@ def test_guard_rejects_stale_or_wrong_allocation(campaign):
     receipt = dict(session_id="session", allocation_started_epoch=now-5, endpoint="owned",
                    watchdog_verified=True, campaign_profile=profile.PROFILE,
                    campaign_manifest_sha256=profile.base.digest(output / "campaign_manifest.json"),
+                   budget_authorization_sha256=runtime.budget_limits(output)["authorization_sha256"],
+                   total_cap_seconds=runtime.budget_limits(output)["total_seconds"],
                    checked_epoch=now-1, expires_epoch=now+119, hard_stop_epoch=now+1000,
                    training_stop_epoch=now+100)
     path = output / "guard.json"

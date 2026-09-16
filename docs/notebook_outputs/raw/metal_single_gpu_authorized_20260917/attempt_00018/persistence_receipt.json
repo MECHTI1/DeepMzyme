@@ -1,0 +1,60 @@
+{
+  "artifacts": {
+    "attempt_outcome.json": {
+      "sha256": "307fe2760ab473503663bdf029e3a4f1ef3f6015aafa69c66d39b5b2551b6b90",
+      "size": 6459
+    },
+    "best_model_checkpoint.pt": {
+      "sha256": "5bdaace1e28f3ab60ba1bf2080015328552a9ef6143db56084ecad320704ab84",
+      "size": 4982203
+    },
+    "dataset_summary.json": {
+      "sha256": "e1a42f0e15f0d84e94df6a88d4e3a567d2868d211c57700a17236ff3f69e3453",
+      "size": 864612
+    },
+    "epoch_metrics.csv": {
+      "sha256": "f0e824dc0c9e55d7f2d38439cb03a69141408752dc7224c346b59a5fb1449718",
+      "size": 75756
+    },
+    "execution.log": {
+      "sha256": "d8d30ebe80676def5cdc51b42122ee67355164e66181fbfe6b936348631e7669",
+      "size": 36410
+    },
+    "last_model_checkpoint.pt": {
+      "sha256": "65d3b18b5e0515e05a1bf3ebe3e70ec49d387e0572ec81c1e92038ef54d1d7e7",
+      "size": 5005435
+    },
+    "performance_profile.json": {
+      "sha256": "fe8154d77ec49b8ecfc02d2eb821719fbe03cb19d69a67154ef41a0b90e375be",
+      "size": 459
+    },
+    "prepare_status.json": {
+      "sha256": "2629778af4310824950a11d1346b705c2b69b64d1cae6fc01ff275de77364087",
+      "size": 5463
+    },
+    "run_config.json": {
+      "sha256": "466717342b80a85007cd623c45229f039d63a18912c177d28b7f12f2840c4403",
+      "size": 1153622
+    },
+    "run_metadata.json": {
+      "sha256": "93a4a42a8a5e66a93360d53a73b46d03358b1234894a5fc5be5445f35cf0ec8f",
+      "size": 916429
+    },
+    "split_diagnostics.json": {
+      "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+      "size": 1752
+    },
+    "train_metrics.csv": {
+      "sha256": "f97caa6b5378954393b6a707da1aaf09af120352c0f93db4e3808b1f631fe5ef",
+      "size": 41480
+    },
+    "val_metrics.csv": {
+      "sha256": "72d6f9f1dcb0bdf66f08e38d8876685385af62ffbc95dff21f7b609f68eb502b",
+      "size": 34777
+    }
+  },
+  "attempt_id": "attempt_00018",
+  "destination_uri": "host-verified-reupload://authorized-continuation/attempt_00018/a48ae76df98a43c387a10d983cc317315a1b0ffe2da0d7ff78105c8316b492a3",
+  "method": "verified_transfer",
+  "readback_root": "/content/attempt_readback/attempt_00018"
+}

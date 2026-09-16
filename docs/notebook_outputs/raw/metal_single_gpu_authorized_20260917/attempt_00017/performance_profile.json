@@ -1,0 +1,13 @@
+{
+  "status": "completed",
+  "started_epoch": 1789594275.248825,
+  "cuda_peak_allocated_bytes": 123046912,
+  "cuda_peak_reserved_bytes": 148897792,
+  "prepare_seconds": 92.71479606628418,
+  "setup_seconds": 92.71479606628418,
+  "training_seconds": 4.301597606715859,
+  "ended_epoch": 1789594372.2652164,
+  "elapsed_seconds": 97.01639367300004,
+  "total_seconds": 97.01639367300004,
+  "preparation_timing_source": "same_process_prepare_status_ready_mtime"
+}

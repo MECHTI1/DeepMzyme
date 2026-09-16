@@ -42,7 +42,7 @@ def state_files(output):
     names = ("campaign_manifest.json", "queue.json", "fold_plan.json", "input_identity.json", "preparation.json",
              "training_cache_audit.json", "sessions.json", "attempts.json", "confirmation_manifest.json",
              "discovery_closed.json", "refinement_decisions.json", "chain_decisions.json", "comparisons.json",
-             "active_process.json", "launch_intents.json")
+             "active_process.json", "launch_intents.json", "budget_authorizations.json")
     paths = [output / name for name in names if (output / name).is_file()]
     for directory in ("reuse", "readiness", "comparisons", "persistence"):
         paths.extend(sorted((output / directory).glob("*.json")))
@@ -335,8 +335,9 @@ def admit(output):
     measurements = _timings(output)
     reserved_ids = {ident for row in base.read(output / "comparisons.json", []) for ident in row["run_ids"]}
     stage = "confirmation" if queue["phase"] == "confirmation" else "discovery"
-    reserve = max(36000., sum(forecast["confirmation"]["buffered_seconds"][b]
-                             for b in forecast["confirmation"]["planned_blocks"])) if stage == "discovery" else 0.
+    reserve = max(forecast["budget"]["caps_seconds"]["confirmation"],
+                  sum(forecast["confirmation"]["buffered_seconds"][b]
+                      for b in forecast["confirmation"]["planned_blocks"])) if stage == "discovery" else 0.
     if not queue.get("top_two") and "future_repeat_0" not in reserved_ids:
         costs = {}
         for index, arm in enumerate(profile.ARMS):
@@ -592,14 +593,18 @@ def verify_host_guard(output, receipt_path, *, session=None):
                  and receipt.get("campaign_manifest_sha256") == base.digest(Path(output) / "campaign_manifest.json"),
                  "A fresh ownership-verified host watchdog receipt is required")
     checked, expiry = receipt.get("checked_epoch", 0), receipt.get("expires_epoch", 0)
+    limits = runtime.budget_limits(output)
     base.require(checked <= now <= expiry <= checked+120 and now < receipt["training_stop_epoch"],
                  "Host watchdog receipt is expired or the training window has closed")
-    base.require(receipt["hard_stop_epoch"] <= session["started_epoch"]+14400 and
-                 receipt["training_stop_epoch"] <= receipt["hard_stop_epoch"]-900,
+    base.require(receipt.get("budget_authorization_sha256") == limits["authorization_sha256"]
+                 and receipt.get("total_cap_seconds") == limits["total_seconds"],
+                 "Host receipt does not bind the active budget authorization")
+    base.require(receipt["hard_stop_epoch"] <= session["started_epoch"]+limits["session_seconds"] and
+                 receipt["training_stop_epoch"] <= receipt["hard_stop_epoch"]-limits["closeout_seconds"],
                  "Host receipt weakens session/closeout limits")
     closed_seconds = sum(s["stopped_epoch"]-s["started_epoch"] for s in base.read(Path(output) / "sessions.json", [])
                          if s.get("stopped_epoch") is not None)
-    base.require(receipt["hard_stop_epoch"] <= session["started_epoch"]+72000-closed_seconds,
+    base.require(receipt["hard_stop_epoch"] <= session["started_epoch"]+limits["total_seconds"]-closed_seconds,
                  "Host receipt weakens the cumulative allocation cap")
     return receipt
 
@@ -608,7 +613,8 @@ def operation_confirmation_reserve(output):
     status = runtime.budget_status(output)
     if status["discovery_closed"]:
         return 0.0  # Frozen complete confirmation comparisons have their own reservations.
-    return max(0., 36000-status["used_seconds"]["confirmation"]-status["reserved_seconds"]["confirmation"])
+    return max(0., status["caps_seconds"]["confirmation"]
+               - status["used_seconds"]["confirmation"]-status["reserved_seconds"]["confirmation"])
 
 
 def execute(output, host_receipt):
@@ -628,8 +634,9 @@ def execute(output, host_receipt):
         measured = measured_forecast(output)
         base.require(measured["full_training_admitted"], "Measured cost/operations forecast does not admit full training")
         forecast_seconds = profile.forecast(run, _timings(output))
-        reserve = max(36000., sum(measured["confirmation"]["buffered_seconds"][b]
-                                 for b in measured["confirmation"]["planned_blocks"])) if run["stage"] == "discovery" else 0.
+        reserve = max(measured["budget"]["caps_seconds"]["confirmation"],
+                      sum(measured["confirmation"]["buffered_seconds"][b]
+                          for b in measured["confirmation"]["planned_blocks"])) if run["stage"] == "discovery" else 0.
         reservations = [r for r in base.read(output / "comparisons.json", []) if run["id"] in r["run_ids"] and not r.get("released_reason")]
         base.require(len(reservations) == 1, "Run admit to reserve the full logical comparison before execution")
         block_id = reservations[0]["block_id"]

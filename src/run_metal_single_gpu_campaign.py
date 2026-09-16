@@ -14,7 +14,7 @@ def parser():
     sub = root.add_subparsers(dest="action", required=True)
     for name in ("plan", "export-runtime-plan", "preview", "prepare", "session-open", "session-close", "readiness", "forecast", "advance",
                  "admit", "execute", "report", "reuse", "verify-transfer", "export-state", "verify-state-transfer",
-                 "reconcile", "ring-audit", "_ring-audit"):
+                 "reconcile", "authorize-budget", "ring-audit", "_ring-audit"):
         command = sub.add_parser(name)
         command.add_argument("--output-dir", type=Path, required=True)
         if name == "plan":
@@ -41,6 +41,8 @@ def parser():
             command.add_argument("--operations-plan-json", type=Path)
         if name in ("execute", "ring-audit"):
             command.add_argument("--host-receipt-json", type=Path, required=True)
+        if name == "authorize-budget":
+            command.add_argument("--authorization-json", type=Path, required=True)
         if name == "reuse":
             command.add_argument("--run-id", required=True)
             command.add_argument("--source-campaign", type=Path, required=True)
@@ -119,6 +121,9 @@ def dispatch(args):
         return workflow.verify_state_transfer(output, runtime.read_json(args.receipt_json))
     if args.action == "reconcile":
         return runtime.reconcile_interrupted(output)
+    if args.action == "authorize-budget":
+        profile.verify_manifest(output)
+        return runtime.authorize_budget(output, runtime.read_json(args.authorization_json))
     if args.action == "ring-audit":
         return workflow.ring_audit(output, args.fold_index, args.host_receipt_json)
     if args.action == "_ring-audit":

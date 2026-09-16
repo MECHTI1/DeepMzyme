@@ -138,11 +138,16 @@ def write_preview(output, payload):
                   "Mandatory discovery still exceeds its six-hour cap, so this fallback is not launch admission.", ""]
         lines += ["- " + note for note in payload["limitations"]]
     else:
+        limits = payload["budget"]["limit_seconds"]
         lines = ["# Measured campaign forecast", "", f"Full-training admission: {payload['full_training_admitted']}",
-                 f"Discovery: {payload['discovery_buffered_seconds']/3600:.3f} h including margin.",
-                 f"Future operations: {payload['operations_buffered_seconds']/3600:.3f} h including margin.",
+                 f"Discovery: {payload['discovery_buffered_seconds']/3600:.3f} h including margin "
+                 f"(authorized cap {limits['discovery_seconds']/3600:.3f} h).",
+                 f"Future operations: {payload['operations_buffered_seconds']/3600:.3f} h including margin "
+                 f"(authorized cap {limits['operations_seconds']/3600:.3f} h).",
                  f"Confirmation blocks: {', '.join(payload['confirmation']['planned_blocks']) or 'none'}.",
                  f"Deferred: {', '.join(payload['confirmation']['deferred_blocks']) or 'none'}.",
-                 "", "An admission forecast does not change the hard cumulative allocation cap."]
+                 f"Cumulative authorized cap: {limits['total_seconds']/3600:.3f} h; "
+                 f"budget authorizations: {limits['authorization_count']}.",
+                 "", "An admission forecast does not itself change the authorized cumulative allocation cap."]
     (output / "budget_forecast.md").write_text("\n".join(lines) + "\n")
     return payload

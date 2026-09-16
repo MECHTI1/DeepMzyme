@@ -29,6 +29,7 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |
 | Reproducibility remediation decisions and verification | [`REPRODUCIBILITY_REMEDIATION_PLAN.md`](REPRODUCIBILITY_REMEDIATION_PLAN.md) | Scientific stage policy |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
+| Proposed GPU orchestration, preparation and throughput improvements | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Implemented behavior, launch authorization or new scientific recipes |
 | Current status, implementation/evidence state, and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
 | Scientific/design/test policy, primary task boundaries, and metal-EC auxiliary strategy | [`Plan.md`](../Plan.md) | Dataset inventory or copied stage blocks |
 | Dataset identity, readiness, bundles, test use | [`DATASETS.md`](DATASETS.md) | Preparation procedure |
@@ -51,6 +52,11 @@ PyTorch preservation, browser/CLI same-VM attachment, Drive authorization,
 artifact transfer, and teardown, use
 [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md).
 
+For the planned continuous-queue, transfer and preparation improvements, read
+[`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md). It includes
+measured overhead, implementation order, failure handling and performance gates;
+current pause/resume authority remains in the current-status document.
+
 ### Metal
 
 - Use the metal playbook for exact stage blocks, budgets, seeds, ranges,
@@ -61,8 +67,9 @@ artifact transfer, and teardown, use
   seed repeats, followed by bounded mixed diagnostics and protected numeric
   continuation when affordable. Confirmation has a protected allowance. Its
   dedicated serial CLI owns the queue. Read current status before using this
-  recipe: its measured gate may close the named campaign and require a new
-  identity rather than resuming the queue.
+  recipe: a measured deficit requires the recorded stop/continue decision.
+  An authorized continuation preserves allocation history, scientific
+  identities and protected comparisons while recording the larger ceiling.
 - For the retained earlier bounded one-GPU architecture campaign, use the
   [Stage 0–2B pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b):
   CPU feature-overlay preparation, early/late and target-formulation screens,

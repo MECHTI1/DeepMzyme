@@ -13,6 +13,16 @@ Exact metal experiment values remain in the
 [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md). This document owns the
 runtime connection and environment procedure, not scientific stage budgets.
 
+When measured execution no longer fits a planned GPU ceiling, keep the owned
+session safe and persist the current state. If the user has not already decided,
+ask whether to stop and close out or continue with a specifically quantified
+higher ceiling. An existing explicit continuation authorization is sufficient;
+do not ask for it again. Record an approved increase in the campaign's durable
+authorization ledger before the next affected launch. The increase changes
+only cumulative compute permission: per-session shutdown reserves, one-process
+ownership, scientific recipes, validation selection, and held-out protections
+remain in force.
+
 ## Non-negotiable runtime rules
 
 1. Preserve the PyTorch build already supplied by Colab when it imports
@@ -33,6 +43,12 @@ runtime connection and environment procedure, not scientific stage budgets.
    verify saved artifacts, then stop the real VM before closing its ledger.
 
 ## Single-GPU campaign runtime policy
+
+The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) proposes a
+maintained continuous queue, fewer transport round trips, validated preparation
+caching and a later same-session budget-update protocol. Those changes are
+planned, not current command behavior. Follow the current playbook until each
+change is implemented and verified; consult current status before any resume.
 
 The [single-GPU playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
 owns the new profile's exact total/phase/session budgets and commands. It is

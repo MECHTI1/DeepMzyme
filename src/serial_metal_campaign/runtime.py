@@ -33,6 +33,16 @@ TERM_GRACE_SECONDS = 10.0
 KILL_GRACE_SECONDS = 5.0
 STAGES = {"discovery", "confirmation", "operations"}
 TERMINAL_STATES = {"completed", "failed", "interrupted", "deadline_stopped"}
+BUDGET_LIMIT_KEYS = ("total_seconds", "discovery_seconds", "confirmation_seconds",
+                     "operations_seconds", "session_seconds", "closeout_seconds")
+DEFAULT_BUDGET_LIMITS = {
+    "total_seconds": TOTAL_SECONDS,
+    "discovery_seconds": DISCOVERY_SECONDS,
+    "confirmation_seconds": CONFIRMATION_SECONDS,
+    "operations_seconds": OPERATIONS_SECONDS,
+    "session_seconds": SESSION_SECONDS,
+    "closeout_seconds": CLOSEOUT_SECONDS,
+}
 
 
 def read_json(path, default=None):
@@ -71,6 +81,69 @@ def _number(value, name):
 
 def _now(value=None):
     return _number(time.time() if value is None else value, "now")
+
+
+def _limit_values(value, name):
+    if not isinstance(value, dict) or set(value) != set(BUDGET_LIMIT_KEYS):
+        raise ValueError(f"{name} must contain exactly {', '.join(BUDGET_LIMIT_KEYS)}.")
+    return {key: _number(value[key], f"{name}.{key}") for key in BUDGET_LIMIT_KEYS}
+
+
+def budget_limits(output):
+    """Return default or explicitly user-authorized cumulative GPU ceilings.
+
+    Authorization records may only raise cumulative phase/total ceilings. The
+    four-hour per-session limit and fifteen-minute closeout reserve stay fixed.
+    """
+    records = read_json(Path(output) / "budget_authorizations.json", [])
+    if not isinstance(records, list):
+        raise ValueError("Budget authorizations must be a JSON list.")
+    limits = {key: float(value) for key, value in DEFAULT_BUDGET_LIMITS.items()}
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            raise ValueError("Each budget authorization must be an object.")
+        if (record.get("sequence") != index or record.get("status") != "authorized"
+                or record.get("authorized_by") != "user"
+                or record.get("decision") != "continue_beyond_planned_ceiling"
+                or record.get("held_out_evaluation") is not False
+                or not str(record.get("authorized_at", "")).strip()
+                or not str(record.get("reason", "")).strip()):
+            raise ValueError("Budget authorization lacks the required user decision and audit fields.")
+        previous = _limit_values(record.get("previous_limits_seconds"), "previous_limits_seconds")
+        if previous != limits:
+            raise ValueError("Budget authorization chain does not match the preceding ceilings.")
+        extended = _limit_values(record.get("authorized_limits_seconds"), "authorized_limits_seconds")
+        for key in ("total_seconds", "discovery_seconds", "confirmation_seconds", "operations_seconds"):
+            if extended[key] < limits[key]:
+                raise ValueError("An authorization cannot reduce a prior cumulative ceiling.")
+        if (extended["session_seconds"] != DEFAULT_BUDGET_LIMITS["session_seconds"]
+                or extended["closeout_seconds"] != DEFAULT_BUDGET_LIMITS["closeout_seconds"]):
+            raise ValueError("Budget authorization cannot weaken session or closeout safety limits.")
+        if extended["total_seconds"] < sum(extended[f"{stage}_seconds"] for stage in STAGES):
+            raise ValueError("The total ceiling must cover all authorized phase ceilings.")
+        if extended == limits:
+            raise ValueError("A budget authorization must increase at least one cumulative ceiling.")
+        limits = extended
+    digest = hashlib.sha256(json.dumps(records, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return {**limits, "authorization_count": len(records), "authorization_sha256": digest}
+
+
+def authorize_budget(output, authorization):
+    """Append one audited user decision while no allocation or fit is active."""
+    with _lock(output) as output:
+        if any(row.get("stopped_epoch") is None for row in _sessions(output)):
+            raise RuntimeError("Close the active allocation before changing cumulative ceilings.")
+        if any(row.get("status") == "running" for row in _attempts(output)):
+            raise RuntimeError("Reconcile the active fit before changing cumulative ceilings.")
+        records = read_json(output / "budget_authorizations.json", [])
+        if not isinstance(records, list):
+            raise ValueError("Budget authorizations must be a JSON list.")
+        candidate = [*records, authorization]
+        with tempfile.TemporaryDirectory() as directory:
+            atomic_json(Path(directory) / "budget_authorizations.json", candidate)
+            checked = budget_limits(directory)
+        atomic_json(output / "budget_authorizations.json", candidate)
+        return checked
 
 
 def _identity():
@@ -187,7 +260,8 @@ def open_session(output, session_id, started_epoch, hardware, now=None):
             raise RuntimeError("Close the previous allocation before registering another session.")
         if sessions and started < max(row["stopped_epoch"] for row in sessions):
             raise ValueError("GPU allocation intervals must not overlap.")
-        if sum(row["stopped_epoch"] - row["started_epoch"] for row in sessions) >= TOTAL_SECONDS:
+        limits = budget_limits(output)
+        if sum(row["stopped_epoch"] - row["started_epoch"] for row in sessions) >= limits["total_seconds"]:
             raise RuntimeError("The cumulative campaign allocation budget is exhausted.")
         active = read_json(output / "active_process.json")
         if active:
@@ -294,24 +368,28 @@ def budget_status(output, now=None):
     if operations < -0.001:
         raise ValueError("Attempt accounting exceeds the actual allocation intervals.")
     operations = max(0.0, operations)
+    limits = budget_limits(output)
     closed = read_json(Path(output) / "discovery_closed.json")
     if closed and (closed.get("status") != "closed" or closed.get("accounting_version") != 2
                    or closed.get("discovery_spent_seconds") != used["discovery"]
-                   or closed.get("transferred_seconds") != max(0.0, DISCOVERY_SECONDS - used["discovery"])):
+                   or closed.get("transferred_seconds") != max(0.0, limits["discovery_seconds"] - used["discovery"])):
         raise ValueError("Invalid or changed frozen discovery closure.")
     transferred = closed["transferred_seconds"] if closed else 0.0
-    caps = {"discovery": DISCOVERY_SECONDS, "confirmation": CONFIRMATION_SECONDS + transferred,
-            "operations": OPERATIONS_SECONDS}
+    caps = {"discovery": limits["discovery_seconds"],
+            "confirmation": limits["confirmation_seconds"] + transferred,
+            "operations": limits["operations_seconds"]}
     used["operations"] = operations
     reservations = _reservation_totals(output, attempts, now)
-    return {"allocated_seconds": allocated, "total_remaining_seconds": max(0.0, TOTAL_SECONDS - allocated),
+    return {"allocated_seconds": allocated,
+            "total_remaining_seconds": max(0.0, limits["total_seconds"] - allocated),
             "used_seconds": used, "caps_seconds": caps,
             "remaining_seconds": {key: max(0.0, caps[key] - used[key]) for key in STAGES},
             "reserved_seconds": reservations, "active_elapsed_seconds": active_elapsed,
             "active_remaining_seconds": active_remaining,
             "failure_liability_seconds": active_elapsed + active_remaining,
             "accounting_version": 2,
-            "discovery_closed": bool(closed), "discovery_transferred_seconds": transferred}
+            "discovery_closed": bool(closed), "discovery_transferred_seconds": transferred,
+            "limit_seconds": limits}
 
 
 def _reservation_remaining(reservation, attempts, now):
@@ -364,7 +442,8 @@ def reserve_comparison(output, block_id, stage, runs, forecasts, confirmation_re
         if stage == "discovery" and status["discovery_closed"]:
             raise ValueError("Discovery is already closed.")
         required = sum(checked.values()) * ADMISSION_FACTOR
-        total_free = status["total_remaining_seconds"] - sum(status["reserved_seconds"].values()) - CLOSEOUT_SECONDS
+        closeout = status["limit_seconds"]["closeout_seconds"]
+        total_free = status["total_remaining_seconds"] - sum(status["reserved_seconds"].values()) - closeout
         if stage != "confirmation":
             total_free -= _number(confirmation_reserve_seconds, "confirmation reserve")
         free_stage = status["remaining_seconds"][stage] - status["reserved_seconds"][stage]
@@ -417,7 +496,8 @@ def freeze_discovery(output, now=None):
             raise RuntimeError("Complete or explicitly defer outstanding discovery comparisons first.")
         record = {"status": "closed", "accounting_version": 2, "closed_epoch": now,
                   "discovery_spent_seconds": status["used_seconds"]["discovery"],
-                  "transferred_seconds": max(0.0, DISCOVERY_SECONDS - status["used_seconds"]["discovery"])}
+                  "transferred_seconds": max(0.0, status["caps_seconds"]["discovery"]
+                                             - status["used_seconds"]["discovery"])}
         atomic_json(output / "discovery_closed.json", record)
         return record
 
@@ -432,6 +512,7 @@ def admission(output, stage, forecast_seconds, confirmation_reserve_seconds=0, n
     if forecast <= 0:
         raise ValueError("A positive measured block forecast is required.")
     status = budget_status(output, now)
+    limits = status["limit_seconds"]
     session = _current_session(output)
     reasons = []
     if status["active_elapsed_seconds"] or any(row["status"] == "running" for row in _attempts(output)):
@@ -443,15 +524,16 @@ def admission(output, stage, forecast_seconds, confirmation_reserve_seconds=0, n
         if comparison["stage"] != stage or comparison.get("released_reason"):
             reasons.append("Logical comparison stage differs or its reservation was released.")
     other = _reservation_totals(output, _attempts(output), now, exclude=block_id)
-    available = status["total_remaining_seconds"] - CLOSEOUT_SECONDS - sum(other.values())
+    available = status["total_remaining_seconds"] - limits["closeout_seconds"] - sum(other.values())
     if stage != "confirmation":
         available -= reserve
     available = min(available, status["remaining_seconds"][stage] - other[stage],
-                    session["started_epoch"] + SESSION_SECONDS - CLOSEOUT_SECONDS - now)
-    if status["remaining_seconds"]["operations"] < CLOSEOUT_SECONDS:
+                    session["started_epoch"] + limits["session_seconds"] - limits["closeout_seconds"] - now)
+    if status["remaining_seconds"]["operations"] < limits["closeout_seconds"]:
         reasons.append("Operations budget cannot cover the closeout reserve.")
     # A fit that fails must fit entirely in operations, without using closeout.
-    available = min(available, status["remaining_seconds"]["operations"] - other["operations"] - CLOSEOUT_SECONDS)
+    available = min(available, status["remaining_seconds"]["operations"] - other["operations"]
+                    - limits["closeout_seconds"])
     needed = forecast * ADMISSION_FACTOR
     if needed > max(0.0, available):
         reasons.append("The complete block forecast plus 25% margin does not fit the remaining budget.")

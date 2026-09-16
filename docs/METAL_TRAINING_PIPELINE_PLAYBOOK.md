@@ -25,6 +25,16 @@ experimental evaluation are separate states.
 | Confirmation | 10 GPU-allocation hours | Frozen shared-fold/seed comparisons; protected from further tuning |
 | Total | **20 GPU-allocation hours** | Cumulative across every session; no reconnect resets |
 
+The table is the original planned ceiling. The user explicitly authorized the
+already accepted campaign to continue beyond it. The 2026-09-17 continuation
+records initially allowed 33 cumulative hours, then increased the operations
+allowance to account for measured artifact-transfer/readback overhead. The
+current continuation ceilings are **9 operations hours, 9 discovery hours, 18
+confirmation hours, and 36 cumulative hours**. The four-hour per-session limit
+and 15-minute closeout reserve do not change. The worker and host controller
+must bind the authorization through `budget_authorizations.json`; a larger
+ceiling must not be inferred from prose alone.
+
 These are ceilings, not spending targets. Unused discovery allowance may fund
 confirmation; confirmation allowance cannot fund tuning. Count the entire
 allocated interval, beginning with actual provisioning time and ending with
@@ -51,8 +61,11 @@ measurements for the active hardware and update them after each allocation.
 Forecast complete comparison blocks with a **1.25 cost multiplier**. Protect
 the forecast confirmation grid before admitting discretionary refinement.
 Never reduce an individual arm's epochs, seeds or cohort to make it fit. If
-costs exceed the allowance, stop with an explicit incomplete outcome; spending
-the cap is not a success criterion.
+costs exceed the currently authorized allowance, persist and present the user
+with the measured stop-versus-increase choice unless the user already approved
+the increase. Apply an approved larger ceiling without changing the scientific
+plan. If no increase is authorized, stop with an explicit incomplete outcome;
+spending the cap is not a success criterion.
 
 ### Frozen input and training contract
 
@@ -285,7 +298,7 @@ The absolute full-fit ceiling is **258** with all diagnostic and chain
 allowances used and all confirmation blocks admitted. The 13 initial smokes,
 new-hardware re-profiling, audits, failed attempts and transfers are additional
 operational work. These counts describe coverage and caps; they are not an
-authorization to spend beyond the fixed 20-hour allocation.
+authorization to spend beyond the currently recorded allocation ceiling.
 
 `preview` writes a historical timing estimate before any allocation.
 It credits **zero certified reuse** by default. Up to 14 old reference-screen
@@ -319,11 +332,13 @@ measurement; a smaller model's runtime cannot price it. Completed exact
 full-fit timings replace smoke projections. A changed GPU invalidates old
 runtime estimates even when scientific results remain reusable.
 
-The revised floor can already exceed the six-hour discovery ceiling. If the
+The revised floor exceeded the original six-hour discovery ceiling. If the
 measured required discovery plus protected confirmation does not fit, the
 runner must refuse full-fit admission and report the deficit. Preserve the
 prepared plan and evidence; do not silently change the allocation split,
 drop a required initial arm, shorten training, or borrow confirmation time.
+Use the accepted-work escalation policy to record an authorized increase;
+the failed original forecast does not revoke a later user authorization.
 Optional blocks consume only measured remaining capacity and follow the
 frozen fallback order before confirmation results are opened.
 
@@ -482,8 +497,33 @@ provider absence has been verified:
 
 Retain the host and worker ledgers together. A new allocation requires a fresh
 owned name, a verified previous stop and hardware readiness. The cumulative
-20-hour cap persists. Do not use a blind unbounded shell loop: follow each
+allocation history and currently authorized ceiling persist. Do not use a blind unbounded shell loop: follow each
 reported admission, persistence, recovery and closeout result.
+
+For a user-authorized budget increase, first finish/persist any safe active fit
+and verify the owned allocation stopped. Save a JSON authorization object with
+`sequence`, `status="authorized"`, `authorized_by="user"`, `authorized_at`,
+`decision="continue_beyond_planned_ceiling"`, the user's authorization basis
+in `reason`, and `held_out_evaluation=false`. Include
+`previous_limits_seconds` and `authorized_limits_seconds`, each containing
+exactly `total_seconds`, `discovery_seconds`, `confirmation_seconds`,
+`operations_seconds`, `session_seconds`, and `closeout_seconds`. The previous
+limits must equal the latest ledger entry (or the original table for sequence
+1). The current continuation values in seconds are respectively **129600,
+32400, 64800, 32400, 14400, 900**.
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py authorize-budget \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --authorization-json "${CAMPAIGN_BUDGET_AUTHORIZATION:?recorded user decision required}"
+```
+
+The command validates and appends the object to `budget_authorizations.json`.
+It cannot lower a previously authorized cumulative ceiling or change the
+session/closeout limits. Export and independently verify the updated state,
+then prepare a fresh host session so its configuration and worker receipts
+bind the same authorization digest. Do not edit an active host configuration,
+reset spent time, or modify a frozen scientific comparison to apply an increase.
 
 ### Expected artifacts
 
@@ -496,6 +536,9 @@ All campaign-level artifacts live below the explicit `--output-dir`:
   campaign manifest or count as attempted training.
 - `budget_forecast.json`, `budget_forecast.md`: historical preview or current
   measured admission forecast, including unmeasured costs and phase deficits.
+- `budget_authorizations.json`, when present: ordered user-authorized ceiling
+  increases, their reason and unchanged session/closeout safeguards. Host
+  configurations and launch receipts bind its digest.
 - `queue.json`, `input_identity.json`, `preparation.json`, `fold_plan.json`,
   `training_cache_audit.json`:
   current queue plus certified shared inputs and declared folds.

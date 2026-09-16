@@ -1,0 +1,2 @@
+# Preserve copied CSV bytes so SHA256SUMS remains valid after checkout.
+*.csv -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

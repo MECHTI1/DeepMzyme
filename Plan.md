@@ -298,6 +298,14 @@ capacity profiles, diagnostic follow-ups, runtime caps and executable controls
 belong to the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign).
 It does not replace the historical pilot or rewrite serious Optuna studies.
 
+Compute ceilings are operational controls around the accepted scientific plan.
+If a measured plan exceeds its recorded ceiling, ask the user to choose between
+stopping at the current evidence boundary and continuing under a quantified,
+durably recorded higher ceiling. When the user has already authorized the
+increase, continue without asking again. A compute increase does not authorize
+changes to model arms, folds, seeds, epochs, validation selection, promotion
+gates, or held-out-test policy.
+
 Use one allocated session and one training process at a time. Count allocation
 time from provisioning, including setup, failed attempts, interruptions,
 transfers and shutdown; changing machines or reconnecting cannot reset it.

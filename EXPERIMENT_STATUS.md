@@ -4,12 +4,60 @@ This is the sole concise answer to: **Where am I now, and what should I do
 next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
-Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-16.
-Last scientific-policy documentation update: 2026-09-16.
+Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-17.
+Last scientific-policy documentation update: 2026-09-17.
 
 ## Current objective
 
-**`metal_single_gpu_20h_v2` measured gate closed (2026-09-16):** the paused
+**Paused by the user after a Colab efficiency audit (2026-09-17):** the owned
+G4 session 9 stopped with provider verification at **00:51:07 Asia/Jerusalem**
+(21:51:07 UTC on 2026-09-16); the final server listing showed no active sessions.
+The other Codex execution is suspended to prevent further allocations. Its
+completed first full discovery fit and earlier artifacts remain saved locally;
+all thirteen persisted files of that full fit were rechecked against their
+recorded SHA256 values. No fit ran in session 9.
+
+The host ledger now totals **8,041.997553 seconds (2.233888 hours)**. Session 9's
+**384.788991 seconds** are a closed host-only interval not yet imported into
+worker `sessions.json`; reconcile it exactly once before any future launch.
+The runtime directory named below contains `PAUSED_HANDOFF.md`,
+`USER_REQUESTED_PAUSE_20260917.json`, and the provider-verified session 9 stop
+receipt. Reconcile that handoff before resuming the suspended agent, whose
+unfinished turn still contains an earlier continuation instruction.
+
+The requested [GPU runtime efficiency implementation
+plan](docs/GPU_RUNTIME_EFFICIENCY_PLAN.md) is now written. Its changes are **planned**, not
+implemented or measured improvements. This planning request does not authorize
+clearing the user pause or allocating another GPU.
+
+**Continuation evidence before the pause (2026-09-17):** the user authorized additional
+Colab time to finish the accepted metal campaign. A separately frozen worker
+source/state snapshot carries the original scientific grid and every prior
+allocation interval forward. Its budget authorization ledger initially records
+33 cumulative hours and now records **36 hours** after measuring transfer
+overhead; current executable ceilings and later increases are in
+`DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_33h_v2_authorized_runtime_g4/budget_authorizations.json`.
+The repaired RING-on probe completed in **106.190 seconds**, and the fresh GVP
+anchor completed in **100.590 seconds**. Both are verified timing evidence,
+not candidate-selection results. All four confirmation blocks now have timing
+coverage. The first 50-epoch discovery fit also completed: compact Only-GVP,
+direct-four, LR `1e-5`, seed 42, selected epoch 42, validation BA **65.2188%**.
+It took **236.399 seconds** and is individually verified Grade-5 evidence,
+not a family ranking. The owned session 8 is provider-verified stopped at
+2.127002 cumulative allocation hours; session 9 is restoring the continuation.
+The measured save/readback estimate is included in its operations forecast.
+No held-out access or promotion is authorized through this campaign.
+
+The continuation runtime, independent artifact copies and host allocation
+receipts are in
+`DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_33h_v2_authorized_runtime_g4/`.
+Its frozen source includes the explicit budget-authorization controls; their
+focused suite passes **168 tests**. The original closed 20-hour forecast below
+is historical evidence, not the active authorization ceiling.
+See the [continuation summary](docs/notebook_outputs/summaries/summary_metal_single_gpu_authorized_20260917.md)
+and [portable evidence](docs/notebook_outputs/raw/metal_single_gpu_authorized_20260917/README.md).
+
+**Original `metal_single_gpu_20h_v2` measured gate closed (2026-09-16):** the paused
 campaign resumed on owned G4 allocations and reached its validation-only cost
 gate. Twelve of thirteen initial one-epoch probes completed, covering every
 planned family/capacity category except RING-on; a fresh same-hardware GVP
@@ -449,13 +497,14 @@ These corrections do not resolve or select the primary final-test dataset.
 
 ## Current blockers
 
-1. The frozen `metal_single_gpu_20h_v2` campaign cannot enter full training:
-   measured discovery cost exceeds its cap by 1.449 hours, and future
-   operations cost exceeds the host-corrected remaining operations balance by
-   0.773 hours. RING-on confirmation pricing is additionally incomplete. Do
-   not reduce the frozen folds, seeds, epochs, candidates or protection rules
-   to force admission; any continuation requires a new campaign identity and
-   revised documented grid or budget.
+1. The original 20-hour profile failed admission. The user has since
+   authorized a separately frozen continuation with additional GPU time;
+   RING-on timing is now complete. Carry every old allocation interval into
+   the authorization ledger and bind revised ceilings to both controllers.
+   Account for measured persistence overhead before sustained execution.
+   The scientific matrix remains incomplete until its full fits and matched
+   grouped-fold comparisons finish; do not reduce their folds, seeds, epochs
+   or protection rules to force admission.
 2. The original mixed 404/401 connection loss is still under investigation.
    Recovery and ownership-preserving teardown controls are implemented and
    tested. A later profiling allocation also lost its local provider session
@@ -500,14 +549,14 @@ Open implementation issues:
 
 ## Immediate next action
 
-Use the closed `metal_single_gpu_20h_v2` timing package to design a separately
-named campaign whose documented discovery, operations
-and protected confirmation budgets pass before allocation. Decide explicitly
-whether to narrow the grid or increase the budget while preserving matched
-four/six-class arms, shared folds/seeds, rare-class protection and the
-five-class diagnostic identity. Re-profile the repaired RING-on path within
-that new identity before admission. Do not start the frozen v2 discovery queue
-or automatically launch GPU, HPO, confirmation, refit or test work.
+Continue the user-authorized runtime described under Current objective.
+Persist and independently verify each terminal attempt, account for every
+allocated second, and update remaining costs from actual measurements. Bind
+each recorded budget increase before it is needed by a launch. Retain the
+complete four/six-class discovery arms, shared folds/seeds, rare-class
+protection and separate five-class diagnostic identity. The existing user
+authorization permits this campaign's GPU continuation; it does not authorize
+unrelated HPO, final refits or held-out evaluation.
 
 Preserve the completed
 [RING](docs/notebook_outputs/summaries/summary_metal_ring_pilot_20260915.md),
@@ -532,12 +581,11 @@ homology and cross-task held-out exclusion before a runnable recipe or training.
 
 ## Next few actions
 
-1. **Replacement single-GPU campaign — design/preparation:** choose a new
-   identity and explicitly revise the grid or budget using the measured v2
-   timing. Prove the planned discovery, operations and protected confirmation
-   blocks fit before allocating. Re-profile the repaired RING-on route before
-   admission. The closed v2 queue must not resume, and no primary final model
-   is promoted through this exploratory route.
+1. **Authorized single-GPU continuation — executing:** complete discovery,
+   frozen candidate selection and the admitted shared-fold/seed matrix under
+   the recorded budget authorizations. The repaired RING timing is complete.
+   Preserve all old allocation charges and every failed/interrupted attempt.
+   No primary final model is promoted through this exploratory route.
 2. **Phase 1 — initial bounded metal pilots complete:** preserve the original
    30 architecture fits, 15 geometry fits and 16 matched RING fits (61 full
    fits total), plus 16 model smokes, geometry prediction export, terminal

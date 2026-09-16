@@ -1,8 +1,8 @@
-"""Explicit owned Colab allocation control for the serial 20-hour metal campaign.
+"""Explicit owned Colab allocation control for the serial metal campaign.
 
 Importing or preparing this module never allocates a GPU. Only ``allocate`` does.
 The detached host watchdog requests teardown five minutes before the earlier of
-the four-hour allocation cap and remaining cumulative twenty-hour cap. Provider
+the four-hour allocation cap and remaining authorized cumulative cap. Provider
 absence, rather than a successful CLI exit, closes an allocation interval.
 """
 from __future__ import annotations
@@ -72,7 +72,9 @@ def host_budget(output, now=None):
                 - row["started_epoch"] for row in rows)
     if spent < 0:
         raise ValueError("Clock precedes allocation history.")
-    return {"allocated_seconds": spent, "total_remaining_seconds": max(0, runtime.TOTAL_SECONDS - spent),
+    limits = runtime.budget_limits(output)
+    return {"allocated_seconds": spent, "total_remaining_seconds": max(0, limits["total_seconds"] - spent),
+            "limit_seconds": limits,
             "open_session_ids": [row["session_id"] for row in rows if row.get("stopped_epoch") is None]}
 
 
@@ -213,10 +215,12 @@ def prepare(output, session_id, gpu, *, manifest_path=None, cli_python=None):
             raise RuntimeError("Verify the preceding owned allocation stopped before preparing another.")
         if runtime.read_json(directory / "config.json") or any(row["session_id"] == session_id for row in _ledger(output)):
             raise FileExistsError("Prepared session identities are immutable; choose a fresh name.")
+        limits = runtime.budget_limits(output)
         config = {"session_id": session_id, "gpu": gpu, "output": str(output), "manifest": str(manifest),
                   "manifest_sha256": _sha(manifest), "cli_python": cli_python,
-                  "total_cap_seconds": runtime.TOTAL_SECONDS, "session_cap_seconds": runtime.SESSION_SECONDS,
-                  "closeout_seconds": runtime.CLOSEOUT_SECONDS, "stop_margin_seconds": STOP_MARGIN_SECONDS,
+                  "budget_limits": limits, "total_cap_seconds": limits["total_seconds"],
+                  "session_cap_seconds": limits["session_seconds"],
+                  "closeout_seconds": limits["closeout_seconds"], "stop_margin_seconds": STOP_MARGIN_SECONDS,
                   "operator_sha256": _sha(__file__), "runtime_sha256": _sha(runtime.__file__)}
         runtime.atomic_json(directory / "config.json", config)
         runtime.atomic_json(identity_path, identity)
@@ -309,13 +313,15 @@ def allocate(output, session_id, *, backend=None, starter=None):
         if (_sha(config["manifest"]) != config["manifest_sha256"]
                 or _sha(__file__) != config["operator_sha256"] or _sha(runtime.__file__) != config["runtime_sha256"]):
             raise ValueError("Prepared source or campaign manifest changed.")
-        duration = min(runtime.SESSION_SECONDS, budget["total_remaining_seconds"])
-        if duration <= runtime.CLOSEOUT_SECONDS:
+        if runtime.budget_limits(output) != config["budget_limits"]:
+            raise ValueError("Budget authorization changed after session preparation.")
+        duration = min(config["session_cap_seconds"], budget["total_remaining_seconds"])
+        if duration <= config["closeout_seconds"]:
             raise RuntimeError("Cumulative allocation budget cannot cover a new session and closeout.")
         started = time.time()
         request = {"session_id": session_id, "started_epoch": started, "started_monotonic": time.monotonic(),
                    "stopped_epoch": None, "hard_deadline_epoch": started + duration,
-                   "training_deadline_epoch": started + duration - runtime.CLOSEOUT_SECONDS,
+                   "training_deadline_epoch": started + duration - config["closeout_seconds"],
                    "stop_request_epoch": started + duration - STOP_MARGIN_SECONDS,
                    "prior_allocated_seconds": budget["allocated_seconds"], "status": "arming_watchdog",
                    "watchdog_token": uuid.uuid4().hex, **runtime._identity()}
@@ -457,6 +463,8 @@ def worker_receipt(output, session_id, *, backend=None):
             "expires_epoch": min(now + 120, request["training_deadline_epoch"]),
             "campaign_profile": manifest.get("profile", manifest.get("campaign_profile")),
             "campaign_manifest_sha256": config["manifest_sha256"], "prior_allocated_seconds": request["prior_allocated_seconds"],
+            "budget_authorization_sha256": config["budget_limits"]["authorization_sha256"],
+            "total_cap_seconds": config["total_cap_seconds"],
             "watchdog_host": runtime._identity()}
 
 

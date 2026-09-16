@@ -1,0 +1,12 @@
+{
+  "cumulative_allocated_seconds": 7657.208562135696,
+  "endpoint": "gpu-g4-s-kkb-usw4a1-2ewqtjhuuxd2u",
+  "hard_deadline_met": true,
+  "observed_endpoints": [],
+  "provider_verified_stopped": true,
+  "session_id": "deepmzyme-metal-v2-authorized-20260917-8",
+  "started_epoch": 1789593050.5582783,
+  "status": "stopped_verified",
+  "stop_response_error": null,
+  "stopped_epoch": 1789594884.4355927
+}

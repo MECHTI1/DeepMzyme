@@ -227,6 +227,32 @@ def test_last_allocation_uses_only_remaining_twenty_hour_budget(context):
         host.allocate(output, "deepmzyme-next", backend=backend, starter=starter)
 
 
+def test_prepared_session_binds_explicit_user_authorized_cumulative_budget(tmp_path):
+    runtime.atomic_json(tmp_path / "campaign_manifest.json", {"profile": "test"})
+    runtime.authorize_budget(tmp_path, {
+        "sequence": 1,
+        "status": "authorized",
+        "authorized_by": "user",
+        "authorized_at": "2026-09-16T23:00:00+03:00",
+        "decision": "continue_beyond_planned_ceiling",
+        "reason": "Finish the accepted validation-only campaign.",
+        "held_out_evaluation": False,
+        "previous_limits_seconds": runtime.DEFAULT_BUDGET_LIMITS,
+        "authorized_limits_seconds": {
+            "total_seconds": 33 * 3600,
+            "discovery_seconds": 9 * 3600,
+            "confirmation_seconds": 18 * 3600,
+            "operations_seconds": 6 * 3600,
+            "session_seconds": runtime.SESSION_SECONDS,
+            "closeout_seconds": runtime.CLOSEOUT_SECONDS,
+        },
+    })
+    prepared = host.prepare(tmp_path, NAME, "G4")
+    assert prepared["total_cap_seconds"] == 33 * 3600
+    assert prepared["budget_limits"]["authorization_count"] == 1
+    assert host.host_budget(tmp_path)["total_remaining_seconds"] == 33 * 3600
+
+
 def test_prior_worker_allocations_are_imported_without_reset(tmp_path):
     runtime.atomic_json(tmp_path / "campaign_manifest.json", {"profile": "test"})
     runtime.atomic_json(tmp_path / "sessions.json", [{

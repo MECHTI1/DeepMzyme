@@ -1,0 +1,10 @@
+{
+  "setup_seconds": 1875,
+  "smoke_seconds": 600,
+  "audit_seconds": 600,
+  "persistence_seconds": 8000,
+  "recovery_seconds": 900,
+  "shutdown_seconds": 5400,
+  "sessions_remaining": 6,
+  "basis": "Five future setups at observed 375 s, six fresh anchors at about 100 s, five bounded RING audits, about 178 remaining fit save/readback cycles at observed ~44 s plus rounding, 900 s recovery, and 900 s closeout per remaining session. Re-estimate remaining counts after each verified batch; apply the runner 1.25 margin."
+}

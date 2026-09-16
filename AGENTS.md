@@ -717,6 +717,31 @@ file.
 
 ---
 
+## Accepted-work budget escalation
+
+- A planned GPU-hour, trial-count, runtime, or other operational budget is an
+  auditable ceiling, not permission to abandon an accepted task unfinished.
+- Before stopping accepted work solely because the remaining plan no longer
+  fits its ceiling, ask the user to choose between exactly these outcomes:
+  **stop and close out at the current evidence boundary**, or **continue beyond
+  the planned ceiling and record a larger ceiling**. Include the measured use,
+  forecast, requested increase, and practical consequence of each choice.
+- Ask at the first safe decision boundary, before launching work that requires
+  the increase. Do not terminate an active safe fit solely because a forecast
+  changed. Provider/session shutdown reserves and ownership safeguards still
+  apply.
+- If the user already authorized the overrun in the current conversation or an
+  existing campaign authorization record, continue without asking again. Do
+  not reinterpret a higher compute ceiling as permission to alter the
+  scientific grid, folds, seeds, target definitions, held-out policy, or other
+  accepted plan details.
+- Record each approved increase in the campaign evidence and executable budget
+  controls. If the new ceiling later becomes insufficient, ask again with the
+  same stop/continue choices instead of silently stopping or silently spending
+  beyond the recorded authorization.
+
+---
+
 ## Git workflow
 
 - This workflow applies to every agent session in DeepMzyme.

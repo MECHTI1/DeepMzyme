@@ -1,0 +1,21 @@
+{
+  "status": "authorized_continuation_prepared",
+  "source_closed_state": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_20h_v2_execfix_23d8ee4_runtime_g4/persistence/closed_worker_state_session_20260916_6",
+  "source_closed_state_sha256": "dafd38f7aadf604d8c4ef259f5318996b76f5acc5baa5cce5ad8c5ccee5075b6",
+  "manifest_sha256": "ecf1799abb451ba286c56de9164128bead6b54dbcd02b526f2375f0929b86ee8",
+  "source_files_sha256": "d4491be25eed7b9a69a6c242a2279b3adff2254249d2c890ba1bcb47447a8012",
+  "budget_limits": {
+    "total_seconds": 118800.0,
+    "discovery_seconds": 32400.0,
+    "confirmation_seconds": 64800.0,
+    "operations_seconds": 21600.0,
+    "session_seconds": 14400.0,
+    "closeout_seconds": 900.0,
+    "authorization_count": 1,
+    "authorization_sha256": "553ae82964d0f4631aff6181abbec3653b039d60f0a080a586ffc6b5f5cefbc9"
+  },
+  "repaired_ring_probe_id": "smoke_authorized_ring_repair_gvp_ring_on_fbee3de6707796d8_s42",
+  "prior_attempt_count": 15,
+  "prior_allocation_count": 4,
+  "held_out_evaluation": false
+}

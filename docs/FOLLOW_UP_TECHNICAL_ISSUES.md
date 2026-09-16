@@ -775,3 +775,37 @@ admission. The measured discovery and host-reconciled operations budgets both
 fail independently, and the repaired RING path was not re-profiled under the
 closed campaign. No 50-epoch or held-out work was run. Evidence is in the
 [measured profile summary](notebook_outputs/summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md).
+
+## TECH-014 — Serial campaign orchestration and preparation overhead
+
+**Status:** Open; improvement plan written 2026-09-17, implementation not started.
+
+The audited continuation allocation spent 30.56 minutes allocated and 7.39
+minutes inside its two probes and one full fit. The 23.18-minute remainder
+includes setup, transfer, verification and orchestration; this is not a measured
+GPU-utilization percentage. The full fit's profile separately records 91.66
+seconds of preparation and 143.76 seconds in its training region.
+
+Verified implementation constraints:
+
+- `workflow.execute()` owns one fit per call. A maintained automatic host
+  supervisor is needed to replace the temporary transport operator and remove
+  conversation turns from the routine next-fit path.
+- `runtime.authorize_budget()` requires all allocations closed, and the host's
+  worker receipts bind the authorization digest frozen during preparation.
+  Increasing that ceiling currently requires a fresh session; silently editing
+  an active host configuration is not a valid optimization.
+- Artifact/state persistence requires independent byte readback. Batching the
+  existing handshake is possible; eliminating re-uploads requires a supported,
+  tested acknowledgement protocol.
+- `prepare_run()` rebuilds preparation per process; caching opportunities need
+  phase timing, exact identity keys, equivalence checks and fold-local fitted
+  preprocessing. The existing pinned-memory and optional AMP/loader-worker
+  controls must not be described as absent.
+
+The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) owns the
+prioritized work, performance targets, provenance boundary and failure tests.
+The [current status](../EXPERIMENT_STATUS.md) owns the user-requested pause and
+host-only allocation reconciliation. No code change or new GPU run is implied
+by this issue record. The first release preserves all scientific settings and
+the current shutdown, persistence and held-out safeguards.
