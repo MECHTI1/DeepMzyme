@@ -1,0 +1,1085 @@
+[
+  {
+    "attempt_id": "attempt_00001",
+    "run_id": "smoke_gvp_four_a976eacb0b80ecb6_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "gvp_four",
+    "family": "Only-GVP",
+    "started_epoch": 1789585002.3111842,
+    "ended_epoch": 1789585104.0858998,
+    "elapsed_seconds": 101.77471566200256,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "gvp_four",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.25,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774562,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "e1913f8fe5dd96e2360b2df74290312e6b00c1512f05ba360a0e8eeb347afac7",
+        "size": 6314
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "814dc22bb7d3ba51f16ee236752a351cfac8e2eb35b055e489027fcf9d07cdfc",
+        "size": 8736027
+      },
+      "dataset_summary.json": {
+        "sha256": "e1a42f0e15f0d84e94df6a88d4e3a567d2868d211c57700a17236ff3f69e3453",
+        "size": 864612
+      },
+      "epoch_metrics.csv": {
+        "sha256": "56c317eb189dd077de9002a1cf9d9e9451281d3bd40d8b443e431a1a4608ce0a",
+        "size": 2638
+      },
+      "execution.log": {
+        "sha256": "2e540b0e325e2a9d3efaa18fc899fdbb1c73861ae32bde4b672c70cb818e680c",
+        "size": 2407
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "9db305fdbc2fce4a369f72fcb19c65295e7b6e07938f722d2a9865827d2bac08",
+        "size": 8735963
+      },
+      "performance_profile.json": {
+        "sha256": "9481024c6245ad51b16ccd15d66034318dbe4dc9653c1a83f30d8ba68caa9661",
+        "size": 456
+      },
+      "prepare_status.json": {
+        "sha256": "425ac69fd872f982064e21eb22339878ef33123939ee2b72541166bd89975cd8",
+        "size": 5463
+      },
+      "run_config.json": {
+        "sha256": "6f2939433062ef53ac4e5e50a6af557381b890059837eb9b5cad08c8db19375d",
+        "size": 920748
+      },
+      "run_metadata.json": {
+        "sha256": "6a7adacf3be819b927d694ca00dd6543a22f03278ffc7e3eadeac98cd45bec2a",
+        "size": 916413
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "9577456d13f4e78d93963e4077384a40130b558207bdcdb5da4509da957c0c1b",
+        "size": 1477
+      },
+      "val_metrics.csv": {
+        "sha256": "07d0d50ff231feaae7140ed2c5255204d8e7e3f4e600ada839012f1acdbe0e3e",
+        "size": 1180
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00002",
+    "run_id": "smoke_gvp_six_c21a5d1b304e8425_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "gvp_six",
+    "family": "Only-GVP",
+    "started_epoch": 1789585266.0903175,
+    "ended_epoch": 1789585365.0603354,
+    "elapsed_seconds": 98.97001791000366,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "gvp_six",
+      "family": "Only-GVP",
+      "scheme": "six_class",
+      "balanced_accuracy": 0.16666666666666666,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774820,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "3902f75831ad0f3540354cfbae15f2a8b5eec52a8beafcd40560184083870aab",
+        "size": 6345
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "0d7b47609fe22cae96f1023cc0c66971bed62a48d1a196841b70f35b467d2351",
+        "size": 8739355
+      },
+      "dataset_summary.json": {
+        "sha256": "1d0a766bdfc5479a405b8fd415c2681c0e8c939b412f2270614cfd22c4759234",
+        "size": 864692
+      },
+      "epoch_metrics.csv": {
+        "sha256": "b59034d31109c85e7a3b7b15d94fde7bae013a5e454a410824a5d100195fcd8e",
+        "size": 2713
+      },
+      "execution.log": {
+        "sha256": "bc370c379b235bdee016e0c13062ed2c980ad90613ca1e4610ac024a3296d49a",
+        "size": 2452
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "da2d39a3291c8e6a9aca4e2b57a7658c83133689e51e0478f2dee74a009b8d24",
+        "size": 8739355
+      },
+      "performance_profile.json": {
+        "sha256": "e13bc79addd5a984c86d39e42a8e68cefe07510623f6deeb5021d1b7de785452",
+        "size": 457
+      },
+      "prepare_status.json": {
+        "sha256": "334a8f8f7920118333251c8610baf037e3c1dc754139ccd1fd18d00834ad7c9f",
+        "size": 5459
+      },
+      "run_config.json": {
+        "sha256": "65b458ec7cad208936c67e99c6999c8d0375c7c54455dc5143a2a02283e74b39",
+        "size": 921482
+      },
+      "run_metadata.json": {
+        "sha256": "e463222f15c6ba4a892b4f7c80a7abb0351b47257883a8162ecfca5650d11cd0",
+        "size": 916536
+      },
+      "split_diagnostics.json": {
+        "sha256": "5a126c0f00279b455b5fb13fb9d48c09da88929a778ad2eef43fcc755814e102",
+        "size": 1788
+      },
+      "train_metrics.csv": {
+        "sha256": "8383490cee544802ac57182277c8a77e2c4055817cca2d94b340162373fcbfbb",
+        "size": 1432
+      },
+      "val_metrics.csv": {
+        "sha256": "ec3652d22f5239b85969847e5bfd36858409356b5d928dcb94c9a07085e4a740",
+        "size": 1300
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00003",
+    "run_id": "smoke_esm_four_7c2127db234a5cd7_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "esm_four",
+    "family": "Only-ESM",
+    "started_epoch": 1789585474.832374,
+    "ended_epoch": 1789585587.7652323,
+    "elapsed_seconds": 112.93285822868347,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "esm_four",
+      "family": "Only-ESM",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.28370650773195877,
+      "collapsed4_balanced_accuracy": 0.28370650773195877,
+      "selected_epoch": 1,
+      "parameter_count": 186085,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "5a7ecdc7037f2c21fa4a5445ee19e66b5621110feec00ece40cf4896694fd3b9",
+        "size": 6402
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "8127b3f461b379cee1f6b2bb7b4efc9ef07dcf434a9c276e29c5f13a981f3152",
+        "size": 2495759
+      },
+      "dataset_summary.json": {
+        "sha256": "11d6e2faa283a3720f31b41f2a28e96603219434e114667de3a5470ad054788e",
+        "size": 371672
+      },
+      "epoch_metrics.csv": {
+        "sha256": "78d92ee2db1ff1abc0c60e14debfd0d764e4c6874091b7b7b8996afb7a241025",
+        "size": 2747
+      },
+      "execution.log": {
+        "sha256": "ae379412e5b83f25291f57cf32fc4c050084228456ff148c7c9ab1ca048bb104",
+        "size": 2407
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "b2ff464931a623df260b628939543d82f0706d582c7095740c7118b1ba02ac82",
+        "size": 2495695
+      },
+      "performance_profile.json": {
+        "sha256": "840671ebb18088aabd0f5051df1681ea63871fe86ea97b28914ef8b077f33a33",
+        "size": 460
+      },
+      "prepare_status.json": {
+        "sha256": "d9b6f93870d0aedac970ad849dd8fc8235fa434d7d370a6bd3ca62e340a33c20",
+        "size": 5514
+      },
+      "run_config.json": {
+        "sha256": "5f5a086c3fb3d424ea4af1cbd2a6d6d36453bace68decacb0f194231dbe3fd94",
+        "size": 421909
+      },
+      "run_metadata.json": {
+        "sha256": "cec0071905b7d02e0b574abd519b3f2baee5787babd31dbe085df6ff1611cc42",
+        "size": 417465
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "166ed46cdab99264f8b8e4a62660b8caaee0910e46d9b9078560e07b76097f89",
+        "size": 1482
+      },
+      "val_metrics.csv": {
+        "sha256": "136e2f9862dddfb0aa889bfdb40cfe8cbb6175b3ae64a4fae720a25231c904e9",
+        "size": 1284
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00004",
+    "run_id": "smoke_esm_six_c51ffc255f1ecd96_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "esm_six",
+    "family": "Only-ESM",
+    "started_epoch": 1789585746.4785047,
+    "ended_epoch": 1789585859.2284036,
+    "elapsed_seconds": 112.74989891052246,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "esm_six",
+      "family": "Only-ESM",
+      "scheme": "six_class",
+      "balanced_accuracy": 0.18783192752264918,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 186343,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "c9f5dd0c26e6ad80f1ac6740a24aab5964c640924d1a3aed2921d39edf1665e5",
+        "size": 6395
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "86b2f1daf8499da56d3f759fcf46030951bc4a7efa1fcade42543c554d642dce",
+        "size": 2499151
+      },
+      "dataset_summary.json": {
+        "sha256": "3b188d538c806aa4d0f3d0ab83fc645006f098932a7a1317de87a23485ea92da",
+        "size": 371752
+      },
+      "epoch_metrics.csv": {
+        "sha256": "0e827c99da395becac9393b3146e9b4b0e8f26ea5dc25cff6f1d8a9ee48b6be2",
+        "size": 2849
+      },
+      "execution.log": {
+        "sha256": "76424fe4c05d29b226cec6797cedc3e8180afdece9c3690ad852e9c445455491",
+        "size": 2452
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "93356b8a70847a1370c1bbe6cb6afff9f8525009e677fd92cd767f1686b81580",
+        "size": 2499087
+      },
+      "performance_profile.json": {
+        "sha256": "e4754a3316bf29b93bdd0378f0bbeb44459ad4ab3fc0983579074761bc514da1",
+        "size": 461
+      },
+      "prepare_status.json": {
+        "sha256": "a9a391308e69c75a5a28ddcf9fc8893bdc5f51e07c3eec8ab40480f827a43b90",
+        "size": 5510
+      },
+      "run_config.json": {
+        "sha256": "6c2422b38006b4b543cada31353405092c980d62edd48035a71ba8e6dc0547e0",
+        "size": 422655
+      },
+      "run_metadata.json": {
+        "sha256": "04cc3b5b4e014ce4153994d178a1237293a5f6c8655b2a0ca1ef2ad3c862b4f9",
+        "size": 417573
+      },
+      "split_diagnostics.json": {
+        "sha256": "5a126c0f00279b455b5fb13fb9d48c09da88929a778ad2eef43fcc755814e102",
+        "size": 1788
+      },
+      "train_metrics.csv": {
+        "sha256": "db151ef1e37143f5e2e8aace0b4383b1a6a42f175c529222cd6b6bbb9b67f560",
+        "size": 1520
+      },
+      "val_metrics.csv": {
+        "sha256": "c9f02078af9ef763a6e8af8336a4b931d6e4ab934e812817389034ece678b669",
+        "size": 1348
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00005",
+    "run_id": "smoke_late_four_61b3f46102e41740_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "late_four",
+    "family": "GVP + late fusion",
+    "started_epoch": 1789586002.9107456,
+    "ended_epoch": 1789586118.0707207,
+    "elapsed_seconds": 115.15997505187988,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "late_four",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.3451594716494846,
+      "collapsed4_balanced_accuracy": 0.3451594716494846,
+      "selected_epoch": 1,
+      "parameter_count": 774562,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "3fb2dd00b932322fc865bc8957287c6bd8f944a499f97b069c8e1faebc350c43",
+        "size": 6531
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "9eb47c9d80d76e29a65ef9c9fd39e7d4fcdfd44cbca283f268ddbb517cb553bd",
+        "size": 9645515
+      },
+      "dataset_summary.json": {
+        "sha256": "11d6e2faa283a3720f31b41f2a28e96603219434e114667de3a5470ad054788e",
+        "size": 371672
+      },
+      "epoch_metrics.csv": {
+        "sha256": "7520e0082e4d8b729e2565db979bf627aca39e797c1a74f465204224a3a22674",
+        "size": 2759
+      },
+      "execution.log": {
+        "sha256": "02726c3727115afb2e4faab6fe86cf97c780954089b959d68b4bd1f1aeee0438",
+        "size": 2412
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "32d198a8bbb17347e4c235e69bc01dbca0ffa7f39231a3bee282b71d20f3e3a2",
+        "size": 9645451
+      },
+      "performance_profile.json": {
+        "sha256": "1be38826eea61e61f9c59626b190fc11814254b669c90759106bd3c1c27bcdef",
+        "size": 459
+      },
+      "prepare_status.json": {
+        "sha256": "597d9006f072971a2ae683f05080448ca9ce1f51bdd533785c344b649548dbf8",
+        "size": 5510
+      },
+      "run_config.json": {
+        "sha256": "9859930ef2b175729f99659160b487fb8f95da79957e269f507804f884c7e90d",
+        "size": 422037
+      },
+      "run_metadata.json": {
+        "sha256": "efffc7cbb967a986d179a6b3b2ff0ecd7ed1210473a07a72e294da90b1e670dc",
+        "size": 417581
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "ebba4dd1bc31e9174c1f9c5e179b1df73cd86086dcc9a7807cbdbe03c7064713",
+        "size": 1477
+      },
+      "val_metrics.csv": {
+        "sha256": "8b0cf1cd4571a2c72c06d1d0136f1b8dd49ecb34ac225adc3c7d63d45ed8a416",
+        "size": 1301
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00006",
+    "run_id": "smoke_late_six_bf00bf6f0ca04550_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "late_six",
+    "family": "GVP + late fusion",
+    "started_epoch": 1789586207.6208556,
+    "ended_epoch": 1789586323.1769056,
+    "elapsed_seconds": 115.55605006217957,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "late_six",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "balanced_accuracy": 0.2159090909090909,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774820,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "a3e9d67c5ddecd98ef086055a45325a3be589b959c2c288561609f237d09ea8e",
+        "size": 6512
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "3f8a6a7967583ceaa558768882dff749a795e92ae9f7322b53423df708a29153",
+        "size": 9648907
+      },
+      "dataset_summary.json": {
+        "sha256": "3b188d538c806aa4d0f3d0ab83fc645006f098932a7a1317de87a23485ea92da",
+        "size": 371752
+      },
+      "epoch_metrics.csv": {
+        "sha256": "6546c1fa6bcbc3e6bfcc0ba0a448940f7a96a1aafeaf39e4728fd6adb19c109b",
+        "size": 2823
+      },
+      "execution.log": {
+        "sha256": "e838de830d161485ccce2be66c3da39f90b049a184208bf265de8d0eb5178057",
+        "size": 2457
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "26995d8506b2e906058fa70babf5f52ea887ba6af5c3504ee337558594b5328e",
+        "size": 9648843
+      },
+      "performance_profile.json": {
+        "sha256": "762b7bbb20ef08d9bb8f7b38e88294fca29b82a354c80ba9b12b2e89488dd4bb",
+        "size": 461
+      },
+      "prepare_status.json": {
+        "sha256": "8d5785a8508f0e3f1151ee9393de584e4e9794b81f968850c44540e4de63834d",
+        "size": 5506
+      },
+      "run_config.json": {
+        "sha256": "51614545d1f9998246bf9ad231a4f4f0aecb6841e0508fbbba35e14baf1aeb65",
+        "size": 422745
+      },
+      "run_metadata.json": {
+        "sha256": "5a663671f8dc9e89d04261b149975c81f1aadc389db98f6099a0bf1b47b7a11f",
+        "size": 417689
+      },
+      "split_diagnostics.json": {
+        "sha256": "5a126c0f00279b455b5fb13fb9d48c09da88929a778ad2eef43fcc755814e102",
+        "size": 1788
+      },
+      "train_metrics.csv": {
+        "sha256": "9685bff758090026533d0deb85957166fc93ab34fd05e090389bad14b40a336e",
+        "size": 1511
+      },
+      "val_metrics.csv": {
+        "sha256": "c88584817f92e6ac9c9aeeed54cf59abd5ca9b9ec9ae005ceaf4502adbfbed36",
+        "size": 1331
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00007",
+    "run_id": "smoke_early_four_9bec2fdfebd05328_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "early_four",
+    "family": "GVP + early fusion",
+    "started_epoch": 1789586400.757284,
+    "ended_epoch": 1789586515.917308,
+    "elapsed_seconds": 115.16002416610718,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "early_four",
+      "family": "GVP + early fusion",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.25,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 810466,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "0f188e63716ec197f7a5d6d04dad4500e0388c9da44fafea0603bee68a01a562",
+        "size": 6517
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "139cab9d0bdb0574ef00ff25e01950dac0187aede344cfcda1f207d55f4c2d40",
+        "size": 8753115
+      },
+      "dataset_summary.json": {
+        "sha256": "11d6e2faa283a3720f31b41f2a28e96603219434e114667de3a5470ad054788e",
+        "size": 371672
+      },
+      "epoch_metrics.csv": {
+        "sha256": "cbb0872153d518245a70d2afc41324b3e01cde25c27aa9d1d0ecb00512ae9559",
+        "size": 2470
+      },
+      "execution.log": {
+        "sha256": "c772390bc420350903ca177fca0f84096e5582a1fcf06650d6253f3005ab30dc",
+        "size": 2417
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "7f48a6a6bfef91d3a51dfaadea8193455996b76c5337596f8f57fe07a0befd8a",
+        "size": 8753051
+      },
+      "performance_profile.json": {
+        "sha256": "049b3b5219be6f2fd86b8902c4c2f8dbadc18102b1b41e3fbb590ca544fc7612",
+        "size": 462
+      },
+      "prepare_status.json": {
+        "sha256": "e8fa676734d3350c62dc40e11596970ad555bd955c1485fbc2605e26aa6768ac",
+        "size": 5511
+      },
+      "run_config.json": {
+        "sha256": "1932d628d8f3cd9c3e2d56be1647622bb97659293342767376762d861a2e101e",
+        "size": 421803
+      },
+      "run_metadata.json": {
+        "sha256": "79d8e159a785c806bef8297abbe8b28f165de14d1e4004de5bd3604d9cf61639",
+        "size": 417636
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "e08f769098c675e86098bed537c6071ba35d080fc47b36936db0232384327ad6",
+        "size": 1309
+      },
+      "val_metrics.csv": {
+        "sha256": "0a941e61cdb0e94fc4dce65cad3ec59d2487b3ce5c3a8de78d3c14661fa4b440",
+        "size": 1180
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00008",
+    "run_id": "smoke_hybrid_four_441d09cdd1dac6eb_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "hybrid_four",
+    "family": "GVP + hybrid fusion",
+    "started_epoch": 1789586593.6169772,
+    "ended_epoch": 1789586708.9791605,
+    "elapsed_seconds": 115.36218333244324,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "hybrid_four",
+      "family": "GVP + hybrid fusion",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.3203125,
+      "collapsed4_balanced_accuracy": 0.3203125,
+      "selected_epoch": 1,
+      "parameter_count": 810466,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "f8e6d5eecfb0700af58613c8cea16512363391d6b7437aa99de59d38843f72c9",
+        "size": 6554
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "a19e40557b433b383f6270946fed53ea230a6a3da2025529cee3ccf5fdb31f83",
+        "size": 10081483
+      },
+      "dataset_summary.json": {
+        "sha256": "11d6e2faa283a3720f31b41f2a28e96603219434e114667de3a5470ad054788e",
+        "size": 371672
+      },
+      "epoch_metrics.csv": {
+        "sha256": "1103c0878619a9f9a4e19617ce3f6668e06bc6cb17f8c612f90fd78b9ac4969d",
+        "size": 2669
+      },
+      "execution.log": {
+        "sha256": "1eb4ded826dba985524acf909c9aa0dec79c09390961394235abfa155cdc9f35",
+        "size": 2422
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "538be962ec8f9bc555c092b307d425d4a40c4d87e5a0456eeee934a7da07fcd9",
+        "size": 10081419
+      },
+      "performance_profile.json": {
+        "sha256": "f33dde01833ac88c9bf4dd05751df80ddb94d9b00d190f3ef50d961d9fa13832",
+        "size": 462
+      },
+      "prepare_status.json": {
+        "sha256": "60445dae95d717aba29b03296cb9a106a238b0678d37a6cc314164bb629588d7",
+        "size": 5506
+      },
+      "run_config.json": {
+        "sha256": "80d20f384e227550cb4e5117895f6a985e2f4d72108fc91cfbb50cebb40f4a51",
+        "size": 421998
+      },
+      "run_metadata.json": {
+        "sha256": "662aed8b5af96895927c2b21ea7e4107a0138dbdaca1c1fbfc5d74d70bfd5b50",
+        "size": 417632
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "a3eb3034a22e652e225e844774ce3562050a993ec6ac4911bb39a046a2d6b279",
+        "size": 1478
+      },
+      "val_metrics.csv": {
+        "sha256": "e52e7ed2aff1c22386d1269b62b3ca300e364b44ef22848b26bd0796b26efb1b",
+        "size": 1210
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00009",
+    "run_id": "smoke_late_four_a27ef4f4b89f314a_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "late_four",
+    "family": "GVP + late fusion",
+    "started_epoch": 1789586815.1758254,
+    "ended_epoch": 1789586930.9867349,
+    "elapsed_seconds": 115.81090950965881,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "late_four",
+      "family": "GVP + late fusion",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.373816043814433,
+      "collapsed4_balanced_accuracy": 0.373816043814433,
+      "selected_epoch": 1,
+      "parameter_count": 2588738,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "bf4d7b6e9ca70df6c099fdf4d246b08fbdedf9ac0bcb7e7fd77b436f14b4329e",
+        "size": 6574
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "0605eb1f8055e41d9c4f735dbc990489b1693be75fc78995c795bcb79ffcced4",
+        "size": 31354571
+      },
+      "dataset_summary.json": {
+        "sha256": "11d6e2faa283a3720f31b41f2a28e96603219434e114667de3a5470ad054788e",
+        "size": 371672
+      },
+      "epoch_metrics.csv": {
+        "sha256": "fc101261d06eeb2d4d49a652516a580f436de059bdaad938a614eea352cead0b",
+        "size": 2948
+      },
+      "execution.log": {
+        "sha256": "dbaedd63c6978b65012235b770ac58f915b2f4a25d0a809b36d711bc92ccb8a5",
+        "size": 2412
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "041e45e7676d3400d3e8ba8c24ab3e3fa48d7b6771252d13ed33913edbd07c0f",
+        "size": 31354507
+      },
+      "performance_profile.json": {
+        "sha256": "9711c48c5c65dcca8157593488482726e5bb3af1b046cb56b24c38611d4957f6",
+        "size": 462
+      },
+      "prepare_status.json": {
+        "sha256": "3b72830547ece94fae64501d3f102f4b9712c88f5484589aa651138c7d69d205",
+        "size": 5511
+      },
+      "run_config.json": {
+        "sha256": "8bd3870923e23451c103df6941404caab4c3ef826f9359c3ce0d0eb4063740f5",
+        "size": 422227
+      },
+      "run_metadata.json": {
+        "sha256": "852cb9ca331634b7d370840afad1457fe68d1ff15b932c3b75410ba8c6c4d039",
+        "size": 417582
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "7e8a13aef212efb3b509fa8d8d702af924e404096047ee65172ca60302980663",
+        "size": 1620
+      },
+      "val_metrics.csv": {
+        "sha256": "b3518bef21931ce7bde99547544966641f94242eb843c8054df52f9b09ee5adc",
+        "size": 1347
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00010",
+    "run_id": "smoke_late_six_b8eaf416cdd28c05_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "late_six",
+    "family": "GVP + late fusion",
+    "started_epoch": 1789587025.2873018,
+    "ended_epoch": 1789587139.7038057,
+    "elapsed_seconds": 114.41650390625,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "late_six",
+      "family": "GVP + late fusion",
+      "scheme": "six_class",
+      "balanced_accuracy": 0.2515086431323545,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 2589252,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "b71cd49a9531048e424fbcbd522f873a051fd341016b148aebc469ae6613c0bb",
+        "size": 6544
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "463051ab23c308bc4ad2def44b4d6371c2e3852de3cd60f3f4b6c058c3dd18c3",
+        "size": 31360971
+      },
+      "dataset_summary.json": {
+        "sha256": "3b188d538c806aa4d0f3d0ab83fc645006f098932a7a1317de87a23485ea92da",
+        "size": 371752
+      },
+      "epoch_metrics.csv": {
+        "sha256": "447b25e9058017bbc1d46d16de709e9d8d7f4f3198c550ac01105779854102d4",
+        "size": 2897
+      },
+      "execution.log": {
+        "sha256": "2eae1928224566c130be7cdd798938996fb7791ee060a4e80b08d7ce00c6e979",
+        "size": 2457
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "2715a9ee4c905a6b5babef921cc156419207730d6942fef04769295f1bdce5ab",
+        "size": 31360907
+      },
+      "performance_profile.json": {
+        "sha256": "4de185e708d7b2400724b8b45825a6d22eb611c0dc9a5262ec766a800229e1d7",
+        "size": 461
+      },
+      "prepare_status.json": {
+        "sha256": "eb90ad2be1389f22a31d5d599059e5311b4cb88874fd9e0e2282fe5611465623",
+        "size": 5507
+      },
+      "run_config.json": {
+        "sha256": "40059bbd84d9ed3718b5418327f7c9f55be679426800d6a7d3a2ab77d6f6e2c9",
+        "size": 422821
+      },
+      "run_metadata.json": {
+        "sha256": "0d076488f9e22659e193a8ac027abafadfec4b99c951219329d97d610b13a924",
+        "size": 417691
+      },
+      "split_diagnostics.json": {
+        "sha256": "5a126c0f00279b455b5fb13fb9d48c09da88929a778ad2eef43fcc755814e102",
+        "size": 1788
+      },
+      "train_metrics.csv": {
+        "sha256": "8f53b899e2499f145e5a4991a82f0e422314a2736b1c2f68d6c8d9d804fde8f4",
+        "size": 1537
+      },
+      "val_metrics.csv": {
+        "sha256": "440c88bef0cdc45f677b69ae81e12b99635a887532746d3b22802dce4f57453f",
+        "size": 1379
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00011",
+    "run_id": "smoke_late_five_87a38f1073ef4669_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "late_five",
+    "family": "GVP + late fusion",
+    "started_epoch": 1789587319.4194627,
+    "ended_epoch": 1789587434.3806777,
+    "elapsed_seconds": 114.96121501922607,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "late_five",
+      "family": "GVP + late fusion",
+      "scheme": "five_class",
+      "balanced_accuracy": 0.241776007497657,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774691,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "1c871fedc60f3fda4204cdc0d3619ca6f8a1397fd98356fe6f21a6cec406fc4f",
+        "size": 6526
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "bd82ae573e2562eb56c96987c26f0ce59bf443d6553ece0ae0489d5cc88f192d",
+        "size": 9647179
+      },
+      "dataset_summary.json": {
+        "sha256": "02293568d8dd9c7e1ea9d4ff1b44498358469b74f37edfb468817a2abda469e3",
+        "size": 371716
+      },
+      "epoch_metrics.csv": {
+        "sha256": "77f63b47bf1eaa1846f16f9956d2da78046a199631f0c8eb703b781e7ef789d1",
+        "size": 2819
+      },
+      "execution.log": {
+        "sha256": "564a01e6636b74fcc25dca24b3fc46a56ccfcd79989b9f8ec374767a3f813fde",
+        "size": 2481
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "75a5ae53b0347fed7665c91f5872fa84d3fc66d22671d6d5b31faa439e4d058c",
+        "size": 9647115
+      },
+      "performance_profile.json": {
+        "sha256": "dde8511dce86f480035dc049cc7de94cfc4aecd30b6771bbf82fa1ad6275fbd1",
+        "size": 450
+      },
+      "prepare_status.json": {
+        "sha256": "5554a6746575c64ca8a9c4d2ec5b4fbe507a37be6f425c88b1e295957d35907b",
+        "size": 5501
+      },
+      "run_config.json": {
+        "sha256": "7c2e548393de1fd28c94ce95868da95ddca927c6dfea079957c974e0768fa270",
+        "size": 422385
+      },
+      "run_metadata.json": {
+        "sha256": "90915c4f3e5f317ecc87b3357fe5690857d95881e0160043ba6d83513a6513de",
+        "size": 417629
+      },
+      "split_diagnostics.json": {
+        "sha256": "ed270d40d460b3b7653d72cb2cc9c0e3fb916e9f63ccdab248cb002d06942ea3",
+        "size": 1772
+      },
+      "train_metrics.csv": {
+        "sha256": "f129d557703db652d892545e8ba5e57d10dee6123eda13243fe60ffdb2e38d45",
+        "size": 1514
+      },
+      "val_metrics.csv": {
+        "sha256": "d777bbf5cc67bc0622b3ff02d614dddaa073fdfbce7ce5d5d3554499bd93fb64",
+        "size": 1324
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00012",
+    "run_id": "smoke_gvp_ring_off_b452d27c06993b1e_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "gvp_ring_off",
+    "family": "Only-GVP",
+    "started_epoch": 1789587529.7943885,
+    "ended_epoch": 1789587630.3611233,
+    "elapsed_seconds": 100.566734790802,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "gvp_ring_off",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.25,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774562,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "b1076c7c622132e448c80faa611ca79de3a36bc68c0da9046343caec9990f257",
+        "size": 6338
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "46035bf859fb30a50ce05496e72686daa6b8a3c78567702371788d6d8486ab44",
+        "size": 8736027
+      },
+      "dataset_summary.json": {
+        "sha256": "e1a42f0e15f0d84e94df6a88d4e3a567d2868d211c57700a17236ff3f69e3453",
+        "size": 864612
+      },
+      "epoch_metrics.csv": {
+        "sha256": "56c317eb189dd077de9002a1cf9d9e9451281d3bd40d8b443e431a1a4608ce0a",
+        "size": 2638
+      },
+      "execution.log": {
+        "sha256": "9babe78fafe8189134e805c8650b8e969f60894778701842e9072823f2019753",
+        "size": 2427
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "96ff713926170ce5c7c0e16e47e86930dcf31c954e3260c7c7a1900164332d84",
+        "size": 8735963
+      },
+      "performance_profile.json": {
+        "sha256": "0ed679cb32024632e214e55b80a3c4b6872ff6358d4c2cd7492bb0ba5a5949e2",
+        "size": 456
+      },
+      "prepare_status.json": {
+        "sha256": "e9b417171c4df2400efd7d34dd6690377318890b5b782f3ce25c8c416fdff0b9",
+        "size": 5466
+      },
+      "run_config.json": {
+        "sha256": "f7212247596d81f432c98cef69466e0865a94a11ac81ae3a67347d59408ccd16",
+        "size": 920758
+      },
+      "run_metadata.json": {
+        "sha256": "eeafa5f2183594ab541a58ff5258d0346de3a9e97dc2a2380034300121d4ad4c",
+        "size": 916423
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "9577456d13f4e78d93963e4077384a40130b558207bdcdb5da4509da957c0c1b",
+        "size": 1477
+      },
+      "val_metrics.csv": {
+        "sha256": "07d0d50ff231feaae7140ed2c5255204d8e7e3f4e600ada839012f1acdbe0e3e",
+        "size": 1180
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00013",
+    "run_id": "smoke_gvp_ring_on_fbee3de6707796d8_s42",
+    "status": "failed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "gvp_ring_on",
+    "family": "Only-GVP",
+    "started_epoch": 1789587726.7937787,
+    "ended_epoch": 1789587730.8154275,
+    "elapsed_seconds": 4.02164888381958,
+    "charged_stage": "operations",
+    "error": "Training command exited with 1.",
+    "result": null,
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "50d4aec0f657cb890f2878377201a4418d054312d05bee4302a03e43bf3ad2ca",
+        "size": 4031
+      },
+      "execution.log": {
+        "sha256": "1071bd278e6cacc14c30ecb2dd6e7997b709246dc82e7e9a55903a058abe0a18",
+        "size": 1794
+      },
+      "performance_profile.json": {
+        "sha256": "7b84694661e4a2d61bea8b522ef594cf8b077ee15cb1a490ea80be2f23670608",
+        "size": 1018
+      },
+      "prepare_status.json": {
+        "sha256": "2f4efaf4bad389103c6c5b4bb879d0a59b50dcf6a7988fe5b04f9b571c3b8466",
+        "size": 6118
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00014",
+    "run_id": "smoke_gvp_ring_on_fbee3de6707796d8_s42",
+    "status": "interrupted",
+    "retry_of": "attempt_00013",
+    "stage": "operations",
+    "block": "smoke",
+    "arm": "gvp_ring_on",
+    "family": "Only-GVP",
+    "started_epoch": 1789587943.8301928,
+    "ended_epoch": 1789588050.6946368,
+    "elapsed_seconds": 106.86444401741028,
+    "charged_stage": "operations",
+    "error": null,
+    "result": null,
+    "artifacts": {
+      "interruption.json": {
+        "sha256": "f9db3cdb222f0b93d61299078e3dfa56ee2b68535fdf5f817ac4203d5528d915",
+        "size": 4100
+      }
+    }
+  },
+  {
+    "attempt_id": "attempt_00015",
+    "run_id": "smoke_b99cfaa9_gvp_four_a976eacb0b80ecb6_s42",
+    "status": "completed",
+    "retry_of": null,
+    "stage": "operations",
+    "block": "smoke_b99cfaa9",
+    "arm": "gvp_four",
+    "family": "Only-GVP",
+    "started_epoch": 1789588778.1064045,
+    "ended_epoch": 1789588879.4808884,
+    "elapsed_seconds": 101.37448382377625,
+    "charged_stage": "operations",
+    "error": null,
+    "result": {
+      "arm": "gvp_four",
+      "family": "Only-GVP",
+      "scheme": "four_class",
+      "balanced_accuracy": 0.25,
+      "collapsed4_balanced_accuracy": 0.25,
+      "selected_epoch": 1,
+      "parameter_count": 774562,
+      "ring": false
+    },
+    "artifacts": {
+      "attempt_outcome.json": {
+        "sha256": "9a1507d44f82d37458c6a1fd4d2de5431cf7f1c122b484b770aa30d86d0840d3",
+        "size": 6377
+      },
+      "best_model_checkpoint.pt": {
+        "sha256": "45e98dcd7aa34f0b08f2775ec7bfdb8029be2502522c6752184e0f0b1dcb005d",
+        "size": 8736027
+      },
+      "dataset_summary.json": {
+        "sha256": "e1a42f0e15f0d84e94df6a88d4e3a567d2868d211c57700a17236ff3f69e3453",
+        "size": 864612
+      },
+      "epoch_metrics.csv": {
+        "sha256": "56c317eb189dd077de9002a1cf9d9e9451281d3bd40d8b443e431a1a4608ce0a",
+        "size": 2638
+      },
+      "execution.log": {
+        "sha256": "94d6b5be3e2cce58f4ac91728bdba9ec2695beb803b3fdf0931816ed57b8c567",
+        "size": 2452
+      },
+      "last_model_checkpoint.pt": {
+        "sha256": "d1d0181cc6a090be1e1431d49a4daa39c7017a4294cd3ac7f9452402c77ee278",
+        "size": 8735963
+      },
+      "performance_profile.json": {
+        "sha256": "cc31bcec0822a0898c746a89f826d701aa9d39efe64e678783ca4708134c8416",
+        "size": 457
+      },
+      "prepare_status.json": {
+        "sha256": "666e3582fc5c9680b3549dea889e07a97a4ca844262baa5fd46ef91456effa11",
+        "size": 5472
+      },
+      "run_config.json": {
+        "sha256": "2482ddcd5dba47863a5a6f4034c9ceab927e38ebd1f7d8864fe95c6eb94de87a",
+        "size": 920775
+      },
+      "run_metadata.json": {
+        "sha256": "1bd11c29104eb1632c6f2bf3b323d6209f8d3aefa31ef32b69a93c86d09d5c45",
+        "size": 916440
+      },
+      "split_diagnostics.json": {
+        "sha256": "f61f735d0bed4643ff153ac3d3d0238a6475b6e831d0043631dabd7dea9db46d",
+        "size": 1752
+      },
+      "train_metrics.csv": {
+        "sha256": "9577456d13f4e78d93963e4077384a40130b558207bdcdb5da4509da957c0c1b",
+        "size": 1477
+      },
+      "val_metrics.csv": {
+        "sha256": "07d0d50ff231feaae7140ed2c5255204d8e7e3f4e600ada839012f1acdbe0e3e",
+        "size": 1180
+      }
+    }
+  }
+]

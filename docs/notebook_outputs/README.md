@@ -32,6 +32,17 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 No copied model-family experiment currently has Grade-1 or Grade-2 confirmation.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
 
+## `metal_single_gpu_20h_v2` measured admission profile
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/nonoverlap/single-gpu-20h-v2-profile/2026-09-16` | Thirteen planned architecture/capacity/RING one-epoch timing probes plus a fresh cross-session GVP anchor on owned G4 workers; measured cost admission before any full fit | Twelve initial probes and the fresh anchor completed; RING-on failed preflight and its single retry was provider-interrupted. Discovery forecasts to 7.449 h with margin against 6 h, and host-corrected future operations to 3.194 h against 2.421 h remaining. Full training rejected; no ranking or promotion | 6 (operations profiling and incomplete timing matrix) | No held-out inference, metrics, Stage 6B or Stage 7 | [summary](summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md); [portable evidence](raw/metal_single_gpu_20h_v2_profile_20260916/README.md); [blocked forecast](raw/metal_single_gpu_20h_v2_profile_20260916/budget_forecast_blocked.json); [host reconciliation](raw/metal_single_gpu_20h_v2_profile_20260916/host_budget_reconciliation.json) |
+
+This measured gate supersedes the campaign's historical cost preview as the
+current execution decision. The frozen discovery queue must not start. A new
+campaign identity and revised documented budget/grid are required before a
+future attempt.
+
 ## Development-only metal × EC1 association
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |

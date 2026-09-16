@@ -87,6 +87,11 @@ def make_run(manifest, arm, parameters, *, seed=42, block="screen", stage="disco
         command = base.replace_option(command, "--n-folds", 5)
         command = base.replace_option(command, "--fold-index", fold_index)
     if ring:
+        command = base.replace_option(
+            command,
+            "--ring-features-dir",
+            Path(manifest["data_root"]) / "RING_features",
+        )
         command += ["--use-ring-edges", "--require-ring-edges"]
     config = base.parse_config(command)
     validate(config, epochs=epochs, fold_index=fold_index, ring=ring)

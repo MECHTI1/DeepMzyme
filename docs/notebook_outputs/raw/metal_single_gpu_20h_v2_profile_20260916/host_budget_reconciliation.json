@@ -1,0 +1,12 @@
+{
+  "status": "host_budget_reconciled",
+  "host_cumulative_allocated_seconds": 5684.279481649399,
+  "worker_closed_session_seconds": 4534.6344113349915,
+  "prior_host_time_absent_from_worker_runtime_seconds": 1149.645070314407349,
+  "operations_cap_seconds": 14400,
+  "host_corrected_operations_remaining_seconds": 8715.720518350601196,
+  "future_operations_buffered_seconds": 11500,
+  "host_corrected_operations_deficit_seconds": 2784.279481649398804,
+  "full_training_admitted": false,
+  "held_out_evaluation": false
+}

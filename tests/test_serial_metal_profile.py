@@ -24,7 +24,11 @@ def manifest(tmp_path_factory):
     overlay = temporary / "overlay"
     overlay.mkdir()
     templates = profile.base._templates(root, data, output, overlay)
-    return {"templates": profile.canonical(templates), "output_dir": str(output)}
+    return {
+        "templates": profile.canonical(templates),
+        "output_dir": str(output),
+        "data_root": str(data),
+    }
 
 
 def test_initial_matrix_uses_real_command_parser_and_all_mandatory_recipes(manifest):
@@ -129,6 +133,10 @@ def test_forecast_distinguishes_capacity_edges_and_fold_membership(manifest):
     assert detail["seconds"] == pytest.approx(80 + 50 * 3.4 * 4 / 3)
     on = profile.make_run(manifest, "gvp_ring_on", profile.reference_parameters(), ring=True)
     off = profile.make_run(manifest, "gvp_ring_off", profile.reference_parameters())
+    assert profile.base.parse_config(on["command"]).ring_features_dir == str(
+        Path(manifest["data_root"]) / "RING_features"
+    )
+    assert profile.base.parse_config(off["command"]).ring_features_dir is None
     with pytest.raises(ValueError, match="profile it first"):
         profile.forecast(on, [{**off, "elapsed_seconds": 270.}])
 

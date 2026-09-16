@@ -1,0 +1,116 @@
+{
+  "status": "measured_forecast_blocked",
+  "full_training_admitted": false,
+  "blocker": "Required RING-on timing probe has no completed attempt after its allowed retry was interrupted by provider loss.",
+  "admission_factor": 1.25,
+  "pending_discovery_runs": 52,
+  "discovery_raw_seconds": 21454.13492850096,
+  "discovery_buffered_seconds": 26817.6686606262,
+  "discovery_cap_seconds": 21600.0,
+  "discovery_admitted": false,
+  "operations_raw_seconds": 9200.0,
+  "operations_buffered_seconds": 11500.0,
+  "operations_cap_seconds": 9918.977695465088,
+  "operations_admitted": false,
+  "known_confirmation_raw_seconds": {
+    "core": 22301.068097759162,
+    "five": 4188.658620768073,
+    "fusion": 8321.233088135854,
+    "ring": 4364.030110320836
+  },
+  "missing_confirmation_timing_runs": [
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s42_f0",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s43_f0",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s42_f1",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s43_f1",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s42_f2",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s43_f2",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s42_f3",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s43_f3",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s42_f4",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    },
+    {
+      "run_id": "ring_gvp_ring_on_53d583a6cd3167e4_s43_f4",
+      "arm": "gvp_ring_on",
+      "block": "ring",
+      "reason": "Missing compatible capacity/RING/fold timing for Only-GVP; profile it first"
+    }
+  ],
+  "missing_timing_count": 10,
+  "completed_timing_probes": 13,
+  "budget": {
+    "allocated_seconds": 4481.022304534912,
+    "total_remaining_seconds": 67518.97769546509,
+    "used_seconds": {
+      "operations": 4481.022304534912,
+      "confirmation": 0.0,
+      "discovery": 0.0
+    },
+    "caps_seconds": {
+      "discovery": 21600,
+      "confirmation": 36000.0,
+      "operations": 14400
+    },
+    "remaining_seconds": {
+      "operations": 9918.977695465088,
+      "confirmation": 36000.0,
+      "discovery": 21600.0
+    },
+    "reserved_seconds": {
+      "operations": 0.0,
+      "confirmation": 0.0,
+      "discovery": 0.0
+    },
+    "active_elapsed_seconds": 0.0,
+    "active_remaining_seconds": 0.0,
+    "failure_liability_seconds": 0.0,
+    "accounting_version": 2,
+    "discovery_closed": false,
+    "discovery_transferred_seconds": 0.0
+  },
+  "held_out_evaluation": false
+}

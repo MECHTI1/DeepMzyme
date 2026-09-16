@@ -720,6 +720,18 @@ sessions. Both closed allocation intervals total 19,263.446 seconds
 post-stop package separately binds the actual stop receipt, allocation
 ledger, and final capture receipts. The host watchdog has exited.
 
+**2026-09-16 recurrence:** During `metal_single_gpu_20h_v2` profiling, the
+provider session mapping was again lost while a RING-on retry was in flight.
+The attempt was conservatively reconciled as interrupted from the last
+observed launch time, the exact owned endpoint was stopped, and a fresh
+provider listing showed no active sessions. The interrupted attempt did not
+become timing evidence. A later fresh session completed its mandatory hardware
+anchor and was also provider-verified stopped. This recurrence strengthens the
+need for diagnosis but still does not establish OAuth or proxy-token expiry as
+the cause. See the
+[v2 profile summary](notebook_outputs/summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md)
+and its [stop receipts](notebook_outputs/raw/metal_single_gpu_20h_v2_profile_20260916/README.md).
+
 **Remaining work:** diagnose the original CLI/runtime mapping-loss path and
 distinguish OAuth credentials from runtime proxy credentials. Do not describe
 proxy-token expiry as
@@ -735,3 +747,31 @@ The continuation adds its [verified stop receipt](notebook_outputs/raw/metal_arc
 [complete allocation closeout](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/post_stop_closeout.json),
 [sanitized proxy-refresh receipt](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/closeout_allocation2/post_stop/runtime_proxy_refresh.json),
 and [completed continuation summary](notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md).
+
+## TECH-013 — Serial v2 profiling integration defects
+
+**Status:** Resolved 2026-09-16; measured campaign admission still rejected
+
+Three integration defects appeared while resuming the frozen
+`metal_single_gpu_20h_v2` profiling stage:
+
+- the controller created `execution.log` before launching the trainer, while
+  the trainer treated that controller-owned file as foreign prelaunch output;
+- generated RING-on commands enabled and required RING edges without passing
+  the frozen bundle's `RING_features` directory; and
+- after the failed RING-on probe and its single interrupted retry, the
+  operations dispatcher kept selecting the exhausted probe instead of the
+  mandatory fresh-session timing anchor.
+
+The trainer now permits only the known controller-owned `execution.log` in
+this prelaunch path. RING-on run generation passes the explicit cache root.
+The dispatcher skips an operations probe after two non-completed attempts so
+a later session can run its fresh anchor; measured forecasting still fails
+closed if the missing probe is required for compatible pricing. Focused serial
+campaign tests cover all three cases and pass 165 tests.
+
+These fixes do not change the frozen scientific recipes or override cost
+admission. The measured discovery and host-reconciled operations budgets both
+fail independently, and the repaired RING path was not re-profiled under the
+closed campaign. No 50-epoch or held-out work was run. Evidence is in the
+[measured profile summary](notebook_outputs/summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md).

@@ -108,6 +108,31 @@ def test_completed_ring_audit_is_not_dispatched_through_training_executor(campai
     assert workflow.next_run(output)["id"] == wanted["id"]
 
 
+def test_exhausted_operations_probe_does_not_block_fresh_session_anchor(campaign, monkeypatch):
+    output, value = campaign
+    runtime.atomic_json(output / "sessions.json", [dict(session_id="live", stopped_epoch=None)])
+    runtime.atomic_json(output / "readiness/live.json", {"status": "ready"})
+    exhausted = next(
+        row for row in value["runs"]
+        if row["stage"] == "operations" and row["arm"] == "gvp_ring_on"
+    )
+    anchor = profile.make_run(
+        value,
+        "gvp_four",
+        profile.reference_parameters(),
+        stage="operations",
+        block="smoke_fresh_session",
+        epochs=1,
+    )
+    runtime.atomic_json(output / "queue.json", {"runs": [exhausted, anchor], "phase": "screen"})
+    runtime.atomic_json(output / "attempts.json", [
+        {"run_id": exhausted["id"], "status": "failed"},
+        {"run_id": exhausted["id"], "status": "interrupted"},
+    ])
+    monkeypatch.setattr(workflow, "collect_results", lambda *_: [])
+    assert workflow.next_run(output)["id"] == anchor["id"]
+
+
 def test_interrupted_confirmation_freeze_recovers_frozen_candidates_without_reselection(campaign, monkeypatch):
     output, value = campaign
     queue = dict(runs=deepcopy(value["runs"]), phase="freeze")

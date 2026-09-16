@@ -97,6 +97,14 @@ def test_prepare_is_pure_and_gpu_name_is_exact(tmp_path, monkeypatch):
         host.prepare(tmp_path, "deepmzyme-another", "L40")
 
 
+def test_cli_backend_preserves_virtual_environment_interpreter_symlink(tmp_path):
+    interpreter = tmp_path / "tool-env/bin/python"
+    interpreter.parent.mkdir(parents=True)
+    interpreter.symlink_to(sys.executable)
+    backend = host.CLIBackend(interpreter, tmp_path / "history")
+    assert backend.cli_python == str(interpreter.absolute())
+
+
 def test_allocate_requires_startup_ack_before_new(context):
     output, clock, backend, _ = context
     with pytest.raises(RuntimeError, match="startup did not prove liveness"):

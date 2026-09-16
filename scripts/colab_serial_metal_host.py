@@ -88,7 +88,9 @@ class CLIBackend:
             if not first.startswith("#!/") or " " in first[2:]:
                 raise RuntimeError("Pass --cli-python for the installed Colab CLI environment.")
             cli_python = first[2:]
-        self.cli_python = str(Path(cli_python).resolve())
+        # Keep a virtual-environment interpreter's path. Resolving its symlink
+        # to the base Python drops the venv's site-packages, including colab_cli.
+        self.cli_python = str(Path(cli_python).expanduser().absolute())
         self.history_dir = Path(history_dir or "~/.config/colab-cli/history").expanduser()
 
     def _invoke(self, mode, arguments=(), timeout=BACKEND_TIMEOUT):

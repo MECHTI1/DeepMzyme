@@ -13,6 +13,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from serial_metal_campaign import runtime
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 
 def allocation(output, started=None):
     now = time.time()
@@ -66,6 +68,38 @@ def persist(output, attempt):
         "destination_uri": "fixture://immutable/" + attempt["attempt_id"],
         "artifacts": attempt["artifacts"],
     })
+
+
+def test_campaign_controller_log_is_a_reusable_training_prelaunch_file(tmp_path):
+    allocation(tmp_path)
+    run_id = "real-training-run-dir-contract"
+    code = f"""
+import json, pathlib, sys
+from types import SimpleNamespace
+sys.path.insert(0, {str(REPO_ROOT / 'src')!r})
+from training.run import build_run_dir
+runs_dir = pathlib.Path(sys.argv[1])
+run_name = sys.argv[2]
+directory = build_run_dir(SimpleNamespace(runs_dir=runs_dir, run_name=run_name))
+(directory / 'done.json').write_text(json.dumps({{'run_name': directory.name}}))
+"""
+    run = {
+        "id": run_id,
+        "stage": "operations",
+        "block": "smoke",
+        "family": "Only-GVP",
+        "arm": "gvp_four",
+        "epochs": 1,
+        "run_dir": str(tmp_path / "runs" / run_id),
+        "command": [sys.executable, "-c", code, str(tmp_path / "runs"), run_id],
+        "env": {},
+        "forecast_seconds": 60,
+    }
+
+    attempt = runtime.execute_attempt(tmp_path, run, tmp_path, verify)
+
+    assert attempt["status"] == "completed"
+    assert "execution.log" in attempt["artifacts"]
 
 
 def test_session_inputs_are_immutable_and_intervals_do_not_overlap(tmp_path):

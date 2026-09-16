@@ -151,6 +151,9 @@ PRELAUNCH_RUN_DIR_FILENAMES = frozenset(
     {
         "active_run_config.json",
         "active_run_config.md",
+        # The bounded campaign controller opens this before launching the
+        # trainer so subprocess output survives setup failures.
+        "execution.log",
         "optuna_trial_status.json",
     }
 )

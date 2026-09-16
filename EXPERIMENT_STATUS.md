@@ -4,43 +4,48 @@ This is the sole concise answer to: **Where am I now, and what should I do
 next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
-Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
+Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-16.
 Last scientific-policy documentation update: 2026-09-16.
 
 ## Current objective
 
-**Next campaign implementation (2026-09-16):** the separately named
-[`metal_single_gpu_20h_v2`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
-adds bounded learning-rate/capacity screening, an initial hybrid arm, one
-mixed diagnostic block per family, bounded paired numeric continuation, and
-protected grouped-fold confirmation. Both top screened recipes receive a
-second seed; the fixed larger late-fusion pair and historical-recipe late-five
-challenger retain separate identities. The revised grid is a ceiling, not a
-promise that every fit fits the original allocation caps.
-Its dedicated serial CLI preserves prior pilot evidence and studies. This is
-an implementation/preparation change: **no new GPU allocation, training fit,
-hardware readiness result or model promotion is implied**. Exact budgets,
-commands and parameter values belong to the playbook. The next runtime action
-is measured readiness and cost admission on the actually assigned single GPU,
-after freezing inputs and durable storage. Confirmation remains exploratory
-until the primary final-test route is resolved.
+**`metal_single_gpu_20h_v2` measured gate closed (2026-09-16):** the paused
+campaign resumed on owned G4 allocations and reached its validation-only cost
+gate. Twelve of thirteen initial one-epoch probes completed, covering every
+planned family/capacity category except RING-on; a fresh same-hardware GVP
+anchor also completed after recovery. The RING-on command first failed because
+its frozen command omitted the cached RING root. Its one permitted retry was
+interrupted by provider session loss and reconciled using provider-verified
+death evidence. These are Grade-6 timing probes only; their one-epoch scores
+are not model-selection evidence.
 
-**Local implementation checks (2026-09-16):** 229 campaign and retained-pilot
-regression tests passed. The v2 local plan is at
-`DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_20h_v2_prepared/`, with 65 initial
-commands and the full budget preview. CPU preparation passed for **1,389**
-eligible pockets and **5,216** cached input files; all six native classes are
-present in every declared training/validation fold. Its historical proxy is **21.540 hours**
-for complete coverage, including the training margin and four operations hours,
-before additional large-capacity cost or optional tuning. Required discovery
-alone projects to **6.712 hours** against its six-hour cap. Full training is
-therefore **not admitted**; zero historical reuse cells are certified. The
-cost-only confirmation order is core, fixed late-five, early/hybrid, then RING.
-No new GPU session or training fit was launched; a fresh server check found no
-active Colab sessions. The old closed allocation identities remain unchanged.
-Earlier unexecuted local previews are retained. The prepared directory binds
-the final source and documentation and is the execution-plan source. No local
-preview directory contains a training attempt.
+The measured decision is **full training not admitted**. Discovery forecasts
+to **7.449 hours with the mandatory margin** against the six-hour cap, a
+**1.449-hour deficit**. Future operations forecast to **3.194 hours** against
+the host-corrected **2.421 hours remaining**, a **0.773-hour deficit**. Ten
+grouped-fold/seed RING-on confirmation cells also lack compatible completed
+timing. These independent failures mean no 50-epoch discovery or confirmation
+fit may start under the frozen campaign. A future attempt requires a new
+campaign identity with a revised, documented grid or budget; repairing the
+RING path alone is insufficient.
+
+All four profiling-lineage allocation intervals total **5,684.279 seconds
+(1.578966 hours)**. Both execution-fix sessions are provider-verified stopped,
+and the final server listing reported no active sessions. No held-out access,
+Stage 6B/Stage 7 action, scientific ranking or promotion occurred. The local
+runtime and independently persisted attempt/state archives are under
+`DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_20h_v2_execfix_23d8ee4_runtime_g4/`.
+See the [measured profile summary](docs/notebook_outputs/summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md)
+and [portable evidence](docs/notebook_outputs/raw/metal_single_gpu_20h_v2_profile_20260916/README.md).
+
+**Implementation closeout (2026-09-16):** commit `23d8ee4` permits the
+controller-owned `execution.log` prelaunch file. The subsequent local fixes
+pass an explicit RING cache root to RING commands and prevent an exhausted
+operations probe from masking a later allocation's fresh timing anchor; the
+measured forecast still fails closed when required timing is absent. The
+focused serial campaign suite now passes **165 tests**. Earlier unexecuted
+preview directories remain planning artifacts, while the measured gate above
+owns the current execution decision.
 
 **Authorized RING continuation completed (2026-09-15):** all four smokes
 and sixteen full 50-epoch fits in the
@@ -444,31 +449,40 @@ These corrections do not resolve or select the primary final-test dataset.
 
 ## Current blockers
 
-1. The original mixed 404/401 connection loss is still under investigation.
+1. The frozen `metal_single_gpu_20h_v2` campaign cannot enter full training:
+   measured discovery cost exceeds its cap by 1.449 hours, and future
+   operations cost exceeds the host-corrected remaining operations balance by
+   0.773 hours. RING-on confirmation pricing is additionally incomplete. Do
+   not reduce the frozen folds, seeds, epochs, candidates or protection rules
+   to force admission; any continuation requires a new campaign identity and
+   revised documented grid or budget.
+2. The original mixed 404/401 connection loss is still under investigation.
    Recovery and ownership-preserving teardown controls are implemented and
-   tested, and the second allocation is now stopped and verified. A later `whoami` refreshes OAuth
-   before reporting validity, so it cannot certify the pre-failure token state.
+   tested. A later profiling allocation also lost its local provider session
+   mapping; it was reconciled as interrupted from provider evidence and its
+   owned endpoint was stopped. A later `whoami` refreshes OAuth before
+   reporting validity, so it cannot certify the pre-failure token state.
    Proxy-token lifetime is a hypothesis, not an established cause. The primary
    final-test route separately remains unresolved.
-2. The bounded metal pilot's exact four/five/six recipes and native-selection
+3. The bounded metal pilot's exact four/five/six recipes and native-selection
    policy are implemented; all seven original smokes and eight A1/A2 full runs
    are verified, and all 15 geometry fits are complete. Original
    target-formulation blocks and all ten selected-LR repeats are also complete.
    The retained historical blocks are not the
    pilot profile; later paired HPO/Stage 6/6B/7 recipes remain to be reconciled.
-3. Current promotion policy calls for grouped-fold Stage 6 evidence, but no such
+4. Current promotion policy calls for grouped-fold Stage 6 evidence, but no such
    completed evidence was found for the historical six-class
    anchor/challengers.
-4. The required controlled metal-model comparison matrix is incomplete despite
+5. The required controlled metal-model comparison matrix is incomplete despite
    the completed bounded target/family/seed, geometry and matched RING pilots.
    Full hybrid comparison and shared Stage 6 folds/paired CIs with rare-class
    protection remain absent; fixed-split RING evidence is not promotion.
-5. A reportable Stage 6B final-refit artifact was not found.
-6. Hybrid Round-1 full configuration/search-space provenance is missing.
-7. The EC standalone Stage 0–2B recipe is executable and its twelve baselines
+6. A reportable Stage 6B final-refit artifact was not found.
+7. Hybrid Round-1 full configuration/search-space provenance is missing.
+8. The EC standalone Stage 0–2B recipe is executable and its twelve baselines
    are completed. Later EC HPO and Stage 6/6B/7 sections still have documented
    incompatibilities and are not certified executable.
-8. No exact, certified recipe or matched evidence exists for the first
+9. No exact, certified recipe or matched evidence exists for the first
    EC-primary auxiliary comparison, and a future multi-source implementation
    must enforce cross-task group exclusion before training.
 
@@ -486,23 +500,24 @@ Open implementation issues:
 
 ## Immediate next action
 
-Prepare and inspect the new
-[single-GPU campaign](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
-with the dedicated CLI. Verify the frozen manifest, retained cohort and input
-hashes, native checkpoint selection, shared confirmation plan and durable
-artifact route. A future allocation must record actual GPU/memory/throughput
-and a full setup-to-stop interval before training admission. Do not automatically
-launch a GPU or ordinary notebook HPO/confirmation/refit/test cells.
+Use the closed `metal_single_gpu_20h_v2` timing package to design a separately
+named campaign whose documented discovery, operations
+and protected confirmation budgets pass before allocation. Decide explicitly
+whether to narrow the grid or increase the budget while preserving matched
+four/six-class arms, shared folds/seeds, rare-class protection and the
+five-class diagnostic identity. Re-profile the repaired RING-on path within
+that new identity before admission. Do not start the frozen v2 discovery queue
+or automatically launch GPU, HPO, confirmation, refit or test work.
 
-No GPU or training queue was started by this implementation. Preserve the completed
+Preserve the completed
 [RING](docs/notebook_outputs/summaries/summary_metal_ring_pilot_20260915.md),
 [architecture continuation](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md)
 and [geometry](docs/notebook_outputs/summaries/summary_metal_coordination_geometry_pilot_20260915.md)
-evidence and all three closed allocation intervals. Review the matched
-LR/seed/class-recall findings as context for the new frozen comparison. Do not
-automatically spend the remaining 2.687089 hours or reset the original ledger.
-Reuse a completed fit only through the new strict scientific-identity checks;
-otherwise retain it as historical evidence.
+evidence and every closed allocation interval. Review the matched
+LR/seed/class-recall findings and the measured v2 timing as context for a new
+frozen comparison. Do not reset any allocation ledger. Reuse a completed fit
+only through strict scientific-identity checks; otherwise retain it as
+historical evidence.
 Keep the original Only-ESM direct-four reference and separately labeled
 late-five challenger without ranking unmatched cross-campaign maxima.
 
@@ -517,11 +532,12 @@ homology and cross-task held-out exclusion before a runnable recipe or training.
 
 ## Next few actions
 
-1. **New single-GPU campaign — implementation/preparation:** perform readiness
-   and measured-cost admission, then the bounded discovery and frozen shared-fold
-   comparisons in the linked recipe. Finish admitted comparisons or explicitly
-   record missing coverage; stop tuning after confirmation. No primary final
-   model is promoted through this exploratory route.
+1. **Replacement single-GPU campaign — design/preparation:** choose a new
+   identity and explicitly revise the grid or budget using the measured v2
+   timing. Prove the planned discovery, operations and protected confirmation
+   blocks fit before allocating. Re-profile the repaired RING-on route before
+   admission. The closed v2 queue must not resume, and no primary final model
+   is promoted through this exploratory route.
 2. **Phase 1 — initial bounded metal pilots complete:** preserve the original
    30 architecture fits, 15 geometry fits and 16 matched RING fits (61 full
    fits total), plus 16 model smokes, geometry prediction export, terminal

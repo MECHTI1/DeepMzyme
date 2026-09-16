@@ -1,0 +1,90 @@
+[
+  {
+    "hard_deadline_epoch": 1789582464.9131567,
+    "prior_allocated_seconds": 0,
+    "session_id": "deepmzyme-metal-v2-profile-20260916-3",
+    "started_epoch": 1789568064.9131567,
+    "status": "stopped_verified",
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 293.9279201030731,
+      "endpoint": "gpu-g4-s-kkb-use5c2-ne3uv1zsw42a",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-profile-20260916-3",
+      "started_epoch": 1789568064.9131567,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789568358.8410769
+    },
+    "stop_request_epoch": 1789582164.9131567,
+    "stopped_epoch": 1789568358.8410769,
+    "training_deadline_epoch": 1789581564.9131567
+  },
+  {
+    "hard_deadline_epoch": 1789597325.6459713,
+    "prior_allocated_seconds": 293.9279201030731,
+    "session_id": "deepmzyme-metal-v2-profile-20260916-4",
+    "started_epoch": 1789582925.6459713,
+    "status": "stopped_verified",
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 1149.6450703144073,
+      "endpoint": "gpu-g4-s-kkb-use1d2-my562f1rata",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-profile-20260916-4",
+      "started_epoch": 1789582925.6459713,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789583781.3631215
+    },
+    "stop_request_epoch": 1789597025.6459713,
+    "stopped_epoch": 1789583781.3631215,
+    "training_deadline_epoch": 1789596425.6459713
+  },
+  {
+    "hard_deadline_epoch": 1789598779.4444673,
+    "prior_allocated_seconds": 1149.6450703144073,
+    "session_id": "deepmzyme-metal-v2-execfix-20260916-5",
+    "started_epoch": 1789584379.4444673,
+    "status": "stopped_verified",
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 4820.895239830017,
+      "endpoint": "gpu-g4-s-kkb-use5c0-fye5scmgiv0z",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-execfix-20260916-5",
+      "started_epoch": 1789584379.4444673,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789588050.6946368
+    },
+    "stop_request_epoch": 1789598479.4444673,
+    "stopped_epoch": 1789588050.6946368,
+    "training_deadline_epoch": 1789597879.4444673
+  },
+  {
+    "hard_deadline_epoch": 1789602605.153727,
+    "prior_allocated_seconds": 4820.895239830017,
+    "session_id": "deepmzyme-metal-v2-execfix-20260916-6",
+    "started_epoch": 1789588205.153727,
+    "status": "stopped_verified",
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 5684.279481649399,
+      "endpoint": "gpu-g4-s-kkb-euw4a2-2sr2sbhcx6sm6",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-execfix-20260916-6",
+      "started_epoch": 1789588205.153727,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789589068.5379689
+    },
+    "stop_request_epoch": 1789602305.153727,
+    "stopped_epoch": 1789589068.5379689,
+    "training_deadline_epoch": 1789601705.153727
+  }
+]

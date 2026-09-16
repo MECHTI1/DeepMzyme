@@ -560,10 +560,18 @@ def next_run(output):
     ready = base.read(Path(output) / "readiness" / f"{session['session_id']}.json")
     base.require(ready, "Run readiness on this allocation first")
     confirm = base.read(Path(output) / "confirmation_manifest.json", {})
+    attempts_by_run = {}
+    for attempt in attempts:
+        attempts_by_run.setdefault(attempt["run_id"], []).append(attempt)
     # These operations probes price all possible confirmation blocks. They
     # do not admit their full-fit comparisons or provide selection evidence.
     for run in queue["runs"]:
         if run["stage"] != "operations" or run.get("kind") or run["id"] in completed:
+            continue
+        # An exhausted optional timing probe must not prevent a later session's
+        # mandatory fresh hardware anchor from running. The measured forecast
+        # still fails closed when that probe's compatible timing is required.
+        if len(attempts_by_run.get(run["id"], [])) >= 2:
             continue
         return run
     stage = "confirmation" if queue["phase"] == "confirmation" else "discovery"
