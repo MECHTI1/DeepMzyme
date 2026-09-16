@@ -5,9 +5,42 @@ next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
-Last scientific-policy documentation update: 2026-09-15.
+Last scientific-policy documentation update: 2026-09-16.
 
 ## Current objective
+
+**Next campaign implementation (2026-09-16):** the separately named
+[`metal_single_gpu_20h_v2`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
+adds bounded learning-rate/capacity screening, an initial hybrid arm, one
+mixed diagnostic block per family, bounded paired numeric continuation, and
+protected grouped-fold confirmation. Both top screened recipes receive a
+second seed; the fixed larger late-fusion pair and historical-recipe late-five
+challenger retain separate identities. The revised grid is a ceiling, not a
+promise that every fit fits the original allocation caps.
+Its dedicated serial CLI preserves prior pilot evidence and studies. This is
+an implementation/preparation change: **no new GPU allocation, training fit,
+hardware readiness result or model promotion is implied**. Exact budgets,
+commands and parameter values belong to the playbook. The next runtime action
+is measured readiness and cost admission on the actually assigned single GPU,
+after freezing inputs and durable storage. Confirmation remains exploratory
+until the primary final-test route is resolved.
+
+**Local implementation checks (2026-09-16):** 229 campaign and retained-pilot
+regression tests passed. The v2 local plan is at
+`DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_20h_v2_prepared/`, with 65 initial
+commands and the full budget preview. CPU preparation passed for **1,389**
+eligible pockets and **5,216** cached input files; all six native classes are
+present in every declared training/validation fold. Its historical proxy is **21.540 hours**
+for complete coverage, including the training margin and four operations hours,
+before additional large-capacity cost or optional tuning. Required discovery
+alone projects to **6.712 hours** against its six-hour cap. Full training is
+therefore **not admitted**; zero historical reuse cells are certified. The
+cost-only confirmation order is core, fixed late-five, early/hybrid, then RING.
+No new GPU session or training fit was launched; a fresh server check found no
+active Colab sessions. The old closed allocation identities remain unchanged.
+Earlier unexecuted local previews are retained. The prepared directory binds
+the final source and documentation and is the execution-plan source. No local
+preview directory contains a training attempt.
 
 **Authorized RING continuation completed (2026-09-15):** all four smokes
 and sixteen full 50-epoch fits in the
@@ -132,7 +165,7 @@ classification and EC/function classification, beginning at EC depth 1. The
 immediate cross-task roadmap starts with reconciling strong standalone models;
 auxiliary shared learning remains a later challenger.
 
-The current Phase 1 pilot has reconciled recipes for the four-class endpoint:
+The completed Phase 1 pilot has reconciled recipes for the four-class endpoint:
 (a) direct four-class training and (b) matched six-class training followed by
 deterministic collapsed-four evaluation, plus a labeled five-class challenger.
 All three targets completed both LR opportunities at seed 42 and one
@@ -453,13 +486,23 @@ Open implementation issues:
 
 ## Immediate next action
 
-No GPU or training queue is active. Preserve the completed
+Prepare and inspect the new
+[single-GPU campaign](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
+with the dedicated CLI. Verify the frozen manifest, retained cohort and input
+hashes, native checkpoint selection, shared confirmation plan and durable
+artifact route. A future allocation must record actual GPU/memory/throughput
+and a full setup-to-stop interval before training admission. Do not automatically
+launch a GPU or ordinary notebook HPO/confirmation/refit/test cells.
+
+No GPU or training queue was started by this implementation. Preserve the completed
 [RING](docs/notebook_outputs/summaries/summary_metal_ring_pilot_20260915.md),
 [architecture continuation](docs/notebook_outputs/summaries/summary_metal_architecture_pilot_continuation_20260915.md)
 and [geometry](docs/notebook_outputs/summaries/summary_metal_coordination_geometry_pilot_20260915.md)
 evidence and all three closed allocation intervals. Review the matched
-LR/seed/class-recall findings before freezing a further comparison. Do not
-automatically spend the remaining 2.687089 hours or rerun completed pilots.
+LR/seed/class-recall findings as context for the new frozen comparison. Do not
+automatically spend the remaining 2.687089 hours or reset the original ledger.
+Reuse a completed fit only through the new strict scientific-identity checks;
+otherwise retain it as historical evidence.
 Keep the original Only-ESM direct-four reference and separately labeled
 late-five challenger without ranking unmatched cross-campaign maxima.
 
@@ -467,31 +510,39 @@ Any future target comparison must retain native checkpoint/LR selection and
 same-checkpoint probability-collapsed-four reporting. Eventual promotion needs
 grouped-fold **Stage 6**, followed by Stage 6B and a scientifically resolved
 one-shot Stage 7 route. Full hybrid comparison, grouped-fold confirmation
-including RING, and later exact recipes remain to be reconciled. The separate
+including RING, have a new bounded recipe but no new execution evidence.
+Reportable paired HPO/Stage 6B/Stage 7 recipes remain to be reconciled. The separate
 EC-primary auxiliary experiment still requires certified cross-source identity,
 homology and cross-task held-out exclusion before a runnable recipe or training.
 
 ## Next few actions
 
-1. **Phase 1 — initial bounded metal pilots complete:** preserve the original
+1. **New single-GPU campaign — implementation/preparation:** perform readiness
+   and measured-cost admission, then the bounded discovery and frozen shared-fold
+   comparisons in the linked recipe. Finish admitted comparisons or explicitly
+   record missing coverage; stop tuning after confirmation. No primary final
+   model is promoted through this exploratory route.
+2. **Phase 1 — initial bounded metal pilots complete:** preserve the original
    30 architecture fits, 15 geometry fits and 16 matched RING fits (61 full
    fits total), plus 16 model smokes, geometry prediction export, terminal
    captures and actual closed allocation receipts. Review these fixed-split
    results before another controlled comparison; hybrid remains deferred and
    no model is promoted. RING controls are fresh fits, not reused matrix cells.
-2. **Phase 2 — completed at the initial fixed-split level:** retain the twelve
+3. **Phase 2 — completed at the initial fixed-split level:** retain the twelve
    EC1 standalone baselines for the three initial families. Grouped-fold
-   confirmation and final promotion remain future work.
-3. **Phase 3 — completed:** retain the predeclared training-only metal × EC1
+   confirmation and final promotion remain future work. After the bounded metal
+   campaign, cost EC1 confirmation separately and reconcile its later-stage
+   workflow; do not transfer metal-family rankings to EC.
+4. **Phase 3 — completed:** retain the predeclared training-only metal × EC1
    association evidence as separate source panels. Review the descriptive
    results; certify cross-source identity and held-out exclusion separately
    before the auxiliary-learning experiment.
-4. **Phase 4:** add and run one controlled EC-primary comparison: EC-only versus
+5. **Phase 4:** certify, then add and run one controlled EC-primary comparison: EC-only versus
    EC plus auxiliary metal, using independent heads with shared learning and
    cross-task group exclusion.
-5. **Phase 5:** test metal-only versus metal plus auxiliary EC only if useful or
+6. **Phase 5:** test metal-only versus metal plus auxiliary EC only if useful or
    scientifically worthwhile.
-6. **Phase 6:** only then consider soft metal conditioning or more complicated
+7. **Phase 6:** only then consider soft metal conditioning or more complicated
    cross-task interactions. Continue the separate direct four-class metal
    architecture matrix when its standalone gates justify it.
 

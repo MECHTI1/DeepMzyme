@@ -32,6 +32,7 @@ clearly contains newer working logic that should be preserved.
 | Notebook workflow and option reference | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` |
 | Copy-paste-ready metal training stages | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` |
 | G4-class Optuna policy and exact stage budgets | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("G4-Class Optuna Policy") |
+| Bounded single-GPU discovery and confirmation | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` ("Single-GPU metal campaign") |
 | EC recipe intent and current compatibility status | `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md` |
 | Raw experiment results | `docs/notebook_outputs/raw/` |
 | Historical documents and commands | `docs/archive/` |
@@ -190,7 +191,9 @@ Stage 6B (promotion gates and final full-train refit), and Stage 7
 Authoritative rules for the pipeline:
 
 - One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
-- Hardware target is a G4-class GPU; the playbook defines exact budgets,
+- Prefer a verified G4-class GPU when available; measure the actual accelerator,
+  memory and throughput on each Colab allocation. Neither a particular GPU nor
+  uninterrupted runtime is guaranteed. The playbook defines exact budgets,
   storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without
   Stage 6 grouped-fold confirmation evidence plus a completed Stage 6B final
@@ -241,7 +244,9 @@ Authoritative rules for the pipeline:
   during Stage 2B. The architecture pilot includes early fusion alongside the
   three core families, then completes the required target-formulation coverage
   before an optional hybrid screen. A weak early result may defer hybrid under
-  the budget; it cannot establish that hybrid is ineffective.
+  that historical pilot's budget; it cannot establish that hybrid is ineffective.
+  The separate single-GPU campaign below gives hybrid its own initial tuning
+  opportunity without an early-fusion performance gate.
 - The metal campaign must complete the controlled comparison matrix in
   Section 7 before making publication claims about the value of ESMC, fusion
   position, or RING edges. Separate HPO winners or unmatched historical runs
@@ -251,7 +256,7 @@ Authoritative rules for the pipeline:
 
 The `metal_architecture_pilot_10h_v1` profile is a separately budgeted Stage
 0–2B campaign. Its exact schedule, values, runnable block, outputs, and decision
-gates belong to the opening pilot section of the metal playbook. It does not
+gates belong to the historical bounded pilot section of the metal playbook. It does not
 automatically expand into the serious Optuna stages or Stage 6 confirmation.
 
 Use one GPU worker and persistent attempt accounting. Charge setup, training,
@@ -284,6 +289,58 @@ pooling-distance cutoff disables only that additional filter. Residue-only
 graphs without explicit metal nodes still use metal coordinates for pocket
 construction and geometric features. Localized pooling remains a separate
 matched ablation after the initial architecture screen.
+
+### Bounded single-GPU discovery and confirmation
+
+The separately named `metal_single_gpu_20h_v2` campaign extends the bounded
+exploration policy with a protected confirmation allocation. Its exact recipe,
+capacity profiles, diagnostic follow-ups, runtime caps and executable controls
+belong to the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign).
+It does not replace the historical pilot or rewrite serious Optuna studies.
+
+Use one allocated session and one training process at a time. Count allocation
+time from provisioning, including setup, failed attempts, interruptions,
+transfers and shutdown; changing machines or reconnecting cannot reset it.
+Persist completed fits and restart an interrupted fit once from its original
+seed. This is attempt recovery, not exact epoch continuation. Admit complete
+blocks against measured hardware-specific costs and a safety margin, protecting
+confirmation before discretionary tuning. No completion guarantee follows from
+a historical minutes-per-fit estimate.
+
+Give all required families an initial learning-rate by capacity screen,
+including early and hybrid fusion. Repeat the two best screened recipes per
+arm before choosing among them. Preserve matched target-formulation
+opportunities across Only-GVP, Only-ESM and graph-level late fusion, including
+one predeclared larger late-fusion recipe for both targets and seeds. Diagnose
+more than one plausible failure mode before allocating additional experiments;
+distinct diagnostic categories receive priority within the small fixed menu.
+Treat the larger recipe as a fresh candidate: overlap with historical hidden
+widths does not establish reproduction of a historical model.
+Bound any further numeric continuation by paired improvement, class-recall
+protection, fixed parameter boundaries and a per-arm fit cap including controls.
+Only one chain per family is active, and a favorable result on one core target
+earns the same opportunity for its paired target. Do not keep tuning after confirmation.
+Unresolved learning curves, search boundaries or incomplete blocks mean
+budget-limited uncertainty, not universal architectural rejection. Capacity
+bundles and separately tuned recipes compare achievable configurations under
+the stated opportunity; they do not isolate every individual hyperparameter.
+
+Freeze one configuration per arm before shared grouped-fold/seed confirmation.
+Choose any cost-based fallback coverage before inspecting fold results. Use
+common-four paired comparisons and class-recall protection, retaining native
+six-class diagnostics. A matched Only-GVP RING contrast fixes geometry-derived
+shell roles in both controls; a base fit can serve as the off control only if
+its full scientific identity matches. Combined models remain RING-off in this
+profile. A fixed historical-recipe late-five challenger has its own labeled
+confirmation block without opening a new five-class search. Missing comparisons stay incomplete and cannot support corresponding
+publication claims.
+
+Until the primary final-test route is resolved, this campaign's confirmation
+is exploratory validation. It neither creates Stage 6B promotion evidence nor
+launches final refitting or test evaluation. A reportable selection cycle must
+first freeze the final-test route, then complete the applicable Stage 6,
+Stage 6B and Stage 7 gates. EC remains an independent primary mission with a
+separately costed confirmation and certified auxiliary-learning cycle.
 
 ### Controlled coordination-geometry exploration
 
@@ -1026,7 +1083,8 @@ over every architecture at every stage:
 For metal GVP/ESM fusion, the advanced-fusion order should be:
 
 1. Node-level late fusion after the late-fusion baseline is stable.
-2. Hybrid fusion only after early or late fusion shows useful validation signal.
+2. Serious hybrid HPO only after early or late fusion shows useful validation
+   signal. The separately bounded single-GPU screen includes hybrid directly.
 3. Cross-modal attention last, starting with a narrow one-layer configuration, because it has the most tuning degrees of freedom and the greatest overfitting risk.
 
 `simple_gnn_esm` should be treated as an auxiliary architecture ablation, not the main next step in the best-pipeline search. Use it after the GVP and ESM baselines are stable when the question is whether GVP vector geometry is actually helping compared with a simpler scalar graph model.

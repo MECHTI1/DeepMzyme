@@ -1,9 +1,549 @@
 # Metal Training Pipeline Playbook
 
-For the bounded, one-GPU metal campaign use
-[metal_architecture_pilot_10h_v1](#bounded-metal-architecture-pilot--stage-0-through-stage-2b).
-The earlier standalone block is retained first for compatibility and historical
-interpretation. It is not the active pilot profile.
+For the new bounded, one-GPU discovery and confirmation campaign use
+[metal_single_gpu_20h_v2](#single-gpu-metal-campaign).
+The [earlier architecture pilot](#bounded-metal-architecture-pilot--stage-0-through-stage-2b)
+and Common70 standalone block remain separate historical recipes. Current
+execution and evidence state belongs to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+
+## Single-GPU metal campaign
+
+Profile: **`metal_single_gpu_20h_v2`**. This is a separately identified,
+validation-only discovery and exploratory grouped-fold campaign. It gives
+hybrid an unconditional initial tuning opportunity and reserves time for
+confirmation instead of automatically opening every serious Optuna search.
+Existing pilot results and 120–200-trial recipes retain their own identities;
+this profile creates no Optuna study. Implementation, runtime readiness and
+experimental evaluation are separate states.
+
+### Allocation and admission policy
+
+| Allowance | Maximum | Charged work |
+|---|---:|---|
+| Operations | 4 GPU-allocation hours | Setup, verification, failed/interrupted attempts, recovery, transfer, idle time, shutdown |
+| Discovery | 6 GPU-allocation hours | Completed initial screens, selected seed repeats and diagnosed refinement |
+| Confirmation | 10 GPU-allocation hours | Frozen shared-fold/seed comparisons; protected from further tuning |
+| Total | **20 GPU-allocation hours** | Cumulative across every session; no reconnect resets |
+
+These are ceilings, not spending targets. Unused discovery allowance may fund
+confirmation; confirmation allowance cannot fund tuning. Count the entire
+allocated interval, beginning with actual provisioning time and ending with
+verified shutdown. Never count overlapping training and allocation time twice.
+Charge a successful fit's complete attempt interval, including its in-process
+preparation and result verification, to its scientific stage. Charge a failed,
+interrupted, timed-out or verification-rejected attempt to operations once.
+Operations also receives allocated time outside completed scientific attempts;
+do not add a failed-attempt duration to that residual a second time. Keep an
+active attempt's elapsed time separate until its outcome is known.
+Use **one allocated GPU session and one training process**, with loader workers
+zero. Each session lasts at most **4 hours**, with the final **15 minutes**
+reserved for verified persistence and shutdown. Shorter sessions are valid.
+An external owner must stop the actual VM; closing a ledger is not VM teardown.
+
+Prefer G4 when available, but record the actual device name, memory, CUDA
+capability, PyTorch support, full-fit duration and peak GPU memory. Colab Pro
+does not promise a GPU type or uninterrupted session. Do not assume G4 means
+16 GB, or call the runtime persistent. Copy input data to VM-local disk and
+use cached ESMC/features; prepare or analyze on the local CPU when practical.
+Historical minutes-per-fit observations are planning context only. Obtain
+measurements for the active hardware and update them after each allocation.
+
+Forecast complete comparison blocks with a **1.25 cost multiplier**. Protect
+the forecast confirmation grid before admitting discretionary refinement.
+Never reduce an individual arm's epochs, seeds or cohort to make it fit. If
+costs exceed the allowance, stop with an explicit incomplete outcome; spending
+the cap is not a success criterion.
+
+### Frozen input and training contract
+
+| Area | Exact campaign setting |
+|---|---|
+| Input | Existing non-overlap PinMyMetal **training** membership only; fixed native-six eligibility |
+| Discovery split | `pdbid` grouping; original `metal_site` stratification; split seed 42; validation fraction 0.15 |
+| Targets | Separate `four_class` / `merge_fe_class_viii` and `six_class` search identities; one fixed `five_class` late-fusion confirmation challenger |
+| Checkpoint/recipe selection | Native `val_metal_balanced_acc` in every arm; six-class common-four results from that same checkpoint |
+| Full fit | 50 epochs; batch 8; no pruning or early stopping; fixed LR schedule; weight decay `1e-4` |
+| Loss | Cross-entropy, training-fitted inverse-frequency native class weights, unit manual multipliers; no auxiliary collapsed loss or site sampler |
+| ESM | Frozen ESMC-300m residue embeddings, dimension 960; graph-ESM dropout 0.1 |
+| Features | Conservative; certified training-only repaired PROPKA overlay; complete shared ESM/external coverage; no on-demand generation |
+| Graph | Extraction 10 Å; residue edge radius 6 Å; pooling cutoff 0.0; residue-only readout; no explicit metal nodes |
+| Defaults held fixed | Edge hidden width 64; head dropout 0.2; early bottleneck 32; early dropout 0.0; all augmentation off |
+| Edges | Radius-only throughout discovery/base confirmation; original shell-role semantics retained until the separately matched RING block |
+| Runtime | CUDA; one process; loader workers 0; deterministic; per-class epoch metrics; invalid/unsupported structures are errors |
+| Test controls | `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`; no test paths/inference; no automatic HPO, Stage 6B or Stage 7 launch |
+
+Only-ESM uses pocket-residue ESMC pooling. Classifier pooling does not select
+the full protein, and disabling explicit metal nodes does not remove metal
+coordinates from pocket construction or geometric features. Frozen source,
+input membership, bundle/overlay/embedding hashes and fitted preprocessing
+must be bound to results. For grouped validation, fit normalization and class
+weights on each fold's training partition only.
+
+Reuse a completed fit only after proving identical effective configuration,
+scientific source behavior, input/feature contents, eligible examples, split,
+seed, epoch budget, normalization and selected checkpoint. Otherwise keep it
+as historical evidence. A matching label or filename is insufficient; prior
+observed seed repeats do not become new confirmation evidence.
+
+### Initial screen, top-two repeats and larger late fusion
+
+The eight arms are Only-GVP, Only-ESM and graph-level late fusion, each with
+four-/six-class training, plus direct-four early and hybrid fusion. Every arm
+receives `1e-5`, `3e-5`, `1e-4` crossed with these two capacity profiles:
+
+| Capacity | Compact | Reference |
+|---|---:|---:|
+| Scalar hidden width | 128 | 128 |
+| GVP vector width | 8 | 16 |
+| GVP layers | 2 | 4 |
+| Classifier layers | 1 | 2 |
+| ESM projection width, where applicable | 64 | 128 |
+
+Graph-only fields do not apply to Only-ESM. These bundled capacity changes do
+not isolate individual width/depth effects. The initial grid contains **48
+full seed-42 fits before strict compatible reuse**. Rank by seed-42 native BA,
+native minimum recall, parameter count, then stable configuration ID. Repeat
+each arm's **top two distinct screened recipes** with seed **43**, adding
+**16 fits**, before choosing by two-seed evidence. Do not gate hybrid on
+early-fusion results.
+
+Add exactly one larger graph-level late-fusion recipe: scalar/vector/edge
+hidden widths **256/32/128**, four GVP layers, two classifier layers, ESM
+projection 128, LR **`3e-5`**, and all other reference settings unchanged.
+Run both four-/six-class targets at seeds **42 and 43**, adding **four fits**.
+These remain separate from the baseline top-two repeats. Other families do
+not receive an implicit large-capacity grid. Required discovery therefore has
+**68 full fits before compatible reuse**, not 56.
+
+Before admitting those full fits, run one one-epoch reference-capacity smoke
+per base arm at LR `3e-5`, seed 42, charged to operations. Add two large-late
+smokes, one fixed late-five smoke, and two matched GVP RING smokes: **13 smoke
+templates** in total. These operational measurements price future comparison
+blocks; running a smoke does not admit its full comparison. Require finite metrics,
+all native classes, shared retained membership, complete features and valid
+checkpoints. Smokes measure hardware/setup cost; their scores do
+not rank architectures. Conservative smoke-based projections are replaced
+with measured full-fit durations as they become available.
+
+### Mixed diagnostic refinement
+
+One mixed diagnostic block per family may follow. Collect applicable
+diagnostics from both target arms and allocate at most **two extra settings
+per arm**. First take the first variant from each distinct triggered category
+in the table's priority order; if only one category triggers, fill the second
+slot from that category's next variant. Both targets receive the same diagnostic
+opportunity relative to their own selected recipe. For the first LR setting,
+each boundary-selected target receives its own outward extension; an interior
+target follows the triggering partner. With opposite target boundaries, the
+second LR setting offers the counterpart only if no second diagnostic category
+needs that slot. This preserves a slot for a visible class-recall problem.
+
+| Priority | Diagnostic | Candidate menu |
+|---:|---|---|
+| 1 | Selected LR is on the initial range boundary | Below: `5e-6`; above: `3e-4` for GVP, `2e-4` for ESM/early/late, `1.5e-4` for hybrid |
+| 2 | Any native class has zero recall in a selected repeated fit | `inverse_sqrt_frequency` and `effective_number` class weighting |
+| 3 | Mean selected-checkpoint train-minus-validation BA exceeds 0.10 | `(weight decay, head dropout)` = `(1e-3, 0.3)` and `(1e-4, 0.4)` |
+| 4 | Early/hybrid remains weak without another diagnostic | Early bottlenecks 16 and 64, each with early dropout 0.1 |
+
+The early/hybrid weakness comparison uses its repeated mean against
+direct-four graph-level late fusion. Each candidate runs seeds 42 and 43, at most
+**four additional fits per arm**, at most **32** across the eight arms.
+Hold other settings fixed. Process eligible
+families in this order: **GVP, ESM, late, early, hybrid**. Admit complete matched
+blocks only after protecting confirmation. A diagnostic result earns further
+numeric exploration only through the bounded continuation gate below.
+
+### Bounded numeric continuation
+
+After mixed diagnostics, a family can receive at most **six further fits per
+arm**, including missing seed repeats and isolation controls. A complete new
+setting uses seeds 42 and 43; at most three such steps fit when no control
+completion is needed. Visit families in the frozen GVP, ESM, late, early,
+hybrid order, one round at a time. Maintain one active axis and direction per
+family. Resolve competing trends by the frozen parameter order below and
+stable configuration identity, never by the largest observed gain.
+
+A continuation requires parent and candidate results on both seeds and the
+same certified discovery cohort. Both native-BA differences must be positive,
+their mean must exceed **0.002**, no common-four mean class recall may decline
+by more than **0.03**, and no previously nonzero native-class recall may become
+zero in either seed. If either core target passes, run the next matched setting
+for **both** four-/six-class targets using their own comparable parents.
+If their observed directions disagree, choose the qualifying family direction
+by the fixed parameter order, lower direction first, then stable configuration
+identity. Each target moves from its own current candidate in that direction;
+only a matching observed direction can supply the improvement gate. Reuse
+already verified next-setting seeds within the campaign and count only missing
+fits against the allowance. Preserve native-six class failures in every decision.
+
+| Parameter priority | Frozen step rule and boundary |
+|---:|---|
+| 1. Learning rate | First boundary extension uses the family-specific diagnostic rate above; subsequent steps multiply/divide by 2, staying in `[1e-6, 1e-3]` |
+| 2. Weight decay | Adjacent value in `1e-6, 1e-5, 1e-4, 1e-3, 1e-2` |
+| 3. Head dropout | Adjacent value in `0.0, 0.1, 0.2, 0.3, 0.4, 0.5` |
+| 4. Early bottleneck | Adjacent dimension in `8, 16, 32, 64, 128`, holding early dropout fixed |
+| 5. Late capacity | Width bundle `128/16/64 → 256/32/128 → 384/48/192 → 512/64/256`, holding GVP/head layers, ESM projection and every other setting fixed |
+
+Categorical choices do not create continuation chains. A coupled diagnostic
+such as weight decay plus dropout cannot establish a one-parameter trend;
+complete a matched isolation control before extending either axis. A missing
+reference seed for the mandatory larger-late comparison likewise counts
+against the same six-fit allowance. Recheck the gate after controls finish;
+do not schedule the next candidate alongside unverified controls. Stop a chain
+at its first failed gate, boundary, budget refusal or exhausted fit cap. Do
+not restart from an older favorable comparison after a newer step fails.
+
+Freeze one recipe per arm using the two-seed mean native BA among completely
+repeated recipes, then mean native minimum recall, smaller parameter count,
+and stable configuration ID. Eligible paired recipes include the mandatory
+larger-late pair. Do not rank native-four against native-six BA.
+Batch/LR interaction, schedules/duration, graph geometry/pooling, focal loss,
+smoothing, augmentation, node-level fusion and cross-attention remain later
+separately costed comparisons, not an implicit expansion of this grid.
+
+Record a full fit as **potentially training-budget-limited** if its selected
+native-validation checkpoint is in epochs 46–50, or mean native validation BA
+over epochs 46–50 exceeds the mean over epochs 41–45 by more than **0.002**.
+Save the selected-epoch-50 flag and the late-window gain alongside that label.
+These are advisory diagnostics: retain the same selected checkpoint, keep the
+50-epoch limit, and do not interpret the flag as architectural ineffectiveness
+or extend training after confirmation results are viewed.
+
+### Exploratory Stage 6 confirmation
+
+Use **Stage 6: top-K seed/split confirmation** semantics with an explicit
+frozen candidate list, `group_kfold_seed_repeat`, five shared `pdbid` folds,
+fold seed **42**, active model seeds **42, 43**, 50 epochs and one process.
+Verify adequate native-six support in each training and validation fold before
+launch. The eight base candidates require **80 full fits**. Automatic top-K
+expansion is disabled.
+
+The separately labeled **late-five** challenger uses the fixed historical
+reference-capacity recipe at LR `3e-5`, native-five checkpoint selection,
+and the same common-four probability-collapse reporting. It adds ten shared
+fold/seed fits when admitted; it is not an expanded five-class HPO campaign.
+Predeclare its paired common-four contrasts against both selected late-four
+and late-six recipes. If its confirmation is deferred or incomplete, retain
+it as an unresolved contender; the selected four/six recipe cannot be said
+to beat all tested target formulations.
+
+Add a direct-four Only-GVP RING comparison using its selected recipe. Both
+RING-on and RING-off use `shell_role_source=geometry`; every other scientific
+setting and fitted-input policy is matched. Reserve ten on fits and **ten
+fresh off fits**. This v2 profile budgets and declares both controls explicitly;
+it does not silently substitute a historical off arm. Existing pilot RING results
+do not replace this shared-fold comparison. Run node/shell/edge-control audits
+before the corresponding RING fits and charge their allocated time to
+operations. Combined models remain RING-off.
+
+Before refinement, forecast the full confirmation grid with the 1.25 margin.
+Reduce discretionary refinement first. If full coverage still cannot fit,
+freeze this cost-only fallback order **before any fold-result inspection**:
+
+1. All six core target/formulation arms (60 fits).
+2. Fixed late-five challenger (10 fits).
+3. Early and hybrid together (20 fits).
+4. The matched GVP RING block (20 fresh off/on fits).
+
+Never choose which blocks complete using favorable fold results. Incomplete
+blocks receive explicit missing-coverage labels; no opportunistic seed/fold
+subset becomes a completed comparison.
+
+Average model seeds within each fold and use paired **10,000-resample**
+fold-level bootstrap intervals. Compare target formulations on common-four
+probabilities, summing Fe/Co/Ni before argmax, while retaining native-six BA and
+Fe/Co/Ni recalls. An improvement claim requires a positive paired interval and
+no common-four mean class-recall loss exceeding **0.03** against its declared
+comparator. Use a **0.002 BA** practical tie band, then recall, stability and
+model simplicity. The comparisons are six-versus-four within each core family,
+modality comparisons among direct-four core models, early/hybrid versus
+graph-level late fusion, and matched RING-on versus off.
+
+These intervals describe stability conditional on the preceding search. They
+do not remove selection bias or substitute for a final held-out evaluation.
+Do not tune after viewing confirmation. The unresolved final-test route makes
+this exploratory validation: no Stage 6B refit or Stage 7 artifacts are emitted.
+A final reporting cycle must first resolve/freeze its data route, then pass
+Stage 6, Stage 6B and Stage 7 in order. EC confirmation and EC-primary auxiliary
+learning follow in separately costed, certified campaigns.
+
+### Count and measured-budget audit
+
+| Work | Full-fit count before reuse |
+|---|---:|
+| Eight-arm baseline LR/capacity screen | 48 |
+| Top-two seed-43 repeats | 16 |
+| Fixed large-late four/six × two seeds | 4 |
+| Mixed diagnostics | 0–32 |
+| Protected numeric chains, including needed controls | 0–48 |
+| Eight base candidates plus fresh RING controls | 100 |
+| Fixed late-five confirmation, if admitted | 10 |
+
+The required discovery floor is 68 fits. Full required confirmation without
+late-five gives 168 fits before optional tuning; adding late-five gives 178.
+The absolute full-fit ceiling is **258** with all diagnostic and chain
+allowances used and all confirmation blocks admitted. The 13 initial smokes,
+new-hardware re-profiling, audits, failed attempts and transfers are additional
+operational work. These counts describe coverage and caps; they are not an
+authorization to spend beyond the fixed 20-hour allocation.
+
+`preview` writes a historical timing estimate before any allocation.
+It credits **zero certified reuse** by default. Up to 14 old reference-screen
+cells and seven old seed repeats are theoretical overlaps only: selected
+recipes may differ, source/configuration/content identity must pass, and old
+fixed-split observations do not replace new grouped-fold fits. Do not count
+unverified reuse as a budget saving.
+
+For perspective, using historical reference-capacity G4 fit means, a
+one-epoch hybrid extrapolation, a 25% training margin, and four operational
+hours gives roughly **21.54 hours** for 68 discovery plus 110 confirmation
+fits, with no optional refinement. That calculation optimistically prices
+large late like reference late and does not include the live forecast's
+conservative discovery-to-fold adjustment. It is a lower planning proxy,
+not a measured completion prediction. Larger late recipes may also win
+selection, increasing subsequent confirmation costs. Earlier closed
+allocations spent about **2.66 of 7.31 hours** outside completed full fits;
+four future operational hours are not guaranteed sufficient.
+The timing basis is the archived
+[architecture attempt ledger](notebook_outputs/raw/metal_architecture_pilot_20260915/continuation/finalization/campaign_attempt_ledger.json),
+[RING attempt ledger](notebook_outputs/raw/metal_ring_pilot_20260915/finalization/campaign_attempt_ledger.json)
+and [closed allocation ledger](notebook_outputs/raw/metal_ring_pilot_20260915/host_closeout_allocation3/allocation_ledger.json),
+with the [geometry attempt ledger](notebook_outputs/raw/metal_coordination_geometry_pilot_20260915/finalization/campaign_attempt_ledger.json)
+included in the operational-overhead calculation.
+
+Before full training, use current-hardware measurements and an explicit
+remaining-operations plan covering setup, smoke work, audits, persistent
+copies/readbacks, recovery and each shutdown. Apply the 1.25 margin and show
+all three phase caps plus the total. A larger model requires its own timing
+measurement; a smaller model's runtime cannot price it. Completed exact
+full-fit timings replace smoke projections. A changed GPU invalidates old
+runtime estimates even when scientific results remain reusable.
+
+The revised floor can already exceed the six-hour discovery ceiling. If the
+measured required discovery plus protected confirmation does not fit, the
+runner must refuse full-fit admission and report the deficit. Preserve the
+prepared plan and evidence; do not silently change the allocation split,
+drop a required initial arm, shorten training, or borrow confirmation time.
+Optional blocks consume only measured remaining capacity and follow the
+frozen fallback order before confirmation results are opened.
+
+### Serial campaign commands
+
+The worker runner is `src/run_metal_single_gpu_campaign.py`; the separate
+ownership/watchdog controller is `scripts/colab_serial_metal_host.py`.
+Planning, preparation, queue transitions and reports never allocate a GPU.
+Only the host's explicit `allocate` action provisions one. Keep the ordinary
+notebook's training, HPO, Stage 6B and final-test launch switches false.
+
+Set `CAMPAIGN_PYTHON` to the verified interpreter, `CAMPAIGN_DATA_ROOT` to the
+verified inputs, and the overlay variables to the certified repaired features.
+Initially `CAMPAIGN_OUTPUT_DIR` is a fresh local planning directory. The
+repository's prescribed local interpreter is
+`/home/mechti/miniconda3/envs/DeepMzyme/bin/python`.
+
+```bash
+"${CAMPAIGN_PYTHON:?verified interpreter required}" -c 'import sys; print(sys.executable)'
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py plan \
+  --repo-root "$PWD" \
+  --data-root "${CAMPAIGN_DATA_ROOT:?verified data root required}" \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?fresh local planning directory required}" \
+  --external-features-root-dir "${CAMPAIGN_EXTERNAL_FEATURES_ROOT_DIR:?certified overlay required}" \
+  --feature-overlay-manifest "${CAMPAIGN_FEATURE_OVERLAY_MANIFEST:?verified overlay manifest required}"
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py prepare \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}"
+```
+
+Inspect `commands.txt`, `run_matrix.csv`, `fold_plan.json`, feature identities
+and `budget_forecast.md`. The historical preview is explicitly not admission.
+Export an untouched initial plan to the exact future worker paths **before**
+allocation. This path-only export preserves scientific recipes and hashes; it
+cannot relocate a started campaign. Choose a compatible worker interpreter
+path using the Colab runbook and recreate these paths on subsequent sessions.
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py export-runtime-plan \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --destination-dir "${CAMPAIGN_RUNTIME_EXPORT:?local export directory required}" \
+  --worker-repo-root /content/DeepMzyme \
+  --worker-data-root /content/DeepMzyme/DeepMzyme_Data \
+  --worker-output-dir "${CAMPAIGN_WORKER_OUTPUT:?persistent or transferred worker path required}" \
+  --worker-external-features-root "${CAMPAIGN_WORKER_OVERLAY:?worker overlay path required}" \
+  --worker-python "${CAMPAIGN_WORKER_PYTHON:?compatible worker interpreter path required}"
+"${CAMPAIGN_PYTHON:?}" scripts/colab_serial_metal_host.py prepare \
+  --output "${CAMPAIGN_RUNTIME_EXPORT:?}" \
+  --session-id "${CAMPAIGN_SESSION_ID:?fresh deepmzyme-prefixed name required}" \
+  --gpu G4
+```
+
+The final command prepares ownership/watchdog configuration only. An eventual
+explicit `allocate` with the same host output and session name arms the
+watchdog before requesting the GPU. Exact available names are T4, L4, G4,
+H100 and A100; choose one explicitly and verify the assigned hardware.
+Copy the exported plan, frozen source and verified data to their declared
+worker locations. Run worker `prepare` again; allocated setup is operations.
+
+On the surviving host, obtain a fresh launch receipt with:
+
+```bash
+"${CAMPAIGN_PYTHON:?}" scripts/colab_serial_metal_host.py status \
+  --output "${CAMPAIGN_RUNTIME_EXPORT:?}" --session-id "${CAMPAIGN_SESSION_ID:?}" \
+  --worker-receipt "${CAMPAIGN_HOST_RECEIPT:?local receipt file required}"
+```
+
+Transfer that receipt promptly to the worker; it expires within 120 seconds.
+For the following worker commands, set `CAMPAIGN_PYTHON` and
+`CAMPAIGN_OUTPUT_DIR` to the frozen **worker** interpreter and output path.
+Use the exact allocation request timestamp from the host receipt, including
+all setup time. Register the session and verify hardware/inputs:
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py session-open \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --session-id "${CAMPAIGN_SESSION_ID:?owned session required}" \
+  --allocation-started-epoch "${CAMPAIGN_ALLOCATION_STARTED_EPOCH:?actual allocation start required}" \
+  --host-receipt-json "${CAMPAIGN_WORKER_HOST_RECEIPT:?fresh transferred receipt required}"
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py readiness \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --operations-plan-json "${CAMPAIGN_OPERATIONS_PLAN:?future operations forecast required}"
+```
+
+The operations JSON records future raw `setup_seconds`, `smoke_seconds`,
+`audit_seconds`, `persistence_seconds`, `recovery_seconds`, `shutdown_seconds`,
+`sessions_remaining` and a nonempty evidence `basis`. Shutdown must reserve
+at least 900 seconds per remaining session. The runner adds the 25% margin.
+Refresh this future-cost estimate through `readiness` when circumstances
+change; a stale overestimate may safely halt admission.
+
+First execute and persist the one-epoch operations probes, one per call.
+They price all prospective confirmation blocks and are not selection evidence.
+Each probe has a bounded bootstrap forecast of 600 seconds; it does not give
+a full-fit timing claim. Before each execution refresh the host receipt.
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py execute \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --host-receipt-json "${CAMPAIGN_WORKER_HOST_RECEIPT:?fresh transferred receipt required}"
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py report \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}"
+```
+
+After profiling, `forecast` prints measured admission and missing coverage.
+Import strictly compatible cells with `reuse --run-id ... --source-campaign ...
+--source-run-id ...` **before** reserving or attempting them. Then call `admit`
+to reserve complete scientific blocks across sessions. `advance` freezes the
+top-two shortlist, diagnostics, chains or final confirmation queue as their
+gates pass; it never trains. After each new scientific block, call `admit`
+before `execute`. Neither command silently changes folds, seeds or epochs.
+
+Verify every terminal attempt, including failed logs, before another fit.
+An actual mounted Drive output is read back automatically. Otherwise transfer
+the attempt directory, independently read it back, and submit a receipt with
+`method="verified_transfer"`, `destination_uri`, `readback_root` and the
+exact `artifacts` inventory from `attempts.json`:
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py verify-transfer \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --attempt-id "${CAMPAIGN_ATTEMPT_ID:?terminal attempt required}" \
+  --receipt-json "${CAMPAIGN_TRANSFER_RECEIPT:?verified readback receipt required}"
+```
+
+For non-Drive output, also call `export-state`, transfer the returned immutable
+snapshot, and call `verify-state-transfer --receipt-json ...`. That receipt
+contains `state_sha256`, `destination_uri` and independent `readback_root`.
+The current queue, allocation, comparison and attempt ledgers must match it
+before execution; queue changes require a new snapshot. A new VM needs the
+verified complete state and artifacts restored at the same paths.
+For the transfer route, the first execution request also writes an immutable
+launch intent before starting a process. Persist that new state, refresh the
+host receipt, and repeat execution. This preserves the attempt identity even
+if the VM disappears before its final ledger is copied. Reconciliation of a
+lost attempt requires verified death of its original allocation, records any
+artifact loss explicitly, and consumes the original attempt's retry allowance.
+
+Before a RING fold, use `ring-audit --fold-index 0..4 --host-receipt-json ...`.
+It registers and runs one bounded CPU audit charged to operations; for a
+transfer route, persist its newly registered queue state and repeat the call.
+Persist audit results before the matched fits. Interrupted fits restart once
+in a separate directory; `reconcile` requires proof the old process or VM died.
+
+After verified persistence, use the host's explicit `stop` action with its
+owned session name. The watchdog is the backstop, not permission to leave a
+VM idle. Close the worker ledger from the surviving controller only after
+provider absence has been verified:
+
+```bash
+"${CAMPAIGN_PYTHON:?}" src/run_metal_single_gpu_campaign.py session-close \
+  --output-dir "${CAMPAIGN_OUTPUT_DIR:?}" \
+  --session-id "${CAMPAIGN_SESSION_ID:?}" \
+  --stopped-epoch "${CAMPAIGN_STOPPED_EPOCH:?actual verified stop required}" \
+  --stop-evidence-json "${CAMPAIGN_STOP_EVIDENCE:?actual stop receipt required}"
+```
+
+Retain the host and worker ledgers together. A new allocation requires a fresh
+owned name, a verified previous stop and hardware readiness. The cumulative
+20-hour cap persists. Do not use a blind unbounded shell loop: follow each
+reported admission, persistence, recovery and closeout result.
+
+### Expected artifacts
+
+All campaign-level artifacts live below the explicit `--output-dir`:
+
+- `campaign_manifest.json`, `commands.txt`, `run_matrix.csv`: frozen source,
+  configuration and initial queue identity.
+- `notebook_planning/`: notebook adapter's planning-only metadata, kept separate
+  from actual fit artifacts in `runs/`. These helper files do not replace the
+  campaign manifest or count as attempted training.
+- `budget_forecast.json`, `budget_forecast.md`: historical preview or current
+  measured admission forecast, including unmeasured costs and phase deficits.
+- `queue.json`, `input_identity.json`, `preparation.json`, `fold_plan.json`,
+  `training_cache_audit.json`:
+  current queue plus certified shared inputs and declared folds.
+- `sessions.json`, `attempts.json`, `readiness/<session>.json`,
+  `persistence/<attempt>.json`: cumulative allocation, linked attempts,
+  hardware readiness and verified artifact persistence.
+- `comparisons.json`: reservations for complete comparisons across sessions.
+  `state_snapshots/` and `state_persistence.json` record controller-state transfer
+  and independent read-back when the output is not directly persistent.
+- `launch_intents.json` and `active_process.json`, when present, preserve
+  prelaunch identities and process ownership for interruption reconciliation.
+  State snapshots also include terminal-attempt persistence receipts.
+- `runtime_export.json` in an exported plan records path/interpreter remapping;
+  it does not certify worker inputs. The separate host output's `host_control/`
+  directory contains allocation ownership, watchdog and teardown records.
+- `refinement_decisions.json`, `discovery_closed.json`,
+  `chain_decisions.json`, `confirmation_manifest.json`: diagnostic/continuation choices, discovery freeze and
+  predeclared candidate/fold/seed admission.
+- `campaign_report.json`, `campaign_report.md`, `campaign_results.csv`,
+  `confirmation_summary.csv`, `confirmation_pairwise.csv`: completed-result
+  evidence, uncertainty/recall gates and explicit missing coverage.
+
+Each completed fit also keeps `run_config.json`, `run_metadata.json`,
+`split_diagnostics.json`, `dataset_summary.json`, `prepare_status.json`,
+`epoch_metrics.csv`, `train_metrics.csv`, `val_metrics.csv`, fitted
+normalization and `best_model_checkpoint.pt` in its recorded attempt directory.
+`performance_profile.json` records setup/training time and peak CUDA memory,
+including profiling status when training fails.
+The standalone manifest owns this recipe; notebook-generated
+`active_run_config.json` / `active_run_config.md` describe ordinary notebook
+plans and must not override it. No `test_report.json` or final-refit selection
+artifact is expected or permitted.
+
+### Recovery and decision gate
+
+Preserve completed fits and restart an interrupted fit once from its original
+seed, linking both attempts. The trainer has no exact epoch/state resume.
+Retries remain charged; a second interruption is an explicit unresolved unit.
+Every completed fit must retain its checkpoint, effective config, metadata,
+normalization and metrics, with verified persistent copies before proceeding.
+
+The campaign is complete only when its frozen admitted comparison grid is
+complete, the artifacts and transfers verify, native/common-four selection
+semantics match the recipe, paired class-recall diagnostics are present, and
+the allocation closes within budget. Report the full required matrix's missing
+blocks even when the admitted subset finishes. A budget stop, negative or
+inconclusive comparison is valid evidence; it is not model promotion. Keep
+strict study/recipe identity and test exclusion throughout.
 
 ## Retained Common70 standalone validation campaign — Stage 0 through Stage 2B
 
@@ -940,15 +1480,17 @@ primary PinMyMetal-compatible reporting endpoint. It requires a controlled
 comparison of direct `four_class` / `merge_fe_class_viii` training against
 matched `six_class` training followed by collapsed-four evaluation.
 
-The bounded pilot supplies both required target arms and a labeled five-class
+The new single-GPU campaign supplies both required target arms through bounded
+discovery and exploratory grouped-fold confirmation. The historical bounded
+pilot supplies both target arms and a labeled five-class
 challenger, with native-selection and same-checkpoint common-four reporting.
 The retained opening standalone Stage 0–2B recipe supplies its historical pair.
 The older blocks below retain their six-class common recipe as historical
 workflow references; they are not a direct-four campaign or a matched pair.
 
-For the current metal campaign use the bounded pilot below the retained
-standalone block, including its native selection and target-independent split
-control. Before extending it
+For the new bounded metal campaign use the
+[single-GPU recipe](#single-gpu-metal-campaign), including native selection and
+target-independent split control. Before extending it
 to HPO or final reporting, reconcile paired later-stage blocks. Coordinate study/run identities, common-view
 metrics, active-class metrics, rare-class gates, and Stage 6/6B/7 provenance
 with the notebook launch surface. Do not patch one label value in isolation or
@@ -1141,7 +1683,7 @@ executable block is added here.
 ## Retained Six-Class Common Defaults — Reconciliation Required
 
 These are retained six-class values for the older stage examples below.
-Use the bounded architecture pilot for the current baseline campaign. Later-stage
+Use the separate single-GPU recipe for the new bounded campaign. Later-stage
 paired HPO and final-reporting recipes still require reconciliation.
 
 ```python
@@ -1232,8 +1774,12 @@ status notes rather than guessed.
 
 ## G4-Class Optuna Policy
 
-This project runs on a G4-class GPU (16 GB VRAM, persistent runtime). All
-serious Optuna stages must use:
+These retained serious-HPO budgets target a verified G4-class GPU. The actual
+GPU model, VRAM, throughput and CUDA compatibility must be inspected at each
+allocation; G4 is not a 16-GB guarantee and a Colab runtime is not persistent.
+Durability comes from verified external artifacts and storage. The separately
+budgeted [single-GPU campaign](#single-gpu-metal-campaign) does not launch these
+studies. All serious Optuna stages must use:
 
 - `OPTUNA_INTENSITY = "custom"` - never rely on `first_useful`/`serious`
   notebook presets for reportable HPO.
@@ -1241,12 +1787,13 @@ serious Optuna stages must use:
   `OPTUNA_TPE_CONSTANT_LIAR = True` so shared-storage studies support multiple
   parallel workers without duplicate/in-flight TPE suggestions.
 - `OPTUNA_PARALLEL_WORKERS = 1` is the canonical default and preserves
-  historical serial trial execution. On a G4/T4 16 GB GPU, `2` is an optional
-  validation-only acceleration override after Stage 3 or another short debug
+  historical serial trial execution. For a separately scoped campaign, `2`
+  remains an optional validation-only acceleration override after Stage 3 or another short debug
   study confirms there is CUDA memory headroom for the active model family,
   batch-size range, and feature set. Keep `OPTUNA_TPE_CONSTANT_LIAR = True`,
   keep persistent storage enabled, and keep
   `OPTUNA_STOP_ON_PARALLEL_CUDA_OOM = True` when using more than one worker.
+  The single-GPU campaign requires one process even if memory would fit two.
 - `OPTUNA_SAMPLER_SEED = None` unless deliberately re-exploring the same split
   with a different Optuna trajectory. With `None`, the sampler seed follows
   `OPTUNA_SPLIT_SEED`.

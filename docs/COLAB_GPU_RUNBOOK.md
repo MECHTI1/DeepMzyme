@@ -28,6 +28,46 @@ runtime connection and environment procedure, not scientific stage budgets.
 6. Stop every CLI-created session on success and failure. An idle session keeps
    consuming metered Colab resources.
 7. Keep held-out evaluation off outside the approved Stage 7 workflow.
+8. For `metal_single_gpu_20h_v2`, keep exactly one owned allocation and one
+   training process active. Account for provisioning/setup/idle/recovery time,
+   verify saved artifacts, then stop the real VM before closing its ledger.
+
+## Single-GPU campaign runtime policy
+
+The [single-GPU playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
+owns the new profile's exact total/phase/session budgets and commands. It is
+separate from prior pilots and serious Optuna studies. The worker runner does not
+provision or stop a Colab VM. The dedicated
+`scripts/colab_serial_metal_host.py` wrapper owns allocation, the independent
+watchdog, ownership checks, and verified teardown; its commands are in the
+playbook. Export an untouched local plan for the worker's paths and interpreter
+before binding the host manifest. CPU preparation must then pass on that worker.
+Use the actual allocation-start timestamp when opening the campaign session,
+including setup before the runner became available. Closing a ledger entry
+does not demonstrate that billing or the VM has stopped.
+
+Prefer G4 if available. Record the assigned GPU model, physical memory,
+compute capability, PyTorch architecture support, peak training memory and
+measured full-fit costs. G4 is not a synonym for 16 GB. Repeat hardware/cost
+inspection after reconnecting to a new runtime. Colab Pro availability and
+session duration are variable; a persistent output directory does not make the
+VM persistent. The queue's complete-block forecast and shutdown reserve must
+use the actual assignment, not a historical fit-time promise.
+
+Do CPU preparation before provisioning when possible. On the VM, stage cached
+inputs on local disk and keep verified durable copies of every completed fit,
+the frozen campaign manifest, queue/attempt state and allocation ledger.
+Authorize Drive in the same browser kernel before unattended execution when
+using a mounted Drive destination. Do not start a second VM to work around a
+transport failure while the first might still exist. First reconcile the
+owned runtime through status/assignment evidence.
+
+After interruption, completed verified fits remain reusable; an interrupted
+fit restarts once from its original seed. The trainer does not implement exact
+optimizer/RNG/epoch continuation. Preserve the original attempt, charge the
+whole allocation, and record its linked retry. Before planned shutdown, stop
+admitting training, verify transfers/checkpoints, stop the owned VM and retain
+its actual stop receipt. A lost connection is not evidence of teardown.
 
 ## Browser-only route
 
@@ -158,9 +198,12 @@ colab new --gpu G4 -s deepmzyme-g4
 colab status -s deepmzyme-g4
 ```
 
-Read the status output. The assigned hardware must be G4-class before
-continuing. A 400 response means that the account lacks entitlement for the
-requested accelerator; do not silently substitute another GPU.
+Read the status output. For this G4-specific procedure, confirm the assigned
+hardware is G4-class before continuing. A 400 response means that the account
+lacks entitlement for the requested accelerator. A separately planned
+single-GPU campaign can use another available accelerator only after recording
+the assignment, rerunning CUDA/memory preflight and replacing cost estimates;
+do not silently reuse G4 timing assumptions.
 
 To attach the browser UI to this exact CLI-created VM:
 

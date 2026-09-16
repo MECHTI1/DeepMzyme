@@ -452,6 +452,19 @@ non-training remediation.
 
 **Status:** Open; policy recorded 2026-09-14
 
+**Bounded single-GPU implementation (2026-09-16):** the separate
+[`metal_single_gpu_20h_v2` recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
+adds matched core four-/six-class learning-rate/capacity discovery, unconditional
+early/hybrid coverage, top-two seed repeats, mixed diagnostics, bounded numeric
+continuation, fixed larger late-fusion and late-five comparisons, a serial allocation ledger and
+frozen exploratory grouped-fold comparisons. It keeps native checkpoint
+selection and common-four comparison distinct. This does not certify the
+retained serious paired HPO/Stage 6B/Stage 7 recipes or resolve final-test data
+policy. Exact epoch resume remains unsupported: interrupted fits restart once,
+linked to the original attempt, within the same cumulative allocation budget.
+Implementation checks are not new GPU readiness or experimental evidence;
+current state belongs to `EXPERIMENT_STATUS.md`.
+
 **Bounded pilot reconciliation (2026-09-15):** The separately named
 `metal_architecture_pilot_10h_v1` profile covers direct-four early/late and
 unimodal screens, and matched four-/five-/six-class core-family screens before
@@ -463,9 +476,11 @@ historical and retains its different six-class collapsed-four-selection rule.
 Pilot implementation, smoke outcomes, and experimental completion must be
 reported separately in `EXPERIMENT_STATUS.md`; this note is not run evidence.
 
-Early fusion now has a bounded manual pilot recipe. A dedicated serious early
-HPO block and later paired HPO/Stage 6/6B/7 recipes remain open. The pilot's
-conditional hybrid budget gate is not the serious Stage 5E promotion gate.
+Early fusion now has bounded manual recipes. A dedicated serious early HPO
+block and reportable paired HPO/Stage 6/6B/7 recipes remain open; the new
+single-GPU profile supplies exploratory paired grouped-fold execution only.
+The historical pilot's conditional hybrid budget gate is not the serious
+Stage 5E promotion gate and does not apply to the new initial hybrid screen.
 
 **Feature-readiness qualification:** Cache-file coverage alone does not verify
 measured external channels. The pilot requires a separately hashed,

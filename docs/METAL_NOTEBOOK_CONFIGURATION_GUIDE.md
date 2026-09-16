@@ -25,8 +25,9 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 > deterministic collapsed-four view. Current notebook and playbook defaults
 > have an explicit paired standalone recipe at the start of the metal playbook.
 > Later-stage paired HPO/final recipes still require TECH-010 reconciliation.
-> Use the opening bounded architecture pilot for the current metal campaign;
-> the earlier Common70 standalone recipe is retained and labeled separately.
+> Use the separately named single-GPU campaign for bounded discovery and
+> confirmation; the earlier architecture pilot and Common70 standalone recipes
+> are retained and labeled separately. Current execution state is in status.
 
 For paired metal baselines, `SPLIT_STRATIFY_BY="metal_site"` is passed as
 `--split-stratify-by metal_site`: it balances original site symbols, independent
@@ -45,6 +46,35 @@ target before either paired metal arm enters training. It excludes mixed-metal
 pockets that would become eligible only after four-class merging. This keeps
 the paired cohort fixed; `active` preserves historical task eligibility. The
 EC-only path does not require metal supervision.
+
+### Single-GPU discovery and confirmation
+
+The dedicated `run_metal_single_gpu_campaign` CLI owns the opt-in
+`metal_single_gpu_20h_v2` queue. Its exact values, commands, budgets, admission
+order and artifacts belong to the
+[single-GPU playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign).
+It uses the existing notebook command generator but does not change live
+notebook defaults or reuse the older pilot's automatic scheduling. Leave
+ordinary main/HPO, Stage 6, Stage 6B and test launch switches false when using
+the dedicated runner; its frozen candidate list owns confirmation.
+
+The initial screen crosses learning rate and capacity for every required arm,
+including hybrid independently of early-fusion performance. Each arm's two
+best screened recipes receive the second seed before selection. A mixed
+diagnostic follow-up and bounded numeric continuation may be admitted with
+matched core-target opportunities; missing isolation controls count against
+the continuation cap. A fixed larger late-fusion recipe has its own paired
+screen, and late-five remains a labeled fixed-recipe confirmation challenger.
+Discovery cannot spend the protected confirmation allocation. Hardware changes
+require new cost measurements; GPU availability and session longevity are not
+fixed by Colab Pro.
+
+The serial session ledger persists allocated time across reconnects, and
+completed fits require configuration/content/checkpoint verification before
+reuse. An interrupted fit can restart once from its original seed; this is not
+exact epoch resume. Shared grouped-fold results remain exploratory while the
+final-test route is unresolved, and cannot trigger an automatic refit/test.
+The historical notebook pilot below keeps its own budget and scheduling rules.
 
 ### Bounded architecture pilot
 
@@ -183,6 +213,7 @@ and safe workflow principles; the playbook is the practical execution recipe.
 | Stage 2A: Only-GVP validation anchor | Manual-comparison controls, Only-GVP preset, split/selection controls | "First real baseline", "Validation and selection metric" |
 | Stage 2B: baseline family comparison | Baseline run-set controls, ESM readiness controls, comparison hygiene | "Recommended model order", "ESM options" |
 | Bounded Stage 0–2B architecture pilot | Optional pilot cell, persistent output directory, allocation-start timestamp, execution limit, persistence receipt | "Bounded architecture pilot"; exact values remain in the playbook |
+| Bounded single-GPU discovery and exploratory confirmation | Dedicated CLI, frozen manifest/candidate list, session ledger, cost admission and durable completion checks | "Single-GPU discovery and confirmation"; exact values remain in the playbook |
 | Bounded Stage 2B coordination-geometry pilot | Standalone runner; site-geometry mode, metal-node mode, explicit residue-only readout, parent campaign budget | "Coordination-geometry controls"; exact values remain in the playbook |
 | Stage 3: Optuna plumbing debug | `RUN_MODE="controlled_hpo_optuna"`, study name/storage, sampler controls, debug budget controls | "Optuna storage and Stage 6 confirmation" |
 | Stage 4: medium per-family Optuna, optional on G4 | One `MODEL_PRESET`, custom Optuna settings, persistent storage, validation-only objective | "Optuna storage and Stage 6 confirmation", "Experiment-Sequence Ownership" |
@@ -205,8 +236,8 @@ Do not rerun old "first baseline" or Optuna examples just because they appear be
 
 When planning a new check or fresh Optuna sweep, use previous raw outputs only
 as context unless the user explicitly asks to rely on prior runs/results/raws.
-For the practical fresh-run default, prefer the broadest sensible
-validation-only Optuna search within one selected `MODEL_PRESET`; the current
+For a fresh Optuna request without a bounded campaign profile, prefer the broadest sensible
+validation-only search within one selected `MODEL_PRESET`; the current
 copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 ## Exact Pipeline Source And Notebook Cell Order
@@ -252,7 +283,7 @@ Before launching a run, verify these resolved notebook values:
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
 | Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
-| Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; optional G4 acceleration override `2` only after a debug run confirms CUDA memory headroom |
+| Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; a separately scoped override requires measured CUDA memory headroom; the bounded single-GPU profile always uses one process |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
 | Collapsed-4 auxiliary loss | `METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0"` unless running an explicitly labeled validation-only objective probe |
 | Multi-objective Optuna | `OPTUNA_MULTIOBJECTIVE = False` unless running an explicitly labeled validation-only Pareto probe |
@@ -392,7 +423,11 @@ For `Only-GVP`, fusion fields are effectively irrelevant even if a saved config 
 
 ### Advanced fusion policy
 
-`GVP + node-level late fusion`, `GVP + hybrid fusion`, and `GVP + cross-modal attention` are not recommended as part of the first best-pipeline search. Treat them as later ablations after simpler models have earned the extra complexity.
+For the retained serious-HPO route, `GVP + node-level late fusion`,
+`GVP + hybrid fusion`, and `GVP + cross-modal attention` remain later ablations
+after simpler models justify the extra search. The separate bounded single-GPU
+profile gives hybrid an initial screen, as specified in the playbook; it does
+not open unrestricted advanced-fusion HPO.
 
 The wider publication mission nevertheless requires a controlled
 early-versus-late-versus-hybrid ESMC comparison. Early fusion therefore remains

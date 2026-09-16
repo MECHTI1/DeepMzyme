@@ -55,7 +55,14 @@ artifact transfer, and teardown, use
 
 - Use the metal playbook for exact stage blocks, budgets, seeds, ranges,
   expected artifacts, and gates.
-- For the bounded one-GPU architecture campaign, use the
+- For new bounded one-GPU discovery and confirmation, use
+  [metal_single_gpu_20h_v2](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign):
+  every required arm receives learning-rate/capacity screening and two-candidate
+  seed repeats, followed by bounded mixed diagnostics and protected numeric
+  continuation when affordable. Confirmation has a protected allowance. Its
+  dedicated serial CLI owns the queue; no GPU campaign is launched by adding
+  the implementation. Current status distinguishes implementation from results.
+- For the retained earlier bounded one-GPU architecture campaign, use the
   [Stage 0–2B pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b):
   CPU feature-overlay preparation, early/late and target-formulation screens,
   conditional hybrid, persistent budget accounting, and validation-only reports.
