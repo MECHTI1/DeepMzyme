@@ -1,0 +1,31 @@
+{
+  "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+  "family": "only_gvp",
+  "fold_id": "fixed_seed42",
+  "group_predictions": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/group_predictions.csv",
+    "sha256": "fc86d0c05be3fc9267aba45255244032bf6076d927b44174de875c52e0392f17"
+  },
+  "pocket_predictions": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/pocket_predictions.csv",
+    "sha256": "858f5d806189b66c8345d92e1806a02e63543c6c1a309abbcf780e707ec3f3ca"
+  },
+  "receipt": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/receipt.json",
+    "sha256": "ecb469eaf6b44b4d27b13947a4dad6c7aa84983ffd10fce81b47579b0abdd46f"
+  },
+  "reproduction_passed": true,
+  "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+  "seed": 43,
+  "target_vocabulary": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7"
+  ],
+  "task": "ec",
+  "validation_only": true
+}

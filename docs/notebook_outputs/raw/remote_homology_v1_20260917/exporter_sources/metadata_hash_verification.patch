@@ -1,0 +1,41 @@
+--- 051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae.py
++++ 94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35.py
+@@ -105,6 +105,20 @@
+         require(path.is_file() and digest(path) == expected, f"Frozen source hash mismatch: {relative}")
+     return {"mode": "verified_frozen_source", "source_root": str(source_root),
+             "source_manifest_sha256": fingerprint(source_files), "verified_files": len(source_files)}
++
++
++def verify_bound_run_files(entry, base):
++    """Validate every supplied run artifact, including metadata and membership."""
++    hashes = entry["expected_sha256"]
++    allowed = {"run_config.json", "best_model_checkpoint.pt", "dataset_summary.json", "run_metadata.json"}
++    require({"run_config.json", "best_model_checkpoint.pt"} <= hashes.keys(), "Missing required run artifact hashes")
++    require(hashes.keys() <= allowed, "Unsupported run artifact in replay ledger")
++    run_dir = resolve_path(entry["run_dir"], base)
++    for name, expected in hashes.items():
++        override = entry.get("checkpoint_path") if name == "best_model_checkpoint.pt" else (
++            entry.get("dataset_summary_path") if name == "dataset_summary.json" else None)
++        path = resolve_path(override, base) if override else run_dir / name
++        require(digest(path) == expected, f"Artifact hash mismatch: {name}")
+ 
+ 
+ def factory_kwargs(source_path, config, checkpoint, metal_labels, ec_labels):
+@@ -261,8 +275,7 @@
+     config_path = run_dir / "run_config.json"
+     checkpoint_path = resolve_path(entry["checkpoint_path"], base) if entry.get("checkpoint_path") else run_dir / "best_model_checkpoint.pt"
+     require(checkpoint_path.name == "best_model_checkpoint.pt", "Only the saved selected checkpoint is supported")
+-    for name, path in (("run_config.json", config_path), ("best_model_checkpoint.pt", checkpoint_path)):
+-        require(entry["expected_sha256"].get(name) == digest(path), f"Artifact hash mismatch: {name}")
++    verify_bound_run_files(entry, base)
+     payload = read_json(config_path)
+     config = payload["config"]
+     validate_config(config)
+@@ -459,6 +472,7 @@
+         freeze = ledger["counts_freeze"]
+         require(digest(resolve_path(freeze["path"], base)) == freeze["sha256"], "Counts freeze file changed")
+     run_dir = resolve_path(entry["run_dir"], base)
++    verify_bound_run_files(entry, base)
+     checkpoint = resolve_path(entry["checkpoint_path"], base) if entry.get("checkpoint_path") else run_dir / "best_model_checkpoint.pt"
+     for key, path, field in (("run_config.json", run_dir / "run_config.json", "run_config_sha256"),
+                              ("best_model_checkpoint.pt", checkpoint, "checkpoint_sha256")):

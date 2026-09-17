@@ -1,0 +1,6776 @@
+{
+  "schema_version": 1,
+  "task": "metal",
+  "validation_only": true,
+  "endpoint": "represented_coordinate_chain",
+  "target_vocabulary": [
+    "Mn",
+    "Cu",
+    "Zn",
+    "Class VIII"
+  ],
+  "scope": "conditional_development_reporting_no_promotion",
+  "inputs": {
+    "protocol.json": "7cddf390f457cb74f7431ec8abafedbd73d04692169fb99965a7187209bf2a81",
+    "manifest.json": "cedd7c81e2ca0eaa708bea0317fae5744d3ce51a0003b76ade30ad3295c92ea0",
+    "remoteness_manifest.json": "67e666c4b7b70c0f363f84ca88d2fddf3e35cc1bbcbc594ce7293a4606c150b0",
+    "counts_freeze.json": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6"
+  },
+  "primary_shorter_sequence_coverage": 0.8,
+  "runs": [
+    {
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "family": "matched_gvp_ring_off",
+      "seed": 42,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7512570690926973,
+          "macro_f1": 0.7559219835348597,
+          "recall": [
+            0.8795180722891566,
+            0.9333333333333333,
+            0.4166666666666667,
+            0.7755102040816326
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              73.0,
+              0.0,
+              3.0,
+              7.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              4.0,
+              1.0,
+              5.0,
+              2.0
+            ],
+            [
+              9.0,
+              0.0,
+              2.0,
+              38.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.75,
+            null,
+            0.0,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              3.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              2.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "family": "matched_gvp_ring_off",
+      "seed": 43,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7787855503647243,
+          "macro_f1": 0.7474113898845081,
+          "recall": [
+            0.8433734939759037,
+            0.9333333333333333,
+            0.5833333333333334,
+            0.7551020408163265
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              70.0,
+              0.0,
+              11.0,
+              2.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              2.0,
+              1.0,
+              7.0,
+              2.0
+            ],
+            [
+              7.0,
+              1.0,
+              4.0,
+              37.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.5,
+            null,
+            0.6666666666666666,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              2.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "family": "matched_gvp_ring_on",
+      "seed": 42,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7546891648225555,
+          "macro_f1": 0.7052004898939235,
+          "recall": [
+            0.7469879518072289,
+            0.9333333333333333,
+            0.5833333333333334,
+            0.7551020408163265
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              62.0,
+              3.0,
+              12.0,
+              6.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              3.0,
+              1.0,
+              7.0,
+              1.0
+            ],
+            [
+              9.0,
+              1.0,
+              2.0,
+              37.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.75,
+            null,
+            0.6666666666666666,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              3.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "family": "matched_gvp_ring_on",
+      "seed": 43,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7859827063355462,
+          "macro_f1": 0.7861949706964699,
+          "recall": [
+            0.9759036144578314,
+            0.9333333333333333,
+            0.5,
+            0.7346938775510204
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              81.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              4.0,
+              1.0,
+              6.0,
+              1.0
+            ],
+            [
+              8.0,
+              2.0,
+              3.0,
+              36.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.5,
+            null,
+            0.6666666666666666,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              2.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "family": "only_esm",
+      "seed": 42,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.6785847471518728,
+          "macro_f1": 0.7092739662572065,
+          "recall": [
+            0.9759036144578314,
+            0.7333333333333333,
+            0.25,
+            0.7551020408163265
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              81.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            [
+              0.0,
+              11.0,
+              4.0,
+              0.0
+            ],
+            [
+              5.0,
+              0.0,
+              3.0,
+              4.0
+            ],
+            [
+              10.0,
+              0.0,
+              2.0,
+              37.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.5,
+            null,
+            0.6666666666666666,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              2.0,
+              0.0,
+              0.0,
+              2.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              2.0,
+              1.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "family": "only_esm",
+      "seed": 43,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7538039914761085,
+          "macro_f1": 0.7727837440158246,
+          "recall": [
+            0.963855421686747,
+            0.7333333333333333,
+            0.5833333333333334,
+            0.7346938775510204
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              80.0,
+              0.0,
+              2.0,
+              1.0
+            ],
+            [
+              0.0,
+              11.0,
+              4.0,
+              0.0
+            ],
+            [
+              4.0,
+              0.0,
+              7.0,
+              1.0
+            ],
+            [
+              11.0,
+              0.0,
+              2.0,
+              36.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.5,
+            null,
+            1.0,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              2.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              3.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "family": "only_gvp",
+      "seed": 42,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7512570690926973,
+          "macro_f1": 0.7559219835348597,
+          "recall": [
+            0.8795180722891566,
+            0.9333333333333333,
+            0.4166666666666667,
+            0.7755102040816326
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              73.0,
+              0.0,
+              3.0,
+              7.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              4.0,
+              1.0,
+              5.0,
+              2.0
+            ],
+            [
+              9.0,
+              0.0,
+              2.0,
+              38.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.75,
+            null,
+            0.0,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              3.0,
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              2.0,
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    },
+    {
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "family": "only_gvp",
+      "seed": 43,
+      "fold_id": "fixed_seed42",
+      "bins": {
+        ">30": {
+          "balanced_accuracy": 0.7787855503647243,
+          "macro_f1": 0.7474113898845081,
+          "recall": [
+            0.8433734939759037,
+            0.9333333333333333,
+            0.5833333333333334,
+            0.7551020408163265
+          ],
+          "support": [
+            83.0,
+            15.0,
+            12.0,
+            49.0
+          ],
+          "confusion_matrix": [
+            [
+              70.0,
+              0.0,
+              11.0,
+              2.0
+            ],
+            [
+              0.0,
+              14.0,
+              1.0,
+              0.0
+            ],
+            [
+              2.0,
+              1.0,
+              7.0,
+              2.0
+            ],
+            [
+              7.0,
+              1.0,
+              4.0,
+              37.0
+            ]
+          ],
+          "full_vocabulary_supported": true,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 83,
+              "groups": 34,
+              "components": 10
+            },
+            {
+              "target": 1,
+              "examples": 15,
+              "groups": 8,
+              "components": 3
+            },
+            {
+              "target": 2,
+              "examples": 12,
+              "groups": 9,
+              "components": 6
+            },
+            {
+              "target": 3,
+              "examples": 49,
+              "groups": 42,
+              "components": 27
+            }
+          ]
+        },
+        "(20,30]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            0.5,
+            null,
+            0.6666666666666666,
+            null
+          ],
+          "support": [
+            4.0,
+            0.0,
+            3.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              2.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.0,
+              2.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 4,
+              "groups": 2,
+              "components": 1
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 3,
+              "groups": 2,
+              "components": 2
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "(15,20]": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=15": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        },
+        "<=20": {
+          "balanced_accuracy": null,
+          "macro_f1": null,
+          "recall": [
+            null,
+            null,
+            null,
+            null
+          ],
+          "support": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "confusion_matrix": [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ],
+          "full_vocabulary_supported": false,
+          "unit_counts": [
+            {
+              "target": 0,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 1,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 2,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            },
+            {
+              "target": 3,
+              "examples": 0,
+              "groups": 0,
+              "components": 0
+            }
+          ]
+        }
+      },
+      "excluded": {
+        "no_qualifying_hit": 42
+      }
+    }
+  ],
+  "comparisons": {
+    "gvp_minus_esm": {
+      "model_seeds": [
+        42,
+        43
+      ],
+      "independent_components": 58,
+      "contrasts": {
+        ">30": {
+          "difference": 0.04882694041472013,
+          "paired_confidence_interval": [
+            -0.10604338100137872,
+            0.2630777990470967
+          ],
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 9540,
+          "support": {
+            ">30": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "(20,30]": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "(20,30]": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 3,
+                "groups": 2,
+                "components": 2
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "(15,20]": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "(15,20]": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "<=15": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=15": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "<=20": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=20": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "interaction_<=20_minus_>30": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=20": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ],
+            ">30": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        }
+      }
+    },
+    "ring_on_minus_off": {
+      "model_seeds": [
+        42,
+        43
+      ],
+      "independent_components": 58,
+      "contrasts": {
+        ">30": {
+          "difference": 0.005314625850340038,
+          "paired_confidence_interval": [
+            -0.04997015097022414,
+            0.04909943181818177
+          ],
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 9540,
+          "support": {
+            ">30": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "(20,30]": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "(20,30]": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 3,
+                "groups": 2,
+                "components": 2
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "(15,20]": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "(15,20]": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "<=15": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=15": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "<=20": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=20": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        },
+        "interaction_<=20_minus_>30": {
+          "difference": null,
+          "paired_confidence_interval": null,
+          "confidence_level": 0.95,
+          "bootstrap_replicates": 10000,
+          "valid_replicates": 0,
+          "support": {
+            "<=20": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ],
+            ">30": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "support_gate_passed": false,
+          "interpretation": "descriptive_or_inconclusive"
+        }
+      }
+    }
+  },
+  "sensitivity_audit": {
+    "shorter_sequence_coverage": 0.5,
+    "role": "predeclared_domain_sensitive_secondary_analysis",
+    "runs": [
+      {
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "family": "matched_gvp_ring_off",
+        "seed": 42,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7512570690926973,
+            "macro_f1": 0.7559219835348597,
+            "recall": [
+              0.8795180722891566,
+              0.9333333333333333,
+              0.4166666666666667,
+              0.7755102040816326
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                73.0,
+                0.0,
+                3.0,
+                7.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                4.0,
+                1.0,
+                5.0,
+                2.0
+              ],
+              [
+                9.0,
+                0.0,
+                2.0,
+                38.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.75,
+              null,
+              0.2,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                3.0,
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                3.0,
+                1.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "family": "matched_gvp_ring_off",
+        "seed": 43,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7787855503647243,
+            "macro_f1": 0.7474113898845081,
+            "recall": [
+              0.8433734939759037,
+              0.9333333333333333,
+              0.5833333333333334,
+              0.7551020408163265
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                70.0,
+                0.0,
+                11.0,
+                2.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                2.0,
+                1.0,
+                7.0,
+                2.0
+              ],
+              [
+                7.0,
+                1.0,
+                4.0,
+                37.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.5,
+              null,
+              0.8,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                2.0,
+                0.0,
+                2.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                0.0,
+                4.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "family": "matched_gvp_ring_on",
+        "seed": 42,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7546891648225555,
+            "macro_f1": 0.7052004898939235,
+            "recall": [
+              0.7469879518072289,
+              0.9333333333333333,
+              0.5833333333333334,
+              0.7551020408163265
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                62.0,
+                3.0,
+                12.0,
+                6.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                3.0,
+                1.0,
+                7.0,
+                1.0
+              ],
+              [
+                9.0,
+                1.0,
+                2.0,
+                37.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.75,
+              null,
+              0.4,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                3.0,
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                3.0,
+                0.0,
+                2.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "family": "matched_gvp_ring_on",
+        "seed": 43,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7859827063355462,
+            "macro_f1": 0.7861949706964699,
+            "recall": [
+              0.9759036144578314,
+              0.9333333333333333,
+              0.5,
+              0.7346938775510204
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                81.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                4.0,
+                1.0,
+                6.0,
+                1.0
+              ],
+              [
+                8.0,
+                2.0,
+                3.0,
+                36.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.5,
+              null,
+              0.8,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                2.0,
+                0.0,
+                2.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                0.0,
+                4.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "family": "only_esm",
+        "seed": 42,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.6785847471518728,
+            "macro_f1": 0.7092739662572065,
+            "recall": [
+              0.9759036144578314,
+              0.7333333333333333,
+              0.25,
+              0.7551020408163265
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                81.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              [
+                0.0,
+                11.0,
+                4.0,
+                0.0
+              ],
+              [
+                5.0,
+                0.0,
+                3.0,
+                4.0
+              ],
+              [
+                10.0,
+                0.0,
+                2.0,
+                37.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.5,
+              null,
+              0.8,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                2.0,
+                0.0,
+                0.0,
+                2.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                4.0,
+                1.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "family": "only_esm",
+        "seed": 43,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7538039914761085,
+            "macro_f1": 0.7727837440158246,
+            "recall": [
+              0.963855421686747,
+              0.7333333333333333,
+              0.5833333333333334,
+              0.7346938775510204
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                80.0,
+                0.0,
+                2.0,
+                1.0
+              ],
+              [
+                0.0,
+                11.0,
+                4.0,
+                0.0
+              ],
+              [
+                4.0,
+                0.0,
+                7.0,
+                1.0
+              ],
+              [
+                11.0,
+                0.0,
+                2.0,
+                36.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.5,
+              null,
+              1.0,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                2.0,
+                0.0,
+                2.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                5.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "family": "only_gvp",
+        "seed": 42,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7512570690926973,
+            "macro_f1": 0.7559219835348597,
+            "recall": [
+              0.8795180722891566,
+              0.9333333333333333,
+              0.4166666666666667,
+              0.7755102040816326
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                73.0,
+                0.0,
+                3.0,
+                7.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                4.0,
+                1.0,
+                5.0,
+                2.0
+              ],
+              [
+                9.0,
+                0.0,
+                2.0,
+                38.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.75,
+              null,
+              0.2,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                3.0,
+                0.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                3.0,
+                1.0,
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      },
+      {
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "family": "only_gvp",
+        "seed": 43,
+        "fold_id": "fixed_seed42",
+        "bins": {
+          ">30": {
+            "balanced_accuracy": 0.7787855503647243,
+            "macro_f1": 0.7474113898845081,
+            "recall": [
+              0.8433734939759037,
+              0.9333333333333333,
+              0.5833333333333334,
+              0.7551020408163265
+            ],
+            "support": [
+              83.0,
+              15.0,
+              12.0,
+              49.0
+            ],
+            "confusion_matrix": [
+              [
+                70.0,
+                0.0,
+                11.0,
+                2.0
+              ],
+              [
+                0.0,
+                14.0,
+                1.0,
+                0.0
+              ],
+              [
+                2.0,
+                1.0,
+                7.0,
+                2.0
+              ],
+              [
+                7.0,
+                1.0,
+                4.0,
+                37.0
+              ]
+            ],
+            "full_vocabulary_supported": true,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 83,
+                "groups": 34,
+                "components": 10
+              },
+              {
+                "target": 1,
+                "examples": 15,
+                "groups": 8,
+                "components": 3
+              },
+              {
+                "target": 2,
+                "examples": 12,
+                "groups": 9,
+                "components": 6
+              },
+              {
+                "target": 3,
+                "examples": 49,
+                "groups": 42,
+                "components": 27
+              }
+            ]
+          },
+          "(20,30]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              0.5,
+              null,
+              0.8,
+              null
+            ],
+            "support": [
+              4.0,
+              0.0,
+              5.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                2.0,
+                0.0,
+                2.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                1.0,
+                0.0,
+                4.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 4,
+                "groups": 2,
+                "components": 1
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 5,
+                "groups": 3,
+                "components": 3
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "(15,20]": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=15": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          },
+          "<=20": {
+            "balanced_accuracy": null,
+            "macro_f1": null,
+            "recall": [
+              null,
+              null,
+              null,
+              null
+            ],
+            "support": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "confusion_matrix": [
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            ],
+            "full_vocabulary_supported": false,
+            "unit_counts": [
+              {
+                "target": 0,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 1,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 2,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              },
+              {
+                "target": 3,
+                "examples": 0,
+                "groups": 0,
+                "components": 0
+              }
+            ]
+          }
+        },
+        "excluded": {
+          "no_qualifying_hit": 40
+        }
+      }
+    ],
+    "comparisons": {
+      "gvp_minus_esm": {
+        "model_seeds": [
+          42,
+          43
+        ],
+        "independent_components": 58,
+        "contrasts": {
+          ">30": {
+            "difference": 0.04882694041472013,
+            "paired_confidence_interval": [
+              -0.10604338100137872,
+              0.2630777990470967
+            ],
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 9540,
+            "support": {
+              ">30": [
+                {
+                  "target": 0,
+                  "examples": 83,
+                  "groups": 34,
+                  "components": 10
+                },
+                {
+                  "target": 1,
+                  "examples": 15,
+                  "groups": 8,
+                  "components": 3
+                },
+                {
+                  "target": 2,
+                  "examples": 12,
+                  "groups": 9,
+                  "components": 6
+                },
+                {
+                  "target": 3,
+                  "examples": 49,
+                  "groups": 42,
+                  "components": 27
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "(20,30]": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "(20,30]": [
+                {
+                  "target": 0,
+                  "examples": 4,
+                  "groups": 2,
+                  "components": 1
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 5,
+                  "groups": 3,
+                  "components": 3
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "(15,20]": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "(15,20]": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "<=15": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=15": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "<=20": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=20": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "interaction_<=20_minus_>30": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=20": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ],
+              ">30": [
+                {
+                  "target": 0,
+                  "examples": 83,
+                  "groups": 34,
+                  "components": 10
+                },
+                {
+                  "target": 1,
+                  "examples": 15,
+                  "groups": 8,
+                  "components": 3
+                },
+                {
+                  "target": 2,
+                  "examples": 12,
+                  "groups": 9,
+                  "components": 6
+                },
+                {
+                  "target": 3,
+                  "examples": 49,
+                  "groups": 42,
+                  "components": 27
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          }
+        }
+      },
+      "ring_on_minus_off": {
+        "model_seeds": [
+          42,
+          43
+        ],
+        "independent_components": 58,
+        "contrasts": {
+          ">30": {
+            "difference": 0.005314625850340038,
+            "paired_confidence_interval": [
+              -0.04997015097022414,
+              0.04909943181818177
+            ],
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 9540,
+            "support": {
+              ">30": [
+                {
+                  "target": 0,
+                  "examples": 83,
+                  "groups": 34,
+                  "components": 10
+                },
+                {
+                  "target": 1,
+                  "examples": 15,
+                  "groups": 8,
+                  "components": 3
+                },
+                {
+                  "target": 2,
+                  "examples": 12,
+                  "groups": 9,
+                  "components": 6
+                },
+                {
+                  "target": 3,
+                  "examples": 49,
+                  "groups": 42,
+                  "components": 27
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "(20,30]": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "(20,30]": [
+                {
+                  "target": 0,
+                  "examples": 4,
+                  "groups": 2,
+                  "components": 1
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 5,
+                  "groups": 3,
+                  "components": 3
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "(15,20]": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "(15,20]": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "<=15": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=15": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "<=20": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=20": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          },
+          "interaction_<=20_minus_>30": {
+            "difference": null,
+            "paired_confidence_interval": null,
+            "confidence_level": 0.95,
+            "bootstrap_replicates": 10000,
+            "valid_replicates": 0,
+            "support": {
+              "<=20": [
+                {
+                  "target": 0,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 1,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 2,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                },
+                {
+                  "target": 3,
+                  "examples": 0,
+                  "groups": 0,
+                  "components": 0
+                }
+              ],
+              ">30": [
+                {
+                  "target": 0,
+                  "examples": 83,
+                  "groups": 34,
+                  "components": 10
+                },
+                {
+                  "target": 1,
+                  "examples": 15,
+                  "groups": 8,
+                  "components": 3
+                },
+                {
+                  "target": 2,
+                  "examples": 12,
+                  "groups": 9,
+                  "components": 6
+                },
+                {
+                  "target": 3,
+                  "examples": 49,
+                  "groups": 42,
+                  "components": 27
+                }
+              ]
+            },
+            "support_gate_passed": false,
+            "interpretation": "descriptive_or_inconclusive"
+          }
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Sequence identity is not a certificate of absence of homology.",
+    "Intervals are conditional on validation-based checkpoint and recipe selection.",
+    "Sequence components are bootstrap units; repeated model seeds are not new proteins.",
+    "A missing true class makes full-task balanced accuracy and macro-F1 undefined.",
+    "The 50% coverage sensitivity audit does not replace the 80% primary endpoint.",
+    "Component intervals do not replace Stage 6 paired-fold promotion gates."
+  ]
+}

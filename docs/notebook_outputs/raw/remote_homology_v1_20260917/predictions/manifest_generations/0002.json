@@ -1,0 +1,325 @@
+{
+  "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+  "reproduction_passed": true,
+  "reuse_ledger_sha256": "04ca8ef84baa1728e2664bf467846e097cbdda7cb62604514b9f5cc0500a08d6",
+  "runs": [
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_esm",
+      "fold_id": "fixed_seed42",
+      "group_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/group_predictions.csv",
+        "sha256": "54cc98ec2a29496f8beb9164fcab054acc792fae98c8643b6fac2161859eca05"
+      },
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/pocket_predictions.csv",
+        "sha256": "d176b64f52a04992ce1157ed930ada424c7b3d4e20e2b248f7d07170cfcd999e"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/receipt.json",
+        "sha256": "f0f470ffdb84333aaddc037794182b1c775c5e1d056e3e346baa7136c8d39ad6"
+      },
+      "reproduction_passed": true,
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "seed": 42,
+      "target_vocabulary": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "task": "ec",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_esm",
+      "fold_id": "fixed_seed42",
+      "group_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/group_predictions.csv",
+        "sha256": "f7ba94117ae4da4ccc8e1fa05d9e138c513802b295ddd245563da891ed3f8c6b"
+      },
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/pocket_predictions.csv",
+        "sha256": "a914003ba4544a050c0ac7b3e0a925ce144cd4f07aa172f7cc6552f2cb49e863"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/receipt.json",
+        "sha256": "3d03d1e41d2ad32c2858a6022d8a4a13860c35d3a2528d706c72861e85b2d6e9"
+      },
+      "reproduction_passed": true,
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "seed": 43,
+      "target_vocabulary": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "task": "ec",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_gvp",
+      "fold_id": "fixed_seed42",
+      "group_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff/group_predictions.csv",
+        "sha256": "6ef3bd1be65a7a812c0bdbb7fd280f671d153e16a32c403815f1cf3dc68afa94"
+      },
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff/pocket_predictions.csv",
+        "sha256": "4f1140a8f8a43b4cb2b8b28bbc55710090666d8b0a03a71ad927dccf9570de11"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff/receipt.json",
+        "sha256": "5f578bdcaa2c9fc5ca6612527d02c3392ca26f1af5eeabad67a2eb22cdab17b5"
+      },
+      "reproduction_passed": true,
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "seed": 42,
+      "target_vocabulary": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "task": "ec",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_gvp",
+      "fold_id": "fixed_seed42",
+      "group_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/group_predictions.csv",
+        "sha256": "fc86d0c05be3fc9267aba45255244032bf6076d927b44174de875c52e0392f17"
+      },
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/pocket_predictions.csv",
+        "sha256": "858f5d806189b66c8345d92e1806a02e63543c6c1a309abbcf780e707ec3f3ca"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/receipt.json",
+        "sha256": "ecb469eaf6b44b4d27b13947a4dad6c7aa84983ffd10fce81b47579b0abdd46f"
+      },
+      "reproduction_passed": true,
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "seed": 43,
+      "target_vocabulary": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "task": "ec",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "matched_gvp_ring_off",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s42/pocket_predictions.csv",
+        "sha256": "a1f7fd135527fe31904914b9a0f041f3c35e77bffa135e39d0972e80c029681e"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s42/receipt.json",
+        "sha256": "7b3081f68d0f1a60a0d47084634944f58652d171391a821ffdb032b9832adb7f"
+      },
+      "reproduction_passed": true,
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "seed": 42,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "matched_gvp_ring_off",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s43/pocket_predictions.csv",
+        "sha256": "e356d71e6272c554b1f9bdc6a13e8848a225087fa2e8981bc8068e9a7f606b85"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s43/receipt.json",
+        "sha256": "03261f7de002abf1d40cbf3dba4cc2d1783f72965e2d8bf00fd6748841696dd1"
+      },
+      "reproduction_passed": true,
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "seed": 43,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "matched_gvp_ring_on",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s42/pocket_predictions.csv",
+        "sha256": "08999f2646ba76614a9565049d736ee2226a9ddac492e061d8c4df8a06b8e1ad"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s42/receipt.json",
+        "sha256": "1a00b80ba604dededa450743c62ad1cfc5bdf42d4b42dbb3cb353332312dc11b"
+      },
+      "reproduction_passed": true,
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "seed": 42,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "matched_gvp_ring_on",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s43/pocket_predictions.csv",
+        "sha256": "023966a7946e3b37e4f29c3d79afae9897615a9a31a1f5bc90d9e34693ad5447"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s43/receipt.json",
+        "sha256": "c4dfb69d24c0b816cfd553f0221732dd3fc2f665ad5826bde34d5084b3fcb12c"
+      },
+      "reproduction_passed": true,
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "seed": 43,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_esm",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A1_1_four_class_lr3e-05_s42/pocket_predictions.csv",
+        "sha256": "12984c3897ca985c39ce66da19df31a6d8134be086ccaa870ce8366e77fdcf3f"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A1_1_four_class_lr3e-05_s42/receipt.json",
+        "sha256": "9cb69d0ec3217c97ad3bf8178654ca08442a14fafa240e0a5eb853edd4f4dd08"
+      },
+      "reproduction_passed": true,
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "seed": 42,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_esm",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_1_four_class_lr3e-05_s43/pocket_predictions.csv",
+        "sha256": "8f03d3a50348339bb551d77efd5b4d344f07655f21ecf7aafda087e875f2af9c"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_1_four_class_lr3e-05_s43/receipt.json",
+        "sha256": "f880c38c9ad26c7b6940fc879e2ad12211955d0226596cd3f6d79b4614c0569f"
+      },
+      "reproduction_passed": true,
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "seed": 43,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_gvp",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A2_0_four_class_lr0.0001_s42/pocket_predictions.csv",
+        "sha256": "a1f7fd135527fe31904914b9a0f041f3c35e77bffa135e39d0972e80c029681e"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A2_0_four_class_lr0.0001_s42/receipt.json",
+        "sha256": "188f28487e43f2bd24632a32d5b9ddc3945bc0f7413a2f1fdd5ea001a3e5b274"
+      },
+      "reproduction_passed": true,
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "seed": 42,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    },
+    {
+      "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+      "family": "only_gvp",
+      "fold_id": "fixed_seed42",
+      "pocket_predictions": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_0_four_class_lr0.0001_s43/pocket_predictions.csv",
+        "sha256": "e356d71e6272c554b1f9bdc6a13e8848a225087fa2e8981bc8068e9a7f606b85"
+      },
+      "receipt": {
+        "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_0_four_class_lr0.0001_s43/receipt.json",
+        "sha256": "35aa77d56f80c2c2c9f4ab3903a57a7564c2c999a60ef705d879a00407db7757"
+      },
+      "reproduction_passed": true,
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "seed": 43,
+      "target_vocabulary": [
+        "Mn",
+        "Cu",
+        "Zn",
+        "Class VIII"
+      ],
+      "task": "metal",
+      "validation_only": true
+    }
+  ],
+  "schema_version": 1,
+  "validation_only": true
+}

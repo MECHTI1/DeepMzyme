@@ -1,5 +1,7 @@
 """Cache integrity checks use synthetic coordinates and tensors, without inference."""
 import hashlib
+import builtins
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -16,6 +18,19 @@ from training.esm_feature_loading import (
     write_embedding_metadata_sidecar,
     embedding_path_candidates,
 )
+
+
+@pytest.fixture(autouse=True)
+def without_optional_esm_sdk(monkeypatch):
+    """Exercise the locked CPU environment even when the local SDK is installed."""
+    original = builtins.__import__
+
+    def restricted_import(name, *args, **kwargs):
+        if name == "esm" or name.startswith("esm."):
+            raise ModuleNotFoundError("No module named 'esm'", name="esm")
+        return original(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", restricted_import)
 
 
 def make_cache(root):
@@ -90,3 +105,17 @@ def test_exact_cache_excludes_longer_ec_annotation_alias(tmp_path):
     embedding.unlink()
     found = [p for p in embedding_path_candidates(embedding.parent, structure) if p.is_file()]
     assert found == [alias]  # Preserve the unambiguous historical fallback.
+
+
+def test_structure_utilities_import_without_optional_inference_sdk():
+    from embed_helpers import esmc
+
+    importlib.reload(esmc)
+    assert callable(esmc.parse_structure)
+
+
+def test_requested_embedding_generation_reports_missing_optional_sdk():
+    from embed_helpers.esmc import load_esmc_model
+
+    with pytest.raises(RuntimeError, match="generation requires the optional 'esm' package"):
+        load_esmc_model(device="cpu")

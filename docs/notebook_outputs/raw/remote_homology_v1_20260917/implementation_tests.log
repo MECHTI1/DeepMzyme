@@ -1,0 +1,16 @@
+........................................................................ [ 27%]
+........................................................................ [ 55%]
+........................................................................ [ 82%]
+.............................................                      [100%]
+=============================== warnings summary ===============================
+tests/test_serial_metal_evidence.py::test_real_saved_checkpoint_config_normalization_and_parameter_shapes
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26: DeprecationWarning: `torch_geometric.distributed` has been deprecated since 2.7.0 and will no longer be maintained. For distributed training, refer to our tutorials on distributed training at https://pytorch-geometric.readthedocs.io/en/latest/tutorial/distributed.html or cuGraph examples at https://github.com/rapidsai/cugraph-gnn/tree/main/python/cugraph-pyg/cugraph_pyg/examples
+    from torch_geometric.distributed import (
+
+tests/test_serial_metal_evidence.py::test_real_saved_checkpoint_config_normalization_and_parameter_shapes
+tests/test_serial_metal_evidence.py::test_real_saved_checkpoint_config_normalization_and_parameter_shapes
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+261 passed, 3 warnings, 6 subtests passed in 57.91s

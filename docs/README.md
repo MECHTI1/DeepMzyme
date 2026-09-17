@@ -29,7 +29,8 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |
 | Reproducibility remediation decisions and verification | [`REPRODUCIBILITY_REMEDIATION_PLAN.md`](REPRODUCIBILITY_REMEDIATION_PLAN.md) | Scientific stage policy |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
-| Proposed GPU orchestration, preparation and throughput improvements | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Implemented behavior, launch authorization or new scientific recipes |
+| GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
+| Sequence-remoteness protocol, validation replay and support gates | [`REMOTE_HOMOLOGY_ADDENDUM.md`](REMOTE_HOMOLOGY_ADDENDUM.md) | Homology absence, new training authorization or model promotion |
 | Current status, implementation/evidence state, and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
 | Scientific/design/test policy, primary task boundaries, and metal-EC auxiliary strategy | [`Plan.md`](../Plan.md) | Dataset inventory or copied stage blocks |
 | Dataset identity, readiness, bundles, test use | [`DATASETS.md`](DATASETS.md) | Preparation procedure |

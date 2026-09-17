@@ -1,0 +1,24 @@
+{
+  "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+  "family": "only_esm",
+  "fold_id": "fixed_seed42",
+  "pocket_predictions": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A1_1_four_class_lr3e-05_s42/pocket_predictions.csv",
+    "sha256": "12984c3897ca985c39ce66da19df31a6d8134be086ccaa870ce8366e77fdcf3f"
+  },
+  "receipt": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A1_1_four_class_lr3e-05_s42/receipt.json",
+    "sha256": "9cb69d0ec3217c97ad3bf8178654ca08442a14fafa240e0a5eb853edd4f4dd08"
+  },
+  "reproduction_passed": true,
+  "run_id": "A1_1_four_class_lr3e-05_s42",
+  "seed": 42,
+  "target_vocabulary": [
+    "Mn",
+    "Cu",
+    "Zn",
+    "Class VIII"
+  ],
+  "task": "metal",
+  "validation_only": true
+}

@@ -74,6 +74,31 @@ the other refit. The pilot does not launch these benchmark evaluations.
 
 ## Status vocabulary
 
+### Development sequence provenance for remoteness reporting
+
+The [remote-homology addendum](REMOTE_HOMOLOGY_ADDENDUM.md) uses only existing
+external-training memberships and their internal validation/fold partitions.
+Preparation on 2026-09-17 found hash-valid coordinate-sequence sidecars for all
+1,270 retained metal structures and 793 EC proteins. These are represented
+coordinate-chain sequences; they do not certify biological full-length proteins
+or all chains of the original metal site. PDB grouping does not establish
+sequence separation. No scientific split was changed.
+
+CARE source sequences agree with coordinate sequences for 786 proteins. The
+seven training discrepancies are `B7G620`, `A4VCL2`, `Q01433`, `P23109`,
+`O88483`, `Q96KN2`, and `Q96MI6`. Full-protein preparation fails until these
+mappings and metal full-sequence provenance are resolved. Diagnostic coordinate
+reporting retains its separate endpoint label. Source/coordinate differences do
+not authorize regenerating completed model features.
+
+Generated manifests and blocker reports are under
+`DeepMzyme_Data/notebook_outputs/remote_homology_v1/`. They include exact saved
+training/validation membership and the five already-prepared metal folds. No
+held-out sequence or prediction evaluation is added. Family/clan/domain
+coverage remains uncertified.
+
+### Interpretation of inventory status
+
 | Field | Meaning |
 |---|---|
 | Materialized | Dataset structures/tables were found in the current local data tree |

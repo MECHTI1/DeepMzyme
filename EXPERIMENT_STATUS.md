@@ -9,6 +9,22 @@ Last scientific-policy documentation update: 2026-09-17.
 
 ## Current objective
 
+**Validation reuse completed; runtime controls CPU-tested (2026-09-17):** all
+twelve selected metal/EC checkpoints reproduced their saved validation metrics,
+and the final resume verification repeated no inference. The coordinate-chain
+audit found no qualifying-hit ≤20% cases in either fixed split or the five
+prepared metal folds under either coverage rule. No-hit cases remain
+unclassified, so the planned remote interaction is unestimable. Full-protein
+provenance remains blocked for metal and seven CARE mappings. See the
+[completed summary](docs/notebook_outputs/summaries/summary_remote_homology_v1_20260917.md)
+and [remote addendum](docs/REMOTE_HOMOLOGY_ADDENDUM.md).
+
+The Stage 6 configuration fix and maintained runtime controls passed 261
+combined tests; 14 exporter tests passed after final source-isolation changes.
+These are engineering checks and inference reuse, not new training evidence.
+No GPU was allocated and Stage 6B/Stage 7 stayed disabled. The source/data-identity
+snapshot is verified locally; it is not a fully prepared operational continuation.
+
 **Paused by the user after a Colab efficiency audit (2026-09-17):** the owned
 G4 session 9 stopped with provider verification at **00:51:07 Asia/Jerusalem**
 (21:51:07 UTC on 2026-09-16); the final server listing showed no active sessions.
@@ -17,18 +33,21 @@ completed first full discovery fit and earlier artifacts remain saved locally;
 all thirteen persisted files of that full fit were rechecked against their
 recorded SHA256 values. No fit ran in session 9.
 
-The host ledger now totals **8,041.997553 seconds (2.233888 hours)**. Session 9's
-**384.788991 seconds** are a closed host-only interval not yet imported into
-worker `sessions.json`; reconcile it exactly once before any future launch.
+The host and worker ledgers now both total **8,041.997553 seconds (2.233888
+hours)**. Session 9's **384.788991 seconds** were imported exactly once using
+its matching independent stop/hardware receipts. Replaying reconciliation added
+no intervals. The before-state and both receipts are preserved under
+`DeepMzyme_Data/notebook_outputs/remote_homology_v1/runtime_reconciliation/`.
 The runtime directory named below contains `PAUSED_HANDOFF.md`,
 `USER_REQUESTED_PAUSE_20260917.json`, and the provider-verified session 9 stop
 receipt. Reconcile that handoff before resuming the suspended agent, whose
 unfinished turn still contains an earlier continuation instruction.
 
 The requested [GPU runtime efficiency implementation
-plan](docs/GPU_RUNTIME_EFFICIENCY_PLAN.md) is now written. Its changes are **planned**, not
-implemented or measured improvements. This planning request does not authorize
-clearing the user pause or allocating another GPU.
+plan](docs/GPU_RUNTIME_EFFICIENCY_PLAN.md) is partially implemented. Durable
+pause/lease/accounting controls and the maintained queue have passed local
+failure tests. Live Colab transport and throughput remain unvalidated.
+The durable pause remains in force.
 
 **Continuation evidence before the pause (2026-09-17):** the user authorized additional
 Colab time to finish the accepted metal campaign. A separately frozen worker
@@ -44,7 +63,8 @@ coverage. The first 50-epoch discovery fit also completed: compact Only-GVP,
 direct-four, LR `1e-5`, seed 42, selected epoch 42, validation BA **65.2188%**.
 It took **236.399 seconds** and is individually verified Grade-5 evidence,
 not a family ranking. The owned session 8 is provider-verified stopped at
-2.127002 cumulative allocation hours; session 9 is restoring the continuation.
+2.127002 cumulative allocation hours; session 9 subsequently stopped without
+running a fit, as recorded in the current pause above.
 The measured save/readback estimate is included in its operations forecast.
 No held-out access or promotion is authorized through this campaign.
 
@@ -581,11 +601,14 @@ homology and cross-task held-out exclusion before a runnable recipe or training.
 
 ## Next few actions
 
-1. **Authorized single-GPU continuation — executing:** complete discovery,
-   frozen candidate selection and the admitted shared-fold/seed matrix under
-   the recorded budget authorizations. The repaired RING timing is complete.
-   Preserve all old allocation charges and every failed/interrupted attempt.
-   No primary final model is promoted through this exploratory route.
+1. **Validation reuse complete; GPU continuation paused:** preserve the
+   [remote addendum](docs/REMOTE_HOMOLOGY_ADDENDUM.md) outputs and resolve the
+   outstanding full-protein provenance/support limits before remote claims. Before
+   a future explicit GPU resume, freeze an operational continuation with the
+   reconciled accounting and preserved scientific source identity. Then complete
+   only admitted discovery and shared-fold/seed work under the recorded budget.
+   Preserve every prior charge and failed/interrupted attempt. This exploratory
+   route does not promote a primary final model.
 2. **Phase 1 — initial bounded metal pilots complete:** preserve the original
    30 architecture fits, 15 geometry fits and 16 matched RING fits (61 full
    fits total), plus 16 model smokes, geometry prediction export, terminal
