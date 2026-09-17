@@ -2674,6 +2674,8 @@ def check_multi_metal_site_level_granularity() -> None:
     structure_id = "1cob__chain_A__EC_1.15.1.1"
     dataset_root = REPO_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
     train_dir = dataset_root / "train"
+    if not train_dir.is_dir():
+        raise SkipCheck(f"local multi-metal fixture directory is absent: {train_dir}")
     from structure_store import index_structure_files_by_name
 
     structure_path = index_structure_files_by_name(train_dir).get(
