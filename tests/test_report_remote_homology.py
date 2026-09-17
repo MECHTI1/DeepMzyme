@@ -1,11 +1,14 @@
 import copy
 import csv
 import json
+import sys
+from pathlib import Path
 
 import numpy as np
 import pytest
 
-from src.report_remote_homology import (
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from report_remote_homology import (
     aggregate_ec_remoteness,
     classification_metrics,
     join_predictions,
@@ -256,7 +259,7 @@ def test_end_to_end_report_rejects_postfreeze_strata_and_unbound_predictions(tmp
 
 
 def test_audit50_unknown_protein_remains_explicit_after_group_aggregation():
-    from src.report_remote_homology import remoteness_view
+    from report_remote_homology import remoteness_view
     rows = [{"example_id": "a", "group_id": "protein", "target": 0, "component_id": "component",
              "bin": ">30", "status": "qualifying_hit", "max_identity": .4,
              "audit50_bin": None, "audit50_status": "incomplete_training_sequences", "audit50_max_identity": .5}]
