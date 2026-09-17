@@ -7,12 +7,11 @@ import fcntl
 import json
 import math
 import shutil
-import sys
 import time
 import uuid
 
 import run_metal_architecture_pilot as base
-from serial_metal_campaign import budget, evidence, profile, reporting, runtime
+from serial_metal_campaign import budget, control, evidence, profile, reporting, runtime
 
 
 @contextmanager
@@ -42,8 +41,10 @@ def state_files(output):
     names = ("campaign_manifest.json", "queue.json", "fold_plan.json", "input_identity.json", "preparation.json",
              "training_cache_audit.json", "sessions.json", "attempts.json", "confirmation_manifest.json",
              "discovery_closed.json", "refinement_decisions.json", "chain_decisions.json", "comparisons.json",
-             "active_process.json", "launch_intents.json", "budget_authorizations.json")
+             "active_process.json", "launch_intents.json", "budget_authorizations.json",
+             "control_events.json", "host_accounting_reconciliation.json")
     paths = [output / name for name in names if (output / name).is_file()]
+    paths.extend(sorted(output.glob("USER_REQUESTED_PAUSE*.json")))
     for directory in ("reuse", "readiness", "comparisons", "persistence"):
         paths.extend(sorted((output / directory).glob("*.json")))
     return paths
@@ -583,6 +584,7 @@ def next_run(output):
 
 
 def verify_host_guard(output, receipt_path, *, session=None):
+    user_control = control.require_running(output)
     receipt = base.read(receipt_path)
     session = current_session(output) if session is None else session
     now = time.time()
@@ -599,6 +601,9 @@ def verify_host_guard(output, receipt_path, *, session=None):
     base.require(receipt.get("budget_authorization_sha256") == limits["authorization_sha256"]
                  and receipt.get("total_cap_seconds") == limits["total_seconds"],
                  "Host receipt does not bind the active budget authorization")
+    if user_control["has_explicit_control"]:
+        base.require(receipt.get("campaign_control_sha256") == user_control["control_sha256"],
+                     "Host receipt does not bind the current user pause/resume generation")
     base.require(receipt["hard_stop_epoch"] <= session["started_epoch"]+limits["session_seconds"] and
                  receipt["training_stop_epoch"] <= receipt["hard_stop_epoch"]-limits["closeout_seconds"],
                  "Host receipt weakens session/closeout limits")
@@ -665,36 +670,43 @@ def ring_audit_directory(output, fold):
     return None
 
 
-def ring_audit(output, fold, host_receipt):
-    """One bounded CPU audit inside the allocated-operations ledger."""
+def prepare_ring_audit(output, fold):
+    """Prepare the audit identity before persisting its launch intent."""
     output = Path(output)
     manifest = profile.verify_manifest(output)
     evidence.verify_preparation(output)
-    guard = verify_host_guard(output, host_receipt)
     confirmation = base.read(output / "confirmation_manifest.json", {})
     base.require("ring" in confirmation.get("planned_blocks", []), "RING confirmation is not admitted")
     source = next(r for r in confirmation["runs"] if r["arm"] == "gvp_ring_off" and r["fold_index"] == fold)
-    existing = ring_audit_directory(output, fold)
-    if existing:
-        return evidence.ring_input_audit(output, source, directory=existing)
     queue = base.read(output / "queue.json")
     ident = f"ring_audit_{fold}"
     run = dict(id=ident, arm="gvp_ring_off", family=profile.FAMILIES["gvp"], kind="ring_audit",
                stage="operations", block="ring_audit", epochs=0, fold_index=fold,
-               command=[sys.executable, str(Path(manifest["root"]) / "src/run_metal_single_gpu_campaign.py"),
+               command=[source["command"][0], str(Path(manifest["root"]) / "src/run_metal_single_gpu_campaign.py"),
                         "_ring-audit", "--output-dir", str(output), "--source-run-id", source["id"],
                         "--run-name", f"fold_{fold}"], env={},
                run_dir=str(output / "ring_audits" / f"fold_{fold}"))
     if not any(r["id"] == ident for r in queue["runs"]):
         queue["runs"].append(run)
         _save_queue(output, queue)
+    return run, source
+
+
+def ring_audit(output, fold, host_receipt):
+    """One bounded CPU audit inside the allocated-operations ledger."""
+    output = Path(output)
+    guard = verify_host_guard(output, host_receipt)
+    run, source = prepare_ring_audit(output, fold)
+    existing = ring_audit_directory(output, fold)
+    if existing:
+        return evidence.ring_input_audit(output, source, directory=existing)
     intent = None if runtime._is_drive_mount(output) else runtime.prepare_launch_intent(output, run)
     require_persistent_state(output)
     def verify(_row, directory):
         result = evidence.ring_input_audit(output, source, directory=directory)
         base.require(result.get("status") == "passed", "RING audit did not pass")
         return dict(kind="ring_audit", fold_index=fold, receipt=result)
-    attempt = runtime.execute_attempt(output, run, manifest["root"], verify,
+    attempt = runtime.execute_attempt(output, run, base.read(output / "campaign_manifest.json")["root"], verify,
                                       block_forecast_seconds=600, confirmation_reserve_seconds=0,
                                       launch_guard=lambda: verify_host_guard(output, host_receipt),
                                       training_deadline_epoch=guard["training_stop_epoch"],

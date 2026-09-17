@@ -70,7 +70,9 @@ class CsvFilterResult:
 
 def find_project_root(start: Path) -> Path:
     for candidate in [start, *start.parents]:
-        if (candidate / "DeepMzyme_Data").exists() and (candidate / "prepare_training_and_test_set").exists():
+        # Dataset artifacts are optional in clean checkouts; input validation
+        # belongs to build_split, not module import or CLI help.
+        if (candidate / "src" / "structure_store.py").is_file() and (candidate / "prepare_training_and_test_set").is_dir():
             return candidate
     raise FileNotFoundError("Could not locate the project root from this script path.")
 

@@ -778,7 +778,8 @@ closed campaign. No 50-epoch or held-out work was run. Evidence is in the
 
 ## TECH-014 — Serial campaign orchestration and preparation overhead
 
-**Status:** Open; improvement plan written 2026-09-17, implementation not started.
+**Status:** Partially implemented 2026-09-17; local controller tests passed,
+live transport and GPU performance remain unvalidated.
 
 The audited continuation allocation spent 30.56 minutes allocated and 7.39
 minutes inside its two probes and one full fit. The 23.18-minute remainder
@@ -786,7 +787,7 @@ includes setup, transfer, verification and orchestration; this is not a measured
 GPU-utilization percentage. The full fit's profile separately records 91.66
 seconds of preparation and 143.76 seconds in its training region.
 
-Verified implementation constraints:
+Constraints recorded before the Release 1 implementation:
 
 - `workflow.execute()` owns one fit per call. A maintained automatic host
   supervisor is needed to replace the temporary transport operator and remove
@@ -806,6 +807,38 @@ Verified implementation constraints:
 The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) owns the
 prioritized work, performance targets, provenance boundary and failure tests.
 The [current status](../EXPERIMENT_STATUS.md) owns the user-requested pause and
-host-only allocation reconciliation. No code change or new GPU run is implied
-by this issue record. The first release preserves all scientific settings and
-the current shutdown, persistence and held-out safeguards.
+allocation accounting. Durable pause/lease controls and exactly-once accounting
+have local failure tests; session 9's verified host-only interval was reconciled
+without clearing the pause. The maintained queue passed CPU failure tests.
+The first release preserves scientific settings and the shutdown, persistence
+and held-out safeguards. Runtime measurement and later preparation caching
+remain distinct gates.
+
+## TECH-015 — Stage 6 candidate imports dropped scientific configuration
+
+**Status:** Resolved in source 2026-09-17; focused regression tests passed.
+
+The generic Stage 6 command builder and summary/Optuna CSV candidate import
+omitted `split_stratify_by`, `metal_eligibility_scheme`, `shell_role_source`,
+`site_geometry_features`, and `ec_class_weight_unit`. Falling back to defaults
+could change cohort, graph semantics or weighting during confirmation.
+Both import and command paths now retain these fields. Tests expand JSON,
+summary-CSV and Optuna-CSV candidates through the real CLI parser. Existing
+frozen campaign commands and historical evidence remain unchanged.
+
+## TECH-016 — Validation-only checkpoint replay and fixed-vocabulary bin metrics
+
+**Status:** Implemented and twelve validation exports reproduced 2026-09-17.
+
+The saved-checkpoint training entry point is held-out-specific. The separate
+`export_validation_predictions.py` reconstructs validation inputs with verified
+frozen source, exact saved membership and saved normalization. It avoids
+training preparation and emits independent prediction/logit sidecars only after
+whole-validation metric agreement. No original run is rewritten.
+
+The remoteness reporter requires a pre-prediction counts freeze and artifact
+bindings. It retains all task classes in confusion matrices and leaves full-task
+BA/macro-F1 undefined when a true class is absent. Existing training metrics are
+unchanged to preserve historical checkpoint selection. See the
+[remote addendum](REMOTE_HOMOLOGY_ADDENDUM.md) for interpretation and remaining
+full-protein/support limits.

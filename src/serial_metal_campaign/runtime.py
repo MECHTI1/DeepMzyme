@@ -682,6 +682,9 @@ def prepare_launch_intent(output, run):
     An intent alone never launches a process. A lost VM leaves this durable
     identity behind, so recovery cannot silently reset the one-retry limit.
     """
+    from serial_metal_campaign.control import require_running
+
+    require_running(output)
     with _lock(output) as output:
         session = _current_session(output)
         if any(session.get(key) != value for key, value in _identity().items()):
@@ -858,6 +861,9 @@ def execute_attempt(output, run, root, verify_result, confirmation_reserve_secon
                     block_forecast_seconds=None, *, block_id=None, launch_guard=None,
                     training_deadline_epoch=None, launch_intent_id=None):
     """Execute one fit/retry under an exclusive lock; never advance automatically."""
+    from serial_metal_campaign.control import require_running
+
+    require_running(output)
     with _lock(output) as output, _worker_lock():
         _reconcile_interrupted(output, allow_intent_id=launch_intent_id)
         session = _current_session(output)
@@ -935,6 +941,7 @@ def execute_attempt(output, run, root, verify_result, confirmation_reserve_secon
             with (directory / "execution.log").open("x") as log:
                 if launch_guard is not None:
                     launch_guard()
+                require_running(output)
                 process = subprocess.Popen(command, cwd=Path(root), env={**os.environ, **run.get("env", {}),
                                             "PYTHONUNBUFFERED": "1"}, stdout=log, stderr=subprocess.STDOUT,
                                            start_new_session=True)

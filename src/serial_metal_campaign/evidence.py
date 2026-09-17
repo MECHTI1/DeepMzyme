@@ -268,6 +268,8 @@ def scientific_sources(manifest):
                          "run_serial_metal_campaign.py", "run_metal_single_gpu_campaign.py",
                          "report_runs.py", "report_paired_metal_routes.py",
                          "train_serial_metal_profile.py",
+                         "audit_sequence_remoteness.py", "export_validation_predictions.py",
+                         "report_remote_homology.py",
                          "stage6_standalone.py", "verify_colab_notebook_smoke.py"}
         return (name.startswith("src/") and not name.startswith("src/serial_metal_campaign/")
                 and not (path.parent == Path("src") and path.name in orchestration))

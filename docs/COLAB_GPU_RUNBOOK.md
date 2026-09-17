@@ -44,11 +44,52 @@ remain in force.
 
 ## Single-GPU campaign runtime policy
 
-The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) proposes a
-maintained continuous queue, fewer transport round trips, validated preparation
-caching and a later same-session budget-update protocol. Those changes are
-planned, not current command behavior. Follow the current playbook until each
-change is implemented and verified; consult current status before any resume.
+The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) separates the
+implemented, CPU-tested host queue and pause/accounting controls from later
+preparation caching and same-session budget rebinding. The maintained adapter
+has not yet been validated on a live Colab segment; consult current status
+before any resume. Existing scientific recipes and admission gates still apply.
+
+### Maintained queue and durable pause
+
+`scripts/colab_serial_metal_host.py control-status --output CAMPAIGN_DIR`
+reports both the append-only control history and existing
+`USER_REQUESTED_PAUSE*.json` receipts. A pause blocks allocation, fresh worker
+receipts and new launches. The queue drains terminal artifacts within the
+bounded closeout path and the independent watchdog still enforces shutdown.
+An explicit user resume must be recorded with its request identity and
+authorization; deleting an old pause file is not the resume procedure.
+
+`reconcile-accounting --output CAMPAIGN_DIR` previews closed host-only intervals;
+adding `--apply` imports only intervals with matching independent provider-stop
+and hardware receipts. It is idempotent and remains available while paused.
+Archive the before-state. Accounting reconciliation is not a new allocation.
+
+After source/state have been frozen as a separate operational continuation and
+one owned endpoint has been prepared, the maintained command is:
+
+```bash
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+  scripts/colab_serial_metal_supervisor.py \
+  --output "$CAMPAIGN_DIR" --session-id "$OWNED_SESSION" \
+  --persistence-seconds "$MEASURED_PER_FIT_PERSISTENCE_SECONDS"
+```
+
+The three variables must name the reviewed continuation, its current owned
+session and its measured transfer allowance. There is no invented persistence
+default. This command does not provision a VM, clear a pause, install packages
+or regenerate features. It verifies existing staged setup, persists completed
+attempts/state with independent readback, advances the original queue, applies
+its cost gates and dispatches each exact launch intent once. An exclusive
+host lease prevents a second controller. A transport failure triggers bounded
+same-endpoint reconciliation; ambiguous ownership or launch state stops work.
+It never allocates a replacement automatically.
+
+Do not hot-patch an archived worker. Operational continuation must preserve
+the accepted science, attempts, folds, charges and immutable receipts. CPU
+fake-provider tests and offline CLI-help checks do not establish live transfer
+performance or guarantee shutdown after loss of the entire host. The host
+watchdog remains necessary; record actual provider-stop evidence on closeout.
 
 The [single-GPU playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
 owns the new profile's exact total/phase/session budgets and commands. It is

@@ -1,0 +1,53 @@
+{
+  "blockers": [],
+  "care_discrepancies": [
+    {
+      "care_relationship": "source_subsequence",
+      "care_sequence_sha256": "800fb7ad8eb9d308a18d4a38abd85081c1d2f5ed534221965fe5b001aa0f57ce",
+      "coordinate_sequence_sha256": "8432be5869039445279af75f22d95fe4daa457caf4c1a3e05851e5bf448a8f29",
+      "group_id": "a4vcl2"
+    },
+    {
+      "care_relationship": "coordinate_subsequence",
+      "care_sequence_sha256": "061a9cb0248a94391706c61fcb3edbd007e0c02acd883877122a2f0f06f7f512",
+      "coordinate_sequence_sha256": "2101cf2787e9f70e98d5be49880fa057262811b9c6a06e1e95141761a2321c60",
+      "group_id": "b7g620"
+    },
+    {
+      "care_relationship": "sequence_disagreement",
+      "care_sequence_sha256": "49546cab48d4065cd5a49c565dedc679cca40b55e7e51a8ff80e26697aa6723a",
+      "coordinate_sequence_sha256": "564ebb21288ee3e9eb9cd494ee63b43644cb5e4218d71d8bf7ed0993469c153a",
+      "group_id": "o88483"
+    },
+    {
+      "care_relationship": "source_subsequence",
+      "care_sequence_sha256": "a0afc094d1ab2597e7caac33ac6f578442d5be8694cd50929b140b5efe1b42b3",
+      "coordinate_sequence_sha256": "3e12f61d2d93d853633f13cd5206044673d08efa97de8522cb584e327fa3a7d1",
+      "group_id": "p23109"
+    },
+    {
+      "care_relationship": "source_subsequence",
+      "care_sequence_sha256": "9d1d0925d538304ff61603143a336f75c19a6cd768a8ada8af41d35376c3a853",
+      "coordinate_sequence_sha256": "5c2ec39142dba4251b98c6b3a59a23a3b53d5e73eb9455d730f88768a7222ca1",
+      "group_id": "q01433"
+    },
+    {
+      "care_relationship": "sequence_disagreement",
+      "care_sequence_sha256": "aba23f105472539e56d56cbe1ab9805047b289ad6e6c9112141854120d5b3857",
+      "coordinate_sequence_sha256": "7c46aa59a94ca3780e37fca517de9ff044b99c5754c5cbb3cd625f3124c69a84",
+      "group_id": "q96kn2"
+    },
+    {
+      "care_relationship": "sequence_disagreement",
+      "care_sequence_sha256": "6e1bef4f2644e1368cc473376da0a81962b5137fbda83f037eedd8967123b609",
+      "coordinate_sequence_sha256": "57611893d03925ad8ec92a9a15ceaa07eed6ec7b29a6139274005a1cf9ca8d30",
+      "group_id": "q96mi6"
+    }
+  ],
+  "endpoint": "represented_coordinate_chain",
+  "held_out_evaluation": false,
+  "n_sequences": 2063,
+  "new_split_created": false,
+  "primary_full_protein_certified": false,
+  "schema_version": 1
+}

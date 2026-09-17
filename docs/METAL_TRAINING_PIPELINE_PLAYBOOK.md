@@ -6,6 +6,76 @@ The [earlier architecture pilot](#bounded-metal-architecture-pilot--stage-0-thro
 and Common70 standalone block remain separate historical recipes. Current
 execution and evidence state belongs to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
+## Validation-only sequence-remoteness attachment
+
+This is inference/reporting for completed checkpoints and existing Stage 6 fold
+definitions, not a new training stage. The
+[remote addendum](REMOTE_HOMOLOGY_ADDENDUM.md) owns the protocol and support
+limits. Preserve all completed fits and the campaign pause. Preparation uses
+the reviewed twelve-run ledger (eight metal, four EC), frozen source snapshots,
+and task-specific sequence provenance. The ledger and protocol must exist and
+pass review before these commands; a fresh directory needs its own identities.
+
+The local diagnostic recipe is:
+
+```bash
+RH_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+RH_ROOT=DeepMzyme_Data/notebook_outputs/remote_homology_v1
+RH_PLAN=DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_33h_v2_authorized_runtime_g4
+RH_MMSEQS=DeepMzyme_Data/tools/mmseqs2-18-8cc5c/mmseqs/bin/mmseqs
+
+"$RH_PY" src/audit_sequence_remoteness.py prepare \
+  --reuse-ledger "$RH_ROOT/reuse_ledger.json" \
+  --fold-plan "$RH_PLAN/fold_plan.json" \
+  --protocol "$RH_ROOT/protocol.json" \
+  --endpoint represented_coordinate_chain --output-dir "$RH_ROOT"
+
+"$RH_PY" scripts/run_remote_homology_search.py \
+  --output-dir "$RH_ROOT" --protocol "$RH_ROOT/protocol.json" \
+  --binary "$RH_MMSEQS" \
+  --binary-sha256 b7ef6e0e33df5dd4fa9cf988cbd8b4988c11a3a1255d2c377f13e1bb40c157fb \
+  --threads 2 --split-memory-limit 2G
+
+"$RH_PY" src/audit_sequence_remoteness.py annotate \
+  --reuse-ledger "$RH_ROOT/reuse_ledger.json" \
+  --protocol "$RH_ROOT/protocol.json" --output-dir "$RH_ROOT" --counts-only
+```
+
+Before inference, inspect `counts_freeze.json`. Create the separate
+`reuse_ledger_replay.json` from the original ledger with a `counts_freeze`
+object containing its absolute/ledger-relative `path` and `sha256`. Do not edit
+the original prepared ledger. The replay ledger binds the eligibility decision
+before any prediction export. The following reuses completed exports:
+
+```bash
+"$RH_PY" src/export_validation_predictions.py \
+  --reuse-ledger "$RH_ROOT/reuse_ledger_replay.json" \
+  --validation-only --device cpu --output-dir "$RH_ROOT/predictions" --resume
+
+"$RH_PY" src/report_remote_homology.py --task metal \
+  --protocol "$RH_ROOT/protocol.json" \
+  --prediction-manifest "$RH_ROOT/predictions/manifest.json" \
+  --remoteness-manifest "$RH_ROOT/remoteness_manifest.json" \
+  --output-dir "$RH_ROOT/reports/metal"
+```
+
+Expected outputs: sequence and membership manifests, per-task search receipts
+and alignments, primary/audit coverage support counts, pocket/protein prediction
+CSV files, per-run reproduction receipts, prediction manifest and separate JSON
+and Markdown reports. Exact saved training configurations remain in the
+original `run_config.json`/`run_metadata.json`; this local CLI attachment does
+not create notebook `active_run_config` files or modify original runs.
+
+Decision gate: missing provenance cannot certify full-protein remoteness;
+no-hit cases remain unclassified. Missing classes or inadequate component
+support prohibit a full-task interaction claim. Whole-validation reproduction
+and artifact hashes must pass before using predictions. This attachment
+retains `four_class` and `val_metal_balanced_acc` for metal and the saved
+`pdbid` split/seed/fraction (or existing grouped folds); it creates no Optuna
+study. Held-out evaluation remains disabled. Any later model promotion still
+requires the unchanged Stage 6 gates, completed Stage 6B refit and resolved
+Stage 7 test route.
+
 ## Single-GPU metal campaign
 
 Profile: **`metal_single_gpu_20h_v2`**. This is a separately identified,

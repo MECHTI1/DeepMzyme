@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -22,6 +24,34 @@ SPEC.loader.exec_module(BUILDER)
 
 
 PRIMARY_CSV = "final_data_summarazing_table_transition_metals_only_catalytic.csv"
+
+
+def test_clean_checkout_import_and_help_do_not_require_local_dataset(tmp_path: Path) -> None:
+    checkout = tmp_path / "checkout"
+    preparation = checkout / "prepare_training_and_test_set"
+    preparation.mkdir(parents=True)
+    (checkout / "src").mkdir()
+    script = preparation / SCRIPT_PATH.name
+    shutil.copyfile(SCRIPT_PATH, script)
+    shutil.copyfile(REPO_ROOT / "src" / "structure_store.py", checkout / "src" / "structure_store.py")
+
+    assert BUILDER.find_project_root(script) == checkout
+    result = subprocess.run(
+        [sys.executable, "-I", str(script), "--help"], cwd=tmp_path,
+        capture_output=True, text=True, timeout=15, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--dry-run" in result.stdout
+    assert not (checkout / "DeepMzyme_Data").exists()
+
+    missing_input = subprocess.run(
+        [sys.executable, "-I", str(script), "--dry-run"], cwd=tmp_path,
+        capture_output=True, text=True, timeout=15, check=False,
+    )
+    assert missing_input.returncode != 0
+    assert "not found" in missing_input.stderr
+    assert str(checkout / "DeepMzyme_Data") in missing_input.stderr
+    assert not (checkout / "DeepMzyme_Data").exists()
 
 
 def _write_csv(path: Path, rows: list[tuple[str, str]]) -> None:

@@ -1,0 +1,181 @@
+[
+  {
+    "boot_id": "679208ac-4f95-44f0-b17b-2cb2e5e1eeaa",
+    "hardware": {
+      "source": "host_only_pre_worker_interval"
+    },
+    "hostname": "mechti-pc",
+    "session_id": "deepmzyme-metal-v2-profile-20260916-3",
+    "started_epoch": 1789568064.9131567,
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 293.9279201030731,
+      "endpoint": "gpu-g4-s-kkb-use5c2-ne3uv1zsw42a",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-profile-20260916-3",
+      "started_epoch": 1789568064.9131567,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789568358.8410769
+    },
+    "stopped_epoch": 1789568358.8410769
+  },
+  {
+    "boot_id": "6e5e81cb-15af-4733-9c15-642a220db8dc",
+    "hardware": {
+      "source": "host_only_pre_worker_interval"
+    },
+    "hostname": "mechti-pc",
+    "session_id": "deepmzyme-metal-v2-profile-20260916-4",
+    "started_epoch": 1789582925.6459713,
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 1149.6450703144073,
+      "endpoint": "gpu-g4-s-kkb-use1d2-my562f1rata",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-profile-20260916-4",
+      "started_epoch": 1789582925.6459713,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789583781.3631215
+    },
+    "stopped_epoch": 1789583781.3631215
+  },
+  {
+    "boot_id": "29849d61-d1ea-4b21-92d2-8f9a57dd00b3",
+    "hardware": {
+      "capability": [
+        12,
+        0
+      ],
+      "compiled_architectures": [
+        "sm_75",
+        "sm_80",
+        "sm_86",
+        "sm_90",
+        "sm_100",
+        "sm_120"
+      ],
+      "cuda": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memory_bytes": 101974081536,
+      "torch": "2.11.0+cu128"
+    },
+    "hostname": "50cca5a0c904",
+    "session_id": "deepmzyme-metal-v2-execfix-20260916-5",
+    "started_epoch": 1789584379.4444673,
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 4820.895239830017,
+      "endpoint": "gpu-g4-s-kkb-use5c0-fye5scmgiv0z",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-execfix-20260916-5",
+      "started_epoch": 1789584379.4444673,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789588050.6946368
+    },
+    "stopped_epoch": 1789588050.6946368
+  },
+  {
+    "boot_id": "c96ba155-a391-4e94-ab6d-20ac14af74e4",
+    "hardware": {
+      "capability": [
+        12,
+        0
+      ],
+      "compiled_architectures": [
+        "sm_75",
+        "sm_80",
+        "sm_86",
+        "sm_90",
+        "sm_100",
+        "sm_120"
+      ],
+      "cuda": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memory_bytes": 101974081536,
+      "torch": "2.11.0+cu128"
+    },
+    "hostname": "18587a40368c",
+    "session_id": "deepmzyme-metal-v2-execfix-20260916-6",
+    "started_epoch": 1789588205.153727,
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 5684.279481649399,
+      "endpoint": "gpu-g4-s-kkb-euw4a2-2sr2sbhcx6sm6",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-execfix-20260916-6",
+      "started_epoch": 1789588205.153727,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789589068.5379689
+    },
+    "stopped_epoch": 1789589068.5379689
+  },
+  {
+    "boot_id": "6e5e81cb-15af-4733-9c15-642a220db8dc",
+    "hardware": {
+      "provider_allocation": "never_created"
+    },
+    "hostname": "mechti-pc",
+    "session_id": "deepmzyme-metal-v2-authorized-20260917-7",
+    "started_epoch": 1789592869.602016,
+    "stop_evidence": {
+      "endpoint": null,
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_history_absent": true,
+      "provider_mapping_absent": true,
+      "provider_verified_stopped": true,
+      "reason": "Colab create returned exit 1 before session history or mapping appeared; repeated server listing found no active assignments.",
+      "session_id": "deepmzyme-metal-v2-authorized-20260917-7",
+      "started_epoch": 1789592869.602016,
+      "status": "provider_verified_never_created",
+      "stop_response_error": null,
+      "stopped_epoch": 1789593008.6537821
+    },
+    "stopped_epoch": 1789593008.6537821
+  },
+  {
+    "boot_id": "f59296b0-dacb-4840-a3f3-6205b50d96e6",
+    "hardware": {
+      "capability": [
+        12,
+        0
+      ],
+      "compiled_architectures": [
+        "sm_75",
+        "sm_80",
+        "sm_86",
+        "sm_90",
+        "sm_100",
+        "sm_120"
+      ],
+      "cuda": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "memory_bytes": 101974081536,
+      "torch": "2.11.0+cu128"
+    },
+    "hostname": "0df3bfa8d33a",
+    "session_id": "deepmzyme-metal-v2-authorized-20260917-8",
+    "started_epoch": 1789593050.5582783,
+    "stop_evidence": {
+      "cumulative_allocated_seconds": 7657.208562135696,
+      "endpoint": "gpu-g4-s-kkb-usw4a1-2ewqtjhuuxd2u",
+      "hard_deadline_met": true,
+      "observed_endpoints": [],
+      "provider_verified_stopped": true,
+      "session_id": "deepmzyme-metal-v2-authorized-20260917-8",
+      "started_epoch": 1789593050.5582783,
+      "status": "stopped_verified",
+      "stop_response_error": null,
+      "stopped_epoch": 1789594884.4355927
+    },
+    "stopped_epoch": 1789594884.4355927
+  }
+]

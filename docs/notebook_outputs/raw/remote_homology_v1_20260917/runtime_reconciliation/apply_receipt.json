@@ -1,0 +1,13 @@
+{
+  "status": "applied",
+  "added_session_ids": [
+    "deepmzyme-metal-v2-authorized-20260917-9"
+  ],
+  "host_allocated_seconds": 8041.997553348541,
+  "worker_allocated_seconds_before": 7657.208562135696,
+  "worker_allocated_seconds_after": 8041.997553348541,
+  "host_ledger_sha256": "9205d5c7f6404c2cedd464c3fc55a1e4aea1609dbee0fce433c2f5f8913cc0a3",
+  "verified_stop_receipts": {
+    "deepmzyme-metal-v2-authorized-20260917-9": "4fcd4f8198b1ceb01fd263445114bb65c6ebb183d673c2c342e2770f3d124b82"
+  }
+}

@@ -1,0 +1,7407 @@
+{
+  "counts_only": true,
+  "prediction_metrics_accessed": false,
+  "primary_shorter_sequence_coverage": 0.8,
+  "protocol_sha256": "7cddf390f457cb74f7431ec8abafedbd73d04692169fb99965a7187209bf2a81",
+  "remoteness_manifest_sha256": "67e666c4b7b70c0f363f84ca88d2fddf3e35cc1bbcbc594ce7293a4606c150b0",
+  "schema_version": 1,
+  "sensitivity_audit": {
+    "shorter_sequence_coverage": 0.5,
+    "support": [
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 6,
+            "pockets": 22,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 9,
+            "pockets": 37,
+            "target": 2
+          },
+          {
+            "components": 2,
+            "groups": 3,
+            "pockets": 11,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 5,
+            "target": 5
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 2,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 3,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 26,
+            "target": 2
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 6,
+            "pockets": 29,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 27,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 5,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 6,
+            "pockets": 22,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 9,
+            "pockets": 37,
+            "target": 2
+          },
+          {
+            "components": 2,
+            "groups": 3,
+            "pockets": 11,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 5,
+            "target": 5
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 2,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 3,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 26,
+            "target": 2
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 6,
+            "pockets": 29,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 27,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 5,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 6,
+            "pockets": 22,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 9,
+            "pockets": 37,
+            "target": 2
+          },
+          {
+            "components": 2,
+            "groups": 3,
+            "pockets": 11,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 5,
+            "target": 5
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 2,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 3,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 26,
+            "target": 2
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 6,
+            "pockets": 29,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 27,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 5,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 6,
+            "pockets": 22,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 9,
+            "pockets": 37,
+            "target": 2
+          },
+          {
+            "components": 2,
+            "groups": 3,
+            "pockets": 11,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 5,
+            "target": 5
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 2,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 3,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 26,
+            "target": 2
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 4,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 6,
+            "pockets": 29,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 27,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 5,
+            "target": 4
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 5
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 6
+          }
+        ],
+        "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+        "support_gate_passed": false,
+        "task": "ec"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "A1_1_four_class_lr3e-05_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "A2_0_four_class_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "R_0_four_class_lr0.0001_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 10,
+            "groups": 34,
+            "pockets": 83,
+            "target": 0
+          },
+          {
+            "components": 3,
+            "groups": 8,
+            "pockets": 15,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 27,
+            "groups": 42,
+            "pockets": 49,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 3,
+            "groups": 3,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 10,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 8,
+            "groups": 10,
+            "pockets": 15,
+            "target": 3
+          }
+        ],
+        "run_id": "R_1_four_class_lr3e-05_s43",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 25,
+            "groups": 45,
+            "pockets": 67,
+            "target": 0
+          },
+          {
+            "components": 4,
+            "groups": 20,
+            "pockets": 38,
+            "target": 1
+          },
+          {
+            "components": 9,
+            "groups": 12,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 17,
+            "groups": 25,
+            "pockets": 32,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 1,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 4,
+            "pockets": 7,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 11,
+            "groups": 31,
+            "pockets": 76,
+            "target": 0
+          },
+          {
+            "components": 1,
+            "groups": 2,
+            "pockets": 4,
+            "target": 1
+          },
+          {
+            "components": 11,
+            "groups": 16,
+            "pockets": 26,
+            "target": 2
+          },
+          {
+            "components": 7,
+            "groups": 9,
+            "pockets": 14,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_0",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 49,
+            "groups": 125,
+            "pockets": 125,
+            "target": 0
+          },
+          {
+            "components": 6,
+            "groups": 9,
+            "pockets": 9,
+            "target": 1
+          },
+          {
+            "components": 15,
+            "groups": 15,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 41,
+            "groups": 85,
+            "pockets": 85,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 1,
+            "target": 0
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 1,
+            "target": 1
+          },
+          {
+            "components": 9,
+            "groups": 12,
+            "pockets": 12,
+            "target": 2
+          },
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 2,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 9,
+            "groups": 9,
+            "pockets": 9,
+            "target": 0
+          },
+          {
+            "components": 1,
+            "groups": 1,
+            "pockets": 1,
+            "target": 1
+          },
+          {
+            "components": 15,
+            "groups": 15,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 6,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_1",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 38,
+            "groups": 105,
+            "pockets": 105,
+            "target": 0
+          },
+          {
+            "components": 7,
+            "groups": 9,
+            "pockets": 9,
+            "target": 1
+          },
+          {
+            "components": 15,
+            "groups": 15,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 38,
+            "groups": 78,
+            "pockets": 78,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 2,
+            "groups": 2,
+            "pockets": 2,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 8,
+            "groups": 8,
+            "pockets": 8,
+            "target": 2
+          },
+          {
+            "components": 6,
+            "groups": 6,
+            "pockets": 6,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 13,
+            "groups": 13,
+            "pockets": 13,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 24,
+            "groups": 24,
+            "pockets": 24,
+            "target": 2
+          },
+          {
+            "components": 17,
+            "groups": 20,
+            "pockets": 20,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_2",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 43,
+            "groups": 114,
+            "pockets": 114,
+            "target": 0
+          },
+          {
+            "components": 6,
+            "groups": 14,
+            "pockets": 14,
+            "target": 1
+          },
+          {
+            "components": 17,
+            "groups": 18,
+            "pockets": 18,
+            "target": 2
+          },
+          {
+            "components": 40,
+            "groups": 91,
+            "pockets": 91,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 3,
+            "groups": 4,
+            "pockets": 4,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 4,
+            "groups": 6,
+            "pockets": 6,
+            "target": 2
+          },
+          {
+            "components": 4,
+            "groups": 5,
+            "pockets": 5,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 6,
+            "groups": 6,
+            "pockets": 6,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 10,
+            "groups": 10,
+            "pockets": 10,
+            "target": 2
+          },
+          {
+            "components": 12,
+            "groups": 12,
+            "pockets": 12,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_3",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": ">30",
+        "classes": [
+          {
+            "components": 38,
+            "groups": 106,
+            "pockets": 106,
+            "target": 0
+          },
+          {
+            "components": 5,
+            "groups": 9,
+            "pockets": 9,
+            "target": 1
+          },
+          {
+            "components": 15,
+            "groups": 16,
+            "pockets": 16,
+            "target": 2
+          },
+          {
+            "components": 42,
+            "groups": 81,
+            "pockets": 81,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(20,30]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 5,
+            "groups": 5,
+            "pockets": 5,
+            "target": 2
+          },
+          {
+            "components": 6,
+            "groups": 6,
+            "pockets": 6,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "(15,20]",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=15",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "<=20",
+        "classes": [
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 2
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      },
+      {
+        "bin": "unclassified",
+        "classes": [
+          {
+            "components": 18,
+            "groups": 19,
+            "pockets": 19,
+            "target": 0
+          },
+          {
+            "components": 0,
+            "groups": 0,
+            "pockets": 0,
+            "target": 1
+          },
+          {
+            "components": 15,
+            "groups": 15,
+            "pockets": 15,
+            "target": 2
+          },
+          {
+            "components": 10,
+            "groups": 11,
+            "pockets": 11,
+            "target": 3
+          }
+        ],
+        "run_id": "fold_4",
+        "support_gate_passed": false,
+        "task": "metal"
+      }
+    ]
+  },
+  "support": [
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 4,
+          "pockets": 13,
+          "target": 1
+        },
+        {
+          "components": 4,
+          "groups": 8,
+          "pockets": 33,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 7,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 5
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 16,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 8,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 2,
+          "groups": 7,
+          "pockets": 32,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 41,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 5,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 3,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 4,
+          "pockets": 13,
+          "target": 1
+        },
+        {
+          "components": 4,
+          "groups": 8,
+          "pockets": 33,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 7,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 5
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 16,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 8,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 2,
+          "groups": 7,
+          "pockets": 32,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 41,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 5,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 3,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 4,
+          "pockets": 13,
+          "target": 1
+        },
+        {
+          "components": 4,
+          "groups": 8,
+          "pockets": 33,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 7,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 5
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 16,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 8,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 2,
+          "groups": 7,
+          "pockets": 32,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 41,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 5,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 3,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 4,
+          "pockets": 13,
+          "target": 1
+        },
+        {
+          "components": 4,
+          "groups": 8,
+          "pockets": 33,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 7,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 5
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 2,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 16,
+          "target": 2
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 8,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 4
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 2,
+          "groups": 7,
+          "pockets": 32,
+          "target": 0
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 41,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 5,
+          "target": 4
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 3,
+          "target": 5
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 6
+        }
+      ],
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+      "support_gate_passed": false,
+      "task": "ec"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "A1_1_four_class_lr3e-05_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "A2_0_four_class_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "R_0_four_class_lr0.0001_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 34,
+          "pockets": 83,
+          "target": 0
+        },
+        {
+          "components": 3,
+          "groups": 8,
+          "pockets": 15,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 12,
+          "target": 2
+        },
+        {
+          "components": 27,
+          "groups": 42,
+          "pockets": 49,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 3,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 7,
+          "groups": 10,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 15,
+          "target": 3
+        }
+      ],
+      "run_id": "R_1_four_class_lr3e-05_s43",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 25,
+          "groups": 45,
+          "pockets": 67,
+          "target": 0
+        },
+        {
+          "components": 4,
+          "groups": 20,
+          "pockets": 38,
+          "target": 1
+        },
+        {
+          "components": 8,
+          "groups": 11,
+          "pockets": 14,
+          "target": 2
+        },
+        {
+          "components": 17,
+          "groups": 25,
+          "pockets": 32,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 5,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 12,
+          "groups": 32,
+          "pockets": 77,
+          "target": 0
+        },
+        {
+          "components": 1,
+          "groups": 2,
+          "pockets": 4,
+          "target": 1
+        },
+        {
+          "components": 13,
+          "groups": 18,
+          "pockets": 29,
+          "target": 2
+        },
+        {
+          "components": 7,
+          "groups": 9,
+          "pockets": 14,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_0",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 48,
+          "groups": 124,
+          "pockets": 124,
+          "target": 0
+        },
+        {
+          "components": 6,
+          "groups": 9,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 13,
+          "groups": 13,
+          "pockets": 13,
+          "target": 2
+        },
+        {
+          "components": 41,
+          "groups": 85,
+          "pockets": 85,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 1,
+          "target": 0
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 1,
+          "target": 1
+        },
+        {
+          "components": 8,
+          "groups": 10,
+          "pockets": 10,
+          "target": 2
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 1,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 10,
+          "groups": 10,
+          "pockets": 10,
+          "target": 0
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 1,
+          "target": 1
+        },
+        {
+          "components": 19,
+          "groups": 19,
+          "pockets": 19,
+          "target": 2
+        },
+        {
+          "components": 5,
+          "groups": 7,
+          "pockets": 7,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_1",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 37,
+          "groups": 104,
+          "pockets": 104,
+          "target": 0
+        },
+        {
+          "components": 7,
+          "groups": 9,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 13,
+          "groups": 13,
+          "pockets": 13,
+          "target": 2
+        },
+        {
+          "components": 38,
+          "groups": 77,
+          "pockets": 77,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 2,
+          "groups": 2,
+          "pockets": 2,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 6,
+          "pockets": 6,
+          "target": 2
+        },
+        {
+          "components": 3,
+          "groups": 3,
+          "pockets": 3,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 14,
+          "groups": 14,
+          "pockets": 14,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 28,
+          "groups": 28,
+          "pockets": 28,
+          "target": 2
+        },
+        {
+          "components": 20,
+          "groups": 24,
+          "pockets": 24,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_2",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 41,
+          "groups": 112,
+          "pockets": 112,
+          "target": 0
+        },
+        {
+          "components": 6,
+          "groups": 14,
+          "pockets": 14,
+          "target": 1
+        },
+        {
+          "components": 16,
+          "groups": 17,
+          "pockets": 17,
+          "target": 2
+        },
+        {
+          "components": 40,
+          "groups": 91,
+          "pockets": 91,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 3,
+          "groups": 4,
+          "pockets": 4,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 1,
+          "groups": 1,
+          "pockets": 1,
+          "target": 2
+        },
+        {
+          "components": 4,
+          "groups": 4,
+          "pockets": 4,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 8,
+          "groups": 8,
+          "pockets": 8,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 14,
+          "groups": 16,
+          "pockets": 16,
+          "target": 2
+        },
+        {
+          "components": 13,
+          "groups": 13,
+          "pockets": 13,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_3",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": ">30",
+      "classes": [
+        {
+          "components": 37,
+          "groups": 105,
+          "pockets": 105,
+          "target": 0
+        },
+        {
+          "components": 5,
+          "groups": 9,
+          "pockets": 9,
+          "target": 1
+        },
+        {
+          "components": 14,
+          "groups": 15,
+          "pockets": 15,
+          "target": 2
+        },
+        {
+          "components": 40,
+          "groups": 79,
+          "pockets": 79,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(20,30]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 6,
+          "groups": 6,
+          "pockets": 6,
+          "target": 2
+        },
+        {
+          "components": 5,
+          "groups": 5,
+          "pockets": 5,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "(15,20]",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=15",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "<=20",
+      "classes": [
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 2
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    },
+    {
+      "bin": "unclassified",
+      "classes": [
+        {
+          "components": 19,
+          "groups": 20,
+          "pockets": 20,
+          "target": 0
+        },
+        {
+          "components": 0,
+          "groups": 0,
+          "pockets": 0,
+          "target": 1
+        },
+        {
+          "components": 15,
+          "groups": 15,
+          "pockets": 15,
+          "target": 2
+        },
+        {
+          "components": 13,
+          "groups": 14,
+          "pockets": 14,
+          "target": 3
+        }
+      ],
+      "run_id": "fold_4",
+      "support_gate_passed": false,
+      "task": "metal"
+    }
+  ]
+}

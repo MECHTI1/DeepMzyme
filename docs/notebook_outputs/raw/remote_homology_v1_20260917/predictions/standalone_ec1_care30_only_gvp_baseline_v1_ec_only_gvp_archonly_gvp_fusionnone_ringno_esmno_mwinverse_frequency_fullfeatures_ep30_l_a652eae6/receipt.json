@@ -1,0 +1,614 @@
+{
+  "checkpoint_reselection": false,
+  "checkpoint_sha256": "5814e22d9ffe50e526ae3819cfeae7d5ed71e18d9c5b1f6949ece1763102f83b",
+  "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+  "device": "cpu",
+  "ec_aggregation": "mean_logits",
+  "exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+  "family": "only_gvp",
+  "feature_generation": false,
+  "fold_id": "fixed_seed42",
+  "imported_source_files": {
+    "src/data_structures.py": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6",
+    "src/featurization.py": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d",
+    "src/graph/__init__.py": "9727f29a515573f7e0cbb0f052bb212d2182818466a3b548ba2a04702dfc7397",
+    "src/graph/construction.py": "92a044b56fa897b4635adb9721b3698ec1487e3f34d4f35891f628510ae3ff4f",
+    "src/graph/edge_geometry.py": "66811c344703a65111a0436cb21b0fb43905e5c1c45b4710f38fb69bdda557a8",
+    "src/graph/edge_postprocess.py": "88d3c31b4e37ce0b6d4310ffe5410d831153c8a3ad0a00ee62d0e68e9c04e111",
+    "src/graph/edge_records.py": "78cead0066f029e5f29ec00ffab191929df813cfb2014fbe97cec93c99408d39",
+    "src/graph/edge_sources.py": "91baeed8a75ba328104934f18d400cdabdd64a2caed9240f1c91f53a77e5dcf2",
+    "src/graph/feature_utils.py": "fd6d833e804d076df5f20be0074b62054fce6d8340e6ec4bca5d47dd3dd24bef",
+    "src/graph/ring_edges.py": "aa96cfe0a24a753bd6e34d7de857e90ddd2285cf8372d4cd1509a4ade217eb7c",
+    "src/graph/shell_roles.py": "713d833610a66c1aac700d5885f045d49fa563cb23d5efcb3ea97c8d8d6d9a4b",
+    "src/graph/structure_parsing.py": "6ad2951735029a0994a2b9ed7ce87e5f909ab58d4d0b60bd2ebff4db0c21e5c0",
+    "src/label_schemes.py": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99",
+    "src/metal_objectives.py": "298681c7ef6d4b88bb96ccf040b3fbc04bc6bc32dda9109cbb1312343bb6d4db",
+    "src/model.py": "3dad0d4e700676c6d304d2239a39c1f1bf713b8c03d17cdd4e0566e2c99fed5a",
+    "src/model_variants/__init__.py": "a7625910fbe38737e588b81ebdb0d36a919c3edb7814882c648e9b736d240c8b",
+    "src/model_variants/factory.py": "386294f7539f9b608008092b7b7ec7ea33597d6083fa04d4561b46bffd38d616",
+    "src/project_paths.py": "0ad35ff1e6312a15971fa29235f28ef9556ddfc149213fe3ffcc9f145f8c9b66",
+    "src/structure_store.py": "1d494a6b3f98e26032a8ead10b3d72efbd5ed4c27932a8b5ca58c384a48306ec",
+    "src/training/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "src/training/config.py": "1c05a2535a37906a091a6c8d8c0425dff466eec4393d9c21ecca219bc89deebd",
+    "src/training/data.py": "465edf92ee44a7644373ae596be26a4c0aacbb2db07331401f94038d9b61b4fc",
+    "src/training/defaults.py": "6cfd115fd29bb4a7e3bfc88ec4ac2574234491e8418962553baaf982a6f6cccb",
+    "src/training/esm_feature_loading.py": "a95a15e71608c30571ee76ec2a8d9cfe4396aa66daac7ae8af23e058ab32b80e",
+    "src/training/evaluation_protocols.py": "3171a663e44a24a2a1a1a5970dbdac000157f714623eb7e5c42ce125a360ccff",
+    "src/training/external_feature_loading.py": "7295d366f15a2b8459c0213c32373036f0dfe1b7c1a8a21d8c31ced50607e898",
+    "src/training/feature_paths.py": "ea9587dc3b2b97e128777d7fe4794d348816ffb0f793b053e491744cbee27aef",
+    "src/training/feature_sources.py": "2d2dab5680c863292d413c1df3f072172e22611f722ef5bd700942a2617862f6",
+    "src/training/final_test_reporting.py": "bb4786238b344a159db93144db621ee0644ad87812ba76025cb0163bebdae7c2",
+    "src/training/graph_dataset.py": "62d579e3a2c7467d53209c196e606283f26807851c86470b16edd567d8b0dd20",
+    "src/training/labels.py": "000cc3820231891627c900b9b9ed9cb0b94138d78f141976d6290a429c37dcdc",
+    "src/training/loop.py": "f926bc78c117f9f1de8ce637f4ff006c7f6397ea25fd060ff1ae71aedd82eab1",
+    "src/training/preflight.py": "21739799c93f543c2cb9aeef40ce3cb4ecb3663c582e30caf27eabff10be8785",
+    "src/training/reproducibility.py": "20449d096fee8575bda5e896f42c3d8c15753f31db49f590ffac29090d98c2d9",
+    "src/training/run.py": "da443bac103afcb360f7817c59e594372218d9839de54ec37ae3d7b2d6e91ca1",
+    "src/training/runtime_preparation.py": "f4f08666cf58d10148e4aa1574d4a5c21ea5767eba40599041433e3ae13a2e8f",
+    "src/training/site_filter.py": "528acbaad1578a61ab6cb51a6bb5ba7cc1e56915f6019fd152681969a5b5a83a",
+    "src/training/splits.py": "8cf17b309e97fb4053b6652a543074f8c1db4913d125cce514eb452f57cf1473",
+    "src/training/structure_loading.py": "09d957e6114826d809088f24f86ea685872a1b5132f426567eadd1d4cabdafbf"
+  },
+  "input_file_hashes": [
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv",
+      "sha256": "6026d144bae57782cd37ad2d89ae5de45900a65e893632c83c3937ea574db613"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/structure_manifest.csv",
+      "sha256": "31c655e13e3c0fe6b5f5143c3b5de8c09cb58a82872292bf5421231cf27c5830"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/A0A4Z3__chain_A__EC_2.4.1.87/residue_features.json",
+      "sha256": "fc3025430890b12c070764d13ac241f68598be1502b86b786f290ee89bc9a0cb"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/A1A4K5__chain_A__EC_3.1.4.39/residue_features.json",
+      "sha256": "522431f2d6966bac805166f4ff27ebdc5e800c2c56517a279a8fe80b80ea9297"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/A8MFH2__chain_A__EC_5.4.2.7/residue_features.json",
+      "sha256": "a5a6325fa714394f7668e2bc2a724ab1f0c88a54783e7c007443f23ef6ee8003"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/B8E259__chain_A__EC_4.2.3.4/residue_features.json",
+      "sha256": "54f5738341e171c0b362a1048cf7b1d363bef06df1395ac4a34ab21ea7f60c43"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/I6WZK7__chain_A__EC_1.16.3.1/residue_features.json",
+      "sha256": "e21f5daf7c938b3a3bad4d30e25c79a8f337a7f0de15eae36d448496c2caa516"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/O51401__chain_A__EC_4.1.2.13/residue_features.json",
+      "sha256": "dc4e58ce0954adaa8d299badc7c299cb2d1a9662362443307f0211bae1ab8e12"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P06811__chain_A__EC_1.10.3.2/residue_features.json",
+      "sha256": "7e7aa86467cf89f02807c33fe25c82984e0ed761e7f28ab4292f7dc26132b14e"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P07788__chain_A__EC_1.3.3.5,1.10.3.2/residue_features.json",
+      "sha256": "454b29970b54d6e9bedb094f9fe9898bdf32c73899ec3af4f9821f2f98a1d69b"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P16442__chain_A__EC_2.4.1.37,2.4.1.40/residue_features.json",
+      "sha256": "21ae8d8a2a352690387d07768ceec7e764fd5910df4b40e93f8ac0e5af8ae8e8"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P23336__chain_A__EC_2.4.1.87/residue_features.json",
+      "sha256": "0c7d94fd20cf959f4645c10fa42295daced8744c0fe5cc282554219e0a25b63b"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P33180__chain_A__EC_1.14.18.1/residue_features.json",
+      "sha256": "5fd686cac6e819213371ec5622ef253d47f0fee57aebb6c362176102b5ae17a5"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P38993__chain_A__EC_1.16.3.1/residue_features.json",
+      "sha256": "13004916a104b65405badf3eedfe31cfd3ecfe1c07b0dc9f13186953538407b6"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P52700__chain_A__EC_3.5.2.6/residue_features.json",
+      "sha256": "06d6a86f1886fa9cda760fe8f459ba08de23cab9c5b86d9b7b5122607b1b1dc0"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P54212__chain_A__EC_4.2.1.1/residue_features.json",
+      "sha256": "413cea13c65d4af05a72118e9786f5c63c4b99efba0e27f57aa3b7f138351985"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P91953__chain_A__EC_3.4.24.12/residue_features.json",
+      "sha256": "3a49305b0934be2e0eb9cb7935dd5d1e608f0207064e53009cb0987abed70c09"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/P94211__chain_A__EC_3.5.1.82/residue_features.json",
+      "sha256": "21ebc5cfb701a810f57b498bc4f2f2bf6b573c064923e35723500babce3ace4d"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q03224__chain_A__EC_3.1.3.11/residue_features.json",
+      "sha256": "ceccbc75dd9792934a5fb1a83ab975209c553f95361741a8b2d5395440a9b8cc"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q06004__chain_A__EC_1.1.1.9,1.1.1.14/residue_features.json",
+      "sha256": "91354ff662ea2e4d83f02f0fd3abda60ed3b5dd393d4deca41eb3c202c6576da"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q10738__chain_A__EC_3.4.24.23/residue_features.json",
+      "sha256": "365f6be67671df628b9464212efbe3d997722f524647046e7cf884203d723429"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q18677__chain_A__EC_3.5.2.2/residue_features.json",
+      "sha256": "d55701fcf4e42c497987edcdb7bb88d5b2897bc16f79a94e926fb4e99383f986"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q20296__chain_A__EC_3.5.1.98/residue_features.json",
+      "sha256": "5124f4863be2d163ce3de443ab4365332e375a82ed2e6c40e48ec9c2e38d744c"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q2QWE3__chain_A__EC_3.1.3.16/residue_features.json",
+      "sha256": "6957c3a81b5a3954809e0ff600bb1e0ab83d429a5f0efab1420202fb6e7a62b0"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q37370__chain_A__EC_7.1.1.9/residue_features.json",
+      "sha256": "1ea90d4ab3d2aa099cfb3bcc27d881fc067d50e213ef5e031f5a256d50d905aa"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q4WBU0__chain_A__EC_3.2.1.4/residue_features.json",
+      "sha256": "15dc2baac8e2c930550f3e5fe8b8d98a37ec7b302c9cb86cc5c0ded731783d21"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q53H47__chain_A__EC_2.1.1.357/residue_features.json",
+      "sha256": "71f09c0206bcde8779a12f2579f5deda1c46bb22756bd178be1fc57e3df77443"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q54SV3__chain_A__EC_3.5.2.5/residue_features.json",
+      "sha256": "c893c2e0f062823b49f21d7e86c7582ffd7d1a569fd5b4601d810fd274ecb733"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q58095__chain_A__EC_6.5.1.8/residue_features.json",
+      "sha256": "42f83318bf5d5043f3ef31501590bfa1415bac3f38e3235ff9faeaefc9b5cc7d"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q6ING9__chain_A__EC_3.1.3.16/residue_features.json",
+      "sha256": "d83f1a1d27d8f3dcc3fab132056a696e400a7d05968ed6685408b018fae040e1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q6K6N7__chain_A__EC_3.1.3.16/residue_features.json",
+      "sha256": "20dba980059766a90306ed29163451dace15bb9469b3d32a6f7a19fcc38e9974"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q80UJ9__chain_A__EC_2.1.1.357/residue_features.json",
+      "sha256": "7aff339d1a76c8c06d4e6529bd97aa821d18a9d232ac75796f9d70e435657735"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q83HU4__chain_A__EC_4.2.3.4/residue_features.json",
+      "sha256": "0385c2d795a165c03139391f548d3db3113e60b6e0936e9c8461c775ef7068bd"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8CQC2__chain_A__EC_3.5.1.18/residue_features.json",
+      "sha256": "5544eda3c78fd1ec6db52783b29479c3939eb9a715db64221f0c59f5c0ecf793"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8EWL9__chain_A__EC_6.5.1.2/residue_features.json",
+      "sha256": "54b5d117172d8605b65192743695bf24eb504ad300555f3e2f86d4d78a10f3a9"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8GXJ1__chain_A__EC_3.5.1.98/residue_features.json",
+      "sha256": "4822f1b06806564598b73d1b2deff9215b9d73d97a574ff86891807207ffa196"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8IJP2__chain_A__EC_3.4.11.18/residue_features.json",
+      "sha256": "d5e8174e825b1aaf242dbfdbdc6e53036f679d4672644891d1b5bfdcfe2ceb34"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8LPL3__chain_A__EC_1.10.3.3/residue_features.json",
+      "sha256": "452eb4f9562dc86e92763555721da1639f12dd30da487f96f08fdcf2f77d962c"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q8VCT9__chain_A__EC_2.7.12.1/residue_features.json",
+      "sha256": "5c8951b68527047611603f1ebec2f49f9a4942096ebf2280485eb1651d14dc5b"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q90611__chain_A__EC_3.4.24.24/residue_features.json",
+      "sha256": "1a76ff4eab3d08c0f0afddbac86f70ebcb5d5abee8a31275cc30cf1a58910863"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q9CPW9__chain_A__EC_3.4.11.18/residue_features.json",
+      "sha256": "b4013ef5bb5c111ba2bad80296cb604aa07bd424093f33f43133478687fb0a9c"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q9EPL6__chain_A__EC_3.4.24.7/residue_features.json",
+      "sha256": "541b5837918c6771f681e16a00a149c59268446b54151235c8fe0025b4069066"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q9FN02__chain_A__EC_3.1.3.16/residue_features.json",
+      "sha256": "aeaed4aea3a6bd0c27cec256a4b14dd302b2bcc633046f0a77bb84f0bf7ab16c"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction/Q9ZPY2__chain_A__EC_1.10.3.2/residue_features.json",
+      "sha256": "2cf810a103970e33c7887a400b2893626f1a399fbb59c37c503dc9e701e4137f"
+    }
+  ],
+  "input_structure_hashes": [
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/fa/fa53ee0da99255da93a00b81032b60e62a5c9b93ccf4f6e79f6a6e5ff9480bcc/A1A4K5__chain_A__EC_3.1.4.39.pdb",
+      "sha256": "fa53ee0da99255da93a00b81032b60e62a5c9b93ccf4f6e79f6a6e5ff9480bcc",
+      "structure_id": "A1A4K5__chain_A__EC_3.1.4.39"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/a4/a4f36e7778e73f2798af6ef2712b5f836dc5925efea59af79018b24a73c403f3/Q90611__chain_A__EC_3.4.24.24.pdb",
+      "sha256": "a4f36e7778e73f2798af6ef2712b5f836dc5925efea59af79018b24a73c403f3",
+      "structure_id": "Q90611__chain_A__EC_3.4.24.24"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/4f/4f91ef82b90ca03c92687d490c07e8669cb8efc6441cf98bca10728bbc2abcf9/P91953__chain_A__EC_3.4.24.12.pdb",
+      "sha256": "4f91ef82b90ca03c92687d490c07e8669cb8efc6441cf98bca10728bbc2abcf9",
+      "structure_id": "P91953__chain_A__EC_3.4.24.12"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/46/460169427037e91c7091245eb656ed2842dd665baae18dd3b35ba9e50c2dce24/Q53H47__chain_A__EC_2.1.1.357.pdb",
+      "sha256": "460169427037e91c7091245eb656ed2842dd665baae18dd3b35ba9e50c2dce24",
+      "structure_id": "Q53H47__chain_A__EC_2.1.1.357"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/de/def7a0c45eeb18a0ef65ff233ca1a2169d990039b48ffdd57376b22caa685635/P06811__chain_A__EC_1.10.3.2.pdb",
+      "sha256": "def7a0c45eeb18a0ef65ff233ca1a2169d990039b48ffdd57376b22caa685635",
+      "structure_id": "P06811__chain_A__EC_1.10.3.2"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/e6/e66ea0b5e94d990ee527f5a5244238e5683f729cbf1affc5ed3f0cf3248a4a3a/P38993__chain_A__EC_1.16.3.1.pdb",
+      "sha256": "e66ea0b5e94d990ee527f5a5244238e5683f729cbf1affc5ed3f0cf3248a4a3a",
+      "structure_id": "P38993__chain_A__EC_1.16.3.1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/b5/b56ee996beef162adf1afbf588b0c355f615fc61ec3a5aaa57ec7784ed2b9580/Q4WBU0__chain_A__EC_3.2.1.4.pdb",
+      "sha256": "b56ee996beef162adf1afbf588b0c355f615fc61ec3a5aaa57ec7784ed2b9580",
+      "structure_id": "Q4WBU0__chain_A__EC_3.2.1.4"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/48/48ac0d70a84bb99cbc16620c184ec4b00adb1f54cb7efd770d26dfeac84422c4/Q8GXJ1__chain_A__EC_3.5.1.98.pdb",
+      "sha256": "48ac0d70a84bb99cbc16620c184ec4b00adb1f54cb7efd770d26dfeac84422c4",
+      "structure_id": "Q8GXJ1__chain_A__EC_3.5.1.98"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/22/22f4f27667f9012c78abc33e82bb951e28920cd5903c816c4fa953b5610247dc/P07788__chain_A__EC_1.3.3.5,1.10.3.2.pdb",
+      "sha256": "22f4f27667f9012c78abc33e82bb951e28920cd5903c816c4fa953b5610247dc",
+      "structure_id": "P07788__chain_A__EC_1.3.3.5,1.10.3.2"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/27/272fbf0d2ee817f9989fe7796bc21a09d22acb2827a82f2a1f946951ce97b006/A8MFH2__chain_A__EC_5.4.2.7.pdb",
+      "sha256": "272fbf0d2ee817f9989fe7796bc21a09d22acb2827a82f2a1f946951ce97b006",
+      "structure_id": "A8MFH2__chain_A__EC_5.4.2.7"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/b5/b53df4e1e696d80df21326615cef3b81a3b80d6597cbb81025f2d016fb26c166/P52700__chain_A__EC_3.5.2.6.pdb",
+      "sha256": "b53df4e1e696d80df21326615cef3b81a3b80d6597cbb81025f2d016fb26c166",
+      "structure_id": "P52700__chain_A__EC_3.5.2.6"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/55/550bbf34c1e52a2314ba0c0ad104868485d86c85ea92602152cdeb8e828db377/Q8CQC2__chain_A__EC_3.5.1.18.pdb",
+      "sha256": "550bbf34c1e52a2314ba0c0ad104868485d86c85ea92602152cdeb8e828db377",
+      "structure_id": "Q8CQC2__chain_A__EC_3.5.1.18"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/bb/bb9a23bbaaaad2404c0fb991cd09e3f144779dbe41244d13912b9ed2aba11b5b/Q8LPL3__chain_A__EC_1.10.3.3.pdb",
+      "sha256": "bb9a23bbaaaad2404c0fb991cd09e3f144779dbe41244d13912b9ed2aba11b5b",
+      "structure_id": "Q8LPL3__chain_A__EC_1.10.3.3"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/b3/b3505f964cdee9cb2e611258a4d427c52316e2ae4d7ad72a0e6193075ac207ed/Q10738__chain_A__EC_3.4.24.23.pdb",
+      "sha256": "b3505f964cdee9cb2e611258a4d427c52316e2ae4d7ad72a0e6193075ac207ed",
+      "structure_id": "Q10738__chain_A__EC_3.4.24.23"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/68/68864124b4fa96cf1f645b00bd2ebeb7295529df1d3570ed803bec6ad1ef69f6/Q20296__chain_A__EC_3.5.1.98.pdb",
+      "sha256": "68864124b4fa96cf1f645b00bd2ebeb7295529df1d3570ed803bec6ad1ef69f6",
+      "structure_id": "Q20296__chain_A__EC_3.5.1.98"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/2b/2b04dcd97fe3c5d879c517f4ea3bd34fb0abc8a36e469f91633e623c08a7042b/Q9ZPY2__chain_A__EC_1.10.3.2.pdb",
+      "sha256": "2b04dcd97fe3c5d879c517f4ea3bd34fb0abc8a36e469f91633e623c08a7042b",
+      "structure_id": "Q9ZPY2__chain_A__EC_1.10.3.2"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/f9/f96f40f181b782d3680caea63020ae1ef6d6c8517fefe19ee827576555ebe887/Q18677__chain_A__EC_3.5.2.2.pdb",
+      "sha256": "f96f40f181b782d3680caea63020ae1ef6d6c8517fefe19ee827576555ebe887",
+      "structure_id": "Q18677__chain_A__EC_3.5.2.2"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/82/8264ea1dbf080d495fceee30e6ffd70da7f4112f4264f2f7220241802ace3b59/Q80UJ9__chain_A__EC_2.1.1.357.pdb",
+      "sha256": "8264ea1dbf080d495fceee30e6ffd70da7f4112f4264f2f7220241802ace3b59",
+      "structure_id": "Q80UJ9__chain_A__EC_2.1.1.357"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/1b/1b4d8f6e0239c95de59a169211df611aea16e4f0a2617e230e04dcd6156a4c7d/Q9FN02__chain_A__EC_3.1.3.16.pdb",
+      "sha256": "1b4d8f6e0239c95de59a169211df611aea16e4f0a2617e230e04dcd6156a4c7d",
+      "structure_id": "Q9FN02__chain_A__EC_3.1.3.16"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/46/4614d9eca6d007cdd5d79ec783cc8e2423400f7eee66b13a42b4487d06c16201/Q8IJP2__chain_A__EC_3.4.11.18.pdb",
+      "sha256": "4614d9eca6d007cdd5d79ec783cc8e2423400f7eee66b13a42b4487d06c16201",
+      "structure_id": "Q8IJP2__chain_A__EC_3.4.11.18"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/71/71d3c749d2f94732a5a593290a8ff87c74eacab641766cfbfe7bfced82c59cb3/Q06004__chain_A__EC_1.1.1.9,1.1.1.14.pdb",
+      "sha256": "71d3c749d2f94732a5a593290a8ff87c74eacab641766cfbfe7bfced82c59cb3",
+      "structure_id": "Q06004__chain_A__EC_1.1.1.9,1.1.1.14"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/3f/3fb71a19803ee0170a041b1ff568b3e32b38c33a1ec8496e6211e8b76ae363ee/Q6K6N7__chain_A__EC_3.1.3.16.pdb",
+      "sha256": "3fb71a19803ee0170a041b1ff568b3e32b38c33a1ec8496e6211e8b76ae363ee",
+      "structure_id": "Q6K6N7__chain_A__EC_3.1.3.16"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/c0/c0c81fe32ea56286c0779a939817fc205487fc2779138f436b2fa2186bc79e59/Q83HU4__chain_A__EC_4.2.3.4.pdb",
+      "sha256": "c0c81fe32ea56286c0779a939817fc205487fc2779138f436b2fa2186bc79e59",
+      "structure_id": "Q83HU4__chain_A__EC_4.2.3.4"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/d6/d61112a4ce7c35a2a77cf55b1f3d55b61ee0d52e94b3fa180784056021112468/Q9EPL6__chain_A__EC_3.4.24.7.pdb",
+      "sha256": "d61112a4ce7c35a2a77cf55b1f3d55b61ee0d52e94b3fa180784056021112468",
+      "structure_id": "Q9EPL6__chain_A__EC_3.4.24.7"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/04/043d1ef4244edcecbe15ff609e28e549487040bf4a450829e8b3d404ab5b1d90/Q9CPW9__chain_A__EC_3.4.11.18.pdb",
+      "sha256": "043d1ef4244edcecbe15ff609e28e549487040bf4a450829e8b3d404ab5b1d90",
+      "structure_id": "Q9CPW9__chain_A__EC_3.4.11.18"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/df/dfe95d4e08606470d0dd05b49a76e34dad7bb53912b20e9b7643d6585b53e537/P54212__chain_A__EC_4.2.1.1.pdb",
+      "sha256": "dfe95d4e08606470d0dd05b49a76e34dad7bb53912b20e9b7643d6585b53e537",
+      "structure_id": "P54212__chain_A__EC_4.2.1.1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/55/5596963ea00ac014e7576a7657f4baa239101c20bca5eab9f108152416ca0adc/Q54SV3__chain_A__EC_3.5.2.5.pdb",
+      "sha256": "5596963ea00ac014e7576a7657f4baa239101c20bca5eab9f108152416ca0adc",
+      "structure_id": "Q54SV3__chain_A__EC_3.5.2.5"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/23/23d5e8ad93cd870ba7fa15f2e55e8e682253bc22245eb338148085c323e978c5/Q6ING9__chain_A__EC_3.1.3.16.pdb",
+      "sha256": "23d5e8ad93cd870ba7fa15f2e55e8e682253bc22245eb338148085c323e978c5",
+      "structure_id": "Q6ING9__chain_A__EC_3.1.3.16"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/00/005a3b3726aaa930e88a6c011caa38e9dafc37e5a09c8fee64bca98ac52879ec/O51401__chain_A__EC_4.1.2.13.pdb",
+      "sha256": "005a3b3726aaa930e88a6c011caa38e9dafc37e5a09c8fee64bca98ac52879ec",
+      "structure_id": "O51401__chain_A__EC_4.1.2.13"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/59/59b786d4ec40032fa756fbaeab7aae963568184dc71e0f1ba1ba9350c43e0331/I6WZK7__chain_A__EC_1.16.3.1.pdb",
+      "sha256": "59b786d4ec40032fa756fbaeab7aae963568184dc71e0f1ba1ba9350c43e0331",
+      "structure_id": "I6WZK7__chain_A__EC_1.16.3.1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/ea/ea2dd1300097dae14a5fd917d472a3d2c7152265afc37ce3859065057efba36b/P33180__chain_A__EC_1.14.18.1.pdb",
+      "sha256": "ea2dd1300097dae14a5fd917d472a3d2c7152265afc37ce3859065057efba36b",
+      "structure_id": "P33180__chain_A__EC_1.14.18.1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/9b/9b98f7ba6102fb3124f28e23f5d5dc344d477cb66f7ec0b055cc955dcfbbe6ac/P94211__chain_A__EC_3.5.1.82.pdb",
+      "sha256": "9b98f7ba6102fb3124f28e23f5d5dc344d477cb66f7ec0b055cc955dcfbbe6ac",
+      "structure_id": "P94211__chain_A__EC_3.5.1.82"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/a8/a86b1a479d4d7b5a15d7f8fb42f084bb87295e74fc5b08ac0142c1cb57388161/Q2QWE3__chain_A__EC_3.1.3.16.pdb",
+      "sha256": "a86b1a479d4d7b5a15d7f8fb42f084bb87295e74fc5b08ac0142c1cb57388161",
+      "structure_id": "Q2QWE3__chain_A__EC_3.1.3.16"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/fd/fda36edddfbc96ae5bc4bc86031c096595fb9ae356d8406172afbbd529a063fd/B8E259__chain_A__EC_4.2.3.4.pdb",
+      "sha256": "fda36edddfbc96ae5bc4bc86031c096595fb9ae356d8406172afbbd529a063fd",
+      "structure_id": "B8E259__chain_A__EC_4.2.3.4"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/70/703d119604717d11732d035cc368010d6fb157ebd5f4b01931f76b6413815bff/Q8VCT9__chain_A__EC_2.7.12.1.pdb",
+      "sha256": "703d119604717d11732d035cc368010d6fb157ebd5f4b01931f76b6413815bff",
+      "structure_id": "Q8VCT9__chain_A__EC_2.7.12.1"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/69/6989d31485927219fd8cca767ffdcc4cc6def507b26cc5efaa7aefcba98037f5/P23336__chain_A__EC_2.4.1.87.pdb",
+      "sha256": "6989d31485927219fd8cca767ffdcc4cc6def507b26cc5efaa7aefcba98037f5",
+      "structure_id": "P23336__chain_A__EC_2.4.1.87"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/ec/ecca319352cb150183f6a702fdc7bd411fe554d13bd612644534dfa0a2765f64/A0A4Z3__chain_A__EC_2.4.1.87.pdb",
+      "sha256": "ecca319352cb150183f6a702fdc7bd411fe554d13bd612644534dfa0a2765f64",
+      "structure_id": "A0A4Z3__chain_A__EC_2.4.1.87"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/2c/2cf4c4232d2694816b3c376ea8a7e4d893a007f1d6ae728898dba9665c437899/P16442__chain_A__EC_2.4.1.37,2.4.1.40.pdb",
+      "sha256": "2cf4c4232d2694816b3c376ea8a7e4d893a007f1d6ae728898dba9665c437899",
+      "structure_id": "P16442__chain_A__EC_2.4.1.37,2.4.1.40"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/91/91512712167fed7b556d614c293ae0ffe1867ea6ed887deee2e5b8ce650237b7/Q58095__chain_A__EC_6.5.1.8.pdb",
+      "sha256": "91512712167fed7b556d614c293ae0ffe1867ea6ed887deee2e5b8ce650237b7",
+      "structure_id": "Q58095__chain_A__EC_6.5.1.8"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/0a/0a1d87abcec9397bcb3bfd9a71c8b15492c8a72a3402b13e6510cc19420a3dd9/Q03224__chain_A__EC_3.1.3.11.pdb",
+      "sha256": "0a1d87abcec9397bcb3bfd9a71c8b15492c8a72a3402b13e6510cc19420a3dd9",
+      "structure_id": "Q03224__chain_A__EC_3.1.3.11"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/24/247e5bf6f10a47bd05500cfe5c698daf09cf35a029693b4c5f42f47cade66970/Q37370__chain_A__EC_7.1.1.9.pdb",
+      "sha256": "247e5bf6f10a47bd05500cfe5c698daf09cf35a029693b4c5f42f47cade66970",
+      "structure_id": "Q37370__chain_A__EC_7.1.1.9"
+    },
+    {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/structure_store/objects/1b/1bd7f34f4daf91fc114cb47ecd07c98f8891cf246025942a6971a79fd3f8cc82/Q8EWL9__chain_A__EC_6.5.1.2.pdb",
+      "sha256": "1bd7f34f4daf91fc114cb47ecd07c98f8891cf246025942a6971a79fd3f8cc82",
+      "structure_id": "Q8EWL9__chain_A__EC_6.5.1.2"
+    }
+  ],
+  "normalization_refitted": false,
+  "normalization_sha256": "767fafa46786a491f791969a79976cde343377a8cab7ec5a4a52e25e63210175",
+  "optimizer_created": false,
+  "path_map": {
+    "/content/deepmzyme_bundle/DeepMzyme_Data": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data",
+    "/content/metal_architecture_pilot_features/external_overlay": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/plans/metal_architecture_pilot_10h_v1/external_overlay"
+  },
+  "prediction_artifacts": {
+    "group_predictions": {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/group_predictions.csv",
+      "sha256": "fc86d0c05be3fc9267aba45255244032bf6076d927b44174de875c52e0392f17"
+    },
+    "pocket_predictions": {
+      "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/pocket_predictions.csv",
+      "sha256": "858f5d806189b66c8345d92e1806a02e63543c6c1a309abbcf780e707ec3f3ca"
+    }
+  },
+  "python": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:20:58) [GCC 14.3.0]",
+  "reproduction_passed": true,
+  "reproduction_scope": "saved whole-validation metrics and confusion matrices; archived logits were unavailable",
+  "resolved_replay_paths": {
+    "esm_embeddings_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/empty_saved_esm_cache",
+    "external_features_root_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/updated_feature_extraction",
+    "ring_features_dir": null,
+    "structure_dir": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train",
+    "summary_csv": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train/final_data_summarazing_table_transition_metals_only_catalytic.csv"
+  },
+  "reuse_ledger_sha256": "04ca8ef84baa1728e2664bf467846e097cbdda7cb62604514b9f5cc0500a08d6",
+  "run_config_sha256": "f4683ed8dd9a73cca65bb70195b628e8c0b862320e1915b790f360d9212e3292",
+  "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6",
+  "seed": 43,
+  "selected_epoch": 23,
+  "selection_metric": "val_ec_group_level_1_balanced_acc",
+  "source": {
+    "mode": "verified_frozen_source",
+    "source_manifest_sha256": "5132913da27b013955d42ee0c1e0a9d5b182c29b3dbc99335c069d63208053a9",
+    "source_root": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/frozen_sources/ec",
+    "verified_files": 70
+  },
+  "target_vocabulary": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7"
+  ],
+  "task": "ec",
+  "torch": "2.11.0+cu130",
+  "train_membership_sha256": "4a60b159bc4e76b3bb56a617a0fba4ece12c27bf094227be11e8534019bbffc7",
+  "training_performed": false,
+  "validation_membership_sha256": "8d206eaa23fb367063d18b4177f3fa24e1deb619796729348dee2c038828f3cf",
+  "validation_only": true,
+  "verified_whole_validation_metrics": {
+    "val_ec_acc": 0.48571428656578064,
+    "val_ec_balanced_acc": 0.37027417027417026,
+    "val_ec_group_acc": 0.6428571343421936,
+    "val_ec_group_balanced_acc": 0.5392857142857143,
+    "val_ec_group_confusion_matrix": [
+      [
+        5,
+        0,
+        3,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        6,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        4,
+        1,
+        13,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1
+      ]
+    ],
+    "val_ec_group_level_1_acc": 0.6428571343421936,
+    "val_ec_group_level_1_balanced_acc": 0.5392857142857143,
+    "val_ec_group_level_1_macro_f1": 0.5113378684807256,
+    "val_ec_group_macro_f1": 0.5113378684807256,
+    "val_ec_group_min_recall": 0.0,
+    "val_ec_group_n_conflicting_groups": 0,
+    "val_ec_group_n_groups": 42,
+    "val_ec_group_per_class_recall": {
+      "1": 0.625,
+      "2": 1.0,
+      "3": 0.65,
+      "4": 0.5,
+      "5": 0.0,
+      "6": 0.0,
+      "7": 1.0
+    },
+    "val_ec_group_per_class_support": {
+      "1": 8,
+      "2": 6,
+      "3": 20,
+      "4": 4,
+      "5": 1,
+      "6": 2,
+      "7": 1
+    },
+    "val_ec_level_1_acc": 0.48571428656578064,
+    "val_ec_level_1_balanced_acc": 0.37027417027417026,
+    "val_ec_level_1_macro_f1": 0.38607840572126284,
+    "val_ec_macro_f1": 0.38607840572126284,
+    "val_ec_per_class_recall": {
+      "1": 0.4444444444444444,
+      "2": 0.6363636363636364,
+      "3": 0.5444444444444444,
+      "4": 0.26666666666666666,
+      "5": 0.0,
+      "6": 0.2,
+      "7": 0.5
+    },
+    "val_ec_per_class_support": {
+      "1": 36,
+      "2": 22,
+      "3": 90,
+      "4": 15,
+      "5": 5,
+      "6": 5,
+      "7": 2
+    }
+  }
+}

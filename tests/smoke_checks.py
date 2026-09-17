@@ -1043,8 +1043,8 @@ def check_colab_notebook_sweep_source() -> None:
         "CONFIG = {",
         "COLAB_DATA_SOURCE",
         "huggingface_link",
-        "DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst",
-        "09525aad00d6c35e32a3601ff3ecf338978c465cec1ccfc18e47b9222b220aba",
+        "DeepMzyme_Data_v12_manifest_exact_common70_nonoverlap_clean30_care30_complete_esm_ring_external.tar.gz",
+        "90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee",
         "site-level MAHOMES summary CSV",
         "structure-level inspection CSV",
         "MODEL_PRESET_MAP",
@@ -2674,6 +2674,8 @@ def check_multi_metal_site_level_granularity() -> None:
     structure_id = "1cob__chain_A__EC_1.15.1.1"
     dataset_root = REPO_ROOT / "DeepMzyme_Data" / "train_and_test_sets_structures_non_overlapped_pinmymetal"
     train_dir = dataset_root / "train"
+    if not train_dir.is_dir():
+        raise SkipCheck(f"local multi-metal fixture directory is absent: {train_dir}")
     from structure_store import index_structure_files_by_name
 
     structure_path = index_structure_files_by_name(train_dir).get(

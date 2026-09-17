@@ -1,0 +1,56 @@
+{
+  "audit_shorter_coverage": 0.5,
+  "comparisons": [
+    {
+      "left_family": "only_gvp",
+      "name": "gvp_minus_esm",
+      "right_family": "only_esm"
+    },
+    {
+      "left_family": "matched_gvp_ring_on",
+      "name": "ring_on_minus_off",
+      "right_family": "matched_gvp_ring_off"
+    }
+  ],
+  "component_coverage": 0.5,
+  "component_identity_threshold": 0.2,
+  "component_rule": "Union same-protein groups, exact sequences, and qualifying >20% identity hits at >=50% shorter-sequence coverage; conservative dependence units, not family-disjoint certification.",
+  "database_convention": "fixed_task_development_database",
+  "extreme_remote_threshold": 0.15,
+  "held_out_evaluation": false,
+  "identity_denominator": "aligned_columns_including_internal_gaps",
+  "max_evalue": 0.001,
+  "min_residue_pairs": 50,
+  "minimum_components_per_class_per_primary_stratum": 10,
+  "no_qualifying_hit": "unclassified_not_zero_identity",
+  "primary_remote_threshold": 0.2,
+  "primary_shorter_coverage": 0.8,
+  "program": "MMseqs2",
+  "release": "18-8cc5c",
+  "schema_version": 1,
+  "sensitivity": 7.5,
+  "statistics": {
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 20260917,
+    "confidence_level": 0.95,
+    "min_components_per_class": 10
+  },
+  "version": "8cc5ce367b5638c4306c2d7cfc652dd099a4643f",
+  "vocabulary": {
+    "ec": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "metal": [
+      "Mn",
+      "Cu",
+      "Zn",
+      "Class VIII"
+    ]
+  }
+}

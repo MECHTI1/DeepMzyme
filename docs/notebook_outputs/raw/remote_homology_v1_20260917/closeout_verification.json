@@ -1,0 +1,16 @@
+{
+  "status": "verified",
+  "copied_files": 72,
+  "copied_bytes": 5390279,
+  "validation_replays": 12,
+  "training_performed": false,
+  "gpu_allocated": false,
+  "held_out_evaluation": false,
+  "tests": {
+    "combined": 261,
+    "final_exporter": 14
+  },
+  "counts_freeze_sha256": "ed5de8ea331b2c7a932b63261884d80ca4b60dc3086bcdb34d4093db35d95ba6",
+  "prediction_manifest_sha256": "cedd7c81e2ca0eaa708bea0317fae5744d3ce51a0003b76ade30ad3295c92ea0",
+  "exporter_provenance_audit_sha256": "4cdb7ccb62952ffddc0554d974937fa6fd22a3d407530317fe1461e4c8a8faf6"
+}

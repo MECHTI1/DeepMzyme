@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import argparse
 import hashlib
 import sys
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import torch
-from esm.models.esmc import ESMC
-from esm.sdk.api import ESMProtein, LogitsConfig
+
+if TYPE_CHECKING:
+    from esm.models.esmc import ESMC
 
 from Bio.PDB import PDBParser, MMCIFParser
 from Bio.Data.PDBData import protein_letters_3to1
@@ -29,6 +32,22 @@ from training.esm_feature_loading import (
 
 
 DEFAULT_ESMC_MODEL_NAME = "esmc_300m"
+
+
+def _esmc_sdk():
+    """Keep structure parsing and existing-cache checks independent of inference."""
+    try:
+        from esm.models.esmc import ESMC
+        from esm.sdk.api import ESMProtein, LogitsConfig
+    except ModuleNotFoundError as exc:
+        if exc.name == "esm" or (exc.name or "").startswith("esm."):
+            raise RuntimeError(
+                "ESMC embedding generation requires the optional 'esm' package. "
+                "Use the project's ESMC environment to generate embeddings; "
+                "existing-cache auditing does not require this package."
+            ) from exc
+        raise
+    return ESMC, ESMProtein, LogitsConfig
 
 
 def parse_structure(structure_file):
@@ -114,6 +133,7 @@ def load_esmc_model(
     *,
     model_name: str = DEFAULT_ESMC_MODEL_NAME,
 ) -> tuple[ESMC, str]:
+    ESMC, _, _ = _esmc_sdk()
     resolved_device = resolve_device(device)
     model = ESMC.from_pretrained(model_name).to(resolved_device)
     model.eval()
@@ -191,6 +211,7 @@ def create_resi_embed_pt(
 
             print(f"\nProcessing chain {chain_id} | sequence length = {len(sequence)}")
 
+            _, ESMProtein, LogitsConfig = _esmc_sdk()
             protein = ESMProtein(sequence=sequence)
             protein_tensor = model.encode(protein)
 
