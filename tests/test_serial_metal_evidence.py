@@ -62,6 +62,19 @@ def test_scientific_sources_excludes_orchestration_but_not_training_run():
     assert evidence.scientific_sources(manifest) == {"src/training/run.py": "science", "src/model.py": "model"}
 
 
+def test_independent_remote_reporting_entrypoints_do_not_change_training_source_identity():
+    manifest = {"source_files": {
+        "src/audit_sequence_remoteness.py": "audit", "src/export_validation_predictions.py": "export",
+        "src/report_remote_homology.py": "report", "src/training/run.py": "training",
+        "src/graph/construction.py": "graph", "src/model_variants/models.py": "models",
+        "src/training/export_validation_predictions.py": "hypothetical_training_dependency",
+    }}
+    assert evidence.scientific_sources(manifest) == {
+        key: value for key, value in manifest["source_files"].items()
+        if key.startswith(("src/training/", "src/graph/", "src/model_variants/"))
+    }
+
+
 def test_cache_identity_is_portable_but_content_changes_are_visible():
     old = {"data_root": "/content/data", "external_features_root_dir": "/content/features"}
     new = {"data_root": "/local/data", "external_features_root_dir": "/local/features"}

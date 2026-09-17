@@ -193,9 +193,10 @@ def plan(root, data, output, external_root, overlay_manifest, source_commit="unk
     train = data / base.DATASET / "train"
     source_files = sorted((root / "src").rglob("*.py")) + [
         root / "notebooks/DeepMzyme_training_colab.ipynb", root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"]
-    host_controller = root / "scripts/colab_serial_metal_host.py"
-    if host_controller.is_file():
-        source_files.append(host_controller)
+    for name in ("colab_serial_metal_host.py", "colab_serial_metal_supervisor.py"):
+        host_controller = root / "scripts" / name
+        if host_controller.is_file():
+            source_files.append(host_controller)
     dataset_files = [train / "structure_manifest.csv",
                      train / "final_data_summarazing_table_transition_metals_only_catalytic.csv"]
     manifest = dict(profile=PROFILE, source_commit=source_commit, root=str(root), data_root=str(data),

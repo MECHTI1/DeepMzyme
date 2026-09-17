@@ -282,6 +282,17 @@ validation choices and the reporting cohort are frozen. Its overlap and the
 historical use of the shared non-overlap test must remain visible; selecting
 this development route does not resolve the primary final-test route.
 
+Sequence-remoteness reporting is a supplementary validation analysis. The
+[remote-homology addendum](docs/REMOTE_HOMOLOGY_ADDENDUM.md) specifies the
+primary maximum detected training-identity endpoint of ≤20% and secondary ≤15%
+endpoint; below 30% alone is not designated extremely remote. Preserve exact
+run/fold training membership, distinguish represented coordinate chains from
+certified full proteins, and keep no-hit cases unclassified. Reuse completed
+checkpoints, freeze support counts before prediction joins, retain the complete
+task vocabulary and report an unestimable interaction when support is absent.
+This analysis neither changes model selection nor authorizes new splits,
+training, promotion or held-out access. It cannot prove absence of homology.
+
 Keep geometry controls distinct: pocket extraction selects residues around
 the supplied metal coordinates; edge radius determines residue connections;
 classifier pooling decides which graph states enter the final readout. A zero

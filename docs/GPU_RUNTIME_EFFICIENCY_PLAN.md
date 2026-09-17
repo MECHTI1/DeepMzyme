@@ -1,7 +1,8 @@
 # GPU runtime efficiency implementation plan
 
-Status: **planned**, 2026-09-17. This document proposes implementation and
-validation work; it does not restart the paused campaign or claim a measured
+Status: **Release 1 partially implemented and CPU-tested**, 2026-09-17. This
+document separates implemented controls from remaining rollout work; it does
+not restart the paused campaign or claim a measured
 speedup. The objective is more **verified, scientifically comparable fits per
 allocated GPU-hour**, with fewer setup cycles and shorter gaps between fits.
 
@@ -10,6 +11,20 @@ many fits, automate the routine transitions, and remove redundant preparation.
 Measure the remaining CPU/GPU bottlenecks before changing training behavior.
 
 ## Authority and scope
+
+Implemented in the first continuation: durable pause/control generations,
+exclusive host-controller leases, exactly-once closed host accounting,
+an existing-endpoint queue supervisor, verified terminal/state persistence,
+idempotent launch intents, bounded reconnects and explicit per-fit persistence
+allowances. The supervisor verifies already-staged setup rather than reinstalling
+it. It has no allocation/replacement path. CPU fake-provider tests exercise
+multiple fits, lost replies, duplicate launches, pauses, corrupt receipts and
+verified shutdown; live Colab transport and throughput remain unmeasured.
+
+Remaining Release 1 rollout work includes freezing the operational continuation,
+provisioning/staging automation and a separately resumed live segment. Releases
+2/3 remain planned. Do not interpret the local queue tests as complete
+end-to-end Colab readiness or a measured speedup.
 
 - [Plan.md](../Plan.md) owns scientific policy. The
   [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
@@ -43,7 +58,8 @@ region**, out of 235.42 seconds inside the profiled process. The controller's
 training-region timer includes work beyond CUDA kernels; neither timer is
 actual GPU utilization. A CUDA utilization trace was not captured.
 
-The code explains several constraints that a useful optimization must address:
+The audited pre-Release-1 code exposed these constraints; the implemented
+continuation and remaining rollout boundaries are distinguished above:
 
 | Observed implementation | Consequence |
 |---|---|

@@ -1,0 +1,144 @@
+Create directory /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp
+easy-search /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/development.fasta /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/development.fasta /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/alignments.tsv /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp --search-type 1 -s 7.5 -e 0.001 --alignment-mode 3 --seq-id-mode 0 -a 1 --min-seq-id 0 --min-aln-len 50 -c 0 --cov-mode 0 --mask 1 --comp-bias-corr 1 --max-seqs 1000000 --max-accept 1000000 --max-rejected 1000000 --threads 2 --split-memory-limit 1G --format-mode 4 --format-output query,target,nident,alnlen,qstart,qend,qlen,tstart,tend,tlen,evalue,bits,qaln,taln 
+
+MMseqs Version:                        	8cc5ce367b5638c4306c2d7cfc652dd099a4643f
+Substitution matrix                    	aa:blosum62.out,nucl:nucleotide.out
+Add backtrace                          	true
+Alignment mode                         	3
+Alignment mode                         	0
+Allow wrapped scoring                  	false
+E-value threshold                      	0.001
+Seq. id. threshold                     	0
+Min alignment length                   	50
+Seq. id. mode                          	0
+Alternative alignments                 	0
+Coverage threshold                     	0
+Coverage mode                          	0
+Max sequence length                    	65535
+Compositional bias                     	1
+Compositional bias scale               	1
+Max reject                             	1000000
+Max accept                             	1000000
+Include identical seq. id.             	false
+Preload mode                           	0
+Pseudo count a                         	substitution:1.100,context:1.400
+Pseudo count b                         	substitution:4.100,context:5.800
+Score bias                             	0
+Realign hits                           	false
+Realign score bias                     	-0.2
+Realign max seqs                       	2147483647
+Correlation score weight               	0
+Gap open cost                          	aa:11,nucl:5
+Gap extension cost                     	aa:1,nucl:2
+Zdrop                                  	40
+Threads                                	2
+Compressed                             	0
+Verbosity                              	3
+Seed substitution matrix               	aa:VTML80.out,nucl:nucleotide.out
+Sensitivity                            	7.5
+k-mer length                           	0
+Target search mode                     	0
+k-score                                	seq:2147483647,prof:2147483647
+Alphabet size                          	aa:21,nucl:5
+Max results per query                  	1000000
+Split database                         	0
+Split mode                             	2
+Split memory limit                     	1G
+Diagonal scoring                       	true
+Exact k-mer matching                   	0
+Mask residues                          	1
+Mask residues probability              	0.9
+Mask lower case residues               	0
+Mask lower letter repeating N times    	0
+Minimum diagonal score                 	15
+Selected taxa                          	
+Spaced k-mers                          	1
+Spaced k-mer pattern                   	
+Local temporary path                   	
+Use GPU                                	0
+Use GPU server                         	0
+Wait for GPU server                    	600
+Prefilter mode                         	0
+Rescore mode                           	0
+Remove hits by seq. id. and coverage   	false
+Sort results                           	0
+Mask profile                           	1
+Profile E-value threshold              	0.001
+Global sequence weighting              	false
+Allow deletions                        	false
+Filter MSA                             	1
+Use filter only at N seqs              	0
+Maximum seq. id. threshold             	0.9
+Minimum seq. id.                       	0.0
+Minimum score per column               	-20
+Minimum coverage                       	0
+Select N most diverse seqs             	1000
+Pseudo count mode                      	0
+Profile output mode                    	0
+Min codons in orf                      	30
+Max codons in length                   	32734
+Max orf gaps                           	2147483647
+Contig start mode                      	2
+Contig end mode                        	2
+Orf start mode                         	1
+Forward frames                         	1,2,3
+Reverse frames                         	1,2,3
+Translation table                      	1
+Translate orf                          	0
+Use all table starts                   	false
+Offset of numeric ids                  	0
+Create lookup                          	0
+Overlap between sequences              	0
+Sequence split mode                    	1
+Header split mode                      	0
+Chain overlapping alignments           	0
+Merge query                            	1
+Search type                            	1
+Search iterations                      	1
+Start sensitivity                      	4
+Search steps                           	1
+Exhaustive search mode                 	false
+Filter results during exhaustive search	0
+Strand selection                       	1
+LCA search mode                        	false
+Disk space limit                       	0
+MPI runner                             	
+Force restart with latest tmp          	false
+Remove temporary files                 	true
+Translation mode                       	0
+Alignment format                       	4
+Format alignment output                	query,target,nident,alnlen,qstart,qend,qlen,tstart,tend,tlen,evalue,bits,qaln,taln
+Database output                        	false
+Overlap threshold                      	0
+Database type                          	0
+Shuffle input database                 	true
+Createdb mode                          	0
+Write lookup file                      	0
+Greedy best hits                       	false
+
+Alignment backtraces will be computed, since they were requested by output format.
+createdb /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/development.fasta /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/query --threads 2 --mask 1 
+
+Converting sequences
+[
+Time for merging to query_h: 0h 0m 0s 3ms
+Time for merging to query: 0h 0m 0s 4ms
+Database type: Aminoacid
+Time for processing: 0h 0m 0s 21ms
+createdb /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/development.fasta /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/target --write-lookup 0 --threads 2 --mask 1 --gpu 0 
+
+Converting sequences
+[
+Time for merging to target_h: 0h 0m 0s 6ms
+Time for merging to target: 0h 0m 0s 6ms
+Database type: Aminoacid
+Time for processing: 0h 0m 0s 31ms
+Create directory /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/search_tmp
+search /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/query /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/target /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/result /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/search_tmp -a 1 --alignment-mode 3 -e 0.001 --min-seq-id 0 --min-aln-len 50 --seq-id-mode 0 -c 0 --cov-mode 0 --comp-bias-corr 1 --max-rejected 1000000 --max-accept 1000000 --threads 2 -s 7.5 --max-seqs 1000000 --split-memory-limit 1G --mask 1 --search-type 1 --remove-tmp-files 1 
+
+prefilter /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/query /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/target /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/ec/tmp/5966575189549289968/search_tmp/8182398736700434257/pref_0 --sub-mat 'aa:blosum62.out,nucl:nucleotide.out' --seed-sub-mat 'aa:VTML80.out,nucl:nucleotide.out' -k 0 --target-search-mode 0 --k-score seq:2147483647,prof:2147483647 --alph-size aa:21,nucl:5 --max-seq-len 65535 --max-seqs 1000000 --split 0 --split-mode 2 --split-memory-limit 1G -c 0 --cov-mode 0 --comp-bias-corr 1 --comp-bias-corr-scale 1 --diag-score 1 --exact-kmer-matching 0 --mask 1 --mask-prob 0.9 --mask-lower-case 0 --mask-n-repeat 0 --min-ungapped-score 15 --add-self-matches 0 --spaced-kmer-mode 1 --db-load-mode 0 --pca substitution:1.100,context:1.400 --pcb substitution:4.100,context:5.800 --threads 2 --compressed 0 -v 3 -s 7.5 
+
+Query database size: 793 type: Aminoacid
+Cannot fit databases into 1023M. Please use a computer with more main memory.
+Error: Prefilter died
+Error: Search died

@@ -1,0 +1,131 @@
+{
+  "affected_worker": {
+    "observation_source": "ps -eo pid,lstart,args and date -u",
+    "pid": 129927,
+    "process_observation_utc": "2026-09-17T02:29:02Z",
+    "process_start_observed_utc": "2026-09-17T02:28:22Z",
+    "run_id": "A2_0_four_class_lr0.0001_s42",
+    "source_identity_basis": "Reconstructed pre-patch text matches SHA256 of ten earlier completed receipts; worker process started before observed mutation; no process-memory source hash was captured."
+  },
+  "after_source": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/exporter_sources/94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35.py",
+    "sha256": "94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35"
+  },
+  "all_48_original_checkpoint_config_metadata_membership_file_hashes_reverified": true,
+  "audit_scope": "operational exporter source provenance; original receipts preserved",
+  "before_source": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/exporter_sources/051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae.py",
+    "sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae"
+  },
+  "change_scope": "Checks every explicitly bound saved run-file hash in preflight and resume, adding dataset_summary.json and run_metadata.json to existing checkpoint/config checks.",
+  "mutation_clock_source": "filesystem source-file mtime after the applied patch",
+  "mutation_observed_utc": "2026-09-17T02:28:27.101533500Z",
+  "numerical_inference_or_model_code_changed": false,
+  "original_receipts_modified": false,
+  "patch": {
+    "path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/exporter_sources/metadata_hash_verification.patch",
+    "sha256": "b526b23051d3eb5d786de65f5c58547280406d76b6512521fbd4ac5f7ab737ef"
+  },
+  "runs": [
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A1_1_four_class_lr3e-05_s42/receipt.json",
+      "receipt_sha256": "9cb69d0ec3217c97ad3bf8178654ca08442a14fafa240e0a5eb853edd4f4dd08",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "A1_1_four_class_lr3e-05_s42"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": true,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/A2_0_four_class_lr0.0001_s42/receipt.json",
+      "receipt_sha256": "188f28487e43f2bd24632a32d5b9ddc3945bc0f7413a2f1fdd5ea001a3e5b274",
+      "recorded_disk_sha256_at_completion": "94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35",
+      "run_id": "A2_0_four_class_lr0.0001_s42"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s42/receipt.json",
+      "receipt_sha256": "7b3081f68d0f1a60a0d47084634944f58652d171391a821ffdb032b9832adb7f",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "GVP_GVP_ring0_lr0.0001_s42"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring0_lr0.0001_s43/receipt.json",
+      "receipt_sha256": "03261f7de002abf1d40cbf3dba4cc2d1783f72965e2d8bf00fd6748841696dd1",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "GVP_GVP_ring0_lr0.0001_s43"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s42/receipt.json",
+      "receipt_sha256": "1a00b80ba604dededa450743c62ad1cfc5bdf42d4b42dbb3cb353332312dc11b",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "GVP_GVP_ring1_lr0.0001_s42"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/GVP_GVP_ring1_lr0.0001_s43/receipt.json",
+      "receipt_sha256": "c4dfb69d24c0b816cfd553f0221732dd3fc2f665ad5826bde34d5084b3fcb12c",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "GVP_GVP_ring1_lr0.0001_s43"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_0_four_class_lr0.0001_s43/receipt.json",
+      "receipt_sha256": "35aa77d56f80c2c2c9f4ab3903a57a7564c2c999a60ef705d879a00407db7757",
+      "recorded_disk_sha256_at_completion": "94e894daa0075563f989a798290a3a05f61e0a1c669080066f486f1f6cc83d35",
+      "run_id": "R_0_four_class_lr0.0001_s43"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/R_1_four_class_lr3e-05_s43/receipt.json",
+      "receipt_sha256": "f880c38c9ad26c7b6940fc879e2ad12211955d0226596cd3f6d79b4614c0569f",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "R_1_four_class_lr3e-05_s43"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e/receipt.json",
+      "receipt_sha256": "f0f470ffdb84333aaddc037794182b1c775c5e1d056e3e346baa7136c8d39ad6",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_a985d60e"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25/receipt.json",
+      "receipt_sha256": "3d03d1e41d2ad32c2858a6022d8a4a13860c35d3a2528d706c72861e85b2d6e9",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "standalone_ec1_care30_only_esm_baseline_v1_ec_only_esm_archonly_esm_fusionnone_ringno_esmyes_mwinverse_frequency_fullfeatures_ep30_ba9edf25"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff/receipt.json",
+      "receipt_sha256": "5f578bdcaa2c9fc5ca6612527d02c3392ca26f1af5eeabad67a2eb22cdab17b5",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_6d7d78ff"
+    },
+    {
+      "completion_disk_hash_differed_from_executed_source": false,
+      "executed_exporter_sha256": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "receipt_path": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/predictions/standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6/receipt.json",
+      "receipt_sha256": "ecb469eaf6b44b4d27b13947a4dad6c7aa84983ffd10fce81b47579b0abdd46f",
+      "recorded_disk_sha256_at_completion": "051335b0772fc1e8c5619aee70fc937683b6aa50f5e505d1f2e169ebcfa668ae",
+      "run_id": "standalone_ec1_care30_only_gvp_baseline_v1_ec_only_gvp_archonly_gvp_fusionnone_ringno_esmno_mwinverse_frequency_fullfeatures_ep30_l_a652eae6"
+    }
+  ],
+  "schema_version": 1,
+  "scientific_frozen_sources_reverified_unchanged": true,
+  "status": "one_completion_hash_corrected_by_separate_audit",
+  "training_or_inference_repeated": false
+}

@@ -1,0 +1,12 @@
+{
+  "archive": "/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/notebook_outputs/remote_homology_v1/runtime_release1_source/deepmzyme-runtime-release1-source.tar.gz",
+  "archive_sha256": "948a204b52ba1ee541a8f31c658d0eb143d92e579cd46ae4ad47047f401c4a79",
+  "archive_bytes": 958164,
+  "verified_source_files": 186,
+  "dataset": "train_and_test_sets_structures_non_overlapped_pinmymetal",
+  "plan_packaged_from": "HEAD",
+  "workspace_plan_unchanged": true,
+  "status": "offline_source_snapshot_not_launch_ready",
+  "gpu_allocated": false,
+  "training_launched": false
+}

@@ -22,7 +22,7 @@ import time
 import uuid
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from serial_metal_campaign import runtime
+from serial_metal_campaign import control, runtime
 
 GPUS = {"T4", "L4", "G4", "H100", "A100"}
 STOP_MARGIN_SECONDS = 300
@@ -30,6 +30,7 @@ HEARTBEAT_SECONDS = 5
 HEARTBEAT_MAX_AGE = 20
 STARTUP_SECONDS = 20
 BACKEND_TIMEOUT = 60
+PAUSE_DRAIN_SECONDS = 60
 
 
 def _sha(path):
@@ -76,6 +77,94 @@ def host_budget(output, now=None):
     return {"allocated_seconds": spent, "total_remaining_seconds": max(0, limits["total_seconds"] - spent),
             "limit_seconds": limits,
             "open_session_ids": [row["session_id"] for row in rows if row.get("stopped_epoch") is None]}
+
+
+def reconcile_host_accounting(output, *, apply=False):
+    """Preview or import closed host-only intervals without reopening an allocation.
+
+    Independent provider stop files must match the host ledger. One atomic
+    worker-ledger write charges each interval once, including after a lost reply.
+    This is accounting only and remains allowed while the campaign is paused.
+    """
+    output = Path(output).resolve()
+
+    def reconcile():
+        host_rows = _ledger(output)
+        worker_rows = runtime._sessions(output)
+        if any(row.get("stopped_epoch") is None for row in host_rows + worker_rows):
+            raise RuntimeError("Close all allocations before reconciling host-only accounting.")
+        if runtime.read_json(output / "active_process.json") or any(
+                row.get("status") == "running" for row in runtime._attempts(output)):
+            raise RuntimeError("Reconcile the active training process before importing accounting.")
+        host_by_id = {row["session_id"]: row for row in host_rows}
+        if len({row["session_id"] for row in worker_rows}) != len(worker_rows):
+            raise ValueError("Worker history contains duplicate allocation identities.")
+        for row in worker_rows:
+            source = host_by_id.get(row["session_id"])
+            if source is None or any(row.get(key) != source.get(key) for key in
+                                     ("started_epoch", "stopped_epoch")):
+                raise ValueError("Worker and host allocation histories differ.")
+        known = {row["session_id"] for row in worker_rows}
+        additions, receipt_hashes = [], {}
+        for row in host_rows:
+            if row["session_id"] in known:
+                continue
+            if row.get("status") == "cancelled_before_request" and row["stopped_epoch"] == row["started_epoch"]:
+                continue  # No provider request or allocated interval exists.
+            directory = _session(output, row["session_id"])
+            receipt_path = directory / "session_stopped.json"
+            receipt = runtime.read_json(receipt_path, {})
+            if (receipt.get("provider_verified_stopped") is not True
+                    or receipt != row.get("stop_evidence")
+                    or any(receipt.get(key) != row[key] for key in
+                           ("session_id", "started_epoch", "stopped_epoch"))):
+                raise ValueError("Host-only interval lacks a matching independent provider stop receipt.")
+            allocation = runtime.read_json(directory / "allocation_receipt.json", {})
+            hardware = allocation.get("hardware")
+            if (not isinstance(hardware, dict) or not hardware
+                    or hardware.get("endpoint") != receipt.get("endpoint")
+                    or allocation.get("session_id") != row["session_id"]
+                    or allocation.get("started_epoch") != row["started_epoch"]):
+                raise ValueError("Host-only interval lacks a matching hardware allocation receipt.")
+            if any(attempt["session_id"] == row["session_id"] for attempt in runtime._attempts(output)):
+                raise ValueError("An unregistered host-only interval unexpectedly contains training attempts.")
+            digest = _sha(receipt_path)
+            receipt_hashes[row["session_id"]] = digest
+            additions.append({"session_id": row["session_id"], "started_epoch": row["started_epoch"],
+                              "stopped_epoch": row["stopped_epoch"], "hardware": hardware,
+                              "stop_evidence": receipt, "hostname": row.get("hostname"),
+                              "boot_id": row.get("boot_id"), "accounting_source": "verified_host_only",
+                              "host_stop_receipt_sha256": digest})
+        updated = sorted([*worker_rows, *additions], key=lambda row: row["started_epoch"])
+        for earlier, later in zip(updated, updated[1:]):
+            if earlier["stopped_epoch"] > later["started_epoch"]:
+                raise ValueError("Reconciled worker allocation intervals overlap.")
+        host_total = sum(row["stopped_epoch"] - row["started_epoch"] for row in host_rows)
+        worker_total = sum(row["stopped_epoch"] - row["started_epoch"] for row in worker_rows)
+        reconciled_total = sum(row["stopped_epoch"] - row["started_epoch"] for row in updated)
+        if abs(host_total - reconciled_total) > 1e-6:
+            raise ValueError("Reconciled worker total does not equal the host allocation total.")
+        result = {"status": "applied" if apply else "preview", "added_session_ids": [r["session_id"] for r in additions],
+                  "host_allocated_seconds": host_total, "worker_allocated_seconds_before": worker_total,
+                  "worker_allocated_seconds_after": reconciled_total,
+                  "host_ledger_sha256": _sha(_root(output) / "allocations.json"),
+                  "verified_stop_receipts": receipt_hashes}
+        if apply:
+            if additions or not (output / "sessions.json").is_file():
+                runtime.atomic_json(output / "sessions.json", updated)
+            audit = {"status": "reconciled", "host_allocated_seconds": host_total,
+                     "worker_allocated_seconds": reconciled_total,
+                     "host_ledger_sha256": result["host_ledger_sha256"],
+                     "reconciled_session_ids": [r["session_id"] for r in updated
+                                                if r.get("accounting_source") == "verified_host_only"],
+                     "worker_ledger_sha256": _sha(output / "sessions.json")}
+            runtime.atomic_json(output / "host_accounting_reconciliation.json", audit)
+        return result
+
+    if not apply:
+        return reconcile()
+    with runtime._lock(_root(output)), runtime._lock(output):
+        return reconcile()
 
 
 class CLIBackend:
@@ -294,6 +383,7 @@ def start_watchdog(output, session_id):
 
 
 def allocate(output, session_id, *, backend=None, starter=None):
+    control.require_running(output)
     config = _config(output, session_id)
     backend = backend or CLIBackend(config.get("cli_python"))
     directory = _session(output, session_id)
@@ -343,6 +433,7 @@ def allocate(output, session_id, *, backend=None, starter=None):
         next(row for row in rows if row["session_id"] == session_id)["status"] = "allocation_requested"
         runtime.atomic_json(_root(output) / "allocations.json", rows)
     try:
+        control.require_running(output)
         backend.create(session_id, config["gpu"])
         owned = _ownership(config, request, backend)
         runtime.atomic_json(directory / "owned_session.json", owned)
@@ -352,6 +443,7 @@ def allocate(output, session_id, *, backend=None, starter=None):
             raise RuntimeError("Assigned hardware differs from the requested named GPU.")
         if not watchdog_alive(output, session_id) or time.time() >= request["training_deadline_epoch"]:
             raise RuntimeError("Watchdog liveness or allocation deadline prevents any work.")
+        control.require_running(output)
         receipt = {"status": "owned_ready", **request, "hardware": observed, "ownership": owned}
         receipt["status"] = "owned_ready"
         runtime.atomic_json(directory / "allocation_receipt.json", receipt)
@@ -425,9 +517,10 @@ def status(output, session_id, *, backend=None):
         return {"work_allowed": False, "allocation": request, "budget": host_budget(output)}
     alive = watchdog_alive(output, session_id)
     directory = _session(output, session_id)
-    allowed = alive and time.time() < request["training_deadline_epoch"] and not (directory / "stop_required.json").exists()
-    if not alive:
-        runtime.atomic_json(directory / "stop_required.json", {"reason": "watchdog_not_live", "epoch": time.time()})
+    pause_reason = _pause_reason(output)
+    allowed = alive and not pause_reason and time.time() < request["training_deadline_epoch"] and not (directory / "stop_required.json").exists()
+    if not alive or (pause_reason and _pause_stop_due(output, directory, request, time.time(), pause_reason)):
+        runtime.atomic_json(directory / "stop_required.json", {"reason": pause_reason or "watchdog_not_live", "epoch": time.time()})
         stop(output, session_id, backend=backend)
     return {"work_allowed": allowed, "watchdog_alive": alive, "allocation": _request(output, session_id),
             "budget": host_budget(output)}
@@ -456,6 +549,7 @@ def worker_receipt(output, session_id, *, backend=None):
         raise RuntimeError("Watchdog receipt expired during provider verification.")
     if _sha(config["manifest"]) != config["manifest_sha256"]:
         raise ValueError("Frozen campaign manifest changed.")
+    user_control = control.require_running(output)
     manifest = runtime.read_json(config["manifest"])
     return {"session_id": session_id, "allocation_started_epoch": request["started_epoch"],
             "hard_stop_epoch": request["hard_deadline_epoch"], "training_stop_epoch": request["training_deadline_epoch"],
@@ -465,7 +559,28 @@ def worker_receipt(output, session_id, *, backend=None):
             "campaign_manifest_sha256": config["manifest_sha256"], "prior_allocated_seconds": request["prior_allocated_seconds"],
             "budget_authorization_sha256": config["budget_limits"]["authorization_sha256"],
             "total_cap_seconds": config["total_cap_seconds"],
+            "campaign_control_sha256": user_control["control_sha256"],
             "watchdog_host": runtime._identity()}
+
+
+def _pause_reason(output):
+    try:
+        return "user_paused" if control.status(output)["paused"] else None
+    except (ValueError, TypeError, KeyError):
+        return "invalid_campaign_control"
+
+
+def _pause_stop_due(output, directory, request, now, reason):
+    """Allow a live maintained controller one bounded terminal-artifact drain."""
+    if reason != "user_paused" or not control.live_controller(output):
+        return True
+    path = directory / "pause_drain.json"
+    drain = runtime.read_json(path)
+    if drain is None:
+        drain = {"reason": reason, "requested_epoch": now,
+                 "stop_by_epoch": min(now + PAUSE_DRAIN_SECONDS, request["stop_request_epoch"])}
+        runtime.atomic_json(path, drain)
+    return now >= drain["stop_by_epoch"]
 
 
 def watchdog(output, session_id, token, *, backend=None, once=False):
@@ -491,6 +606,9 @@ def watchdog(output, session_id, token, *, backend=None, once=False):
                                 "hard_deadline_epoch": request["hard_deadline_epoch"], **runtime._identity()})
             if stop_signal:
                 runtime.atomic_json(directory / "stop_required.json", {"reason": "watchdog_signal", "epoch": now})
+            pause_reason = _pause_reason(output)
+            if pause_reason and _pause_stop_due(output, directory, request, now, pause_reason):
+                runtime.atomic_json(directory / "stop_required.json", {"reason": pause_reason, "epoch": now})
             monotonic_due = time.monotonic() - request["started_monotonic"] >= (
                 request["stop_request_epoch"] - request["started_epoch"])
             if now >= request["stop_request_epoch"] or monotonic_due or (directory / "stop_required.json").exists():
@@ -509,16 +627,32 @@ def watchdog(output, session_id, token, *, backend=None, once=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=("prepare", "allocate", "status", "watchdog", "stop"))
+    parser.add_argument("action", choices=("prepare", "allocate", "status", "watchdog", "stop",
+                                          "pause", "resume", "control-status", "reconcile-accounting"))
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--session-id", required=True)
+    parser.add_argument("--session-id")
+    parser.add_argument("--request-id", help="Idempotency identity for an explicit user pause/resume.")
+    parser.add_argument("--reason", default="")
+    parser.add_argument("--authorization", default="", help="Exact user resume authorization; required to clear a pause.")
+    parser.add_argument("--apply", action="store_true", help="Apply verified accounting; default is read-only preview.")
     parser.add_argument("--gpu", choices=sorted(GPUS), default="G4")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--cli-python")
     parser.add_argument("--worker-receipt", type=Path, help="Write a fresh verified worker launch receipt with status.")
     parser.add_argument("--token", help=argparse.SUPPRESS)
     args = parser.parse_args()
-    if args.action == "prepare":
+    if args.action in {"prepare", "allocate", "status", "watchdog", "stop"} and not args.session_id:
+        parser.error("--session-id is required for session actions")
+    if args.action in {"pause", "resume"}:
+        if not args.request_id:
+            parser.error("--request-id is required for pause/resume")
+        result = control.record(args.output, args.action, request_id=args.request_id,
+                                reason=args.reason, authorization=args.authorization)
+    elif args.action == "control-status":
+        result = control.status(args.output)
+    elif args.action == "reconcile-accounting":
+        result = reconcile_host_accounting(args.output, apply=args.apply)
+    elif args.action == "prepare":
         result = prepare(args.output, args.session_id, args.gpu, manifest_path=args.manifest, cli_python=args.cli_python)
     elif args.action == "watchdog":
         result = watchdog(args.output, args.session_id, args.token)

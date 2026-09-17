@@ -375,3 +375,82 @@ def test_cli_named_stop_keeps_mapping_locked_through_provider_unassignment(tmp_p
         backend.stop(NAME, owned)
         assert calls == [NAME]
         assert entries == {}
+
+
+def test_user_pause_blocks_provider_allocation_before_any_request(context):
+    output, clock, backend, starter = context
+    host.control.record(output, "pause", request_id="user-stop", reason="Pause GPU campaign")
+    with pytest.raises(RuntimeError, match="user-paused"):
+        host.allocate(output, NAME, backend=backend, starter=starter)
+    assert backend.created == []
+    assert host._ledger(output) == []
+
+
+@pytest.mark.parametrize("corrupt", [False, True])
+def test_watchdog_stops_owned_vm_on_user_pause_or_corrupt_control(context, corrupt):
+    output, clock, backend, starter = context
+    request = host.allocate(output, NAME, backend=backend, starter=starter)
+    if corrupt:
+        runtime.atomic_json(output / "control_events.json", {"invalid": True})
+    else:
+        host.control.record(output, "pause", request_id="user-stop", reason="Pause GPU campaign")
+    result = host.watchdog(output, NAME, request["watchdog_token"], backend=backend, once=True)
+    assert result["provider_verified_stopped"]
+    assert backend.stopped == [(NAME, "owned-endpoint")]
+    assert [row["endpoint"] for row in backend.live] == ["unrelated-browser-vm"]
+
+
+def test_live_supervisor_gets_one_bounded_pause_drain_but_no_new_receipt(context):
+    output, clock, backend, starter = context
+    request = host.allocate(output, NAME, backend=backend, starter=starter)
+    with host.control.controller_lease(output):
+        host.control.record(output, "pause", request_id="user-stop", reason="Drain and stop")
+        assert host.watchdog(output, NAME, request["watchdog_token"], backend=backend, once=True)["status"] == "watchdog_armed"
+        with pytest.raises(RuntimeError, match="does not authorize"):
+            host.worker_receipt(output, NAME, backend=backend)
+        assert backend.stopped == []
+        clock.wall += host.PAUSE_DRAIN_SECONDS + 1
+        assert host.watchdog(output, NAME, request["watchdog_token"], backend=backend, once=True)["provider_verified_stopped"]
+    assert backend.stopped == [(NAME, "owned-endpoint")]
+
+
+def test_host_only_reconciliation_is_previewed_and_charged_exactly_once(context):
+    output, clock, backend, starter = context
+    host.allocate(output, NAME, backend=backend, starter=starter)
+    clock.wall += 384.788991
+    host.stop(output, NAME, backend=backend)
+    host.control.record(output, "pause", request_id="user-stop", reason="Keep stopped")
+    preview = host.reconcile_host_accounting(output)
+    assert preview["added_session_ids"] == [NAME]
+    assert preview["worker_allocated_seconds_after"] == pytest.approx(384.788991)
+    assert not (output / "sessions.json").exists()
+    applied = host.reconcile_host_accounting(output, apply=True)
+    original = (output / "sessions.json").read_bytes()
+    replay = host.reconcile_host_accounting(output, apply=True)
+    assert replay["added_session_ids"] == []
+    assert (output / "sessions.json").read_bytes() == original
+    assert applied["host_allocated_seconds"] == replay["worker_allocated_seconds_after"]
+    assert runtime.budget_status(output)["allocated_seconds"] == pytest.approx(384.788991)
+    assert host.control.status(output)["paused"]
+    assert len(backend.created) == 1
+
+
+@pytest.mark.parametrize("failure", ["missing_stop", "corrupt_stop", "corrupt_hardware", "active_fit"])
+def test_host_only_reconciliation_rejects_unverified_or_inconsistent_history(context, failure):
+    output, clock, backend, starter = context
+    host.allocate(output, NAME, backend=backend, starter=starter)
+    clock.wall += 100
+    host.stop(output, NAME, backend=backend)
+    path = host._session(output, NAME) / "session_stopped.json"
+    if failure == "missing_stop":
+        path.unlink()
+    elif failure == "corrupt_stop":
+        receipt = runtime.read_json(path)
+        runtime.atomic_json(path, {**receipt, "stopped_epoch": clock.wall + 1})
+    elif failure == "corrupt_hardware":
+        runtime.atomic_json(host._session(output, NAME) / "allocation_receipt.json", {"hardware": {}})
+    else:
+        runtime.atomic_json(output / "active_process.json", {"session_id": NAME})
+    with pytest.raises((RuntimeError, ValueError)):
+        host.reconcile_host_accounting(output, apply=True)
+    assert not (output / "sessions.json").exists()

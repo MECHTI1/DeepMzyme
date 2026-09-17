@@ -249,6 +249,39 @@ For the cross-document run order and output-folder map, see `docs/README.md`.
 For environment/data orientation use `docs/GETTING_STARTED.md`; for Colab GPU
 connection and dependency installation use `docs/COLAB_GPU_RUNBOOK.md`.
 
+## Existing-checkpoint sequence-remoteness reporting
+
+The [remote addendum](REMOTE_HOMOLOGY_ADDENDUM.md) adds descriptive EC1 reporting
+from the completed Only-GVP/Only-ESM checkpoints at LR `1e-4`, seeds 42/43.
+It does not launch new EC training or certify the legacy confirmation workflow.
+Use the [shared local preparation/replay recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#validation-only-sequence-remoteness-attachment)
+for the reviewed twelve-run reuse ledger; that shared command exports four EC
+and eight metal checkpoints independently. Then produce the EC report:
+
+```bash
+RH_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+RH_ROOT=DeepMzyme_Data/notebook_outputs/remote_homology_v1
+"$RH_PY" src/report_remote_homology.py --task ec \
+  --protocol "$RH_ROOT/protocol.json" \
+  --prediction-manifest "$RH_ROOT/predictions/manifest.json" \
+  --remoteness-manifest "$RH_ROOT/remoteness_manifest.json" \
+  --output-dir "$RH_ROOT/reports/ec"
+```
+
+The exporter retains EC depth 1, the original protein membership, selected
+checkpoint, training-fitted normalization and
+`val_ec_group_level_1_balanced_acc`. Protein predictions average raw logits.
+Expected outputs are protein/pocket CSVs and receipts, plus the separate EC
+JSON/Markdown report with primary and 50%-coverage audit results. No notebook
+configuration, Optuna study, feature cache or original run is rewritten.
+
+The full seven-class interaction requires adequate independent component
+support in both primary strata. The entire EC development cohort contains only
+six EC7 proteins, so new seeds or resplitting cannot satisfy the proposed
+ten-per-class floor. Report missing/no-hit cases explicitly. Held-out evaluation,
+auxiliary training and Stage 6B/7 remain disabled by this attachment. The
+compatibility warning below still applies to later EC training stages.
+
 ## Compatibility Warning — Later Stages Still Require Reconciliation
 
 The opening standalone Stage 0–2B block replaces the legacy baseline blocks
