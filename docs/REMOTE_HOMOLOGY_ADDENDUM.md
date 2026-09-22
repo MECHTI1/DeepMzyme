@@ -1,8 +1,9 @@
 # Remote homology addendum
 
-This extends the existing validation campaign with sequence-remoteness reporting.
-It does not select a new model, construct a new split, or repeat completed
-training. [Plan.md](../Plan.md) owns scientific policy;
+The original validation-reuse analysis adds sequence-remoteness reporting
+without changing its splits or repeating training. The separately authorized
+bounded diagnostic pilot below uses a new development-only partition.
+[Plan.md](../Plan.md) owns scientific policy;
 [current status](../EXPERIMENT_STATUS.md) owns execution and completion state.
 The supplied Phase A audit is the starting evidence, not proof that later
 implementation or experimental gates have passed.
@@ -190,8 +191,9 @@ A new ≤20% blocked split is conditional on both insufficient existing/planned
 remote support and adequate component-level class feasibility. Join qualifying
 identity edges, all pockets of a protein/PDB and verified aliases before
 assigning whole components to folds. Verify no blocked edge crosses folds.
-Never break a component to improve class balance. No new blocked split or
-threshold-specific training campaign is currently justified.
+Never break a component to improve class balance. The original reuse analysis
+did not establish a positive direction for a new training campaign. The bounded
+pilot below addresses that missing diagnostic result under separate authorization.
 
 Keep `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False`, current task-specific
 selection metrics and incompatible-study reuse protection. The direct metal
@@ -205,3 +207,93 @@ The remaining runtime work belongs to the
 change does not clear a durable user pause, reset allocation accounting or
 amend a frozen worker. Preserve the completed campaign evidence when preparing
 a versioned continuation.
+
+## Bounded diagnostic coordinate-chain pilot
+
+The separately authorized `diagnostic_pilot_v1` compares the selected direct-four
+Only-ESM and Only-GVP systems on one split (20260917), one model seed (42), and
+exactly two 50-epoch fits. This is not Stage 6, Stage 6B, Stage 7, a final refit,
+or permission to resume the broader paused campaign. The earlier checkpoint-reuse
+analysis and its missing qualifying-hit ≤20% stratum remain unchanged.
+
+[`diagnostic_metal_pilot.py`](../src/diagnostic_metal_pilot.py) uses the existing
+unified trainer. Its optional `--explicit-membership-manifest` descriptor and
+`--explicit-membership-sha256` bind separate training, inner-validation and outer
+CSV manifests. Absent these options, automatic splitting follows its existing
+path. Explicit mode rejects changed inputs, targets, dataset identity, duplicate
+or unresolved examples, protected membership, crossing groups/components/edges,
+missing classes and insufficient component support before fitting. Its trusted
+allowlist comes from hash-bound saved non-overlap PinMyMetal development runs;
+protected test tables are not opened to reconstruct that allowlist.
+
+Only training and inner-validation structures are deserialized for fitting.
+Normalization and class weights use training alone; inner-validation metal
+balanced accuracy selects checkpoints. Outer support labels and input-file
+hashes are inspected only by the isolated metadata preflight. No outer graph
+or loader is created during fitting. `run_test_eval=False`, corresponding to
+`INCLUDE_HELD_OUT_TEST_DURING_TRAINING=False`, stays in force.
+
+The `freeze-checkpoints` action requires both complete fits, their exact frozen
+configurations and memberships, and selected checkpoint/metadata agreement.
+It writes `frozen_pilot.json` and its SHA256. Only the separate `evaluate` action
+can open outer membership; it rechecks both checkpoints and creates an exclusive
+one-shot output directory before inference. Changed artifacts or an existing
+outer output directory block the action. Failed fits do not authorize replacement
+hyperparameters, seeds or outer evaluation of the other model.
+
+The split-generation receipt records the smallest feasible component transfer
+from the prior diagnostic outer partition to inner validation, with deterministic
+seeded tie-breaking and no prediction inputs. Training membership is preserved.
+Require at least three inner, five outer and five training components per class.
+Canonical evidence, counts, input audits, source/configuration hashes and results
+live under `DeepMzyme_Data/notebook_outputs/remote_homology_v1/diagnostic_pilot_v1/`.
+The [pilot summary](notebook_outputs/summaries/summary_diagnostic_remote_pilot_v1_20260917.md)
+owns the execution result.
+
+Report metal-site/pocket metrics and paired connected-component uncertainty;
+do not average different metal-site labels into an EC-style protein target.
+`protein_id` is explicitly a PDB grouping proxy here. The directional interaction
+subtracts the selected systems' ordinary seed-42 validation contrast from their
+diagnostic outer contrast. Shared component draws account for dependence across
+both systems and both cohorts; missing-class draws are counted, and intervals
+require at least 95% valid draws. Earlier recipe selection, smaller diagnostic
+training membership, and changed validation composition limit causal claims.
+
+The practical +5 percentage-point interaction threshold is exploratory. A
+promising result also requires effects beyond one class, no severe unexplained
+Zn/Cu/Class VIII collapse and intact integrity gates. Full biological protein
+and site-chain provenance remain uncertified. No qualifying hit is unclassified,
+not measured ≤20% identity; this pilot cannot certify family, superfamily,
+structure or homology separation.
+
+## Local five-class follow-up
+
+The separately authorized five-class repeat keeps the completed diagnostic
+pilot's exact train/inner/outer scientific memberships. It separates Fe from
+Co+Ni using the existing `five_class` scheme. In that scheme the code's native
+`Class VIII` label denotes Co+Ni; in common-four reporting it denotes Fe+Co+Ni.
+Always spell out this difference in results tables.
+
+The pilot runner's `freeze-five-class` action binds the parent descriptor and
+two agreeing saved five-class development label sources. Native labels must
+collapse exactly to the parent labels, and all group/component memberships,
+feature hashes and search-protocol identity must remain unchanged. The optional
+explicit-membership validator now handles four or five classes; automatic
+splitting and legacy four-class descriptors retain their existing behavior.
+
+This repeat is local CPU only. A completed CPU admission receipt binds the
+tested source and both finite-output preflights before either fit. Both models
+retain their saved recipes and full 50-epoch budgets, selecting on native
+five-class inner-validation balanced accuracy. The same two-checkpoint freeze
+and one-shot outer-evaluation safeguards apply. No protected test, additional
+seed, HPO, remote allocation or feature regeneration is part of the follow-up.
+
+Compare target formulations on the common four-class view by summing Fe and
+Co+Ni probabilities before argmax. Report native-five metrics separately, reuse
+matching ordinary seed-42 five-class validation references, and pair component
+bootstrap draws across systems, cohorts and target formulations. This outer
+partition was already observed in the four-class pilot; the repeat is a
+follow-up on development evidence, not independent confirmation. CPU versus
+prior GPU execution is an additional limitation on causal target-formulation
+claims. Canonical artifacts belong in
+`DeepMzyme_Data/notebook_outputs/remote_homology_v1/diagnostic_pilot_five_class_v1/`.

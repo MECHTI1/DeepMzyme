@@ -131,7 +131,7 @@ def resolve_selection_metric(config: TrainConfig) -> TrainConfig:
         return config
     metric = default_selection_metric_for_task(
         "ec" if config.controlled_ec_auxiliary else config.task,
-        has_validation=config.val_fraction > 0.0 or config.n_folds is not None,
+        has_validation=config.val_fraction > 0.0 or config.n_folds is not None or bool(config.explicit_membership_manifest),
     )
     return replace(config, selection_metric=metric)
 
@@ -381,6 +381,8 @@ def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str,
 
 
 def validate_training_configuration(config: TrainConfig) -> None:
+    from training.explicit_membership import validate_mode
+    validate_mode(config)
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     if config.controlled_ec_auxiliary:
@@ -1101,10 +1103,16 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     validate_training_configuration(config)
+    from training.explicit_membership import load_membership, fixed_split
+    membership = load_membership(config)
     config_payload = config_to_payload(config)
     config_payload.update(infer_split_identity(config))
     config_payload["model_seed"] = int(config.seed)
     config_payload["effective_split_seed"] = split_seed_for_config(config)
+    if membership is not None:
+        config_payload["explicit_membership"] = membership["receipt"]
+        config_payload["split_name"] = membership["receipt"]["endpoint"]
+        config_payload["split_type"] = "diagnostic_explicit_membership"
     config_payload["training_graph_augmentation"] = {
         "position_noise_std": float(config.position_noise_std),
         "second_shell_dropout": float(config.second_shell_dropout),
@@ -1128,7 +1136,11 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         prepare_status_payload(stage="prepare_run", status="started", config_payload=config_payload),
     )
     try:
-        runtime_preparation_report = prepare_runtime_inputs(
+        runtime_preparation_report = ({
+            "explicit_membership": membership["receipt"],
+            "feature_generation": False,
+            "outer_metadata_only_preflight": True,
+        } if membership is not None else prepare_runtime_inputs(
             structure_dir=config.structure_dir,
             esm_embeddings_dir=config.esm_embeddings_dir,
             require_esm_embeddings=config.require_esm_embeddings,
@@ -1140,7 +1152,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             prepare_missing_ring_edges=config.prepare_missing_ring_edges,
-        )
+        ))
         test_runtime_preparation_report = None
         if config.run_test_eval and config.test_structure_dir is not None:
             test_runtime_preparation_report = prepare_runtime_inputs(
@@ -1185,6 +1197,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             unsupported_metal_policy=config.unsupported_metal_policy,
             invalid_structure_policy=config.invalid_structure_policy,
             ec_label_depth=config.ec_label_depth,
+            **({"allowed_structure_ids": {
+                row["structure_id"] for part in ("train", "inner_validation")
+                for row in membership["partitions"][part]
+            }} if membership is not None else {}),
         )
         pockets = load_result.pockets
         if not pockets:
@@ -1204,7 +1220,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ),
         )
 
-        if config.n_folds is not None:
+        if membership is not None:
+            split = fixed_split(pockets, membership)
+        elif config.n_folds is not None:
             split = split_pockets_k_fold(
                 pockets,
                 n_folds=config.n_folds,
@@ -1430,6 +1448,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             node_rbf_sigma=config.node_rbf_sigma,
             edge_rbf_sigma=config.edge_rbf_sigma,
             node_rbf_use_raw_distances=config.node_rbf_use_raw_distances,
+            edge_rbf_use_raw_distances=config.edge_rbf_use_raw_distances,
             classifier_pool_distance_cutoff=config.classifier_pool_distance_cutoff,
             structural_readout_scope=config.structural_readout_scope,
             use_node_type_embedding=config.metal_node_mode != "none",
@@ -1463,11 +1482,36 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             predict_metal=task_predicts_metal(config.task),
             predict_ec=task_predicts_ec(config.task),
         ).to(config.device)
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=config.learning_rate,
-            weight_decay=config.weight_decay,
-        )
+        gvp_lr = config.gvp_learning_rate
+        if gvp_lr is not None and gvp_lr != config.learning_rate and hasattr(model, "layers"):
+            trunk_params = []
+            head_params = []
+            for name, param in model.named_parameters():
+                if not param.requires_grad:
+                    continue
+                if any(name.startswith(prefix) for prefix in ("layers.", "node_scalar_encoder.", "edge_scalar_encoder.")):
+                    trunk_params.append(param)
+                else:
+                    head_params.append(param)
+            param_groups = [
+                {
+                    "params": trunk_params,
+                    "lr": gvp_lr,
+                    "weight_decay": config.gvp_weight_decay if config.gvp_weight_decay is not None else config.weight_decay,
+                },
+                {
+                    "params": head_params,
+                    "lr": config.learning_rate,
+                    "weight_decay": config.weight_decay,
+                },
+            ]
+            optimizer = torch.optim.AdamW(param_groups)
+        else:
+            optimizer = torch.optim.AdamW(
+                model.parameters(),
+                lr=config.learning_rate,
+                weight_decay=config.weight_decay,
+            )
         scheduler = build_scheduler(optimizer, config)
         save_json(
             run_dir / "prepare_status.json",
@@ -1880,6 +1924,10 @@ def persist_run_outputs(
         ),
         "test_report": test_report,
     }
+    if prepared.config_payload.get("explicit_membership"):
+        run_metadata["explicit_membership"] = prepared.config_payload["explicit_membership"]
+        run_metadata["fit_status"] = "completed" if len(history) == prepared.config_payload["epochs"] else "incomplete"
+        run_metadata["outer_observed_during_training"] = False
 
     save_json(
         prepared.run_dir / "run_config.json",
@@ -1928,7 +1976,8 @@ def run_training(config: TrainConfig) -> Path:
         print("Omitting conservative node features:", ", ".join(config.omit_node_features))
     prepared = prepare_run(config)
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
-    test_report = evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint)
+    test_report = (None if config.explicit_membership_manifest else
+                   evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint))
     persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint, test_report=test_report)
     return prepared.run_dir
 

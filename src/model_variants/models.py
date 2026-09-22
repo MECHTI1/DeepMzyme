@@ -268,10 +268,14 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         predict_ec: bool = True,
         site_feature_dim: int = DEFAULT_SITE_FEATURE_DIM,
         classifier_pool_distance_cutoff: float = 0.0,
+        node_rbf_use_raw_distances: bool = False,
+        edge_rbf_use_raw_distances: bool = False,
     ):
         super().__init__()
         self.site_feature_dim = int(site_feature_dim)
         self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
+        self.node_rbf_use_raw_distances = bool(node_rbf_use_raw_distances)
+        self.edge_rbf_use_raw_distances = bool(edge_rbf_use_raw_distances)
         if self.site_feature_dim < 1:
             raise ValueError(f"site_feature_dim must be positive, got {self.site_feature_dim}.")
         if self.classifier_pool_distance_cutoff < 0.0:
@@ -544,18 +548,28 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
 
     def forward(self, data: Data) -> dict[str, Tensor]:
         early_esm = self._masked_early_esm_scalar_features(data)
+        node_distances = (
+            data.x_dist_raw_raw
+            if getattr(self, "node_rbf_use_raw_distances", False) and hasattr(data, "x_dist_raw_raw")
+            else data.x_dist_raw
+        )
         x = self.node_scalar_encoder(
             data.x_reschem,
             data.hydrophobicity_kd,
             data.x_role,
-            data.x_dist_raw,
+            node_distances,
             data.x_misc,
             data.x_env_burial,
             data.x_env_electrostatics,
             extra_scalar_features=early_esm,
         )
+        edge_distances = (
+            data.edge_dist_raw_raw
+            if getattr(self, "edge_rbf_use_raw_distances", False) and hasattr(data, "edge_dist_raw_raw")
+            else data.edge_dist_raw
+        )
         edge_attr = self.edge_scalar_encoder(
-            data.edge_dist_raw,
+            edge_distances,
             data.edge_seqsep,
             data.edge_same_chain,
             data.edge_interaction_type,

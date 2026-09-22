@@ -5,10 +5,11 @@ the storage contract for copied run evidence. Current project state belongs in
 [`EXPERIMENT_STATUS.md`](../../EXPERIMENT_STATUS.md); empirical parameter
 conclusions belong in [`PARAMETER_FINDINGS.md`](../PARAMETER_FINDINGS.md).
 
-## Validation remoteness reuse
+## Sequence-remoteness evidence
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|
+| `diagnostic/remote-homology-pilot-v1/2026-09-17` | One component-preserving diagnostic split; two direct-four, seed-42, 50-epoch standalone fits; outer evaluation after both checkpoints froze | GVP BA 44.61% vs ESM 54.29%; directional shift −8.45 pp; Cu recall 0/14; practical stop decision | Exploratory diagnostic only; not Stage 6 | None; development-only outer evaluation | [summary](summaries/summary_diagnostic_remote_pilot_v1_20260917.md); canonical artifacts under `DeepMzyme_Data/notebook_outputs/remote_homology_v1/diagnostic_pilot_v1/` |
 | `validation/remote-homology-v1/2026-09-17` | Twelve existing metal/EC selected checkpoints replayed on CPU; coordinate-chain search against exact training membership; primary 80% and audit 50% coverage; five existing metal folds annotated | All twelve whole-validation reproductions passed; no qualifying-hit ≤20% strata, so interaction unestimable; no training or promotion | 3 inherited fixed-split evidence; remoteness descriptive | None | [summary](summaries/summary_remote_homology_v1_20260917.md); [portable evidence](raw/remote_homology_v1_20260917/README.md) |
 
 ## How to read the evidence

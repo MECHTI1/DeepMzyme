@@ -186,14 +186,23 @@ def _require_exact_reference_manifest(config: Any, overlap_report: Mapping[str, 
         str(value).strip().lower()
         for value in identities.get("pdb_id", [])
     } if isinstance(identities, Mapping) else set()
-    if observed_pdbids != expected_pdbids:
-        missing = sorted(expected_pdbids - observed_pdbids)[:10]
+
+    phase = overlap_report.get("overlap_validation_phase")
+    if phase == "loaded_pockets_before_inference":
         unexpected = sorted(observed_pdbids - expected_pdbids)[:10]
-        raise RuntimeError(
-            "Observed held-out PDB-ID overlap does not equal the audited exact PinMyMetal membership: "
-            f"expected={len(expected_pdbids)}, observed={len(observed_pdbids)}, "
-            f"missing_examples={missing}, unexpected_examples={unexpected}."
-        )
+        if unexpected:
+            raise RuntimeError(
+                f"Observed loaded held-out PDB-ID overlap contains unexpected PDB IDs: {unexpected}."
+            )
+    else:
+        if observed_pdbids != expected_pdbids:
+            missing = sorted(expected_pdbids - observed_pdbids)[:10]
+            unexpected = sorted(observed_pdbids - expected_pdbids)[:10]
+            raise RuntimeError(
+                "Observed held-out PDB-ID overlap does not equal the audited exact PinMyMetal membership: "
+                f"expected={len(expected_pdbids)}, observed={len(observed_pdbids)}, "
+                f"missing_examples={missing}, unexpected_examples={unexpected}."
+            )
 
     return {
         "exact_split_metadata_path": str(exact_metadata_path),

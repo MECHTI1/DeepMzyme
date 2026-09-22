@@ -137,6 +137,7 @@ def build_pocket_classifier(
         resolved_kwargs.pop("node_rbf_sigma", None)
         resolved_kwargs.pop("edge_rbf_sigma", None)
         resolved_kwargs.pop("node_rbf_use_raw_distances", None)
+        resolved_kwargs.pop("edge_rbf_use_raw_distances", None)
         resolved_kwargs.pop("normalize_message_aggregation", None)
         resolved_kwargs.pop("structural_readout_scope", None)
         resolved_kwargs.pop("use_node_type_embedding", None)

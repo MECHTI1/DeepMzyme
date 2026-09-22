@@ -6,6 +6,64 @@ The [earlier architecture pilot](#bounded-metal-architecture-pilot--stage-0-thro
 and Common70 standalone block remain separate historical recipes. Current
 execution and evidence state belongs to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
+## Recovery of a frozen GVP capacity diagnostic
+
+`scripts/resume_gvp_capacity_colab.py` continues an existing, reduced
+`gvp_capacity_diagnostic_v1` study. It requires the original study directory,
+including `manifest.json`, frozen splits/matrices, input archive and transfer
+inventory, allocation ledger, and all completed runs with their retrieval
+archives and verification receipts. It does not create a replacement study or
+reconstruct missing evidence from summary scores. Current availability belongs
+to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+
+The preserved schedule contains fourteen discovery fits (reference, widths
+64/96, depths 2/3, weight decay and dropout; seeds 42/43), then twenty
+confirmation fits (reference and the selected pure-width challenger, five
+shared folds and both seeds). Every fit retains 50 epochs, direct
+`four_class`/`merge_fe_class_viii`, and `val_metal_balanced_acc` selection.
+All other settings, ordered memberships, normalization rules and source hashes
+come from the original frozen study. Optional refinement and a third
+confirmation candidate remain omitted. This is bounded Stage 2B and
+exploratory Stage 6; held-out evaluation, Stage 6B and Stage 7 stay disabled.
+
+From the repository root:
+
+```bash
+CAPACITY_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+"$CAPACITY_PY" scripts/resume_gvp_capacity_colab.py status
+"$CAPACITY_PY" scripts/resume_gvp_capacity_colab.py resume
+```
+
+Both commands accept `--root` and `--output`; the default output is
+`DeepMzyme_Data/notebook_outputs/plans/gvp_capacity_diagnostic_v1/`. `status`
+verifies the original archive and completed results without changing study
+state. `resume` acquires the existing exclusive host lock and extracts the
+verified original source separately from working-tree edits. It preserves
+prior charges and results, confirms the lost session's absence, and permits
+one replacement G4. A missing original absence receipt is captured from the
+provider; its observation time is a conservative accounting upper bound, not
+an exact termination time. An unverified or missing artifact blocks execution.
+
+The original six-hour cumulative ceiling includes every allocation interval,
+setup, failed/interrupted work, transfer and teardown. The replacement retains
+a four-hour session ceiling, a fifteen-minute shutdown reserve and an independent
+watchdog. Admission uses the worst measured complete-fit time multiplied by
+1.25 and the original operations allowance. Completed fits are never repeated;
+a lost fit can restart once from its original seed. Transport ambiguity never
+causes another launch, and partial downloads are preserved while retrying only
+the transfer. If the protected full comparison no longer fits, stop incomplete.
+
+Recovery receipts are under `execution/recovery/`; allocation/hardware/launch/
+terminal/stop evidence is under `execution/session_2/`. Each new fit retains
+`run_config.json`, `run_metadata.json`, checkpoints, predictions and a hash-bound
+`capacity_result.json`, independently verified locally before the next launch.
+After all 34 results and provider teardown are verified, the frozen report
+code writes `confirmation_report.json` and `comparison.csv`. The primary
+width-minus-reference gain must exceed 0.002, have a positive paired-fold
+bootstrap 95% lower bound, positive mean class recalls and no mean class-recall
+drop above 0.03 to support an improvement. No notebook `active_run_config`
+files or Optuna studies are involved.
+
 ## Validation-only sequence-remoteness attachment
 
 This is inference/reporting for completed checkpoints and existing Stage 6 fold

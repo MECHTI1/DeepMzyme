@@ -122,6 +122,8 @@ class TrainConfig:
     test_structure_dir: Path | None = None
     test_summary_csv: Path | None = None
     run_test_eval: bool = False
+    explicit_membership_manifest: str | None = None
+    explicit_membership_sha256: str | None = None
     allow_train_loss_test_eval_debug: bool = False
     allow_final_refit_test_eval: bool = False
     device: str = "cpu"
@@ -158,6 +160,9 @@ class TrainConfig:
     node_rbf_sigma: float = 0.75
     edge_rbf_sigma: float = 0.75
     node_rbf_use_raw_distances: bool = False
+    edge_rbf_use_raw_distances: bool = False
+    gvp_learning_rate: float | None = None
+    gvp_weight_decay: float | None = None
     classifier_pool_distance_cutoff: float = 0.0
     metal_node_mode: str = "none"
     site_geometry_features: str = "legacy"
@@ -420,6 +425,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--node-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--edge-rbf-sigma", type=float, default=0.75)
     parser.add_argument("--node-rbf-use-raw-distances", action="store_true")
+    parser.add_argument("--edge-rbf-use-raw-distances", action="store_true")
+    parser.add_argument(
+        "--rbf-use-raw-distances",
+        action="store_true",
+        help="Enable unnormalized Angstrom distances for both node and edge RBF expansions.",
+    )
+    parser.add_argument(
+        "--gvp-learning-rate",
+        type=float,
+        default=None,
+        help="Separate learning rate for GVP structural trunk parameters.",
+    )
+    parser.add_argument(
+        "--gvp-weight-decay",
+        type=float,
+        default=None,
+        help="Separate weight decay for GVP structural trunk parameters.",
+    )
     parser.add_argument(
         "--classifier-pool-distance-cutoff",
         type=float,
@@ -884,6 +907,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "the held-out test source."
         ),
     )
+    parser.add_argument("--explicit-membership-manifest", default=None,
+                        help="Frozen diagnostic train/inner/outer membership descriptor.")
+    parser.add_argument("--explicit-membership-sha256", default=None,
+                        help="Required SHA256 of the frozen membership descriptor.")
     return parser
 
 
@@ -964,6 +991,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         test_structure_dir=args.test_structure_dir,
         test_summary_csv=args.test_summary_csv,
         run_test_eval=args.run_test_eval,
+        explicit_membership_manifest=args.explicit_membership_manifest,
+        explicit_membership_sha256=args.explicit_membership_sha256,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         allow_final_refit_test_eval=args.allow_final_refit_test_eval,
         device=args.device,
@@ -997,7 +1026,10 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         esm_graph_encoder_dropout=args.esm_graph_encoder_dropout,
         node_rbf_sigma=args.node_rbf_sigma,
         edge_rbf_sigma=args.edge_rbf_sigma,
-        node_rbf_use_raw_distances=args.node_rbf_use_raw_distances,
+        node_rbf_use_raw_distances=args.node_rbf_use_raw_distances or args.rbf_use_raw_distances,
+        edge_rbf_use_raw_distances=args.edge_rbf_use_raw_distances or args.rbf_use_raw_distances,
+        gvp_learning_rate=args.gvp_learning_rate,
+        gvp_weight_decay=args.gvp_weight_decay,
         classifier_pool_distance_cutoff=args.classifier_pool_distance_cutoff,
         metal_node_mode=args.metal_node_mode,
         site_geometry_features=args.site_geometry_features,

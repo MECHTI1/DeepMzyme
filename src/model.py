@@ -462,6 +462,8 @@ def vector_norm(v: Tensor, eps: float = 1e-8) -> Tensor:
 class SimpleGVP(nn.Module):
     def __init__(self, s_in: int, v_in: int, s_out: int, v_out: int):
         super().__init__()
+        self.vector_h = nn.Linear(v_in, v_in, bias=False)
+        nn.init.eye_(self.vector_h.weight)
         self.scalar_mlp = nn.Sequential(
             nn.Linear(s_in + v_in, s_out),
             nn.SiLU(),
@@ -470,12 +472,36 @@ class SimpleGVP(nn.Module):
         self.vector_linear = nn.Linear(v_in, v_out, bias=False)
         self.vector_gate = nn.Linear(s_out, v_out)
 
+    def _load_from_state_dict(
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ):
+        h_key = prefix + "vector_h.weight"
+        if h_key not in state_dict:
+            state_dict[h_key] = self.vector_h.weight.data.clone()
+        super()._load_from_state_dict(
+            state_dict,
+            prefix,
+            local_metadata,
+            strict,
+            missing_keys,
+            unexpected_keys,
+            error_msgs,
+        )
+
     def forward(self, s: Tensor, v: Tensor) -> Tuple[Tensor, Tensor]:
-        v_norm = vector_norm(v)
+        v_t = v.transpose(1, 2)
+        v_h = self.vector_h(v_t).transpose(1, 2)
+        v_norm = vector_norm(v_h)
         s_cat = torch.cat([s, v_norm], dim=-1)
         s_out = self.scalar_mlp(s_cat)
 
-        v_t = v.transpose(1, 2)
         v_proj = self.vector_linear(v_t).transpose(1, 2)
         gate = torch.sigmoid(self.vector_gate(s_out)).unsqueeze(-1)
         v_out = v_proj * gate
@@ -617,6 +643,7 @@ class GVPPocketClassifier(nn.Module):
         node_rbf_sigma: float = 0.75,
         edge_rbf_sigma: float = 0.75,
         node_rbf_use_raw_distances: bool = False,
+        edge_rbf_use_raw_distances: bool = False,
         joint_loss_weighting: str = "fixed",
         metal_loss_weight: float = 1.0,
         ec_loss_weight: float = 1.0,
@@ -850,6 +877,7 @@ class GVPPocketClassifier(nn.Module):
             predict_ec=self.predict_ec,
         )
         self.node_rbf_use_raw_distances = bool(node_rbf_use_raw_distances)
+        self.edge_rbf_use_raw_distances = bool(edge_rbf_use_raw_distances)
         self.metal_loss_function = str(metal_loss_function)
         self.metal_focal_gamma = float(metal_focal_gamma)
         self.metal_label_smoothing = float(metal_label_smoothing)
@@ -1108,8 +1136,13 @@ class GVPPocketClassifier(nn.Module):
         s = self._add_node_type_embedding(s, data)
         v = self._init_vector_channels(data.x_vec)
 
+        edge_distances = (
+            data.edge_dist_raw_raw
+            if self.edge_rbf_use_raw_distances and hasattr(data, "edge_dist_raw_raw")
+            else data.edge_dist_raw
+        )
         edge_s = self.edge_scalar_encoder(
-            data.edge_dist_raw,
+            edge_distances,
             data.edge_seqsep,
             data.edge_same_chain,
             data.edge_interaction_type,
