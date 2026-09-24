@@ -44,6 +44,13 @@ The historical non-overlap PinMyMetal test was evaluated in seven early runs.
 See [`docs/DATASETS.md`](docs/DATASETS.md) for the precise access record. Those
 test values are not eligible current HPO or model-selection evidence.
 
+## Datasets, Model Checkpoints & Cloud Backups
+
+All primary dataset bundles, precomputed embeddings, trained 5-fold cross-validation model weights, and source audit crosswalks are backed up and hosted permanently in the cloud:
+- **Hugging Face Hub:** [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)
+- **Authoritative Inventory & Restore Guide:** [`docs/BACKUP_AND_DATA_INVENTORY.md`](docs/BACKUP_AND_DATA_INVENTORY.md)
+- **GitHub Repositories:** [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) and [`MECHTI1/deepmzyme-vm-manager`](https://github.com/MECHTI1/deepmzyme-vm-manager)
+
 ## Quick start
 
 For a fresh checkout, Colab, data setup, known readiness failures, and the
