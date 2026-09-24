@@ -86,6 +86,22 @@ bash scripts/reproduce_zenodo_pmm_benchmark.sh
 ```
 Full documentation is in [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md).
 
+### Generalized 5-Fold Cross-Validation on Any Dataset Split (Ion & Pocket Levels)
+
+DeepMzyme provides a unified orchestrator to run 5-fold cross-validation and benchmarking across any dataset folder split in both **metal ion-focused** (`--metal-example-unit ion`) and **pocket-centroid** (`--metal-example-unit pocket`) modes:
+
+```bash
+# Validate paths, site counts, and planned fold commands instantly without training:
+python scripts/run_metal_5fold_cv.py --dataset train_and_test_sets_structures_exact_pinmymetal --metal-example-unit ion --dry-run
+
+# Run full 5-fold CV across all 3 benchmark models:
+python scripts/run_metal_5fold_cv.py --dataset train_and_test_sets_structures_exact_pinmymetal --metal-example-unit ion --epochs 50 --batch-size 16 --device cuda
+
+# Or using the portable shell wrapper:
+bash scripts/run_metal_5fold_cv.sh train_and_test_sets_structures_exact_pinmymetal ion cuda
+```
+Full documentation is in [`docs/GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](docs/GENERALIZED_METAL_5FOLD_CV_GUIDE.md).
+
 Interactive workflow:
 [`notebooks/DeepMzyme_training_colab.ipynb`](notebooks/DeepMzyme_training_colab.ipynb).
 For browser and terminal access to the same Colab GPU VM, including the required

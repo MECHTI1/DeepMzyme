@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""5-Fold Cross-Validation & Benchmark Runner for Exact Zenodo PinMyMetal Dataset.
+"""Generalized 5-Fold Cross-Validation & Benchmark Runner.
 
-Reconstructed from published Zenodo/GitHub classmodel source rows:
-- 7,911 train sites across 6,443 structures (99.89% exact reconstruction)
-- 1,487 test sites across 1,281 structures (99.93% exact reconstruction)
+Supports training, validation, and held-out test evaluation on any DeepMzyme
+dataset folder split at either the pocket level or the metal ion focused level:
+- Clustered Pocket Level: --metal-example-unit pocket
+- Disentangled Metal Ion Level: --metal-example-unit ion
 
-Evaluates:
-1. 5-Fold OOF Validation performance on Zenodo train set (5-class and collapsed-4).
-2. Held-Out Test Set performance per-fold and 5-fold soft-voting ensemble predictions.
-3. Direct benchmark comparison against PinMyMetal Fig 2a/2b and Metal3D Fig 2c.
+Works with any dataset folder (e.g., exact_pinmymetal, zenodo_pmm_exact,
+non_overlapped_pinmymetal, common_pdbid_70_30_pinmymetal, CLEAN_30_*, CARE_*,
+or custom folders).
+
+Maintains complete run isolation by tagging run names and output directories
+with the dataset identity and example unit (pocket vs. ion).
 """
 
 from __future__ import annotations
@@ -18,7 +21,6 @@ import os
 os.environ.setdefault("MKL_THREADING_LAYER", "GNU")
 
 import argparse
-import copy
 import csv
 import json
 import os
@@ -129,6 +131,12 @@ MODEL_ALIASES = {
     "benchmark_enhanced_only_gvp": "benchmark_enhanced_only_gvp",
 }
 
+CHECKPOINT_CANDIDATES = (
+    "best_model_checkpoint.pt",
+    "best_checkpoint.pt",
+    "last_model_checkpoint.pt",
+)
+
 
 def write_json(path: str | Path, data: Any) -> None:
     path = Path(path)
@@ -139,24 +147,13 @@ def write_json(path: str | Path, data: Any) -> None:
     tmp.replace(path)
 
 
-def resolve_default_paths() -> dict[str, Path]:
-    data1_dir = Path("/media/mechti/Data1/DeepMzyme_Data")
-    colab_root = Path("/content/DeepMzyme_Data/DeepMzyme_Data")
-    local_root = REPO_ROOT / "DeepMzyme_Data"
-
-    data_dir = colab_root if colab_root.exists() else local_root
-
-    if Path("/content").exists():
-        runs_dir = Path("/content/runs/runs_zenodo_pmm_exact")
-    elif data1_dir.exists():
-        runs_dir = data1_dir / "runs_zenodo_pmm_exact"
-    else:
-        runs_dir = REPO_ROOT / "runs" / "runs_zenodo_pmm_exact"
-
-    return {
-        "data_dir": data_dir,
-        "runs_dir": runs_dir,
-    }
+def resolve_fold_checkpoint(run_dir: Path) -> Path | None:
+    """Return the fold's selected-model checkpoint, or None when no weights exist."""
+    for name in CHECKPOINT_CANDIDATES:
+        candidate = run_dir / name
+        if candidate.exists():
+            return candidate
+    return None
 
 
 def is_fold_complete(run_dir: Path, target_epochs: int = 50) -> bool:
@@ -172,25 +169,80 @@ def is_fold_complete(run_dir: Path, target_epochs: int = 50) -> bool:
         return False
 
 
-# ``src/training/run.py`` persists the selected weights as ``best_model_checkpoint.pt``
-# (and the final-epoch weights as ``last_model_checkpoint.pt``). An earlier revision of
-# this runner looked for ``best_checkpoint.pt``, which training never writes: that made
-# ``fold_is_complete`` always return False and made the held-out test evaluation skip
-# every fold silently. Resolve the real filenames, newest naming first.
-CHECKPOINT_CANDIDATES = (
-    "best_model_checkpoint.pt",
-    "best_checkpoint.pt",
-    "last_model_checkpoint.pt",
-)
+def find_summary_csv(directory: Path, explicit_csv: Path | None = None) -> Path:
+    """Find the best matching summary CSV in a dataset directory."""
+    if explicit_csv is not None:
+        csv_path = Path(explicit_csv)
+        if not csv_path.exists():
+            raise FileNotFoundError(f"Specified summary CSV does not exist: {csv_path}")
+        return csv_path
+
+    candidates = [
+        directory / "final_data_summarazing_table_transition_metals_only_catalytic.csv",
+        directory / "final_data_summarazing_table.csv",
+        directory / "final_data_summarazing_table_transition_metals_only_catalytic_verified_biological_metal.csv",
+    ]
+    for c in candidates:
+        if c.is_file():
+            return c
+
+    all_csvs = sorted(p for p in directory.glob("*.csv") if not p.name.endswith("manifest.csv"))
+    if all_csvs:
+        return all_csvs[0]
+
+    raise FileNotFoundError(f"Could not find a valid summary CSV in {directory}")
 
 
-def resolve_fold_checkpoint(run_dir: Path) -> Path | None:
-    """Return the fold's selected-model checkpoint, or None when no weights exist."""
-    for name in CHECKPOINT_CANDIDATES:
-        candidate = run_dir / name
-        if candidate.exists():
-            return candidate
-    return None
+def resolve_dataset_layout(
+    data_root: Path,
+    dataset_name_or_path: str,
+    train_summary_csv: Path | None = None,
+    test_summary_csv: Path | None = None,
+) -> tuple[str, Path, Path, Path | None, Path | None]:
+    """Resolve train/test structure directories and summary CSVs.
+
+    Returns:
+        (dataset_id, train_dir, train_csv, test_dir_or_none, test_csv_or_none)
+    """
+    candidates = [
+        Path(dataset_name_or_path),
+        data_root / dataset_name_or_path,
+        REPO_ROOT / "DeepMzyme_Data" / dataset_name_or_path,
+        Path("/media/mechti/Data1/DeepMzyme_Data") / dataset_name_or_path,
+    ]
+    dataset_root = None
+    for cand in candidates:
+        if cand.is_dir():
+            dataset_root = cand.resolve()
+            dataset_id = cand.name
+            break
+
+    if dataset_root is None:
+        raise FileNotFoundError(
+            f"Dataset '{dataset_name_or_path}' not found across candidates: {[str(c) for c in candidates]}"
+        )
+
+    # Check for train subdirectory
+    train_sub = dataset_root / "train"
+    if train_sub.is_dir():
+        train_dir = train_sub
+    else:
+        train_dir = dataset_root
+
+    train_csv = find_summary_csv(train_dir, train_summary_csv)
+
+    # Check for test subdirectory
+    test_sub = dataset_root / "test"
+    test_dir: Path | None = None
+    test_csv: Path | None = None
+    if test_sub.is_dir():
+        test_dir = test_sub
+        try:
+            test_csv = find_summary_csv(test_dir, test_summary_csv)
+        except FileNotFoundError:
+            test_csv = None
+
+    return dataset_id, train_dir, train_csv, test_dir, test_csv
 
 
 def build_fold_command(
@@ -198,22 +250,22 @@ def build_fold_command(
     model_key: str,
     fold_idx: int,
     n_folds: int,
-    data_root: Path,
+    train_dir: Path,
+    train_csv: Path,
     runs_dir: Path,
+    run_name: str,
+    feat_dir: Path,
+    esm_dir: Path,
+    metal_example_unit: str = "ion",
+    metal_label_scheme: str = "five_class",
+    train_val_split_by: str = "pocket_id",
     epochs: int = 50,
     batch_size: int = 16,
     device: str = "cuda",
     seed: int = 42,
     save_epoch_checkpoints: bool = False,
-) -> tuple[str, list[str]]:
+) -> list[str]:
     cfg = MODEL_CONFIGS[model_key]
-    run_name = f"{model_key}_fold{fold_idx}"
-
-    dataset_root = data_root / "train_and_test_sets_structures_zenodo_pmm_exact"
-    train_dir = dataset_root / "train"
-    train_csv = train_dir / "final_data_summarazing_table.csv"
-    feat_dir = data_root / "updated_feature_extraction"
-    esm_dir = data_root / "esm_embeddings"
 
     train_py = REPO_ROOT / "src" / "train.py"
     if not train_py.exists() and Path("/content/DeepMzyme/src/train.py").exists():
@@ -222,8 +274,8 @@ def build_fold_command(
     cmd = [
         python_bin, "-u", str(train_py),
         "--task", "metal",
-        "--metal-label-scheme", "five_class",
-        "--metal-example-unit", "ion",
+        "--metal-label-scheme", metal_label_scheme,
+        "--metal-example-unit", metal_example_unit,
         "--structure-dir", str(train_dir),
         "--summary-csv", str(train_csv),
         "--external-feature-source", "updated",
@@ -240,7 +292,7 @@ def build_fold_command(
         "--seed", str(seed),
         "--n-folds", str(n_folds),
         "--fold-index", str(fold_idx),
-        "--train-val-split-by", "pocket_id",
+        "--train-val-split-by", train_val_split_by,
     ]
 
     if cfg["use_esm"]:
@@ -256,12 +308,9 @@ def build_fold_command(
         cmd.append("--rbf-use-raw-distances")
 
     if save_epoch_checkpoints:
-        # Training keeps the selected weights in memory and only writes them after the
-        # final epoch, so a VM reclaim mid-run loses every epoch trained so far. Writing
-        # a checkpoint each epoch caps that loss at one epoch.
         cmd.append("--save-epoch-checkpoints")
 
-    return run_name, cmd
+    return cmd
 
 
 def run_single_fold(
@@ -269,8 +318,15 @@ def run_single_fold(
     model_key: str,
     fold_idx: int,
     n_folds: int,
-    data_root: Path,
+    train_dir: Path,
+    train_csv: Path,
     runs_dir: Path,
+    run_name: str,
+    feat_dir: Path,
+    esm_dir: Path,
+    metal_example_unit: str = "ion",
+    metal_label_scheme: str = "five_class",
+    train_val_split_by: str = "pocket_id",
     epochs: int = 50,
     batch_size: int = 16,
     device: str = "cuda",
@@ -278,13 +334,20 @@ def run_single_fold(
     skip_existing: bool = True,
     save_epoch_checkpoints: bool = False,
 ) -> tuple[int, float]:
-    run_name, cmd = build_fold_command(
+    cmd = build_fold_command(
         python_bin=python_bin,
         model_key=model_key,
         fold_idx=fold_idx,
         n_folds=n_folds,
-        data_root=data_root,
+        train_dir=train_dir,
+        train_csv=train_csv,
         runs_dir=runs_dir,
+        run_name=run_name,
+        feat_dir=feat_dir,
+        esm_dir=esm_dir,
+        metal_example_unit=metal_example_unit,
+        metal_label_scheme=metal_label_scheme,
+        train_val_split_by=train_val_split_by,
         epochs=epochs,
         batch_size=batch_size,
         device=device,
@@ -294,30 +357,26 @@ def run_single_fold(
     run_dir = runs_dir / run_name
 
     if skip_existing and is_fold_complete(run_dir, target_epochs=epochs):
-        print(f"[RUNNER] Fold {fold_idx} ({run_name}) is already completed in {run_dir}. Skipping.", flush=True)
+        print(f"[RUNNER] Fold {fold_idx} ({run_name}) already completed at {run_dir}, skipping...", flush=True)
         return 0, 0.0
-
-    if run_dir.exists():
-        print(f"[RUNNER] Incomplete run directory detected: {run_dir}. Cleaning up before run.", flush=True)
-        shutil.rmtree(run_dir)
+    elif run_dir.exists():
+        print(f"[RUNNER] Cleaning up incomplete prior run at {run_dir}...", flush=True)
+        shutil.rmtree(run_dir, ignore_errors=True)
 
     print("=" * 76, flush=True)
-    print(f"[RUNNER] Starting {run_name} (Fold {fold_idx}/{n_folds - 1})", flush=True)
-    print(f"[RUNNER] Command: {' '.join(cmd)}", flush=True)
+    print(f"[RUNNER] STARTING FOLD {fold_idx}/{n_folds-1}: {run_name} (unit={metal_example_unit})", flush=True)
     print("=" * 76, flush=True)
 
-    t0 = time.time()
-    sub_env = os.environ.copy()
-    src_dir = str(REPO_ROOT / "src")
-    existing_pp = sub_env.get("PYTHONPATH", "")
-    sub_env["PYTHONPATH"] = f"{src_dir}:{str(REPO_ROOT)}:{existing_pp}" if existing_pp else f"{src_dir}:{str(REPO_ROOT)}"
-    sub_env["MKL_THREADING_LAYER"] = "GNU"
-    # Parse each structure once for all folds; see training/parallel_loading.py.
-    sub_env.setdefault("DEEPMZYME_PARSE_CACHE_DIR", str(REPO_ROOT / ".parse_cache"))
-    result = subprocess.run(cmd, cwd=str(REPO_ROOT), env=sub_env)
-    elapsed = time.time() - t0
-    return_code = result.returncode
-
+    started = time.time()
+    child_env = os.environ.copy()
+    child_env["MKL_THREADING_LAYER"] = "GNU"
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, env=child_env)
+    assert proc.stdout is not None
+    prefix = f"[{model_key[-8:]}:f{fold_idx}:{metal_example_unit[:3]}]"
+    for line in proc.stdout:
+        print(f"{prefix} {line}", end="", flush=True)
+    return_code = proc.wait()
+    elapsed = time.time() - started
     print(f"[RUNNER] Fold {fold_idx} finished in {elapsed:.1f}s with return code {return_code}", flush=True)
     return return_code, elapsed
 
@@ -325,22 +384,26 @@ def run_single_fold(
 def evaluate_test_set_for_fold(
     model_key: str,
     fold_idx: int,
-    data_root: Path,
+    run_name: str,
     runs_dir: Path,
+    test_dir: Path,
+    test_csv: Path,
+    feat_dir: Path,
+    esm_dir: Path,
+    metal_example_unit: str = "ion",
+    metal_label_scheme: str = "five_class",
     device: str = "cuda",
     batch_size: int = 16,
 ) -> dict[str, Any] | None:
-    """Evaluate the held-out test split for a single trained fold checkpoint."""
+    """Evaluate a trained fold checkpoint on the held-out test set."""
     from model_variants import build_pocket_classifier
     from training.run import normalization_stats_from_payload
 
-    run_name = f"{model_key}_fold{fold_idx}"
     run_dir = runs_dir / run_name
     ckpt_path = resolve_fold_checkpoint(run_dir)
     if ckpt_path is None:
         print(
-            f"[TEST EVAL] No checkpoint found in {run_dir} "
-            f"(looked for: {', '.join(CHECKPOINT_CANDIDATES)})",
+            f"[TEST EVAL] No checkpoint found in {run_dir} (looked for: {', '.join(CHECKPOINT_CANDIDATES)})",
             flush=True,
         )
         return None
@@ -351,14 +414,8 @@ def evaluate_test_set_for_fold(
         with open(report_out, encoding="utf-8") as h:
             return json.load(h)
 
-    print(f"[TEST EVAL] Running held-out test inference for {run_name}...", flush=True)
-    configure_active_metal_label_scheme("five_class")
-
-    dataset_root = data_root / "train_and_test_sets_structures_zenodo_pmm_exact"
-    test_dir = dataset_root / "test"
-    test_csv = test_dir / "final_data_summarazing_table.csv"
-    feat_dir = data_root / "updated_feature_extraction"
-    esm_dir = data_root / "esm_embeddings"
+    print(f"[TEST EVAL] Running held-out test inference for {run_name} ({metal_example_unit} mode)...", flush=True)
+    configure_active_metal_label_scheme(metal_label_scheme)
 
     cfg = MODEL_CONFIGS[model_key]
 
@@ -371,7 +428,7 @@ def evaluate_test_set_for_fold(
         external_features_root_dir=feat_dir,
         external_feature_source="updated",
         require_external_features=False,
-        metal_example_unit="ion",
+        metal_example_unit=metal_example_unit,
     )
 
     test_pockets = [p for p in test_res.pockets if getattr(p, "y_metal", None) is not None]
@@ -477,6 +534,7 @@ def evaluate_test_set_for_fold(
             "metal_y": targets,
             "pocket_ids": [p.pocket_id for p in test_pockets],
             "structure_ids": [p.structure_id for p in test_pockets],
+            "metal_example_unit": metal_example_unit,
         },
         pred_out,
     )
@@ -484,6 +542,7 @@ def evaluate_test_set_for_fold(
     report_payload = {
         "run_name": run_name,
         "fold_index": fold_idx,
+        "metal_example_unit": metal_example_unit,
         "n_test_sites": len(test_pockets),
         "metrics": metrics,
     }
@@ -549,14 +608,20 @@ def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[s
     return out
 
 
-def evaluate_model_ensemble(model_key: str, runs_dir: Path, n_folds: int = 5) -> dict[str, Any] | None:
-    configure_active_metal_label_scheme("five_class")
+def evaluate_model_ensemble(
+    model_key: str,
+    runs_dir: Path,
+    run_name_fn,
+    n_folds: int = 5,
+    metal_label_scheme: str = "five_class",
+) -> dict[str, Any] | None:
+    configure_active_metal_label_scheme(metal_label_scheme)
 
     fold_probs = []
     targets = None
 
     for fold_idx in range(n_folds):
-        run_name = f"{model_key}_fold{fold_idx}"
+        run_name = run_name_fn(fold_idx)
         pred_path = runs_dir / run_name / "test_predictions.pt"
         if not pred_path.exists():
             print(f"[ENSEMBLE] Notice: {pred_path} not found. Skipping ensemble for {model_key}.", flush=True)
@@ -612,11 +677,26 @@ def compute_oof_cv_metrics(fold_summaries: list[dict[str, Any]]) -> dict[str, An
     return cv_stats
 
 
-def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
+def format_comparison_table(
+    results: dict[str, dict[str, Any]],
+    dataset_name: str,
+    metal_example_unit: str,
+) -> str:
+    def _pct(val: Any) -> float:
+        if val is None:
+            return 0.0
+        try:
+            return float(val) * 100.0
+        except (ValueError, TypeError):
+            return 0.0
+
     lines = [
-        "# ZENODO PINMYMETAL EXACT 5-FOLD CV BENCHMARK COMPARISON",
+        f"# 5-FOLD CV BENCHMARK COMPARISON ({dataset_name} | {metal_example_unit.upper()} LEVEL)",
         "",
-        "## Table 1: 5-Fold Cross-Validation Performance (Validation Folds vs PinMyMetal Fig 2a)",
+        f"- **Dataset Split:** `{dataset_name}`",
+        f"- **Example Granularity:** `{metal_example_unit}` (1 example per {metal_example_unit})",
+        "",
+        "## Table 1: 5-Fold Cross-Validation Performance (Validation Folds)",
         "",
         "| Architecture | 5-Fold CV Val Bal Acc (5-class) | 5-Fold CV Val Bal Acc (Collapsed-4) | Mn Recall | Zn Recall | Group VIII Recall | Cu Recall | Delta vs PMM Fig 2a (75.08%) |",
         "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
@@ -627,17 +707,18 @@ def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
         short_name = MODEL_CONFIGS[model_key]["short_name"]
         cv_stats = res.get("cv_stats", {})
 
-        v5_m = cv_stats.get("mean_best_val_balanced_acc_5class", 0) * 100
-        v5_s = cv_stats.get("std_best_val_balanced_acc_5class", 0) * 100
-        vc4_m = cv_stats.get("mean_best_val_balanced_acc_collapsed4", 0) * 100
-        vc4_s = cv_stats.get("std_best_val_balanced_acc_collapsed4", 0) * 100
+        v5_m = _pct(cv_stats.get("mean_best_val_balanced_acc_5class"))
+        v5_s = _pct(cv_stats.get("std_best_val_balanced_acc_5class"))
+        vc4_m = _pct(cv_stats.get("mean_best_val_balanced_acc_collapsed4"))
+        vc4_s = _pct(cv_stats.get("std_best_val_balanced_acc_collapsed4"))
 
-        mn_r = cv_stats.get("mean_best_val_collapsed4_mn_recall", 0) * 100
-        zn_r = cv_stats.get("mean_best_val_collapsed4_zn_recall", 0) * 100
-        viii_r = cv_stats.get("mean_best_val_collapsed4_class_viii_recall", 0) * 100
-        cu_r = cv_stats.get("mean_best_val_collapsed4_cu_recall", 0) * 100
+        mn_r = _pct(cv_stats.get("mean_best_val_collapsed4_mn_recall"))
+        zn_r = _pct(cv_stats.get("mean_best_val_collapsed4_zn_recall"))
+        viii_r = _pct(cv_stats.get("mean_best_val_collapsed4_class_viii_recall"))
+        cu_r = _pct(cv_stats.get("mean_best_val_collapsed4_cu_recall"))
 
-        delta_pmm = (cv_stats.get("mean_best_val_balanced_acc_collapsed4", 0) - PINMYMETAL_FIG2A_CV["collapsed4_balanced_acc"]) * 100
+        c4_val = cv_stats.get("mean_best_val_balanced_acc_collapsed4")
+        delta_pmm = (float(c4_val) - PINMYMETAL_FIG2A_CV["collapsed4_balanced_acc"]) * 100 if c4_val is not None else 0.0
         delta_str = f"**{delta_pmm:+.2f} pp**" if vc4_m > 0 else "-"
 
         lines.append(
@@ -653,7 +734,7 @@ def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
 
     lines.extend([
         "",
-        "## Table 2: Held-Out Test Set Performance (vs PinMyMetal Fig 2b & Metal3D Fig 2c)",
+        "## Table 2: Held-Out Test Set Performance",
         "",
         "| Architecture | Test Mode | Test Bal Acc (Collapsed-4) | Mn Recall | Zn Recall | Group VIII Recall | Cu Recall | Delta vs PMM Fig 2b (67.85%) | Delta vs Metal3D Fig 2c (61.70%) |",
         "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
@@ -667,15 +748,16 @@ def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
         ens = res.get("ensemble", {})
         ens_metrics = ens.get("ensemble_metrics", {}) if ens else {}
 
-        t_bal4_m = cv_stats.get("mean_test_metal_collapsed4_balanced_acc", 0) * 100
-        t_bal4_s = cv_stats.get("std_test_metal_collapsed4_balanced_acc", 0) * 100
-        t_mn = cv_stats.get("mean_test_metal_collapsed4_mn_recall", 0) * 100
-        t_zn = cv_stats.get("mean_test_metal_collapsed4_zn_recall", 0) * 100
-        t_viii = cv_stats.get("mean_test_metal_collapsed4_class_viii_recall", 0) * 100
-        t_cu = cv_stats.get("mean_test_metal_collapsed4_cu_recall", 0) * 100
+        t_bal4_m = _pct(cv_stats.get("mean_test_metal_collapsed4_balanced_acc"))
+        t_bal4_s = _pct(cv_stats.get("std_test_metal_collapsed4_balanced_acc"))
+        t_mn = _pct(cv_stats.get("mean_test_metal_collapsed4_mn_recall"))
+        t_zn = _pct(cv_stats.get("mean_test_metal_collapsed4_zn_recall"))
+        t_viii = _pct(cv_stats.get("mean_test_metal_collapsed4_class_viii_recall"))
+        t_cu = _pct(cv_stats.get("mean_test_metal_collapsed4_cu_recall"))
 
-        delta_t_pmm = (cv_stats.get("mean_test_metal_collapsed4_balanced_acc", 0) - PINMYMETAL_FIG2B_TEST["collapsed4_balanced_acc"]) * 100
-        delta_t_m3d = (cv_stats.get("mean_test_metal_collapsed4_balanced_acc", 0) - PINMYMETAL_FIG2C_METAL3D["collapsed4_balanced_acc"]) * 100
+        mean_test_bal = cv_stats.get("mean_test_metal_collapsed4_balanced_acc")
+        delta_t_pmm = (float(mean_test_bal) - PINMYMETAL_FIG2B_TEST["collapsed4_balanced_acc"]) * 100 if mean_test_bal is not None else 0.0
+        delta_t_m3d = (float(mean_test_bal) - PINMYMETAL_FIG2C_METAL3D["collapsed4_balanced_acc"]) * 100 if mean_test_bal is not None else 0.0
 
         lines.append(
             f"| **{short_name} (Per-Fold Mean)** | 5-Fold Mean | "
@@ -686,15 +768,16 @@ def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
         )
 
         if ens_metrics:
-            e_bal4 = ens_metrics.get("test_ensemble_metal_collapsed4_balanced_acc", 0) * 100
-            recalls = ens_metrics.get("test_ensemble_metal_collapsed4_per_class_recall", {})
-            mn_r = recalls.get("Mn", 0) * 100
-            zn_r = recalls.get("Zn", 0) * 100
-            viii_r = recalls.get("Class VIII", 0) * 100
-            cu_r = recalls.get("Cu", 0) * 100
+            e_bal4 = _pct(ens_metrics.get("test_ensemble_metal_collapsed4_balanced_acc"))
+            recalls = ens_metrics.get("test_ensemble_metal_collapsed4_per_class_recall", {}) or {}
+            mn_r = _pct(recalls.get("Mn"))
+            zn_r = _pct(recalls.get("Zn"))
+            viii_r = _pct(recalls.get("Class VIII"))
+            cu_r = _pct(recalls.get("Cu"))
 
-            delta_e_pmm = (ens_metrics.get("test_ensemble_metal_collapsed4_balanced_acc", 0) - PINMYMETAL_FIG2B_TEST["collapsed4_balanced_acc"]) * 100
-            delta_e_m3d = (ens_metrics.get("test_ensemble_metal_collapsed4_balanced_acc", 0) - PINMYMETAL_FIG2C_METAL3D["collapsed4_balanced_acc"]) * 100
+            ens_bal = ens_metrics.get("test_ensemble_metal_collapsed4_balanced_acc")
+            delta_e_pmm = (float(ens_bal) - PINMYMETAL_FIG2B_TEST["collapsed4_balanced_acc"]) * 100 if ens_bal is not None else 0.0
+            delta_e_m3d = (float(ens_bal) - PINMYMETAL_FIG2C_METAL3D["collapsed4_balanced_acc"]) * 100 if ens_bal is not None else 0.0
 
             lines.append(
                 f"| **{short_name} (5-Fold Ensemble)** | 5-Fold Ensemble | "
@@ -713,8 +796,17 @@ def format_comparison_table(results: dict[str, dict[str, Any]]) -> str:
 def run_campaign(
     models: list[str],
     folds: list[int],
-    data_root: Path,
+    dataset_name: str,
+    train_dir: Path,
+    train_csv: Path,
+    test_dir: Path | None,
+    test_csv: Path | None,
+    feat_dir: Path,
+    esm_dir: Path,
     runs_dir: Path,
+    metal_example_unit: str = "ion",
+    metal_label_scheme: str = "five_class",
+    train_val_split_by: str = "pocket_id",
     epochs: int = 50,
     batch_size: int = 16,
     device: str = "cuda",
@@ -726,28 +818,39 @@ def run_campaign(
     n_folds: int = 5,
 ) -> dict[str, Any]:
     runs_dir.mkdir(parents=True, exist_ok=True)
-    status_file = runs_dir / "zenodo_pmm_exact_runner_state.json"
-    summary_file = runs_dir / "zenodo_pmm_exact_5fold_summary.json"
+    status_file = runs_dir / "runner_state.json"
+    summary_file = runs_dir / "5fold_summary.json"
 
     print("=" * 76, flush=True)
-    print("STARTING ZENODO PINMYMETAL EXACT 5-FOLD BENCHMARK CAMPAIGN", flush=True)
-    print(f"Data Root: {data_root}", flush=True)
-    print(f"Runs Dir:  {runs_dir}", flush=True)
-    print(f"Models:    {models}", flush=True)
-    print(f"Folds:     {folds}", flush=True)
-    print(f"Epochs:    {epochs}", flush=True)
-    print(f"Device:    {device}", flush=True)
+    print("STARTING 5-FOLD BENCHMARK CAMPAIGN", flush=True)
+    print(f"Dataset:     {dataset_name}", flush=True)
+    print(f"Unit:        {metal_example_unit.upper()} LEVEL", flush=True)
+    print(f"Train Dir:   {train_dir}", flush=True)
+    print(f"Train CSV:   {train_csv}", flush=True)
+    print(f"Test Dir:    {test_dir or 'None'}", flush=True)
+    print(f"Test CSV:    {test_csv or 'None'}", flush=True)
+    print(f"Split By:    {train_val_split_by}", flush=True)
+    print(f"Runs Dir:    {runs_dir}", flush=True)
+    print(f"Models:      {models}", flush=True)
+    print(f"Folds:       {folds}", flush=True)
+    print(f"Epochs:      {epochs}", flush=True)
+    print(f"Device:      {device}", flush=True)
     print("=" * 76, flush=True)
 
     state: dict[str, Any] = {
         "status": "in_progress",
+        "dataset_name": dataset_name,
+        "metal_example_unit": metal_example_unit,
         "models": models,
         "folds": folds,
         "epochs": epochs,
         "batch_size": batch_size,
         "device": device,
         "runs_dir": str(runs_dir),
-        "data_root": str(data_root),
+        "train_dir": str(train_dir),
+        "train_csv": str(train_csv),
+        "test_dir": str(test_dir) if test_dir else None,
+        "test_csv": str(test_csv) if test_csv else None,
         "model_results": {},
         "start_time": time.time(),
     }
@@ -757,17 +860,20 @@ def run_campaign(
 
     for model_key in models:
         print("#" * 76, flush=True)
-        print(f"# RUNNING MODEL: {model_key}", flush=True)
+        print(f"# RUNNING MODEL: {model_key} [{metal_example_unit.upper()} LEVEL]", flush=True)
         print(f"# {MODEL_CONFIGS[model_key]['description']}", flush=True)
         print("#" * 76, flush=True)
 
         model_fold_summaries = []
 
+        def fold_run_name(f_idx: int) -> str:
+            return f"{model_key}_{metal_example_unit}_fold{f_idx}"
+
         for fold_idx in folds:
-            run_name = f"{model_key}_fold{fold_idx}"
+            run_name = fold_run_name(fold_idx)
             run_dir = runs_dir / run_name
 
-            state["status"] = f"running_{model_key}_fold_{fold_idx}"
+            state["status"] = f"running_{run_name}"
             write_json(status_file, state)
 
             rc, elapsed = run_single_fold(
@@ -775,8 +881,15 @@ def run_campaign(
                 model_key=model_key,
                 fold_idx=fold_idx,
                 n_folds=n_folds,
-                data_root=data_root,
+                train_dir=train_dir,
+                train_csv=train_csv,
                 runs_dir=runs_dir,
+                run_name=run_name,
+                feat_dir=feat_dir,
+                esm_dir=esm_dir,
+                metal_example_unit=metal_example_unit,
+                metal_label_scheme=metal_label_scheme,
+                train_val_split_by=train_val_split_by,
                 epochs=epochs,
                 batch_size=batch_size,
                 device=device,
@@ -791,12 +904,18 @@ def run_campaign(
                 write_json(status_file, state)
                 sys.exit(rc)
 
-            if evaluate_test:
+            if evaluate_test and test_dir is not None and test_csv is not None:
                 evaluate_test_set_for_fold(
                     model_key=model_key,
                     fold_idx=fold_idx,
-                    data_root=data_root,
+                    run_name=run_name,
                     runs_dir=runs_dir,
+                    test_dir=test_dir,
+                    test_csv=test_csv,
+                    feat_dir=feat_dir,
+                    esm_dir=esm_dir,
+                    metal_example_unit=metal_example_unit,
+                    metal_label_scheme=metal_label_scheme,
                     device=device,
                     batch_size=batch_size,
                 )
@@ -810,13 +929,24 @@ def run_campaign(
             write_json(status_file, state)
 
         cv_stats = compute_oof_cv_metrics(model_fold_summaries)
-        print(f"[RUNNER] {model_key} Completed all requested folds.", flush=True)
+        print(f"[RUNNER] {model_key} completed all requested folds.", flush=True)
         if "mean_best_val_balanced_acc_collapsed4" in cv_stats:
-            print(f"  OOF CV Val Collapsed-4 Bal Acc: {cv_stats['mean_best_val_balanced_acc_collapsed4']*100:.2f}% ± {cv_stats['std_best_val_balanced_acc_collapsed4']*100:.2f}%", flush=True)
+            print(
+                f"  OOF CV Val Collapsed-4 Bal Acc: "
+                f"{cv_stats['mean_best_val_balanced_acc_collapsed4']*100:.2f}% ± "
+                f"{cv_stats['std_best_val_balanced_acc_collapsed4']*100:.2f}%",
+                flush=True,
+            )
 
         ensemble_res = None
-        if evaluate_test and len(folds) == n_folds:
-            ensemble_res = evaluate_model_ensemble(model_key, runs_dir, n_folds=n_folds)
+        if evaluate_test and test_dir is not None and len(folds) == n_folds:
+            ensemble_res = evaluate_model_ensemble(
+                model_key=model_key,
+                runs_dir=runs_dir,
+                run_name_fn=fold_run_name,
+                n_folds=n_folds,
+                metal_label_scheme=metal_label_scheme,
+            )
 
         overall_results[model_key] = {
             "config": MODEL_CONFIGS[model_key],
@@ -833,8 +963,12 @@ def run_campaign(
     write_json(status_file, state)
     write_json(summary_file, state)
 
-    table_md = format_comparison_table(overall_results)
-    table_path = runs_dir / "zenodo_pmm_exact_5fold_comparison_table.md"
+    table_md = format_comparison_table(
+        overall_results,
+        dataset_name=dataset_name,
+        metal_example_unit=metal_example_unit,
+    )
+    table_path = runs_dir / f"{dataset_name}_{metal_example_unit}_5fold_comparison_table.md"
     with open(table_path, "w", encoding="utf-8") as handle:
         handle.write(table_md + "\n")
     print("=" * 76, flush=True)
@@ -848,8 +982,33 @@ def run_campaign(
 
 
 def parse_args() -> argparse.Namespace:
-    paths = resolve_default_paths()
-    parser = argparse.ArgumentParser(description="Exact Zenodo PinMyMetal 5-Fold Cross-Validation Benchmark Runner")
+    colab_root = Path("/content/DeepMzyme_Data/DeepMzyme_Data")
+    local_root = REPO_ROOT / "DeepMzyme_Data"
+    default_data_dir = colab_root if colab_root.exists() else local_root
+
+    parser = argparse.ArgumentParser(
+        description="Generalized 5-Fold Cross-Validation Runner (Pocket & Metal-Ion Focused Levels)"
+    )
+    parser.add_argument(
+        "--dataset",
+        "-d",
+        type=str,
+        default="train_and_test_sets_structures_exact_pinmymetal",
+        help=(
+            "Dataset folder name (under data-root) or absolute path. "
+            "Examples: train_and_test_sets_structures_exact_pinmymetal, "
+            "train_and_test_sets_structures_zenodo_pmm_exact, "
+            "train_and_test_sets_structures_non_overlapped_pinmymetal, "
+            "CLEAN_30_train_test_split_0, etc."
+        ),
+    )
+    parser.add_argument(
+        "--metal-example-unit",
+        "-u",
+        choices=["pocket", "ion"],
+        default="ion",
+        help="Supervision granularity: 'pocket' (clustered 5Å centroid) or 'ion' (individual metal ion coordinates, default: ion)",
+    )
     parser.add_argument(
         "--models",
         nargs="+",
@@ -858,29 +1017,73 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--folds", nargs="+", type=int, default=[0, 1, 2, 3, 4], help="Fold indices to run (default: 0 1 2 3 4)")
     parser.add_argument("--n-folds", type=int, default=5, help="Total number of cross-validation folds (default: 5)")
-    parser.add_argument("--data-root", type=Path, default=paths["data_dir"], help="Path to DeepMzyme_Data directory")
-    parser.add_argument("--runs-dir", type=Path, default=paths["runs_dir"], help="Path to save model runs")
+    parser.add_argument(
+        "--train-val-split-by",
+        type=str,
+        default="pocket_id",
+        choices=["pocket_id", "pdbid", "pdbid_chain", "structure_id"],
+        help="Grouping strategy for CV split. 'pocket_id' groups sibling ions in ion mode (default: pocket_id)",
+    )
+    parser.add_argument(
+        "--metal-label-scheme",
+        type=str,
+        default="five_class",
+        help="Metal label scheme (default: five_class, with collapsed-4 evaluation)",
+    )
+    parser.add_argument("--data-root", type=Path, default=default_data_dir, help="Root path to DeepMzyme_Data directory")
+    parser.add_argument("--runs-dir", type=Path, default=None, help="Root directory for run outputs (defaults to runs_<dataset>_<unit>)")
+    parser.add_argument("--train-summary-csv", type=Path, default=None, help="Explicit path to train summary CSV")
+    parser.add_argument("--test-summary-csv", type=Path, default=None, help="Explicit path to test summary CSV")
     parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs (default: 50)")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size (default: 16)")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Compute device (default: cuda if available else cpu)")
+    parser.add_argument(
+        "--device",
+        type=str,
+        default="cuda" if torch.cuda.is_available() else "cpu",
+        help="Compute device (default: cuda if available else cpu)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--no-skip-existing", action="store_true", help="Force re-running already completed folds")
     parser.add_argument(
         "--save-epoch-checkpoints",
         action="store_true",
-        help=(
-            "Write a checkpoint after every epoch. Recommended for long remote runs: "
-            "training otherwise only persists weights after the final epoch, so a "
-            "reclaimed VM loses the whole fold."
-        ),
+        help="Write a checkpoint after every epoch (recommended on remote VMs to prevent loss upon preemption)",
     )
     parser.add_argument("--no-evaluate-test", action="store_true", help="Skip held-out test evaluation")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate paths, counts, and print execution plan and fold commands without running training",
+    )
     parser.add_argument("--python-bin", type=str, default=sys.executable, help="Python interpreter binary path")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+
+    # Resolve dataset paths
+    dataset_id, train_dir, train_csv, test_dir, test_csv = resolve_dataset_layout(
+        data_root=args.data_root,
+        dataset_name_or_path=args.dataset,
+        train_summary_csv=args.train_summary_csv,
+        test_summary_csv=args.test_summary_csv,
+    )
+
+    feat_dir = args.data_root / "updated_feature_extraction"
+    esm_dir = args.data_root / "esm_embeddings"
+
+    # Default runs directory: segregated by dataset and unit
+    if args.runs_dir is not None:
+        runs_dir = args.runs_dir
+    else:
+        if Path("/content").exists():
+            runs_root = Path(f"/content/runs/runs_{dataset_id}_{args.metal_example_unit}")
+        elif Path("/media/mechti/Data1").exists():
+            runs_root = Path(f"/media/mechti/Data1/DeepMzyme_Data/runs_{dataset_id}_{args.metal_example_unit}")
+        else:
+            runs_root = REPO_ROOT / "runs" / f"runs_{dataset_id}_{args.metal_example_unit}"
+        runs_dir = runs_root
 
     resolved_models = []
     for m in args.models:
@@ -892,12 +1095,78 @@ def main() -> None:
         else:
             raise ValueError(f"Unknown model architecture {m!r}. Choose from: {list(MODEL_CONFIGS.keys())}")
 
+    if args.dry_run:
+        print("=" * 76)
+        print("DRY RUN VALIDATION: 5-FOLD BENCHMARK PLAN")
+        print("=" * 76)
+        print(f"Dataset ID:          {dataset_id}")
+        print(f"Example Granularity: {args.metal_example_unit.upper()} LEVEL (--metal-example-unit {args.metal_example_unit})")
+        print(f"Train Directory:     {train_dir} (exists: {train_dir.exists()})")
+        print(f"Train CSV:           {train_csv} (exists: {train_csv.exists()})")
+        print(f"Test Directory:      {test_dir} (exists: {test_dir.exists()})")
+        print(f"Test CSV:            {test_csv} (exists: {test_csv.exists()})")
+
+        def _count_csv(p: Path) -> int:
+            try:
+                with open(p, newline="", encoding="utf-8") as f:
+                    return max(0, sum(1 for _ in csv.DictReader(f)))
+            except Exception:
+                return -1
+
+        print(f"Train Ion Sites:     {_count_csv(train_csv):,}")
+        print(f"Test Ion Sites:      {_count_csv(test_csv):,}")
+        print(f"Output Directory:    {runs_dir}")
+        print(f"Split Strategy:      --train-val-split-by {args.train_val_split_by} ({args.n_folds} folds)")
+        print(f"Models ({len(resolved_models)}):      {resolved_models}")
+        print(f"Folds to run:        {args.folds}")
+        print(f"Epochs:              {args.epochs}")
+        print(f"Batch Size:          {args.batch_size}")
+        print(f"Device:              {args.device}")
+        print("=" * 76)
+        print("PLANNED FOLD COMMANDS:")
+        for m in resolved_models:
+            print(f"\n--- Model: {m} ---")
+            for f in args.folds:
+                run_name = f"{m}_{args.metal_example_unit}_fold{f}"
+                cmd = build_fold_command(
+                    python_bin=args.python_bin,
+                    model_key=m,
+                    fold_idx=f,
+                    n_folds=args.n_folds,
+                    train_dir=train_dir,
+                    train_csv=train_csv,
+                    runs_dir=runs_dir,
+                    run_name=run_name,
+                    feat_dir=feat_dir,
+                    esm_dir=esm_dir,
+                    metal_example_unit=args.metal_example_unit,
+                    metal_label_scheme=args.metal_label_scheme,
+                    train_val_split_by=args.train_val_split_by,
+                    epochs=args.epochs,
+                    batch_size=args.batch_size,
+                    device=args.device,
+                    seed=args.seed,
+                    save_epoch_checkpoints=args.save_epoch_checkpoints,
+                )
+                print(f"Fold {f}: {' '.join(cmd)}\n")
+        print("=" * 76)
+        print("Dry run validation successful: all paths, options, and commands verified.")
+        return
+
     run_campaign(
         models=resolved_models,
         folds=args.folds,
-        n_folds=args.n_folds,
-        data_root=args.data_root,
-        runs_dir=args.runs_dir,
+        dataset_name=dataset_id,
+        train_dir=train_dir,
+        train_csv=train_csv,
+        test_dir=test_dir,
+        test_csv=test_csv,
+        feat_dir=feat_dir,
+        esm_dir=esm_dir,
+        runs_dir=runs_dir,
+        metal_example_unit=args.metal_example_unit,
+        metal_label_scheme=args.metal_label_scheme,
+        train_val_split_by=args.train_val_split_by,
         epochs=args.epochs,
         batch_size=args.batch_size,
         device=args.device,
@@ -906,6 +1175,7 @@ def main() -> None:
         save_epoch_checkpoints=args.save_epoch_checkpoints,
         python_bin=args.python_bin,
         evaluate_test=not args.no_evaluate_test,
+        n_folds=args.n_folds,
     )
 
 

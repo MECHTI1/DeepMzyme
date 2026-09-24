@@ -20,6 +20,10 @@ Evaluates:
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("MKL_THREADING_LAYER", "GNU")
+
 import argparse
 import csv
 import json
@@ -182,9 +186,10 @@ def build_fold_command(
     batch_size: int = 16,
     device: str = "cuda",
     seed: int = 42,
+    metal_example_unit: str = "pocket",
 ) -> tuple[str, list[str]]:
     cfg = MODEL_CONFIGS[model_key]
-    run_name = f"{model_key}_fold{fold_idx}"
+    run_name = f"{model_key}_{metal_example_unit}_fold{fold_idx}" if metal_example_unit != "pocket" else f"{model_key}_fold{fold_idx}"
 
     train_dir = data_root / "train_and_test_sets_structures_exact_pinmymetal" / "train"
     train_csv = train_dir / "final_data_summarazing_table_transition_metals_only_catalytic.csv"
@@ -201,6 +206,7 @@ def build_fold_command(
         python_bin, "-u", str(train_py),
         "--task", "metal",
         "--metal-label-scheme", "five_class",
+        "--metal-example-unit", metal_example_unit,
         "--structure-dir", str(train_dir),
         "--summary-csv", str(train_csv),
         "--external-feature-source", "updated",
@@ -253,6 +259,7 @@ def run_single_fold(
     device: str = "cuda",
     seed: int = 42,
     skip_existing: bool = True,
+    metal_example_unit: str = "pocket",
 ) -> tuple[int, float]:
     run_name, cmd = build_fold_command(
         python_bin=python_bin,
@@ -265,6 +272,7 @@ def run_single_fold(
         batch_size=batch_size,
         device=device,
         seed=seed,
+        metal_example_unit=metal_example_unit,
     )
     run_dir = runs_dir / run_name
 
@@ -280,7 +288,9 @@ def run_single_fold(
     print("=" * 76, flush=True)
 
     started = time.time()
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    child_env = os.environ.copy()
+    child_env["MKL_THREADING_LAYER"] = "GNU"
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1, env=child_env)
     assert proc.stdout is not None
     prefix = f"[{model_key[-8:]}:f{fold_idx}]"
     for line in proc.stdout:
@@ -289,6 +299,15 @@ def run_single_fold(
     elapsed = time.time() - started
     print(f"[RUNNER] Fold {fold_idx} finished in {elapsed:.1f}s with return code {return_code}", flush=True)
     return return_code, elapsed
+
+
+def _safe_float(val: Any, default: float | None = None) -> float | None:
+    if val is None or val == "":
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
 
 
 def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[str, Any]:
@@ -303,23 +322,23 @@ def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[s
             rows = list(csv.DictReader(handle))
         out["completed_epochs"] = len(rows)
         if rows:
-            best_5c = max(rows, key=lambda r: float(r.get("val_metal_balanced_acc", 0.0)))
-            out["best_epoch_5class"] = int(float(best_5c.get("epoch", 0)))
-            out["best_val_balanced_acc_5class"] = float(best_5c.get("val_metal_balanced_acc", 0.0))
-            out["best_val_raw_acc_5class"] = float(best_5c.get("val_metal_acc", 0.0))
+            best_5c = max(rows, key=lambda r: _safe_float(r.get("val_metal_balanced_acc"), 0.0) or 0.0)
+            out["best_epoch_5class"] = int(_safe_float(best_5c.get("epoch"), 0.0) or 0.0)
+            out["best_val_balanced_acc_5class"] = _safe_float(best_5c.get("val_metal_balanced_acc"))
+            out["best_val_raw_acc_5class"] = _safe_float(best_5c.get("val_metal_acc"))
 
-            best_c4 = max(rows, key=lambda r: float(r.get("val_metal_collapsed4_balanced_acc", 0.0)))
-            out["best_epoch_collapsed4"] = int(float(best_c4.get("epoch", 0)))
-            out["best_val_balanced_acc_collapsed4"] = float(best_c4.get("val_metal_collapsed4_balanced_acc", 0.0))
-            out["best_val_collapsed4_mn_recall"] = float(best_c4.get("val_metal_collapsed4_mn_recall", 0.0))
-            out["best_val_collapsed4_cu_recall"] = float(best_c4.get("val_metal_collapsed4_cu_recall", 0.0))
-            out["best_val_collapsed4_zn_recall"] = float(best_c4.get("val_metal_collapsed4_zn_recall", 0.0))
-            out["best_val_collapsed4_class_viii_recall"] = float(best_c4.get("val_metal_collapsed4_class_viii_recall", 0.0))
+            best_c4 = max(rows, key=lambda r: _safe_float(r.get("val_metal_collapsed4_balanced_acc"), 0.0) or 0.0)
+            out["best_epoch_collapsed4"] = int(_safe_float(best_c4.get("epoch"), 0.0) or 0.0)
+            out["best_val_balanced_acc_collapsed4"] = _safe_float(best_c4.get("val_metal_collapsed4_balanced_acc"))
+            out["best_val_collapsed4_mn_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_mn_recall"))
+            out["best_val_collapsed4_cu_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_cu_recall"))
+            out["best_val_collapsed4_zn_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_zn_recall"))
+            out["best_val_collapsed4_class_viii_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_class_viii_recall"))
 
             final_row = rows[-1]
-            out["final_epoch"] = int(float(final_row.get("epoch", 0)))
-            out["final_val_balanced_acc_5class"] = float(final_row.get("val_metal_balanced_acc", 0.0))
-            out["final_val_balanced_acc_collapsed4"] = float(final_row.get("val_metal_collapsed4_balanced_acc", 0.0))
+            out["final_epoch"] = int(_safe_float(final_row.get("epoch"), 0.0) or 0.0)
+            out["final_val_balanced_acc_5class"] = _safe_float(final_row.get("val_metal_balanced_acc"))
+            out["final_val_balanced_acc_collapsed4"] = _safe_float(final_row.get("val_metal_collapsed4_balanced_acc"))
 
     test_json = run_dir / "test_report.json"
     if test_json.exists():
@@ -339,7 +358,12 @@ def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[s
     return out
 
 
-def evaluate_model_ensemble(model_key: str, runs_dir: Path, n_folds: int = 5) -> dict[str, Any] | None:
+def evaluate_model_ensemble(
+    model_key: str,
+    runs_dir: Path,
+    n_folds: int = 5,
+    metal_example_unit: str = "pocket",
+) -> dict[str, Any] | None:
     configure_active_metal_label_scheme("five_class")
 
     fold_probs = []
@@ -347,7 +371,7 @@ def evaluate_model_ensemble(model_key: str, runs_dir: Path, n_folds: int = 5) ->
     targets = None
 
     for fold_idx in range(n_folds):
-        run_name = f"{model_key}_fold{fold_idx}"
+        run_name = f"{model_key}_{metal_example_unit}_fold{fold_idx}" if metal_example_unit != "pocket" else f"{model_key}_fold{fold_idx}"
         pred_path = runs_dir / run_name / "test_predictions.pt"
         if not pred_path.exists():
             print(f"[ENSEMBLE] Warning: {pred_path} not found. Cannot evaluate complete ensemble.", flush=True)
@@ -373,12 +397,14 @@ def evaluate_model_ensemble(model_key: str, runs_dir: Path, n_folds: int = 5) ->
     result = {
         "model": model_key,
         "n_folds": n_folds,
-        "n_test_pockets": int(targets.size(0)),
+        "metal_example_unit": metal_example_unit,
+        "n_test_sites": int(targets.size(0)),
         "ensemble_metrics": ensemble_metrics,
         "calibrated_ensemble_metrics": calibrated_metrics,
     }
 
-    ens_path = runs_dir / f"{model_key}_5fold_ensemble_report.json"
+    ens_suffix = f"_{metal_example_unit}" if metal_example_unit != "pocket" else ""
+    ens_path = runs_dir / f"{model_key}{ens_suffix}_5fold_ensemble_report.json"
     write_json(ens_path, result)
     print(f"[ENSEMBLE] Saved 5-fold ensemble report to {ens_path}", flush=True)
     return result
@@ -523,6 +549,7 @@ def run_campaign(
     seed: int = 42,
     skip_existing: bool = True,
     python_bin: str = sys.executable,
+    metal_example_unit: str = "pocket",
 ) -> dict[str, Any]:
     runs_dir.mkdir(parents=True, exist_ok=True)
     status_file = runs_dir / "benchmark_5fold_status.json"
@@ -530,6 +557,7 @@ def run_campaign(
 
     state: dict[str, Any] = {
         "campaign": "exact_pinmymetal_5fold_cv",
+        "metal_example_unit": metal_example_unit,
         "models": models,
         "folds": folds,
         "epochs": epochs,
@@ -548,17 +576,17 @@ def run_campaign(
 
     for model_key in models:
         print("#" * 76, flush=True)
-        print(f"# RUNNING MODEL: {model_key}", flush=True)
+        print(f"# RUNNING MODEL: {model_key} [{metal_example_unit.upper()} LEVEL]", flush=True)
         print(f"# {MODEL_CONFIGS[model_key]['description']}", flush=True)
         print("#" * 76, flush=True)
 
         model_fold_summaries = []
 
         for fold_idx in folds:
-            run_name = f"{model_key}_fold{fold_idx}"
+            run_name = f"{model_key}_{metal_example_unit}_fold{fold_idx}" if metal_example_unit != "pocket" else f"{model_key}_fold{fold_idx}"
             run_dir = runs_dir / run_name
 
-            state["status"] = f"running_{model_key}_fold_{fold_idx}"
+            state["status"] = f"running_{run_name}"
             write_json(status_file, state)
 
             rc, elapsed = run_single_fold(
@@ -573,6 +601,7 @@ def run_campaign(
                 device=device,
                 seed=seed,
                 skip_existing=skip_existing,
+                metal_example_unit=metal_example_unit,
             )
 
             summary = summarize_single_fold(run_dir, fold_idx, run_name)
@@ -596,7 +625,9 @@ def run_campaign(
         if "mean_test_metal_collapsed4_balanced_acc" in cv_stats:
             print(f"  Mean Per-Fold Test Collapsed-4 Bal Acc: {cv_stats['mean_test_metal_collapsed4_balanced_acc']*100:.2f}% ± {cv_stats['std_test_metal_collapsed4_balanced_acc']*100:.2f}%", flush=True)
 
-        ensemble_res = evaluate_model_ensemble(model_key, runs_dir, n_folds=len(folds))
+        ensemble_res = evaluate_model_ensemble(
+            model_key, runs_dir, n_folds=len(folds), metal_example_unit=metal_example_unit
+        )
 
         overall_results[model_key] = {
             "config": MODEL_CONFIGS[model_key],
@@ -637,6 +668,12 @@ def parse_args() -> argparse.Namespace:
         help="List of models to run. Options: benchmark_only_esm, benchmark_enhanced_only_gvp, benchmark_enhanced_gvp_esmc",
     )
     parser.add_argument("--folds", nargs="+", type=int, default=[0, 1, 2, 3, 4], help="Fold indices (default: 0 1 2 3 4)")
+    parser.add_argument(
+        "--metal-example-unit",
+        choices=["pocket", "ion"],
+        default="pocket",
+        help="Supervision granularity: 'pocket' (clustered 5Å centroid, default) or 'ion' (individual metal ion coordinates)",
+    )
     parser.add_argument("--data-root", type=Path, default=paths["data_dir"], help="Path to DeepMzyme_Data directory")
     parser.add_argument("--runs-dir", type=Path, default=paths["runs_dir"], help="Path to save model runs")
     parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs (default: 50)")
@@ -672,6 +709,7 @@ def main() -> None:
         seed=args.seed,
         skip_existing=not args.no_skip_existing,
         python_bin=args.python_bin,
+        metal_example_unit=args.metal_example_unit,
     )
 
 

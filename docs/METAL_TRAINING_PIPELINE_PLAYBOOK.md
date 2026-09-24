@@ -48,7 +48,7 @@ also mix PDB IDs. Label all results accordingly.
 The controlling evidence is the **actual**
 `runs/benchmark_exact_pinmymetal_5fold/{benchmark_enhanced_gvp_esmc,benchmark_enhanced_only_gvp}_fold{0..4}/run_config.json`,
 `dataset_summary.json`, and `split_diagnostics.json`, together with
-`scripts/run_exact_pinmymetal_5fold_cv.py`. The copied summary is explanatory,
+`scripts/run_exact_pinmymetal_5fold_cv.py` (and the generalized multi-dataset, dual-granularity runner `scripts/run_metal_5fold_cv.py`; see [`GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](GENERALIZED_METAL_5FOLD_CV_GUIDE.md)). The copied summary is explanatory,
 not the source of executable defaults. Reproduce the old internal CV, not the
 stopped non-overlap/PDB-grouped draft:
 
