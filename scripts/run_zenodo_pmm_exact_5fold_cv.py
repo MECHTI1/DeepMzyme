@@ -273,7 +273,11 @@ def run_single_fold(
     print("=" * 76, flush=True)
 
     t0 = time.time()
-    result = subprocess.run(cmd, cwd=str(REPO_ROOT))
+    sub_env = os.environ.copy()
+    src_dir = str(REPO_ROOT / "src")
+    existing_pp = sub_env.get("PYTHONPATH", "")
+    sub_env["PYTHONPATH"] = f"{src_dir}:{str(REPO_ROOT)}:{existing_pp}" if existing_pp else f"{src_dir}:{str(REPO_ROOT)}"
+    result = subprocess.run(cmd, cwd=str(REPO_ROOT), env=sub_env)
     elapsed = time.time() - t0
     return_code = result.returncode
 
