@@ -253,7 +253,7 @@ def ring_input_audit(output, run, directory=None):
 OPERATIONAL_CONFIG_FIELDS = frozenset({
     "runs_dir", "run_name", "structure_dir", "summary_csv", "esm_embeddings_dir",
     "ring_features_dir", "external_features_root_dir", "test_structure_dir", "test_summary_csv",
-    "device", "num_workers", "pin_memory",
+    "device", "num_workers", "pin_memory", "load_workers",
 })
 ARTIFACT_NAMES = ("run_config.json", "run_metadata.json", "dataset_summary.json", "epoch_metrics.csv",
                   "best_model_checkpoint.pt", "last_model_checkpoint.pt")

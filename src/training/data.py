@@ -22,12 +22,11 @@ from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.feature_paths import resolve_runtime_feature_paths
 from training.labels import assign_ec_targets
+from training.parallel_loading import iter_structure_load_results, resolve_load_workers
 from training.site_filter import resolve_allowed_site_metal_labels
 from training.structure_loading import (
-    StructureLoadError,
     build_load_report,
     find_structure_files,
-    load_structure_pockets,
     pocket_has_required_supervision,
 )
 
@@ -100,8 +99,15 @@ def load_labeled_pockets_with_report_from_dir(
     metal_eligibility_scheme: str = "active",
     metal_example_unit: str = "pocket",
     allowed_structure_ids: set[str] | None = None,
+    load_workers: int | str | None = None,
 ) -> PocketLoadResult:
-    """Load labeled pockets from a structure directory and return them with a load report."""
+    """Load labeled pockets from a structure directory and return them with a load report.
+
+    ``load_workers`` sets parallel structure parsing; see
+    ``training.parallel_loading.resolve_load_workers`` for the default (every available
+    core, unless overridden by environment or per-machine config). Output is identical
+    to serial loading.
+    """
     if metal_example_unit == "ion" and required_targets != ("metal",):
         raise ValueError("Ion examples currently require metal-only supervision")
     structure_root = Path(structure_dir)
@@ -131,16 +137,32 @@ def load_labeled_pockets_with_report_from_dir(
     skipped_pockets: List[Dict[str, str]] = []
     invalid_structures: List[Dict[str, str]] = []
 
+    workers, workers_source = resolve_load_workers(load_workers)
     progress_every = _structure_load_progress_interval(len(structure_files))
     load_started_at = time.monotonic()
     if progress_every:
         print(
             f"[LOAD] Parsing {len(structure_files)} structures from {structure_root} "
-            f"(metal_example_unit={metal_example_unit})",
+            f"(metal_example_unit={metal_example_unit}, workers={workers} from {workers_source})",
             flush=True,
         )
 
-    for loaded_count, structure_path in enumerate(structure_files, start=1):
+    load_kwargs = dict(
+        structure_root=structure_root,
+        allowed_site_metal_labels=allowed_site_metal_labels,
+        esm_dim=esm_dim,
+        embeddings_dir=embeddings_dir,
+        require_esm_embeddings=require_esm_embeddings,
+        ring_features_dir=resolved_ring_features_dir,
+        feature_root_dir=feature_root_dir,
+        external_feature_source=external_feature_source,
+        require_external_features=require_external_features,
+        unsupported_metal_policy=unsupported_metal_policy,
+        ec_label_depth=ec_label_depth,
+        metal_example_unit=metal_example_unit,
+    )
+    load_results = iter_structure_load_results(structure_files, load_kwargs, workers=workers)
+    for loaded_count, (structure_path, (status, outcome)) in enumerate(load_results, start=1):
         if progress_every and (loaded_count % progress_every == 0 or loaded_count == len(structure_files)):
             elapsed = time.monotonic() - load_started_at
             rate = loaded_count / elapsed if elapsed > 0 else 0.0
@@ -151,33 +173,18 @@ def load_labeled_pockets_with_report_from_dir(
                 f"~{remaining / 60:.1f} min remaining), {len(raw_pockets)} examples so far",
                 flush=True,
             )
-        try:
-            structure_pockets, structure_fallbacks, structure_skipped_pockets = load_structure_pockets(
-                structure_path=structure_path,
-                structure_root=structure_root,
-                allowed_site_metal_labels=allowed_site_metal_labels,
-                esm_dim=esm_dim,
-                embeddings_dir=embeddings_dir,
-                require_esm_embeddings=require_esm_embeddings,
-                ring_features_dir=resolved_ring_features_dir,
-                feature_root_dir=feature_root_dir,
-                external_feature_source=external_feature_source,
-                require_external_features=require_external_features,
-                unsupported_metal_policy=unsupported_metal_policy,
-                ec_label_depth=ec_label_depth,
-                metal_example_unit=metal_example_unit,
-            )
-        except StructureLoadError as exc:
+        if status == "invalid":
             if invalid_structure_policy != "skip":
-                raise
+                raise outcome
             invalid_structures.append(
                 {
                     "structure_path": str(structure_path),
                     "reason": "invalid_structure",
-                    "detail": str(exc),
+                    "detail": str(outcome),
                 }
             )
             continue
+        structure_pockets, structure_fallbacks, structure_skipped_pockets = outcome
         feature_fallbacks.extend(structure_fallbacks)
         skipped_pockets.extend(structure_skipped_pockets)
 
@@ -270,6 +277,7 @@ def load_training_pockets_with_report_from_dir(
     metal_eligibility_scheme: str = "active",
     metal_example_unit: str = "pocket",
     allowed_structure_ids: set[str] | None = None,
+    load_workers: int | str | None = None,
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
     return load_labeled_pockets_with_report_from_dir(
@@ -292,6 +300,7 @@ def load_training_pockets_with_report_from_dir(
         metal_eligibility_scheme=metal_eligibility_scheme,
         metal_example_unit=metal_example_unit,
         allowed_structure_ids=allowed_structure_ids,
+        load_workers=load_workers,
     )
 
 
