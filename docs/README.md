@@ -34,6 +34,7 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Generalized 5-fold CV runner guide (arbitrary splits, ion & pocket levels) | [`GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](GENERALIZED_METAL_5FOLD_CV_GUIDE.md) | Single dataset-specific fixed scripts |
 | PinMyMetal 5-fold three-architecture benchmark summary | [`notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md`](notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md) | Unverified pilot results |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
+| GCP GPU VM provisioning, PyCharm remote setup, and batch execution | [`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
 | Sequence-remoteness protocol, validation replay and support gates | [`REMOTE_HOMOLOGY_ADDENDUM.md`](REMOTE_HOMOLOGY_ADDENDUM.md) | Homology absence, new training authorization or model promotion |
 | Current status, implementation/evidence state, and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
@@ -56,7 +57,9 @@ For the end-to-end entry path, start with
 [`GETTING_STARTED.md`](GETTING_STARTED.md). For Colab provisioning, stock
 PyTorch preservation, browser/CLI same-VM attachment, Drive authorization,
 artifact transfer, and teardown, use
-[`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md).
+[`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md). For dedicated GCP GPU VM
+execution with PyCharm remote development and gross commercial cost bounds, use
+[`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md).
 
 For the planned continuous-queue, transfer and preparation improvements, read
 [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md). It includes
