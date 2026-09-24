@@ -157,8 +157,8 @@ def resolve_default_paths() -> dict[str, Path]:
 
 def is_fold_complete(run_dir: Path, target_epochs: int = 50) -> bool:
     val_csv = run_dir / "val_metrics.csv"
-    best_ckpt = run_dir / "best_checkpoint.pt"
-    if not (val_csv.exists() and best_ckpt.exists()):
+    best_ckpt = resolve_fold_checkpoint(run_dir)
+    if not (val_csv.exists() and best_ckpt is not None):
         return False
     try:
         with open(val_csv, newline="", encoding="utf-8") as handle:
@@ -166,6 +166,27 @@ def is_fold_complete(run_dir: Path, target_epochs: int = 50) -> bool:
         return len(rows) >= target_epochs
     except Exception:
         return False
+
+
+# ``src/training/run.py`` persists the selected weights as ``best_model_checkpoint.pt``
+# (and the final-epoch weights as ``last_model_checkpoint.pt``). An earlier revision of
+# this runner looked for ``best_checkpoint.pt``, which training never writes: that made
+# ``fold_is_complete`` always return False and made the held-out test evaluation skip
+# every fold silently. Resolve the real filenames, newest naming first.
+CHECKPOINT_CANDIDATES = (
+    "best_model_checkpoint.pt",
+    "best_checkpoint.pt",
+    "last_model_checkpoint.pt",
+)
+
+
+def resolve_fold_checkpoint(run_dir: Path) -> Path | None:
+    """Return the fold's selected-model checkpoint, or None when no weights exist."""
+    for name in CHECKPOINT_CANDIDATES:
+        candidate = run_dir / name
+        if candidate.exists():
+            return candidate
+    return None
 
 
 def build_fold_command(
@@ -179,6 +200,7 @@ def build_fold_command(
     batch_size: int = 16,
     device: str = "cuda",
     seed: int = 42,
+    save_epoch_checkpoints: bool = False,
 ) -> tuple[str, list[str]]:
     cfg = MODEL_CONFIGS[model_key]
     run_name = f"{model_key}_fold{fold_idx}"
@@ -229,6 +251,12 @@ def build_fold_command(
     if cfg["rbf_raw"]:
         cmd.append("--rbf-use-raw-distances")
 
+    if save_epoch_checkpoints:
+        # Training keeps the selected weights in memory and only writes them after the
+        # final epoch, so a VM reclaim mid-run loses every epoch trained so far. Writing
+        # a checkpoint each epoch caps that loss at one epoch.
+        cmd.append("--save-epoch-checkpoints")
+
     return run_name, cmd
 
 
@@ -244,6 +272,7 @@ def run_single_fold(
     device: str = "cuda",
     seed: int = 42,
     skip_existing: bool = True,
+    save_epoch_checkpoints: bool = False,
 ) -> tuple[int, float]:
     run_name, cmd = build_fold_command(
         python_bin=python_bin,
@@ -256,6 +285,7 @@ def run_single_fold(
         batch_size=batch_size,
         device=device,
         seed=seed,
+        save_epoch_checkpoints=save_epoch_checkpoints,
     )
     run_dir = runs_dir / run_name
 
@@ -300,9 +330,13 @@ def evaluate_test_set_for_fold(
 
     run_name = f"{model_key}_fold{fold_idx}"
     run_dir = runs_dir / run_name
-    ckpt_path = run_dir / "best_checkpoint.pt"
-    if not ckpt_path.exists():
-        print(f"[TEST EVAL] Checkpoint not found: {ckpt_path}", flush=True)
+    ckpt_path = resolve_fold_checkpoint(run_dir)
+    if ckpt_path is None:
+        print(
+            f"[TEST EVAL] No checkpoint found in {run_dir} "
+            f"(looked for: {', '.join(CHECKPOINT_CANDIDATES)})",
+            flush=True,
+        )
         return None
 
     pred_out = run_dir / "test_predictions.pt"
@@ -629,6 +663,7 @@ def run_campaign(
     device: str = "cuda",
     seed: int = 42,
     skip_existing: bool = True,
+    save_epoch_checkpoints: bool = False,
     python_bin: str = sys.executable,
     evaluate_test: bool = True,
     n_folds: int = 5,
@@ -690,6 +725,7 @@ def run_campaign(
                 device=device,
                 seed=seed,
                 skip_existing=skip_existing,
+                save_epoch_checkpoints=save_epoch_checkpoints,
             )
 
             if rc != 0:
@@ -772,6 +808,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Compute device (default: cuda if available else cpu)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
     parser.add_argument("--no-skip-existing", action="store_true", help="Force re-running already completed folds")
+    parser.add_argument(
+        "--save-epoch-checkpoints",
+        action="store_true",
+        help=(
+            "Write a checkpoint after every epoch. Recommended for long remote runs: "
+            "training otherwise only persists weights after the final epoch, so a "
+            "reclaimed VM loses the whole fold."
+        ),
+    )
     parser.add_argument("--no-evaluate-test", action="store_true", help="Skip held-out test evaluation")
     parser.add_argument("--python-bin", type=str, default=sys.executable, help="Python interpreter binary path")
     return parser.parse_args()
@@ -801,6 +846,7 @@ def main() -> None:
         device=args.device,
         seed=args.seed,
         skip_existing=not args.no_skip_existing,
+        save_epoch_checkpoints=args.save_epoch_checkpoints,
         python_bin=args.python_bin,
         evaluate_test=not args.no_evaluate_test,
     )

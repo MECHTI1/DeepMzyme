@@ -9,6 +9,8 @@ This module:
 
 from __future__ import annotations
 
+import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -59,6 +61,23 @@ def _assemble_pocket_load_result(
         ec_label_to_index={},
         ec_index_to_label={},
     )
+
+
+def _structure_load_progress_interval(total: int) -> int:
+    """Structures between progress lines; 0 disables reporting.
+
+    Parsing a large structure set is single-threaded and can run for many minutes
+    while emitting nothing, which makes a stalled job indistinguishable from a
+    healthy one in a captured log. Report periodically for large sets, and stay
+    silent for the small sets used by tests and smoke runs.
+    """
+    raw = os.environ.get("DEEPMZYME_LOAD_PROGRESS_EVERY")
+    if raw is not None:
+        try:
+            return max(0, int(raw))
+        except ValueError:
+            return 0
+    return 250 if total > 200 else 0
 
 
 def load_labeled_pockets_with_report_from_dir(
@@ -112,7 +131,26 @@ def load_labeled_pockets_with_report_from_dir(
     skipped_pockets: List[Dict[str, str]] = []
     invalid_structures: List[Dict[str, str]] = []
 
-    for structure_path in structure_files:
+    progress_every = _structure_load_progress_interval(len(structure_files))
+    load_started_at = time.monotonic()
+    if progress_every:
+        print(
+            f"[LOAD] Parsing {len(structure_files)} structures from {structure_root} "
+            f"(metal_example_unit={metal_example_unit})",
+            flush=True,
+        )
+
+    for loaded_count, structure_path in enumerate(structure_files, start=1):
+        if progress_every and (loaded_count % progress_every == 0 or loaded_count == len(structure_files)):
+            elapsed = time.monotonic() - load_started_at
+            rate = loaded_count / elapsed if elapsed > 0 else 0.0
+            remaining = (len(structure_files) - loaded_count) / rate if rate > 0 else 0.0
+            print(
+                f"[LOAD] {loaded_count}/{len(structure_files)} structures "
+                f"({rate:.1f}/s, {elapsed / 60:.1f} min elapsed, "
+                f"~{remaining / 60:.1f} min remaining), {len(raw_pockets)} examples so far",
+                flush=True,
+            )
         try:
             structure_pockets, structure_fallbacks, structure_skipped_pockets = load_structure_pockets(
                 structure_path=structure_path,
@@ -144,6 +182,14 @@ def load_labeled_pockets_with_report_from_dir(
         skipped_pockets.extend(structure_skipped_pockets)
 
         raw_pockets.extend(structure_pockets)
+
+    if progress_every:
+        print(
+            f"[LOAD] Finished parsing {len(structure_files)} structures in "
+            f"{(time.monotonic() - load_started_at) / 60:.1f} min: "
+            f"{len(raw_pockets)} examples, {len(invalid_structures)} invalid structures",
+            flush=True,
+        )
 
     ec_label_to_index, ec_index_to_label = assign_ec_targets(
         raw_pockets,
