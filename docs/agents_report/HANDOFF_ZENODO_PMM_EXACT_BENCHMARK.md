@@ -1,5 +1,13 @@
 # Handoff & Continuation Playbook: Zenodo PinMyMetal Exact Ion-Level Benchmark
 
+> **STATUS 2026-09-24 11:50 UTC (14:50 local): THE RUN DESCRIBED BELOW IS DEAD AND
+> PRODUCED NO RESULTS.** Colab session `pmm-zenodo` was reaped by the backend;
+> `colab sessions` reports no active sessions. Fold 0 never reached epoch 1 (GPU was
+> at 0% / 3 MiB VRAM at the last poll) and no checkpoint or metrics file survives.
+> Sections 1-4 below describe the *intended* run and are retained for reference only;
+> the monitoring commands in section 2 will all fail with "Session not found".
+> **Read section 7 (Post-mortem) before relaunching anything.**
+
 ## Purpose
 This document provides exact, turn-key instructions for any subsequent autonomous agent or developer to inspect, monitor, retrieve results from, or resume/continue the **Exact Zenodo PinMyMetal Benchmark** from the exact point of interruption.
 
@@ -134,3 +142,60 @@ If the Colab VM disconnects:
    # Executes download from HF, SHA-256 verification, and benchmark execution automatically
    bash scripts/reproduce_zenodo_pmm_benchmark.sh
    ```
+
+---
+
+## 7. Post-mortem: why the run was lost, and what to change before relaunching
+
+### What actually happened
+| Time (UTC) | Event |
+| :--- | :--- |
+| 09:20:34 | First `pmm-zenodo` VM created (`gpu-l4-s-kkb-usw4a0-mryee7671hft`). |
+| 10:21:36 | First VM **pruned** by the backend. |
+| 10:22:35 | Second VM created (`gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb`). |
+| 10:40:27 | Fold 0 of `benchmark_enhanced_only_gvp` launched (training PID 5353). |
+| 10:51:48 | Last successful telemetry poll: 11m12s CPU time, **GPU 0%, 3 MiB / 23,034 MiB VRAM**, run dir contains only `prepare_status.json`. Training had **not** started. |
+| 11:42 | **Workstation rebooted** (`who -b`: 2026-09-24 14:42 local). The Colab CLI keep-alive daemon is a *local* process, so it died here. |
+| 11:48:32 | Second VM found gone; local session state **pruned**. All VM-side artifacts lost. |
+
+### Root cause
+The Colab keep-alive daemon runs on the local workstation. When the workstation went
+down, nothing renewed the VM lease and the backend reclaimed it. Everything the job had
+produced lived only on that VM's ephemeral disk.
+
+### Durability gaps that turned a reboot into total data loss
+1. **No off-VM persistence.** `--runs-dir /content/runs/...` is ephemeral VM disk.
+   Nothing was mirrored to Google Drive (`colab drivemount`) or downloaded during the
+   run, so a reap destroys all output. *Fix: mount Drive and point `--runs-dir` at it,
+   or download artifacts on a timer.*
+2. **Best checkpoint is held in RAM until the run ends.** `train_and_select_checkpoint`
+   (`src/training/run.py:1612`) deep-copies the best state into memory; it is only
+   written to disk by `persist_run_outputs` (`src/training/run.py:1886`) after the final
+   epoch. A kill at epoch 49 of 50 leaves no weights. Per-epoch metric CSVs *are*
+   written each epoch (`src/training/run.py:1629`), and `--save-epoch-checkpoints`
+   exists but was not enabled. *Fix: enable per-epoch checkpoints for long runs.*
+3. **The ~11-minute graph-construction phase is silent.** Neither
+   `src/training/data.py` nor the loaders print progress, so the log shows only the
+   runner banner for the first ten-plus minutes. This is what made a stalled/never-started
+   job look identical to a healthy one, and led the previous session to report "50 epochs
+   training, finishing ~11:24 UTC" while the GPU was in fact idle at 0%.
+   *Fix: emit a structure-parsing progress line, and always check `nvidia-smi`
+   utilisation - not just CPU time - before claiming training is underway.*
+4. **No parsed-graph cache.** There is no caching in `src/training/graph_dataset.py`
+   or `src/graph/structure_parsing.py`, so all 6,443 train PDBs are re-parsed from
+   scratch for every fold and every model. A full 3-model x 5-fold campaign repeats
+   this 15 times (~2.75 h of pure re-parsing). *Fix: cache built graphs to disk keyed
+   by structure set + feature config.*
+5. **`/media/mechti/Data1` does not exist on this workstation.** Both this document and
+   the local-path fallback in `scripts/reproduce_zenodo_pmm_benchmark.sh` reference it;
+   the actual 1.8 TB disk is `/dev/sda1` (NTFS, label `Data`) and is currently
+   **unmounted**. The root filesystem has only ~7.4 GB free (97% full), so a download
+   target must be chosen and mounted before retrieving run artifacts.
+
+### Pre-flight checklist for the relaunch
+- [ ] Mount Drive on the VM and write run outputs there (survives a VM reap).
+- [ ] Enable per-epoch checkpointing for any run longer than a few minutes.
+- [ ] Confirm the workstation will stay powered on, or accept that the VM dies with it.
+- [ ] Verify training actually started by checking GPU utilisation is non-zero, not CPU time.
+- [ ] Mount `/dev/sda1` (or pick another target) before downloading artifacts; `/` is 97% full.
+- [ ] `colab stop -s <name>` when finished - idle VMs keep burning compute units.
