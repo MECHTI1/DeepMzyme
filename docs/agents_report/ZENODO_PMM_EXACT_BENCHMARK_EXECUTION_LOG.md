@@ -1,5 +1,16 @@
 # Zenodo PinMyMetal Exact Ion-Level Benchmark Execution & Reproducibility Report
 
+> **OUTCOME (recorded 2026-09-24 11:50 UTC): THIS RUN PRODUCED NO RESULTS.**
+> The workstation rebooted at 11:42 UTC, killing the local Colab keep-alive daemon;
+> the backend then reclaimed the VM. At the last telemetry poll (10:51:48 UTC) the GPU
+> was **idle at 0% with 3 MiB VRAM used** - the job was still in CPU graph construction
+> and had never started epoch 1. Only `prepare_status.json` was ever written, and
+> nothing was downloaded off the VM. The timings in section 2 below are *estimates made
+> while the job was running*, not measurements. Post-mortem and relaunch checklist:
+> [`HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`](HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md) section 7.
+
+
+
 ## 1. Executive Summary
 
 This report provides the authoritative record of the reconstruction, verification, and execution of the **Exact Zenodo PinMyMetal Benchmark** within the DeepMzyme project.
@@ -20,12 +31,12 @@ Every detail in this document is recorded so that any autonomous agent, engineer
 | **Dataset SHA-256** | `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296` |
 | **Total Source Rows** | 9,408 rows (7,920 train, 1,488 test) |
 | **Reconstructed Sites** | 9,398 sites (**99.89% exact fidelity**: 7,911 train sites in 6,443 PDBs, 1,487 test sites in 1,281 PDBs) |
-| **Active Execution Target** | Fold 0 of `benchmark_enhanced_only_gvp` (50 epochs) + Held-Out Test Evaluation |
-| **Active Colab Session** | `pmm-zenodo` (`gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb`, NVIDIA L4, 24 GB VRAM) |
+| **Execution Target (NOT COMPLETED)** | Fold 0 of `benchmark_enhanced_only_gvp` (50 epochs) + Held-Out Test Evaluation |
+| **Colab Session (REAPED, GONE)** | `pmm-zenodo` (`gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb`, NVIDIA L4, 24 GB VRAM) |
 | **Colab Web Interface** | [Colab Notebook](https://colab.research.google.com/notebooks/empty.ipynb?dbu=%2Ftun%2Fm%2Fgpu-l4-s-kkb-ass1b1-c4x86vhbzxfb#datalabBackendUrl=https://colab.research.google.com/tun/m/gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb) |
-| **Active Process PIDs** | Runner PID `5303`, Training PID `5353` |
+| **Process PIDs (dead with the VM)** | Runner PID `5303`, Training PID `5353` |
 | **Execution Start Time** | 2026-09-24 10:40:27 UTC (13:40:27 local time) |
-| **Estimated Completion** | 2026-09-24 11:24 UTC (14:24 local time) (~42–44 minutes total) |
+| **Estimated Completion** | ~~2026-09-24 11:24 UTC~~ **never reached - VM reclaimed 11:48 UTC, no artifacts** |
 
 ---
 

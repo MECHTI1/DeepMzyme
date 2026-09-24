@@ -7,19 +7,35 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-24.
 
-**2026-09-24 ion-unit correction & Zenodo exact benchmark (ACTIVE RUNNING):**
+**2026-09-24 ion-unit correction & Zenodo exact benchmark (RUN LOST - NO RESULTS YET):**
 - **Contract & Architecture:** `--metal-example-unit ion` is fully implemented for standalone metal training in CLI, runner scripts, and Colab notebook, ensuring multi-nuclear sites (e.g. `1a0e` 3-Zn center) receive independent coordinates and residue microenvironments while grouping sibling ions under parent pocket IDs.
 - **Dataset Fidelity:** Reconstructed from published Zenodo source rows (`classmodel_train_set.csv` and `classmodel_test_set.csv`) at **99.89% exact fidelity** (9,398 / 9,408 source rows: 7,911 train sites across 6,443 PDBs, 1,487 test sites across 1,281 PDBs).
 - **Hugging Face Hosting:** Published permanently to [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) (`train_and_test_sets_structures_zenodo_pmm_exact.tar.gz`, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
 - **Automated Verification:** Verified via `scripts/verify_zenodo_pmm_ion_dataset.py` (passes 100% with 0 errors).
 - **1-Command Reproducibility:** Automated via `scripts/reproduce_zenodo_pmm_benchmark.sh` (downloads bundle if missing, verifies SHA-256, runs pre-flight tests, launches cross-validation, and compiles comparison table).
-- **Active Colab GPU Execution:**
-  - Session: `pmm-zenodo` (NVIDIA L4 GPU, 24 GB VRAM)
-  - Active Target: Fold 0 of `benchmark_enhanced_only_gvp` (50 epochs, lr=3e-4, raw RBF) followed by held-out test evaluation.
-  - Process: Runner PID `5303`, Training PID `5353`
-  - Started: 2026-09-24 10:40:27 UTC (13:40:27 local)
-  - Estimated Finish Time: 2026-09-24 11:24 UTC (14:24 local) (~42-44 minutes total: ~10m CPU graph construction + ~32m GPU training + ~2m test evaluation)
-  - Log File: `/content/zenodo_single_fold_execution.log`
+- **Colab GPU Execution (LOST - must be relaunched):**
+  - Session `pmm-zenodo` (endpoint `gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb`, NVIDIA L4) was
+    **reaped by the Colab backend and no longer exists**. `colab sessions` reports no
+    active sessions; local session state was pruned at 2026-09-24 11:48 UTC.
+  - **Cause:** the workstation rebooted at 2026-09-24 11:42 UTC (14:42 local). The
+    Colab CLI keep-alive daemon runs *locally*, so it died with the machine and the
+    backend reclaimed the VM. The same pruning had already happened once earlier to
+    the first `pmm-zenodo` VM (created 09:20 UTC, pruned 10:21 UTC).
+  - **Result: zero training artifacts survive.** Fold 0 of
+    `benchmark_enhanced_only_gvp` (started 10:40:27 UTC) had produced only
+    `prepare_status.json` in its run directory. At the last successful telemetry poll
+    (10:51:48 UTC, 11m12s of CPU time) `nvidia-smi` reported **0% GPU utilisation and
+    3 MiB of 23,034 MiB VRAM in use**, i.e. the job was still in the single-threaded
+    CPU graph-construction phase and **had not begun epoch 1**. No checkpoint, no
+    `val_metrics.csv`, no `test_report.json` was ever written, and nothing was
+    downloaded off the VM before it was reclaimed.
+  - **No published benchmark numbers exist for this dataset yet.** Any earlier note
+    giving an expected completion time (~11:24 UTC / 14:24 local) is superseded.
+  - **Before relaunching**, see the durability gaps recorded in
+    [`docs/agents_report/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`](docs/agents_report/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md)
+    (section "Post-mortem"): artifacts are written only to ephemeral VM disk, the best
+    checkpoint is held in memory until the run ends, and the ~11-minute graph
+    construction phase emits no progress output and is repeated for every fold.
   - Master Guide: [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)
 
 ## Current objective
