@@ -7,14 +7,20 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-24.
 
-**2026-09-24 ion-unit correction & Zenodo exact benchmark:** `--metal-example-unit ion` is now
-implemented for standalone metal training in both CLI and Colab notebook while
-retaining parent-pocket fold grouping. The exact published Zenodo PinMyMetal
-dataset (`train_and_test_sets_structures_zenodo_pmm_exact`) has been reconstructed at
-99.89% fidelity (9,398 / 9,408 source rows), verified with multinuclear disentanglement
-controls, published to Hugging Face, and documented in
-[`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md).
-Active 5-fold cross-validation is running on Colab GPU.
+**2026-09-24 ion-unit correction & Zenodo exact benchmark (ACTIVE RUNNING):**
+- **Contract & Architecture:** `--metal-example-unit ion` is fully implemented for standalone metal training in CLI, runner scripts, and Colab notebook, ensuring multi-nuclear sites (e.g. `1a0e` 3-Zn center) receive independent coordinates and residue microenvironments while grouping sibling ions under parent pocket IDs.
+- **Dataset Fidelity:** Reconstructed from published Zenodo source rows (`classmodel_train_set.csv` and `classmodel_test_set.csv`) at **99.89% exact fidelity** (9,398 / 9,408 source rows: 7,911 train sites across 6,443 PDBs, 1,487 test sites across 1,281 PDBs).
+- **Hugging Face Hosting:** Published permanently to [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) (`train_and_test_sets_structures_zenodo_pmm_exact.tar.gz`, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
+- **Automated Verification:** Verified via `scripts/verify_zenodo_pmm_ion_dataset.py` (passes 100% with 0 errors).
+- **1-Command Reproducibility:** Automated via `scripts/reproduce_zenodo_pmm_benchmark.sh` (downloads bundle if missing, verifies SHA-256, runs pre-flight tests, launches cross-validation, and compiles comparison table).
+- **Active Colab GPU Execution:**
+  - Session: `pmm-zenodo` (NVIDIA L4 GPU, 24 GB VRAM)
+  - Active Target: Fold 0 of `benchmark_enhanced_only_gvp` (50 epochs, lr=3e-4, raw RBF) followed by held-out test evaluation.
+  - Process: Runner PID `5303`, Training PID `5353`
+  - Started: 2026-09-24 10:40:27 UTC (13:40:27 local)
+  - Estimated Finish Time: 2026-09-24 11:24 UTC (14:24 local) (~42-44 minutes total: ~10m CPU graph construction + ~32m GPU training + ~2m test evaluation)
+  - Log File: `/content/zenodo_single_fold_execution.log`
+  - Master Guide: [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)
 
 ## Current objective
 
