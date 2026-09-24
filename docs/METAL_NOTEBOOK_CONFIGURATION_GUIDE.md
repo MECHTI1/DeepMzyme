@@ -1034,6 +1034,15 @@ The required target-formulation comparison uses separately named `four_class`
 and `six_class` batches/studies. Changing this field creates a different
 prediction problem.
 
+`METAL_EXAMPLE_UNIT` selects the labeled training unit for `TASK="metal"`:
+`"pocket"` preserves the historical one-label-per-cluster behavior, while
+`"ion"` creates one separately centered example for each metal ion. With
+`SPLIT_BY="pocket_id"`, sibling ions remain grouped by their parent pocket.
+Ion mode changes the cohort and fold membership, so give it a new batch and
+Optuna study identity and rerun its matched controls. The notebook records the
+unit in each run configuration and blocks reuse of a persistent Optuna study
+whose unit differs. EC and joint tasks currently require `"pocket"`.
+
 `FINAL_TEST_BATCH_METRICS` controls only which metric columns are emphasized in
 batch final-test summaries and plots. It does not change which metrics are
 computed or saved in `test_report.json`.

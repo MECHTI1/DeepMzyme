@@ -5,6 +5,207 @@ For the new bounded, one-GPU discovery and confirmation campaign use
 The [earlier architecture pilot](#bounded-metal-architecture-pilot--stage-0-through-stage-2b)
 and Common70 standalone block remain separate historical recipes. Current
 execution and evidence state belongs to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+The user-requested exact-pocket continuation of the recent Antigravity
+benchmark is [below](#exact-pocket-antigravity-matched-l4-diagnostic). The
+earlier PDB-grouped L4 draft is [stopped](#stopped-pdb-grouped-l4-draft) and
+cannot supply comparison runs.
+
+### Metal-ion examples within pocket-grouped folds
+
+For standalone metal training, `--metal-example-unit ion` creates one labeled
+example per parsed metal ion. Keep `--train-val-split-by pocket_id` when matching
+the historical *grouping method*: all ions from a clustered pocket share its
+parent pocket fold. The graph for each ion uses that ion's coordinate and its
+own 10 Å residue neighborhood. With a catalytic summary CSV, each ion must
+match its own summary site; missing or conflicting sites are logged as skips.
+The `pocket` default preserves the existing one-label-per-cluster behavior.
+
+This **does not preserve the historical ordered fold memberships** or the
+1,597-pocket cohort: mixed pockets may now contribute individually labeled
+ions, and a parent with multiple ions has multiple examples. Before any new
+validation campaign, freeze its measured ion cohort, five pocket-grouped fold
+identities, eligibility counts and matched ion-unit control commands in a
+separate recipe/study. The earlier pocket-unit F0/F1/G0/G1 archives are
+historical context only. Do not compare their scores as paired controls or use
+held-out test data to choose the unit. The ion option is currently
+implemented and unit-tested, not experimentally evaluated.
+
+## Exact-pocket Antigravity-matched L4 diagnostic
+
+**Pocket-unit historical protocol stopped after the user's ion-unit correction.**
+Its frozen commands and verified partial outputs remain in the
+[v2 execution ledger](agents_report/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
+Use the identity `gvp_fusion_exact_pocket_l4_v2`. This is a *secondary exact
+PinMyMetal benchmark continuation* requested to compare focused GVP and
+late-fusion changes with the 2026-09-23 Antigravity run. It does not replace
+the primary `pdbid`-grouped development/Stage 6 policy in `Plan.md`, and it
+does not promote an exact-split held-out test to the primary final test. The
+exact cohort has 177 train/test PDB-ID overlaps; its internal pocket folds
+also mix PDB IDs. Label all results accordingly.
+
+### Locked historical protocol
+
+The controlling evidence is the **actual**
+`runs/benchmark_exact_pinmymetal_5fold/{benchmark_enhanced_gvp_esmc,benchmark_enhanced_only_gvp}_fold{0..4}/run_config.json`,
+`dataset_summary.json`, and `split_diagnostics.json`, together with
+`scripts/run_exact_pinmymetal_5fold_cv.py`. The copied summary is explanatory,
+not the source of executable defaults. Reproduce the old internal CV, not the
+stopped non-overlap/PDB-grouped draft:
+
+Here a *pocket* is one spatial cluster of metal ions and nearby residues, not
+necessarily one ion. Ions connected within the default 4.5 Å merge distance
+form one pocket, so a binuclear cluster stays together. A PDB structure can
+still contribute several separate pockets, potentially with different metals.
+The historical `pocket_id` folds assign those pockets separately, so pockets
+from one PDB may appear in both training and validation. A cluster with metals
+mapping to different target classes has no single metal target and is excluded
+from this metal-supervised cohort: Co+Ni both map to Class VIII in the
+historical five-class scheme, whereas Fe+Mn does not map to one class. This is
+a single-label experiment, not mixed-metal multi-label prediction. This split
+intentionally matches Antigravity for a paired comparison, but its PDB overlap
+limits generalization claims.
+
+| Field | Frozen value for the corrected study |
+| --- | --- |
+| Data | Verified v12 archive SHA256 `90c0899829e0ac5ca94a5ef34484b74ca1014d3e9b6b1fba90bd338ee3440dee`; **exact** PinMyMetal `train` directory and its catalytic transition-metal summary, 1,597 retained training pockets; cached ESM and updated external features |
+| Target/cohort | Native `five_class`, `metal_eligibility_scheme=active`; no four-class relabeling or six-class eligibility filter during fitting. Report collapsed-four metrics from the same selected checkpoint. |
+| Internal split | `--train-val-split-by pocket_id --n-folds 5 --fold-index 0..4 --seed 42`; `split_stratify_by=active_targets` by default; **omit** `--split-seed` so the recorded value remains `null` and the effective seed is 42. No PDB-ID regrouping. |
+| Shared training | 50 epochs, batch 16, edge radius 8 Å, conservative node features, legacy geometry, raw-distance RBF, fixed LR schedule, weight decay `1e-4`, inverse-frequency class-weighted CE, no RING/metal nodes/augmentation |
+| G0/G1 | `only_gvp`, LR `3e-4`; G1 alone enables `--gvp-normalize-message-aggregation` |
+| F0/F1 | `gvp` with graph-level `late_fusion`, cached ESMC-300m/960, base LR `3e-5`, GVP LR `3e-4`; F1 alone sets `--gvp-lr-scope branch` to move `init_vec_proj`, `gvp_attn_pool`, `gvp_fusion_proj` to the fast group |
+| Selection | Native `val_metal_balanced_acc` selects the checkpoint, as in the historical run; native-five and collapsed-four metrics and recalls are read at **that same epoch** |
+| Test | No test path, `--run-test-eval`, overlap override, or final-test report ID in this diagnostic. The historical test was already opened; it must not guide this comparison. |
+
+The five historical **ordered** train/validation membership hashes are hard
+acceptance gates, not optional context. For every arm, the corresponding
+`dataset_summary.json` hashes must match the row below exactly. The original
+three model arms shared these hashes within each fold. The historical PDB-ID
+train/validation overlap count is expected to be nonzero and must also match;
+zero PDB overlap here would reveal the wrong split protocol.
+
+| Fold | Train pockets | Validation pockets | Train SHA256 | Validation SHA256 | Shared train/validation PDB IDs |
+| --- | ---: | ---: | --- | --- | ---: |
+| 0 | 1272 | 325 | `4b7c20d5bd235e1431b3c747dcf30914eea2ee6b21e3632ea34cd8b5d2230bec` | `5e45b29050dfec6334f314928bfade081af55d8be97a85e6902d5ce35387c80f` | 58 |
+| 1 | 1272 | 325 | `228bec7c597aa1bc2181ec6ab0329bd2bf892699b81465ec2dcf3c3c9ca99705` | `dd0a6baa3bdc9db713984f8a7e80fef66aa13051f9d3adb52df2083168205e61` | 56 |
+| 2 | 1272 | 325 | `7057d455fa23287e268dfc4facb247280bcac5280922553bb8e7cb83793efc71` | `ea91f0ad2426726b29a6b6f77c9d33c7f21e1afeb28d35c54cb00d1a99274a4c` | 43 |
+| 3 | 1272 | 325 | `767783ed70875a2e9e8f2b6224c06f4f333f8c02e493fc0ccf41ff8663704e8e` | `3b6c313894293b5914bd089f932ba56ecb833b176d7ca6f572eca1c220ff381f` | 49 |
+| 4 | 1300 | 297 | `db252dd6edaae04a45032f6a900acf4634affd8f33d476907b1be26906a9725b` | `a1ad850864a88913a2ef5d5cdf9b2b3d533e0ebde820fbb66cd448ca35074ca5` | 45 |
+
+### Isolated implementation and exact command
+
+Work only under
+`DeepMzyme_Data/notebook_outputs/plans/gvp_fusion_exact_pocket_l4_v2/`
+and on the named Colab VM. Copy the tested experimental trainer changes from
+the stopped study's `source_snapshot.tar.gz` into a **new isolated source
+checkout**; freeze and hash that copy before use. Leave the shared checkout's
+`src/`, `scripts/`, `tests/`, historical runner, and staged patch untouched.
+The stopped `gvp_fusion_diagnostic_l4_v1` commands, manifest, source hash,
+non-overlap data, and two one-epoch smokes are **not reusable** in v2. Keep
+their ledger and archives intact as evidence of the stopped attempt.
+
+Implement a fresh validation-only runner with `plan`, `smoke`, `run`, `status`,
+and `summarize`. Generate exactly **20** full commands (four arms × five
+historical folds × model seed 42) in a new immutable manifest. Fail closed if
+the source/data hash, native target, `pocket_id` grouping, effective seed,
+`active_targets` stratification, historical ordered membership hashes, or
+expected per-fold overlap counts differ. Verify those properties before
+launching any 50-epoch fit and again from every completed run. A partial run
+is never skipped as complete or silently deleted. Do not reuse a persistent
+study or output directory from v1.
+
+The common trainer command is below. The runner fills the arm, fold, paths,
+and learning-rate options while preserving these exact split and target
+settings. Source/bundle SHA256 belong in the new manifest and run receipt;
+they do not alter the historical split. The two new CLI flags exist only in
+the isolated experimental source until reviewed for promotion.
+
+```bash
+/usr/local/bin/python -u /content/DeepMzyme/src/train.py \
+  --task metal --metal-label-scheme five_class \
+  --structure-dir /content/DeepMzyme_Data/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/train \
+  --summary-csv /content/DeepMzyme_Data/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/train/final_data_summarazing_table_transition_metals_only_catalytic.csv \
+  --external-feature-source updated \
+  --external-features-root-dir /content/DeepMzyme_Data/DeepMzyme_Data/updated_feature_extraction \
+  --runs-dir /content/runs/gvp_fusion_exact_pocket_l4_v2 \
+  --run-name gvp_exact_l4_v2_<arm>_fold<fold> \
+  --model-architecture <only_gvp_or_gvp> \
+  --epochs 50 --batch-size 16 --edge-radius 8 \
+  --node-feature-set conservative --metal-node-mode none \
+  --site-geometry-features legacy \
+  --position-noise-std 0 --second-shell-dropout 0 --outer-residue-dropout 0 \
+  --metal-class-weight-mode inverse_frequency --metal-loss-function cross_entropy \
+  --learning-rate <3e-4_or_3e-5> --weight-decay 1e-4 \
+  --rbf-use-raw-distances --lr-schedule fixed \
+  --n-folds 5 --fold-index <fold> --train-val-split-by pocket_id \
+  --seed 42 --selection-metric val_metal_balanced_acc \
+  --gvp-lr-scope <trunk_or_branch> \
+  --export-selected-val-predictions --device cuda
+```
+
+For F0/F1 append `--fusion-mode late_fusion --gvp-learning-rate 3e-4
+--esm-embeddings-dir /content/DeepMzyme_Data/DeepMzyme_Data/esm_embeddings`;
+for G1 append `--gvp-normalize-message-aggregation`; F1 alone uses
+`--gvp-lr-scope branch`. Omit `--split-seed` and
+`--split-stratify-by` to match the saved historical config exactly. Omit
+all test and final-report options. Baseline F0/G0 must be rerun under the
+same isolated source as their challengers; the historical runs are
+reproduction references, not substitutes for matched controls.
+
+### Execution gates and interpretation
+
+1. CPU: confirm the shared source matches the pre-study Git state and the
+   staged patch fingerprint in the [stop ledger](agents_report/GVP_FUSION_L4_EXECUTION_20260924.md).
+   Test unchanged trunk defaults, exact optimizer-group movement, command
+   exclusion of all test options, and refusal of wrong cohort/fold hashes.
+   Freeze source, manifest, 20 commands, and an artifact inventory.
+2. L4: verify assignment with `colab status`, stock PyTorch/CUDA, v12 bundle
+   SHA256, complete train-side ESM/external coverage, and exact-train-only
+   extraction. Run four one-epoch fold-0 smokes. Each smoke must reproduce
+   the historical fold-0 membership hashes and 58 shared PDB IDs. Smoke
+   scores are not selection evidence.
+3. Cost gate: charge the stopped v1 allocation (approximately 0.5 hour) to
+   the original 16-hour L4 ceiling; do not reset that ceiling by renaming
+   the study. Use one verified L4, at most four hours per owned session with
+   15 minutes reserved for transfer and teardown. Admit a complete pair only
+   when 1.25 × the worst measured 50-epoch fit time × remaining fits, plus
+   setup/transfer/teardown reserve, fits the remaining ceiling. Do not cut
+   epochs/folds or launch half a pair as a result claim.
+4. Full fits: run and verify F0/F1 on all five shared historical folds, then
+   G0/G1 on those same five folds. Complete one fit at a time; copy each
+   archive locally and match remote/local SHA256 before the next fit. Keep
+   incomplete attempts and record their allocated time. No automatic GPU
+   reprovisioning or fallback.
+5. Analysis: compare F1−F0 and G1−G0 on five paired folds using the native
+   selected-checkpoint five-class BA and the same-checkpoint collapsed-four
+   view. Report every fold's difference, selected epoch, losses, native
+   Mn/Cu/Zn/Fe/CoNi recalls and collapsed-four recalls. A 10,000-resample
+   paired fold bootstrap 95% CI is descriptive with only five folds. Apply
+   the predeclared ≥1.5 percentage-point mean gain, CI lower bound >0, and
+   no >3-point mean recall loss in any non-Mn native class (Cu, Zn, Fe, or
+   Co+Ni/Class VIII); this conservative definition of rare-class protection
+   is fixed before seeing full-fit results. No winner from incomplete
+   pairs. Reconcile F0/G0 baseline metrics with the historical *selected*
+   checkpoints before claiming a gain relative to Antigravity; do not use
+   max-over-epoch collapsed-four summary numbers as selected-checkpoint
+   results.
+6. Close out: verify the named session is stopped. Save `comparison.csv`,
+   `paired_bootstrap.json`, `class_recall.csv`, `artifact_manifest.json`,
+   `split_audit.json`, and `campaign_report.md`, plus each fit's config,
+   metadata, 50 validation rows, selected checkpoint, and aligned validation
+   predictions. State the exact-split PDB-overlap limitation beside every
+   benchmark comparison. No held-out test, Stage 6B refit, or Stage 7
+   promotion is authorized by this diagnostic.
+
+## Stopped PDB-grouped L4 draft
+
+`gvp_fusion_diagnostic_l4_v1` was stopped on 2026-09-24 because its
+non-overlap cohort, direct four-class target, and PDB-ID-grouped folds do not
+match the user's intended Antigravity comparison. Its two completed
+one-epoch smokes are preparation evidence only; no 50-epoch fit ran. The
+[full stopped plan](archive/experiments/gvp_fusion_l4_v1_stopped_plan.md)
+and [execution ledger](agents_report/GVP_FUSION_L4_EXECUTION_20260924.md)
+remain available for audit. Do not run its commands or mix its artifacts with
+`gvp_fusion_exact_pocket_l4_v2`.
 
 ## Recovery of a frozen GVP capacity diagnostic
 

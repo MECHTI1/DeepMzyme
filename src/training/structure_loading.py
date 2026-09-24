@@ -18,6 +18,7 @@ from training.labels import (
     parse_ec_label_token_from_structure_path,
     parse_structure_ec_numbers,
 )
+from training.metal_examples import metal_ion_examples
 from training.site_filter import AllowedSiteMetalLabels, matched_site_metal_types, pocket_matches_allowed_sites
 
 
@@ -100,7 +101,10 @@ def load_structure_pockets(
     require_external_features: bool,
     unsupported_metal_policy: str = "error",
     ec_label_depth: int = 1,
+    metal_example_unit: str = "pocket",
 ) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
+    if metal_example_unit not in {"pocket", "ion"}:
+        raise ValueError(f"Unsupported metal example unit: {metal_example_unit!r}")
     try:
         structure = parse_structure_file(str(structure_path), structure_id=structure_path.stem)
         extracted_pockets = extract_metal_pockets_from_structure(structure, structure_id=structure_path.stem)
@@ -151,6 +155,23 @@ def load_structure_pockets(
             )
         except ValueError as exc:
             raise StructureLoadError(str(exc)) from exc
+
+        if metal_example_unit == "ion":
+            try:
+                ion_pockets, ion_skipped = metal_ion_examples(
+                    pocket, structure_path, allowed_site_metal_labels,
+                    unsupported_metal_policy=unsupported_metal_policy,
+                )
+            except ValueError as exc:
+                raise StructureLoadError(str(exc)) from exc
+            skipped_pockets.extend(ion_skipped)
+            for ion in ion_pockets:
+                ion.metadata["ec_label_depth"] = ec_label_depth
+                ion.metadata["ec_numbers"] = ec_numbers
+                if ec_label_token is not None:
+                    ion.metadata["ec_label_token"] = ec_label_token
+            kept_pockets.extend(ion_pockets)
+            continue
 
         matched_summary_metal_types: set[str] = set()
         if allowed_site_metal_labels is not None and not pocket_matches_allowed_sites(

@@ -79,9 +79,12 @@ def load_labeled_pockets_with_report_from_dir(
     ec_label_depth: int = 1,
     ec_label_to_index: Dict[str, int] | None = None,
     metal_eligibility_scheme: str = "active",
+    metal_example_unit: str = "pocket",
     allowed_structure_ids: set[str] | None = None,
 ) -> PocketLoadResult:
     """Load labeled pockets from a structure directory and return them with a load report."""
+    if metal_example_unit == "ion" and required_targets != ("metal",):
+        raise ValueError("Ion examples currently require metal-only supervision")
     structure_root = Path(structure_dir)
     structure_files = find_structure_files(structure_root)
     if allowed_structure_ids is not None:
@@ -124,6 +127,7 @@ def load_labeled_pockets_with_report_from_dir(
                 require_external_features=require_external_features,
                 unsupported_metal_policy=unsupported_metal_policy,
                 ec_label_depth=ec_label_depth,
+                metal_example_unit=metal_example_unit,
             )
         except StructureLoadError as exc:
             if invalid_structure_policy != "skip":
@@ -218,6 +222,7 @@ def load_training_pockets_with_report_from_dir(
     ec_label_depth: int = 1,
     ec_label_to_index: Dict[str, int] | None = None,
     metal_eligibility_scheme: str = "active",
+    metal_example_unit: str = "pocket",
     allowed_structure_ids: set[str] | None = None,
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
@@ -239,6 +244,7 @@ def load_training_pockets_with_report_from_dir(
         ec_label_depth=ec_label_depth,
         ec_label_to_index=ec_label_to_index,
         metal_eligibility_scheme=metal_eligibility_scheme,
+        metal_example_unit=metal_example_unit,
         allowed_structure_ids=allowed_structure_ids,
     )
 
@@ -260,6 +266,7 @@ def load_smoke_test_pockets_from_dir(
     invalid_structure_policy: str = "skip",
     ec_label_depth: int = 1,
     ec_label_to_index: Dict[str, int] | None = None,
+    metal_example_unit: str = "pocket",
 ) -> List[PocketRecord]:
     """Load a small pocket subset for smoke tests, with optional feature requirements relaxed."""
     return load_labeled_pockets_with_report_from_dir(
@@ -279,4 +286,5 @@ def load_smoke_test_pockets_from_dir(
         invalid_structure_policy=invalid_structure_policy,
         ec_label_depth=ec_label_depth,
         ec_label_to_index=ec_label_to_index,
+        metal_example_unit=metal_example_unit,
     ).pockets

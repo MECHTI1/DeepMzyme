@@ -44,7 +44,7 @@ def pocket_split_key(pocket: PocketRecord, split_by: str) -> str:
     if split_by == "pdbid_chain":
         return f"{pdbid}__chain_{chain}"
     if split_by == "pocket_id":
-        return pocket.pocket_id
+        return str(pocket.metadata.get("parent_pocket_id", pocket.pocket_id))
     raise AssertionError(f"Unhandled split_by value: {split_by!r}")
 
 
@@ -429,7 +429,7 @@ def _safe_pocket_split_key(pocket: PocketRecord, split_by: str) -> str:
         return pocket_split_key(pocket, split_by)
     except Exception:
         if split_by == "pocket_id":
-            return str(pocket.pocket_id)
+            return str(pocket.metadata.get("parent_pocket_id", pocket.pocket_id))
         return str(pocket.structure_id)
 
 
@@ -442,7 +442,7 @@ def _safe_identity_values(pocket: PocketRecord) -> dict[str, str | None]:
     else:
         pdbid_chain = f"{pdbid}__chain_{chain}"
     return {
-        "pocket_id": str(pocket.pocket_id),
+        "pocket_id": str(pocket.metadata.get("parent_pocket_id", pocket.pocket_id)),
         "structure_id": str(pocket.structure_id),
         "pdbid_chain": pdbid_chain,
         "pdbid": pdbid,
@@ -512,6 +512,9 @@ def build_split_diagnostics(
         "fold_index": config.fold_index,
         "n_train_pockets": len(split.train_pockets),
         "n_val_pockets": len(split.val_pockets),
+        "metal_example_unit": config.metal_example_unit,
+        "n_train_parent_pockets": len({pocket_split_key(p, "pocket_id") for p in split.train_pockets}),
+        "n_val_parent_pockets": len({pocket_split_key(p, "pocket_id") for p in split.val_pockets}),
         "n_train_groups": len(train_groups),
         "n_val_groups": len(val_groups),
         "train_val_overlap_pocket_id": overlap_counts["pocket_id"],
@@ -606,16 +609,20 @@ def format_split_diagnostics(report: dict[str, Any]) -> str:
 
 def retained_split_identity(pockets: list[PocketRecord], split_by: str) -> dict[str, Any]:
     """Record ordered retained examples, targets and groups for paired-run verification."""
-    examples = [
-        {
+    examples = []
+    for pocket in pockets:
+        row = {
             "structure_id": pocket.structure_id,
             "pocket_id": pocket.pocket_id,
             "group": pocket_split_key(pocket, split_by),
             "y_metal": pocket.y_metal,
             "y_ec": pocket.y_ec,
         }
-        for pocket in pockets
-    ]
+        if "parent_pocket_id" in pocket.metadata:
+            row["parent_pocket_id"] = pocket.metadata["parent_pocket_id"]
+            row["ion_site_id"] = list(pocket.metadata["ion_site_id"])
+            row["ion_symbol_target"] = pocket.metadata["ion_symbol_target"]
+        examples.append(row)
     payload = json.dumps(examples, sort_keys=True, separators=(",", ":"))
     return {
         "n_examples": len(examples),
@@ -641,6 +648,9 @@ def build_dataset_summary(
         "external_feature_source": config.external_feature_source,
         "n_train_pockets": len(split.train_pockets),
         "n_val_pockets": len(split.val_pockets),
+        "metal_example_unit": config.metal_example_unit,
+        "n_train_parent_pockets": len({pocket_split_key(p, "pocket_id") for p in split.train_pockets}),
+        "n_val_parent_pockets": len({pocket_split_key(p, "pocket_id") for p in split.val_pockets}),
         "task": config.task,
         "eligibility": "fully_labelled_intersection" if config.task == "joint" else f"{config.task}_label_required",
         "controlled_ec_auxiliary": config.controlled_ec_auxiliary,

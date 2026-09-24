@@ -271,7 +271,7 @@ def pocket_identity_sets(pockets) -> dict[str, set[str]]:
     pocket_ids: set[str] = set()
     for pocket in pockets:
         structure_ids.add(str(pocket.structure_id))
-        pocket_ids.add(str(pocket.pocket_id))
+        pocket_ids.add(str(pocket.metadata.get("parent_pocket_id", pocket.pocket_id)))
         pdb_id, chain_id, _ec = parse_structure_identity(pocket.structure_id)
         pdb_ids.add(str(pdb_id))
         pdb_chain_ids.add(f"{pdb_id}__chain_{chain_id}")
@@ -383,6 +383,10 @@ def prepare_status_payload(*, stage: str, status: str, config_payload: dict[str,
 def validate_training_configuration(config: TrainConfig) -> None:
     from training.explicit_membership import validate_mode
     validate_mode(config)
+    if config.metal_example_unit not in {"pocket", "ion"}:
+        raise ValueError(f"Unsupported metal example unit: {config.metal_example_unit!r}")
+    if config.metal_example_unit == "ion" and config.task != "metal":
+        raise ValueError("--metal-example-unit ion currently requires --task metal")
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     if config.controlled_ec_auxiliary:
@@ -1186,6 +1190,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             require_full_labels=True,
             required_targets=required_targets_for_task(config.task),
             metal_eligibility_scheme=config.metal_eligibility_scheme,
+            metal_example_unit=config.metal_example_unit,
             summary_csv=config.summary_csv,
             esm_dim=config.esm_dim,
             esm_embeddings_dir=config.esm_embeddings_dir,
@@ -1677,6 +1682,7 @@ def evaluate_held_out_test_split(
             invalid_structure_policy=config.invalid_structure_policy,
             ec_label_depth=config.ec_label_depth,
             ec_label_to_index=prepared.ec_label_to_index,
+            metal_example_unit=config.metal_example_unit,
         )
         if not test_load_result.pockets:
             raise ValueError("No held-out test pockets were loaded.")

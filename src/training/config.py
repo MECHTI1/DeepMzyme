@@ -42,6 +42,7 @@ VALID_SPLIT_BY_CHOICES = ("pdbid", "pdbid_chain", "structure_id", "pocket_id")
 VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
 VALID_INVALID_STRUCTURE_POLICY_CHOICES = ("error", "skip")
 VALID_TASK_CHOICES = ("joint", "metal", "ec")
+VALID_METAL_EXAMPLE_UNITS = ("pocket", "ion")
 VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_METAL_NODE_MODE_CHOICES = METAL_NODE_MODE_CHOICES
@@ -132,6 +133,7 @@ class TrainConfig:
     controlled_ec_auxiliary: bool = False
     metal_label_scheme: str = "split_all_metals"
     metal_eligibility_scheme: str = "active"
+    metal_example_unit: str = "pocket"
     epochs: int = 10
     batch_size: int = 8
     learning_rate: float = 3e-4
@@ -333,6 +335,14 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "merge_fe_class_viii/four_class groups Fe/Co/Ni. "
             "If omitted, DEEPGM_METAL_LABEL_SCHEME is used, defaulting to split_all_metals. "
             f"Accepted aliases include: {', '.join(sorted(METAL_LABEL_SCHEME_ALIASES))}."
+        ),
+    )
+    parser.add_argument(
+        "--metal-example-unit", choices=VALID_METAL_EXAMPLE_UNITS, default="pocket",
+        help=(
+            "For task=metal, use one label per clustered pocket (default) or one "
+            "separately centered, labeled example per metal ion. With ion, "
+            "--train-val-split-by pocket_id groups sibling ions together."
         ),
     )
     parser.add_argument("--epochs", type=int, default=10)
@@ -955,6 +965,8 @@ def resolve_structural_readout_scope(metal_node_mode: str, requested_scope: str)
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
+    if args.metal_example_unit == "ion" and args.task != "metal":
+        parser.error("--metal-example-unit ion currently requires --task metal")
     if args.site_geometry_features != "legacy" and args.model_architecture not in {"gvp", "only_gvp"}:
         parser.error("--site-geometry-features explicit modes require --model-architecture gvp or only_gvp")
     omit_node_features = validate_node_feature_omissions(
@@ -1001,6 +1013,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         controlled_ec_auxiliary=args.controlled_ec_auxiliary,
         metal_label_scheme=metal_label_scheme,
         metal_eligibility_scheme=args.metal_eligibility_scheme,
+        metal_example_unit=args.metal_example_unit,
         epochs=args.epochs,
         batch_size=args.batch_size,
         esm_dim=args.esm_dim,
