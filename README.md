@@ -76,6 +76,16 @@ Task entry points:
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train_ec.py --help
 ```
 
+### Reproducing the Exact Zenodo PinMyMetal Benchmark
+
+To replicate the 99.89% exact Zenodo PinMyMetal benchmark with ion-level supervision:
+
+```bash
+# 1-command end-to-end replication (downloads from HF, validates SHA-256, verifies, and runs):
+bash scripts/reproduce_zenodo_pmm_benchmark.sh
+```
+Full documentation is in [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md).
+
 Interactive workflow:
 [`notebooks/DeepMzyme_training_colab.ipynb`](notebooks/DeepMzyme_training_colab.ipynb).
 For browser and terminal access to the same Colab GPU VM, including the required
@@ -110,6 +120,7 @@ metal playbook.
 | What exact metal stage block should be used? | [`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md) |
 | What is the current EC recipe compatibility state? | [`docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`](docs/EC_TRAINING_PIPELINE_PLAYBOOK.md) |
 | Which verified technical issues remain unfixed? | [`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`](docs/FOLLOW_UP_TECHNICAL_ISSUES.md) |
+| How do I reproduce the exact Zenodo PinMyMetal ion-level benchmark? | [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) |
 | Where is the complete documentation index? | [`docs/README.md`](docs/README.md) |
 
 ## Main repository areas
