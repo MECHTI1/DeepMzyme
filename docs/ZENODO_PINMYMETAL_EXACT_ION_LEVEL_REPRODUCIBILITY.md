@@ -118,7 +118,27 @@ python scripts/verify_zenodo_pmm_ion_dataset.py \
 
 ## 6. Execution Guide (Google Colab & Local GPU)
 
-### Quick Launch on Google Colab
+### One-Command Full Pipeline Replication
+The easiest and most robust way to reproduce the benchmark on any environment (local GPU workstation or Colab) is via the master reproduction script:
+
+```bash
+bash scripts/reproduce_zenodo_pmm_benchmark.sh
+```
+
+This single command:
+1. Automatically verifies whether the dataset is present; if not, fetches `train_and_test_sets_structures_zenodo_pmm_exact.tar.gz` from Hugging Face.
+2. Cryptographically validates the archive SHA-256 (`24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
+3. Extracts and lays out the structures and manifests.
+4. Executes `scripts/verify_zenodo_pmm_ion_dataset.py` to confirm 100% structure integrity and multinuclear site separation.
+5. Launches the 5-fold cross-validation campaign across all comparative models.
+6. Prints the benchmark comparison table comparing results directly against published PinMyMetal and Metal3D metrics.
+
+To run only a single fold (e.g. Fold 0 for rapid validation) or custom epochs:
+```bash
+FOLDS="0" EPOCHS=50 bash scripts/reproduce_zenodo_pmm_benchmark.sh
+```
+
+### Manual Step-by-Step Launch on Google Colab
 On an active Colab session with GPU (e.g. NVIDIA L4):
 
 1. **Bootstrap & Download Dataset:**
@@ -136,7 +156,7 @@ On an active Colab session with GPU (e.g. NVIDIA L4):
      --data-dir /content/DeepMzyme_Data/DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact
    ```
 
-3. **Launch the 5-Fold Benchmark Runner:**
+3. **Launch the Benchmark Runner:**
    ```bash
    nohup python3 -u /content/DeepMzyme/scripts/run_zenodo_pmm_exact_5fold_cv.py \
      --models benchmark_enhanced_only_gvp benchmark_only_esm benchmark_enhanced_gvp_esmc \
