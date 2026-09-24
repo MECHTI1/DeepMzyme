@@ -7,7 +7,7 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-24.
 
-**2026-09-24 ion-unit correction & Zenodo exact benchmark (RUN LOST - NO RESULTS YET):**
+**2026-09-24 ion-unit correction & Zenodo exact benchmark (RELAUNCHED after total run loss):**
 - **Contract & Architecture:** `--metal-example-unit ion` is fully implemented for standalone metal training in CLI, runner scripts, and Colab notebook, ensuring multi-nuclear sites (e.g. `1a0e` 3-Zn center) receive independent coordinates and residue microenvironments while grouping sibling ions under parent pocket IDs.
 - **Dataset Fidelity:** Reconstructed from published Zenodo source rows (`classmodel_train_set.csv` and `classmodel_test_set.csv`) at **99.89% exact fidelity** (9,398 / 9,408 source rows: 7,911 train sites across 6,443 PDBs, 1,487 test sites across 1,281 PDBs).
 - **Hugging Face Hosting:** Published permanently to [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) (`train_and_test_sets_structures_zenodo_pmm_exact.tar.gz`, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
@@ -36,6 +36,19 @@ Last scientific-policy documentation update: 2026-09-24.
     (section "Post-mortem"): artifacts are written only to ephemeral VM disk, the best
     checkpoint is held in memory until the run ends, and the ~11-minute graph
     construction phase emits no progress output and is repeated for every fold.
+- **Relaunch in flight (session `pmm-zenodo-v2`, started 2026-09-24 12:05 UTC / 15:05 local):**
+  - Fold 0 of `benchmark_enhanced_only_gvp`, 50 epochs, lr=3e-4, raw RBF, seed 42,
+    now launched with **`--save-epoch-checkpoints`** so an interrupted run keeps its weights.
+  - Artifacts are mirrored off the VM every 5 minutes by
+    `scripts/colab_artifact_streamer.py` into `~/zenodo_pmm_artifacts`, so a VM reclaim
+    costs at most one poll interval instead of the whole fold.
+  - **Measured** structure-parsing throughput: **3.0 structures/s**, i.e. **~36 minutes**
+    to parse the 6,443 training structures. The previously documented "~9-11 minutes"
+    for this phase was an estimate and is wrong by roughly 3x; budget fold timings
+    accordingly (~36 min parse + ~32 min train + test parse/eval).
+  - Two runner defects found and fixed before relaunching (see below), either of which
+    would have produced an empty comparison table even from a fully successful run.
+
   - Master Guide: [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)
 
 ## Current objective

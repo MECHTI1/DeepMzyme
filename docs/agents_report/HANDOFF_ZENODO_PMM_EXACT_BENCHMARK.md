@@ -192,6 +192,26 @@ produced lived only on that VM's ephemeral disk.
    **unmounted**. The root filesystem has only ~7.4 GB free (97% full), so a download
    target must be chosen and mounted before retrieving run artifacts.
 
+### Defects found while hardening (fixed 2026-09-24, staged)
+1. **The runner looked for a checkpoint filename training never writes.**
+   `scripts/run_zenodo_pmm_exact_5fold_cv.py` expected `best_checkpoint.pt`, while
+   `src/training/run.py` persists `best_model_checkpoint.pt` (and
+   `last_model_checkpoint.pt`). Consequences: `fold_is_complete` always returned False,
+   so `--skip-existing` could never skip a finished fold; and `evaluate_test_split`
+   printed "Checkpoint not found" and returned `None`, **silently skipping the held-out
+   test evaluation for every fold**. A fully successful 50-epoch campaign would still
+   have produced an empty Fig 2b comparison table. Fixed via `resolve_fold_checkpoint`.
+2. **The structure-parsing phase is now instrumented.** `src/training/data.py` reports
+   progress, rate and ETA every 250 structures for sets larger than 200
+   (`DEEPMZYME_LOAD_PROGRESS_EVERY` overrides; 0 disables). First measurement on an L4:
+   **3.0 structures/s -> ~36 min for the 6,443 train structures**, about 3x the
+   previously documented 9-11 min estimate.
+3. **`--save-epoch-checkpoints` is now exposed by the runner**, so long remote runs
+   survive interruption with at most one epoch lost.
+4. **`scripts/colab_artifact_streamer.py`** mirrors a remote run directory to local disk
+   on an interval, keeping metrics plus the newest checkpoint per run and pausing when
+   local free space runs low.
+
 ### Pre-flight checklist for the relaunch
 - [ ] Mount Drive on the VM and write run outputs there (survives a VM reap).
 - [ ] Enable per-epoch checkpointing for any run longer than a few minutes.
