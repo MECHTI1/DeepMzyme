@@ -28,6 +28,10 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Locked Linux environment and Colab overlay boundary | [`../requirements/README.md`](../requirements/README.md) | Scientific stage policy |
 | Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |
 | Reproducibility remediation decisions and verification | [`REPRODUCIBILITY_REMEDIATION_PLAN.md`](REPRODUCIBILITY_REMEDIATION_PLAN.md) | Scientific stage policy |
+| Optional PMM source-site benchmark implementation plan | [`VERY_EXACT_PMM_SETS_PLAN.md`](VERY_EXACT_PMM_SETS_PLAN.md) | Implemented dataset or validated comparison |
+| PinMyMetal exact 5-fold CV reproducibility playbook | [`EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md`](EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) | Multi-task or unrelated split policies |
+| Zenodo PinMyMetal exact ion-level 5-fold CV reproducibility playbook | [`ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) | Non-destructive ion-level replication & benchmark guide |
+| PinMyMetal 5-fold three-architecture benchmark summary | [`notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md`](notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md) | Unverified pilot results |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
 | Sequence-remoteness protocol, validation replay and support gates | [`REMOTE_HOMOLOGY_ADDENDUM.md`](REMOTE_HOMOLOGY_ADDENDUM.md) | Homology absence, new training authorization or model promotion |
@@ -57,74 +61,3 @@ For the planned continuous-queue, transfer and preparation improvements, read
 [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md). It includes
 measured overhead, implementation order, failure handling and performance gates;
 current pause/resume authority remains in the current-status document.
-
-### Metal
-
-- Use the metal playbook for exact stage blocks, budgets, seeds, ranges,
-  expected artifacts, and gates.
-- For the bounded one-GPU discovery and confirmation recipe, use
-  [metal_single_gpu_20h_v2](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign):
-  every required arm receives learning-rate/capacity screening and two-candidate
-  seed repeats, followed by bounded mixed diagnostics and protected numeric
-  continuation when affordable. Confirmation has a protected allowance. Its
-  dedicated serial CLI owns the queue. Read current status before using this
-  recipe: a measured deficit requires the recorded stop/continue decision.
-  An authorized continuation preserves allocation history, scientific
-  identities and protected comparisons while recording the larger ceiling.
-- For the retained earlier bounded one-GPU architecture campaign, use the
-  [Stage 0–2B pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-metal-architecture-pilot--stage-0-through-stage-2b):
-  CPU feature-overlay preparation, early/late and target-formulation screens,
-  conditional hybrid, persistent budget accounting, and validation-only reports.
-- After the original two architecture/LR blocks, use the separate
-  [Stage 2B coordination-geometry pilot](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-coordination-geometry-pilot--stage-2b)
-  for matched counts, angular-summary, and generic-metal-node comparisons. It
-  shares the original cumulative budget before the remaining architecture
-  blocks resume.
-- After those bounded queues close, the separate
-  [matched RING continuation](METAL_TRAINING_PIPELINE_PLAYBOOK.md#bounded-matched-ring-continuation--stage-2b)
-  fixes node shell annotations, trains fresh on/off controls, and admits
-  complete family blocks within the original remaining budget.
-- Use the configuration guide for option meaning, precedence, study reuse, and
-  artifact interpretation.
-- Read current status before choosing a stage.
-- The primary final-test route is currently an unresolved scientific decision;
-  the playbook warning links to the dataset record.
-
-### EC
-
-The [Phase-3 training-only association recipe](EC_TRAINING_PIPELINE_PLAYBOOK.md#phase-3--training-only-metal--ec1-association)
-provides a local CPU metal × EC1 analysis with separate source panels and
-protein-group weighting. It does not certify the later shared-encoder experiment.
-
-The EC playbook preserves scientifically important historical budgets, ranges,
-label-depth progression, and contrastive-loss intent. Some variables and final
-workflow values do not match the current notebook. Read its warning and
-[`TECH-002`](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface)
-before copying affected blocks. The opening standalone Stage 0–2B recipe is
-reconciled against current command expansion; legacy HPO and final-test blocks
-remain outside that certification. The metal playbook retains its earlier
-paired four-/six-class standalone recipe, followed by the separate bounded
-architecture pilot. Recipe checks are not model results.
-
-## Evidence storage
-
-- `notebook_outputs/summaries/`: immutable human-readable batch summaries.
-- `notebook_outputs/raw/`: copied outputs, exact configs, recovered metadata,
-  and historical test-access evidence.
-- `archive/`: recoverable historical documents that are no longer current.
-- CLEAN/CARE/PinMyMetal preparation `provenance/` directories: tracked
-  lightweight copies of generated dataset metadata.
-
-Read summary first, then exact raw/config evidence. If evidence is absent, use
-`MISSING — recovery required`; do not reconstruct unsupported details.
-
-## Coordination rules
-
-- Validation evidence owns model and hyperparameter decisions.
-- Historical held-out-test values are access evidence only.
-- Keep trial IDs namespaced by family, study/batch, and storage identity.
-- Update current status, parameter findings, experiment index, and dataset
-  authority in the same change when a new result affects them.
-- Preserve raw evidence and negative/incomplete findings.
-- Treat the current dirty worktree as user-owned.
-- Do not move working code/data paths as part of documentation cleanup.

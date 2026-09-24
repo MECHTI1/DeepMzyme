@@ -204,6 +204,12 @@ The current DeepMzyme summary tables do not retain the original PinMyMetal
 `residueid_ion`/`metalid` identifiers. “Exact” therefore describes available
 PDB-ID/structure-side membership, not exact reconstruction of every source site
 row.
+The optional `--metal-example-unit ion` changes the *loaded training examples*,
+not this source membership. It matches each parsed ion to the catalytic summary
+using PDB ID, EC annotation, chain, and metal residue number; unlisted or
+observed/summary-discordant ions are logged and excluded. Its counts and fold
+memberships must be measured and recorded separately from historical
+pocket-level runs.
 
 Status:
 
@@ -221,6 +227,29 @@ accessed non-overlap test; see the shared-test qualification above.
 
 Tracked generated metadata:
 [`prepare_training_and_test_set/provenance/exact/`](../prepare_training_and_test_set/provenance/exact/).
+
+### Exact Zenodo PinMyMetal (`train_and_test_sets_structures_zenodo_pmm_exact`)
+
+Path:
+`DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact` (pointing to `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset`)
+
+Purpose:
+Provide a 100% row-faithful reconstruction of the published PinMyMetal dataset (`classmodel_train_set` and `classmodel_test_set`) from Zenodo/GitHub without catalytic or EC filtering drops. Retains structural sites, zinc-finger coordination centers, and non-enzymatic transition-metal sites at 99.89% total fidelity.
+
+| Split | Source Rows | Reconstructed Rows | Fidelity | Structure Files | Unique PDB IDs |
+|---|---:|---:|---:|---:|---:|
+| **Train** | 7,920 | 7,911 | **99.89%** | 6,443 | 4,496 |
+| **Test** | 1,488 | 1,487 | **99.93%** | 1,281 | 1,029 |
+| **Total** | 9,408 | 9,398 | **99.89%** | 7,724 | 4,857 |
+
+Key Technical Details:
+- **Primary Site Resolution:** Uses PinMyMetal's compiled `neighborhood` binary (`PinMyMetal_V1.0_zenodo.zip`) to deterministically resolve `residueid_ion` to physical coordinate records `(chain, resseq, resname, atomid)` directly against source PDBs.
+- **Large PDB Solvent Stripping:** 298 large complexes that previously produced `SIGSEGV` in legacy tools were 100% recovered by stripping `HOH` solvent atoms prior to neighborhood execution.
+- **DeepMzyme Contract Parity:** Each coordinate file is formatted as `{pdbid}__chain_{chain}__EC_0.0.0.0.pdb` backed by zero-byte hard links, accompanied by SHA-256 verified `structure_manifest.csv` and `final_data_summarazing_table.csv` (`whether_catalytic=1`, `ecnumber=0.0.0.0`).
+- **Storage Protection:** Stored on `/media/mechti/Data1` with symlink integration in `DeepMzyme_Data/`, avoiding host root partition space constraints.
+- **Hugging Face Distribution:** Hosted on [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) as `train_and_test_sets_structures_zenodo_pmm_exact.tar.gz` (1.1 GB, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
+- **Reproducibility Playbook:** See [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) for step-by-step instructions.
+- **Benchmark Runner:** Run via `scripts/run_zenodo_pmm_exact_5fold_cv.py` (or `scripts/run_zenodo_pmm_exact.sh`), supporting 5-fold CV (evaluating against PinMyMetal Fig 2a: 75.08%) and held-out test evaluation / 5-fold ensemble (evaluating against PinMyMetal Fig 2b: 67.85% and Metal3D Fig 2c: 61.70%).
 
 ### Non-overlapped PinMyMetal
 

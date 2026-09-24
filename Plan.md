@@ -26,6 +26,7 @@ clearly contains newer working logic that should be preserved.
 | Documentation index, validation/testing order, and output folder map | `docs/README.md` |
 | Current experiment progress and next planned action | `EXPERIMENT_STATUS.md` |
 | Dataset/split identity, bundle provenance, and test-use history | `docs/DATASETS.md` |
+| Zenodo PinMyMetal exact ion-level dataset & 5-fold CV reproducibility | `docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md` |
 | Validation/HPO parameter findings | `docs/PARAMETER_FINDINGS.md` |
 | Experiment-batch index and evidence links | `docs/notebook_outputs/README.md` |
 | Verified but deliberately unfixed technical issues | `docs/FOLLOW_UP_TECHNICAL_ISSUES.md` |
@@ -139,6 +140,17 @@ The implemented five-class scheme (`five_class`) remains valid for explicitly
 labeled alternative experiments and for preserving historical evidence. It
 keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
 name and Optuna study whenever the target scheme changes.
+
+Metal training also has an optional **example unit**. The default `pocket`
+unit preserves historical clustered-pocket labels. The `ion` unit makes one
+separately centered graph and one target per metal ion, including distinct
+Fe and Mn examples from a mixed cluster. Both examples retain the original
+parent pocket as their `pocket_id` split group, so ions from one cluster
+cannot cross train/validation folds. This option currently applies only to
+standalone metal training. Its changed cohort and graph geometry require fresh
+matched controls; historical pocket-unit scores are context, not paired
+ion-unit comparison results. Held-out-test rules and primary target policy are
+unchanged.
 
 The bounded architecture pilot includes that five-class scheme as an additional
 matched challenger across the same three core families. For this pilot every
@@ -557,6 +569,8 @@ protein/structure-level. Multiple pockets from one protein are repeated views
 of one EC annotation, not independent EC labels. Preserve structure/protein
 grouping, `pdbid` split protection where applicable, and EC group weighting
 such as `structure_id` in standalone and auxiliary experiments.
+When using ion-level metal examples, keep ions from one parent pocket together
+in every split; do not duplicate structure-level EC supervision per ion.
 
 Cross-task leakage protection is mandatory. A protein held out for either
 primary task must be excluded from all shared-encoder training, including loss
@@ -638,6 +652,7 @@ can reproduce a command-line run.
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. The raw CLI default is an implementation default, not scientific preference for joint training. | Expose |
 | Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the required challenger uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
+| Data policy | `--metal-example-unit` | `pocket`; choices `pocket`, `ion` | For standalone metal training, use one clustered-pocket label or one example and target per matched metal ion. Ion examples keep the parent pocket as their fold group and use their own metal coordinate and 10 Å residue neighborhood. | Expose for metal diagnostics |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of pocket graphs per mini-batch. | Expose / sweep |
 | Training | `--learning-rate` | `3e-4` | Optimizer step size. Previous serious baselines often start at `3e-5`. | Expose / sweep |
