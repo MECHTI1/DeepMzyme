@@ -133,6 +133,7 @@ is owned by [`Plan.md`](../Plan.md).
 | Dataset ID | Scientific purpose | Materialized locally | In current v12 bundle | Test/fold evaluation record | Current interpretation |
 |---|---|---:|---:|---|---|
 | `pinmymetal-source` | Original PinMyMetal class-model membership and site provenance | Source files tracked | No, source membership only | Not an executable split by itself | Primary membership evidence |
+| `very_exact-pmm_sets` | Optional PMM source-row site benchmark | Complete source-row feature audit in isolated output; 6,791/9,408 unique, no training dataset | No | No model evaluation | Coverage and site-type representation gates fail; Parts 2–3 not ready |
 | `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | No completed test evaluation found | Possibly overlapped comparison/validation route |
 | `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | Yes | Seven early test evaluations found | Historically accessed; not pristine |
 | `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation found | Documented severe comparison variant |
@@ -162,6 +163,33 @@ their CARE/CLEAN `HEADER` and `COMPND` provenance text differs. See
 pairwise interpretation, and verification command.
 
 ## PinMyMetal
+
+The separate `very_exact-pmm_sets` audit preserves all 9,408 source rows and
+their original train/test sides with a checksum-derived row UID. The pinned
+files have 7,920 train and 1,488 test rows; PMM's released `dropna()` removes
+none, but its training script then requests a `source` column absent from both
+files. Its published effective model cohort is therefore not certified by
+these counts. The verified Figshare v1 archive supplies deposited element and
+coordinate candidates, but no direct PMM internal-ID-to-ion join. The isolated
+[coordinate-only deposition crosswalk](PMM_DEPOSITION_CROSSWALK.md) has **0 exact, 3,409
+ambiguous, 0 unmatched, and 5,999 incomplete** source-row audit records; they
+are **not training examples**. The initial `very_exact-pmm_sets` site manifests
+remain empty and cannot be used for training or a direct PMM performance
+claim. Official Zenodo V1.0 code and release assets also lack the original
+NEIGHBORHOOD join. A preceding
+[bounded feature check](PMM_FEATURE_MATCH_FEASIBILITY.md) established the
+fixed rule. The subsequent [complete feature audit](PMM_FULL_FEATURE_CROSSWALK.md)
+reviewed all source rows: **6,791 unique, 153 ambiguous, and 2,464 unavailable**.
+Unique train/test coverage is **5,691/7,920** and **1,100/1,488**. Common
+ED-containing site types are disproportionately excluded; the full-cohort
+coverage and representation gates fail despite 26/26 passing independent
+sample checks. The isolated crosswalk and exclusion ledger are **audit
+artifacts, not training examples**. `very_exact-pmm_sets` remains unbuilt;
+Parts 2–3 have not started. See the
+[targeted recovery](PMM_DEPOSITION_CROSSWALK.md#targeted-provenance-recovery-2026-09-23)
+and [unsent author request](PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md). See the
+[source audit](PMM_SOURCE_AUDIT.md) for hashes and source counts.
+The existing `pinmymetal-exact` PDB projection below is unchanged.
 
 ### Original membership
 

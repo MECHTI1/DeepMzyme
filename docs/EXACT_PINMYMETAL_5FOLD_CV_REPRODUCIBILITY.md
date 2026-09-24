@@ -11,12 +11,21 @@
 
 This document provides exhaustive, deterministic reproduction specifications for running the exact **PinMyMetal 5-Fold Cross-Validation Benchmark** within DeepMzyme.
 
+**Source-site audit qualification (2026-09-23):** Here “exact PinMyMetal”
+names DeepMzyme's historical PDB-projection/catalytic-pocket dataset. It does
+not mean the same PMM source rows, individual ion anchors, or published fold
+membership. The [source audit](PMM_SOURCE_AUDIT.md) found 7,920/1,488 PMM
+train/test source rows versus this document's 1,597/352 loaded pockets; PMM
+row-fold IDs have not been recovered. The PMM Fig. 2a numbers below are
+historical context, not a paired or direct reproduction comparison. Existing
+test access remains documented in [DATASETS.md](DATASETS.md).
+
 Any researcher or AI agent reading this repository can replicate the exact runs, evaluation protocols, and per-fold performance metrics reported below.
 
 ### Key Empirical Findings
-1. **Direct Alignment with PinMyMetal (Figure 2a)**:
+1. **Historical numerical context from PinMyMetal (Figure 2a)**:
    - In *PinMyMetal* (Nature Communications 2025, Fig. 2a), the authors report a headline cross-validation balanced accuracy of **~75.08%** across 4 collapsed metal classes (Mn: 90.3%, Zn: 73.8%, Group VIII: 73.3%, Cu: 62.9%) derived from **5-fold cross-validation on their training dataset**.
-   - Under the identical dataset, identical 5-fold stratification, and identical collapsed-4 class aggregation, **DeepMzyme achieves 81.27% (Fold 0) and 75.88% (Fold 1) Validation Balanced Accuracy (Mean: 78.58%)**, matching and exceeding PinMyMetal's reported baseline.
+   - In two recorded DeepMzyme folds on the PDB-projection cohort, collapsed-four validation balanced accuracy was **81.27% (Fold 0) and 75.88% (Fold 1), mean 78.58%**. Different row cohorts and unverified fold identity prevent a direct PMM baseline claim.
 2. **Resolution of the "Generalization Gap"**:
    - In strict held-out test splits without pocket overlap, test performance is ~58–60% due to the complete absence of homology.
    - In pocket-stratified cross-validation (`pocket_id`), validation balanced accuracy reaches **~78.6%**, and individual-fold test set balanced accuracy reaches **74.2%–77.6%**. This confirms that the tabular pocket split preserves shared local geometric motifs between train and validation partitions.
@@ -43,7 +52,7 @@ Any researcher or AI agent reading this repository can replicate the exact runs,
 
 ## 3. Dataset Paths & Data Verification
 
-The exact PinMyMetal dataset consists of transition metal binding catalytic pockets partitioned as follows:
+The historical DeepMzyme `exact_pinmymetal` PDB-projection dataset consists of transition metal binding catalytic pockets partitioned as follows:
 - **Training Set Directory**: `DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/train`
   - Summary CSV: `final_data_summarazing_table_transition_metals_only_catalytic.csv` (1,597 total training pockets across 1,483 PDB structures)
   - Train distribution across 5 folds: 1,272 train pockets / 325 validation pockets per fold
@@ -57,6 +66,9 @@ The exact PinMyMetal dataset consists of transition metal binding catalytic pock
 ## 4. Empirical Benchmark Results (Recorded September 22, 2026)
 
 ### Fold-by-Fold Performance Table
+
+The PMM paper column is unpaired historical context. The mean uses only the
+two completed DeepMzyme folds listed here, not all five folds.
 
 | Metric Scope | Fold 0 | Fold 1 | **Mean (Folds 0–1)** | PinMyMetal (Fig 2a) |
 | :--- | :---: | :---: | :---: | :---: |

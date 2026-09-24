@@ -28,6 +28,12 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Locked Linux environment and Colab overlay boundary | [`../requirements/README.md`](../requirements/README.md) | Scientific stage policy |
 | Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |
 | Reproducibility remediation decisions and verification | [`REPRODUCIBILITY_REMEDIATION_PLAN.md`](REPRODUCIBILITY_REMEDIATION_PLAN.md) | Scientific stage policy |
+| Optional PMM source-site benchmark implementation plan | [`VERY_EXACT_PMM_SETS_PLAN.md`](VERY_EXACT_PMM_SETS_PLAN.md) | Verified site coverage or model-quality evidence |
+| PMM source-row hashes, labels, coverage, and mapping blockers | [`PMM_SOURCE_AUDIT.md`](PMM_SOURCE_AUDIT.md) | A training-ready cohort or published-score reproduction |
+| PMM Figshare deposition, row-to-ion candidate review, and per-class coverage | [`PMM_DEPOSITION_CROSSWALK.md`](PMM_DEPOSITION_CROSSWALK.md) | Certified structural matches or training examples |
+| Bounded PMM feature-to-ion matching controls, ambiguous cases, and coverage | [`PMM_FEATURE_MATCH_FEASIBILITY.md`](PMM_FEATURE_MATCH_FEASIBILITY.md) | Full-cohort site coverage or training examples |
+| Complete PMM source-row feature audit, exclusions, representation and materialization gate | [`PMM_FULL_FEATURE_CROSSWALK.md`](PMM_FULL_FEATURE_CROSSWALK.md) | A training dataset or matched PMM model result |
+| Unsent request for the missing PMM source-row provenance | [`PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md`](PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md) | Evidence that an ID mapping has been supplied |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
 | Sequence-remoteness protocol, validation replay and support gates | [`REMOTE_HOMOLOGY_ADDENDUM.md`](REMOTE_HOMOLOGY_ADDENDUM.md) | Homology absence, new training authorization or model promotion |

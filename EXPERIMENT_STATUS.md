@@ -9,7 +9,26 @@ Last scientific-policy documentation update: 2026-09-22.
 
 ## Current objective
 
-**Exact PinMyMetal 5-Fold Cross-Validation Benchmark (2026-09-22):** Direct replication of the Nature Communications (2025) PinMyMetal evaluation protocol (`--train-val-split-by pocket_id --n-folds 5`) using the multimodal Enhanced GVP + ESM-C architecture (`benchmark_enhanced_gvp_esmc`). On the exact PinMyMetal dataset (1,597 training pockets across 1,483 structures, 352 held-out test pockets across 316 structures), Fold 0 achieved **81.27%** collapsed-4 validation balanced accuracy (**77.62%** held-out test balanced accuracy) and Fold 1 achieved **75.88%** collapsed-4 validation balanced accuracy (**74.21%** held-out test balanced accuracy), achieving a two-fold mean validation balanced accuracy of **78.58%** (matching/exceeding PinMyMetal Fig 2a's reported ~75.08%). Complete deterministic CLI commands, hyperparameters, per-class recall tables, and reproduction instructions are documented in [`docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md`](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) and automated via [`scripts/run_exact_pinmymetal_5fold_cv.py`](scripts/run_exact_pinmymetal_5fold_cv.py).
+**Historical exact-PDB PinMyMetal 5-fold workflow (2026-09-22):** DeepMzyme's `pocket_id` fivefold runner used the catalytic PDB-projection dataset (1,597 training pockets; 352 test pockets), not the original PMM row cohort or verified PMM fold IDs. The two recorded folds reached **81.27%** and **75.88%** collapsed-four validation balanced accuracy (two-fold mean **78.58%**); their test balanced accuracies were **77.62%** and **74.21%**. PMM Fig. 2a is historical numerical context, not a matched baseline or direct reproduction claim. Commands and run details remain in [`docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md`](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md).
+
+**PMM source-site audit (2026-09-23):** The pinned source files have 7,920
+train and 1,488 test rows, all surviving the released `dropna()` step. Numeric
+labels are verified. Figshare v1 was retrieved and checked via its public API;
+its coordinate-only review yielded zero direct matches. The complete
+[fixed-rule feature audit](docs/PMM_FULL_FEATURE_CROSSWALK.md) then processed
+**all 9,408 source rows**: **6,791 unique (72.18%)**, 153 ambiguous, and
+2,464 unavailable. Train/test unique coverage is **5,691/7,920** and
+**1,100/1,488**. ED2 and H1ED1 site types retain only 43% and 48%, so the
+mapped cohort is not representative; 26/26 independently reviewed accepted
+rows passed. These are audit records, not training examples. No serialized
+published fold IDs were found.
+Targeted recovery also checked the official Zenodo V1.0 source archive and
+released import workflow: neither preserves the original NEIGHBORHOOD ID join.
+`very_exact-pmm_sets` remains unbuilt and cannot advance to Parts 2–3. Any
+future PMM comparator must be rerun on the same mapped rows and folds; paper
+numbers remain historical context. An unsent
+[author-request draft](docs/PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md) names the
+needed export, effective cohort, and retained fold assignments.
 
 **Next campaign implementation (2026-09-16):** the separately named
 [`metal_single_gpu_20h_v2`](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)

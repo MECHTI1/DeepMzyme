@@ -56,6 +56,14 @@ replace site-level labels for single-label metal training.
 Data integrity rule: the only metal types present in structure files must match
 those in the CSV exactly, and vice versa.
 
+The optional `very_exact-pmm_sets` source-row profile has a narrower rule:
+each included PMM row must have a documented, unique structural-ion anchor
+whose observed element agrees with that row's verified PMM four-class label.
+Nearby ions may remain unlabeled context; they must not merge, replace, or
+generate target rows. This exception does not change the catalytic CSV rule
+above. Source train/test membership is row-level, and an unresolved ion mapping
+cannot be promoted to a training example.
+
 Preparation scripts live under `prepare_training_and_test_set/`. These scripts
 download structures, create non-redundant chain-level files, and run MAHOMES
 activation to produce the site-level summary CSVs used for training.
