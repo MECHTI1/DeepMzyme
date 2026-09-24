@@ -1186,6 +1186,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ),
         )
         load_result = load_training_pockets_with_report_from_dir(
+            load_workers=config.load_workers,
             structure_dir=config.structure_dir,
             require_full_labels=True,
             required_targets=required_targets_for_task(config.task),
@@ -1667,6 +1668,7 @@ def evaluate_held_out_test_split(
     prepared.model.load_state_dict(model_state_dict)
     try:
         test_load_result = load_training_pockets_with_report_from_dir(
+            load_workers=config.load_workers,
             structure_dir=config.test_structure_dir,
             require_full_labels=True,
             required_targets=required_targets_for_task(config.task),

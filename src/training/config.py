@@ -226,6 +226,7 @@ class TrainConfig:
     lr_step_size: int = 0
     lr_decay_gamma: float = 0.5
     save_epoch_checkpoints: bool = False
+    load_workers: int | None = None
     log_per_class_metrics: bool = False
     selection_metric: str | None = None
     evaluation_protocol_id: str = STANDARD_DISJOINT_PROTOCOL_ID
@@ -604,6 +605,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--lr-step-size", type=int, default=0)
     parser.add_argument("--lr-decay-gamma", type=float, default=0.5)
     parser.add_argument("--save-epoch-checkpoints", action="store_true")
+    parser.add_argument(
+        "--load-workers",
+        type=int,
+        default=None,
+        help=(
+            "Processes for parsing structure files (0 = every available core, 1 = serial). "
+            "Default: DEEPMZYME_LOAD_WORKERS, else load_workers in "
+            "~/.config/deepmzyme/runtime.json, else every available core. "
+            "Results are identical for any value."
+        ),
+    )
     parser.add_argument(
         "--log-per-class-metrics",
         action="store_true",
@@ -1105,6 +1117,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         lr_step_size=args.lr_step_size,
         lr_decay_gamma=args.lr_decay_gamma,
         save_epoch_checkpoints=args.save_epoch_checkpoints,
+        load_workers=args.load_workers,
         log_per_class_metrics=args.log_per_class_metrics,
         selection_metric=selection_metric,
         evaluation_protocol_id=args.evaluation_protocol_id,
