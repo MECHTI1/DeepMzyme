@@ -31,6 +31,7 @@ Scientific policy is in [`Plan.md`](../Plan.md).
 | Optional PMM source-site benchmark implementation plan | [`VERY_EXACT_PMM_SETS_PLAN.md`](VERY_EXACT_PMM_SETS_PLAN.md) | Implemented dataset or validated comparison |
 | PinMyMetal exact 5-fold CV reproducibility playbook | [`EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md`](EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) | Multi-task or unrelated split policies |
 | Zenodo PinMyMetal exact ion-level 5-fold CV reproducibility playbook | [`ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) | Non-destructive ion-level replication & benchmark guide |
+| Generalized 5-fold CV runner guide (arbitrary splits, ion & pocket levels) | [`GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](GENERALIZED_METAL_5FOLD_CV_GUIDE.md) | Single dataset-specific fixed scripts |
 | PinMyMetal 5-fold three-architecture benchmark summary | [`notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md`](notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md) | Unverified pilot results |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |

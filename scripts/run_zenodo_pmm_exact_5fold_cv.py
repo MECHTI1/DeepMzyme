@@ -13,6 +13,10 @@ Evaluates:
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("MKL_THREADING_LAYER", "GNU")
+
 import argparse
 import copy
 import csv
@@ -27,7 +31,7 @@ from typing import Any
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
+from torch_geometric.loader import DataLoader
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 for candidate in [
@@ -307,6 +311,7 @@ def run_single_fold(
     src_dir = str(REPO_ROOT / "src")
     existing_pp = sub_env.get("PYTHONPATH", "")
     sub_env["PYTHONPATH"] = f"{src_dir}:{str(REPO_ROOT)}:{existing_pp}" if existing_pp else f"{src_dir}:{str(REPO_ROOT)}"
+    sub_env["MKL_THREADING_LAYER"] = "GNU"
     # Parse each structure once for all folds; see training/parallel_loading.py.
     sub_env.setdefault("DEEPMZYME_PARSE_CACHE_DIR", str(REPO_ROOT / ".parse_cache"))
     result = subprocess.run(cmd, cwd=str(REPO_ROOT), env=sub_env)
@@ -326,9 +331,8 @@ def evaluate_test_set_for_fold(
     batch_size: int = 16,
 ) -> dict[str, Any] | None:
     """Evaluate the held-out test split for a single trained fold checkpoint."""
-    from training.config import TrainConfig
-    from training.model import build_model
-    from training.normalization import NormalizationStats
+    from model_variants import build_pocket_classifier
+    from training.run import normalization_stats_from_payload
 
     run_name = f"{model_key}_fold{fold_idx}"
     run_dir = runs_dir / run_name
@@ -379,51 +383,93 @@ def evaluate_test_set_for_fold(
 
     norm_stats = None
     if isinstance(checkpoint.get("normalization_stats"), dict):
-        ns = checkpoint["normalization_stats"]
-        if "means" in ns and "stds" in ns:
-            norm_stats = NormalizationStats(
-                means={k: torch.tensor(v) for k, v in ns["means"].items()},
-                stds={k: torch.tensor(v) for k, v in ns["stds"].items()},
-            )
+        norm_stats = normalization_stats_from_payload(checkpoint["normalization_stats"])
+
+    saved_cfg = checkpoint.get("config", {}) if isinstance(checkpoint.get("config"), dict) else {}
+    esm_dim = saved_cfg.get("esm_dim", 1152)
+    edge_radius = saved_cfg.get("edge_radius", 10.0)
+    node_feat_set = saved_cfg.get("node_feature_set", "conservative")
 
     test_graphs = build_graph_data_list(
         test_pockets,
-        esm_dim=1152,
-        edge_radius=10.0,
-        node_feature_set="conservative",
+        esm_dim=esm_dim,
+        edge_radius=edge_radius,
+        node_feature_set=node_feat_set,
     )
 
     test_dataset = PocketGraphDataset(
         test_pockets,
-        esm_dim=1152,
-        edge_radius=10.0,
+        esm_dim=esm_dim,
+        edge_radius=edge_radius,
         normalization_stats=norm_stats,
         precomputed_data=test_graphs,
-        node_feature_set="conservative",
+        node_feature_set=node_feat_set,
     )
 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    dummy_cfg = TrainConfig(
-        task="metal",
-        metal_label_scheme="five_class",
-        model_architecture=cfg["architecture"],
-        fusion_mode=cfg["fusion_mode"] or "late_fusion",
-        device=device,
-        rbf_use_raw_distances=cfg["rbf_raw"],
-        num_classes=5,
-        num_metal_classes=5,
+    arch = saved_cfg.get("model_architecture", cfg["architecture"])
+    fusion = saved_cfg.get("fusion_mode", cfg["fusion_mode"] or "late_fusion")
+    n_metal = len(checkpoint.get("metal_labels", [0, 1, 2, 3, 4]))
+    task = saved_cfg.get("task", "metal")
+    sd = checkpoint["model_state_dict"]
+
+    model = build_pocket_classifier(
+        model_architecture=arch,
+        esm_dim=esm_dim,
+        hidden_s=saved_cfg.get("hidden_s", 128),
+        hidden_v=saved_cfg.get("hidden_v", 16),
+        edge_hidden=saved_cfg.get("edge_hidden", 32),
+        n_layers=saved_cfg.get("gvp_layers", 4),
+        n_metal=n_metal,
+        n_ec=max(1, len(checkpoint.get("ec_labels", {0: "ec1"}))),
+        predict_metal=task in ("metal", "joint"),
+        predict_ec=task in ("ec", "joint"),
+        metal_class_weights=sd.get("metal_class_weights"),
+        metal_collapsed4_class_weights=sd.get("metal_collapsed4_class_weights"),
+        ec_class_weights=sd.get("ec_class_weights"),
+        esm_fusion_dim=saved_cfg.get("esm_fusion_dim", 128),
+        head_mlp_layers=saved_cfg.get("head_mlp_layers", 2),
+        head_mlp_dropout=saved_cfg.get("head_mlp_dropout", 0.2),
+        esm_graph_encoder_dropout=saved_cfg.get("esm_graph_encoder_dropout", 0.1),
+        node_rbf_sigma=saved_cfg.get("node_rbf_sigma", 0.75),
+        edge_rbf_sigma=saved_cfg.get("edge_rbf_sigma", 0.75),
+        node_rbf_use_raw_distances=saved_cfg.get("node_rbf_use_raw_distances", cfg["rbf_raw"]),
+        edge_rbf_use_raw_distances=saved_cfg.get("edge_rbf_use_raw_distances", cfg["rbf_raw"]),
+        classifier_pool_distance_cutoff=saved_cfg.get("classifier_pool_distance_cutoff", 0.0),
+        structural_readout_scope=saved_cfg.get("structural_readout_scope", "residue_only"),
+        use_node_type_embedding=saved_cfg.get("metal_node_mode", "none") != "none",
+        site_geometry_features=saved_cfg.get("site_geometry_features", "legacy"),
+        use_esm_branch=saved_cfg.get("use_esm_branch", cfg["use_esm"]),
+        fusion_mode=fusion,
+        cross_attention_layers=saved_cfg.get("cross_attention_layers", 1),
+        cross_attention_heads=saved_cfg.get("cross_attention_heads", 4),
+        cross_attention_dropout=saved_cfg.get("cross_attention_dropout", 0.1),
+        cross_attention_neighborhood=saved_cfg.get("cross_attention_neighborhood", "all"),
+        cross_attention_bidirectional=saved_cfg.get("cross_attention_bidirectional", False),
+        use_early_esm=saved_cfg.get("use_early_esm", False),
+        early_esm_dim=saved_cfg.get("early_esm_dim", 32),
+        early_esm_dropout=saved_cfg.get("early_esm_dropout", 0.2),
+        early_esm_raw=saved_cfg.get("early_esm_raw", False),
+        early_esm_scope=saved_cfg.get("early_esm_scope", "all"),
+        normalize_message_aggregation=saved_cfg.get("normalize_message_aggregation", False),
+        site_feature_dim=saved_cfg.get("site_feature_dim", 32),
+        use_site_angle_features=saved_cfg.get("use_site_angle_features", False),
     )
-    model = build_model(dummy_cfg)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model.load_state_dict(sd)
     model.to(device)
     model.eval()
 
     preds = evaluate_epoch_with_predictions(model, test_loader, device=device)
-    probs = preds["metal_probabilities"].float().cpu()
+    if "metal_probabilities" in preds:
+        probs = preds["metal_probabilities"].float().cpu()
+    elif "metal_logits" in preds:
+        probs = preds["metal_logits"].softmax(dim=-1).float().cpu()
+    else:
+        raise KeyError(f"Expected metal predictions in evaluate_epoch_with_predictions, found: {list(preds.keys())}")
     targets = preds["metal_y"].long().cpu()
 
-    metrics = metal_metrics_from_probabilities(probs, targets, prefix="test_metal")
+    metrics = metal_metrics_from_probabilities(probs, targets, prefix="test")
 
     torch.save(
         {
@@ -446,6 +492,15 @@ def evaluate_test_set_for_fold(
     return report_payload
 
 
+def _safe_float(val: Any, default: float | None = None) -> float | None:
+    if val is None or val == "":
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
 def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[str, Any]:
     out: dict[str, Any] = {
         "fold_index": fold_idx,
@@ -458,23 +513,23 @@ def summarize_single_fold(run_dir: Path, fold_idx: int, run_name: str) -> dict[s
             rows = list(csv.DictReader(handle))
         out["completed_epochs"] = len(rows)
         if rows:
-            best_5c = max(rows, key=lambda r: float(r.get("val_metal_balanced_acc", 0.0)))
-            out["best_epoch_5class"] = int(float(best_5c.get("epoch", 0)))
-            out["best_val_balanced_acc_5class"] = float(best_5c.get("val_metal_balanced_acc", 0.0))
-            out["best_val_raw_acc_5class"] = float(best_5c.get("val_metal_acc", 0.0))
+            best_5c = max(rows, key=lambda r: _safe_float(r.get("val_metal_balanced_acc"), 0.0) or 0.0)
+            out["best_epoch_5class"] = int(_safe_float(best_5c.get("epoch"), 0.0) or 0.0)
+            out["best_val_balanced_acc_5class"] = _safe_float(best_5c.get("val_metal_balanced_acc"))
+            out["best_val_raw_acc_5class"] = _safe_float(best_5c.get("val_metal_acc"))
 
-            best_c4 = max(rows, key=lambda r: float(r.get("val_metal_collapsed4_balanced_acc", 0.0)))
-            out["best_epoch_collapsed4"] = int(float(best_c4.get("epoch", 0)))
-            out["best_val_balanced_acc_collapsed4"] = float(best_c4.get("val_metal_collapsed4_balanced_acc", 0.0))
-            out["best_val_collapsed4_mn_recall"] = float(best_c4.get("val_metal_collapsed4_mn_recall", 0.0))
-            out["best_val_collapsed4_cu_recall"] = float(best_c4.get("val_metal_collapsed4_cu_recall", 0.0))
-            out["best_val_collapsed4_zn_recall"] = float(best_c4.get("val_metal_collapsed4_zn_recall", 0.0))
-            out["best_val_collapsed4_class_viii_recall"] = float(best_c4.get("val_metal_collapsed4_class_viii_recall", 0.0))
+            best_c4 = max(rows, key=lambda r: _safe_float(r.get("val_metal_collapsed4_balanced_acc"), 0.0) or 0.0)
+            out["best_epoch_collapsed4"] = int(_safe_float(best_c4.get("epoch"), 0.0) or 0.0)
+            out["best_val_balanced_acc_collapsed4"] = _safe_float(best_c4.get("val_metal_collapsed4_balanced_acc"))
+            out["best_val_collapsed4_mn_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_mn_recall"))
+            out["best_val_collapsed4_cu_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_cu_recall"))
+            out["best_val_collapsed4_zn_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_zn_recall"))
+            out["best_val_collapsed4_class_viii_recall"] = _safe_float(best_c4.get("val_metal_collapsed4_class_viii_recall"))
 
             final_row = rows[-1]
-            out["final_epoch"] = int(float(final_row.get("epoch", 0)))
-            out["final_val_balanced_acc_5class"] = float(final_row.get("val_metal_balanced_acc", 0.0))
-            out["final_val_balanced_acc_collapsed4"] = float(final_row.get("val_metal_collapsed4_balanced_acc", 0.0))
+            out["final_epoch"] = int(_safe_float(final_row.get("epoch"), 0.0) or 0.0)
+            out["final_val_balanced_acc_5class"] = _safe_float(final_row.get("val_metal_balanced_acc"))
+            out["final_val_balanced_acc_collapsed4"] = _safe_float(final_row.get("val_metal_collapsed4_balanced_acc"))
 
     test_json = run_dir / "test_report.json"
     if test_json.exists():
