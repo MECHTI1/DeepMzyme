@@ -36,8 +36,16 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 | 6 | Exploratory, smoke, partial, or incomplete |
 | 7 | Superseded historical evidence |
 
-No copied model-family experiment currently has Grade-1 or Grade-2 confirmation.
+No copied neural-model experiment currently has Grade-1 or Grade-2 confirmation.
+The PMM comparator below has Grade-2 grouped-fold evidence; its neural comparison
+grid remains incomplete.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
+
+## PMM ion-level comparison with corrected protein context
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/pmm-ion-v2-context/2026-09-26` | 7,398 ions/3,992 PDB groups after 503 explicit protein-symmetry-context exclusions; released PMM recipe on five frozen grouped folds; common-four endpoint | PMM mean-fold BA 70.2885%, pooled OOF BA 70.0766%; real L4 ESMC sample preflight passed. Neural fits/grid pending at snapshot; no superiority or promotion | 2 for completed PMM fivefold only; 6 for incomplete neural grid and preflight | None; no final refit or primary final-test claim | [summary](summaries/summary_pmm_ion_v2_context_20260926.md); [portable evidence](raw/pmm_ion_v2_context_20260926/README.md) |
 
 ## GPU runtime efficiency planning
 

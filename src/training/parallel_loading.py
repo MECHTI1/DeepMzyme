@@ -154,6 +154,9 @@ _WORKER_CACHE_DIR: Path | None = None
 
 
 def _init_worker(load_kwargs: dict[str, Any], metal_label_scheme: str, cache_dir: Path | None) -> None:
+    from training.access_guard import install_guard_from_environment
+
+    install_guard_from_environment()
     global _WORKER_LOAD_KWARGS, _WORKER_CACHE_DIR
     _WORKER_LOAD_KWARGS = load_kwargs
     _WORKER_CACHE_DIR = cache_dir

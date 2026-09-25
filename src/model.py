@@ -41,6 +41,7 @@ DEFAULT_NODE_BURIAL_LATENT_DIM = 4
 DEFAULT_NODE_ELECTROSTATICS_DIM = 2
 DEFAULT_NODE_DISTANCE_FEATURE_COUNT = 3
 VALID_STRUCTURAL_READOUT_SCOPES = set(STRUCTURAL_READOUT_SCOPE_CHOICES) - {"auto"}
+BINDING_RESIDUE_POOLING_CHOICES = ("none", "first_shell_bias")
 
 
 class TaskLossWeighter(nn.Module):
@@ -249,19 +250,73 @@ class AttentionPool(nn.Module):
             nn.Linear(hidden_dim, 1),
         )
 
-    def forward(self, x: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
+    def forward(
+        self,
+        x: Tensor,
+        batch: Tensor,
+        mask: Tensor | None = None,
+        logit_bias: Tensor | None = None,
+    ) -> Tensor:
         batch_size = int(batch.max().item()) + 1 if batch.numel() > 0 else 0
         if mask is not None:
             mask = mask.to(dtype=torch.bool, device=x.device)
             x = x[mask]
             batch = batch[mask]
+            if logit_bias is not None:
+                logit_bias = logit_bias[mask]
         logits = self.score(x).squeeze(-1)
+        if logit_bias is not None:
+            logits = logits + logit_bias
         weights = softmax(logits, batch, num_nodes=batch_size)
         return global_add_pool(x * weights.unsqueeze(-1), batch, size=batch_size)
 
 
+class BindingResidueBias(nn.Module):
+    """Target-shell-conditioned readout: one learned logit bias per pooling branch.
+
+    For the target first-shell flag ``m_i`` the mean branch pools with
+    ``softmax_i(b_mean * m_i)`` and the attention branch with
+    ``softmax_i(a_i + b_attn * m_i)``, both within each graph's pooling mask.
+    Both biases start at zero, which reproduces the ordinary mean/attention
+    readout. A graph without first-shell residues keeps the ordinary readout.
+    A learned bias is a relative weighting, not evidence of a true ligand.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.mean_bias = nn.Parameter(torch.zeros(()))
+        self.attn_bias = nn.Parameter(torch.zeros(()))
+
+    def node_logits(self, first_shell: Tensor) -> tuple[Tensor, Tensor]:
+        flags = first_shell.to(dtype=self.mean_bias.dtype)
+        return self.mean_bias * flags, self.attn_bias * flags
+
+
+def target_first_shell_flags(data: Data) -> Tensor:
+    """Boolean target first-shell mask from the unnormalized geometric shell roles."""
+    return data.x_role[:, 0] > 0.5
+
+
+def biased_mean_pool(x: Tensor, batch: Tensor, mask: Tensor | None, logit_bias: Tensor) -> Tensor:
+    """Per-graph softmax(logit_bias)-weighted mean; equals the plain mean at zero bias."""
+    batch_size = int(batch.max().item()) + 1 if batch.numel() > 0 else 0
+    if mask is not None:
+        mask = mask.to(dtype=torch.bool, device=x.device)
+        x = x[mask]
+        batch = batch[mask]
+        logit_bias = logit_bias[mask]
+    weights = softmax(logit_bias, batch, num_nodes=batch_size)
+    return global_add_pool(x * weights.unsqueeze(-1), batch, size=batch_size)
+
+
 class ESMGraphEncoder(nn.Module):
-    def __init__(self, esm_dim: int, proj_dim: int = 128, dropout: float = 0.1):
+    def __init__(
+        self,
+        esm_dim: int,
+        proj_dim: int = 128,
+        dropout: float = 0.1,
+        binding_residue_pooling: str = "none",
+    ):
         super().__init__()
         self.esm_proj = nn.Sequential(
             nn.Linear(esm_dim, proj_dim),
@@ -270,11 +325,30 @@ class ESMGraphEncoder(nn.Module):
             nn.Dropout(dropout),
         )
         self.attn_pool = AttentionPool(proj_dim)
+        if binding_residue_pooling not in BINDING_RESIDUE_POOLING_CHOICES:
+            raise ValueError(f"Unsupported binding_residue_pooling {binding_residue_pooling!r}.")
+        # Registered after the existing layers and zero-initialized without RNG
+        # use, so shared weights initialize exactly as in the ordinary readout.
+        self.binding_bias = BindingResidueBias() if binding_residue_pooling == "first_shell_bias" else None
 
-    def forward(self, x_esm: Tensor, batch: Tensor, mask: Tensor | None = None) -> Tensor:
+    def forward(
+        self,
+        x_esm: Tensor,
+        batch: Tensor,
+        mask: Tensor | None = None,
+        first_shell: Tensor | None = None,
+    ) -> Tensor:
+        # ESM states are projected once and shared by both pooling branches.
         z = self.esm_proj(x_esm)
-        z_mean = masked_global_mean_pool(z, batch, mask)
-        z_attn = self.attn_pool(z, batch, mask)
+        if self.binding_bias is None:
+            z_mean = masked_global_mean_pool(z, batch, mask)
+            z_attn = self.attn_pool(z, batch, mask)
+        else:
+            if first_shell is None:
+                raise ValueError("first_shell_bias readout requires target first-shell flags.")
+            mean_logits, attn_logits = self.binding_bias.node_logits(first_shell)
+            z_mean = biased_mean_pool(z, batch, mask, mean_logits)
+            z_attn = self.attn_pool(z, batch, mask, logit_bias=attn_logits)
         return torch.cat([z_mean, z_attn], dim=-1)
 
 
@@ -338,8 +412,23 @@ def masked_global_mean_pool(x: Tensor, batch: Tensor, mask: Tensor | None = None
     return global_mean_pool(x, batch, size=batch_size)
 
 
-def pool_graph_states(x: Tensor, batch: Tensor, attn_pool: AttentionPool, mask: Tensor | None = None) -> Tensor:
-    return torch.cat([masked_global_mean_pool(x, batch, mask), attn_pool(x, batch, mask)], dim=-1)
+def pool_graph_states(
+    x: Tensor,
+    batch: Tensor,
+    attn_pool: AttentionPool,
+    mask: Tensor | None = None,
+    binding_bias: BindingResidueBias | None = None,
+    first_shell: Tensor | None = None,
+) -> Tensor:
+    if binding_bias is None:
+        return torch.cat([masked_global_mean_pool(x, batch, mask), attn_pool(x, batch, mask)], dim=-1)
+    if first_shell is None:
+        raise ValueError("first_shell_bias readout requires target first-shell flags.")
+    mean_logits, attn_logits = binding_bias.node_logits(first_shell)
+    return torch.cat(
+        [biased_mean_pool(x, batch, mask, mean_logits), attn_pool(x, batch, mask, logit_bias=attn_logits)],
+        dim=-1,
+    )
 
 
 class LocalizedCrossAttentionBlock(nn.Module):
@@ -677,8 +766,14 @@ class GVPPocketClassifier(nn.Module):
         use_node_type_embedding: bool = False,
         use_site_angle_features: bool = False,
         site_geometry_features: str = "legacy",
+        binding_residue_pooling: str = "none",
     ):
         super().__init__()
+        if binding_residue_pooling not in BINDING_RESIDUE_POOLING_CHOICES:
+            raise ValueError(f"Unsupported binding_residue_pooling {binding_residue_pooling!r}.")
+        self.binding_residue_pooling = binding_residue_pooling
+        if binding_residue_pooling != "none" and fusion_mode == "cross_modal_attention":
+            raise ValueError("binding_residue_pooling is not defined for cross_modal_attention readouts.")
         # Current supervised targets:
         # - EC head: first EC digit only, mapped from EC 1..7 to class ids 0..6.
         # - Metal head: class count follows the active metal label scheme.
@@ -740,6 +835,8 @@ class GVPPocketClassifier(nn.Module):
             esm_dim=esm_dim,
             proj_dim=esm_fusion_dim,
             dropout=esm_graph_encoder_dropout,
+            # Only an active late-ESM readout receives a bias; an unused branch gets none.
+            binding_residue_pooling=binding_residue_pooling if use_esm_branch else "none",
         )
         self.edge_scalar_encoder = EdgeScalarEncoder(n_rbf=16, out_dim=edge_hidden, distance_sigma=edge_rbf_sigma)
         self.gvp_attn_pool = AttentionPool(hidden_s)
@@ -900,6 +997,7 @@ class GVPPocketClassifier(nn.Module):
             "ec_class_weights",
             ec_class_weights.float() if ec_class_weights is not None else torch.empty(0),
         )
+        self.gvp_binding_bias = BindingResidueBias() if binding_residue_pooling == "first_shell_bias" else None
 
     def _early_esm_scalar_features(self, x_esm: Tensor) -> Tensor | None:
         if not self.use_early_esm:
@@ -1181,12 +1279,22 @@ class GVPPocketClassifier(nn.Module):
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             esm_fused = self.cross_attn_esm_fusion_proj(esm_graph_embed)
         else:
-            gvp_graph_embed = pool_graph_states(s, data.batch, self.gvp_attn_pool, structural_pool_mask)
+            first_shell = target_first_shell_flags(data) if self.binding_residue_pooling != "none" else None
+            gvp_graph_embed = pool_graph_states(
+                s,
+                data.batch,
+                self.gvp_attn_pool,
+                structural_pool_mask,
+                binding_bias=self.gvp_binding_bias,
+                first_shell=first_shell,
+            )
             gvp_fused = self.gvp_fusion_proj(gvp_graph_embed)
             if self.use_esm_branch:
                 # Late ESM fusion: pool residue ESM embeddings separately, then inject the
                 # graph-level sequence signal near the classifier head.
-                esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, esm_pool_mask)
+                esm_graph_embed = self.esm_graph_encoder(
+                    data.x_esm, data.batch, esm_pool_mask, first_shell=first_shell,
+                )
                 esm_fused = self.esm_fusion_proj(esm_graph_embed)
             else:
                 batch_size = int(data.batch.max().item()) + 1

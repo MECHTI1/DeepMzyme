@@ -1,0 +1,9 @@
+{
+  "source_tree_sha256": "86950d068812db8f380c9d85993b7b95c96050c061a1ef2428f7bcebef366125",
+  "archive_sha256": "682a10aabee3c788f7a0f723c9780492f97dfb2d7ca4135c99872508a2e7fc56",
+  "archive_members_verified": 130,
+  "neural_fits_before_revision": 0,
+  "change": "Content-preserving admission optimization and complete HTTP dependencies",
+  "embedding_generation_started_from_source": "68f1fa9a59d5db1e0de9dc39092756e8390acb2d90d3d22f9917e11dee05afaa",
+  "certification_and_neural_fits_use_revision": "86950d068812db8f380c9d85993b7b95c96050c061a1ef2428f7bcebef366125"
+}

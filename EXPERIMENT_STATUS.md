@@ -5,7 +5,38 @@ next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
-Last scientific-policy documentation update: 2026-09-24.
+Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-26.
+
+**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — implementation verified; feature generation running:**
+- Executes [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md);
+  exact recipe in the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context).
+  Supersedes the five-class Zenodo wrapper for this comparison (direct four vs six, late fusion, PDB-grouped folds, no test access).
+- Training-only cohort frozen and context-certified: **7,398 / 7,920** source rows,
+  **3,992 PDB groups**, five class-complete frozen folds. Exclusions: 9 missing,
+  10 non-single-metal residues, 503 with explicit missing protein symmetry context.
+  Campaign root: `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
+  Historical v1 (7,901 ions) and its five verified PMM results and three one-epoch
+  Only-GVP smokes remain preserved; they are not v2 experiment evidence.
+- Implemented and tested: source binding, matched folds/weights/readouts, strict
+  ESM content certification, RNG-isolated training metrics, independent checkpoint
+  replay, comparator integrity, bounded execution/persistence, and the gated
+  validation → final refits → secondary reference report. All 114 targeted
+  regression tests passed, including input-drift rejection without redundant
+  per-fit semantic parsing.
+- **Execution state:** all five v2 PMM CPU folds completed and verified (mean
+  fold common-four BA 70.2885%; pooled OOF BA 70.0766%). ESM planning is complete:
+  4,972 unique sequences, 7,664 payloads, maximum length 3,715 and 10.36 GB
+  estimated FP32 storage. No v2 neural grid fits or live nine-arm smoke yet.
+  One L4 VM was allocated in `us-central1-a` on the first bounded attempt at
+  2026-09-25 21:32 UTC. Actual CUDA and ESMC-600M preflight passed through the
+  longest planned sequence; complete feature generation and host backup are in
+  progress, with provider hard stop at 2026-09-26 01:29 UTC. GPU execution is authorized
+  under the approved bounded route and existing caps; it is not awaiting a new
+  permission phrase. No reference-test access in this continuation so far.
+  The primary final-test route remains unresolved; the authorized PMM
+  reference route is secondary and possibly overlapping.
+  See the [evidence summary](docs/notebook_outputs/summaries/summary_pmm_ion_v2_context_20260926.md)
+  for completed PMM folds, context exclusions and GPU measurements.
 
 **2026-09-24 ion-unit correction & Zenodo exact benchmark (RELAUNCHED after total run loss):**
 - **Contract & Architecture:** `--metal-example-unit ion` is fully implemented for standalone metal training in CLI, runner scripts, and Colab notebook, ensuring multi-nuclear sites (e.g. `1a0e` 3-Zn center) receive independent coordinates and residue microenvironments while grouping sibling ions under parent pocket IDs.

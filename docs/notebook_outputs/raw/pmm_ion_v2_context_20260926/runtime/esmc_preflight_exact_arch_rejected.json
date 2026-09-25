@@ -1,0 +1,7 @@
+{
+  "status": "failed",
+  "source_tree_sha256": "68f1fa9a59d5db1e0de9dc39092756e8390acb2d90d3d22f9917e11dee05afaa",
+  "samples": [],
+  "error": "AssertionError(('sm_89', ['sm_75', 'sm_80', 'sm_86', 'sm_90', 'sm_100', 'sm_120']))",
+  "process_peak_rss_bytes": 767029248
+}

@@ -1,0 +1,10 @@
+{
+  "estimated_float32_storage_gb": 10.356286464,
+  "max_sequence_length": 3715,
+  "n_chain_files": 7664,
+  "n_structures": 3992,
+  "n_unique_sequences": 4972,
+  "plan_csv_sha256": "4853f1d376659a186bdc6323002647471355a5010ed8888182eb5a67db2cc166",
+  "stored_residues": 2247458,
+  "unique_sequence_residues": 1484731
+}

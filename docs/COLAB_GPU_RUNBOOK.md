@@ -299,19 +299,38 @@ if not torch.cuda.is_available():
     raise RuntimeError("The assigned Colab runtime does not expose CUDA.")
 
 major, minor = torch.cuda.get_device_capability(0)
-required_arch = f"sm_{major}{minor}"
+device_arch = f"sm_{major}{minor}"
 compiled_arches = torch.cuda.get_arch_list()
+compiled_capabilities = [
+    (int(arch[3:]) // 10, int(arch[3:]) % 10)
+    for arch in compiled_arches if arch.startswith("sm_") and arch[3:].isdigit()
+]
 print("GPU:", torch.cuda.get_device_name(0))
 print("compute capability:", f"{major}.{minor}")
-print("required architecture:", required_arch)
+print("device architecture:", device_arch)
 print("compiled architectures:", compiled_arches)
-if required_arch not in compiled_arches:
+if not any(m == major and n <= minor for m, n in compiled_capabilities):
     raise RuntimeError(
-        f"PyTorch {torch.__version__} does not contain kernels for {required_arch}. "
+        f"PyTorch {torch.__version__} has no compatible compiled architecture for {device_arch}. "
         "Restart with the stock Colab PyTorch build; do not start GPU work."
     )
+probe_dtypes = [torch.float32]
+if torch.cuda.is_bf16_supported():
+    probe_dtypes.append(torch.bfloat16)
+for dtype in probe_dtypes:
+    x = torch.ones((32, 32), device="cuda", dtype=dtype)
+    assert torch.isfinite(x @ x).all().item()
+torch.cuda.synchronize()
+print("CUDA kernel checks passed:", probe_dtypes)
 PY
 ```
+
+Accept a compiled cubin with the same compute-capability major and an equal or
+lower minor version; `sm_86` therefore supports L4's `sm_89`
+([NVIDIA compatibility guide](https://docs.nvidia.com/cuda/ada-compatibility-guide/)).
+This still rejects the observed Blackwell 12.0 build capped at `sm_90`.
+Architecture metadata alone is insufficient: the CUDA operations above must
+pass, followed by the workload's real model preflight and training smoke.
 
 Observed compatibility evidence on 2026-08-22:
 

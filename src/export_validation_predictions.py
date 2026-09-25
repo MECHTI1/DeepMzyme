@@ -344,7 +344,16 @@ def run_worker(ledger_path, run_id, output_dir, device):
         require(paths[key] is not None and paths[key].exists(), f"Existing explicit data/cache path required: {key}")
     validate_config({**config, **{key: str(value) if value is not None else None for key, value in paths.items()}})
     input_roots.extend(path for path in paths.values() if path is not None)
-    allowed_sites = resolve_allowed_site_metal_labels(paths["summary_csv"])
+    metal_example_unit = config.get("metal_example_unit", "pocket")
+    cohort_bindings = None
+    if config.get("source_cohort_csv"):
+        # Ion runs bound to a frozen source cohort replay the exact bindings, never summary matching.
+        from training.source_cohort import cohort_load_payload, read_cohort_csv
+
+        cohort_path = remap_path(config["source_cohort_csv"], path_map)
+        input_roots.append(cohort_path)
+        cohort_bindings = cohort_load_payload(read_cohort_csv(cohort_path, expected_sha256=config["source_cohort_sha256"]))
+    allowed_sites = None if cohort_bindings is not None else resolve_allowed_site_metal_labels(paths["summary_csv"])
     structure_files = find_structure_files(paths["structure_dir"])
     structure_lookup = {}
     for path in structure_files:
@@ -368,7 +377,8 @@ def run_worker(ledger_path, run_id, output_dir, device):
             require_esm_embeddings=config["require_esm_embeddings"], ring_features_dir=paths["ring_features_dir"],
             feature_root_dir=paths["external_features_root_dir"], external_feature_source=config["external_feature_source"],
             require_external_features=config["require_external_features"], unsupported_metal_policy=config["unsupported_metal_policy"],
-            ec_label_depth=config["ec_label_depth"])
+            ec_label_depth=config["ec_label_depth"], metal_example_unit=metal_example_unit,
+            cohort_bindings=cohort_bindings)
         assign_ec_targets(loaded, depth=config["ec_label_depth"], token_to_index={value: key for key, value in ec_labels.items()})
         wanted = {(row["structure_id"], row["pocket_id"]) for row in expected}
         for pocket in loaded:
@@ -400,6 +410,13 @@ def run_worker(ledger_path, run_id, output_dir, device):
     verified_metrics = compare_metrics(metrics, selected[0], config["selection_metric"])
     exported_examples = [{"example_id": row["pocket_id"], "group_id": row["group"],
                           "structure_id": row["structure_id"], "pocket_id": row["pocket_id"]} for row in examples]
+    if cohort_bindings is not None:
+        for row, pocket in zip(exported_examples, pockets):
+            row.update(source_uid=pocket.metadata["source_uid"],
+                       physical_ion_id=pocket.metadata["physical_ion_id"],
+                       parent_pocket_id=pocket.metadata["parent_pocket_id"],
+                       fold=config["fold_index"], model_seed=config["seed"],
+                       checkpoint_sha256=digest(checkpoint_path))
     rows = prediction_rows(predictions[f"{prefix}_logits"], predictions[f"{prefix}_y"], exported_examples, labels)
     result = {key: entry[key] for key in ("run_id", "task", "family")}
     result.update(seed=int(config["seed"]), fold_id=entry.get("fold_id", "fixed"), validation_only=True,
@@ -531,6 +548,21 @@ def snapshot_worker_source(output, source_path):
 
 
 def main(argv=None):
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if "--campaign-run-dir" in arguments:
+        parser = argparse.ArgumentParser(description="Independently replay a frozen PMM campaign validation checkpoint")
+        parser.add_argument("--campaign-run-dir", type=Path, required=True)
+        parser.add_argument("--validation-only", action="store_true", required=True)
+        parser.add_argument("--output-dir", type=Path)
+        parser.add_argument("--device", default="cpu")
+        parser.add_argument("--path-map-json", type=Path, help="JSON mapping old absolute path prefixes to current ones")
+        args = parser.parse_args(arguments)
+        from training.campaign_runtime import replay_campaign_run
+
+        receipt = replay_campaign_run(args.campaign_run_dir, device=args.device, output_dir=args.output_dir,
+                                      path_map=read_json(args.path_map_json) if args.path_map_json else None)
+        print(json.dumps(receipt, indent=2, sort_keys=True))
+        return
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reuse-ledger", type=Path, required=True)
     parser.add_argument("--validation-only", action="store_true", required=True)
@@ -539,7 +571,7 @@ def main(argv=None):
     parser.add_argument("--run-id", action="append", default=[])
     parser.add_argument("--resume", action="store_true", help="Verify and reuse completed sidecars without repeating inference")
     parser.add_argument("--worker-run-id", help=argparse.SUPPRESS)
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
     ledger_path, output = args.reuse_ledger.resolve(), args.output_dir.resolve()
     if args.worker_run_id:
         run_worker(ledger_path, args.worker_run_id, output, args.device)

@@ -43,6 +43,7 @@ VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
 VALID_INVALID_STRUCTURE_POLICY_CHOICES = ("error", "skip")
 VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_METAL_EXAMPLE_UNITS = ("pocket", "ion")
+VALID_BINDING_RESIDUE_POOLING_CHOICES = ("none", "first_shell_bias")
 VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
 VALID_METAL_NODE_MODE_CHOICES = METAL_NODE_MODE_CHOICES
@@ -125,6 +126,15 @@ class TrainConfig:
     run_test_eval: bool = False
     explicit_membership_manifest: str | None = None
     explicit_membership_sha256: str | None = None
+    source_cohort_csv: str | None = None
+    source_cohort_sha256: str | None = None
+    fold_membership_csv: str | None = None
+    fold_membership_sha256: str | None = None
+    feature_inventory_sha256: str | None = None
+    campaign_run_identity: str | None = None
+    export_validation_predictions: bool = False
+    binding_residue_pooling: str = "none"
+    train_metrics_every_n_epochs: int = 1
     allow_train_loss_test_eval_debug: bool = False
     allow_final_refit_test_eval: bool = False
     device: str = "cpu"
@@ -929,6 +939,46 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "the held-out test source."
         ),
     )
+    parser.add_argument(
+        "--source-cohort-csv", default=None,
+        help=(
+            "Frozen source-row ion cohort (train_cohort.csv). Replaces summary-CSV site matching: "
+            "one example per retained source row, fatal on any unreproducible binding. "
+            "Requires --task metal --metal-example-unit ion."
+        ),
+    )
+    parser.add_argument("--source-cohort-sha256", default=None, help="Required SHA256 of --source-cohort-csv.")
+    parser.add_argument(
+        "--fold-membership-csv", default=None,
+        help="Frozen fold_membership.csv; the computed k-fold split must reproduce it exactly.",
+    )
+    parser.add_argument("--fold-membership-sha256", default=None, help="Required SHA256 of --fold-membership-csv.")
+    parser.add_argument(
+        "--feature-inventory-sha256", default=None,
+        help="SHA256 of the frozen feature_inventory.json; binds parse-cache entries to immutable features.",
+    )
+    parser.add_argument(
+        "--campaign-run-identity", default=None,
+        help="Opaque campaign run identity (JSON) recorded in run metadata and checked on reuse.",
+    )
+    parser.add_argument(
+        "--export-validation-predictions", action="store_true",
+        help="After training, replay the selected checkpoint on validation and write val_predictions.csv.",
+    )
+    parser.add_argument(
+        "--train-metrics-every-n-epochs", type=int, default=1,
+        help=(
+            "Evaluate full training-set metrics every N epochs (and on the last epoch). "
+            "Logging only: validation selection is unchanged. Default 1 keeps per-epoch evaluation."
+        ),
+    )
+    parser.add_argument(
+        "--binding-residue-pooling", choices=VALID_BINDING_RESIDUE_POOLING_CHOICES, default="none",
+        help=(
+            "'first_shell_bias' adds one learned, zero-initialized logit bias per readout pooling "
+            "branch for target first-shell residues; 'none' keeps the existing readout."
+        ),
+    )
     parser.add_argument("--explicit-membership-manifest", default=None,
                         help="Frozen diagnostic train/inner/outer membership descriptor.")
     parser.add_argument("--explicit-membership-sha256", default=None,
@@ -979,6 +1029,17 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     args = parser.parse_args(argv)
     if args.metal_example_unit == "ion" and args.task != "metal":
         parser.error("--metal-example-unit ion currently requires --task metal")
+    if args.source_cohort_csv is not None and (args.task != "metal" or args.metal_example_unit != "ion"):
+        parser.error("--source-cohort-csv requires --task metal --metal-example-unit ion")
+    if args.source_cohort_csv is not None and not args.source_cohort_sha256:
+        parser.error("--source-cohort-csv requires --source-cohort-sha256")
+    if args.fold_membership_csv is not None and (not args.fold_membership_sha256 or args.n_folds is None):
+        parser.error("--fold-membership-csv requires --fold-membership-sha256 and --n-folds")
+    if args.export_validation_predictions:
+        if args.source_cohort_csv is None or args.task != "metal" or args.metal_example_unit != "ion":
+            parser.error("--export-validation-predictions requires --source-cohort-csv --task metal --metal-example-unit ion")
+        if not (args.val_fraction > 0.0 or (args.n_folds is not None and args.fold_index is not None)):
+            parser.error("--export-validation-predictions requires a validation split")
     if args.site_geometry_features != "legacy" and args.model_architecture not in {"gvp", "only_gvp"}:
         parser.error("--site-geometry-features explicit modes require --model-architecture gvp or only_gvp")
     omit_node_features = validate_node_feature_omissions(
@@ -1017,6 +1078,15 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         run_test_eval=args.run_test_eval,
         explicit_membership_manifest=args.explicit_membership_manifest,
         explicit_membership_sha256=args.explicit_membership_sha256,
+        source_cohort_csv=args.source_cohort_csv,
+        source_cohort_sha256=args.source_cohort_sha256,
+        fold_membership_csv=args.fold_membership_csv,
+        fold_membership_sha256=args.fold_membership_sha256,
+        feature_inventory_sha256=args.feature_inventory_sha256,
+        campaign_run_identity=args.campaign_run_identity,
+        export_validation_predictions=args.export_validation_predictions,
+        binding_residue_pooling=args.binding_residue_pooling,
+        train_metrics_every_n_epochs=args.train_metrics_every_n_epochs,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         allow_final_refit_test_eval=args.allow_final_refit_test_eval,
         device=args.device,

@@ -1,0 +1,94 @@
+{
+  "campaign_id": "pmm_ion_metal_v2_context",
+  "completed_at": "2026-09-25T21:14:59+00:00",
+  "context": {
+    "chain_policy": "all protein chains of the asymmetric-unit file within the pocket radius",
+    "model_policy": "first model only (model_index=0); residues and ions from other models ignored",
+    "n_context_chain_files_needed": 7664,
+    "n_multi_chain_context_ions": 2451,
+    "pocket_radius_angstrom": 10.0,
+    "symmetry_policy": "no crystallographic symmetry expansion; applied identically to every ion"
+  },
+  "context_exclusion_count": 503,
+  "context_policy": "exclude_explicit_protein_symmetry_links_v1",
+  "crosswalk_accessed": false,
+  "disposition_counts": {
+    "missing": 9,
+    "retained": 7398,
+    "unresolved": 503,
+    "unsupported": 10
+  },
+  "empty_first_shell_ions": 4,
+  "files": {
+    "train_cohort.csv": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "train_row_dispositions.csv": "2e79aa0218f8e63644be39134577d391c6b6329ea98a8565ab7f9a61f5f754fc"
+  },
+  "generated_at": "2026-09-25T21:14:59+00:00",
+  "n_canonical_structure_files": 4191,
+  "n_manifest_rows": 7911,
+  "n_retained_groups": 3992,
+  "n_retained_ions": 7398,
+  "n_source_rows": 7920,
+  "n_structure_files": 6443,
+  "n_structure_files_used": 3992,
+  "n_summary_rows": 7911,
+  "parent_campaign_manifest_sha256": "5ff1618ddb6666f37c1d4b151d896261cce63d9169f08ba03ed2fd56db17bb75",
+  "parent_context_audit_sha256": "73bc708473ad9594f194d132ff03851fd712f05eaf0efd19e71c3452bb89a967",
+  "placeholders": {
+    "ecnumber": "compatibility placeholder (0.0.0.0); no EC head or loss",
+    "whether_catalytic": "compatibility placeholder (=1), not a biological annotation; unused in cohort mode"
+  },
+  "pmm_features": {
+    "dropna_rows_removed": 0,
+    "n_feature_columns": 93,
+    "non_feature_columns": [
+      "metalid",
+      "pdbid",
+      "residueid_ion",
+      "label_metal",
+      "source",
+      "ched_count"
+    ]
+  },
+  "reason_counts": {
+    "missing:no_reconstruction_row": 9,
+    "retained:": 7398,
+    "unresolved:missing_protein_symmetry_context": 503,
+    "unsupported:target_residue_not_supported_metal": 10
+  },
+  "retained_native_counts": {
+    "CO": 283,
+    "CU": 343,
+    "FE": 1737,
+    "MN": 2528,
+    "NI": 475,
+    "ZN": 2032
+  },
+  "retained_source_code_counts": {
+    "1": 2528,
+    "2": 2495,
+    "6": 343,
+    "7": 2032
+  },
+  "schema_version": 1,
+  "scope": "training_only",
+  "source_label_mapping": {
+    "1": [
+      "MN"
+    ],
+    "2": [
+      "FE",
+      "CO",
+      "NI"
+    ],
+    "6": [
+      "CU"
+    ],
+    "7": [
+      "ZN"
+    ]
+  },
+  "structure_hash_problems": {},
+  "structure_parse_errors": [],
+  "test_side_accessed": false
+}

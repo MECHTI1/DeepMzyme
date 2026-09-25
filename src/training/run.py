@@ -4,6 +4,9 @@ import copy
 import csv
 import json
 import random
+import resource
+import sys
+from time import perf_counter
 import warnings
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -74,6 +77,13 @@ from training.splits import (
     split_pockets_k_fold,
 )
 from training.structure_loading import find_structure_files
+from training.campaign_runtime import (
+    binding_bias_state,
+    export_selected_validation_predictions,
+    first_shell_support,
+    read_fold_membership,
+    verify_fold_membership,
+)
 
 
 @dataclass(frozen=True)
@@ -93,6 +103,7 @@ class PreparedRun:
     model: torch.nn.Module
     optimizer: torch.optim.Optimizer
     scheduler: torch.optim.lr_scheduler.LRScheduler | None
+    train_eval_loader: DataLoader | None = None
 
 
 def set_seed(seed: int, *, deterministic: bool = False) -> None:
@@ -389,6 +400,11 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError("--metal-example-unit ion currently requires --task metal")
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    if config.export_validation_predictions:
+        if config.source_cohort_csv is None or config.task != "metal" or config.metal_example_unit != "ion":
+            raise ValueError("--export-validation-predictions requires --source-cohort-csv --task metal --metal-example-unit ion")
+        if not (config.val_fraction > 0.0 or (config.n_folds is not None and config.fold_index is not None)):
+            raise ValueError("--export-validation-predictions requires a validation split")
     if config.controlled_ec_auxiliary:
         requirements = {
             "--task joint": config.task == "joint",
@@ -490,6 +506,21 @@ def validate_training_configuration(config: TrainConfig) -> None:
                 "so L_total=(1-alpha)*CE_6class + alpha*CE_4class is well-defined."
             )
         validate_required_six_class_metal_labels(METAL_TARGET_LABELS)
+    if config.source_cohort_csv is not None:
+        if config.run_test_eval or config.test_structure_dir is not None or config.test_summary_csv is not None:
+            raise ValueError("Source-cohort development runs must not receive held-out test paths or evaluation")
+        if config.prepare_missing_esm_embeddings and config.require_esm_embeddings:
+            raise ValueError(
+                "Source-cohort runs require --no-prepare-missing-esm-embeddings: feature preparation "
+                "belongs to the frozen feature inventory, not to a fit"
+            )
+        if config.explicit_membership_manifest:
+            raise ValueError("--source-cohort-csv cannot be combined with --explicit-membership-manifest")
+    if config.binding_residue_pooling != "none":
+        if config.model_architecture not in {"gvp", "only_gvp", "only_esm"}:
+            raise ValueError("--binding-residue-pooling requires gvp, only_gvp or only_esm")
+        if config.fusion_mode == "cross_modal_attention" and config.model_architecture == "gvp":
+            raise ValueError("--binding-residue-pooling is not defined for cross_modal_attention")
     if config.metal_class_weight_mode not in {"none", "manual", "inverse_frequency", "inverse_sqrt_frequency", "effective_number"}:
         raise ValueError(f"Unsupported --metal-class-weight-mode {config.metal_class_weight_mode!r}")
     for field_name in (
@@ -1144,7 +1175,15 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             "explicit_membership": membership["receipt"],
             "feature_generation": False,
             "outer_metadata_only_preflight": True,
-        } if membership is not None else prepare_runtime_inputs(
+        } if membership is not None else {
+            # The frozen feature inventory certified coverage for exactly the cohort's
+            # canonical files; a directory-wide scan would count unused chain aliases.
+            "source_cohort": True,
+            "feature_generation": False,
+            "certified_by_feature_inventory_sha256": config.feature_inventory_sha256,
+            "esm_embeddings_dir": config.esm_embeddings_dir,
+            "external_features_root_dir": config.external_features_root_dir,
+        } if config.source_cohort_csv is not None else prepare_runtime_inputs(
             structure_dir=config.structure_dir,
             esm_embeddings_dir=config.esm_embeddings_dir,
             require_esm_embeddings=config.require_esm_embeddings,
@@ -1203,6 +1242,9 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             unsupported_metal_policy=config.unsupported_metal_policy,
             invalid_structure_policy=config.invalid_structure_policy,
             ec_label_depth=config.ec_label_depth,
+            source_cohort_csv=config.source_cohort_csv,
+            source_cohort_sha256=config.source_cohort_sha256,
+            feature_inventory_sha256=config.feature_inventory_sha256,
             **({"allowed_structure_ids": {
                 row["structure_id"] for part in ("train", "inner_validation")
                 for row in membership["partitions"][part]
@@ -1247,6 +1289,16 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 task=config.task,
                 stratify_by=config.split_stratify_by,
             )
+        if config.export_validation_predictions and not split.val_pockets:
+            raise ValueError("--export-validation-predictions requires a nonempty validation split")
+        fold_membership_receipt = None
+        if config.fold_membership_csv is not None:
+            fold_membership_receipt = verify_fold_membership(
+                train_pockets=split.train_pockets,
+                val_pockets=split.val_pockets,
+                fold_index=int(config.fold_index),
+                membership=read_fold_membership(Path(config.fold_membership_csv), str(config.fold_membership_sha256)),
+            )
         if task_predicts_ec(config.task):
             assign_ec_group_metadata(split.train_pockets, weighting_mode=config.ec_group_weighting)
             assign_ec_group_metadata(split.val_pockets, weighting_mode=config.ec_group_weighting)
@@ -1264,6 +1316,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ec_label_map=load_result.ec_index_to_label,
         )
         dataset_summary["split_diagnostics"] = split_diagnostics
+        if fold_membership_receipt is not None:
+            dataset_summary["fold_membership"] = fold_membership_receipt
         dataset_summary.update(
             {
                 "split_name": config_payload.get("split_name"),
@@ -1300,6 +1354,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             if split.val_pockets
             else None
         )
+        dataset_summary["first_shell_support"] = {
+            "train": first_shell_support(train_graphs),
+            "val": first_shell_support(val_graphs),
+        }
         save_json(
             run_dir / "prepare_status.json",
             prepare_status_payload(
@@ -1358,6 +1416,21 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
             sampler=train_sampler,
+            generator=torch.Generator().manual_seed(int(config.seed)),
+            **loader_worker_kwargs,
+        )
+        # Metrics use the unaugmented training examples and an independent RNG:
+        # changing log frequency cannot consume shuffle/augmentation randomness.
+        train_eval_loader = DataLoader(
+            PocketGraphDataset(
+                split.train_pockets, esm_dim=config.esm_dim, edge_radius=config.edge_radius,
+                normalization_stats=normalization_stats, use_ring_edges=config.use_ring_edges,
+                require_ring_edges=config.require_ring_edges, shell_role_source=config.shell_role_source,
+                precomputed_data=train_graphs, node_feature_set=config.node_feature_set,
+                omit_node_features=config.omit_node_features, metal_node_mode=config.metal_node_mode,
+            ),
+            batch_size=config.batch_size, shuffle=False,
+            generator=torch.Generator().manual_seed(int(config.seed) + 1),
             **loader_worker_kwargs,
         )
         val_loader = (
@@ -1377,6 +1450,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 ),
                 batch_size=config.batch_size,
                 shuffle=False,
+                generator=torch.Generator().manual_seed(int(config.seed) + 2),
                 **loader_worker_kwargs,
             )
             if split.val_pockets
@@ -1487,6 +1561,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ec_class_weights=ec_class_weights,
             predict_metal=task_predicts_metal(config.task),
             predict_ec=task_predicts_ec(config.task),
+            binding_residue_pooling=config.binding_residue_pooling,
         ).to(config.device)
         gvp_lr = config.gvp_learning_rate
         if gvp_lr is not None and gvp_lr != config.learning_rate and hasattr(model, "layers"):
@@ -1539,6 +1614,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             model=model,
             optimizer=optimizer,
             scheduler=scheduler,
+            train_eval_loader=train_eval_loader,
         )
     except Exception as exc:
         save_json(
@@ -1564,6 +1640,7 @@ def train_and_select_checkpoint(
     amp_active = bool(config.use_amp) and torch.cuda.is_available() and str(config.device).startswith("cuda")
     grad_scaler = torch.amp.GradScaler("cuda") if amp_active else None
     for epoch in range(1, config.epochs + 1):
+        phase_started = perf_counter()
         train_loss = train_epoch(
             prepared.model,
             prepared.train_loader,
@@ -1574,24 +1651,34 @@ def train_and_select_checkpoint(
             use_amp=config.use_amp,
             scaler=grad_scaler,
         )
-        train_metrics = evaluate_split_metrics(
-            prepared.model,
-            prepared.train_loader,
-            config.device,
-            prefix="train",
-            task=config.task,
-            ec_label_map=prepared.ec_labels,
-            ec_label_depth=config.ec_label_depth,
-        )
-        train_metrics.pop("train_loss", None)
+        _record_runtime_phase(prepared.run_dir, config, "train_epoch", phase_started)
+        every = max(1, int(config.train_metrics_every_n_epochs))
+        if epoch % every == 0 or epoch == config.epochs or every == 1:
+            phase_started = perf_counter()
+            train_metrics = evaluate_split_metrics(
+                prepared.model,
+                prepared.train_eval_loader if prepared.train_eval_loader is not None else prepared.train_loader,
+                config.device,
+                prefix="train",
+                task=config.task,
+                ec_label_map=prepared.ec_labels,
+                ec_label_depth=config.ec_label_depth,
+            )
+            train_metrics.pop("train_loss", None)
+            _record_runtime_phase(prepared.run_dir, config, "train_metric_evaluation", phase_started)
+        else:
+            # Logging-only skip; the selected checkpoint depends on validation metrics alone.
+            train_metrics = {"train_metal_acc": None, "train_ec_acc": None, "train_metrics_skipped": True}
         record = {
             "epoch": epoch,
             "train_loss": train_loss,
             "lr": float(prepared.optimizer.param_groups[0]["lr"]),
             **train_metrics,
             **task_loss_weighting_state(prepared.model),
+            **binding_bias_state(prepared.model),
         }
 
+        phase_started = perf_counter()
         val_metrics = evaluate_split_metrics(
             prepared.model,
             prepared.val_loader,
@@ -1601,6 +1688,9 @@ def train_and_select_checkpoint(
             ec_label_map=prepared.ec_labels,
             ec_label_depth=config.ec_label_depth,
         )
+        if prepared.val_loader is not None:
+            _record_runtime_phase(prepared.run_dir, config, "validation", phase_started)
+        phase_started = perf_counter()
         record.update(val_metrics)
         current_metric, maximize = metric_sort_value(record, config.selection_metric)
         is_better = (
@@ -1645,10 +1735,35 @@ def train_and_select_checkpoint(
                 ),
                 epoch_checkpoint_path,
             )
+        _record_runtime_phase(prepared.run_dir, config, "checkpoint_save", phase_started)
         if prepared.scheduler is not None:
             prepared.scheduler.step()
         print(format_epoch_log(record, include_per_class=config.log_per_class_metrics))
     return history, best_checkpoint
+
+
+def _record_runtime_phase(run_dir: Path, config: TrainConfig, phase: str, started: float, *, reset: bool = False) -> None:
+    """Campaign wall timings and process high-water memory; never synchronize CUDA."""
+    if not config.campaign_run_identity:
+        return
+    elapsed = perf_counter() - started
+    path = run_dir / "runtime_profile.json"
+    profile = json.loads(path.read_text(encoding="utf-8")) if path.is_file() and not reset else {
+        "schema_version": 1,
+        "phase_seconds": {key: 0.0 for key in ("prepare", "train_epoch", "train_metric_evaluation",
+                                               "validation", "checkpoint_save", "selected_export")},
+        "notes": ["Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+                  "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+                  "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."],
+    }
+    profile["phase_seconds"][phase] += elapsed
+    profile["process_peak_rss_bytes"] = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss) * (
+        1 if sys.platform == "darwin" else 1024
+    )
+    cuda_active = str(config.device).startswith("cuda") and torch.cuda.is_initialized()
+    profile["cuda_peak_allocated_bytes"] = int(torch.cuda.max_memory_allocated(config.device)) if cuda_active else 0
+    profile["cuda_peak_reserved_bytes"] = int(torch.cuda.max_memory_reserved(config.device)) if cuda_active else 0
+    save_json(path, profile)
 
 
 def evaluate_held_out_test_split(
@@ -1932,6 +2047,14 @@ def persist_run_outputs(
         ),
         "test_report": test_report,
     }
+    run_metadata["fit_status"] = "completed" if len(history) == prepared.config_payload["epochs"] else "incomplete"
+    metal_weights = getattr(prepared.model, "metal_class_weights", None)
+    run_metadata["metal_class_weights"] = (
+        {METAL_TARGET_LABELS[index]: float(value) for index, value in enumerate(metal_weights.tolist())}
+        if isinstance(metal_weights, torch.Tensor) and metal_weights.numel() else None
+    )
+    if prepared.config_payload.get("campaign_run_identity"):
+        run_metadata["campaign_run_identity"] = json.loads(prepared.config_payload["campaign_run_identity"])
     if prepared.config_payload.get("explicit_membership"):
         run_metadata["explicit_membership"] = prepared.config_payload["explicit_membership"]
         run_metadata["fit_status"] = "completed" if len(history) == prepared.config_payload["epochs"] else "incomplete"
@@ -1982,11 +2105,31 @@ def run_training(config: TrainConfig) -> Path:
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
         print("Omitting conservative node features:", ", ".join(config.omit_node_features))
+    phase_started = perf_counter()
     prepared = prepare_run(config)
+    _record_runtime_phase(prepared.run_dir, config, "prepare", phase_started, reset=True)
     history, best_checkpoint = train_and_select_checkpoint(prepared, config)
     test_report = (None if config.explicit_membership_manifest else
                    evaluate_held_out_test_split(prepared, config, checkpoint=best_checkpoint))
+    phase_started = perf_counter()
     persist_run_outputs(prepared, history=history, best_checkpoint=best_checkpoint, test_report=test_report)
+    _record_runtime_phase(prepared.run_dir, config, "checkpoint_save", phase_started)
+    if config.export_validation_predictions:
+        if best_checkpoint is None or prepared.val_loader is None:
+            raise ValueError("--export-validation-predictions requires a validation split and selected checkpoint")
+        phase_started = perf_counter()
+        export_selected_validation_predictions(
+            model=prepared.model,
+            val_loader=prepared.val_loader,
+            val_pockets=prepared.split.val_pockets,
+            best_checkpoint=best_checkpoint,
+            checkpoint_path=prepared.run_dir / "best_model_checkpoint.pt",
+            history=history,
+            config_payload=prepared.config_payload,
+            run_dir=prepared.run_dir,
+            device=config.device,
+        )
+        _record_runtime_phase(prepared.run_dir, config, "selected_export", phase_started)
     return prepared.run_dir
 
 

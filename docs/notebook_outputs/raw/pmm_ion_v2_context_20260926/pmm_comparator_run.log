@@ -1,0 +1,107 @@
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/sklearn/svm/_base.py:1242: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:546: FutureWarning: The default of `sampling_strategy` will change from `'auto'` to `'all'` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `'all'` to silence this warning and adopt the future behaviour.
+  warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:558: FutureWarning: The default of `replacement` will change from `False` to `True` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `True` to silence this warning and adopt the future behaviour.
+  warn(
+[PMM] fold 0: 5906 train / 1492 val in 108s
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/sklearn/svm/_base.py:1242: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:546: FutureWarning: The default of `sampling_strategy` will change from `'auto'` to `'all'` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `'all'` to silence this warning and adopt the future behaviour.
+  warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:558: FutureWarning: The default of `replacement` will change from `False` to `True` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `True` to silence this warning and adopt the future behaviour.
+  warn(
+[PMM] fold 1: 5902 train / 1496 val in 112s
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/sklearn/svm/_base.py:1242: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:546: FutureWarning: The default of `sampling_strategy` will change from `'auto'` to `'all'` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `'all'` to silence this warning and adopt the future behaviour.
+  warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:558: FutureWarning: The default of `replacement` will change from `False` to `True` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `True` to silence this warning and adopt the future behaviour.
+  warn(
+[PMM] fold 2: 5902 train / 1496 val in 116s
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/sklearn/svm/_base.py:1242: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:546: FutureWarning: The default of `sampling_strategy` will change from `'auto'` to `'all'` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `'all'` to silence this warning and adopt the future behaviour.
+  warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:558: FutureWarning: The default of `replacement` will change from `False` to `True` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `True` to silence this warning and adopt the future behaviour.
+  warn(
+[PMM] fold 3: 5904 train / 1494 val in 108s
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/sklearn/svm/_base.py:1242: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+  warnings.warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:546: FutureWarning: The default of `sampling_strategy` will change from `'auto'` to `'all'` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `'all'` to silence this warning and adopt the future behaviour.
+  warn(
+/media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/lib/python3.11/site-packages/imblearn/ensemble/_forest.py:558: FutureWarning: The default of `replacement` will change from `False` to `True` in version 0.13. This change will follow the implementation proposed in the original paper. Set to `True` to silence this warning and adopt the future behaviour.
+  warn(
+[PMM] fold 4: 5978 train / 1420 val in 122s
+{
+  "folds": {
+    "0": {
+      "n_train": 5906,
+      "n_val": 1492,
+      "fit_seconds": 107.66637086868286,
+      "predictions_sha256": "ef5c90721b96abac5e94789b4363a3456f8b054fc2bf0d847dd71dc3d2ea058a",
+      "class_order": [
+        1,
+        2,
+        6,
+        7
+      ]
+    },
+    "1": {
+      "n_train": 5902,
+      "n_val": 1496,
+      "fit_seconds": 111.76690101623535,
+      "predictions_sha256": "ffb20b1733242fdab39e9baef7ef776a662b0caf2c3e3f36cf6f789f434452e0",
+      "class_order": [
+        1,
+        2,
+        6,
+        7
+      ]
+    },
+    "2": {
+      "n_train": 5902,
+      "n_val": 1496,
+      "fit_seconds": 116.17137813568115,
+      "predictions_sha256": "7f2b3540b250ac824ee46a4305d3da7837a68306f2a0dbaf2e1524fbe94c97ec",
+      "class_order": [
+        1,
+        2,
+        6,
+        7
+      ]
+    },
+    "3": {
+      "n_train": 5904,
+      "n_val": 1494,
+      "fit_seconds": 108.32983756065369,
+      "predictions_sha256": "a1e2df9d41248f972ad7046f26d2001066d8267556d6efea9aff17076b543988",
+      "class_order": [
+        1,
+        2,
+        6,
+        7
+      ]
+    },
+    "4": {
+      "n_train": 5978,
+      "n_val": 1420,
+      "fit_seconds": 121.85622119903564,
+      "predictions_sha256": "af27e0c642e8a1ed8c1fe8749b89761db33fdf37cd0e6411870afa7ecd86cffc",
+      "class_order": [
+        1,
+        2,
+        6,
+        7
+      ]
+    }
+  },
+  "adaptations": {
+    "released_drop_columns_absent_from_source": [
+      "source"
+    ],
+    "rows_restricted_to_frozen_cohort": true,
+    "dropna_rows_removed": 0,
+    "resampling": "internal to imbalanced-learn estimators, within each training fold"
+  }
+}

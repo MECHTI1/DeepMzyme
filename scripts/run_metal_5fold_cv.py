@@ -1059,7 +1059,178 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+CAMPAIGN_ACTIONS = ("folds", "plan", "smoke", "run", "pmm", "assess", "refit-preview", "refit", "reference-test")
+
+
+def parse_campaign_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "PMM ion campaign profile (plan: metal_level_metal_task_compared_PMM_final_plan.md). "
+            "Development never reads held-out inputs; reference-test requires frozen refits."
+        )
+    )
+    parser.add_argument("--campaign-dir", type=Path, required=True,
+                        help="Frozen campaign root holding campaign_manifest.json and train_cohort.csv")
+    parser.add_argument("--train-dir", type=Path, required=True, help="The dataset's train/ directory only")
+    parser.add_argument("--campaign-action", choices=CAMPAIGN_ACTIONS, required=True)
+    parser.add_argument("--families", nargs="+", default=None)
+    parser.add_argument("--targets", nargs="+", default=None, choices=["four_class", "six_class"])
+    parser.add_argument("--readouts", nargs="+", default=None, choices=["none", "first_shell_bias"])
+    parser.add_argument("--folds", nargs="+", type=int, default=None)
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--load-workers", type=int, default=None)
+    parser.add_argument("--python-bin", default=sys.executable)
+    parser.add_argument("--dry-run", action="store_true", help="Record expanded commands without fitting")
+    parser.add_argument("--no-save-epoch-checkpoints", action="store_true")
+    parser.add_argument("--status-tag", default="",
+                        help="Suffix for the status file so several runners with disjoint subsets can share a campaign")
+    parser.add_argument("--pmm-python", default=sys.executable,
+                        help="Interpreter of the pinned PinMyMetal environment (scikit-learn 1.3.0 + imbalanced-learn) for --campaign-action pmm")
+    parser.add_argument("--session-id", help="Owned provider allocation identity")
+    parser.add_argument("--execution-deadline", type=float, help="Provider hard-stop Unix timestamp")
+    parser.add_argument("--allocation-started", type=float, help="Actual provider allocation-start Unix timestamp")
+    parser.add_argument("--execution-max-seconds", type=float, help="Authorized total seconds for this allocation")
+    parser.add_argument("--estimated-fit-seconds", type=float, help="Measured full-unit forecast, including export")
+    parser.add_argument("--durable-root", type=Path, help="Verified independent mounted destination")
+    parser.add_argument("--persistence-mode", choices=("mounted", "host_pull"), default="mounted",
+                        help="Mounted independent storage, or verified host download acknowledgment between units")
+    parser.add_argument("--reference-dir", type=Path, help="Stage 7 only: original Zenodo reference-test directory")
+    parser.add_argument("--reference-source-csv", type=Path, help="Stage 7 only: pinned PMM reference source")
+    return parser.parse_args(argv)
+
+
+def campaign_execution(args, root):
+    """Admission wraps the existing queue; provider lifecycle stays outside it."""
+    from benchmarking.pmm_execution import CampaignExecution, ExecutionPolicy
+
+    required = ("session_id", "execution_deadline", "allocation_started", "execution_max_seconds",
+                "estimated_fit_seconds", "durable_root")
+    missing = [f"--{name.replace('_', '-')}" for name in required if getattr(args, name) is None]
+    if missing:
+        raise ValueError("Remote/production execution needs owned allocation receipts and measured admission: "
+                         + ", ".join(missing))
+    if args.execution_max_seconds > 4 * 3600:
+        raise ValueError("Execution exceeds the current four-hour session ceiling")
+    return CampaignExecution(root, policy=ExecutionPolicy(
+        deadline_unix=args.execution_deadline, max_total_seconds=args.execution_max_seconds,
+        allocation_started_unix=args.allocation_started), session_id=args.session_id,
+        durable_root=args.durable_root / "smoke" if root.name == "smoke" else args.durable_root,
+        persistence_mode=args.persistence_mode)
+
+
+def campaign_main(argv: list[str]) -> None:
+    """Delegate to the frozen PMM ion campaign profile (no legacy dataset discovery)."""
+    from benchmarking import pmm_ion_campaign as campaign
+    from training.access_guard import install_forbidden_read_guard
+
+    args = parse_campaign_args(argv)
+    paths = campaign.CampaignPaths(args.campaign_dir)
+    if args.campaign_action == "reference-test":
+        from benchmarking.pmm_final_report import execute_reference_report
+
+        # This function verifies the frozen selection and both completed refits
+        # before any reference path is inspected. Development keeps its guard.
+        if args.dry_run:
+            execute_reference_report(paths, args)
+        else:
+            with campaign_execution(args, paths.root) as execution:
+                print(json.dumps(execute_reference_report(paths, args, execution=execution), indent=2))
+        return
+    install_forbidden_read_guard(campaign.forbidden_read_roots(args.train_dir))
+    if args.campaign_action == "folds":
+        print(json.dumps(campaign.freeze_folds(paths), indent=2, sort_keys=True))
+        return
+    if args.campaign_action == "assess":
+        from benchmarking.pmm_ion_analysis import assess_campaign
+
+        decision = assess_campaign(paths, args.train_dir)
+        print(json.dumps({"status": decision["status"], "decisions": decision["decisions"],
+                          "incomplete_units": len(decision["incomplete_units"])}, indent=2))
+        return
+    if args.campaign_action == "pmm":
+        from benchmarking.pmm_comparator import verify_comparator_outputs
+
+        if (paths.root / "pmm_comparator" / "pmm_comparator_manifest.json").exists():
+            print(json.dumps(verify_comparator_outputs(paths.root), indent=2))
+            return
+        subprocess.run([args.pmm_python, str(REPO_ROOT / "src" / "benchmarking" / "pmm_comparator.py"),
+                        "--campaign-dir", str(paths.root)], check=True)
+        return
+    if args.campaign_action in {"refit-preview", "refit"}:
+        from benchmarking.pmm_final_report import preview_refit, execute_refit
+        from benchmarking.pmm_ion_features import verify_frozen_feature_inventory
+
+        verify_frozen_feature_inventory(paths, args.train_dir)
+        if args.campaign_action == "refit-preview" or args.dry_run:
+            print(json.dumps(preview_refit(paths, args.train_dir, python_bin=args.python_bin,
+                                          device=args.device, load_workers=args.load_workers), indent=2))
+        else:
+            with campaign_execution(args, paths.root) as execution:
+                print(json.dumps(execute_refit(paths, args.train_dir, python_bin=args.python_bin,
+                                              pmm_python=args.pmm_python, device=args.device, execution=execution,
+                                              estimated_seconds=args.estimated_fit_seconds,
+                                              load_workers=args.load_workers), indent=2))
+        return
+    epochs = None
+    folds = args.folds
+    if args.campaign_action == "smoke":
+        paths = campaign.prepare_smoke_campaign(paths)
+        epochs = 1
+        runnable = campaign.runnable_folds(paths)
+        folds = folds if folds is not None else runnable[:1]
+        not_runnable = sorted(set(folds) - set(runnable))
+        if not_runnable:
+            raise SystemExit(f"Smoke folds {not_runnable} lack a native class; runnable smoke folds: {runnable}")
+    campaign.campaign_manifest_guard(paths, require_context=args.campaign_action in {"run", "smoke"} and not args.dry_run)
+    if args.campaign_action in {"run", "smoke"} and not args.dry_run:
+        from benchmarking.pmm_ion_features import verify_frozen_feature_inventory
+
+        verify_frozen_feature_inventory(paths, args.train_dir)
+    units = campaign.selected_units(args.families, args.targets, args.readouts, folds)
+    results = []
+    status_name = f"{args.campaign_action}_status{'_' + args.status_tag if args.status_tag else ''}.json"
+    from contextlib import nullcontext
+
+    production = (not args.dry_run and args.campaign_action in {"run", "smoke"}
+                  and (args.campaign_action == "run" or str(args.device).startswith("cuda")))
+    execution_context = campaign_execution(args, paths.root) if production else nullcontext(None)
+    with execution_context as execution:
+        for config, fold, seed in units:
+            command, env, identity = campaign.build_train_command(
+                paths, python_bin=args.python_bin, train_dir=args.train_dir, config=config, fold=fold, seed=seed,
+                device=args.device, runs_dir=paths.runs, epochs=epochs, load_workers=args.load_workers,
+                save_epoch_checkpoints=not args.no_save_epoch_checkpoints, smoke=args.campaign_action == "smoke",
+            )
+            name = campaign.run_name(config, fold, seed)
+            dry = args.dry_run or args.campaign_action == "plan"
+            print(f"[CAMPAIGN] {name}: {'planning' if dry else 'running'}", flush=True)
+            reuse = campaign.completed_run_receipt(paths.runs / name, identity)
+            if execution is not None and reuse is None:
+                execution.admit(name, args.estimated_fit_seconds)
+            result = campaign.execute_unit(paths, command, env, identity, paths.runs, name,
+                                           dry_run=dry, execution=execution)
+            results.append({key: value for key, value in result.items() if key != "receipt"})
+            print(f"[CAMPAIGN] {name}: {result['status']} ({result.get('elapsed_seconds', 0):.0f}s)", flush=True)
+            campaign.write_json(paths.root / status_name, {"units": results})
+            if execution is not None:
+                if reuse is None:
+                    execution.record_result(name, result["status"], result.get("elapsed_seconds", 0.0))
+                execution.persist([path for path in (paths.runs / name, paths.runs / f"{name}.log",
+                                                     paths.commands / f"{name}.json", paths.root / status_name)
+                                   if path.exists()])
+                if execution.should_stop:
+                    break
+            if result["status"].startswith("failed"):
+                break
+    failed = [row for row in results if row["status"].startswith("failed")]
+    if failed:
+        raise SystemExit(f"{len(failed)} unit(s) failed: " + ", ".join(f"{row['run_name']} ({row.get('log')})" for row in failed))
+
+
 def main() -> None:
+    if "--campaign-dir" in sys.argv[1:]:
+        campaign_main(sys.argv[1:])
+        return
     args = parse_args()
 
     # Resolve dataset paths

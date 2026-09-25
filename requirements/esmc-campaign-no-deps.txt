@@ -1,0 +1,33 @@
+# ESMC-600M embedding generation on a CUDA host (PMM ion campaign, plan Step 2).
+# Install WITHOUT dependency resolution on top of an existing DeepMzyme torch 2.11 env:
+#   python -m pip install --no-deps -r requirements/esmc-campaign-no-deps.txt
+# Why --no-deps: esm 3.2.3 declares torchtext/torchvision, and resolving them would
+# replace the pinned torch. ESMC inference imports neither (verified 2026-09-25 by a
+# real esmc_300m CPU inference that loaded only the packages below).
+# Versions are those verified together with torch 2.11.0 on the workstation env.
+esm==3.2.3
+attrs==26.1.0
+biotite==1.6.0
+boto3==1.43.2
+botocore==1.43.2
+s3transfer==0.17.0
+jmespath==1.1.0
+brotli==1.2.0
+cloudpathlib==0.24.0
+einops==0.8.2
+httpx==0.28.1
+anyio==4.13.0
+httpcore==1.0.9
+h11==0.16.0
+msgpack==1.1.2
+msgpack-numpy==0.4.8
+tenacity==9.1.4
+transformers==4.48.1
+tokenizers==0.21.4
+huggingface_hub==0.36.2
+hf-xet==1.4.3
+safetensors==0.7.0
+zstd==1.5.7.3
+matplotlib==3.10.9
+PyYAML==6.0.3
+regex==2026.4.4
