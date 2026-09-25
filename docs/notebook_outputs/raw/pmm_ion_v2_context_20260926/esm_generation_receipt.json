@@ -1,0 +1,14 @@
+{
+  "device": "cuda",
+  "elapsed_seconds": 308.53587436676025,
+  "model_dtype": "torch.bfloat16",
+  "out_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1",
+  "reused": 0,
+  "storage_dtypes": [
+    "torch.float32"
+  ],
+  "unique_embedded": 4972,
+  "unique_inferred": 4972,
+  "verified_existing_sequences": 0,
+  "written": 7664
+}

@@ -1,0 +1,55 @@
+{
+  "status": "completed",
+  "source_tree_sha256": "68f1fa9a59d5db1e0de9dc39092756e8390acb2d90d3d22f9917e11dee05afaa",
+  "samples": [
+    {
+      "sequence_sha256": "e15d1ac444df4a8a0f1979af2014de18e8de1da1390fdf05c6a389cb8683a306",
+      "length": 128,
+      "seconds": 0.14062420200002634,
+      "emitted_dtype": "torch.float32",
+      "peak_allocated_bytes": 1187915264,
+      "peak_reserved_bytes": 4886364160
+    },
+    {
+      "sequence_sha256": "eafee88f3ef8a73cbc6ffb7f5542528659b9a696575736abe29a57aaf814a9cb",
+      "length": 512,
+      "seconds": 0.06361878600000637,
+      "emitted_dtype": "torch.float32",
+      "peak_allocated_bytes": 1273560576,
+      "peak_reserved_bytes": 4930404352
+    },
+    {
+      "sequence_sha256": "47cd3b19d7f3f9f3f14dd3064391464779259f6a8521d8b856ed4585f3fa4f2b",
+      "length": 3715,
+      "seconds": 0.24523445700003776,
+      "emitted_dtype": "torch.float32",
+      "peak_allocated_bytes": 1816632832,
+      "peak_reserved_bytes": 5293211648
+    }
+  ],
+  "compiled_architectures": [
+    "sm_75",
+    "sm_80",
+    "sm_86",
+    "sm_90",
+    "sm_100",
+    "sm_120"
+  ],
+  "compatible_cubins": [
+    "sm_80",
+    "sm_86"
+  ],
+  "hardware": {
+    "name": "NVIDIA L4",
+    "capability": [
+      8,
+      9
+    ],
+    "memory_bytes": 23745396736,
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8"
+  },
+  "model_load_seconds": 29.913476134999996,
+  "parameter_dtype": "torch.bfloat16",
+  "process_peak_rss_bytes": 2449690624
+}

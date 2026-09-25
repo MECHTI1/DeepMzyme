@@ -234,22 +234,48 @@ Path:
 `DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact` (pointing to `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset`)
 
 Purpose:
-Provide a 100% row-faithful reconstruction of the published PinMyMetal dataset (`classmodel_train_set` and `classmodel_test_set`) from Zenodo/GitHub without catalytic or EC filtering drops. Retains structural sites, zinc-finger coordination centers, and non-enzymatic transition-metal sites at 99.89% total fidelity.
+Reconstruct the published PinMyMetal source rows (`classmodel_train_set` and `classmodel_test_set`) from Zenodo/GitHub without catalytic or EC filtering. Historical reconstruction coverage is 99.89%; the audited comparison cohort below additionally excludes unsupported ions and explicit missing protein symmetry context. Row coverage alone does not certify input or paper-result parity.
 
 | Split | Source Rows | Reconstructed Rows | Fidelity | Structure Files | Unique PDB IDs |
 |---|---:|---:|---:|---:|---:|
-| **Train** | 7,920 | 7,911 | **99.89%** | 6,443 | 4,496 |
+| **Train** | 7,920 | 7,911 | **99.89%** | 6,443 | 4,191 (measured; see note) |
 | **Test** | 1,488 | 1,487 | **99.93%** | 1,281 | 1,029 |
 | **Total** | 9,408 | 9,398 | **99.89%** | 7,724 | 4,857 |
+
+Training-side audit (2026-09-25, `pmm_ion_metal_v1`, training files only): the
+training `site_manifest.csv` has 7,911 rows over **4,191** unique PDB IDs, not the
+4,496 previously listed; the 6,443 structure files are hard links to 4,191 distinct
+full-entry contents (one file per labelled chain of the same entry). Binding each
+row to one physical ion atom retained 7,901 rows; 9 source rows have no
+reconstruction row and 10 map to non-single-metal residues (Fe-S clusters,
+cofactors, `UNX`, or ligands after solvent-stripped recovery). No duplicate
+physical ions, conflicting labels, alternate-location targets or structure-hash
+mismatches were found. See `train_audit.json` and `train_row_dispositions.csv` in
+the preserved v1 campaign root. Test-side counts were not re-audited.
+
+The 2026-09-26 v2 context audit found explicit target-to-protein symmetry LINKs
+for **503** of those ions. The matched-subset policy excludes them from both
+DeepMzyme and PMM: **7,398 ions / 3,992 PDB groups** remain, with native counts
+Mn 2,528; Cu 343; Zn 2,032; Fe 1,737; Co 283; Ni 475. New fivefold membership
+contains every native class on both sides of every fold. The cohort SHA-256 is
+`745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd`.
+`pmm_ion_metal_v2_context/train_context_audit.json` certifies the declared
+first-model, asymmetric-unit, all-local-protein-chain input contract after
+exclusion. Thirteen remaining ions have symmetry LINKs only to non-protein
+partners outside the predictive residue channels. There are no retained
+multi-model ambiguities or cross-PDB exact-content aliases. Missing LINK
+annotations cannot establish absence of all symmetry contacts, so historical
+source/paper context parity remains unproven. Reference-side reconstruction
+and overlap are deferred until both selected full-training refits are frozen.
 
 Key Technical Details:
 - **Primary Site Resolution:** Uses PinMyMetal's compiled `neighborhood` binary (`PinMyMetal_V1.0_zenodo.zip`) to deterministically resolve `residueid_ion` to physical coordinate records `(chain, resseq, resname, atomid)` directly against source PDBs.
 - **Large PDB Solvent Stripping:** 298 large complexes that previously produced `SIGSEGV` in legacy tools were 100% recovered by stripping `HOH` solvent atoms prior to neighborhood execution.
-- **DeepMzyme Contract Parity:** Each coordinate file is formatted as `{pdbid}__chain_{chain}__EC_0.0.0.0.pdb` backed by zero-byte hard links, accompanied by SHA-256 verified `structure_manifest.csv` and `final_data_summarazing_table.csv` (`whether_catalytic=1`, `ecnumber=0.0.0.0`).
+- **DeepMzyme Input Layout:** Each coordinate file is formatted as `{pdbid}__chain_{chain}__EC_0.0.0.0.pdb`; chain-named hard links share each full-entry file's inode and contents. The layout includes `structure_manifest.csv` and `final_data_summarazing_table.csv`. Here `whether_catalytic=1` and `ecnumber=0.0.0.0` are compatibility placeholders, not biological annotations.
 - **Storage Protection:** Stored on `/media/mechti/Data1` with symlink integration in `DeepMzyme_Data/`, avoiding host root partition space constraints.
 - **Hugging Face Distribution:** Hosted on [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) as `train_and_test_sets_structures_zenodo_pmm_exact.tar.gz` (1.1 GB, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
 - **Reproducibility Playbook:** See [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) for step-by-step instructions.
-- **Benchmark Runner:** Run via `scripts/run_zenodo_pmm_exact_5fold_cv.py` (or `scripts/run_zenodo_pmm_exact.sh`), supporting 5-fold CV (evaluating against PinMyMetal Fig 2a: 75.08%) and held-out test evaluation / 5-fold ensemble (evaluating against PinMyMetal Fig 2b: 67.85% and Metal3D Fig 2c: 61.70%).
+- **Current Comparison Runner:** Use the explicit PMM campaign mode in `scripts/run_metal_5fold_cv.py` and the [metal playbook recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context). The historical Zenodo wrappers do not implement this campaign's target, fold, selection and refit safeguards; their paper-number comparisons and fold ensembles are not the approved execution route.
 
 ### Non-overlapped PinMyMetal
 

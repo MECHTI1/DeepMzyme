@@ -57,6 +57,17 @@ replace site-level labels for single-label metal training.
 Data integrity rule: the only metal types present in structure files must match
 those in the CSV exactly, and vice versa.
 
+The PMM known-ion comparison has a narrowly scoped source-row exception:
+its frozen `train_cohort.csv` binds released PMM rows to individual physical
+ions, and retains otherwise eligible noncatalytic examples. In that profile,
+`whether_catalytic=1` and `EC_0.0.0.0` are compatibility placeholders, not
+biological annotations. Only bound target ions supply labels; neighboring ions
+do not become extra training examples. Explicit missing protein symmetry
+context is excluded by the same frozen rule in both systems and in any later
+authorized secondary reference report. No EC supervision is inferred from
+these records. The [PMM plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
+defines this separate comparison and its validation-to-refit boundary.
+
 Preparation scripts live under `prepare_training_and_test_set/`. These scripts
 download structures, create non-redundant chain-level files, and run MAHOMES
 activation to produce the site-level summary CSVs used for training.

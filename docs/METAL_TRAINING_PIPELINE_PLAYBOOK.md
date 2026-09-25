@@ -30,6 +30,179 @@ historical context only. Do not compare their scores as paired controls or use
 held-out test data to choose the unit. The ion option is currently
 implemented and unit-tested, not experimentally evaluated.
 
+## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
+
+Plan: [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](plans/metal_level_metal_task_compared_PMM_final_plan.md).
+Stage: Stage 2B-style matched baseline comparison on grouped folds
+(**one-seed grouped-fold comparison**, not Stage 6 seed-repeat confirmation).
+Development commands below never discover or read the held-out side. Their
+read guard denies `test/`, the mixed `site_crosswalk.csv` and the repository's
+`classmodel_test_set`. The separately gated reference command appears after
+the validation/refit decision gates.
+
+The v2 profile consistently excludes target ions with explicit protein LINK
+symmetry context outside the supplied coordinates. It preserves first-model,
+all-local-protein-chain inputs; absent LINK records are not proof of historical
+PMM assembly parity. Keep v1 outputs as historical evidence. Counts and current
+certification state belong in `DATASETS.md` and `EXPERIMENT_STATUS.md`.
+
+Frozen profile (owner: `src/benchmarking/pmm_ion_campaign.py`, `PROFILE`):
+`task=metal`, `metal_example_unit=ion`, frozen source-row cohort
+(`--source-cohort-csv`), five PDB-grouped folds (`split_seed=42`,
+`split_stratify_by=metal_site`, frozen `fold_membership.csv`), model seed 42,
+50 epochs, batch 16, AdamW, weight decay `1e-4`, fixed LR, selection on native
+`val_metal_balanced_acc` (earliest-epoch tie), 10 Å pocket, 8 Å edges,
+`metal_node_mode=none`, `structural_readout_scope=residue_only`,
+`shell_role_source=geometry`, RING off, GVP 128/16/64/4 layers, ESM projection
+128, two head layers (dropout 0.2), ESM encoder dropout 0.1, conservative
+features with `biotite_residue_sasa`, `custom_charge_distance_proxy` and
+`dpka_titr` omitted, ESMC-600M (`esmc_600m`, `--esm-dim 1152`).
+Class weights: per training fold, `w_c = N_train / (4 n_c)` on the common four
+classes via `--metal-class-weight-mode manual`; the six-class arm assigns
+`w_VIII` to Fe, Co and Ni separately.
+
+| Family | Architecture | LR | Targets | Readout variant |
+|---|---|---|---|---|
+| Only-ESM | `only_esm` | `3e-5` | `four_class`, `six_class` | `first_shell_bias` (four only) |
+| Only-GVP | `only_gvp`, raw RBF | `3e-4` | `four_class`, `six_class` | `first_shell_bias` (four only) |
+| GVP + ESMC | `gvp`, `late_fusion`, early ESM off, raw RBF | `3e-5`, GVP group `3e-4` | `four_class`, `six_class` | `first_shell_bias` (four only) |
+
+`first_shell_bias` adds zero-initialized learned logit biases for the target's
+geometric first-shell residues in each readout pooling branch (mean and
+attention; GVP and, where active, late ESM). At zero it reproduces the ordinary
+readout. With it, Only-ESM is labeled **ESMC with target-shell-conditioned
+readout**, not sequence-only.
+
+Grid: 3 families x 2 targets x 5 folds + 3 aware direct-four arms x 5 folds =
+**45 fits**, plus the PinMyMetal released-recipe comparator refit on the same
+five training partitions (CPU).
+
+Commands (run from the repository root; `T` is the dataset's `train/`
+directory, `C` the campaign root; outputs never go under `DeepMzyme_Data/`
+runs of other campaigns):
+
+```bash
+PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+T=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
+C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context
+# Step 1 (CPU, training-only): freeze cohort, dispositions, audit, campaign manifest
+$PY src/benchmarking/pmm_ion_cohort.py --train-dir $T --out-dir $C --workers 2
+$PY src/benchmarking/pmm_ion_cohort.py --train-dir $T --out-dir $C --verify-only
+$PY src/benchmarking/pmm_ion_cohort.py --train-dir $T --out-dir $C --context-audit
+# Step 3 folds and class weights (CPU)
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action folds
+# Step 2 inputs: plan context chains (CPU), generate ESMC-600M (GPU), certify (CPU/GPU host)
+$PY src/benchmarking/pmm_ion_features.py plan --campaign-dir $C --train-dir $T
+$PY src/benchmarking/pmm_ion_features.py generate --campaign-dir $C --train-dir $T --device cuda
+$PY src/benchmarking/pmm_ion_features.py certify --campaign-dir $C --train-dir $T
+# Set these from the actual owned allocation and measured timing receipt.
+# GCP can use host_pull with verified workstation acknowledgment between units.
+RUNTIME=(--session-id "${PMM_ALLOCATION_ID:?}" \
+  --allocation-started "${PMM_ALLOCATION_STARTED:?}" \
+  --execution-deadline "${PMM_HARD_STOP:?}" \
+  --execution-max-seconds "${PMM_ALLOWED_SECONDS:?}" \
+  --estimated-fit-seconds "${PMM_UNIT_SECONDS:?}" \
+  --durable-root "${PMM_DURABLE_ROOT:?}" \
+  --persistence-mode "${PMM_PERSISTENCE_MODE:?mounted or host_pull}")
+# Step 5 smoke: all nine configurations, 1 epoch, first class-complete smoke fold
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
+  --campaign-action smoke --device cuda "${RUNTIME[@]}"
+# Step 6: record expanded commands, then fit serially (identity-checked reuse)
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action plan
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
+  --campaign-action run --device cuda "${RUNTIME[@]}"
+# PinMyMetal comparator (needs imbalanced-learn; isolated venv) and assessment
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action pmm \
+  --pmm-python /media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/bin/python
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action assess
+```
+
+`--families`, `--targets`, `--readouts` and `--folds` restrict `run`/`plan` to
+a subset without changing the grid. A unit is reused only when its
+`selected_checkpoint.json`, `run_metadata.json` fit status, campaign identity
+(cohort, fold membership, feature inventory, profile hash, family, target,
+readout, fold, seed, epochs) and checkpoint/prediction hashes all match; a
+partial directory is moved to `runs/_incomplete_attempts/` and the fit restarts
+from scratch (no optimizer-state resume). Full development admission requires
+the complete schema-v2 feature inventory. Certification validates every embedding
+payload, sidecar, sequence and residue order; fit admission rechecks the frozen
+structure, plan, coverage and payload/sidecar hashes without repeating that
+semantic parsing. An explicit full semantic re-audit remains available through
+`verify_frozen_feature_inventory(..., verify_payloads=True)`. `certify --structure-only`
+is a diagnostic and an authorized Only-GVP reference option; it does not admit
+the development grid. Each fitted checkpoint is independently reloaded and
+replayed on its frozen validation membership before completion is certified.
+
+Use actual allocation start, not runner start, with the current four-hour
+session ceiling and provider/daily limits. Forecast the next full unit with
+1.25 margin and 900 seconds for closeout, including checkpoint replay and
+transfer. `host_pull` exits after a terminal unit until its transfer manifest
+has been independently verified on the workstation and its acknowledgment
+returned. Consult the [GPU routing guide](GPU_EXECUTION_CASCADE_PLAYBOOK.md)
+for ownership, measured efficiency and shutdown.
+
+Expected outputs under `C`: `campaign_manifest.json`, `train_cohort.csv`,
+`train_row_dispositions.csv`, `train_audit.json`, `train_context_audit.json`, `fold_membership.csv`,
+`fold_class_weights.json`, `esm_generation_plan.{csv,json}`,
+`feature_inventory.json`, `commands/<run>.json`, per fit `run_config.json`,
+`run_metadata.json`, `split_diagnostics.json`, `selected_checkpoint.json`,
+`runtime_profile.json` (phase wall times, process RSS and CUDA allocator peaks),
+`independent_validation_replay/replay_receipt.json`,
+`val_predictions.csv` (UID-keyed native and common-four probabilities of the
+selected checkpoint), `pmm_comparator/`, `cv_fold_metrics.csv`,
+`cv_oof_predictions.csv`, `cv_paired_deltas.csv`, `validation_decision.json`.
+
+Decision gate (validation only): the primary estimand is mean common-four
+balanced accuracy over the five selected fold checkpoints. The six predeclared
+contrasts (six vs four per family; aware vs ordinary per direct-four family)
+use paired fold-difference bootstrap (10,000 resamples, seed 42, 95 %
+percentile intervals). Promotion requires a positive mean difference, a
+positive lower 95 % bound, no missing or zero mean class recall, and no
+common-four class recall drop above 0.03; a simultaneous claim also needs a
+positive Bonferroni (`1 - 0.05/6`) lower bound. Otherwise retain direct four
+and the ordinary readout. The PinMyMetal comparator is descriptive (different
+inputs), and paper figures remain contextual. A complete development decision
+requires all 45 verified fits and all five compatible PMM comparator outputs;
+a neural-only grid is incomplete.
+
+Stage 6B and Stage 7 below implement the separately authorized secondary PMM
+reference route. They do not designate the project's primary final test.
+The fixed fallback is ordinary direct-four Only-GVP. A challenger must pass
+its applicable matched contrast and paired-CI/rare-recall gates against that
+control. Rank eligible configurations by mean common-four balanced accuracy;
+within 0.002, prefer mean minimum recall, worst-fold accuracy, lower fold SD,
+then the declared complexity proxy and configuration ID. Select only a
+configuration actually evaluated in the grid.
+
+```bash
+# Preview first: writes the frozen selection and exact full-train command.
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
+  --campaign-action refit-preview --device cuda
+# Once the complete validation decision passes: 50 full-train epochs, seed42,
+# terminal epoch50 checkpoint; full-training normalization/common-four weights.
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
+  --campaign-action refit --device cuda "${RUNTIME[@]}" \
+  --pmm-python "${PMM_RELEASED_PYTHON:?}"
+# Both final refits must be complete before even reference input certification.
+$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
+  --campaign-action reference-test --device cuda "${RUNTIME[@]}" \
+  --pmm-python "${PMM_RELEASED_PYTHON:?}" \
+  --reference-dir "${PMM_REFERENCE_DIR:?original dataset/test}" \
+  --reference-source-csv "${PMM_REFERENCE_SOURCE:?pinned classmodel_test_set}"
+```
+
+Preview outputs: `stage6b_decision.json`, `stage6b_ranked_candidates.csv`, and
+`stage6b_final_refit_command.txt`. Only a completed terminal refit creates
+`stage6b_selected_final_refit_candidate.json`; PMM writes
+`final_refit/pmm/pmm_refit_receipt.json`. Reference outputs live exclusively
+under `reference/`: route/access receipts, reconstruction dispositions,
+`coverage_and_overlap.json`, both prediction files and `reference_report.json`.
+The report uses one frozen model per system, no ensemble/calibration, and
+10,000 paired PDB-group bootstrap resamples with seed42. It discloses exclusions
+and train/reference overlap and is labeled a secondary matched known-ion
+comparison. A failed reference attempt requires artifact reconciliation before
+recovery; it does not authorize a new selection or a second exploratory test.
+
 ## Exact-pocket Antigravity-matched L4 diagnostic
 
 **Pocket-unit historical protocol stopped after the user's ion-unit correction.**

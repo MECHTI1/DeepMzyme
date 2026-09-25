@@ -1,0 +1,247 @@
+{
+  "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+  "folds": {
+    "0": {
+      "absent_native_classes": [],
+      "common_four_weights": {
+        "Class VIII": 0.7529321774604794,
+        "Cu": 4.8569078947368425,
+        "Mn": 0.8248603351955307,
+        "Zn": 0.7976769313884386
+      },
+      "four_class_multipliers": {
+        "class_viii": 0.7529321774604794,
+        "cu": 4.8569078947368425,
+        "mn": 0.8248603351955307,
+        "zn": 0.7976769313884386
+      },
+      "n_train": 5906,
+      "n_val": 1492,
+      "runnable": true,
+      "six_class_multipliers": {
+        "co": 0.7529321774604794,
+        "cu": 4.8569078947368425,
+        "fe": 0.7529321774604794,
+        "mn": 0.8248603351955307,
+        "ni": 0.7529321774604794,
+        "zn": 0.7976769313884386
+      },
+      "train_common_four_counts": {
+        "Class VIII": 1961,
+        "Cu": 304,
+        "Mn": 1790,
+        "Zn": 1851
+      },
+      "train_native_counts": {
+        "CO": 248,
+        "CU": 304,
+        "FE": 1355,
+        "MN": 1790,
+        "NI": 358,
+        "ZN": 1851
+      },
+      "val_native_counts": {
+        "CO": 35,
+        "CU": 39,
+        "FE": 382,
+        "MN": 738,
+        "NI": 117,
+        "ZN": 181
+      }
+    },
+    "1": {
+      "absent_native_classes": [],
+      "common_four_weights": {
+        "Class VIII": 0.7381190595297649,
+        "Cu": 5.346014492753623,
+        "Mn": 0.7388582874311467,
+        "Zn": 0.9052147239263804
+      },
+      "four_class_multipliers": {
+        "class_viii": 0.7381190595297649,
+        "cu": 5.346014492753623,
+        "mn": 0.7388582874311467,
+        "zn": 0.9052147239263804
+      },
+      "n_train": 5902,
+      "n_val": 1496,
+      "runnable": true,
+      "six_class_multipliers": {
+        "co": 0.7381190595297649,
+        "cu": 5.346014492753623,
+        "fe": 0.7381190595297649,
+        "mn": 0.7388582874311467,
+        "ni": 0.7381190595297649,
+        "zn": 0.9052147239263804
+      },
+      "train_common_four_counts": {
+        "Class VIII": 1999,
+        "Cu": 276,
+        "Mn": 1997,
+        "Zn": 1630
+      },
+      "train_native_counts": {
+        "CO": 226,
+        "CU": 276,
+        "FE": 1358,
+        "MN": 1997,
+        "NI": 415,
+        "ZN": 1630
+      },
+      "val_native_counts": {
+        "CO": 57,
+        "CU": 67,
+        "FE": 379,
+        "MN": 531,
+        "NI": 60,
+        "ZN": 402
+      }
+    },
+    "2": {
+      "absent_native_classes": [],
+      "common_four_weights": {
+        "Class VIII": 0.727923038973853,
+        "Cu": 5.589015151515151,
+        "Mn": 0.7366450324513231,
+        "Zn": 0.9175995024875622
+      },
+      "four_class_multipliers": {
+        "class_viii": 0.727923038973853,
+        "cu": 5.589015151515151,
+        "mn": 0.7366450324513231,
+        "zn": 0.9175995024875622
+      },
+      "n_train": 5902,
+      "n_val": 1496,
+      "runnable": true,
+      "six_class_multipliers": {
+        "co": 0.727923038973853,
+        "cu": 5.589015151515151,
+        "fe": 0.727923038973853,
+        "mn": 0.7366450324513231,
+        "ni": 0.727923038973853,
+        "zn": 0.9175995024875622
+      },
+      "train_common_four_counts": {
+        "Class VIII": 2027,
+        "Cu": 264,
+        "Mn": 2003,
+        "Zn": 1608
+      },
+      "train_native_counts": {
+        "CO": 234,
+        "CU": 264,
+        "FE": 1383,
+        "MN": 2003,
+        "NI": 410,
+        "ZN": 1608
+      },
+      "val_native_counts": {
+        "CO": 49,
+        "CU": 79,
+        "FE": 354,
+        "MN": 525,
+        "NI": 65,
+        "ZN": 424
+      }
+    },
+    "3": {
+      "absent_native_classes": [],
+      "common_four_weights": {
+        "Class VIII": 0.7372627372627373,
+        "Cu": 5.857142857142857,
+        "Mn": 0.6972130373169579,
+        "Zn": 0.9628180039138943
+      },
+      "four_class_multipliers": {
+        "class_viii": 0.7372627372627373,
+        "cu": 5.857142857142857,
+        "mn": 0.6972130373169579,
+        "zn": 0.9628180039138943
+      },
+      "n_train": 5904,
+      "n_val": 1494,
+      "runnable": true,
+      "six_class_multipliers": {
+        "co": 0.7372627372627373,
+        "cu": 5.857142857142857,
+        "fe": 0.7372627372627373,
+        "mn": 0.6972130373169579,
+        "ni": 0.7372627372627373,
+        "zn": 0.9628180039138943
+      },
+      "train_common_four_counts": {
+        "Class VIII": 2002,
+        "Cu": 252,
+        "Mn": 2117,
+        "Zn": 1533
+      },
+      "train_native_counts": {
+        "CO": 214,
+        "CU": 252,
+        "FE": 1429,
+        "MN": 2117,
+        "NI": 359,
+        "ZN": 1533
+      },
+      "val_native_counts": {
+        "CO": 69,
+        "CU": 91,
+        "FE": 308,
+        "MN": 411,
+        "NI": 116,
+        "ZN": 499
+      }
+    },
+    "4": {
+      "absent_native_classes": [],
+      "common_four_weights": {
+        "Class VIII": 0.7506278252134606,
+        "Cu": 5.4148550724637685,
+        "Mn": 0.6777777777777778,
+        "Zn": 0.9923638778220452
+      },
+      "four_class_multipliers": {
+        "class_viii": 0.7506278252134606,
+        "cu": 5.4148550724637685,
+        "mn": 0.6777777777777778,
+        "zn": 0.9923638778220452
+      },
+      "n_train": 5978,
+      "n_val": 1420,
+      "runnable": true,
+      "six_class_multipliers": {
+        "co": 0.7506278252134606,
+        "cu": 5.4148550724637685,
+        "fe": 0.7506278252134606,
+        "mn": 0.6777777777777778,
+        "ni": 0.7506278252134606,
+        "zn": 0.9923638778220452
+      },
+      "train_common_four_counts": {
+        "Class VIII": 1991,
+        "Cu": 276,
+        "Mn": 2205,
+        "Zn": 1506
+      },
+      "train_native_counts": {
+        "CO": 210,
+        "CU": 276,
+        "FE": 1423,
+        "MN": 2205,
+        "NI": 358,
+        "ZN": 1506
+      },
+      "val_native_counts": {
+        "CO": 73,
+        "CU": 67,
+        "FE": 314,
+        "MN": 323,
+        "NI": 117,
+        "ZN": 526
+      }
+    }
+  },
+  "membership_identity_sha256": "912997c82877eef781492f6207f5deb9c36b601def715247fa3a37ec601bccc1",
+  "rule": "w_c = N_train / (4 * n_c) on the common-four endpoint"
+}

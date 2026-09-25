@@ -178,20 +178,16 @@ def build_graph_data_list(
     metal_node_mode: str = "none",
     shell_role_source: str = "edge_mode",
 ) -> list[Data]:
-    return [
-        pocket_to_pyg_data(
-            pocket,
-            esm_dim=esm_dim,
-            edge_radius=edge_radius,
-            use_ring_edges=use_ring_edges,
-            require_ring_edges=require_ring_edges,
-            node_feature_set=node_feature_set,
-            omit_node_features=omit_node_features,
-            metal_node_mode=metal_node_mode,
-            shell_role_source=shell_role_source,
-        )
-        for pocket in pockets
-    ]
+    from training.raw_graph_cache import build_cached_graphs
+
+    options = dict(esm_dim=esm_dim, edge_radius=edge_radius, use_ring_edges=use_ring_edges,
+                   require_ring_edges=require_ring_edges, node_feature_set=node_feature_set,
+                   omit_node_features=omit_node_features, metal_node_mode=metal_node_mode,
+                   shell_role_source=shell_role_source)
+    cached = build_cached_graphs(pockets, options, pocket_to_pyg_data)
+    if cached is not None:
+        return cached
+    return [pocket_to_pyg_data(pocket, **options) for pocket in pockets]
 
 
 def _normalization_tensor_for_feature(data: Data, feature_name: str) -> Tensor | None:

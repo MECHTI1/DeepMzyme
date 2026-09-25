@@ -19,6 +19,7 @@ from training.labels import (
     parse_structure_ec_numbers,
 )
 from training.metal_examples import metal_ion_examples
+from training.source_cohort import CohortBindingError, binding_from_payload, build_cohort_ion_examples
 from training.site_filter import AllowedSiteMetalLabels, matched_site_metal_types, pocket_matches_allowed_sites
 
 
@@ -102,9 +103,31 @@ def load_structure_pockets(
     unsupported_metal_policy: str = "error",
     ec_label_depth: int = 1,
     metal_example_unit: str = "pocket",
+    cohort_bindings: dict[str, tuple] | None = None,
+    feature_inventory_sha256: str | None = None,
 ) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
+    """Parse one structure into labeled examples.
+
+    ``cohort_bindings`` (structure stem -> frozen binding tuples) switches to the
+    source-row cohort path: one example per bound ion, no summary-key matching.
+    ``feature_inventory_sha256`` is not used here; it only makes parse-cache
+    entries specific to one immutable feature inventory.
+    """
     if metal_example_unit not in {"pocket", "ion"}:
         raise ValueError(f"Unsupported metal example unit: {metal_example_unit!r}")
+    if cohort_bindings is not None:
+        return _load_cohort_structure_pockets(
+            structure_path=structure_path,
+            structure_root=structure_root,
+            bindings=cohort_bindings.get(structure_path.stem, ()),
+            esm_dim=esm_dim,
+            embeddings_dir=embeddings_dir,
+            require_esm_embeddings=require_esm_embeddings,
+            feature_root_dir=feature_root_dir,
+            external_feature_source=external_feature_source,
+            require_external_features=require_external_features,
+            ec_label_depth=ec_label_depth,
+        )
     try:
         structure = parse_structure_file(str(structure_path), structure_id=structure_path.stem)
         extracted_pockets = extract_metal_pockets_from_structure(structure, structure_id=structure_path.stem)
@@ -232,3 +255,67 @@ def load_structure_pockets(
         kept_pockets.append(pocket)
 
     return kept_pockets, feature_fallbacks, skipped_pockets
+
+
+def _load_cohort_structure_pockets(
+    *,
+    structure_path: Path,
+    structure_root: Path,
+    bindings: tuple,
+    esm_dim: int,
+    embeddings_dir: Path,
+    require_esm_embeddings: bool,
+    feature_root_dir: Path,
+    external_feature_source: str,
+    require_external_features: bool,
+    ec_label_depth: int,
+) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
+    """Frozen-cohort ion examples. Every failure is fatal (no silent skips)."""
+    if not bindings:
+        return [], [], []
+    resolved = [binding_from_payload(item) for item in bindings]
+    try:
+        structure = parse_structure_file(str(structure_path), structure_id=structure_path.stem)
+    except Exception as exc:
+        raise CohortBindingError(f"Failed to parse cohort structure {structure_path}: {exc}") from exc
+    examples = build_cohort_ion_examples(
+        structure,
+        structure_id=structure_path.stem,
+        structure_path=structure_path,
+        bindings=resolved,
+    )
+    feature_fallbacks: list[dict[str, str]] = []
+    try:
+        feature_sources = load_structure_feature_sources(
+            structure=structure,
+            structure_path=structure_path,
+            structure_root=structure_root,
+            embeddings_dir=embeddings_dir,
+            require_esm_embeddings=require_esm_embeddings,
+            feature_root_dir=feature_root_dir,
+            external_feature_source=external_feature_source,
+            require_external_features=require_external_features,
+            feature_fallbacks=feature_fallbacks,
+        )
+        # Features are attached to retained ion examples only, never to other
+        # pockets of the structure, so an unused remote chain cannot fail a load.
+        for example in examples:
+            attach_structure_features_to_pocket(
+                example,
+                feature_sources=feature_sources,
+                esm_dim=esm_dim,
+                require_esm_embeddings=require_esm_embeddings,
+                require_external_features=require_external_features,
+                structure_path=structure_path,
+            )
+    except ValueError as exc:
+        raise CohortBindingError(f"Required features unavailable for cohort structure {structure_path}: {exc}") from exc
+    ec_label_token = parse_ec_label_token_from_structure_path(structure_path, depth=ec_label_depth)
+    ec_numbers = list(parse_structure_ec_numbers(structure_path.stem))
+    for example in examples:
+        example.y_metal = map_site_metal_symbols([example.metal_element], unsupported_metal_policy="error")
+        example.metadata["ec_label_depth"] = ec_label_depth
+        example.metadata["ec_numbers"] = ec_numbers
+        if ec_label_token is not None:
+            example.metadata["ec_label_token"] = ec_label_token
+    return examples, feature_fallbacks, []

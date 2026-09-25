@@ -1,0 +1,52 @@
+{
+  "audit": {
+    "path": "train_audit.json",
+    "sha256": "3a11661a740de89dd497a5c2796421cb7ba909c59a542a34b08a477eaf0eaaeb"
+  },
+  "campaign_id": "pmm_ion_metal_v2_context",
+  "code": {
+    "branch": "metal-pmm-ion-campaign",
+    "commit": "34633fae35a6bef6e2ae0693d0bfce914dab31cb",
+    "dirty": true,
+    "source_tree_rule": "sha256 over sorted src/**/*.py and scripts/*.py (path + content)",
+    "source_tree_sha256": "8f0635ee5030ad6ecaa36f73f43bb5efc690907d95cc7b6744e0bcd1e563cad2"
+  },
+  "cohort": {
+    "n_rows": 7398,
+    "path": "train_cohort.csv",
+    "sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd"
+  },
+  "context_policy": "exclude_explicit_protein_symmetry_links_v1",
+  "created_at": "2026-09-25T21:14:59+00:00",
+  "dataset_name": "train_and_test_sets_structures_zenodo_pmm_exact",
+  "dataset_train_dir_at_creation": "/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train",
+  "dispositions": {
+    "path": "train_row_dispositions.csv",
+    "sha256": "2e79aa0218f8e63644be39134577d391c6b6329ea98a8565ab7f9a61f5f754fc"
+  },
+  "identity_rule": "content hashes below; folder names and row counts are not identity",
+  "n_structure_files": 6443,
+  "parent_campaign": {
+    "campaign_id": "pmm_ion_metal_v1",
+    "context_audit_sha256": "73bc708473ad9594f194d132ff03851fd712f05eaf0efd19e71c3452bb89a967",
+    "manifest_sha256": "5ff1618ddb6666f37c1d4b151d896261cce63d9169f08ba03ed2fd56db17bb75",
+    "path_at_creation": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v1"
+  },
+  "schema_version": 1,
+  "source_release": {
+    "github_commit": "59ef46795920322c798db4e5ec500b04451f7904",
+    "github_repository": "hhz-lab/PinMyMetal",
+    "source_file": "classmodel_train_set",
+    "source_file_sha256": "4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f",
+    "training_script": "data_model/train_chedhclassmodel.py",
+    "zenodo_record": "14830978"
+  },
+  "source_side": "train",
+  "structure_content_sha256": "01264a9511bfefb10c50f835e2b65c58c771069f0a59f7bf25d0572f01ca9ef6",
+  "train_metadata_sha256": {
+    "final_data_summarazing_table.csv": "ab8a91b53465c813f97a5465e23c0c5bd9e510e0371e43d50668ee5e3fa9d4c9",
+    "site_manifest.csv": "fe83370add5ff15216e57229c1ad06c8ea51614ea9cdbb054e0f3531e9f7f94c",
+    "structure_chain_manifest.csv": "c0c4bb4ea37d1a879303e0c83b4132cca1962091b4173386ab55fcc8b8291ad5",
+    "structure_manifest.csv": "792975d358e7d2e5852f9e6d67903805172abfd2221a5c7fe21f195c25785a5d"
+  }
+}

@@ -101,11 +101,19 @@ def metal_records_from_biopython_residue(residue, chain_id: str) -> List[MetalAt
 
 def collect_structure_residues_and_metals(
     structure,
+    model_index: Optional[int] = None,
 ) -> Tuple[List[ResidueRecord], List[MetalAtomRecord]]:
+    """Collect protein residues and metal atoms.
+
+    ``model_index=None`` keeps the historical traversal of every model. A
+    multi-model (e.g. NMR) file then contributes duplicate residues and ions, so
+    callers that need one physical coordinate set pass the model position.
+    """
     all_residues: List[ResidueRecord] = []
     metal_records: List[MetalAtomRecord] = []
 
-    for model in structure:
+    models = list(structure) if model_index is None else [list(structure)[model_index]]
+    for model in models:
         for chain in model:
             for residue in chain:
                 residue_metal_records = metal_records_from_biopython_residue(residue, chain.id)
@@ -218,9 +226,10 @@ def extract_metal_pockets_from_structure(
     structure_id: Optional[str] = None,
     pocket_radius: float = DEFAULT_POCKET_RADIUS,
     multinuclear_merge_distance: float = DEFAULT_MULTINUCLEAR_MERGE_DISTANCE,
+    model_index: Optional[int] = None,
 ) -> List[PocketRecord]:
     sid = structure_id or getattr(structure, "id", "unknown_structure")
-    all_residues, metal_records = collect_structure_residues_and_metals(structure)
+    all_residues, metal_records = collect_structure_residues_and_metals(structure, model_index=model_index)
     residue_coord_tensors = [
         torch.stack([coord.float() for coord in residue_record.atoms.values()], dim=0)
         for residue_record in all_residues

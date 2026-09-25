@@ -1,0 +1,10 @@
+{
+  "source_tree_sha256": "86950d068812db8f380c9d85993b7b95c96050c061a1ef2428f7bcebef366125",
+  "interpreter": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python",
+  "passed": 114,
+  "warnings": 39,
+  "elapsed_seconds": 69.81,
+  "exit_code": 0,
+  "suites": ["test_pmm_ion_campaign", "test_pmm_campaign_integrity", "test_pmm_training_integrity", "test_pmm_execution", "test_pmm_final_report", "test_metal_ion_examples", "test_generalized_metal_5fold_cv"],
+  "live_reference_test_access": false
+}

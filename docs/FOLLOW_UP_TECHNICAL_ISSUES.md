@@ -842,3 +842,88 @@ BA/macro-F1 undefined when a true class is absent. Existing training metrics are
 unchanged to preserve historical checkpoint selection. See the
 [remote addendum](REMOTE_HOMOLOGY_ADDENDUM.md) for interpretation and remaining
 full-protein/support limits.
+
+## TECH-017 — Ion-unit loading of the Zenodo PinMyMetal reconstruction
+
+**Status:** Resolved for the opt-in source-cohort path 2026-09-25; the legacy
+summary-matching ion path is unchanged and remains affected.
+
+Every `{pdbid}__chain_{X}__EC_0.0.0.0.pdb` file of the reconstruction is a hard
+link to the full PDB entry. Summary-key ion matching (`pdbid`, EC,
+`chain_resi`) ignores which file an ion came from and ignores insertion codes,
+so an ion can be ingested once per chain alias of its entry, and
+`load_allowed_site_metal_labels()` silently overwrites duplicate keys.
+`collect_structure_residues_and_metals()` traverses every model, and features are
+attached to every pocket of a structure before ion filtering, so a strict ESM
+requirement also fails on unused remote chains. Per-chain ESM files cover only
+the file's named chain, although 32 % of retained ion contexts include another
+chain.
+
+The campaign's `--source-cohort-csv` path binds each source UID to one atom
+(canonical file, content hash, model 0, chain, residue, insertion code, atom,
+altloc, coordinate), builds one example per binding from model 0 only,
+attaches features to retained ions only, and fails on any missing or repeated
+binding. `scripts/run_zenodo_pmm_exact_5fold_cv.py` and the generalized
+runner's legacy (non-campaign) path still use summary matching, five-class
+defaults, `--allow-missing-esm-embeddings` and per-fold test evaluation; do not
+use them for this campaign.
+
+## TECH-018 — Legacy 5-fold runner summary selects independent maxima
+
+**Status:** Open for the legacy runner path; not used by the PMM campaign profiles.
+
+`summarize_single_fold()` in `scripts/run_metal_5fold_cv.py` reports the maximum
+native and the maximum collapsed-four validation BA from possibly different
+epochs, and `compute_oof_cv_metrics()` averages those scalar maxima under an
+"OOF" name. Neither describes one selected checkpoint or real out-of-fold
+predictions. The campaign path reports both views from the same selected
+checkpoint (`selected_checkpoint.json`, `val_predictions.csv`) and pools actual
+UID-keyed predictions (`src/benchmarking/pmm_ion_analysis.py`).
+
+## TECH-019 — Stale explicit-membership loader test
+
+**Status:** Open (pre-existing on `main`, found 2026-09-25).
+
+`tests/test_explicit_membership.py::test_outer_loader_not_deserialized` patches
+`training.data.load_structure_pockets`, which `training/data.py` has not
+imported since parallel parsing moved per-structure loading to
+`training/parallel_loading.py` (commit `c3728b0`). The test fails with
+`AttributeError` before exercising its guard. The guard itself is covered by
+the other explicit-membership tests; the stale test needs retargeting to
+`training.parallel_loading.load_structure_pockets`.
+
+## TECH-020 — Greedy k-fold assignment concentrates large groups in fold 0
+
+**Status:** Open; observed 2026-09-25, deliberately not changed.
+
+`split_pockets_k_fold()` places each group (largest first) into the fold with
+the lowest *absolute* penalty after assignment. A partially filled fold already
+has a smaller label deviation than an empty one, so large groups accumulate in
+fold 0 until its size overshoots. In the frozen `pmm_ion_metal_v1` cohort all of
+the largest PDB groups (for example two 48-Mn entries) are in fold 0, and
+validation Mn counts range from 340 (fold 4) to 729 (fold 0). Grouping and
+per-fold class presence are correct; only stratification balance is weak. The
+campaign plan requires reusing this splitter unchanged, and changing it would
+alter every existing fold definition, so any fix needs a separate, versioned
+split identity.
+
+## TECH-021 — PMM input, replay and runtime certification gaps
+
+**Status:** Implemented and tested 2026-09-26; live GPU validation pending.
+
+The original transfer builder could include the tracked held-out PMM source;
+embedding metadata did not fully bind live payload content, sequence and residue
+order; selected-checkpoint reconciliation could be recorded without failing
+completion; train-metric evaluation shared training RNG; and the provisioning
+cascade duplicated the VM controller while changing configuration during dry-run.
+The revised implementation uses allowlisted archives, schema-v2 content
+certification, independent checkpoint replay, separate evaluation RNG, worker
+read guards, strict matched prediction validation, and the existing VM controller.
+Execution ownership, complete-unit admission and independently verified transfer
+receipts gate the next fit. The redundant cascade script was retired.
+
+A training-only context scan also found 503 ions with explicit missing protein
+symmetry context. The versioned v2 matched subset consistently excludes them;
+see `DATASETS.md` for counts and interpretation. The original v1 artifacts remain
+historical evidence. These implementation checks do not establish GPU efficiency,
+model superiority, or published PMM context parity.

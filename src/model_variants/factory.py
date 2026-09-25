@@ -149,6 +149,9 @@ def build_pocket_classifier(
     if architecture == "simple_gnn_esm":
         from model_variants.models import SimpleGNNPocketClassifier
 
+        if resolved_kwargs.pop("binding_residue_pooling", "none") != "none":
+            raise ValueError("binding_residue_pooling is not implemented for simple_gnn_esm.")
+
         resolved_kwargs.pop("hidden_v", None)
         resolved_kwargs.pop("node_rbf_use_raw_distances", None)
         resolved_kwargs.pop("normalize_message_aggregation", None)

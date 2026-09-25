@@ -1,0 +1,235 @@
+{
+  "audited_at": "2026-09-25T21:17:40+00:00",
+  "blockers": [],
+  "campaign_id": "pmm_ion_metal_v2_context",
+  "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+  "exact_content_aliases": [],
+  "input_contract": "frozen first-model asymmetric-unit protein coordinates; all local protein chains",
+  "input_contract_certified": true,
+  "model_ambiguities": [],
+  "n_ions": 7398,
+  "n_ions_with_target_protein_symmetry_links": 0,
+  "n_ions_with_target_symmetry_links": 13,
+  "n_structures": 3992,
+  "schema_version": 1,
+  "scope": "training_only",
+  "source_context_parity_certified": false,
+  "source_context_parity_note": "No claim of historical source/paper assembly parity; absent LINK annotations do not prove absent symmetry contacts",
+  "structure_content_sha256": "01264a9511bfefb10c50f835e2b65c58c771069f0a59f7bf25d0572f01ca9ef6",
+  "target_protein_symmetry_links": [],
+  "target_symmetry_links": [
+    {
+      "partner": [
+        "A",
+        1104,
+        "",
+        "CL",
+        "CL"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2870",
+      "structure_name": "2xmk__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "2555",
+        "1555"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        763,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:7067",
+      "structure_name": "4u08__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "4555"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        404,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:3733",
+      "structure_name": "4yci__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "5669"
+      ]
+    },
+    {
+      "partner": [
+        "D",
+        369,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5802",
+      "structure_name": "5hjh__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "2445"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        713,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:6208",
+      "structure_name": "5nqz__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "3455"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        304,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:6832",
+      "structure_name": "5wlm__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "4555"
+      ]
+    },
+    {
+      "partner": [
+        "C",
+        924,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:4629",
+      "structure_name": "5zru__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "2645"
+      ]
+    },
+    {
+      "partner": [
+        "A",
+        410,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5583",
+      "structure_name": "6ivo__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "4455",
+        "1555"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        664,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:6398",
+      "structure_name": "6yi1__chain_B__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "11445"
+      ]
+    },
+    {
+      "partner": [
+        "C",
+        582,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:7441",
+      "structure_name": "7fip__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "8545"
+      ]
+    },
+    {
+      "partner": [
+        "A",
+        424,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1280",
+      "structure_name": "7v0f__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "4655"
+      ]
+    },
+    {
+      "partner": [
+        "A",
+        338,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1589",
+      "structure_name": "8ad2__chain_E__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "2656",
+        "1555"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        603,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2985",
+      "structure_name": "8q40__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "1655"
+      ]
+    },
+    {
+      "partner": [
+        "B",
+        681,
+        "",
+        "HOH",
+        "O"
+      ],
+      "source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2985",
+      "structure_name": "8q40__chain_A__EC_0.0.0.0.pdb",
+      "symmetry_operators": [
+        "1555",
+        "1655"
+      ]
+    }
+  ],
+  "test_side_accessed": false,
+  "ungrouped_exact_content_aliases": [],
+  "unsupported_formats": []
+}

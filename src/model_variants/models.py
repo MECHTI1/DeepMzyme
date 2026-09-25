@@ -27,6 +27,7 @@ from model import (
     pool_graph_states,
     shell_mask_from_roles,
     supervised_contrastive_loss,
+    target_first_shell_flags,
 )
 
 
@@ -270,8 +271,10 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         classifier_pool_distance_cutoff: float = 0.0,
         node_rbf_use_raw_distances: bool = False,
         edge_rbf_use_raw_distances: bool = False,
+        binding_residue_pooling: str = "none",
     ):
         super().__init__()
+        self.binding_residue_pooling = str(binding_residue_pooling)
         self.site_feature_dim = int(site_feature_dim)
         self.classifier_pool_distance_cutoff = float(classifier_pool_distance_cutoff)
         self.node_rbf_use_raw_distances = bool(node_rbf_use_raw_distances)
@@ -287,6 +290,7 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             esm_dim=esm_dim,
             proj_dim=esm_fusion_dim,
             dropout=esm_graph_encoder_dropout,
+            binding_residue_pooling=self.binding_residue_pooling,
         )
         self.esm_fusion_proj = nn.Sequential(
             nn.Linear(2 * esm_fusion_dim, hidden_s),
@@ -323,7 +327,12 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
 
     def forward(self, data: Data) -> dict[str, Tensor]:
         classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
-        esm_graph_embed = self.esm_graph_encoder(data.x_esm, data.batch, classifier_pool_mask)
+        # The target-shell-conditioned variant uses geometric shell roles, so it is
+        # no longer a purely sequence-derived readout.
+        first_shell = target_first_shell_flags(data) if self.binding_residue_pooling != "none" else None
+        esm_graph_embed = self.esm_graph_encoder(
+            data.x_esm, data.batch, classifier_pool_mask, first_shell=first_shell,
+        )
         esm_fused = self.esm_fusion_proj(esm_graph_embed)
         site_stats = (
             data.site_metal_stats.float()
