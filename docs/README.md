@@ -21,6 +21,18 @@ documents when a link is sufficient.
 
 Scientific policy is in [`Plan.md`](../Plan.md).
 
+## Task plans and reviews
+
+Keep current task plans in `docs/plans/`. The two final plans below supersede
+the four Antigravity/Opus proposals and link to their originals preserved in
+Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
+
+- [Metal-level prediction and PMM comparison](plans/metal_level_metal_task_compared_PMM_final_plan.md).
+- [Pocket-level EC prediction and CLEAN30 comparison](plans/pocket_level_EC_task_compare_clean30_final_plan.md).
+
+These documents describe planned work; they do not replace `Plan.md` as the
+scientific authority or establish implemented or evaluated behavior.
+
 ## Ownership
 
 | Information | Authority | Not its role |
