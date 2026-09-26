@@ -10,6 +10,14 @@ Implement the orchestration improvements first. Keep a healthy owned VM across
 many fits, automate the routine transitions, and remove redundant preparation.
 Measure the remaining CPU/GPU bottlenecks before changing training behavior.
 
+For current GPU discovery and recovery, read the required
+[GPU-use skill](../.agents/skills/gpu-use-skill/SKILL.md) and
+[GCP runbook](GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region).
+The historical Colab supervisor below still has no allocation/replacement path.
+GCP capacity recovery belongs exclusively to `~/deepmzyme-vm`: one active GPU,
+temporary stopped-source retention, snapshot restoration, bounded attempts and
+verified cleanup. It does not change this plan's scientific or budget scope.
+
 ## Authority and scope
 
 Implemented in the first continuation: durable pause/control generations,

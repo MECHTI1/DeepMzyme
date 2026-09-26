@@ -7,7 +7,9 @@ the coordinator performs these checks. The monitor does not spawn other agents.
 
 Give the monitor concrete values, not a request to find its own VM:
 
-- Provider, project/zone/VM or explicit Colab session, and coordinator identity.
+- Provider, project/zone/VM and immutable instance ID or explicit Colab session,
+  and coordinator identity. Include the selected endpoint and fallback receipt
+  when recovery has changed zones; a reused VM name is insufficient identity.
 - Existing authorization and the active allocation receipt with start, hard
   stop, closeout reserve and budget; read-only command/connection route.
 - Exact PID/job/run, log and runtime-profile paths, expected phase/output files,
@@ -27,6 +29,8 @@ Suggested assignment:
 > allocate, start, stop, restart, kill, submit training, alter settings, install
 > packages, or modify shared artifacts. Send observations and recommendations
 > to the coordinator; the coordinator makes and performs operational decisions.
+> During recovery, observe the named receipt and resource only; do not advance
+> candidates, reset attempt limits, select endpoints or finalize cleanup.
 > Continue until the supplied deadline or coordinator closeout, then return a
 > final observation with its UTC timestamp. If access fails, report it promptly
 > and stop claiming coverage; do not authenticate or replace the runtime.

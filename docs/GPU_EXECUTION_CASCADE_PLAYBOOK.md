@@ -13,7 +13,7 @@ and [Colab runbook](COLAB_GPU_RUNBOOK.md) own provider procedures;
 
 Only the coordinating operator allocates, starts, submits work to, or stops a GPU.
 Other agents can prepare inputs, review code and analyze completed development
-artifacts independently. Begin with one allocation and one training process.
+artifacts independently. Begin with one active GPU and one training process.
 
 Finish local contract checks and freeze the source snapshot, training-only
 bundle and output destination before allocating. Recover prior receipts and
@@ -22,10 +22,15 @@ full grid; do not repeat completed smokes or preparation merely because the
 larger recipe lists them. Preserve controller caps and recorded authorization;
 use the skill's resource-state decision table before considering any new start.
 
-In particular, an existing stopped GCP VM still blocks a second managed GCP VM
-under the controller's project-wide duplicate guard. Changing the configured
-zone does not migrate its disk/caches or enable that new allocation. Follow the
-skill's existing-resource path instead of retrying ineligible candidates.
+After a confirmed stockout of a stopped GCP VM, the controller's bounded
+`vm-fallback` can restore its boot disk in another zone of the same region.
+The source may remain only while positively confirmed `TERMINATED`; other or
+unknown active-GPU states block allocation. Follow the
+[GCP recovery procedure](GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region),
+including the persisted attempt limits, fresh hard-stop/session identity and
+overlapping-storage costs. Changing the configured zone does not migrate disks.
+Reuse completed scientific work after identity verification. Approved cleanup
+requires a completed replacement fit, replay and independent verified backup.
 
 The retired `scripts/gpu_provisioning_cascade.py` supplied its own authorization,
 modified configuration even on dry-run, and duplicated lifecycle decisions.
