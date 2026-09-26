@@ -1,0 +1,19 @@
+{
+  "built_at_utc": "2026-09-26T00:00:06Z",
+  "code": {
+    "path": "code_snapshot.tar.gz",
+    "sha256": "0ea9ccd3c5767aa5c54e12ef9afee888e6c67cbda2ade5bf22694fede4f7ed7b",
+    "members": 131,
+    "root": "DeepMzyme",
+    "bytes": 2853577,
+    "git_head": "c273a38a50b87f0465d75d7131be548bdfc8fa42",
+    "git_branch": "metal-pmm-ion-campaign",
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23"
+  },
+  "supersedes_source_tree_sha256": "86950d068812db8f380c9d85993b7b95c96050c061a1ef2428f7bcebef366125",
+  "reason": "Optional content-bound raw graph reuse after measured CPU graph-construction bottleneck; graph geometry and scientific configuration unchanged",
+  "applied_at_utc": "2026-09-26T00:01:12Z",
+  "neural_fits_before_revision": 0,
+  "certification_source_tree_sha256": "86950d068812db8f380c9d85993b7b95c96050c061a1ef2428f7bcebef366125",
+  "feature_certification_reused": "Complete certification already passed; raw graph values and fold normalization verified unchanged by regression tests"
+}

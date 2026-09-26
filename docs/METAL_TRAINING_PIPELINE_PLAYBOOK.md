@@ -73,9 +73,57 @@ attention; GVP and, where active, late ESM). At zero it reproduces the ordinary
 readout. With it, Only-ESM is labeled **ESMC with target-shell-conditioned
 readout**, not sequence-only.
 
-Grid: 3 families x 2 targets x 5 folds + 3 aware direct-four arms x 5 folds =
+Deferred full grid: 3 families x 2 targets x 5 folds + 3 aware direct-four arms x 5 folds =
 **45 fits**, plus the PinMyMetal released-recipe comparator refit on the same
 five training partitions (CPU).
+
+### Immediate exploratory screen: Only-ESM binding-awareness pair
+
+The user-approved next execution reuses the completed ordinary direct-four
+Only-ESM fold-0 baseline and adds only its `first_shell_bias` counterpart.
+This is one-seed, single-fold exploration, not grouped-fold confirmation.
+All frozen profile values above remain unchanged. Do not rerun preparation,
+smokes, the ordinary baseline or PMM folds when their existing receipts verify.
+
+Use one requested VM hour (the controller reserves three minutes, leaving at
+most 57 minutes), a conservative 1,800-second complete-unit forecast, the
+existing 25% admission margin and 900-second closeout reserve. The following
+block runs on the existing VM after obtaining its actual session identity and
+timestamps; expired allocation values must not be reused:
+
+```bash
+PY=/home/mechti/venvs/deepmzyme/bin/python
+T=/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
+C=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
+$PY scripts/run_metal_5fold_cv.py --campaign-dir "$C" --train-dir "$T" \
+  --campaign-action run --device cuda --load-workers 4 \
+  --families only_esm --targets four_class --readouts first_shell_bias --folds 0 \
+  --session-id "${PMM_ALLOCATION_ID:?}" \
+  --allocation-started "${PMM_ALLOCATION_STARTED:?}" \
+  --execution-deadline "${PMM_HARD_STOP:?}" \
+  --execution-max-seconds "${PMM_ALLOWED_SECONDS:?}" \
+  --estimated-fit-seconds 1800 \
+  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --persistence-mode host_pull
+```
+
+Complete the existing workstation host-pull/hash-acknowledgment step before
+closing the allocation. Expected run directory:
+`runs/only_esm__four_class__first_shell_bias__fold0__seed42/`, including
+`run_config.json`, `run_metadata.json`, `epoch_metrics.csv`,
+`selected_checkpoint.json`, `best_model_checkpoint.pt`, `val_predictions.csv`,
+`runtime_profile.json`, and `independent_validation_replay/replay_receipt.json`.
+Save the paired report as `runtime/esm_binding_screen.json` and
+`runtime/esm_binding_screen.md`, with validation identities, checkpoint hashes,
+BA/macro-F1/class-recall differences, confusion matrices, selected epochs,
+learning curves, learned biases and empty-shell coverage. No held-out access,
+full-grid `assess`, promotion or final-refit action belongs to this stage.
+
+Acceptance requires both completed 50-epoch receipts, matching frozen validation
+units and independent replay, verified host backup and controller-confirmed
+`TERMINATED`. A positive or negative single-fold trend completes this screen;
+it is not a superiority claim. Later confirmation of the ESMC intervention
+requires both arms on folds 1–4, with fold 0's screening role disclosed.
 
 Commands (run from the repository root; `T` is the dataset's `train/`
 directory, `C` the campaign root; outputs never go under `DeepMzyme_Data/`
@@ -107,7 +155,8 @@ RUNTIME=(--session-id "${PMM_ALLOCATION_ID:?}" \
 # Step 5 smoke: all nine configurations, 1 epoch, first class-complete smoke fold
 $PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
   --campaign-action smoke --device cuda "${RUNTIME[@]}"
-# Step 6: record expanded commands, then fit serially (identity-checked reuse)
+# Deferred full Step 6: use only under separately approved full-grid execution.
+# The immediate single-fit screen is the bounded block above.
 $PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action plan
 $PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
   --campaign-action run --device cuda "${RUNTIME[@]}"
@@ -132,6 +181,13 @@ semantic parsing. An explicit full semantic re-audit remains available through
 is a diagnostic and an authorized Only-GVP reference option; it does not admit
 the development grid. Each fitted checkpoint is independently reloaded and
 replayed on its frozen validation membership before completion is certified.
+
+The campaign sets `DEEPMZYME_GRAPH_CACHE_DIR=<campaign>/raw_graph_cache` to
+reuse raw radius-only graphs across matching fits. Each entry binds complete
+pocket contents, graph options, active target scheme, source and library versions;
+its payload checksum is verified on read. Fold normalization is fitted afterward
+on training graphs only. This cache is optional outside the campaign, and RING
+graphs bypass it. A corrupt entry stops the unit with its exact path for recovery.
 
 Use actual allocation start, not runner start, with the current four-hour
 session ceiling and provider/daily limits. Forecast the next full unit with

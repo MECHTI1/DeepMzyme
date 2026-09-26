@@ -7,7 +7,7 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-26.
 
-**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — implementation verified; feature generation running:**
+**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — single-fold ESMC pair approved; VM capacity blocks its new fit:**
 - Executes [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md);
   exact recipe in the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context).
   Supersedes the five-class Zenodo wrapper for this comparison (direct four vs six, late fusion, PDB-grouped folds, no test access).
@@ -20,19 +20,44 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
 - Implemented and tested: source binding, matched folds/weights/readouts, strict
   ESM content certification, RNG-isolated training metrics, independent checkpoint
   replay, comparator integrity, bounded execution/persistence, and the gated
-  validation → final refits → secondary reference report. All 114 targeted
-  regression tests passed, including input-drift rejection without redundant
-  per-fit semantic parsing.
+  validation → final refits → secondary reference report. All 114 campaign
+  regressions and 23 raw-graph-cache tests passed, including input-drift rejection,
+  exact cached graph equality and training-only normalization.
 - **Execution state:** all five v2 PMM CPU folds completed and verified (mean
   fold common-four BA 70.2885%; pooled OOF BA 70.0766%). ESM planning is complete:
   4,972 unique sequences, 7,664 payloads, maximum length 3,715 and 10.36 GB
-  estimated FP32 storage. No v2 neural grid fits or live nine-arm smoke yet.
+  estimated FP32 storage. Generation completed all 7,664 payloads (10.43 GB actual);
+  certification constructed all 7,398 graphs successfully. The complete input
+  backup passed host-side checksums. All nine GPU smoke cases passed independent
+  replay and host backup verification. The first 50-epoch Only-ESM/direct-four
+  fold-0 fit completed in 40m17s and its 71-file host backup was acknowledged at
+  01:00 UTC. Validation selected epoch 36: common-four BA **88.3945%**, on 1,492
+  validation ions. This is one seed/fold, not a completed comparison or promotion.
+  **44/45 neural grid fits, selection and final refits remain.**
   One L4 VM was allocated in `us-central1-a` on the first bounded attempt at
   2026-09-25 21:32 UTC. Actual CUDA and ESMC-600M preflight passed through the
-  longest planned sequence; complete feature generation and host backup are in
-  progress, with provider hard stop at 2026-09-26 01:29 UTC. GPU execution is authorized
-  under the approved bounded route and existing caps; it is not awaiting a new
-  permission phrase. No reference-test access in this continuation so far.
+  longest planned sequence. After an agent interruption, the same VM and its
+  completed preparation were recovered without regeneration. The original
+  provider hard stop was 2026-09-26 01:29 UTC; the controller stopped the VM at
+  **01:06:50 UTC**, with cloud state **TERMINATED** confirmed. Session usage was
+  **3h34m / approximately $3.15 gross**, including interrupted-session overhead.
+  The VM disk and caches are preserved. No reference-test access occurred.
+  The user subsequently approved an **ESMC pair first** screen: reuse this
+  ordinary baseline and run only its `first_shell_bias` counterpart on frozen
+  fold 0, seed 42, with the same 50-epoch recipe. One bounded one-hour VM session
+  is authorized for that screen; the broader grid is deferred. The **30 total
+  VM hours / $34 gross** proposal remains unapproved and is not needed for this
+  stage. One-hour start attempts at **01:27 and 02:11 UTC** both failed with an
+  L4 stockout in `us-central1-a`; subsequent cloud status confirmed **TERMINATED**. No new
+  fit or running compute/GPU session was created. Baseline completion, replay
+  and frozen source were reverified; the binding-aware run directory is absent.
+  The user-authorized same-VM retry has been consumed; another billable start
+  requires a new deliberate request under the controller's stockout policy. The
+  [screen execution receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
+  records this boundary. The earlier full-grid forecast is about 22.3 additional VM hours before
+  contingency, not the budget of the immediate screen. See the
+  [forecast receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/remaining_budget_forecast.json)
+  for assumptions and the unmeasured reference-report cost.
   The primary final-test route remains unresolved; the authorized PMM
   reference route is secondary and possibly overlapping.
   See the [evidence summary](docs/notebook_outputs/summaries/summary_pmm_ion_v2_context_20260926.md)

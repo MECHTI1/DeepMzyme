@@ -1,13 +1,16 @@
-# PMM ion campaign: context correction, comparator and GPU preflight — 2026-09-26
+# PMM ion campaign: comparator, nine smokes and first full fit — 2026-09-26
 
 **The PMM comparator completed five PDB-grouped folds: mean fold balanced
 accuracy 70.2885%, pooled out-of-fold balanced accuracy 70.0766%.** The corrected
-cohort contains **7,398 ions across 3,992 PDB groups**. This snapshot contains no
-neural-model fits, model-superiority result, promotion, final refit or held-out
-evaluation. PMM has **Grade 2** grouped-fold evidence; the unfinished neural grid
-and operational preflight remain **Grade 6**.
+cohort contains **7,398 ions across 3,992 PDB groups**. The completed Only-ESM,
+direct-four fold-0 fit has **88.3945% validation balanced accuracy** at selected
+epoch 36, with independent replay and verified backup. This is **Grade 5**
+single-seed validation evidence. PMM has **Grade 2** grouped-fold evidence;
+the unfinished 45-fit neural grid remains **Grade 6**. There is no model-superiority
+result, promotion, final refit or held-out evaluation.
 
-Snapshot: 2026-09-25 21:56 UTC (2026-09-26 local). Exact receipts and all five
+Initial snapshot: 2026-09-25 21:56 UTC (2026-09-26 local), supplemented below through
+the first full fit and budget decision on 2026-09-26. Exact receipts and all five
 validation prediction files are in the [portable evidence](../raw/pmm_ion_v2_context_20260926/README.md).
 Feature-generation completion and implementation checks were added at 22:24 UTC below.
 [Current status](../../../EXPERIMENT_STATUS.md) owns subsequent GPU outcomes and
@@ -96,3 +99,113 @@ the generation snapshot from the certification/training snapshot.
 
 At this supplement's boundary, full graph certification and the verified
 workstation backup were still in progress; no neural grid fit had started.
+
+## Certification and execution recovery
+
+Certification finished at 22:41 UTC: all **7,398 ion graphs** passed, with four
+empty first-shell masks and no missing retained ESM residues. It took **32m28s**,
+including structure/alignment checks, parsing and graph construction; peak main
+process RSS was **5.23 GB**. The
+[certificate summary](../raw/pmm_ion_v2_context_20260926/runtime/feature_certification_summary.json)
+records the full inventory hash. After the interrupted agent session, the
+existing L4 VM was recovered at 23:55 UTC and the unmounted workstation data
+volume was mounted again. No embeddings or certification were regenerated.
+All **15,339 input and receipt files** then passed host-side hash verification.
+
+The remaining CPU graph work justified an optional raw-graph cache before the
+first neural smoke. It binds complete input values, target scheme, graph options,
+source and library versions; normalization still fits only training graphs.
+The final source is
+`adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`.
+All **114 campaign regressions and 23 cache tests passed**, plus the existing
+tiny training/replay regression repeated with caching enabled. These engineering
+checks do not complete the 45-fit neural grid.
+
+At 00:17 UTC, all **nine one-epoch GPU smoke cases** passed independent
+checkpoint replay and verified host backup. Repeated GVP graph preparation
+used 151/151 cached entries and fell from 19.47 seconds to 0.72 seconds; the
+matching late-fusion case also reused the ESM-backed graphs. Cold/warm smoke
+unit times were roughly 46–47/19–20 seconds, excluding host transfer.
+Independent replay keeps a second cache copy because its unused EC target is
+unset while the normal loader assigns the compatibility placeholder. The full
+cache key preserves that difference; verified metal predictions are unchanged.
+The [smoke receipt](../raw/pmm_ion_v2_context_20260926/runtime/smoke_validation_summary.json)
+contains identities, selected-checkpoint hashes and measured profiles, not
+evidence for selecting between model families. The first full 50-epoch Only-ESM
+fit was then admitted with a 40-minute initial forecast, 25% forecast margin,
+and 15-minute closeout reserve inside the original provider deadline.
+
+## First full fit and measured continuation cost
+
+The `only_esm__four_class__none__fold0__seed42` unit completed all 50 epochs and
+independent validation replay in **2,417 seconds (40m17s)**. Its 71-file host
+backup was verified and acknowledged at 01:00 UTC. The fit used **5,906 training
+and 1,492 validation ions**. Validation selected epoch **36**, with common-four
+balanced accuracy **88.3945%**, accuracy **84.7185%**, and recalls Mn **85.3659%**,
+Cu **97.4359%**, Zn **89.5028%**, Class VIII **81.2734%**. These are one-fold
+development results; comparison with PMM or other neural families awaits the
+complete matched grid and predeclared paired analysis.
+
+The [full-fit receipt](../raw/pmm_ion_v2_context_20260926/runtime/first_full_fit_summary.json)
+binds the source, cohort, folds, checkpoint, 50-epoch history, independent replay
+and host acknowledgment. Preparation took **1,305.36 seconds**; training,
+train-metric evaluation, validation, checkpoint saves and selected export took
+**648.28 seconds**. Peak main-process RSS was **7.76 GB**, with CUDA allocator
+peaks of **30.62 MB allocated / 54.53 MB reserved**. The separate replay rebuilt
+its validation graphs in **214.48 seconds** after roughly four minutes of serial
+structure parsing. CUDA peaks exclude driver/context memory.
+
+After the full fit and host acknowledgment, two bounded operational probes used
+copies of smoke checkpoints and one representative 16-graph batch (602 nodes,
+9,832 edges): five warmup batches and twenty timed batches. GVP averaged
+**48.69 ms/batch** and late fusion **53.61 ms/batch**, with allocated GPU peaks
+of **280.94/282.46 MB**. The copied checkpoint hashes remained unchanged; no
+probe weights or comparison result were saved. These measurements include
+collation/transfer but do not establish full-fit throughput. The
+[probe script and receipts](../raw/pmm_ion_v2_context_20260926/README.md)
+make their scope explicit.
+
+GPU correctness is established by real ESMC and neural execution. Utilization
+is limited here by CPU preparation and small batches over frozen embeddings.
+The tested cache materially reduces repeated graph work, but serial replay
+parsing remains a recurring cost. About **74 minutes** between certification
+completion and recovery were interrupted-session overhead, not training time;
+that allocation time remains charged. Completed work was recovered, not rerun.
+
+The [remaining-budget forecast](../raw/pmm_ion_v2_context_20260926/runtime/remaining_budget_forecast.json)
+estimates **22.3 additional VM hours before contingency** for 44 remaining fits
+and final refits. Warm loading, evaluation cost and the PMM refit include explicit
+proxies/allowances; reference-report preparation remains unmeasured. The user
+was asked to close out or approve a **30 total VM-hour / $34 gross** continuation
+ceiling, about 19% time reserve relative to the estimate at the decision point.
+That proposal is **not approved** and does not guarantee full completion.
+Existing four-hour session and six-hour daily limits remain unchanged, and
+future VM starts require authorization. No scientific arm, fold or epoch budget
+was reduced. The original session was stopped after artifact backup rather than
+left idle pending a budget reply. The controller recorded **TERMINATED at
+01:06:50 UTC**, **12,878 running seconds** and **$3.145 estimated gross**;
+the [closeout receipt](../raw/pmm_ion_v2_context_20260926/runtime/session_closeout.json)
+preserves that accounting. The disk and caches remain available for an authorized
+continuation.
+
+## Approved smaller screen and capacity failure
+
+The user subsequently approved **ESMC pair first**: reuse ordinary Only-ESM,
+direct-four, fold 0 and add only the matching `first_shell_bias` fit. The same
+fold, model seed, 50-epoch recipe and frozen inputs/source remain fixed. This
+supersedes immediate full-grid execution; the 30-hour/$34 proposal remains
+unapproved. The written plan and playbook now specify the bounded single-fold
+screen and its paired exploratory report, with no model promotion or test access.
+
+The controller accepted a requested one-hour allocation (57-minute provider
+limit, maximum estimated running cost $0.8352), but Google rejected the start
+at **01:27 UTC** because L4 capacity was unavailable in `us-central1-a`.
+The user then authorized one same-VM retry; Google rejected it at **02:12 UTC**
+for the same L4 stockout.
+Subsequent cloud status confirmed **TERMINATED**. There was no new running
+session, fit or result. The ordinary baseline's completion/replay/source were
+reverified without retraining. The
+[execution receipt](../raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
+records both failed attempts. The authorized retry is consumed, and the
+controller prohibits automatic retries or hardware/zone substitution. The scientific comparison therefore
+remains one completed arm until the single new fit can run.

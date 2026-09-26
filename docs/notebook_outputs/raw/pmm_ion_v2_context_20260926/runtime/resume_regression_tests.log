@@ -1,0 +1,21 @@
+........................................................................ [ 63%]
+..........................................                               [100%]
+=============================== warnings summary ===============================
+../../miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26: DeprecationWarning: `torch_geometric.distributed` has been deprecated since 2.7.0 and will no longer be maintained. For distributed training, refer to our tutorials on distributed training at https://pytorch-geometric.readthedocs.io/en/latest/tutorial/distributed.html or cuGraph examples at https://github.com/rapidsai/cugraph-gnn/tree/main/python/cugraph-pyg/cugraph_pyg/examples
+    from torch_geometric.distributed import (
+
+../../miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
+../../miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+tests/test_pmm_ion_campaign.py: 7 warnings
+tests/test_pmm_campaign_integrity.py: 2 warnings
+tests/test_pmm_training_integrity.py: 25 warnings
+tests/test_pmm_final_report.py: 2 warnings
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=20605) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+114 passed, 39 warnings in 81.14s (0:01:21)

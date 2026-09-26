@@ -1,0 +1,83 @@
+{
+  "campaign_id": "pmm_ion_metal_v2_context",
+  "certified": true,
+  "certified_at": "2026-09-25T22:41:13+0000",
+  "certified_scope": "structure_and_esmc600m",
+  "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+  "external_features": {
+    "conservative_feature_names": [
+      "aa_one_hot",
+      "hydrophobicity_kd",
+      "donor_flag",
+      "acceptor_flag",
+      "aromatic_flag",
+      "acidic_flag",
+      "basic_flag",
+      "is_first_shell",
+      "is_second_shell",
+      "ca_to_metal",
+      "fg_to_metal",
+      "min_donor_to_metal",
+      "biotite_residue_sasa",
+      "custom_charge_distance_proxy",
+      "dpka_titr",
+      "v_cb_to_fg",
+      "v_res_to_metal",
+      "cos_theta_between_vnetligand_to_vrestometal"
+    ],
+    "directory_empty": true,
+    "external_features_root_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/external_features_intentionally_empty",
+    "omitted_node_features": [
+      "biotite_residue_sasa",
+      "custom_charge_distance_proxy",
+      "dpka_titr"
+    ],
+    "zero_channels_verified_on_graphs": true
+  },
+  "feature_fallbacks": 3992,
+  "graph_contract": {
+    "edge_radius": 8.0,
+    "first_shell_cutoff_angstrom": 2.7,
+    "metal_node_mode": "none",
+    "node_feature_set": "conservative",
+    "pocket_radius": 10.0,
+    "shell_role_source": "geometry",
+    "use_ring_edges": false
+  },
+  "load_seconds": 1323.000979423523,
+  "n_empty_first_shell_graphs": 4,
+  "n_examples_loaded": 7398,
+  "n_graphs_built": 7398,
+  "parse_cache": {
+    "namespace_rule": "load settings + src hash + scheme + feature_inventory_sha256; raw examples only, never fold normalization",
+    "root": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/parse_cache"
+  },
+  "schema_version": 2,
+  "total_context_residues": 265867,
+  "esm": {
+    "embedding_dim": 1152,
+    "embeddings_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1",
+    "files_sha256": "90c301e1fd652ae54a059c8394ddc60ea5300dfddcf05fae4efb3af3b230efdd",
+    "model_name": "esmc_600m",
+    "n_files": 7664,
+    "only_gvp": "does not load ESM; points at an intentionally empty directory",
+    "plan_csv_sha256": "4853f1d376659a186bdc6323002647471355a5010ed8888182eb5a67db2cc166",
+    "residue_coverage": {
+      "missing": 0,
+      "retained_residues": 265867
+    }
+  },
+  "summary_of": {
+    "path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/feature_inventory.json",
+    "sha256": "3c068317a9be3b1ff48079e7ea4600eb66a6924fa59084be771ea400d51e334d",
+    "omitted_field": "esm.files (full per-file identities remain in canonical inventory)"
+  },
+  "host_backup_ack": {
+    "file_count": 15339,
+    "manifest_sha256": "2b93606d0679c799742526094e641f6248776eccfe22a6dfc883d26f1988f021",
+    "schema_version": 1,
+    "verified_by": "mechti-pc",
+    "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "verified_unix": 1790380809.211009
+  }
+}

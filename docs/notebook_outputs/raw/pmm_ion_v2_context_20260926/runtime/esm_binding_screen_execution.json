@@ -1,0 +1,33 @@
+{
+  "recorded_at_utc": "2026-09-26T02:12:30Z",
+  "status": "blocked_by_provider_capacity",
+  "authorization": "User approved ESMC pair first and instructed implementation; one requested VM hour only.",
+  "requested_vm_hours": 1,
+  "provider_max_run_seconds": 3420,
+  "max_session_estimated_gross_usd": 0.8352,
+  "baseline_run": "only_esm__four_class__none__fold0__seed42",
+  "baseline_verified": true,
+  "baseline_checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+  "new_run": "only_esm__four_class__first_shell_bias__fold0__seed42",
+  "new_fit_started": false,
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "start_attempts": [
+    {
+      "start_attempt_utc": "2026-09-26T01:27:26Z",
+      "failure_utc": "2026-09-26T01:27:53Z",
+      "failure_reason": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS: L4 unavailable in us-central1-a"
+    },
+    {
+      "start_attempt_utc": "2026-09-26T02:11:57Z",
+      "failure_utc": "2026-09-26T02:12:22Z",
+      "failure_reason": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS: L4 unavailable in us-central1-a"
+    }
+  ],
+  "vm_state_after_attempt": "TERMINATED",
+  "new_running_session_recorded": false,
+  "controller_caps_changed": false,
+  "retry_authorized": true,
+  "authorized_retry_consumed": true,
+  "larger_30_hour_budget_approved": false,
+  "remaining_immediate_work": "One first_shell_bias fit, independent replay, verified host backup and paired exploratory report; original full grid deferred."
+}

@@ -1,0 +1,380 @@
+{
+  "verified_at_utc": "2026-09-26T00:17:43Z",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "passed_cases": 9,
+  "required_cases": 9,
+  "epochs_per_case": 1,
+  "held_out_access": false,
+  "evidence_role": "Training-side engineering smoke, not model-comparison evidence",
+  "cases": [
+    {
+      "run_name": "only_gvp__four_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_gvp",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "0e57e2f066bc93692bdd045527f5526a50e0ed7989c22f262cb8a1163c79d130",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "23595c1ea28c8e34896eb1b278cfab5ea892b9e233ebc5afcce3c6691828f6be",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 27.204976909000834,
+          "train_epoch": 1.1489098010006273,
+          "train_metric_evaluation": 0.2336910079993686,
+          "validation": 0.06110435200025677,
+          "checkpoint_save": 0.16546781799843302,
+          "selected_export": 0.09315949400115642
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1940910080,
+        "cuda_peak_allocated_bytes": 298854912,
+        "cuda_peak_reserved_bytes": 318767104
+      }
+    },
+    {
+      "run_name": "only_gvp__six_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_gvp",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "fd615547c2b9dbf18f1b9de33219f93e85dc11a82fabbcd99532e42e987641cf",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "b88b724ecca50099a59d4ebb7a8dbfd8c21d0353ba485ff3d3f7222ef8bd4bb2",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 27.53840174800098,
+          "train_epoch": 1.106767335000768,
+          "train_metric_evaluation": 0.23721359100090922,
+          "validation": 0.06641813299938804,
+          "checkpoint_save": 0.1647553099992365,
+          "selected_export": 0.09366116199998942
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1959350272,
+        "cuda_peak_allocated_bytes": 298857984,
+        "cuda_peak_reserved_bytes": 318767104
+      }
+    },
+    {
+      "run_name": "only_gvp__four_class__first_shell_bias__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_gvp",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "first_shell_bias",
+        "resolved_config_sha256": "b070ad091b50d9f4d8d03feb0c600e93de6fb3b4377261bf14b2131fcd8f7c03",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "c9706fd4132243ab9a44e6f710eb5651018286ab3cde78dfabb66c08725098e5",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 3.957206146998942,
+          "train_epoch": 1.0846665379995102,
+          "train_metric_evaluation": 0.24033812400011811,
+          "validation": 0.06243075800011866,
+          "checkpoint_save": 0.16561317000014242,
+          "selected_export": 0.0950811659986357
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1944690688,
+        "cuda_peak_allocated_bytes": 298857984,
+        "cuda_peak_reserved_bytes": 316669952
+      }
+    },
+    {
+      "run_name": "only_esm__four_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_esm",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "dbc2e0df8d8b06048b83501353050c5ae3c5cd6bc80dd10346a1f470a547f5be",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "1a931e85efaa4bc446c82472479581bce216f1260af4f69d438cefe438451d9e",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 28.517060164000213,
+          "train_epoch": 0.8490597410000191,
+          "train_metric_evaluation": 0.18306273199959833,
+          "validation": 0.04708991199913726,
+          "checkpoint_save": 0.05661781700109714,
+          "selected_export": 0.06175739600075758
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1868480512,
+        "cuda_peak_allocated_bytes": 27883008,
+        "cuda_peak_reserved_bytes": 50331648
+      }
+    },
+    {
+      "run_name": "only_esm__six_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_esm",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "532c37181e222f81c8d0868ca17a106ff1564b72f539013b5fadfe7030daf0bc",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "f5044012d6d7f3d12f4944666cbecff0776ec58be10550e684ea5e7a091495bc",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 28.378096602998994,
+          "train_epoch": 0.8600141320002876,
+          "train_metric_evaluation": 0.18087336299868184,
+          "validation": 0.04826616500031378,
+          "checkpoint_save": 0.056838506998246885,
+          "selected_export": 0.06249287500031642
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1868316672,
+        "cuda_peak_allocated_bytes": 27889152,
+        "cuda_peak_reserved_bytes": 50331648
+      }
+    },
+    {
+      "run_name": "only_esm__four_class__first_shell_bias__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "only_esm",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "first_shell_bias",
+        "resolved_config_sha256": "ac23006df2d6af2d08f96a87888db7fddd20edd05807ef0e3477116dd8fce7a7",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "15103529ec1945c41f6fe07f009f995282fcb28789b946d4e949f2a2b4ce2853",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 4.261262727999565,
+          "train_epoch": 0.8852174029998423,
+          "train_metric_evaluation": 0.18687865399988368,
+          "validation": 0.04892148599901702,
+          "checkpoint_save": 0.058903018001728924,
+          "selected_export": 0.06303320600090956
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1902780416,
+        "cuda_peak_allocated_bytes": 27895296,
+        "cuda_peak_reserved_bytes": 50331648
+      }
+    },
+    {
+      "run_name": "gvp_late_fusion__four_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "1bb594b80707c7657f4d51c6b0761fe3ce46431d3710906493bcb237c721f2fa",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "4b6ab1946e24092fa09a14ec61104be00ab78508ef7d99e9e4b005404ee1a1bf",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 4.25238041800003,
+          "train_epoch": 1.1207894630006194,
+          "train_metric_evaluation": 0.24786399499862455,
+          "validation": 0.06384176600113278,
+          "checkpoint_save": 0.17614737700023397,
+          "selected_export": 0.292319113999838
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1974951936,
+        "cuda_peak_allocated_bytes": 300371456,
+        "cuda_peak_reserved_bytes": 320864256
+      }
+    },
+    {
+      "run_name": "gvp_late_fusion__six_class__none__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "3fc0f3d8c1c749485963af5bdcd35c98f74589a80332c18064df6e4a31f0a8a9",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "c6b2308af8c39a1ef73ac4d59cab7ff87060e07090923635262efcc56c5f3b11",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 4.2202566340001795,
+          "train_epoch": 1.1425571589988976,
+          "train_metric_evaluation": 0.25910215899966715,
+          "validation": 0.06676171999970393,
+          "checkpoint_save": 0.18022267800006375,
+          "selected_export": 0.3008525789991836
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1990266880,
+        "cuda_peak_allocated_bytes": 300374528,
+        "cuda_peak_reserved_bytes": 320864256
+      }
+    },
+    {
+      "run_name": "gvp_late_fusion__four_class__first_shell_bias__fold2__seed42",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "547b0bf68f6e5a5810e24587e218113a5d93eb56052f0d60f3d0e6429a777c5b",
+        "epochs": 1,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "3de7d812a525e5e174ecad570783516906264894dc475fe5278ec7e7c6cccead",
+        "fold": 2,
+        "fold_membership_sha256": "05d3eedcc963259120b72f089f5db81d103e2dd7ed9971710cb2301fe64405da",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "first_shell_bias",
+        "resolved_config_sha256": "91640ace908d116bf825df80c1e2d8bf323f4d07e484bc82fc72c0a400522d07",
+        "smoke": true,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "fit_status": "completed",
+      "independent_replay": "match",
+      "selected_checkpoint_sha256": "39ca3e62bec22aa5f5272af773fc337e0613b4f7bdf8be4962a9cc209b607ffc",
+      "runtime_profile": {
+        "schema_version": 1,
+        "phase_seconds": {
+          "prepare": 4.230054444000416,
+          "train_epoch": 1.144993907000753,
+          "train_metric_evaluation": 0.26325055199959024,
+          "validation": 0.06898742600060359,
+          "checkpoint_save": 0.18218500099828816,
+          "selected_export": 0.2848323700000037
+        },
+        "notes": [
+          "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+          "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+          "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+        ],
+        "process_peak_rss_bytes": 1976934400,
+        "cuda_peak_allocated_bytes": 300377600,
+        "cuda_peak_reserved_bytes": 320864256
+      }
+    }
+  ]
+}

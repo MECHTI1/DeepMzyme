@@ -45,7 +45,7 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|
-| `metal/pmm-ion-v2-context/2026-09-26` | 7,398 ions/3,992 PDB groups after 503 explicit protein-symmetry-context exclusions; released PMM recipe on five frozen grouped folds; common-four endpoint | PMM mean-fold BA 70.2885%, pooled OOF BA 70.0766%; real L4 ESMC sample preflight passed. Neural fits/grid pending at snapshot; no superiority or promotion | 2 for completed PMM fivefold only; 6 for incomplete neural grid and preflight | None; no final refit or primary final-test claim | [summary](summaries/summary_pmm_ion_v2_context_20260926.md); [portable evidence](raw/pmm_ion_v2_context_20260926/README.md) |
+| `metal/pmm-ion-v2-context/2026-09-26` | 7,398 ions/3,992 PDB groups after 503 explicit protein-symmetry-context exclusions; released PMM recipe on five frozen grouped folds; common-four endpoint | PMM mean-fold BA 70.2885%, pooled OOF BA 70.0766%; nine GPU smokes and one full Only-ESM/direct-four fold verified (BA 88.3945%). Full grid deferred; approved one-fit ESMC screen awaits GPU capacity. No superiority or promotion | 2 for completed PMM fivefold; 5 for individual neural fit; 6 for incomplete neural grid and smoke | None; no final refit or primary final-test claim | [summary](summaries/summary_pmm_ion_v2_context_20260926.md); [portable evidence](raw/pmm_ion_v2_context_20260926/README.md) |
 
 ## GPU runtime efficiency planning
 

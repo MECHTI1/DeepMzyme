@@ -1,7 +1,35 @@
 # Final execution plan: metal-level prediction and PMM comparison
 
-**Status:** planned; independent review, 2026-09-25. This document authorizes no execution.
-**Repository reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
+**Status:** original design reviewed 2026-09-25; execution order amended by the user on 2026-09-26. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
+**Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
+
+## Immediate execution amendment — ESMC pair first
+
+The user approved a small exploratory screen before further grouped-fold work.
+This amendment supersedes the immediate execution order and scope of Step 6;
+it does not claim the full comparison matrix is complete.
+
+- Reuse the completed ordinary Only-ESM/direct-four fold-0 fit. Run exactly one
+  matching `first_shell_bias` fit on the same frozen fold and model seed, with
+  the existing 50-epoch recipe unchanged. Reuse certified inputs, embeddings,
+  caches and source; no ESMC fine-tuning, HPO or new data preparation.
+- Require independent checkpoint replay, exact validation-ion identity matching
+  and verified host backup. Report paired balanced accuracy, macro-F1, every
+  class recall, confusion matrices, selected epochs, learning curves, learned
+  biases and empty-shell coverage. Label all findings exploratory single-fold
+  evidence; do not promote a model or invoke the full-grid assessment/refit gates.
+- The approved immediate allocation is one bounded one-hour VM session using
+  the existing controller and admission safeguards. The larger proposed
+  30-hour/$34 continuation is unnecessary for this screen and remains unapproved.
+- Defer the remaining 45-fit grid. A later approved broader screen can evaluate
+  all nine configurations on the same fold, reusing completed fits. For a
+  binding-awareness claim, confirm both the shortlisted aware model and its
+  ordinary control on the remaining four frozen folds, then compare on matched
+  folds with PMM. Disclose that fold 0 informed screening; do not equate this
+  controlled comparison with exact reproduction of PMM's published protocol.
+- Keep reference/test inputs closed. The final-refit and reporting gates remain
+  intact. One coordinator executes this single-fit stage; additional agents are
+  unnecessary. Exact commands and outputs belong in the metal playbook.
 
 The source proposals were read completely during the review and are preserved
 in Git at the reviewed revision:
@@ -157,7 +185,7 @@ Use the required DeepMzyme interpreter and verify it before future Python checks
 
 ### Step 6 — Run and assess the bounded matched comparison
 
-**Neural grid:** three baseline families × two target formulations × five folds = **30 fits**, plus three direct-four readout variants × five folds = **15 fits**. Total **45 full neural fits**, one model seed. All three awareness variants run, regardless of the Only-ESM result; screening only that family cannot decide usefulness in another family. Additional seeds are a separately budgeted extension using a shared active seed list for every compared candidate.
+**Deferred full neural grid:** three baseline families × two target formulations × five folds = **30 fits**, plus three direct-four readout variants × five folds = **15 fits**. Total **45 full neural fits**, one model seed. The immediate amendment above runs only the exploratory ESMC pair. Completing the full matrix later requires all three awareness variants, regardless of the Only-ESM result; screening only that family cannot decide usefulness in another family. Additional seeds are a separately budgeted extension using a shared active seed list for every compared candidate.
 
 **PMM comparator:** fit the released four-class classifier recipe anew on each of the same five training partitions and predict its matching validation ions. Bind source version, class-code order, permitted feature columns, preprocessing, and resampling to the run; pin dependency versions and fully resolved estimator defaults. Never use a released full-training fitted model to score its own training rows as CV. PMM's released script calls `dropna()` before selecting features and fits a soft-voting classifier; it is not itself a fivefold runner. Adapt its data boundary, with any fitting/resampling confined to the training fold. [Released PMM training source](https://github.com/hhz-lab/PinMyMetal/blob/main/data_model/train_chedhclassmodel.py).
 
@@ -186,7 +214,7 @@ This step is a **later reporting gate**, not permission to access test during im
 
 ### Step 8 — Admit compute only after correctness and timing evidence
 
-The authorized unit of work here is the plan document. Future execution needs a concrete compute authorization and storage/runtime admission. Use the existing VM controller and [`docs/GCP_GPU_RUNBOOK.md`](../GCP_GPU_RUNBOOK.md) if GCP is chosen; its start authorization and actual caps apply. Neither source plan's VM status, hourly price, free-space measurement, or elapsed-time forecast was verified as current.
+The original review authorized only this plan document. Subsequent execution requires concrete compute authorization and storage/runtime admission; the immediate amendment above records the user-approved one-session screen. Use the existing VM controller and [`docs/GCP_GPU_RUNBOOK.md`](../GCP_GPU_RUNBOOK.md) if GCP is chosen; its start authorization and actual caps apply. Neither source proposal's VM status, hourly price, free-space measurement, or elapsed-time forecast establishes current readiness.
 
 Measure preparation and training costs during the authorized smoke/first complete fits. Forecast the 45-fit grid as `15 × (time_ESM + time_GVP + time_late)` plus embedding preparation, PMM CPU fits, validation export, and any separately admitted final refit/report. Do not promise the grid fits one session or copy the old cohort's timings. Preserve the scientific grid when addressing a budget shortfall; obtain a recorded budget decision instead of silently dropping an arm or shrinking its epochs.
 
