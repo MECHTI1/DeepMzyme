@@ -246,6 +246,7 @@ def test_commands_bind_identity_and_forbid_test_paths(tmp_path, monkeypatch):
     assert identity["source_tree_sha256"] == campaign.source_tree_sha256()
     assert len(identity["resolved_config_sha256"]) == 64
     forbidden = env[campaign.FORBIDDEN_READ_ROOTS_ENV]
+    assert env["DEEPMZYME_GRAPH_CACHE_DIR"] == str(paths.root / "raw_graph_cache")
     assert str((train.parent / "test").resolve()) in forbidden and "classmodel_test_set" in forbidden
     # Placement does not change identity; a scientific flag does.
     other = campaign.build_train_command(paths, config=config, **{**options, "device": "cuda", "load_workers": 4})[2]
