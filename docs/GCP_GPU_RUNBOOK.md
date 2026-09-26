@@ -1,11 +1,15 @@
 # GCP GPU VM runbook
 
-Use `~/deepmzyme-vm/bin/*` for all VM lifecycle actions. Read that controller's
+Agents first read the project
+[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md), which owns runtime
+routing and the bounded capacity pass. Use `~/deepmzyme-vm/bin/*` for all VM
+lifecycle actions. Read that controller's
 `AGENTS.md` and current `config.env` before operating it. The controller owns
 authorization, prices, quotas, daily/session accounting, locking and Google's
-automatic STOP. The [GPU routing guide](GPU_EXECUTION_CASCADE_PLAYBOOK.md) chooses
-between this route and [Colab](COLAB_GPU_RUNBOOK.md); the [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md)
-owns scientific commands. Current progress belongs in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+automatic STOP. The [PMM runtime guide](GPU_EXECUTION_CASCADE_PLAYBOOK.md) covers
+measured admission and persistence on this route or [Colab](COLAB_GPU_RUNBOOK.md);
+the [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md) owns scientific commands.
+Current progress belongs in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
 ## Controller and resource contract
 
@@ -42,10 +46,17 @@ quota, pricing refusal or authentication failure. Capacity changes; neither a
 past failure nor positive quota establishes current availability
 ([Google documentation](https://docs.cloud.google.com/compute/docs/troubleshooting/troubleshooting-vm-creation)).
 
-The PMM campaign's bounded order is `us-central1-a`, `us-east4-a`, then
-`us-west1-a`, with at most three creates and ten minutes for initiating them.
-Virginia has a separately price-supported configuration; do not repeat an
-open-ended sweep of every zone.
+The GPU skill owns candidate order, attempt limits and the search deadline.
+Its cross-zone GCP creation pass requires no existing managed GCP VM. The
+current controller's project-wide duplicate guard rejects a second managed VM
+even when the first is stopped. A failed start of an existing VM does not permit
+changing `ZONE` and creating elsewhere: the original disk/caches remain zonal.
+Preserve that resource; use an authorized same-VM retry or eligible Colab
+fallback, or obtain a separately reviewed migration procedure. Never delete,
+rename or unlabel the original to evade the guard.
+
+The table below supplies the region mapping for eligible, authorized new
+allocations. Virginia has a separately price-supported configuration.
 
 | Candidate | Region | Existing subnet range | Compute SKUs (quantity) | Disk SKU | Reviewed compute $/h |
 |---|---|---|---|---|---|
@@ -68,8 +79,9 @@ machine type and provisioning model remain unchanged.
 Only a confirmed stockout permits moving to the next candidate. Check cloud
 state after an interrupted or ambiguous request before any retry. On success,
 retain that configuration while the VM exists. On exhausted/abandoned search,
-restore the exact saved file, including on exceptions. Do not run a background
-retry loop or automatically restart a stopped VM.
+including exceptions, restore the exact saved file only after confirming no
+candidate is active or ambiguous. Do not run a background retry loop or
+automatically restart a stopped VM.
 
 ## PMM campaign setup: exact source and train-only data
 

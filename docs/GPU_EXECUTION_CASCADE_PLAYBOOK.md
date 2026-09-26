@@ -1,38 +1,31 @@
 # GPU execution routing for the PMM ion campaign
 
-This guide chooses an execution route. The [PMM ion campaign recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context)
+First read the required project
+[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md), which owns resource
+reuse, bounded capacity routing, connection and optional monitoring. This guide
+applies that workflow to PMM runtime measurement, admission and persistence.
+The [PMM ion campaign recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context)
 owns scientific configuration and exact commands. The [GCP runbook](GCP_GPU_RUNBOOK.md)
-and [Colab runbook](COLAB_GPU_RUNBOOK.md) own runtime procedures;
+and [Colab runbook](COLAB_GPU_RUNBOOK.md) own provider procedures;
 [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) owns current progress.
 
-## One operator, a bounded search
+## Recover the authorized work before allocation
 
 Only the coordinating operator allocates, starts, submits work to, or stops a GPU.
 Other agents can prepare inputs, review code and analyze completed development
 artifacts independently. Begin with one allocation and one training process.
 
-1. Finish local contract tests and freeze the source snapshot, training-only
-   bundle and output destination before allocating. Preserve current controller
-   caps and recorded user authorization. Earlier explicit authorization remains
-   usable within its scope; do not ask for it again.
-2. Through `~/deepmzyme-vm/bin/*`, check ownership, gross price, quota, machine
-   availability, subnet and provider hard-stop settings. Try at most three
-   eligible L4 candidates: `us-central1-a`, `us-east4-a`, then `us-west1-a`.
-   Virginia uses different verified SKUs; the GCP runbook lists the mapping.
-   Allow at most ten minutes for starting new attempts. Check that deadline
-   between attempts; reconcile an in-flight request before considering another.
-3. Continue only for confirmed capacity exhaustion. Quota, authentication,
-   price, lock or configuration failures need diagnosis; do not label them
-   stockouts or continue through a controller refusal. Stop after success.
-   Restore the exact saved controller configuration if all attempts fail or the
-   search is abandoned. Keep the successful configuration while its VM exists
-   so status and stop commands address the right resource.
-4. If this pass cannot provide a VM, check the existing Colab entitlement and
-   compute units, then request one explicitly named L4 runtime through the
-   existing Colab interface. Use A100 only as the reviewed fallback when L4 is
-   unavailable or the measured memory envelope requires it. Verify the actual
-   assigned device and rate. Never silently substitute hardware or allocate a
-   second runtime after a transport failure.
+Finish local contract checks and freeze the source snapshot, training-only
+bundle and output destination before allocating. Recover prior receipts and
+verified artifacts. A narrower approved screen takes precedence over a deferred
+full grid; do not repeat completed smokes or preparation merely because the
+larger recipe lists them. Preserve controller caps and recorded authorization;
+use the skill's resource-state decision table before considering any new start.
+
+In particular, an existing stopped GCP VM still blocks a second managed GCP VM
+under the controller's project-wide duplicate guard. Changing the configured
+zone does not migrate its disk/caches or enable that new allocation. Follow the
+skill's existing-resource path instead of retrying ineligible candidates.
 
 The retired `scripts/gpu_provisioning_cascade.py` supplied its own authorization,
 modified configuration even on dry-run, and duplicated lifecycle decisions.
@@ -41,8 +34,10 @@ The existing controller is the only GCP lifecycle implementation.
 ## Hardware decisions use measurements
 
 The installed ESMC SDK uses BF16 on CUDA. L4 and A100 support that inference
-path; test ESMC-600M on representative training sequences, including the longest,
-before generating all embeddings. More VRAM does not guarantee freedom from OOM.
+path; when embedding generation is needed, test ESMC-600M on representative
+training sequences, including the longest, before generating all embeddings.
+Reuse certified cached embeddings without repeating their generation checks.
+More VRAM does not guarantee freedom from OOM.
 The cached-feature campaign currently trains in FP32 unless its frozen
 configuration explicitly says otherwise. T4/V100 are not categorically invalid
 for that training workload, but changing the BF16 embedding path or machine
@@ -60,8 +55,10 @@ Paid Colab also has variable hardware availability and runtime limits
 - Stage inputs and caches on runtime-local disk. Verify the mounted or
   acknowledged host-pull persistence route before unattended work. Synchronize generated
   embeddings and certify their content before freezing the feature inventory.
-- Run the nine-configuration training-only smoke, then one complete canonical
-  fit per family. Measure preparation, graph construction, training, validation,
+- For an unmeasured full campaign, run the nine-configuration training-only
+  smoke, then one complete canonical fit per family. Reuse verified completed
+  units; for a narrower approved screen, perform only its missing readiness
+  checks and fits. Measure preparation, graph construction, training, validation,
   checkpoint/export and transfer separately, with CPU RSS and peak GPU memory.
   A single `nvidia-smi` utilization sample is not an efficiency gate.
 - Forecast each next complete unit with a 1.25 multiplier and a 15-minute
@@ -82,7 +79,7 @@ Paid Colab also has variable hardware availability and runtime limits
   the owned provider resource and confirm provider state. Worker exit or a
   closed local receipt alone does not prove that billing stopped.
 
-Reuse existing parse/feature caches. Add raw-graph caching or tune DataLoader
+Reuse existing parse/feature/raw-graph caches. Change caching or tune DataLoader
 workers only after timing identifies a material bottleneck. Keep each fold's
 normalization fitted to its training partition. Consider two disjoint training
 processes only after serial measurements demonstrate improved completed-fit

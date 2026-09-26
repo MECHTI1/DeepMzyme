@@ -51,8 +51,9 @@ scientific authority or establish implemented or evaluated behavior.
 | Generalized 5-fold CV runner guide (arbitrary splits, ion & pocket levels) | [`GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](GENERALIZED_METAL_5FOLD_CV_GUIDE.md) | Single dataset-specific fixed scripts |
 | PinMyMetal 5-fold three-architecture benchmark summary | [`notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md`](notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md) | Unverified pilot results |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
+| Required agent GPU entry point, bounded routing and optional monitor delegation | [`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) | New spending permission, a second controller or guaranteed GPU availability |
 | GCP GPU VM provisioning, PyCharm remote setup, and batch execution | [`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md) | Scientific stage values or model selection |
-| Bounded PMM GPU route, measured admission and persistence | [`GPU_EXECUTION_CASCADE_PLAYBOOK.md`](GPU_EXECUTION_CASCADE_PLAYBOOK.md) | A second provisioning controller or a hardware speed guarantee |
+| PMM application of GPU routing, measured admission and persistence | [`GPU_EXECUTION_CASCADE_PLAYBOOK.md`](GPU_EXECUTION_CASCADE_PLAYBOOK.md) | A second provisioning controller or a hardware speed guarantee |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
 | Sequence-remoteness protocol, validation replay and support gates | [`REMOTE_HOMOLOGY_ADDENDUM.md`](REMOTE_HOMOLOGY_ADDENDUM.md) | Homology absence, new training authorization or model promotion |
 | Current status, implementation/evidence state, and next action | [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) | Long chronological diary |
@@ -72,7 +73,9 @@ scientific authority or establish implemented or evaluated behavior.
 ## Execution references
 
 For the end-to-end entry path, start with
-[`GETTING_STARTED.md`](GETTING_STARTED.md). For Colab provisioning, stock
+[`GETTING_STARTED.md`](GETTING_STARTED.md). Agents must first use the project
+[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) for GPU operations.
+For Colab provisioning, stock
 PyTorch preservation, browser/CLI same-VM attachment, Drive authorization,
 artifact transfer, and teardown, use
 [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md). For dedicated GCP GPU VM
