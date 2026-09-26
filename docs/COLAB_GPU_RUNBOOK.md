@@ -1,5 +1,10 @@
 # Google Colab GPU Runbook: Browser and CLI
 
+Agents first read the project
+[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) for authorization,
+owned-runtime reuse, bounded fallback and optional monitoring. This runbook owns
+the Colab-specific procedure; its use does not itself allocate a runtime.
+
 This runbook provides two first-class interfaces to one Colab VM:
 
 - the browser notebook for interactive configuration, Drive authorization, and

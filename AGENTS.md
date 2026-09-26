@@ -26,6 +26,26 @@ The main goals are:
 
 ## Environment
 
+### Required GPU workflow
+
+Before planning or performing DeepMzyme GPU execution, capacity search,
+connection, monitoring or recovery, read and apply
+[`gpu-use-skill`](.agents/skills/gpu-use-skill/SKILL.md). This includes training,
+HPO, embedding generation, inference and GPU benchmarks. It is the canonical
+project GPU entry point; agents without automatic skill discovery must open
+the file directly. Pure CPU/code/documentation work does not require a GPU.
+
+The skill owns bounded routing and optional audit/monitor delegation. Provider
+runbooks and the installed controller own actual commands and safeguards;
+scientific recipes remain in the task playbooks. Reuse existing authorization
+and verified artifacts within their scope. A skill invocation alone does not
+authorize spending, migration, another provider or a larger budget. One
+coordinator owns allocation/submission/shutdown; an optional monitor is read-only
+and never substitutes for stop controls. Do not use retired provisioning or
+automatic replacement scripts as shortcuts.
+
+### Python interpreter
+
 Use this Python interpreter unless explicitly instructed otherwise:
 
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python

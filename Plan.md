@@ -19,6 +19,7 @@ clearly contains newer working logic that should be preserved.
 | Need | Go to |
 | --- | --- |
 | Executable orientation, local setup limits, and project navigation | `docs/GETTING_STARTED.md` |
+| Required agent GPU routing, connection and optional monitoring | `.agents/skills/gpu-use-skill/SKILL.md` |
 | Colab browser/CLI runtime and environment procedure | `docs/COLAB_GPU_RUNBOOK.md` |
 | Locked environment contracts | `requirements/README.md` |
 | Benchmark schemas, commands, and artifact inventory | `bench/README.md` |

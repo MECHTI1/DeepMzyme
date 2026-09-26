@@ -11,6 +11,11 @@ configuration from examples in this guide.
 
 ## Choose an execution path
 
+Before GPU planning or execution, agents must read the project
+[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md). It covers reuse,
+capacity fallback, connection, admission, optional monitoring and verified
+shutdown through the existing provider tools.
+
 | Path | Use it when | Setup status |
 |---|---|---|
 | Existing project workstation | The configured DeepMzyme Conda environment is already present | Directly executable with the interpreter below |
