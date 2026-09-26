@@ -206,6 +206,19 @@ Subsequent cloud status confirmed **TERMINATED**. There was no new running
 session, fit or result. The ordinary baseline's completion/replay/source were
 reverified without retraining. The
 [execution receipt](../raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
-records both failed attempts. The authorized retry is consumed, and the
-controller prohibits automatic retries or hardware/zone substitution. The scientific comparison therefore
-remains one completed arm until the single new fit can run.
+records the attempts. A later explicit resumption request authorized a third
+start at **02:52:20 UTC**, rejected at **02:52:42 UTC**. Google suggested
+`us-central1-c`; that is a transient capacity hint, not a guarantee. Status at
+**02:53:12 UTC** again confirmed **TERMINATED**.
+
+The user questioned the alternate-zone block. An offline call to the actual
+controller guard reproduced its refusal for another managed VM in TERMINATED
+state. This is a local controller limitation, not a Google restriction caused
+by the preserved disk. The controller's budget also assumes one boot disk, so
+removing only the duplicate check would be insufficient. A deliberate fallback
+preserving old data, allowing only one running GPU and counting extra storage
+has been proposed; no controller-policy or zone change has been made.
+Colab authentication is valid and its session list is empty. Its installed CLI
+does not expose the CU balance/rate, browser access was unavailable, and no
+Colab allocation was attempted. The scientific comparison remains one completed
+arm until the single new fit can run.

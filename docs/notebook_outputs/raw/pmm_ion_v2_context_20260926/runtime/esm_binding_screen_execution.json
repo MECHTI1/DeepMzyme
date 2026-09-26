@@ -1,7 +1,7 @@
 {
-  "recorded_at_utc": "2026-09-26T02:12:30Z",
+  "recorded_at_utc": "2026-09-26T02:53:12Z",
   "status": "blocked_by_provider_capacity",
-  "authorization": "User approved ESMC pair first and instructed implementation; one requested VM hour only.",
+  "authorization": "User approved ESMC pair first and instructed implementation, then explicitly requested resumption using the GPU skill; one requested VM hour for the immediate fit.",
   "requested_vm_hours": 1,
   "provider_max_run_seconds": 3420,
   "max_session_estimated_gross_usd": 0.8352,
@@ -21,6 +21,13 @@
       "start_attempt_utc": "2026-09-26T02:11:57Z",
       "failure_utc": "2026-09-26T02:12:22Z",
       "failure_reason": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS: L4 unavailable in us-central1-a"
+    },
+    {
+      "start_attempt_utc": "2026-09-26T02:52:20Z",
+      "failure_utc": "2026-09-26T02:52:42Z",
+      "failure_reason": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS: L4 unavailable in us-central1-a",
+      "provider_suggested_zone": "us-central1-c",
+      "suggestion_is_capacity_guarantee": false
     }
   ],
   "vm_state_after_attempt": "TERMINATED",
@@ -28,6 +35,13 @@
   "controller_caps_changed": false,
   "retry_authorized": true,
   "authorized_retry_consumed": true,
+  "colab_fallback_inspection": {
+    "authentication": "oauth2 identity and Colab scope verified",
+    "active_sessions": 0,
+    "allocation_attempted": false,
+    "compute_unit_balance_and_rate": "not exposed by installed CLI; browser connection unavailable"
+  },
+  "cross_zone_guard_review": "Offline reproduction confirms the local controller rejects creation with another managed TERMINATED VM. This is a controller restriction, not a Google restriction caused by the existing disk. Controlled fallback policy change requested; no controller changes or alternate-zone creation performed.",
   "larger_30_hour_budget_approved": false,
   "remaining_immediate_work": "One first_shell_bias fit, independent replay, verified host backup and paired exploratory report; original full grid deferred."
 }

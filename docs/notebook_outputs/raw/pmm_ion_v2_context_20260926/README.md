@@ -35,7 +35,7 @@ and proposed continuation budget were added after 01:00 UTC.
 | [`runtime/deepmzyme_cuda_batch_probe.py`](runtime/deepmzyme_cuda_batch_probe.py), [`runtime/gvp_batch_probe.json`](runtime/gvp_batch_probe.json), [`runtime/late_batch_probe.json`](runtime/late_batch_probe.json) | Reproducible operational timing on copied smoke checkpoints; no saved weights or scientific comparison result |
 | [`runtime/remaining_budget_forecast.json`](runtime/remaining_budget_forecast.json) | Measured costs, explicit forecast assumptions and proposed unapproved 30-hour / $34 gross continuation cap |
 | [`runtime/session_closeout.json`](runtime/session_closeout.json) | Controller-confirmed stopped state and session accounting; no new allocation |
-| [`runtime/esm_binding_screen_execution.json`](runtime/esm_binding_screen_execution.json) | Later approved one-fit ESMC screen; baseline reverified, one-hour VM start rejected for L4 capacity, no new fit |
+| [`runtime/esm_binding_screen_execution.json`](runtime/esm_binding_screen_execution.json) | Approved one-fit ESMC screen; three authorized starts rejected for L4 capacity, latest alternate-zone hint and local controller limitation recorded; no new fit |
 
 The campaign manifest records the cohort-creation source snapshot. The GPU
 receipt records the later frozen execution source
