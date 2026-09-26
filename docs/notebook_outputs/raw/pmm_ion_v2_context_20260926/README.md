@@ -8,6 +8,11 @@ byte-identical copies from
 `sha256sum -c SHA256SUMS` from this directory.
 The later feature-generation and implementation-check receipts were added at
 22:24 UTC; the original snapshot receipts remain unchanged.
+Completed input certification, its verified host backup, the final graph-cache
+source revision and 137 passing targeted checks were added after resumption at
+2026-09-26 00:10 UTC.
+The first full fit, its verified host acknowledgment, operational batch probes
+and proposed continuation budget were added after 01:00 UTC.
 
 | Files | Evidence |
 |---|---|
@@ -22,10 +27,21 @@ The later feature-generation and implementation-check receipts were added at
 | [`esm_generation_receipt.json`](esm_generation_receipt.json), [`runtime/generate.resources.txt`](runtime/generate.resources.txt) | All 7,664 payloads generated; inference/write timing and whole-process time/RSS |
 | [`runtime/esmc_checkpoint_identity.json`](runtime/esmc_checkpoint_identity.json) | Exact public weight revision and content SHA-256 |
 | [`runtime/source_revision.json`](runtime/source_revision.json), [`runtime/local_tests.json`](runtime/local_tests.json) | Admission optimization deployed before any neural fit; 114 passing targeted tests |
+| [`runtime/feature_certification_summary.json`](runtime/feature_certification_summary.json), [`runtime/certify.resources.txt`](runtime/certify.resources.txt) | All 7,398 graphs certified; full inventory hash and verified host-backup acknowledgment; 32m28s certification |
+| [`runtime/source_revision_graph_cache.json`](runtime/source_revision_graph_cache.json) | Final graph-cache source deployed before any neural smoke or full fit |
+| [`runtime/resume_tests.json`](runtime/resume_tests.json), [`runtime/resume_regression_tests.log`](runtime/resume_regression_tests.log) | 114 campaign regressions plus 23 cache tests passed; separate cache-enabled training/replay check |
+| [`runtime/smoke_validation_summary.json`](runtime/smoke_validation_summary.json) | All nine one-epoch GPU cases passed completion and independent replay; identities, checkpoint hashes and runtime profiles |
+| [`runtime/first_full_fit_summary.json`](runtime/first_full_fit_summary.json) | First 50-epoch Only-ESM/direct-four/fold-0 fit, independent replay, selected metrics and 71-file verified host acknowledgment |
+| [`runtime/deepmzyme_cuda_batch_probe.py`](runtime/deepmzyme_cuda_batch_probe.py), [`runtime/gvp_batch_probe.json`](runtime/gvp_batch_probe.json), [`runtime/late_batch_probe.json`](runtime/late_batch_probe.json) | Reproducible operational timing on copied smoke checkpoints; no saved weights or scientific comparison result |
+| [`runtime/remaining_budget_forecast.json`](runtime/remaining_budget_forecast.json) | Measured costs, explicit forecast assumptions and proposed unapproved 30-hour / $34 gross continuation cap |
+| [`runtime/session_closeout.json`](runtime/session_closeout.json) | Controller-confirmed stopped state and session accounting; no new allocation |
+| [`runtime/esm_binding_screen_execution.json`](runtime/esm_binding_screen_execution.json) | Later approved one-fit ESMC screen; baseline reverified, one-hour VM start rejected for L4 capacity, no new fit |
 
 The campaign manifest records the cohort-creation source snapshot. The GPU
 receipt records the later frozen execution source
 `68f1fa9a59d5db1e0de9dc39092756e8390acb2d90d3d22f9917e11dee05afaa`.
+The later final training source is
+`adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`.
 These are distinct provenance moments; the original receipts are unchanged.
 
 Full cohort/disposition tables, fold membership, sequence-plan CSV, source data,
@@ -35,6 +51,7 @@ dataset bundle. No credentials, private cloud configuration, held-out files or
 model checkpoints are included. Full remote environment setup and training
 completion are not established by the ESMC sample receipt.
 
-PMM's completed fivefold comparison has Grade 2 evidence. The unfinished neural
-grid and runtime preflight have Grade 6 evidence. No neural-fit, superiority,
-promotion, final-refit or held-out result is present at this snapshot.
+PMM's completed fivefold comparison has Grade 2 evidence. The individual full
+neural fit has Grade 5 evidence; the unfinished neural grid and runtime probes
+have Grade 6 evidence. No superiority, promotion, final-refit or held-out result
+is present.

@@ -1,0 +1,109 @@
+{
+  "operational_timing_only": true,
+  "weights_saved": false,
+  "canonical_fit": false,
+  "checkpoint_copy_sha256": "c9706fd4132243ab9a44e6f710eb5651018286ab3cde78dfabb66c08725098e5",
+  "cache_namespace": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/smoke/raw_graph_cache/d0d44c6090898c33407838685e8aa8486ffb768979a07054f30810bbff4893c3",
+  "cache_files": [
+    {
+      "key": "a3c6c5cd705b4ebc2c98ffeb788edb64c729c08d18b00a46da979e8fed67bf9b",
+      "payload_sha256": "ebd2ac64613f07d492da4b9a4a56966586163ff15c46e91f64ddd123289416c5"
+    },
+    {
+      "key": "2a82b7ab0e42c9f8b3683d55a260e43d121dd01ef3f1543a970a2f04ebcee0d0",
+      "payload_sha256": "5446e9e03205b12ad6567fb1a021d40e867bfd3d1ba6aac0251f1a6c8c00663c"
+    },
+    {
+      "key": "c7d2828857ba264d2fdeb0eb8283d27161259c23865bdccebb9ace9c70831ac3",
+      "payload_sha256": "9559e556ab701757524691929f2e2fb5a10c55cc6e16cb8fcdae47e5b23fae3a"
+    },
+    {
+      "key": "e1729099da1f04fc1d8979ee0a8ef1d7d88848de6a77233109c2b451bb9046d9",
+      "payload_sha256": "d62edc4730495faac4f72edd680cb5444dded03adeb5e64617f07da58b9488e6"
+    },
+    {
+      "key": "45651e2df185723aa8a39c88e4f11decb312c1c15ca27aa5fb3d399eb339889e",
+      "payload_sha256": "ac65405f9be305d25561d9721e9560f003006fece5b129c895294ed0c354d0ee"
+    },
+    {
+      "key": "9a00995ad056f03ff555e93116408dbedc081ec058e0349f1a17884d49761cd9",
+      "payload_sha256": "7123e1995345f183747a9745953d36f2036628adcc5330f1c5879616d29f6473"
+    },
+    {
+      "key": "2207612779e889c208d1440c026df24e1ad4d40e786698be5bf05285c2ca7e9f",
+      "payload_sha256": "b2536cb9073edaac7d5d2dcfdc80321dd8ec9bc9ad727524b32a9261655a1e4c"
+    },
+    {
+      "key": "d28c25750c7cbf34fc785dd1bebf12d51084e58c016492343511d7df18393d94",
+      "payload_sha256": "fb26dd16c417d933929e1208d8c0e953caab81934e0b29c08690fdcc763952a7"
+    },
+    {
+      "key": "8207e28dc087751f8564ef49559bceeef4c7fab831ab1e081de9ade17aa1e666",
+      "payload_sha256": "ca73e6466ec8d6d1c9dacc2a340fe17bca8901771d13fabea73bb32618790e08"
+    },
+    {
+      "key": "1a074c5bf67dc41215f2eb2a9c6cb7abab27f9e36e81ae097cefa64345ec8cb3",
+      "payload_sha256": "754d26f8c5a6bab42bae4d7e0a399a35731ec56a1d4ec670893e0551ab18cd6f"
+    },
+    {
+      "key": "cee098adcf9f9bf735f086ddc7f9bcfcddfef26cccb57087b2689c2dfe4bd04b",
+      "payload_sha256": "9a6597fbd9db5dd804440ccec78d0a4ea096712500a6432e8a85f2d7e7ee6d8b"
+    },
+    {
+      "key": "e7f22d2dfeede12e680724864596b7dddf11342a4056298769bdabadaac65b7e",
+      "payload_sha256": "091430d34fc564dcf14f16fc340dc7a19491cef7394d93fabdf78852135f1602"
+    },
+    {
+      "key": "d2ca5ce6dc8999528e814223f1fe9fe22d70245cf849b02df5c014334df1ab1d",
+      "payload_sha256": "06b0b7db29322d97ceec4d3277a2abe1dee8830ad291ef146c6e5071ae8707c6"
+    },
+    {
+      "key": "62b22ab36b4d32471b5c15870955009d5fc2e026756fead14d609b296afbdf26",
+      "payload_sha256": "58ef5f19c00de5f10f5ea409fd9907c3a1629a4482f38083cedebec52f210dc2"
+    },
+    {
+      "key": "5f248823205c881a237e10c4023c29ee85bfa2488385410afae9849210d1c69e",
+      "payload_sha256": "d5e0b375e7ee446e0efe471261bbe810c321a435960f77908775ed6784a9e591"
+    },
+    {
+      "key": "2983829c49a69e75bb3f05c74be51b64881bfd4834b7702e622c5d6ddc72cd23",
+      "payload_sha256": "29f8f137862c425e01d5fcd55179c9bef3ddc589c3d4aca0f533480a9d089e64"
+    }
+  ],
+  "device": "cuda",
+  "model_architecture": "only_gvp",
+  "fusion_mode": "late_fusion",
+  "warmup_batches": 5,
+  "timed_batches": 20,
+  "batch_size": 16,
+  "seconds_per_batch": [
+    0.04862847399999737,
+    0.048731222001151764,
+    0.04863216299963824,
+    0.048431346000143094,
+    0.04856992600070953,
+    0.04927127799965092,
+    0.04847587000040221,
+    0.04862700199919345,
+    0.04868783299934876,
+    0.04813537599875417,
+    0.048873807998461416,
+    0.048938616000668844,
+    0.04847423300088849,
+    0.049253884000791004,
+    0.0490596559993719,
+    0.04846832700059167,
+    0.04812483100067766,
+    0.048862595000173314,
+    0.048812425000505755,
+    0.04878669999925478
+  ],
+  "mean_seconds": 0.04869227825001872,
+  "median_seconds": 0.0486599979994935,
+  "batch_nodes": 602,
+  "batch_edges": 9832,
+  "cpu_peak_rss_bytes": 1883697152,
+  "cuda_peak_allocated_bytes": 280944128,
+  "cuda_peak_reserved_bytes": 304087040,
+  "notes": "One representative repeated batch; includes clone/normalization/collation/transfer and saved training loss. Excludes graph construction, validation, export and checkpoint I/O; use overheads separately. Cold AdamW state was warmed; no scheduler or checkpoint writes."
+}

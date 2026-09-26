@@ -1,0 +1,197 @@
+{
+  "verified_at_utc": "2026-09-26T01:01:07Z",
+  "run_name": "only_esm__four_class__none__fold0__seed42",
+  "completed_grid_fits": 1,
+  "required_grid_fits": 45,
+  "training_examples": 5906,
+  "validation_examples": 1492,
+  "history_epochs": 50,
+  "selected_checkpoint_receipt": {
+    "campaign_run_identity": {
+      "campaign_id": "pmm_ion_metal_v2_context",
+      "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+      "epochs": 50,
+      "family": "only_esm",
+      "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+      "fold": 0,
+      "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+      "model_seed": 42,
+      "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+      "readout": "none",
+      "resolved_config_sha256": "dff062a73609c8fdce15fe7e1bea0e421fe6da6d038ebb5807aa4571c3dcd700",
+      "smoke": false,
+      "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+      "target_scheme": "four_class"
+    },
+    "common_four_rule": "sum native probabilities into [Mn, Cu, Zn, Fe+Co+Ni] before argmax",
+    "completed_epochs": 50,
+    "fit_status": "completed",
+    "metrics": {
+      "val_metal_acc": 0.8471850156784058,
+      "val_metal_balanced_acc": 0.8839448044126841,
+      "val_metal_class_viii_recall": 0.8127340823970037,
+      "val_metal_collapsed4_acc": 0.8471850156784058,
+      "val_metal_collapsed4_balanced_acc": 0.8839448044126841,
+      "val_metal_collapsed4_class_viii_recall": 0.8127340823970037,
+      "val_metal_collapsed4_cu_recall": 0.9743589743589743,
+      "val_metal_collapsed4_macro_f1": 0.8429511712849522,
+      "val_metal_collapsed4_mn_recall": 0.8536585365853658,
+      "val_metal_collapsed4_per_class_recall": {
+        "Class VIII": 0.8127340823970037,
+        "Cu": 0.9743589743589743,
+        "Mn": 0.8536585365853658,
+        "Zn": 0.8950276243093923
+      },
+      "val_metal_collapsed4_zn_recall": 0.8950276243093923,
+      "val_metal_fe_recall": null,
+      "val_metal_macro_f1": 0.8429511712849522,
+      "val_metal_min_recall": 0.8127340823970037,
+      "val_metal_mn_recall": 0.8536585365853658,
+      "val_metal_per_class_recall": {
+        "Class VIII": 0.8127340823970037,
+        "Cu": 0.9743589743589743,
+        "Mn": 0.8536585365853658,
+        "Zn": 0.8950276243093923
+      }
+    },
+    "planned_epochs": 50,
+    "reconciliation": {
+      "val_metal_balanced_acc": {
+        "abs_difference": 0.0,
+        "recorded": 0.8839448044126841,
+        "replayed": 0.8839448044126841
+      },
+      "val_metal_collapsed4_balanced_acc": {
+        "abs_difference": 0.0,
+        "recorded": 0.8839448044126841,
+        "replayed": 0.8839448044126841
+      }
+    },
+    "reconciliation_status": "match",
+    "selected_checkpoint": "best_model_checkpoint.pt",
+    "selected_checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+    "selected_epoch": 36,
+    "selection_metric": "val_metal_balanced_acc",
+    "selection_metric_value": 0.8839448044126841,
+    "tie_rule": "earliest epoch (strictly greater metric required to replace)",
+    "validation_predictions": {
+      "n_rows": 1492,
+      "path": "val_predictions.csv",
+      "sha256": "94cd57b402be37edd88c7cfa6625b6ac6101be60e14b701411eb04bea0a67bf1"
+    }
+  },
+  "independent_replay_receipt": {
+    "campaign_run_identity": {
+      "campaign_id": "pmm_ion_metal_v2_context",
+      "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+      "epochs": 50,
+      "family": "only_esm",
+      "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+      "fold": 0,
+      "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+      "model_seed": 42,
+      "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+      "readout": "none",
+      "resolved_config_sha256": "dff062a73609c8fdce15fe7e1bea0e421fe6da6d038ebb5807aa4571c3dcd700",
+      "smoke": false,
+      "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+      "target_scheme": "four_class"
+    },
+    "common_four_rule": "sum native probabilities into [Mn, Cu, Zn, Fe+Co+Ni] before argmax",
+    "completed_epochs": 50,
+    "fit_status": "completed",
+    "independent_replay": true,
+    "metrics": {
+      "val_metal_acc": 0.8471850156784058,
+      "val_metal_balanced_acc": 0.8839448044126841,
+      "val_metal_class_viii_recall": 0.8127340823970037,
+      "val_metal_collapsed4_acc": 0.8471850156784058,
+      "val_metal_collapsed4_balanced_acc": 0.8839448044126841,
+      "val_metal_collapsed4_class_viii_recall": 0.8127340823970037,
+      "val_metal_collapsed4_cu_recall": 0.9743589743589743,
+      "val_metal_collapsed4_macro_f1": 0.8429511712849522,
+      "val_metal_collapsed4_mn_recall": 0.8536585365853658,
+      "val_metal_collapsed4_per_class_recall": {
+        "Class VIII": 0.8127340823970037,
+        "Cu": 0.9743589743589743,
+        "Mn": 0.8536585365853658,
+        "Zn": 0.8950276243093923
+      },
+      "val_metal_collapsed4_zn_recall": 0.8950276243093923,
+      "val_metal_fe_recall": null,
+      "val_metal_macro_f1": 0.8429511712849522,
+      "val_metal_min_recall": 0.8127340823970037,
+      "val_metal_mn_recall": 0.8536585365853658,
+      "val_metal_per_class_recall": {
+        "Class VIII": 0.8127340823970037,
+        "Cu": 0.9743589743589743,
+        "Mn": 0.8536585365853658,
+        "Zn": 0.8950276243093923
+      }
+    },
+    "normalization_refitted": false,
+    "planned_epochs": 50,
+    "prediction_rows_verified": true,
+    "reconciliation": {
+      "val_metal_balanced_acc": {
+        "abs_difference": 0.0,
+        "recorded": 0.8839448044126841,
+        "replayed": 0.8839448044126841
+      },
+      "val_metal_collapsed4_balanced_acc": {
+        "abs_difference": 0.0,
+        "recorded": 0.8839448044126841,
+        "replayed": 0.8839448044126841
+      }
+    },
+    "reconciliation_status": "match",
+    "selected_checkpoint": "best_model_checkpoint.pt",
+    "selected_checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+    "selected_epoch": 36,
+    "selection_metric": "val_metal_balanced_acc",
+    "selection_metric_value": 0.8839448044126841,
+    "source_run_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42",
+    "tie_rule": "earliest epoch (strictly greater metric required to replace)",
+    "training_performed": false,
+    "validation_predictions": {
+      "n_rows": 1492,
+      "path": "val_predictions.csv",
+      "sha256": "2fb9b03051ce9f9c83dbb7e5678084b45103a4091227c26d2b282e56da2afd24"
+    }
+  },
+  "runtime_profile": {
+    "schema_version": 1,
+    "phase_seconds": {
+      "prepare": 1305.3626340270002,
+      "train_epoch": 486.3564223969988,
+      "train_metric_evaluation": 45.318472744000246,
+      "validation": 108.09460799899716,
+      "checkpoint_save": 6.140157365996856,
+      "selected_export": 2.3735594019999553
+    },
+    "notes": [
+      "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+      "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+      "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+    ],
+    "process_peak_rss_bytes": 7755296768,
+    "cuda_peak_allocated_bytes": 30622720,
+    "cuda_peak_reserved_bytes": 54525952
+  },
+  "held_out_access": false,
+  "evidence_role": "One completed seed/fold (Grade 5); matched 45-fit grid incomplete (Grade 6). No family ranking or promotion.",
+  "host_backup_acknowledgment": {
+    "file_count": 71,
+    "manifest_sha256": "00a9275a331787b5ba6075e3461746bec2f399a02aae8eb38207071576ad8e03",
+    "schema_version": 1,
+    "verified_by": "mechti-pc",
+    "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "verified_unix": 1790384412.729913
+  },
+  "completed_unit_seconds_rounded_from_runner": 2417,
+  "cold_graph_seconds": {
+    "train": 743.43,
+    "validation": 201.24,
+    "independent_replay_validation": 214.48
+  }
+}

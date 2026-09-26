@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-09-26T00:09:33Z",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "campaign_regressions": {
+    "passed": 114,
+    "warnings": 39,
+    "seconds": 81.14,
+    "log": "resume_regression_tests.log",
+    "sha256": "bc35c1db16feeaf03eb1312c2400aa7867209f80529d229a56ea81b4e7fba006"
+  },
+  "cache_tests": {
+    "passed": 23,
+    "seconds": 14.54,
+    "evidence": "training_audit agent execution result"
+  },
+  "additional_cache_enabled_training_replay": {
+    "passed": 1,
+    "seconds": 13.61,
+    "evidence": "training_audit agent execution result",
+    "note": "Existing regression repeated with cache enabled; not an additional unique test"
+  }
+}

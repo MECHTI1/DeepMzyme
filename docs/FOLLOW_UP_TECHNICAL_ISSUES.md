@@ -909,7 +909,8 @@ split identity.
 
 ## TECH-021 — PMM input, replay and runtime certification gaps
 
-**Status:** Implemented and tested 2026-09-26; live GPU validation pending.
+**Status:** Implemented and tested 2026-09-26; complete input certification and all
+nine GPU smoke/replay cases passed. See `EXPERIMENT_STATUS.md` for full-grid progress.
 
 The original transfer builder could include the tracked held-out PMM source;
 embedding metadata did not fully bind live payload content, sequence and residue

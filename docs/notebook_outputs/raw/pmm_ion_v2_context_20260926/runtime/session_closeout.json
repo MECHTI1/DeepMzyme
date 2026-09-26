@@ -1,0 +1,22 @@
+{
+  "session_id": "session-20260925T213213Z",
+  "session_start": "2026-09-25T21:32:13Z",
+  "session_stop": "2026-09-26T01:06:50Z",
+  "elapsed_running_s": 12878,
+  "estimated_gross_cost_usd": 3.145,
+  "gross_usd_per_hour": 0.879172,
+  "vm_state": "TERMINATED",
+  "auto_stop_by_max_run_duration": false,
+  "event": "STOPPED",
+  "source": "VM controller usage ledger and post-stop cloud status",
+  "stop_policy": "End idle billable allocation after verified backup; continuation budget decision pending",
+  "vm_disk_preserved": true,
+  "completed_grid_fits": 1,
+  "remaining_grid_fits": 44,
+  "verified_smoke_cases": 9,
+  "verified_pmm_folds": 5,
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "budget_increase_approved": false,
+  "new_allocation_started": false,
+  "host_fit_manifest_sha256": "00a9275a331787b5ba6075e3461746bec2f399a02aae8eb38207071576ad8e03"
+}
