@@ -48,11 +48,19 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   is authorized for that screen; the broader grid is deferred. The **30 total
   VM hours / $34 gross** proposal remains unapproved and is not needed for this
   stage. One-hour start attempts at **01:27 and 02:11 UTC** both failed with an
-  L4 stockout in `us-central1-a`; subsequent cloud status confirmed **TERMINATED**. No new
+  L4 stockout in `us-central1-a`. After another explicit resume request, the
+  **02:52 UTC** start also failed; this time Google suggested `us-central1-c`.
+  Cloud status at **02:53:12 UTC** confirmed **TERMINATED**. No new
   fit or running compute/GPU session was created. Baseline completion, replay
   and frozen source were reverified; the binding-aware run directory is absent.
-  The user-authorized same-VM retry has been consumed; another billable start
-  requires a new deliberate request under the controller's stockout policy. The
+  The same-VM retry has been consumed. Offline reproduction confirms that the
+  **local controller**, not Google, rejects creating another managed VM even
+  while the existing one is stopped. Its cost accounting also assumes one boot
+  disk. A controlled zone fallback preserving the disk and one-running-GPU rule
+  has been proposed; the required controller/zone decision is pending. Colab
+  authentication works and no sessions are active, but the installed CLI does
+  not expose CU balance/rate and browser access was unavailable; no Colab GPU
+  was allocated. The
   [screen execution receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
   records this boundary. The earlier full-grid forecast is about 22.3 additional VM hours before
   contingency, not the budget of the immediate screen. See the
