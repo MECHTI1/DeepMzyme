@@ -64,7 +64,7 @@ def build_cached_graphs(pockets: list[PocketRecord], options: dict[str, Any],
     namespace.mkdir(parents=True, exist_ok=True)
     started = perf_counter()
     graphs, hits = [], 0
-    for pocket in pockets:
+    for index, pocket in enumerate(pockets, start=1):
         key = hashlib.sha256(_compact_bytes(pocket)).hexdigest()
         path = namespace / f"{key}.pkl"
         try:
@@ -91,6 +91,9 @@ def build_cached_graphs(pockets: list[PocketRecord], options: dict[str, Any],
                 raise ValueError(f"Raw graph cache input identity differs: {path}")
             hits += 1
         graphs.append(graph)
+        if index % 500 == 0 and index < len(pockets):
+            print(f"[GRAPH-CACHE] processed={index}/{len(pockets)} hits={hits} misses={index - hits} "
+                  f"seconds={perf_counter() - started:.2f}", flush=True)
     print(f"[GRAPH-CACHE] hits={hits} misses={len(graphs) - hits} "
           f"seconds={perf_counter() - started:.2f} namespace={namespace}", flush=True)
     return graphs

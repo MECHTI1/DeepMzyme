@@ -508,6 +508,7 @@ def build_train_command(
     env = {
         FORBIDDEN_READ_ROOTS_ENV: forbidden_roots_environment(forbidden_read_roots(train_dir)),
         "DEEPMZYME_PARSE_CACHE_DIR": str(paths.parse_cache),
+        "DEEPMZYME_GRAPH_CACHE_DIR": str(paths.root / "raw_graph_cache"),
         "MKL_THREADING_LAYER": "GNU",
     }
     return command, env, identity
