@@ -1,0 +1,11 @@
+[CAMPAIGN] only_esm__four_class__first_shell_bias__fold0__seed42: running
+Traceback (most recent call last):
+  File "/home/mechti/projects/DeepMzyme/scripts/run_metal_5fold_cv.py", line 1354, in <module>
+    main()
+  File "/home/mechti/projects/DeepMzyme/scripts/run_metal_5fold_cv.py", line 1232, in main
+    campaign_main(sys.argv[1:])
+  File "/home/mechti/projects/DeepMzyme/scripts/run_metal_5fold_cv.py", line 1209, in campaign_main
+    execution.admit(name, args.estimated_fit_seconds)
+  File "/home/mechti/projects/DeepMzyme/src/benchmarking/pmm_execution.py", line 289, in admit
+    raise ExecutionBlocked(f"{run_name} needs {required:.0f}s including margin/closeout; {remaining:.0f}s remain")
+benchmarking.pmm_execution.ExecutionBlocked: only_esm__four_class__first_shell_bias__fold0__seed42 needs 3150s including margin/closeout; 3090s remain

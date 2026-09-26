@@ -89,7 +89,13 @@ Use one requested VM hour (the controller reserves three minutes, leaving at
 most 57 minutes), a conservative 1,800-second complete-unit forecast, the
 existing 25% admission margin and 900-second closeout reserve. The following
 block runs on the existing VM after obtaining its actual session identity and
-timestamps; expired allocation values must not be reused:
+timestamps; expired allocation values must not be reused.
+
+This initial envelope leaves at most 270 seconds for boot, connection and input
+verification before the 3,150-second admission requirement. It is not a guarantee
+of admission. If that allowance is exhausted, keep the forecast and safeguards;
+use the budget-decision rule in `AGENTS.md` before any larger allocation.
+`EXPERIMENT_STATUS.md` records the current authorization and actual outcome.
 
 ```bash
 PY=/home/mechti/venvs/deepmzyme/bin/python

@@ -217,7 +217,45 @@ state. This is a local controller limitation, not a Google restriction caused
 by the preserved disk. The controller's budget also assumes one boot disk, so
 removing only the duplicate check would be insufficient. A deliberate fallback
 preserving old data, allowing only one running GPU and counting extra storage
-has been proposed; no controller-policy or zone change has been made.
+was proposed at that boundary. The implementation and live verification below
+supersede that earlier operational block.
+
+## GPU recovery verified; fit admission refused
+
+The approved controller recovery now enforces one active GPU while allowing a
+positively stopped source to coexist temporarily. It snapshots/restores the
+source boot disk, bounds destination attempts, verifies provider automatic STOP
+before selecting SSH, and counts overlapping disks, snapshots and recycle-bin
+storage. Both GPU skills and the related runbooks were updated. The initial
+offline regression suite passed **63 tests**. A subsequent focused suite passed
+**31 fallback tests**, including nine new cases for evidence from a later
+explicitly authorized session on the same immutable replacement. Original
+allocation history remains unchanged; unknown/wrong-instance sessions and
+completion outside execution or stop bounds are rejected.
+
+Recovery pass `e9ff994df82d` succeeded on its first destination,
+`us-central1-c`, at **2026-09-26 03:42:02 UTC**. The restored NVIDIA L4 executed
+a real CUDA matrix operation; the scientific source hash remained
+`adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`.
+The existing runner verified frozen inputs and accepted the completed ordinary
+baseline's host acknowledgment. It did not repeat feature generation or smokes.
+
+At **03:47:25 UTC**, admission refused the new binding-aware fit: its
+1,800-second forecast × 1.25 plus a 900-second closeout reserve required
+**3,150 seconds**, while **3,090 seconds** remained before automatic STOP.
+Startup, connection, coordinator delay and verification consumed the available
+setup allowance. Neither the forecast nor safety margins were lowered to force
+admission. **No new fit started and no new scientific result exists.**
+
+The coordinator stopped the replacement; the controller recorded
+**TERMINATED at 03:49:17 UTC** (cloud stop 03:49:13),
+about **7m12s / $0.11 estimated running gross**.
+The stopped source and replacement disks plus temporary snapshot remain
+preserved and bill for storage. The fit/replay/independent-backup cleanup gate
+has not passed. A 1.5-hour total screen allocation ceiling, including this
+session, was requested; it is not authorized without a user reply. No restart
+was performed. The [recovery receipt](../raw/pmm_ion_v2_context_20260926/runtime/gpu_fallback_execution.json)
+and admission log preserve this boundary; current status owns later decisions.
 Colab authentication is valid and its session list is empty. Its installed CLI
 does not expose the CU balance/rate, browser access was unavailable, and no
 Colab allocation was attempted. The scientific comparison remains one completed

@@ -95,6 +95,9 @@ help exposes this command; an older controller needs updating before recovery.
   endpoint and refreshing SSH/guardian state. Verify the actual runtime, frozen
   inputs, caches and independent backup destination before admitting a fit.
   Use fresh allocation timestamps; reuse valid scientific preparation/results.
+  If an explicitly authorized later start on the same replacement completes
+  the work, bind cleanup evidence to that actual ledger session without
+  rewriting the original fallback allocation history.
 - Finalize only with the controller's evidence gate and existing cleanup
   authorization. It stops and confirms the replacement, then removes only the
   recorded superseded VM, disk and snapshot. Failed verification preserves them;
@@ -158,7 +161,11 @@ the user's scope; an explicitly specified working route takes precedence.
   Preserve raw caches across fits; normalization remains training-fold-only.
 - Bind execution to the actual allocation start and hard-stop deadline. Use
   the campaign's measured admission rule; PMM requires a 1.25 forecast multiplier
-  plus a 900-second persistence/closeout reserve. Count setup/idle/transfer and
+  plus a 900-second persistence/closeout reserve. Allow for boot, connection,
+  input verification, idle time and transfer before selecting a session length:
+  requested hours exceed usable fit time. Prepare the launch command
+  before allocation and submit promptly after required runtime checks. A short
+  admission deficit does not justify weakening the margin or reserve. Count
   all provider charges against the applicable budget. Colab has separate CU
   accounting: do not treat it as free, apply GCP dollar rates to it, or assume
   an hour cap transfers automatically. Confirm an enforceable stop mechanism
