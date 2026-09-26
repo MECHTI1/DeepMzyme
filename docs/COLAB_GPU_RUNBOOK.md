@@ -5,6 +5,15 @@ Agents first read the project
 owned-runtime reuse, bounded fallback and optional monitoring. This runbook owns
 the Colab-specific procedure; its use does not itself allocate a runtime.
 
+GCP stockout recovery uses the controller's
+[same-region procedure](GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region).
+Colab is a separate authorized fallback. Confirm that no GCP GPU is active or
+ambiguous before allocating here, and retain any GCP storage charges in the
+overall cost record. Verify Colab compute-unit balance and consumption rate
+through an available supported interface; CLI 0.6.0 does not expose a balance
+command. Do not substitute GCP dollar rates or presume that a GCP hour allowance
+authorizes Colab compute-unit spending.
+
 This runbook provides two first-class interfaces to one Colab VM:
 
 - the browser notebook for interactive configuration, Drive authorization, and

@@ -28,7 +28,8 @@ controller. Creating or reading this skill does not authorize cloud spending.
    instruction cited. Never invent a confirmation phrase or widen a budget.
 4. Choose one coordinator to own allocation, job submission and shutdown.
    Prepare/checksum inputs and the smallest useful command before billing starts.
-   Default to one owned allocation and one training process.
+   Default to one active GPU and one training process. A confirmed stopped GCP
+   source may coexist temporarily with its replacement during recovery.
    Inspection alone does not transfer lifecycle ownership; report to the
    existing coordinator without submitting or stopping its work.
 
@@ -61,17 +62,45 @@ coordinator's runtime requires an applicable explicit user-authorized handoff.
 | Healthy, owned running resource | Connect to that exact endpoint; inspect process/log state before submitting. An active fit is monitored, not duplicated. |
 | Existing stopped GCP VM | Start that VM only under applicable start authorization. Its disk and caches stay in its zone. |
 | No managed GCP VM anywhere in the project | The new-allocation cascade below can apply when authorized. |
-| Stockout while starting an existing VM | Preserve it and its disk. Follow an already approved retry/fallback scope; otherwise present a concrete continuation choice. |
+| Stockout while starting an existing VM | Preserve it and its disk; use the controller's authorized same-region `vm-fallback` procedure below. |
 | Unknown ownership, another job, in-flight start, disconnect or timeout | Reconcile the same resource first. Do not allocate a replacement to resolve uncertainty. |
 
-**Existing-VM limitation:** the current controller's project-wide duplicate guard
-rejects another managed GCP VM even if the old one is stopped. Editing `ZONE`
-does not move the VM/disk and does not make that candidate eligible. Do not
-rename, delete, unlabel, or bypass the guard to obtain a second VM. A separately
-authorized migration needs a supported procedure preserving artifacts; this
-skill supplies none. An authorized Colab fallback can be considered with the
-GCP VM confirmed stopped, keeping its disk charges in the total. Explain this
-constraint instead of repeatedly trying ineligible GCP candidates.
+The GCP invariant is **one active GPU**, not one existing VM. Only a positively
+confirmed `TERMINATED` managed VM may coexist with a replacement; running,
+transitioning, suspended or unknown GPU states block allocation. Do not rename,
+delete, unlabel or manually change the selected endpoint to evade a refusal.
+Changing `ZONE` alone does not move a zonal disk or its caches.
+
+## Recover a stopped GCP VM after stockout
+
+Use the installed controller's `vm-fallback`; the
+[GCP recovery procedure](../../../docs/GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region)
+owns the exact commands and cleanup evidence contract. First confirm that its
+help exposes this command; an older controller needs updating before recovery.
+
+- Preview the authorized hours and preferred zone, then execute with `--confirm`
+  under the applicable bounded fallback authorization. No new permission is
+  needed per candidate within that scope. Same-VM start authority alone does not
+  authorize replacement. Cross-region recovery is outside this procedure.
+- Prefer Google's suggested eligible zone, then other same-region L4 offerings,
+  excluding the failed source zone. Offerings and hints do not guarantee
+  capacity. The controller persists at most three destination creation attempts
+  and a ten-minute initiation window after the source snapshot is ready.
+  Reconnects or agent changes do not reset that pass.
+- Restore from the stopped source's boot-disk snapshot to preserve its filesystem.
+  Retain the source until the replacement's completed fit, independent replay
+  and host backup are verified. Include overlapping disks and the temporary
+  snapshot in cost accounting. Unknown prices block execution.
+- The controller verifies provider automatic STOP before selecting the new
+  endpoint and refreshing SSH/guardian state. Verify the actual runtime, frozen
+  inputs, caches and independent backup destination before admitting a fit.
+  Use fresh allocation timestamps; reuse valid scientific preparation/results.
+- Finalize only with the controller's evidence gate and existing cleanup
+  authorization. It stops and confirms the replacement, then removes only the
+  recorded superseded VM, disk and snapshot. Failed verification preserves them;
+  report their continuing costs. Ordinary closeout remains stop-only.
+  Confirm the temporary snapshot's recycle-bin copy is also removed, accounting
+  for its minimum charge without changing project retention policy.
 
 ## Bounded capacity cascade
 
@@ -95,13 +124,16 @@ the user's scope; an explicitly specified working route takes precedence.
 4. On GCP success, stop searching and retain its config so status/stop target
    that resource. If every attempt fails or the search is abandoned, restore
    the saved config only after confirming no candidate is active/ambiguous.
-5. If GCP capacity is exhausted, or its existing-VM restriction makes new GCP
-   candidates ineligible, inspect an **authorized** Colab fallback. Reuse a
+5. If the authorized GCP pass is exhausted, inspect an **authorized** Colab
+   fallback after confirming no GCP GPU is active or ambiguous. Retained GCP
+   storage continues to count toward total cost. Reuse a
    named owned runtime when possible; otherwise request one explicitly named
    L4 runtime. A100 is eligible only under a reviewed, already authorized
    fallback with verified compatibility and metered cost. A 400 from `colab new`
    is an entitlement failure, not evidence for automatic hardware substitution;
    diagnose 400 responses from other commands according to their actual error.
+   Verify CU balance/rate through an available supported interface; do not invent
+   CLI balance commands or substitute GCP prices for Colab compute units.
    On 401/403, inspect identity per the Colab skill and report the blocker;
    do not repair authentication by starting browser/ADC flows yourself.
 6. Stop after the first suitable allocation. If allowed routes are exhausted,
@@ -142,7 +174,8 @@ the user's scope; an explicitly specified working route takes precedence.
 - On success or failure, persist artifacts, stop the owned resource and confirm
   provider state unless explicit keep-running authorization applies. GCP uses
   `vm-stop` then `vm-status`; Colab uses named stop and session verification.
-  Never delete the GCP disk for ordinary closeout. A stopped ledger or dead
+  Never delete the GCP disk for ordinary closeout; approved fallback finalization
+  is the evidence-gated exception for superseded resources. A stopped ledger or dead
   worker alone is insufficient proof of provider shutdown.
   For a local GPU, clean up only this task's processes; do not shut down the host.
 

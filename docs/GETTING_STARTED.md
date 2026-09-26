@@ -15,6 +15,10 @@ Before GPU planning or execution, agents must read the project
 [`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md). It covers reuse,
 capacity fallback, connection, admission, optional monitoring and verified
 shutdown through the existing provider tools.
+For an existing GCP VM that cannot restart because of capacity, follow the
+[same-region recovery procedure](GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region).
+It preserves the stopped source until the replacement and independent backup
+are verified, while enforcing one active GPU.
 
 | Path | Use it when | Setup status |
 |---|---|---|

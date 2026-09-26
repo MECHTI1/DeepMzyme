@@ -13,16 +13,18 @@ Current progress belongs in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
 ## Controller and resource contract
 
-The configured machine is `deepmzyme-l4` in project `deepmzyme-gpu-vm`, using
+The initial machine is `deepmzyme-l4` in project `deepmzyme-gpu-vm`, using
 `g2-standard-8`: 8 vCPU, 32 GiB RAM and one NVIDIA L4 with 24 GB GPU memory.
+Read `config.env` for the currently selected name and zone after recovery.
 Connection uses IAP SSH. Confirm actual hardware after creation.
 
 Read live configuration for limits. Reviewed defaults are 4 hours/$6 per
 session, 6 hours/$10 per UTC day, and $1.50/hour maximum verified gross rate.
 The controller subtracts stop overhead, so the usual effective session is
 237 minutes. Scientific work needs an additional closeout allowance within
-that deadline. Costs include compute, IP and persistent disk; credits never
-widen caps. A stopped VM can still incur disk/storage charges.
+that deadline. Costs include compute, IP and persistent storage, including
+overlapping source/replacement disks and temporary snapshots during recovery;
+credits never widen caps. A stopped VM still incurs storage charges.
 
 ```bash
 ~/deepmzyme-vm/bin/vm-status
@@ -46,14 +48,97 @@ quota, pricing refusal or authentication failure. Capacity changes; neither a
 past failure nor positive quota establishes current availability
 ([Google documentation](https://docs.cloud.google.com/compute/docs/troubleshooting/troubleshooting-vm-creation)).
 
-The GPU skill owns candidate order, attempt limits and the search deadline.
-Its cross-zone GCP creation pass requires no existing managed GCP VM. The
-current controller's project-wide duplicate guard rejects a second managed VM
-even when the first is stopped. A failed start of an existing VM does not permit
-changing `ZONE` and creating elsewhere: the original disk/caches remain zonal.
-Preserve that resource; use an authorized same-VM retry or eligible Colab
-fallback, or obtain a separately reviewed migration procedure. Never delete,
-rename or unlabel the original to evade the guard.
+The GPU skill owns route selection; the controller enforces recovery limits.
+An existing stopped VM uses the same-region recovery below. A fresh allocation
+without a managed VM may use the skill's separately authorized cross-region
+creation pass. These are distinct procedures. Never delete, rename or unlabel
+a source to evade a guard. Reconcile uncertain requests against actual cloud
+state before another attempt.
+
+### Recover a stopped VM in the same region
+
+Use `vm-fallback` after capacity exhaustion when the source and every other
+managed GPU are positively confirmed `TERMINATED`. Running, starting, stopping,
+suspended or unknown GPU states block allocation. The controller locks and
+rechecks the inventory immediately before a create. One coordinator operates
+the pass; an optional monitor only reads status and reports.
+
+Preview before executing the already authorized recovery. The example uses
+one requested hour and a provider-suggested zone; substitute the actual approved
+duration and same-region hint. `--preferred-zone` is optional.
+
+```bash
+~/deepmzyme-vm/bin/vm-fallback --dry-run --hours 1 --preferred-zone us-central1-c
+~/deepmzyme-vm/bin/vm-fallback --confirm --hours 1 --preferred-zone us-central1-c
+```
+
+Preview must not create cloud resources or change the selected configuration,
+ledger or SSH files. Inspect its candidate order, storage estimate, effective
+hard stop and maximum estimated gross cost. Unknown pricing blocks execution.
+Authorization for this bounded pass covers its eligible candidates without
+repeated per-zone questions; it does not widen spending caps or authorize
+cross-region migration or another provider.
+
+The controller snapshots the stopped source boot disk once and restores it into
+the replacement zone. It prefers the eligible provider hint, then remaining
+same-region L4 machine offerings, excluding the source. A durable receipt binds
+the source, snapshot, replacement, original configuration, phase and attempt
+history in `state/fallback.json`; the exact original config is saved as
+`state/fallback-<pass_id>.config.env`. At most three destination creation attempts
+may begin within ten minutes after snapshot preparation. Reconnects and agent changes retain those
+limits. Advance only on confirmed capacity exhaustion; diagnose quota, price,
+authentication, ownership or configuration failures. A timeout requires
+reconciliation of the recorded candidate before retrying.
+
+Provider automatic STOP, managed labels and scheduling safeguards must pass
+verification before the controller selects the replacement and refreshes its
+guardian and IAP SSH configuration. Session records bind project, zone, name
+and immutable instance ID so old stopped resources cannot close a new session.
+The active-disk charge is counted once; retained disks and the snapshot remain
+chargeable until verified deletion, including after an unsuccessful pass.
+
+Connecting, restoring and mounting are different operations. IAP SSH connects
+to the selected VM. Snapshot restoration copies the old zonal boot filesystem
+into the new zone; it does not attach the original zonal disk across zones.
+A mounted durable destination or verified host-pull copy provides independent
+artifact storage. Two paths on the restored boot disk do not provide a backup.
+The snapshot/recreate route follows
+[Google's zone-migration guidance](https://docs.cloud.google.com/compute/docs/instances/moving-instance-across-zones).
+
+After connecting, verify the interpreter, a relevant CUDA operation, frozen
+source/input identities, cached files and independent backup destination. Reuse
+valid preparation and completed fits. Bind job admission to the replacement's
+actual fresh allocation start and deadline, not the source's expired session.
+Use `vm-pycharm-info` to inspect the selected connection; managed SSH changes
+preserve unrelated user entries.
+
+Cleanup requires a successful replacement fit, independent checkpoint replay
+and host-side backup verification tied to that replacement session. Under
+existing cleanup authorization, finalize with its evidence file:
+
+```bash
+~/deepmzyme-vm/bin/vm-fallback --finalize --dry-run --evidence /absolute/path/recovery_evidence.json
+~/deepmzyme-vm/bin/vm-fallback --finalize --evidence /absolute/path/recovery_evidence.json --confirm
+~/deepmzyme-vm/bin/vm-status
+```
+
+Use `~/deepmzyme-vm/README.md`'s "Verify and finalize recovery" evidence contract.
+It binds the pass and immutable replacement/session IDs, UTC completion time,
+completed fit and passed replay artifacts, and the independently verified local
+backup's complete file/hash manifest. Fit/replay artifacts must be inside that
+backup. The controller rehashes bytes; the coordinating operator verifies the
+scientific meaning of those artifacts. A completion claim or an older baseline's
+receipts are insufficient. Finalization stops and confirms the replacement
+before deleting only the recorded superseded VM, old
+disk and temporary snapshot. The working replacement and verified host backup
+remain. Incomplete, mismatched or stale evidence preserves the old resources
+and their ongoing charges. Ordinary session completion remains stop-only.
+Snapshot deletion can retain a billable recycle-bin copy. The controller also
+verifies permanent removal of that exact temporary snapshot and records its
+separate one-hour minimum charge. It preserves unrelated recoverable snapshots
+and does not change project retention settings.
+
+### Fresh allocation in another region
 
 The table below supplies the region mapping for eligible, authorized new
 allocations. Virginia has a separately price-supported configuration.
@@ -235,8 +320,8 @@ On normal completion and exceptions, copy/read back artifacts and run:
 Confirm `TERMINATED` and record provider evidence. Keep Google's hard stop
 active independently of the workstation. A finished worker, closed local
 ledger or ended SSH connection does not stop billing by itself. Do not delete
-the VM/disk automatically; deletion has its own authorization and retention
-decision.
+the selected VM/disk for ordinary closeout. Recovery finalization is a separate,
+authorized, evidence-gated cleanup of superseded resources.
 
 For PyCharm details use `vm-pycharm-info --write-ssh-config`. Select the
 configured remote interpreter, and exclude datasets, embeddings, caches and

@@ -44,6 +44,12 @@ coordinator owns allocation/submission/shutdown; an optional monitor is read-onl
 and never substitutes for stop controls. Do not use retired provisioning or
 automatic replacement scripts as shortcuts.
 
+The GCP limit is one **active** GPU. A positively confirmed stopped source VM
+may coexist temporarily with its replacement through the controller's bounded
+`vm-fallback` recovery. Preserve source data until fit/replay/independent-backup
+verification permits approved cleanup. Follow the skill and provider runbook;
+manual zone changes do not migrate disks or bypass resource-state checks.
+
 ### Python interpreter
 
 Use this Python interpreter unless explicitly instructed otherwise:
