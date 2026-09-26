@@ -9,20 +9,32 @@ DeepMzyme supports rigorous 5-fold cross-validation and benchmarking across **ar
 This orchestrator eliminates manual per-dataset scripting by providing automatic dataset directory resolution, summary CSV discovery, cross-validation fold splitting, model training execution, held-out test evaluation, out-of-fold (OOF) cross-validation aggregation, soft-voting ensemble prediction, and markdown report generation.
 
 Crucially, it supports **both representation granularities** via clean, separate command-line flags:
-1. **Metal Ion-Focused Level** (`--metal-example-unit ion`)
-2. **Clustered Pocket-Centroid Level** (`--metal-example-unit pocket`)
+1. **Ion-centered examples** (`--metal-example-unit ion`)
+2. **Clustered-pocket examples** (`--metal-example-unit pocket`)
 
 ---
 
 ## 2. Representation Granularities: Ion vs. Pocket
 
-| Feature | Metal Ion Focused (`--metal-example-unit ion`) | Pocket Centroid (`--metal-example-unit pocket`) |
+Use [Plan.md's metal example terminology](../Plan.md#metal-example-terminology)
+when interpreting either mode. The table describes the example unit, which is
+separate from the label scheme and validation grouping.
+
+| Feature | Ion-centered (`--metal-example-unit ion`) | Clustered-pocket (`--metal-example-unit pocket`) |
 | :--- | :--- | :--- |
-| **Example Definition** | One training example per individual metal ion coordinate `(chain, resseq, coordinate)` | One training example per clustered pocket centroid (5 Å merge) |
-| **Multinuclear Sites** | Disentangled: e.g. a trinuclear Zn site produces 3 separate examples centered at each ion | Merged: all 3 ions merged into 1 pocket record |
-| **Coordinate Center** | Exact 3D Cartesian coordinates of the metal atom | Geometric centroid of the cluster |
-| **Radius Sphere** | 10 Å sphere around the specific ion center | 10 Å sphere around the pocket centroid |
-| **Target Benchmark** | Nature Communications (2025) PinMyMetal exact ion-level benchmark standard | DeepMzyme classic clustered pocket benchmark |
+| **Example definition** | One example per eligible target ion | One example per eligible parsed metal cluster |
+| **Multinuclear sites** | A retained three-ion cluster produces three examples, with potentially overlapping or identical residue neighborhoods | That cluster produces one record containing all three metal coordinates |
+| **Extraction coordinates** | The target ion's coordinate | All metal coordinates in the cluster |
+| **Residue neighborhood** | Any residue atom within 10 Å of the target ion | Any residue atom within 10 Å of any cluster ion; not a centroid sphere |
+| **Metal target** | One class per ion under the active label scheme | One class per eligible cluster under the active label scheme; not a multi-label target |
+
+Both modes use `PocketRecord` and `pocket_id`. Ion examples additionally retain
+`parent_pocket_id`; `split_by="pocket_id"` groups siblings by that parent,
+whereas `pdbid` groups all examples from a PDB. Inspect the saved
+`metal_example_unit` and split configuration, and report ion-example,
+parent-pocket, and PDB-group counts separately. The source-bound PMM ion
+comparison uses frozen PDB-grouped folds; ion mode alone does not establish
+paper-protocol equivalence.
 
 ---
 
@@ -67,7 +79,7 @@ python scripts/run_metal_5fold_cv.py \
   --metal-example-unit ion \
   --dry-run
 
-# Verify pocket-centroid level:
+# Verify clustered-pocket level:
 python scripts/run_metal_5fold_cv.py \
   --dataset train_and_test_sets_structures_exact_pinmymetal \
   --metal-example-unit pocket \
@@ -93,7 +105,7 @@ python scripts/run_metal_5fold_cv.py \
   --device cuda \
   --seed 42
 
-# Pocket centroid level
+# Clustered-pocket level
 python scripts/run_metal_5fold_cv.py \
   --dataset train_and_test_sets_structures_exact_pinmymetal \
   --metal-example-unit pocket \

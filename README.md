@@ -95,7 +95,17 @@ Full documentation is in [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILIT
 
 ### Generalized 5-Fold Cross-Validation on Any Dataset Split (Ion & Pocket Levels)
 
-DeepMzyme provides a unified orchestrator to run 5-fold cross-validation and benchmarking across any dataset folder split in both **metal ion-focused** (`--metal-example-unit ion`) and **pocket-centroid** (`--metal-example-unit pocket`) modes:
+DeepMzyme provides a unified orchestrator to run 5-fold cross-validation and
+benchmarking across dataset folder splits in both **ion-centered**
+(`--metal-example-unit ion`) and **clustered-pocket**
+(`--metal-example-unit pocket`) modes. A clustered pocket can contain several
+ions; ion mode creates a separate example for each retained target ion and its
+10 Å residue neighborhood. Both modes reuse `PocketRecord` and `pocket_id`, so
+check the saved example unit before interpreting counts or predictions. See
+[metal example terminology](Plan.md#metal-example-terminology) for record IDs,
+parent pockets, and validation groups.
+
+Example commands:
 
 ```bash
 # Validate paths, site counts, and planned fold commands instantly without training:
