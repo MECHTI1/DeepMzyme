@@ -128,7 +128,11 @@ completed fit and passed replay artifacts, and the independently verified local
 backup's complete file/hash manifest. Fit/replay artifacts must be inside that
 backup. The controller rehashes bytes; the coordinating operator verifies the
 scientific meaning of those artifacts. A completion claim or an older baseline's
-receipts are insufficient. Finalization stops and confirms the replacement
+receipts are insufficient. A later explicitly authorized start on the same
+immutable replacement may supply the verification: use that actual controller
+ledger session ID and a completion time within its deadline and recorded stop.
+Do not rewrite the original fallback session to match newer work.
+Finalization stops and confirms the replacement
 before deleting only the recorded superseded VM, old
 disk and temporary snapshot. The working replacement and verified host backup
 remain. Incomplete, mismatched or stale evidence preserves the old resources

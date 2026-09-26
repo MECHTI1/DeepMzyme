@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-26T03:52:26.901425+00:00",
+  "status": "recovery_verified_fit_admission_refused_replacement_stopped",
+  "authorization": "User approved execution of bounded same-region recovery and the existing one-hour single-fold screen; no larger training grid authorized.",
+  "controller_implementation_commit": "be35c99",
+  "project_gpu_documentation_commit": "e884ede",
+  "initial_offline_tests": {
+    "passed": 63,
+    "seconds": 137.451,
+    "log_sha256": "66f519ea171aad6977f7f3f4be53a3710ba75874a0539d6026283bb295c1d1d8"
+  },
+  "recovery": {
+    "pass_id": "e9ff994df82d",
+    "source": {
+      "instance_id": "2686771147845621433",
+      "project": "deepmzyme-gpu-vm",
+      "vm_name": "deepmzyme-l4",
+      "zone": "us-central1-a"
+    },
+    "replacement": {
+      "instance_id": "3144565200755786222",
+      "project": "deepmzyme-gpu-vm",
+      "vm_name": "deepmzyme-l4",
+      "zone": "us-central1-c"
+    },
+    "candidates": [
+      "us-central1-c",
+      "us-central1-b"
+    ],
+    "session_id": "session-20260926T034202Z-b30eac96",
+    "session_start": "2026-09-26T03:42:02Z",
+    "termination_ts": "2026-09-26T04:38:55Z",
+    "requested_hours": 1.0,
+    "limit": {
+      "allowed": true,
+      "binding_limit": "requested",
+      "bounds_minutes": {
+        "MAX_SESSION_ESTIMATED_COST_USD": 336.41,
+        "MAX_SESSION_HOURS": 240.0,
+        "remaining daily cost": 409.71,
+        "remaining daily hours": 293.17,
+        "requested": 60.0
+      },
+      "effective_minutes": 57,
+      "effective_seconds": 3420,
+      "max_session_cost_usd": 0.884,
+      "max_session_cost_with_margin_usd": 1.0166,
+      "refusal": null,
+      "stop_overhead_minutes": 3.0
+    }
+  },
+  "destination_attempt_count": 1,
+  "snapshot": {
+    "name": "deepmzyme-fallback-e9ff994df82d",
+    "id": "3087872731960213671",
+    "sourceDiskId": "7799988799598712505",
+    "storageBytes": "27615451776",
+    "status": "READY"
+  },
+  "restored_disk": {
+    "name": "deepmzyme-l4-recovery-e9ff994df82d",
+    "id": "1500574169364594722",
+    "sourceSnapshotId": "3087872731960213671",
+    "sizeGb": "150",
+    "status": "READY"
+  },
+  "preflight": {
+    "device": "NVIDIA L4",
+    "real_cuda_matrix_operation": "passed",
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "frozen_input_verification": "passed in existing campaign runner before admission",
+    "baseline_host_acknowledgment": "accepted by runner"
+  },
+  "new_run": "only_esm__four_class__first_shell_bias__fold0__seed42",
+  "new_fit_started": false,
+  "admission": {
+    "at_utc": "2026-09-26T03:47:25Z",
+    "forecast_seconds": 1800,
+    "forecast_multiplier": 1.25,
+    "closeout_reserve_seconds": 900,
+    "required_seconds": 3150,
+    "remaining_seconds_rounded": 3090,
+    "deficit_seconds_rounded": 60,
+    "result": "refused"
+  },
+  "closeout": {
+    "session_stop": "2026-09-26T03:49:13Z",
+    "ts": "2026-09-26T03:49:17Z",
+    "vm_state": "TERMINATED",
+    "elapsed_running_s": 432,
+    "estimated_gross_cost_usd": 0.1054
+  },
+  "retained_resources": {
+    "source_vm_and_disk": true,
+    "temporary_snapshot": true,
+    "replacement_vm_and_disk": true,
+    "cleanup_gate": "not passed; no completed replacement fit/replay/host backup",
+    "conservative_storage_usd_per_month": 37.5,
+    "source_of_storage_estimate": "controller report 2026-09-26T03:50:00Z; full 150-GB snapshot reservation despite 25.7 GiB actual stored"
+  },
+  "pending_budget_choice": {
+    "requested_total_screen_hours": 1.5,
+    "includes_recovery_elapsed_seconds": 432,
+    "additional_gross_cost_ceiling_approximate_usd": 0.5,
+    "approval_received": false,
+    "automatic_restart_authorized": false
+  },
+  "held_out_access": false,
+  "completed_neural_grid_fits": 1,
+  "remaining_neural_grid_fits": 44,
+  "larger_30_hour_budget_approved": false,
+  "next_action": "Await user stop/continue ceiling decision. If approved, explicitly start the same immutable replacement within remaining total screen budget, verify actual runtime, run only missing fit, replay and verified host backup; then gated cleanup and exploratory pair report.",
+  "continuation_offline_tests": {
+    "passed": 31,
+    "new_cases": 9,
+    "seconds": 80.752,
+    "log_sha256": "f35d582175b3b72ebc1ca03f14b9908ea095f4e1563c1107df770baa4a27780c"
+  }
+}

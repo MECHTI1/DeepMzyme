@@ -36,6 +36,7 @@ and proposed continuation budget were added after 01:00 UTC.
 | [`runtime/remaining_budget_forecast.json`](runtime/remaining_budget_forecast.json) | Measured costs, explicit forecast assumptions and proposed unapproved 30-hour / $34 gross continuation cap |
 | [`runtime/session_closeout.json`](runtime/session_closeout.json) | Controller-confirmed stopped state and session accounting; no new allocation |
 | [`runtime/esm_binding_screen_execution.json`](runtime/esm_binding_screen_execution.json) | Approved one-fit ESMC screen; three authorized starts rejected for L4 capacity, latest alternate-zone hint and local controller limitation recorded; no new fit |
+| [`runtime/gpu_fallback_execution.json`](runtime/gpu_fallback_execution.json), [`runtime/fallback_admission_state.json`](runtime/fallback_admission_state.json), [`runtime/esm_binding_screen_run.log`](runtime/esm_binding_screen_run.log) | Successful stopped-source snapshot recovery to `us-central1-c`; unchanged inputs/source and real CUDA verified; single fit refused by remaining-time admission; replacement stopped, recovery storage retained |
 
 The campaign manifest records the cohort-creation source snapshot. The GPU
 receipt records the later frozen execution source

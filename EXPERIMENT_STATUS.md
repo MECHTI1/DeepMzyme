@@ -7,7 +7,7 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-26.
 
-**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — single-fold ESMC pair approved; VM capacity blocks its new fit:**
+**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — GPU recovery verified; single-fold ESMC fit awaits a budget decision:**
 - Executes [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md);
   exact recipe in the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context).
   Supersedes the five-class Zenodo wrapper for this comparison (direct four vs six, late fusion, PDB-grouped folds, no test access).
@@ -47,22 +47,26 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   fold 0, seed 42, with the same 50-epoch recipe. One bounded one-hour VM session
   is authorized for that screen; the broader grid is deferred. The **30 total
   VM hours / $34 gross** proposal remains unapproved and is not needed for this
-  stage. One-hour start attempts at **01:27 and 02:11 UTC** both failed with an
-  L4 stockout in `us-central1-a`. After another explicit resume request, the
-  **02:52 UTC** start also failed; this time Google suggested `us-central1-c`.
-  Cloud status at **02:53:12 UTC** confirmed **TERMINATED**. No new
-  fit or running compute/GPU session was created. Baseline completion, replay
-  and frozen source were reverified; the binding-aware run directory is absent.
-  The same-VM retry has been consumed. Offline reproduction confirms that the
-  **local controller**, not Google, rejects creating another managed VM even
-  while the existing one is stopped. Its cost accounting also assumes one boot
-  disk. A controlled zone fallback preserving the disk and one-running-GPU rule
-  has been proposed; the required controller/zone decision is pending. Colab
-  authentication works and no sessions are active, but the installed CLI does
-  not expose CU balance/rate and browser access was unavailable; no Colab GPU
-  was allocated. The
-  [screen execution receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
-  records this boundary. The earlier full-grid forecast is about 22.3 additional VM hours before
+  stage. Three starts in `us-central1-a` failed for capacity; the
+  [historical screen receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
+  preserves those attempts. The approved controller fix now permits a verified
+  stopped source alongside one active replacement, accounts for overlapping
+  storage, and preserves data through snapshot/restore. Its bounded fallback
+  succeeded on the first destination, `us-central1-c`, at **03:42:02 UTC**.
+  The restored NVIDIA L4 passed real CUDA execution and the unchanged scientific
+  source hash; the runner verified frozen inputs and accepted the earlier
+  baseline's host acknowledgment. No embeddings, smokes or completed fits were
+  repeated. The new fit was refused at **03:47:25 UTC**: its unchanged forecast,
+  25% margin and closeout reserve required **3,150 seconds**, with **3,090** left.
+  **No new training fit started.** The replacement was stopped at **03:49:13 UTC**
+  (about **7m12s / $0.11 estimated running gross**); cloud state is **TERMINATED**.
+  The source VM/disk, temporary snapshot and stopped replacement disk are retained
+  pending a completed replacement fit, replay and independent backup. Their
+  storage continues billing. A **1.5-hour total screen allocation ceiling**, including
+  the recovery session, has been requested but is **not approved**. No automatic
+  restart is authorized. See the
+  [recovery receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/gpu_fallback_execution.json).
+  The earlier full-grid forecast is about 22.3 additional VM hours before
   contingency, not the budget of the immediate screen. See the
   [forecast receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/remaining_budget_forecast.json)
   for assumptions and the unmeasured reference-report cost.
