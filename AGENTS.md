@@ -127,10 +127,20 @@ Default experiment-planning posture:
   Distinguish observed, curated, computationally transferred AlphaFill/MAHOMES,
   and model-predicted metal; never call transferred assignments perfect ground
   truth.
-- Metal labels are site/pocket-level; EC labels are protein/structure-level.
+- Metal labels are per clustered pocket or per ion according to
+  `metal_example_unit`; EC labels are protein/structure-level.
   Preserve protein/structure grouping and EC group weighting. If any protein is
   held out for either task, exclude it from every shared-encoder training loss,
   including labels from the other task.
+- Before describing sample counts, predictions, or multinuclear handling,
+  verify `metal_example_unit` in the actual run configuration and follow
+  [Plan.md's metal example terminology](Plan.md#metal-example-terminology).
+  Never infer the prediction unit from `PocketRecord`, `pocket_id`, or the
+  word "pocket." Distinguish the record/example ID, `parent_pocket_id`, and
+  validation group; `split_by="pocket_id"` uses the parent when present.
+  Report ion examples, parent pockets, and PDB groups separately. Preserve
+  historical runs' recorded units; an ion campaign does not change the
+  repository-wide default or make EC supervision per ion.
 - Any metal x EC1 association analysis is development-data-only and descriptive.
   Plan counts, conditional probabilities, Cramer's V, appropriate chi-square,
   mutual information, and normalized mutual information without using held-out

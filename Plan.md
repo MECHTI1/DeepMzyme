@@ -152,16 +152,9 @@ labeled alternative experiments and for preserving historical evidence. It
 keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
 name and Optuna study whenever the target scheme changes.
 
-Metal training also has an optional **example unit**. The default `pocket`
-unit preserves historical clustered-pocket labels. The `ion` unit makes one
-separately centered graph and one target per metal ion, including distinct
-Fe and Mn examples from a mixed cluster. Both examples retain the original
-parent pocket as their `pocket_id` split group, so ions from one cluster
-cannot cross train/validation folds. This option currently applies only to
-standalone metal training. Its changed cohort and graph geometry require fresh
-matched controls; historical pocket-unit scores are context, not paired
-ion-unit comparison results. Held-out-test rules and primary target policy are
-unchanged.
+Metal training also has an optional **example unit**: `pocket` (the default)
+or `ion`. The [metal example terminology](#metal-example-terminology) below
+defines both modes and distinguishes example identity from split grouping.
 
 The bounded architecture pilot includes that five-class scheme as an additional
 matched challenger across the same three core families. For this pilot every
@@ -201,6 +194,47 @@ five-class recipe as a direct four-class run.
 For the staged training pipeline (smoke, baseline, HPO, grouped-fold
 confirmation, final test) with copy-paste notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+### Metal example terminology
+
+These definitions apply throughout the project. The word **pocket** alone does
+not identify the prediction unit; check `metal_example_unit` in the saved
+`run_config.json` / `run_metadata.json` and the loader used by that run.
+
+| Term | Meaning |
+|---|---|
+| Clustered pocket / parent pocket | A residue neighborhood associated with a parsed cluster of one or more metal ions. It may represent a multinuclear binding site. |
+| Pocket-level example (`metal_example_unit="pocket"`) | One graph and one metal-class target per eligible clustered pocket. Multiple metal atoms do not make the target multi-label; eligibility and class assignment follow the active label scheme. |
+| Ion-centered example (`metal_example_unit="ion"`) | One target ion, its coordinate, and its own residue neighborhood. A retained three-ion site contributes three examples, even when their neighborhoods overlap or are identical. The physical site can still be multinuclear. |
+| `PocketRecord` / record `pocket_id` | The existing container and example identifier, reused in both modes. Ordinary ion loading appends `__ION_<index>`; source-cohort loading uses `<structure_stem>__SRC_<source_row>`. Neither the field name nor an assumed suffix establishes the example unit. |
+| `parent_pocket_id` | Metadata identifying the original clustered pocket for an ion example. Sibling examples share this parent identity. |
+| Validation group | The identity used to assign examples to folds, separately from the record ID. `split_by="pocket_id"` resolves to `parent_pocket_id` when present; `pdbid` groups all sites/ions from a PDB together. Frozen campaign groups may additionally bind exact aliases. |
+
+The implemented default extraction radius is **10 Å**, measured from any
+residue atom to the target ion in ion mode, or to any ion in the cluster in
+pocket mode. Clustered-pocket extraction is not a sphere around a centroid.
+Metal clustering and residue extraction are separate operations; the current
+default cluster merge distance is 4.5 Å. First-shell assignment and classifier
+pooling are separate controls and do not redefine the example unit.
+
+Only-ESM also uses the extracted residue neighborhood: selecting residues
+around a known ion supplies site context even with
+`binding_residue_pooling="none"`. The separate `first_shell_bias` option adds
+explicit target-shell conditioning to readout. An ion-centered example does
+not by itself imply that the model consumes coordinates or explicit metal
+nodes; check its architecture and feature configuration.
+
+Ion mode currently applies only to standalone metal training. Keep sibling
+ions in one validation group; the PMM ion comparison requires the stricter
+PDB-grouped frozen folds. Report **ion examples**, **parent pockets**, and
+**PDB groups** as distinct counts. Preserve the recorded unit for historical
+runs, and use fresh matched controls when changing units. Ion mode does not
+replace the repository's default pocket mode or change held-out-test policy.
+
+Implementation references: [`metal_examples.py`](src/training/metal_examples.py),
+[`source_cohort.py`](src/training/source_cohort.py),
+[`structure_parsing.py`](src/graph/structure_parsing.py), and
+[`splits.py`](src/training/splits.py).
 
 ### Canonical Colab metal-training pipeline
 
@@ -575,7 +609,8 @@ one of:
 Computationally transferred assignments must not be called perfect ground
 truth. Results from these provenance categories must remain separately labeled.
 
-Metal supervision is naturally site/pocket-level, whereas EC supervision is
+Metal supervision is per clustered pocket or per ion according to the
+[example unit](#metal-example-terminology), whereas EC supervision is
 protein/structure-level. Multiple pockets from one protein are repeated views
 of one EC annotation, not independent EC labels. Preserve structure/protein
 grouping, `pdbid` split protection where applicable, and EC group weighting
@@ -663,9 +698,9 @@ can reproduce a command-line run.
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. The raw CLI default is an implementation default, not scientific preference for joint training. | Expose |
 | Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the required challenger uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
-| Data policy | `--metal-example-unit` | `pocket`; choices `pocket`, `ion` | For standalone metal training, use one clustered-pocket label or one example and target per matched metal ion. Ion examples keep the parent pocket as their fold group and use their own metal coordinate and 10 Å residue neighborhood. | Expose for metal diagnostics |
+| Data policy | `--metal-example-unit` | `pocket`; choices `pocket`, `ion` | For standalone metal training, use one clustered-pocket label or one example and target per matched metal ion. Ion examples use their own coordinate and 10 Å residue neighborhood; the configured split policy groups siblings by parent pocket or a broader group. See [terminology](#metal-example-terminology). | Expose for metal diagnostics |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
-| Training | `--batch-size` | `8` | Number of pocket graphs per mini-batch. | Expose / sweep |
+| Training | `--batch-size` | `8` | Number of example graphs per mini-batch: clustered pockets or ion-centered examples, according to `--metal-example-unit`. | Expose / sweep |
 | Training | `--learning-rate` | `3e-4` | Optimizer step size. Previous serious baselines often start at `3e-5`. | Expose / sweep |
 | Training | `--grad-clip-norm` | `1.0` | Gradient clipping max norm. Values `<= 0` disable clipping. | Advanced |
 | Training | `--amp` | false | Optional CUDA automatic mixed precision for training only; evaluation stays FP32. | Advanced |

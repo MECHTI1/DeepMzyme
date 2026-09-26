@@ -52,6 +52,11 @@ Then answer these questions in order:
 5. Are there known execution problems? Read
    [`FOLLOW_UP_TECHNICAL_ISSUES.md`](FOLLOW_UP_TECHNICAL_ISSUES.md).
 
+For metal runs, also check the saved `metal_example_unit` before interpreting
+sample counts: `PocketRecord` and `pocket_id` are used for both clustered
+pockets and ion-centered examples. See
+[metal example terminology](../Plan.md#metal-example-terminology).
+
 ## Local environment contracts
 
 For a fresh Linux x86_64 development and CPU-test environment, follow

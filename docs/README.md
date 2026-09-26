@@ -20,6 +20,8 @@ documents when a link is sufficient.
    index and links to summaries/configs/raw evidence.
 
 Scientific policy is in [`Plan.md`](../Plan.md).
+Its [metal example terminology](../Plan.md#metal-example-terminology) defines
+clustered pockets, ion-centered examples, record IDs, and validation groups.
 
 ## Task plans and reviews
 

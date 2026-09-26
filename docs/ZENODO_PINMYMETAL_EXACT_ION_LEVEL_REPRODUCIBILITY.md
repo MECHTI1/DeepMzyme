@@ -4,7 +4,7 @@
 
 The **PinMyMetal (PMM)** benchmark is the primary published standard for predicting catalytic metal ion binding sites (Manganese, Zinc, Copper, and Class VIII transition metals) in enzyme structures.
 
-Historically, earlier dataset extractions merged nearby metal ions within proximity into single pocket clusters. However, **PinMyMetal and the official Zenodo `classmodel_train_set` / `classmodel_test_set` supervise each individual metal ion center (`(chain, resseq)`) separately**. In multi-nuclear sites (e.g. trinuclear zinc centers in alkaline phosphatase `1a0e`), each ion has its own distinct chemical microenvironment and coordinates.
+Historically, earlier dataset extractions merged nearby metal ions within proximity into single pocket clusters. However, **PinMyMetal and the official Zenodo `classmodel_train_set` / `classmodel_test_set` supervise each individual metal ion center (`(chain, resseq)`) separately**. In multinuclear sites (e.g. trinuclear zinc centers in alkaline phosphatase `1a0e`), each target has its own coordinate; the selected residue neighborhoods can overlap or be identical.
 
 This document serves as the complete, authoritative guide to:
 1. Replicating the exact Zenodo PinMyMetal dataset (99.89% exact reconstruction).
@@ -87,15 +87,27 @@ train_and_test_sets_structures_zenodo_pmm_exact/
 ## 4. The Metal Ion-Level Representation Contract
 
 ### Pocket vs. Ion Representation
-- **Pocket-Level (`--metal-example-unit pocket`):** Merges all metal ions within 5 Å into a single centroid pocket with a merged multi-label representation.
+
+Canonical definitions and identifier semantics are in
+[Plan.md's metal example terminology](../Plan.md#metal-example-terminology).
+
+- **Pocket-Level (`--metal-example-unit pocket`):** Creates one example per eligible metal cluster, retaining its metal coordinates and one target class under the active label scheme. Residues are selected within 10 Å of any cluster ion, not from a centroid sphere. This is not a multi-label target.
 - **Ion-Level (`--metal-example-unit ion`):** **MANDATORY FOR THIS BENCHMARK.**
-  - Every individual metal ion with valid coordinates forms an independent example.
+  - Every retained target ion forms a separate example; sibling examples remain correlated and must stay in the same validation group.
   - In multinuclear sites (e.g., trinuclear zinc site in `1a0e`), three distinct `PocketRecord` examples are created:
     - Center 1: `(A, 501)` -> Zn
     - Center 2: `(A, 502)` -> Zn
     - Center 3: `(A, 503)` -> Zn
-  - Each ion example extracts a surrounding 10 Å residue sphere centered at the ion's exact 3D Cartesian coordinate $(x, y, z)$.
-  - This strictly matches PinMyMetal's evaluation setup where prediction accuracy is evaluated per metal ion coordinate.
+  - Each ion example includes residues with any atom within 10 Å of that ion's exact 3D Cartesian coordinate $(x, y, z)$.
+  - The prediction unit is the individual ion. This alone does not certify the same cohort, inputs, folds, or metrics as the published benchmark.
+
+`PocketRecord` and record `pocket_id` are reused for both modes. Ion examples
+retain `parent_pocket_id` for their original cluster; the record ID identifies
+the individual example. Inspect `metal_example_unit` in the saved run
+configuration and distinguish ion-example counts from parent-pocket and PDB
+counts. With `split_by="pocket_id"`, siblings share their parent's fold;
+the source-bound PMM ion comparison requires the stricter frozen PDB-grouped
+folds. Historical pocket-unit results retain their original meaning.
 
 ---
 

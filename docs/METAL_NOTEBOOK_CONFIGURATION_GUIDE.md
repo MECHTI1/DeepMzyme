@@ -1043,6 +1043,14 @@ Optuna study identity and rerun its matched controls. The notebook records the
 unit in each run configuration and blocks reuse of a persistent Optuna study
 whose unit differs. EC and joint tasks currently require `"pocket"`.
 
+Both modes reuse `PocketRecord` and record `pocket_id`; these names do not
+establish the prediction unit. In ion mode, distinguish the example ID from
+`parent_pocket_id` and the configured validation group. Count samples as ion
+examples, parent pockets, or PDB groups explicitly. The 10 Å residue
+neighborhood is measured around each target ion; it can overlap a sibling's
+neighborhood. See the canonical
+[metal example terminology](../Plan.md#metal-example-terminology).
+
 `FINAL_TEST_BATCH_METRICS` controls only which metric columns are emphasized in
 batch final-test summaries and plots. It does not change which metrics are
 computed or saved in `test_report.json`.
