@@ -31,7 +31,7 @@
     }
   ],
   "completed_new_units": [],
-  "current_unit": "only_gvp__six_class__none__fold0__seed42",
+  "current_unit": "gvp_late_fusion__six_class__none__fold0__seed42",
   "held_out_access": false,
   "full_grid_budget_proposal_activated": false,
   "controller_caps_changed": false,
@@ -47,8 +47,8 @@
     "vm_name": "deepmzyme-l4",
     "zone": "us-central1-c"
   },
-  "updated_at_utc": "2026-09-27T18:14:08.549084+00:00",
-  "exec_session_id": 78448,
+  "updated_at_utc": "2026-09-27T19:12:15.638996+00:00",
+  "exec_session_id": 90050,
   "runtime_preflight": {
     "source_hash_matches": true,
     "gpu": "NVIDIA L4",
@@ -56,5 +56,44 @@
     "cuda": "12.8",
     "cuda_matmul": "passed",
     "remote_free_gib": 100.6285
-  }
+  },
+  "replay_recovery": {
+    "unit": "only_gvp__six_class__none__fold0__seed42",
+    "initial_status": "failed_independent_replay",
+    "initial_fit_and_replay_seconds": 2830,
+    "failed_manifest": "1392007cd0954537862455f252297e4d",
+    "failed_backup_files": 70,
+    "preserved_backup_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/fold0_completion_20260927/failed_replay_attempt1_backup",
+    "probability_tolerance": 1e-06,
+    "max_observed_abs_probability_difference": 3.51e-06,
+    "non_probability_mismatches": 0,
+    "above_tolerance_values": 24,
+    "unchanged_replay_retries_authorized": 1,
+    "retry_forecast_seconds": 900,
+    "training_repeated": false,
+    "source_or_tolerance_changed": false,
+    "retry_status": "failed_independent_replay_after_one_unchanged_retry",
+    "retry_backup_manifest": "f76be57729b14af4ac3380f919a78cbb",
+    "retry_backup_ack": {
+      "file_count": 72,
+      "manifest_sha256": "428f0df3c0488868ce53d86a9819993f6ea8ee1e79b2e45220d3643b7cd770a8",
+      "schema_version": 1,
+      "verified_by": "mechti-pc",
+      "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+      "verified_unix": 1790536267.6169927
+    },
+    "retry_elapsed_seconds": 232,
+    "retry_max_abs_probability_difference": 2.19999999995224e-06,
+    "retry_above_tolerance_values": 28,
+    "retry_non_probability_mismatches": 0,
+    "certified": false
+  },
+  "failed_units": [
+    {
+      "run_name": "only_gvp__six_class__none__fold0__seed42",
+      "status": "trained_but_independent_replay_failed",
+      "backup_manifest": "f76be57729b14af4ac3380f919a78cbb",
+      "checkpoint_sha256": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0"
+    }
+  ]
 }

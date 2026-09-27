@@ -1,0 +1,88 @@
+{
+  "status": "failed_independent_replay_after_one_unchanged_retry",
+  "rows": 1492,
+  "probability_tolerance": 1e-06,
+  "probabilities_above_tolerance": 28,
+  "maximum_difference": [
+    2.19999999995224e-06,
+    "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2917",
+    "p_common4_Class_VIII",
+    "0.61669344",
+    "0.61669564"
+  ],
+  "non_probability_mismatches": [],
+  "largest_differences": [
+    [
+      2.19999999995224e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2917",
+      "p_common4_Class_VIII",
+      "0.61669344",
+      "0.61669564"
+    ],
+    [
+      2.149999999978558e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2917",
+      "p_native_Zn",
+      "0.37720117",
+      "0.37719902"
+    ],
+    [
+      2.149999999978558e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2917",
+      "p_common4_Zn",
+      "0.37720117",
+      "0.37719902"
+    ],
+    [
+      2.080000000015403e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_native_Cu",
+      "0.62355912",
+      "0.62356120"
+    ],
+    [
+      2.080000000015403e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_common4_Cu",
+      "0.62355912",
+      "0.62356120"
+    ],
+    [
+      2.0299999999862095e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_common4_Class_VIII",
+      "0.36429653",
+      "0.36429450"
+    ],
+    [
+      1.8800000000096517e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_native_Fe",
+      "0.28304753",
+      "0.28304565"
+    ],
+    [
+      1.7299999999775828e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:2917",
+      "p_native_Co",
+      "0.36393130",
+      "0.36393303"
+    ],
+    [
+      1.4600000000086766e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:3585",
+      "p_native_Ni",
+      "0.44909149",
+      "0.44909295"
+    ],
+    [
+      1.4600000000086766e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:3585",
+      "p_common4_Class_VIII",
+      "0.48316821",
+      "0.48316967"
+    ]
+  ],
+  "training_repeated": false,
+  "source_or_tolerance_changed": false
+}

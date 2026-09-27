@@ -7,7 +7,7 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
 
-**2026-09-27 18:12 UTC — final two fold-0 screen fits resumed:**
+**2026-09-27 19:14 UTC — final fold-0 fit running; GVP six-class replay blocked:**
 - User requested "so please continue" after clarification of the targets and
   two remaining configurations. Continue those two six-class fits on the
   existing L4 in one bounded 2.5-hour session. The separate 30-hour/$34 full-grid
@@ -17,12 +17,18 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   automatic STOP: **20:38:52 UTC / 23:38:52 Israel**, 8,820 seconds maximum.
   Estimated session maximum **$2.15 gross**, **$2.48 with margin**. Existing
   4h/$6 session and 6h/$10 daily caps are unchanged.
-- Seven completed units and the frozen scientific source reverified; CUDA
-  preflight passed on PyTorch 2.11.0+cu128. Current submitted unit:
-  `only_gvp__six_class__none__fold0__seed42`, forecast 3,600 seconds. Next:
-  `gvp_late_fusion__six_class__none__fold0__seed42`, warm forecast 2,000 seconds.
-  Preserve 50 epochs, seed 42, native selection, shared frozen fold, independent
-  replay and 71-file host verification. No completed fits or preparation repeat.
+- Seven prior units remain certified. Six-class Only-GVP completed all 50
+  epochs, but independent replay failed its absolute `1e-6` probability check
+  twice, including one replay-only retry. All 1,492 class predictions and
+  metadata fields match; maximum probability differences were `3.51e-6` and
+  `2.20e-6`. Both failed terminal backups were verified and acknowledged.
+  No retraining, source edit or tolerance relaxation occurred. This result is
+  **trained but uncertified**, excluded from comparisons; see
+  [TECH-023](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
+- Current submitted unit: `gvp_late_fusion__six_class__none__fold0__seed42`,
+  forecast 2,000 seconds; graph-cache reuse confirmed. Preserve 50 epochs,
+  seed 42, native selection, frozen fold, independent replay and host verification.
+  Stop and confirm the VM after terminal persistence; no further GVP retry.
 - Current allocation record:
   [completion execution](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_execution.json).
   Canonical handoff: campaign `runtime/RESUME_STATE.md`; root alone owns
