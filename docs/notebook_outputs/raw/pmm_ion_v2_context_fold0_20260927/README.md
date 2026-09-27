@@ -10,6 +10,9 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
   selected immutable VM, allocation identity/deadline, unchanged controller
   caps and operational fixes. Historical receipt; current state is owned by
   [EXPERIMENT_STATUS.md](../../../../EXPERIMENT_STATUS.md).
+- [Screen-completion execution](runtime/completion_execution.json): the later
+  user-authorized session for the two remaining six-class fold-0 configurations.
+  It preserves the earlier allocation and closeout records separately.
 - [Verified closeout](runtime/verified_closeout.json): seven completed screen
   configurations, five new verified backups, provider-confirmed TERMINATED
   state, actual session accounting, and the pending budget/start decision.
