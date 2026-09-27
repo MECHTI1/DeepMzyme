@@ -1,6 +1,6 @@
 # Final execution plan: metal-level prediction and PMM comparison
 
-**Status:** original design reviewed 2026-09-25; execution order amended by the user on 2026-09-26. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
+**Status:** original design reviewed 2026-09-25; execution order amended on 2026-09-26 and continued by the user on 2026-09-27. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
 **Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
 
 ## Immediate execution amendment — ESMC pair first
@@ -30,6 +30,23 @@ it does not claim the full comparison matrix is complete.
 - Keep reference/test inputs closed. The final-refit and reporting gates remain
   intact. One coordinator executes this single-fit stage; additional agents are
   unnecessary. Exact commands and outputs belong in the metal playbook.
+
+### Continuation — complete the nine-configuration fold-0 screen
+
+The user's 2026-09-27 instruction to continue this plan advances to the later
+screen described above. Reuse the completed ESMC pair and run the seven missing
+configurations on the same frozen fold and seed. Keep the binding-residue
+mechanism, feature contract and training recipe fixed. Include all three
+families' awareness variants; the ESMC null result does not remove another arm.
+
+Use the existing session and daily controller limits, with measured admission
+and verified host backup between individual fits. This continuation does not
+activate the separate proposed 30-hour/$34 envelope. If the remaining work
+exceeds the current allocation, follow the repository budget-decision rule
+before another allocation. The exact queue and commands belong in the
+[metal playbook](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#nine-configuration-fold-0-screen-continuation).
+Screening supplies exploratory comparisons only. The full 45-fit completion
+criteria and later refit/test gates below remain unchanged.
 
 The source proposals were read completely during the review and are preserved
 in Git at the reviewed revision:

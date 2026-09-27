@@ -7,6 +7,34 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
 
+**2026-09-27 PMM fold-0 screen continuation — in progress:**
+- User requested continuation of the same [final plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
+  after the completed ESMC pair. The next phase completes the nine-configuration
+  fold-0 screen with seven missing fits; the full 45-fit completion requirement
+  remains unchanged. Exact selectors and safeguards are in the
+  [playbook continuation](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#nine-configuration-fold-0-screen-continuation).
+- The existing L4 VM `deepmzyme-l4@us-central1-c`, immutable instance
+  `3144565200755786222`, started at **2026-09-27 14:32:39 UTC** under session
+  `session-20260927T143239Z-d9c4d944`. Verified provider automatic STOP:
+  **18:29:32 UTC / 21:29 Israel time**. Existing four-hour/$6 session and
+  six-hour/$10 daily caps are unchanged; estimated session maximum is $3.47
+  ($3.99 with the controller's margin). The separate 30-hour/$34 proposal
+  has not been activated. Per-unit admission retains 1.25 margin and 900-second reserve.
+- Local and VM scientific source still match
+  `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`;
+  CUDA preflight passed on PyTorch 2.11.0+cu128. Existing pair checkpoints
+  reverified; no completed fits, embeddings, smokes or PMM folds are repeated.
+- First submitted unit: `only_gvp__four_class__none__fold0__seed42`, 50 epochs,
+  conservative 3,600-second complete-unit forecast. Run one exact missing unit
+  at a time, use a unique status tag, replay independently, then verify host
+  backup and return its acknowledgment before the next submission. Local
+  evidence: canonical campaign `runtime/fold0_screen_20260927/`.
+- Operational launcher now validates the active session and immutable selected
+  VM without requiring an unfinished recovery. One read-only agent monitors
+  the first GVP fit; the coordinator alone allocates, submits and stops.
+  This entry records execution, not a new completed result or model promotion.
+  No refit or held-out access is part of the screen.
+
 **2026-09-27 PMM ion-level campaign (`pmm_ion_metal_v2_context`) — exploratory ESMC pair and GPU recovery closeout complete:**
 - Executes the [metal-level PMM plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
   and its [ESMC-pair amendment](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#immediate-exploratory-screen-only-esm-binding-awareness-pair).

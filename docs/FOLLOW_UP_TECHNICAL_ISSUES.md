@@ -946,3 +946,9 @@ A future persistence change should snapshot aggregate status under the transfer
 ID before hashing, rather than require an old mutable file to remain current.
 Do not overwrite historical manifests or acknowledgments to conceal the mismatch.
 The frozen scientific source was retained for the completed screen.
+
+The subsequent fold-0 continuation uses the existing `--status-tag` option with
+one unique unit identity per invocation. This prevents new fits from replacing
+each other's status artifacts without changing frozen source. It is an
+operational mitigation, not a repair of the historical manifest or the general
+runner's default behavior.

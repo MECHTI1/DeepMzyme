@@ -1,0 +1,315 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-27T14:39:01.341844+00:00",
+  "status": "partial_single_fold_screen",
+  "fold": 0,
+  "model_seed": 42,
+  "epochs": 50,
+  "held_out_access": false,
+  "completed_configurations": 2,
+  "required_configurations": 9,
+  "missing_configurations": [
+    "only_esm__six_class__none",
+    "only_gvp__four_class__none",
+    "only_gvp__six_class__none",
+    "gvp_late_fusion__four_class__none",
+    "gvp_late_fusion__six_class__none",
+    "only_gvp__four_class__first_shell_bias",
+    "gvp_late_fusion__four_class__first_shell_bias"
+  ],
+  "arms": {
+    "only_esm__four_class__none": {
+      "run_name": "only_esm__four_class__none__fold0__seed42",
+      "metrics": {
+        "common4": {
+          "balanced_accuracy": 0.8839448044126841,
+          "accuracy": 0.8471849865951743,
+          "macro_f1": 0.8429511712849523,
+          "min_recall": 0.8127340823970037,
+          "recall": {
+            "Mn": 0.8536585365853658,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.8950276243093923,
+            "Class VIII": 0.8127340823970037
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              630,
+              0,
+              72,
+              36
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              7,
+              3,
+              162,
+              9
+            ],
+            [
+              32,
+              0,
+              68,
+              434
+            ]
+          ]
+        },
+        "n": 1492,
+        "native": {
+          "balanced_accuracy": 0.8839448044126841,
+          "accuracy": 0.8471849865951743,
+          "macro_f1": 0.8429511712849523,
+          "min_recall": 0.8127340823970037,
+          "recall": {
+            "Mn": 0.8536585365853658,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.8950276243093923,
+            "Class VIII": 0.8127340823970037
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              630,
+              0,
+              72,
+              36
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              7,
+              3,
+              162,
+              9
+            ],
+            [
+              32,
+              0,
+              68,
+              434
+            ]
+          ]
+        }
+      },
+      "selected_epoch": 36,
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "dff062a73609c8fdce15fe7e1bea0e421fe6da6d038ebb5807aa4571c3dcd700",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+      "predictions_sha256": "94cd57b402be37edd88c7cfa6625b6ac6101be60e14b701411eb04bea0a67bf1",
+      "independent_replay": "verified",
+      "validation_parent_pockets": 1346,
+      "validation_pdb_groups": 195
+    },
+    "only_esm__four_class__first_shell_bias": {
+      "run_name": "only_esm__four_class__first_shell_bias__fold0__seed42",
+      "metrics": {
+        "common4": {
+          "balanced_accuracy": 0.8839448044126841,
+          "accuracy": 0.8471849865951743,
+          "macro_f1": 0.8429511712849523,
+          "min_recall": 0.8127340823970037,
+          "recall": {
+            "Mn": 0.8536585365853658,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.8950276243093923,
+            "Class VIII": 0.8127340823970037
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              630,
+              0,
+              72,
+              36
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              7,
+              3,
+              162,
+              9
+            ],
+            [
+              32,
+              0,
+              68,
+              434
+            ]
+          ]
+        },
+        "n": 1492,
+        "native": {
+          "balanced_accuracy": 0.8839448044126841,
+          "accuracy": 0.8471849865951743,
+          "macro_f1": 0.8429511712849523,
+          "min_recall": 0.8127340823970037,
+          "recall": {
+            "Mn": 0.8536585365853658,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.8950276243093923,
+            "Class VIII": 0.8127340823970037
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              630,
+              0,
+              72,
+              36
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              7,
+              3,
+              162,
+              9
+            ],
+            [
+              32,
+              0,
+              68,
+              434
+            ]
+          ]
+        }
+      },
+      "selected_epoch": 36,
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "first_shell_bias",
+        "resolved_config_sha256": "36b67e0a0a426f7e28d1b611646c40183acee951538ffcd6db1eb04c90b9255d",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "checkpoint_sha256": "ff5b8ad63e69aed7ebda48339a472c2b33e2c12636634a8a6c14f2c0a028fce8",
+      "predictions_sha256": "a6f8583b42cb6dc67cf5907f6c22379471f2189637e4276886a01dde999c4d6e",
+      "independent_replay": "verified",
+      "validation_parent_pockets": 1346,
+      "validation_pdb_groups": 195
+    }
+  },
+  "pmm_same_fold": {
+    "common4": {
+      "balanced_accuracy": 0.7245521128193895,
+      "accuracy": 0.7915549597855228,
+      "macro_f1": 0.710600394975395,
+      "min_recall": 0.48717948717948717,
+      "recall": {
+        "Mn": 0.9336043360433605,
+        "Cu": 0.48717948717948717,
+        "Zn": 0.8950276243093923,
+        "Class VIII": 0.5823970037453183
+      },
+      "support": {
+        "Mn": 738,
+        "Cu": 39,
+        "Zn": 181,
+        "Class VIII": 534
+      },
+      "confusion_matrix": [
+        [
+          689,
+          0,
+          37,
+          12
+        ],
+        [
+          0,
+          19,
+          17,
+          3
+        ],
+        [
+          8,
+          7,
+          162,
+          4
+        ],
+        [
+          125,
+          0,
+          98,
+          311
+        ]
+      ]
+    },
+    "n": 1492
+  },
+  "descriptive_contrasts": [
+    {
+      "contrast": "only_esm: first_shell_bias vs ordinary readout",
+      "balanced_accuracy_delta_pp": 0.0,
+      "macro_f1_delta_pp": 0.0,
+      "class_recall_delta_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 0.0,
+        "Class VIII": 0.0
+      }
+    }
+  ],
+  "interpretation": "Exploratory single-fold, single-seed validation. Checkpoints selected on this fold. No promotion, confidence interval, paper-parity or superiority claim. Full grid requires all 45 fits."
+}

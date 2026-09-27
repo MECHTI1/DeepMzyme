@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-27T14:35:49.460597+00:00",
+  "user_instruction": "So please continue execution with this plan.",
+  "scope": "Continue the named plan via its nine-configuration fold-0 screen; use existing four-hour session and daily controller limits. No activation of the separate proposed 30-hour/$34 envelope.",
+  "status": "running",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "session": {
+    "active": true,
+    "gross_usd_per_hour": 0.879172,
+    "instance_id": "3144565200755786222",
+    "max_run_duration_s": 14220,
+    "project": "deepmzyme-gpu-vm",
+    "session_id": "session-20260927T143239Z-d9c4d944",
+    "session_start": "2026-09-27T14:32:39Z",
+    "termination_ts": "2026-09-27T18:29:32Z",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-c"
+  },
+  "requested_hours": 4,
+  "session_cap_usd": 6,
+  "daily_cap_hours": 6,
+  "daily_cap_usd": 10,
+  "controller_caps_changed": false,
+  "forecast_margin": 1.25,
+  "closeout_reserve_seconds": 900,
+  "initial_gvp_complete_unit_forecast_seconds": 3600,
+  "held_out_access": false,
+  "queue": [
+    {
+      "family": "only_gvp",
+      "target": "four_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "only_gvp__four_class__none__fold0__seed42"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "four_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "gvp_late_fusion__four_class__none__fold0__seed42"
+    },
+    {
+      "family": "only_gvp",
+      "target": "four_class",
+      "readout": "first_shell_bias",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "only_gvp__four_class__first_shell_bias__fold0__seed42"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "four_class",
+      "readout": "first_shell_bias",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "gvp_late_fusion__four_class__first_shell_bias__fold0__seed42"
+    },
+    {
+      "family": "only_esm",
+      "target": "six_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "only_esm__six_class__none__fold0__seed42"
+    },
+    {
+      "family": "only_gvp",
+      "target": "six_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "only_gvp__six_class__none__fold0__seed42"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "six_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "run_name": "gvp_late_fusion__six_class__none__fold0__seed42"
+    }
+  ],
+  "reused": [
+    "only_esm__four_class__none__fold0__seed42",
+    "only_esm__four_class__first_shell_bias__fold0__seed42"
+  ],
+  "runtime_preflight": {
+    "source_hash_matches": true,
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "gpu": "NVIDIA L4",
+    "cuda_matmul": "passed",
+    "campaign_lock": "available_before_submission",
+    "old_completed_unit_ack": "runner reconciles existing acknowledgment",
+    "remote_free_gib": 108.49,
+    "host_free_gib": 73.36
+  },
+  "operational_fixes": [
+    "Launcher validates selected immutable VM/current session after fallback finalization.",
+    "Exact missing-unit selectors avoid republishing completed pair.",
+    "Unique per-unit status tags preserve manifest-bound status bytes."
+  ]
+}
