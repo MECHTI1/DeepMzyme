@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "phase_seconds": {
+    "prepare": 107.71518181200008,
+    "train_epoch": 1026.0234155850007,
+    "train_metric_evaluation": 61.8330755159991,
+    "validation": 157.89168959599738,
+    "checkpoint_save": 8.055162195998037,
+    "selected_export": 3.332066857999962
+  },
+  "notes": [
+    "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+    "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+    "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+  ],
+  "process_peak_rss_bytes": 7965650944,
+  "cuda_peak_allocated_bytes": 346155520,
+  "cuda_peak_reserved_bytes": 429916160
+}

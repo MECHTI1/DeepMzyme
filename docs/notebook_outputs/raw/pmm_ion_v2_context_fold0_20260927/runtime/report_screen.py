@@ -18,7 +18,7 @@ def main():
     sys.path.insert(0, str(args.source_root / 'src'))
     from benchmarking.pmm_ion_campaign import CampaignPaths, PREDECLARED_CONTRASTS, forbidden_read_roots
     from benchmarking.pmm_ion_analysis import collect_units, prediction_metrics, read_prediction_rows
-    from benchmarking.pmm_comparator import read_campaign_contract, validate_prediction_rows
+    from benchmarking.pmm_comparator import read_campaign_contract, validate_prediction_rows, verify_comparator_outputs
     from training.access_guard import install_forbidden_read_guard
     install_forbidden_read_guard(forbidden_read_roots(args.train_dir))
     collected = collect_units(CampaignPaths(args.campaign_dir), args.train_dir)
@@ -48,6 +48,7 @@ def main():
                           'validation_parent_pockets': len({row['parent_pocket_id'] for row in rows}),
                           'validation_pdb_groups': len({row['group_id'] for row in rows})}
     assert identities and all(item == identities[0] for item in identities)
+    verify_comparator_outputs(args.campaign_dir)
     manifest = json.loads((args.campaign_dir / 'pmm_comparator/pmm_comparator_manifest.json').read_text())
     pmm_path = args.campaign_dir / 'pmm_comparator/fold0_predictions.csv'
     assert hashlib.sha256(pmm_path.read_bytes()).hexdigest() == manifest['folds']['0']['predictions_sha256']

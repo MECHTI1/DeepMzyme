@@ -24,16 +24,27 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`;
   CUDA preflight passed on PyTorch 2.11.0+cu128. Existing pair checkpoints
   reverified; no completed fits, embeddings, smokes or PMM folds are repeated.
-- **3/9 screen configurations verified:** the reused ESMC pair plus
+- **5/9 screen configurations verified:** the reused ESMC pair plus ordinary GVP
+  and ordinary late fusion, plus binding-aware GVP. The ordinary GVP fit is
   `only_gvp__four_class__none__fold0__seed42`. GVP completed 50 epochs, selected
   epoch **12**, and reached BA **86.0232%**, macro-F1 **77.2357%**. Its fit/replay
   took **2,955 seconds**; all 71 host-backup files verified at **15:26:50 UTC**.
   This is single-fold evidence, not a superiority result. The
   [screen report](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
   compares the same 1,492 validation ions and retains all class recalls.
-- Current submitted unit: `gvp_late_fusion__four_class__none__fold0__seed42`,
-  with a conservative 3,000-second fit/replay/transfer forecast based on the
-  measured GVP execution and expected existing ESM graph-cache reuse.
+- Ordinary late fusion completed 50 epochs and selected epoch **11**, with
+  BA **89.4653%**, macro-F1 **80.7283%**. Fit/replay took **1,631 seconds**;
+  all 71 backup files verified at **15:57:17 UTC**. It reused all 7,398 raw
+  graphs, reducing preparation to **107.7 seconds**. These remain exploratory
+  comparisons on one fold, with no promotion.
+- Binding-aware GVP completed 50 epochs, selected epoch **27**, with BA
+  **84.9441%** and macro-F1 **81.9963%**. Compared with ordinary GVP, BA fell
+  1.0791 percentage points while macro-F1 rose 4.7606 points; Class VIII recall
+  rose from 64.6067% to 76.4045%. This is a single-fold tradeoff, not promotion.
+  Fit/replay took **1,519 seconds**, with 71 backup files verified at **16:26 UTC**.
+- Current submitted unit: `gvp_late_fusion__four_class__first_shell_bias__fold0__seed42`,
+  with a conservative 2,000-second fit/replay/transfer forecast based on the
+  observed late-fusion and warm-cache/replay timings.
   Run one exact missing unit
   at a time, use a unique status tag, replay independently, then verify host
   backup and return its acknowledgment before the next submission. Local
@@ -41,7 +52,7 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
 - Operational launcher now validates the active session and immutable selected
   VM without requiring an unfinished recovery. One read-only agent audited the
   queue and monitored initial preparation; the coordinator now monitors directly
-  and alone allocates, submits and stops. The current late-fusion unit is not
+  and alone allocates, submits and stops. The current aware-late-fusion unit is not
   yet a completed result; no model is promoted.
   No refit or held-out access is part of the screen.
 - A budget question is pending for the later full matrix: the measured/proxy
