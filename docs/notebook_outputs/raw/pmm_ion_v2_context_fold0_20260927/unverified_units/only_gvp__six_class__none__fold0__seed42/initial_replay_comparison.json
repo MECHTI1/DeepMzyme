@@ -1,0 +1,84 @@
+{
+  "rows": 1492,
+  "probabilities_above_1e_6": 24,
+  "maximum_difference": [
+    3.509999999984359e-06,
+    "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+    "p_native_Cu",
+    "0.62355912",
+    "0.62356263"
+  ],
+  "non_probability_mismatches": [],
+  "largest_differences": [
+    [
+      3.509999999984359e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_native_Cu",
+      "0.62355912",
+      "0.62356263"
+    ],
+    [
+      3.509999999984359e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_common4_Cu",
+      "0.62355912",
+      "0.62356263"
+    ],
+    [
+      3.4600000000106768e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_common4_Class_VIII",
+      "0.36429653",
+      "0.36429307"
+    ],
+    [
+      3.3400000000183283e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5803",
+      "p_native_Fe",
+      "0.28304753",
+      "0.28304419"
+    ],
+    [
+      2.150000000034069e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1530",
+      "p_native_Ni",
+      "0.64385200",
+      "0.64384985"
+    ],
+    [
+      2.0299999999862095e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1530",
+      "p_native_Fe",
+      "0.32976085",
+      "0.32976288"
+    ],
+    [
+      1.600000000046009e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:6585",
+      "p_common4_Class_VIII",
+      "0.60268641",
+      "0.60268801"
+    ],
+    [
+      1.400000000040258e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:6585",
+      "p_native_Co",
+      "0.43485090",
+      "0.43485230"
+    ],
+    [
+      1.2000000000345068e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:7631",
+      "p_common4_Class_VIII",
+      "0.71528804",
+      "0.71528924"
+    ],
+    [
+      1.1900000000952815e-06,
+      "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:7631",
+      "p_native_Fe",
+      "0.69099134",
+      "0.69099253"
+    ]
+  ]
+}

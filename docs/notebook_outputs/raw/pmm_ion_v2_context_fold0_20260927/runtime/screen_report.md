@@ -4,6 +4,8 @@ Verified configurations: 7/9. Matched validation ions: 1492.
 
 Exploratory single-fold, single-seed validation. Checkpoints selected on this fold. No promotion, confidence interval, paper-parity or superiority claim. Full grid requires all 45 fits.
 
+In configuration names, `four_class` or `six_class` is the training target. Every score in the first table evaluates four classes: Mn, Cu, Zn, and Class VIII = Fe+Co+Ni. No five-class model is part of this screen.
+
 | Configuration | Epoch | Common-four BA | Macro-F1 | Mn recall | Cu recall | Zn recall | VIII recall |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | only_esm__four_class__none | 36 | 88.394% | 84.295% | 85.366% | 97.436% | 89.503% | 81.273% |
@@ -19,4 +21,14 @@ PMM uses its released features; DeepMzyme uses the declared ESM/geometry inputs.
 
 Six-class native metrics and Fe/Co/Ni recalls are retained in the CSV/JSON; common-four predictions sum Fe+Co+Ni probabilities before argmax.
 
-Pending: only_gvp__six_class__none, gvp_late_fusion__six_class__none.
+## Native six-class evaluation
+
+These models were trained and evaluated on Mn, Cu, Zn, Fe, Co and Ni separately. Each checkpoint was selected by native six-class validation BA; its collapsed-four result above uses that same checkpoint.
+
+| Configuration | Epoch | Six-class BA | Six-class macro-F1 | Fe recall | Co recall | Ni recall |
+|---|---:|---:|---:|---:|---:|---:|
+| only_esm__six_class__none | 33 | 72.251% | 65.812% | 79.843% | 34.286% | 58.974% |
+
+Pending certification: only_gvp__six_class__none, gvp_late_fusion__six_class__none.
+
+Checkpoint artifacts exist for only_gvp__six_class__none, but independent replay is not certified. These configurations are excluded from every score table and contrast above. See the batch README and completion execution receipt for failure diagnostics.

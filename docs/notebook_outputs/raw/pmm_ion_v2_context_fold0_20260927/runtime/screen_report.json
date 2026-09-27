@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "recorded_at_utc": "2026-09-27T17:40:49.269078+00:00",
+  "recorded_at_utc": "2026-09-27T19:16:16.429729+00:00",
   "status": "partial_single_fold_screen",
   "fold": 0,
   "model_seed": 42,
@@ -12,6 +12,15 @@
     "only_gvp__six_class__none",
     "gvp_late_fusion__six_class__none"
   ],
+  "uncertified_configurations": {
+    "only_gvp__six_class__none": {
+      "run_name": "only_gvp__six_class__none__fold0__seed42",
+      "selected_epoch": 31,
+      "checkpoint_sha256": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0",
+      "status": "checkpoint_present_but_independent_replay_not_certified",
+      "included_in_comparisons": false
+    }
+  },
   "arms": {
     "only_esm__four_class__none": {
       "run_name": "only_esm__four_class__none__fold0__seed42",

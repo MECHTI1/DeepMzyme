@@ -22,10 +22,19 @@ def main():
     from training.access_guard import install_forbidden_read_guard
     install_forbidden_read_guard(forbidden_read_roots(args.train_dir))
     collected = collect_units(CampaignPaths(args.campaign_dir), args.train_dir)
-    arms, missing, identities = {}, [], []
+    arms, missing, identities, uncertified = {}, [], [], {}
     for config_id, item in collected.items():
         if 0 not in item['folds']:
             missing.append(config_id)
+            run_name = config_id + '__fold0__seed42'
+            selected_path = args.campaign_dir / 'runs' / run_name / 'selected_checkpoint.json'
+            if selected_path.is_file():
+                selected = json.loads(selected_path.read_text())
+                uncertified[config_id] = {'run_name': run_name,
+                    'selected_epoch': selected.get('selected_epoch'),
+                    'checkpoint_sha256': selected.get('selected_checkpoint_sha256'),
+                    'status': 'checkpoint_present_but_independent_replay_not_certified',
+                    'included_in_comparisons': False}
             continue
         unit = item['folds'][0]
         receipt, rows = unit['receipt'], unit['rows']
@@ -69,7 +78,8 @@ def main():
               'status':'complete_single_fold_screen' if not missing else 'partial_single_fold_screen',
               'fold':0, 'model_seed':42, 'epochs':50, 'held_out_access':False,
               'completed_configurations':len(arms), 'required_configurations':9,
-              'missing_configurations':missing, 'arms':arms, 'pmm_same_fold':pmm,
+              'missing_configurations':missing, 'uncertified_configurations':uncertified,
+              'arms':arms, 'pmm_same_fold':pmm,
               'descriptive_contrasts':contrasts,
               'interpretation':'Exploratory single-fold, single-seed validation. Checkpoints selected on this fold. No promotion, confidence interval, paper-parity or superiority claim. Full grid requires all 45 fits.'}
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -85,6 +95,7 @@ def main():
     with (args.out_dir/'screen_metrics.csv').open('w',newline='') as stream:
         writer=csv.DictWriter(stream,fieldnames=fields);writer.writeheader();writer.writerows(records)
     lines=['# PMM campaign: exploratory fold-0 screen','',f"Verified configurations: {len(arms)}/9. Matched validation ions: {len(identities[0])}.",'',report['interpretation'],'',
+           'In configuration names, `four_class` or `six_class` is the training target. Every score in the first table evaluates four classes: Mn, Cu, Zn, and Class VIII = Fe+Co+Ni. No five-class model is part of this screen.','',
            '| Configuration | Epoch | Common-four BA | Macro-F1 | Mn recall | Cu recall | Zn recall | VIII recall |',
            '|---|---:|---:|---:|---:|---:|---:|---:|']
     for row in records:
@@ -94,7 +105,21 @@ def main():
     lines+=['| PMM released recipe, same fold | — | '+' | '.join(f'{100*v:.3f}%' for v in vals)+' |','',
             'PMM uses its released features; DeepMzyme uses the declared ESM/geometry inputs. This is a matched known-site comparison, not paper protocol reproduction.','',
             'Six-class native metrics and Fe/Co/Ni recalls are retained in the CSV/JSON; common-four predictions sum Fe+Co+Ni probabilities before argmax.','']
-    if missing: lines+=['Pending: '+', '.join(missing)+'.','']
+    six_class_rows = [row for row in records if '__six_class__' in row['configuration']]
+    if six_class_rows:
+        lines += ['## Native six-class evaluation','',
+                  'These models were trained and evaluated on Mn, Cu, Zn, Fe, Co and Ni separately. Each checkpoint was selected by native six-class validation BA; its collapsed-four result above uses that same checkpoint.','',
+                  '| Configuration | Epoch | Six-class BA | Six-class macro-F1 | Fe recall | Co recall | Ni recall |',
+                  '|---|---:|---:|---:|---:|---:|---:|']
+        for row in six_class_rows:
+            native = arms[row['configuration']]['metrics']['native']
+            values = [native['balanced_accuracy'], native['macro_f1'], row['Fe_recall'], row['Co_recall'], row['Ni_recall']]
+            lines.append(f"| {row['configuration']} | {row['selected_epoch']} | " + ' | '.join(f'{100*v:.3f}%' for v in values) + ' |')
+        lines.append('')
+    if missing: lines+=['Pending certification: '+', '.join(missing)+'.','']
+    if uncertified:
+        lines += ['Checkpoint artifacts exist for '+', '.join(uncertified)+
+                  ', but independent replay is not certified. These configurations are excluded from every score table and contrast above. See the batch README and completion execution receipt for failure diagnostics.','']
     (args.out_dir/'screen_report.md').write_text('\n'.join(lines))
     print(json.dumps({'status':report['status'],'completed':len(arms),'missing':missing}))
 

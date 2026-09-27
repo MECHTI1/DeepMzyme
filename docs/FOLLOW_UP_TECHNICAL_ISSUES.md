@@ -952,3 +952,39 @@ one unique unit identity per invocation. This prevents new fits from replacing
 each other's status artifacts without changing frozen source. It is an
 operational mitigation, not a repair of the historical manifest or the general
 runner's default behavior.
+
+## TECH-023 — Full-fit GVP independent replay exceeds the frozen probability tolerance
+
+**Status:** Open; observed 2026-09-27. Completed training is preserved but not
+certified; frozen source and tolerance remain unchanged.
+
+`only_gvp__six_class__none__fold0__seed42` completed all 50 epochs. Independent
+replay reproduced all 1,492 ion identities, labels, native/common-four class
+predictions, and selected-epoch metric/confusion checks, but 24 probability
+fields differed by more than the required absolute `1e-6` tolerance (maximum
+`3.51e-6`). One unchanged replay-only retry reused the checkpoint without
+training, reproduced the same discrete fields, and again failed: 28 probability
+fields above tolerance, maximum `2.20e-6`. Counts include both native and
+common-four columns; they are not counts of distinct ions.
+
+The first 70-file failed-unit backup and the second 72-file backup were verified
+and acknowledged. The first snapshot is retained separately before retry;
+the runner also archives incomplete replay outputs. See the portable
+[failure evidence](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/unverified_units/only_gvp__six_class__none__fold0__seed42/)
+and [execution record](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_execution.json).
+This configuration is excluded from certified comparisons and promotion.
+
+A focused read-only audit found matching FP32 evaluation, batch size 16,
+validation order, model weights/buffers, graph options and saved normalization.
+Both processes receive the campaign environment; no active evaluation dropout
+or autocast was found. With `deterministic=false`, CUDA message accumulation
+and pooling reductions are a plausible cause, not a proven explanation.
+Bitwise equality of training and independently rebuilt graph tensors has not
+been established. The second replay reused all 1,492 cached validation graphs
+and still failed, so repeated cold preparation alone does not resolve the issue.
+
+Before certifying this result, diagnose graph-tensor equality and numerical
+reproducibility, then version and validate any necessary replay-policy or
+determinism change consistently across compared configurations. Do not edit
+saved probabilities, loosen the frozen tolerance for this arm alone, repeatedly
+retry until a pass, or retrain the completed fit merely to replace this evidence.

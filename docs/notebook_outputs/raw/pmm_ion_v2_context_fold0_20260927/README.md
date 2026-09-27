@@ -12,13 +12,16 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
   [EXPERIMENT_STATUS.md](../../../../EXPERIMENT_STATUS.md).
 - [Screen-completion execution](runtime/completion_execution.json): the later
   user-authorized session for the two remaining six-class fold-0 configurations.
-  It preserves the earlier allocation and closeout records separately.
+  It preserves the earlier allocation and closeout records separately. Six-class
+  GVP trained but failed independent probability replay twice; late fusion is
+  running. Current state is owned by `EXPERIMENT_STATUS.md`.
 - [Verified closeout](runtime/verified_closeout.json): seven completed screen
   configurations, five new verified backups, provider-confirmed TERMINATED
   state, actual session accounting, and the pending budget/start decision.
   [Provider status](runtime/vm_status_closeout.log) and
   [controller report](runtime/vm_report_closeout.log) preserve the closeout evidence.
-  Two fold-0 configurations remain; the full grid is seven of 45 complete.
+  At that historical closeout two fold-0 configurations remained; seven of 45
+  grid fits were certified.
 - [Exploratory screen report](runtime/screen_report.md),
   [full metrics/identities](runtime/screen_report.json),
   [metrics CSV](runtime/screen_metrics.csv).
@@ -43,6 +46,14 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
   Excerpts retain full configuration, normalization and provenance fields,
   identify omitted verbose dataset details, and bind the complete original
   metadata files by SHA-256. No canonical run files are replaced by excerpts.
+- `unverified_units/`: completed training artifacts that failed independent
+  replay certification. They are excluded from every verified score table and
+  contrast. The GVP six-class entry includes both replay prediction sets,
+  the exact comparison diagnostics, original checkpoint hash and configuration
+  excerpt. Its first failed 70-file transfer was preserved separately before
+  retry; the second 72-file transfer includes the runner's archived first replay.
+  Historical manifests refer to those original transfer snapshots. See
+  [TECH-023](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
 
 Canonical checkpoint/data/backup location:
 `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
