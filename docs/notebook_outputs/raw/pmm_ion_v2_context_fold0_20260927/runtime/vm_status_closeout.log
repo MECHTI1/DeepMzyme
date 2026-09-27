@@ -1,0 +1,5 @@
+DeepMzyme VM status  [2026-09-27T17:41:59Z]
+  VM:      deepmzyme-l4  project=deepmzyme-gpu-vm  zone=us-central1-c
+  State:   TERMINATED
+  No compute/GPU charges accrue while TERMINATED (disk storage still bills).
+  Today (UTC): 3h 09m running, ESTIMATED GROSS $3.65 (caps 6 h / $10.00 gross; no credits applied)

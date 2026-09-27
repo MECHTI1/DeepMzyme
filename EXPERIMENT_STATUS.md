@@ -7,67 +7,56 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
 
-**2026-09-27 PMM fold-0 screen continuation — in progress:**
-- User requested continuation of the same [final plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
-  after the completed ESMC pair. The next phase completes the nine-configuration
-  fold-0 screen with seven missing fits; the full 45-fit completion requirement
-  remains unchanged. Exact selectors and safeguards are in the
-  [playbook continuation](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#nine-configuration-fold-0-screen-continuation).
-- The existing L4 VM `deepmzyme-l4@us-central1-c`, immutable instance
-  `3144565200755786222`, started at **2026-09-27 14:32:39 UTC** under session
-  `session-20260927T143239Z-d9c4d944`. Verified provider automatic STOP:
-  **18:29:32 UTC / 21:29 Israel time**. Existing four-hour/$6 session and
-  six-hour/$10 daily caps are unchanged; estimated session maximum is $3.47
-  ($3.99 with the controller's margin). The separate 30-hour/$34 proposal
-  has not been activated. Per-unit admission retains 1.25 margin and 900-second reserve.
-- Local and VM scientific source still match
-  `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`;
-  CUDA preflight passed on PyTorch 2.11.0+cu128. Existing pair checkpoints
-  reverified; no completed fits, embeddings, smokes or PMM folds are repeated.
-- **6/9 screen configurations verified:** the reused ESMC pair plus ordinary GVP
-  and ordinary late fusion, plus both binding-aware graph models. The ordinary GVP fit is
-  `only_gvp__four_class__none__fold0__seed42`. GVP completed 50 epochs, selected
-  epoch **12**, and reached BA **86.0232%**, macro-F1 **77.2357%**. Its fit/replay
-  took **2,955 seconds**; all 71 host-backup files verified at **15:26:50 UTC**.
-  This is single-fold evidence, not a superiority result. The
-  [screen report](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
-  compares the same 1,492 validation ions and retains all class recalls.
-- Ordinary late fusion completed 50 epochs and selected epoch **11**, with
-  BA **89.4653%**, macro-F1 **80.7283%**. Fit/replay took **1,631 seconds**;
-  all 71 backup files verified at **15:57:17 UTC**. It reused all 7,398 raw
-  graphs, reducing preparation to **107.7 seconds**. These remain exploratory
-  comparisons on one fold, with no promotion.
-- Binding-aware GVP completed 50 epochs, selected epoch **27**, with BA
-  **84.9441%** and macro-F1 **81.9963%**. Compared with ordinary GVP, BA fell
-  1.0791 percentage points while macro-F1 rose 4.7606 points; Class VIII recall
-  rose from 64.6067% to 76.4045%. This is a single-fold tradeoff, not promotion.
-  Fit/replay took **1,519 seconds**, with 71 backup files verified at **16:26 UTC**.
-- Binding-aware late fusion completed 50 epochs, selected epoch **45**, with
-  BA **88.7277%**, macro-F1 **81.0455%**; BA fell 0.7376 points compared with
-  ordinary late fusion. Fit/replay took **1,647 seconds**, with all 71 files
-  verified at **16:56:25 UTC**. None of the three awareness variants improved
-  the primary score on this fold; this does not establish equivalence or
-  rule out binding information more generally.
-- Current submitted unit: `only_esm__six_class__none__fold0__seed42`,
-  with a conservative **3,100-second** fit/replay/transfer forecast. The measured
-  cold ESM fit/replay took 2,416.7 seconds; target label scheme is part of the
-  raw graph-cache key, so warm direct-four timings are insufficient here.
-  Run one exact missing unit
-  at a time, use a unique status tag, replay independently, then verify host
-  backup and return its acknowledgment before the next submission. Local
-  evidence: canonical campaign `runtime/fold0_screen_20260927/`.
-- Operational launcher now validates the active session and immutable selected
-  VM without requiring an unfinished recovery. One read-only agent audited the
-  queue and monitored initial preparation; the coordinator now monitors directly
-  and alone allocates, submits and stops. The current six-class ESMC unit is not
-  yet a completed result; no model is promoted.
-  No refit or held-out access is part of the screen.
-- A budget question is pending for the later full matrix: the measured/proxy
-  [remaining-grid forecast](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/continuation_budget_forecast.json)
-  is **20.53 hours** for the remaining 42 fits, including the current unit.
-  Approximately 5.2 campaign VM hours/$4.6 running gross were used at the
-  question. The proposed cumulative ceiling is 30 hours/$34; no approval or
-  cap increase is inferred while the current authorized allocation continues.
+**2026-09-27 PMM fold-0 continuation — allocation closed; 7/9 configurations verified:**
+- Continues the same [final plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
+  and [playbook queue](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#nine-configuration-fold-0-screen-continuation).
+  Five additional 50-epoch fits completed; the earlier ESMC pair, embeddings,
+  feature certification, smokes and PMM folds were reused. The full grid is
+  **7/45 complete**, with no promotion, final refit or held-out access.
+- All seven selected checkpoints and independent replays validate on the same
+  **1,492 ions / 1,346 parent pockets / 195 PDB groups**, frozen fold 0, seed 42.
+  Each new fit has a verified 71-file host backup and uploaded acknowledgment.
+  Source remains `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`.
+  See the [screen report](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
+  for checkpoint-bound scores and the CSV/JSON for native metrics and recalls.
+- Direct-four balanced accuracy, ordinary → first-shell-aware: **ESMC
+  88.3945% → 88.3945%; GVP 86.0232% → 84.9441%; late fusion
+  89.4653% → 88.7277%**. None improves the primary metric on this fold.
+  GVP macro-F1 nevertheless rises **77.2357% → 81.9963%**, with Class VIII
+  recall **64.6067% → 76.4045%**. These are Grade-5 single-fold tradeoffs,
+  not equivalence, superiority, or evidence against binding information generally.
+- Six-class ESMC selected epoch **33**, with common-four BA **85.8393%**,
+  macro-F1 **79.8831%**, and native six-class BA **72.2507%**. Native Fe/Co/Ni
+  recalls are **79.8429% / 34.2857% / 58.9744%**. The common-four BA is
+  2.5552 points below direct-four ESMC. Fit/replay took **2,487 seconds**;
+  its 71-file backup verified at **17:39:59 UTC**.
+- **VM confirmed TERMINATED at 17:41:59 UTC / 20:41:59 Israel.**
+  Session `session-20260927T143239Z-d9c4d944` ran from **14:32:39 to 17:41:40 UTC**
+  on `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`:
+  **3h 09m 01s**, estimated running gross **$2.7697**. No compute is running.
+  One 150-GB persistent disk remains at approximately **$15/month**. Normal
+  closeout deleted nothing. The provider deadline had been 18:29:32 UTC.
+- **Next missing unit:** `only_gvp__six_class__none__fold0__seed42`, then
+  `gvp_late_fusion__six_class__none__fold0__seed42`. The next cold GVP fit's
+  3,600-second forecast needs **5,400 seconds** with 1.25 margin and 900-second
+  reserve; only **2,973 seconds** remained at the last host acknowledgment.
+  It was not submitted. Resume exact missing selectors after the budget/start
+  decision; do not rerun completed units or broaden to full-grid assessment yet.
+- The larger-budget question remains **unanswered**; the proposed cumulative
+  **30 VM hours/$34** ceiling has not been activated. Measured campaign running
+  use is **7.4439 hours / $6.5445 estimated gross**, excluding additional
+  retained-storage charges. Updated forecast for the remaining 38 grid fits is
+  **18.38 VM hours**, based on measured family timings and stated allowances;
+  it excludes separately gated final refits/test work. Existing 4h/$6 session
+  and 6h/$10 daily caps remain unchanged. See the
+  [verified closeout and forecast](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/verified_closeout.json).
+- One coordinator owned lifecycle/submission/shutdown; a focused read-only
+  reviewer audited the reporting contracts. Exact unit selectors and unique
+  status tags preserve old results and mitigate TECH-022. The
+  [GPU review](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/gpu_execution_review.md)
+  records cold versus warm preparation costs. Canonical artifacts remain at
+  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`;
+  current resume notes are in its `runtime/RESUME_STATE.md`.
 
 **2026-09-27 PMM ion-level campaign (`pmm_ion_metal_v2_context`) — exploratory ESMC pair and GPU recovery closeout complete:**
 - Executes the [metal-level PMM plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)

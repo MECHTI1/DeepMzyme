@@ -1,15 +1,14 @@
 {
   "schema_version": 1,
-  "recorded_at_utc": "2026-09-27T16:57:10.614838+00:00",
+  "recorded_at_utc": "2026-09-27T17:40:49.269078+00:00",
   "status": "partial_single_fold_screen",
   "fold": 0,
   "model_seed": 42,
   "epochs": 50,
   "held_out_access": false,
-  "completed_configurations": 6,
+  "completed_configurations": 7,
   "required_configurations": 9,
   "missing_configurations": [
-    "only_esm__six_class__none",
     "only_gvp__six_class__none",
     "gvp_late_fusion__six_class__none"
   ],
@@ -126,6 +125,161 @@
       },
       "checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
       "predictions_sha256": "94cd57b402be37edd88c7cfa6625b6ac6101be60e14b701411eb04bea0a67bf1",
+      "independent_replay": "verified",
+      "first_shell_support": {
+        "train": {
+          "n_graphs": 5906,
+          "n_empty_first_shell": 4
+        },
+        "val": {
+          "n_graphs": 1492,
+          "n_empty_first_shell": 0
+        }
+      },
+      "learned_pooling_biases": {},
+      "validation_parent_pockets": 1346,
+      "validation_pdb_groups": 195
+    },
+    "only_esm__six_class__none": {
+      "run_name": "only_esm__six_class__none__fold0__seed42",
+      "metrics": {
+        "common4": {
+          "balanced_accuracy": 0.8583932224644355,
+          "accuracy": 0.7902144772117963,
+          "macro_f1": 0.7988308605311273,
+          "min_recall": 0.7140921409214093,
+          "recall": {
+            "Mn": 0.7140921409214093,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.9005524861878453,
+            "Class VIII": 0.8445692883895131
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              527,
+              2,
+              72,
+              137
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              4,
+              5,
+              163,
+              9
+            ],
+            [
+              15,
+              0,
+              68,
+              451
+            ]
+          ]
+        },
+        "n": 1492,
+        "native": {
+          "balanced_accuracy": 0.7225072683616819,
+          "accuracy": 0.7520107238605898,
+          "macro_f1": 0.6581210283663353,
+          "min_recall": 0.34285714285714286,
+          "recall": {
+            "Mn": 0.7235772357723578,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.9060773480662984,
+            "Fe": 0.7984293193717278,
+            "Co": 0.34285714285714286,
+            "Ni": 0.5897435897435898
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Fe": 382,
+            "Co": 35,
+            "Ni": 117
+          },
+          "confusion_matrix": [
+            [
+              534,
+              8,
+              72,
+              6,
+              92,
+              26
+            ],
+            [
+              0,
+              38,
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              4,
+              5,
+              164,
+              3,
+              2,
+              3
+            ],
+            [
+              9,
+              0,
+              56,
+              305,
+              6,
+              6
+            ],
+            [
+              6,
+              0,
+              12,
+              5,
+              12,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              48,
+              0,
+              69
+            ]
+          ]
+        }
+      },
+      "selected_epoch": 33,
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "34aa8b6050aafa2d243a2a6503007952ebce92325f7e814c01ea8a5d80fe65e2",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "checkpoint_sha256": "edf67d8861d9ff70137360834a0ddce552f546feb5e8c0fecf6fc51763305c6d",
+      "predictions_sha256": "ff8a4a5b43c1e80cc009c7f43cc6705e9faa9a1d3c47dc62f33395f8451a804a",
       "independent_replay": "verified",
       "first_shell_support": {
         "train": {
@@ -836,6 +990,17 @@
     "n": 1492
   },
   "descriptive_contrasts": [
+    {
+      "contrast": "only_esm: six_class vs four_class",
+      "balanced_accuracy_delta_pp": -2.555158194824858,
+      "macro_f1_delta_pp": -4.412031075382505,
+      "class_recall_delta_pp": {
+        "Mn": -13.956639566395657,
+        "Cu": 0.0,
+        "Zn": 0.5524861878453025,
+        "Class VIII": 3.183520599250933
+      }
+    },
     {
       "contrast": "only_esm: first_shell_bias vs ordinary readout",
       "balanced_accuracy_delta_pp": 0.0,
