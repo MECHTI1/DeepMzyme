@@ -29,6 +29,13 @@ def main():
             continue
         unit = item['folds'][0]
         receipt, rows = unit['receipt'], unit['rows']
+        run_dir = args.campaign_dir / 'runs' / unit['run_name']
+        shell_support = json.loads((run_dir / 'dataset_summary.json').read_text())['first_shell_support']
+        biases = {}
+        if item['config'].readout != 'none':
+            import torch
+            checkpoint = torch.load(run_dir / 'best_model_checkpoint.pt', map_location='cpu', weights_only=False)
+            biases = {key: value.detach().cpu().tolist() for key, value in checkpoint['model_state_dict'].items() if 'binding_bias' in key}
         assert receipt['campaign_run_identity']['source_tree_sha256'] == 'adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23'
         identities.append({row['source_uid']: (row['physical_ion_id'], row['group_id'], row['y_common4']) for row in rows})
         arms[config_id] = {'run_name': unit['run_name'], 'metrics': unit['metrics'],
@@ -37,6 +44,7 @@ def main():
                           'checkpoint_sha256': receipt['selected_checkpoint_sha256'],
                           'predictions_sha256': receipt['validation_predictions']['sha256'],
                           'independent_replay': 'verified',
+                          'first_shell_support': shell_support, 'learned_pooling_biases': biases,
                           'validation_parent_pockets': len({row['parent_pocket_id'] for row in rows}),
                           'validation_pdb_groups': len({row['group_id'] for row in rows})}
     assert identities and all(item == identities[0] for item in identities)

@@ -20,6 +20,17 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
   selected VM, selects one unit and uses an independent per-unit status file.
   A failed SSH exit requires process reconciliation and explicit terminal
   artifact persistence. It does not authorize allocation or training by itself.
+- [Budget forecast](runtime/continuation_budget_forecast.json): measured GVP and
+  ESM times, explicit warm-cache/late-fusion proxies, preserved prior use, and
+  the pending larger-envelope question. A proposal is not an approved budget.
+- `units/`: portable completed-fit metadata excerpts, selected receipts, learning curves
+  and validation predictions. This directory corresponds to canonical `runs/`;
+  binary checkpoints stay in the verified local/VM storage and their hashes are
+  retained. `persistence_receipts/` preserves native manifests/acknowledgments
+  against the canonical campaign layout, not this selective portable copy.
+  Excerpts retain full configuration, normalization and provenance fields,
+  identify omitted verbose dataset details, and bind the complete original
+  metadata files by SHA-256. No canonical run files are replaced by excerpts.
 
 Canonical checkpoint/data/backup location:
 `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.

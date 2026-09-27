@@ -24,16 +24,32 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`;
   CUDA preflight passed on PyTorch 2.11.0+cu128. Existing pair checkpoints
   reverified; no completed fits, embeddings, smokes or PMM folds are repeated.
-- First submitted unit: `only_gvp__four_class__none__fold0__seed42`, 50 epochs,
-  conservative 3,600-second complete-unit forecast. Run one exact missing unit
+- **3/9 screen configurations verified:** the reused ESMC pair plus
+  `only_gvp__four_class__none__fold0__seed42`. GVP completed 50 epochs, selected
+  epoch **12**, and reached BA **86.0232%**, macro-F1 **77.2357%**. Its fit/replay
+  took **2,955 seconds**; all 71 host-backup files verified at **15:26:50 UTC**.
+  This is single-fold evidence, not a superiority result. The
+  [screen report](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
+  compares the same 1,492 validation ions and retains all class recalls.
+- Current submitted unit: `gvp_late_fusion__four_class__none__fold0__seed42`,
+  with a conservative 3,000-second fit/replay/transfer forecast based on the
+  measured GVP execution and expected existing ESM graph-cache reuse.
+  Run one exact missing unit
   at a time, use a unique status tag, replay independently, then verify host
   backup and return its acknowledgment before the next submission. Local
   evidence: canonical campaign `runtime/fold0_screen_20260927/`.
 - Operational launcher now validates the active session and immutable selected
-  VM without requiring an unfinished recovery. One read-only agent monitors
-  the first GVP fit; the coordinator alone allocates, submits and stops.
-  This entry records execution, not a new completed result or model promotion.
+  VM without requiring an unfinished recovery. One read-only agent audited the
+  queue and monitored initial preparation; the coordinator now monitors directly
+  and alone allocates, submits and stops. The current late-fusion unit is not
+  yet a completed result; no model is promoted.
   No refit or held-out access is part of the screen.
+- A budget question is pending for the later full matrix: the measured/proxy
+  [remaining-grid forecast](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/continuation_budget_forecast.json)
+  is **20.53 hours** for the remaining 42 fits, including the current unit.
+  Approximately 5.2 campaign VM hours/$4.6 running gross were used at the
+  question. The proposed cumulative ceiling is 30 hours/$34; no approval or
+  cap increase is inferred while the current authorized allocation continues.
 
 **2026-09-27 PMM ion-level campaign (`pmm_ion_metal_v2_context`) — exploratory ESMC pair and GPU recovery closeout complete:**
 - Executes the [metal-level PMM plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
