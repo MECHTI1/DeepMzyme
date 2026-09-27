@@ -98,6 +98,20 @@ promote a target formulation from one fold. See the
 [continuation report](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
 and its CSV/JSON for every selected-checkpoint metric and class recall.
 
+Matched six-class late fusion selected epoch 32 and passed independent replay.
+Its common-four BA was **88.8124%** versus direct-four **89.4653%**
+(-0.6529 points), while macro-F1 rose **80.7283% → 85.3215%** and Class VIII
+recall rose **81.8352% → 84.8315%**. Native six-class BA was **72.0131%**;
+Fe/Co/Ni recalls were **85.8639% / 22.8571% / 51.2821%**. These Grade-5
+tradeoffs do not establish a preferred target formulation, particularly with
+low native Co recall and only one validation fold/seed.
+
+The six-class GVP fit completed training but is excluded from parameter
+conclusions: two independent replays matched class predictions and metrics yet
+failed the frozen probability tolerance. Thus **eight of nine screen
+configurations are certified**, with the GVP target comparison unresolved.
+See [TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
+
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 
 All twelve CARE30 EC1 standalone runs completed under the matched two-LR,

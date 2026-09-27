@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-27T19:42:49.668166+00:00",
+  "status": "allocation_closed_screen_replay_blocked",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "held_out_access": false,
+  "required_screen_configurations": 9,
+  "completed_screen_training_fits": 9,
+  "certified_screen_configurations": 8,
+  "required_grid_fits": 45,
+  "completed_grid_training_fits": 9,
+  "certified_grid_fits": 8,
+  "remaining_untrained_grid_fits": 36,
+  "outstanding_replay_certification": [
+    "only_gvp__six_class__none"
+  ],
+  "stop_record": {
+    "auto_stop_by_max_run_duration": false,
+    "controller": "mechti@mechti-pc:pid44367",
+    "controller_version": "1.0.0",
+    "day_policy": "UTC calendar day",
+    "elapsed_running_s": 5333,
+    "estimated_gross_cost_usd": 1.3023,
+    "event": "STOPPED",
+    "gross_usd_per_hour": 0.879172,
+    "project": "deepmzyme-gpu-vm",
+    "reason": "reconcile: cloud reports TERMINATED",
+    "session_id": "session-20260927T181200Z-259157df",
+    "session_start": "2026-09-27T18:12:00Z",
+    "session_stop": "2026-09-27T19:40:52Z",
+    "ts": "2026-09-27T19:40:57Z",
+    "vm_name": "deepmzyme-l4",
+    "vm_state": "TERMINATED",
+    "zone": "us-central1-c"
+  },
+  "provider_state": "TERMINATED",
+  "provider_status_verified_at_utc": "2026-09-27T19:41:10Z",
+  "persistent_storage": {
+    "retained_disk": "deepmzyme-l4-recovery-e9ff994df82d",
+    "size_gb": 150,
+    "type": "pd-balanced",
+    "estimated_gross_usd_per_month": 15,
+    "ordinary_closeout_deleted_nothing": true
+  },
+  "verified_new_units": [
+    {
+      "run_name": "gvp_late_fusion__six_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 1528.3615968227386,
+      "backup_manifest": "d448d82687bb4d6087964c1a5eb8bec2",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "d8f10a943ab3b76185881337d03eb6d3796d048fe661bbeeb46a30d82f524f85",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790537960.981427
+      },
+      "selected_epoch": 32,
+      "checkpoint_sha256": "b596db995bc3d929cffeb9abaa94f1ba6c275872b7214cbfda637921cc3ec719"
+    }
+  ],
+  "uncertified_units": [
+    {
+      "run_name": "only_gvp__six_class__none__fold0__seed42",
+      "status": "trained_but_independent_replay_failed",
+      "backup_manifest": "f76be57729b14af4ac3380f919a78cbb",
+      "checkpoint_sha256": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0"
+    }
+  ],
+  "replay_recovery": {
+    "unit": "only_gvp__six_class__none__fold0__seed42",
+    "initial_status": "failed_independent_replay",
+    "initial_fit_and_replay_seconds": 2830,
+    "failed_manifest": "1392007cd0954537862455f252297e4d",
+    "failed_backup_files": 70,
+    "preserved_backup_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/fold0_completion_20260927/failed_replay_attempt1_backup",
+    "probability_tolerance": 1e-06,
+    "max_observed_abs_probability_difference": 3.51e-06,
+    "non_probability_mismatches": 0,
+    "above_tolerance_values": 24,
+    "unchanged_replay_retries_authorized": 1,
+    "retry_forecast_seconds": 900,
+    "training_repeated": false,
+    "source_or_tolerance_changed": false,
+    "retry_status": "failed_independent_replay_after_one_unchanged_retry",
+    "retry_backup_manifest": "f76be57729b14af4ac3380f919a78cbb",
+    "retry_backup_ack": {
+      "file_count": 72,
+      "manifest_sha256": "428f0df3c0488868ce53d86a9819993f6ea8ee1e79b2e45220d3643b7cd770a8",
+      "schema_version": 1,
+      "verified_by": "mechti-pc",
+      "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+      "verified_unix": 1790536267.6169927
+    },
+    "retry_elapsed_seconds": 232,
+    "retry_max_abs_probability_difference": 2.19999999995224e-06,
+    "retry_above_tolerance_values": 28,
+    "retry_non_probability_mismatches": 0,
+    "certified": false
+  },
+  "campaign_vm_use": {
+    "running_hours": 8.925277777777778,
+    "estimated_running_gross_usd": 7.8468,
+    "basis": "Prior verified cumulative use plus the unique current STOPPED record; includes disk pro-rata while running, excludes additional retained-storage charges."
+  },
+  "budget_scope": {
+    "current_screen_session_closed": true,
+    "full_grid_30_hour_34_usd_proposal_activated": false,
+    "controller_caps_changed": false,
+    "further_start_authorized_by_this_receipt": false
+  },
+  "next_action": "Resolve TECH-023 under a versioned and validated replay/determinism policy before certifying GVP6 or expanding the campaign; preserve all existing fits. The full-grid budget remains separate."
+}

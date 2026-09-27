@@ -7,17 +7,22 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
 
-**2026-09-27 19:14 UTC — final fold-0 fit running; GVP six-class replay blocked:**
-- User requested "so please continue" after clarification of the targets and
-  two remaining configurations. Continue those two six-class fits on the
-  existing L4 in one bounded 2.5-hour session. The separate 30-hour/$34 full-grid
-  proposal is not activated by this screen-completion allocation.
-- VM `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`,
-  is **RUNNING** under `session-20260927T181200Z-259157df`. Verified provider
-  automatic STOP: **20:38:52 UTC / 23:38:52 Israel**, 8,820 seconds maximum.
-  Estimated session maximum **$2.15 gross**, **$2.48 with margin**. Existing
-  4h/$6 session and 6h/$10 daily caps are unchanged.
-- Seven prior units remain certified. Six-class Only-GVP completed all 50
+**2026-09-27 19:41 UTC — allocation closed; 9/9 trained, 8/9 certified:**
+- The two remaining six-class fold-0 configurations completed 50 epochs under
+  the bounded continuation of the same
+  [final plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md).
+  Seven previous fits and all preparation were reused. Source, fold 0, seed 42,
+  native checkpoint selection and the validation-only protocol remain fixed.
+  The report separates training on four or six classes from common-four
+  evaluation (Mn, Cu, Zn, Class VIII = Fe+Co+Ni); no five-class arm was run.
+- Six-class late fusion selected epoch **32** and passed independent replay:
+  common-four BA **88.8124%**, macro-F1 **85.3215%**, native six-class BA
+  **72.0131%**. Compared with direct-four late fusion, common-four BA decreased
+  **0.6529 points**, while macro-F1 increased **4.5932 points**. Native Fe/Co/Ni
+  recalls are **85.8639% / 22.8571% / 51.2821%**. These are Grade-5 exploratory
+  tradeoffs, with no promotion. Its fit/replay took **1,528 seconds**; all 71
+  backup files verified and the acknowledgment was uploaded before shutdown.
+- Six-class Only-GVP completed all 50
   epochs, but independent replay failed its absolute `1e-6` probability check
   twice, including one replay-only retry. All 1,492 class predictions and
   metadata fields match; maximum probability differences were `3.51e-6` and
@@ -25,14 +30,26 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   No retraining, source edit or tolerance relaxation occurred. This result is
   **trained but uncertified**, excluded from comparisons; see
   [TECH-023](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
-- Current submitted unit: `gvp_late_fusion__six_class__none__fold0__seed42`,
-  forecast 2,000 seconds; graph-cache reuse confirmed. Preserve 50 epochs,
-  seed 42, native selection, frozen fold, independent replay and host verification.
-  Stop and confirm the VM after terminal persistence; no further GVP retry.
-- Current allocation record:
-  [completion execution](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_execution.json).
-  Canonical handoff: campaign `runtime/RESUME_STATE.md`; root alone owns
-  submission and shutdown. No promotion, full-grid assessment, refit or test access.
+- **VM confirmed TERMINATED at 19:41:10 UTC / 22:41:10 Israel.**
+  `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`,
+  stopped at **19:40:52 UTC**, before its 20:38:52 deadline. Session
+  `session-20260927T181200Z-259157df` used **5,333 seconds / $1.3023 estimated
+  running gross**. No GPU worker remains. One 150-GB disk is retained at
+  approximately **$15/month**; ordinary closeout deleted nothing. Cumulative
+  campaign running use is **8.9253 hours / $7.8468 estimated gross**, excluding
+  additional retained-storage charges.
+- **Next:** resolve TECH-023 with a versioned, validated replay/determinism
+  policy before certifying GVP6 or expanding the campaign. Preserve the fit;
+  do not retrain it or repeat replay until a chance pass. Full grid: **9/45
+  trained, 8/45 certified**, leaving **36 untrained fits and one certification
+  issue**. The 30-hour/$34 full-grid proposal remains unactivated; controller
+  4h/$6 session and 6h/$10 daily caps are unchanged. No full-grid assessment,
+  promotion, final refit or test access occurred.
+- Evidence: [screen report](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md),
+  [completion execution](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_execution.json),
+  [verified closeout](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_verified_closeout.json).
+  Canonical handoff: campaign `runtime/RESUME_STATE.md`. One coordinator owned
+  lifecycle; a focused read-only reviewer audited the replay failure.
 
 **2026-09-27 PMM fold-0 continuation — allocation closed; 7/9 configurations verified:**
 - Continues the same [final plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
