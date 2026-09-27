@@ -149,9 +149,25 @@
       },
       "selected_epoch": 27,
       "checkpoint_sha256": "9c0a6ebf027eb4e45254ae5378ff0fa02f63215eaafc3a5079a5b1172047274a"
+    },
+    {
+      "run_name": "gvp_late_fusion__four_class__first_shell_bias__fold0__seed42",
+      "fit_and_replay_seconds": 1647.3044800758362,
+      "backup_manifest": "ef70e927f7554e90bf884cd888b965ec",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "16664d6d360dad5a186c4498536a129b68b41ef755e02e1d0ac4c32dade575f2",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790528185.4835515
+      },
+      "selected_epoch": 45,
+      "checkpoint_sha256": "9d164689d4f80ba5dcb9caae6415a4905a22d1c337194d7192f01b618a4b5439"
     }
   ],
-  "current_unit": "gvp_late_fusion__four_class__first_shell_bias__fold0__seed42",
-  "next_unit_forecast_seconds": 2000,
-  "updated_at_utc": "2026-09-27T16:27:28.984460+00:00"
+  "current_unit": "only_esm__six_class__none__fold0__seed42",
+  "next_unit_forecast_seconds": 3100,
+  "updated_at_utc": "2026-09-27T16:57:53.792238+00:00",
+  "next_unit_forecast_basis": "Measured cold ESM fit/replay 2416.685s plus transfer/admission allowance; raw graph cache namespace includes the target label scheme."
 }

@@ -24,8 +24,8 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   `adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23`;
   CUDA preflight passed on PyTorch 2.11.0+cu128. Existing pair checkpoints
   reverified; no completed fits, embeddings, smokes or PMM folds are repeated.
-- **5/9 screen configurations verified:** the reused ESMC pair plus ordinary GVP
-  and ordinary late fusion, plus binding-aware GVP. The ordinary GVP fit is
+- **6/9 screen configurations verified:** the reused ESMC pair plus ordinary GVP
+  and ordinary late fusion, plus both binding-aware graph models. The ordinary GVP fit is
   `only_gvp__four_class__none__fold0__seed42`. GVP completed 50 epochs, selected
   epoch **12**, and reached BA **86.0232%**, macro-F1 **77.2357%**. Its fit/replay
   took **2,955 seconds**; all 71 host-backup files verified at **15:26:50 UTC**.
@@ -42,9 +42,16 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
   1.0791 percentage points while macro-F1 rose 4.7606 points; Class VIII recall
   rose from 64.6067% to 76.4045%. This is a single-fold tradeoff, not promotion.
   Fit/replay took **1,519 seconds**, with 71 backup files verified at **16:26 UTC**.
-- Current submitted unit: `gvp_late_fusion__four_class__first_shell_bias__fold0__seed42`,
-  with a conservative 2,000-second fit/replay/transfer forecast based on the
-  observed late-fusion and warm-cache/replay timings.
+- Binding-aware late fusion completed 50 epochs, selected epoch **45**, with
+  BA **88.7277%**, macro-F1 **81.0455%**; BA fell 0.7376 points compared with
+  ordinary late fusion. Fit/replay took **1,647 seconds**, with all 71 files
+  verified at **16:56:25 UTC**. None of the three awareness variants improved
+  the primary score on this fold; this does not establish equivalence or
+  rule out binding information more generally.
+- Current submitted unit: `only_esm__six_class__none__fold0__seed42`,
+  with a conservative **3,100-second** fit/replay/transfer forecast. The measured
+  cold ESM fit/replay took 2,416.7 seconds; target label scheme is part of the
+  raw graph-cache key, so warm direct-four timings are insufficient here.
   Run one exact missing unit
   at a time, use a unique status tag, replay independently, then verify host
   backup and return its acknowledgment before the next submission. Local
@@ -52,7 +59,7 @@ Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026
 - Operational launcher now validates the active session and immutable selected
   VM without requiring an unfinished recovery. One read-only agent audited the
   queue and monitored initial preparation; the coordinator now monitors directly
-  and alone allocates, submits and stops. The current aware-late-fusion unit is not
+  and alone allocates, submits and stops. The current six-class ESMC unit is not
   yet a completed result; no model is promoted.
   No refit or held-out access is part of the screen.
 - A budget question is pending for the later full matrix: the measured/proxy

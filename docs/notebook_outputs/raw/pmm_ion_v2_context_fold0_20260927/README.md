@@ -23,6 +23,8 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
 - [Budget forecast](runtime/continuation_budget_forecast.json): measured GVP and
   ESM times, explicit warm-cache/late-fusion proxies, preserved prior use, and
   the pending larger-envelope question. A proposal is not an approved budget.
+- [GPU execution review](runtime/gpu_execution_review.md): measured preparation,
+  training and persistence costs, cache reuse, and interpretation limits.
 - `units/`: portable completed-fit metadata excerpts, selected receipts, learning curves
   and validation predictions. This directory corresponds to canonical `runs/`;
   binary checkpoints stay in the verified local/VM storage and their hashes are
