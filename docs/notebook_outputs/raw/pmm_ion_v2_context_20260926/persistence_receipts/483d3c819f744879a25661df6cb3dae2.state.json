@@ -1,0 +1,59 @@
+{
+  "active_child": null,
+  "active_session_id": "session-20260926T040843Z-3fe5be87",
+  "allocations": {
+    "session-20260925T213213Z": {
+      "deadline_unix": 1790386148.0,
+      "last_observed_unix": 1790384362.0811758,
+      "max_total_seconds": 14220.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790371933.0
+    },
+    "session-20260926T034202Z-b30eac96": {
+      "deadline_unix": 1790397535.0,
+      "last_observed_unix": 1790394445.3939378,
+      "max_total_seconds": 3420.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790394122.0
+    },
+    "session-20260926T040843Z-3fe5be87": {
+      "deadline_unix": 1790400036.0,
+      "last_observed_unix": 1790397733.1278167,
+      "max_total_seconds": 4320.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790395723.0
+    }
+  },
+  "last_host_transfer": {
+    "ack_path": "persistence_receipts/eba51ab6413b4329a96d10f1f562a18d.ack.json",
+    "ack_sha256": "0953395f6e4757b5062919b8067112ad8d6f3128416145220fd590bf7a9fa07c",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "file_count": 71,
+    "manifest_path": "persistence_receipts/eba51ab6413b4329a96d10f1f562a18d.json",
+    "manifest_sha256": "00a9275a331787b5ba6075e3461746bec2f399a02aae8eb38207071576ad8e03"
+  },
+  "owner": {
+    "hostname": "deepmzyme-l4.us-central1-c.c.deepmzyme-gpu-vm.internal",
+    "pid": 2296
+  },
+  "pending_transfer": {
+    "ack_path": "persistence_receipts/483d3c819f744879a25661df6cb3dae2.ack.json",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "manifest_path": "persistence_receipts/483d3c819f744879a25661df6cb3dae2.json"
+  },
+  "pending_unit": {
+    "elapsed_seconds": 1025.194878578186,
+    "estimated_seconds": 1800.0,
+    "finished_unix": 1790397733.1257646,
+    "persisted": false,
+    "required_seconds": 3150.0,
+    "run_name": "only_esm__four_class__first_shell_bias__fold0__seed42",
+    "session_id": "session-20260926T040843Z-3fe5be87",
+    "started_unix": 1790396707.8452165,
+    "status": "completed"
+  },
+  "schema_version": 1
+}

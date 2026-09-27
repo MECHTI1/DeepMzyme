@@ -1,0 +1,43 @@
+{
+  "active_child": null,
+  "active_session_id": "session-20260925T213213Z",
+  "allocations": {
+    "session-20260925T213213Z": {
+      "deadline_unix": 1790386148.0,
+      "last_observed_unix": 1790384361.2175689,
+      "max_total_seconds": 14220.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790371933.0
+    }
+  },
+  "last_host_transfer": {
+    "ack_path": "persistence_receipts/056cffd0a1aa4a2481fa1acd1eeb7684.ack.json",
+    "ack_sha256": "e55af051017c845af29dfebfef5d51adc62f047dddf9e6a2331e3e6729d38f06",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "file_count": 15339,
+    "manifest_path": "persistence_receipts/056cffd0a1aa4a2481fa1acd1eeb7684.json",
+    "manifest_sha256": "2b93606d0679c799742526094e641f6248776eccfe22a6dfc883d26f1988f021"
+  },
+  "owner": {
+    "hostname": "deepmzyme-l4.us-central1-a.c.deepmzyme-gpu-vm.internal",
+    "pid": 46440
+  },
+  "pending_transfer": {
+    "ack_path": "persistence_receipts/eba51ab6413b4329a96d10f1f562a18d.ack.json",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "manifest_path": "persistence_receipts/eba51ab6413b4329a96d10f1f562a18d.json"
+  },
+  "pending_unit": {
+    "elapsed_seconds": 2416.68505191803,
+    "estimated_seconds": 2400.0,
+    "finished_unix": 1790384361.2156446,
+    "persisted": false,
+    "required_seconds": 3900.0,
+    "run_name": "only_esm__four_class__none__fold0__seed42",
+    "session_id": "session-20260925T213213Z",
+    "started_unix": 1790381944.4442396,
+    "status": "completed"
+  },
+  "schema_version": 1
+}

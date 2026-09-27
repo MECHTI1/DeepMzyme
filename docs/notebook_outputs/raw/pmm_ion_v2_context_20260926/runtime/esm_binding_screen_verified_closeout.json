@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-09-27T14:11:50.906106+00:00",
+  "status": "completed_exploratory_single_fold_pair",
+  "new_training_this_resumption": false,
+  "new_gpu_start_this_resumption": false,
+  "recovered_session_id": "session-20260926T040843Z-3fe5be87",
+  "fit_elapsed_seconds": 1025.194878578186,
+  "fit_completed_at_utc": "2026-09-26T04:42:13.125765Z",
+  "host_backup_verified_at_utc": "2026-09-26T04:43:01.951893Z",
+  "cloud_stopped_at_utc": "2026-09-26T04:44:30Z",
+  "session_running_seconds": 2147,
+  "session_estimated_gross_usd": 0.5244,
+  "screen_total_running_seconds_including_first_recovery": 2579,
+  "screen_total_estimated_running_gross_usd": 0.6298,
+  "host_verification": {
+    "binding_aware_manifest": "483d3c819f744879a25661df6cb3dae2",
+    "binding_aware_files_passed": 71,
+    "baseline_manifest": "eba51ab6413b4329a96d10f1f562a18d",
+    "baseline_files_passed": 70,
+    "baseline_only_mismatch": "run_status.json replaced by latest unit; all immutable baseline artifacts match; TECH-022"
+  },
+  "scientific_audit": {
+    "same_run_config_except_readout_and_identity": true,
+    "same_normalization": true,
+    "same_frozen_validation": true,
+    "validation_ions": 1492,
+    "validation_parent_pockets": 1346,
+    "validation_pdb_groups": 195,
+    "class_support": {
+      "Mn": 738,
+      "Cu": 39,
+      "Zn": 181,
+      "Class VIII": 534
+    },
+    "held_out_access": false,
+    "independent_replay": "match for both arms"
+  },
+  "report_correction": "Preserved prior unverified Markdown locally; removed unsupported delta/positive-bias/epoch-average promotion gates. Neither arm promoted.",
+  "completed_neural_grid_fits": 2,
+  "remaining_neural_grid_fits": 43,
+  "full_grid_continuation": "deferred; no new budget or launch implied",
+  "gpu_recovery_cleanup": {
+    "status": "complete",
+    "completed_at_utc": "2026-09-27T14:10:48Z",
+    "pass_id": "e9ff994df82d",
+    "replacement": {
+      "instance_id": "3144565200755786222",
+      "project": "deepmzyme-gpu-vm",
+      "vm_name": "deepmzyme-l4",
+      "zone": "us-central1-c"
+    },
+    "replacement_state": "TERMINATED",
+    "source_vm_deleted": true,
+    "source_disk_deleted": true,
+    "temporary_snapshot_and_recycle_copy_deleted": true,
+    "verification_evidence_sha256": "58c9478f9d9f8ad7e758ecf0966dbc557d8573787e0c7d5ff0b0191bc2f22f3f",
+    "remaining_storage": "150-GB pd-balanced replacement disk",
+    "remaining_storage_estimated_usd_per_month": 15.0
+  }
+}

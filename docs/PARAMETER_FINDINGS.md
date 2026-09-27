@@ -67,6 +67,21 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ## Current validation anchors and challengers
 
+### ESMC first-shell readout: single-fold screen
+
+On `pmm_ion_metal_v2_context`, ordinary ESMC and its `first_shell_bias`
+counterpart both selected epoch 36 of 50 and achieved **88.3945% validation
+balanced accuracy** and **84.2951% macro-F1**. All 1,492 matched ion predictions
+agree; class probabilities and fitted weights differ. The validation set has
+1,346 parent pockets and 195 PDB groups. This is **Grade 5**, one fold and seed.
+
+The intervention learned positive pooling biases but showed no selected-metric
+gain in this screen. It is not evidence of equivalence, general lack of benefit,
+or ligand identification. Neither epoch-average metrics nor positive bias
+values are promotion criteria. No configuration was promoted and no held-out
+test was opened. See the [paired report](notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen.md)
+for checkpoint-bound metrics, learning curves, confusion matrices and limitations.
+
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 
 All twelve CARE30 EC1 standalone runs completed under the matched two-LR,

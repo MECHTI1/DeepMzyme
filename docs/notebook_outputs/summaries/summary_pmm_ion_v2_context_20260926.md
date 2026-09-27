@@ -1,16 +1,18 @@
-# PMM ion campaign: comparator, nine smokes and first full fit — 2026-09-26
+# PMM ion campaign: comparator and exploratory ESMC pair — verified 2026-09-27
 
 **The PMM comparator completed five PDB-grouped folds: mean fold balanced
 accuracy 70.2885%, pooled out-of-fold balanced accuracy 70.0766%.** The corrected
-cohort contains **7,398 ions across 3,992 PDB groups**. The completed Only-ESM,
-direct-four fold-0 fit has **88.3945% validation balanced accuracy** at selected
-epoch 36, with independent replay and verified backup. This is **Grade 5**
-single-seed validation evidence. PMM has **Grade 2** grouped-fold evidence;
+cohort contains **7,398 ions across 3,992 PDB groups**. The completed ordinary and
+first-shell-aware Only-ESM/direct-four fold-0 fits both have **88.3945% validation
+balanced accuracy** at selected epoch 36, with independent replay and verified
+checkpoint backups. All 1,492 class predictions agree; probabilities differ.
+This is **Grade 5** single-seed validation evidence. PMM has **Grade 2** grouped-fold evidence;
 the unfinished 45-fit neural grid remains **Grade 6**. There is no model-superiority
 result, promotion, final refit or held-out evaluation.
 
 Initial snapshot: 2026-09-25 21:56 UTC (2026-09-26 local), supplemented below through
-the first full fit and budget decision on 2026-09-26. Exact receipts and all five
+the first full fit and budget decision on 2026-09-26, then the recovered second
+fit and cleanup on 2026-09-27. Exact receipts and all five
 validation prediction files are in the [portable evidence](../raw/pmm_ion_v2_context_20260926/README.md).
 Feature-generation completion and implementation checks were added at 22:24 UTC below.
 [Current status](../../../EXPERIMENT_STATUS.md) owns subsequent GPU outcomes and
@@ -260,3 +262,62 @@ Colab authentication is valid and its session list is empty. Its installed CLI
 does not expose the CU balance/rate, browser access was unavailable, and no
 Colab allocation was attempted. The scientific comparison remains one completed
 arm until the single new fit can run.
+
+## Completed ESMC pair recovered and verified — 2026-09-27
+
+The earlier status above was stale. Controller ledger and native artifacts show
+a later session, `session-20260926T040843Z-3fe5be87`, on the same immutable
+replacement from **2026-09-26 04:08:43 to 04:44:30 UTC**. It completed the new
+50-epoch fit and independent replay in **1,025.19 seconds**, with the **71-file
+host backup verified at 04:43:01 UTC**. On 2026-09-27 the local data volume was
+remounted and those files were rehashed; no VM start or training was repeated.
+
+The [paired report](../raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen.md)
+contains metrics, learning curves, confusion matrices, learned biases and
+empty-shell coverage. Both arms select epoch **36**, with BA **88.3945%**,
+macro-F1 **84.2951%** and accuracy **84.7185%**. Recalls are Mn **85.3659%**,
+Cu **97.4359%**, Zn **89.5028%**, Class VIII **81.2734%**. All **1,492** selected
+class predictions agree; probabilities differ in **1,484** rows (maximum absolute
+difference **0.0673162**). Thus equal metrics do not mean identical models.
+
+The two runs match in source/input/fold identities, normalization, class weights,
+software and training settings apart from the declared readout. Validation
+contains **1,346 parent pockets and 195 PDB groups**, with class counts Mn 738,
+Cu 39, Zn 181, Class VIII 534; PDB groups do not overlap training. The first-shell
+proxy is empty for four training ions and zero validation ions. Learned selected
+pooling biases are **+0.0496791** (mean) and **+0.0578617** (attention). These
+indicate relative weighting of the geometric shell proxy, not ligand annotation
+or improved accuracy. The original local Markdown's invented delta, positive-bias
+and epoch-average promotion criteria were removed; its original text remains
+archived locally. No model was promoted or rejected from this one-fold tie.
+
+All 71 new-transfer files verify. The older ordinary manifest verifies all
+70 immutable entries; its only mismatch is the shared `run_status.json`, now
+describing the latest unit. Native manifests and acknowledgments are unchanged;
+[TECH-022](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-022--historical-host-manifests-include-mutable-campaign-status)
+records that persistence limitation. Both native checkpoint/replay/prediction
+identities remain verified. The report generator and compact per-run evidence
+are copied with checksums for reproducibility.
+
+Warm graph preparation took **102.00 seconds**, versus **1,305.36** for the cold
+ordinary fit. Training plus metrics, validation, saves and export took **672.20
+seconds**, versus **648.28**. The 17-minute unit time therefore demonstrates
+cache reuse, not a faster or better awareness model. The later allocation lasted
+**35m47s / $0.5244 estimated running gross**; preparation/admission, connection,
+transfer and idle overhead remain included in that charge. Including the earlier
+7m12s recovery allocation, the screen used **42m59s / $0.6298 running gross**,
+with persistent storage charged separately.
+
+At **2026-09-27 14:10:48 UTC**, controller finalization completed after verifying
+the replacement's fit, replay, native host backup and session identity. It removed
+the superseded `us-central1-a` VM/disk and temporary snapshot, including its exact
+recycle-bin copy. The replacement remains **TERMINATED** with one 150-GB disk
+preserved. Its ongoing storage estimate is **$15/month**, reduced from the
+previous conservative $37.50/month. No compute was started for this closeout.
+See the [closeout receipt](../raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_verified_closeout.json).
+
+The approved immediate screen is complete. **Two of 45 neural grid fits** are
+now complete; the remaining 43, later selection/refits and reference reporting
+remain deferred. Confirmation of this intervention requires both arms on
+remaining frozen folds 1–4, with the screening role of fold 0 disclosed. The
+primary final-test route is still unresolved; no reference/test inputs were opened.
