@@ -1,18 +1,17 @@
 {
   "schema_version": 1,
-  "recorded_at_utc": "2026-09-27T16:26:53.449673+00:00",
+  "recorded_at_utc": "2026-09-27T16:57:10.614838+00:00",
   "status": "partial_single_fold_screen",
   "fold": 0,
   "model_seed": 42,
   "epochs": 50,
   "held_out_access": false,
-  "completed_configurations": 5,
+  "completed_configurations": 6,
   "required_configurations": 9,
   "missing_configurations": [
     "only_esm__six_class__none",
     "only_gvp__six_class__none",
-    "gvp_late_fusion__six_class__none",
-    "gvp_late_fusion__four_class__first_shell_bias"
+    "gvp_late_fusion__six_class__none"
   ],
   "arms": {
     "only_esm__four_class__none": {
@@ -655,6 +654,138 @@
       },
       "validation_parent_pockets": 1346,
       "validation_pdb_groups": 195
+    },
+    "gvp_late_fusion__four_class__first_shell_bias": {
+      "run_name": "gvp_late_fusion__four_class__first_shell_bias__fold0__seed42",
+      "metrics": {
+        "common4": {
+          "balanced_accuracy": 0.8872772848167606,
+          "accuracy": 0.8445040214477212,
+          "macro_f1": 0.8104554337836258,
+          "min_recall": 0.8202247191011236,
+          "recall": {
+            "Mn": 0.8373983739837398,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.9171270718232044,
+            "Class VIII": 0.8202247191011236
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              618,
+              0,
+              78,
+              42
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              4,
+              0,
+              166,
+              11
+            ],
+            [
+              18,
+              17,
+              61,
+              438
+            ]
+          ]
+        },
+        "n": 1492,
+        "native": {
+          "balanced_accuracy": 0.8872772848167606,
+          "accuracy": 0.8445040214477212,
+          "macro_f1": 0.8104554337836258,
+          "min_recall": 0.8202247191011236,
+          "recall": {
+            "Mn": 0.8373983739837398,
+            "Cu": 0.9743589743589743,
+            "Zn": 0.9171270718232044,
+            "Class VIII": 0.8202247191011236
+          },
+          "support": {
+            "Mn": 738,
+            "Cu": 39,
+            "Zn": 181,
+            "Class VIII": 534
+          },
+          "confusion_matrix": [
+            [
+              618,
+              0,
+              78,
+              42
+            ],
+            [
+              0,
+              38,
+              1,
+              0
+            ],
+            [
+              4,
+              0,
+              166,
+              11
+            ],
+            [
+              18,
+              17,
+              61,
+              438
+            ]
+          ]
+        }
+      },
+      "selected_epoch": 45,
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "first_shell_bias",
+        "resolved_config_sha256": "406f08d3ff48b556768e3a2da3e013b504710aa948d35ee7fb1b0d48187faa57",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "checkpoint_sha256": "9d164689d4f80ba5dcb9caae6415a4905a22d1c337194d7192f01b618a4b5439",
+      "predictions_sha256": "81591d29feab44e609773e7a8c68a34690ff22d131ce18e4615cb978766b9c29",
+      "independent_replay": "verified",
+      "first_shell_support": {
+        "train": {
+          "n_graphs": 5906,
+          "n_empty_first_shell": 4
+        },
+        "val": {
+          "n_graphs": 1492,
+          "n_empty_first_shell": 0
+        }
+      },
+      "learned_pooling_biases": {
+        "esm_graph_encoder.binding_bias.mean_bias": 0.016950266435742378,
+        "esm_graph_encoder.binding_bias.attn_bias": 0.04111230745911598,
+        "gvp_binding_bias.mean_bias": 0.019985361024737358,
+        "gvp_binding_bias.attn_bias": 0.009405608288943768
+      },
+      "validation_parent_pockets": 1346,
+      "validation_pdb_groups": 195
     }
   },
   "pmm_same_fold": {
@@ -725,6 +856,17 @@
         "Cu": -5.128205128205132,
         "Zn": -0.5524861878453025,
         "Class VIII": 11.79775280898876
+      }
+    },
+    {
+      "contrast": "gvp_late_fusion: first_shell_bias vs ordinary readout",
+      "balanced_accuracy_delta_pp": -0.7375710924817591,
+      "macro_f1_delta_pp": 0.3172062669457354,
+      "class_recall_delta_pp": {
+        "Mn": 1.084010840108407,
+        "Cu": -2.564102564102566,
+        "Zn": -1.6574585635359074,
+        "Class VIII": 0.1872659176029967
       }
     }
   ],
