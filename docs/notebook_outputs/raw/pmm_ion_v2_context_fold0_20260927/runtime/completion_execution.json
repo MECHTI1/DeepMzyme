@@ -3,7 +3,7 @@
   "recorded_at_utc": "2026-09-27T18:10:08.526417+00:00",
   "user_instruction": "so please continue.",
   "authorization_scope": "Continue the two remaining six-class fold-0 screen configurations on the existing L4, one bounded session up to2.5hours under unchanged4h/$6 session and6h/$10 daily caps. This does not activate the separate30hour/$34 full-grid proposal.",
-  "status": "running",
+  "status": "allocation_closed_screen_replay_blocked",
   "requested_hours": 2.5,
   "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
   "prior_screen_configurations": 7,
@@ -30,13 +30,29 @@
       "forecast_seconds": 2000
     }
   ],
-  "completed_new_units": [],
-  "current_unit": "gvp_late_fusion__six_class__none__fold0__seed42",
+  "completed_new_units": [
+    {
+      "run_name": "gvp_late_fusion__six_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 1528.3615968227386,
+      "backup_manifest": "d448d82687bb4d6087964c1a5eb8bec2",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "d8f10a943ab3b76185881337d03eb6d3796d048fe661bbeeb46a30d82f524f85",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790537960.981427
+      },
+      "selected_epoch": 32,
+      "checkpoint_sha256": "b596db995bc3d929cffeb9abaa94f1ba6c275872b7214cbfda637921cc3ec719"
+    }
+  ],
+  "current_unit": null,
   "held_out_access": false,
   "full_grid_budget_proposal_activated": false,
   "controller_caps_changed": false,
   "session": {
-    "active": true,
+    "active": false,
     "gross_usd_per_hour": 0.879172,
     "instance_id": "3144565200755786222",
     "max_run_duration_s": 8820,
@@ -45,10 +61,14 @@
     "session_start": "2026-09-27T18:12:00Z",
     "termination_ts": "2026-09-27T20:38:52Z",
     "vm_name": "deepmzyme-l4",
-    "zone": "us-central1-c"
+    "zone": "us-central1-c",
+    "session_stop": "2026-09-27T19:40:52Z",
+    "elapsed_running_s": 5333,
+    "estimated_running_gross_usd": 1.3023,
+    "provider_status_verified_at_utc": "2026-09-27T19:41:10Z"
   },
-  "updated_at_utc": "2026-09-27T19:12:15.638996+00:00",
-  "exec_session_id": 90050,
+  "updated_at_utc": "2026-09-27T19:42:49.668166+00:00",
+  "exec_session_id": null,
   "runtime_preflight": {
     "source_hash_matches": true,
     "gpu": "NVIDIA L4",
@@ -95,5 +115,7 @@
       "backup_manifest": "f76be57729b14af4ac3380f919a78cbb",
       "checkpoint_sha256": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0"
     }
-  ]
+  ],
+  "completed_screen_training_fits": 9,
+  "certified_screen_configurations": 8
 }
