@@ -16,6 +16,8 @@ Measured profile examples (seconds; see each completed unit's
 | Ordinary GVP, cold graphs | 1294.5 | 986.2 | 156.0 | 8.9 |
 | Ordinary late fusion, warm graphs | 107.7 | 1026.0 | 157.9 | 8.1 |
 | Binding-aware GVP, warm graphs | 85.4 | 961.3 | 152.1 | 8.9 |
+| Binding-aware late fusion, warm graphs | 97.3 | 1052.0 | 163.6 | 8.3 |
+| Six-class ESMC, cold graphs | 1334.9 | 519.0 | 118.4 | 6.4 |
 
 Raw graph-cache reuse removes most repeated preparation cost. The GVP pair's
 preparation differs by about 20.2 minutes; its overall runtime difference must

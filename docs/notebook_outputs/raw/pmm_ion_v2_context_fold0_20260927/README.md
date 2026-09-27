@@ -10,6 +10,12 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
   selected immutable VM, allocation identity/deadline, unchanged controller
   caps and operational fixes. Historical receipt; current state is owned by
   [EXPERIMENT_STATUS.md](../../../../EXPERIMENT_STATUS.md).
+- [Verified closeout](runtime/verified_closeout.json): seven completed screen
+  configurations, five new verified backups, provider-confirmed TERMINATED
+  state, actual session accounting, and the pending budget/start decision.
+  [Provider status](runtime/vm_status_closeout.log) and
+  [controller report](runtime/vm_report_closeout.log) preserve the closeout evidence.
+  Two fold-0 configurations remain; the full grid is seven of 45 complete.
 - [Exploratory screen report](runtime/screen_report.md),
   [full metrics/identities](runtime/screen_report.json),
   [metrics CSV](runtime/screen_metrics.csv).
@@ -23,6 +29,7 @@ toward all nine configurations on fold 0; it does not complete the 45-fit grid.
 - [Budget forecast](runtime/continuation_budget_forecast.json): measured GVP and
   ESM times, explicit warm-cache/late-fusion proxies, preserved prior use, and
   the pending larger-envelope question. A proposal is not an approved budget.
+  The closeout receipt contains the updated forecast after all five new fits.
 - [GPU execution review](runtime/gpu_execution_review.md): measured preparation,
   training and persistence costs, cache reuse, and interpretation limits.
 - `units/`: portable completed-fit metadata excerpts, selected receipts, learning curves

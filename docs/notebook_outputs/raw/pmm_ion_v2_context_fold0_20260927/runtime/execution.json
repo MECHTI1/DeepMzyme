@@ -3,10 +3,10 @@
   "recorded_at_utc": "2026-09-27T14:35:49.460597+00:00",
   "user_instruction": "So please continue execution with this plan.",
   "scope": "Continue the named plan via its nine-configuration fold-0 screen; use existing four-hour session and daily controller limits. No activation of the separate proposed 30-hour/$34 envelope.",
-  "status": "running",
+  "status": "allocation_closed_partial_screen_budget_decision_pending",
   "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
   "session": {
-    "active": true,
+    "active": false,
     "gross_usd_per_hour": 0.879172,
     "instance_id": "3144565200755786222",
     "max_run_duration_s": 14220,
@@ -15,7 +15,9 @@
     "session_start": "2026-09-27T14:32:39Z",
     "termination_ts": "2026-09-27T18:29:32Z",
     "vm_name": "deepmzyme-l4",
-    "zone": "us-central1-c"
+    "zone": "us-central1-c",
+    "provider_stop_verified": true,
+    "actual_stop_utc": "2026-09-27T17:41:40Z"
   },
   "requested_hours": 4,
   "session_cap_usd": 6,
@@ -164,10 +166,29 @@
       },
       "selected_epoch": 45,
       "checkpoint_sha256": "9d164689d4f80ba5dcb9caae6415a4905a22d1c337194d7192f01b618a4b5439"
+    },
+    {
+      "run_name": "only_esm__six_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 2487.0801990032196,
+      "backup_manifest": "633b0121ea9846f0884585bc915ca516",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "51d2f486d88d041a8ebdddad213f09a5da72437559b3c01ac0bbded60462c981",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790530799.156928
+      },
+      "selected_epoch": 33,
+      "checkpoint_sha256": "edf67d8861d9ff70137360834a0ddce552f546feb5e8c0fecf6fc51763305c6d"
     }
   ],
-  "current_unit": "only_esm__six_class__none__fold0__seed42",
-  "next_unit_forecast_seconds": 3100,
-  "updated_at_utc": "2026-09-27T16:57:53.792238+00:00",
-  "next_unit_forecast_basis": "Measured cold ESM fit/replay 2416.685s plus transfer/admission allowance; raw graph cache namespace includes the target label scheme."
+  "current_unit": null,
+  "next_unit_forecast_seconds": 3600,
+  "updated_at_utc": "2026-09-27T17:44:18.791983+00:00",
+  "next_unit_forecast_basis": "Measured cold GVP fit/replay 2955s plus admission/transfer allowance; six-class raw graphs differ from Only-ESM graph options.",
+  "next_unit": "only_gvp__six_class__none__fold0__seed42",
+  "completed_screen_configurations": 7,
+  "closed_at_utc": "2026-09-27T17:41:40Z",
+  "closeout_receipt": "runtime/fold0_screen_20260927/verified_closeout.json"
 }

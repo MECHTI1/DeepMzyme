@@ -67,7 +67,7 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ## Current validation anchors and challengers
 
-### ESMC first-shell readout: single-fold screen
+### PMM ion campaign: single-fold target and readout comparisons
 
 On `pmm_ion_metal_v2_context`, ordinary ESMC and its `first_shell_bias`
 counterpart both selected epoch 36 of 50 and achieved **88.3945% validation
@@ -81,6 +81,22 @@ or ligand identification. Neither epoch-average metrics nor positive bias
 values are promotion criteria. No configuration was promoted and no held-out
 test was opened. See the [paired report](notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen.md)
 for checkpoint-bound metrics, learning curves, confusion matrices and limitations.
+
+The same frozen fold/seed continuation also evaluated both graph families.
+For GVP, first-shell weighting changed BA **86.0232% → 84.9441%** while
+macro-F1 increased **77.2357% → 81.9963%** and Class VIII recall increased
+**64.6067% → 76.4045%**. Late fusion changed BA **89.4653% → 88.7277%**
+and macro-F1 **80.7283% → 81.0455%**. Thus no family improved the primary
+metric on this fold. These Grade-5 tradeoffs do not establish general benefit,
+equivalence, or lack of usefulness of binding information.
+
+Matched six-class ESMC selected epoch 33 by native six-class BA (**72.2507%**).
+Its probability-sum collapsed-four BA is **85.8393%**, below direct-four
+ESMC's **88.3945%**; native Fe/Co/Ni recalls are **79.8429% / 34.2857% /
+58.9744%**. Do not replace that checkpoint with a collapsed-score maximum or
+promote a target formulation from one fold. See the
+[continuation report](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)
+and its CSV/JSON for every selected-checkpoint metric and class recall.
 
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 
