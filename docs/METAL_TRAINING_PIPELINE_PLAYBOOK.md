@@ -131,6 +131,63 @@ units and independent replay, verified host backup and controller-confirmed
 it is not a superiority claim. Later confirmation of the ESMC intervention
 requires both arms on folds 1–4, with fold 0's screening role disclosed.
 
+### Nine-configuration fold-0 screen continuation
+
+After the completed ESMC pair, the 2026-09-27 continuation uses the same frozen
+profile for the seven remaining fold-0/seed-42 units. Reuse preparation, smokes,
+PMM outputs and the completed pair. Use these one-unit selectors serially;
+do not submit a broad `--folds 0` command in `host_pull` mode, because the
+runner also republishes reused units and stops for their acknowledgment.
+
+| Order | `--families` | `--targets` | `--readouts` |
+|---|---|---|---|
+| 1 | `only_gvp` | `four_class` | `none` |
+| 2 | `gvp_late_fusion` | `four_class` | `none` |
+| 3 | `only_gvp` | `four_class` | `first_shell_bias` |
+| 4 | `gvp_late_fusion` | `four_class` | `first_shell_bias` |
+| 5 | `only_esm` | `six_class` | `none` |
+| 6 | `only_gvp` | `six_class` | `none` |
+| 7 | `gvp_late_fusion` | `six_class` | `none` |
+
+Use one requested four-hour session under unchanged controller caps. Its usual
+237-minute provider deadline includes setup, verification, execution and
+closeout. Per-unit admission retains the 1.25 forecast multiplier and 900-second
+reserve. The first cold full GVP unit uses a conservative 3,600-second forecast
+based on the measured batch probe plus full preparation/replay overhead; replace
+the proxy with observed complete-unit times before subsequent admission. This
+is not a guarantee that all seven units fit. Apply the budget-decision rule at
+the first safe boundary if remaining work cannot fit; never shorten epochs or
+drop a scientific arm.
+
+With `RUNTIME` set using the full-campaign block below and the actual active
+allocation, and one table row assigned to `PMM_FAMILY`, `PMM_TARGET` and
+`PMM_READOUT`:
+
+```bash
+PMM_UNIT="${PMM_FAMILY}__${PMM_TARGET}__${PMM_READOUT}__fold0__seed42"
+$PY scripts/run_metal_5fold_cv.py --campaign-dir "$C" --train-dir "$T" \
+  --campaign-action run --device cuda --load-workers 4 \
+  --families "$PMM_FAMILY" --targets "$PMM_TARGET" --readouts "$PMM_READOUT" \
+  --folds 0 --status-tag "$PMM_UNIT" "${RUNTIME[@]}"
+```
+
+Use a distinct status tag for each unit so a later fit does not overwrite a
+previous host manifest's status file. Require independent replay, verify all
+manifest hashes on the workstation, and return the host acknowledgment before
+the next unit. On a failed or ambiguous SSH/runner exit, inspect the same worker
+and pull any terminal artifacts before deciding whether a retry is necessary.
+An operational wrapper must bind the current session to the selected immutable
+VM identity; it must not require an unfinished fallback after recovery closes.
+
+Expected outputs are the existing per-fit artifacts listed below, distinct
+`run_status_<unit>.json`, persistence manifests/acknowledgments and a fold-0
+screen summary. Report the common-four endpoint for every arm and retain native
+six-class metrics and Fe/Co/Ni recalls. This screen has no promotion gate and
+does not invoke full-grid `assess`, final refitting or test evaluation. Full
+comparison completion still requires all 45 verified fits.
+
+### Full campaign commands
+
 Commands (run from the repository root; `T` is the dataset's `train/`
 directory, `C` the campaign root; outputs never go under `DeepMzyme_Data/`
 runs of other campaigns):
