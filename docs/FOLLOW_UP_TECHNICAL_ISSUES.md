@@ -928,3 +928,21 @@ symmetry context. The versioned v2 matched subset consistently excludes them;
 see `DATASETS.md` for counts and interpretation. The original v1 artifacts remain
 historical evidence. These implementation checks do not establish GPU efficiency,
 model superiority, or published PMM context parity.
+
+## TECH-022 — Historical host manifests include mutable campaign status
+
+**Status:** Open; observed during the 2026-09-27 PMM screen closeout.
+
+Each `host_pull` manifest includes the campaign-level `run_status.json`. The next
+completed unit replaces that file, so the previous unit's full manifest no
+longer verifies at the shared destination. The ordinary ESMC manifest rechecks
+70/71 files successfully; its only mismatch is this aggregate status file.
+All immutable baseline run artifacts still match, and the new binding-aware
+unit's complete 71-file manifest verifies. Historical acknowledgment and
+per-transfer state snapshots remain intact, so this does not invalidate either
+fit or their matched comparison.
+
+A future persistence change should snapshot aggregate status under the transfer
+ID before hashing, rather than require an old mutable file to remain current.
+Do not overwrite historical manifests or acknowledgments to conceal the mismatch.
+The frozen scientific source was retained for the completed screen.

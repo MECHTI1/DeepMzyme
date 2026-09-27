@@ -13,6 +13,9 @@ source revision and 137 passing targeted checks were added after resumption at
 2026-09-26 00:10 UTC.
 The first full fit, its verified host acknowledgment, operational batch probes
 and proposed continuation budget were added after 01:00 UTC.
+The completed ESMC pair was recovered and reverified on 2026-09-27, followed by
+controller recovery finalization. Earlier stockout/admission receipts remain
+historical records; the new verified-closeout receipt owns the later outcome.
 
 | Files | Evidence |
 |---|---|
@@ -37,6 +40,10 @@ and proposed continuation budget were added after 01:00 UTC.
 | [`runtime/session_closeout.json`](runtime/session_closeout.json) | Controller-confirmed stopped state and session accounting; no new allocation |
 | [`runtime/esm_binding_screen_execution.json`](runtime/esm_binding_screen_execution.json) | Approved one-fit ESMC screen; three authorized starts rejected for L4 capacity, latest alternate-zone hint and local controller limitation recorded; no new fit |
 | [`runtime/gpu_fallback_execution.json`](runtime/gpu_fallback_execution.json), [`runtime/fallback_admission_state.json`](runtime/fallback_admission_state.json), [`runtime/esm_binding_screen_run.log`](runtime/esm_binding_screen_run.log) | Successful stopped-source snapshot recovery to `us-central1-c`; unchanged inputs/source and real CUDA verified; single fit refused by remaining-time admission; replacement stopped, recovery storage retained |
+| [`runtime/esm_binding_screen.md`](runtime/esm_binding_screen.md), [`runtime/esm_binding_screen.json`](runtime/esm_binding_screen.json), [`runtime/esm_binding_screen.png`](runtime/esm_binding_screen.png) | Completed exploratory ordinary/first-shell ESMC pair; matched selected metrics, probability differences, curves, confusion matrices, biases and coverage; no promotion |
+| [`runtime/report_esm_binding_screen.py`](runtime/report_esm_binding_screen.py) | CPU-only report generator; pass `--campaign-dir` pointing to the complete canonical campaign (including checkpoints), not this compact copy |
+| [`runs/`](runs/), [`persistence_receipts/`](persistence_receipts/) | Both native selected-checkpoint/replay receipts, validation predictions, epoch metrics and profiles; original host manifests, acknowledgments and transfer-state snapshots |
+| [`runtime/esm_binding_screen_verified_closeout.json`](runtime/esm_binding_screen_verified_closeout.json), [`runtime/recovery_evidence_verified_20260927.json`](runtime/recovery_evidence_verified_20260927.json), [`runtime/gpu_recovery_finalize_20260927.log`](runtime/gpu_recovery_finalize_20260927.log) | Reverified later session, 71-file new backup, corrected cleanup completion time from native acknowledgment, exact superseded-resource cleanup and stopped replacement; baseline mutable-status exception recorded |
 
 The campaign manifest records the cohort-creation source snapshot. The GPU
 receipt records the later frozen execution source
@@ -52,7 +59,7 @@ dataset bundle. No credentials, private cloud configuration, held-out files or
 model checkpoints are included. Full remote environment setup and training
 completion are not established by the ESMC sample receipt.
 
-PMM's completed fivefold comparison has Grade 2 evidence. The individual full
-neural fit has Grade 5 evidence; the unfinished neural grid and runtime probes
+PMM's completed fivefold comparison has Grade 2 evidence. The completed single-fold
+neural pair has Grade 5 evidence; the unfinished neural grid and runtime probes
 have Grade 6 evidence. No superiority, promotion, final-refit or held-out result
 is present.

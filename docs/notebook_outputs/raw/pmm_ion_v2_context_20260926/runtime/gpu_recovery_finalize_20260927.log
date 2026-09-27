@@ -1,0 +1,4 @@
+WARNING: ZONE=us-central1-c differs from the approved baseline us-central1-a; this must be an explicit user decision
+Verified cleanup: stop replacement, delete recorded superseded VM/disks/snapshot; keep replacement disk and local backup.
+deepmzyme-l4 is already TERMINATED (no compute/GPU charges accruing).
+Recovery finalized; replacement TERMINATED, superseded resources removed, independent backup retained.

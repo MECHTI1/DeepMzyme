@@ -5,75 +5,50 @@ next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
-Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-26.
+Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
 
-**2026-09-26 PMM ion-level comparison campaign (`pmm_ion_metal_v2_context`) — GPU recovery verified; single-fold ESMC fit awaits a budget decision:**
-- Executes [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md);
-  exact recipe in the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context).
-  Supersedes the five-class Zenodo wrapper for this comparison (direct four vs six, late fusion, PDB-grouped folds, no test access).
-- Training-only cohort frozen and context-certified: **7,398 / 7,920** source rows,
-  **3,992 PDB groups**, five class-complete frozen folds. Exclusions: 9 missing,
-  10 non-single-metal residues, 503 with explicit missing protein symmetry context.
-  Campaign root: `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
-  Historical v1 (7,901 ions) and its five verified PMM results and three one-epoch
-  Only-GVP smokes remain preserved; they are not v2 experiment evidence.
-- Implemented and tested: source binding, matched folds/weights/readouts, strict
-  ESM content certification, RNG-isolated training metrics, independent checkpoint
-  replay, comparator integrity, bounded execution/persistence, and the gated
-  validation → final refits → secondary reference report. All 114 campaign
-  regressions and 23 raw-graph-cache tests passed, including input-drift rejection,
-  exact cached graph equality and training-only normalization.
-- **Execution state:** all five v2 PMM CPU folds completed and verified (mean
-  fold common-four BA 70.2885%; pooled OOF BA 70.0766%). ESM planning is complete:
-  4,972 unique sequences, 7,664 payloads, maximum length 3,715 and 10.36 GB
-  estimated FP32 storage. Generation completed all 7,664 payloads (10.43 GB actual);
-  certification constructed all 7,398 graphs successfully. The complete input
-  backup passed host-side checksums. All nine GPU smoke cases passed independent
-  replay and host backup verification. The first 50-epoch Only-ESM/direct-four
-  fold-0 fit completed in 40m17s and its 71-file host backup was acknowledged at
-  01:00 UTC. Validation selected epoch 36: common-four BA **88.3945%**, on 1,492
-  validation ions. This is one seed/fold, not a completed comparison or promotion.
-  **44/45 neural grid fits, selection and final refits remain.**
-  One L4 VM was allocated in `us-central1-a` on the first bounded attempt at
-  2026-09-25 21:32 UTC. Actual CUDA and ESMC-600M preflight passed through the
-  longest planned sequence. After an agent interruption, the same VM and its
-  completed preparation were recovered without regeneration. The original
-  provider hard stop was 2026-09-26 01:29 UTC; the controller stopped the VM at
-  **01:06:50 UTC**, with cloud state **TERMINATED** confirmed. Session usage was
-  **3h34m / approximately $3.15 gross**, including interrupted-session overhead.
-  The VM disk and caches are preserved. No reference-test access occurred.
-  The user subsequently approved an **ESMC pair first** screen: reuse this
-  ordinary baseline and run only its `first_shell_bias` counterpart on frozen
-  fold 0, seed 42, with the same 50-epoch recipe. One bounded one-hour VM session
-  is authorized for that screen; the broader grid is deferred. The **30 total
-  VM hours / $34 gross** proposal remains unapproved and is not needed for this
-  stage. Three starts in `us-central1-a` failed for capacity; the
-  [historical screen receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_execution.json)
-  preserves those attempts. The approved controller fix now permits a verified
-  stopped source alongside one active replacement, accounts for overlapping
-  storage, and preserves data through snapshot/restore. Its bounded fallback
-  succeeded on the first destination, `us-central1-c`, at **03:42:02 UTC**.
-  The restored NVIDIA L4 passed real CUDA execution and the unchanged scientific
-  source hash; the runner verified frozen inputs and accepted the earlier
-  baseline's host acknowledgment. No embeddings, smokes or completed fits were
-  repeated. The new fit was refused at **03:47:25 UTC**: its unchanged forecast,
-  25% margin and closeout reserve required **3,150 seconds**, with **3,090** left.
-  **No new training fit started.** The replacement was stopped at **03:49:13 UTC**
-  (about **7m12s / $0.11 estimated running gross**); cloud state is **TERMINATED**.
-  The source VM/disk, temporary snapshot and stopped replacement disk are retained
-  pending a completed replacement fit, replay and independent backup. Their
-  storage continues billing. A **1.5-hour total screen allocation ceiling**, including
-  the recovery session, has been requested but is **not approved**. No automatic
-  restart is authorized. See the
-  [recovery receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/gpu_fallback_execution.json).
-  The earlier full-grid forecast is about 22.3 additional VM hours before
-  contingency, not the budget of the immediate screen. See the
-  [forecast receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/remaining_budget_forecast.json)
-  for assumptions and the unmeasured reference-report cost.
-  The primary final-test route remains unresolved; the authorized PMM
-  reference route is secondary and possibly overlapping.
-  See the [evidence summary](docs/notebook_outputs/summaries/summary_pmm_ion_v2_context_20260926.md)
-  for completed PMM folds, context exclusions and GPU measurements.
+**2026-09-27 PMM ion-level campaign (`pmm_ion_metal_v2_context`) — exploratory ESMC pair and GPU recovery closeout complete:**
+- Executes the [metal-level PMM plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
+  and its [ESMC-pair amendment](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#immediate-exploratory-screen-only-esm-binding-awareness-pair).
+  The broader 45-fit matrix remains deferred; no final refit, promotion or test access occurred.
+- Frozen training-only cohort: **7,398 ions / 3,992 PDB groups**, five class-complete
+  PDB-grouped folds. Excluded source rows: 9 missing, 10 non-single-metal residues,
+  503 missing explicit protein-symmetry context. Canonical artifacts:
+  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
+  Historical v1 evidence is preserved separately.
+- Completed preparation is reusable: five PMM CPU folds (mean common-four BA
+  **70.2885%**, pooled OOF **70.0766%**), all **7,664 ESMC-600M payloads**,
+  full feature certification/input backup and nine GPU smoke/replay cases.
+  Engineering evidence: 114 campaign regressions and 23 cache tests passed.
+- **Both 50-epoch ESMC fits are complete:** ordinary and `first_shell_bias`,
+  direct-four, frozen fold 0, model seed 42. Both select epoch **36**, with
+  validation BA **88.3945%**, macro-F1 **84.2951%**, accuracy **84.7185%** and
+  identical class recalls. All **1,492 ion class predictions agree**; probabilities
+  differ for 1,484 ions. Validation contains **1,346 parent pockets / 195 PDB groups**.
+  This is **Grade 5 single-fold evidence**, with no selected-metric gain and no
+  equivalence or superiority conclusion. See the [paired report and figure](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen.md).
+- The later `us-central1-c` session on **2026-09-26 04:08:43–04:44:30 UTC**
+  completed the missing fit and replay in **1,025 seconds** and verified its
+  71-file host backup at **04:43:01 UTC**. This supersedes the earlier admission
+  refusal/status note. The local disk was remounted and results reverified on
+  2026-09-27 without starting a GPU or repeating training. All immutable baseline
+  artifacts also verify; its old manifest's only mismatch is the subsequently
+  replaced aggregate `run_status.json` ([TECH-022](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-022--historical-host-manifests-include-mutable-campaign-status)).
+- **GPU recovery finalized on 2026-09-27:** exact superseded source VM/disk and
+  temporary snapshot, including its recycle-bin copy, were removed after the
+  fit/replay/backup gate passed. The restored replacement remains **TERMINATED**.
+  One 150-GB disk remains, estimated **$15/month**; no GPU compute is running.
+  Recovery plus screen consumed **42m59s / $0.6298 estimated running gross**,
+  excluding separately accounted persistent storage. No new allocation was made
+  in this resumption. The [verified closeout receipt](docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen_verified_closeout.json)
+  binds the later session, results, backup and cleanup.
+- **2/45 neural grid fits are complete; 43 remain**, plus later assessment/refits.
+  The 30-hour/$34 full-grid proposal remains unapproved. A later binding-awareness
+  confirmation must compare both arms on remaining frozen folds 1–4 and disclose
+  fold 0's screening role. The primary final-test route remains unresolved;
+  PMM's possibly overlapping reference route is secondary, not a pristine test.
+  The [evidence summary](docs/notebook_outputs/summaries/summary_pmm_ion_v2_context_20260926.md)
+  preserves the historical capacity failures and source/input provenance.
 
 **2026-09-24 ion-unit correction & Zenodo exact benchmark (RELAUNCHED after total run loss):**
 - **Contract & Architecture:** `--metal-example-unit ion` is fully implemented for standalone metal training in CLI, runner scripts, and Colab notebook, ensuring multi-nuclear sites (e.g. `1a0e` 3-Zn center) receive independent coordinates and residue microenvironments while grouping sibling ions under parent pocket IDs.
