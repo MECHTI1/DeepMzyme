@@ -103,5 +103,25 @@
     "Launcher validates selected immutable VM/current session after fallback finalization.",
     "Exact missing-unit selectors avoid republishing completed pair.",
     "Unique per-unit status tags preserve manifest-bound status bytes."
-  ]
+  ],
+  "completed_new_units": [
+    {
+      "run_name": "only_gvp__four_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 2955,
+      "backup_manifest": "bddc8c42b70c44e1b704cc3b0211bace",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "341330a71d04cb9dbe15a67d05fa17524d73b482149c355012773e6bb3111898",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790522810.078073
+      },
+      "selected_epoch": 12,
+      "checkpoint_sha256": "c258412690b0451d27796f71a9b0ada0a46f6a8a93bf2ae4bc977c8997700de0"
+    }
+  ],
+  "current_unit": "gvp_late_fusion__four_class__none__fold0__seed42",
+  "next_unit_forecast_seconds": 3000,
+  "updated_at_utc": "2026-09-27T15:27:32.186583+00:00"
 }

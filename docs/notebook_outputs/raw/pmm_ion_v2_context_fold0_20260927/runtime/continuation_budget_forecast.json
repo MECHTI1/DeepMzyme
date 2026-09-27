@@ -1,0 +1,46 @@
+{
+  "recorded_at_utc": "2026-09-27T15:29:19.007326+00:00",
+  "status": "budget_question_pending",
+  "completed_grid_fits": 3,
+  "remaining_grid_fits_including_current": 42,
+  "remaining_counts": {
+    "only_esm": 13,
+    "only_gvp": 14,
+    "gvp_late_fusion": 15
+  },
+  "measured_first_gvp_fit_and_replay_seconds": 2955,
+  "measured_gvp_training_profile": {
+    "prepare": 1294.5364323889999,
+    "train_epoch": 986.2207554360007,
+    "train_metric_evaluation": 60.01608736500066,
+    "validation": 156.03510051000126,
+    "checkpoint_save": 8.873580873001629,
+    "selected_export": 3.2081178759999602
+  },
+  "warm_gvp_fit_and_replay_proxy_seconds": 1553.4635676110001,
+  "warm_late_fit_and_replay_proxy_seconds": 1676.0751518650172,
+  "measured_warm_esm_fit_and_replay_seconds": 1025.194878578186,
+  "per_unit_admission_transfer_overhead_allowance_seconds": 240,
+  "cold_profile_allowance_seconds": 3600,
+  "remaining_grid_forecast_hours": 20.526986290568242,
+  "measured_campaign_use_at_question_approximate_hours": 5.2,
+  "measured_campaign_running_gross_at_question_approximate_usd": 4.6,
+  "proposed_total_campaign_vm_hours": 30,
+  "proposed_total_campaign_gross_usd": 34,
+  "approval_received": false,
+  "controller_session_caps_unchanged": {
+    "hours": 4,
+    "gross_usd": 6
+  },
+  "controller_daily_caps_unchanged": {
+    "hours": 6,
+    "gross_usd": 10
+  },
+  "limitations": [
+    "Warm GVP uses measured full GVP time minus cold preparation and replay graph construction plus measured warm preparation; not yet a measured warm GVP fit.",
+    "Late proxy scales measured GVP training work by the bounded batch-probe ratio; update after the current full late fit.",
+    "Three additional cold-profile allowances are conservative cache planning, not a requirement to regenerate features.",
+    "Forecast excludes final test and separately gated reference work; no test authorization implied.",
+    "All previous usage counts; the budget is not reset. Provider/session safeguards and 1.25 per-unit admission margin plus900s reserve remain mandatory."
+  ]
+}

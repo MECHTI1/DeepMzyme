@@ -1,0 +1,79 @@
+{
+  "campaign_run_identity": {
+    "campaign_id": "pmm_ion_metal_v2_context",
+    "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "epochs": 50,
+    "family": "only_gvp",
+    "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+    "fold": 0,
+    "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "model_seed": 42,
+    "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+    "readout": "none",
+    "resolved_config_sha256": "d932c0f1f3d021ba711fe3c5254b1af53a47c3a086a986d0e3b141a3a8c2e0aa",
+    "smoke": false,
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "target_scheme": "four_class"
+  },
+  "common_four_rule": "sum native probabilities into [Mn, Cu, Zn, Fe+Co+Ni] before argmax",
+  "completed_epochs": 50,
+  "fit_status": "completed",
+  "independent_replay": true,
+  "metrics": {
+    "val_metal_acc": 0.8089812397956848,
+    "val_metal_balanced_acc": 0.8602322112519033,
+    "val_metal_class_viii_recall": 0.6460674157303371,
+    "val_metal_collapsed4_acc": 0.8089812397956848,
+    "val_metal_collapsed4_balanced_acc": 0.8602322112519033,
+    "val_metal_collapsed4_class_viii_recall": 0.6460674157303371,
+    "val_metal_collapsed4_cu_recall": 1.0,
+    "val_metal_collapsed4_macro_f1": 0.7723567270260764,
+    "val_metal_collapsed4_mn_recall": 0.8943089430894309,
+    "val_metal_collapsed4_per_class_recall": {
+      "Class VIII": 0.6460674157303371,
+      "Cu": 1.0,
+      "Mn": 0.8943089430894309,
+      "Zn": 0.9005524861878453
+    },
+    "val_metal_collapsed4_zn_recall": 0.9005524861878453,
+    "val_metal_fe_recall": null,
+    "val_metal_macro_f1": 0.7723567270260764,
+    "val_metal_min_recall": 0.6460674157303371,
+    "val_metal_mn_recall": 0.8943089430894309,
+    "val_metal_per_class_recall": {
+      "Class VIII": 0.6460674157303371,
+      "Cu": 1.0,
+      "Mn": 0.8943089430894309,
+      "Zn": 0.9005524861878453
+    }
+  },
+  "normalization_refitted": false,
+  "planned_epochs": 50,
+  "prediction_rows_verified": true,
+  "reconciliation": {
+    "val_metal_balanced_acc": {
+      "abs_difference": 0.0,
+      "recorded": 0.8602322112519033,
+      "replayed": 0.8602322112519033
+    },
+    "val_metal_collapsed4_balanced_acc": {
+      "abs_difference": 0.0,
+      "recorded": 0.8602322112519033,
+      "replayed": 0.8602322112519033
+    }
+  },
+  "reconciliation_status": "match",
+  "selected_checkpoint": "best_model_checkpoint.pt",
+  "selected_checkpoint_sha256": "c258412690b0451d27796f71a9b0ada0a46f6a8a93bf2ae4bc977c8997700de0",
+  "selected_epoch": 12,
+  "selection_metric": "val_metal_balanced_acc",
+  "selection_metric_value": 0.8602322112519033,
+  "source_run_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42",
+  "tie_rule": "earliest epoch (strictly greater metric required to replace)",
+  "training_performed": false,
+  "validation_predictions": {
+    "n_rows": 1492,
+    "path": "val_predictions.csv",
+    "sha256": "c7a1ea39db08259d769406a4f7b9b852abd1d0f992fdcbc83fc01355787b7b16"
+  }
+}
