@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-27T18:10:08.526417+00:00",
+  "user_instruction": "so please continue.",
+  "authorization_scope": "Continue the two remaining six-class fold-0 screen configurations on the existing L4, one bounded session up to2.5hours under unchanged4h/$6 session and6h/$10 daily caps. This does not activate the separate30hour/$34 full-grid proposal.",
+  "status": "running",
+  "requested_hours": 2.5,
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "prior_screen_configurations": 7,
+  "prior_grid_fits": 7,
+  "prior_cumulative_running_hours": 7.443888888888889,
+  "prior_cumulative_estimated_running_gross_usd": 6.5445,
+  "forecast_margin": 1.25,
+  "closeout_reserve_seconds": 900,
+  "queue": [
+    {
+      "family": "only_gvp",
+      "target": "six_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 3600
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "six_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 2000
+    }
+  ],
+  "completed_new_units": [],
+  "current_unit": "only_gvp__six_class__none__fold0__seed42",
+  "held_out_access": false,
+  "full_grid_budget_proposal_activated": false,
+  "controller_caps_changed": false,
+  "session": {
+    "active": true,
+    "gross_usd_per_hour": 0.879172,
+    "instance_id": "3144565200755786222",
+    "max_run_duration_s": 8820,
+    "project": "deepmzyme-gpu-vm",
+    "session_id": "session-20260927T181200Z-259157df",
+    "session_start": "2026-09-27T18:12:00Z",
+    "termination_ts": "2026-09-27T20:38:52Z",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-c"
+  },
+  "updated_at_utc": "2026-09-27T18:14:08.549084+00:00",
+  "exec_session_id": 78448,
+  "runtime_preflight": {
+    "source_hash_matches": true,
+    "gpu": "NVIDIA L4",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "cuda_matmul": "passed",
+    "remote_free_gib": 100.6285
+  }
+}
