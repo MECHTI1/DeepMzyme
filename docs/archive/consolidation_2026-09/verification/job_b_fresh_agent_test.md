@@ -8,6 +8,8 @@
 PLAN_v2 §12.6 requires all six answers to match [ANSWER_KEY](../ANSWER_KEY.md).
 Run 2 meets that under this grading. It is a single run after a document fix
 aimed at run 1's miss, not an independent repeat; acceptance is the user's call.
+**The user accepted run 2 on 2026-09-29.** An independent check follows at
+handover: the first task of the new Codex thread is to answer the six questions.
 
 ## Setup and limits (both runs)
 
