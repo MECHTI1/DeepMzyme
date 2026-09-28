@@ -198,6 +198,9 @@ claim or change.
   anchors, trusted evidence files, caveats, and next planned action.
 - `docs/DATASETS.md`: authoritative dataset/split/bundle inventory, current
   availability, provenance links, and historical test-use ledger.
+- `docs/plans/pmm_core_scope_v2.json`: current PMM ordinary-readout four/five/six
+  scope; use the metal playbook for its bounded five-class fold-0 recipe.
+  Preserve the v1 manifest and historical awareness screen.
 - `docs/PARAMETER_FINDINGS.md`: validation/HPO findings with evidence grades;
   historical test metrics are excluded from parameter conclusions.
 - `docs/FOLLOW_UP_TECHNICAL_ISSUES.md`: verified implementation/documentation

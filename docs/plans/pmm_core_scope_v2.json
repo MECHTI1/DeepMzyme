@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope_id": "pmm-core-v2",
+  "campaign_id": "pmm_ion_metal_v2_context",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "authorization": "User explicitly added five-class training on 2026-09-28. Begin with the separate three-fit fold-0 screen protocol; full-grid allocation still requires replay/assessment bridges and an approved remaining budget. Session/day caps remain unchanged.",
+  "families": [
+    "only_esm",
+    "only_gvp",
+    "gvp_late_fusion"
+  ],
+  "targets": [
+    "four_class",
+    "five_class",
+    "six_class"
+  ],
+  "readouts": [
+    "none"
+  ],
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "model_seeds": [
+    42
+  ],
+  "epochs": 50,
+  "required_core_fits": 45,
+  "paused_readouts": [
+    "first_shell_bias"
+  ],
+  "legacy_full_grid_fits": 45,
+  "execution_ready": false,
+  "blocked_by": [
+    "TECH-023",
+    "TECH-025"
+  ],
+  "replay_policy": "Original strict 1e-6 independent replay applies prospectively to the new five-class screen. Existing legacy receipts and retrospective nine-fit v2.1 agreement remain unchanged. Further folds require explicit core replay/assessment integration.",
+  "assessment": {
+    "required_configurations": 9,
+    "required_folds_per_configuration": 5,
+    "required_pmm_folds": 5,
+    "active_contrasts": "five_class versus four_class and six_class versus four_class within each ordinary-readout family",
+    "paused_contrasts": "first_shell_bias versus none within each direct-four family",
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 42,
+    "confidence": 0.95,
+    "simultaneous_correction_denominator": 9,
+    "rare_class_recall_drop_tolerance": 0.03,
+    "planned_decision_filename": "core_validation_decision.json",
+    "legacy_assess_refit_test_compatible": false,
+    "descriptive_only": "five_class versus six_class; no additional formal hypothesis or promotion from fold 0"
+  },
+  "preservation": "Keep all trained fits, smokes, embeddings, caches, PMM folds, historical plans, manifests and replay failures. Do not rename the campaign, edit historical receipts, repeat preparation, or count paused arms as completed.",
+  "binding_revisit_gate": "A specific new mechanistic hypothesis and an explicitly approved matched validation-only protocol are required to reactivate binding-aware work. Current single-fold results are exploratory and do not establish general absence of benefit.",
+  "queued_folds_by_target": {
+    "four_class": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "five_class": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "six_class": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "screen_protocol": "pmm_five_class_screen_v1.json",
+  "supersedes": "pmm_core_scope_v1.json; historical manifest and evidence remain immutable"
+}

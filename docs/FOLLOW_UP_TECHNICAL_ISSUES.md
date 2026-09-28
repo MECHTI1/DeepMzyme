@@ -1035,20 +1035,21 @@ inventory query must never be used as evidence that storage charges ended.
 
 **Status:** Open after the user-approved 2026-09-28 scope amendment; the new
 root-level core entry point rejects execution while TECH-023/TECH-025 remain
-unresolved. Its CPU preview is implemented and tested. No scientific source,
+unresolved. The separately versioned three-fit five-class screen uses strict
+legacy replay and does not require or claim a full-grid decision. Its CPU preview is implemented and tested. No scientific source,
 historical identity, receipt or probability threshold was changed.
 
 The frozen `scripts/run_metal_5fold_cv.py` applies family/target/readout/fold
 filters only after dispatching `assess` and refit actions. Consequently,
 `--readouts none --campaign-action assess` still assesses nine configurations;
 `pmm_final_report.select_configuration()` also requires that complete grid.
-The active scope now requires six ordinary-readout configurations on five
+The active scope now requires nine ordinary-readout four/five/six configurations on five
 folds. Training filters alone cannot change the completion or selection rules.
 
 Implement a separately identified core assessor and promotion/refit bridge
 without rewriting frozen training source or historical evidence. It must:
 
-- Bind `pmm_core_scope_v1` (or an explicitly reviewed successor), all 30 core
+- Bind `pmm_core_scope_v2`, all 45 ordinary-readout core
   units, five compatible PMM folds, shared source/fold/seed identities and
   complete UID-level OOF coverage. Keep the three awareness arms paused.
 - Integrate a prospectively fixed completion/replay rule with TECH-023. The
@@ -1056,7 +1057,7 @@ without rewriting frozen training source or historical evidence. It must:
   silently certify future folds or be presented as a legacy receipt.
 - Preserve native checkpoint selection, common-four target comparisons, all
   class recalls, bootstrap and rare-class gates. Retain the original
-  six-contrast simultaneous correction despite the post-screen scope reduction.
+  six-contrast family plus the three new five-vs-four contrasts (denominator 9).
 - Write distinct `core_cv_*` and `core_validation_decision.json`, binding the
   scope, source and replay policy. Do not overwrite legacy assessment artifacts
   or substitute missing awareness metrics merely to satisfy the old selector.
@@ -1069,3 +1070,8 @@ arms, altered replay evidence, incorrect OOF coverage and premature refit/test
 access before enabling the entry point. Flipping its readiness field alone
 does not resolve these prerequisites. Exact future commands belong in the
 [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation).
+
+The frozen analysis helpers also assume native vocabularies of length four or
+six; a five-class export must use explicit Mn/Cu/Zn/Fe/Co+Ni validation and
+probability-first collapse. The five-class screen adapter provides that bounded
+validation, but full OOF/PMM assessment and refit integration remain open.

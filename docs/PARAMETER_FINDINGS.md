@@ -1,5 +1,10 @@
 # DeepMzyme Parameter and HPO Findings
 
+The user-requested PMM five-class addition is tracked in the
+[v2 scope](plans/pmm_core_scope_v2.json) and
+[current status](../EXPERIMENT_STATUS.md). Adding the arm is not validation
+evidence; native five-class and common-four results must remain separate.
+
 This document is the authoritative synthesis of what validation and HPO have
 taught the project about model and parameter choices. Exact run evidence remains
 in [`notebook_outputs/`](notebook_outputs/), and historical narrative remains in
@@ -71,7 +76,8 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 **Research disposition, approved 2026-09-28:** pause further development and
 confirmation of the current binding-aware readout. Prioritize ordinary-readout
-core models under both target formulations and their matched PMM comparison;
+core models under required four/six and the added five-class formulation, with
+their matched common-four PMM comparison;
 see the [scope amendment](plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness).
 This is a resource-prioritization decision after screening, not an equivalence
 test or a finding that binding information is generally unhelpful. The tested

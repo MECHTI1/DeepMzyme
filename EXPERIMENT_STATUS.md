@@ -7,7 +7,31 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
 
-**2026-09-28 — user-approved core scope; further binding-awareness work paused:**
+**2026-09-28 — five-class comparison explicitly requested; preparation in progress:**
+- Add Mn/Cu/Zn/Fe/Co+Ni training to Only-ESMC, Only-GVP and graph-level late
+  fusion, ordinary readout. The active [v2 scope](docs/plans/pmm_core_scope_v2.json)
+  is **45 ordinary-readout fits**, distinct from the old 45-fit awareness grid.
+  At adoption, **6 core fits are trained and 39 remain** (24 four/six, 15 five).
+  All previous fits, failures, PMM folds, features and caches are preserved.
+- First execute the [three-fit five-class fold-0 screen](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#five-class-exploratory-screen-on-the-frozen-pmm-fold-0).
+  Native-five BA selects the checkpoint; compare its common-four probabilities
+  on the same validation ions. Keep Fe and Co+Ni recalls and distinguish native
+  Co+Ni `Class VIII` from common-four Fe+Co+Ni. No five-class result is yet claimed.
+- The root adapter preserves the frozen scientific source and uses original
+  strict `1e-6` independent replay. The retrospective nine-fit v2.1 policy stays
+  limited to those old fits. Full-grid TECH-023/025, Stage 6B and held-out gates
+  remain open; three exploratory fits do not resolve them.
+- The full-grid preview now lists 39 fixed candidate units, without treating
+  them as a verified missing-work queue. Five-class folds 1–4 intentionally have
+  no execution command yet. Use isolated frozen checkout
+  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;
+  unrelated shared-checkout model/configuration edits are preserved.
+- Binding-aware work remains paused. The previous 30-hour/$34 proposal remains
+  unapproved; session/day caps are unchanged. Provider verified TERMINATED at
+  01:44 UTC before this preparation. Latest measured running use remains
+  **9.3061 hours / $8.1815 estimated gross**, plus retained storage.
+
+**2026-09-28 — historical v1 core scope, superseded by the five-class addition above:**
 - Prioritize ordinary-readout Only-ESMC, Only-GVP and graph-level late fusion,
   each with direct four-class and six-class training on the same five folds.
   The active matrix is **30 fits**, with **6 trained core fits and 24 remaining**.
