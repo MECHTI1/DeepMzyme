@@ -1,0 +1,54 @@
+{
+  "checkpoint": "Job B step 2, independent cloud review before user rule review",
+  "date": "2026-09-28",
+  "environment": {
+    "kind": "Claude Code cloud container with a fresh clone; no workstation, shared checkout, frozen checkout, controller or VM access",
+    "base": "3c0f80c6033a332b65e91302eea16c81add13e1d",
+    "input_patch_sha256": "f8ac2f27d5611796f04cfd0ccc478f18d35722080d99edc1c614a70b075f4ab6",
+    "input_patch_files": 31,
+    "apply": "git apply --check, then git apply --index; staged whitespace check clean",
+    "interpreter": "system python3 3.11.15 for stdlib read-only checks only; the Conda interpreter named in AGENTS is absent here"
+  },
+  "reproduced": {
+    "status_reconstruction": "3c0f80c, 9a25f36^, 9a069d2^ and b45b893 rebuilt byte-for-byte from nine logs: 91 contiguous spans, 60 distinct blocks, source SHA-256 equal to the manifest",
+    "rule_inventory": "466 rows; every row text equals its source lines; every nonempty source line is covered except headings and rules; all kept rows appear verbatim at a named destination",
+    "protected_files_checked": 1869,
+    "protected_set": "exactly the tracked files under src/, scripts/, tests/, notebooks/, docs/plans/, raw evidence, summaries and root *.py at the base",
+    "protected_changes": [],
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "source_hash_scope": "this checkout only; the shared checkout is not reachable from the cloud session",
+    "playbooks": {
+      "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md": "67 fences byte-identical and in order; LF only; heading unique at line 1512 before the first python fence at 1514; first-block SHA-256 equals job_b_before.json",
+      "docs/EC_TRAINING_PIPELINE_PLAYBOOK.md": "file unchanged; 23 fences identical; first-block SHA-256 equals job_b_before.json"
+    },
+    "links": "258 relative links/anchors in changed Markdown resolve; a repository-wide comparison finds no link broken by Job B (ten pre-existing broken links, all in raw evidence or summaries)",
+    "code_consumers": "tests and src readers use only the unchanged first python fence or whole-file digests against their own manifest roots; no consumer of the rewritten AGENTS/STATUS text"
+  },
+  "corrections": [
+    "AGENTS: restored merged-row substance B-A005, B-A010, B-A020, B-A030, B-A193, B-A200, B-A236, B-A247 and B-A251",
+    "User target decision 2026-09-28: each new metal campaign trains six only, four + six, or four + five + six as chosen by the user; applied to AGENTS, the relocated stage checks and a Plan.md subsection (B-M01, B-M10); PMM core v2 unchanged",
+    "AGENTS: suggested commit/push commands stay in final responses; consolidation read-only scope follows PLAN_v2 section 3.3 (B-M07)",
+    "AGENTS: Colab Python 3.12 ESMC route is a tested convenience, not a requirement; closure step names PARAMETER_FINDINGS; not-pristine wording clarified",
+    "docs/README: src/model.py pointer (B-M08) and non-overlap test count with ledger link (B-M09)",
+    "PMM README: the released PMM comparator's completed fivefold Grade-2 evidence is named"
+  ],
+  "after_corrections": {
+    "default_read_bytes": {
+      "AGENTS.md": 15844,
+      "EXPERIMENT_STATUS.md": 4307,
+      "docs/campaigns/pmm_ion_metal/README.md": 4025
+    },
+    "default_read_total": 24176,
+    "rule_dispositions": {
+      "kept": 246,
+      "merged": 139,
+      "modified": 74,
+      "dropped": 7
+    },
+    "whitespace_check_clean": true,
+    "links": "277 links/anchors in changed Markdown resolve (Plan.md included); no link newly broken repository-wide",
+    "code_consumers_of_plan": "Plan.md is only existence-checked (notebook root marker) and shipped by the snapshot builder; nothing hashes it"
+  },
+  "not_claimed": "No pytest or smoke run yet, no checker, hook or ignore change, no fresh-agent acceptance, and no check of the workstation, shared checkout, frozen checkouts or live VM state. The local job_b_review_invariants.json remains the dated local record.",
+  "approval": "All dispositions remain proposals awaiting the PLAN_v2 section 11 Job B step-2 review."
+}
