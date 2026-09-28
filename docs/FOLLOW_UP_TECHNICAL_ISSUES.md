@@ -452,6 +452,21 @@ non-training remediation.
 
 **Status:** Open; policy recorded 2026-09-14
 
+**Policy update and latent Stage 6B gap (2026-09-28):** `Plan.md` changed at
+the Job B documentation review: no training objective is primary; each campaign
+trains the user-chosen mix of `four_class`, `five_class` and `six_class`; and
+comparing five- or six-class training with direct four-class training on
+collapsed four is a neutral test ([target policy](../Plan.md#2-train-the-metal-classification-model)).
+The lines below that call the four-class endpoint “primary” or six-class
+training the “required” challenger are now history. Latent gap, not active
+now: the notebook Stage 6/6B route is single-scheme. Stage 6 skips imported
+candidates whose `metal_label_scheme` differs, Stage 7 blocks mixed batches,
+and Stage 6B's paired-CI, rare-recall and tie-breaker gates stay on native
+metrics, so setting `STAGE6B_RANK_BY_METRIC` alone cannot rank across schemes.
+Cross-scheme comparison needs a campaign assessor on collapsed-four balanced
+accuracy, as `pmm_core_assessment.py` does; do not merge Stage 6 outputs across
+schemes. A code fix needs separate authorization.
+
 **Bounded single-GPU implementation (2026-09-16):** the separate
 [`metal_single_gpu_20h_v2` recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
 adds matched core four-/six-class learning-rate/capacity discovery, unconditional

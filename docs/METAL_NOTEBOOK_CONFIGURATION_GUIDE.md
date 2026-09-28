@@ -19,10 +19,11 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 > route remains an unresolved scientific decision. Verified workflow mismatches
 > are recorded in `docs/FOLLOW_UP_TECHNICAL_ISSUES.md` and are not fixed here.
 
-> Target-policy boundary: the intended primary reporting endpoint is now Mn,
-> Cu, Zn, and Class VIII = Fe+Co+Ni. The plan requires both direct
-> `four_class` training and a matched `six_class` arm evaluated through its
-> deterministic collapsed-four view. Current notebook and playbook defaults
+> Target-policy boundary: the collapsed-four reporting endpoint is Mn, Cu, Zn,
+> and Class VIII = Fe+Co+Ni. No training objective is primary: each campaign
+> trains the user-chosen mix of `four_class`, `five_class` and `six_class`, and
+> every model is evaluated through its deterministic collapsed-four view; a
+> five/six versus direct-four comparison follows Plan's neutral test. Current notebook and playbook defaults
 > have an explicit paired standalone recipe at the start of the metal playbook.
 > Later-stage paired HPO/final recipes still require TECH-010 reconciliation.
 > Use the separately named single-GPU campaign for bounded discovery and
@@ -346,17 +347,16 @@ Keep this guide explanatory. Do not paste full Stage 0-7 blocks here.
 - `active_run_config.json` / `active_run_config.md`: notebook-generated records
   of the resolved live configuration before a subprocess starts. Completed
   runs still rely on `run_config.json` and `run_metadata.json`.
-- `five-class`: optional metal target scheme where `Mn`, `Cu`, `Zn`, and `Fe`
+- `five-class`: metal training objective where `Mn`, `Cu`, `Zn`, and `Fe`
   stay separate while `Co` and `Ni` share the fifth class. This changes the
   model output classes; use a separate run batch and Optuna study when enabling
-  it.
-- `four-class`: direct-training arm for the primary reporting endpoint, where
-  Mn, Cu, and Zn stay separate and Fe, Co, and Ni map to `Class VIII`;
-  canonical internal scheme name `merge_fe_class_viii`.
-- `collapsed-4`: deterministic reporting view from a six-class-trained model
-  where Fe, Co, and Ni are merged into `Class VIII`. It is not direct
-  four-class training. The controlled metal baseline campaign requires this
-  view for comparison with the direct-four arm.
+  it, and evaluate it through collapsed four.
+- `four-class`: direct four-class training objective for the collapsed-four
+  reporting endpoint, where Mn, Cu, and Zn stay separate and Fe, Co, and Ni
+  map to `Class VIII`; canonical internal scheme name `merge_fe_class_viii`.
+- `collapsed-4`: deterministic reporting view from a five- or six-class-trained
+  model where Fe, Co, and Ni are merged into `Class VIII`; every trained model
+  is evaluated on it. It is not direct four-class training.
 
 ## Execution Sequence and Live Values
 
@@ -867,10 +867,13 @@ For useful Colab HPO:
   `stage6b_partial_preview_*` files, and cannot launch or approve the final
   refit.
 - Stage 6B ranks by `STAGE6B_RANK_BY_METRIC = "auto"` in the live notebook,
-  which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`. When
-  candidates span target schemes, set it to
-  `mean_val_metal_collapsed4_balanced_acc`; never rank native balanced
-  accuracies of different class counts against each other.
+  which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`. The
+  notebook Stage 6/6B route is single-scheme: Stage 6 skips imported
+  candidates whose `metal_label_scheme` differs, and Stage 7 blocks mixed
+  batches. Do not merge Stage 6 outputs across schemes. Compare schemes with a
+  campaign assessor on collapsed-four balanced accuracy, as the PMM core
+  assessment does. Setting `STAGE6B_RANK_BY_METRIC` alone is not enough: the
+  paired-CI, rare-recall and tie-breaker gates stay on native metrics.
   Promotion is blocked unless the paired-CI gate passes, rare-class recall
   thresholds pass, and the configured tie-breaker policy is satisfied. The
   default metal tie-breaker order is mean minimum recall, worst-fold validation
@@ -1033,9 +1036,9 @@ loss, checkpoint-selection metric, or held-out test policy.
 commands are built. The current executable default may still resolve to
 `six_class` or a notebook resume value until TECH-010 is completed;
 `five_class` groups only Co/Ni, and the direct `four_class` arm groups Fe/Co/Ni.
-The required target-formulation comparison uses separately named `four_class`
-and `six_class` batches/studies. Changing this field creates a different
-prediction problem.
+A target-formulation comparison uses separately named batches/studies for each
+scheme (for example `four_class` and `six_class`) under Plan's neutral test.
+Changing this field creates a different prediction problem.
 
 `METAL_EXAMPLE_UNIT` selects the labeled training unit for `TASK="metal"`:
 `"pocket"` preserves the historical one-label-per-cluster behavior, while
@@ -1078,10 +1081,10 @@ primary report after viewing held-out metrics. The full Stage 7 policy and execu
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
 
 For the direct `METAL_LABEL_SCHEME = "four_class"` arm, active metal metrics
-cover Mn, Cu, Zn, and Class VIII directly. The required standard `six_class`
-arm produces native six-class metrics plus collapsed-four metrics formed by
-merging Fe, Co, and Ni. Label the latter as collapsed reporting from a
-six-class-trained model; they are the common comparison view but are not direct
+cover Mn, Cu, Zn, and Class VIII directly. A standard `six_class` arm produces
+native six-class metrics plus collapsed-four metrics formed by merging Fe, Co,
+and Ni; a `five_class` arm merges Fe with its Co+Ni class. Label the latter as
+collapsed reporting from a model trained on that scheme; they are the common comparison view but are not direct
 four-class training metrics. A selected `five_class` scheme is a separately
 named training objective. Use `METAL_REPORT_VIEW` to choose which already-computed
 view is emphasized in notebook output, not to change the target or rerun a
@@ -1149,8 +1152,9 @@ For Optuna:
 3. Run top-k grouped-fold validation with shared `pdbid` folds and the
    configured `REPEAT_SEEDS` via `group_kfold_seed_repeat`. Serious
    controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
-4. Run Stage 6B and select by mean `val_metal_balanced_acc` (by mean
-   collapsed-four balanced accuracy across target schemes), paired bootstrap
+4. Run Stage 6B within one target scheme and select by mean
+   `val_metal_balanced_acc` (cross-scheme comparison belongs to a campaign
+   assessor on collapsed-four balanced accuracy), paired bootstrap
    CI over seed-averaged fold means, rare-class recall protection, and the
    configured tie-breakers, not by a single trial. Use partial Stage 6B preview
    only for progress inspection; resume Stage 6 before promotion/refit.

@@ -3248,9 +3248,10 @@ the best validated simpler family.
 
 
 The final selected model must come from Stage 6 grouped-fold validation plus
-Stage 6B promotion gates, not from a single Optuna trial. Stage 6B ranks by mean
-`val_metal_balanced_acc` (by mean collapsed-four balanced accuracy when
-candidates span target schemes), promotes only when the paired bootstrap CI and
+Stage 6B promotion gates, not from a single Optuna trial. Stage 6B ranks
+candidates of one target scheme by mean `val_metal_balanced_acc` (cross-scheme
+comparison uses a campaign assessor on collapsed-four balanced accuracy),
+promotes only when the paired bootstrap CI and
 rare-recall gates pass, then uses configured tie-breakers such as standard
 deviation, worst fold, and model simplicity.
 
@@ -5048,10 +5049,13 @@ Purpose: convert Stage 6 validation/CV evidence into one frozen final model.
 Stage 6B ranks candidates by mean `val_metal_balanced_acc`, applies the
 predeclared paired-CI, rare-class recall, and tie-breaker policy, then
 optionally trains the selected configuration once on the full non-test training
-set. Stage 6B does not open the held-out test set. When candidates span target
-schemes, set `STAGE6B_RANK_BY_METRIC = "mean_val_metal_collapsed4_balanced_acc"`;
-the notebook's `"auto"` resolves to native `mean_val_metal_balanced_acc`, which
-must not rank different class counts.
+set. Stage 6B does not open the held-out test set. This notebook route is
+single-scheme: Stage 6 skips imported candidates whose `metal_label_scheme`
+differs, and Stage 7 blocks mixed batches. Do not merge Stage 6 outputs across
+schemes; compare schemes with a campaign assessor on collapsed-four balanced
+accuracy, as the PMM core assessment does. Setting `STAGE6B_RANK_BY_METRIC`
+alone is not enough, because the paired-CI, rare-recall and tie-breaker gates
+stay on native metrics.
 
 When to use it: only after Stage 6 has completed and the Stage 6 decision gate
 above passes.
@@ -5592,8 +5596,9 @@ Operational assumptions for this project:
   bootstrap confidence intervals and rare-class recall protection, not raw
   validation deltas alone.
 - Stage 6B is the named validation-to-final-refit bridge. It ranks Stage 6
-  candidates by mean `val_metal_balanced_acc` (by mean collapsed-four balanced
-  accuracy when candidates span target schemes), applies configurable paired-CI,
+  candidates of one target scheme by mean `val_metal_balanced_acc`
+  (cross-scheme comparison uses a campaign assessor on collapsed-four balanced
+  accuracy; the notebook route is single-scheme), applies configurable paired-CI,
   rare-class recall, and tie-breaker gates, then optionally trains one final
   full non-test training-set refit for the selected configuration. Stage 6B
   writes `stage6b_decision.json`, `stage6b_ranked_candidates.csv`,
@@ -5650,9 +5655,10 @@ format:
      `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is used, label it as
      one-seed grouped-fold confirmation because only the first `REPEAT_SEEDS`
      value is active.
-   - For Stage 6B, confirm the Stage 6 artifacts exist, promotion ranks by
-     mean `val_metal_balanced_acc` (by `mean_val_metal_collapsed4_balanced_acc`
-     when candidates span target schemes), paired-CI and rare-recall gates are
+   - For Stage 6B, confirm the Stage 6 artifacts exist and share one target
+     scheme, promotion ranks by mean `val_metal_balanced_acc` (cross-scheme
+     comparison belongs to a campaign assessor on collapsed-four balanced
+     accuracy, not to `STAGE6B_RANK_BY_METRIC` alone), paired-CI and rare-recall gates are
      configured, `LAUNCH_STAGE6B_FINAL_REFIT` is still `False` during preview,
      and the final refit uses the full non-test training set with no held-out
      test evaluation.
