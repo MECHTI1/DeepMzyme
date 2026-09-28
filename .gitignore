@@ -1,4 +1,6 @@
 .idea
+# Machine-local agent config written by IDE plugins (for example Codex's MCP port).
+/.codex/
 DeepMzyme_Data
 DeepMzyme_Data/CARE_dataset/
 DeepMzyme_Data/CARE_task1_30_train_test_metallo/
