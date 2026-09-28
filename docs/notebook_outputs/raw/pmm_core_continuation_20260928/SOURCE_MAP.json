@@ -1,0 +1,96 @@
+{
+  "schema": "pmm-portable-source-map-v1",
+  "files": [
+    {
+      "portable_path": "gvp5_diagnostic_summary.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/gvp5_diagnostic/diagnostic_summary.json",
+      "sha256": "2418a3beaf1111190d79cd9a16b5675e2d169653c637db38bfe7843a6126836d"
+    },
+    {
+      "portable_path": "concurrency_report.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/concurrency_probe/report.json",
+      "sha256": "eb24526015711143f76a7cb3f35962092c5a89c7d32d4dbb6cfb52746276bb86"
+    },
+    {
+      "portable_path": "core_readiness.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/readiness_host/core_readiness.json",
+      "sha256": "201ecd7932c4ff9fa10da3f0a83e5234f4790d81735ca5f40ae635b74061d0b4"
+    },
+    {
+      "portable_path": "historical_diagnostics.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_replay_v1/historical_diagnostics.json",
+      "sha256": "d856fe35d96337ed60be490714ee0d8664d473525d67c7f222660274d60b3e4e"
+    },
+    {
+      "portable_path": "cpu_tests.log",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/cpu_tests.log",
+      "sha256": "4752510edff749d680c15e3cebc8ed8b0bad82fea97f8d6b62e366e08fc93b0d"
+    },
+    {
+      "portable_path": "core_scope_tests.log",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/core_scope_tests.log",
+      "sha256": "2c67c565ee20b3166cf1aa0de9e7b7049d3619d34025b8bf2b09eb84a5aa65ec"
+    },
+    {
+      "portable_path": "remaining_budget_forecast.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/remaining_budget_forecast.json",
+      "sha256": "173aae86ec0ccdf4f67bff873766a36c37dbb62cc23276203c31e865337aaab2"
+    },
+    {
+      "portable_path": "host_backup_verified.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/host_backup_verified.json",
+      "sha256": "588aad36ded0f82be0bcf399a8cf22929393b90aa38fd41ad1fefb6c3a241b49"
+    },
+    {
+      "portable_path": "remote_artifact_sha256.txt",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/remote_artifact_sha256.txt",
+      "sha256": "0ee46919bb29fc393b876fdcc3ceed61cb3841e86a74eef7ae494277a30716ba"
+    },
+    {
+      "portable_path": "provider_status_after_stop.txt",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/provider_status_after_stop.txt",
+      "sha256": "b8182f6bf79611e1b5b8029983b8fd5ba188c0ee45c8c561e189ceeeb012e214"
+    },
+    {
+      "portable_path": "provider_report_after_stop.txt",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/provider_report_after_stop.txt",
+      "sha256": "f766146214d8843958f38345254465e0843c6714213393b2a6b79ea0376e27d2"
+    },
+    {
+      "portable_path": "controller_ledger_tail.txt",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/controller_ledger_tail.txt",
+      "sha256": "fd59f8e801183dfeb5cd45d0cbc245616207d0abe6cfea0acd34449b897a8005"
+    },
+    {
+      "portable_path": "verified_closeout.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/verified_closeout.json",
+      "sha256": "75b5523f09342af6a5f669d4c7eb285002878038c6647b426fbfe1e643ed5d65"
+    },
+    {
+      "portable_path": "core_preview.json",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/core_preview.json",
+      "sha256": "25619ddd96f63e4f850f1a78ad2fc282e0074ddeaf067f1fbe1ee98f1fbc1f18"
+    },
+    {
+      "portable_path": "gvp5_diagnostic_protocol.md",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/gvp5_diagnostic_protocol.md",
+      "sha256": "b1967b7a9475c66168ac6b18d71b5e4b2d41ad9c386fa43b63edb5c58a9c244e"
+    },
+    {
+      "portable_path": "run_gvp5_diagnostic.sh",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/run_gvp5_diagnostic.sh",
+      "sha256": "aece7f7ba827f5f1c6debaa3808ac651a3a30fabfd16c3f5e8e685e486092af2"
+    },
+    {
+      "portable_path": "run_concurrency_probe.sh",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/run_concurrency_probe.sh",
+      "sha256": "f40ef49fc66a5355925c923e7437cfffbfac06b83a2c6d93ae9f0741df15ac6a"
+    },
+    {
+      "portable_path": "resume_handoff.md",
+      "canonical_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/core_continuation_20260928/resume_handoff.md",
+      "sha256": "8be500a08e3eafe0119dd1039c684b8ca89b9afae6c1bddf56d091dc607d3e1e"
+    }
+  ],
+  "large_tensor_artifacts_retained_in_canonical_storage": true
+}

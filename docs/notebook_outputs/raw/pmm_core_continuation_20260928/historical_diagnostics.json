@@ -1,0 +1,15 @@
+{
+  "schema": "pmm-core-historical-diagnostics-v1",
+  "policy_id": "pmm-core-replay-v1",
+  "policy_sha256": "fa008bd06147544058fb36d185f8e2593e4483e53ccdeb1da0424f956e9bfa39",
+  "units": {
+    "only_gvp__six_class__none__fold0__seed42": {
+      "summary_path": "runtime/replay_diagnostic_20260928/diagnostic_summary.json",
+      "summary_sha256": "9356335aeb7fba3343465847540f7bd2add3c0a64a30fcdfe823924e28f1d51e"
+    },
+    "only_gvp__five_class__none__fold0__seed42": {
+      "summary_path": "runtime/core_continuation_20260928/gvp5_diagnostic/diagnostic_summary.json",
+      "summary_sha256": "2418a3beaf1111190d79cd9a16b5675e2d169653c637db38bfe7843a6126836d"
+    }
+  }
+}

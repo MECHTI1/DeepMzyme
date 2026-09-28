@@ -1,5 +1,9 @@
 # PMM five-class fold-0 screen — 2026-09-28
 
+Later evidence: the [core integration and concurrency summary](summary_pmm_core_continuation_20260928.md)
+qualifies GVP5/GVP6 through explicit retrospective diagnostics. This historical
+screen's original strict failures and values remain unchanged.
+
 Five-class training scored higher than six-class training for Only-ESMC on
 common-four balanced accuracy. Six-class training scored higher for graph-level
 late fusion; the provisional Only-GVP comparison also favors six classes.

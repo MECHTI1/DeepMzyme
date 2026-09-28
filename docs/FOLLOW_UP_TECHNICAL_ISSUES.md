@@ -955,11 +955,14 @@ runner's default behavior.
 
 ## TECH-023 — Full-fit GVP independent replay exceeds the frozen probability tolerance
 
-**Status:** Historical six-class case numerically diagnosed 2026-09-28; the
-original nine-fit screen has retrospective v2.1 agreement. The new five-class
-GVP failure below remains uncertified and is outside that policy. The frozen
-runner's original certification gate remains open. Training, source, original
-tolerance and historical receipts are unchanged.
+**Status:** Additive core replay integration implemented and CPU-tested
+2026-09-28; the original strict failures remain failures. The historical
+six-class case has a completed input/repeatability diagnostic and v2.1
+agreement. The five-class diagnostic also completed its fixed 20 passes and
+passed the historical gate. All nine core fold-0 units passed the host readiness
+check; GVP5/GVP6 remain explicitly retrospective qualifications with original
+strict failures. See the [integration evidence](notebook_outputs/raw/pmm_core_continuation_20260928/README.md).
+Training source, original `1e-6` tolerance and historical receipts are unchanged.
 
 `only_gvp__six_class__none__fold0__seed42` completed all 50 epochs. Independent
 replay reproduced all 1,492 ion identities, labels, native/common-four class
@@ -975,7 +978,9 @@ and acknowledged. The first snapshot is retained separately before retry;
 the runner also archives incomplete replay outputs. See the portable
 [failure evidence](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/unverified_units/only_gvp__six_class__none__fold0__seed42/)
 and [execution record](notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/completion_execution.json).
-This configuration is excluded from certified comparisons and promotion.
+Under the original strict contract this configuration is excluded from
+certified comparisons and promotion. The separate retrospective integration
+below must retain that original status.
 
 A focused read-only audit found matching FP32 evaluation, batch size 16,
 validation order, model weights/buffers, graph options and saved normalization.
@@ -1005,12 +1010,28 @@ this supplemental agreement check; only eight pass the original contract.
 The initial v2 report's over-strict auxiliary simplex check and its correction
 to the pre-existing validator allowance are both preserved and disclosed.
 
-Remaining implementation boundary: the frozen `completed_run_receipt` and
-runner do not consume these supplemental reports. Broader continuation requires
-an explicit policy-aware integration that preserves old scientific identities.
-Do not forge a legacy receipt, broadly resume the old runner over GVP6, edit
-saved probabilities, retry until a pass, or retrain the completed fit merely
-to replace this evidence.
+The frozen `completed_run_receipt` and runner still do not consume those
+supplemental reports. That implementation boundary is now handled by the
+separate [`pmm_core_replay.py`](../pmm_core_replay.py) and
+[`run_pmm_core_campaign.py`](../run_pmm_core_campaign.py), under
+[`pmm-core-replay-v1`](plans/pmm_core_execution_v1.md). Every new fold-1–4
+identity binds the fixed absolute `1e-5`, relative-zero engineering agreement
+contract before training. Exact classes/confusions, native-selected checkpoint,
+source/cohort/configuration/normalization and metric checks remain mandatory.
+The exporter runs once; the core status retains the original strict outcome.
+
+The separate historical path pins exactly nine core fold-0 checkpoints and
+all known replay-export hashes. Every preserved replay, including the GVP6
+runtime backup, is checked. Historical records are explicitly
+`acceptance_basis=retrospective_core_agreement`, `post_observation=true`;
+GVP5/GVP6 retain `original_strict_status=original_strict_failed`. Both failures
+require full input-equality and repeated-forward diagnostic evidence before
+qualification. The consumer rechecks preserved CPU arrays, identity, classes,
+model/input invariants and the fixed probability bound, not just report flags.
+No diagnostic, missing export or altered source can be bypassed by a readiness
+flag. This engineering contract does not prove determinism or scientific
+superiority. Do not forge a legacy receipt, edit saved probabilities, retry
+until a pass, or retrain a completed fit to replace its evidence.
 
 The subsequent five-class screen encountered the same **type of contract
 failure**, without establishing its cause for the new fit:
@@ -1018,12 +1039,17 @@ failure**, without establishing its cause for the new fit:
 epoch 47. Its first independent replay differs by up to **2.38e-6**, with
 22 probability fields above `1e-6` (11 native and 11 common-four). All 1,492
 UIDs and every non-probability field, including both class predictions, match.
-The 70-file terminal backup is verified and acknowledged. No replay retry,
-tolerance change, graph-tensor equivalence audit or repeatability test was
-performed for this five-class unit. It remains **strict-replay failed** and
-is not covered by the earlier nine-fit v2.1 policy. Its matching exported
-common-four BA of 78.2397% is a provisional diagnostic, not certified comparison
-or promotion evidence; see the
+The 70-file terminal backup is verified and acknowledged. At screen closeout,
+no replay retry, tolerance change, graph-tensor equivalence audit or repeatability
+test had been performed for this five-class unit. Its subsequently authorized
+input/repeatability diagnosis verified predictive tensors for all 1,492 ions,
+with only the same audited inactive EC-label difference. Original-setting
+passes vary by up to `2.622604e-6`; strict passes are bitwise identical across
+two processes. Maximum difference against preserved exports is `3.515757e-6`,
+with all classes unchanged. It remains **strict-replay failed**, outside the
+earlier nine-fit v2.1 policy, but now qualifies under the separate disclosed
+historical core contract. Common-four BA remains 78.2397%; this is single-fold
+evidence, not promotion or fivefold confirmation. See the
 [preserved five-class failure](notebook_outputs/raw/pmm_five_class_screen_20260928/execution/only_gvp__five_class__none__fold0__seed42/).
 After diagnosing and backing up this terminal unit, the coordinator deliberately
 continued the separate authorized late-fusion screen under the unchanged
@@ -1052,11 +1078,13 @@ inventory query must never be used as evidence that storage charges ended.
 
 ## TECH-025 — Core scope needs a separate assessment and promotion bridge
 
-**Status:** Open after the user-approved 2026-09-28 scope amendment; the new
-root-level core entry point rejects execution while TECH-023/TECH-025 remain
-unresolved. The separately versioned three-fit five-class screen uses strict
-legacy replay and does not require or claim a full-grid decision. Its CPU preview is implemented and tested. No scientific source,
-historical identity, receipt or probability threshold was changed.
+**Status:** Implementation resolved 2026-09-28 through the additive, CPU-tested
+[`pmm_core_assessment.py`](../pmm_core_assessment.py) and root runner.
+Full-grid scientific assessment and actual final refit remain unevaluated:
+nine core fold-0 fits are preserved and qualified under the separate core
+contract, while 36 further fits remain. The bridge does not modify
+frozen scientific source, historical identities or receipts and does not grant
+compute or held-out permission.
 
 The frozen `scripts/run_metal_5fold_cv.py` applies family/target/readout/fold
 filters only after dispatching `assess` and refit actions. Consequently,
@@ -1065,32 +1093,40 @@ filters only after dispatching `assess` and refit actions. Consequently,
 The active scope now requires nine ordinary-readout four/five/six configurations on five
 folds. Training filters alone cannot change the completion or selection rules.
 
-Implement a separately identified core assessor and promotion/refit bridge
-without rewriting frozen training source or historical evidence. It must:
+The separately identified core assessor and refit bridge now:
 
 - Bind `pmm_core_scope_v2`, all 45 ordinary-readout core
   units, five compatible PMM folds, shared source/fold/seed identities and
   complete UID-level OOF coverage. Keep the three awareness arms paused.
-- Integrate a prospectively fixed completion/replay rule with TECH-023. The
-  existing v2.1 consumer covers nine stored fold-0 exports only; it must not
-  silently certify future folds or be presented as a legacy receipt.
+- Integrate the prospectively fixed core replay rule with TECH-023, while
+  keeping the nine historical core qualifications explicitly retrospective.
+  The existing v2.1 consumer still covers only its original nine screen units;
+  it is neither a future-fold nor a legacy strict receipt.
 - Preserve native checkpoint selection, common-four target comparisons, all
   class recalls, bootstrap and rare-class gates. Retain the original
   six-contrast family plus the three new five-vs-four contrasts (denominator 9).
 - Write distinct `core_cv_*` and `core_validation_decision.json`, binding the
   scope, source and replay policy. Do not overwrite legacy assessment artifacts
   or substitute missing awareness metrics merely to satisfy the old selector.
-- Make final selection/refit consume that exact core decision and exclude
-  paused configurations. Preserve the complete full-train refit and frozen
-  reporting-source requirement before any separately authorized held-out use.
+- Make final selection/refit preview consume and reverify that exact core
+  decision, its output hashes and underlying units, excluding paused
+  configurations. Preview writes a full-training command and separate
+  `core_stage6b_*` artifacts; it executes no fit. An existing-refit verifier
+  checks the full frozen training cohort, normalization, identity and terminal
+  epoch-50 checkpoint. A compatible PMM refit and separately authorized
+  reporting gate remain required; the bridge never authorizes held-out use.
 
-Add regressions for incomplete core grids, incompatible identities, paused
-arms, altered replay evidence, incorrect OOF coverage and premature refit/test
-access before enabling the entry point. Flipping its readiness field alone
-does not resolve these prerequisites. Exact future commands belong in the
+CPU regressions cover incomplete core grids, incompatible identities, paused
+arms, altered evidence, incorrect OOF coverage and premature refit/test access.
+The entry point adds explicit readiness, assessment and refit-preview actions;
+single-unit execution still requires its verified readiness certificate and
+original runtime/persistence gates. Flipping a scope status field alone cannot
+satisfy them. Exact commands belong in the
 [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation).
 
-The frozen analysis helpers also assume native vocabularies of length four or
-six; a five-class export must use explicit Mn/Cu/Zn/Fe/Co+Ni validation and
-probability-first collapse. The five-class screen adapter provides that bounded
-validation, but full OOF/PMM assessment and refit integration remain open.
+The frozen four/six-only helpers remain unchanged. The additive core consumer
+validates native Mn/Cu/Zn/Fe/Co+Ni explicitly, collapses probabilities before
+argmax and carries native-five Fe/Co+Ni recalls beside common-four reporting.
+Native-six metrics and separate Fe/Co/Ni recalls remain present. Passing
+synthetic CPU tests does not establish a completed 45-fit assessment, model
+promotion, final refit or final-report readiness.

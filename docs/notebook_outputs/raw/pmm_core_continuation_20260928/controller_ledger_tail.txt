@@ -1,0 +1,4 @@
+ts=2026-09-28T05:38:35Z  event=RUNNING  session_id=session-20260928T053830Z-efe0130c  vm_state=RUNNING  reason=vm-start
+ts=2026-09-28T05:38:35Z  event=AUTO_STOP_EXPECTED  session_id=session-20260928T053830Z-efe0130c
+ts=2026-09-28T05:59:04Z  event=STOP_REQUESTED  vm_state=RUNNING  reason=user request
+ts=2026-09-28T06:00:08Z  event=STOPPED  session_id=session-20260928T053830Z-efe0130c  vm_state=TERMINATED  reason=reconcile: cloud reports TERMINATED  elapsed_running_s=1292  estimated_gross_cost_usd=0.3156
