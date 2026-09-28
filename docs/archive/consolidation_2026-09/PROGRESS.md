@@ -43,12 +43,20 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   finding for Job C/D; raw evidence unchanged. Local pytest and `smoke_checks`
   with the Conda interpreter run on the workstation before any merge. Then
   commit, push and stop.
+- Independent review of `042e93d` and `a205658` (user): checker, hook, ignore
+  files and STATUS are good and every STATUS fact checks out. Must fix: the
+  Stage 7 mixed-batch claim (it came from the user's earlier wording), the
+  absolute Stage 6 scheme-skip claim, “gates stay on native metrics”, stale
+  ANSWER_KEY citations and the playbook's active PMM target line; small fixes
+  to B-M11, four inventory labels, STATUS links and list items, the PMM README
+  VM line, two guide sentences and the cloud record. Commit and push once, then
+  stop. The accepted sizes stay (Job C tightens).
 
 ## State
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B cloud work done (2026-09-28): fresh-agent run 1 not accepted; run 2, after the approved Q1 fix, matches all six under the recorded grading; sizes accepted for now; workstation pytest/smoke and any merge await the user |
+| Phase | Job B cloud work done (2026-09-28): fresh-agent run 1 not accepted; run 2, after the approved Q1 fix, matches all six under the recorded grading; review fixes of `042e93d`/`a205658` applied after run 2; sizes accepted for now; workstation pytest/smoke and any merge await the user |
 | Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only, `29e7460` through `a205658` and the commit carrying this update; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
@@ -156,21 +164,29 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   pushed to `claude/happy-ritchie-99xmhd` at the user's request.
 - `e261680` applied the user's step-2 answers only partly; the user's review
   found remaining target wording and an inaccurate Stage 6B claim. After the
-  review fixes, no training objective is called primary anywhere in the active
-  docs; the places changed and the exceptions (other meanings of “primary”;
-  historical recipe wording; `docs/plans/`) are listed in RULES B-M11. Any mix
+  review fixes, the active docs no longer call a training objective primary,
+  except `docs/VERY_EXACT_PMM_SETS_PLAN.md:156-160` (planned, not updated) and
+  `docs/PARAMETER_FINDINGS.md:49` (Job C); the playbook's active PMM line
+  (`:84`, “both four- and six-class targets remain required”) was fixed only
+  after the user's review of `a205658`. The places changed and the exceptions
+  (other meanings of “primary”; historical recipe wording; `docs/plans/`) are
+  listed in RULES B-M11. Any mix
   of four/five/six with the neutral test; B-M02 changes; PMM README resume
   rules. Counts: 244 kept, 139 merged, 76 modified, seven dropped.
 - Stage 6B code check: every metal run computes
   `val_metal_collapsed4_balanced_acc` (`src/training/run.py:776-807`);
   `STAGE6B_RANK_BY_METRIC = "auto"` resolves to native
   `mean_val_metal_balanced_acc` (`src/training/pipeline_metric_policy.py:109-118,
-  159-161`), whose rare-recall and tie-breaker metrics are native. Stage 6
-  skips imported candidates whose `metal_label_scheme` differs (notebook cell
-  `a408dcb9`), and Stage 7 blocks mixed batches unless
-  `ALLOW_MIXED_FINAL_TEST_BATCH` (final held-out cell). So the notebook route is
-  single-scheme; `pmm_core_assessment.py:95-146` ranks on mean common-four BA.
-  Recorded in TECH-010 and the STATUS caveats; no code change.
+  159-161`). The paired-CI gate uses the Stage 6 selection metric (native by
+  default), the rare-recall gate is always native, and the default
+  tie-breakers are native. Stage 6 skips imported candidates whose recorded
+  `metal_label_scheme` differs (candidates without it are kept with a warning;
+  notebook cell `a408dcb9`); Stage 6B does not check schemes. Stage 7 evaluates
+  only the one frozen Stage 6B final-refit source, so it never mixes schemes
+  (`ALLOW_MIXED_FINAL_TEST_BATCH` guards only an ensemble path that is never
+  called). `pmm_core_assessment.py:95-146` ranks on mean common-four BA.
+  Recorded in TECH-010 and the STATUS caveats; no code change. The Stage 6 and
+  Stage 7 sentences were corrected after the user's review of `a205658`.
 - STATUS follows the approved layout (5,290 bytes). The user accepted AGENTS at
   about 16.8 KB and a default read of about 25.8 KB until Job C; after the
   approved STATUS layout and review fixes they are 17,027 and 27,026 bytes,
@@ -184,7 +200,7 @@ Details: [cloud review record](verification/job_b_cloud_review.json),
 `remaining_job_b_steps`.
 - Added `tools/check_docs_contract.py` (stdlib) and `.githooks/pre-commit`,
   enabled per command only; `core.hooksPath` is not set. Checker: 188 Markdown
-  files, 792 links, 0 strict, 13 warnings (caps, six resolved TECH issues kept
+  files, 794 links, 0 strict, 13 warnings (caps, six resolved TECH issues kept
   in full, two duplicated paragraphs). 18 of 18 seeded violations fail as
   expected; the hook blocks a broken-link commit in a throwaway clone.
 - `a205658` used the approved command `DEEPMZYME_PYTHON=python3 git -c
@@ -215,6 +231,36 @@ Details: [cloud review record](verification/job_b_cloud_review.json),
 - Sizes accepted by the user for now: after the Q1 fix the default read is
   27,112 bytes (AGENTS 17,031 + STATUS 5,290 + PMM README 4,791) and the PMM
   README 63 lines; the checker keeps warning.
+
+## Review fixes after fresh-agent run 2 (2026-09-28)
+
+- Applied after fresh-agent run 2; per the user, these wording fixes need no
+  re-run. Run 2 read the STATUS and PMM README before these edits.
+- Code checked for fixes 1–3 (notebook `DeepMzyme_training_colab.ipynb`):
+  Stage 7 has one workflow (`FINAL_TEST_WORKFLOW =
+  "evaluate_stage6_selected_candidate"`) and resolves only the Stage 6B
+  selected final-refit source; the `ALLOW_MIXED_FINAL_TEST_BATCH` guard sits in
+  `_final_validate_batch_compatible`, reached only from
+  `_final_evaluate_softmax_mean_ensemble`, which is never called. Stage 6
+  import (cell `a408dcb9`) skips a mismatched recorded scheme and keeps
+  candidates without one as `metadata_incomplete` with a warning. Stage 6B
+  (cell `c56014262ad35ce1`) compares no schemes; its paired-CI rows use each
+  run's selection-metric value; the default
+  `STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = True` passes ties within
+  `STAGE6B_TIE_EPSILON`; rare-recall metrics and default tie-breakers are
+  native (`src/training/pipeline_metric_policy.py`).
+- Changed: Plan §2; the guide's Stage 6B bullet (tie-break default added) and
+  collapsed-four label sentence; the playbook's Stage 6B section and active PMM
+  target line; the TECH-010 note; STATUS (caveat wording, fixed lines as list
+  items, campaign ids, grade citation, `pmm-001` link); the PMM README (VM line
+  now points to the STATUS `GPU/VM:` line); ANSWER_KEY source citations and
+  header; RULES B-M11 and the approval paragraph; four inventory approval
+  labels; the cloud record's links and default-read notes; the checker (STATUS
+  fixed lines may be list items).
+- Sizes after the fixes: default read 27,407 bytes (AGENTS 17,031 + STATUS
+  5,642 + PMM README 4,734), above the about 27.0 KB accepted because of the
+  requested STATUS additions (+352 bytes; the README lost 57); PMM README 62
+  lines. The accepted sizes stay until Job C.
 
 ## Job A closeout verification
 
@@ -256,7 +302,9 @@ All line numbers refer to `3c0f80c`.
   lists 42 entries; 34 are VM-side files absent from the repository and the 8
   present entries match. Not caused by Job B; raw evidence stays unchanged.
 - Historical “challenger” wording left as run: single-GPU and pilot recipe
-  sections of the playbook, FOLLOW_UP issue text, `docs/VERY_EXACT_PMM_SETS_PLAN.md`.
+  sections of the playbook and FOLLOW_UP issue text. Planned, not updated:
+  `docs/VERY_EXACT_PMM_SETS_PLAN.md:156-160` (direct four-class as the primary
+  reference endpoint). Job C: `docs/PARAMETER_FINDINGS.md:49`.
 
 ## Findings to report (not ours to fix)
 - `raw/legacy_nonoverlap_test_access/SHA256SUMS` fails in every fresh checkout (CRLF

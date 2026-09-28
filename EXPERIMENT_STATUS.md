@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-Status: paused (2026-09-28 user decision)
-Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-09-28.
+- Status: paused (2026-09-28 user decision)
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-09-28.
 
 ## Current objective and stage
 
-Current campaign: pmm_ion_metal, PMM core scope v2 (paused) — [README](docs/campaigns/pmm_ion_metal/README.md)
-Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-Stage: exploratory fold-0 comparison retained; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Current campaign: pmm_ion_metal, PMM core scope v2 (paused; scope `pmm-core-v2`, campaign `pmm_ion_metal_v2_context`) — [README](docs/campaigns/pmm_ion_metal/README.md)
+- Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
+- Stage: exploratory fold-0 comparison retained; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 
 **Nine ordinary-readout fits are retained; the remaining 36 fits are deferred.**
 No completed fivefold neural confirmation, model/target promotion, final refit
@@ -17,7 +17,7 @@ results and evidence grades live in the campaign README and the
 
 ## Anchor and evidence state
 
-Best validation result: none promoted; the fold-0 core fits are Grade 5 exploratory evidence ([core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+- Best validation result: none promoted; the fold-0 core fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the [PMM README](docs/campaigns/pmm_ion_metal/README.md); results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
 
 Seven original strict replay passes and the GVP5/GVP6 strict failures remain
 recorded. All nine core fits have separate retrospective `pmm-core-replay-v1`
@@ -33,9 +33,11 @@ before auxiliary learning; [issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md) own deta
 
 ### Known caveats and open mismatches
 
-- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme and its
-  gates stay on native metrics; comparing target schemes needs a campaign
-  assessor on collapsed-four balanced accuracy. Latent, not active now
+- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme; the
+  paired-CI gate uses the Stage 6 selection metric (native by default), the
+  rare-recall gate is always native, and the default tie-breakers are native.
+  Comparing target schemes needs a campaign assessor on collapsed-four balanced
+  accuracy. Latent, not active now
   ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
 
 ## Dataset and test readiness
@@ -57,14 +59,15 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 
 ## Blockers and immediate next action
 
-Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
-GPU/VM: TERMINATED, independently checked 2026-09-28 06:00:18 UTC; the retained 150-GB disk costs approximately $15/month. This is historical provider evidence, not a new live resource check ([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+- Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
+- GPU/VM: TERMINATED, independently checked 2026-09-28 06:00:18 UTC; the retained 150-GB disk costs approximately $15/month. This is historical provider evidence, not a new live resource check ([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
 
 Resume requires an explicit user request, refreshed remaining-budget authority
 and new readiness verification against the execution environment. The proposed
 additional 34 hours/$34 is unapproved and no longer awaiting an immediate
 execution decision. No extra fold-0 fits or final refits are authorized
-([scope authorization](docs/plans/pmm_core_scope_v2.json)).
+([scope authorization](docs/plans/pmm_core_scope_v2.json);
+[pmm-001](docs/campaigns/pmm_ion_metal/log.md#pmm-001)).
 
 Stage 6 grouped-fold selection (or explicitly labeled fallback), completed/reused
 Stage 6B full non-test refit, frozen report/checkpoint rules and a scientifically

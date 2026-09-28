@@ -460,9 +460,12 @@ collapsed four is a neutral test ([target policy](../Plan.md#2-train-the-metal-c
 The lines below that call the four-class endpoint “primary” or six-class
 training the “required” challenger are now history. Latent gap, not active
 now: the notebook Stage 6/6B route is single-scheme. Stage 6 skips imported
-candidates whose `metal_label_scheme` differs, Stage 7 blocks mixed batches,
-and Stage 6B's paired-CI, rare-recall and tie-breaker gates stay on native
-metrics, so setting `STAGE6B_RANK_BY_METRIC` alone cannot rank across schemes.
+candidates whose recorded `metal_label_scheme` differs (candidates without it
+are kept with a warning); Stage 6B does not check schemes. Stage 7 evaluates
+only the one frozen Stage 6B final-refit source, so it never mixes schemes. The
+paired-CI gate uses the Stage 6 selection metric (native by default), the
+rare-recall gate is always native, and the default tie-breakers are native, so
+setting `STAGE6B_RANK_BY_METRIC` alone cannot rank across schemes.
 Cross-scheme comparison needs a campaign assessor on collapsed-four balanced
 accuracy, as `pmm_core_assessment.py` does; do not merge Stage 6 outputs across
 schemes. A code fix needs separate authorization.

@@ -48,9 +48,9 @@
       "dropped": 7
     },
     "whitespace_check_clean": true,
-    "links": "296 links/anchors in changed Markdown resolve; no link newly broken repository-wide",
+    "links": "296 links/anchors in changed Markdown resolve; no link newly broken repository-wide. RULES table destinations are repo-root-relative references in code text, not Markdown links, so they are not checked and do not resolve from the archive folder (recorded for Job C)",
     "code_consumers_of_plan": "Plan.md is only existence-checked (notebook root marker) and shipped by the snapshot builder; nothing hashes it",
-    "default_read_note": "27,026 bytes: over the PLAN_v2 25-KB target and above the ~25.8 KB the user accepted until Job C, because of the approved STATUS layout (+983 bytes) and AGENTS review fixes (+219 bytes); reported for the user's decision",
+    "default_read_note": "27,026 bytes: over the PLAN_v2 25-KB target and above the ~25.8 KB (25,772 bytes at e261680) the user accepted until Job C, because of the approved STATUS layout (+983 bytes), AGENTS review fixes (+219 bytes) and the PMM README change (+52 bytes); reported for the user's decision",
     "playbook_fences": "metal 67 and EC 23 fences byte-identical; heading and first-block hash invariants hold"
   },
   "not_claimed": "No local pytest or smoke run (this container's python3 lacks torch and numpy; nothing was installed); GitHub Actions CPU CI is the stand-in and never reaches smoke_checks. No match to the local Job A pytest/smoke baseline is claimed; the user runs pytest and smoke_checks with the Conda interpreter on the workstation before any merge. Fresh-agent acceptance is the user's decision: run 1 did not match; run 2 matches all six under the recorded grading. No check of the workstation, shared checkout, frozen checkouts, Conda interpreter, controller or live VM state. The local job_b_review_invariants.json remains the dated local record.",
@@ -84,9 +84,9 @@
         "follow-up resolved-in-full",
         "default read path"
       ],
-      "current_result": "after the final record edits: 188 Markdown files, 792 relative links; 0 strict, 13 warnings; about 0.2 s (789 links during the mutation tests)",
+      "current_result": "after the review fixes of a205658: 188 Markdown files, 794 relative links; 0 strict, 13 warnings; about 0.2 s (789 links during the first mutation tests)",
       "warnings": "caps: AGENTS 17,031 / 12,000, Plan 87,110 / 35,000, docs/README 22,365 / 5,000, default read 27,030 / 25,000, PMM README 63 / 60 lines; six resolved TECH issues kept in full (Job C); two duplicated paragraphs between the paused campaign READMEs",
-      "mutation_tests": "18 of 18 seeded violations (one per strict rule path) exit 1 with the expected rule in a hard-linked sandbox; baseline and restored tree exit 0",
+      "mutation_tests": "18 of 18 seeded violations (one per strict rule path) exit 1 with the expected rule in a hard-linked sandbox; after STATUS fixed lines became list items, 2 more list-item cases fail as expected and plain fixed lines are still accepted (21 of 21); baseline and restored tree exit 0",
       "no_cap_raised": true
     },
     "hook": {
@@ -138,7 +138,28 @@
     "protected_scope": "git diff 3c0f80c over src, scripts, tests, notebooks, docs/plans, raw evidence and summaries is empty; no untracked file there; no root *.py changed; 1,869 protected files unchanged; source_tree_sha256 adc95c42...",
     "playbooks": "metal 67 and EC 23 fences byte-identical; LF only; unique heading before the first python block; first-block hashes match",
     "status_reconstruction": "all four STATUS revisions still rebuild byte-for-byte",
-    "sizes": "accepted by the user for now (default read about 27.0 KB, AGENTS 17.0 KB, PMM README over 60 lines; tightening is Job C). After the Q1 fix: default read 27,112 bytes (AGENTS 17,031 + STATUS 5,290 + PMM README 4,791); PMM README 63 lines; the checker keeps warning",
+    "sizes": "accepted by the user for now (default read about 27.0 KB, AGENTS 17.0 KB, PMM README over 60 lines; tightening is Job C). After the Q1 fix: default read 27,112 bytes (AGENTS 17,031 + STATUS 5,290 + PMM README 4,791); PMM README 63 lines; the checker keeps warning; after the review fixes of a205658: 27,407 bytes (STATUS 5,642, PMM README 4,734 and 62 lines)",
     "user_decisions_after_run1": "2026-09-28: back up with the two listed commands (a205658, pushed, no merge); apply the PMM README Q1 wording and run one new fresh agent with the same setup, reporting both runs and not rewriting docs further if it fails; accept the sizes for now (default read about 27.0 KB, AGENTS 17.0 KB, PMM README over 60 lines; tightening is Job C); record remote_SHA256SUMS in PROGRESS for Job C/D; workstation pytest/smoke before any merge"
+  },
+  "review_fixes_after_a205658": {
+    "date": "2026-09-28",
+    "timing": "applied after fresh-agent run 2; the user said no re-run is needed for these wording fixes",
+    "code_checked": [
+      "Stage 7: one workflow, FINAL_TEST_WORKFLOW = evaluate_stage6_selected_candidate, resolving only the Stage 6B selected final-refit source; the ALLOW_MIXED_FINAL_TEST_BATCH guard is in _final_validate_batch_compatible, reached only from _final_evaluate_softmax_mean_ensemble, which is never called",
+      "Stage 6 import (cell a408dcb9): a mismatched recorded metal_label_scheme is skipped; missing metadata is metadata_incomplete and kept with a warning",
+      "Stage 6B (cell c56014262ad35ce1): no scheme comparison; paired-CI rows use each run's selection-metric value; STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = True passes ties within STAGE6B_TIE_EPSILON",
+      "src/training/pipeline_metric_policy.py: rare-recall metrics and default metal tie-breakers are native"
+    ],
+    "fixes": [
+      "1-3: Stage 6/6B/7 wording in Plan, the guide, the playbook, the TECH-010 note and PROGRESS; gate wording also in the STATUS caveat",
+      "4: ANSWER_KEY citations (Q1 index :56 and README :60-61, Q3 AGENTS :39-47, Q4 STATUS :60-70, Q6 AGENTS :32-34 and Plan :325-342 after the Plan edit added three lines); header narrowed",
+      "5: playbook active PMM target line; PROGRESS no longer claims no primary wording anywhere (VERY_EXACT 156-160 planned, not updated; PARAMETER_FINDINGS 49 Job C)",
+      "6: B-M11 catch-all for unrelated uses of primary",
+      "7: inventory approvals: B-A209/B-A217 not individually reviewed; B-A003/B-A033 changed to apply decisions 1A/2B",
+      "8: STATUS fixed lines as list items (checker accepts '- '), campaign ids, grade citation with incomplete grid Grade 6, pmm-001 link; PMM README VM line points to the STATUS GPU/VM line",
+      "9: guide collapsed-four label sentence and tie-break default",
+      "10: this record's links and default-read notes"
+    ],
+    "sizes": "default read 27,407 bytes (AGENTS 17,031 + STATUS 5,642 + PMM README 4,734); PMM README 62 lines; accepted sizes stay until Job C"
   }
 }

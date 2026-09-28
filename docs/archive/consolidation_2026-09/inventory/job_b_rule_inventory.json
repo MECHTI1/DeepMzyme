@@ -30,7 +30,7 @@
     "text": "1. Predict the primary four-class transition-metal target (Mn, Cu, Zn, and\n   Class VIII = Fe+Co+Ni) from protein structural pocket graphs and ESMC\n   embeddings/models.",
     "status": "merged",
     "destination": "AGENTS.md#scientific-boundaries",
-    "approval": "not individually reviewed at the step-2 review"
+    "approval": "changed to apply decisions 1A/2B; not separately reviewed"
   },
   {
     "id": "B-A004",
@@ -360,7 +360,7 @@
     "text": "- The intended primary PinMyMetal-compatible reporting endpoint is Mn, Cu, Zn,\n  and Class VIII = Fe+Co+Ni. Direct training uses `four_class`, canonical name\n  `merge_fe_class_viii`; do not invent another scheme. Keep historical\n  six-class and five-class evidence labeled exactly as run. Direct four-class\n  training is not equivalent to six-class training followed by collapsed-four\n  reporting.",
     "status": "merged",
     "destination": "AGENTS.md#scientific-boundaries",
-    "approval": "not individually reviewed at the step-2 review"
+    "approval": "changed to apply decisions 1A/2B; not separately reviewed"
   },
   {
     "id": "B-A034",
@@ -2296,7 +2296,7 @@
     "text": "For example, prefer command-line/config options such as:",
     "status": "merged",
     "destination": "AGENTS.md#read-path-and-authority (B-D01: delete invalid flag examples; actual config/help authoritative)",
-    "approval": "approved by the user, 2026-09-28 (B-D01)"
+    "approval": "not individually reviewed at the step-2 review"
   },
   {
     "id": "B-A210",
@@ -2384,7 +2384,7 @@
     "text": "rather than hardcoding one experimental choice.",
     "status": "merged",
     "destination": "AGENTS.md#read-path-and-authority (B-D01: delete invalid flag examples; actual config/help authoritative)",
-    "approval": "approved by the user, 2026-09-28 (B-D01)"
+    "approval": "not individually reviewed at the step-2 review"
   },
   {
     "id": "B-A218",
