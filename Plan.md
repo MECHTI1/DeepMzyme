@@ -155,12 +155,15 @@ Select each arm's checkpoint from validation only with the pre-declared metric
 collapsed four from that same checkpoint. Any ranking across target schemes
 uses collapsed-four balanced accuracy, never native balanced accuracies of
 different class counts. The notebook Stage 6/6B route is single-scheme: Stage 6
-skips imported candidates whose `metal_label_scheme` differs, and Stage 7
-blocks mixed batches. Do not merge Stage 6 outputs across schemes; compare
+skips imported candidates whose recorded `metal_label_scheme` differs
+(candidates without it are kept with a warning); Stage 6B does not check
+schemes. Stage 7 evaluates only the one frozen Stage 6B final-refit source, so
+it never mixes schemes. Do not merge Stage 6 outputs across schemes; compare
 schemes with a campaign assessor on collapsed-four balanced accuracy, as the
 PMM core assessment does. Setting `STAGE6B_RANK_BY_METRIC` alone is not
-enough, because Stage 6B's paired-CI, rare-recall and tie-breaker gates stay
-on native metrics.
+enough: the paired-CI gate uses the Stage 6 selection metric (native by
+default), the rare-recall gate is always native, and the default tie-breakers
+are native.
 
 Do not use held-out test results to select between these formulations. After
 validation confirmation, freeze the selected formulation and complete Stage 6B

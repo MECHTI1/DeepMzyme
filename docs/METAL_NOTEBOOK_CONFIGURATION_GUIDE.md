@@ -869,13 +869,18 @@ For useful Colab HPO:
 - Stage 6B ranks by `STAGE6B_RANK_BY_METRIC = "auto"` in the live notebook,
   which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`. The
   notebook Stage 6/6B route is single-scheme: Stage 6 skips imported
-  candidates whose `metal_label_scheme` differs, and Stage 7 blocks mixed
-  batches. Do not merge Stage 6 outputs across schemes. Compare schemes with a
+  candidates whose recorded `metal_label_scheme` differs (candidates without
+  it are kept with a warning); Stage 6B does not check schemes. Stage 7
+  evaluates only the one frozen Stage 6B final-refit source, so it never mixes
+  schemes. Do not merge Stage 6 outputs across schemes. Compare schemes with a
   campaign assessor on collapsed-four balanced accuracy, as the PMM core
   assessment does. Setting `STAGE6B_RANK_BY_METRIC` alone is not enough: the
-  paired-CI, rare-recall and tie-breaker gates stay on native metrics.
+  paired-CI gate uses the Stage 6 selection metric (native by default), the
+  rare-recall gate is always native, and the default tie-breakers are native.
   Promotion is blocked unless the paired-CI gate passes, rare-class recall
   thresholds pass, and the configured tie-breaker policy is satisfied. The
+  default `STAGE6B_ALLOW_TIE_BREAK_WITHOUT_POSITIVE_CI = True` lets a tie
+  (scores within `STAGE6B_TIE_EPSILON`) pass without a positive CI. The
   default metal tie-breaker order is mean minimum recall, worst-fold validation
   metric, standard deviation, then model simplicity.
 - Stage 6B final refit uses the full non-test training set
@@ -1083,7 +1088,7 @@ primary report after viewing held-out metrics. The full Stage 7 policy and execu
 For the direct `METAL_LABEL_SCHEME = "four_class"` arm, active metal metrics
 cover Mn, Cu, Zn, and Class VIII directly. A standard `six_class` arm produces
 native six-class metrics plus collapsed-four metrics formed by merging Fe, Co,
-and Ni; a `five_class` arm merges Fe with its Co+Ni class. Label the latter as
+and Ni; a `five_class` arm merges Fe with its Co+Ni class. Label these collapsed-four metrics as
 collapsed reporting from a model trained on that scheme; they are the common comparison view but are not direct
 four-class training metrics. A selected `five_class` scheme is a separately
 named training objective. Use `METAL_REPORT_VIEW` to choose which already-computed

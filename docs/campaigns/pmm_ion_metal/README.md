@@ -43,8 +43,7 @@ Compute route: CLI runners on GCP L4 via `~/deepmzyme-vm/bin/*` under
 authorized fallback, notebook secondary ([route decision](../../archive/consolidation_2026-09/PLAN_v2.md#6-user-decisions)).
 Production stays one training worker per GPU; the
 [concurrency probe](../../plans/pmm_gpu_concurrency_probe.md) establishes no accuracy equivalence.
-Last verified VM state: TERMINATED, 2026-09-28 06:00:18 UTC; retained 150-GB disk
-costs approximately $15/month ([closeout summary](../../notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+Last verified VM state and retained-disk cost: the `GPU/VM:` line in [current status](../../../EXPERIMENT_STATUS.md#blockers-and-immediate-next-action).
 
 Files here: this overview and [verbatim STATUS history](log.md).
 Plans, JSON scopes, recipes and immutable evidence keep their existing paths.

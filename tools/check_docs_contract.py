@@ -216,6 +216,11 @@ def status_sections(lines: list[str]) -> dict[str, list[tuple[int, str]]]:
     return sections
 
 
+def fixed_line(line: str) -> str:
+    """STATUS fixed lines may be written as list items ('- Stage: ...')."""
+    return line[2:] if line.startswith("- ") else line
+
+
 def check_status(root: Path, findings: Findings) -> str | None:
     """Check the approved STATUS layout; return the current campaign README path."""
     if not (root / STATUS_PATH).is_file():
@@ -225,7 +230,7 @@ def check_status(root: Path, findings: Findings) -> str | None:
     lines = blank_fences(text_of(root, STATUS_PATH).split("\n"))
     if lines[0].strip() != STATUS_TITLE:
         findings.add("STRICT", f"{STATUS_PATH}:1", "status", "unexpected title", f"use '{STATUS_TITLE}'")
-    head = [line for line in lines[:6] if line.strip()]
+    head = [fixed_line(line) for line in lines[:6] if line.strip()]
     if not any(STATUS_LINE.match(line) for line in head):
         findings.add("STRICT", STATUS_PATH, "status", "missing 'Status: <state> (<date> ...)' line near the top",
                      "add 'Status: active|paused|closed|planned (YYYY-MM-DD reason)'")
@@ -238,12 +243,12 @@ def check_status(root: Path, findings: Findings) -> str | None:
                      "use exactly: " + "; ".join(STATUS_SECTIONS))
     sections = status_sections(lines)
     for section, prefixes in STATUS_SECTION_LINES.items():
-        body = [line for _, line in sections.get(section, [])]
+        body = [fixed_line(line) for _, line in sections.get(section, [])]
         for prefix in prefixes:
             if not any(line.startswith(prefix) for line in body):
                 findings.add("STRICT", STATUS_PATH, "status", f"'{section}' lacks the '{prefix}' line",
                              f"add '{prefix} ...' to that section")
-    blocker_body = [line for _, line in sections.get("Blockers and immediate next action", []) if line.strip()]
+    blocker_body = [fixed_line(line) for _, line in sections.get("Blockers and immediate next action", []) if line.strip()]
     for index, prefix in enumerate(STATUS_BLOCKER_LEAD):
         if len(blocker_body) <= index or not blocker_body[index].startswith(prefix):
             findings.add("STRICT", STATUS_PATH, "status",
@@ -268,7 +273,7 @@ def check_status(root: Path, findings: Findings) -> str | None:
             if "FOLLOW_UP_TECHNICAL_ISSUES.md" not in bullet and bullet.strip() != "- None.":
                 findings.add("WARN", STATUS_PATH, "status", f"caveat without a FOLLOW_UP link: {bullet[:60]}",
                              "link the tracking TECH-### issue")
-    campaign_line = next((line for line in lines if line.startswith("Current campaign:")), "")
+    campaign_line = next((line for line in map(fixed_line, lines) if line.startswith("Current campaign:")), "")
     match = re.search(r"\]\((docs/campaigns/[^/)]+/README\.md)\)", campaign_line)
     if not match:
         findings.add("STRICT", STATUS_PATH, "status", "'Current campaign:' line lacks a docs/campaigns/<id>/README.md link",

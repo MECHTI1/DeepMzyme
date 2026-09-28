@@ -81,8 +81,8 @@ readout, plus the PinMyMetal released-recipe comparator on the same five
 training partitions (CPU). Preserve the completed awareness screen; its
 remaining twelve fits and further mechanism/HPO development are paused by the
 user-approved scope amendment. Do not claim completion of the original 45-fit
-grid. Both four- and six-class targets remain required; five-class is the explicitly
-requested alternative. The old and new 45-fit grids contain different arms.
+grid. The v2 scope trains `four_class`, `five_class` and `six_class` as recorded;
+none is a primary training objective. The old and new 45-fit grids contain different arms.
 
 ### Active core-only continuation
 
@@ -5050,12 +5050,15 @@ Stage 6B ranks candidates by mean `val_metal_balanced_acc`, applies the
 predeclared paired-CI, rare-class recall, and tie-breaker policy, then
 optionally trains the selected configuration once on the full non-test training
 set. Stage 6B does not open the held-out test set. This notebook route is
-single-scheme: Stage 6 skips imported candidates whose `metal_label_scheme`
-differs, and Stage 7 blocks mixed batches. Do not merge Stage 6 outputs across
-schemes; compare schemes with a campaign assessor on collapsed-four balanced
-accuracy, as the PMM core assessment does. Setting `STAGE6B_RANK_BY_METRIC`
-alone is not enough, because the paired-CI, rare-recall and tie-breaker gates
-stay on native metrics.
+single-scheme: Stage 6 skips imported candidates whose recorded
+`metal_label_scheme` differs (candidates without it are kept with a warning);
+Stage 6B does not check schemes. Stage 7 evaluates only the one frozen Stage 6B
+final-refit source, so it never mixes schemes. Do not merge Stage 6 outputs
+across schemes; compare schemes with a campaign assessor on collapsed-four
+balanced accuracy, as the PMM core assessment does. Setting
+`STAGE6B_RANK_BY_METRIC` alone is not enough: the paired-CI gate uses the
+Stage 6 selection metric (native by default), the rare-recall gate is always
+native, and the default tie-breakers are native.
 
 When to use it: only after Stage 6 has completed and the Stage 6 decision gate
 above passes.

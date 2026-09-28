@@ -4,8 +4,9 @@ Status: **approved in Phase 0**, as recorded in [PROGRESS.md](PROGRESS.md)
 (2026-09-28). Scientific facts are as of `3e912a6`; Job A corrects their
 documentation. **Q1 element 4 was revised and re-approved by the user on
 2026-09-28** after the Job B decision that no training objective is primary.
-Q2–Q6 answers are unchanged; their source line numbers for `AGENTS.md`,
-`EXPERIMENT_STATUS.md` and the campaign README refer to the Job B branch tip.
+Q2–Q6 answers are unchanged. Source line numbers refer to the Job B branch tip
+unless a commit or an earlier state is named; they were rechecked after the
+user's review of `a205658`.
 
 After Job B, a fresh agent that reads only `AGENTS.md`, `EXPERIMENT_STATUS.md` and the
 active campaign README must give every **required element** below. Wording may differ.
@@ -31,10 +32,10 @@ update this key first, with sources, and get approval again.
    primary, required or main training target is a contradiction.
 
 **Sources:** `run_pmm_core_campaign.py:18-26` (`targets`); `docs/plans/pmm_core_scope_v2.json`
-(`targets`); `docs/notebook_outputs/README.md:54` ("common-four endpoint"); `AGENTS.md:125-137`
+(`targets`); `docs/notebook_outputs/README.md:56` ("common-four endpoint"); `AGENTS.md:125-137`
 at `3c0f80c` (element 4 before revision); user decision 1A, 2026-09-28 (“remove "primary",
 everywhere”); `AGENTS.md:17` and `:19-20`; `docs/campaigns/pmm_ion_metal/README.md:9-12`
-and `:61-62` (revised element 4).
+and `:60-61` (revised element 4).
 
 ## Q2. What does "5-fold" mean in the active campaign?
 
@@ -61,7 +62,7 @@ and `:61-62` (revised element 4).
    and shutdown; an optional monitor is read-only. At most one **active** GPU.
 4. A skill invocation does not authorize spending, another provider or a larger budget.
 
-**Sources:** D1 (PLAN_v2 §6); `AGENTS.md:29-51`.
+**Sources:** D1 (PLAN_v2 §6); `AGENTS.md:39-47`.
 Baseline note: before Job A, `AGENTS.md:467` ("Hardware: G4-class GPU") and
 `docs/GETTING_STARTED.md:26` ("Recommended cloud entry point") contradicted D1.
 Job A fixes these statements in the isolated worktree.
@@ -76,7 +77,7 @@ Job A fixes these statements in the isolated worktree.
    readiness verification.
 4. The last verified VM state is TERMINATED; its disk storage still costs money.
 
-**Sources:** `EXPERIMENT_STATUS.md:3`, `:12` and `:58-67`.
+**Sources:** `EXPERIMENT_STATUS.md:3`, `:12` and `:60-70`.
 
 ## Q5. Which held-out test sets have been opened?
 
@@ -110,4 +111,4 @@ state: fold 0 training, `run_test_eval: false`); `scripts/run_zenodo_pmm_exact_5
    selects one configuration, plus a completed Stage 6B final full-train refit of it, frozen
    as the Stage 7 source. Stage 7 is one-shot.
 
-**Sources:** `AGENTS.md:405-413, :474-486`; `Plan.md:272-275`.
+**Sources:** `AGENTS.md:32-34`; `Plan.md:325-342`.
