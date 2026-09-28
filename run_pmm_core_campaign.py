@@ -251,6 +251,9 @@ def parse_args(argv=None):
 def main(argv=None):
     args = parse_args(argv)
     scope, scope_hash = load_scope(args.scope_file)
+    deferred = scope.get("execution_status") == "deferred_by_user"
+    if args.action == "run":
+        require(not deferred, "Core continuation is deferred by user; retain fold 0 until an explicit resume and renewed readiness/budget verification")
     require(source_tree_sha256() == scope["source_tree_sha256"], "Frozen scientific source changed; no plan or run allowed")
     args.campaign_dir, args.train_dir = args.campaign_dir.resolve(), args.train_dir.resolve()
     require(args.train_dir.name == "train", "Only the training-side directory named train is allowed")
@@ -310,12 +313,13 @@ def main(argv=None):
              for family in scope["families"] for target in scope["targets"] for fold in (1, 2, 3, 4)]
     result = {"scope_id": scope["scope_id"], "scope_sha256": scope_hash,
               "source_tree_sha256": scope["source_tree_sha256"], "execution_ready": False,
-              "status": "preview_only_pending_operational_admission",
+              "status": "deferred_by_user" if deferred else "preview_only_pending_operational_admission",
               "required_core_fits": 45, "candidate_units": len(units),
               "five_class_screen_entrypoint": "run_pmm_five_class_screen.py",
               "preserved_core_fold0_units": 9, "historical_awareness_fold0_units": 3,
               "paused_awareness_remaining_units": 12, "legacy_full_grid_fits": 45,
-              "blocked_prerequisites": ["Approved remaining compute budget, source/feature/replay validation, session admission and independent persistence"],
+              "blocked_prerequisites": (["Explicit user resume of deferred fold-1–4 fits"] if deferred else [])
+                                       + ["Approved remaining compute budget, source/feature/replay validation, session admission and independent persistence"],
               "run_artifacts_examined": False, "child_invoked": False, "files_written": False,
               "note": "Counts describe the continuation scope, not verified completion. All nine fold-0 fits are preserved with their original qualifications. Run-state, budget, persistence and provider admission are not certified by this plan. No final refit or held-out execution is exposed.",
               "units": units}

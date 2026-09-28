@@ -1,5 +1,11 @@
 # PMM core readiness and single-GPU concurrency — 2026-09-28
 
+Subsequent user decision: retain the existing fold-0 results and defer the
+36 remaining fits for future work. The budget proposal below remains an
+unapproved historical proposal; no immediate continuation decision is pending.
+The implementation/readiness snapshot is preserved, with fresh verification
+required after an explicit resume. Current status is in `EXPERIMENT_STATUS.md`.
+
 All nine trained core fold-0 fits now qualify under the explicitly retrospective
 `pmm-core-replay-v1` integration. Seven retain original strict replay passes;
 GVP5 and GVP6 retain their original strict failures. No fit or checkpoint was

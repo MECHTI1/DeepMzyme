@@ -7,6 +7,30 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
 
+**2026-09-28 — user decision: retain fold 0; defer further fits:**
+- Keep the nine existing ordinary-readout fold-0 results as the current
+  exploratory comparison of four/five/six-class training. Their original
+  strict outcomes and separate retrospective qualifications remain attached.
+- **The 36 remaining fold-1–4 fits are deferred**, with the full 45-fit design,
+  code, caches, checkpoints, PMM folds and resume instructions preserved for
+  future work. This is not completed fivefold confirmation or final selection.
+- The additional 34-hour/$34 proposal is **not approved and no longer awaiting
+  a decision for immediate execution**. Resume only after an explicit user
+  request, refreshed remaining-budget authority and new readiness verification.
+  No further fits, extra fold-0 experiments or final refits are authorized by
+  this decision. The core scope and runner record/refuse the active deferral.
+- Deferral verification: all 44 core-runner CPU tests passed. A read-only plan
+  against the frozen campaign reports 36 deferred selectors and nine preserved
+  fold-0 units; a training attempt is refused before source/artifact access.
+  No child process or training output was created by these checks.
+- No GPU was started for this update. Last verified VM state is TERMINATED;
+  retained disk storage continues. The historical readiness/forecast evidence
+  below is preserved; its old scope/implementation hash cannot authorize a
+  future run after this update.
+- Nine unrelated uncommitted files belong to the Antigravity GVP-improvement
+  suite (five source edits, three new scripts, one new test file). They are
+  separate from this frozen PMM campaign and remain untouched/uncommitted.
+
 **2026-09-28 — core readiness verified; concurrency measured; GPU stopped:**
 - All **nine core fold-0 fits** qualify under explicit retrospective
   `pmm-core-replay-v1` integration. Seven retain strict passes; GVP5/GVP6 retain

@@ -86,6 +86,14 @@ requested alternative. The old and new 45-fit grids contain different arms.
 
 ### Active core-only continuation
 
+**Execution deferred by user on 2026-09-28.** Retain the nine existing fold-0
+results. The following recipe preserves the 36 missing fits for a future
+explicitly resumed campaign; do not execute its training block now. The runner
+refuses `--action run` while the scope says `execution_status=deferred_by_user`.
+After a user-authorized resume, update that status, verify the remaining budget
+and regenerate readiness for the exact scope/implementation. Historical
+readiness files remain evidence and must not be rewritten to bypass the pause.
+
 Scope authority: [`pmm_core_scope_v2.json`](plans/pmm_core_scope_v2.json).
 Use the repository-root [`run_pmm_core_campaign.py`](../run_pmm_core_campaign.py)
 entry point and the [core execution contract](plans/pmm_core_execution_v1.md).

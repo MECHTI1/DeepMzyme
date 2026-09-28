@@ -3,6 +3,17 @@
 **Status:** original design reviewed 2026-09-25; exploratory execution amended 2026-09-26–27; core-only scope, five-class arm and additive continuation contract adopted 2026-09-28. The continuation, replay and assessment/refit-preview implementation is CPU-tested; this does not complete the scientific campaign. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
 **Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
 
+## Current execution decision — retain fold 0; defer further fits
+
+On 2026-09-28 the user chose to remain with the existing fold-0 comparison.
+Preserve all nine core fits, their qualifications and all supporting artifacts.
+The remaining 36 fold-1–4 fits and complete 45-fit research design below are
+retained for future work. They are not authorized for immediate execution.
+The proposed larger budget remains unapproved; it is no longer a pending
+request to continue now. Resume requires an explicit user instruction,
+refreshed budget authority and new readiness verification. No model is promoted
+from this exploratory fold, and no extra fold-0 experiments are implied.
+
 ## Active amendment — prioritize core models; pause binding awareness
 
 The user approved pausing further `first_shell_bias` work, then explicitly

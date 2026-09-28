@@ -85,6 +85,28 @@ def test_actual_run_is_blocked_until_readiness_exists(scope_args):
         core.main(run_args(scope_args))
 
 
+def test_user_deferral_blocks_training_before_any_source_or_artifact_access(scope_args, monkeypatch):
+    path = Path(scope_args[1])
+    scope = json.loads(path.read_text())
+    scope["execution_status"] = "deferred_by_user"
+    path.write_text(json.dumps(scope))
+    monkeypatch.setattr(core, "source_tree_sha256", lambda: pytest.fail("Deferred run proceeded to source checks"))
+    with pytest.raises(ValueError, match="deferred by user"):
+        core.main(run_args(scope_args))
+
+
+def test_deferred_plan_preserves_all_future_selectors(scope_args, capsys):
+    path = Path(scope_args[1])
+    scope = json.loads(path.read_text())
+    scope["execution_status"] = "deferred_by_user"
+    path.write_text(json.dumps(scope))
+    assert core.main(scope_args) == 0
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "deferred_by_user"
+    assert result["candidate_units"] == 36 and not result["execution_ready"]
+    assert result["blocked_prerequisites"][0].startswith("Explicit user resume")
+
+
 @pytest.mark.parametrize("artifact", ["directory", "log", "command", "dangling_symlink"])
 def test_existing_unit_artifacts_never_trigger_reuse_or_retry(scope_args, artifact):
     campaign = Path(scope_args[scope_args.index("--campaign-dir") + 1])

@@ -3,7 +3,7 @@
   "scope_id": "pmm-core-v2",
   "campaign_id": "pmm_ion_metal_v2_context",
   "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
-  "authorization": "User added five-class training and requested continuation of matched fivefold confirmation. The three-fit fold-0 screen is already trained. Core implementation is CPU-tested; full-grid allocation requires diagnostic-backed readiness and an approved remaining budget. Session/day caps remain unchanged.",
+  "authorization": "On 2026-09-28 the user chose to retain the existing fold-0 results and defer further fits. Preserve the complete fivefold design for future execution. No additional fits or larger budget are authorized now; resume requires an explicit user request, refreshed budget authority and new readiness verification. Session/day caps remain unchanged.",
   "families": [
     "only_esm",
     "only_gvp",
@@ -34,8 +34,10 @@
   ],
   "legacy_full_grid_fits": 45,
   "execution_ready": false,
+  "execution_status": "deferred_by_user",
   "implementation_status": "implemented_cpu_tested",
   "blocked_by": [
+    "explicit_user_resume",
     "remaining_budget_authorization"
   ],
   "runtime_readiness_requirement": "A new core_readiness.json must verify all nine historical units and the exact implementation/scope in the execution environment; successful host diagnostics alone are not run admission.",

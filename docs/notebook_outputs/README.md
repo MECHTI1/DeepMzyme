@@ -43,6 +43,11 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 ## PMM ion-level comparison with corrected protein context
 
+Current execution decision: retain the existing fold-0 comparison and defer
+the remaining 36 core fits. The fivefold design stays available for future
+explicit resumption. Historical rows below preserve the decisions at the time;
+see `EXPERIMENT_STATUS.md` for the active deferral.
+
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|
 | `metal/pmm-ion-v2-context/core-readiness/2026-09-28` | Preserved nine core fold-0 fits; GVP5 fixed-input/20-pass diagnosis; separate historical core qualification; disposable two-process L4 probe | 9/45 trained and separately qualified, 36 absent fits; seven strict passes/two preserved strict failures. Probe step throughput 1.518×, numerical state differences; production remains serial. GPU stopped; larger remaining budget pending | 5 for individual qualified fits; 6 for diagnostics and incomplete fivefold grid | None; no new fit, promotion or refit | [summary](summaries/summary_pmm_core_continuation_20260928.md); [portable evidence](raw/pmm_core_continuation_20260928/README.md) |
