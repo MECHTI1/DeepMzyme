@@ -216,14 +216,14 @@ Status:
 - Materialized locally: yes.
 - Included in v10: yes.
 - Test membership and labels: materialized.
-- Completed test evaluation found: no.
-- Selection use established: no.
+- Completed test evaluation found: yes — opened 2026-09-22 (single-split runs) and 2026-09-23 (5-fold benchmark; see [test-use ledger](#test-use-ledger)).
+- Selection use established: yes, exploratory (test deltas used for model ranking and claims; no model was promoted to production).
 - Protection: must remain labeled exact/possibly-overlapped; it is not silently
   interchangeable with a zero-overlap final split.
 
-"No completed test evaluation found" here means no exact-trained evaluation
-artifact was identified. The same test structures occur in the historically
-accessed non-overlap test; see the shared-test qualification above.
+Completed test evaluations were identified for both single-split runs (2026-09-22)
+and 5-fold cross-validation runs (2026-09-23). The same test structures occur in the
+historically accessed non-overlap test; see the shared-test qualification above and the ledger.
 
 Tracked generated metadata:
 [`prepare_training_and_test_set/provenance/exact/`](../prepare_training_and_test_set/provenance/exact/).
@@ -291,15 +291,15 @@ Status:
 - Materialized locally: yes; 1,304 train structures and 316 test structures
   are represented by manifests in the shared structure store.
 - Included in v10: no.
-- Historical model evaluations found: exactly seven.
+- Historical model evaluations found: seven early reports, plus six undocumented evaluations on 2026-09-18 (see [test-use ledger](#test-use-ledger)).
 - Test pockets per report: 352.
-- Selection use established: not established by repository evidence.
+- Selection use established: not established by repository evidence for early runs; exploratory comparisons for 09-18 runs.
 - Protection: historically accessed; do not use its metrics for current HPO,
   model ranking, promotion, or rejection.
 
 > The non-overlap PinMyMetal test was historically evaluated in seven early
-> runs and is therefore not pristine or unopened. Whether those values
-> influenced subsequent selection is not established by repository evidence.
+> runs and six additional 2026-09-18 runs, and is therefore not pristine or unopened.
+> Whether early values influenced subsequent selection is not established by repository evidence.
 > These test metrics must not be used for current HPO recommendations or model
 > selection.
 
@@ -512,12 +512,38 @@ Tracked metadata:
 
 | Dataset | Labels/membership materialized | Evaluation artifacts found | Selection influence established | Current record |
 |---|---:|---:|---:|---|
-| Exact PinMyMetal | Yes | No | No | Possibly overlapped; label every use |
-| Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports | Not established | Historically accessed; metrics excluded from current selection |
+| Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
+| Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set |
+| Exact Zenodo PinMyMetal | Yes | Unknown, possibly evaluated (fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No | Active evaluation status unconfirmed; treat as potentially opened |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
 | CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation |
+
+### Local test-access artifacts (git-ignored)
+
+The following local, untracked evaluation reports record test evaluations performed across DeepMzyme runs (full details, local mtimes, byte counts, and individual report SHA-256 hashes are cataloged in [`docs/archive/consolidation_2026-09/inventory/test_access_artifacts.tsv`](archive/consolidation_2026-09/inventory/test_access_artifacts.tsv)):
+
+#### Exact PinMyMetal Test Runs (2026-09-22 and 2026-09-23)
+- Single-split runs (2026-09-22):
+  - `runs/benchmark_exact_pinmymetal/benchmark_enhanced_gvp_esmc/test_report.json` (`51882f786b...`)
+  - `runs/benchmark_exact_pinmymetal/benchmark_enhanced_only_gvp/test_report.json` (`3cf876146c...`)
+  - `runs/benchmark_exact_pinmymetal/benchmark_only_esm/test_report.json` (`a9b6bd0c0a...`)
+  *(Identical copies preserved in `DeepMzyme_Data/notebook_outputs/benchmark_exact_pinmymetal_recovery_20260922/`)*
+- 5-Fold Cross-Validation runs (2026-09-23):
+  - 15 fold reports in `runs/benchmark_exact_pinmymetal_5fold/benchmark_{enhanced_gvp_esmc,enhanced_only_gvp,only_esm}_fold{0..4}/test_report.json`
+  - 3 ensemble reports:
+    - `runs/benchmark_exact_pinmymetal_5fold/benchmark_enhanced_gvp_esmc_5fold_ensemble_report.json` (`dfeab429c3...`)
+    - `runs/benchmark_exact_pinmymetal_5fold/benchmark_enhanced_only_gvp_5fold_ensemble_report.json` (`cbf0a6fdc0...`)
+    - `runs/benchmark_exact_pinmymetal_5fold/benchmark_only_esm_5fold_ensemble_report.json` (`27772ffd39...`)
+
+#### Non-overlapped PinMyMetal Test Runs (2026-09-18)
+- 50-Epoch benchmark runs:
+  - `DeepMzyme_Data/notebook_outputs/benchmark_50epochs/{enhanced_gvp_esmc,enhanced_only_gvp,only_esm}/test_report.json`
+  *(Identical copies in `DeepMzyme_Data/notebook_outputs/benchmark_50epochs_ARCHIVE_successful_and_failed/`)*
+- Replicated 72% runs:
+  - `runs/benchmark_replicated_72pct/benchmark_{enhanced_gvp_esmc,enhanced_only_gvp,only_esm}/test_report.json`
+  *(Identical copies in `DeepMzyme_Data/notebook_outputs/benchmark_replicated_72pct/`)*
 
 **2026-09-15 incidental CARE metadata access:** while locating a development
 PDB-to-UniProt mapping for the metal–EC association analysis, a broad source

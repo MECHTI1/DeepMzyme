@@ -230,8 +230,8 @@ claim or change.
   configuration blocks for metal classification. Use this as the practical
   execution recipe and exact parameter source for each training stage (smoke,
   baseline, Optuna, Stage 6 grouped-fold confirmation, final test). For
-  G4-class GPU planning, this is where serious/custom Optuna budgets and search
-  spaces should be recorded.
+  historical G4-class GPU planning, this records the historical serious/custom Optuna
+  budgets and search spaces.
 - `docs/EC_TRAINING_PIPELINE_PLAYBOOK.md`: same staged structure as the metal
   playbook, covering EC-number classification. Covers EC label depth, group
   weighting, contrastive loss progression, and 200-trial Optuna examples.
@@ -464,9 +464,12 @@ planning the next Optuna sweep:
 
 Operational assumptions for this project:
 
-- Hardware: G4-class GPU. All serious Optuna runs use the budgets in the
-  playbook's "G4-Class Optuna Policy" subsection.
-- Persistent Optuna storage in Drive is mandatory for Stage 4 and Stage 5.
+- Hardware: the primary route is the CLI runners on the GCP L4 VM under `gpu-use-skill`; Colab is the authorized fallback, with the notebook as secondary interface. Serious Optuna runs use the budgets in the playbook's "G4-Class Optuna Policy" subsection (historical).
+- Persistent Optuna storage is mandatory for Stage 4 and Stage 5 on both routes.
+  Colab uses persistent Drive SQLite storage. The VM route follows the general
+  artifact-persistence safeguards in `gpu-use-skill` and
+  `docs/GCP_GPU_RUNBOOK.md`; a VM-specific Optuna storage recipe is not yet
+  documented (see the consolidation B0.4 precheck).
 - Persistent Optuna studies must not silently mix incompatible `MODEL_PRESET`
   values or incompatible search spaces. Keep
   `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False` for reportable HPO unless the
@@ -549,7 +552,7 @@ format:
      and the final refit uses the full non-test training set with no held-out
      test evaluation.
    - Confirm one `MODEL_PRESET` per Optuna study.
-   - Confirm persistent Drive SQLite storage for serious Optuna stages.
+   - Confirm persistent Drive SQLite storage for serious Optuna stages on the Colab route.
    - Confirm incompatible persistent-study reuse remains blocked unless an
      explicit recovery/debug override is requested.
 

@@ -249,11 +249,24 @@ Implementation references: [`metal_examples.py`](src/training/metal_examples.py)
 [`structure_parsing.py`](src/graph/structure_parsing.py), and
 [`splits.py`](src/training/splits.py).
 
-### Canonical Colab metal-training pipeline
+### Fold regimes
 
-The canonical metal-training workflow is
-`notebooks/DeepMzyme_training_colab.ipynb` driven by the staged blocks in
-`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The pipeline has eight stages with
+The project uses distinct split and fold regimes depending on the campaign and stage. The word "5-fold" alone is ambiguous unless the grouping key is stated:
+
+| Regime | Grouping Key | Description & Behavior | Campaigns |
+|---|---|---|---|
+| `pocket_id`-stratified 5-fold | `pocket_id` (resolves to `parent_pocket_id`) | One PDB ID can appear across multiple folds. Fold 0 has 58 val pockets whose PDB ID is also in train ([reporting and split audit](docs/agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)). | Exact-PMM benchmark; exact-pocket L4 v2; Zenodo runner (parent pocket) |
+| Frozen PDB-grouped 5-fold | `pdbid` groups | All sites/ions from the same PDB structure are assigned to the same fold. Fold membership files are frozen once. | PMM ion campaign (`pmm-core-v2`) |
+| Single train/val split | `pdbid` groups | Custom greedy label-balanced split (`src/training/splits.py`). Recipe documents `VAL_FRACTION = 0.15`; live notebook uses **0.18** (TECH-003). | Notebook stages 0–5 |
+| Stage 6 grouped k-fold × seeds | `pdbid` groups | Confirmation of top candidates across seeds and grouped folds (`group_kfold_seed_repeat`). | Notebook Stage 6 |
+
+### Canonical staged metal-training pipeline
+
+The canonical metal-training workflow is driven by the staged blocks in
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The primary execution route runs
+them as CLI runners on the GCP L4 VM (`gpu-use-skill`); the interactive
+notebook (`notebooks/DeepMzyme_training_colab.ipynb`) is a secondary interface
+and Colab is the authorized cloud fallback. The pipeline has eight stages with
 explicit decision gates: Stage 0 (environment/data readiness), Stage 1
 (1-epoch smoke), Stage 2A (Only-GVP validation anchor), Stage 2B (baseline
 family comparison), Stage 3 (Optuna plumbing debug), Stage 4 (optional medium
@@ -265,8 +278,9 @@ Stage 6B (promotion gates and final full-train refit), and Stage 7
 Authoritative rules for the pipeline:
 
 - One `MODEL_PRESET` per Optuna study. Optuna never compares model families.
-- Prefer a verified G4-class GPU when available; measure the actual accelerator,
-  memory and throughput on each Colab allocation. Neither a particular GPU nor
+- Measure the actual accelerator, memory and throughput on each allocation
+  (the GCP L4 VM on the primary route, or Colab on the authorized fallback). Historical
+  budgets reference a G4-class GPU. Neither a particular GPU nor
   uninterrupted runtime is guaranteed. The playbook defines exact budgets,
   storage, search spaces, seed lists, and decision gates.
 - No held-out test evaluation before Stage 7 and no Stage 7 launch without

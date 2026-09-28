@@ -1,0 +1,22 @@
+# sha256sum -c of every tracked SHA256SUMS under docs/, worktree @ 3e912a6 (2026-09-28)
+# Manifests whose entries start with 'docs/' are checked from the repo root; others from their own directory.
+OK    75  docs/notebook_outputs/raw/GVP + late fusion/metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1/SHA256SUMS  (from docs/notebook_outputs/raw/GVP + late fusion/metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1)
+FAIL  25  docs/notebook_outputs/raw/legacy_nonoverlap_test_access/SHA256SUMS  (from docs/notebook_outputs/raw/legacy_nonoverlap_test_access)
+        diagnostic_existing_test_reports.csv: FAILED
+        sweep_comparison.csv: FAILED
+        sweep_status.csv: FAILED
+        sha256sum: WARNING: 3 computed checksums did NOT match
+OK    9  docs/notebook_outputs/raw/metal_single_gpu_20h_v2_profile_20260916/SHA256SUMS  (from .)
+OK    38  docs/notebook_outputs/raw/metal_single_gpu_authorized_20260917/SHA256SUMS  (from docs/notebook_outputs/raw/metal_single_gpu_authorized_20260917)
+OK    20  docs/notebook_outputs/raw/pmm_core_continuation_20260928/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_core_continuation_20260928)
+OK    6  docs/notebook_outputs/raw/pmm_five_class_screen_20260928/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_five_class_screen_20260928)
+OK    89  docs/notebook_outputs/raw/pmm_five_class_screen_20260928/execution/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_five_class_screen_20260928/execution)
+OK    60  docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_ion_v2_context_20260926)
+OK    111  docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927)
+OK    58  docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/SHA256SUMS  (from docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928)
+OK    73  docs/notebook_outputs/raw/remote_homology_v1_20260917/SHA256SUMS  (from docs/notebook_outputs/raw/remote_homology_v1_20260917)
+
+# PRE-EXISTING (not caused by this work): legacy_nonoverlap_test_access/{diagnostic_existing_test_reports,sweep_comparison,sweep_status}.csv
+# were committed in 3846f47 (2026-08-22) with core.autocrlf=input (~/.gitconfig), which stripped CRLF.
+# SHA256SUMS records the CRLF bytes; the shared checkout's working copies still have CRLF and pass;
+# every fresh checkout (this worktree, clones, bundles) fails. Evidence is immutable here: report only.

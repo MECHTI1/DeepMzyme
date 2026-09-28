@@ -16,21 +16,23 @@ This document provides exhaustive, deterministic reproduction specifications for
 
 Any researcher or AI agent reading this repository can replicate the exact runs, evaluation protocols, and per-fold performance metrics reported below.
 
+> **Methodological Qualification:** Not a like-for-like comparison with PinMyMetal: this cohort has 1,597 training pockets (DeepMzyme's catalytic-pocket subset of the exact train membership; PinMyMetal's released source file has 7,920 training rows, and its effective training cohort is not certified), PinMyMetal's fold assignments were not released, and the exact-PinMyMetal test set shares 177 PDB IDs (179 identical structure filenames) with its training set (see [Exact PinMyMetal dataset](DATASETS.md#exact-pinmymetal)). Test set opened 2026-09-22/23; see [test-use ledger](DATASETS.md#test-use-ledger).
+
 ### Key Empirical Findings
-1. **Resolution of Baseline Evaluation Regimes (Fig. 2a vs Fig. 2b)**:
+1. **Evaluation Regimes (PinMyMetal Fig. 2a vs Fig. 2b)**:
    - In *PinMyMetal* (Nature Communications 2025, Fig. 2), the authors report two separate evaluation figures:
-     - **Figure 2a**: 5-Fold Cross-Validation validation performance on the training dataset (**75.08%** Balanced Accuracy across 4 collapsed metal classes: Mn: 90.3%, Zn: 73.8%, Group VIII: 73.3%, Cu: 62.9%).
-     - **Figure 2b**: Held-Out Test Set performance on the independent 352 test pockets (**67.85%** Balanced Accuracy: Mn: 88.6%, Zn: 65.9%, Group VIII: 57.5%, Cu: 59.4%).
+     - **Figure 2a**: 5-Fold Cross-Validation validation performance on the training dataset (**75.08%** Balanced Accuracy across 4 collapsed metal classes: Mn: 90.3%, Zn: 73.8%, Class VIII: 73.3%, Cu: 62.9%).
+     - **Figure 2b**: Held-Out Test Set performance on PinMyMetal's 1,488 test rows (**67.85%** Balanced Accuracy: Mn: 88.6%, Zn: 65.9%, Class VIII: 57.5%, Cu: 59.4%; evaluated in DeepMzyme on 352 catalytic pockets).
      - **Figure 2c**: Generalization performance on external Metal3D structures (**61.70%** Balanced Accuracy).
-   - Under the identical dataset, identical 5-fold stratification, and identical collapsed-4 class aggregation, **DeepMzyme achieves 80.22% ± 3.31% Cross-Validation Validation Balanced Accuracy** (beating Fig. 2a by **+5.14 pp**), and **79.92% 5-Fold Ensemble Held-Out Test Balanced Accuracy** (beating Fig. 2b by **+12.07 pp** and Metal3D Fig. 2c by **+18.22 pp**).
-2. **Complementary Multimodal Power**:
-   - Sequence-only ESM-C achieves **77.37%** test balanced accuracy (+9.52 pp vs PMM).
-   - Structure-only Enhanced GVP achieves **78.03%** test balanced accuracy (+10.18 pp vs PMM).
-   - Multimodal Late Fusion unites both, reaching **79.92%** test balanced accuracy (+12.07 pp vs PMM) and **80.40%** raw accuracy.
-3. **Massive Breakthrough on Challenging Metals**:
-   - Copper (Cu) test recall: **89.7%** (vs PinMyMetal's 59.4%, **+30.3 pp**).
-   - Zinc (Zn) test recall: **88.0%** (vs PinMyMetal's 65.9%, **+22.1 pp**).
-   - Group VIII (Fe/Co/Ni) test recall: **74.6%** (vs PinMyMetal's 57.5%, **+17.1 pp**).
+   - In DeepMzyme's exploratory benchmark, maximum validation Balanced Accuracy across epochs reached **80.22% ± 3.31%** (selected-checkpoint out-of-fold values: **79.84%** for late fusion, **78.98%** for ESM-C, and **73.87%** for Enhanced GVP; see [reporting and split audit](agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)), and **79.92% 5-Fold Ensemble Held-Out Test Balanced Accuracy** (test set opened 2026-09-23; see [test-use ledger](DATASETS.md#test-use-ledger)).
+2. **Multimodal Evaluation (Test set opened 2026-09-23; see [test-use ledger](DATASETS.md#test-use-ledger))**:
+   - Sequence-only ESM-C: **77.37%** test balanced accuracy.
+   - Structure-only Enhanced GVP: **78.03%** test balanced accuracy.
+   - Multimodal Late Fusion: **79.92%** test balanced accuracy and **80.40%** collapsed-4 accuracy.
+3. **Per-Metal Recalls (Test set opened 2026-09-23; see [test-use ledger](DATASETS.md#test-use-ledger))**:
+   - Copper (Cu) test recall: **89.7%** (vs PinMyMetal Fig. 2b 59.4%).
+   - Zinc (Zn) test recall: **88.0%** (vs PinMyMetal Fig. 2b 65.9%).
+   - Class VIII (Fe/Co/Ni) test recall: **74.6%** (vs PinMyMetal Fig. 2b 57.5%).
 
 ---
 
@@ -68,7 +70,9 @@ Any researcher or AI agent reading this repository can replicate the exact runs,
 
 ## 4. Empirical Benchmark Results
 
-### Table 1: 5-Fold Cross-Validation Performance (Validation Folds vs PinMyMetal Fig 2a)
+### Table 1: 5-Fold Cross-Validation Performance (Collapsed-Four Epoch Maxima vs PinMyMetal Fig 2a)
+
+> **Metric distinction:** The reported DeepMzyme collapsed-four balanced-accuracy means below are epoch maxima, according to the [reporting audit](agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable). That audit reports selected-checkpoint out-of-fold means of **79.84%** for late fusion, **78.98%** for ESM-C, and **73.87%** for Enhanced GVP, and requires reconciliation before publication. Selected-checkpoint scores are not a statistical correction for selection bias. Folds are `pocket_id`-stratified, not PDB-grouped. The historical PMM deltas are descriptive arithmetic across different cohorts and protocols, not evidence of superiority.
 
 | Architecture | 5-Fold CV Val Bal Acc (5-Class) | 5-Fold CV Val Bal Acc (Collapsed-4) | Mn Recall | Zn Recall | Group VIII Recall | Cu Recall | Delta vs PMM Fig 2a (75.08%) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
