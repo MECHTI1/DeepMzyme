@@ -1,40 +1,55 @@
 # Final execution plan: metal-level prediction and PMM comparison
 
-**Status:** original design reviewed 2026-09-25; exploratory execution amended 2026-09-26–27; user-approved core-only scope adopted 2026-09-28. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
+**Status:** original design reviewed 2026-09-25; exploratory execution amended 2026-09-26–27; user-approved core-only scope adopted and five-class arm added 2026-09-28. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
 **Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
 
 ## Active amendment — prioritize core models; pause binding awareness
 
-The user approved pausing further development and confirmation of the current
-`first_shell_bias` method. The active neural comparison is **three families ×
-two target formulations × five folds = 30 fits**, all with ordinary readout
-(`binding_residue_pooling=none`). Retain both direct four-class and six-class
-training with common-four evaluation, including native six-class reporting.
+The user approved pausing further `first_shell_bias` work, then explicitly
+requested five-class training as well. The active neural comparison is
+**three families × three target formulations × five folds = 45 ordinary-readout
+fits**: required direct four and six, plus the five-class alternative. This is
+**not the original 45-fit grid**, which included awareness arms.
 
-The [versioned scope](pmm_core_scope_v1.json) and
-[core execution recipe](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
-supersede the historical 45-fit requirement below. Keep the completed awareness
-screen, model code, original manifests, failed replays and raw evidence intact.
-The three awareness contrasts remain exploratory; their remaining folds, new
-variants and HPO are paused. Do not describe them as disproved or completed
-fivefold comparisons. The decision to pause follows inspection of fold 0 and
-must be disclosed. Ordinary ESMC still receives the ion-centered neighborhood.
+The [v2 scope](pmm_core_scope_v2.json) and
+[core recipe](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
+supersede the [30-fit v1 scope](pmm_core_scope_v1.json). Begin with the
+[three-fit five-class fold-0 screen](pmm_five_class_screen_v1.json). Reuse the
+six existing four/six fold-0 fits subject to their recorded replay status;
+39 core fits remain at this amendment, including 15 five-class fits. The three
+trained awareness fits remain exploratory evidence; their 12 further fits,
+new variants and HPO are paused. The pause follows inspection of fold 0 and is
+not evidence that binding information is generally unhelpful.
 
-Reuse the same campaign, frozen folds, source, recipes, embeddings, caches and
-PMM comparator. The scope amendment is external to the frozen `src/`/`scripts/`
-identity; no old fit is renamed or retrained to make it match a new code hash.
-Keep the original six-contrast multiplicity denominator for simultaneous
-claims about the three retained target contrasts. Do not gain a looser
-threshold by dropping unfavorable awareness contrasts after screening.
+Five-class native indices are Mn=0, Cu=1, Zn=2, Fe=3, Co+Ni=4. The historical
+internal label `Class VIII` at index 4 means **Co+Ni only**. On the common-four
+endpoint it means **Fe+Co+Ni**; sum those native probabilities before argmax.
+Select checkpoints by native validation BA, earliest epoch on ties. Retain
+native five-class metrics and Fe/Co+Ni recalls separately. Keep common-four
+per-ion training weights, giving both Fe and Co+Ni the original `w_VIII`.
+Do not introduce a five-class-specific cohort, HPO, or standard inverse-five
+weighting. Four/six remain required rather than being replaced by five.
 
-This update authorizes code/documentation changes, not a GPU start or an
-increased compute ceiling. Refresh the reduced remaining-work forecast before
-allocation. The root-level entry point previews only eligible core units and
-blocks execution pending TECH-023 replay-policy integration and TECH-025 core
-assessment/refit integration. The old assessment ignores training filters and
-still requires all nine configurations; a filtered run is not a 30-fit decision.
-Reactivation of awareness requires a specific hypothesis and an explicitly
-adopted matched validation-only protocol, before any new results are inspected.
+Reuse the frozen source, cohort, folds, embeddings, caches and PMM comparator.
+The small root adapter delegates to existing training/admission/persistence;
+it does not change frozen `src/` or `scripts/`, old identities or receipts.
+The new screen uses the original strict independent replay tolerance `1e-6`;
+the retrospective nine-fit v2.1 policy does not cover these new fits. Preserve
+any failed replay, without retrying until it passes or changing tolerance.
+
+For later full-fold inference, predeclare five-vs-four and six-vs-four within
+each family (six active contrasts). Retain the three paused awareness contrasts
+in multiplicity bookkeeping: simultaneous denominator **9**. Five-vs-six is
+descriptive. The screen supplies no promotion or formal fivefold claim.
+
+The full-grid entry point remains preview-only pending TECH-023/TECH-025 and
+remaining-budget authority. The separate bounded five-class screen can execute
+with its own strict prospective contract and applicable session authorization.
+This does not approve the earlier 30-hour/$34 proposal, raise controller caps,
+resolve GVP6's historical replay issue, or enable the old assessor/refit/test
+path. That assessor still expects the different historical nine configurations.
+Reactivation of awareness requires a new hypothesis and explicitly adopted
+matched validation-only protocol.
 
 ## Immediate execution amendment — ESMC pair first
 
@@ -112,7 +127,7 @@ Produce a reproducible comparison of **metal identity at a known individual ion 
 
 The latest user instructions and applicable repository instructions govern this work. [`Plan.md`, sections 2, 7, and 8](../../Plan.md) explicitly require the paired target-formulation comparison, validation-only selection, and a final full-train refit before held-out reporting. Existing five-class runner defaults do not supersede that policy.
 
-The original experiment request and an independently attributable record of the alleged earlier five-class clarification were **not available in the inspected repository material**. Consequently:
+At the original review, the original experiment request and an independently attributable record of the alleged earlier five-class clarification were **not available in the inspected repository material**. The explicit 2026-09-28 user request now authorizes the additional five-class arm above; the following records that earlier review:
 
 - **Confirmed requirements:** metal-only scope, correct ion/example identity, PMM mapping, matched comparisons, leakage protection, and the repository's direct-four versus collapsed-six comparison.
 - **Original inferred objective, now screened and paused:** test binding-residue awareness on the Zenodo source-row cohort. Improvement was a hypothesis, not a required outcome; a single-fold null/tradeoff does not establish general lack of benefit.
@@ -255,7 +270,7 @@ Use the required DeepMzyme interpreter and verify it before future Python checks
 
 ### Step 6 — Run and assess the bounded matched comparison
 
-**Active core neural grid:** three ordinary-readout baseline families × two target formulations × five folds = **30 fits**, one model seed. Reuse the six trained core fold-0 fits subject to their recorded replay status; the remaining queue is 24 fits on folds 1–4. The three awareness fold-0 fits remain separate exploratory evidence; twelve additional awareness fits are deliberately paused. This is a disclosed reduction of the original 45-fit plan, never completion of that original grid. Additional seeds require a separately budgeted extension with a shared active seed list.
+**Active core neural grid:** three ordinary-readout baseline families × three target formulations × five folds = **45 fits**, one model seed. Reuse the six trained four/six core fold-0 fits subject to their recorded replay status; at adoption the remaining queue is 24 four/six fits on folds 1–4 plus 15 five-class fits. The three awareness fold-0 fits remain separate exploratory evidence; twelve additional awareness fits are deliberately paused. This is a disclosed replacement of the original 45-fit plan, never completion of that different grid. Additional seeds require a separately budgeted extension with a shared active seed list.
 
 **PMM comparator:** fit the released four-class classifier recipe anew on each of the same five training partitions and predict its matching validation ions. Bind source version, class-code order, permitted feature columns, preprocessing, and resampling to the run; pin dependency versions and fully resolved estimator defaults. Never use a released full-training fitted model to score its own training rows as CV. PMM's released script calls `dropna()` before selecting features and fits a soft-voting classifier; it is not itself a fivefold runner. Adapt its data boundary, with any fitting/resampling confined to the training fold. [Released PMM training source](https://github.com/hhz-lab/PinMyMetal/blob/main/data_model/train_chedhclassmodel.py).
 
@@ -263,11 +278,11 @@ Resolve PMM feature completeness and filtering in Step 1, so its retained evalua
 
 **Metrics and decisions:**
 
-- Primary comparison: mean common-four balanced accuracy over the five selected fold checkpoints. Co-report macro-F1, each class's recall/support, minimum recall, confusion matrices, and pooled OOF metrics. Six-class arms additionally retain native metrics and separate Fe/Co/Ni recalls. Never rank native four-class BA against native six-class BA.
-- Retain the three predeclared six-versus-direct-four contrasts within the ordinary-readout families. The three aware-versus-ordinary contrasts are paused after their disclosed single-fold screen; report that disposition and all screen outcomes. Do not present them as fivefold null results.
+- Primary comparison: mean common-four balanced accuracy over the five selected fold checkpoints. Co-report macro-F1, each class's recall/support, minimum recall, confusion matrices, and pooled OOF metrics. Six-class arms additionally retain native metrics and separate Fe/Co/Ni recalls; five-class arms retain native metrics and Fe/Co+Ni recalls. Never rank native BA across different vocabularies.
+- Retain the three predeclared six-versus-direct-four contrasts and add three five-versus-direct-four contrasts within the ordinary-readout families. Five-versus-six remains descriptive. The three aware-versus-ordinary contrasts are paused after their disclosed single-fold screen; report that disposition and all screen outcomes. Do not present them as fivefold null results.
 - Follow Stage 6's paired fold-difference bootstrap for the mean-fold estimand; freeze 10,000 resamples, 95% intervals, and bootstrap seed 42. If seeds are later added, average the same active seeds within each fold before resampling folds. A separate pooled-OOF interval, if reported, resamples whole PDB/alias groups and is labeled conditional on fitted models. Never resample sibling ions independently or use a pooled-OOF interval as though it estimated mean fold BA.
-- Validation promotion requires positive mean difference, a positive lower paired-95%-CI bound, no missing class recall, no zero mean class recall, and no common-four class's mean recall dropping more than **0.03** versus its matched control. The last rule applies the playbook's rare-recall tolerance per class. Report the retained contrasts as exploratory; a simultaneous improvement claim additionally requires a positive lower Bonferroni interval bound at `1 - 0.05/6` confidence, computed from the same resamples. Retain the original denominator despite the post-screen scope reduction. These approximate intervals are conditional on the fixed fold/seed design, not proof of a universal architecture advantage.
-- Without clear improvement, retain direct-four over six-class and ordinary readout over the new mechanism. Promote only a configuration actually evaluated: do not attach a four-class readout winner to an untested six-class model. Do not demand an invented +1 or +3 percentage-point gain, or success specifically in a small heterometal subset. Completion does not require outperforming PMM.
+- Validation promotion requires positive mean difference, a positive lower paired-95%-CI bound, no missing class recall, no zero mean class recall, and no common-four class's mean recall dropping more than **0.03** versus its matched control. The last rule applies the playbook's rare-recall tolerance per class. Report the retained contrasts as exploratory; a simultaneous improvement claim additionally requires a positive lower Bonferroni interval bound at `1 - 0.05/9` confidence, computed from the same resamples. This keeps the original six hypotheses and adds three five-class hypotheses. These approximate intervals are conditional on the fixed fold/seed design, not proof of a universal architecture advantage.
+- Without clear improvement, retain direct-four over five/six-class and ordinary readout over the new mechanism. Promote only a configuration actually evaluated: do not attach a four-class readout winner to an untested five/six-class model. Do not demand an invented +1 or +3 percentage-point gain, or success specifically in a small heterometal subset. Completion does not require outperforming PMM.
 - Limited train-only diagnostics may count nearby ions, target-shell overlap, and same/different native or collapsed labels. Structure-wide multiplicity must not be called local multinuclearity. Define any distance-based subgroup before examining its errors, show support, and keep sparse subgroups descriptive. Do not infer causal “interference resolution” from aggregate accuracy alone.
 
 These are validation-selected, one-seed CV estimates; using each fold for checkpoint selection is not an unbiased nested estimate of the whole selection process. Do not label them PMM's original folds, seed-stability evidence, or proof of remote-protein generalization.
@@ -276,7 +291,7 @@ These are validation-selected, one-seed CV estimates; using each fold for checkp
 
 This step is a **later reporting gate**, not permission to access test during implementation or this review.
 
-1. Produce a validation decision using the common-four comparisons above. Across target schemes, retain the distinction between native checkpoint selection and common-endpoint promotion. Do not send mixed native four/six BA values into an undifferentiated Stage 6B ranking.
+1. Produce a validation decision using the common-four comparisons above. Across target schemes, retain the distinction between native checkpoint selection and common-endpoint promotion. Do not send mixed native four/five/six BA values into an undifferentiated Stage 6B ranking.
 2. Before reportable final confirmation/refit, declare the test route and permitted training side. The exact Zenodo PMM source split can support a **secondary, possibly overlapping reference comparison**; it does not resolve the project's outstanding primary final-test route. Do not quietly move overlapping PDBs between original PMM sides or call this a pristine generalization test.
 3. Apply **Stage 6B: promotion gates and final full-train refit**. Preview the decision and command with `LAUNCH_STAGE6B_FINAL_REFIT=False`. Freeze one selected DeepMzyme configuration, seed 42, 50 full-training epochs, and the terminal checkpoint rule; refit once on its complete eligible non-test training side, recomputing normalization and weights there. Refit the frozen PMM recipe on the same eligible training cohort. Save the decision, exact command, and completed-refit identity before test access. If promotion is inconclusive, report that and retain the declared simple control; do not manufacture an improvement claim.
 4. Only after the route and reporting set are fixed, a separately authorized execution may certify test reconstruction/overlap using the already frozen rules, prepare label-free test inputs, and conduct **Stage 7: one-shot held-out test** for those fixed refits. Save exclusions and coverage; a mismatch yields a clearly named matched-subset report, not a silent protocol change. No per-fold development test evaluation, fold-ensemble replacement for refitting, test-driven calibration, or testing every exploratory arm.
@@ -286,7 +301,7 @@ This step is a **later reporting gate**, not permission to access test during im
 
 The original review authorized only this plan document. Subsequent execution requires concrete compute authorization and storage/runtime admission; the immediate amendment above records the user-approved one-session screen. Use the existing VM controller and [`docs/GCP_GPU_RUNBOOK.md`](../GCP_GPU_RUNBOOK.md) if GCP is chosen; its start authorization and actual caps apply. Neither source proposal's VM status, hourly price, free-space measurement, or elapsed-time forecast establishes current readiness.
 
-Reuse measured preparation, fit and replay timings. Forecast the remaining core queue as `8 × (time_ESM + time_GVP + time_late)` plus measured per-unit admission/transfer and cold-session allowances. Count all historical allocations and retained storage; do not charge completed embedding preparation or PMM fits again. Final refits/reporting remain separately gated. This user-approved scientific scope change is not a budget-driven silent deletion; future budget shortfalls still require a recorded budget decision without shrinking the accepted core grid or epochs.
+Reuse measured preparation, fit and replay timings. Forecast the remaining core queue as `13 × (time_ESM + time_GVP + time_late)` at adoption (39 remaining fits) plus measured per-unit admission/transfer and cold-session allowances. Count all historical allocations and retained storage; do not charge completed embedding preparation or PMM fits again. Final refits/reporting remain separately gated. This user-approved scientific scope change is not a budget-driven silent deletion; future budget shortfalls still require a recorded budget decision without shrinking the accepted core grid or epochs.
 
 Use persistent run storage, epoch checkpoints, and artifact synchronization with verified receipts. Distinguish restart from genuine optimizer-state resume; do not count an incomplete fit as complete. Keep GPU fits serial initially. Stop owned compute at the completion boundary under the runbook.
 
@@ -299,7 +314,7 @@ Under one new campaign output root, retain:
 - Scope-bound `core_cv_fold_metrics.csv`, `core_cv_oof_predictions.csv`, `core_cv_paired_deltas.csv`, and `core_validation_decision.json` from the future core assessor; PMM configuration and aligned predictions; an input/cohort/protocol comparison table; all active units plus explicit paused-awareness dispositions. These planned outputs must not overwrite historical `cv_*` or `validation_decision.json` or be relabeled as legacy-compatible.
 - If the later reporting gate is executed: `stage6b_decision.json`, `stage6b_ranked_candidates.csv`, `stage6b_final_refit_command.txt`, and `stage6b_selected_final_refit_candidate.json` only after completed/reused compatible refitting; frozen final prediction/report artifacts and the test-access record.
 
-**Development completion:** targeted tests and the prospectively integrated replay policy pass; all retained ions have certified provenance and required inputs; all six active neural configurations complete five matching folds with identical evaluation identities; PMM supplies predictions on those same units; native/common-four metrics reconcile to the selected checkpoints; class support and paired uncertainty are reported; no test access occurred in the validation chain. Awareness remains explicitly paused/exploratory. TECH-023/TECH-025 must be resolved by a scope-aware assessment/promotion bridge before claiming core completion or producing a final refit. Missing PMM parity or incomplete folds must remain explicitly incomplete, not be disguised by an average over available runs.
+**Development completion:** targeted tests and the prospectively integrated replay policy pass; all retained ions have certified provenance and required inputs; all nine active ordinary-readout neural configurations complete five matching folds with identical evaluation identities; PMM supplies predictions on those same units; native/common-four metrics reconcile to the selected checkpoints; class support and paired uncertainty are reported; no test access occurred in the validation chain. Awareness remains explicitly paused/exploratory. TECH-023/TECH-025 must be resolved by a scope-aware assessment/promotion bridge before claiming core completion or producing a final refit. Missing PMM parity or incomplete folds must remain explicitly incomplete, not be disguised by an average over available runs.
 
 **Reference-report completion:** the separately gated refit/report artifacts and coverage/overlap disclosures exist, with no selection changes after test access. This does not complete or designate the project's primary final held-out route.
 
@@ -309,7 +324,7 @@ During implementation, coordinate the affected documentation owners: dataset/pro
 
 | Uncertainty | Smallest check and decision rule |
 |---|---|
-| Alleged earlier five-class or true-hybrid instruction | Recover an attributable original user instruction if available. In its absence, execute the four/six, late-fusion scope above; neither proposal alone overrides repository policy. |
+| Five-class request and earlier true-hybrid proposal | Five-class was explicitly requested on 2026-09-28 and is included by the active v2 amendment. True hybrid remains outside this matched late-fusion campaign. |
 | Effective PMM cohort and fine-label provenance | Compare the pinned training source, its filtering, manifest UIDs, native elements, and feature availability. Freeze their certified common cohort; unresolved rows are excluded with reasons, and incomplete coverage is labeled a matched subset. |
 | Multi-model, insertion-code, altloc, or interface ambiguity | Inspect only affected training structures and their source resolution. A unique faithful anchor/context permits inclusion; unresolved ambiguity blocks that example, not automatic nearest-ion substitution. |
 | Embedding availability and runtime cost | Run the training-only input inventory, then an authorized preparation/smoke. Reuse certified 600M assets or generate them in a new namespace; do not change the ESM model or silently accept zeros to fit a budget. |

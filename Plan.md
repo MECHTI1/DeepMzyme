@@ -228,7 +228,9 @@ nodes; check its architecture and feature configuration.
 The [PMM comparison plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
 owns whether its optional binding-aware readout is active. Its approved core
 scope retains ordinary Only-ESM, Only-GVP and graph-level late fusion under
-both four- and six-class training. Preserve binding-aware code and exploratory
+required four- and six-class training, plus the explicitly user-requested
+five-class alternative (Mn/Cu/Zn/Fe/Co+Ni). Compare all three on the common-four
+endpoint from their native-BA-selected checkpoints. Preserve binding-aware code and exploratory
 evidence for reproducibility; further awareness development/confirmation is
 paused until a specific hypothesis and matched protocol are explicitly adopted.
 That prioritization does not establish that binding information is generally

@@ -59,13 +59,16 @@ features with `biotite_residue_sasa`, `custom_charge_distance_proxy` and
 `dpka_titr` omitted, ESMC-600M (`esmc_600m`, `--esm-dim 1152`).
 Class weights: per training fold, `w_c = N_train / (4 n_c)` on the common four
 classes via `--metal-class-weight-mode manual`; the six-class arm assigns
-`w_VIII` to Fe, Co and Ni separately.
+`w_VIII` to Fe, Co and Ni separately; the five-class arm assigns it to Fe and
+the merged Co+Ni output. Five-class internal `Class VIII` means Co+Ni only,
+whereas the common-four endpoint means Fe+Co+Ni. Collapse probabilities before
+argmax; do not compare native BA across different target vocabularies.
 
 | Family | Architecture | LR | Targets | Active readout |
 |---|---|---|---|---|
-| Only-ESM | `only_esm` | `3e-5` | `four_class`, `six_class` | `none` |
-| Only-GVP | `only_gvp`, raw RBF | `3e-4` | `four_class`, `six_class` | `none` |
-| GVP + ESMC | `gvp`, `late_fusion`, early ESM off, raw RBF | `3e-5`, GVP group `3e-4` | `four_class`, `six_class` | `none` |
+| Only-ESM | `only_esm` | `3e-5` | `four_class`, `five_class`, `six_class` | `none` |
+| Only-GVP | `only_gvp`, raw RBF | `3e-4` | `four_class`, `five_class`, `six_class` | `none` |
+| GVP + ESMC | `gvp`, `late_fusion`, early ESM off, raw RBF | `3e-5`, GVP group `3e-4` | `four_class`, `five_class`, `six_class` | `none` |
 
 The paused `first_shell_bias` option adds zero-initialized learned logit biases for the target's
 geometric first-shell residues in each readout pooling branch (mean and
@@ -73,19 +76,20 @@ attention; GVP and, where active, late ESM). At zero it reproduces the ordinary
 readout. With it, Only-ESM is labeled **ESMC with target-shell-conditioned
 readout**, not sequence-only.
 
-Active core grid: **3 families × 2 targets × 5 folds = 30 fits**, with ordinary
+Active core grid: **3 families × 3 targets × 5 folds = 45 ordinary-readout fits**, with ordinary
 readout, plus the PinMyMetal released-recipe comparator on the same five
 training partitions (CPU). Preserve the completed awareness screen; its
 remaining twelve fits and further mechanism/HPO development are paused by the
 user-approved scope amendment. Do not claim completion of the original 45-fit
-grid. Both four- and six-class targets remain required.
+grid. Both four- and six-class targets remain required; five-class is the explicitly
+requested alternative. The old and new 45-fit grids contain different arms.
 
 ### Active core-only continuation
 
-Scope authority: [`pmm_core_scope_v1.json`](plans/pmm_core_scope_v1.json).
+Scope authority: [`pmm_core_scope_v2.json`](plans/pmm_core_scope_v2.json).
 Use the repository-root [`run_pmm_core_campaign.py`](../run_pmm_core_campaign.py)
 entry point. It preserves the frozen training source hash and exposes no
-binding-aware, fold-0 retry, legacy-assessment, refit or test shortcut. This is
+binding-aware, existing-fit retry, legacy-assessment, refit or test shortcut. This is
 a scope guard around the existing runner, not a new GPU controller.
 
 Current stage is Stage 2B-style one-seed grouped-fold comparison. The completed
@@ -107,10 +111,11 @@ $PY run_pmm_core_campaign.py --campaign-dir "$C" --train-dir "$T" \
   --action plan
 ```
 
-The preview prints JSON with the scope/source hashes, 30 required core units and 24
-candidate selectors on folds 1–4; it does not revalidate completed fits or
+The preview prints JSON with the scope/source hashes, 45 required core units and 39
+candidate selectors (24 four/six on folds 1–4, 15 five on folds 0–4); it does not revalidate completed fits or
 prove that a candidate is still missing. It starts no child/GPU worker and
-does not overwrite scientific artifacts. Candidate commands are preview-only.
+does not overwrite scientific artifacts. Candidate commands are preview-only. Five-class folds 1–4 deliberately have
+no runnable command until their execution/assessment bridge exists.
 Save stdout to a new preview file only after the command succeeds; a failed
 source check must not truncate a previous successful preview.
 The entry point rejects existing unit artifacts before a prospective run, so
@@ -119,9 +124,11 @@ an uncertified fit cannot silently be retrained or replayed until it passes.
 **Execution gate:** `execution_ready=false`. Resolve
 [TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance)
 and [TECH-025](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge)
-before enabling training. Integrate a prospectively fixed replay rule covering
+before enabling the full grid. The separate new five-class fold-0 screen below
+uses its own prospective strict replay contract; it does not certify old GVP6
+or make a full-grid decision. Integrate a prospectively fixed replay rule covering
 the core, preserving the old receipts and the narrower fold-0 v2.1 report.
-Implement/test a scope-bound 30-fit assessor and refit bridge. Never simply
+Implement/test a scope-bound 45-ordinary-fit assessor and refit bridge. Never simply
 flip the readiness flag or reuse the old `assess` with `--readouts none`: that
 action ignores the filter. Then refresh the remaining-core forecast and resolve
 compute authority before allocation through the required GPU skill. This scope
@@ -134,16 +141,73 @@ disabled. Preserve old `run_config.json`, `run_metadata.json`, normalization,
 checkpoints, predictions, PMM outputs and failed replays; no new preparation is
 required merely because the scope changed.
 
-Core completion requires all 30 units, matched validation identities and full
+Core completion requires all 45 ordinary-readout units, matched validation identities and full
 OOF coverage, five compatible PMM folds, unchanged checkpoint selection and
 rare-class protection. The future assessor must write distinct
 `core_cv_fold_metrics.csv`, `core_cv_oof_predictions.csv`,
 `core_cv_paired_deltas.csv`, and `core_validation_decision.json`, binding the
-scope, source and replay policy. The three target contrasts retain 10,000
+scope, source and replay policy. The six target contrasts (five-vs-four and six-vs-four in each family) retain 10,000
 bootstrap resamples, seed 42, 95% intervals, 0.03 recall-drop protection and the
-original `1 - 0.05/6` simultaneous bound. Awareness contrasts are paused, not
+`1 - 0.05/9` simultaneous bound (original six hypotheses plus three new
+five-vs-four hypotheses; the paused awareness contrasts stay counted). Five-vs-six is descriptive. Awareness contrasts are paused, not
 failed or complete. Scope-bound Stage 6B selection and a completed full-train
 refit remain mandatory before separately authorized Stage 7 reporting.
+
+### Five-class exploratory screen on the frozen PMM fold 0
+
+Scope: [`pmm_five_class_screen_v1.json`](plans/pmm_five_class_screen_v1.json).
+This user-requested Stage 2B-style screen adds exactly one 50-epoch fit per
+family, native `five_class`, ordinary readout, fold 0 and model seed 42.
+It uses the same ion cohort, PDB groups, features, fixed family learning rates,
+manual common-four weights and cached ESMC-600M inputs as the four/six controls.
+No fivefold conclusion or promotion comes from this screen.
+
+Use the frozen checkout and the same `PY`, `T`, `C` definitions above. CPU preview:
+
+```bash
+$PY run_pmm_five_class_screen.py --action plan \
+  --campaign-dir "$C" --train-dir "$T"
+```
+
+On the verified existing GPU allocation, execute one family at a time. The
+following values come from the controller's **current** session; never reuse an
+old deadline. `FIT_SECONDS` is a conservative measured full-unit forecast,
+including load, training and independent replay. The existing admission rule
+requires `1.25 * FIT_SECONDS + 900` seconds remaining. No session/day cap changes
+are part of this recipe.
+
+```bash
+/home/mechti/venvs/deepmzyme/bin/python run_pmm_five_class_screen.py \
+  --action run --family "$FAMILY" \
+  --campaign-dir /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context \
+  --train-dir /home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --session-id "$SESSION_ID" --allocation-started "$ALLOCATION_STARTED" \
+  --execution-deadline "$DEADLINE" --execution-max-seconds "$SESSION_SECONDS" \
+  --estimated-fit-seconds "$FIT_SECONDS" --load-workers 4 \
+  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --persistence-mode host_pull
+```
+
+Set `FAMILY` to `only_esm`, then `only_gvp`, then `gvp_late_fusion`; acknowledge
+each terminal host backup before another fit. Existing run directories, logs
+or command records are refused, even if uncertified. Failure is preserved for
+explicit diagnosis, never retried until a chance pass. Use the GPU skill for
+allocation, readiness, timing and verified shutdown.
+
+Expected evidence: a distinct
+`runs/{family}__five_class__none__fold0__seed42/` with `run_config.json`,
+`run_metadata.json`, selected checkpoint, predictions and independent replay;
+command/identity bindings include the adapter and protocol hashes. Preserve
+persistence manifests and verified host acknowledgments. The report must show
+native-five BA/macro-F1/recalls and common-four BA/macro-F1/recalls, with identical
+validation-ion identities to the controls. Native index 4 is Co+Ni, not Fe+Co+Ni.
+
+Decision gate: complete all three full fits, validate the five-class vocabulary
+and probability collapse, require the unchanged `1e-6` independent replay,
+verify backups and stop the VM. Report any failed replay separately. No held-out
+access, checkpoint reselection, awareness restart, HPO, or final refit is
+permitted. The later 45-fit core assessment remains blocked by TECH-023/025;
+the historical assessor cannot be used merely because its total also equals 45.
 
 ### Immediate exploratory screen: Only-ESM binding-awareness pair
 

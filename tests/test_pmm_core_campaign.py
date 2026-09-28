@@ -32,7 +32,7 @@ def run_args(scope_args):
                          "--durable-root", "/fixture/independent", "--persistence-mode", "host_pull"]
 
 
-def test_default_plan_has_exact_24_units_without_child_reads_or_writes(scope_args, tmp_path, capsys, monkeypatch):
+def test_default_plan_has_exact_39_units_without_child_reads_or_writes(scope_args, tmp_path, capsys, monkeypatch):
     original_read_bytes, original_read_text = Path.read_bytes, Path.read_text
 
     def forbid_run_read(path):
@@ -51,16 +51,24 @@ def test_default_plan_has_exact_24_units_without_child_reads_or_writes(scope_arg
     before = sorted(str(path.relative_to(tmp_path)) for path in tmp_path.rglob("*"))
     assert core.main(scope_args) == 0
     result = json.loads(capsys.readouterr().out)
-    assert result["required_core_fits"] == 30 and result["candidate_units"] == 24
+    assert result["required_core_fits"] == 45 and result["candidate_units"] == 39
     assert result["preserved_core_fold0_units"] == 6 and result["historical_awareness_fold0_units"] == 3
     assert result["paused_awareness_remaining_units"] == 12 and result["legacy_full_grid_fits"] == 45
     assert not result["execution_ready"] and not result["run_artifacts_examined"]
     assert not result["child_invoked"] and not result["files_written"]
-    assert len({unit["run_name"] for unit in result["units"]}) == 24
+    assert len({unit["run_name"] for unit in result["units"]}) == 39
     for unit in result["units"]:
         argv = unit["preview_argv_without_allocation_fields"]
-        assert argv[argv.index("--readouts") + 1] == "none"
-        assert unit["fold"] in (1, 2, 3, 4) and unit["seed"] == 42
+        if unit["target"] == "five_class":
+            assert unit["fold"] in (0, 1, 2, 3, 4)
+            if unit["fold"] > 0:
+                assert argv is None
+                continue
+            assert argv[1].endswith("run_pmm_five_class_screen.py")
+        else:
+            assert argv[argv.index("--readouts") + 1] == "none"
+            assert unit["fold"] in (1, 2, 3, 4)
+        assert unit["seed"] == 42
         assert "first_shell_bias" not in argv and "--session-id" not in argv
     assert sorted(str(path.relative_to(tmp_path)) for path in tmp_path.rglob("*")) == before
 
@@ -68,8 +76,8 @@ def test_default_plan_has_exact_24_units_without_child_reads_or_writes(scope_arg
 @pytest.mark.parametrize("arguments", [["--readouts", "first_shell_bias"], ["--readout", "none"],
                                        ["--campaign-action", "assess"], ["--action", "refit"],
                                        ["--action", "test"], ["--action", "folds"], ["--action", "smoke"],
-                                       ["--epochs", "1"], ["--no-skip-existing"], ["--fold", "0"],
-                                       ["--family", "unplanned"], ["--target", "five_class"],
+                                       ["--epochs", "1"], ["--no-skip-existing"], ["--fold", "5"],
+                                       ["--family", "unplanned"], ["--target", "seven_class"],
                                        ["--camp", "truncated-flag"]])
 def test_forbidden_actions_targets_and_passthrough_rejected(scope_args, arguments):
     with pytest.raises(SystemExit):
@@ -110,7 +118,7 @@ def test_run_requires_unit_and_allocation_fields(scope_args):
 
 
 @pytest.mark.parametrize("key,value", [("source_tree_sha256", "changed"), ("readouts", ["first_shell_bias"]),
-                                     ("queued_folds", [0, 1, 2, 3, 4]), ("required_core_fits", 45),
+                                     ("queued_folds_by_target", {}), ("required_core_fits", 30),
                                      ("epochs", 1), ("model_seeds", [42, 43]), ("schema_version", True)])
 def test_changed_scope_is_rejected(scope_args, key, value):
     path = Path(scope_args[1])

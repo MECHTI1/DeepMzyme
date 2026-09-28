@@ -12,18 +12,19 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent
-SCOPE_PATH = ROOT / "docs/plans/pmm_core_scope_v1.json"
+SCOPE_PATH = ROOT / "docs/plans/pmm_core_scope_v2.json"
 EXPECTED = {
-    "schema_version": 1, "scope_id": "pmm-core-v1", "campaign_id": "pmm_ion_metal_v2_context",
+    "schema_version": 1, "scope_id": "pmm-core-v2", "campaign_id": "pmm_ion_metal_v2_context",
     "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
     "families": ["only_esm", "only_gvp", "gvp_late_fusion"],
-    "targets": ["four_class", "six_class"], "readouts": ["none"], "folds": [0, 1, 2, 3, 4],
-    "model_seeds": [42], "epochs": 50, "required_core_fits": 30, "queued_folds": [1, 2, 3, 4],
+    "targets": ["four_class", "five_class", "six_class"], "readouts": ["none"], "folds": [0, 1, 2, 3, 4],
+    "model_seeds": [42], "epochs": 50, "required_core_fits": 45,
+    "queued_folds_by_target": {"four_class": [1, 2, 3, 4], "five_class": [0, 1, 2, 3, 4], "six_class": [1, 2, 3, 4]},
     "paused_readouts": ["first_shell_bias"], "legacy_full_grid_fits": 45,
 }
 EXECUTION_BLOCKERS = [
     "TECH-023: integrate an explicit prospective replay acceptance contract without changing frozen run identities; fold-0 v2.1 agreement is not a future-fold or legacy-runner pass.",
-    "TECH-025: implement scope-aware 30-fit assessment and promotion; the frozen assessor/refit bridge still requires 45 fits and ignores readout filters.",
+    "TECH-025: implement scope-aware four/five/six assessment and promotion; the frozen assessor/refit bridge requires the different historical 45-fit grid and ignores readout filters.",
 ]
 
 
@@ -56,8 +57,8 @@ def unit_name(family, target, fold):
 
 def validate_unit(family, target, fold):
     require(family in EXPECTED["families"] and target in EXPECTED["targets"]
-            and type(fold) is int and fold in EXPECTED["queued_folds"],
-            "Select one ordinary-readout core family/target and fold 1–4; preserved fold 0 is not a run request")
+            and type(fold) is int and fold in EXPECTED["queued_folds_by_target"][target],
+            "Select one ordinary-readout core family/target and a queued fold; existing four/six fold 0 is preserved")
 
 
 def refuse_existing_artifacts(campaign_dir, family, target, fold):
@@ -70,6 +71,14 @@ def refuse_existing_artifacts(campaign_dir, family, target, fold):
 
 def candidate_command(args, family, target, fold):
     validate_unit(family, target, fold)
+    if target == "five_class":
+        # The old runner cannot accept five classes. Future folds intentionally
+        # have no command until their scope-aware execution bridge exists.
+        if fold != 0:
+            return None
+        return [args.python_bin, str(ROOT / "run_pmm_five_class_screen.py"),
+                "--campaign-dir", str(args.campaign_dir), "--train-dir", str(args.train_dir),
+                "--action", "run", "--family", family]
     return [args.python_bin, str(ROOT / "scripts/run_metal_5fold_cv.py"),
             "--campaign-dir", str(args.campaign_dir), "--train-dir", str(args.train_dir),
             "--campaign-action", "run", "--families", family, "--targets", target,
@@ -86,7 +95,7 @@ def parse_args(argv=None):
     parser.add_argument("--python-bin", default=sys.executable)
     parser.add_argument("--family", choices=EXPECTED["families"])
     parser.add_argument("--target", choices=EXPECTED["targets"])
-    parser.add_argument("--fold", type=int, choices=EXPECTED["queued_folds"])
+    parser.add_argument("--fold", type=int, choices=EXPECTED["folds"])
     # Match the frozen runner's allocation/persistence inputs; no alternate
     # provisioning, spending authorization, or scientific overrides are added.
     parser.add_argument("--session-id")
@@ -116,17 +125,18 @@ def main(argv=None):
         require(not missing, "Run requests require existing allocation/persistence fields: " + ", ".join(missing))
         raise ValueError("Execution remains blocked: " + " ".join(EXECUTION_BLOCKERS))
     require(args.family is None and args.target is None and args.fold is None,
-            "The plan always enumerates the fixed 24 candidate selectors; unit selection belongs to --action run")
+            "The plan always enumerates the fixed 39 candidate selectors; unit selection belongs to --action run")
     require(all(getattr(args, key) is None for key in (*runtime_fields, "load_workers")),
             "The CPU-only plan does not accept allocation/runtime fields")
     units = [{"run_name": unit_name(family, target, fold), "family": family, "target": target,
               "readout": "none", "fold": fold, "seed": 42,
               "preview_argv_without_allocation_fields": candidate_command(args, family, target, fold)}
-             for family in scope["families"] for target in scope["targets"] for fold in scope["queued_folds"]]
+             for family in scope["families"] for target in scope["targets"] for fold in scope["queued_folds_by_target"][target]]
     result = {"scope_id": scope["scope_id"], "scope_sha256": scope_hash,
               "source_tree_sha256": scope["source_tree_sha256"], "execution_ready": False,
               "status": "preview_only_pending_replay_and_core_assessment_integration",
-              "required_core_fits": 30, "candidate_units": len(units),
+              "required_core_fits": 45, "candidate_units": len(units),
+              "five_class_screen_entrypoint": "run_pmm_five_class_screen.py",
               "preserved_core_fold0_units": 6, "historical_awareness_fold0_units": 3,
               "paused_awareness_remaining_units": 12, "legacy_full_grid_fits": 45,
               "blocked_prerequisites": EXECUTION_BLOCKERS,
