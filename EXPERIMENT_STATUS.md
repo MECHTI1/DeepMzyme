@@ -7,7 +7,7 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
 
-**2026-09-28 — five-class comparison explicitly requested; preparation in progress:**
+**2026-09-28 — five-class comparison prepared; GPU capacity blocked:**
 - Add Mn/Cu/Zn/Fe/Co+Ni training to Only-ESMC, Only-GVP and graph-level late
   fusion, ordinary readout. The active [v2 scope](docs/plans/pmm_core_scope_v2.json)
   is **45 ordinary-readout fits**, distinct from the old 45-fit awareness grid.
@@ -17,6 +17,10 @@ Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026
   Native-five BA selects the checkpoint; compare its common-four probabilities
   on the same validation ions. Keep Fe and Co+Ni recalls and distinguish native
   Co+Ni `Class VIII` from common-four Fe+Co+Ni. No five-class result is yet claimed.
+- Implemented and pushed in `b80d164`; **72 targeted tests passed**, including
+  synthetic CPU training and independent replay. The actual frozen-cohort CPU
+  preview produces the three expected commands. See the
+  [preparation/capacity evidence](docs/notebook_outputs/raw/pmm_five_class_screen_20260928/README.md).
 - The root adapter preserves the frozen scientific source and uses original
   strict `1e-6` independent replay. The retrospective nine-fit v2.1 policy stays
   limited to those old fits. Full-grid TECH-023/025, Stage 6B and held-out gates
@@ -27,8 +31,13 @@ Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026
   `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;
   unrelated shared-checkout model/configuration edits are preserved.
 - Binding-aware work remains paused. The previous 30-hour/$34 proposal remains
-  unapproved; session/day caps are unchanged. Provider verified TERMINATED at
-  01:44 UTC before this preparation. Latest measured running use remains
+  unapproved; session/day caps are unchanged. The requested four-hour same-VM
+  start failed with `ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS` in `us-central1-c`;
+  no alternative zone was suggested. Provider verified **TERMINATED at 01:59:48
+  UTC**. No new fit or GPU compute use occurred. The controller refused recovery
+  preview because the previous pass is complete; its receipt is preserved.
+  **Next:** user decision on a new bounded same-region recovery pass with
+  evidence-gated cleanup, or keep stopped and retry later. Latest running use remains
   **9.3061 hours / $8.1815 estimated gross**, plus retained storage.
 
 **2026-09-28 — historical v1 core scope, superseded by the five-class addition above:**
