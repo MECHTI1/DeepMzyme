@@ -449,6 +449,7 @@ Closed campaigns go to `docs/archive/campaigns/<id>/`; the rest go to
      `five_class`.
    - Record the change as *modified* in `RULES.md` for your review.
    - Every campaign README states its trained schemes and its endpoint.
+   - *Superseded 2026-09-28:* the “primary direct arm” wording above is replaced by the user's Job B decisions 1A/2B (no primary training objective; any mix of four, five and six per campaign); see [RULES](RULES.md) B-M01 and B-M11.
 3. **"5-fold" means several regimes** (Job A). Add one table to Plan after "Metal example
    terminology" (`Plan.md:199`):
 

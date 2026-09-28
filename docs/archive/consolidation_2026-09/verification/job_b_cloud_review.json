@@ -26,7 +26,7 @@
   },
   "corrections": [
     "AGENTS: restored merged-row substance B-A005, B-A010, B-A020, B-A030, B-A193, B-A200, B-A236, B-A247 and B-A251",
-    "User decisions at the step-2 review, 2026-09-28: 1A no training objective is primary (Plan, AGENTS, playbook, guide, PMM README, ANSWER_KEY Q1); 2B any mix of four, five and six per campaign with the neutral-test rules and collapsed-four ranking across targets, including Stage 6B; architecture comparisons keep one fixed target named per campaign (B-M01, B-M10, B-M11)",
+    "User decisions at the step-2 review, 2026-09-28: 1A no training objective is primary; 2B any mix of four, five and six per campaign with the neutral-test rules; architecture comparisons keep one fixed target named per campaign (B-M01, B-M10, B-M11; exceptions listed in RULES B-M11)",
     "AGENTS: suggested commit/push commands stay in final responses; consolidation read-only scope follows PLAN_v2 section 3.3 (B-M07)",
     "AGENTS: Colab Python 3.12 ESMC route is a tested convenience, not a requirement; closure step names PARAMETER_FINDINGS; not-pristine wording clarified",
     "docs/README: src/model.py pointer (B-M08) and non-overlap test count with ledger link (B-M09)",
@@ -36,11 +36,11 @@
   ],
   "after_corrections": {
     "default_read_bytes": {
-      "AGENTS.md": 16808,
-      "EXPERIMENT_STATUS.md": 4307,
-      "docs/campaigns/pmm_ion_metal/README.md": 4657
+      "AGENTS.md": 17027,
+      "EXPERIMENT_STATUS.md": 5290,
+      "docs/campaigns/pmm_ion_metal/README.md": 4709
     },
-    "default_read_total": 25772,
+    "default_read_total": 27026,
     "rule_dispositions": {
       "kept": 244,
       "merged": 139,
@@ -50,9 +50,17 @@
     "whitespace_check_clean": true,
     "links": "296 links/anchors in changed Markdown resolve; no link newly broken repository-wide",
     "code_consumers_of_plan": "Plan.md is only existence-checked (notebook root marker) and shipped by the snapshot builder; nothing hashes it",
-    "default_read_note": "over the PLAN_v2 25-KB target after the user-requested additions; AGENTS and docs/README over-target size accepted by the user until Job C",
+    "default_read_note": "27,026 bytes: over the PLAN_v2 25-KB target and above the ~25.8 KB the user accepted until Job C, because of the approved STATUS layout (+983 bytes) and AGENTS review fixes (+219 bytes); reported for the user's decision",
     "playbook_fences": "metal 67 and EC 23 fences byte-identical; heading and first-block hash invariants hold"
   },
   "not_claimed": "No pytest or smoke run yet, no checker, hook or ignore change, no fresh-agent acceptance, and no check of the workstation, shared checkout, frozen checkouts or live VM state. The local job_b_review_invariants.json remains the dated local record.",
-  "approval": "Dispositions reviewed by the user on 2026-09-28 (see RULES); ANSWER_KEY Q1 re-approval and the STATUS layout approval are pending."
+  "approval": "User review 2026-09-28: named review items approved (RULES); ANSWER_KEY Q1 re-approved with the user's element 4; STATUS layout approved with additions. Rows not named are not individually reviewed.",
+  "review_fixes_after_e261680": [
+    "A: remaining target wording fixed in Plan, the notebook guide and root README; other meanings of 'primary' kept and listed",
+    "B: Stage 6B text corrected: the notebook Stage 6/6B route is single-scheme; cross-scheme comparison uses a campaign assessor on collapsed-four BA; STAGE6B_RANK_BY_METRIC alone is not enough",
+    "C: dated TECH-010 note and STATUS caveat for the latent Stage 6B gap",
+    "D: inventory approvals limited to named rows; PROGRESS line numbers at 3c0f80c; AGENTS 17 and 26; ANSWER_KEY sources; PLAN_v2 supersession note; Job C items",
+    "E: ANSWER_KEY Q1 element 4 set to the user-approved text",
+    "F: EXPERIMENT_STATUS.md rewritten to the approved layout with fixed lines and a caveats slot"
+  ]
 }

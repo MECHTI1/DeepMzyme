@@ -22,12 +22,21 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   docs/README (22 KB) accepted over target until Job C. Show ANSWER_KEY Q1 and
   the STATUS layout for approval; push the backup branch after applying.
   `docs/plans/` stays unedited (the PMM plan's line-312 tie rule stays).
+- Review of `e261680` (user): fix remaining target wording (A) and the Stage 6B
+  text (B: the notebook Stage 6/6B route is single-scheme; cross-scheme
+  comparison uses a campaign assessor); record the Stage 6B gap now in a dated
+  TECH-010 note and the STATUS caveats slot (C; FOLLOW_UP editing allowed for
+  this only); “only the rows I named are approved”; AGENTS 16.8 KB and a
+  25.8-KB default read accepted until Job C (D). ANSWER_KEY Q1 approved with
+  the user's element 4 (E). STATUS layout approved with fixed campaign, stage,
+  best-result, authorization and GPU/VM lines and a caveats slot (F). Then push
+  and continue the remaining Job B steps, stopping before the final commit.
 
 ## State
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B step 2 reviewed (2026-09-28); stopped for ANSWER_KEY Q1 re-approval and STATUS layout approval |
+| Phase | Job B step 2 reviewed and review fixes applied (2026-09-28); ANSWER_KEY Q1 and STATUS layout approved; remaining Job B steps in progress |
 | Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
@@ -62,11 +71,9 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
    - Full tree verification against HEAD: Checked `git diff HEAD --name-only -- src scripts tests notebooks docs/plans` (completely empty).
 
 ## Next
-- **Review stop:** the user approves or amends the revised
-  [ANSWER_KEY Q1](ANSWER_KEY.md) and the concrete STATUS layout.
-- Then: skill-handoff/ignore/navigation corrections, checker and per-command
-  hook; the fresh-agent test against the re-approved answer key; full Job B
-  verification and final staging. These are not yet complete.
+- Skill-handoff/ignore/navigation corrections, checker and per-command hook;
+  the fresh-agent test against the re-approved answer key; full Job B
+  verification and final staging. Stop before the final commit.
 - Ask before commit, merge or push. Shared checkout remains read-only.
 
 ## Job B completed at the rule-review checkpoint
@@ -134,17 +141,27 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   navigation lines.
 - Backup `29e7460` (patch + cloud corrections, before the approved edits) was
   pushed to `claude/happy-ritchie-99xmhd` at the user's request.
-- The user's written step-2 answers (above) are applied: no primary objective
-  across Plan, AGENTS, playbook, guide, PMM README and ANSWER_KEY Q1; any mix
-  of four/five/six with the neutral test; collapsed-four ranking across targets,
-  including Stage 6B; B-M02 changes; PMM README resume rules. Counts: 244 kept,
-  139 merged, 76 modified, seven dropped.
-- Code check for the ranking rule: every metal run computes
-  `val_metal_collapsed4_balanced_acc` (`src/training/run.py:776-807`); the
-  notebook offers `STAGE6B_RANK_BY_METRIC = "mean_val_metal_collapsed4_balanced_acc"`,
-  while `"auto"` resolves to native `mean_val_metal_balanced_acc`
-  (`src/training/pipeline_metric_policy.py:109-118, 159-161`). The playbook
-  and guide now say to set it for cross-target sets; no automatic guard exists.
+- `e261680` applied the user's step-2 answers only partly; the user's review
+  found remaining target wording and an inaccurate Stage 6B claim. After the
+  review fixes, no training objective is called primary anywhere in the active
+  docs; the places changed and the exceptions (other meanings of “primary”;
+  historical recipe wording; `docs/plans/`) are listed in RULES B-M11. Any mix
+  of four/five/six with the neutral test; B-M02 changes; PMM README resume
+  rules. Counts: 244 kept, 139 merged, 76 modified, seven dropped.
+- Stage 6B code check: every metal run computes
+  `val_metal_collapsed4_balanced_acc` (`src/training/run.py:776-807`);
+  `STAGE6B_RANK_BY_METRIC = "auto"` resolves to native
+  `mean_val_metal_balanced_acc` (`src/training/pipeline_metric_policy.py:109-118,
+  159-161`), whose rare-recall and tie-breaker metrics are native. Stage 6
+  skips imported candidates whose `metal_label_scheme` differs (notebook cell
+  `a408dcb9`), and Stage 7 blocks mixed batches unless
+  `ALLOW_MIXED_FINAL_TEST_BATCH` (final held-out cell). So the notebook route is
+  single-scheme; `pmm_core_assessment.py:95-146` ranks on mean common-four BA.
+  Recorded in TECH-010 and the STATUS caveats; no code change.
+- STATUS follows the approved layout (5,290 bytes). The user accepted AGENTS at
+  about 16.8 KB and a default read of about 25.8 KB until Job C; after the
+  approved STATUS layout and review fixes they are 17,027 and 27,026 bytes,
+  which exceeds that acceptance and is reported for the user's decision.
 - No training, GPU action or held-out evaluation occurred.
 
 ## Job A closeout verification
@@ -162,21 +179,24 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   or GPU action had been performed. Job A was subsequently integrated as above.
 
 ## Open questions
-- Await re-approval of ANSWER_KEY Q1 and approval of the STATUS layout.
-- Later Job B steps include the `.aiignore` preparation-directory decision;
-  default proposal is to expose it and match the planned `.ignore` list.
-- Whether to record the Stage 6B `"auto"` ranking default as a STATUS/FOLLOW_UP
-  mismatch now (Plan asks for both) or in Job C.
+- The `.aiignore` preparation-directory decision: the default proposal exposes
+  it and matches the planned `.ignore` list.
 - Job C/D decisions remain outside this checkpoint.
 
 ## Recorded for Job C (user, 2026-09-28)
+All line numbers refer to `3c0f80c`.
 - `docs/DATASETS.md:136` says no completed exact-PMM test evaluation was found;
   the ledger at `:515` records the 2026-09-22/23 openings.
-- “Seven early runs” without the six 2026-09-18 reports: `docs/DATASETS.md:16-17`
-  and `:137`, `Plan.md` (user line 1222-1223 at `29e7460`; also near 947 and
-  973), `README.md:43`, `docs/PARAMETER_FINDINGS.md:33`; ledger `:516` has 7+6.
+- “Seven early runs” without the six 2026-09-18 reports:
+  `docs/DATASETS.md:16-17` and `:137`, `Plan.md:917`, `:943` and `:1223`,
+  `README.md:43`, `docs/PARAMETER_FINDINGS.md:33`; the ledger at
+  `docs/DATASETS.md:516` has seven plus six.
 - `Plan.md:113-117` splits `val_metal_balanced_acc` across blank lines.
-- Tighten AGENTS (12-KB target) and docs/README (5-KB target).
+- `docs/PARAMETER_FINDINGS.md:49`: “intended primary metal reporting endpoint”.
+- RULES table destination references are repo-root-relative and do not resolve
+  from its folder.
+- Tighten AGENTS (12-KB target), docs/README (5-KB target) and the default read
+  path (25-KB target).
 - Historical “challenger” wording left as run: single-GPU and pilot recipe
   sections of the playbook, FOLLOW_UP issue text, `docs/VERY_EXACT_PMM_SETS_PLAN.md`.
 

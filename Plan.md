@@ -96,7 +96,7 @@ bundle via `COLAB_DATA_SOURCE`.
 
 ## 2) Train the Metal-Classification Model
 
-The intended primary PinMyMetal-compatible reporting target is four-class
+The PinMyMetal-compatible collapsed-four reporting endpoint is four-class
 classification:
 
 - Mn
@@ -152,9 +152,15 @@ collapsed four is a neutral test. It requires:
 
 Select each arm's checkpoint from validation only with the pre-declared metric
 (by default `val_metal_balanced_acc` over the arm's active target) and report
-collapsed four from that same checkpoint. Any ranking across target schemes,
-including Stage 6B, uses collapsed-four balanced accuracy, never native
-balanced accuracies of different class counts.
+collapsed four from that same checkpoint. Any ranking across target schemes
+uses collapsed-four balanced accuracy, never native balanced accuracies of
+different class counts. The notebook Stage 6/6B route is single-scheme: Stage 6
+skips imported candidates whose `metal_label_scheme` differs, and Stage 7
+blocks mixed batches. Do not merge Stage 6 outputs across schemes; compare
+schemes with a campaign assessor on collapsed-four balanced accuracy, as the
+PMM core assessment does. Setting `STAGE6B_RANK_BY_METRIC` alone is not
+enough, because Stage 6B's paired-CI, rare-recall and tie-breaker gates stay
+on native metrics.
 
 Do not use held-out test results to select between these formulations. After
 validation confirmation, freeze the selected formulation and complete Stage 6B
@@ -173,7 +179,8 @@ or `ion`. The [metal example terminology](#metal-example-terminology) below
 defines both modes and distinguishes example identity from split grouping.
 
 The bounded architecture pilot includes that five-class scheme as an additional
-matched challenger across the same three core families. For this pilot every
+matched arm across the three initial baseline families (Only-GVP, Only-ESM and
+GVP + graph-level late fusion). For this pilot every
 arm selects checkpoints and its learning rate by native
 `val_metal_balanced_acc`; native and collapsed-four reports must come from that
 same selected checkpoint. Sum class probabilities before the collapsed-four
@@ -316,9 +323,9 @@ Authoritative rules for the pipeline:
   Stage 6 grouped-fold confirmation evidence plus a completed Stage 6B final
   full-train refit selected from that evidence.
 - Stage 6 selects candidate configurations from validation/CV evidence only.
-  Stage 6B is the mandatory bridge to final training: it ranks candidates by
-  mean `val_metal_balanced_acc` (by mean collapsed-four balanced accuracy when
-  candidates span target schemes), applies the predeclared paired-CI,
+  Stage 6B is the mandatory bridge to final training: it ranks candidates of
+  one target scheme by mean `val_metal_balanced_acc` (cross-scheme comparison
+  uses a campaign assessor; see the target policy), applies the predeclared paired-CI,
   rare-class recall, and tie-breaker promotion policy, then trains/refits one
   final model using the frozen selected configuration before opening the
   held-out test. This final-training run must keep the model family,
@@ -754,7 +761,7 @@ can reproduce a command-line run.
 | Runtime | `--num-workers` | `0` | Number of DataLoader worker processes. Default preserves single-process loading. | Advanced |
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. The raw CLI default is an implementation default, not scientific preference for joint training. | Expose |
-| Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the six-class arm uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
+| Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The collapsed-four reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`; `six_class` and `five_class` (Mn/Cu/Zn/Fe plus grouped Co/Ni) arms are evaluated through collapsed four. Raw defaults may lag the recipes. | Expose |
 | Data policy | `--metal-example-unit` | `pocket`; choices `pocket`, `ion` | For standalone metal training, use one clustered-pocket label or one example and target per matched metal ion. Ion examples use their own coordinate and 10 Å residue neighborhood; the configured split policy groups siblings by parent pocket or a broader group. See [terminology](#metal-example-terminology). | Expose for metal diagnostics |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of example graphs per mini-batch: clustered pockets or ion-centered examples, according to `--metal-example-unit`. | Expose / sweep |
@@ -1060,8 +1067,8 @@ The summary table should include, when available:
 - metal active-scheme metrics, including direct four-class metrics, native
   six-class metrics for six-class arms, and scheme-labeled native five-class
   metrics for five-class arms
-- metal collapsed-four metrics labeled as reporting from a six-class-trained
-  model when applicable
+- metal collapsed-four metrics labeled as reporting from a five- or
+  six-class-trained model when applicable
 - EC level-1 / level-2 metrics
 - split name/type used for the run
 - whether train/test overlap was detected
@@ -1167,9 +1174,9 @@ The publication-facing metal campaign must answer all four questions below
 before making the corresponding scientific claims:
 
 1. **Which training target best supports the four-class endpoint?** Compare
-   direct four-class training against six-class training followed by
+   direct four-class training against five- or six-class training followed by
    deterministic collapsed-four evaluation across the three initial baseline
-   families.
+   families, as the neutral test defined in the target policy above.
 2. **Where should ESMC enter the structural model?** Compare GVP + early ESMC
    fusion, GVP + graph-level late ESMC fusion, and GVP + hybrid early-and-late
    ESMC fusion.

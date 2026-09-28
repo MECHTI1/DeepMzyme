@@ -15,11 +15,12 @@ DeepMzyme supports:
 3. experimental joint metal + EC prediction with independent heads and a
    shared learned representation.
 
-The scientific plan requires a controlled comparison between direct four-class
-training and six-class training evaluated after collapsing Fe/Co/Ni into Class
-VIII. Historical six-class results retain their original target and cannot
-substitute for that matched comparison; five-class results also remain
-separately labeled. The current EC path is single-label at a selected hierarchy
+Metal models are trained with four-, five- or six-class targets chosen per
+campaign; no training objective is primary, and every model is evaluated on
+the collapsed-four endpoint (Mn, Cu, Zn, Class VIII = Fe+Co+Ni). Comparing
+direct four-class training with five- or six-class training is a neutral,
+matched test. Historical five- and six-class results retain their original
+targets and cannot substitute for a matched comparison. The current EC path is single-label at a selected hierarchy
 depth and should not be described as full multi-label EC prediction.
 
 Model families include structure-only GVP variants, ESM-only baselines, and

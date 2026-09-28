@@ -2,9 +2,10 @@
 
 Status: **approved in Phase 0**, as recorded in [PROGRESS.md](PROGRESS.md)
 (2026-09-28). Scientific facts are as of `3e912a6`; Job A corrects their
-documentation. **Q1 element 4 was revised on 2026-09-28** after the user's
-Job B decision that no training objective is primary; the revised Q1 awaits
-the user's re-approval before the fresh-agent test. Q2–Q6 are unchanged.
+documentation. **Q1 element 4 was revised and re-approved by the user on
+2026-09-28** after the Job B decision that no training objective is primary.
+Q2–Q6 answers are unchanged; their source line numbers for `AGENTS.md`,
+`EXPERIMENT_STATUS.md` and the campaign README refer to the Job B branch tip.
 
 After Job B, a fresh agent that reads only `AGENTS.md`, `EXPERIMENT_STATUS.md` and the
 active campaign README must give every **required element** below. Wording may differ.
@@ -23,13 +24,17 @@ update this key first, with sources, and get approval again.
    are compared. The five- and six-class arms also keep their native metrics.
 4. No training objective is primary; every trained model is evaluated on the collapsed-four
    endpoint. Direct `four_class` training is not equivalent to training on five or six
-   classes and collapsing to four.
+   classes and collapsing to four. Comparing objectives is a neutral test: better, no
+   difference and worse are all valid results. Grading note: mentioning the pre-declared
+   tie rule (without clear improvement, keep direct `four_class`, which is the PMM plan's
+   rule and the default) is consistent with this element; calling direct `four_class` the
+   primary, required or main training target is a contradiction.
 
 **Sources:** `run_pmm_core_campaign.py:18-26` (`targets`); `docs/plans/pmm_core_scope_v2.json`
 (`targets`); `docs/notebook_outputs/README.md:54` ("common-four endpoint"); `AGENTS.md:125-137`
-(element 4 before revision); user decision 1A, 2026-09-28 (“remove ‘primary’, everywhere”),
-and [Plan's target policy](../../../Plan.md#2-train-the-metal-classification-model)
-(revised element 4).
+at `3c0f80c` (element 4 before revision); user decision 1A, 2026-09-28 (“remove "primary",
+everywhere”); `AGENTS.md:17` and `:19-20`; `docs/campaigns/pmm_ion_metal/README.md:9-12`
+and `:61-62` (revised element 4).
 
 ## Q2. What does "5-fold" mean in the active campaign?
 
@@ -42,7 +47,8 @@ and [Plan's target policy](../../../Plan.md#2-train-the-metal-classification-mod
    benchmark, where one PDB can appear in several folds.
 
 **Sources:** `docs/plans/metal_level_metal_task_compared_PMM_final_plan.md:239-242, :259`;
-`docs/plans/pmm_core_scope_v2.json` (`folds`, `model_seeds`); `EXPERIMENT_STATUS.md:10-16`;
+`docs/plans/pmm_core_scope_v2.json` (`folds`, `model_seeds`); `EXPERIMENT_STATUS.md:8-16`;
+`docs/campaigns/pmm_ion_metal/README.md:14-20`;
 `docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md:9`.
 
 ## Q3. Where do runs execute, and who owns the GPU lifecycle?
@@ -70,7 +76,7 @@ Job A fixes these statements in the isolated worktree.
    readiness verification.
 4. The last verified VM state is TERMINATED; its disk storage still costs money.
 
-**Sources:** `EXPERIMENT_STATUS.md:10-29`.
+**Sources:** `EXPERIMENT_STATUS.md:3`, `:12` and `:58-67`.
 
 ## Q5. Which held-out test sets have been opened?
 

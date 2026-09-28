@@ -5,26 +5,38 @@ Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-09-28.
 
 ## Current objective and stage
 
-Retain the exploratory PMM core v2 fold-0 comparison. **Nine ordinary-readout
-fits are retained; the remaining 36 fits are deferred.** No completed fivefold
-neural confirmation, model/target promotion, final refit or held-out evaluation
-is claimed. See the [campaign README](docs/campaigns/pmm_ion_metal/README.md) and
-[v2 scope](docs/plans/pmm_core_scope_v2.json); exact scientific identities,
-sub-batches, results and evidence grades live there.
+Current campaign: pmm_ion_metal, PMM core scope v2 (paused) — [README](docs/campaigns/pmm_ion_metal/README.md)
+Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
+Stage: exploratory fold-0 comparison retained; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+
+**Nine ordinary-readout fits are retained; the remaining 36 fits are deferred.**
+No completed fivefold neural confirmation, model/target promotion, final refit
+or held-out evaluation is claimed. Exact scientific identities, sub-batches,
+results and evidence grades live in the campaign README and the
+[v2 scope](docs/plans/pmm_core_scope_v2.json).
 
 ## Anchor and evidence state
+
+Best validation result: none promoted; the fold-0 core fits are Grade 5 exploratory evidence ([core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
 
 Seven original strict replay passes and the GVP5/GVP6 strict failures remain
 recorded. All nine core fits have separate retrospective `pmm-core-replay-v1`
 qualification; this does not rewrite the original `1e-6` failures as passes.
-The [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)
-owns the result table and diagnostic limits. The three earlier binding-aware
-fits remain separate exploratory evidence; further awareness work is paused.
+The core summary owns the result table and diagnostic limits. The three earlier
+binding-aware fits remain separate exploratory evidence; further awareness work
+is paused.
 
 The [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md)
 retains twelve completed fixed-split runs (Grade 3), not promotion. Later EC
 workflow reconciliation and cross-task holdout certification remain required
 before auxiliary learning; [issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md) own details.
+
+### Known caveats and open mismatches
+
+- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme and its
+  gates stay on native metrics; comparing target schemes needs a campaign
+  assessor on collapsed-four balanced accuracy. Latent, not active now
+  ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
 
 ## Dataset and test readiness
 
@@ -45,16 +57,14 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 
 ## Blockers and immediate next action
 
-**No experiment or GPU work is authorized now.** Resume requires an explicit
-user request, refreshed remaining-budget authority and new readiness verification
-against the execution environment. The proposed additional 34 hours/$34 is
-unapproved and no longer awaiting an immediate execution decision. No extra
-fold-0 fits or final refits are authorized ([scope authorization](docs/plans/pmm_core_scope_v2.json)).
+Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
+GPU/VM: TERMINATED, independently checked 2026-09-28 06:00:18 UTC; the retained 150-GB disk costs approximately $15/month. This is historical provider evidence, not a new live resource check ([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
 
-Last verified VM state: **TERMINATED**, independently checked 2026-09-28
-06:00:18 UTC. The retained 150-GB disk still costs approximately $15/month;
-this is historical provider evidence, not a new live resource check
-([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+Resume requires an explicit user request, refreshed remaining-budget authority
+and new readiness verification against the execution environment. The proposed
+additional 34 hours/$34 is unapproved and no longer awaiting an immediate
+execution decision. No extra fold-0 fits or final refits are authorized
+([scope authorization](docs/plans/pmm_core_scope_v2.json)).
 
 Stage 6 grouped-fold selection (or explicitly labeled fallback), completed/reused
 Stage 6B full non-test refit, frozen report/checkpoint rules and a scientifically
@@ -64,9 +74,11 @@ ranking, promotion, rejection or checkpoint choice; see [Plan](Plan.md#canonical
 ## History and update rule
 
 Overwrite this file after preserving dated changes in the campaign's `log.md`.
-Keep only objective/stage, anchor/evidence grade, dataset/test readiness,
-blockers, next action and evidence links. Exact budgets stay in the playbooks;
-parameter findings stay in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md),
-scientific policy in [Plan](Plan.md), and batch evidence in the [index](docs/notebook_outputs/README.md).
+Keep only objective/stage with the current and other open campaign lines,
+anchor, best validation result and evidence grade, known caveats and open
+mismatches, dataset/test readiness, authorization and GPU/VM state, blockers,
+next action and evidence links. Exact budgets stay in the playbooks; parameter
+findings stay in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), scientific
+policy in [Plan](Plan.md), and batch evidence in the [index](docs/notebook_outputs/README.md).
 [History map](docs/archive/consolidation_2026-09/MAP.md) includes the recovered
 09-16/17 pause and earlier removed policy; historical next actions do not resume work.

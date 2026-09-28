@@ -59,5 +59,5 @@ authorize a run ([pmm-001](log.md#pmm-001)). Do not retry or retrain GVP5 or
 GVP6, or repeat their replay, in the hope of a chance strict pass; their original
 strict failures stay recorded ([pmm-003](log.md#pmm-003), [pmm-006](log.md#pmm-006),
 [pmm-007](log.md#pmm-007)). The campaign plan's pre-declared contrasts and tie
-rule govern its comparison. Old forecasts and historical next actions in the log
+rule (without clear improvement, keep direct four-class) govern its comparison. Old forecasts and historical next actions in the log
 confer no authorization.
