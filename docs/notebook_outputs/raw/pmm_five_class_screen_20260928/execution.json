@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-28T01:55:12.420878+00:00",
+  "user_instruction": "Can you do the 5 class training also? of course add where needed in documentation or any where needed file that will be all ordered and organized in project.",
+  "authorization_scope": "New three-family five-class fold-0 exploratory screen on existing L4, one bounded session up to four hours under unchanged session/day caps; preserve earlier results. This does not activate full-grid30hour/$34proposal.",
+  "status": "prepared_capacity_blocked_new_recovery_authorization_pending",
+  "requested_hours": 4,
+  "session_usd_cap": 6,
+  "daily_hours_cap": 6,
+  "daily_usd_cap": 10,
+  "prior_cumulative_running_hours": 9.3061111111,
+  "prior_cumulative_estimated_running_gross_usd": 8.1815,
+  "forecast_margin": 1.25,
+  "closeout_reserve_seconds": 900,
+  "full_grid_budget_proposal_activated": false,
+  "controller_caps_changed": false,
+  "held_out_access": false,
+  "queue": [
+    {
+      "family": "only_esm",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 3000
+    },
+    {
+      "family": "only_gvp",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 3600
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 2400
+    }
+  ],
+  "forecast_basis": "Conservative proxies from matched four/six full fit+replay; actual five-class time unmeasured. Per-unit admission includes1.25margin and900scloseout; stop if next unit cannot be admitted.",
+  "source_commit": "b80d164",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+  "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607",
+  "new_fits_started": 0,
+  "new_running_seconds": 0,
+  "provider_state": "TERMINATED",
+  "provider_state_verified_at_utc": "2026-09-28T01:59:48Z",
+  "start_attempt": {
+    "zone": "us-central1-c",
+    "requested_hours": 4,
+    "effective_provider_stop_seconds": 14220,
+    "verified_gross_hourly_rate": 0.879172,
+    "maximum_estimated_session_gross_usd": 3.47,
+    "maximum_with_margin_usd": 3.99,
+    "outcome": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+    "suggested_alternative_zones": []
+  },
+  "fallback_preview": {
+    "outcome": "refused_prior_pass_complete",
+    "message": "previous recovery is complete; archive its receipt only for a separately authorized new pass",
+    "receipt_preserved": true
+  },
+  "pending_question": "Approve one new bounded same-region L4 recovery pass and evidence-gated superseded-resource cleanup, with unchanged4h/$6session and6h/$10daily caps; or keepstoppedretrylater.",
+  "updated_at_utc": "2026-09-28T02:01:08.426692+00:00"
+}

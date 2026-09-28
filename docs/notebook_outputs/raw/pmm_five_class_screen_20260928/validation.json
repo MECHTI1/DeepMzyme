@@ -1,0 +1,24 @@
+{
+  "source_commit": "b80d164",
+  "frozen_source_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "core_preview_tests": {
+    "passed": 32,
+    "seconds": 0.21
+  },
+  "five_class_screen_tests": {
+    "passed": 40,
+    "seconds": 17.96,
+    "includes": "Actual synthetic CPU fit, selected export, strict independent replay, five-class validation, common-four weights, deliberate5e-6driftrefusal"
+  },
+  "actual_frozen_cohort_cpu_preview": {
+    "passed": true,
+    "units": 3,
+    "preview_sha256": "23f3a794488f64a2180c97a02902924d555727e5c20e78b04e4c45b86d3f7140"
+  },
+  "core_scope_cpu_preview": {
+    "units": 39,
+    "sha256": "7d64fc4abe5072217fdf5c8d3968b05d6d0315bbe913094b0986c8c3a3aff4bc"
+  },
+  "new_gpu_training_started": false,
+  "held_out_access": false
+}

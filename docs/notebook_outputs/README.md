@@ -53,6 +53,10 @@ The continuation row records the original certification outcome. The later
 diagnostic adds a separately versioned agreement check; it does not replace
 that historical report or turn its failed replay into a legacy pass.
 
+The [five-class screen preparation](raw/pmm_five_class_screen_20260928/README.md)
+records 72 passing CPU tests and the capacity-blocked GPU start. It contains no
+new campaign training result; current execution state is in `EXPERIMENT_STATUS.md`.
+
 The [2026-09-28 scope amendment](../plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness)
 pauses further awareness experiments and adds explicitly requested five-class
 training to the ordinary-readout core (45 fits under v2, a different grid from
