@@ -30,7 +30,8 @@ the four Antigravity/Opus proposals and link to their originals preserved in
 Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
 
 - [Metal-level prediction and PMM comparison](plans/metal_level_metal_task_compared_PMM_final_plan.md):
-  active ordinary-readout core; further binding-awareness work is paused.
+  existing fold-0 comparison retained; remaining core fits are deferred for
+  future work, and further binding-awareness work is paused.
   The [scope manifest](plans/pmm_core_scope_v2.json) and
   [execution recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
   define the four/five/six comparison. The additive
