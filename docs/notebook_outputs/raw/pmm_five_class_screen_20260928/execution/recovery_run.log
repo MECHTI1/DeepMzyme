@@ -1,0 +1,20 @@
+WARNING: ZONE=us-central1-c differs from the approved baseline us-central1-a; this must be an explicit user decision
+Action:                     SAME-REGION DISK-PRESERVING RECOVERY
+Project / VM / zone:        deepmzyme-gpu-vm / deepmzyme-l4 / us-central1-c
+Machine:                    g2-standard-8 (1x NVIDIA L4 (24 GB)), STANDARD
+Verified GROSS list rate:   $0.87917/h = compute $0.85362 + external IP $0.0050 + disk $0.02055 (verified 2026-09-28T02:37:46Z; no credits/free tiers applied)
+Today (UTC) used:           0h 04m running; ESTIMATED GROSS $0.56 (running $0.06 + full-day disk reservation $0.49)
+Limit bounds (minutes):     MAX_SESSION_HOURS=240, MAX_SESSION_ESTIMATED_COST_USD=336.41, remaining daily hours=355.63, remaining daily cost=459.83, requested=240
+Binding limit:              MAX_SESSION_HOURS (minus 3 min stop overhead)
+Google-side hard STOP after:  237 min  (maxRunDuration=14220s, instanceTerminationAction=STOP)
+Max ESTIMATED session cost: $3.68 ($4.23 incl. 15% margin)
+Candidate offerings (capacity not guaranteed): us-central1-a, us-central1-b
+Extra conservative full-day storage reservation: $1.2432; worst-case compute + overlapping storage session rate: $0.930542/h
+
+SAFETY VERIFIED:
+  status RUNNING, machine g2-standard-8, zone us-central1-a, managed labels present
+  maxRunDuration=14220s, instanceTerminationAction=STOP, automaticRestart=false
+  session session-20260928T024459Z-3d2d6dd8 started 2026-09-28T02:44:59Z (05:44 IDT local)
+  HARD AUTOMATIC STOP at 2026-09-28T06:41:51Z (09:41 IDT local)
+Local guardian started (systemd user unit deepmzyme-vm-guardian; secondary protection, logs in /home/mechti/deepmzyme-vm/logs). It does NOT survive workstation shutdown; the Google-side stop does.
+Recovery selected deepmzyme-l4 in us-central1-a; preserved source and snapshot pending verification.

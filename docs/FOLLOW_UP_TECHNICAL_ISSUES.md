@@ -955,9 +955,11 @@ runner's default behavior.
 
 ## TECH-023 — Full-fit GVP independent replay exceeds the frozen probability tolerance
 
-**Status:** Numerically diagnosed 2026-09-28; retrospective screen agreement
-qualified under v2.1. The frozen runner's original certification gate remains
-open. Training, source, original tolerance and historical receipts are unchanged.
+**Status:** Historical six-class case numerically diagnosed 2026-09-28; the
+original nine-fit screen has retrospective v2.1 agreement. The new five-class
+GVP failure below remains uncertified and is outside that policy. The frozen
+runner's original certification gate remains open. Training, source, original
+tolerance and historical receipts are unchanged.
 
 `only_gvp__six_class__none__fold0__seed42` completed all 50 epochs. Independent
 replay reproduced all 1,492 ion identities, labels, native/common-four class
@@ -1009,6 +1011,23 @@ an explicit policy-aware integration that preserves old scientific identities.
 Do not forge a legacy receipt, broadly resume the old runner over GVP6, edit
 saved probabilities, retry until a pass, or retrain the completed fit merely
 to replace this evidence.
+
+The subsequent five-class screen encountered the same **type of contract
+failure**, without establishing its cause for the new fit:
+`only_gvp__five_class__none__fold0__seed42` completed 50 epochs and selected
+epoch 47. Its first independent replay differs by up to **2.38e-6**, with
+22 probability fields above `1e-6` (11 native and 11 common-four). All 1,492
+UIDs and every non-probability field, including both class predictions, match.
+The 70-file terminal backup is verified and acknowledged. No replay retry,
+tolerance change, graph-tensor equivalence audit or repeatability test was
+performed for this five-class unit. It remains **strict-replay failed** and
+is not covered by the earlier nine-fit v2.1 policy. Its matching exported
+common-four BA of 78.2397% is a provisional diagnostic, not certified comparison
+or promotion evidence; see the
+[preserved five-class failure](notebook_outputs/raw/pmm_five_class_screen_20260928/execution/only_gvp__five_class__none__fold0__seed42/).
+After diagnosing and backing up this terminal unit, the coordinator deliberately
+continued the separate authorized late-fusion screen under the unchanged
+strict contract; the failed GVP unit was not retried or reclassified.
 
 ## TECH-024 — GPU controller could report failed inventory as no storage
 

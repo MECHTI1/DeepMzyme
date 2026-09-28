@@ -1,0 +1,80 @@
+{
+  "campaign_run_identity": {
+    "campaign_id": "pmm_ion_metal_v2_context",
+    "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "epochs": 50,
+    "family": "only_esm",
+    "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+    "five_class_screen": {
+      "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+      "protocol_id": "pmm-five-class-screen-v1",
+      "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+    },
+    "fold": 0,
+    "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "model_seed": 42,
+    "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+    "readout": "none",
+    "resolved_config_sha256": "91ed8bcd5a51efa25f0e5ec54fee53484729285431b14f81e415b998d2625933",
+    "smoke": false,
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "target_scheme": "five_class"
+  },
+  "common_four_rule": "sum native probabilities into [Mn, Cu, Zn, Fe+Co+Ni] before argmax",
+  "completed_epochs": 50,
+  "fit_status": "completed",
+  "metrics": {
+    "val_metal_acc": 0.8250670433044434,
+    "val_metal_balanced_acc": 0.8086627440944657,
+    "val_metal_class_viii_recall": 0.45394736842105265,
+    "val_metal_collapsed4_acc": 0.8686327338218689,
+    "val_metal_collapsed4_balanced_acc": 0.8943536536126044,
+    "val_metal_collapsed4_class_viii_recall": 0.897003745318352,
+    "val_metal_collapsed4_cu_recall": 0.9743589743589743,
+    "val_metal_collapsed4_macro_f1": 0.8617722663778156,
+    "val_metal_collapsed4_mn_recall": 0.8441734417344173,
+    "val_metal_collapsed4_per_class_recall": {
+      "Class VIII": 0.897003745318352,
+      "Cu": 0.9743589743589743,
+      "Mn": 0.8441734417344173,
+      "Zn": 0.861878453038674
+    },
+    "val_metal_collapsed4_zn_recall": 0.861878453038674,
+    "val_metal_fe_recall": 0.8979057591623036,
+    "val_metal_macro_f1": 0.7885756210479714,
+    "val_metal_min_recall": 0.45394736842105265,
+    "val_metal_mn_recall": 0.8441734417344173,
+    "val_metal_per_class_recall": {
+      "Class VIII": 0.45394736842105265,
+      "Cu": 0.9743589743589743,
+      "Fe": 0.8979057591623036,
+      "Mn": 0.8441734417344173,
+      "Zn": 0.8729281767955801
+    }
+  },
+  "planned_epochs": 50,
+  "reconciliation": {
+    "val_metal_balanced_acc": {
+      "abs_difference": 0.0,
+      "recorded": 0.8086627440944657,
+      "replayed": 0.8086627440944657
+    },
+    "val_metal_collapsed4_balanced_acc": {
+      "abs_difference": 0.0,
+      "recorded": 0.8943536536126044,
+      "replayed": 0.8943536536126044
+    }
+  },
+  "reconciliation_status": "match",
+  "selected_checkpoint": "best_model_checkpoint.pt",
+  "selected_checkpoint_sha256": "4db74f19cc401ef30ef31662c005dc99059132171c2d4345297a860880aeb3bc",
+  "selected_epoch": 41,
+  "selection_metric": "val_metal_balanced_acc",
+  "selection_metric_value": 0.8086627440944657,
+  "tie_rule": "earliest epoch (strictly greater metric required to replace)",
+  "validation_predictions": {
+    "n_rows": 1492,
+    "path": "val_predictions.csv",
+    "sha256": "ea82a4790a6a18187104756cc2a0d96b7b50b54e00dc18e6843aef3ab16ad6f9"
+  }
+}

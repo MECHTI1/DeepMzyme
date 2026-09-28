@@ -1,0 +1,569 @@
+{
+  "derived_excerpt": true,
+  "note": "This is a derived excerpt, not the original file. Full files and binary checkpoints remain in the canonical verified host backup. Full epoch history is copied as epoch_metrics.csv. No labels/configuration values are rewritten.",
+  "omitted_top_level_fields": [
+    "dataset_summary"
+  ],
+  "payload": {
+    "campaign_run_identity": {
+      "campaign_id": "pmm_ion_metal_v2_context",
+      "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+      "epochs": 50,
+      "family": "only_esm",
+      "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+      "five_class_screen": {
+        "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+        "protocol_id": "pmm-five-class-screen-v1",
+        "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+      },
+      "fold": 0,
+      "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+      "model_seed": 42,
+      "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+      "readout": "none",
+      "resolved_config_sha256": "91ed8bcd5a51efa25f0e5ec54fee53484729285431b14f81e415b998d2625933",
+      "smoke": false,
+      "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+      "target_scheme": "five_class"
+    },
+    "config": {
+      "allow_final_refit_test_eval": false,
+      "allow_train_loss_test_eval_debug": false,
+      "balance_metal_site_symbols": false,
+      "batch_size": 16,
+      "binding_residue_pooling": "none",
+      "campaign_run_identity": "{\"campaign_id\": \"pmm_ion_metal_v2_context\", \"cohort_sha256\": \"745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd\", \"epochs\": 50, \"family\": \"only_esm\", \"feature_inventory_sha256\": \"942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c\", \"five_class_screen\": {\"adapter_sha256\": \"5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d\", \"protocol_id\": \"pmm-five-class-screen-v1\", \"protocol_sha256\": \"c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607\"}, \"fold\": 0, \"fold_membership_sha256\": \"b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572\", \"model_seed\": 42, \"profile_sha256\": \"24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802\", \"readout\": \"none\", \"resolved_config_sha256\": \"91ed8bcd5a51efa25f0e5ec54fee53484729285431b14f81e415b998d2625933\", \"smoke\": false, \"source_tree_sha256\": \"adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23\", \"target_scheme\": \"five_class\"}",
+      "class_viii_loss_multiplier": 0.7529321774604794,
+      "classifier_pool_distance_cutoff": 0.0,
+      "co_loss_multiplier": 1.0,
+      "controlled_ec_auxiliary": false,
+      "cross_attention_bidirectional": false,
+      "cross_attention_dropout": 0.1,
+      "cross_attention_heads": 4,
+      "cross_attention_layers": 1,
+      "cross_attention_neighborhood": "all",
+      "cu_loss_multiplier": 4.8569078947368425,
+      "dataset_bundle_id": null,
+      "dataset_bundle_sha256": null,
+      "deterministic": false,
+      "device": "cuda",
+      "early_esm_dim": 32,
+      "early_esm_dropout": 0.2,
+      "early_esm_raw": false,
+      "early_esm_scope": "all",
+      "ec_class_weight_unit": "pocket",
+      "ec_contrastive_temperature": 0.1,
+      "ec_contrastive_weight": 0.0,
+      "ec_group_weighting": "structure_id",
+      "ec_label_depth": 1,
+      "ec_loss_weight": 1.0,
+      "edge_hidden": 64,
+      "edge_radius": 8.0,
+      "edge_rbf_sigma": 0.75,
+      "edge_rbf_use_raw_distances": false,
+      "effective_split_seed": 42,
+      "epochs": 50,
+      "esm_dim": 1152,
+      "esm_embeddings_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1",
+      "esm_fusion_dim": 128,
+      "esm_graph_encoder_dropout": 0.1,
+      "evaluation_protocol_id": "standard_disjoint_v1",
+      "explicit_membership_manifest": null,
+      "explicit_membership_sha256": null,
+      "export_validation_predictions": true,
+      "external_feature_source": "updated",
+      "external_features_root_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/external_features_intentionally_empty",
+      "fe_loss_multiplier": 0.7529321774604794,
+      "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+      "final_test_bootstrap_confidence_level": 0.95,
+      "final_test_bootstrap_resamples": 1000,
+      "final_test_bootstrap_seed": 20260518,
+      "final_test_calibration_bins": 15,
+      "final_test_checkpoint_paths": [],
+      "final_test_enable_bootstrap_ci": true,
+      "final_test_enable_calibration": true,
+      "final_test_enable_temperature_scaling": true,
+      "final_test_ensemble_mode": "single_checkpoint",
+      "final_test_primary_report": "single_checkpoint",
+      "final_test_result_role": "primary_final_report",
+      "final_test_seed_values": [],
+      "final_test_selected_config_id": null,
+      "final_test_source_run_dirs": [],
+      "fold_index": 0,
+      "fold_membership_csv": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/fold_membership.csv",
+      "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+      "fusion_mode": "late_fusion",
+      "git_commit": null,
+      "git_dirty": null,
+      "grad_accum_steps": 1,
+      "grad_clip_norm": 1.0,
+      "gvp_layers": 4,
+      "gvp_learning_rate": null,
+      "gvp_weight_decay": null,
+      "head_mlp_dropout": 0.2,
+      "head_mlp_layers": 2,
+      "held_out_overlap_policy": "forbid",
+      "hidden_s": 128,
+      "hidden_v": 16,
+      "invalid_structure_policy": "error",
+      "joint_loss_weighting": "fixed",
+      "learning_rate": 3e-05,
+      "load_workers": 4,
+      "log_per_class_metrics": false,
+      "lr_decay_gamma": 0.5,
+      "lr_schedule": "fixed",
+      "lr_step_size": 0,
+      "metal_class_weight_mode": "manual",
+      "metal_collapsed_loss_weight": 0.0,
+      "metal_eligibility_scheme": "six_class",
+      "metal_example_unit": "ion",
+      "metal_focal_gamma": 2.0,
+      "metal_label_scheme": "five_class",
+      "metal_label_smoothing": 0.0,
+      "metal_loss_function": "cross_entropy",
+      "metal_loss_weight": 1.0,
+      "metal_node_mode": "none",
+      "mn_loss_multiplier": 0.8248603351955307,
+      "model_architecture": "only_esm",
+      "model_seed": 42,
+      "n_folds": 5,
+      "ni_loss_multiplier": 1.0,
+      "node_feature_set": "conservative",
+      "node_rbf_sigma": 0.75,
+      "node_rbf_use_raw_distances": false,
+      "normalize_message_aggregation": false,
+      "num_workers": 0,
+      "omit_node_features": [
+        "biotite_residue_sasa",
+        "custom_charge_distance_proxy",
+        "dpka_titr"
+      ],
+      "outer_residue_dropout": 0.0,
+      "overlap_warning": null,
+      "pin_memory": false,
+      "position_noise_std": 0.0,
+      "prepare_missing_esm_embeddings": false,
+      "prepare_missing_ring_edges": false,
+      "require_all_task_classes": true,
+      "require_esm_embeddings": true,
+      "require_external_features": false,
+      "require_ring_edges": false,
+      "ring_features_dir": null,
+      "run_name": "only_esm__five_class__none__fold0__seed42",
+      "run_test_eval": false,
+      "runs_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs",
+      "save_epoch_checkpoints": true,
+      "second_shell_dropout": 0.0,
+      "seed": 42,
+      "selection_metric": "val_metal_balanced_acc",
+      "shell_role_source": "geometry",
+      "site_geometry_features": "legacy",
+      "source_cohort_csv": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/train_cohort.csv",
+      "source_cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+      "split_by": "pdbid",
+      "split_name": "train_and_test_sets_structures_zenodo_pmm_exact",
+      "split_seed": 42,
+      "split_stratify_by": "metal_site",
+      "split_type": "custom_or_unknown",
+      "structural_readout_scope": "residue_only",
+      "structure_dir": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train",
+      "summary_csv": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train/final_data_summarazing_table.csv",
+      "task": "metal",
+      "test_structure_dir": null,
+      "test_summary_csv": null,
+      "train_metrics_every_n_epochs": 10,
+      "train_val_split_by": "pdbid",
+      "training_graph_augmentation": {
+        "outer_residue_dropout": 0.0,
+        "position_noise_std": 0.0,
+        "second_shell_dropout": 0.0,
+        "training_only": true,
+        "validation_and_test_unchanged": true
+      },
+      "training_sampler_seed": null,
+      "unsupported_metal_policy": "error",
+      "use_amp": false,
+      "use_early_esm": false,
+      "use_esm_branch": true,
+      "use_ring_edges": false,
+      "val_fraction": 0.0,
+      "weight_decay": 0.0001,
+      "zn_loss_multiplier": 0.7976769313884386
+    },
+    "ec_labels": {
+      "0": "0"
+    },
+    "esm_embedding_metadata": null,
+    "fit_status": "completed",
+    "metal_class_weights": {
+      "Class VIII": 0.7529321908950806,
+      "Cu": 4.856907844543457,
+      "Fe": 0.7529321908950806,
+      "Mn": 0.8248603343963623,
+      "Zn": 0.7976769208908081
+    },
+    "metal_label_scheme": "five_class",
+    "metal_labels": {
+      "0": "Mn",
+      "1": "Cu",
+      "2": "Zn",
+      "3": "Fe",
+      "4": "Class VIII"
+    },
+    "normalization_stats": {
+      "clamp_value": 5.0,
+      "means": {
+        "edge_dist_raw": [
+          [
+            4.994753360748291,
+            8.325852394104004
+          ]
+        ],
+        "edge_seqsep": [
+          [
+            54.69684982299805
+          ]
+        ],
+        "hydrophobicity_kd": [
+          [
+            -0.29181423783302307
+          ]
+        ],
+        "site_ligand_angle_stats": [
+          [
+            3.332712411880493,
+            4.189637660980225,
+            89.71450805664062,
+            102.3675537109375,
+            126.2867202758789,
+            13.65375804901123,
+            16.347942352294922,
+            12.173975944519043
+          ]
+        ],
+        "site_metal_stats": [
+          [
+            0.0,
+            1.0,
+            0.0,
+            0.0
+          ]
+        ],
+        "x_dist_raw": [
+          [
+            8.96117115020752,
+            8.705541610717773,
+            447.15545654296875
+          ]
+        ],
+        "x_env_burial": [
+          [
+            0.0
+          ]
+        ],
+        "x_env_electrostatics": [
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "x_misc": [
+          [
+            0.08450699597597122
+          ]
+        ]
+      },
+      "stds": {
+        "edge_dist_raw": [
+          [
+            1.9838584661483765,
+            2.762500762939453
+          ]
+        ],
+        "edge_seqsep": [
+          [
+            89.12689971923828
+          ]
+        ],
+        "hydrophobicity_kd": [
+          [
+            3.0159683227539062
+          ]
+        ],
+        "site_ligand_angle_stats": [
+          [
+            0.777827262878418,
+            2.1452348232269287,
+            17.371553421020508,
+            17.636131286621094,
+            33.107234954833984,
+            11.909180641174316,
+            9.32466983795166,
+            7.493058681488037
+          ]
+        ],
+        "site_metal_stats": [
+          [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "x_dist_raw": [
+          [
+            2.1661674976348877,
+            2.9564671516418457,
+            492.3605651855469
+          ]
+        ],
+        "x_env_burial": [
+          [
+            1.0
+          ]
+        ],
+        "x_env_electrostatics": [
+          [
+            1.0,
+            1.0
+          ]
+        ],
+        "x_misc": [
+          [
+            0.5677610039710999
+          ]
+        ]
+      }
+    },
+    "overlap_warning": null,
+    "runtime_environment": {
+      "accelerator": {
+        "cuda_arch_list": [
+          "sm_75",
+          "sm_80",
+          "sm_86",
+          "sm_90",
+          "sm_100",
+          "sm_120"
+        ],
+        "cuda_available": true,
+        "devices": [
+          {
+            "compute_capability": "8.9",
+            "index": 0,
+            "name": "NVIDIA L4",
+            "total_memory_bytes": 23745396736
+          }
+        ],
+        "nvidia_driver_version": "615.71.09",
+        "torch_cuda_version": "12.8"
+      },
+      "captured_at_utc": "2026-09-28T02:49:02+00:00",
+      "invocation": [
+        "/home/mechti/venvs/deepmzyme/bin/python",
+        "/home/mechti/projects/DeepMzyme/src/train.py",
+        "--task",
+        "metal",
+        "--metal-example-unit",
+        "ion",
+        "--metal-label-scheme",
+        "five_class",
+        "--metal-eligibility-scheme",
+        "six_class",
+        "--structure-dir",
+        "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train",
+        "--summary-csv",
+        "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train/final_data_summarazing_table.csv",
+        "--source-cohort-csv",
+        "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/train_cohort.csv",
+        "--source-cohort-sha256",
+        "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "--fold-membership-csv",
+        "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/fold_membership.csv",
+        "--fold-membership-sha256",
+        "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "--n-folds",
+        "5",
+        "--fold-index",
+        "0",
+        "--train-val-split-by",
+        "pdbid",
+        "--split-seed",
+        "42",
+        "--split-stratify-by",
+        "metal_site",
+        "--seed",
+        "42",
+        "--epochs",
+        "50",
+        "--batch-size",
+        "16",
+        "--weight-decay",
+        "0.0001",
+        "--lr-schedule",
+        "fixed",
+        "--learning-rate",
+        "3e-5",
+        "--selection-metric",
+        "val_metal_balanced_acc",
+        "--model-architecture",
+        "only_esm",
+        "--edge-radius",
+        "8.0",
+        "--metal-node-mode",
+        "none",
+        "--structural-readout-scope",
+        "residue_only",
+        "--shell-role-source",
+        "geometry",
+        "--no-prepare-missing-ring-edges",
+        "--hidden-s",
+        "128",
+        "--hidden-v",
+        "16",
+        "--edge-hidden",
+        "64",
+        "--gvp-layers",
+        "4",
+        "--esm-fusion-dim",
+        "128",
+        "--head-mlp-layers",
+        "2",
+        "--head-mlp-dropout",
+        "0.2",
+        "--esm-graph-encoder-dropout",
+        "0.1",
+        "--node-feature-set",
+        "conservative",
+        "--omit-node-features",
+        "biotite_residue_sasa,custom_charge_distance_proxy,dpka_titr",
+        "--external-feature-source",
+        "updated",
+        "--external-features-root-dir",
+        "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/external_features_intentionally_empty",
+        "--allow-missing-external-features",
+        "--esm-dim",
+        "1152",
+        "--esm-embeddings-dir",
+        "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1",
+        "--no-prepare-missing-esm-embeddings",
+        "--metal-class-weight-mode",
+        "manual",
+        "--metal-loss-function",
+        "cross_entropy",
+        "--metal-label-smoothing",
+        "0.0",
+        "--metal-collapsed-loss-weight",
+        "0.0",
+        "--unsupported-metal-policy",
+        "error",
+        "--invalid-structure-policy",
+        "error",
+        "--require-all-task-classes",
+        "--binding-residue-pooling",
+        "none",
+        "--export-validation-predictions",
+        "--train-metrics-every-n-epochs",
+        "10",
+        "--feature-inventory-sha256",
+        "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "--device",
+        "cuda",
+        "--runs-dir",
+        "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs",
+        "--run-name",
+        "only_esm__five_class__none__fold0__seed42",
+        "--class-viii-loss-multiplier",
+        "0.7529321774604794",
+        "--cu-loss-multiplier",
+        "4.8569078947368425",
+        "--mn-loss-multiplier",
+        "0.8248603351955307",
+        "--zn-loss-multiplier",
+        "0.7976769313884386",
+        "--save-epoch-checkpoints",
+        "--load-workers",
+        "4",
+        "--fe-loss-multiplier",
+        "0.7529321774604794",
+        "--campaign-run-identity",
+        "{\"campaign_id\": \"pmm_ion_metal_v2_context\", \"cohort_sha256\": \"745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd\", \"epochs\": 50, \"family\": \"only_esm\", \"feature_inventory_sha256\": \"942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c\", \"five_class_screen\": {\"adapter_sha256\": \"5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d\", \"protocol_id\": \"pmm-five-class-screen-v1\", \"protocol_sha256\": \"c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607\"}, \"fold\": 0, \"fold_membership_sha256\": \"b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572\", \"model_seed\": 42, \"profile_sha256\": \"24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802\", \"readout\": \"none\", \"resolved_config_sha256\": \"91ed8bcd5a51efa25f0e5ec54fee53484729285431b14f81e415b998d2625933\", \"smoke\": false, \"source_tree_sha256\": \"adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23\", \"target_scheme\": \"five_class\"}"
+      ],
+      "packages": {
+        "biopython": "1.86",
+        "biotite": "1.6.0",
+        "esm": "3.2.3",
+        "gemmi": "0.7.3",
+        "matplotlib": "3.10.9",
+        "numpy": "2.4.4",
+        "optuna": "4.8.0",
+        "pandas": "3.0.1",
+        "propka": "3.5.1",
+        "pytest": null,
+        "scikit_learn": "1.8.0",
+        "torch": "2.11.0+cu128",
+        "torch_geometric": "2.7.0"
+      },
+      "platform": {
+        "machine": "x86_64",
+        "platform": "Linux-7.0.0-1013-gcp-x86_64-with-glibc2.39",
+        "release": "7.0.0-1013-gcp",
+        "system": "Linux"
+      },
+      "python": {
+        "executable": "/home/mechti/venvs/deepmzyme/bin/python",
+        "implementation": "CPython",
+        "version": "3.12.3"
+      },
+      "schema_version": 1
+    },
+    "selected_checkpoint": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/best_model_checkpoint.pt",
+    "selected_checkpoint_epoch": 41,
+    "selected_metric_value": 0.8086627440944657,
+    "selection_metric": "val_metal_balanced_acc",
+    "source_artifacts": {
+      "dataset_bundle": {
+        "declared_by_user": false,
+        "identifier": null,
+        "sha256": null
+      },
+      "evaluation_protocol": {
+        "held_out_overlap_policy": "forbid",
+        "identifier": "standard_disjoint_v1"
+      },
+      "held_out_test_source": {
+        "evaluation_requested": false,
+        "split_manifest": null,
+        "structure_dir": null,
+        "summary_csv": null
+      },
+      "training_source": {
+        "split_manifest": {
+          "exists": false,
+          "path": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/split_metadata.json"
+        },
+        "structure_dir": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train",
+        "summary_csv": {
+          "exists": true,
+          "path": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train/final_data_summarazing_table.csv",
+          "sha256": "ab8a91b53465c813f97a5465e23c0c5bd9e510e0371e43d50668ee5e3fa9d4c9",
+          "size_bytes": 198850
+        }
+      }
+    },
+    "source_control": {
+      "branch": null,
+      "commit": null,
+      "dirty": null,
+      "repository_root": "/home/mechti/projects/DeepMzyme",
+      "status_entry_count": null
+    },
+    "split_name": "train_and_test_sets_structures_zenodo_pmm_exact",
+    "split_type": "custom_or_unknown",
+    "test_report": null,
+    "train_test_overlap_detected": null
+  },
+  "source_path": "runs/only_esm__five_class__none__fold0__seed42/run_metadata.json",
+  "source_sha256": "2e633102420259f4fed4fea98e3eb2fa232c6e5b5d41e1c880608c4b679944f3",
+  "source_size_bytes": 4446000
+}

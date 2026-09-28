@@ -7,7 +7,40 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
 
-**2026-09-28 — five-class comparison prepared; GPU capacity blocked:**
+**2026-09-28 — three five-class fits trained; two verified, one replay failure; GPU closed:**
+- All three new fold-0/seed-42 fits completed 50 epochs. Only-ESMC and graph-level
+  late fusion passed original strict replay; Only-GVP did not. All terminal
+  artifacts are independently backed up and acknowledged (71/70/71 files).
+- Common-four BA from native-selected checkpoints:
+
+  | Family | Five-class training | Six-class training | Higher on this fold |
+  |---|---:|---:|---|
+  | Only-ESMC | 89.4354% | 85.8393% | Five |
+  | Only-GVP, provisional comparison | 78.2397% | 82.8399% | Six |
+  | Graph-level late fusion | 87.6608% | 88.8124% | Six |
+
+- GVP5's class predictions and BA match across exports, but maximum probability
+  difference `2.38e-6` fails the unchanged `1e-6` limit. No retry or threshold
+  change occurred. GVP6 retains historical supplemental-only agreement. See the
+  [complete summary and qualifications](docs/notebook_outputs/summaries/summary_pmm_five_class_screen_20260928.md).
+  This is exploratory single-fold evidence, not target promotion or fivefold confirmation.
+- Recovery `5279a430fc79` succeeded in `us-central1-a`. The VM stopped at
+  **04:55:14 UTC**, independently confirmed **TERMINATED at 04:57:26 UTC**.
+  Verified cleanup removed the superseded VM/disk and temporary snapshot,
+  including its recycle-bin copy. The working 150-GB disk remains, approximately
+  **$15/month**. [Closeout evidence](docs/notebook_outputs/raw/pmm_five_class_screen_20260928/execution/verified_closeout.json).
+- This session used **2 h 10 m 15 s / $1.9086 estimated running gross**, plus
+  additional storage. Campaign cumulative running use is **11.4769 hours /
+  $10.0901 estimated gross**, plus storage. Four-hour/$6 session and six-hour/$10
+  UTC-day caps stayed unchanged; the larger full-grid proposal is not activated.
+- Active core v2: **9/45 trained, 36 untrained**; seven original strict passes,
+  one historical supplemental-only GVP6, one uncertified GVP5. The three earlier
+  aware fits remain separate; further awareness work is paused. Next resolve
+  TECH-023/025 and remaining-budget authority before full-fold execution and
+  assessment. No held-out access, HPO, promotion or final refit occurred. Reuse
+  all completed fits; do not retry GVP5 until a chance pass.
+
+**2026-09-28 — initial five-class preparation and stockout, superseded above:**
 - Add Mn/Cu/Zn/Fe/Co+Ni training to Only-ESMC, Only-GVP and graph-level late
   fusion, ordinary readout. The active [v2 scope](docs/plans/pmm_core_scope_v2.json)
   is **45 ordinary-readout fits**, distinct from the old 45-fit awareness grid.

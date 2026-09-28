@@ -1,0 +1,537 @@
+{
+  "backup": {
+    "host_ack": {
+      "file_count": 70,
+      "manifest_sha256": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+      "schema_version": 1,
+      "verified_by": "mechti-pc",
+      "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+      "verified_unix": 1790569339.9447699
+    },
+    "manifest_id": "ce88c0be10764fd0b35a2a6e807ee2c5",
+    "manifest_sha256": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+    "terminal_status": "failed_independent_replay",
+    "verified_files": 70
+  },
+  "campaign_run_identity": {
+    "campaign_id": "pmm_ion_metal_v2_context",
+    "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "epochs": 50,
+    "family": "only_gvp",
+    "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+    "five_class_screen": {
+      "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+      "protocol_id": "pmm-five-class-screen-v1",
+      "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+    },
+    "fold": 0,
+    "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "model_seed": 42,
+    "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+    "readout": "none",
+    "resolved_config_sha256": "3beb63d275358c143ae19aa288f0b4772de91083cf80e2d6491fa6682f69f65e",
+    "smoke": false,
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "target_scheme": "five_class"
+  },
+  "cause_identified": false,
+  "checkpoint_sha256": "0e53c06eb58210f92e9cec4a40a4840135a3cc356eead88d59b12ae981ebddf6",
+  "completed_epochs": 50,
+  "export_comparison": {
+    "column_order_exact": true,
+    "common4_prediction_changes": 0,
+    "ions_above_original_tolerance": 6,
+    "maximum_absolute_probability_difference": "0.00000238",
+    "n_ions": 1492,
+    "native_prediction_changes": 0,
+    "nonprobability_differences": [],
+    "nonprobability_fields_exact": true,
+    "probability_columns": {
+      "p_common4_Class_VIII": {
+        "fields_above_original_tolerance": 2,
+        "maximum_absolute_difference": "0.00000113",
+        "nonzero_difference_fields": 343,
+        "replay_probability": "0.62709683",
+        "saved_probability": "0.62709570",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5304"
+      },
+      "p_common4_Cu": {
+        "fields_above_original_tolerance": 1,
+        "maximum_absolute_difference": "0.00000124",
+        "nonzero_difference_fields": 22,
+        "replay_probability": "0.14195174",
+        "saved_probability": "0.14195298",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:723"
+      },
+      "p_common4_Mn": {
+        "fields_above_original_tolerance": 4,
+        "maximum_absolute_difference": "0.00000224",
+        "nonzero_difference_fields": 295,
+        "replay_probability": "0.37812927",
+        "saved_probability": "0.37813151",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1270"
+      },
+      "p_common4_Zn": {
+        "fields_above_original_tolerance": 4,
+        "maximum_absolute_difference": "0.00000238",
+        "nonzero_difference_fields": 259,
+        "replay_probability": "0.61969906",
+        "saved_probability": "0.61969668",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1270"
+      },
+      "p_native_Class_VIII": {
+        "fields_above_original_tolerance": 0,
+        "maximum_absolute_difference": "8.9E-7",
+        "nonzero_difference_fields": 280,
+        "replay_probability": "0.30088902",
+        "saved_probability": "0.30088991",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5570"
+      },
+      "p_native_Cu": {
+        "fields_above_original_tolerance": 1,
+        "maximum_absolute_difference": "0.00000124",
+        "nonzero_difference_fields": 22,
+        "replay_probability": "0.14195174",
+        "saved_probability": "0.14195298",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:723"
+      },
+      "p_native_Fe": {
+        "fields_above_original_tolerance": 2,
+        "maximum_absolute_difference": "0.00000114",
+        "nonzero_difference_fields": 263,
+        "replay_probability": "0.62642086",
+        "saved_probability": "0.62641972",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:5304"
+      },
+      "p_native_Mn": {
+        "fields_above_original_tolerance": 4,
+        "maximum_absolute_difference": "0.00000224",
+        "nonzero_difference_fields": 295,
+        "replay_probability": "0.37812927",
+        "saved_probability": "0.37813151",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1270"
+      },
+      "p_native_Zn": {
+        "fields_above_original_tolerance": 4,
+        "maximum_absolute_difference": "0.00000238",
+        "nonzero_difference_fields": 259,
+        "replay_probability": "0.61969906",
+        "saved_probability": "0.61969668",
+        "worst_source_uid": "sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1270"
+      }
+    },
+    "probability_fields_above_original_tolerance": 22,
+    "row_order_exact": true,
+    "uid_set_exact": true
+  },
+  "held_out_access": false,
+  "input_sha256": {
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/docs/plans/pmm_five_class_screen_v1.json": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/run_pmm_five_class_screen.py": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/campaign_manifest.json": "267384eb3501e735af9871aadcf3108cc19694df0f2f1d67bd7da17eea322383",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_gvp__five_class__none__fold0__seed42.json": "9e58270efefcb67890c4f3d3056577d0dceee61e4e96a9764badc7da17d7076f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_gvp__six_class__none__fold0__seed42.json": "c812e08c47fdcec06454d6c5ae5a5cef26d732d17c26467d31d10f06d8912844",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/feature_inventory.json": "3c068317a9be3b1ff48079e7ea4600eb66a6924fa59084be771ea400d51e334d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/fold_class_weights.json": "863e82f9dd235fb08bd1ac14df0055906009efb42e14bac3dabd9183d46cc2af",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/fold_membership.csv": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.ack.json": "de827f8c7a409259097a52245b78071f65cff2b7641bec158c82e4d587e0f8e6",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.events.jsonl": "13cf422d030a60d443faa714166823d16efe452730b9d05a174bc5c6a1d7cfbe",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.json": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.state.json": "f6529ddd8e3d140bb3b225ce0d1e99a35aeaae9b32612dc1e5462724daf7342f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/run_status_five_screen_only_gvp__five_class__none__fold0__seed42.json": "0aa1d8957e16f85cbbb108cde7b195d7e8544b009cdc67225997f2789e8e5d67",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42.log": "dfc0c0157673085611b389a163b60afe7dbf46bcab1d9664b976480998f07ccc",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/best_model_checkpoint.pt": "0e53c06eb58210f92e9cec4a40a4840135a3cc356eead88d59b12ae981ebddf6",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/dataset_summary.json": "e60c842136dc9a8ee92dfe8be644049cf81df17db53d3183b15f644cc8b09ccb",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0001_checkpoint.pt": "d4cdd14672d4f1cc9c9b5e04c9adb064bf85d5597bd452956daf9ccf8b7c595f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0002_checkpoint.pt": "a378d4e66d1b4420bb3d6ca47b91fd0688b1a0d13d5a53954a9350554e54c7d9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0003_checkpoint.pt": "c3e2088307bb4260af84d40faa1118bfad0d7aea9934eb6251fa0eba7e6c9377",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0004_checkpoint.pt": "fee5d925e96bc4f506b4dc6799e063c74f0c02bf59c7721593e3c0cceb426887",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0005_checkpoint.pt": "19bfe0500b387315c20f66be61b0b19f802cc4f6905b29d726692b3b8237d7ef",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0006_checkpoint.pt": "38f0a6c949c4ea67a42f12f8173b9362016fe1c623f294648f8b7a6243a0e407",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0007_checkpoint.pt": "05be5d635a24904bae7bb9168278b334af43408370c9c9fdf0e2f40442d4e1d5",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0008_checkpoint.pt": "5cf094e725165a0836c99509727f4e0020bdcade795608bc7c57ddd636986c65",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0009_checkpoint.pt": "53ff6d34557ce5bd5a12238152b34c950e0a7fb29d6fbfaa58460f7ee541d6d9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0010_checkpoint.pt": "eb44d381f2af616fb3ca139f0ab6944b9dae636afaa1ccca18aff6abaee7a6f4",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0011_checkpoint.pt": "d5e41f1baf69e8536a531984614a562f568c6cf1fa7319bb859684692aeec381",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0012_checkpoint.pt": "53ca35b39ff51b03d7e1100a1a02ea44d6546e99e4745805e1a1ade80a05e187",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0013_checkpoint.pt": "b835a945636def0252f057d42012cb01605f0d943b74b37c90e2c7b4a4a86902",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0014_checkpoint.pt": "0b25a394af53ead8bf3a06734b960daa6930658f3197a7a1af35f292137114b2",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0015_checkpoint.pt": "2b80805bbc78aa56c20b8a34721ea3a9c35ffa559c4619705d547cc9fd35a80c",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0016_checkpoint.pt": "b486824bb3f9b4c3c1cda2c61acf6f8c7c13e7641b60d097f8ce0ee5bad29cf5",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0017_checkpoint.pt": "068fe023bc0dc9cabf1ae2d1737d664adcc625bedf35a8a781188e9f66671fc5",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0018_checkpoint.pt": "583202ecb7efd6cdba87ef11a4e4dcc110afca2b97e6fcdafd65342ad2b4a2b1",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0019_checkpoint.pt": "b9cc4c727ddd5d6fd86ae2f19d35460f1ec47c9279a22ab09ca2644e677f2475",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0020_checkpoint.pt": "9e3b103cd4dd44e3958d1221815ed7c6edf609c3c27b3d29b65511f0a5ae7717",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0021_checkpoint.pt": "ac154f55806e3a0571f6b91a9d27fb4432cb7809d6c6ae65637be7fbe46c4dff",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0022_checkpoint.pt": "2fd93ceeaef64c73e89d60d5cdafc64cce2398950d3b4ad6c42f3b7c21ba4694",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0023_checkpoint.pt": "541090bb245a05902d0d45b21fa979cc52d935b660f3fe415c1611e86789fac0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0024_checkpoint.pt": "150a180e8838c8fd3f63bfffe19ce9692c0eda499a9c406ef58e842c8bd9a097",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0025_checkpoint.pt": "b91aee8ea775ab5bc64d4c9383063639131c0328691069e035064ca5b35d0ef3",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0026_checkpoint.pt": "9ab59cfa08aac9541ad2a6ef3efa54561eb5e87b993795a91affd9f9afde5c9a",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0027_checkpoint.pt": "35c890c71aade902aa40b9acc5be9408e1fe8d77b992cf6f51201384e69cd4db",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0028_checkpoint.pt": "d7db34f468e613fc836a15642a2de2dd65b7a776a5208897c7dffbebcb1ee304",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0029_checkpoint.pt": "b06e607d5c2bfc8eb037e1f1dd16921fc510830064ad12276ff1afc76fe45ccf",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0030_checkpoint.pt": "e61664bd29d5faa5dc6f0b3e02cd0864cd1e123e4d8c7196d93d76d9b1995d35",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0031_checkpoint.pt": "02e3ded82388ae37095a72a91819f706d956745cd1a4cde85fdb0f53c25c2c16",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0032_checkpoint.pt": "19453d2ca00e4f62775b6ac08abb807e473792908e4f7733a6cdb8aad27dc087",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0033_checkpoint.pt": "3741e1934e40a82da84af433d46a69a8e4d1684b568a12330d40cea43d577339",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0034_checkpoint.pt": "254c0b6a5f392c3e2b610ce71efbaf134c2185886f293309113eef818d4129f0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0035_checkpoint.pt": "211f037bc0a89a39015f66c91fc52328c831e2233bd5ad0c8a2cf2c8bca3653c",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0036_checkpoint.pt": "e2bf1416f7e4c86bde0db61bdd32b0e0e8cca461da0d326137634fa5df49545e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0037_checkpoint.pt": "af04e7d8e1d35854718da38c3f622b2abad191b67ac33836dc4d6225955eb416",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0038_checkpoint.pt": "68e29134dc1e7bf8203db940b250b51a15b0960d9c7f58f33e27a2c8f78945c0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0039_checkpoint.pt": "7156729b4a8dbb9d10a3489146904e05116225acf1cffb20af5dfbba5376dfbe",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0040_checkpoint.pt": "73d7c197d043608486d6ad044f485b235eb6bd59cdfccf0d6b62e1f67c3154ee",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0041_checkpoint.pt": "c35ba3b97c3c72a648731b0ee1fec4725ad139563cb665c7c6726b3ee82f1134",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0042_checkpoint.pt": "fd5f01204ef0ffc74c872893b71ef44b1be0c0f68eb0df9dc6e3fb57740cccc3",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0043_checkpoint.pt": "d20248d430788cbec777fff31c1277ff6c726ed9210bc1605a712869d66479b7",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0044_checkpoint.pt": "b3d47761f6993bfb7f596f2e3c8f1546da8e434db80dd29e118bc0bfa6459b39",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0045_checkpoint.pt": "e4995d750c9c386ecbe0b2e349921c4df9aed282ea113e891f90c8814db01800",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0046_checkpoint.pt": "8dc4f8150a4c05e26052eb9a12c472801051ba8872f18b9ede872212100bd518",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0047_checkpoint.pt": "031676f1ab8404b70b2b7cff58ebd7cd7899af9c887698a09962d64fae7c4eab",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0048_checkpoint.pt": "41caf259fde7c0422c809541b2e46fea511a6165860f9e061063ee1d62d5ab30",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0049_checkpoint.pt": "c286d6b5823158e1a507ed27f29a852b4797569de8b57486d614bb7270003d67",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_0050_checkpoint.pt": "dd0c962b0ffa73c02a6770c8e3fc0e032ef0b0e3e82e9a1ab8849331084e224a",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_metrics.csv": "cfe73633de94cc0385ae2d9891c17421bf80d97a2584e8977bdd867274ae6f20",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/independent_validation_replay/selected_checkpoint.json": "6292bcde4e52781456d7fa516a8992f506aef4f2ec15730799fe7937f97439ee",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "886eb1512f0437352a9a94b548ac0aa9eb5119ec26119a4b75dbd25234fca9c4",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/last_model_checkpoint.pt": "2e05a279e854bb9bb8d57b911b0f729d994fe808c2838fa9e9a41fe0004739de",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/prepare_status.json": "069d2a169ca3f24eb27b303e9e585ef7bdf479c8b377beb4f2185dfb1714b42f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/run_config.json": "82f2c71020fee6d5b8004f63d92110869ab48d29ec14a55467ca55d1196a06b0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/run_metadata.json": "d944215f306486131273d715fb7d4a3766b9c22fbdb685429ac0b655545e6328",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/runtime_profile.json": "ed701b11c44a128429b948cb2ee35c14535efe3eef88ad2bff632827a3077fbd",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/selected_checkpoint.json": "c0a5c5968411441bf109f92c34bbaec1e7100f2e4610c0bb782b98293ff3575f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/split_diagnostics.json": "64c4c94be1ea0124e0e9c02c2c6c96f7258a090bc9a9649a5baf95237ea4be93",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/train_metrics.csv": "a5e14326a0b5ef722f3fcff8a8564c974ec20c9e6b4da747fb65a978334378af",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/val_metrics.csv": "99f95f9eafd97f224675da584689b90dad75b82a3fd944b2c5b165bafcd0f37d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/val_predictions.csv": "f03c50dfed6bc8d297a138ab300c3656fa8017f59997b50aaff5ad967adea515",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/_incomplete_replays/attempt_1790535993190927214/selected_checkpoint.json": "fefe539723e1fdaea1ad18ecc736b2bcf5a8a2b3a61e5c11aaf20132aaeb7cf8",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/_incomplete_replays/attempt_1790535993190927214/val_predictions.csv": "ad792528c497ed29334e2358f02509296a6eb0fb3794c4ee91153e27b7c21f90",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/best_model_checkpoint.pt": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/dataset_summary.json": "11b6138d70ec3ae1425c942bb464cb8750da4c497fd0088bf414ca80c76530f9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/independent_validation_replay/selected_checkpoint.json": "05f3eacd0a0c297dfeeeda9037329604093d8bae8eb419c31d47e576dc68c3bb",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "10cd28af1d491b93167ca4411d044c71cb867d7723b3012d1fdb8360ddb8fa86",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/run_config.json": "7749ae59a235589848013fefacc933ee7f98eae284013e139faac73b7deb1dca",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/run_metadata.json": "1ecec2782092857c5a724aed44a7d4ee03a6aa26b0c28374ac6d6718b7304139",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/selected_checkpoint.json": "1d1ff1f95a7e912db671c9a175b44617cc54df8d3d617a1aece1e604d03aa0e6",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/val_predictions.csv": "ac4e4ef6e8aa35fb54e47ec16c9b729a105b64d7468e28799c31dd43b68477bf",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/copy_verified_five_unit.py": "de40603a0ab953e692753b3f7130c5e7bdef3fcd25c958b9740174a9f36ea59d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/diagnose_failed_gvp_five.py": "acdad2e7d08c0188b076f5332b353efbe7081ce6b4a9cd37f6e799686101ed59",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/report_five_screen.py": "e34c66156e71efeddb7d0df574cfc5c56b880ca4a7f27bcd689581d925e545b7",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/screen_agreement_v2_1_checked_20260928/screen_agreement_v2_1.json": "8887fc8a144ca203354254cac96ca268c77699a592bdcd9fc441ad35fe294b47",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/train_cohort.csv": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd"
+  },
+  "input_tensor_equality_audited": false,
+  "limitations": "Preserved serialized CSVs only. Identical class predictions do not satisfy strict probability replay and do not certify the run. No input-tensor equality or repeated-forward diagnostic was performed; numerical cause remains unproven. Single fold and seed, no formal inference. The strict screen report must continue excluding this five-class fit.",
+  "metrics": {
+    "failed_independent_export": {
+      "common4": {
+        "accuracy": 0.7191689008042895,
+        "balanced_accuracy": 0.7823968180445926,
+        "confusion_matrix": [
+          [
+            533,
+            0,
+            100,
+            105
+          ],
+          [
+            0,
+            34,
+            4,
+            1
+          ],
+          [
+            10,
+            2,
+            161,
+            8
+          ],
+          [
+            80,
+            0,
+            109,
+            345
+          ]
+        ],
+        "macro_f1": 0.7412396268087946,
+        "recall": {
+          "Class VIII": 0.6460674157303371,
+          "Cu": 0.8717948717948718,
+          "Mn": 0.7222222222222222,
+          "Zn": 0.8895027624309392
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "native5": {
+        "accuracy": 0.6950402144772118,
+        "balanced_accuracy": 0.6819983964300553,
+        "confusion_matrix": [
+          [
+            534,
+            0,
+            100,
+            71,
+            33
+          ],
+          [
+            0,
+            34,
+            4,
+            0,
+            1
+          ],
+          [
+            10,
+            2,
+            161,
+            1,
+            7
+          ],
+          [
+            42,
+            0,
+            52,
+            278,
+            10
+          ],
+          [
+            39,
+            0,
+            57,
+            26,
+            30
+          ]
+        ],
+        "macro_f1": 0.6522864950531198,
+        "recall": {
+          "Co+Ni": 0.19736842105263158,
+          "Cu": 0.8717948717948718,
+          "Fe": 0.7277486910994765,
+          "Mn": 0.7235772357723578,
+          "Zn": 0.8895027624309392
+        },
+        "support": {
+          "Co+Ni": 152,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Zn": 181
+        }
+      }
+    },
+    "selected_training_export": {
+      "common4": {
+        "accuracy": 0.7191689008042895,
+        "balanced_accuracy": 0.7823968180445926,
+        "confusion_matrix": [
+          [
+            533,
+            0,
+            100,
+            105
+          ],
+          [
+            0,
+            34,
+            4,
+            1
+          ],
+          [
+            10,
+            2,
+            161,
+            8
+          ],
+          [
+            80,
+            0,
+            109,
+            345
+          ]
+        ],
+        "macro_f1": 0.7412396268087946,
+        "recall": {
+          "Class VIII": 0.6460674157303371,
+          "Cu": 0.8717948717948718,
+          "Mn": 0.7222222222222222,
+          "Zn": 0.8895027624309392
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "native5": {
+        "accuracy": 0.6950402144772118,
+        "balanced_accuracy": 0.6819983964300553,
+        "confusion_matrix": [
+          [
+            534,
+            0,
+            100,
+            71,
+            33
+          ],
+          [
+            0,
+            34,
+            4,
+            0,
+            1
+          ],
+          [
+            10,
+            2,
+            161,
+            1,
+            7
+          ],
+          [
+            42,
+            0,
+            52,
+            278,
+            10
+          ],
+          [
+            39,
+            0,
+            57,
+            26,
+            30
+          ]
+        ],
+        "macro_f1": 0.6522864950531198,
+        "recall": {
+          "Co+Ni": 0.19736842105263158,
+          "Cu": 0.8717948717948718,
+          "Fe": 0.7277486910994765,
+          "Mn": 0.7235772357723578,
+          "Zn": 0.8895027624309392
+        },
+        "support": {
+          "Co+Ni": 152,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Zn": 181
+        }
+      }
+    }
+  },
+  "original_probability_tolerance": "0.000001",
+  "promotion": false,
+  "provisional_five_vs_six": {
+    "common4_five": {
+      "accuracy": 0.7191689008042895,
+      "balanced_accuracy": 0.7823968180445926,
+      "confusion_matrix": [
+        [
+          533,
+          0,
+          100,
+          105
+        ],
+        [
+          0,
+          34,
+          4,
+          1
+        ],
+        [
+          10,
+          2,
+          161,
+          8
+        ],
+        [
+          80,
+          0,
+          109,
+          345
+        ]
+      ],
+      "macro_f1": 0.7412396268087946,
+      "recall": {
+        "Class VIII": 0.6460674157303371,
+        "Cu": 0.8717948717948718,
+        "Mn": 0.7222222222222222,
+        "Zn": 0.8895027624309392
+      },
+      "support": {
+        "Class VIII": 534,
+        "Cu": 39,
+        "Mn": 738,
+        "Zn": 181
+      }
+    },
+    "common4_six": {
+      "accuracy": 0.764745308310992,
+      "balanced_accuracy": 0.8283989253531352,
+      "confusion_matrix": [
+        [
+          526,
+          0,
+          113,
+          99
+        ],
+        [
+          0,
+          37,
+          1,
+          1
+        ],
+        [
+          7,
+          4,
+          156,
+          14
+        ],
+        [
+          37,
+          10,
+          65,
+          422
+        ]
+      ],
+      "macro_f1": 0.7549849443269103,
+      "recall": {
+        "Class VIII": 0.7902621722846442,
+        "Cu": 0.9487179487179487,
+        "Mn": 0.7127371273712737,
+        "Zn": 0.861878453038674
+      },
+      "support": {
+        "Class VIII": 534,
+        "Cu": 39,
+        "Mn": 738,
+        "Zn": 181
+      }
+    },
+    "comparison_source": "Same selected checkpoints and matched fold0/seed42 validation ions; no checkpoint reselection or formal inference.",
+    "five_minus_six_common4_ba_pp": -4.6002107308542595,
+    "five_minus_six_common4_macro_f1_pp": -1.3745317518115696,
+    "five_status": "trained_but_strict_replay_failed",
+    "n_paired_ions": 1492,
+    "six_status": "historical_supplemental_v2_1_only",
+    "status": "provisional_point_estimate_only_not_certified_comparison"
+  },
+  "provisional_metrics": true,
+  "recorded_at_utc": "2026-09-28T04:27:49.302020+00:00",
+  "repeatability_measured": false,
+  "rerun_performed": false,
+  "run_name": "only_gvp__five_class__none__fold0__seed42",
+  "schema_version": 1,
+  "selected_epoch": 47,
+  "status": "trained_but_strict_replay_failed",
+  "strict_replay_pass": false,
+  "threshold_changed": false
+}

@@ -1,0 +1,1202 @@
+{
+  "comparisons": [
+    {
+      "common4_ba_delta_pp": 1.0408849199920356,
+      "common4_macro_f1_delta_pp": 1.8821095092863227,
+      "common4_recall_delta_pp": {
+        "Class VIII": 8.42696629213483,
+        "Cu": 0.0,
+        "Mn": -0.9485094850948506,
+        "Zn": -3.314917127071826
+      },
+      "comparison": "five_class minus four_class",
+      "control_status": "strict_replay_certified",
+      "family": "only_esm",
+      "n_paired_ions": 1492
+    },
+    {
+      "common4_ba_delta_pp": 3.5960431148168936,
+      "common4_macro_f1_delta_pp": 6.294140584668806,
+      "common4_recall_delta_pp": {
+        "Class VIII": 5.243445692883897,
+        "Cu": 0.0,
+        "Mn": 13.008130081300806,
+        "Zn": -3.8674033149171283
+      },
+      "comparison": "five_class minus six_class",
+      "control_status": "strict_replay_certified",
+      "family": "only_esm",
+      "n_paired_ions": 1492
+    },
+    {
+      "common4_ba_delta_pp": -1.804468348980659,
+      "common4_macro_f1_delta_pp": 3.6976914889571777,
+      "common4_recall_delta_pp": {
+        "Class VIII": -2.9962546816479363,
+        "Cu": -5.128205128205132,
+        "Mn": 3.1165311653116534,
+        "Zn": -2.20994475138121
+      },
+      "comparison": "five_class minus four_class",
+      "control_status": "strict_replay_certified",
+      "family": "gvp_late_fusion",
+      "n_paired_ions": 1492
+    },
+    {
+      "common4_ba_delta_pp": -1.1515277741058316,
+      "common4_macro_f1_delta_pp": -0.8954992534857542,
+      "common4_recall_delta_pp": {
+        "Class VIII": -5.992509363295873,
+        "Cu": -2.564102564102566,
+        "Mn": 2.8455284552845517,
+        "Zn": 1.104972375690605
+      },
+      "comparison": "five_class minus six_class",
+      "control_status": "strict_replay_certified",
+      "family": "gvp_late_fusion",
+      "n_paired_ions": 1492
+    }
+  ],
+  "confidence_intervals": null,
+  "created_at_utc": "2026-09-28T04:54:33.990120+00:00",
+  "five_class_required": 3,
+  "five_class_strictly_certified": 2,
+  "held_out_access": false,
+  "input_sha256": {
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/docs/plans/pmm_five_class_screen_v1.json": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/run_pmm_five_class_screen.py": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/campaign_manifest.json": "267384eb3501e735af9871aadcf3108cc19694df0f2f1d67bd7da17eea322383",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/gvp_late_fusion__five_class__none__fold0__seed42.json": "ade1d0d97444f316614cab395ec1e33087434258eadc5e5129dda0ae48c82b1e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/gvp_late_fusion__four_class__none__fold0__seed42.json": "0dd554a358c2d192b544d8d6751d17eb344d438a55e2f59f6b8e4f4d2568418a",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/gvp_late_fusion__six_class__none__fold0__seed42.json": "d5aab2b536325d52c214138f4b5e8ea71d0d3d8187ea789b5dc4b3b7644ee2f5",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_esm__five_class__none__fold0__seed42.json": "1cc95138e9a077fd7b519b27234ef0ae1a0e0bb4a11ef656e3fdffa4095a44cf",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_esm__four_class__none__fold0__seed42.json": "e022ca5e86a15f50d0d466b0c09d2ebc6bf4384fcbddf15b98c59b11cfdd97ba",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_esm__six_class__none__fold0__seed42.json": "8e53889ee12f1eaa54d2ce37acac61ce9c7a201154fa95f414dd6378b5d0111f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_gvp__four_class__none__fold0__seed42.json": "0f3149422c1574e6bb6a417a3ec5a54339dfa26f2ecc1a8b03d945f336458f79",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_gvp__six_class__none__fold0__seed42.json": "c812e08c47fdcec06454d6c5ae5a5cef26d732d17c26467d31d10f06d8912844",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/feature_inventory.json": "3c068317a9be3b1ff48079e7ea4600eb66a6924fa59084be771ea400d51e334d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/fold_class_weights.json": "863e82f9dd235fb08bd1ac14df0055906009efb42e14bac3dabd9183d46cc2af",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/fold_membership.csv": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/run_status_five_screen_gvp_late_fusion__five_class__none__fold0__seed42.json": "3839d47fa93ee9db2d067b9ebbe74ce3c0d3fa6ea74ab889576f93bf76cc809a",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/run_status_five_screen_only_esm__five_class__none__fold0__seed42.json": "25b9863fd50f4935bd6c9c9b4af02c81a6b5025ede072d0a346ab8cbf6e72252",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/run_status_five_screen_only_gvp__five_class__none__fold0__seed42.json": "0aa1d8957e16f85cbbb108cde7b195d7e8544b009cdc67225997f2789e8e5d67",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/best_model_checkpoint.pt": "ac81027cec32cacbe73ddd34e599b666536037a59f7f924bb937fc4d09370681",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "bdf8dc0b33acdc1c3625f353a21aec9af7e2ab1d6aa2ba96219ba5a927e68840",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "85192a84187b4ca6a97fa9189b2a07c295b883b618f866b43cc418046b29edea",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/run_config.json": "392f4d0ed6ee5fc52c704178e1be85ddef5394804825791cbecf68b438989f29",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/run_metadata.json": "44193358ccc3e49ec64f09cc98b3ae082adf041a2f36d113a3392dc86c423c63",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/selected_checkpoint.json": "898c238bc0c5a2f3462561e9aa8d90ca79826e6012dd285b4224ec0ffd9ca518",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__five_class__none__fold0__seed42/val_predictions.csv": "ef844c02183f9418356bfa9c918d4058816a73cde542b75f84717205f0d7fe8f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/best_model_checkpoint.pt": "6142d5b4fa8e4447b77fc4fbd4b036d82cd9cab2e44773befe4bb1d99a8e9514",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "3e07d8c5991f3dc24c87f2f8afd8197f62a3b5f3826e066835de13e5a3f44c35",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "6491baf375322221e7521950b1d59397054c46bb30045c6baf21b434ff3c78e9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/run_config.json": "9a3f6dd60abaeaa275b361391633d174fbed2e3b9f9e5e14e46a18921c8bf1e7",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/run_metadata.json": "f0783feaf578b743648b8e52deaf21c3569aaaaed83211f2f360eaaec26c1e57",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/selected_checkpoint.json": "e2009e6a29538be272b7eef0e3bf8950be16e68f0ab959a3e936cfe87a07adf5",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__four_class__none__fold0__seed42/val_predictions.csv": "4331306b2dcb68d6ff6bae220654cb52d75cf62fed343fd3ae29b678b2e90f92",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/best_model_checkpoint.pt": "b596db995bc3d929cffeb9abaa94f1ba6c275872b7214cbfda637921cc3ec719",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "a2e2903ffe31715f49d0747c052b3f6e4df728560b69aedf11f3ac3b09c3b4ea",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "159cedcf739a733a43b7dde47f724cd92c4d0d877040cedb2c80875e02ba649e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/run_config.json": "8b3d37e6277d995b71aba1b740c91cb0e2021793399d0d2a3f38a3a5451f41ab",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/run_metadata.json": "3e1a8a041f6c1d6d4737cca8f0c2d649582fa83bfe76d3e2ae27686c2f101541",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/selected_checkpoint.json": "8ec8981f9e8f965e2f3b6e47cfd9e4be483cc69966a0d890d443e84c235193e1",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/gvp_late_fusion__six_class__none__fold0__seed42/val_predictions.csv": "f16a84f50837e468f20211d272f6433e1e16e13b0fd5e9100cb16fd089ea84c9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/best_model_checkpoint.pt": "4db74f19cc401ef30ef31662c005dc99059132171c2d4345297a860880aeb3bc",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "88fc4e8d6b60a51be97fbc468a3b27f729de0eae7101c5de8ad6dd2d0048b312",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "3dfabee7a1289f1be9f11c6219887c179f123c099be4dd19d55b3ff17974ad0e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/run_config.json": "598abd139cb7354d46b192a29f7b8d154e8354a7e9fabbb76cd0add0746ad019",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/run_metadata.json": "2e633102420259f4fed4fea98e3eb2fa232c6e5b5d41e1c880608c4b679944f3",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/selected_checkpoint.json": "46b4eee331e00233969fb6c07b09173ac8426d34b5f95ffb9d96a3808c41f9c7",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__five_class__none__fold0__seed42/val_predictions.csv": "ea82a4790a6a18187104756cc2a0d96b7b50b54e00dc18e6843aef3ab16ad6f9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/best_model_checkpoint.pt": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "20a878ce4ed3222aaead1b5f0b165a95d15902c6127affc06a6b4943eb020ee2",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "2fb9b03051ce9f9c83dbb7e5678084b45103a4091227c26d2b282e56da2afd24",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/run_config.json": "01daa7f3442657c846f3d8f0b9f8ddb60dd6d0e4f9929bac6eb28ddf4b24fd5e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/run_metadata.json": "0a3c856109546727bce8aea91c53aadc2e657c5c182f382b17e85899cd24e430",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/selected_checkpoint.json": "910a7eda9b884e174530e8876f1e7bab216570a5cedb9dc6974e1021d24a2548",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__four_class__none__fold0__seed42/val_predictions.csv": "94cd57b402be37edd88c7cfa6625b6ac6101be60e14b701411eb04bea0a67bf1",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/best_model_checkpoint.pt": "edf67d8861d9ff70137360834a0ddce552f546feb5e8c0fecf6fc51763305c6d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "2b860fa00152b1c542247695d0ff05c757fc5f212359b9cd20b8422e196f15ed",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "97858fe4414ad928e28f412ea8edc9bc80b73ae19ce3afa11db6ba83e795df63",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/run_config.json": "97036fc7bad70a5212731213406d3a2c058ed1a3d302f3f2d54e8f7c83d460fd",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/run_metadata.json": "85dcb5ad2a6f16ce8e2d2761e5547fff7dab5cabfdbc06560a64971662a4f2e3",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/selected_checkpoint.json": "b5dea151cc5ad40275d5ec333dcb735db2f6c61b12253f2da1f67a3add7b0a94",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_esm__six_class__none__fold0__seed42/val_predictions.csv": "ff8a4a5b43c1e80cc009c7f43cc6705e9faa9a1d3c47dc62f33395f8451a804a",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/best_model_checkpoint.pt": "c258412690b0451d27796f71a9b0ada0a46f6a8a93bf2ae4bc977c8997700de0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/independent_validation_replay/replay_receipt.json": "12902385a5e9b547dcc01405a2bfea7aa85c88cbc56925839c1ee48449ac3232",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "c7a1ea39db08259d769406a4f7b9b852abd1d0f992fdcbc83fc01355787b7b16",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/run_config.json": "4823f6a41f48acfcb5a56a8746aaa493626d5be25035526c542b8fb26699367f",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/run_metadata.json": "f86bc65763dbc3700211fd8439259422e3e0e203a70c38db9b9d1d558aabc65d",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/selected_checkpoint.json": "378d34b4c2dc45f9add962ae694b6a9da04b43b31dc0ea85dedad2fbc4a3977e",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__four_class__none__fold0__seed42/val_predictions.csv": "75347d15be9fd28ef5f39ce33ccd4960e25000aeac4898dea7f19fb5c132f8a4",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/_incomplete_replays/attempt_1790535993190927214/selected_checkpoint.json": "fefe539723e1fdaea1ad18ecc736b2bcf5a8a2b3a61e5c11aaf20132aaeb7cf8",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/_incomplete_replays/attempt_1790535993190927214/val_predictions.csv": "ad792528c497ed29334e2358f02509296a6eb0fb3794c4ee91153e27b7c21f90",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/best_model_checkpoint.pt": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/dataset_summary.json": "11b6138d70ec3ae1425c942bb464cb8750da4c497fd0088bf414ca80c76530f9",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/independent_validation_replay/selected_checkpoint.json": "05f3eacd0a0c297dfeeeda9037329604093d8bae8eb419c31d47e576dc68c3bb",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "10cd28af1d491b93167ca4411d044c71cb867d7723b3012d1fdb8360ddb8fa86",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/run_config.json": "7749ae59a235589848013fefacc933ee7f98eae284013e139faac73b7deb1dca",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/run_metadata.json": "1ecec2782092857c5a724aed44a7d4ee03a6aa26b0c28374ac6d6718b7304139",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/selected_checkpoint.json": "1d1ff1f95a7e912db671c9a175b44617cc54df8d3d617a1aece1e604d03aa0e6",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/val_predictions.csv": "ac4e4ef6e8aa35fb54e47ec16c9b729a105b64d7468e28799c31dd43b68477bf",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/report_five_screen.py": "e34c66156e71efeddb7d0df574cfc5c56b880ca4a7f27bcd689581d925e545b7",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/screen_agreement_v2_1_checked_20260928/screen_agreement_v2_1.json": "8887fc8a144ca203354254cac96ca268c77699a592bdcd9fc441ad35fe294b47",
+    "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/train_cohort.csv": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd"
+  },
+  "limitations": "Exploratory single fold, seed42. Native metrics use different vocabularies and cannot rank formulations. Only common-four deltas are paired. GVP6 control retains supplemental v2.1 status; no new strict receipt. TECH-023/025 full-grid gates remain open. Backup/provider shutdown verification is separate.",
+  "promotion": false,
+  "schema_version": 1,
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "status": "screen_incomplete",
+  "units": [
+    {
+      "checkpoint_sha256": "a0af72fd1ed1d2830c429c9ec74386275a283f4833d238d90dce7962096a9839",
+      "common4": {
+        "accuracy": 0.8471849865951743,
+        "balanced_accuracy": 0.8839448044126841,
+        "confusion_matrix": [
+          [
+            630,
+            0,
+            72,
+            36
+          ],
+          [
+            0,
+            38,
+            1,
+            0
+          ],
+          [
+            7,
+            3,
+            162,
+            9
+          ],
+          [
+            32,
+            0,
+            68,
+            434
+          ]
+        ],
+        "macro_f1": 0.8429511712849522,
+        "recall": {
+          "Class VIII": 0.8127340823970037,
+          "Cu": 0.9743589743589743,
+          "Mn": 0.8536585365853658,
+          "Zn": 0.8950276243093923
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "only_esm",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "dff062a73609c8fdce15fe7e1bea0e421fe6da6d038ebb5807aa4571c3dcd700",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8471849865951743,
+        "balanced_accuracy": 0.8839448044126841,
+        "confusion_matrix": [
+          [
+            630,
+            0,
+            72,
+            36
+          ],
+          [
+            0,
+            38,
+            1,
+            0
+          ],
+          [
+            7,
+            3,
+            162,
+            9
+          ],
+          [
+            32,
+            0,
+            68,
+            434
+          ]
+        ],
+        "macro_f1": 0.8429511712849522,
+        "recall": {
+          "Class VIII": 0.8127340823970037,
+          "Cu": 0.9743589743589743,
+          "Mn": 0.8536585365853658,
+          "Zn": 0.8950276243093923
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "run_name": "only_esm__four_class__none__fold0__seed42",
+      "selected_epoch": 36,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "four_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "4db74f19cc401ef30ef31662c005dc99059132171c2d4345297a860880aeb3bc",
+      "common4": {
+        "accuracy": 0.868632707774799,
+        "balanced_accuracy": 0.8943536536126044,
+        "confusion_matrix": [
+          [
+            623,
+            0,
+            69,
+            46
+          ],
+          [
+            0,
+            38,
+            1,
+            0
+          ],
+          [
+            10,
+            3,
+            156,
+            12
+          ],
+          [
+            21,
+            0,
+            34,
+            479
+          ]
+        ],
+        "macro_f1": 0.8617722663778155,
+        "recall": {
+          "Class VIII": 0.897003745318352,
+          "Cu": 0.9743589743589743,
+          "Mn": 0.8441734417344173,
+          "Zn": 0.861878453038674
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "only_esm",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "five_class_screen": {
+          "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+          "protocol_id": "pmm-five-class-screen-v1",
+          "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+        },
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "91ed8bcd5a51efa25f0e5ec54fee53484729285431b14f81e415b998d2625933",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "five_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8250670241286864,
+        "balanced_accuracy": 0.8086627440944657,
+        "confusion_matrix": [
+          [
+            623,
+            0,
+            72,
+            24,
+            19
+          ],
+          [
+            0,
+            38,
+            1,
+            0,
+            0
+          ],
+          [
+            10,
+            3,
+            158,
+            5,
+            5
+          ],
+          [
+            9,
+            0,
+            22,
+            343,
+            8
+          ],
+          [
+            12,
+            0,
+            12,
+            59,
+            69
+          ]
+        ],
+        "macro_f1": 0.7885756210479714,
+        "recall": {
+          "Co+Ni": 0.45394736842105265,
+          "Cu": 0.9743589743589743,
+          "Fe": 0.8979057591623036,
+          "Mn": 0.8441734417344173,
+          "Zn": 0.8729281767955801
+        },
+        "support": {
+          "Co+Ni": 152,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "run_name": "only_esm__five_class__none__fold0__seed42",
+      "selected_epoch": 41,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "five_class",
+      "terminal_status": "completed",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "edf67d8861d9ff70137360834a0ddce552f546feb5e8c0fecf6fc51763305c6d",
+      "common4": {
+        "accuracy": 0.7902144772117963,
+        "balanced_accuracy": 0.8583932224644355,
+        "confusion_matrix": [
+          [
+            527,
+            2,
+            72,
+            137
+          ],
+          [
+            0,
+            38,
+            1,
+            0
+          ],
+          [
+            4,
+            5,
+            163,
+            9
+          ],
+          [
+            15,
+            0,
+            68,
+            451
+          ]
+        ],
+        "macro_f1": 0.7988308605311274,
+        "recall": {
+          "Class VIII": 0.8445692883895131,
+          "Cu": 0.9743589743589743,
+          "Mn": 0.7140921409214093,
+          "Zn": 0.9005524861878453
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "only_esm",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_esm",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "34aa8b6050aafa2d243a2a6503007952ebce92325f7e814c01ea8a5d80fe65e2",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.7520107238605898,
+        "balanced_accuracy": 0.7225072683616819,
+        "confusion_matrix": [
+          [
+            534,
+            8,
+            72,
+            6,
+            92,
+            26
+          ],
+          [
+            0,
+            38,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            5,
+            164,
+            3,
+            2,
+            3
+          ],
+          [
+            9,
+            0,
+            56,
+            305,
+            6,
+            6
+          ],
+          [
+            6,
+            0,
+            12,
+            5,
+            12,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            48,
+            0,
+            69
+          ]
+        ],
+        "macro_f1": 0.6581210283663353,
+        "recall": {
+          "Co": 0.34285714285714286,
+          "Cu": 0.9743589743589743,
+          "Fe": 0.7984293193717278,
+          "Mn": 0.7235772357723578,
+          "Ni": 0.5897435897435898,
+          "Zn": 0.9060773480662984
+        },
+        "support": {
+          "Co": 35,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Ni": 117,
+          "Zn": 181
+        }
+      },
+      "run_name": "only_esm__six_class__none__fold0__seed42",
+      "selected_epoch": 33,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "six_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "c258412690b0451d27796f71a9b0ada0a46f6a8a93bf2ae4bc977c8997700de0",
+      "common4": {
+        "accuracy": 0.8089812332439679,
+        "balanced_accuracy": 0.8602322112519033,
+        "confusion_matrix": [
+          [
+            660,
+            1,
+            10,
+            67
+          ],
+          [
+            0,
+            39,
+            0,
+            0
+          ],
+          [
+            10,
+            2,
+            163,
+            6
+          ],
+          [
+            117,
+            37,
+            35,
+            345
+          ]
+        ],
+        "macro_f1": 0.7723567270260764,
+        "recall": {
+          "Class VIII": 0.6460674157303371,
+          "Cu": 1.0,
+          "Mn": 0.8943089430894309,
+          "Zn": 0.9005524861878453
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "only_gvp",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_gvp",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "d932c0f1f3d021ba711fe3c5254b1af53a47c3a086a986d0e3b141a3a8c2e0aa",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8089812332439679,
+        "balanced_accuracy": 0.8602322112519033,
+        "confusion_matrix": [
+          [
+            660,
+            1,
+            10,
+            67
+          ],
+          [
+            0,
+            39,
+            0,
+            0
+          ],
+          [
+            10,
+            2,
+            163,
+            6
+          ],
+          [
+            117,
+            37,
+            35,
+            345
+          ]
+        ],
+        "macro_f1": 0.7723567270260764,
+        "recall": {
+          "Class VIII": 0.6460674157303371,
+          "Cu": 1.0,
+          "Mn": 0.8943089430894309,
+          "Zn": 0.9005524861878453
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "run_name": "only_gvp__four_class__none__fold0__seed42",
+      "selected_epoch": 12,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "four_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "family": "only_gvp",
+      "run_name": "only_gvp__five_class__none__fold0__seed42",
+      "status": "failed_independent_replay",
+      "strict_replay_certified": false,
+      "target": "five_class",
+      "terminal_detail": {
+        "elapsed_seconds": 2905.007661819458,
+        "log": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42.log",
+        "run_name": "only_gvp__five_class__none__fold0__seed42",
+        "status": "failed_independent_replay"
+      },
+      "terminal_status": "failed_independent_replay"
+    },
+    {
+      "checkpoint_sha256": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0",
+      "common4": {
+        "accuracy": 0.764745308310992,
+        "balanced_accuracy": 0.8283989253531352,
+        "confusion_matrix": [
+          [
+            526,
+            0,
+            113,
+            99
+          ],
+          [
+            0,
+            37,
+            1,
+            1
+          ],
+          [
+            7,
+            4,
+            156,
+            14
+          ],
+          [
+            37,
+            10,
+            65,
+            422
+          ]
+        ],
+        "macro_f1": 0.7549849443269103,
+        "recall": {
+          "Class VIII": 0.7902621722846442,
+          "Cu": 0.9487179487179487,
+          "Mn": 0.7127371273712737,
+          "Zn": 0.861878453038674
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "only_gvp",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "only_gvp",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "5ab1200077770ec38c3c46b9bf6062e2d129ccdb6cdfb886db8ce2258ef3f7e8",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.6997319034852547,
+        "balanced_accuracy": 0.6362748730109361,
+        "confusion_matrix": [
+          [
+            527,
+            0,
+            116,
+            70,
+            17,
+            8
+          ],
+          [
+            0,
+            37,
+            1,
+            0,
+            0,
+            1
+          ],
+          [
+            7,
+            4,
+            157,
+            3,
+            2,
+            8
+          ],
+          [
+            34,
+            3,
+            34,
+            289,
+            13,
+            9
+          ],
+          [
+            2,
+            0,
+            15,
+            5,
+            12,
+            1
+          ],
+          [
+            8,
+            7,
+            20,
+            30,
+            30,
+            22
+          ]
+        ],
+        "macro_f1": 0.5749318897004121,
+        "recall": {
+          "Co": 0.34285714285714286,
+          "Cu": 0.9487179487179487,
+          "Fe": 0.756544502617801,
+          "Mn": 0.7140921409214093,
+          "Ni": 0.18803418803418803,
+          "Zn": 0.8674033149171271
+        },
+        "support": {
+          "Co": 35,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Ni": 117,
+          "Zn": 181
+        }
+      },
+      "qualification": "Retrospective v2.1 agreement; NOT a legacy strict replay pass",
+      "run_name": "only_gvp__six_class__none__fold0__seed42",
+      "selected_epoch": 31,
+      "status": "historical_supplemental_v2_1_only",
+      "strict_replay_certified": false,
+      "target": "six_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "6142d5b4fa8e4447b77fc4fbd4b036d82cd9cab2e44773befe4bb1d99a8e9514",
+      "common4": {
+        "accuracy": 0.8411528150134048,
+        "balanced_accuracy": 0.8946529957415782,
+        "confusion_matrix": [
+          [
+            610,
+            0,
+            55,
+            73
+          ],
+          [
+            0,
+            39,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            169,
+            8
+          ],
+          [
+            32,
+            25,
+            40,
+            437
+          ]
+        ],
+        "macro_f1": 0.8072833711141685,
+        "recall": {
+          "Class VIII": 0.8183520599250936,
+          "Cu": 1.0,
+          "Mn": 0.8265582655826558,
+          "Zn": 0.9337016574585635
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "gvp_late_fusion",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "69283b4148dfe8abf78f2f0643ae3129ad6895e1cd3bd9c26e054296cc7035ea",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "four_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8411528150134048,
+        "balanced_accuracy": 0.8946529957415782,
+        "confusion_matrix": [
+          [
+            610,
+            0,
+            55,
+            73
+          ],
+          [
+            0,
+            39,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            169,
+            8
+          ],
+          [
+            32,
+            25,
+            40,
+            437
+          ]
+        ],
+        "macro_f1": 0.8072833711141685,
+        "recall": {
+          "Class VIII": 0.8183520599250936,
+          "Cu": 1.0,
+          "Mn": 0.8265582655826558,
+          "Zn": 0.9337016574585635
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "run_name": "gvp_late_fusion__four_class__none__fold0__seed42",
+      "selected_epoch": 11,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "four_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "ac81027cec32cacbe73ddd34e599b666536037a59f7f924bb937fc4d09370681",
+      "common4": {
+        "accuracy": 0.8418230563002681,
+        "balanced_accuracy": 0.8766083122517716,
+        "confusion_matrix": [
+          [
+            633,
+            0,
+            85,
+            20
+          ],
+          [
+            0,
+            37,
+            2,
+            0
+          ],
+          [
+            7,
+            0,
+            165,
+            9
+          ],
+          [
+            44,
+            0,
+            69,
+            421
+          ]
+        ],
+        "macro_f1": 0.8442602860037403,
+        "recall": {
+          "Class VIII": 0.7883895131086143,
+          "Cu": 0.9487179487179487,
+          "Mn": 0.8577235772357723,
+          "Zn": 0.9116022099447514
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "gvp_late_fusion",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "five_class_screen": {
+          "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+          "protocol_id": "pmm-five-class-screen-v1",
+          "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+        },
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "5294091cd19e6f8538b5f7ff1dfe1252cc05f2a79372155710a2fc25cf6b8d28",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "five_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8331099195710456,
+        "balanced_accuracy": 0.8459509902218549,
+        "confusion_matrix": [
+          [
+            633,
+            0,
+            85,
+            14,
+            6
+          ],
+          [
+            0,
+            37,
+            2,
+            0,
+            0
+          ],
+          [
+            7,
+            0,
+            165,
+            4,
+            5
+          ],
+          [
+            32,
+            0,
+            46,
+            296,
+            8
+          ],
+          [
+            12,
+            0,
+            23,
+            5,
+            112
+          ]
+        ],
+        "macro_f1": 0.8314754735335492,
+        "recall": {
+          "Co+Ni": 0.7368421052631579,
+          "Cu": 0.9487179487179487,
+          "Fe": 0.774869109947644,
+          "Mn": 0.8577235772357723,
+          "Zn": 0.9116022099447514
+        },
+        "support": {
+          "Co+Ni": 152,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "run_name": "gvp_late_fusion__five_class__none__fold0__seed42",
+      "selected_epoch": 50,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "five_class",
+      "terminal_status": "completed",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    },
+    {
+      "checkpoint_sha256": "b596db995bc3d929cffeb9abaa94f1ba6c275872b7214cbfda637921cc3ec719",
+      "common4": {
+        "accuracy": 0.8485254691689008,
+        "balanced_accuracy": 0.8881235899928299,
+        "confusion_matrix": [
+          [
+            612,
+            0,
+            82,
+            44
+          ],
+          [
+            0,
+            38,
+            1,
+            0
+          ],
+          [
+            4,
+            0,
+            163,
+            14
+          ],
+          [
+            20,
+            0,
+            61,
+            453
+          ]
+        ],
+        "macro_f1": 0.8532152785385978,
+        "recall": {
+          "Class VIII": 0.848314606741573,
+          "Cu": 0.9743589743589743,
+          "Mn": 0.8292682926829268,
+          "Zn": 0.9005524861878453
+        },
+        "support": {
+          "Class VIII": 534,
+          "Cu": 39,
+          "Mn": 738,
+          "Zn": 181
+        }
+      },
+      "family": "gvp_late_fusion",
+      "identity": {
+        "campaign_id": "pmm_ion_metal_v2_context",
+        "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+        "epochs": 50,
+        "family": "gvp_late_fusion",
+        "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+        "fold": 0,
+        "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+        "model_seed": 42,
+        "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+        "readout": "none",
+        "resolved_config_sha256": "784c3c347885a5b2c134ecdd5fc60984937e701c877d72814174c18e06865261",
+        "smoke": false,
+        "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+        "target_scheme": "six_class"
+      },
+      "n_ions": 1492,
+      "n_pdb_groups": 195,
+      "native": {
+        "accuracy": 0.8123324396782842,
+        "balanced_accuracy": 0.7201308372854242,
+        "confusion_matrix": [
+          [
+            612,
+            0,
+            82,
+            37,
+            1,
+            6
+          ],
+          [
+            0,
+            38,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            166,
+            4,
+            3,
+            4
+          ],
+          [
+            11,
+            0,
+            39,
+            328,
+            3,
+            1
+          ],
+          [
+            3,
+            0,
+            22,
+            2,
+            8,
+            0
+          ],
+          [
+            6,
+            0,
+            0,
+            51,
+            0,
+            60
+          ]
+        ],
+        "macro_f1": 0.7213720051860403,
+        "recall": {
+          "Co": 0.22857142857142856,
+          "Cu": 0.9743589743589743,
+          "Fe": 0.8586387434554974,
+          "Mn": 0.8292682926829268,
+          "Ni": 0.5128205128205128,
+          "Zn": 0.9171270718232044
+        },
+        "support": {
+          "Co": 35,
+          "Cu": 39,
+          "Fe": 382,
+          "Mn": 738,
+          "Ni": 117,
+          "Zn": 181
+        }
+      },
+      "run_name": "gvp_late_fusion__six_class__none__fold0__seed42",
+      "selected_epoch": 32,
+      "status": "strict_replay_certified",
+      "strict_replay_certified": true,
+      "target": "six_class",
+      "uid_identity_sha256": "3fffa976ead71ae2eb8e63f1fa6997936ba3fdeb0ff3af02bbccd615f3746655"
+    }
+  ]
+}

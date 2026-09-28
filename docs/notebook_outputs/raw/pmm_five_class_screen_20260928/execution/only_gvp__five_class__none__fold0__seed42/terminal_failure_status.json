@@ -1,0 +1,13 @@
+{
+  "full_grid_assessed": false,
+  "promotion_ready": false,
+  "protocol_id": "pmm-five-class-screen-v1",
+  "units": [
+    {
+      "elapsed_seconds": 2905.007661819458,
+      "log": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42.log",
+      "run_name": "only_gvp__five_class__none__fold0__seed42",
+      "status": "failed_independent_replay"
+    }
+  ]
+}

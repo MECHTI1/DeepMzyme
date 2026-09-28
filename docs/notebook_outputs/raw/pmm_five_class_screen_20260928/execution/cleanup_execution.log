@@ -1,0 +1,5 @@
+Verified cleanup: stop replacement, delete recorded superseded VM/disks/snapshot; keep replacement disk and local backup.
+Stopping deepmzyme-l4 ...
+deepmzyme-l4 state: TERMINATED
+Session session-20260928T024459Z-3d2d6dd8: ran 2h 10m, ESTIMATED GROSS cost $1.91 (list rate $0.87917/h; no credits subtracted)
+Recovery finalized; replacement TERMINATED, superseded resources removed, independent backup retained.

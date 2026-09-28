@@ -2,8 +2,8 @@
 
 The user-requested PMM five-class addition is tracked in the
 [v2 scope](plans/pmm_core_scope_v2.json) and
-[current status](../EXPERIMENT_STATUS.md). Adding the arm is not validation
-evidence; native five-class and common-four results must remain separate.
+[current status](../EXPERIMENT_STATUS.md). Its completed single-fold results
+are recorded below; native five-class and common-four results remain separate.
 
 This document is the authoritative synthesis of what validation and HPO have
 taught the project about model and parameter choices. Exact run evidence remains
@@ -83,6 +83,43 @@ This is a resource-prioritization decision after screening, not an equivalence
 test or a finding that binding information is generally unhelpful. The tested
 intervention changes pooling of cached embeddings; ESMC was not fine-tuned.
 Keep all screen outcomes below, including macro-F1/recall tradeoffs.
+
+The additional five-class Only-ESMC fit completed all 50 epochs and selected
+epoch 41 by native-five BA. Original strict independent replay and the complete
+71-file host backup passed. Common-four BA is **89.4354%** and macro-F1
+**86.1772%**, respectively **+1.0409** and **+1.8821 percentage points** versus
+the matched direct-four fit. Native-five BA is **80.8663%**; native Fe and
+Co+Ni recalls are **89.7906%** and **45.3947%**. The common-four improvement
+has a recall tradeoff: Fe+Co+Ni **+8.4270 pp**, Mn **−0.9485 pp**, Zn
+**−3.3149 pp**, Cu unchanged. This is **Grade 5**, not promotion or proof of
+general improvement; the Zn decline requires attention in subsequent matched
+fold confirmation. The five-class target groups only Co+Ni internally; reporting
+adds Fe probability before common-four argmax. See the
+[verified selection and replay evidence](notebook_outputs/raw/pmm_five_class_screen_20260928/execution/only_esm__five_class__none__fold0__seed42/portable_evidence_manifest.json).
+The [batch summary](notebook_outputs/summaries/summary_pmm_five_class_screen_20260928.md)
+compares all three families and retains their verification qualifications.
+
+Five-class Only-GVP also completed 50 epochs, selecting epoch 47, but remains
+**strict-replay failed**. Its two preserved exports have identical class
+predictions and common-four BA **78.2397%**, compared with **82.8399%** for the
+matched six-class GVP control: a provisional **−4.6002 pp** difference. Native-five
+BA is **68.1998%**. This is **Grade 6 diagnostic evidence**, excluded from the
+certified screen comparison. Small probability differences fail the unchanged
+strict threshold; the earlier nine-fit supplemental policy does not cover this
+new run. The six-class control retains its own supplemental-only qualification.
+See the [failure diagnostic](notebook_outputs/raw/pmm_five_class_screen_20260928/execution/only_gvp__five_class__none__fold0__seed42/failed_replay_diagnostic.md)
+and [TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
+
+Five-class graph-level late fusion completed 50 epochs, selected epoch 50 and
+passed strict replay with a verified 71-file host backup. Common-four BA is
+**87.6608%**, versus **88.8124%** for matched six-class training (**−1.1515 pp**).
+Common-four macro-F1 is **84.4260%**, versus **85.3215%** (**−0.8955 pp**).
+Native-five BA is **84.5951%**, with Fe/Co+Ni recalls **77.4869% / 73.6842%**.
+Against direct-four late fusion, common-four BA is **−1.8045 pp** while macro-F1
+is **+3.6977 pp**. These **Grade-5** findings show a family-dependent direction:
+five improves ESMC's common-four BA over six, whereas six is higher for late
+fusion. The provisional GVP comparison also favors six. They do not establish
+a generally better target scheme or justify final model selection.
 
 On `pmm_ion_metal_v2_context`, ordinary ESMC and its `first_shell_bias`
 counterpart both selected epoch 36 of 50 and achieved **88.3945% validation

@@ -1,0 +1,84 @@
+{
+  "active_child": null,
+  "active_session_id": "session-20260928T024459Z-3d2d6dd8",
+  "allocations": {
+    "session-20260925T213213Z": {
+      "deadline_unix": 1790386148.0,
+      "last_observed_unix": 1790384362.0811758,
+      "max_total_seconds": 14220.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790371933.0
+    },
+    "session-20260926T034202Z-b30eac96": {
+      "deadline_unix": 1790397535.0,
+      "last_observed_unix": 1790394445.3939378,
+      "max_total_seconds": 3420.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790394122.0
+    },
+    "session-20260926T040843Z-3fe5be87": {
+      "deadline_unix": 1790400036.0,
+      "last_observed_unix": 1790397733.9855227,
+      "max_total_seconds": 4320.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790395723.0
+    },
+    "session-20260927T143239Z-d9c4d944": {
+      "deadline_unix": 1790533772.0,
+      "last_observed_unix": 1790530751.5153308,
+      "max_total_seconds": 14220.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790519559.0
+    },
+    "session-20260927T181200Z-259157df": {
+      "deadline_unix": 1790541532.0,
+      "last_observed_unix": 1790537875.6935403,
+      "max_total_seconds": 8820.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790532720.0
+    },
+    "session-20260928T024459Z-3d2d6dd8": {
+      "deadline_unix": 1790577711.0,
+      "last_observed_unix": 1790569255.2835114,
+      "max_total_seconds": 14220.0,
+      "provider_stop_verified": false,
+      "start_basis": "provider_allocation",
+      "started_unix": 1790563499.0
+    }
+  },
+  "last_host_transfer": {
+    "ack_path": "persistence_receipts/f68be397b5294bb2b7953f92c302478f.ack.json",
+    "ack_sha256": "b02d89a259c45271b54fe17d42b1b9a0f1f25361d3746a427499803512b09a8c",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "file_count": 71,
+    "manifest_path": "persistence_receipts/f68be397b5294bb2b7953f92c302478f.json",
+    "manifest_sha256": "fb82639623be44d80a59af1a067e9d55a3d3c8aaa181b7453e5aeb0a9f0e76d5"
+  },
+  "owner": {
+    "hostname": "deepmzyme-l4.us-central1-a.c.deepmzyme-gpu-vm.internal",
+    "pid": 3304
+  },
+  "pending_transfer": {
+    "ack_path": "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.ack.json",
+    "destination_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+    "manifest_path": "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.json"
+  },
+  "pending_unit": {
+    "elapsed_seconds": 2905.007661819458,
+    "estimated_seconds": 3600.0,
+    "finished_unix": 1790569255.281652,
+    "persisted": false,
+    "required_seconds": 5400.0,
+    "restart_semantics": "restart original seed",
+    "run_name": "only_gvp__five_class__none__fold0__seed42",
+    "session_id": "session-20260928T024459Z-3d2d6dd8",
+    "started_unix": 1790566350.2639787,
+    "status": "failed_independent_replay"
+  },
+  "schema_version": 1
+}

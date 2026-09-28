@@ -1,0 +1,17 @@
+{
+  "user_instruction": "conrinur",
+  "interpreted_against": "Explained new bounded same-region L4 recovery and verified superseded-resource cleanup for the three five-class fold-0 fits.",
+  "approved_at_utc": "2026-09-28T02:34:15.187320+00:00",
+  "requested_hours": 4,
+  "session_usd_cap": 6,
+  "daily_hours_cap": 6,
+  "daily_usd_cap": 10,
+  "same_region_only": "us-central1",
+  "hardware": "g2-standard-8,1xL4,on-demand",
+  "max_candidate_attempts": 3,
+  "candidate_initiation_window_seconds_after_snapshot_ready": 600,
+  "cleanup_requires": "Completed replacement fit, original strict independent replay and independent host hash backup",
+  "previous_receipt_sha256": "c1515bd5401a1214be8842d8f5490b45d57352678c07b5a92631b1596a45a450",
+  "previous_receipt_archive": "/home/mechti/deepmzyme-vm/state/fallback-e9ff994df82d.completed.json",
+  "larger_full_grid_budget_activated": false
+}
