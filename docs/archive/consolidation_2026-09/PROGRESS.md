@@ -31,13 +31,25 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   the user's element 4 (E). STATUS layout approved with fixed campaign, stage,
   best-result, authorization and GPU/VM lines and a caveats slot (F). Then push
   and continue the remaining Job B steps, stopping before the final commit.
+- After fresh-agent run 1 (user): commit and push the staged work as a backup
+  with the two listed commands, no merge (done: `a205658`). Q1 fix approved:
+  the PMM README endpoint sentence says five- or six-class training followed by
+  collapse differs from direct four-class training and that comparing
+  objectives is a neutral test where better, no difference and worse are all
+  valid; run one new fresh agent with the same setup and report both runs; if
+  it still fails, stop rather than rewrite docs to pass. Sizes accepted for now:
+  default read about 27.0 KB, AGENTS 17.0 KB, PMM README over 60 lines; safety
+  text comes first and tightening is Job C. Record the `remote_SHA256SUMS`
+  finding for Job C/D; raw evidence unchanged. Local pytest and `smoke_checks`
+  with the Conda interpreter run on the workstation before any merge. Then
+  commit, push and stop.
 
 ## State
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B remaining steps done in the cloud (2026-09-28) except fresh-agent acceptance (run 1 not accepted); explicit paths staged; stopped before the final commit |
-| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only; nothing merged into `metal-pmm-ion-campaign`) |
+| Phase | Job B cloud work done (2026-09-28): fresh-agent run 1 not accepted; run 2, after the approved Q1 fix, matches all six under the recorded grading; sizes accepted for now; workstation pytest/smoke and any merge await the user |
+| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only, `29e7460` through `a205658` and the commit carrying this update; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
 
@@ -71,11 +83,10 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
    - Full tree verification against HEAD: Checked `git diff HEAD --name-only -- src scripts tests notebooks docs/plans` (completely empty).
 
 ## Next
-- User decisions: the Q1 remedy and a new fresh-agent run (see
-  [run 1](verification/job_b_fresh_agent_test.md)); the size overrun; then the
-  final commit and push to `claude/happy-ritchie-99xmhd`.
-- On the workstation: run the checker with the Conda interpreter, and pytest
-  and `smoke_checks` against the local baseline.
+- User: accept or reject the fresh-agent result
+  ([both runs](verification/job_b_fresh_agent_test.md)).
+- On the workstation, before any merge: the checker and hook with the Conda
+  interpreter, and pytest and `smoke_checks` against the local baseline.
 - Ask before commit, merge or push. Shared checkout remains read-only.
 
 ## Job B completed at the rule-review checkpoint
@@ -163,7 +174,8 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
 - STATUS follows the approved layout (5,290 bytes). The user accepted AGENTS at
   about 16.8 KB and a default read of about 25.8 KB until Job C; after the
   approved STATUS layout and review fixes they are 17,027 and 27,026 bytes,
-  which exceeds that acceptance and is reported for the user's decision.
+  which exceeded that acceptance; the user later accepted the current sizes
+  for now (see the decisions above).
 - No training, GPU action or held-out evaluation occurred.
 
 ## Job B remaining steps (cloud, 2026-09-28)
@@ -172,27 +184,37 @@ Details: [cloud review record](verification/job_b_cloud_review.json),
 `remaining_job_b_steps`.
 - Added `tools/check_docs_contract.py` (stdlib) and `.githooks/pre-commit`,
   enabled per command only; `core.hooksPath` is not set. Checker: 188 Markdown
-  files, 789 links, 0 strict, 13 warnings (caps, six resolved TECH issues kept
+  files, 792 links, 0 strict, 13 warnings (caps, six resolved TECH issues kept
   in full, two duplicated paragraphs). 18 of 18 seeded violations fail as
   expected; the hook blocks a broken-link commit in a throwaway clone.
+- `a205658` used the approved command `DEEPMZYME_PYTHON=python3 git -c
+  core.hooksPath=.githooks commit …`; the hook skipped because it required a
+  path (the checker had run directly just before: 0 strict). The hook now
+  resolves a command name on PATH and then requires an executable; retested,
+  a missing interpreter still skips with a message and a broken-link commit is
+  refused.
 - `.ignore` added; `.aiignore` replaced by the same list (PLAN_v2
   contradiction 11); `prepare_training_and_test_set` stays visible because the
   user did not ask to hide it. `GEMINI.md` points to AGENTS. The gpu-use-skill
   Handoff follows the STATUS/log rule.
-- Fresh-agent test, run 1: **not accepted.** Q2, Q5 and Q6 match; Q4 matches
-  counting the whole response; Q1 misses part of element 4; Q3 is borderline.
-  One cold-start subagent, read-only by instruction only.
-- CPU CI (stand-in for pytest): base `3c0f80c` and backup `042e93d` both show
-  3 failed, 991 passed, 40 skipped, with the same three failures; CI never
-  reaches `smoke_checks`. No local pytest or smoke run (no torch/numpy here; no
-  installs). No match to the local baseline is claimed.
+- Fresh-agent test ([both runs](verification/job_b_fresh_agent_test.md)):
+  run 1 **not accepted** (Q1 missed part of element 4; Q3 borderline). After
+  the approved PMM README fix (lines 10–12; still 63 lines), run 2 matches all
+  six under the same grading (Q4 counting the whole response), with wording
+  notes. One cold-start subagent per run, read-only by instruction only.
+- CPU CI (stand-in for pytest): base `3c0f80c` and backups `042e93d` and
+  `a205658` all show 3 failed, 991 passed, 40 skipped, with the same three
+  failures; CI never reaches `smoke_checks`. No local pytest or smoke run (no
+  torch/numpy here; no installs). No match to the local baseline is claimed.
 - Manifests: 10 of the 11 Phase 0 manifests pass; the same three legacy CRLF
   CSVs fail. New observation: `pmm_replay_diagnostic_20260928/remote_SHA256SUMS`
   lists 34 VM files absent from the repository (8 present entries match); not
-  caused by Job B.
+  caused by Job B; recorded for Job C/D below.
 - `before_hashes.txt`: 1,521 entries, 0 missing, 14 changed, all documents.
   Protected paths unchanged; source hash `adc95c42…`; playbook invariants hold.
-- Default read 27,030 bytes; PMM README 63 lines (target 60). Reported.
+- Sizes accepted by the user for now: after the Q1 fix the default read is
+  27,112 bytes (AGENTS 17,031 + STATUS 5,290 + PMM README 4,791) and the PMM
+  README 63 lines; the checker keeps warning.
 
 ## Job A closeout verification
 
@@ -209,9 +231,7 @@ Details: [cloud review record](verification/job_b_cloud_review.json),
   or GPU action had been performed. Job A was subsequently integrated as above.
 
 ## Open questions
-- Fresh-agent Q1: apply the proposed PMM README wording and run a new agent?
-- Default read (27,030 bytes) and PMM README (63 lines) exceed the accepted
-  sizes.
+- Acceptance of fresh-agent run 2 (wording notes recorded with it).
 - `.aiignore`: `prepare_training_and_test_set` is visible (the plan's
   default); hiding it needs the user's word.
 - Job C/D decisions remain outside this checkpoint.
@@ -228,8 +248,13 @@ All line numbers refer to `3c0f80c`.
 - `docs/PARAMETER_FINDINGS.md:49`: “intended primary metal reporting endpoint”.
 - RULES table destination references are repo-root-relative and do not resolve
   from its folder.
-- Tighten AGENTS (12-KB target), docs/README (5-KB target) and the default read
-  path (25-KB target).
+- Tighten AGENTS (12-KB target), docs/README (5-KB target), the default read
+  path (25-KB target) and the PMM README (60-line target). Accepted for now
+  (user, 2026-09-28): default read about 27.0 KB, AGENTS 17.0 KB, PMM README
+  over 60 lines (27,112 bytes, 17,031 bytes and 63 lines at this record).
+- Job C/D: `docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/remote_SHA256SUMS`
+  lists 42 entries; 34 are VM-side files absent from the repository and the 8
+  present entries match. Not caused by Job B; raw evidence stays unchanged.
 - Historical “challenger” wording left as run: single-GPU and pilot recipe
   sections of the playbook, FOLLOW_UP issue text, `docs/VERY_EXACT_PMM_SETS_PLAN.md`.
 

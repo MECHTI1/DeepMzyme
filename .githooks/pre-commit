@@ -5,7 +5,8 @@
 # Do not set core.hooksPath in the repository config: without
 # extensions.worktreeConfig it reaches every worktree, frozen checkouts included.
 # Runs only when staged Markdown outside docs/notebook_outputs/raw/ changes;
-# exits 0 when the interpreter is missing. Override it with DEEPMZYME_PYTHON.
+# exits 0 when the interpreter is missing. Override it with DEEPMZYME_PYTHON
+# (a path or a command on PATH).
 
 PY="${DEEPMZYME_PYTHON:-/home/mechti/miniconda3/envs/DeepMzyme/bin/python}"
 ROOT="$(git rev-parse --show-toplevel)" || exit 0
@@ -13,8 +14,9 @@ ROOT="$(git rev-parse --show-toplevel)" || exit 0
 if ! git diff --cached --name-only -- '*.md' ':(exclude)docs/notebook_outputs/raw/**' | grep -q .; then
     exit 0
 fi
-if [ ! -x "$PY" ]; then
+PY_BIN="$(command -v "$PY" 2>/dev/null)"
+if [ -z "$PY_BIN" ] || [ ! -x "$PY_BIN" ]; then
     echo "docs-contract hook: $PY not found; skipping the check (set DEEPMZYME_PYTHON)." >&2
     exit 0
 fi
-exec "$PY" "$ROOT/tools/check_docs_contract.py"
+exec "$PY_BIN" "$ROOT/tools/check_docs_contract.py"
