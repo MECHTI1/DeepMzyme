@@ -53,6 +53,12 @@ The continuation row records the original certification outcome. The later
 diagnostic adds a separately versioned agreement check; it does not replace
 that historical report or turn its failed replay into a legacy pass.
 
+The [2026-09-28 scope amendment](../plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness)
+pauses further awareness experiments and prioritizes the 30-fit ordinary-readout
+core. It adds no experimental evidence. These batches retain their original
+counts and checksums; the three aware fits remain exploratory. Current active
+counts and pending execution gates belong in `EXPERIMENT_STATUS.md`.
+
 ## GPU runtime efficiency planning
 
 The [efficiency plan](../GPU_RUNTIME_EFFICIENCY_PLAN.md) uses the authorized
