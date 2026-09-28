@@ -2,7 +2,9 @@
 
 Status: **approved in Phase 0**, as recorded in [PROGRESS.md](PROGRESS.md)
 (2026-09-28). Scientific facts are as of `3e912a6`; Job A corrects their
-documentation. The six required answers are unchanged.
+documentation. **Q1 element 4 was revised on 2026-09-28** after the user's
+Job B decision that no training objective is primary; the revised Q1 awaits
+the user's re-approval before the fresh-agent test. Q2–Q6 are unchanged.
 
 After Job B, a fresh agent that reads only `AGENTS.md`, `EXPERIMENT_STATUS.md` and the
 active campaign README must give every **required element** below. Wording may differ.
@@ -19,11 +21,15 @@ update this key first, with sources, and get approval again.
 2. Trained schemes: `four_class`, `five_class` and `six_class`, as separate identities.
 3. Endpoint: the common-four view (Mn, Cu, Zn, Class VIII = Fe+Co+Ni), on which all three
    are compared. The five- and six-class arms also keep their native metrics.
-4. Direct `four_class` training remains the primary formulation. It is not equivalent to
-   training on six classes and collapsing to four.
+4. No training objective is primary; every trained model is evaluated on the collapsed-four
+   endpoint. Direct `four_class` training is not equivalent to training on five or six
+   classes and collapsing to four.
 
 **Sources:** `run_pmm_core_campaign.py:18-26` (`targets`); `docs/plans/pmm_core_scope_v2.json`
-(`targets`); `docs/notebook_outputs/README.md:54` ("common-four endpoint"); `AGENTS.md:125-137`.
+(`targets`); `docs/notebook_outputs/README.md:54` ("common-four endpoint"); `AGENTS.md:125-137`
+(element 4 before revision); user decision 1A, 2026-09-28 (“remove ‘primary’, everywhere”),
+and [Plan's target policy](../../../Plan.md#2-train-the-metal-classification-model)
+(revised element 4).
 
 ## Q2. What does "5-fold" mean in the active campaign?
 

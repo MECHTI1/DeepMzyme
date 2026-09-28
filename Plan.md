@@ -116,44 +116,57 @@ balanced accuracy (`val_metal_ba
 
 lanced_acc`) over the active four-class target.
 
-The metal program must examine two training formulations for this four-class
-endpoint:
+Three training objectives can serve this four-class endpoint:
 
-1. direct four-class training with `four_class`; and
-2. six-class training with `six_class` / `split_all_metals`, followed by a
-   deterministic four-class evaluation that merges Fe, Co, and Ni into Class
-   VIII.
+1. direct four-class training with `four_class`;
+2. five-class training with `five_class`; and
+3. six-class training with `six_class` / `split_all_metals`.
 
-Direct four-class training is the primary baseline. The six-class-trained,
-collapsed-four arm is a required challenger that tests whether finer Fe/Co/Ni
-supervision helps the four-class endpoint. It is not optional, and it must not
-be relabeled as direct four-class training.
+Five- and six-class models are evaluated through a deterministic collapse that
+merges Fe, Co, and Ni into Class VIII.
 
-Run the two formulations as a controlled validation comparison across the
-initial metal baseline families: Only-GVP, Only-ESM, and GVP + graph-level late
-fusion. Within each family, keep eligible samples, grouping, folds, seeds,
-features, architecture capacity, optimization budget, and HPO opportunity
-matched; only the target formulation and unavoidable output/loss dimensions
-may differ. Keep separate run names and Optuna studies. Select checkpoints from
-validation only, using `val_metal_balanced_acc` over each arm's active target,
-then compare the direct-four metric with
-`val_metal_collapsed4_balanced_acc` from the six-class-trained arm on the same
-validation units. Use paired confidence intervals and four-class per-class
-recall protection before promotion. The six-class arm must also retain its
-native six-class metrics and separate Fe/Co/Ni recalls.
+No training objective is primary. Every trained model is evaluated on the
+collapsed-four endpoint, which remains the reporting endpoint; five- and
+six-class models also keep their native metrics. Direct four-class training is
+not the same experiment as five- or six-class training followed by collapse,
+and a collapsed model must never be relabeled as direct four-class training.
+Historical runs keep the target scheme they were run with. Which objectives a
+campaign trains follows [per-campaign target selection](#per-campaign-target-selection).
+
+Testing whether five- or six-class training beats direct four-class training on
+collapsed four is a neutral test. It requires:
+
+- a matched `four_class` arm for each compared family: the same folds, seeds,
+  data and eligible samples, grouping, features, architecture and capacity, and
+  tuning budget and HPO opportunity; only the target and unavoidable
+  output/loss dimensions differ, with separate run names and Optuna studies;
+- the metric, collapse rule, checkpoint-selection metric, decision rule (paired
+  bootstrap confidence interval) and tie rule fixed before any run; the default
+  tie rule is: no clear difference, keep direct four-class;
+- every outcome reported as better, no difference or worse; arms added after
+  seeing results are labeled exploratory;
+- rare-class recall protection, including four-class per-class recalls;
+  six-class arms also keep native metrics and separate Fe/Co/Ni recalls, and
+  five-class arms keep native metrics and Fe and Co+Ni recalls;
+- no held-out test use.
+
+Select each arm's checkpoint from validation only with the pre-declared metric
+(by default `val_metal_balanced_acc` over the arm's active target) and report
+collapsed four from that same checkpoint. Any ranking across target schemes,
+including Stage 6B, uses collapsed-four balanced accuracy, never native
+balanced accuracies of different class counts.
 
 Do not use held-out test results to select between these formulations. After
 validation confirmation, freeze the selected formulation and complete Stage 6B
-before its one-shot Stage 7 report. If both formulations are ever intended as
-final report models, that reporting set and its interpretation must be fixed
+before its one-shot Stage 7 report. If several formulations are ever intended
+as final report models, that reporting set and its interpretation must be fixed
 before any held-out data are opened.
 
-The implemented five-class scheme (`five_class`) remains valid for explicitly
-labeled alternative experiments and for preserving historical evidence. It
-keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
-name and Optuna study whenever the target scheme changes. A new campaign trains
-it only in the four + five + six combination described under
+The implemented five-class scheme (`five_class`) keeps Mn, Cu, Zn, and Fe
+separate while grouping Co and Ni. Historical five-class evidence keeps its
+label; a new campaign trains it when the user selects it under
 [per-campaign target selection](#per-campaign-target-selection).
+Use a separate run name and Optuna study whenever the target scheme changes.
 
 Metal training also has an optional **example unit**: `pocket` (the default)
 or `ion`. The [metal example terminology](#metal-example-terminology) below
@@ -180,13 +193,13 @@ experiments:
    Mn, Cu, Zn, and Class VIII.
 
 The direct-four arm reports its active four-class metrics, confusion matrix,
-and per-class recall. The required six-class challenger reports both its native
-six-class results and a deterministic collapsed-four view. That view must remain
-labeled as collapsed reporting from a six-class-trained model. If the
-six-class-trained arm is promoted as the source of the primary four-class
-endpoint, the final report must state that training formulation explicitly.
+and per-class recall. A five- or six-class arm reports both its native results
+and a deterministic collapsed-four view. That view must remain labeled as
+collapsed reporting from a model trained on that scheme. Whichever training
+objective is promoted as the source of the four-class endpoint, the final
+report must state that training formulation explicitly.
 The optional collapsed-four auxiliary loss is a third, separate six-class
-objective experiment; it is not the required standard six-class challenger and
+objective experiment; it is not the standard six-class arm and
 is not part of direct four-class training.
 
 Executable notebook or playbook defaults may temporarily lag this scientific
@@ -201,18 +214,14 @@ confirmation, final test) with copy-paste notebook configuration blocks, use
 ### Per-campaign target selection
 
 User decision, 2026-09-28. Before planning a new metal campaign, ask the user
-which target combination to train, and record the answer in the campaign
-README or scope:
-
-1. `six_class` only;
-2. `four_class` + `six_class`; or
-3. `four_class` + `five_class` + `six_class`.
-
-Every new campaign trains `six_class`; `five_class` is trained only together
-with both other schemes. Each chosen training objective keeps a separate run
-name and Optuna study. Every trained model is evaluated on the collapsed-four
-endpoint (Mn, Cu, Zn, Class VIII = Fe+Co+Ni); `five_class` and `six_class`
-models also keep their native metrics. Existing scopes keep their recorded
+which training objectives to train: any mix of `four_class`, `five_class` and
+`six_class`. Record the answer in the campaign README or scope before any run.
+Each chosen objective keeps a separate run name and Optuna study. Every trained
+model is evaluated on the collapsed-four endpoint (Mn, Cu, Zn, Class VIII =
+Fe+Co+Ni); `five_class` and `six_class` models also keep their native metrics.
+A comparison between objectives follows the neutral-test rules above.
+Architecture comparisons (fusion, GVP versus ESM, RING) keep one fixed training
+target, named per campaign before any run. Existing scopes keep their recorded
 targets. This choice authorizes no training or compute.
 
 ### Metal example terminology
@@ -246,10 +255,11 @@ nodes; check its architecture and feature configuration.
 
 The [PMM comparison plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
 owns whether its optional binding-aware readout is active. Its approved core
-scope retains ordinary Only-ESM, Only-GVP and graph-level late fusion under
-required four- and six-class training, plus the explicitly user-requested
-five-class alternative (Mn/Cu/Zn/Fe/Co+Ni). Compare all three on the common-four
-endpoint from their native-BA-selected checkpoints. Preserve binding-aware code and exploratory
+scope trains ordinary Only-ESM, Only-GVP and graph-level late fusion separately
+with `four_class`, `six_class` and the user-requested `five_class`
+(Mn/Cu/Zn/Fe/Co+Ni). Compare all three on the common-four endpoint from their
+native-BA-selected checkpoints; that plan's pre-declared contrasts and tie rule
+govern this campaign. Preserve binding-aware code and exploratory
 evidence for reproducibility; further awareness development/confirmation is
 paused until a specific hypothesis and matched protocol are explicitly adopted.
 That prioritization does not establish that binding information is generally
@@ -307,7 +317,8 @@ Authoritative rules for the pipeline:
   full-train refit selected from that evidence.
 - Stage 6 selects candidate configurations from validation/CV evidence only.
   Stage 6B is the mandatory bridge to final training: it ranks candidates by
-  mean `val_metal_balanced_acc`, applies the predeclared paired-CI,
+  mean `val_metal_balanced_acc` (by mean collapsed-four balanced accuracy when
+  candidates span target schemes), applies the predeclared paired-CI,
   rare-class recall, and tie-breaker promotion policy, then trains/refits one
   final model using the frozen selected configuration before opening the
   held-out test. This final-training run must keep the model family,
@@ -337,8 +348,8 @@ Authoritative rules for the pipeline:
 - Optional multi-objective HPO may be used as validation-only rare-class
   protection tooling. Its primary objectives are `val_metal_balanced_acc` and
   active metal-scheme `val_metal_min_recall`; for the direct-four arm, that is
-  minimum recall across Mn, Cu, Zn, and Class VIII. In the required six-class
-  challenger, collapsed-four recall is part of the common-endpoint comparison,
+  minimum recall across Mn, Cu, Zn, and Class VIII. In the six-class
+  arm, collapsed-four recall is part of the common-endpoint comparison,
   but it must not replace native six-class minimum recall or hide separate
   Fe/Co/Ni failures.
 - Serious validation-only metal Optuna searches should keep the current
@@ -743,7 +754,7 @@ can reproduce a command-line run.
 | Runtime | `--num-workers` | `0` | Number of DataLoader worker processes. Default preserves single-process loading. | Advanced |
 | Runtime | `--pin-memory` | false | Enables pinned DataLoader host memory only for CUDA runs. CPU runs ignore it. | Advanced |
 | Task | `--task` | `joint`; choices `joint`, `metal`, `ec` | Selects metal-only, EC-only, or joint prediction heads and losses. The raw CLI default is an implementation default, not scientific preference for joint training. | Expose |
-| Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the required challenger uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
+| Target labels | `--metal-label-scheme` | raw code default `split_all_metals`; aliases `six_class`, `five_class`, `four_class` | Selects metal target classes. The primary reporting endpoint is four-class: the direct arm uses `four_class` / `merge_fe_class_viii`, and the six-class arm uses standard `six_class` training with collapsed-four evaluation. Raw defaults may lag the paired recipe. `five_class` means Mn/Cu/Zn/Fe plus grouped Co/Ni. | Expose |
 | Data policy | `--metal-example-unit` | `pocket`; choices `pocket`, `ion` | For standalone metal training, use one clustered-pocket label or one example and target per matched metal ion. Ion examples use their own coordinate and 10 Å residue neighborhood; the configured split policy groups siblings by parent pocket or a broader group. See [terminology](#metal-example-terminology). | Expose for metal diagnostics |
 | Training | `--epochs` | `10` | Maximum number of training epochs. | Expose |
 | Training | `--batch-size` | `8` | Number of example graphs per mini-batch: clustered pockets or ion-centered examples, according to `--metal-example-unit`. | Expose / sweep |
@@ -1047,8 +1058,8 @@ The summary table should include, when available:
 - final held-out test metrics
 - final held-out calibration metrics and bootstrap confidence intervals
 - metal active-scheme metrics, including direct four-class metrics, native
-  six-class metrics for the required challenger, and scheme-labeled five-class
-  metrics for alternatives
+  six-class metrics for six-class arms, and scheme-labeled native five-class
+  metrics for five-class arms
 - metal collapsed-four metrics labeled as reporting from a six-class-trained
   model when applicable
 - EC level-1 / level-2 metrics
@@ -1173,9 +1184,10 @@ before making the corresponding scientific claims:
 
 These are controlled ablations, not a ranking of unrelated historical maxima.
 For the target-formulation comparison, the label scheme and output dimension
-are the intended differences; compare both arms on the common four-class
-validation view while preserving the six-class arm's native metrics. For the
-other three comparisons, keep the direct four-class label scheme fixed. Within
+are the intended differences; compare the arms on the common four-class
+validation view under the neutral-test rules while preserving native five- or
+six-class metrics. For the other three comparisons (fusion, GVP versus ESM,
+RING), keep one fixed training target, named per campaign before any run. Within
 every comparison, keep the dataset, ESMC model and embedding coverage, GVP
 backbone, non-target features, training budget, grouped folds, and active model
 seeds identical wherever the question permits. Give separately tuned families
