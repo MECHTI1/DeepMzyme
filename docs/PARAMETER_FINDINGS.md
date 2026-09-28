@@ -175,6 +175,29 @@ lower common-four BA than their matched direct-four arm on this fold. This is
 still Grade-5 evidence; the numerical diagnosis adds no folds, seeds, promotion
 evidence or held-out results.
 
+**Checkpoint-selection sensitivity (post-hoc analysis, 2026-09-29, Grade 5).**
+The ranking above depends on the checkpoint rule. Direct-four arms select by
+native BA, which equals common-four BA, so they are selected on the comparison
+metric; five/six-class arms select by native BA, which rare Co/Ni recalls
+dominate. Recomputed read-only from each fold-0 run's `epoch_metrics.csv`
+(`val_metal_collapsed4_balanced_acc`; selected epochs and values reproduce the
+recorded ones), common-four BA as selected / at the best common-four epoch /
+mean of the last 10 epochs:
+
+| Family | Four | Five | Six |
+|---|---|---|---|
+| Late fusion | 89.47 / 89.47 / 85.78 | 87.66 / 90.07 / 86.73 | 88.81 / 90.60 / 87.22 |
+| Only-ESMC | 88.39 / 88.39 / 83.62 | 89.44 / 89.44 / 82.87 | 85.84 / 88.25 / 85.65 |
+| Only-GVP | 86.02 / 86.02 / 73.47 | 78.24 / 79.49 / 74.31 | 82.84 / 84.24 / 76.65 |
+
+With symmetric common-four selection, six-class exceeds direct-four for late
+fusion; on the selection-free last-10 mean, six-class exceeds direct-four in all
+three families. Direct-four arms peak early (epochs 11–12) and then decline. Fold
+0 was already seen, so this is exploratory only and does not change the
+pre-declared PMM rule. Any rule for folds 1–4 must be declared before those
+fits run (Plan neutral target test); saved per-epoch metrics allow every rule
+to be computed from the same fits without extra GPU time.
+
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 
 All twelve CARE30 EC1 standalone runs completed under the matched two-LR,
