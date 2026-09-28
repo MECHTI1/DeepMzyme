@@ -1,0 +1,6 @@
+# isolation re-run of the files holding the 32 setup errors, 2026-09-28T14:14:10+03:00
+# files: tests/test_pmm_core_assessment.py 
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+40 passed, 3 warnings in 5.43s

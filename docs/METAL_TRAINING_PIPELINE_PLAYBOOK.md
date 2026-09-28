@@ -2686,7 +2686,7 @@ status notes rather than guessed.
 
 ## G4-Class Optuna Policy
 
-These retained serious-HPO budgets target a verified G4-class GPU. The actual
+Historical (G4-class): These retained serious-HPO budgets target a verified G4-class GPU. The actual
 GPU model, VRAM, throughput and CUDA compatibility must be inspected at each
 allocation; G4 is not a 16-GB guarantee and a Colab runtime is not persistent.
 Durability comes from verified external artifacts and storage. The separately
@@ -3831,7 +3831,7 @@ Purpose: run a useful but bounded HPO pass inside one selected model family.
 When to use it: after baseline behavior is understood and you have selected a
 model family to tune, usually Only-GVP first.
 
-Expected scale/runtime: useful serious run on a G4-class GPU, usually hours.
+Historical (G4-class): Expected scale/runtime: useful serious run on a G4-class GPU, usually hours.
 
 Notebook configuration block for first useful Only-GVP HPO:
 

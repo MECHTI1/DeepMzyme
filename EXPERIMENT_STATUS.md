@@ -396,11 +396,12 @@ Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026
 
 ## Current objective
 
-**Exact PinMyMetal 5-Fold Cross-Validation Benchmark COMPLETED (2026-09-23):** Full replication of the Nature Communications (2025) PinMyMetal 5-fold cross-validation protocol (`--train-val-split-by pocket_id --n-folds 5`) across three comparative architectures: Sequence-Only ESM-C (`benchmark_only_esm`), Structure-Only Enhanced GVP (`benchmark_enhanced_only_gvp`), and Multimodal Late Fusion (`benchmark_enhanced_gvp_esmc`).
-- **Table 1 (5-Fold CV Val Bal Acc vs PinMyMetal Fig 2a: 75.08%)**:
-  - `benchmark_only_esm`: **80.29% ± 3.26%** (+5.21 pp)
-  - `benchmark_enhanced_only_gvp`: **74.42% ± 2.39%** (-0.66 pp)
-  - `benchmark_enhanced_gvp_esmc`: **80.22% ± 3.31%** (+5.14 pp)
+**Exact PinMyMetal 5-Fold Cross-Validation Benchmark (2026-09-23, Exploratory):** Exploratory benchmark under `--train-val-split-by pocket_id --n-folds 5` across three comparative architectures: Sequence-Only ESM-C (`benchmark_only_esm`), Structure-Only Enhanced GVP (`benchmark_enhanced_only_gvp`), and Multimodal Late Fusion (`benchmark_enhanced_gvp_esmc`). *(Caveat: Not a like-for-like comparison with PinMyMetal; test set opened 2026-09-22/23; see [EXACT doc qualification](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) and [test-use ledger](docs/DATASETS.md#test-use-ledger)).*
+- **Table 1 (5-Fold CV Val Bal Acc — Unadjusted Epoch Maxima vs PinMyMetal Fig 2a: 75.08%)**:
+  *(Selected-checkpoint out-of-fold values: Late Fusion **79.84%**, ESM-C **78.98%**, Enhanced GVP **73.87%**; see [reporting and split audit](docs/agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable))*
+  - `benchmark_only_esm`: **80.29% ± 3.26%** (epoch max; OOF: 78.98%; historical arithmetic delta +5.21 pp)
+  - `benchmark_enhanced_only_gvp`: **74.42% ± 2.39%** (epoch max; OOF: 73.87%; historical arithmetic delta -0.66 pp)
+  - `benchmark_enhanced_gvp_esmc`: **80.22% ± 3.31%** (epoch max; OOF: 79.84%; historical arithmetic delta +5.14 pp)
 - **Table 2 (Held-Out Test Set 352 Pockets vs PinMyMetal Fig 2b: 67.85% & Metal3D Fig 2c: 61.70%)**:
   - `benchmark_only_esm` 5-Fold Ensemble: **77.37%** (+9.52 pp vs PMM, +15.67 pp vs Metal3D)
   - `benchmark_enhanced_only_gvp` 5-Fold Ensemble: **78.03%** (+10.18 pp vs PMM, +16.33 pp vs Metal3D)

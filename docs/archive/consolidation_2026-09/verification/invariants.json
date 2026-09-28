@@ -1,0 +1,126 @@
+{
+  "source_hash": {
+    "/home/mechti/PycharmProjects/DeepMzyme": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "/media/mechti/Data1/DeepMzyme_worktrees/docs": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23"
+  },
+  "playbooks": {
+    "METAL": {
+      "first_block_unchanged": true,
+      "LF_only": true,
+      "heading_count": 1,
+      "heading_before_first_python": true
+    },
+    "EC": {
+      "first_block_unchanged": true,
+      "LF_only": true,
+      "heading_count": 1,
+      "heading_before_first_python": true
+    }
+  },
+  "baseline_hash_changes": [
+    "AGENTS.md",
+    "EXPERIMENT_STATUS.md",
+    "Plan.md",
+    "docs/DATASETS.md",
+    "docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md",
+    "docs/GETTING_STARTED.md",
+    "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md",
+    "docs/PARAMETER_FINDINGS.md",
+    "docs/notebook_outputs/README.md"
+  ],
+  "manifest_checks": [
+    {
+      "manifest": "docs/notebook_outputs/raw/GVP + late fusion/metal_late_fusion_optuna_top3_seedrepeat_50epoch_v1/SHA256SUMS",
+      "entries": 75,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/legacy_nonoverlap_test_access/SHA256SUMS",
+      "entries": 25,
+      "exit_code": 1,
+      "failures": [
+        "diagnostic_existing_test_reports.csv: FAILED",
+        "sweep_comparison.csv: FAILED",
+        "sweep_status.csv: FAILED"
+      ],
+      "stderr": "sha256sum: WARNING: 3 computed checksums did NOT match"
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/metal_single_gpu_20h_v2_profile_20260916/SHA256SUMS",
+      "entries": 9,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/metal_single_gpu_authorized_20260917/SHA256SUMS",
+      "entries": 38,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_core_continuation_20260928/SHA256SUMS",
+      "entries": 20,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_five_class_screen_20260928/SHA256SUMS",
+      "entries": 6,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_five_class_screen_20260928/execution/SHA256SUMS",
+      "entries": 89,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_ion_v2_context_20260926/SHA256SUMS",
+      "entries": 60,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/SHA256SUMS",
+      "entries": 111,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/SHA256SUMS",
+      "entries": 58,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    },
+    {
+      "manifest": "docs/notebook_outputs/raw/remote_homology_v1_20260917/SHA256SUMS",
+      "entries": 73,
+      "exit_code": 0,
+      "failures": [],
+      "stderr": ""
+    }
+  ],
+  "baseline_hash_count": 1521,
+  "ledger": {
+    "rows": 36,
+    "distinct_hashes": 27,
+    "mismatches": []
+  },
+  "protected_diff": [],
+  "protected_untracked": [],
+  "main_status": [],
+  "head": "3e912a68c214800f43f4df78abcbb4286901496c",
+  "campaign_tip": "3e912a68c214800f43f4df78abcbb4286901496c",
+  "post_test_source_hashes_rechecked": true
+}

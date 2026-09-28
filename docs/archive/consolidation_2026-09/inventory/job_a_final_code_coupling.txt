@@ -1,0 +1,16 @@
+notebooks/DeepMzyme_training_colab.ipynb:12:    "> **Live values are not canonical stage defaults.** The assignments in **Main configuration** are the current editable/resume state. For a numbered metal stage, paste exactly one block from [`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`](../docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md). Read [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) before choosing a stage; use the [configuration guide](../docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md) for option semantics and [`docs/DATASETS.md`](../docs/DATASETS.md) for split/test provenance.\n",
+notebooks/DeepMzyme_training_colab.ipynb:155:    "# v12 includes complete audited CARE ESM/external/RING caches; see docs/DATASETS.md.\n",
+notebooks/DeepMzyme_training_colab.ipynb:541:    "    playbook = (snapshot_root / \"docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md\").read_text()\n",
+notebooks/DeepMzyme_training_colab.ipynb:1459:    "    return (path / \"src\" / \"train.py\").is_file() and (path / \"Plan.md\").is_file()\n",
+notebooks/DeepMzyme_training_colab.ipynb:2077:    "        \"The default DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz bundle contains exact, historical non-overlapped, and Common-PDBID 70/30 PinMyMetal, CLEAN_30 folds 0-4 with the conservative CLEAN_30_main source, the original CLEAN_30_shared source, and CARE Task 1 clusterRes30 (incomplete feature caches; see docs/DATASETS.md); \"\n",
+notebooks/DeepMzyme_training_colab.ipynb:9243:    "Use the exact Stage 6 control block, bootstrap settings, and decision gate from the [metal playbook](../docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md)."
+notebooks/DeepMzyme_training_colab.ipynb:11797:    "Stage 7 writes a new output folder and must not modify Stage 6/6B artifacts or feed test metrics back into model, checkpoint, architecture, calibration, threshold, or hyperparameter choices. See the [Stage 7 playbook block](../docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md) for the one-shot checklist."
+scripts/prepare_colab_smoke_snapshot.py:28:         "src", "requirements", "tests", "scripts", "notebooks", "docs", "Plan.md",
+scripts/prepare_colab_smoke_snapshot.py:29:         "README.md", "EXPERIMENT_STATUS.md"], cwd=root,
+tests/test_standalone_baselines.py:196:    name = "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"
+src/run_metal_coordination_geometry_pilot.py:93:        root / "notebooks/DeepMzyme_training_colab.ipynb", root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"]
+tests/test_serial_metal_evidence.py:61:        "docs/Plan.md": "docs"}}
+src/run_metal_architecture_pilot.py:151:    playbook = (root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md").read_text()
+src/run_metal_architecture_pilot.py:240:        root / "notebooks/DeepMzyme_training_colab.ipynb", root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"]
+src/serial_metal_campaign/profile.py:195:        root / "notebooks/DeepMzyme_training_colab.ipynb", root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"]
+src/run_metal_ring_pilot.py:117:                                                                  root / "docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md"]

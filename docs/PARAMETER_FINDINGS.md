@@ -811,6 +811,14 @@ rare-class-recall policy in `Plan.md` and the metal playbook.
 | RING | The matched GVP pairs show mean BA gains of 1.426/0.387 points at the two LRs, with Class VIII recall losses; all four late-fusion pairs tie in selected BA/recalls | Existing-edge annotation evidence on one split does not establish universal benefit, identical predictions, equivalence, or Stage 6 promotion; added-edge effects were not exercised |
 | Regularization/augmentation | Current records contain candidate values but no clean matched confirmation | Do not claim dropout/noise settings helped or hurt without new evidence |
 
+### Benchmark and diagnostic validation findings (2026-09-23 / 2026-09-24)
+
+- **Exact-PinMyMetal 5-Fold Benchmark (Grade 6, exploratory; validation-only)**:
+  - Validation out-of-fold balanced accuracy (selected checkpoints): Multimodal late fusion reached **79.84%**, ESM-C reached **78.98%**, and Enhanced GVP reached **73.87%** (unadjusted epoch maxima: 80.22% ± 3.31% for late fusion, 80.29% ± 3.26% for ESM-C, 74.42% ± 2.39% for Enhanced GVP; see [reporting and split audit](agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)).
+  - Evidence grade: Grade 6 (exploratory). Does not qualify for Grade 2 because fold assignments were `pocket_id`-stratified rather than PDB-grouped (Fold 0 has 58 validation pockets sharing PDB IDs with training). Test set metrics are excluded from parameter selection.
+- **Exact-Pocket L4 Continuation (`gvp_fusion_exact_pocket_l4_v2`, Grade 6)**:
+  - Exploratory diagnostic runs stopped at 3/20 verified full fits on the L4 VM; no promotion or test evaluation. See the [execution record](agents_report/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
+
 ## Settings and conclusions not to repeat incorrectly
 
 - Do not use a single Optuna trial as a confirmed best model.

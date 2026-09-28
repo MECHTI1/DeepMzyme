@@ -1,0 +1,4 @@
+# Code-coupled invariants, worktree @ 3e912a6, 2026-09-28
+source_tree_sha256 adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23  (pinned: adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23)
+docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md: CR bytes=0 first_python_fence_line=1514 block_end_line=1624 block_sha256=9779d8d4da8dbaf0df22961db96ea379f94cd3aa9e7eb0ea214e520372c81362 exact_standalone_heading_lines=[1512]
+docs/EC_TRAINING_PIPELINE_PLAYBOOK.md: CR bytes=0 first_python_fence_line=61 block_end_line=168 block_sha256=e70f7c6125c2aa6d0abd24b162a4b23d80c66b5854664e23ac6bcb954dc78f2b exact_standalone_heading_lines=[59]
