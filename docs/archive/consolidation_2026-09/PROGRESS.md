@@ -12,15 +12,23 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
 - The agent may run the rebase and `git merge --ff-only`, but must **stop and ask before
   executing the merge**.
 - gitleaks is not installed: use the fallback credential scan.
-- Target schemes (Job B step-2 review): each new metal campaign trains six only,
-  four + six, or four + five + six, chosen by the user and recorded; apply a
-  small Plan edit now (RULES B-M01, B-M10). Existing scopes are unchanged.
+- Job B step-2 review (user's written answers): 1A “remove "primary",
+  everywhere”, keeping collapsed four as the reporting endpoint, direct four as
+  distinct from six-then-collapse, and historical labels; architecture
+  comparisons keep one fixed training target named per campaign. 2B “any mix of
+  four, five and six per campaign”, with the neutral-test rules in RULES B-M01.
+  “Approve B-M03 to B-M10 and B-D01”; B-M02 approved with changes (a)–(d).
+  Repeat log-only resume rules in the PMM README. AGENTS (15.8 KB) and
+  docs/README (22 KB) accepted over target until Job C. Show ANSWER_KEY Q1 and
+  the STATUS layout for approval; push the backup branch after applying.
+  `docs/plans/` stays unedited (the PMM plan's line-312 tie rule stays).
 
 ## State
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B step 2: concrete rewrites and preservation verified; stopped for modified/dropped-rule review |
+| Phase | Job B step 2 reviewed (2026-09-28); stopped for ANSWER_KEY Q1 re-approval and STATUS layout approval |
+| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
 
@@ -54,11 +62,11 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
    - Full tree verification against HEAD: Checked `git diff HEAD --name-only -- src scripts tests notebooks docs/plans` (completely empty).
 
 ## Next
-- **Real review stop: PLAN_v2 §11, Job B step 2.** Review [RULES](RULES.md#modified-and-dropped-rules-for-user-review)
-  and the concrete AGENTS/STATUS rewrites. No approval has been inferred.
-- After approval: finish skill-handoff/ignore/navigation corrections, checker
-  and per-command hook; run the fresh-agent test against the approved answer
-  key, full Job B verification and final staging. These are not yet complete.
+- **Review stop:** the user approves or amends the revised
+  [ANSWER_KEY Q1](ANSWER_KEY.md) and the concrete STATUS layout.
+- Then: skill-handoff/ignore/navigation corrections, checker and per-command
+  hook; the fresh-agent test against the re-approved answer key; full Job B
+  verification and final staging. These are not yet complete.
 - Ask before commit, merge or push. Shared checkout remains read-only.
 
 ## Job B completed at the rule-review checkpoint
@@ -123,12 +131,21 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   See [cloud review record](verification/job_b_cloud_review.json).
 - Review corrections restore merged-row substance lost in compression, keep
   commit/push suggestions in final responses, and repair two relocated
-  navigation lines. The user's target-scheme decision replaced the five-class
-  wording and added a Plan subsection. RULES lists them; counts are now 246
-  kept, 139 merged, 74 modified, seven dropped. The rest of the list still
-  awaits approval.
-- Stopped at the PLAN_v2 §11 Job B step-2 review. No approval is inferred. No
-  commit, merge, push, training, GPU action or held-out evaluation occurred.
+  navigation lines.
+- Backup `29e7460` (patch + cloud corrections, before the approved edits) was
+  pushed to `claude/happy-ritchie-99xmhd` at the user's request.
+- The user's written step-2 answers (above) are applied: no primary objective
+  across Plan, AGENTS, playbook, guide, PMM README and ANSWER_KEY Q1; any mix
+  of four/five/six with the neutral test; collapsed-four ranking across targets,
+  including Stage 6B; B-M02 changes; PMM README resume rules. Counts: 244 kept,
+  139 merged, 76 modified, seven dropped.
+- Code check for the ranking rule: every metal run computes
+  `val_metal_collapsed4_balanced_acc` (`src/training/run.py:776-807`); the
+  notebook offers `STAGE6B_RANK_BY_METRIC = "mean_val_metal_collapsed4_balanced_acc"`,
+  while `"auto"` resolves to native `mean_val_metal_balanced_acc`
+  (`src/training/pipeline_metric_policy.py:109-118, 159-161`). The playbook
+  and guide now say to set it for cross-target sets; no automatic guard exists.
+- No training, GPU action or held-out evaluation occurred.
 
 ## Job A closeout verification
 
@@ -145,10 +162,23 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   or GPU action had been performed. Job A was subsequently integrated as above.
 
 ## Open questions
-- Await user approval of the concrete modified/dropped-rule proposals.
+- Await re-approval of ANSWER_KEY Q1 and approval of the STATUS layout.
 - Later Job B steps include the `.aiignore` preparation-directory decision;
   default proposal is to expose it and match the planned `.ignore` list.
+- Whether to record the Stage 6B `"auto"` ranking default as a STATUS/FOLLOW_UP
+  mismatch now (Plan asks for both) or in Job C.
 - Job C/D decisions remain outside this checkpoint.
+
+## Recorded for Job C (user, 2026-09-28)
+- `docs/DATASETS.md:136` says no completed exact-PMM test evaluation was found;
+  the ledger at `:515` records the 2026-09-22/23 openings.
+- “Seven early runs” without the six 2026-09-18 reports: `docs/DATASETS.md:16-17`
+  and `:137`, `Plan.md` (user line 1222-1223 at `29e7460`; also near 947 and
+  973), `README.md:43`, `docs/PARAMETER_FINDINGS.md:33`; ledger `:516` has 7+6.
+- `Plan.md:113-117` splits `val_metal_balanced_acc` across blank lines.
+- Tighten AGENTS (12-KB target) and docs/README (5-KB target).
+- Historical “challenger” wording left as run: single-GPU and pilot recipe
+  sections of the playbook, FOLLOW_UP issue text, `docs/VERY_EXACT_PMM_SETS_PLAN.md`.
 
 ## Findings to report (not ours to fix)
 - `raw/legacy_nonoverlap_test_access/SHA256SUMS` fails in every fresh checkout (CRLF

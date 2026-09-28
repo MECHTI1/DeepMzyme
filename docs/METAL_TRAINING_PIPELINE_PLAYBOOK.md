@@ -2385,17 +2385,18 @@ Before any final reporting, read [`DATASETS.md`](DATASETS.md) and
 This warning changes no stage value, budget, range, seed, gate, output name, or
 notebook behavior.
 
-## Primary Four-Class Policy / Recipe Reconciliation Warning
+## Four-Class Endpoint / Recipe Reconciliation Warning
 
-`Plan.md` now designates Mn, Cu, Zn, and Class VIII = Fe+Co+Ni as the intended
-primary PinMyMetal-compatible reporting endpoint. It requires a controlled
-comparison of direct `four_class` / `merge_fe_class_viii` training against
-matched `six_class` training followed by collapsed-four evaluation.
+`Plan.md` designates Mn, Cu, Zn, and Class VIII = Fe+Co+Ni as the collapsed-four
+PinMyMetal-compatible reporting endpoint for every training objective. No
+training objective is primary. A comparison of direct `four_class` /
+`merge_fe_class_viii` training against five- or six-class training followed by
+collapsed-four evaluation follows Plan's neutral-test rules.
 
-The new single-GPU campaign supplies both required target arms through bounded
+The new single-GPU campaign supplies both target arms through bounded
 discovery and exploratory grouped-fold confirmation. The historical bounded
 pilot supplies both target arms and a labeled five-class
-challenger, with native-selection and same-checkpoint common-four reporting.
+arm, with native-selection and same-checkpoint common-four reporting.
 The retained opening standalone Stage 0–2B recipe supplies its historical pair.
 The older blocks below retain their six-class common recipe as historical
 workflow references; they are not a direct-four campaign or a matched pair.
@@ -2993,9 +2994,9 @@ L_total = (1 - alpha) * CE_6class + alpha * CE_4class
 The collapsed view is deterministic: `Mn`, `Cu`, `Zn`, and `Class VIII`, where
 `Class VIII = Fe + Co + Ni`. The collapsed logits are computed by log-sum-exp
 marginalization from the six-class logits. This is a separate six-class
-objective experiment. It is not direct four-class training and cannot replace
-the intended primary four-class baseline. Within a six-class experiment,
-collapsed-four metrics are supplemental and must not hide Fe/Co/Ni failures.
+objective experiment. It is not direct four-class training and must not be
+relabeled as such. Within a six-class experiment, collapsed-four metrics must
+not hide Fe/Co/Ni failures; keep native six-class metrics and recalls.
 
 First-use rule: test this only against a same-scheme six-class validation
 baseline before using it broadly. For a separately labeled Stage 5A-only
@@ -3006,7 +3007,7 @@ METAL_COLLAPSED_LOSS_WEIGHTS_CSV = "0.0,0.3,0.5"
 METAL_LOSS_FUNCTIONS_CSV = "cross_entropy"
 ```
 
-The required six-class-trained/collapsed-four challenger uses the standard
+The standard six-class-trained model, evaluated on collapsed four, uses the
 six-class objective with this weight at `0.0`; deterministic collapsed-four
 evaluation does not require an auxiliary collapsed loss. Treat a nonzero weight
 as a third target-objective experiment. Do not add that search axis to direct
@@ -3015,10 +3016,10 @@ same-scheme Stage 5A validation comparison and Stage 6 confirmation justify it.
 
 ### Optional five-class metal target scheme
 
-The primary reporting endpoint is four-class. Its direct arm uses `four_class`,
-and its required standard six-class challenger uses the retained label scheme
-above pending TECH-010 reconciliation. `five_class` is a separate alternative
-target.
+The reporting endpoint is collapsed four-class for every training objective.
+Direct four-class training uses `four_class`; standard six-class training uses
+the retained label scheme above pending TECH-010 reconciliation; `five_class`
+is a separately named third training objective. None is primary.
 
 For an explicitly labeled validation-only comparison, use:
 
@@ -3149,7 +3150,7 @@ study with objectives:
 The second objective is minimum recall across active metal-scheme validation
 classes with support > 0. For the direct four-class arm, this means Mn, Cu, Zn,
 and Class VIII. For an explicitly labeled `five_class` run it means Mn, Cu, Zn,
-Fe, and grouped Co/Ni; for the required standard `six_class` challenger it means
+Fe, and grouped Co/Ni; for a standard `six_class` run it means
 all six classes. In six-class runs, do not substitute
 `val_metal_collapsed4_min_recall`, because it can hide separate Fe/Co/Ni
 failures. Collapsed-four minimum recall is supplemental context for that
@@ -3214,7 +3215,7 @@ making the corresponding publication claims:
 
 | Question | Playbook coverage | Completion requirement |
 |---|---|---|
-| Direct four-class training vs six-class training with collapsed-four evaluation | The bounded pilot supplies native-selected matched baseline arms and an additional five-class challenger; later-stage paired blocks remain open | Run both required arms for Only-GVP, Only-ESM, and graph-level late fusion with separate studies, matched data/folds/seeds/features/budgets, common four-class validation metrics, paired CIs, and four-class recall protection; retain native six-class metrics for the six-class arm |
+| Direct four-class training vs five- or six-class training with collapsed-four evaluation | The bounded pilot supplies native-selected matched baseline arms and an additional five-class arm; later-stage paired blocks remain open | Run the matched arms for Only-GVP, Only-ESM, and graph-level late fusion under Plan's neutral-test rules, with separate studies, matched data/folds/seeds/features/budgets, common four-class validation metrics, paired CIs, and four-class recall protection; retain native five- or six-class metrics |
 | Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Stages 2A/2B establish the simple baselines; Stages 5A/5B/5C tune the serious candidates | Confirm every eligible family on the same Stage 6 folds/seeds and compare with paired CIs and rare-class recall protection |
 | Early vs late vs hybrid ESMC fusion | The bounded pilot screens early/late and conditionally hybrid; Stage 5C covers serious late HPO and Stage 5E serious hybrid HPO | A dedicated serious early-HPO recipe remains open; confirm early, late, and hybrid candidates on the shared Stage 6 grid before claiming a fusion-position advantage |
 | GVP with vs without RING | Stage 2A supplies the RING-enabled Only-GVP anchor and Stage 5G supplies its radius-only counterpart | Keep all non-edge settings matched and confirm any claimed RING benefit on shared validation units; if the final combined model uses RING, also ablate RING in that same combined family |
@@ -3224,7 +3225,8 @@ budget. Add its reviewable executable block here first. Do not infer a RING effe
 the historical Hybrid+RING maximum with a separately tuned no-RING model.
 Historical six-class candidates may motivate the search but cannot complete the
 paired target-formulation comparison without matched direct-four arms. The
-other three rows remain direct-four architecture comparisons. Advanced
+other three rows keep one fixed training target, named per campaign before any
+run. Advanced
 candidates in this matrix also stay outside the first EC-primary
 auxiliary-learning experiment.
 
@@ -3247,7 +3249,8 @@ the best validated simpler family.
 
 The final selected model must come from Stage 6 grouped-fold validation plus
 Stage 6B promotion gates, not from a single Optuna trial. Stage 6B ranks by mean
-`val_metal_balanced_acc`, promotes only when the paired bootstrap CI and
+`val_metal_balanced_acc` (by mean collapsed-four balanced accuracy when
+candidates span target schemes), promotes only when the paired bootstrap CI and
 rare-recall gates pass, then uses configured tie-breakers such as standard
 deviation, worst fold, and model simplicity.
 
@@ -5045,7 +5048,10 @@ Purpose: convert Stage 6 validation/CV evidence into one frozen final model.
 Stage 6B ranks candidates by mean `val_metal_balanced_acc`, applies the
 predeclared paired-CI, rare-class recall, and tie-breaker policy, then
 optionally trains the selected configuration once on the full non-test training
-set. Stage 6B does not open the held-out test set.
+set. Stage 6B does not open the held-out test set. When candidates span target
+schemes, set `STAGE6B_RANK_BY_METRIC = "mean_val_metal_collapsed4_balanced_acc"`;
+the notebook's `"auto"` resolves to native `mean_val_metal_balanced_acc`, which
+must not rank different class counts.
 
 When to use it: only after Stage 6 has completed and the Stage 6 decision gate
 above passes.
@@ -5478,8 +5484,9 @@ is non-reportable and must never be pointed at the primary held-out set.
 ## Agent stage-request protocol
 
 Relocated from `3c0f80c:AGENTS.md`; the executable stage blocks above are unchanged.
-The target-combination wording follows the user's 2026-09-28 per-campaign
-decision; it is a proposed Job B change.
+The target-objective wording follows the user's 2026-09-28 decisions at the
+Job B step-2 review: any mix of four, five and six per campaign, no primary
+objective, and Plan's neutral test.
 
 For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
 the specific evidence files it names. For notebook behavior questions, inspect
@@ -5526,8 +5533,9 @@ not an optional interpretation of unmatched historical maxima. Before claiming
 that a target formulation, fusion position, combined modality, or RING edge
 source is better, verify that the applicable candidates were compared on shared
 validation folds/seeds with paired confidence intervals and rare-class recall
-protection. The target-formulation comparison uses the common four-class view;
-the other architecture comparisons keep direct four-class training fixed.
+protection. The target-formulation comparison uses the common four-class view
+under Plan's neutral-test rules; architecture comparisons (fusion, GVP versus
+ESM, RING) keep one fixed training target, named per campaign before any run.
 This separate metal-architecture matrix does not expand the initial
 metal-EC auxiliary experiment beyond Only-GVP, Only-ESM, and graph-level late
 fusion.
@@ -5584,7 +5592,8 @@ Operational assumptions for this project:
   bootstrap confidence intervals and rare-class recall protection, not raw
   validation deltas alone.
 - Stage 6B is the named validation-to-final-refit bridge. It ranks Stage 6
-  candidates by mean `val_metal_balanced_acc`, applies configurable paired-CI,
+  candidates by mean `val_metal_balanced_acc` (by mean collapsed-four balanced
+  accuracy when candidates span target schemes), applies configurable paired-CI,
   rare-class recall, and tie-breaker gates, then optionally trains one final
   full non-test training-set refit for the selected configuration. Stage 6B
   writes `stage6b_decision.json`, `stage6b_ranked_candidates.csv`,
@@ -5616,16 +5625,19 @@ format:
 3. Safety checks:
    - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final
      stages.
-   - Confirm the user-chosen target combination for a new metal campaign
-     (six only, four + six, or four + five + six;
-     [Plan](../Plan.md#per-campaign-target-selection)); ask if it is not recorded.
-     Each chosen scheme uses a separately named run/study:
-     `METAL_LABEL_SCHEME = "four_class"` for the direct arm; `six_class`
-     reports `val_metal_collapsed4_balanced_acc` on the common endpoint while
-     retaining native six-class metrics; `five_class` only together with both.
-     For PMM core v2, preserve the separately named `five_class` arm in
+   - Confirm the user-chosen training objectives for a new metal campaign
+     (any mix of `four_class`, `five_class` and `six_class`;
+     [Plan](../Plan.md#per-campaign-target-selection)); ask if they are not
+     recorded. Each chosen scheme uses a separately named run/study:
+     `METAL_LABEL_SCHEME = "four_class"` for the direct arm; `five_class` and
+     `six_class` report `val_metal_collapsed4_balanced_acc` on the common
+     endpoint while retaining native metrics. No training objective is primary;
+     every trained model is evaluated on collapsed-four. A five/six versus
+     direct-four comparison needs a matched four-class arm and the pre-declared
+     metric, collapse rule, selection metric, paired-bootstrap decision rule and
+     tie rule of Plan's neutral test. For PMM core v2, preserve the separately named `five_class` arm in
      `docs/plans/pmm_core_scope_v2.json`, its native metrics and common-four
-     comparison; direct-four remains the primary formulation. If the paired playbook blocks have not
+     comparison. If the paired playbook blocks have not
      yet been reconciled, update the playbook before recommending execution.
    - Confirm `SELECTION_METRIC = "val_metal_balanced_acc"`.
    - Confirm `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless the stage is
@@ -5639,7 +5651,8 @@ format:
      one-seed grouped-fold confirmation because only the first `REPEAT_SEEDS`
      value is active.
    - For Stage 6B, confirm the Stage 6 artifacts exist, promotion ranks by
-     mean `val_metal_balanced_acc`, paired-CI and rare-recall gates are
+     mean `val_metal_balanced_acc` (by `mean_val_metal_collapsed4_balanced_acc`
+     when candidates span target schemes), paired-CI and rare-recall gates are
      configured, `LAUNCH_STAGE6B_FINAL_REFIT` is still `False` during preview,
      and the final refit uses the full non-test training set with no held-out
      test evaluation.

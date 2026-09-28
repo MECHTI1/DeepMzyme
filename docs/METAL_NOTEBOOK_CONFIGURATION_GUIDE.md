@@ -272,7 +272,7 @@ Before launching a run, verify these resolved notebook values:
 | Check | Required value for reportable metal runs |
 | --- | --- |
 | Task | `TASK = "metal"` |
-| Metal label scheme | A new target-formulation campaign needs separate reconciled arms: `four_class` for direct training and `six_class` for the required collapsed-four challenger; keep separate run/study identities, and keep `five_class` as an alternative or historical target |
+| Metal label scheme | A new metal campaign trains the user-chosen objectives, any mix of `four_class`, `five_class` and `six_class` ([Plan](../Plan.md#per-campaign-target-selection)); keep separate reconciled run/study identities and evaluate every model on collapsed four. No objective is primary; historical five/six-class runs keep their labels |
 | External split | Use the stage block to select the intended named dataset; verify materialization, provenance, and test-access history in `docs/DATASETS.md`. No dataset is designated here as the primary final test. |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
@@ -696,8 +696,8 @@ destroying common-class performance.
 
 `METAL_COLLAPSED_LOSS_WEIGHTS_CSV` is an experimental metal-only objective option.
 For an explicitly labeled six-class run, `0.0` preserves the six-class loss.
-That standard six-class objective is the required challenger to direct-four
-training; its collapsed-four evaluation is already deterministic. Nonzero
+That standard six-class objective is a separate training objective from
+direct-four training; its collapsed-four evaluation is already deterministic. Nonzero
 values add an auxiliary collapsed-four cross-entropy term where `Fe`, `Co`, and
 `Ni` are merged into `Class VIII` for the auxiliary loss. This creates a third
 target-objective experiment and is not part of direct four-class training.
@@ -709,7 +709,7 @@ block is being run deliberately.
 
 Do not use collapsed-four loss in the direct four-class Stage 2 baselines,
 during final held-out test reporting, or as a reason to repeatedly inspect
-held-out test performance. For the required standard six-class challenger,
+held-out test performance. For a standard six-class run,
 collapsed-four reporting is the common comparison view, while native six-class
 metrics and separate Fe/Co/Ni recalls remain mandatory.
 
@@ -867,7 +867,10 @@ For useful Colab HPO:
   `stage6b_partial_preview_*` files, and cannot launch or approve the final
   refit.
 - Stage 6B ranks by `STAGE6B_RANK_BY_METRIC = "auto"` in the live notebook,
-  which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`.
+  which resolves to `mean_val_metal_balanced_acc` for `TASK = "metal"`. When
+  candidates span target schemes, set it to
+  `mean_val_metal_collapsed4_balanced_acc`; never rank native balanced
+  accuracies of different class counts against each other.
   Promotion is blocked unless the paired-CI gate passes, rare-class recall
   thresholds pass, and the configured tie-breaker policy is satisfied. The
   default metal tie-breaker order is mean minimum recall, worst-fold validation
@@ -903,8 +906,8 @@ single Optuna validation split as final evidence.
 
 In multi-objective mode, Optuna uses minimum recall over the active metal label
 scheme for rare-class protection. For the direct four-class arm, this covers
-Mn, Cu, Zn, and Class VIII. The required standard six-class challenger uses all
-six active classes, and a five-class alternative uses its five classes. In a six-class run,
+Mn, Cu, Zn, and Class VIII. A standard six-class run uses all
+six active classes, and a five-class run uses its five classes. In a six-class run,
 collapsed-four minimum recall is supplemental information and cannot replace
 separate Fe/Co/Ni recall. If pruning is incompatible with the multi-objective study,
 the notebook disables pruning and warns before launch. Inspect Pareto
@@ -1079,8 +1082,8 @@ cover Mn, Cu, Zn, and Class VIII directly. The required standard `six_class`
 arm produces native six-class metrics plus collapsed-four metrics formed by
 merging Fe, Co, and Ni. Label the latter as collapsed reporting from a
 six-class-trained model; they are the common comparison view but are not direct
-four-class training metrics. A selected `five_class` scheme remains an
-alternative target. Use `METAL_REPORT_VIEW` to choose which already-computed
+four-class training metrics. A selected `five_class` scheme is a separately
+named training objective. Use `METAL_REPORT_VIEW` to choose which already-computed
 view is emphasized in notebook output, not to change the target or rerun a
 test.
 
@@ -1146,7 +1149,8 @@ For Optuna:
 3. Run top-k grouped-fold validation with shared `pdbid` folds and the
    configured `REPEAT_SEEDS` via `group_kfold_seed_repeat`. Serious
    controlled-HPO defaults use auto top-K up to 20 and five grouped folds.
-4. Run Stage 6B and select by mean `val_metal_balanced_acc`, paired bootstrap
+4. Run Stage 6B and select by mean `val_metal_balanced_acc` (by mean
+   collapsed-four balanced accuracy across target schemes), paired bootstrap
    CI over seed-averaged fold means, rare-class recall protection, and the
    configured tie-breakers, not by a single trial. Use partial Stage 6B preview
    only for progress inspection; resume Stage 6 before promotion/refit.

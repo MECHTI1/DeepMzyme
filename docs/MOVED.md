@@ -1,6 +1,7 @@
 # Documentation relocations
 
-Job B section copies, proposed for review; no existing file was moved or renamed.
+Job B section copies, reviewed by the user on 2026-09-28; no existing file was
+moved or renamed.
 Source revision: `3c0f80c`. Exact STATUS ranges and hashes are in the
 [preservation manifest](archive/consolidation_2026-09/inventory/job_b_status_preservation.json).
 

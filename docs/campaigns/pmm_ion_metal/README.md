@@ -6,9 +6,10 @@ Current scope: `pmm-core-v2`, campaign `pmm_ion_metal_v2_context`.
 The [v2 manifest](../../plans/pmm_core_scope_v2.json) retains nine ordinary-readout
 fold-0 fits across Only-ESMC, Only-GVP and graph-level late fusion, each trained
 separately with `four_class`, `five_class` and `six_class`; 36 fits are deferred.
-The common-four endpoint is Mn, Cu, Zn, Class VIII = Fe+Co+Ni. Five/six arms also
-retain native metrics. Direct four-class is primary; six-class training followed
-by collapse is a different formulation ([Plan](../../../Plan.md#2-train-the-metal-classification-model)).
+The common-four endpoint is Mn, Cu, Zn, Class VIII = Fe+Co+Ni; every arm is evaluated
+on it, and five/six arms also retain native metrics. No training objective is primary;
+six-class training followed by collapse is a different formulation from direct
+four-class training ([Plan](../../../Plan.md#2-train-the-metal-classification-model)).
 
 Dataset: frozen training-only PMM source cohort, 7,398 ions / 3,992 PDB groups;
 `metal_example_unit=ion`. Five PDB-grouped folds are frozen once in
@@ -51,4 +52,12 @@ How to continue: no experiment or GPU action is authorized now. Resume requires
 an explicit user request, refreshed budget authority and new readiness verification
 under the [v2 scope](../../plans/pmm_core_scope_v2.json) and
 [guarded recipe](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation).
-Old forecasts and historical next actions in the log confer no authorization.
+On any authorized resume, reuse all completed fits and run only missing
+selectors; do not rerun completed units ([pmm-003](log.md#pmm-003),
+[pmm-008](log.md#pmm-008)). An old scope or implementation hash cannot
+authorize a run ([pmm-001](log.md#pmm-001)). Do not retry or retrain GVP5 or
+GVP6, or repeat their replay, in the hope of a chance strict pass; their original
+strict failures stay recorded ([pmm-003](log.md#pmm-003), [pmm-006](log.md#pmm-006),
+[pmm-007](log.md#pmm-007)). The campaign plan's pre-declared contrasts and tie
+rule govern its comparison. Old forecasts and historical next actions in the log
+confer no authorization.

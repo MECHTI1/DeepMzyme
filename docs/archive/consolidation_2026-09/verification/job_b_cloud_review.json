@@ -26,29 +26,33 @@
   },
   "corrections": [
     "AGENTS: restored merged-row substance B-A005, B-A010, B-A020, B-A030, B-A193, B-A200, B-A236, B-A247 and B-A251",
-    "User target decision 2026-09-28: each new metal campaign trains six only, four + six, or four + five + six as chosen by the user; applied to AGENTS, the relocated stage checks and a Plan.md subsection (B-M01, B-M10); PMM core v2 unchanged",
+    "User decisions at the step-2 review, 2026-09-28: 1A no training objective is primary (Plan, AGENTS, playbook, guide, PMM README, ANSWER_KEY Q1); 2B any mix of four, five and six per campaign with the neutral-test rules and collapsed-four ranking across targets, including Stage 6B; architecture comparisons keep one fixed target named per campaign (B-M01, B-M10, B-M11)",
     "AGENTS: suggested commit/push commands stay in final responses; consolidation read-only scope follows PLAN_v2 section 3.3 (B-M07)",
     "AGENTS: Colab Python 3.12 ESMC route is a tested convenience, not a requirement; closure step names PARAMETER_FINDINGS; not-pristine wording clarified",
     "docs/README: src/model.py pointer (B-M08) and non-overlap test count with ledger link (B-M09)",
-    "PMM README: the released PMM comparator's completed fivefold Grade-2 evidence is named"
+    "PMM README: the released PMM comparator's completed fivefold Grade-2 evidence is named",
+    "B-M02 approved with changes: active campaign README via STATUS; Plan before design, split, selection-metric or test-set decisions; DATASETS before test-set use; split/selection checks for new runners and campaign designs",
+    "PMM README repeats the log-only resume rules: reuse completed fits; an old hash cannot authorize a run; no GVP5/GVP6 retry or replay for a chance pass"
   ],
   "after_corrections": {
     "default_read_bytes": {
-      "AGENTS.md": 15844,
+      "AGENTS.md": 16808,
       "EXPERIMENT_STATUS.md": 4307,
-      "docs/campaigns/pmm_ion_metal/README.md": 4025
+      "docs/campaigns/pmm_ion_metal/README.md": 4657
     },
-    "default_read_total": 24176,
+    "default_read_total": 25772,
     "rule_dispositions": {
-      "kept": 246,
+      "kept": 244,
       "merged": 139,
-      "modified": 74,
+      "modified": 76,
       "dropped": 7
     },
     "whitespace_check_clean": true,
-    "links": "277 links/anchors in changed Markdown resolve (Plan.md included); no link newly broken repository-wide",
-    "code_consumers_of_plan": "Plan.md is only existence-checked (notebook root marker) and shipped by the snapshot builder; nothing hashes it"
+    "links": "296 links/anchors in changed Markdown resolve; no link newly broken repository-wide",
+    "code_consumers_of_plan": "Plan.md is only existence-checked (notebook root marker) and shipped by the snapshot builder; nothing hashes it",
+    "default_read_note": "over the PLAN_v2 25-KB target after the user-requested additions; AGENTS and docs/README over-target size accepted by the user until Job C",
+    "playbook_fences": "metal 67 and EC 23 fences byte-identical; heading and first-block hash invariants hold"
   },
   "not_claimed": "No pytest or smoke run yet, no checker, hook or ignore change, no fresh-agent acceptance, and no check of the workstation, shared checkout, frozen checkouts or live VM state. The local job_b_review_invariants.json remains the dated local record.",
-  "approval": "All dispositions remain proposals awaiting the PLAN_v2 section 11 Job B step-2 review."
+  "approval": "Dispositions reviewed by the user on 2026-09-28 (see RULES); ANSWER_KEY Q1 re-approval and the STATUS layout approval are pending."
 }
