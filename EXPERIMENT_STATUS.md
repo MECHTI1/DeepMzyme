@@ -27,9 +27,14 @@ Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026
   retained disk storage continues. The historical readiness/forecast evidence
   below is preserved; its old scope/implementation hash cannot authorize a
   future run after this update.
-- Nine unrelated uncommitted files belong to the Antigravity GVP-improvement
-  suite (five source edits, three new scripts, one new test file). They are
-  separate from this frozen PMM campaign and remain untouched/uncommitted.
+- Subsequent user-requested cleanup removed the incomplete Antigravity
+  GVP-improvement draft after review confirmed checkpoint/default regressions,
+  incompatible experiment commands and unreliable result handling. Five source
+  files were restored to their committed versions; three untracked scripts and
+  one untracked test file were deleted. The
+  [evidence-ranked improvement plan](docs/plans/gvp_and_esmc_evidence_ranked_improvement_plan.md)
+  remains saved verbatim for future separately scoped implementation. This
+  cleanup does not resume the frozen PMM campaign or authorize GPU execution.
 
 **2026-09-28 — core readiness verified; concurrency measured; GPU stopped:**
 - All **nine core fold-0 fits** qualify under explicit retrospective
