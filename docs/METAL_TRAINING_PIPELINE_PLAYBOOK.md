@@ -88,14 +88,20 @@ requested alternative. The old and new 45-fit grids contain different arms.
 
 Scope authority: [`pmm_core_scope_v2.json`](plans/pmm_core_scope_v2.json).
 Use the repository-root [`run_pmm_core_campaign.py`](../run_pmm_core_campaign.py)
-entry point. It preserves the frozen training source hash and exposes no
-binding-aware, existing-fit retry, legacy-assessment, refit or test shortcut. This is
-a scope guard around the existing runner, not a new GPU controller.
+entry point and the [core execution contract](plans/pmm_core_execution_v1.md).
+The additive runner, replay consumer and assessor/refit-preview bridge are
+implemented and CPU-tested. They retain the frozen training source and existing
+allocation, admission and persistence controls. They expose no binding-aware,
+existing-fit retry, final-refit execution or test shortcut.
 
 Current stage is Stage 2B-style one-seed grouped-fold comparison. The completed
 fold-0 screen is reusable exploratory evidence; the recorded split, native BA
-checkpoint selection, 50 epochs and seed 42 stay fixed. The core has six trained
-fold-0 units: five legacy replay passes and one supplemental GVP6 qualification.
+checkpoint selection, 50 epochs and seed 42 stay fixed. At continuation adoption,
+the core has nine trained fold-0 units: seven original strict passes, the
+historical GVP6 supplemental agreement and the GVP5 strict failure.
+All nine are preserved; **36 folds-1–4 fits remain**. Historical qualification
+requires the diagnostic/readiness gates below; current completion and evidence
+are recorded in `EXPERIMENT_STATUS.md`.
 The three trained awareness units stay outside core completion counts.
 
 CPU-only preview from the repository root of a checkout matching the scope's
@@ -107,43 +113,108 @@ other work rather than bypassing the source/configuration identity guards.
 PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
 T=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
 C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context
+FROZEN_CODE=/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2
+cd "$FROZEN_CODE"
+$PY -c 'import sys; print(sys.executable)'
 $PY run_pmm_core_campaign.py --campaign-dir "$C" --train-dir "$T" \
   --action plan
 ```
 
-The preview prints JSON with the scope/source hashes, 45 required core units and 39
-candidate selectors (24 four/six on folds 1–4, 15 five on folds 0–4); it does not revalidate completed fits or
+The verified checkout must carry the matching root runner, replay/assessment
+modules and scope file. The preview prints JSON with the scope/source hashes,
+45 required core units and 36 explicit candidate selectors across all three
+targets on folds 1–4; it does not revalidate completed fits or
 prove that a candidate is still missing. It starts no child/GPU worker and
-does not overwrite scientific artifacts. Candidate commands are preview-only. Five-class folds 1–4 deliberately have
-no runnable command until their execution/assessment bridge exists.
+does not overwrite scientific artifacts. Candidate commands omit allocation
+fields and cannot establish execution readiness by themselves.
 Save stdout to a new preview file only after the command succeeds; a failed
 source check must not truncate a previous successful preview.
 The entry point rejects existing unit artifacts before a prospective run, so
 an uncertified fit cannot silently be retrained or replayed until it passes.
 
-**Execution gate:** `execution_ready=false`. Resolve
-[TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance)
-and [TECH-025](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge)
-before enabling the full grid. The separate new five-class fold-0 screen below
-uses its own prospective strict replay contract; it does not certify old GVP6
-or make a full-grid decision. Integrate a prospectively fixed replay rule covering
-the core, preserving the old receipts and the narrower fold-0 v2.1 report.
-Implement/test a scope-bound 45-ordinary-fit assessor and refit bridge. Never simply
-flip the readiness flag or reuse the old `assess` with `--readouts none`: that
-action ignores the filter. Then refresh the remaining-core forecast and resolve
-compute authority before allocation through the required GPU skill. This scope
-change does not approve the earlier 30-hour/$34 proposal or alter session/day caps.
+**Replay and readiness gate.** `pmm-core-replay-v1` uses the same absolute
+`1e-5` probability bound for every arm, zero relative tolerance, exact native
+and common-four class predictions/confusion matrices, and checkpoint metrics
+reconciled within `1e-9`. Finite probability, fixed vocabulary, serialization,
+cohort, source, saved normalization and earliest-native-BA selection checks
+also remain mandatory. The identity of each new fit binds the policy before
+training. Run the frozen strict exporter once, retain its `1e-6` outcome, and
+validate that preserved export under the separate core policy; do not retry it.
 
-After these prerequisites, execution remains serial and one explicitly named
-missing unit at a time, through the same frozen runner's admission and
-host-pull/hash-acknowledgment protocol. All development paths keep test access
-disabled. Preserve old `run_config.json`, `run_metadata.json`, normalization,
+Historical fold-0 qualification is explicitly retrospective and
+post-observation. It binds the nine original checkpoints and every known
+replay export. GVP5/GVP6 require the independently checked input and repeated
+forward-pass evidence indexed by
+`runtime/core_replay_v1/historical_diagnostics.json`. The earlier v2.1 report
+keeps its narrower historical scope. Missing qualifying evidence blocks a
+readiness certificate; neither matching classes alone nor a status flag can
+override it. Historical strict failures remain labeled as failures.
+
+Once both failed units have complete qualifying evidence, create a new CPU
+readiness report. Every output directory in this recipe must be new; advance
+the suffix instead of overwriting an existing report.
+
+```bash
+$PY run_pmm_core_campaign.py --action certify \
+  --campaign-dir "$C" --train-dir "$T" \
+  --output-dir "$C/runtime/core_readiness_01"
+```
+
+Expected output: `core_readiness.json`, binding the scope/source/replay policy,
+operational implementation, diagnostic integration and all nine historical
+units with their original qualification labels. It sets `compute_authorized`
+and `held_out_access` to false. A certificate does not allocate a GPU or enlarge
+the budget. The [GPU skill](../.agents/skills/gpu-use-skill/SKILL.md), current
+session/day caps, remaining authorized budget and independent persistence
+remain required. The old 30-hour/$34 proposal is not activated by this recipe.
+
+On the verified existing allocation, from its frozen checkout, run one
+explicitly selected missing unit. `FAMILY` is `only_esm`, `only_gvp` or
+`gvp_late_fusion`; `TARGET` is `four_class`, `five_class` or `six_class`; `FOLD`
+is 1–4. `READINESS_FILE` must refer to the certificate available and verifiable
+in that execution environment. Session identity/timestamps come from the
+current controller session; `FIT_SECONDS` includes load, training and replay.
+The existing admission margin is `1.25 * FIT_SECONDS + 900` seconds, and the
+runner refuses an execution envelope above the existing four-hour ceiling.
+
+```bash
+/home/mechti/venvs/deepmzyme/bin/python run_pmm_core_campaign.py \
+  --action run --family "$FAMILY" --target "$TARGET" --fold "$FOLD" \
+  --campaign-dir /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context \
+  --train-dir /home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --readiness-file "$READINESS_FILE" \
+  --session-id "$SESSION_ID" --allocation-started "$ALLOCATION_STARTED" \
+  --execution-deadline "$DEADLINE" --execution-max-seconds "$SESSION_SECONDS" \
+  --estimated-fit-seconds "$FIT_SECONDS" \
+  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --persistence-mode host_pull
+```
+
+The default is **one concurrent training worker**. A separate bounded timing
+probe does not authorize concurrent production fits or bypass the campaign
+lock. Acknowledge each verified terminal host backup before the next unit.
+All development paths keep test access disabled. Preserve old `run_config.json`, `run_metadata.json`, normalization,
 checkpoints, predictions, PMM outputs and failed replays; no new preparation is
 required merely because the scope changed.
 
+Expected new-unit outputs remain under
+`runs/{family}__{target}__none__fold{fold}__seed42/`, with the exact command in
+`commands/` and a separate `run_status_core_{run_name}.json`. The status preserves
+`original_strict_execution_status` and separately records core verification.
+The host manifest/acknowledgment must cover the terminal artifacts.
+
 Core completion requires all 45 ordinary-readout units, matched validation identities and full
 OOF coverage, five compatible PMM folds, unchanged checkpoint selection and
-rare-class protection. The future assessor must write distinct
+rare-class protection. After all units qualify, run the CPU assessor:
+
+```bash
+$PY run_pmm_core_campaign.py --action assess \
+  --campaign-dir "$C" --train-dir "$T" \
+  --output-dir "$C/core_assessment_01"
+```
+
+It refuses an incomplete grid, missing PMM fold, changed evidence, duplicate or
+missing validation ion, incompatible identity, or paused arm. It writes distinct
 `core_cv_fold_metrics.csv`, `core_cv_oof_predictions.csv`,
 `core_cv_paired_deltas.csv`, and `core_validation_decision.json`, binding the
 scope, source and replay policy. The six target contrasts (five-vs-four and six-vs-four in each family) retain 10,000
@@ -153,7 +224,33 @@ five-vs-four hypotheses; the paused awareness contrasts stay counted). Five-vs-s
 failed or complete. Scope-bound Stage 6B selection and a completed full-train
 refit remain mandatory before separately authorized Stage 7 reporting.
 
+Only a complete, independently reverified core decision can create a refit
+preview. The accepted route is the explicitly secondary, possibly overlapping
+Zenodo PMM reference comparison; the primary final-test route remains
+unresolved. This command writes a command and decision, and launches no fit:
+
+```bash
+$PY run_pmm_core_campaign.py --action refit-preview \
+  --campaign-dir "$C" --train-dir "$T" \
+  --decision-path "$C/core_assessment_01/core_validation_decision.json" \
+  --test-route zenodo_pmm_secondary_reference \
+  --output-dir "$C/core_refit_preview_01"
+```
+
+Expected outputs are `core_stage6b_decision.json`,
+`core_stage6b_ranked_candidates.csv` and `core_stage6b_final_refit_command.txt`.
+The full-training recipe recomputes normalization and common-four weights on
+the complete frozen training cohort, uses 50 epochs/seed 42 and the terminal
+epoch-50 checkpoint. A separately authorized completed neural refit and a
+compatible PMM refit still need verification before Stage 7. Neither the
+preview nor the verifier authorizes held-out access. The root entry point has
+no refit-execution or test action; do not use the historical grid's assessor
+or final-report shortcut for this core decision.
+
 ### Five-class exploratory screen on the frozen PMM fold 0
+
+**Historical completed training recipe; preserve all three fits and do not
+resubmit them.** Its strict outcomes remain unchanged by core integration.
 
 Scope: [`pmm_five_class_screen_v1.json`](plans/pmm_five_class_screen_v1.json).
 This user-requested Stage 2B-style screen adds exactly one 50-epoch fit per
@@ -206,8 +303,10 @@ Decision gate: complete all three full fits, validate the five-class vocabulary
 and probability collapse, require the unchanged `1e-6` independent replay,
 verify backups and stop the VM. Report any failed replay separately. No held-out
 access, checkpoint reselection, awareness restart, HPO, or final refit is
-permitted. The later 45-fit core assessment remains blocked by TECH-023/025;
-the historical assessor cannot be used merely because its total also equals 45.
+permitted by this historical recipe. Further work uses the separately
+implemented core continuation above, whose readiness still requires the GVP5
+diagnostic. The historical assessor cannot be used merely because its total
+also equals 45.
 
 ### Immediate exploratory screen: Only-ESM binding-awareness pair
 

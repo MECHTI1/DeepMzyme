@@ -3,7 +3,7 @@
   "scope_id": "pmm-core-v2",
   "campaign_id": "pmm_ion_metal_v2_context",
   "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
-  "authorization": "User explicitly added five-class training on 2026-09-28. Begin with the separate three-fit fold-0 screen protocol; full-grid allocation still requires replay/assessment bridges and an approved remaining budget. Session/day caps remain unchanged.",
+  "authorization": "User added five-class training and requested continuation of matched fivefold confirmation. The three-fit fold-0 screen is already trained. Core implementation is CPU-tested; full-grid allocation requires diagnostic-backed readiness and an approved remaining budget. Session/day caps remain unchanged.",
   "families": [
     "only_esm",
     "only_gvp",
@@ -34,11 +34,13 @@
   ],
   "legacy_full_grid_fits": 45,
   "execution_ready": false,
+  "implementation_status": "implemented_cpu_tested",
   "blocked_by": [
-    "TECH-023",
-    "TECH-025"
+    "remaining_budget_authorization"
   ],
-  "replay_policy": "Original strict 1e-6 independent replay applies prospectively to the new five-class screen. Existing legacy receipts and retrospective nine-fit v2.1 agreement remain unchanged. Further folds require explicit core replay/assessment integration.",
+  "runtime_readiness_requirement": "A new core_readiness.json must verify all nine historical units and the exact implementation/scope in the execution environment; successful host diagnostics alone are not run admission.",
+  "replay_policy": "pmm-core-replay-v1 binds absolute 1e-5, relative zero, exact classes/non-probability fields and reconciled metrics before folds 1-4. Original strict 1e-6 replay still runs once and its outcome is preserved. Historical GVP5/GVP6 qualification additionally requires their complete input/numerical diagnostics and remains explicitly retrospective. Existing receipts and prior v2.1 evidence remain unchanged.",
+  "execution_contract": "pmm_core_execution_v1.md",
   "assessment": {
     "required_configurations": 9,
     "required_folds_per_configuration": 5,
@@ -64,7 +66,6 @@
       4
     ],
     "five_class": [
-      0,
       1,
       2,
       3,

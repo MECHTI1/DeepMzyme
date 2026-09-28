@@ -1,0 +1,76 @@
+{
+  "schema": "pmm-core-remaining-budget-forecast-v1",
+  "remaining_fits": 36,
+  "already_trained_core_fits": 9,
+  "gpu_running_usd_per_hour": 0.879172,
+  "assume_parallel_speedup": false,
+  "warm_4_6_fit_seconds": {
+    "only_esm": 1025.1949,
+    "only_gvp": 1519.0311,
+    "gvp_late_fusion": 1647.3045
+  },
+  "observed_five_class_wall_seconds": {
+    "only_esm": 2481.4708,
+    "only_gvp": 2905.0077,
+    "gvp_late_fusion": 1594.6065
+  },
+  "observed_five_class_preparation_seconds": {
+    "only_esm": 1323.4108,
+    "only_gvp": 1273.0681,
+    "gvp_late_fusion": 96.3437
+  },
+  "inferred_warm_five_class_seconds": {
+    "only_esm": 1254.4036999999998,
+    "only_gvp": 1728.2833,
+    "gvp_late_fusion": 1594.6065
+  },
+  "persistence_seconds_per_fit": 240,
+  "forecast_cushion": 1.15,
+  "admission_margin_unchanged": 1.25,
+  "closeout_reserve_seconds": 900,
+  "scenarios": {
+    "warm_cache": {
+      "fit_and_replay_hours": 14.400393888888889,
+      "forecast_hours_by_allocations": {
+        "6": 20.82045297222222,
+        "7": 21.07045297222222
+      },
+      "forecast_running_usd_by_allocations": {
+        "6": 18.304759280494554,
+        "7": 18.524552280494554
+      }
+    },
+    "repeated_preparation": {
+      "fit_and_replay_hours": 23.445943333333336,
+      "forecast_hours_by_allocations": {
+        "8": 31.722834833333334,
+        "11": 32.47283483333334
+      },
+      "forecast_running_usd_by_allocations": {
+        "8": 27.889828146091332,
+        "11": 28.549207146091334
+      }
+    }
+  },
+  "proposal_only": {
+    "additional_vm_running_hours": 34,
+    "additional_gross_usd": 34,
+    "includes": "remaining36fits plus bounded diagnostics, startup and storage within ceiling",
+    "running_usd_at_max_hours": 29.891848,
+    "remaining_gross_allowance_at_max_hours": 4.1081520000000005,
+    "approved": false
+  },
+  "existing_session_max_hours": 4,
+  "existing_session_gross_cap_usd": 6,
+  "existing_utc_day_max_hours": 6,
+  "existing_utc_day_gross_cap_usd": 10,
+  "prior_running_hours": 11.476944,
+  "prior_running_gross_usd": 10.0901,
+  "limitations": [
+    "Warm five-class preparation is inferred, not measured on all new folds.",
+    "Forecast excludes final refits and held-out evaluation.",
+    "No capacity replacement, retry, scientific scope change or larger budget is authorized by this forecast.",
+    "Calendar spacing, repeated cold preparation, failed fits, stockout and extra storage may exhaust the proposed ceiling.",
+    "Use actual ledger and stop controls, not this estimate, for admission."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "pmm-core-continuation-closeout-v1",
+  "session_id": "session-20260928T053830Z-efe0130c",
+  "instance_id": "6465074116022266445",
+  "project": "deepmzyme-gpu-vm",
+  "vm_name": "deepmzyme-l4",
+  "zone": "us-central1-a",
+  "session_start_receipt": "2026-09-28T05:38:30Z",
+  "hard_stop_deadline": "2026-09-28T06:35:22Z",
+  "stop_requested_utc": "2026-09-28T05:59:04Z",
+  "stopped_utc": "2026-09-28T06:00:08Z",
+  "independent_provider_check_utc": "2026-09-28T06:00:18Z",
+  "provider_state": "TERMINATED",
+  "controller_elapsed_running_s": 1292,
+  "controller_estimated_session_gross_usd": 0.3156,
+  "cumulative_running_hours_approx": 11.835832888888888,
+  "cumulative_running_gross_usd_approx": 10.4057,
+  "cost_basis": "controller gross estimate, not provider invoice; session rate includes storage while running; additional retained storage continues",
+  "retained_disks": [
+    {
+      "size_gb": 150,
+      "type": "pd-balanced",
+      "estimated_monthly_usd": 15
+    }
+  ],
+  "remote_files_host_verified": 72,
+  "trained_core_fits": 9,
+  "historically_qualified_core_fits": 9,
+  "original_strict_core_passes": 7,
+  "preserved_strict_core_failures": 2,
+  "remaining_core_fits": 36,
+  "new_fits_this_session": 0,
+  "training_updates_diagnostic_only": true,
+  "production_parallelism_enabled": false,
+  "held_out_accessed": false,
+  "larger_budget_approved": false,
+  "source_receipts_sha256": {
+    "controller_ledger_tail.txt": "fd59f8e801183dfeb5cd45d0cbc245616207d0abe6cfea0acd34449b897a8005",
+    "provider_status_after_stop.txt": "b8182f6bf79611e1b5b8029983b8fd5ba188c0ee45c8c561e189ceeeb012e214",
+    "provider_report_after_stop.txt": "f766146214d8843958f38345254465e0843c6714213393b2a6b79ea0376e27d2",
+    "host_backup_verified.json": "588aad36ded0f82be0bcf399a8cf22929393b90aa38fd41ad1fefb6c3a241b49"
+  }
+}

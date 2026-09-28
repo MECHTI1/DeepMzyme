@@ -7,6 +7,41 @@ experiment history is in the [experiment index](docs/notebook_outputs/README.md)
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
 Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
 
+**2026-09-28 — core readiness verified; concurrency measured; GPU stopped:**
+- All **nine core fold-0 fits** qualify under explicit retrospective
+  `pmm-core-replay-v1` integration. Seven retain strict passes; GVP5/GVP6 retain
+  their original strict failures. No fit was repeated or prediction replaced.
+  Active grid: **9/45 trained, 36 absent fits**. Full fivefold confirmation,
+  promotion, final refit and held-out evaluation remain incomplete.
+- GVP5 input diagnosis and all 20 fixed evaluations completed. All classes stayed
+  unchanged; original-setting probabilities varied by up to `2.622604e-6`, while
+  strict passes were bitwise identical. Maximum difference against preserved
+  exports was `3.515757e-6`. Original strict `1e-6` failure stays recorded; the
+  separate engineering agreement uses absolute `1e-5` with exact classes/metrics.
+- Root continuation/replay/assessment/refit-preview implementation passed
+  **195 CPU tests**, plus **42 final runner tests**. Actual host readiness binds
+  all nine units and their diagnostic evidence. The frozen training source
+  stays unchanged; unrelated shared-checkout edits are preserved. Recompute
+  readiness after staging into the execution environment.
+- Two disposable GVP processes on one L4 achieved **1.518× step throughput**
+  (34.1% less elapsed step time). Both weight comparisons exceeded the probe's
+  numerical comparison tolerance; no serial-repeat control was included.
+  This is a short microbenchmark, not proven end-to-end speedup or accuracy
+  equivalence. **Production remains one training worker per GPU.**
+- All 72 remote files were independently hash-verified. Provider confirmed
+  **TERMINATED at 06:00:08 UTC**, independently checked at **06:00:18 UTC**.
+  Session use: **1,292 seconds / $0.3156 estimated running gross**. Cumulative
+  running use: approximately **11.8358 hours / $10.4057**, plus additional
+  storage. One 150-GB disk remains, approximately **$15/month**.
+- Next boundary: the serial forecast is **21–33 additional VM hours** for the
+  36 absent fits. User decision is pending on **34 additional hours / $34
+  additional gross**, retaining four-hour/$6 session and six-hour/$10 UTC-day
+  limits. The earlier 30-hour/$34 total proposal remains unapproved. Neither
+  forecast nor readiness grants compute authority. No allocation remains active.
+- [Full results, four/five/six table and limitations](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md);
+  [portable evidence](docs/notebook_outputs/raw/pmm_core_continuation_20260928/README.md);
+  [execution contract](docs/plans/pmm_core_execution_v1.md).
+
 **2026-09-28 — three five-class fits trained; two verified, one replay failure; GPU closed:**
 - All three new fold-0/seed-42 fits completed 50 epochs. Only-ESMC and graph-level
   late fusion passed original strict replay; Only-GVP did not. All terminal

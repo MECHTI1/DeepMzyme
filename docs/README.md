@@ -33,9 +33,13 @@ Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
   active ordinary-readout core; further binding-awareness work is paused.
   The [scope manifest](plans/pmm_core_scope_v2.json) and
   [execution recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
-  define the four/five/six comparison and outstanding replay/assessment gates.
+  define the four/five/six comparison. The additive
+  [core execution contract](plans/pmm_core_execution_v1.md) owns replay
+  qualification, readiness and the separate core assessment/refit bridge.
   The [five-class screen](plans/pmm_five_class_screen_v1.json) is its bounded
   exploratory execution route.
+- [Single-GPU concurrency probe](plans/pmm_gpu_concurrency_probe.md): a bounded
+  performance diagnostic; production remains one training process per GPU.
 - [Pocket-level EC prediction and CLEAN30 comparison](plans/pocket_level_EC_task_compare_clean30_final_plan.md).
 
 These documents describe planned work; they do not replace `Plan.md` as the

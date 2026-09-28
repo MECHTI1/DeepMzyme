@@ -18,6 +18,13 @@ GCP capacity recovery belongs exclusively to `~/deepmzyme-vm`: one active GPU,
 temporary stopped-source retention, snapshot restoration, bounded attempts and
 verified cleanup. It does not change this plan's scientific or budget scope.
 
+The PMM-specific [two-process throughput probe](plans/pmm_gpu_concurrency_probe.md)
+is implemented separately from this older Colab rollout. It uses disposable
+optimizer steps, preserves the campaign lock and compares serial versus two
+concurrent workers on the same GPU. Its results and limits belong in
+`EXPERIMENT_STATUS.md` and the experiment index. It does not enable parallel
+production fits or change the scientific training recipe.
+
 ## Authority and scope
 
 Implemented in the first continuation: durable pause/control generations,
