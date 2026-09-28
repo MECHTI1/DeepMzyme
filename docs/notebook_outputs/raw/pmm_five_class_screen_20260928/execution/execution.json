@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-28T01:55:12.420878+00:00",
+  "user_instruction": "Can you do the 5 class training also? of course add where needed in documentation or any where needed file that will be all ordered and organized in project.",
+  "authorization_scope": "New three-family five-class fold-0 exploratory screen on existing L4, one bounded session up to four hours under unchanged session/day caps; preserve earlier results. This does not activate full-grid30hour/$34proposal.",
+  "status": "all_three_fits_trained_two_strictly_verified_one_failed",
+  "requested_hours": 4,
+  "session_usd_cap": 6,
+  "daily_hours_cap": 6,
+  "daily_usd_cap": 10,
+  "prior_cumulative_running_hours": 9.3061111111,
+  "prior_cumulative_estimated_running_gross_usd": 8.1815,
+  "forecast_margin": 1.25,
+  "closeout_reserve_seconds": 900,
+  "full_grid_budget_proposal_activated": false,
+  "controller_caps_changed": false,
+  "held_out_access": false,
+  "queue": [
+    {
+      "family": "only_esm",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 3000
+    },
+    {
+      "family": "only_gvp",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 3600
+    },
+    {
+      "family": "gvp_late_fusion",
+      "target": "five_class",
+      "readout": "none",
+      "fold": 0,
+      "seed": 42,
+      "forecast_seconds": 2400
+    }
+  ],
+  "forecast_basis": "Conservative proxies from matched four/six full fit+replay; actual five-class time unmeasured. Per-unit admission includes1.25margin and900scloseout; stop if next unit cannot be admitted.",
+  "source_commit": "b80d164",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+  "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607",
+  "new_fits_started": 3,
+  "provider_state": "TERMINATED",
+  "provider_state_verified_at_utc": "2026-09-28T04:57:26Z",
+  "start_attempt": {
+    "zone": "us-central1-c",
+    "requested_hours": 4,
+    "effective_provider_stop_seconds": 14220,
+    "verified_gross_hourly_rate": 0.879172,
+    "maximum_estimated_session_gross_usd": 3.47,
+    "maximum_with_margin_usd": 3.99,
+    "outcome": "ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+    "suggested_alternative_zones": []
+  },
+  "fallback_preview": {
+    "outcome": "refused_prior_pass_complete",
+    "message": "previous recovery is complete; archive its receipt only for a separately authorized new pass",
+    "receipt_preserved": true
+  },
+  "pending_question": null,
+  "updated_at_utc": "2026-09-28T05:00:05.168182+00:00",
+  "recovery_authorization": "recovery_authorization.json",
+  "recovery_preview": {
+    "candidates": [
+      "us-central1-a",
+      "us-central1-b"
+    ],
+    "effective_provider_stop_seconds": 14220,
+    "maximum_estimated_session_gross_usd": 3.68,
+    "maximum_with_margin_usd": 4.23,
+    "worst_case_hourly_with_storage_usd": 0.930542,
+    "additional_full_day_storage_reservation_usd": 1.2432
+  },
+  "session": {
+    "active": false,
+    "gross_usd_per_hour": 0.879172,
+    "instance_id": "6465074116022266445",
+    "max_run_duration_s": 14220,
+    "project": "deepmzyme-gpu-vm",
+    "session_id": "session-20260928T024459Z-3d2d6dd8",
+    "session_start": "2026-09-28T02:44:59Z",
+    "termination_ts": "2026-09-28T06:41:51Z",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-a",
+    "session_stop": "2026-09-28T04:55:14Z"
+  },
+  "recovery_pass": "5279a430fc79",
+  "current_unit": null,
+  "runtime_preflight": {
+    "source_hash_matches": true,
+    "adapter_hash_matches": true,
+    "gpu": "NVIDIA L4",
+    "torch": "2.11.0+cu128",
+    "cuda": "12.8",
+    "cuda_matmul": "passed",
+    "free_gib": 96.94214630126953,
+    "new_units_absent": true
+  },
+  "host_worker_session_id": null,
+  "read_only_monitor_session_id": null,
+  "completed_new_units": [
+    {
+      "run_name": "only_esm__five_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 2481.4707641601562,
+      "backup_manifest": "f68be397b5294bb2b7953f92c302478f",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "fb82639623be44d80a59af1a067e9d55a3d3c8aaa181b7453e5aeb0a9f0e76d5",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790566270.8154018
+      },
+      "selected_epoch": 41,
+      "checkpoint_sha256": "4db74f19cc401ef30ef31662c005dc99059132171c2d4345297a860880aeb3bc"
+    },
+    {
+      "run_name": "gvp_late_fusion__five_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 1594.6065468788147,
+      "backup_manifest": "ac792f423bd2409d9eeb026b5ac59418",
+      "backup_ack": {
+        "file_count": 71,
+        "manifest_sha256": "9805d6c4f75c0505f313c7f7ebddc48d62c184963c836db9e0312fc2957241d0",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790571176.396009
+      },
+      "selected_epoch": 50,
+      "checkpoint_sha256": "ac81027cec32cacbe73ddd34e599b666536037a59f7f924bb937fc4d09370681"
+    }
+  ],
+  "failed_new_units": [
+    {
+      "run_name": "only_gvp__five_class__none__fold0__seed42",
+      "status": "failed_independent_replay",
+      "completed_training_epochs": 50,
+      "selected_epoch": 47,
+      "checkpoint_sha256": "0e53c06eb58210f92e9cec4a40a4840135a3cc356eead88d59b12ae981ebddf6",
+      "fit_and_replay_seconds": 2905.007661819458,
+      "backup_manifest": "ce88c0be10764fd0b35a2a6e807ee2c5",
+      "backup_ack": {
+        "file_count": 70,
+        "manifest_sha256": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+        "schema_version": 1,
+        "verified_by": "mechti-pc",
+        "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context",
+        "verified_unix": 1790569339.9447699
+      },
+      "strict_tolerance_unchanged": true,
+      "retry_performed": false,
+      "diagnostic": "gvp5_failed_replay_diagnostic_01/failed_replay_diagnostic.json"
+    }
+  ],
+  "deliberate_continuation_after_diagnosis": {
+    "preceding_unit": "only_gvp__five_class__none__fold0__seed42",
+    "backup_verified": true,
+    "all_non_probability_fields_identical": true,
+    "observed_max_probability_difference": 2.38e-06,
+    "strict_replay_passed": false,
+    "retry_performed": false,
+    "tolerance_changed": false,
+    "next_unit_is_independent_previously_authorized_family": true,
+    "reason": "Failure paused the queue for diagnosis and persistence. Continue the distinct pending late-fusion fit under the unchanged strict contract; do not reuse or certify the failed GVP unit."
+  },
+  "new_fits_trained": 3,
+  "last_observed_epoch": 50,
+  "cleanup_session_id": null,
+  "strict_replay_passed": 2,
+  "strict_replay_failed": 1,
+  "new_running_seconds": 7815,
+  "new_estimated_running_gross_usd": 1.9086,
+  "provider_stop_at_utc": "2026-09-28T04:55:14Z",
+  "recovery_finalized_at_utc": "2026-09-28T04:56:43Z",
+  "cumulative_running_hours": 11.476944444433332,
+  "cumulative_estimated_running_gross_usd": 10.0901
+}

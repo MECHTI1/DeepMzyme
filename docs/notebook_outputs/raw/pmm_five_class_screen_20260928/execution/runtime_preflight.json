@@ -1,0 +1,10 @@
+{
+  "source_hash_matches": true,
+  "adapter_hash_matches": true,
+  "gpu": "NVIDIA L4",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "cuda_matmul": "passed",
+  "free_gib": 96.94214630126953,
+  "new_units_absent": true
+}

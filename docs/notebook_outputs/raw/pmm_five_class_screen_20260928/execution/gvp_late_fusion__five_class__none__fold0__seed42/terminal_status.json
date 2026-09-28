@@ -1,0 +1,50 @@
+{
+  "full_grid_assessed": false,
+  "promotion_ready": false,
+  "protocol_id": "pmm-five-class-screen-v1",
+  "units": [
+    {
+      "elapsed_seconds": 1594.6065468788147,
+      "fit_reused_for_replay": false,
+      "five_class_validation": {
+        "campaign_run_identity": {
+          "campaign_id": "pmm_ion_metal_v2_context",
+          "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+          "epochs": 50,
+          "family": "gvp_late_fusion",
+          "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+          "five_class_screen": {
+            "adapter_sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+            "protocol_id": "pmm-five-class-screen-v1",
+            "protocol_sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607"
+          },
+          "fold": 0,
+          "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+          "model_seed": 42,
+          "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+          "readout": "none",
+          "resolved_config_sha256": "5294091cd19e6f8538b5f7ff1dfe1252cc05f2a79372155710a2fc25cf6b8d28",
+          "smoke": false,
+          "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+          "target_scheme": "five_class"
+        },
+        "common_four_class_viii": "Fe+Co+Ni",
+        "native_class_viii": "Co+Ni",
+        "native_labels": [
+          "Mn",
+          "Cu",
+          "Zn",
+          "Fe",
+          "Class VIII"
+        ],
+        "prediction_sha256": {
+          "runs/gvp_late_fusion__five_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv": "85192a84187b4ca6a97fa9189b2a07c295b883b618f866b43cc418046b29edea",
+          "runs/gvp_late_fusion__five_class__none__fold0__seed42/val_predictions.csv": "ef844c02183f9418356bfa9c918d4058816a73cde542b75f84717205f0d7fe8f"
+        },
+        "status": "passed"
+      },
+      "run_name": "gvp_late_fusion__five_class__none__fold0__seed42",
+      "status": "completed"
+    }
+  ]
+}

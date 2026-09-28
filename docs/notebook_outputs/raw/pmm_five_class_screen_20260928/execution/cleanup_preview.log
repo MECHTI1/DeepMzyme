@@ -1,0 +1,1 @@
+Verified cleanup: stop replacement, delete recorded superseded VM/disks/snapshot; keep replacement disk and local backup.

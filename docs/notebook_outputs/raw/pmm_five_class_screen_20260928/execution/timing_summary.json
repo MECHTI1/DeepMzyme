@@ -1,0 +1,56 @@
+{
+  "units": [
+    {
+      "run_name": "only_esm__five_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 2481.4707641601562,
+      "phase_seconds": {
+        "prepare": 1323.41078191,
+        "train_epoch": 513.0644755070009,
+        "train_metric_evaluation": 44.71692987000074,
+        "validation": 117.38290792299972,
+        "checkpoint_save": 6.342752565000865,
+        "selected_export": 2.508749353999974
+      },
+      "notes": [
+        "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+        "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+        "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+      ]
+    },
+    {
+      "run_name": "gvp_late_fusion__five_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 1594.6065468788147,
+      "phase_seconds": {
+        "prepare": 96.34365745300056,
+        "train_epoch": 1007.535051152,
+        "train_metric_evaluation": 61.963780787999895,
+        "validation": 161.30197899499944,
+        "checkpoint_save": 8.417629047998162,
+        "selected_export": 3.2818747679993976
+      },
+      "notes": [
+        "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+        "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+        "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+      ]
+    },
+    {
+      "run_name": "only_gvp__five_class__none__fold0__seed42",
+      "fit_and_replay_seconds": 2905.007661819458,
+      "phase_seconds": {
+        "prepare": 1273.0681045570004,
+        "train_epoch": 957.4612011109984,
+        "train_metric_evaluation": 59.001291057001254,
+        "validation": 153.13589390099878,
+        "checkpoint_save": 8.979888196998218,
+        "selected_export": 3.205039446000228
+      },
+      "notes": [
+        "Wall times do not add CUDA synchronization; asynchronous work may cross phase boundaries.",
+        "CPU peak RSS covers this process, excluding loader workers; CUDA peaks are process allocator high-water marks.",
+        "Profile I/O and orchestration overhead are excluded; preparation is recorded after successful completion."
+      ]
+    }
+  ],
+  "note": "Fit/replay time excludes admission/input verification, host transfer and provider closeout; phase timers are not GPU utilization."
+}

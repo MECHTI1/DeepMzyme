@@ -1,0 +1,285 @@
+{
+  "attempt_window_started": "2026-09-28T02:42:28Z",
+  "attempts": [
+    {
+      "disk": {
+        "architecture": "X86_64",
+        "creationTimestamp": "2026-09-27T19:42:41.162-07:00",
+        "enableConfidentialCompute": false,
+        "guestOsFeatures": [
+          {
+            "type": "VIRTIO_SCSI_MULTIQUEUE"
+          },
+          {
+            "type": "SEV_CAPABLE"
+          },
+          {
+            "type": "SEV_SNP_CAPABLE"
+          },
+          {
+            "type": "SEV_LIVE_MIGRATABLE"
+          },
+          {
+            "type": "SEV_LIVE_MIGRATABLE_V2"
+          },
+          {
+            "type": "SNP_SVSM_CAPABLE"
+          },
+          {
+            "type": "IDPF"
+          },
+          {
+            "type": "TDX_CAPABLE"
+          },
+          {
+            "type": "UEFI_COMPATIBLE"
+          },
+          {
+            "type": "GVNIC"
+          }
+        ],
+        "id": "5638006703511595727",
+        "kind": "compute#disk",
+        "labelFingerprint": "dEPzgRvga08=",
+        "labels": {
+          "fallback-pass": "5279a430fc79",
+          "managed-by": "deepmzyme-vm-controller"
+        },
+        "licenseCodes": [
+          "3242930272766215801"
+        ],
+        "licenses": [
+          "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2404-lts"
+        ],
+        "name": "deepmzyme-l4-recovery-5279a430fc79",
+        "physicalBlockSizeBytes": "4096",
+        "satisfiesPzi": true,
+        "selfLink": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-a/disks/deepmzyme-l4-recovery-5279a430fc79",
+        "sizeGb": "150",
+        "sourceSnapshot": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/global/snapshots/deepmzyme-fallback-5279a430fc79",
+        "sourceSnapshotId": "6497342033518423449",
+        "status": "READY",
+        "type": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-a/diskTypes/pd-balanced",
+        "zone": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-a"
+      },
+      "disk_name": "deepmzyme-l4-recovery-5279a430fc79",
+      "requested_at": "2026-09-28T02:44:35Z",
+      "status": "create_requested",
+      "vm_name": "deepmzyme-l4",
+      "zone": "us-central1-a"
+    }
+  ],
+  "candidates": [
+    "us-central1-a",
+    "us-central1-b"
+  ],
+  "completed_at": "2026-09-28T04:56:43Z",
+  "config_backup": "/home/mechti/deepmzyme-vm/state/fallback-5279a430fc79.config.env",
+  "config_backup_sha256": "4b0545f0b19bd8ed548acb8776682683b1dd9ec44c20f06c7acc7e5c9c8c1127",
+  "limit": {
+    "allowed": true,
+    "binding_limit": "MAX_SESSION_HOURS",
+    "bounds_minutes": {
+      "MAX_SESSION_ESTIMATED_COST_USD": 336.41,
+      "MAX_SESSION_HOURS": 240.0,
+      "remaining daily cost": 459.83,
+      "remaining daily hours": 355.63,
+      "requested": 240.0
+    },
+    "effective_minutes": 237,
+    "effective_seconds": 14220,
+    "max_session_cost_usd": 3.6756,
+    "max_session_cost_with_margin_usd": 4.227,
+    "refusal": null,
+    "stop_overhead_minutes": 3.0
+  },
+  "pass_id": "5279a430fc79",
+  "phase": "complete",
+  "price": {
+    "basis": "GROSS commercial list price (no credits, free tiers or discounts)",
+    "compute_skus": "A88A-5A60-E821:1,D18E-3563-415F:8,F0A4-E3D3-33BD:32",
+    "compute_usd_per_hour": 0.853624,
+    "disk_type": "pd-balanced",
+    "disk_usd_per_gib_month": 0.1,
+    "disk_usd_per_hour": 0.020548,
+    "external_ip_usd_per_hour": 0.005,
+    "from_cache": false,
+    "gross_usd_per_hour": 0.879172,
+    "machine_type": "g2-standard-8",
+    "page_cross_check_usd_per_hour": null,
+    "region": "us-central1",
+    "running_usd_per_hour": 0.858624,
+    "sources": [
+      "Cloud Billing Catalog API: A88A-5A60-E821 (Nvidia L4 GPU running in Americas) $0.560040/h x1 + D18E-3563-415F (G2 Instance Core running in Americas) $0.024988/h x8 + F0A4-E3D3-33BD (G2 Instance Ram running in Americas) $0.002927/GiBy.h x32"
+    ],
+    "verified_at": "2026-09-28T02:37:46Z"
+  },
+  "project": "deepmzyme-gpu-vm",
+  "recycle_price": {
+    "region": "us-central1",
+    "sku_id": "092B-DDAC-75F4",
+    "source": "Cloud Billing Catalog API",
+    "usd_per_gib_month": 0.05,
+    "verified_at": "2026-09-28T02:37:48Z"
+  },
+  "replacement": {
+    "instance_id": "6465074116022266445",
+    "project": "deepmzyme-gpu-vm",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-a"
+  },
+  "requested_hours": 4.0,
+  "schema_version": 1,
+  "session_id": "session-20260928T024459Z-3d2d6dd8",
+  "session_start": "2026-09-28T02:44:59Z",
+  "snapshot": {
+    "architecture": "X86_64",
+    "creationSizeBytes": "33801883392",
+    "creationTimestamp": "2026-09-27T19:39:50.384-07:00",
+    "diskSizeGb": "150",
+    "downloadBytes": "33812016734",
+    "enableConfidentialCompute": false,
+    "guestOsFeatures": [
+      {
+        "type": "VIRTIO_SCSI_MULTIQUEUE"
+      },
+      {
+        "type": "SEV_CAPABLE"
+      },
+      {
+        "type": "SEV_SNP_CAPABLE"
+      },
+      {
+        "type": "SEV_LIVE_MIGRATABLE"
+      },
+      {
+        "type": "SEV_LIVE_MIGRATABLE_V2"
+      },
+      {
+        "type": "SNP_SVSM_CAPABLE"
+      },
+      {
+        "type": "IDPF"
+      },
+      {
+        "type": "TDX_CAPABLE"
+      },
+      {
+        "type": "UEFI_COMPATIBLE"
+      },
+      {
+        "type": "GVNIC"
+      }
+    ],
+    "id": "6497342033518423449",
+    "kind": "compute#snapshot",
+    "labelFingerprint": "dEPzgRvga08=",
+    "labels": {
+      "fallback-pass": "5279a430fc79",
+      "managed-by": "deepmzyme-vm-controller"
+    },
+    "licenseCodes": [
+      "3242930272766215801"
+    ],
+    "licenses": [
+      "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2404-lts"
+    ],
+    "name": "deepmzyme-fallback-5279a430fc79",
+    "satisfiesPzi": true,
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/global/snapshots/deepmzyme-fallback-5279a430fc79",
+    "snapshotType": "STANDARD",
+    "sourceDisk": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/disks/deepmzyme-l4-recovery-e9ff994df82d",
+    "sourceDiskId": "1500574169364594722",
+    "status": "READY",
+    "storageBytes": "33801883392",
+    "storageBytesStatus": "UP_TO_DATE",
+    "storageLocations": [
+      "us-central1"
+    ]
+  },
+  "snapshot_name": "deepmzyme-fallback-5279a430fc79",
+  "snapshot_price": {
+    "region": "us-central1",
+    "sku_id": "817F-F5A3-514E",
+    "source": "Cloud Billing Catalog API",
+    "usd_per_gib_month": 0.05,
+    "verified_at": "2026-09-28T02:37:47Z"
+  },
+  "source": {
+    "instance_id": "3144565200755786222",
+    "project": "deepmzyme-gpu-vm",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-c"
+  },
+  "source_disk": {
+    "architecture": "X86_64",
+    "creationTimestamp": "2026-09-25T20:41:01.527-07:00",
+    "enableConfidentialCompute": false,
+    "guestOsFeatures": [
+      {
+        "type": "VIRTIO_SCSI_MULTIQUEUE"
+      },
+      {
+        "type": "SEV_CAPABLE"
+      },
+      {
+        "type": "SEV_SNP_CAPABLE"
+      },
+      {
+        "type": "SEV_LIVE_MIGRATABLE"
+      },
+      {
+        "type": "SEV_LIVE_MIGRATABLE_V2"
+      },
+      {
+        "type": "SNP_SVSM_CAPABLE"
+      },
+      {
+        "type": "IDPF"
+      },
+      {
+        "type": "TDX_CAPABLE"
+      },
+      {
+        "type": "UEFI_COMPATIBLE"
+      },
+      {
+        "type": "GVNIC"
+      }
+    ],
+    "id": "1500574169364594722",
+    "kind": "compute#disk",
+    "labelFingerprint": "QxUaZac9-Yc=",
+    "labels": {
+      "fallback-pass": "e9ff994df82d",
+      "managed-by": "deepmzyme-vm-controller"
+    },
+    "lastAttachTimestamp": "2026-09-25T20:41:54.650-07:00",
+    "licenseCodes": [
+      "3242930272766215801"
+    ],
+    "licenses": [
+      "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/licenses/ubuntu-2404-lts"
+    ],
+    "name": "deepmzyme-l4-recovery-e9ff994df82d",
+    "physicalBlockSizeBytes": "4096",
+    "satisfiesPzi": true,
+    "selfLink": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/disks/deepmzyme-l4-recovery-e9ff994df82d",
+    "sizeGb": "150",
+    "sourceSnapshot": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/global/snapshots/deepmzyme-fallback-e9ff994df82d",
+    "sourceSnapshotId": "3087872731960213671",
+    "status": "READY",
+    "type": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/diskTypes/pd-balanced",
+    "users": [
+      "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/instances/deepmzyme-l4"
+    ],
+    "zone": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c"
+  },
+  "source_last_start": "2026-09-27T16:41:32.104-07:00",
+  "termination_ts": "2026-09-28T06:41:51Z",
+  "updated_at": "2026-09-28T04:56:43Z",
+  "verification_evidence": {
+    "path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/recovery_evidence_esm.json",
+    "sha256": "351174803824b58a48ba59448af907e26d8a60710fc7fe916c1140ff1350ecfd"
+  }
+}

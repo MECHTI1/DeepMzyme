@@ -1,0 +1,119 @@
+Omitting conservative node features: biotite_residue_sasa, custom_charge_distance_proxy, dpka_titr
+[LOAD] Parsing 3992 structures from /home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train (metal_example_unit=ion, workers=4 from --load-workers)
+[LOAD] parse cache: /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/parse_cache/2cf08d8f84141b8ddfca
+[LOAD] 250/3992 structures (12.2/s, 0.3 min elapsed, ~5.1 min remaining), 411 examples so far
+[LOAD] 500/3992 structures (14.4/s, 0.6 min elapsed, ~4.1 min remaining), 917 examples so far
+[LOAD] 750/3992 structures (15.9/s, 0.8 min elapsed, ~3.4 min remaining), 1299 examples so far
+[LOAD] 1000/3992 structures (15.4/s, 1.1 min elapsed, ~3.2 min remaining), 1760 examples so far
+[LOAD] 1250/3992 structures (15.4/s, 1.4 min elapsed, ~3.0 min remaining), 2258 examples so far
+[LOAD] 1500/3992 structures (15.7/s, 1.6 min elapsed, ~2.7 min remaining), 2667 examples so far
+[LOAD] 1750/3992 structures (14.9/s, 2.0 min elapsed, ~2.5 min remaining), 3150 examples so far
+[LOAD] 2000/3992 structures (15.6/s, 2.1 min elapsed, ~2.1 min remaining), 3609 examples so far
+[LOAD] 2250/3992 structures (15.3/s, 2.4 min elapsed, ~1.9 min remaining), 4073 examples so far
+[LOAD] 2500/3992 structures (15.0/s, 2.8 min elapsed, ~1.7 min remaining), 4531 examples so far
+[LOAD] 2750/3992 structures (14.3/s, 3.2 min elapsed, ~1.4 min remaining), 5007 examples so far
+[LOAD] 3000/3992 structures (14.2/s, 3.5 min elapsed, ~1.2 min remaining), 5394 examples so far
+[LOAD] 3250/3992 structures (13.5/s, 4.0 min elapsed, ~0.9 min remaining), 5908 examples so far
+[LOAD] 3500/3992 structures (13.3/s, 4.4 min elapsed, ~0.6 min remaining), 6390 examples so far
+[LOAD] 3750/3992 structures (13.1/s, 4.8 min elapsed, ~0.3 min remaining), 6879 examples so far
+[LOAD] 3992/3992 structures (12.6/s, 5.3 min elapsed, ~0.0 min remaining), 7396 examples so far
+[LOAD] Finished parsing 3992 structures in 5.3 min: 7398 examples, 0 invalid structures
+
+=== Split diagnostics (passive; training behavior unchanged) ===
+task=metal train_val_split_by=pdbid val_fraction=0.0 n_folds=5 fold_index=0 model_seed=42 split_seed=42
+pockets: train=5906 validation=1492
+groups by pdbid: train=3797 validation=195
+train/validation overlap counts: pdbid=0, pdbid_chain=0, structure_id=0, pocket_id=0
+leakage guard: split_by=pdbid keeps every chain and pocket from the same PDB entry on one side of train/validation, so pdbid_chain overlap is also blocked. This guards repeated or binuclear same-chain metal sites from leaking into validation.
+train metal distribution: Mn=1790, Cu=304, Zn=1851, Fe=1355, Class VIII=606
+validation metal distribution: Mn=738, Cu=39, Zn=181, Fe=382, Class VIII=152
+missing train metal classes: none
+missing validation metal classes: none
+train EC distribution: 0=5906
+validation EC distribution: 0=1492
+missing train EC classes: none
+missing validation EC classes: none
+===============================================================
+
+[GRAPH-CACHE] processed=500/5906 hits=0 misses=500 seconds=65.33
+[GRAPH-CACHE] processed=1000/5906 hits=0 misses=1000 seconds=131.49
+[GRAPH-CACHE] processed=1500/5906 hits=0 misses=1500 seconds=190.72
+[GRAPH-CACHE] processed=2000/5906 hits=0 misses=2000 seconds=255.91
+[GRAPH-CACHE] processed=2500/5906 hits=0 misses=2500 seconds=319.40
+[GRAPH-CACHE] processed=3000/5906 hits=0 misses=3000 seconds=384.17
+[GRAPH-CACHE] processed=3500/5906 hits=0 misses=3500 seconds=447.24
+[GRAPH-CACHE] processed=4000/5906 hits=0 misses=4000 seconds=505.82
+[GRAPH-CACHE] processed=4500/5906 hits=0 misses=4500 seconds=567.27
+[GRAPH-CACHE] processed=5000/5906 hits=0 misses=5000 seconds=628.61
+[GRAPH-CACHE] processed=5500/5906 hits=0 misses=5500 seconds=688.18
+[GRAPH-CACHE] hits=0 misses=5906 seconds=735.68 namespace=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/raw_graph_cache/7e9402a3ec2149bb4a722fe58999ae4d6309c87b4a36f6986184ee7b01b2785b
+[GRAPH-CACHE] processed=500/1492 hits=0 misses=500 seconds=71.04
+[GRAPH-CACHE] processed=1000/1492 hits=0 misses=1000 seconds=139.77
+[GRAPH-CACHE] hits=0 misses=1492 seconds=204.26 namespace=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/raw_graph_cache/7e9402a3ec2149bb4a722fe58999ae4d6309c87b4a36f6986184ee7b01b2785b
+epoch=1 train_loss=1.3539 lr=0.0003 val_loss=1.2734 val_metal_acc=0.5798 val_metal_bal_acc=0.4390 val_metal_min_recall=0.0000 val_fe_recall=0.6335 val_class_viii_recall=0.0000 val_joint_bal_acc=0.4390 val_joint_macro_f1=0.3596 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=2 train_loss=1.0953 lr=0.0003 val_loss=0.8904 val_metal_acc=0.7225 val_metal_bal_acc=0.5887 val_metal_min_recall=0.0000 val_fe_recall=0.5052 val_class_viii_recall=0.0000 val_joint_bal_acc=0.5887 val_joint_macro_f1=0.5740 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=3 train_loss=0.9463 lr=0.0003 val_loss=0.8985 val_metal_acc=0.7198 val_metal_bal_acc=0.6440 val_metal_min_recall=0.0000 val_fe_recall=0.5105 val_class_viii_recall=0.0000 val_joint_bal_acc=0.6440 val_joint_macro_f1=0.6076 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=4 train_loss=0.8815 lr=0.0003 val_loss=0.8862 val_metal_acc=0.7239 val_metal_bal_acc=0.6483 val_metal_min_recall=0.0000 val_fe_recall=0.6230 val_class_viii_recall=0.0000 val_joint_bal_acc=0.6483 val_joint_macro_f1=0.6167 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=5 train_loss=0.8287 lr=0.0003 val_loss=0.9314 val_metal_acc=0.6897 val_metal_bal_acc=0.6349 val_metal_min_recall=0.0000 val_fe_recall=0.6937 val_class_viii_recall=0.0000 val_joint_bal_acc=0.6349 val_joint_macro_f1=0.5867 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=6 train_loss=0.7841 lr=0.0003 val_loss=1.0934 val_metal_acc=0.5885 val_metal_bal_acc=0.6007 val_metal_min_recall=0.0000 val_fe_recall=0.7461 val_class_viii_recall=0.0000 val_joint_bal_acc=0.6007 val_joint_macro_f1=0.5323 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=7 train_loss=0.7286 lr=0.0003 val_loss=1.0538 val_metal_acc=0.6005 val_metal_bal_acc=0.6444 val_metal_min_recall=0.0000 val_fe_recall=0.7539 val_class_viii_recall=0.0000 val_joint_bal_acc=0.6444 val_joint_macro_f1=0.5754 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=8 train_loss=0.7004 lr=0.0003 val_loss=0.8346 val_metal_acc=0.6307 val_metal_bal_acc=0.6500 val_metal_min_recall=0.0592 val_fe_recall=0.7173 val_class_viii_recall=0.0592 val_joint_bal_acc=0.6500 val_joint_macro_f1=0.6175 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=9 train_loss=0.6740 lr=0.0003 val_loss=1.0685 val_metal_acc=0.5985 val_metal_bal_acc=0.6103 val_metal_min_recall=0.0197 val_fe_recall=0.7880 val_class_viii_recall=0.0197 val_joint_bal_acc=0.6103 val_joint_macro_f1=0.5654 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=10 train_loss=0.6228 lr=0.0003 train_metal_acc=0.8109 val_loss=0.9378 val_metal_acc=0.6696 val_metal_bal_acc=0.6466 val_metal_min_recall=0.0066 val_fe_recall=0.7696 val_class_viii_recall=0.0066 val_joint_bal_acc=0.6466 val_joint_macro_f1=0.5903 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=11 train_loss=0.5895 lr=0.0003 val_loss=0.9689 val_metal_acc=0.6153 val_metal_bal_acc=0.6405 val_metal_min_recall=0.0395 val_fe_recall=0.7042 val_class_viii_recall=0.0395 val_joint_bal_acc=0.6405 val_joint_macro_f1=0.5836 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=12 train_loss=0.5557 lr=0.0003 val_loss=0.8118 val_metal_acc=0.7399 val_metal_bal_acc=0.6428 val_metal_min_recall=0.0066 val_fe_recall=0.5550 val_class_viii_recall=0.0066 val_joint_bal_acc=0.6428 val_joint_macro_f1=0.6167 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=13 train_loss=0.5181 lr=0.0003 val_loss=1.6177 val_metal_acc=0.4765 val_metal_bal_acc=0.5665 val_metal_min_recall=0.0789 val_fe_recall=0.6466 val_class_viii_recall=0.0789 val_joint_bal_acc=0.5665 val_joint_macro_f1=0.4050 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=14 train_loss=0.4602 lr=0.0003 val_loss=0.9217 val_metal_acc=0.7151 val_metal_bal_acc=0.6234 val_metal_min_recall=0.0066 val_fe_recall=0.6675 val_class_viii_recall=0.0066 val_joint_bal_acc=0.6234 val_joint_macro_f1=0.6062 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=15 train_loss=0.4287 lr=0.0003 val_loss=1.7686 val_metal_acc=0.4692 val_metal_bal_acc=0.5655 val_metal_min_recall=0.1184 val_fe_recall=0.5262 val_class_viii_recall=0.1184 val_joint_bal_acc=0.5655 val_joint_macro_f1=0.4197 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=16 train_loss=0.3862 lr=0.0003 val_loss=1.4289 val_metal_acc=0.5342 val_metal_bal_acc=0.5998 val_metal_min_recall=0.0987 val_fe_recall=0.6257 val_class_viii_recall=0.0987 val_joint_bal_acc=0.5998 val_joint_macro_f1=0.5146 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=17 train_loss=0.3591 lr=0.0003 val_loss=1.1485 val_metal_acc=0.6180 val_metal_bal_acc=0.6364 val_metal_min_recall=0.0658 val_fe_recall=0.7016 val_class_viii_recall=0.0658 val_joint_bal_acc=0.6364 val_joint_macro_f1=0.5302 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=18 train_loss=0.3516 lr=0.0003 val_loss=1.2956 val_metal_acc=0.6113 val_metal_bal_acc=0.6336 val_metal_min_recall=0.1908 val_fe_recall=0.7199 val_class_viii_recall=0.1908 val_joint_bal_acc=0.6336 val_joint_macro_f1=0.5738 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=19 train_loss=0.3176 lr=0.0003 val_loss=1.3245 val_metal_acc=0.6408 val_metal_bal_acc=0.6392 val_metal_min_recall=0.1645 val_fe_recall=0.7251 val_class_viii_recall=0.1645 val_joint_bal_acc=0.6392 val_joint_macro_f1=0.5347 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=20 train_loss=0.2789 lr=0.0003 train_metal_acc=0.9153 val_loss=1.5321 val_metal_acc=0.6408 val_metal_bal_acc=0.6171 val_metal_min_recall=0.0724 val_fe_recall=0.5707 val_class_viii_recall=0.0724 val_joint_bal_acc=0.6171 val_joint_macro_f1=0.5243 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=21 train_loss=0.2549 lr=0.0003 val_loss=1.5370 val_metal_acc=0.5650 val_metal_bal_acc=0.6029 val_metal_min_recall=0.1645 val_fe_recall=0.5916 val_class_viii_recall=0.1645 val_joint_bal_acc=0.6029 val_joint_macro_f1=0.5586 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=22 train_loss=0.2472 lr=0.0003 val_loss=1.7467 val_metal_acc=0.5764 val_metal_bal_acc=0.6262 val_metal_min_recall=0.1776 val_fe_recall=0.6518 val_class_viii_recall=0.1776 val_joint_bal_acc=0.6262 val_joint_macro_f1=0.5207 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=23 train_loss=0.2220 lr=0.0003 val_loss=1.6842 val_metal_acc=0.6066 val_metal_bal_acc=0.6024 val_metal_min_recall=0.0724 val_fe_recall=0.5942 val_class_viii_recall=0.0724 val_joint_bal_acc=0.6024 val_joint_macro_f1=0.5373 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=24 train_loss=0.2098 lr=0.0003 val_loss=1.7735 val_metal_acc=0.6039 val_metal_bal_acc=0.6035 val_metal_min_recall=0.0197 val_fe_recall=0.7120 val_class_viii_recall=0.0197 val_joint_bal_acc=0.6035 val_joint_macro_f1=0.5419 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=25 train_loss=0.1814 lr=0.0003 val_loss=1.6551 val_metal_acc=0.6300 val_metal_bal_acc=0.6245 val_metal_min_recall=0.0395 val_fe_recall=0.7304 val_class_viii_recall=0.0395 val_joint_bal_acc=0.6245 val_joint_macro_f1=0.5603 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=26 train_loss=0.1702 lr=0.0003 val_loss=1.9249 val_metal_acc=0.6361 val_metal_bal_acc=0.6408 val_metal_min_recall=0.0395 val_fe_recall=0.7382 val_class_viii_recall=0.0395 val_joint_bal_acc=0.6408 val_joint_macro_f1=0.5503 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=27 train_loss=0.1531 lr=0.0003 val_loss=1.6197 val_metal_acc=0.6280 val_metal_bal_acc=0.6449 val_metal_min_recall=0.2237 val_fe_recall=0.5995 val_class_viii_recall=0.2237 val_joint_bal_acc=0.6449 val_joint_macro_f1=0.6065 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=28 train_loss=0.1444 lr=0.0003 val_loss=2.1213 val_metal_acc=0.6434 val_metal_bal_acc=0.6370 val_metal_min_recall=0.0724 val_fe_recall=0.7251 val_class_viii_recall=0.0724 val_joint_bal_acc=0.6370 val_joint_macro_f1=0.5712 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=29 train_loss=0.1556 lr=0.0003 val_loss=2.1939 val_metal_acc=0.6166 val_metal_bal_acc=0.6093 val_metal_min_recall=0.0789 val_fe_recall=0.7408 val_class_viii_recall=0.0789 val_joint_bal_acc=0.6093 val_joint_macro_f1=0.5117 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=30 train_loss=0.1388 lr=0.0003 train_metal_acc=0.9655 val_loss=2.7727 val_metal_acc=0.6213 val_metal_bal_acc=0.6344 val_metal_min_recall=0.1316 val_fe_recall=0.7173 val_class_viii_recall=0.1316 val_joint_bal_acc=0.6344 val_joint_macro_f1=0.5123 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=31 train_loss=0.1464 lr=0.0003 val_loss=2.1894 val_metal_acc=0.6233 val_metal_bal_acc=0.6613 val_metal_min_recall=0.0987 val_fe_recall=0.7644 val_class_viii_recall=0.0987 val_joint_bal_acc=0.6613 val_joint_macro_f1=0.5772 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=32 train_loss=0.1343 lr=0.0003 val_loss=2.9287 val_metal_acc=0.6227 val_metal_bal_acc=0.6323 val_metal_min_recall=0.0855 val_fe_recall=0.7906 val_class_viii_recall=0.0855 val_joint_bal_acc=0.6323 val_joint_macro_f1=0.5767 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=33 train_loss=0.1401 lr=0.0003 val_loss=2.4924 val_metal_acc=0.5985 val_metal_bal_acc=0.5989 val_metal_min_recall=0.0987 val_fe_recall=0.6492 val_class_viii_recall=0.0987 val_joint_bal_acc=0.5989 val_joint_macro_f1=0.5328 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=34 train_loss=0.1220 lr=0.0003 val_loss=1.9529 val_metal_acc=0.6823 val_metal_bal_acc=0.6602 val_metal_min_recall=0.0592 val_fe_recall=0.7670 val_class_viii_recall=0.0592 val_joint_bal_acc=0.6602 val_joint_macro_f1=0.5668 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=35 train_loss=0.1132 lr=0.0003 val_loss=3.5670 val_metal_acc=0.5476 val_metal_bal_acc=0.6079 val_metal_min_recall=0.2368 val_fe_recall=0.5942 val_class_viii_recall=0.2368 val_joint_bal_acc=0.6079 val_joint_macro_f1=0.5529 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=36 train_loss=0.1138 lr=0.0003 val_loss=4.4223 val_metal_acc=0.4980 val_metal_bal_acc=0.5208 val_metal_min_recall=0.0658 val_fe_recall=0.5733 val_class_viii_recall=0.0658 val_joint_bal_acc=0.5208 val_joint_macro_f1=0.4212 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=37 train_loss=0.1250 lr=0.0003 val_loss=2.1522 val_metal_acc=0.6535 val_metal_bal_acc=0.6490 val_metal_min_recall=0.2171 val_fe_recall=0.5157 val_class_viii_recall=0.2171 val_joint_bal_acc=0.6490 val_joint_macro_f1=0.5606 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=38 train_loss=0.1085 lr=0.0003 val_loss=2.9311 val_metal_acc=0.6059 val_metal_bal_acc=0.6019 val_metal_min_recall=0.0395 val_fe_recall=0.6387 val_class_viii_recall=0.0395 val_joint_bal_acc=0.6019 val_joint_macro_f1=0.5500 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=39 train_loss=0.1202 lr=0.0003 val_loss=2.5858 val_metal_acc=0.6669 val_metal_bal_acc=0.6610 val_metal_min_recall=0.1118 val_fe_recall=0.7251 val_class_viii_recall=0.1118 val_joint_bal_acc=0.6610 val_joint_macro_f1=0.6087 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=40 train_loss=0.0964 lr=0.0003 train_metal_acc=0.9770 val_loss=3.2151 val_metal_acc=0.5563 val_metal_bal_acc=0.5772 val_metal_min_recall=0.1118 val_fe_recall=0.5812 val_class_viii_recall=0.1118 val_joint_bal_acc=0.5772 val_joint_macro_f1=0.5066 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=41 train_loss=0.0968 lr=0.0003 val_loss=2.2276 val_metal_acc=0.6950 val_metal_bal_acc=0.6449 val_metal_min_recall=0.0724 val_fe_recall=0.5995 val_class_viii_recall=0.0724 val_joint_bal_acc=0.6449 val_joint_macro_f1=0.5823 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=42 train_loss=0.1105 lr=0.0003 val_loss=3.2263 val_metal_acc=0.6273 val_metal_bal_acc=0.6659 val_metal_min_recall=0.1974 val_fe_recall=0.7356 val_class_viii_recall=0.1974 val_joint_bal_acc=0.6659 val_joint_macro_f1=0.5965 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=43 train_loss=0.0950 lr=0.0003 val_loss=3.1549 val_metal_acc=0.6059 val_metal_bal_acc=0.6248 val_metal_min_recall=0.1447 val_fe_recall=0.6597 val_class_viii_recall=0.1447 val_joint_bal_acc=0.6248 val_joint_macro_f1=0.5723 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=44 train_loss=0.1256 lr=0.0003 val_loss=2.3667 val_metal_acc=0.6408 val_metal_bal_acc=0.6514 val_metal_min_recall=0.0855 val_fe_recall=0.7461 val_class_viii_recall=0.0855 val_joint_bal_acc=0.6514 val_joint_macro_f1=0.6041 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=45 train_loss=0.0794 lr=0.0003 val_loss=3.5861 val_metal_acc=0.5483 val_metal_bal_acc=0.5586 val_metal_min_recall=0.0329 val_fe_recall=0.5445 val_class_viii_recall=0.0329 val_joint_bal_acc=0.5586 val_joint_macro_f1=0.4678 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=46 train_loss=0.1075 lr=0.0003 val_loss=3.4449 val_metal_acc=0.5623 val_metal_bal_acc=0.6094 val_metal_min_recall=0.0263 val_fe_recall=0.6361 val_class_viii_recall=0.0263 val_joint_bal_acc=0.6094 val_joint_macro_f1=0.5280 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=47 train_loss=0.0927 lr=0.0003 val_loss=2.2765 val_metal_acc=0.6950 val_metal_bal_acc=0.6820 val_metal_min_recall=0.1974 val_fe_recall=0.7277 val_class_viii_recall=0.1974 val_joint_bal_acc=0.6820 val_joint_macro_f1=0.6523 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=48 train_loss=0.0969 lr=0.0003 val_loss=2.7075 val_metal_acc=0.6588 val_metal_bal_acc=0.6260 val_metal_min_recall=0.0592 val_fe_recall=0.6675 val_class_viii_recall=0.0592 val_joint_bal_acc=0.6260 val_joint_macro_f1=0.5882 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=49 train_loss=0.0750 lr=0.0003 val_loss=3.1754 val_metal_acc=0.6032 val_metal_bal_acc=0.5920 val_metal_min_recall=0.0526 val_fe_recall=0.7199 val_class_viii_recall=0.0526 val_joint_bal_acc=0.5920 val_joint_macro_f1=0.5508 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+epoch=50 train_loss=0.0800 lr=0.0003 train_metal_acc=0.9876 val_loss=3.1337 val_metal_acc=0.6300 val_metal_bal_acc=0.6120 val_metal_min_recall=0.0789 val_fe_recall=0.7042 val_class_viii_recall=0.0789 val_joint_bal_acc=0.6120 val_joint_macro_f1=0.5744 metal_loss_scale=1.0000 ec_loss_scale=1.0000
+Saved checkpoint to /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/last_model_checkpoint.pt
+Saved best checkpoint to /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/best_model_checkpoint.pt
+Saved dataset summary to /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/dataset_summary.json
+Saved run config to /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/run_config.json
+Saved run metadata to /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/run_metadata.json
+[GRAPH-CACHE] processed=500/1492 hits=0 misses=500 seconds=72.46
+[GRAPH-CACHE] processed=1000/1492 hits=0 misses=1000 seconds=143.61
+[GRAPH-CACHE] hits=0 misses=1492 seconds=210.93 namespace=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/raw_graph_cache/7e9402a3ec2149bb4a722fe58999ae4d6309c87b4a36f6986184ee7b01b2785b
+Traceback (most recent call last):
+  File "/home/mechti/projects/DeepMzyme/src/export_validation_predictions.py", line 611, in <module>
+    main()
+  File "/home/mechti/projects/DeepMzyme/src/export_validation_predictions.py", line 562, in main
+    receipt = replay_campaign_run(args.campaign_run_dir, device=args.device, output_dir=args.output_dir,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mechti/projects/DeepMzyme/src/training/campaign_runtime.py", line 363, in replay_campaign_run
+    raise CampaignContractError(f"Independent replay differs at {uid}/{key}")
+training.campaign_runtime.CampaignContractError: Independent replay differs at sha256:4748babd2b6ac0706cd9ed4bcfd4855c8d2c5535f01813fb2e10b68b31a24c0f:row:1270/p_native_Mn

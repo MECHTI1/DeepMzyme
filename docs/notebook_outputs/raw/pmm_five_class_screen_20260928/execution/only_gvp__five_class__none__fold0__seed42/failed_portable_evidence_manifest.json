@@ -1,0 +1,126 @@
+{
+  "artifacts": {
+    "command_record.json": {
+      "exact_copy": true,
+      "sha256": "9e58270efefcb67890c4f3d3056577d0dceee61e4e96a9764badc7da17d7076f",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/commands/only_gvp__five_class__none__fold0__seed42.json"
+    },
+    "dataset_summary_excerpt.json": {
+      "derived": true,
+      "sha256": "b91eefd680a8394dfe4f778e4b2cfa72bf1e649e7eeccc9993977a36bc55682d"
+    },
+    "epoch_metrics.csv": {
+      "exact_copy": true,
+      "sha256": "cfe73633de94cc0385ae2d9891c17421bf80d97a2584e8977bdd867274ae6f20",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/epoch_metrics.csv"
+    },
+    "failed_replay_diagnostic.json": {
+      "derived": true,
+      "sha256": "22ca741794595a358c877bdf02674c8565e30001579c2d61686c3332f6d740c9"
+    },
+    "failed_replay_diagnostic.md": {
+      "derived": true,
+      "sha256": "48b2dcde0b7fa2604a38b8dae22a3c5fda46211e52f3a84b792be891f4525178"
+    },
+    "independent_validation_replay/selected_checkpoint.json": {
+      "exact_copy": true,
+      "sha256": "6292bcde4e52781456d7fa516a8992f506aef4f2ec15730799fe7937f97439ee",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/independent_validation_replay/selected_checkpoint.json"
+    },
+    "independent_validation_replay/val_predictions.csv": {
+      "exact_copy": true,
+      "sha256": "886eb1512f0437352a9a94b548ac0aa9eb5119ec26119a4b75dbd25234fca9c4",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/independent_validation_replay/val_predictions.csv"
+    },
+    "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.ack.json": {
+      "exact_copy": true,
+      "sha256": "de827f8c7a409259097a52245b78071f65cff2b7641bec158c82e4d587e0f8e6",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.ack.json"
+    },
+    "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.events.jsonl": {
+      "exact_copy": true,
+      "sha256": "13cf422d030a60d443faa714166823d16efe452730b9d05a174bc5c6a1d7cfbe",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.events.jsonl"
+    },
+    "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.json": {
+      "exact_copy": true,
+      "sha256": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.json"
+    },
+    "persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.state.json": {
+      "exact_copy": true,
+      "sha256": "f6529ddd8e3d140bb3b225ce0d1e99a35aeaae9b32612dc1e5462724daf7342f",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/persistence_receipts/ce88c0be10764fd0b35a2a6e807ee2c5.state.json"
+    },
+    "provenance/diagnose_failed_gvp_five.py": {
+      "exact_copy": true,
+      "sha256": "acdad2e7d08c0188b076f5332b353efbe7081ce6b4a9cd37f6e799686101ed59",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/five_class_screen_20260928/diagnose_failed_gvp_five.py"
+    },
+    "provenance/five_class_screen_protocol.json": {
+      "exact_copy": true,
+      "sha256": "c6d1da7fa0b7aa32b147f0bfbc4914a95ed5d127cdbf22d11716e26c42321607",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/docs/plans/pmm_five_class_screen_v1.json"
+    },
+    "provenance/run_pmm_five_class_screen.py": {
+      "exact_copy": true,
+      "sha256": "5c038c30d3540ed88c893a973dd66ec11425d7f28e60c2aa6605b4b1fa508c8d",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2/run_pmm_five_class_screen.py"
+    },
+    "run_config_excerpt.json": {
+      "derived": true,
+      "sha256": "9415d5c627a10aa6f4dcc5ffeec04c49be6e75ed57be25058b3c9be766af53e1"
+    },
+    "run_metadata_excerpt.json": {
+      "derived": true,
+      "sha256": "cb7bb275ca45a13842451b397abc5e32a073f3b09abe36be52b1546fb0de7942"
+    },
+    "runtime_profile.json": {
+      "exact_copy": true,
+      "sha256": "ed701b11c44a128429b948cb2ee35c14535efe3eef88ad2bff632827a3077fbd",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/runtime_profile.json"
+    },
+    "selected_checkpoint.json": {
+      "exact_copy": true,
+      "sha256": "c0a5c5968411441bf109f92c34bbaec1e7100f2e4610c0bb782b98293ff3575f",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/selected_checkpoint.json"
+    },
+    "split_diagnostics.json": {
+      "exact_copy": true,
+      "sha256": "64c4c94be1ea0124e0e9c02c2c6c96f7258a090bc9a9649a5baf95237ea4be93",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/split_diagnostics.json"
+    },
+    "terminal_failure_status.json": {
+      "exact_copy": true,
+      "sha256": "0aa1d8957e16f85cbbb108cde7b195d7e8544b009cdc67225997f2789e8e5d67",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/run_status_five_screen_only_gvp__five_class__none__fold0__seed42.json"
+    },
+    "train_metrics.csv": {
+      "exact_copy": true,
+      "sha256": "a5e14326a0b5ef722f3fcff8a8564c974ec20c9e6b4da747fb65a978334378af",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/train_metrics.csv"
+    },
+    "training_and_failed_replay.log": {
+      "exact_copy": true,
+      "sha256": "dfc0c0157673085611b389a163b60afe7dbf46bcab1d9664b976480998f07ccc",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42.log"
+    },
+    "val_metrics.csv": {
+      "exact_copy": true,
+      "sha256": "99f95f9eafd97f224675da584689b90dad75b82a3fd944b2c5b165bafcd0f37d",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/val_metrics.csv"
+    },
+    "val_predictions.csv": {
+      "exact_copy": true,
+      "sha256": "f03c50dfed6bc8d297a138ab300c3656fa8017f59997b50aaff5ad967adea515",
+      "source_path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runs/only_gvp__five_class__none__fold0__seed42/val_predictions.csv"
+    }
+  },
+  "helper_sha256": "acdad2e7d08c0188b076f5332b353efbe7081ce6b4a9cd37f6e799686101ed59",
+  "host_manifest_sha256": "ea8c893054da02a551cff7452c7f1653fce5b2b6d9a7955609cdc6f784625d37",
+  "note": "Failure evidence, not a successful completion receipt. No binary weights/full repeated metadata copied; originals remain canonical.",
+  "provisional_metrics": true,
+  "run_name": "only_gvp__five_class__none__fold0__seed42",
+  "status": "trained_but_strict_replay_failed",
+  "strict_replay_pass": false
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "verified_closed_with_one_scientific_replay_failure",
+  "session_id": "session-20260928T024459Z-3d2d6dd8",
+  "pass_id": "5279a430fc79",
+  "replacement": {
+    "instance_id": "6465074116022266445",
+    "project": "deepmzyme-gpu-vm",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-a"
+  },
+  "provider_state": "TERMINATED",
+  "session_start": "2026-09-28T02:44:59Z",
+  "session_stop": "2026-09-28T04:55:14Z",
+  "provider_stop_verified_at_utc": "2026-09-28T04:57:26Z",
+  "recovery_finalized_at_utc": "2026-09-28T04:56:43Z",
+  "elapsed_running_seconds": 7815,
+  "estimated_running_gross_usd": 1.9086,
+  "cost_note": "Running gross includes the active disk while running; additional retained/temporary storage is separate. Controller UTC-day estimate is $2.50 including its storage reservation; this is not a Google invoice. The retained working 150-GB disk costs approximately $15/month.",
+  "cumulative_running_hours": 11.476944444433332,
+  "cumulative_estimated_running_gross_usd": 10.0901,
+  "session_limits": {
+    "hours": 4,
+    "usd": 6
+  },
+  "daily_limits": {
+    "hours": 6,
+    "usd": 10
+  },
+  "limits_changed": false,
+  "new_fits_trained": 3,
+  "new_fits_strictly_verified": 2,
+  "new_fits_strict_replay_failed": 1,
+  "all_terminal_backups_verified": true,
+  "backup_file_counts": {
+    "only_esm": 71,
+    "only_gvp": 70,
+    "gvp_late_fusion": 71
+  },
+  "superseded_resources_removed": {
+    "source_vm": {
+      "instance_id": "3144565200755786222",
+      "project": "deepmzyme-gpu-vm",
+      "vm_name": "deepmzyme-l4",
+      "zone": "us-central1-c"
+    },
+    "source_disk": "deepmzyme-l4-recovery-e9ff994df82d",
+    "snapshot": "deepmzyme-fallback-5279a430fc79",
+    "temporary_snapshot_recycle_copy_removed": true
+  },
+  "retained_working_disk": "deepmzyme-l4-recovery-5279a430fc79",
+  "cleanup_gate": "Completed ESM5 replacement fit, passed strict independent replay and 71-file independently verified host backup; controller rehashed evidence before finalizing. All remaining terminal units were also backed up before shutdown.",
+  "held_out_access": false,
+  "promotion": false,
+  "larger_full_grid_budget_activated": false,
+  "evidence_sha256": {
+    "execution.json": "c3a804f47456a40d3fa61bbd07b3b6ce32a63beae100e75adcb372491c2a021c",
+    "fallback_final.json": "dfbcdef8de408939977e19222e98f25f8e773b5e37f043a30008150bff046c74",
+    "controller_session_final.json": "2a90794d485ba6d13fb93046d24d4e0b623124335f1c36b388484205e1abc94a",
+    "controller_closeout_ledger.json": "d70e671b9a8e5d05612659e35b0490384cb197905bdb1d94561acfd97ccaaae5",
+    "provider_status_final.txt": "133f3f80bf3e7b5f31a4c309510cb890dff23a781d3fdd5d39b32b015e0e17a7",
+    "provider_report_final.txt": "6746ca1d5dbbd1acdf48b19b627eea320955aa34957f50a0631781ec96eed90e",
+    "recovery_evidence_esm.json": "351174803824b58a48ba59448af907e26d8a60710fc7fe916c1140ff1350ecfd",
+    "cleanup_preview.log": "5cd821730a42e154da3f8ffd586ae4fb30e96bdb74fbe74df9bde96d42d7b5be",
+    "cleanup_execution.log": "413fa3b38fa915be3efc069da8fd8424c3054c6f049fbb901737483d95e21d0c"
+  }
+}
