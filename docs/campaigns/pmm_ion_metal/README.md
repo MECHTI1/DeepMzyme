@@ -7,9 +7,9 @@ The [v2 manifest](../../plans/pmm_core_scope_v2.json) retains nine ordinary-read
 fold-0 fits across Only-ESMC, Only-GVP and graph-level late fusion, each trained
 separately with `four_class`, `five_class` and `six_class`; 36 fits are deferred.
 The common-four endpoint is Mn, Cu, Zn, Class VIII = Fe+Co+Ni; every arm is evaluated
-on it, and five/six arms also retain native metrics. No training objective is primary;
-six-class training followed by collapse is a different formulation from direct
-four-class training ([Plan](../../../Plan.md#2-train-the-metal-classification-model)).
+on it, and five/six arms also retain native metrics. No training objective is primary. Five- or six-class
+training followed by collapse differs from direct four-class training; comparing objectives is a neutral test
+where better, no difference and worse are all valid ([Plan](../../../Plan.md#2-train-the-metal-classification-model)).
 
 Dataset: frozen training-only PMM source cohort, 7,398 ions / 3,992 PDB groups;
 `metal_example_unit=ion`. Five PDB-grouped folds are frozen once in
