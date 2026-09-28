@@ -1,0 +1,5 @@
+# Hidden from default searches (ripgrep and similar tools). docs/MOVED.md stays visible.
+# Use `rg --no-ignore` for history, evidence and safety verification (AGENTS.md).
+docs/archive/
+docs/notebook_outputs/raw/
+uv.lock

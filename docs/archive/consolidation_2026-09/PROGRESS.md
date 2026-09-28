@@ -36,7 +36,7 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B step 2 reviewed and review fixes applied (2026-09-28); ANSWER_KEY Q1 and STATUS layout approved; remaining Job B steps in progress |
+| Phase | Job B remaining steps done in the cloud (2026-09-28) except fresh-agent acceptance (run 1 not accepted); explicit paths staged; stopped before the final commit |
 | Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
@@ -71,9 +71,11 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
    - Full tree verification against HEAD: Checked `git diff HEAD --name-only -- src scripts tests notebooks docs/plans` (completely empty).
 
 ## Next
-- Skill-handoff/ignore/navigation corrections, checker and per-command hook;
-  the fresh-agent test against the re-approved answer key; full Job B
-  verification and final staging. Stop before the final commit.
+- User decisions: the Q1 remedy and a new fresh-agent run (see
+  [run 1](verification/job_b_fresh_agent_test.md)); the size overrun; then the
+  final commit and push to `claude/happy-ritchie-99xmhd`.
+- On the workstation: run the checker with the Conda interpreter, and pytest
+  and `smoke_checks` against the local baseline.
 - Ask before commit, merge or push. Shared checkout remains read-only.
 
 ## Job B completed at the rule-review checkpoint
@@ -164,6 +166,34 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   which exceeds that acceptance and is reported for the user's decision.
 - No training, GPU action or held-out evaluation occurred.
 
+## Job B remaining steps (cloud, 2026-09-28)
+
+Details: [cloud review record](verification/job_b_cloud_review.json),
+`remaining_job_b_steps`.
+- Added `tools/check_docs_contract.py` (stdlib) and `.githooks/pre-commit`,
+  enabled per command only; `core.hooksPath` is not set. Checker: 188 Markdown
+  files, 789 links, 0 strict, 13 warnings (caps, six resolved TECH issues kept
+  in full, two duplicated paragraphs). 18 of 18 seeded violations fail as
+  expected; the hook blocks a broken-link commit in a throwaway clone.
+- `.ignore` added; `.aiignore` replaced by the same list (PLAN_v2
+  contradiction 11); `prepare_training_and_test_set` stays visible because the
+  user did not ask to hide it. `GEMINI.md` points to AGENTS. The gpu-use-skill
+  Handoff follows the STATUS/log rule.
+- Fresh-agent test, run 1: **not accepted.** Q2, Q5 and Q6 match; Q4 matches
+  counting the whole response; Q1 misses part of element 4; Q3 is borderline.
+  One cold-start subagent, read-only by instruction only.
+- CPU CI (stand-in for pytest): base `3c0f80c` and backup `042e93d` both show
+  3 failed, 991 passed, 40 skipped, with the same three failures; CI never
+  reaches `smoke_checks`. No local pytest or smoke run (no torch/numpy here; no
+  installs). No match to the local baseline is claimed.
+- Manifests: 10 of the 11 Phase 0 manifests pass; the same three legacy CRLF
+  CSVs fail. New observation: `pmm_replay_diagnostic_20260928/remote_SHA256SUMS`
+  lists 34 VM files absent from the repository (8 present entries match); not
+  caused by Job B.
+- `before_hashes.txt`: 1,521 entries, 0 missing, 14 changed, all documents.
+  Protected paths unchanged; source hash `adc95c42…`; playbook invariants hold.
+- Default read 27,030 bytes; PMM README 63 lines (target 60). Reported.
+
 ## Job A closeout verification
 
 - Final report: [verification/README.md](verification/README.md).
@@ -179,8 +209,11 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   or GPU action had been performed. Job A was subsequently integrated as above.
 
 ## Open questions
-- The `.aiignore` preparation-directory decision: the default proposal exposes
-  it and matches the planned `.ignore` list.
+- Fresh-agent Q1: apply the proposed PMM README wording and run a new agent?
+- Default read (27,030 bytes) and PMM README (63 lines) exceed the accepted
+  sizes.
+- `.aiignore`: `prepare_training_and_test_set` is visible (the plan's
+  default); hiding it needs the user's word.
 - Job C/D decisions remain outside this checkpoint.
 
 ## Recorded for Job C (user, 2026-09-28)
