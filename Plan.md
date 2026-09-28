@@ -151,7 +151,9 @@ before any held-out data are opened.
 The implemented five-class scheme (`five_class`) remains valid for explicitly
 labeled alternative experiments and for preserving historical evidence. It
 keeps Mn, Cu, Zn, and Fe separate while grouping Co and Ni. Use a separate run
-name and Optuna study whenever the target scheme changes.
+name and Optuna study whenever the target scheme changes. A new campaign trains
+it only in the four + five + six combination described under
+[per-campaign target selection](#per-campaign-target-selection).
 
 Metal training also has an optional **example unit**: `pocket` (the default)
 or `ion`. The [metal example terminology](#metal-example-terminology) below
@@ -195,6 +197,23 @@ five-class recipe as a direct four-class run.
 For the staged training pipeline (smoke, baseline, HPO, grouped-fold
 confirmation, final test) with copy-paste notebook configuration blocks, use
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+
+### Per-campaign target selection
+
+User decision, 2026-09-28. Before planning a new metal campaign, ask the user
+which target combination to train, and record the answer in the campaign
+README or scope:
+
+1. `six_class` only;
+2. `four_class` + `six_class`; or
+3. `four_class` + `five_class` + `six_class`.
+
+Every new campaign trains `six_class`; `five_class` is trained only together
+with both other schemes. Each chosen training objective keeps a separate run
+name and Optuna study. Every trained model is evaluated on the collapsed-four
+endpoint (Mn, Cu, Zn, Class VIII = Fe+Co+Ni); `five_class` and `six_class`
+models also keep their native metrics. Existing scopes keep their recorded
+targets. This choice authorizes no training or compute.
 
 ### Metal example terminology
 

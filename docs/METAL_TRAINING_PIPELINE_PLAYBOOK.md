@@ -5474,3 +5474,202 @@ canonical notebook additionally verifies the Stage 6B provenance artifact.
 Raw structure overlap is checked before preparation/inference and loaded-pocket
 overlap is checked before graph construction. The separate explicit debug flag
 is non-reportable and must never be pointed at the primary held-out set.
+
+## Agent stage-request protocol
+
+Relocated from `3c0f80c:AGENTS.md`; the executable stage blocks above are unchanged.
+The target-combination wording follows the user's 2026-09-28 per-campaign
+decision; it is a proposed Job B change.
+
+For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
+the specific evidence files it names. For notebook behavior questions, inspect
+the notebook itself rather than relying only on the workflow guide.
+
+To answer "what is the next metal-training step", the agent must:
+
+1. Read `EXPERIMENT_STATUS.md` to find the current stage anchor.
+2. Read the corresponding stage block in
+   `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+3. Confirm the decision gate of the previous stage was passed.
+4. Output: (a) the exact notebook configuration block to paste, (b) the
+   expected outputs/files, (c) the decision gate that determines whether to
+   proceed to the next stage. Do not invent budgets; cite the playbook stage.
+5. Never silently recommend held-out test evaluation before Stage 7, and never
+   recommend Stage 7 unless Stage 6 has selected one configuration from
+   grouped-fold confirmation or an explicitly labeled fallback, Stage 6B has
+   produced a completed/reused final full-train refit for that configuration,
+   and that refit is fixed as the Stage 7 source.
+
+Use the playbook stage names exactly:
+
+
+
+- Stage 0: environment/data readiness
+- Stage 1: 1-epoch smoke
+- Stage 2A: Only-GVP validation anchor
+- Stage 2B: baseline family comparison
+- Stage 3: Optuna plumbing debug
+- Stage 4: medium per-family Optuna, optional on G4
+- Stage 5A: serious Only-GVP HPO
+- Stage 5B: Only-ESM HPO
+- Stage 5C: GVP + late fusion HPO
+- Stage 5D: GVP + node-level late fusion HPO
+- Stage 5E: GVP + hybrid fusion HPO
+- Stage 5F: GVP + cross-attention HPO
+- Stage 5G: RING/radius-only ablation
+- Stage 6: top-K seed/split confirmation
+- Stage 6B: promotion gates and final full-train refit
+- Stage 7: one-shot held-out test
+
+The controlled comparison matrix in `Plan.md` is a required research mission,
+not an optional interpretation of unmatched historical maxima. Before claiming
+that a target formulation, fusion position, combined modality, or RING edge
+source is better, verify that the applicable candidates were compared on shared
+validation folds/seeds with paired confidence intervals and rare-class recall
+protection. The target-formulation comparison uses the common four-class view;
+the other architecture comparisons keep direct four-class training fixed.
+This separate metal-architecture matrix does not expand the initial
+metal-EC auxiliary experiment beyond Only-GVP, Only-ESM, and graph-level late
+fusion.
+Use `EXPERIMENT_STATUS.md` for the current completion state and the metal
+playbook for exact runnable blocks. If a required block is missing, document it
+in the playbook before recommending execution.
+
+## Metal Colab pipeline documentation policy
+
+When the task touches the metal-training notebook, configuring a stage, or
+planning the next Optuna sweep:
+
+- Treat `notebooks/DeepMzyme_training_colab.ipynb` as implemented behavior and
+  the live notebook-default surface.
+- Treat `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` as the exact stage-parameter
+  recipe; it owns canonical stage budgets, search spaces, and decision gates.
+- Treat `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` as the option-meaning
+  reference and stage-to-option crosswalk.
+- Treat `Plan.md` as design authority and policy (selection metric, split
+  policy, held-out test rules, advanced-fusion ordering).
+- Keep mutable "current best result" status in `EXPERIMENT_STATUS.md`.
+
+Operational assumptions for this project:
+
+- Hardware: the primary route is the CLI runners on the GCP L4 VM under `gpu-use-skill`; Colab is the authorized fallback, with the notebook as secondary interface. Serious Optuna runs use the budgets in the playbook's "G4-Class Optuna Policy" subsection (historical).
+- Persistent Optuna storage is mandatory for Stage 4 and Stage 5 on both routes.
+  Colab uses persistent Drive SQLite storage. The VM route follows the general
+  artifact-persistence safeguards in `gpu-use-skill` and
+  `docs/GCP_GPU_RUNBOOK.md`; a VM-specific Optuna storage recipe is not yet
+  documented (see the consolidation B0.4 precheck).
+- Persistent Optuna studies must not silently mix incompatible `MODEL_PRESET`
+  values or incompatible search spaces. Keep
+  `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False` for reportable HPO unless the
+  user explicitly asks for a labeled recovery/debug override.
+- Stage 7 (held-out test) is one-shot per final training/refit run derived from
+  a final validation-selected configuration.
+- After Stage 6/cross-validation, the selected configuration must be promoted
+  and trained/refit once before held-out testing. Stage 6 selects the
+  configuration, Stage 6B applies promotion gates and creates the final
+  full-train refit, and Stage 7 reports the frozen final-training
+  checkpoint/run.
+- Stage 7 reporting improvements (ensemble, calibration, temperature scaling,
+  plots, bootstrap CIs) must not weaken the one-shot policy. The primary final
+  report, final training/refit source run, ensemble source list, averaging rule,
+  and calibration rule must be fixed before opening the held-out test, and test
+  metrics must never be used to switch the primary report or choose a different
+  checkpoint/configuration.
+- Stage 6 defaults to
+  `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"` for top-K 5-fold
+  grouped validation by `pdbid` crossed with the configured `REPEAT_SEEDS`
+  model-seed list, with the same fold definitions and active seed list for
+  every compared candidate. Plain `group_kfold` is a one-seed grouped-fold
+  option, and `seed_repeat` is exploratory. Candidate promotion uses paired
+  bootstrap confidence intervals and rare-class recall protection, not raw
+  validation deltas alone.
+- Stage 6B is the named validation-to-final-refit bridge. It ranks Stage 6
+  candidates by mean `val_metal_balanced_acc`, applies configurable paired-CI,
+  rare-class recall, and tie-breaker gates, then optionally trains one final
+  full non-test training-set refit for the selected configuration. Stage 6B
+  writes `stage6b_decision.json`, `stage6b_ranked_candidates.csv`,
+  `stage6b_final_refit_command.txt`, and, only after a completed/reused refit,
+  `stage6b_selected_final_refit_candidate.json`.
+- Exact executable stage values, Optuna budgets, search spaces, seed lists,
+  expected outputs, and decision gates are owned by
+  `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults should be kept
+  coordinated when they are intended to represent the current canonical workflow.
+
+## Required answer format for metal notebook stage requests
+
+When the user asks what to run next, how to configure the metal Colab notebook,
+or how to update the metal training pipeline documentation, answer using this
+format:
+
+1. Current stage assumption:
+   - State which stage is being configured.
+   - State whether the answer relies on `EXPERIMENT_STATUS.md` or is a fresh
+     validation-only plan.
+
+2. Exact notebook block:
+   - Copy the block from `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
+   - Do not invent budgets.
+   - Do not silently change `OPTUNA_TARGET_COMPLETE_TRIALS`,
+     `MAX_EPOCHS_PER_TRIAL`, `OPTUNA_N_STARTUP_TRIALS`, search ranges, seed
+     lists, or final-test flags.
+
+3. Safety checks:
+   - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final
+     stages.
+   - Confirm the user-chosen target combination for a new metal campaign
+     (six only, four + six, or four + five + six;
+     [Plan](../Plan.md#per-campaign-target-selection)); ask if it is not recorded.
+     Each chosen scheme uses a separately named run/study:
+     `METAL_LABEL_SCHEME = "four_class"` for the direct arm; `six_class`
+     reports `val_metal_collapsed4_balanced_acc` on the common endpoint while
+     retaining native six-class metrics; `five_class` only together with both.
+     For PMM core v2, preserve the separately named `five_class` arm in
+     `docs/plans/pmm_core_scope_v2.json`, its native metrics and common-four
+     comparison; direct-four remains the primary formulation. If the paired playbook blocks have not
+     yet been reconciled, update the playbook before recommending execution.
+   - Confirm `SELECTION_METRIC = "val_metal_balanced_acc"`.
+   - Confirm `VAL_FRACTION = 0.15` and `SPLIT_BY = "pdbid"` unless the stage is
+     Stage 6 grouped-fold confirmation or an explicitly labeled new split
+     experiment.
+   - For Stage 6 fold-plus-seed confirmation, confirm
+     `TOP_CONFIG_REEVALUATION_MODE = "group_kfold_seed_repeat"`,
+     `SEED_REPEAT_N_FOLDS = 5`, a fixed `SEED_REPEAT_SPLIT_SEED`, and shared
+     fold definitions and active seed list for every compared candidate. If
+     `TOP_CONFIG_REEVALUATION_MODE = "group_kfold"` is used, label it as
+     one-seed grouped-fold confirmation because only the first `REPEAT_SEEDS`
+     value is active.
+   - For Stage 6B, confirm the Stage 6 artifacts exist, promotion ranks by
+     mean `val_metal_balanced_acc`, paired-CI and rare-recall gates are
+     configured, `LAUNCH_STAGE6B_FINAL_REFIT` is still `False` during preview,
+     and the final refit uses the full non-test training set with no held-out
+     test evaluation.
+   - Confirm one `MODEL_PRESET` per Optuna study.
+   - Confirm persistent Drive SQLite storage for serious Optuna stages on the Colab route.
+   - Confirm incompatible persistent-study reuse remains blocked unless an
+     explicit recovery/debug override is requested.
+
+4. Expected outputs:
+   - List the exact expected CSV/JSON/Markdown files for that stage.
+   - Identify where the exact run configuration is saved (`run_config.json` /
+     `run_metadata.json`; notebook-generated `active_run_config.json` and
+     `active_run_config.md`).
+
+5. Decision gate:
+   - State what must be true before moving to the next stage.
+   - Include held-out-test leakage, expected files, selection metric,
+     `MODEL_PRESET`/Optuna-study compatibility where applicable, completed
+     trial/run counts, paired bootstrap CI requirements where applicable, and
+     rare-class recall protection.
+   - For Stage 6, Stage 6B, and Stage 7 transitions, include the required
+     Stage 6B final training/refit run between validation/CV selection and
+     held-out testing.
+
+If the requested stage block is missing or incomplete, update
+`docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` first instead of patching the answer
+with undocumented values.
+
+When editing the metal-pipeline documents together, never copy full
+configuration blocks into `Plan.md`, `AGENTS.md`, or
+`docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable stage blocks
+belong in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults may be
+updated separately to match the canonical workflow.

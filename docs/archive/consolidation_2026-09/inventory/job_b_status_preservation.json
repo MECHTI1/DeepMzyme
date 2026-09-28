@@ -1,0 +1,751 @@
+{
+  "base": "3c0f80c",
+  "sources": {
+    "3c0f80c": {
+      "sha256": "d92f7000f8e402b6de9165e7a36559df6e8a5ff71c172be264c70cecfaa5c410",
+      "lines": 548
+    },
+    "9a25f36^": {
+      "sha256": "854030df383a804857fafb225f9769cfc8d185cf0e610db56c256b2e13f2d97c",
+      "lines": 585
+    },
+    "9a069d2^": {
+      "sha256": "d150a367449282ad4ee2119ca667175290fbf33c619cbf813ea14caeec03ffd5",
+      "lines": 670
+    },
+    "b45b893": {
+      "sha256": "98d1c35a396d930252eabbdac37a5a834a9165fc646e48b4f17877007f882f71",
+      "lines": 476
+    }
+  },
+  "blocks": [
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 1,
+      "last_line": 9,
+      "sha256": "a55d1be0d496869ecb539dc01472006410f80738bb59df7756eeabccf72157c4",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 10,
+      "last_line": 38,
+      "sha256": "f3b9fa9b41d06c6a19133e05b013f4b25123ab1ec502893ae45accb8992f1546",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 39,
+      "last_line": 73,
+      "sha256": "8971c6348e02bedf99819220ac1296af546e5cf7dbb2fef988689ff835f05c00",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-002"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 74,
+      "last_line": 106,
+      "sha256": "b3c2867ed0b4b96815ec31a6be5f938d22e13bdf8819f2ca4ced53448857e8ba",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-003"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 107,
+      "last_line": 139,
+      "sha256": "1a844ac551d38c37cf6d4446eb54a2166d00a67a22de6f0117f20a8fd3dbc234",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-004"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 140,
+      "last_line": 176,
+      "sha256": "3a172f155caf81ba926f4b8678742a122a4a38c7d13136f11136710b96fb3c30",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-005"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 177,
+      "last_line": 214,
+      "sha256": "32acd775b8ca5052bab393047a9e3acb002098a766e352bffcf03ed3acea652b",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-006"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 215,
+      "last_line": 258,
+      "sha256": "1b70cec1785ee0b89eb67dbe37a58e3d7d33ce395407524158c4049cb9fe6059",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-007"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 259,
+      "last_line": 309,
+      "sha256": "406d1afaf315e7cba2ac1bbad8a3f02f1aaf72d22dc5e01eda0ea82e1853d4db",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-008"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 310,
+      "last_line": 352,
+      "sha256": "a9925490be4b7055cde3631316f43b6f680224e6f023bbb81c1d5cc3d0287d0d",
+      "log": "docs/campaigns/pmm_ion_metal/log.md",
+      "block": "pmm-009"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 353,
+      "last_line": 396,
+      "sha256": "9bd79e567d2fc5562f75b9c297ccba077d80e82cbed550bb58c82f018e78beda",
+      "log": "docs/campaigns/zenodo_pmm_exact_2026-09-24/log.md",
+      "block": "zenodo-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 397,
+      "last_line": 398,
+      "sha256": "afc9b22fef59cc50d059cb7d9c9c87c5e23ae6bc33443a6e697be9e6c0679e0c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-002"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 399,
+      "last_line": 411,
+      "sha256": "2e9f7df079138340a19f457a3e70095025b94a61272c9ff63359680d50bf516f",
+      "log": "docs/archive/campaigns/exact_pmm_5fold_2026-09-23/log.md",
+      "block": "exact-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 412,
+      "last_line": 427,
+      "sha256": "484ced957d1cb5d1b04f778c538025516511638ce70d4ca4c903612358ed5369",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 428,
+      "last_line": 444,
+      "sha256": "f9965462d26ce80399ef4c42133ef80438279ebfa24a1b4b4551f9371e279a9f",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-002"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 445,
+      "last_line": 469,
+      "sha256": "307c404f6b2b612a8409c57c36e3f0724fb4d124ce79102e38e3becbd304b54a",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 470,
+      "last_line": 483,
+      "sha256": "64a83406d6004756484d230084be3cc0b64a5e56fcbd6997d50ca3fd43f1ccbb",
+      "log": "docs/archive/campaigns/metal_ec1_association_2026-09-15/log.md",
+      "block": "association-001"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 484,
+      "last_line": 547,
+      "sha256": "3cd4e7a16c9a2c07e4fd41b16fe76157ea17239d680e4b7ebad5fe018c0ebc76",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-002"
+    },
+    {
+      "source": "3c0f80c:EXPERIMENT_STATUS.md",
+      "first_line": 548,
+      "last_line": 548,
+      "sha256": "81519737cf7d62578902550c62d8b30908fd5c3bd9e056d2a0cdaddafe84c0ec",
+      "log": "docs/archive/campaigns/ec1_standalone_v12_2026-09-14/log.md",
+      "block": "ec-001"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 1,
+      "last_line": 9,
+      "sha256": "42c4207440b4b814779718412a4d6625bd52f2039fd8ad14b19734a8fc53a1bd",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-003"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 10,
+      "last_line": 11,
+      "sha256": "afc9b22fef59cc50d059cb7d9c9c87c5e23ae6bc33443a6e697be9e6c0679e0c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-002"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 12,
+      "last_line": 13,
+      "sha256": "02f6f35d3217d2eec9d3acde197af71d6f95915ffee8286cba4c8f16f3b14da8",
+      "log": "docs/archive/campaigns/exact_pmm_5fold_2026-09-23/log.md",
+      "block": "exact-002"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 14,
+      "last_line": 29,
+      "sha256": "484ced957d1cb5d1b04f778c538025516511638ce70d4ca4c903612358ed5369",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-001"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 30,
+      "last_line": 46,
+      "sha256": "f9965462d26ce80399ef4c42133ef80438279ebfa24a1b4b4551f9371e279a9f",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-002"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 47,
+      "last_line": 71,
+      "sha256": "307c404f6b2b612a8409c57c36e3f0724fb4d124ce79102e38e3becbd304b54a",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-001"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 72,
+      "last_line": 85,
+      "sha256": "64a83406d6004756484d230084be3cc0b64a5e56fcbd6997d50ca3fd43f1ccbb",
+      "log": "docs/archive/campaigns/metal_ec1_association_2026-09-15/log.md",
+      "block": "association-001"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 86,
+      "last_line": 149,
+      "sha256": "3cd4e7a16c9a2c07e4fd41b16fe76157ea17239d680e4b7ebad5fe018c0ebc76",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-002"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 150,
+      "last_line": 190,
+      "sha256": "5d258b4f42695b1ca91bbbf0ca4ec36cd22a2e95a9973e243c274366b902ae75",
+      "log": "docs/archive/campaigns/ec1_standalone_v12_2026-09-14/log.md",
+      "block": "ec-002"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 191,
+      "last_line": 208,
+      "sha256": "a91863c8e90554e0238405628da1299d286cf5c3921b2c77f94b1b9b544fa608",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-004"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 209,
+      "last_line": 234,
+      "sha256": "9bfd3c539ce5c37031d33fea3b41346cda6562716d7089723e34e6473723256f",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-005"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 235,
+      "last_line": 253,
+      "sha256": "6b07aab0431e12e18bf4698a451f59cea0b8fab8ec8cffcdbc6540499c2ddb52",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-006"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 254,
+      "last_line": 270,
+      "sha256": "fca6c814bc4e3d6aeac4ea1f58e7d4643e87f2732d967f27a17af8c2dcffbdec",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-007"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 271,
+      "last_line": 287,
+      "sha256": "b7ec4b80bf629171321bd0d5f7ea6f731460f0e1d7fae041136c4706e7ed5af0",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-008"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 288,
+      "last_line": 309,
+      "sha256": "9669d0286072f6c234c1b1778b704c534a171dcc1c6aa8e29ce221152b2be476",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-009"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 310,
+      "last_line": 322,
+      "sha256": "e577513923a33f2c118b1cdd4f2f02086d4cfdda49ef9b374b3e550f45e12bf0",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-010"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 323,
+      "last_line": 338,
+      "sha256": "f800c2aff43718fc115459c44863878a139b131e69e00480bbde941bb3350b41",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-011"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 339,
+      "last_line": 414,
+      "sha256": "2c2e89efe1448b1f5ed3fcde7c52f32b1431e960955b7c4a935bb19bed23922f",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-012"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 415,
+      "last_line": 432,
+      "sha256": "e7936b155fa6cbdc5a9a0694068c254e995384d21ee3f4381fdcf7f8639ccb9c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-013"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 433,
+      "last_line": 446,
+      "sha256": "4215acc037ec02d65f5695b0fc50dc4197f1276197138ab770ffed0eec54c365",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-014"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 447,
+      "last_line": 488,
+      "sha256": "f3526d9c72c6f81bebf9f11a2ea2e9e1ebdb13ba3b43260310c0d4ee25ee1b16",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-015"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 489,
+      "last_line": 519,
+      "sha256": "be3fab110d7a070a2531118d50ed1cef2f648a4518b3bfd9302dd3fbb684c83c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-016"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 520,
+      "last_line": 558,
+      "sha256": "7519ebd041020e97b85c33ff45c9ef3ea8941aa68d1e7120122661a5f2519b98",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-017"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 559,
+      "last_line": 572,
+      "sha256": "99d9156410e143c50827f2b917490e8d792b654393dffd1fe3a3c4ab33470c17",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-018"
+    },
+    {
+      "source": "9a25f36^:EXPERIMENT_STATUS.md",
+      "first_line": 573,
+      "last_line": 585,
+      "sha256": "334d0cd47eb29de27929b849137bc28d3659b443938d23bfe879509aa07c3750",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-019"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 1,
+      "last_line": 9,
+      "sha256": "2855f4e1fcc046c3912e71ed3e5bcde79dd6fd901d8c97bdee90d058b1362bbb",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-020"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 10,
+      "last_line": 11,
+      "sha256": "afc9b22fef59cc50d059cb7d9c9c87c5e23ae6bc33443a6e697be9e6c0679e0c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-002"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 12,
+      "last_line": 27,
+      "sha256": "240a4dace182fc44fd3591261959978d35825220ed2ad63a0735c4ef962430fc",
+      "log": "docs/archive/campaigns/remote_homology_v1/log.md",
+      "block": "remote-001"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 28,
+      "last_line": 51,
+      "sha256": "01af0d6dbe0d525a1771913f948bc8b41a16ecfda6fa4be243f3da64df5cf1d5",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-003"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 52,
+      "last_line": 79,
+      "sha256": "7f88d162262f74d93be9f007a0656f43b068a339dc5d6e5d83276f80efc3e2bb",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-004"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 80,
+      "last_line": 108,
+      "sha256": "82b3d0060ff12671fa335b947c1d041b000cc1bd6e94092af1fa55d1e6049fa1",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-005"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 109,
+      "last_line": 117,
+      "sha256": "ebb0657ba524152956c77272855c69e8a2c9ad3e6fe876fb43b8032673a51f78",
+      "log": "docs/campaigns/metal_single_gpu/log.md",
+      "block": "single-006"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 118,
+      "last_line": 142,
+      "sha256": "307c404f6b2b612a8409c57c36e3f0724fb4d124ce79102e38e3becbd304b54a",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-001"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 143,
+      "last_line": 156,
+      "sha256": "64a83406d6004756484d230084be3cc0b64a5e56fcbd6997d50ca3fd43f1ccbb",
+      "log": "docs/archive/campaigns/metal_ec1_association_2026-09-15/log.md",
+      "block": "association-001"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 157,
+      "last_line": 220,
+      "sha256": "3cd4e7a16c9a2c07e4fd41b16fe76157ea17239d680e4b7ebad5fe018c0ebc76",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-002"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 221,
+      "last_line": 261,
+      "sha256": "5d258b4f42695b1ca91bbbf0ca4ec36cd22a2e95a9973e243c274366b902ae75",
+      "log": "docs/archive/campaigns/ec1_standalone_v12_2026-09-14/log.md",
+      "block": "ec-002"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 262,
+      "last_line": 279,
+      "sha256": "a91863c8e90554e0238405628da1299d286cf5c3921b2c77f94b1b9b544fa608",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-004"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 280,
+      "last_line": 305,
+      "sha256": "9bfd3c539ce5c37031d33fea3b41346cda6562716d7089723e34e6473723256f",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-005"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 306,
+      "last_line": 324,
+      "sha256": "6b07aab0431e12e18bf4698a451f59cea0b8fab8ec8cffcdbc6540499c2ddb52",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-006"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 325,
+      "last_line": 341,
+      "sha256": "fca6c814bc4e3d6aeac4ea1f58e7d4643e87f2732d967f27a17af8c2dcffbdec",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-007"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 342,
+      "last_line": 358,
+      "sha256": "b7ec4b80bf629171321bd0d5f7ea6f731460f0e1d7fae041136c4706e7ed5af0",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-008"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 359,
+      "last_line": 380,
+      "sha256": "9669d0286072f6c234c1b1778b704c534a171dcc1c6aa8e29ce221152b2be476",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-009"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 381,
+      "last_line": 393,
+      "sha256": "e577513923a33f2c118b1cdd4f2f02086d4cfdda49ef9b374b3e550f45e12bf0",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-010"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 394,
+      "last_line": 409,
+      "sha256": "f800c2aff43718fc115459c44863878a139b131e69e00480bbde941bb3350b41",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-011"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 410,
+      "last_line": 485,
+      "sha256": "2c2e89efe1448b1f5ed3fcde7c52f32b1431e960955b7c4a935bb19bed23922f",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-012"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 486,
+      "last_line": 503,
+      "sha256": "e7936b155fa6cbdc5a9a0694068c254e995384d21ee3f4381fdcf7f8639ccb9c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-013"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 504,
+      "last_line": 517,
+      "sha256": "4215acc037ec02d65f5695b0fc50dc4197f1276197138ab770ffed0eec54c365",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-014"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 518,
+      "last_line": 569,
+      "sha256": "b21c03a83e6142b4b1046f778a8942e4552ace72eb8d60c5bbd6b5599947b5b9",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-021"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 570,
+      "last_line": 601,
+      "sha256": "7d41f57cad9057afc86d11655e4f458f6562678526b85f482a3b494b36f8d924",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-022"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 602,
+      "last_line": 643,
+      "sha256": "1e127f6f571557b02ec1e478da46b4f6cdcf9786e7bf7b23c416cb831f71fbb1",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-023"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 644,
+      "last_line": 657,
+      "sha256": "99d9156410e143c50827f2b917490e8d792b654393dffd1fe3a3c4ab33470c17",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-018"
+    },
+    {
+      "source": "9a069d2^:EXPERIMENT_STATUS.md",
+      "first_line": 658,
+      "last_line": 670,
+      "sha256": "334d0cd47eb29de27929b849137bc28d3659b443938d23bfe879509aa07c3750",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-019"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 1,
+      "last_line": 9,
+      "sha256": "c135a56ad81affa6d62792ac46951f565c99c07fabaa287616ee434d18d3c636",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-024"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 10,
+      "last_line": 11,
+      "sha256": "afc9b22fef59cc50d059cb7d9c9c87c5e23ae6bc33443a6e697be9e6c0679e0c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-002"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 12,
+      "last_line": 71,
+      "sha256": "a81c7d8c21ec8e7cba6d1bf8df5ba9a074cae784a160970385f4515cf12644a7",
+      "log": "docs/archive/campaigns/metal_pilots_2026-09-15/log.md",
+      "block": "pilots-003"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 72,
+      "last_line": 112,
+      "sha256": "af3bf7be6ca5280e07c46cd871516b666acaf60d8f5aff5da37894b30a0cb7d3",
+      "log": "docs/archive/campaigns/ec1_standalone_v12_2026-09-14/log.md",
+      "block": "ec-003"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 113,
+      "last_line": 129,
+      "sha256": "bffc6c437f29efe6a484b936377e346b4e5e4a57eb8ae906b06e96d6f56020b5",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-025"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 130,
+      "last_line": 154,
+      "sha256": "0cf17e58da462dd6be7e75d0b3e5f539369e215fb0001fbef9ff5024982120b8",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-026"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 155,
+      "last_line": 172,
+      "sha256": "33b77224f8fc24ad7ec7034c4dcaf21214232b72b6d4d0bdd4aed8f2035bb7c3",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-027"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 173,
+      "last_line": 189,
+      "sha256": "92381b7411d4a04f00832c64913711f7d30f4a9066da3a29d581fa39ab867736",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-028"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 190,
+      "last_line": 206,
+      "sha256": "85fe971a70fb65b0c79dd9a87f22ebd1a5d58173d41ac8051326724b6f99baac",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-029"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 207,
+      "last_line": 228,
+      "sha256": "50eac42a1a551243103798ef6ec4bfc50257a19d2b89b301e7505dbc52bec60a",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-030"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 229,
+      "last_line": 241,
+      "sha256": "e577513923a33f2c118b1cdd4f2f02086d4cfdda49ef9b374b3e550f45e12bf0",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-010"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 242,
+      "last_line": 257,
+      "sha256": "f800c2aff43718fc115459c44863878a139b131e69e00480bbde941bb3350b41",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-011"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 258,
+      "last_line": 333,
+      "sha256": "2c2e89efe1448b1f5ed3fcde7c52f32b1431e960955b7c4a935bb19bed23922f",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-012"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 334,
+      "last_line": 351,
+      "sha256": "e7936b155fa6cbdc5a9a0694068c254e995384d21ee3f4381fdcf7f8639ccb9c",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-013"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 352,
+      "last_line": 365,
+      "sha256": "4215acc037ec02d65f5695b0fc50dc4197f1276197138ab770ffed0eec54c365",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-014"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 366,
+      "last_line": 406,
+      "sha256": "4abeaaba1d0cee3b5b60f957fc10e20972035d45cb5e16938d624f1bf9e879fd",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-031"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 407,
+      "last_line": 422,
+      "sha256": "b7e128536942ac79ddc052decad2ec4a3da9927959455f85022d41a6c7676e11",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-032"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 423,
+      "last_line": 450,
+      "sha256": "15909d435d0ef60be27e3fa777d05f37004f6dd76a2ca06bbc93c4b3f6c95faa",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-033"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 451,
+      "last_line": 463,
+      "sha256": "2c5ceb20bb964e82779802cacdb5feda8b80c4d966749c33546969f53931b241",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-034"
+    },
+    {
+      "source": "b45b893:EXPERIMENT_STATUS.md",
+      "first_line": 464,
+      "last_line": 476,
+      "sha256": "334d0cd47eb29de27929b849137bc28d3659b443938d23bfe879509aa07c3750",
+      "log": "docs/archive/campaigns/project_status_2026-09/log.md",
+      "block": "project-019"
+    }
+  ]
+}
