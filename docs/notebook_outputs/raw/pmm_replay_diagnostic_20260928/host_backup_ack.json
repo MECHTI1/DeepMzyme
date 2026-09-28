@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "session_id": "session-20260927T234132Z-8191aea8",
+  "verified_at_utc": "2026-09-28T00:03:13Z",
+  "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/replay_diagnostic_20260928",
+  "manifest": "remote_SHA256SUMS",
+  "manifest_sha256": "591173f68f0bbbc695d399e624462a0404ee09e63d5eb0146db754581a9e2f35",
+  "file_count": 42,
+  "all_file_hashes_match": true,
+  "completed_gpu_evaluations": 20,
+  "training_performed": false
+}

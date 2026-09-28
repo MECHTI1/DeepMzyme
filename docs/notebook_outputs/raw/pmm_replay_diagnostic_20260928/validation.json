@@ -1,0 +1,13 @@
+{
+  "diagnostic_tests": 17,
+  "agreement_consumer_tests": 52,
+  "controller_report_tests": 6,
+  "raw_graph_cache_tests_previously_passed_unchanged": 23,
+  "new_gpu_work_for_consumer_review": false,
+  "frozen_source_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "consumer_sha256": "247a979a087c02ab18f6b123322a3e17d4476e8108a853ffb58dc55629cd1413",
+  "agreement_report_sha256": "8887fc8a144ca203354254cac96ca268c77699a592bdcd9fc441ad35fe294b47",
+  "all_nine_rechecked_on_cpu": true,
+  "legacy_passes": 8,
+  "v2_1_qualified": 9
+}

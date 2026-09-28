@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-28T00:11:44.377555+00:00",
+  "status": "verified_closed",
+  "session": {
+    "active": false,
+    "gross_usd_per_hour": 0.879172,
+    "instance_id": "3144565200755786222",
+    "max_run_duration_s": 2520,
+    "project": "deepmzyme-gpu-vm",
+    "session_id": "session-20260927T234132Z-8191aea8",
+    "session_start": "2026-09-27T23:41:32Z",
+    "termination_ts": "2026-09-28T00:23:23Z",
+    "vm_name": "deepmzyme-l4",
+    "zone": "us-central1-c",
+    "session_stop": "2026-09-28T00:04:22Z",
+    "elapsed_running_s": 1371,
+    "estimated_gross_cost_usd": 0.3347
+  },
+  "provider_state": "TERMINATED",
+  "provider_status_verified_at_utc": "2026-09-28T00:05:21Z",
+  "backup": {
+    "schema_version": 1,
+    "session_id": "session-20260927T234132Z-8191aea8",
+    "verified_at_utc": "2026-09-28T00:03:13Z",
+    "verified_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/replay_diagnostic_20260928",
+    "manifest": "remote_SHA256SUMS",
+    "manifest_sha256": "591173f68f0bbbc695d399e624462a0404ee09e63d5eb0146db754581a9e2f35",
+    "file_count": 42,
+    "all_file_hashes_match": true,
+    "completed_gpu_evaluations": 20,
+    "training_performed": false
+  },
+  "diagnostic": {
+    "original_passes": 10,
+    "strict_passes": 10,
+    "all_classes_stable": true,
+    "strict_cross_process_bitwise_identical": true,
+    "original_pairwise_max_native_probability_difference": 2.3245811462402344e-06,
+    "predictive_inputs_matched": true,
+    "disabled_ec_target_audited": true,
+    "cpu_equivalence_scope": "first 16-example batch plus source branch audit"
+  },
+  "agreement": {
+    "policy_id": "pmm-screen-agreement-v2.1",
+    "policy_sha256": "44d595b2a73718c8c30540fd68f0781a26dc80c85616811ef607158805b983b6",
+    "consumer_sha256": "084a3f4df2d8526a80766c4fcc50a45666fc558f454f5918284791c1725cd1e3",
+    "qualified": 9,
+    "legacy_passes": 8,
+    "trained": 9,
+    "required_full_grid_fits": 45,
+    "remaining_untrained_fits": 36,
+    "legacy_runner_gate_changed": false
+  },
+  "campaign_vm_use": {
+    "running_hours": 9.306111111111111,
+    "estimated_running_gross_usd": 8.1815,
+    "basis": "Unique STOPPED controller ledger sessions; running gross includes active-disk pro-rata, excludes additional retained-storage charges."
+  },
+  "persistent_storage": {
+    "disks": [
+      {
+        "name": "deepmzyme-l4-recovery-e9ff994df82d",
+        "sizeGb": "150",
+        "status": "READY",
+        "type": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/diskTypes/pd-balanced",
+        "users": [
+          "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/instances/deepmzyme-l4"
+        ]
+      }
+    ],
+    "estimated_usd_per_month": 15,
+    "controller_inventory_discrepancy": "00:06:42 report said none; direct provider disk describe confirmed this retained disk. No deletion was requested or performed."
+  },
+  "remaining_grid_forecast": {
+    "fits": 36,
+    "counts": {
+      "only_esm": 12,
+      "only_gvp": 12,
+      "gvp_late_fusion": 12
+    },
+    "measured_warm_fit_replay_seconds": {
+      "only_esm": 1025.194878578186,
+      "only_gvp": 1519.0310599803925,
+      "gvp_late_fusion": 1647.3044800758362
+    },
+    "per_fit_admission_transfer_allowance_seconds": 240,
+    "cold_profile_allowance_seconds": 3600,
+    "additional_vm_hours": 17.371768062114715,
+    "additional_running_gross_usd": 15.272772070705518,
+    "projected_cumulative_running_hours": 26.677879173225826,
+    "limitations": [
+      "Extrapolation across remaining frozen folds; measured fold-0 family timings are not guarantees.",
+      "Cold graph/replay and session-boundary overhead may differ; preserve actual per-unit admission gates.",
+      "Excludes separately gated final refits and held-out/reference evaluation."
+    ]
+  },
+  "budget_decision": {
+    "status": "pending_user_answer",
+    "proposed_total_vm_hours": 30,
+    "proposed_total_gross_usd": 34,
+    "approval_received": false,
+    "controller_caps_changed": false
+  },
+  "training_performed": false,
+  "held_out_access": false,
+  "promoted": false,
+  "full_grid_budget_activated": false
+}

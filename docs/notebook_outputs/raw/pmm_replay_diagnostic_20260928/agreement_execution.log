@@ -1,0 +1,17 @@
+Checking only_esm__four_class__none
+Checking only_esm__six_class__none
+Traceback (most recent call last):
+  File "/home/mechti/PycharmProjects/DeepMzyme/audit_pmm_screen_agreement.py", line 386, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/mechti/PycharmProjects/DeepMzyme/audit_pmm_screen_agreement.py", line 351, in main
+    report["arms"][config_id] = inspect_unit(paths, args.train_dir, configs[config_id], membership, policy)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mechti/PycharmProjects/DeepMzyme/audit_pmm_screen_agreement.py", line 276, in inspect_unit
+    margins = validate_probabilities(original, labels, policy)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mechti/PycharmProjects/DeepMzyme/audit_pmm_screen_agreement.py", line 74, in validate_probabilities
+    require(abs(sum(values) - 1) <= allowance, "Probability vector does not sum to one")
+  File "/home/mechti/PycharmProjects/DeepMzyme/audit_pmm_screen_agreement.py", line 24, in require
+    raise ValueError(message)
+ValueError: Probability vector does not sum to one

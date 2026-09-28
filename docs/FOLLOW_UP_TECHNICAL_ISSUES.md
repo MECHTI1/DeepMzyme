@@ -955,8 +955,9 @@ runner's default behavior.
 
 ## TECH-023 — Full-fit GVP independent replay exceeds the frozen probability tolerance
 
-**Status:** Open; observed 2026-09-27. Completed training is preserved but not
-certified; frozen source and tolerance remain unchanged.
+**Status:** Numerically diagnosed 2026-09-28; retrospective screen agreement
+qualified under v2.1. The frozen runner's original certification gate remains
+open. Training, source, original tolerance and historical receipts are unchanged.
 
 `only_gvp__six_class__none__fold0__seed42` completed all 50 epochs. Independent
 replay reproduced all 1,492 ion identities, labels, native/common-four class
@@ -979,12 +980,53 @@ validation order, model weights/buffers, graph options and saved normalization.
 Both processes receive the campaign environment; no active evaluation dropout
 or autocast was found. With `deterministic=false`, CUDA message accumulation
 and pooling reductions are a plausible cause, not a proven explanation.
-Bitwise equality of training and independently rebuilt graph tensors has not
-been established. The second replay reused all 1,492 cached validation graphs
+At the original failure, bitwise equality of training and independently rebuilt
+graph tensors had not been established. The second replay reused all 1,492 cached validation graphs
 and still failed, so repeated cold preparation alone does not resolve the issue.
 
-Before certifying this result, diagnose graph-tensor equality and numerical
-reproducibility, then version and validate any necessary replay-policy or
-determinism change consistently across compared configurations. Do not edit
-saved probabilities, loosen the frozen tolerance for this arm alone, repeatedly
-retry until a pass, or retrain the completed fit merely to replace this evidence.
+The subsequent [diagnostic](notebook_outputs/raw/pmm_replay_diagnostic_20260928/README.md)
+found one inactive EC target difference (`y_ec=0` versus `-1`) in every graph;
+all predictive tensors and metal labels match their unique preserved cache
+candidate. The EC head is disabled. A source audit and exact CPU logits/loss
+check on the first 16-example batch establish the scoped nonpredictive exception;
+all 94 normalized batches retain exact predictive-field equality. Original
+in-memory training tensors were not captured contemporaneously, so cache
+provenance remains retrospective.
+
+Ten original-setting evaluations on fixed inputs vary by up to `2.324581e-6`
+between passes. Ten strict deterministic evaluations are bitwise identical
+across two processes; all native/common-four class predictions stay unchanged.
+The explicitly versioned [v2.1 policy](plans/pmm_screen_agreement_v2_1.json)
+checks every preserved replay across all nine screen configurations, with one
+fixed absolute `1e-5` bound and exact discrete outputs/metrics. All nine pass
+this supplemental agreement check; only eight pass the original contract.
+The initial v2 report's over-strict auxiliary simplex check and its correction
+to the pre-existing validator allowance are both preserved and disclosed.
+
+Remaining implementation boundary: the frozen `completed_run_receipt` and
+runner do not consume these supplemental reports. Broader continuation requires
+an explicit policy-aware integration that preserves old scientific identities.
+Do not forge a legacy receipt, broadly resume the old runner over GVP6, edit
+saved probabilities, retry until a pass, or retrain the completed fit merely
+to replace this evidence.
+
+## TECH-024 — GPU controller could report failed inventory as no storage
+
+**Status:** Fixed in the installed controller, 2026-09-28; offline report
+regressions passed. No allocation limits or provider configuration changed.
+Controller commit
+[`1fe09d7`](https://github.com/MECHTI1/deepmzyme-vm-manager/commit/1fe09d7fbeaeda993bd36fc754c8bb88538354f5)
+is pushed; a fresh read-only report correctly lists the retained disk.
+
+During diagnostic closeout, `vm-report --no-ssh` printed no persistent resources
+even though direct provider inspection confirmed the attached 150-GB recovery
+disk. `lifecycle.inventory()` used `check=False` and converted failed or missing
+list results to empty lists. It now requires successful list responses; failed
+or malformed responses become **UNKNOWN** in the report. Confirmed empty lists
+still mean no resources. Tests cover each inventory type, missing responses,
+empty inventories and visibility of retained storage.
+
+The [closeout evidence](notebook_outputs/raw/pmm_replay_diagnostic_20260928/verified_closeout.json)
+preserves the contradictory report and direct disk evidence. GPU compute was
+stopped; the retained disk continues to cost approximately $15/month. A failed
+inventory query must never be used as evidence that storage charges ended.

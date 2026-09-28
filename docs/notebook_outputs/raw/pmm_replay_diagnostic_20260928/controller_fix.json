@@ -1,0 +1,13 @@
+{
+  "commit": "1fe09d7fbeaeda993bd36fc754c8bb88538354f5",
+  "repository": "https://github.com/MECHTI1/deepmzyme-vm-manager",
+  "branch": "main",
+  "pushed": true,
+  "targeted_offline_report_tests": 6,
+  "post_fix_provider_state": "TERMINATED",
+  "post_fix_report": "vm_report_after_inventory_fix.log",
+  "retained_disk_size_gb": 150,
+  "retained_disk_estimated_usd_per_month": 15,
+  "limits_changed": false,
+  "lifecycle_action_performed": false
+}

@@ -1,0 +1,4 @@
+WARNING: ZONE=us-central1-c differs from the approved baseline us-central1-a; this must be an explicit user decision
+Stopping deepmzyme-l4 ...
+deepmzyme-l4 state: TERMINATED
+Session session-20260927T234132Z-8191aea8: ran 0h 22m, ESTIMATED GROSS cost $0.33 (list rate $0.87917/h; no credits subtracted)
