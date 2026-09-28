@@ -1030,3 +1030,42 @@ The [closeout evidence](notebook_outputs/raw/pmm_replay_diagnostic_20260928/veri
 preserves the contradictory report and direct disk evidence. GPU compute was
 stopped; the retained disk continues to cost approximately $15/month. A failed
 inventory query must never be used as evidence that storage charges ended.
+
+## TECH-025 — Core scope needs a separate assessment and promotion bridge
+
+**Status:** Open after the user-approved 2026-09-28 scope amendment; the new
+root-level core entry point rejects execution while TECH-023/TECH-025 remain
+unresolved. Its CPU preview is implemented and tested. No scientific source,
+historical identity, receipt or probability threshold was changed.
+
+The frozen `scripts/run_metal_5fold_cv.py` applies family/target/readout/fold
+filters only after dispatching `assess` and refit actions. Consequently,
+`--readouts none --campaign-action assess` still assesses nine configurations;
+`pmm_final_report.select_configuration()` also requires that complete grid.
+The active scope now requires six ordinary-readout configurations on five
+folds. Training filters alone cannot change the completion or selection rules.
+
+Implement a separately identified core assessor and promotion/refit bridge
+without rewriting frozen training source or historical evidence. It must:
+
+- Bind `pmm_core_scope_v1` (or an explicitly reviewed successor), all 30 core
+  units, five compatible PMM folds, shared source/fold/seed identities and
+  complete UID-level OOF coverage. Keep the three awareness arms paused.
+- Integrate a prospectively fixed completion/replay rule with TECH-023. The
+  existing v2.1 consumer covers nine stored fold-0 exports only; it must not
+  silently certify future folds or be presented as a legacy receipt.
+- Preserve native checkpoint selection, common-four target comparisons, all
+  class recalls, bootstrap and rare-class gates. Retain the original
+  six-contrast simultaneous correction despite the post-screen scope reduction.
+- Write distinct `core_cv_*` and `core_validation_decision.json`, binding the
+  scope, source and replay policy. Do not overwrite legacy assessment artifacts
+  or substitute missing awareness metrics merely to satisfy the old selector.
+- Make final selection/refit consume that exact core decision and exclude
+  paused configurations. Preserve the complete full-train refit and frozen
+  reporting-source requirement before any separately authorized held-out use.
+
+Add regressions for incomplete core grids, incompatible identities, paused
+arms, altered replay evidence, incorrect OOF coverage and premature refit/test
+access before enabling the entry point. Flipping its readiness field alone
+does not resolve these prerequisites. Exact future commands belong in the
+[metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation).

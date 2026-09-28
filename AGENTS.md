@@ -186,6 +186,11 @@ claim or change.
 - `Plan.md`: design authority for architecture, experiment policy, validation
   selection, and held-out test rules. Contains the document map for all
   related files.
+- `docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`: active scope
+  of the known-ion PMM comparison. Resolve its scope manifest and the metal
+  playbook's guarded entry point before resuming; the frozen low-level runner's
+  full grid is not automatically the current authorized queue. Preserve old
+  scientific identities and distinguish active, paused and historical arms.
 - `docs/README.md`: top-level documentation index for validation/testing,
   notebook, playbook, copied-output documentation, Drive/local output
   handling, and copied-evidence placement rules.

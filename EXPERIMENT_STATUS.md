@@ -5,7 +5,44 @@ next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
-Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-28.
+Last scientific-policy documentation update: 2026-09-28. Last status entry: 2026-09-28.
+
+**2026-09-28 — user-approved core scope; further binding-awareness work paused:**
+- Prioritize ordinary-readout Only-ESMC, Only-GVP and graph-level late fusion,
+  each with direct four-class and six-class training on the same five folds.
+  The active matrix is **30 fits**, with **6 trained core fits and 24 remaining**.
+  Five core fits pass legacy replay; all six have supplemental fold-0 v2.1
+  agreement. TECH-023 remains an explicit certification-integration issue.
+- Keep the three trained binding-aware fits as exploratory evidence. Their
+  twelve remaining folds, new awareness variants and awareness HPO are paused.
+  This decision follows inspection of fold 0; it is not evidence of general
+  lack of benefit. Preserve every run and the original 45-fit scope in history.
+- [Scope manifest](docs/plans/pmm_core_scope_v1.json),
+  [amended plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness),
+  and [core recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
+  now govern continuation. The root entry point previews exactly 24 core
+  candidates and refuses training/assessment/refit/test pending TECH-023 and
+  [TECH-025](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge).
+  Its 32 targeted tests passed. This amendment edits no scientific source.
+  Concurrent model/configuration edits in the shared working tree subsequently
+  changed its source identity; the guard correctly refused that checkout.
+  The isolated checkout at
+  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v1`
+  passed the same 32 tests and actual CPU preview. It preserves frozen source
+  without reverting unrelated edits or bypassing source/configuration checks.
+  Canonical `runtime/core_scope_verification.json` binds the successful preview.
+- No GPU was started, training repeated or test data accessed for this update.
+  Last verified provider state remains TERMINATED. Historical campaign use is
+  **9.3061 VM hours / $8.1815 estimated running gross**, plus retained storage.
+  Remaining core forecast: **11.91 additional VM hours / $10.47 running gross**,
+  excluding additional storage and final refits/reporting. The old 36-fit /
+  17.37-hour forecast is superseded; the calculation is saved in canonical
+  `runtime/core_scope_amendment_20260928.json`. Actual cost and source records
+  are preserved. The old 30-hour/$34 proposal remains unapproved.
+- **Next:** finish the prospective replay and core assessment/refit bridge,
+  refresh/authorize the reduced-core compute budget, then run only missing core
+  units. Do not activate awareness or count a filtered legacy assessment as
+  core completion. Final full-train refit and one-shot held-out gates remain.
 
 **2026-09-28 — numerical diagnosis complete; nine-model screen agreement verified:**
 - **9/9 trained and qualified under the explicit v2.1 agreement policy;

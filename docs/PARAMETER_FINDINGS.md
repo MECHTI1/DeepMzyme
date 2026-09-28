@@ -69,6 +69,15 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ### PMM ion campaign: single-fold target and readout comparisons
 
+**Research disposition, approved 2026-09-28:** pause further development and
+confirmation of the current binding-aware readout. Prioritize ordinary-readout
+core models under both target formulations and their matched PMM comparison;
+see the [scope amendment](plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness).
+This is a resource-prioritization decision after screening, not an equivalence
+test or a finding that binding information is generally unhelpful. The tested
+intervention changes pooling of cached embeddings; ESMC was not fine-tuned.
+Keep all screen outcomes below, including macro-F1/recall tradeoffs.
+
 On `pmm_ion_metal_v2_context`, ordinary ESMC and its `first_shell_bias`
 counterpart both selected epoch 36 of 50 and achieved **88.3945% validation
 balanced accuracy** and **84.2951% macro-F1**. All 1,492 matched ion predictions

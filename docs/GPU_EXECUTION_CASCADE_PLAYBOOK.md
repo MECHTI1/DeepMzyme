@@ -22,6 +22,14 @@ full grid; do not repeat completed smokes or preparation merely because the
 larger recipe lists them. Preserve controller caps and recorded authorization;
 use the skill's resource-state decision table before considering any new start.
 
+For the active PMM continuation, resolve the
+[core-only scope and entry point](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
+before allocation. Paused binding-aware fits are excluded from its queue and
+forecast; completed core and exploratory fits remain preserved. Resolve the
+documented replay/assessment blockers and refresh the remaining-core forecast
+under an approved compute ceiling before requesting a resource. A scope edit
+does not authorize a GPU start.
+
 After a confirmed stockout of a stopped GCP VM, the controller's bounded
 `vm-fallback` can restore its boot disk in another zone of the same region.
 The source may remain only while positively confirmed `TERMINATED`; other or
@@ -60,8 +68,8 @@ Paid Colab also has variable hardware availability and runtime limits
 - Stage inputs and caches on runtime-local disk. Verify the mounted or
   acknowledged host-pull persistence route before unattended work. Synchronize generated
   embeddings and certify their content before freezing the feature inventory.
-- For an unmeasured full campaign, run the nine-configuration training-only
-  smoke, then one complete canonical fit per family. Reuse verified completed
+- For an unmeasured campaign, smoke only the configurations in its approved
+  active scope, then measure one complete canonical fit per family. Reuse verified completed
   units; for a narrower approved screen, perform only its missing readiness
   checks and fits. Measure preparation, graph construction, training, validation,
   checkpoint/export and transfer separately, with CPU RSS and peak GPU memory.

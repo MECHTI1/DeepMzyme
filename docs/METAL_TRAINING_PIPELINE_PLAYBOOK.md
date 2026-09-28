@@ -61,23 +61,94 @@ Class weights: per training fold, `w_c = N_train / (4 n_c)` on the common four
 classes via `--metal-class-weight-mode manual`; the six-class arm assigns
 `w_VIII` to Fe, Co and Ni separately.
 
-| Family | Architecture | LR | Targets | Readout variant |
+| Family | Architecture | LR | Targets | Active readout |
 |---|---|---|---|---|
-| Only-ESM | `only_esm` | `3e-5` | `four_class`, `six_class` | `first_shell_bias` (four only) |
-| Only-GVP | `only_gvp`, raw RBF | `3e-4` | `four_class`, `six_class` | `first_shell_bias` (four only) |
-| GVP + ESMC | `gvp`, `late_fusion`, early ESM off, raw RBF | `3e-5`, GVP group `3e-4` | `four_class`, `six_class` | `first_shell_bias` (four only) |
+| Only-ESM | `only_esm` | `3e-5` | `four_class`, `six_class` | `none` |
+| Only-GVP | `only_gvp`, raw RBF | `3e-4` | `four_class`, `six_class` | `none` |
+| GVP + ESMC | `gvp`, `late_fusion`, early ESM off, raw RBF | `3e-5`, GVP group `3e-4` | `four_class`, `six_class` | `none` |
 
-`first_shell_bias` adds zero-initialized learned logit biases for the target's
+The paused `first_shell_bias` option adds zero-initialized learned logit biases for the target's
 geometric first-shell residues in each readout pooling branch (mean and
 attention; GVP and, where active, late ESM). At zero it reproduces the ordinary
 readout. With it, Only-ESM is labeled **ESMC with target-shell-conditioned
 readout**, not sequence-only.
 
-Deferred full grid: 3 families x 2 targets x 5 folds + 3 aware direct-four arms x 5 folds =
-**45 fits**, plus the PinMyMetal released-recipe comparator refit on the same
-five training partitions (CPU).
+Active core grid: **3 families × 2 targets × 5 folds = 30 fits**, with ordinary
+readout, plus the PinMyMetal released-recipe comparator on the same five
+training partitions (CPU). Preserve the completed awareness screen; its
+remaining twelve fits and further mechanism/HPO development are paused by the
+user-approved scope amendment. Do not claim completion of the original 45-fit
+grid. Both four- and six-class targets remain required.
+
+### Active core-only continuation
+
+Scope authority: [`pmm_core_scope_v1.json`](plans/pmm_core_scope_v1.json).
+Use the repository-root [`run_pmm_core_campaign.py`](../run_pmm_core_campaign.py)
+entry point. It preserves the frozen training source hash and exposes no
+binding-aware, fold-0 retry, legacy-assessment, refit or test shortcut. This is
+a scope guard around the existing runner, not a new GPU controller.
+
+Current stage is Stage 2B-style one-seed grouped-fold comparison. The completed
+fold-0 screen is reusable exploratory evidence; the recorded split, native BA
+checkpoint selection, 50 epochs and seed 42 stay fixed. The core has six trained
+fold-0 units: five legacy replay passes and one supplemental GVP6 qualification.
+The three trained awareness units stay outside core completion counts.
+
+CPU-only preview from the repository root of a checkout matching the scope's
+frozen source hash. If concurrent source changes exist, use an isolated frozen
+checkout carrying this root-level entry point and scope file; preserve the
+other work rather than bypassing the source/configuration identity guards.
+
+```bash
+PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+T=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
+C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context
+$PY run_pmm_core_campaign.py --campaign-dir "$C" --train-dir "$T" \
+  --action plan
+```
+
+The preview prints JSON with the scope/source hashes, 30 required core units and 24
+candidate selectors on folds 1–4; it does not revalidate completed fits or
+prove that a candidate is still missing. It starts no child/GPU worker and
+does not overwrite scientific artifacts. Candidate commands are preview-only.
+Save stdout to a new preview file only after the command succeeds; a failed
+source check must not truncate a previous successful preview.
+The entry point rejects existing unit artifacts before a prospective run, so
+an uncertified fit cannot silently be retrained or replayed until it passes.
+
+**Execution gate:** `execution_ready=false`. Resolve
+[TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance)
+and [TECH-025](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge)
+before enabling training. Integrate a prospectively fixed replay rule covering
+the core, preserving the old receipts and the narrower fold-0 v2.1 report.
+Implement/test a scope-bound 30-fit assessor and refit bridge. Never simply
+flip the readiness flag or reuse the old `assess` with `--readouts none`: that
+action ignores the filter. Then refresh the remaining-core forecast and resolve
+compute authority before allocation through the required GPU skill. This scope
+change does not approve the earlier 30-hour/$34 proposal or alter session/day caps.
+
+After these prerequisites, execution remains serial and one explicitly named
+missing unit at a time, through the same frozen runner's admission and
+host-pull/hash-acknowledgment protocol. All development paths keep test access
+disabled. Preserve old `run_config.json`, `run_metadata.json`, normalization,
+checkpoints, predictions, PMM outputs and failed replays; no new preparation is
+required merely because the scope changed.
+
+Core completion requires all 30 units, matched validation identities and full
+OOF coverage, five compatible PMM folds, unchanged checkpoint selection and
+rare-class protection. The future assessor must write distinct
+`core_cv_fold_metrics.csv`, `core_cv_oof_predictions.csv`,
+`core_cv_paired_deltas.csv`, and `core_validation_decision.json`, binding the
+scope, source and replay policy. The three target contrasts retain 10,000
+bootstrap resamples, seed 42, 95% intervals, 0.03 recall-drop protection and the
+original `1 - 0.05/6` simultaneous bound. Awareness contrasts are paused, not
+failed or complete. Scope-bound Stage 6B selection and a completed full-train
+refit remain mandatory before separately authorized Stage 7 reporting.
 
 ### Immediate exploratory screen: Only-ESM binding-awareness pair
+
+**Historical completed recipe. Do not launch further awareness fits.** Use
+the [active core-only continuation](#active-core-only-continuation) for new work.
 
 The user-approved next execution reuses the completed ordinary direct-four
 Only-ESM fold-0 baseline and adds only its `first_shell_bias` counterpart.
@@ -132,6 +203,10 @@ it is not a superiority claim. Later confirmation of the ESMC intervention
 requires both arms on folds 1–4, with fold 0's screening role disclosed.
 
 ### Nine-configuration fold-0 screen continuation
+
+**Historical completed recipe. Do not rerun fold 0.** Its nine-unit screen and
+original 45-fit completion language record the previous scope; the
+[active amendment](#active-core-only-continuation) now controls the queue.
 
 After the completed ESMC pair, the 2026-09-27 continuation uses the same frozen
 profile for the seven remaining fold-0/seed-42 units. Reuse preparation, smokes,
@@ -197,7 +272,12 @@ receipt into a pass. Keep both counts visible. The frozen runner cannot consume
 that report, so do not resume the affected arm through its ordinary replay
 retry path or claim full-grid completion from this screen.
 
-### Full campaign commands
+### Historical preparation commands and frozen runner behavior
+
+These commands document the preparation already completed for this campaign.
+Reuse its artifacts; do not rerun them for the scope amendment. Further
+training uses the guarded core entry point above. The original 45-fit recipe
+is preserved in Git at `f2dcc9c`.
 
 Commands (run from the repository root; `T` is the dataset's `train/`
 directory, `C` the campaign root; outputs never go under `DeepMzyme_Data/`
@@ -226,22 +306,18 @@ RUNTIME=(--session-id "${PMM_ALLOCATION_ID:?}" \
   --estimated-fit-seconds "${PMM_UNIT_SECONDS:?}" \
   --durable-root "${PMM_DURABLE_ROOT:?}" \
   --persistence-mode "${PMM_PERSISTENCE_MODE:?mounted or host_pull}")
-# Step 5 smoke: all nine configurations, 1 epoch, first class-complete smoke fold
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
-  --campaign-action smoke --device cuda "${RUNTIME[@]}"
-# Deferred full Step 6: use only under separately approved full-grid execution.
-# The immediate single-fit screen is the bounded block above.
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action plan
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
-  --campaign-action run --device cuda "${RUNTIME[@]}"
-# PinMyMetal comparator (needs imbalanced-learn; isolated venv) and assessment
+# All nine smokes and the five PMM comparator fits are already preserved.
+# For the new scope, use run_pmm_core_campaign.py --action plan above.
+# The existing comparator action verifies saved outputs when its manifest exists.
 $PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action pmm \
   --pmm-python /media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/bin/python
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action assess
 ```
 
 `--families`, `--targets`, `--readouts` and `--folds` restrict `run`/`plan` to
-a subset without changing the grid. A unit is reused only when its
+a subset without changing the frozen legacy grid. **They do not restrict
+`assess`, `refit-preview`, `refit` or `reference-test`.** Use the core entry
+point; the old assessment/promotion commands are incompatible with the new
+scope until the separate bridge is implemented. A unit is reused only when its
 `selected_checkpoint.json`, `run_metadata.json` fit status, campaign identity
 (cohort, fold membership, feature inventory, profile hash, family, target,
 readout, fold, seed, epochs) and checkpoint/prediction hashes all match; a
@@ -271,7 +347,7 @@ has been independently verified on the workstation and its acknowledgment
 returned. Consult the [GPU routing guide](GPU_EXECUTION_CASCADE_PLAYBOOK.md)
 for ownership, measured efficiency and shutdown.
 
-Expected outputs under `C`: `campaign_manifest.json`, `train_cohort.csv`,
+Preserved legacy outputs under `C`: `campaign_manifest.json`, `train_cohort.csv`,
 `train_row_dispositions.csv`, `train_audit.json`, `train_context_audit.json`, `fold_membership.csv`,
 `fold_class_weights.json`, `esm_generation_plan.{csv,json}`,
 `feature_inventory.json`, `commands/<run>.json`, per fit `run_config.json`,
@@ -282,7 +358,7 @@ Expected outputs under `C`: `campaign_manifest.json`, `train_cohort.csv`,
 selected checkpoint), `pmm_comparator/`, `cv_fold_metrics.csv`,
 `cv_oof_predictions.csv`, `cv_paired_deltas.csv`, `validation_decision.json`.
 
-Decision gate (validation only): the primary estimand is mean common-four
+Historical 45-fit decision gate (validation only): the primary estimand is mean common-four
 balanced accuracy over the five selected fold checkpoints. The six predeclared
 contrasts (six vs four per family; aware vs ordinary per direct-four family)
 use paired fold-difference bootstrap (10,000 resamples, seed 42, 95 %
@@ -295,8 +371,10 @@ inputs), and paper figures remain contextual. A complete development decision
 requires all 45 verified fits and all five compatible PMM comparator outputs;
 a neural-only grid is incomplete.
 
-Stage 6B and Stage 7 below implement the separately authorized secondary PMM
-reference route. They do not designate the project's primary final test.
+The frozen Stage 6B and Stage 7 implementation belongs to that historical
+nine-configuration scope. It must not consume the new core decision until
+TECH-025 supplies a scope-aware bridge. The intended secondary PMM reference
+route does not designate the project's primary final test.
 The fixed fallback is ordinary direct-four Only-GVP. A challenger must pass
 its applicable matched contrast and paired-CI/rare-recall gates against that
 control. Rank eligible configurations by mean common-four balanced accuracy;
@@ -304,22 +382,10 @@ within 0.002, prefer mean minimum recall, worst-fold accuracy, lower fold SD,
 then the declared complexity proxy and configuration ID. Select only a
 configuration actually evaluated in the grid.
 
-```bash
-# Preview first: writes the frozen selection and exact full-train command.
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
-  --campaign-action refit-preview --device cuda
-# Once the complete validation decision passes: 50 full-train epochs, seed42,
-# terminal epoch50 checkpoint; full-training normalization/common-four weights.
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
-  --campaign-action refit --device cuda "${RUNTIME[@]}" \
-  --pmm-python "${PMM_RELEASED_PYTHON:?}"
-# Both final refits must be complete before even reference input certification.
-$PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T \
-  --campaign-action reference-test --device cuda "${RUNTIME[@]}" \
-  --pmm-python "${PMM_RELEASED_PYTHON:?}" \
-  --reference-dir "${PMM_REFERENCE_DIR:?original dataset/test}" \
-  --reference-source-csv "${PMM_REFERENCE_SOURCE:?pinned classmodel_test_set}"
-```
+The historical refit/reference commands remain recoverable at Git revision
+`f2dcc9c`; they are deliberately omitted from the current runnable recipe.
+Implement and validate the core-aware bridge first, then document its exact
+preview, full-train refit and separately authorized one-shot reporting commands.
 
 Preview outputs: `stage6b_decision.json`, `stage6b_ranked_candidates.csv`, and
 `stage6b_final_refit_command.txt`. Only a completed terminal refit creates
