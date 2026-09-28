@@ -202,9 +202,13 @@ after its execution stops. Provider controls remain mandatory.
 
 ## Handoff
 
-Update the campaign's existing runtime receipt/handoff and current-status owner:
-authorization scope, attempts/errors, resource identity, actual hardware,
-allocation start/deadline, budget spent/remaining, exact active/completed unit,
-source/input identity, verified artifact location, and provider stop evidence.
-Keep live state and measured results out of this skill. Distinguish prepared,
-running, verified complete and blocked; report the precise next action.
+Update the campaign's existing runtime receipt/handoff: authorization scope,
+attempts/errors, resource identity, actual hardware, allocation start/deadline,
+budget spent/remaining, exact active/completed unit, source/input identity,
+verified artifact location, and provider stop evidence. Then update current
+status by the STATUS rule: copy any dated root `EXPERIMENT_STATUS.md` text you
+replace into the campaign's `docs/campaigns/<id>/log.md` first, then overwrite
+STATUS in its layout, including the `Authorized now:` and `GPU/VM:` lines (last
+verified state, time and retained cost). Keep live state and measured results
+out of this skill. Distinguish prepared, running, verified complete and blocked;
+report the precise next action.

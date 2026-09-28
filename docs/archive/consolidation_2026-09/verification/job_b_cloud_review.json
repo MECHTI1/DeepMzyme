@@ -53,7 +53,7 @@
     "default_read_note": "27,026 bytes: over the PLAN_v2 25-KB target and above the ~25.8 KB the user accepted until Job C, because of the approved STATUS layout (+983 bytes) and AGENTS review fixes (+219 bytes); reported for the user's decision",
     "playbook_fences": "metal 67 and EC 23 fences byte-identical; heading and first-block hash invariants hold"
   },
-  "not_claimed": "No pytest or smoke run yet, no checker, hook or ignore change, no fresh-agent acceptance, and no check of the workstation, shared checkout, frozen checkouts or live VM state. The local job_b_review_invariants.json remains the dated local record.",
+  "not_claimed": "No local pytest or smoke run (this container's python3 lacks torch and numpy; nothing was installed); GitHub Actions CPU CI is the stand-in and never reaches smoke_checks. No match to the local Job A pytest/smoke baseline is claimed. No fresh-agent acceptance: run 1 did not match Q1 and was borderline on Q3. No check of the workstation, shared checkout, frozen checkouts, Conda interpreter, controller or live VM state. The local job_b_review_invariants.json remains the dated local record.",
   "approval": "User review 2026-09-28: named review items approved (RULES); ANSWER_KEY Q1 re-approved with the user's element 4; STATUS layout approved with additions. Rows not named are not individually reviewed.",
   "review_fixes_after_e261680": [
     "A: remaining target wording fixed in Plan, the notebook guide and root README; other meanings of 'primary' kept and listed",
@@ -62,5 +62,78 @@
     "D: inventory approvals limited to named rows; PROGRESS line numbers at 3c0f80c; AGENTS 17 and 26; ANSWER_KEY sources; PLAN_v2 supersession note; Job C items",
     "E: ANSWER_KEY Q1 element 4 set to the user-approved text",
     "F: EXPERIMENT_STATUS.md rewritten to the approved layout with fixed lines and a caveats slot"
-  ]
+  ],
+  "remaining_job_b_steps": {
+    "date": "2026-09-28",
+    "scope": "working tree = 042e93d plus uncommitted: gpu-use-skill Handoff, GEMINI.md, .ignore, .aiignore, tools/check_docs_contract.py, .githooks/pre-commit, AGENTS checker/hook/ignore lines, RULES status notes, this record, PROGRESS and the fresh-agent record",
+    "interpreter": "system python3 3.11.15 (stdlib only); the Conda path named in AGENTS and the hook is absent in this container",
+    "checker": {
+      "file": "tools/check_docs_contract.py (stdlib only; exit 1 on any STRICT finding)",
+      "strict_rules": [
+        "links",
+        "anchors",
+        "allowed-files",
+        "status",
+        "campaigns",
+        "follow-up",
+        "playbook"
+      ],
+      "warn_rules": [
+        "caps",
+        "duplicates",
+        "follow-up resolved-in-full",
+        "default read path"
+      ],
+      "current_result": "after the final record edits: 188 Markdown files, 791 relative links; 0 strict, 13 warnings; about 0.2 s (789 links during the mutation tests)",
+      "warnings": "caps: AGENTS 17,031 / 12,000, Plan 87,110 / 35,000, docs/README 22,365 / 5,000, default read 27,030 / 25,000, PMM README 63 / 60 lines; six resolved TECH issues kept in full (Job C); two duplicated paragraphs between the paused campaign READMEs",
+      "mutation_tests": "18 of 18 seeded violations (one per strict rule path) exit 1 with the expected rule in a hard-linked sandbox; baseline and restored tree exit 0",
+      "no_cap_raised": true
+    },
+    "hook": {
+      "file": ".githooks/pre-commit (mode 100755)",
+      "enable": "per command only: git -c core.hooksPath=.githooks commit ...; git config --get core.hooksPath is unset",
+      "tests": [
+        "no staged Markdown: exit 0 without running the checker",
+        "staged Markdown, interpreter missing: message and exit 0",
+        "staged Markdown, python3: checker runs, exit 0",
+        "only non-Markdown staged: exit 0",
+        "staged broken link: STRICT links, exit 1",
+        "end to end in a throwaway local clone: a commit with a broken link is refused under -c core.hooksPath=.githooks; a clean commit succeeds"
+      ],
+      "method": "temporary GIT_INDEX_FILE, hard-linked sandbox and a throwaway clone; this repository's index, refs and config were not changed"
+    },
+    "ignore_files": {
+      ".ignore": "docs/archive/, docs/notebook_outputs/raw/, uv.lock; docs/MOVED.md stays visible",
+      ".aiignore": "replaced by the .ignore list (PLAN_v2 contradiction 11): the bare README.md entry hid every README and .data, .md_files and Documenation matched nothing; prepare_training_and_test_set stays visible because the user did not ask to hide it",
+      "GEMINI.md": "one line pointing to AGENTS.md, like CLAUDE.md"
+    },
+    "skill_handoff": "gpu-use-skill Handoff: update the runtime receipt, copy dated STATUS text into the campaign log.md first, then overwrite STATUS in its layout including the Authorized now: and GPU/VM: lines",
+    "fresh_agent_test": {
+      "record": "job_b_fresh_agent_test.md",
+      "result": "not accepted: Q2, Q5, Q6 match; Q4 matches counting the whole response; Q1 misses part of element 4 (five-then-collapse and the neutral-test outcomes); Q3 element 3 borderline (read gpu-use-skill before any GPU action)",
+      "limit": "one cold-start Explore subagent; read-only by instruction (the type also has Bash/Grep/Glob and its tool calls are not logged here); one run; not a Codex or workstation run"
+    },
+    "ci_comparison": {
+      "workflow": ".github/workflows/cpu-ci.yml: uv sync --frozen, CLI help, pytest, then smoke_checks",
+      "base_3c0f80c": "run 36418448722: 3 failed, 991 passed, 40 skipped",
+      "backup_042e93d": "run 36465596477: 3 failed, 991 passed, 40 skipped (same three failures)",
+      "failures_in_both": [
+        "test_explicit_membership::test_outer_loader_not_deserialized",
+        "test_generalized_metal_5fold_cv::test_dry_run_flag (dataset absent)",
+        "test_pmm_campaign_integrity::test_pmm_refit_reuse_and_one_shot_reference_prediction (pandas absent)"
+      ],
+      "smoke_checks": "never reached in CI (pytest fails first); not run locally",
+      "after_042e93d": "no CI run on the uncommitted changes; pytest collects tests/ only and no test reads the files changed since 042e93d",
+      "local_baseline": "the Job A local baseline (992 passed, 2 failed, 32 errors, 8 skipped; smoke 43 passed) is from a different environment; no match is claimed"
+    },
+    "manifests": {
+      "baseline_set": "10 of the 11 Phase 0 SHA256SUMS manifests pass; legacy_nonoverlap_test_access keeps the same 3 CRLF CSV mismatches (pre-existing)",
+      "remote_SHA256SUMS": "docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/remote_SHA256SUMS: 42 entries, 8 present and matching, 34 remote/VM files absent from the repository; not in the Phase 0 set; not caused by Job B; report only"
+    },
+    "before_hashes": "1,521 entries, 0 missing, 14 changed, all documents edited by Jobs A/B (SKILL.md, AGENTS, STATUS, Plan, README, DATASETS, EXACT doc, FOLLOW_UP, GETTING_STARTED, notebook guide, metal playbook, PARAMETER_FINDINGS, docs/README, notebook_outputs/README); no evidence or plan file changed",
+    "protected_scope": "git diff 3c0f80c over src, scripts, tests, notebooks, docs/plans, raw evidence and summaries is empty; no untracked file there; no root *.py changed; 1,869 protected files unchanged; source_tree_sha256 adc95c42...",
+    "playbooks": "metal 67 and EC 23 fences byte-identical; LF only; unique heading before the first python block; first-block hashes match",
+    "status_reconstruction": "all four STATUS revisions still rebuild byte-for-byte",
+    "sizes": "default read 27,030 bytes (AGENTS 17,031 + STATUS 5,290 + PMM README 4,709): above the ~25.8 KB accepted until Job C; PMM README 63 lines against the 60-line target; reported for the user's decision"
+  }
 }
