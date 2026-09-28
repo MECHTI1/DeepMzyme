@@ -1,0 +1,1748 @@
+# workstation pytest, worktree @ 6808084, started 2026-09-29T01:48:26+03:00
+# cmd: systemd-run --user --scope --quiet -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0 env GIT_OPTIONAL_LOCKS=0 CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 TMPDIR=/media/mechti/Data1/DeepMzyme_worktrees/_tmp_job_b_verify/tmp taskset -c 0,1 nice -n 19 /home/mechti/miniconda3/envs/DeepMzyme/bin/python -m pytest -p no:cacheprovider -q -rs
+......................................s................................. [  6%]
+........................................................................ [ 13%]
+.....................................F............................ [ 20%]
+.........ssssss....F.................................................... [ 27%]
+........................................................................ [ 34%]
+..............................EEEEEEEEEEEEEEE.EEEEEE.....EEE..EEEEEEEE.. [ 41%]
+........................................................................ [ 48%]
+........................................................................ [ 55%]
+........................................................................ [ 62%]
+........................................................................ [ 69%]
+........................................................................ [ 76%]
+........................................................s............... [ 82%]
+........................................................................ [ 89%]
+........................................................................ [ 96%]
+.........................F......                                [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_full_grid_has_six_target_contrasts_and_nine_denominator _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+______ ERROR at setup of test_bootstrap_uses_paired_folds_and_fixed_seed _______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls0] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls1] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls2] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[missing_fold] __
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[missing_config] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[awareness_config] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_native_ranking_never_overrides_common_four_and_matched_gate _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_direct_four_can_replace_control_and_frozen_tie_rule_is_explicit _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+______ ERROR at setup of test_oof_and_pmm_coverage_required[missing_pmm] _______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_____ ERROR at setup of test_oof_and_pmm_coverage_required[duplicate_uid] ______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_______ ERROR at setup of test_oof_and_pmm_coverage_required[wrong_fold] _______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+______ ERROR at setup of test_oof_and_pmm_coverage_required[missing_uid] _______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_report_preserves_native_five_meaning_and_replay_provenance _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_____ ERROR at setup of test_collection_accepts_exact_45_normalized_units ______
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+__ ERROR at setup of test_collection_refuses_wrong_normalized_unit[identity] ___
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+___ ERROR at setup of test_collection_refuses_wrong_normalized_unit[source] ____
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+___ ERROR at setup of test_collection_refuses_wrong_normalized_unit[metrics] ___
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_collection_refuses_wrong_normalized_unit[repeated_uid] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_collection_refuses_wrong_normalized_unit[qualification] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[four_class] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[five_class] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[six_class] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_completed_refit_verification_does_not_authorize_test_or_pmm _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[partial] ____
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+__ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[test_report] __
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[normalization] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+_ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[configuration] _
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+___ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[decision] ____
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[cohort] _____
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[target] _____
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+>           bind_frozen_source(source_root)
+
+pmm_core_assessment.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+pmm_core_replay.py:94: in bind_frozen_source
+    require(Path(file).resolve().is_relative_to(root / "src"),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+condition = False
+message = 'Scientific module already loaded from another tree: data_structures'
+
+    def require(condition, message):
+        if not condition:
+>           raise ReplayValidationError(message)
+E           pmm_core_replay.ReplayValidationError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_replay.py:79: ReplayValidationError
+
+The above exception was the direct cause of the following exception:
+
+    @pytest.fixture(scope="module")
+    def modules():
+        if not FROZEN.is_dir():
+            pytest.skip("Frozen PMM scientific checkout is required")
+>       return core.bind_source(FROZEN)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pmm_core_assessment.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+
+    def bind_source(source_root):
+        """Use the shared replay consumer's source guard before scientific imports."""
+        from pmm_core_replay import ReplayValidationError, bind_frozen_source
+        try:
+            bind_frozen_source(source_root)
+        except ReplayValidationError as exc:
+>           raise CoreAssessmentError(str(exc)) from exc
+E           pmm_core_assessment.CoreAssessmentError: Scientific module already loaded from another tree: data_structures
+
+pmm_core_assessment.py:63: CoreAssessmentError
+=================================== FAILURES ===================================
+______________________ test_outer_loader_not_deserialized ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x79b9b1b91be0>
+tmp_path = PosixPath('/media/mechti/Data1/DeepMzyme_worktrees/_tmp_job_b_verify/tmp/pytest-of-mechti/pytest-0/test_outer_loader_not_deserial0')
+
+    def test_outer_loader_not_deserialized(monkeypatch, tmp_path):
+        import training.data as data
+        paths = [tmp_path / f"{n}.pdb" for n in ("train", "inner", "outer")]
+        monkeypatch.setattr(data, "find_structure_files", lambda p: paths)
+        monkeypatch.setattr(data, "resolve_allowed_site_metal_labels", lambda p: {})
+        monkeypatch.setattr(data, "resolve_runtime_feature_paths", lambda **kw: (tmp_path, tmp_path))
+        seen = []
+        def load(**kwargs):
+            name = kwargs["structure_path"].stem
+            assert name != "outer"
+            seen.append(name)
+            return [], [], []
+>       monkeypatch.setattr(data, "load_structure_pockets", load)
+E       AttributeError: <module 'training.data' from '/media/mechti/Data1/DeepMzyme_worktrees/docs/src/training/data.py'> has no attribute 'load_structure_pockets'
+
+tests/test_explicit_membership.py:300: AttributeError
+______________________________ test_dry_run_flag _______________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x79b9b1b7dd00>
+capsys = <_pytest.capture.CaptureFixture object at 0x79b9b1b7d5e0>
+
+    def test_dry_run_flag(monkeypatch, capsys):
+        test_args = [
+            "run_metal_5fold_cv.py",
+            "--dataset",
+            "train_and_test_sets_structures_exact_pinmymetal",
+            "--metal-example-unit",
+            "ion",
+            "--models",
+            "benchmark_enhanced_only_gvp",
+            "--folds",
+            "0",
+            "--dry-run",
+        ]
+        monkeypatch.setattr(sys, "argv", test_args)
+>       rmc.main()
+
+tests/test_generalized_metal_5fold_cv.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_metal_5fold_cv.py:1237: in main
+    dataset_id, train_dir, train_csv, test_dir, test_csv = resolve_dataset_layout(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data_root = PosixPath('/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data')
+dataset_name_or_path = 'train_and_test_sets_structures_exact_pinmymetal'
+train_summary_csv = None, test_summary_csv = None
+
+    def resolve_dataset_layout(
+        data_root: Path,
+        dataset_name_or_path: str,
+        train_summary_csv: Path | None = None,
+        test_summary_csv: Path | None = None,
+    ) -> tuple[str, Path, Path, Path | None, Path | None]:
+        """Resolve train/test structure directories and summary CSVs.
+    
+        Returns:
+            (dataset_id, train_dir, train_csv, test_dir_or_none, test_csv_or_none)
+        """
+        candidates = [
+            Path(dataset_name_or_path),
+            data_root / dataset_name_or_path,
+            REPO_ROOT / "DeepMzyme_Data" / dataset_name_or_path,
+            Path("/media/mechti/Data1/DeepMzyme_Data") / dataset_name_or_path,
+        ]
+        dataset_root = None
+        for cand in candidates:
+            if cand.is_dir():
+                dataset_root = cand.resolve()
+                dataset_id = cand.name
+                break
+    
+        if dataset_root is None:
+>           raise FileNotFoundError(
+                f"Dataset '{dataset_name_or_path}' not found across candidates: {[str(c) for c in candidates]}"
+            )
+E           FileNotFoundError: Dataset 'train_and_test_sets_structures_exact_pinmymetal' not found across candidates: ['train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal']
+
+scripts/run_metal_5fold_cv.py:221: FileNotFoundError
+______ test_profiles_one_call_without_changing_arguments_or_return_value _______
+
+tmp_path = PosixPath('/media/mechti/Data1/DeepMzyme_worktrees/_tmp_job_b_verify/tmp/pytest-of-mechti/pytest-0/test_profiles_one_call_without0')
+
+    def test_profiles_one_call_without_changing_arguments_or_return_value(tmp_path):
+        torch, reset = fake_torch()
+        argv = ["--runs-dir", str(tmp_path), "--run-name=fit", "--device", "cuda:0", "--unknown-training-option", "value"]
+        calls = []
+        def train():
+            calls.append(1)
+            directory = tmp_path / "fit"
+            directory.mkdir()
+            (directory / "prepare_status.json").write_text('{"status":"ready"}')
+            return "original-return"
+        assert wrapper.profile_training(train, argv, torch_module=torch) == "original-return"
+        row = json.loads((tmp_path / "fit/performance_profile.json").read_text())
+        assert calls == [1] and reset == ["cuda:0"]
+        assert row["status"] == "completed" and row["cuda_peak_allocated_bytes"] == 123
+        assert row["cuda_peak_reserved_bytes"] == 456
+>       assert row["setup_seconds"] >= 0 and row["training_seconds"] >= 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: '>=' not supported between instances of 'NoneType' and 'int'
+
+tests/test_train_serial_metal_profile.py:35: TypeError
+=============================== warnings summary ===============================
+../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26: DeprecationWarning: `torch_geometric.distributed` has been deprecated since 2.7.0 and will no longer be maintained. For distributed training, refer to our tutorials on distributed training at https://pytorch-geometric.readthedocs.io/en/latest/tutorial/distributed.html or cuGraph examples at https://github.com/rapidsai/cugraph-gnn/tree/main/python/cugraph-pyg/cugraph_pyg/examples
+    from torch_geometric.distributed import (
+
+../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
+../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
+  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/smoke_checks.py:2979: local multi-metal fixture directory is absent: /media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_exact_pinmymetal not available locally
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_zenodo_pmm_exact not available locally
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_non_overlapped_pinmymetal not available locally
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_common_pdbid_70_30_pinmymetal not available locally
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset CLEAN_30_train_test_split_0 not available locally
+SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset CARE_task1_30_clusterRes30_train_test_metallo not available locally
+SKIPPED [1] tests/test_serial_metal_evidence.py:191: Optional immutable local historical artifacts are absent
+3 failed, 991 passed, 8 skipped, 3 warnings, 32 errors, 15 subtests passed in 573.10s (0:09:33)
+# pytest exit=1 finished 2026-09-29T01:58:01+03:00

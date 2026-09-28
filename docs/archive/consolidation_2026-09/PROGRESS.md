@@ -51,15 +51,19 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   to B-M11, four inventory labels, STATUS links and list items, the PMM README
   VM line, two guide sentences and the cloud record. Commit and push once, then
   stop. The accepted sizes stay (Job C tightens).
+- 2026-09-29 (user): fresh-agent run 2 accepted. The cloud part of Job B is
+  complete at `6808084`; integration and verification continue on the
+  workstation, and the user asked the agent to carry them out, asking again
+  before the commit, the fast-forward merge and the push.
 
 ## State
 | Field | Value |
 |---|---|
 | Job | B |
-| Phase | Job B cloud work done (2026-09-28): fresh-agent run 1 not accepted; run 2, after the approved Q1 fix, matches all six under the recorded grading; review fixes of `042e93d`/`a205658` applied after run 2; sizes accepted for now; workstation pytest/smoke and any merge await the user |
-| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only, `29e7460` through `a205658` and the commit carrying this update; nothing merged into `metal-pmm-ion-campaign`) |
-| Branch / base | `docs-consolidation` and `metal-pmm-ion-campaign` @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
-| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean at Job B start) |
+| Phase | Job B verified on the workstation (2026-09-29): fresh-agent run 2 accepted by the user; checker, hashes, invariants, smoke and pytest checked against the baseline ([record](verification/job_b_workstation.md)); commit, fast-forward merge and push await the user's approval |
+| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only, `29e7460` through `6808084`; nothing merged into `metal-pmm-ion-campaign`) |
+| Branch / base | `docs-consolidation` fast-forwarded to `6808084` on the workstation; `metal-pmm-ion-campaign` still @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
+| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean after the fast-forward; the older staged draft was saved outside the repository before it was dropped) |
 
 ## Done (Phase 0)
 1. Pre-flight on the shared checkout (read-only): status empty; HEAD = origin = `3e912a6`;
@@ -91,11 +95,12 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
    - Full tree verification against HEAD: Checked `git diff HEAD --name-only -- src scripts tests notebooks docs/plans` (completely empty).
 
 ## Next
-- User: accept or reject the fresh-agent result
-  ([both runs](verification/job_b_fresh_agent_test.md)).
-- On the workstation, before any merge: the checker and hook with the Conda
-  interpreter, and pytest and `smoke_checks` against the local baseline.
-- Ask before commit, merge or push. Shared checkout remains read-only.
+- With the user's approval: commit this record in the worktree with the
+  per-command hook, fast-forward `metal-pmm-ion-campaign` to `docs-consolidation`
+  in the shared checkout while Codex is idle, and push.
+- Then the Codex handover (PLAN_v2 §3.9): stop the old thread, start a new one
+  with the handover note, and ask it the six ANSWER_KEY questions first as an
+  independent fresh-agent check.
 
 ## Job B completed at the rule-review checkpoint
 
@@ -277,7 +282,6 @@ Details: [cloud review record](verification/job_b_cloud_review.json),
   or GPU action had been performed. Job A was subsequently integrated as above.
 
 ## Open questions
-- Acceptance of fresh-agent run 2 (wording notes recorded with it).
 - `.aiignore`: `prepare_training_and_test_set` is visible (the plan's
   default); hiding it needs the user's word.
 - Job C/D decisions remain outside this checkpoint.
@@ -311,3 +315,9 @@ All line numbers refer to `3c0f80c`.
   stripped at commit by `core.autocrlf=input`). See `baseline/README.md`.
 - 32 pytest errors in `tests/test_pmm_core_assessment.py` in full-suite runs only (test
   order); the file passes alone.
+- `tests/test_train_serial_metal_profile.py::test_profiles_one_call_without_changing_arguments_or_return_value`
+  is flaky: `src/train_serial_metal_profile.py:62-67` requires the
+  `prepare_status.json` mtime to lie between two `time.time()` readings, but file
+  timestamps can fall slightly earlier, leaving `setup_seconds` as `None`
+  (1 of 3 runs on `/tmp`, 3 of 3 with `TMPDIR` on NTFS; 2026-09-29). Frozen
+  source: report only. See [workstation verification](verification/job_b_workstation.md).
