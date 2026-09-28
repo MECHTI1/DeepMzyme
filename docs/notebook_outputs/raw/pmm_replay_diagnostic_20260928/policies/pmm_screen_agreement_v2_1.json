@@ -1,0 +1,58 @@
+{
+  "policy_id": "pmm-screen-agreement-v2.1",
+  "status": "fixed_before_corrected_all_nine_recheck; qualification_requires_all_gates",
+  "previous_policy_sha256": "0ec2a237f3a69c708cfad7f3b3324c6de0043642d3656a06a1e68ff671e6aa56",
+  "correction": "The initial v2 consumer incorrectly applied its 2e-7 serialization/collapse allowance to the FP32 probability simplex sum, rejecting an already legacy-certified six-class ESM export. V2.1 uses the pre-existing frozen comparator's 2e-6 probability-sum check. This value comes from src/benchmarking/pmm_comparator.py PROBABILITY_TOLERANCE under the recorded frozen source hash, not the observed failure maximum. The original v2 policy, consumer snapshot and failed report remain preserved. The 1e-5 replay acceptance bound, 2e-7 collapse allowance, exact predictions, identity checks and metric gates are unchanged.",
+  "scope": "Retrospective agreement of the nine frozen fold-0, seed-42, 50-epoch validation exports. This does not pass or replace the legacy replay contract, authorize the legacy runner, establish determinism, promote a model, or permit held-out access.",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "fold": 0,
+  "model_seed": 42,
+  "epochs": 50,
+  "validation_ions": 1492,
+  "probability_atol": "0.00001",
+  "probability_rtol": "0",
+  "legacy_probability_atol": "0.000001",
+  "serialized_probability_consistency_atol": "0.0000002",
+  "probability_simplex_atol": "0.000002",
+  "metric_atol": 1e-9,
+  "required_configurations": [
+    "only_esm__four_class__none",
+    "only_esm__six_class__none",
+    "only_gvp__four_class__none",
+    "only_gvp__six_class__none",
+    "gvp_late_fusion__four_class__none",
+    "gvp_late_fusion__six_class__none",
+    "only_esm__four_class__first_shell_bias",
+    "only_gvp__four_class__first_shell_bias",
+    "gvp_late_fusion__four_class__first_shell_bias"
+  ],
+  "probability_views": ["native", "common4"],
+  "all_preserved_replay_attempts_required": true,
+  "gvp_six_class_minimum_preserved_attempts": 2,
+  "exact_requirements": ["UID set and non-probability columns", "native and common-four predictions", "confusion matrices", "selected checkpoint, epoch, configuration and scientific identity"],
+  "diagnostic_requirements": {
+    "predictive_inputs_matched": true,
+    "original_variable": true,
+    "all_classes_stable": true,
+    "no_mutation": true,
+    "original_processes": 2,
+    "passes_per_process": 5,
+    "strict_processes": 2,
+    "strict_unsupported_must_be_preserved": true,
+    "original_max_abs_probability_difference_lte_policy_atol": true
+  },
+  "rationale": {
+    "post_observation_amendment": true,
+    "known_previous_max_difference": 0.00000351,
+    "independent_reference": "https://docs.pytorch.org/docs/2.11/testing.html#torch.testing.assert_close",
+    "reference_float32_defaults": {"atol": 0.00001, "rtol": 0.0000013},
+    "interpretation": "The fixed absolute-only bound is stricter than the referenced float32 testing convention. It is an engineering acceptance convention, not a proved model error bound. Exact discrete predictions and checkpoint metrics remain mandatory. No threshold adjustment follows diagnostic or all-nine acceptance results."
+  },
+  "limitations": [
+    "The one-arm input diagnostic does not prove input equality or deterministic repeatability for all nine models.",
+    "Original in-memory training inputs were not contemporaneously fingerprinted; original-window graph-cache comparison is retrospective evidence.",
+    "Stored exports are decimal-rounded. Native-to-common-four collapse uses the separately stated 2e-7 serialization allowance. The FP32 probability simplex sum uses the pre-existing frozen comparator's 2e-6 allowance. Neither allowance enlarges the 1e-5 replay tolerance.",
+    "Qualification does not establish calibrated probabilities, future-run stability, five-fold completion, superiority, or test readiness.",
+    "The frozen completed_run_receipt and execute_unit retain the legacy gate. An explicit separate consumer must opt into this policy; do not forge legacy receipts or broadly resume the old runner."
+  ]
+}

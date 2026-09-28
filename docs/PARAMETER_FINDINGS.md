@@ -106,11 +106,22 @@ Fe/Co/Ni recalls were **85.8639% / 22.8571% / 51.2821%**. These Grade-5
 tradeoffs do not establish a preferred target formulation, particularly with
 low native Co recall and only one validation fold/seed.
 
-The six-class GVP fit completed training but is excluded from parameter
-conclusions: two independent replays matched class predictions and metrics yet
-failed the frozen probability tolerance. Thus **eight of nine screen
-configurations are certified**, with the GVP target comparison unresolved.
-See [TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
+The six-class GVP fit initially failed two strict probability replays, despite
+matching predictions and metrics. A separate fixed-input diagnosis established
+small CUDA numerical variation and stable class predictions. All nine models
+now satisfy the uniformly applied retrospective v2.1 agreement rule; **eight
+still pass the original replay contract**. See the
+[supplemental report](notebook_outputs/raw/pmm_replay_diagnostic_20260928/screen_agreement_v2_1.md)
+and [TECH-023](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance)
+for the explicit amendment and remaining legacy-runner limitation.
+
+GVP6 selected epoch 31: common-four BA **82.8399%**, macro-F1 **75.4985%**,
+native-six BA **63.6275%**. Compared with direct-four GVP, common-four BA fell
+**3.1833 points** and macro-F1 fell **1.7372 points**. Native Fe/Co/Ni recalls
+were **75.6545% / 34.2857% / 18.8034%**. Thus all three six-class arms have
+lower common-four BA than their matched direct-four arm on this fold. This is
+still Grade-5 evidence; the numerical diagnosis adds no folds, seeds, promotion
+evidence or held-out results.
 
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 

@@ -5,7 +5,45 @@ next?** It is mutable. Scientific policy is in [`Plan.md`](Plan.md); exact
 experiment history is in the [experiment index](docs/notebook_outputs/README.md).
 
 Last historical experiment-evidence audit: 2026-08-20. Last execution audit: 2026-09-15.
-Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-27.
+Last scientific-policy documentation update: 2026-09-26. Last status entry: 2026-09-28.
+
+**2026-09-28 — numerical diagnosis complete; nine-model screen agreement verified:**
+- **9/9 trained and qualified under the explicit v2.1 agreement policy;
+  8/9 pass the original replay contract.** No fit, checkpoint, prediction export
+  or legacy receipt was replaced. The
+  [supplemental report](docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/screen_agreement_v2_1.md)
+  uniformly checks every preserved replay with absolute probability difference
+  at most `1e-5`, unchanged class predictions and checkpoint metrics. It is
+  retrospective single-fold evidence, not a legacy-gate pass or promotion.
+- GVP6's predictive tensors match the preserved training cache on all 1,492
+  ions / 94 batches. The sole raw difference is an inactive EC label, audited
+  separately; CPU equivalence was checked on the first 16-example batch.
+  Ten evaluations under original settings varied by up to **2.324581e-6**;
+  ten strict deterministic evaluations were bitwise identical across two
+  processes. All native/common-four class predictions remained unchanged.
+  This establishes numerical variation on fixed inputs; see the
+  [diagnostic evidence](docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/README.md).
+- Six-class GVP selected epoch **31**: common-four BA **82.8399%**, macro-F1
+  **75.4985%**, native-six BA **63.6275%**; Fe/Co/Ni recalls
+  **75.6545% / 34.2857% / 18.8034%**. Its common-four BA is below direct-four
+  GVP's **86.0232%**. All three six-class arms have lower common-four BA than
+  their matched direct-four arm on this fold; no target formulation is promoted.
+  Binding awareness still shows no primary-metric gain in the single-fold screen.
+- **VM TERMINATED**, stopped **00:04:22 UTC**, independently checked at
+  **00:05:21 UTC**. Session `session-20260927T234132Z-8191aea8` used
+  **1,371 seconds / $0.3347 estimated running gross**. All 42 remote artifacts
+  verified on the host and acknowledgment was uploaded before shutdown.
+  One 150-GB disk remains, approximately **$15/month**. No GPU is running.
+  [Closeout](docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/verified_closeout.json)
+  records **9.3061 cumulative VM hours / $8.1815 running gross**, excluding
+  additional retained-storage charges.
+- **Next boundary:** 36 remaining fold fits forecast **17.37 more VM hours**.
+  The **30-hour/$34 total-ceiling question is pending**; existing session/day
+  caps are unchanged. Before broader execution, explicitly integrate the
+  versioned replay policy without rewriting historical identities. The frozen
+  runner still rejects GVP6 under its old gate; do not retry it until a chance
+  pass or present the supplemental report as a completed 45-fit campaign.
+  No final refit, held-out access or full-grid assessment occurred.
 
 **2026-09-27 19:41 UTC — allocation closed; 9/9 trained, 8/9 certified:**
 - The two remaining six-class fold-0 configurations completed 50 epochs under

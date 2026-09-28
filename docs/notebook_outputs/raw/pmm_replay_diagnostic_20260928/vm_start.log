@@ -1,0 +1,17 @@
+WARNING: ZONE=us-central1-c differs from the approved baseline us-central1-a; this must be an explicit user decision
+Action:                     START existing managed GPU VM (billing starts when RUNNING)
+Project / VM / zone:        deepmzyme-gpu-vm / deepmzyme-l4 / us-central1-c
+Machine:                    g2-standard-8 (1x NVIDIA L4 (24 GB)), STANDARD
+Verified GROSS list rate:   $0.87917/h = compute $0.85362 + external IP $0.0050 + disk $0.02055 (verified 2026-09-27T23:40:58Z; no credits/free tiers applied)
+Today (UTC) used:           4h 37m running; ESTIMATED GROSS $4.92 (running $4.07 + full-day disk reservation $0.85)
+Limit bounds (minutes):     MAX_SESSION_HOURS=240, MAX_SESSION_ESTIMATED_COST_USD=356.07, remaining daily hours=82.12, remaining daily cost=301.65, requested=45
+Binding limit:              requested (minus 3 min stop overhead)
+Google-side hard STOP after:   42 min  (maxRunDuration=2520s, instanceTerminationAction=STOP)
+Max ESTIMATED session cost: $0.62 ($0.71 incl. 15% margin)
+
+SAFETY VERIFIED:
+  status RUNNING, machine g2-standard-8, zone us-central1-c, managed labels present
+  maxRunDuration=2520s, instanceTerminationAction=STOP, automaticRestart=false
+  session session-20260927T234132Z-8191aea8 started 2026-09-27T23:41:32Z (02:41 IDT local)
+  HARD AUTOMATIC STOP at 2026-09-28T00:23:23Z (03:23 IDT local)
+Local guardian started (systemd user unit deepmzyme-vm-guardian; secondary protection, logs in /home/mechti/deepmzyme-vm/logs). It does NOT survive workstation shutdown; the Google-side stop does.

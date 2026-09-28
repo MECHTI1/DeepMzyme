@@ -1,0 +1,9 @@
+{
+  "python": "/home/mechti/venvs/deepmzyme/bin/python",
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8",
+  "gpu": "NVIDIA L4",
+  "cuda_matmul": "passed",
+  "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+  "free_gib": 97.34893798828125
+}

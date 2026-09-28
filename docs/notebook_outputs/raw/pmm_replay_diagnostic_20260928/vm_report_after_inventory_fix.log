@@ -1,0 +1,27 @@
+WARNING: ZONE=us-central1-c differs from the approved baseline us-central1-a; this must be an explicit user decision
+DeepMzyme VM report
+===================
+Generated:           2026-09-28T00:17:33Z (03:17 IDT local)
+State:               TERMINATED
+Project / VM:        deepmzyme-gpu-vm / deepmzyme-l4
+Machine:             g2-standard-8
+Zone:                us-central1-c
+GPU:                 1x NVIDIA L4 (24 GB)
+Current session:     -
+Cost basis:          GROSS commercial list price. Free-trial/promotional credits are never
+                     subtracted; this is the real money value being consumed.
+Verified gross rate: $0.87917/h = compute $0.85362 + IP $0.0050 + disk $0.02055 (verified 2026-09-27T23:40:58Z)
+Session gross cap:   $6.00  (hours cap 4 h)
+Daily running total (UTC 2026-09-28): 0h 04m of 6 h
+Daily ESTIMATED GROSS: $0.56 of $10.00 cap (running $0.06 + full-day disk $0.49)
+Last 7 days:         9h 18m running, ESTIMATED GROSS $8.18 (running sessions incl. disk while running)
+
+Persistent resources (bill even while the VM is stopped):
+  disk deepmzyme-l4-recovery-e9ff994df82d: 150 GB pd-balanced -> ESTIMATED $15.00/month
+  ESTIMATED persistent storage: $15.00/month (~$0.500/day)
+
+GOOGLE-REPORTED BILLING COST (GROSS): unavailable (no BigQuery billing export configured: set BILLING_EXPORT_TABLE)
+Billing data timestamp:       -
+Billing warning:              Google billing data can lag by hours to a day; never a hard stop.
+SSH (IAP):           n/a (VM not running)
+PyCharm:             connection info via ~/deepmzyme-vm/bin/vm-pycharm-info (host alias deepmzyme-vm)

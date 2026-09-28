@@ -1,0 +1,11 @@
+test_preflight_reports_blockers_without_billing (test_controller.ControllerTests.test_preflight_reports_blockers_without_billing) ... ok
+test_report_inventory_listing_failures_are_unknown_not_empty (test_controller.ControllerTests.test_report_inventory_listing_failures_are_unknown_not_empty) ... ok
+test_report_labels_gross (test_controller.ControllerTests.test_report_labels_gross) ... ok
+test_report_missing_inventory_json_is_unknown_not_empty (test_controller.ControllerTests.test_report_missing_inventory_json_is_unknown_not_empty) ... ok
+test_report_retained_disk_is_visible (test_controller.ControllerTests.test_report_retained_disk_is_visible) ... ok
+test_report_successful_empty_inventory_remains_empty (test_controller.ControllerTests.test_report_successful_empty_inventory_remains_empty) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 9.418s
+
+OK

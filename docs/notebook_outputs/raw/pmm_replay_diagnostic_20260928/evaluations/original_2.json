@@ -1,0 +1,424 @@
+{
+  "certifies_fit": false,
+  "comparisons_to_saved": [
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4907052612311844e-06,
+        "mean_abs_difference": 4.0486125467556045e-08,
+        "minimum_class_margin": 0.0003822743892669678,
+        "probability_fields_above_original_1e_6": 12
+      },
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4903868865712155e-06,
+        "mean_abs_difference": 3.3055272846879106e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 15
+      },
+      "pass": 0,
+      "seconds": 4.097910043000184
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.7315196991218862e-06,
+        "mean_abs_difference": 4.0016087446489176e-08,
+        "minimum_class_margin": 0.0003819763660430908,
+        "probability_fields_above_original_1e_6": 13
+      },
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.8475238037218844e-06,
+        "mean_abs_difference": 3.182966035798291e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 12
+      },
+      "pass": 1,
+      "seconds": 3.553249079999887
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 2.2026890563742185e-06,
+        "mean_abs_difference": 3.9476139545615946e-08,
+        "minimum_class_margin": 0.000382155179977417,
+        "probability_fields_above_original_1e_6": 18
+      },
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 2.2026890563742185e-06,
+        "mean_abs_difference": 3.226849673426138e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 21
+      },
+      "pass": 2,
+      "seconds": 3.534664867000174
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.5452445221164623e-06,
+        "mean_abs_difference": 3.936057725385212e-08,
+        "minimum_class_margin": 0.00038313865661621094,
+        "probability_fields_above_original_1e_6": 13
+      },
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.5507113647617032e-06,
+        "mean_abs_difference": 3.1468031478613566e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 13
+      },
+      "pass": 3,
+      "seconds": 3.546068840999851
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 2.441107635475781e-06,
+        "mean_abs_difference": 3.865935382044539e-08,
+        "minimum_class_margin": 0.0003826022148132324,
+        "probability_fields_above_original_1e_6": 11
+      },
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 2.441107635475781e-06,
+        "mean_abs_difference": 3.124027001792825e-08,
+        "minimum_class_margin": 0.001193910837173462,
+        "probability_fields_above_original_1e_6": 11
+      },
+      "pass": 4,
+      "seconds": 3.542397246999826
+    }
+  ],
+  "completed_repeats": 5,
+  "condition": "original",
+  "cublas_workspace_config": null,
+  "cuda": "12.8",
+  "cuda_device": "NVIDIA L4",
+  "cudnn_allow_tf32": true,
+  "cudnn_benchmark": false,
+  "cudnn_deterministic": false,
+  "deterministic_algorithms": false,
+  "deterministic_warn_only": false,
+  "device": "cuda",
+  "forward_passes_sha256": "b96aba3802889a39a83f5e76b85254d9e4390c2eab2919446afa76d07847c9ff",
+  "gpu_library": "2.7.0",
+  "input_hashes_before_and_after": [
+    "57794c7d94c0045984654829c584ddcc1955f1cffc4779b0e099bf2d5b497941",
+    "061667fb1a2badc1af35120ae9cbf4de9db034a5c6090be62b946a81d95a4d30",
+    "00b980be09a0f6e524f8b0b001e682a9c5b84ed9545481b54539e90267c91a46",
+    "ad78163af86cae796ffeef9aef3320c2c317403589aa3c286a7f1ac5bbedd01e",
+    "8e1118955dbf9e1b336f2fec1a68aec97eec11c78dc93b12219d9df63b119de0",
+    "d05ec5d0b0d9718977a1f8b0ba7e141a40538049d8f18e47358f31ee06c9cf14",
+    "6e049045f8edeb4e78a6f9b49d64c4c507bbaee8421ece208797b5fbb1587040",
+    "10f4bee14b961e4946919ef9373da9690168303b8a16e8c3da672ad72496accb",
+    "8d87732751d95a9771e15a5c1dcb589fa154596f8c8bdd60f79a3d7612f619c5",
+    "88defbe34892a92b137142b8ffdf2d6f6c374009155ef935f0cf399598890912",
+    "f11f603ebee46e3811ab6009f20de8965e98e554e37524a584e87eb559770e6f",
+    "1960901f522b1aace50802e8177809607db21f597bad5bed945a018c7844efd3",
+    "47014179173a9597bd1d7f06d57edfc5fc4a616e7059a98e3b51d4e0bfd1976c",
+    "8b1c036236cbe2d280390e211a8b7fa50d1dbefb06f2d04520228154f1d6e3a6",
+    "dc2677cf6f3269b02581a4b6b0eb012c24c485c68b53e7901f9fdd76e7926570",
+    "944fea5e42a375fe85ddea8e59d202c6467bc22abcae5aaa1dae92003d514d13",
+    "824da9667dcd3235c8944cf828ae51aa7c31c3281514b0a4cf142257f0e7f999",
+    "47060fff90eda3c9d03f9f54509817131d20764e5fe537da0ae72c86ad7c2e54",
+    "5541afaa1b12bf598501c9e0cbba388e8a81b9212956db33e35e4fffae844a38",
+    "4ba086448b3fb3eba6f7c8064362c6eacacd86b6cce4c85e8eb379a34fbb2eb0",
+    "cf8eee22e2cbd0e1939f2441d0a64ded9efba34e7197d6e262d5d745c071cfd5",
+    "15f17f6c345d292cf282aa19ecd3bb81ffb13be7a0a9e1919303f66ccd849889",
+    "df62c4bc9e677c59b988ceddeaa8670f52e85b254ffcc84302e62a3103761fe8",
+    "459940a38216b69bd9c675022eb1840f36d5944c6d83d1cdc21d30f50f209ff9",
+    "c35c51e0b66e6045b16490344117c9d36bcee38927b4044d70745668cac7b2bc",
+    "6aa90a054c7c7fceca432f3fa9cb67ca67fd1cbc5a1381681585adcdc87ccca7",
+    "84beb2590b1e2232b1b0547f8f4fdafb8854dea8d80be848ca16d9ae7c4cddeb",
+    "e073806643f8f4f7484aa2f4248b2bfa4fa074e2203f564255924e06b6d0a605",
+    "238ba2939c2dae92db8d9f5a14bea5736afdf27faf78d1a61b16bda5bba1d026",
+    "ca95180fc3f373d5031b9b537b37c7178efabdf85d42c772a0352c0146155d50",
+    "d5f52aae40317c9de360b89bd75d7215fe5c6dbb2d5e8970c9385662e752a50e",
+    "27b00d6caac6e8f79d2e7cc84e4402ffcd1536efef31abe4d297d8e07c46e1d3",
+    "afffde8dfce76ca80f55b27116e64dc9c60723e268dbb103a60aa0a090edb669",
+    "8bf15dccfe244deba5b946ac80a10424043a0fa88f13eb883938900767f70e4d",
+    "975a6b99af83ef5008bba7fec8b3eeb77080387cf137498499c0280c4cd4a0e6",
+    "a6c0c9d5d1e80bd94791bbcf62790c64b8d66d18f96d55708582187055e4f9f3",
+    "6a74da8f596a372e2efd2b1552ac54269eb56a8ad935d3ec43a4c7bd5b71cdda",
+    "ea95914a8f7fe5f0f2271310431f1d28575d70a38cdd06ad2057960c50f23a34",
+    "1dded512454a23813014f504341a6e6ea45f6e08f1302c3b65b1824d433f6d65",
+    "10bf1bdd1992783e0874ab4d3bfdf36637e2a113d7942eca10a65d9bb2bf6132",
+    "5caedc6d68cae8bcd2d9006a0d1eae3283ee92cef14b35836e73b11ee37de04b",
+    "8ced625d22315b5cec6de50a767e317472c6a1fe7352c990a1ec260dd3857ca1",
+    "83f3a300fea791fbe64c9954364fc460ae349ee476d9316a7aa85f54955647d5",
+    "acfcf785d2646768d18879fbdd549918f3a365b6c584f118da9f08db0bc12df2",
+    "eae3f36add3b30fb94396ce615e41ee17cf907fa8a4f999b5cfbc013bb43d501",
+    "1d4e0588bb43739e2dc0e145cb8342a43a2675ceeb9d99266f388a1fce4915b8",
+    "bd284f388ab181f9878ce13b5851aaab10af218b229f6e5c8a1deee1f2efafd6",
+    "e1dcef5cf9212e7485d6fb9a78c95552f2885879496c0eab302d144fcc4b9f31",
+    "aa5d02c4d0ad14568bd7a2d8f5b2bfbfb732458b4541fe89f8152b4c605c45dd",
+    "6e858d23c1dd0070abbe12e0f3f853dae135111c3e59ccae7bbc6e8230459dac",
+    "2ce12a079ae0dea1eaf1024544af4a28f1f2ad17a9afea3e71e1507a05a2c208",
+    "95d1f783c55ea429a457e9910ed87ae4a2e4adfad81389257dcae5ceff57b420",
+    "acac901e0f68afc8bee1556b56ba1dc937f038ced78f8699e820ab618f208c73",
+    "533b55d05b1a1adea9add5594aed2b2345655d72aac1f70d7ad6016859ef1333",
+    "4e73ddfdfc9fc44f8858024abc17b4a6229b9f276def1a5531e59e67b430d829",
+    "27f69498fbcb02a9b7a172b87061e8d866f3cc44c85cd7c0878a24e0905fe524",
+    "b09dc3196c60a923d19ff02c54d704c4375fd2ce5cc4c8841d4d8b3a3022173a",
+    "cc628d8139ab0959d94ffe39de7bd3fa6fd75589374336c875ee50a50e628ad9",
+    "4f2752db1f9610c74da6a1aab4fac2f7799a2df938e10a728f23c486971b54da",
+    "81ef8beeef245fa1405992717761e1294d2914d642e6059df00fa106fa67cbf3",
+    "8e55107fdc47e0004100bb52c091fc6c704fe3127145d721a1b67fe72ad06404",
+    "b4a8c315b751c97777eaca7ecf310b894000494897d13cd7b0a84e6d6b9799d6",
+    "d9a158784cf111b575c8b3bb290f7e495c14c2eebb96a84f81e780cb56862bf1",
+    "277629a0ffae60252dea9304db85d9f5693153b7f0588ad4910b618de1e8cd23",
+    "114c88f8e9e4e884b53e8775615d4728c204f6957e1dde804041b72c5a61badf",
+    "2015fdce7a95d29d7d7aa7899c8f67241f90d013ec52d875ad43f912c5009b1b",
+    "d922e0ac673103b602b1f491acf7df8c90017b03517a2edc64aae0da7fa84a80",
+    "7b6bb01cb06505f76e3831235c6ed4fb4b0e37ac3e5dab6778a0ce78cab7e319",
+    "cf5df499bc31ea20fdb1a2b0e08df5eaf672950158006067ebe4d874c791d728",
+    "cd0969d99870cee846e5aeb599eea565dcb950caf4713cf94dfc90b9a9308ef1",
+    "72c3cd50184680db23beb19300c1214438bf8f386d8796969d7953f054663473",
+    "7508eadfc01922d0ed672eb7c183edc72503eb93f4a2c94d230e4b4924bb5875",
+    "152b653f73cb69827024c511543c27dd53e647eeb8807038dfcb64043859318c",
+    "d6906d3808e6da15fca80f048e76fea13079af78a98c4344938d63174c005b86",
+    "ccbb551e493c8edec6836f8f9d9249eab04174bfd85839af48e5b43de38676e1",
+    "c3a01ca609b826388420a40f902fe621b259f495e5cdccaaf629aebbbd73ea50",
+    "9f1b78a75116846c42c541a7a190297d06d16519ae0998db801a2597e70f15f4",
+    "fcf508812ca42962d419333f5d00ee32d08438ded95422d58668bd8a185599cb",
+    "852927f2be772999d1ce2d9861842998eb72cd86dab966c0ab3bd6d19c1ffcfd",
+    "5122708547dbee5743e6eca4814f553961ae000764610cedc7dec4060ce111c4",
+    "411a62eeecc6a3244c0af8b80064f028f652051bd6a357f3f04ae4e468daf454",
+    "4e8b29175288755817629735a2fc4fcc3d391af4afaa76779a5fbe93ef52faf9",
+    "d6170a6e3e69d2cc3dee7a3251910a93cd23bb84bd59aacf0ff303646d3e5dc8",
+    "2522f3502f91ad2f41ee88c20249b8351f6e1b5ca599e0e000d4b9186be8a3b3",
+    "66606804bfbb82c7cd2cc983a13e07370a67b04a0680ff41b3f2b2a0af2bdf87",
+    "2d492fdae86ce04d91814bba2aa8094d74fee52a1bf06d84d3c61f610631c76f",
+    "bf4944ae8a5039de37f41934ddcf94659456cf471bd6d21e673902f57be85093",
+    "8dacaa135a45389af0cf6b6468ca3486127f6b37df79a89597c42e9847cbc645",
+    "6e99498bab9c27238344b66b6c09cde2aadbf25af1716ca7dfe33af50399eae2",
+    "6c641cf2a5b3c1628a58b06ee83ede84a3f557e78139b6de7f6b2e0f35175e14",
+    "b3936b0e8df0cd497ecde26c1f2585188e10be20c9b0a2d36bc6d1d0637783a7",
+    "3e48062ebe17e7aab12199f528371cd7b612854503996a652ab08c11b0f45f79",
+    "4acd52ef26ccd801a3ad3d990f1f2ec8440ebfb21991ed4a9b7d82b15371652f",
+    "99fd4c12093c57d4292034667ae37ad5c313873e5f1a5110d5047cee8ea9a6da"
+  ],
+  "input_manifest_sha256": "295fb0f39169f0ea725b8418095cf8bbba4fc34b317c9768925fabf9aad16785",
+  "matmul_allow_tf32": false,
+  "model_state_sha256_before_and_after": "a1d911f5d8835932f9c29e953a692c215b01e30eaf339ca475cb952e77fb4569",
+  "normalization_refitted": false,
+  "pairwise_comparisons": [
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.7881393432617188e-06,
+        "mean_abs_difference": 3.576032462255177e-08,
+        "minimum_class_margin": 0.0003822743892669678,
+        "probability_fields_above_original_1e_6": 5
+      },
+      "left": 0,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.9073486328125e-06,
+        "mean_abs_difference": 2.893957864549508e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 5
+      },
+      "right": 1
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4603137969970703e-06,
+        "mean_abs_difference": 3.477727952146598e-08,
+        "minimum_class_margin": 0.0003822743892669678,
+        "probability_fields_above_original_1e_6": 9
+      },
+      "left": 0,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.9073486328125e-06,
+        "mean_abs_difference": 2.921305305334469e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 10
+      },
+      "right": 2
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4901161193847656e-06,
+        "mean_abs_difference": 3.678608686891882e-08,
+        "minimum_class_margin": 0.0003822743892669678,
+        "probability_fields_above_original_1e_6": 13
+      },
+      "left": 0,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4901161193847656e-06,
+        "mean_abs_difference": 2.9266565706297156e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 13
+      },
+      "right": 3
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.7285346984863281e-06,
+        "mean_abs_difference": 3.713854375609795e-08,
+        "minimum_class_margin": 0.0003822743892669678,
+        "probability_fields_above_original_1e_6": 14
+      },
+      "left": 0,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.6093254089355469e-06,
+        "mean_abs_difference": 2.98428845965348e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 15
+      },
+      "right": 4
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.5497207641601562e-06,
+        "mean_abs_difference": 3.4016803688727856e-08,
+        "minimum_class_margin": 0.0003819763660430908,
+        "probability_fields_above_original_1e_6": 8
+      },
+      "left": 1,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.817941665649414e-06,
+        "mean_abs_difference": 2.764181029893043e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 8
+      },
+      "right": 2
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.3709068298339844e-06,
+        "mean_abs_difference": 3.510729390725789e-08,
+        "minimum_class_margin": 0.0003819763660430908,
+        "probability_fields_above_original_1e_6": 9
+      },
+      "left": 1,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.6689300537109375e-06,
+        "mean_abs_difference": 2.813090679314599e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 9
+      },
+      "right": 3
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.0728836059570312e-06,
+        "mean_abs_difference": 3.538593101394311e-08,
+        "minimum_class_margin": 0.0003819763660430908,
+        "probability_fields_above_original_1e_6": 2
+      },
+      "left": 1,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.0728836059570312e-06,
+        "mean_abs_difference": 2.83312331429351e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 4
+      },
+      "right": 4
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.2814998626708984e-06,
+        "mean_abs_difference": 3.6119121024137325e-08,
+        "minimum_class_margin": 0.000382155179977417,
+        "probability_fields_above_original_1e_6": 6
+      },
+      "left": 2,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.3113021850585938e-06,
+        "mean_abs_difference": 2.956083095454945e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 8
+      },
+      "right": 3
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.4007091522216797e-06,
+        "mean_abs_difference": 3.3630359719707566e-08,
+        "minimum_class_margin": 0.000382155179977417,
+        "probability_fields_above_original_1e_6": 7
+      },
+      "left": 2,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 2.3245811462402344e-06,
+        "mean_abs_difference": 2.829154457414977e-08,
+        "minimum_class_margin": 0.0011941194534301758,
+        "probability_fields_above_original_1e_6": 8
+      },
+      "right": 4
+    },
+    {
+      "common4": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.6093254089355469e-06,
+        "mean_abs_difference": 3.5170908131214914e-08,
+        "minimum_class_margin": 0.00038313865661621094,
+        "probability_fields_above_original_1e_6": 4
+      },
+      "left": 3,
+      "native": {
+        "changed_predictions": 0,
+        "max_abs_difference": 1.519918441772461e-06,
+        "mean_abs_difference": 2.841277113982368e-08,
+        "minimum_class_margin": 0.0011942088603973389,
+        "probability_fields_above_original_1e_6": 8
+      },
+      "right": 4
+    }
+  ],
+  "planned_repeats": 5,
+  "preserved_passes": [
+    {
+      "pass": 0,
+      "path": "pass_00.pt",
+      "sha256": "db1b16cc59f5589f3c986861bd2fb7582e0cab93a75cd958a2decb788affe5a2"
+    },
+    {
+      "pass": 1,
+      "path": "pass_01.pt",
+      "sha256": "1ea3128eaa79213044b1c0ccab724855673514a3496ffee70e4c08eb70bf32e2"
+    },
+    {
+      "pass": 2,
+      "path": "pass_02.pt",
+      "sha256": "d97ab49e8a07d66af29f769d98e78877d39ab87bcdf3493f6bfdd5accc023950"
+    },
+    {
+      "pass": 3,
+      "path": "pass_03.pt",
+      "sha256": "8fa5f5313d0dfc0bf30d31ae820aed924d9de3f70889ebeaee9ca5934c0b402b"
+    },
+    {
+      "pass": 4,
+      "path": "pass_04.pt",
+      "sha256": "2ae678aaee4ba47d362f2fb2ecdcf7c5065baae526e23b0cd57318bd949d095b"
+    }
+  ],
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "schema": "pmm-replay-diagnostic-v1.1-disabled-ec-target",
+  "status": "diagnosis_complete",
+  "tool_sha256": "e02809f4df6bf5964ef939c86f34de7a6c994716f9160726f0e1879a1c2e0cdd",
+  "torch": "2.11.0+cu128",
+  "training_performed": false
+}

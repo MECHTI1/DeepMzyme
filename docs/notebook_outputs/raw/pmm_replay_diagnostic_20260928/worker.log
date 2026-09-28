@@ -1,0 +1,18 @@
+Indexing original-window cache graph contents
+Indexed 416 eligible cache entries
+Indexed 844 eligible cache entries
+Indexed 1659 eligible cache entries
+Indexed 2089 eligible cache entries
+Indexed 2968 eligible cache entries
+Indexed 3793 eligible cache entries
+Indexed 4621 eligible cache entries
+Indexed 5047 eligible cache entries
+Indexed 6297 eligible cache entries
+Traceback (most recent call last):
+  File "/home/mechti/projects/DeepMzyme/audit_pmm_replay.py", line 444, in <module>
+    main()
+  File "/home/mechti/projects/DeepMzyme/audit_pmm_replay.py", line 440, in main
+    (prepare if args.phase == "prepare" else evaluate)(args)
+  File "/home/mechti/projects/DeepMzyme/audit_pmm_replay.py", line 226, in prepare
+    raise ValueError(f"{len(problems)} fresh graphs lack exact original-window predictive-content matches")
+ValueError: 1492 fresh graphs lack exact original-window predictive-content matches

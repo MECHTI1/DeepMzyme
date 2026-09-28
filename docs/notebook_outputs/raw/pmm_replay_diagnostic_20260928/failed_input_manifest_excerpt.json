@@ -1,0 +1,92 @@
+{
+  "ambiguous_identical_content_examples": 0,
+  "cache_namespace": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/raw_graph_cache/117d3f2d78b3429930bcc78491821c7352c89d5e488b7df0ab3715b32c5c0f0f",
+  "cache_time_window": {
+    "after": "2026-09-27T18:14:00Z",
+    "basis": "filesystem mtime",
+    "before": "2026-09-27T18:54:00Z"
+  },
+  "campaign_run_identity": {
+    "campaign_id": "pmm_ion_metal_v2_context",
+    "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "epochs": 50,
+    "family": "only_gvp",
+    "feature_inventory_sha256": "942d1d0e04b4dde177f7ea42cb77f0920bdd80800962624911acc4748d64793c",
+    "fold": 0,
+    "fold_membership_sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572",
+    "model_seed": 42,
+    "profile_sha256": "24f78eee4e7935fb7b41ea69d0912b00d847d832f7e38ca130487b74d7e1c802",
+    "readout": "none",
+    "resolved_config_sha256": "5ab1200077770ec38c3c46b9bf6062e2d129ccdb6cdfb886db8ce2258ef3f7e8",
+    "smoke": false,
+    "source_tree_sha256": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "target_scheme": "six_class"
+  },
+  "certifies_fit": false,
+  "cohort_file": {
+    "path": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/train_cohort.csv",
+    "sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd"
+  },
+  "eligible_cache_files": 7398,
+  "excluded_from_predictive_equality": [
+    "ec_group_id",
+    "ec_sample_weight"
+  ],
+  "exclusion_basis": "task=metal, model.predict_ec=False; ec_group_id is reporting metadata and ec_sample_weight is only consumed by the disabled EC loss branch. Their differences remain recorded; targets are never excluded.",
+  "fold_file": {
+    "path": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/fold_membership.csv",
+    "sha256": "b13d0b2c964d4c1d3f57642e72ec1cbbc6f6454dc327990cbff1d742a31b1572"
+  },
+  "input_files": {
+    "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/best_model_checkpoint.pt": "a07a608924a19af7561ffe7e40b067db37bd4b99ae1c6d3fd42c790cbf7fabc0",
+    "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/run_config.json": "7749ae59a235589848013fefacc933ee7f98eae284013e139faac73b7deb1dca",
+    "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/selected_checkpoint.json": "1d1ff1f95a7e912db671c9a175b44617cc54df8d3d617a1aece1e604d03aa0e6",
+    "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42/val_predictions.csv": "ac4e4ef6e8aa35fb54e47ec16c9b729a105b64d7468e28799c31dd43b68477bf"
+  },
+  "matched_cache_files": [],
+  "normalization_sha256": "e804bb89659c4cd1809f365b7c2eaa72413a6f406ef66aec6dec444f870eeffe",
+  "retrospective_limit": "Original in-memory inputs were not saved. Fresh UID-keyed graphs match original-window cache contents; cache entries themselves do not contain UIDs. Identical-content candidates are all listed, not assigned distinct historical identities.",
+  "run_dir": "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/runs/only_gvp__six_class__none__fold0__seed42",
+  "schema": "pmm-replay-diagnostic-v1",
+  "status": "input_mismatch",
+  "structure_dir": "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train",
+  "tool_sha256": "6e9f48ec1e5057d2c3c2ea3e7dbc019111d76378ecd212820e756f10de05dcb0",
+  "derived_excerpt": true,
+  "original_manifest": {
+    "path": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/replay_diagnostic_20260928/failed_input_manifest.json",
+    "sha256": "8d5b347edfd54febe258fd1fcd9577592f36947a5c19d112418a7430666759db",
+    "size_bytes": 15944008
+  },
+  "omitted_fields": [
+    "examples",
+    "unmatched_uids"
+  ],
+  "example_count": 1492,
+  "unmatched_uid_count": 1492,
+  "candidate_count_histogram": {
+    "1": 1492
+  },
+  "differing_fields_counts": {
+    "y_ec": 1492
+  },
+  "representative_difference": {
+    "y_ec": {
+      "cached": {
+        "dtype": "torch.int64",
+        "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+        "shape": [
+          1
+        ],
+        "type": "tensor"
+      },
+      "fresh": {
+        "dtype": "torch.int64",
+        "sha256": "12a3ae445661ce5dee78d0650d33362dec29c4f82af05e7e57fb595bbbacf0ca",
+        "shape": [
+          1
+        ],
+        "type": "tensor"
+      }
+    }
+  }
+}

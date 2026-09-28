@@ -1,0 +1,9 @@
+{
+  "name": "deepmzyme-l4-recovery-e9ff994df82d",
+  "sizeGb": "150",
+  "status": "READY",
+  "type": "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/diskTypes/pd-balanced",
+  "users": [
+    "https://www.googleapis.com/compute/v1/projects/deepmzyme-gpu-vm/zones/us-central1-c/instances/deepmzyme-l4"
+  ]
+}

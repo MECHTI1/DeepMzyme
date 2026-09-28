@@ -48,6 +48,16 @@ before another allocation. The exact queue and commands belong in the
 Screening supplies exploratory comparisons only. The full 45-fit completion
 criteria and later refit/test gates below remain unchanged.
 
+If an otherwise completed fit fails independent probability replay, preserve
+it and diagnose input equality and numerical repeatability before further
+training. The [bounded replay diagnostic](pmm_replay_diagnostic_v1.md) defines
+the TECH-023 investigation, with a separately recorded
+[disabled-EC-target amendment](pmm_replay_diagnostic_v1_1.md). The explicit
+[retrospective agreement policy](pmm_screen_agreement_v2_1.json) applies uniformly
+to this screen without replacing legacy receipts. Neither diagnostic nor
+supplemental report activates the deferred full-grid budget or the old runner's
+completion gate.
+
 The source proposals were read completely during the review and are preserved
 in Git at the reviewed revision:
 [Antigravity proposal](https://github.com/MECHTI1/DeepMzyme/blob/63d4cd52bf98b2448d42f4498364828431c962eb/docs/plans/metal_level_metal_task_compared_PMM_antigravity_plan.md)

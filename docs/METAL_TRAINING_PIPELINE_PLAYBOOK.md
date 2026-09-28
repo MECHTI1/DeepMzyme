@@ -186,6 +186,17 @@ six-class metrics and Fe/Co/Ni recalls. This screen has no promotion gate and
 does not invoke full-grid `assess`, final refitting or test evaluation. Full
 comparison completion still requires all 45 verified fits.
 
+For a completed fit with a probability-only replay failure, preserve its
+checkpoint and every failed export. Follow the
+[bounded input/numerical diagnostic](plans/pmm_replay_diagnostic_v1.md) and its
+[disabled-EC-label amendment](plans/pmm_replay_diagnostic_v1_1.md), where
+applicable. These tools live outside the frozen training source. A separately
+versioned [screen agreement policy](plans/pmm_screen_agreement_v2_1.json) may
+produce an explicit retrospective report; it does not turn a failed legacy
+receipt into a pass. Keep both counts visible. The frozen runner cannot consume
+that report, so do not resume the affected arm through its ordinary replay
+retry path or claim full-grid completion from this screen.
+
 ### Full campaign commands
 
 Commands (run from the repository root; `T` is the dataset's `train/`
