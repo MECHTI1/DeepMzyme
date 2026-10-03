@@ -7,6 +7,48 @@ Source ranges and hashes: [preservation manifest](../../../docs/archive/consolid
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+## pmm-010
+
+Preserved verbatim from STATUS before the user-authorized 2026-10-03 storage
+retirement update. Scientific execution remains paused.
+
+```text
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-09-28.
+- GPU/VM: TERMINATED, independently checked 2026-09-28 06:00:18 UTC; the retained 150-GB disk costs approximately $15/month. This is historical provider evidence, not a new live resource check ([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+```
+
+## pmm-011
+
+2026-10-03 — user approved the recommendation to preserve a standard snapshot
+and local backups, then retire the stopped VM and its disk to reduce recurring
+storage cost. This does not resume scientific work or authorize compute starts.
+
+The [retirement receipt](storage_retirement_20261003.json) owns the resource IDs,
+provider inventory, snapshot size, verified price and local evidence path. The
+snapshot reached READY and was restored to a temporary disk; its source identity
+matched, and the temporary disk was deleted. This verifies provider restoration,
+not a filesystem mount or boot. The local 72-file diagnostic backup passed a
+fresh SHA-256 readback. Full instance/disk metadata, controller configuration,
+controller source and the archive receipt were independently copied and hashed
+on the secondary drive before source deletion.
+
+The original VM and 150-GiB disk were deleted through the controller. Independent
+inventory found no VMs, disks, reserved addresses or recoverable snapshots; one
+standard snapshot remains. Its 34.77 GiB at $0.05/GiB-month gives approximately
+$1.74/month gross, versus the previous $15/month disk. Billing stays enabled to
+retain the snapshot. No GPU was started and no training/evaluation was performed.
+
+The controller gained a storage-only `vm-archive` preparation command, and its
+delete path now explicitly removes the requested boot disk even when recovery
+set `autoDelete=false`. All 85 controller tests passed. Current status/report
+daily reserves can still show conservative configured-disk estimates; these are
+not invoices. The receipt's snapshot-size calculation describes retained storage.
+
+Resume requires a separately authorized controller restore route, using the
+saved snapshot and existing boot-disk/automatic-STOP safeguards. The public
+archive-to-VM restore command is not yet implemented; default `vm-create` would
+create a fresh OS. See the [archive procedure](../../GCP_GPU_RUNBOOK.md#archive-a-paused-environment).
+
 ## pmm-001
 
 Source: `3c0f80c:EXPERIMENT_STATUS.md:10-38`.

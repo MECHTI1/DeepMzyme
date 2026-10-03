@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-10-03T13:48:51Z",
+  "project": "deepmzyme-gpu-vm",
+  "authorization": "User accepted standard snapshot plus local backups, followed by retirement of the stopped VM and disk; no compute start authorized.",
+  "retired_instance": {
+    "name": "deepmzyme-l4",
+    "id": "6465074116022266445",
+    "zone": "us-central1-a"
+  },
+  "retired_disk": {
+    "name": "deepmzyme-l4-recovery-5279a430fc79",
+    "id": "5638006703511595727",
+    "size_gib": 150
+  },
+  "snapshot": {
+    "name": "deepmzyme-paused-20261003",
+    "id": "2759500758241819488",
+    "status": "READY",
+    "snapshotType": "STANDARD",
+    "sourceDiskId": "5638006703511595727",
+    "storageBytes": "37332941824",
+    "storageBytesStatus": "UP_TO_DATE",
+    "storageLocations": [
+      "us-central1"
+    ]
+  },
+  "price": {
+    "region": "us-central1",
+    "sku_id": "817F-F5A3-514E",
+    "source": "Cloud Billing Catalog API",
+    "usd_per_gib_month": 0.05,
+    "verified_at": "2026-10-03T13:39:19Z"
+  },
+  "estimated_gross_monthly_usd": 1.738450574874878,
+  "verification": {
+    "instances_remaining": 0,
+    "disks_remaining": 0,
+    "snapshots_remaining": 1,
+    "reserved_addresses_remaining": 0,
+    "recoverable_snapshots_remaining": 0,
+    "restore_verified_at": "2026-10-03T13:46:25Z",
+    "temporary_restore_disk_deleted": true,
+    "scope": "provider snapshot and disk restoration; no filesystem mount or boot test",
+    "local_72_file_manifest_rechecked": true,
+    "controller_tests_passed": 85
+  },
+  "independent_backup_root": "/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/runtime/storage_retirement_20261003",
+  "resume": "Requires snapshot-to-boot-disk restoration and separately authorized guarded VM creation; public archive-to-VM restore CLI not yet implemented. Do not use default vm-create as a restore.",
+  "billing": "Keep project billing enabled to retain this snapshot; existing incurred charges remain payable."
+}
