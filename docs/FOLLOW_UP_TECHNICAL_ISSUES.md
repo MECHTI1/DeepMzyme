@@ -912,18 +912,47 @@ the other explicit-membership tests; the stale test needs retargeting to
 
 ## TECH-020 — Greedy k-fold assignment concentrates large groups in fold 0
 
-**Status:** Open; observed 2026-09-25, deliberately not changed.
+**Status:** Open; observed 2026-09-25, measured 2026-09-29, deliberately not
+changed in frozen campaigns. Fix it only in a new study's fold builder. This entry
+absorbs the never-committed draft number TECH-026, which stays unused.
 
-`split_pockets_k_fold()` places each group (largest first) into the fold with
+`split_pockets_k_fold()` (`src/training/splits.py:208-265`) shuffles the groups,
+then sorts them largest first (`:239`) and places each group into the fold with
 the lowest *absolute* penalty after assignment. A partially filled fold already
-has a smaller label deviation than an empty one, so large groups accumulate in
-fold 0 until its size overshoots. In the frozen `pmm_ion_metal_v1` cohort all of
-the largest PDB groups (for example two 48-Mn entries) are in fold 0, and
-validation Mn counts range from 340 (fold 4) to 729 (fold 0). Grouping and
-per-fold class presence are correct; only stratification balance is weak. The
-campaign plan requires reusing this splitter unchanged, and changing it would
-alter every existing fold definition, so any fix needs a separate, versioned
-split identity.
+has a smaller label deviation than an empty one, so folds fill in order and fold
+identity follows group size. The splitter builds the PMM ion folds
+(`src/benchmarking/pmm_ion_campaign.py:244`), `--n-folds` runs including Stage 6
+grouped-fold confirmation (`src/training/run.py:1274`) and the serial metal
+campaign evidence (`src/serial_metal_campaign/evidence.py:45`). In the frozen
+`pmm_ion_metal_v1` cohort all of the largest PDB groups (for example two 48-Mn
+entries) are in fold 0. Measured in the `pmm_ion_metal_v2_context`
+`fold_membership.csv`:
+
+| Fold | Ions | PDB groups | Ions per group | Group sizes | Cu ions (groups) |
+|---|---|---|---|---|---|
+| 0 | 1,492 | 195 | 7.65 | 3–48 | 39 (6) |
+| 1 | 1,496 | 425 | 3.52 | 3–4 | 67 (20) |
+| 2 | 1,496 | 713 | 2.10 | 1–3 | 79 (39) |
+| 3 | 1,494 | 1,239 | 1.21 | 1–2 | 91 (75) |
+| 4 | 1,420 | 1,420 | 1.00 | 1 | 67 (67) |
+
+Grouping and per-fold class presence are correct, but the folds are size strata,
+not exchangeable random folds: fold 0 holds only multi-ion entries (Mn is 49% of
+fold 0 but 23% of fold 4); with fold 0 as validation no training PDB has more
+than four ions; fold-to-fold variance mixes structure type with sampling noise;
+single-fold screens (all fold-0 evidence so far) are not representative; and
+designs that screen on some folds and confirm on others compare different
+populations. With only six Cu PDB groups in fold 0, one Cu group moves fold-0
+balanced accuracy by 3–5 points. PDB grouping is also not homology-disjoint; a
+read-only review reported about 18% of ions with an identical chain sequence in
+another fold (UNVERIFIED, not re-run). Other cohorts built with this splitter
+are likely affected and should be measured before reuse.
+
+Fix direction (new study only): random group order without size sorting,
+stratification on native labels with Cu groups spread evenly, groups formed from
+sequence-sharing components, balance checks recorded before any fit, and a re-run
+of the PMM comparator on the new folds. Changing the splitter alters every
+existing fold definition, so a fix needs a separate, versioned split identity.
 
 ## TECH-021 — PMM input, replay and runtime certification gaps
 
@@ -1091,8 +1120,9 @@ empty inventories and visibility of retained storage.
 
 The [closeout evidence](notebook_outputs/raw/pmm_replay_diagnostic_20260928/verified_closeout.json)
 preserves the contradictory report and direct disk evidence. GPU compute was
-stopped; the retained disk continues to cost approximately $15/month. A failed
-inventory query must never be used as evidence that storage charges ended.
+stopped; the disk was then retained at approximately $15/month until its
+2026-10-03 retirement to a snapshot (see current status). A failed inventory
+query must never be used as evidence that storage charges ended.
 
 ## TECH-025 — Core scope needs a separate assessment and promotion bridge
 
@@ -1148,3 +1178,111 @@ argmax and carries native-five Fe/Co+Ni recalls beside common-four reporting.
 Native-six metrics and separate Fe/Co/Ni recalls remain present. Passing
 synthetic CPU tests does not establish a completed 45-fit assessment, model
 promotion, final refit or final-report readiness.
+
+## TECH-027 — Cross-validation and final refit use different checkpoint rules
+
+**Status:** Open (verified 2026-09-29). A pre-declared single rule is needed
+before the next confirmation campaign.
+
+Cross-validation reports the best validation epoch (native BA), but the Stage 6B
+full refit uses the terminal epoch-50 checkpoint
+([playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation);
+`docs/plans/pmm_core_execution_v1.md:125`). With the fixed learning rate used by
+all nine fold-0 fits, the two differ strongly: common-four BA at the selected
+epoch versus epoch 50 is 89.47 versus 84.59 (late fusion four-class), 86.02
+versus 77.01 (Only-GVP four-class) and 88.39 versus 84.29 (Only-ESMC four-class).
+Model and target decisions are therefore made on checkpoints that are never
+deployed, and single-epoch selection adds 1–7 points of selection luck (see
+[PARAMETER_FINDINGS](PARAMETER_FINDINGS.md#pmm-ion-campaign-single-fold-target-and-readout-comparisons)).
+
+Fix direction: declare one rule used identically in CV and refit, for every target
+and family, for example a cross-fitted fixed epoch (fold k uses the median
+smoothed best epoch of the other folds; the refit uses the median over all folds)
+or a cosine-to-zero schedule (`--lr-schedule cosine`, already implemented) with a
+fixed epoch count and the terminal checkpoint. Keep other rules as declared
+secondary analyses.
+
+## TECH-028 — PMM comparator inherits a true-metal label leak
+
+**Status:** Open (verified read-only 2026-10-03). Upstream PinMyMetal property;
+DeepMzyme results are unaffected because DeepMzyme uses no PMM inputs.
+
+In `classmodel_train_set` (7,920 rows), `valence_3a` equals the bond-valence sum
+computed with the ion's true metal: the `bvs_<metal>` column closest to
+`valence_3a` (within 1e-4) gives the label in 7,919 of 7,920 rows (Mn 2,590/2,590,
+Cu 400/400, Zn 2,300/2,301, Class VIII 2,629/2,629; 69 rows tie between two
+columns). On the frozen `pmm_ion_metal_v2_context` cohort this zero-parameter
+rule reaches 99.94–100% common-four BA in every fold. PinMyMetal's class model
+uses these NEIGHBORHOOD features and its released training script drops only
+identifier and label columns; the DeepMzyme comparator reproduces that recipe
+(`src/pmm_source_release.py:33`, `src/benchmarking/pmm_comparator.py`), so its
+feature columns include `valence_3a`, `valence_4a`, `vecsum_3a`, `vecsum_4a` and
+all `bvs_*`. Deployed PinMyMetal writes predicted sites as ZN (upstream
+`add_metal_site_to_pdb.py:84`), so training and deployment inputs differ
+(INFERRED; the binary was not traced).
+
+The recorded comparator values (fold 0 72.46%, five-fold mean 70.29%) correctly
+reproduce the released recipe, which uses the leak only weakly (fold-0 Cu recall
+48.7%), but they were computed with label-bearing inputs. Approximate leak-free
+refits (scikit-learn stand-ins, not the pinned environment) gave about 58–65%
+fold-0 BA, so the recorded DeepMzyme lead over PMM is conservative. Stored PMM
+out-of-fold probabilities must not be blended with or fed into DeepMzyme: they
+rescue 58 of late fusion's 73 fold-0 Mn→Class VIII errors, a leak-free stand-in
+rescues none.
+
+Fix direction: in the pinned environment (Python 3.11.5, scikit-learn 1.3.0,
+imbalanced-learn 0.11.0), refit the comparator on the same folds without
+`valence_3a`, `valence_4a`, `vecsum_3a` and `vecsum_4a` (second variant: also
+without `bvs_*`), write to a new directory (never over `pmm_comparator/`), and
+report the released recipe only as a labelled historical reference. Pre-declare
+the primary comparator variant before any held-out use.
+
+## TECH-029 — Verified input and training behaviours with small measured effect
+
+**Status:** Open, recorded 2026-10-03 from a read-only, adversarially verified
+review. Not defects in recorded results: training, validation and every arm used
+the same behaviour, so recorded comparisons remain matched. Change any item only
+in a new study with its own source and feature identity.
+
+- Weight decay is numerically inert. AdamW's decoupled decay shrinks each weight
+  by `lr × wd` per step (`src/training/run.py:1566-1595`; no parameter is excluded
+  from decay). With about 18,500 steps (5,906 training ions, batch 16, 50 epochs),
+  `wd=1e-4` removes under 0.06% at `lr=3e-4` (about 0.16% in float32) and nothing
+  at `lr=3e-5`, where `float32(1 - 3e-9)` equals 1. Historical WD grids up to
+  `1e-3` were equally inert. A decay strength with any effect would be a new,
+  untuned regime.
+- The coordination sphere is incomplete. Waters, ligands, other metals and
+  HETATM residues are dropped (`src/graph/structure_parsing.py:37-42`;
+  `src/training/source_cohort.py:325`), so the water-inclusive coordination number
+  (training folds, P(CN ≥ 6): Mn 0.63, Class VIII 0.48, Zn 0.06, Cu 0.02) is not an
+  input. A no-fit fold-0 rule "geometric CN ≥ 6 ⇒ not Zn/Cu" changed late fusion by
+  +0.81 BA points (PDB-cluster 95% CI -0.49 to +2.42), Only-ESMC by +1.25 and
+  Only-GVP by -0.24; the gain comes from two protein families and disappears
+  without them or at CN ≥ 5. Only-GVP already avoids Zn/Cu on CN ≥ 6 sites (6 of
+  589). Deposited LINK records must not become inputs.
+- Modified residues written as HETATM (MSE, TPO, KCX and others) are removed from
+  both the ESMC sequence and the pocket graph (`src/embed_helpers/esmc.py:73`;
+  `src/graph/structure_parsing.py:39-42`): 755 of 7,664 context chains lose 2,931
+  residues (2,449 MSE). The ESMC input is the ATOM-record sequence, not SEQRES,
+  joined without a chain-break token; 7.25% of SEQRES residues are absent, mostly
+  termini. A held-out set must use the identical extraction.
+- ESMC features are the final normed layer only
+  (`src/benchmarking/pmm_ion_features.py:317-319`; esm 3.2.3 returns
+  `self.norm(x)`); intermediate layers are computed and discarded, and payload
+  metadata does not record the layer.
+- In ion mode `site_metal_stats` is constant (`[0,1,0,0]`, zero after z-scoring),
+  so the site-feature encoder adds only a bias and partner metals are invisible;
+  about 22% of ions have another metal within 4 Å (PMM `num_metal_4a`).
+- Edge sequence separation is one linearly z-scored scalar (mean 54.7, sd 89.1;
+  `src/graph/edge_geometry.py:134`, `src/model.py:520-548`): spacings 1–6 span
+  only 0.056, and cross-chain pairs carry a meaningless residue-number difference.
+- Metal label smoothing is fixed at 0 (`src/benchmarking/pmm_ion_campaign.py:90`,
+  `:477`); checkpoints selected late are highly overconfident on their errors in
+  every family. Argmax BA is unaffected.
+- The metal loss weights every ion equally. In folds 1–4 and the full refit,
+  copies from large homo-oligomer entries carry about 11% of the loss mass (none
+  in fold-0 training); each class still receives 25%.
+
+Not re-verified: backbone-N or Met-SD donor sites (for example NiSOD), the
+occupancy-below-one subset, and a reported 18% of ions sharing an identical chain
+sequence across folds.

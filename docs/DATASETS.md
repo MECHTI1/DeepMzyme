@@ -14,8 +14,9 @@ Last broad evidence audit: 2026-09-14. Pilot PROPKA overlay audit: 2026-09-15.
 Relevant facts:
 
 - The legacy non-overlap PinMyMetal test was historically evaluated in seven
-  early Only-GVP runs and is not pristine or unopened.
-- Exact PinMyMetal contains train/test PDB-ID overlap.
+  early Only-GVP runs and six runs on 2026-09-18 and is not pristine or unopened.
+- Exact PinMyMetal contains train/test PDB-ID overlap; its test side (the same
+  structure set) was opened on 2026-09-22 and 2026-09-23.
 - The non-overlapped PinMyMetal root is present locally but its historical test
   was already accessed; it is included in v11/v12 (absent from historical v10).
   The harsh root is absent locally and from v10/v11/v12.
@@ -133,10 +134,10 @@ is owned by [`Plan.md`](../Plan.md).
 | Dataset ID | Scientific purpose | Materialized locally | In current v12 bundle | Test/fold evaluation record | Current interpretation |
 |---|---|---:|---:|---|---|
 | `pinmymetal-source` | Original PinMyMetal class-model membership and site provenance | Source files tracked | No, source membership only | Not an executable split by itself | Primary membership evidence |
-| `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | No completed test evaluation found | Possibly overlapped comparison/validation route |
-| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | Yes | Seven early test evaluations found | Historically accessed; not pristine |
-| `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation found | Documented severe comparison variant |
-| `pinmymetal-common70` | Custom zero-overlap assignment of common PDB IDs, seed 42 | Yes | Yes | No evaluation found | Custom comparison split, not a selected final test |
+| `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | Opened 2026-09-22/23 (see ledger) | Opened test; possibly overlapped comparison route |
+| `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | Yes | Seven early and six 2026-09-18 test evaluations found | Historically accessed; not pristine |
+| `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation of this split found | Severe comparison variant; its test PDB IDs are the opened exact test side |
+| `pinmymetal-common70` | Custom zero-overlap assignment of common PDB IDs, seed 42 | Yes | Yes | No evaluation of this split found | Custom comparison split; all test PDB IDs come from the opened exact test |
 | `clean30-original` | CLEAN official split30 fold benchmark with shared multi-donor structures | Yes | Yes | Fold evaluation is the intended benchmark design | Five fold pairs; report aggregate across folds |
 | `clean30-conservative` | One deterministic supported-metal AlphaFill donor per CLEAN target/fold | Yes; current `CLEAN_30_main` | Yes | No completed DeepMzyme/CLEAN-predictor result found in inspected evidence | Current preferred CLEAN metallo source |
 | `clean10` | Potential CLEAN 10%-identity benchmark | No | No | No evidence found | Not present or documented |
@@ -324,6 +325,8 @@ Status:
 - Included in v10: no.
 - Completed evaluation found: no.
 - Selection use established: no.
+- Overlap with opened tests: by construction its test side holds every exact
+  test-side PDB ID, which were opened on 2026-09-22/23; it is not an unopened test.
 
 The existing script filename
 `step6_create_additional_split_non_overalpped_structures.py` and its argparse
@@ -354,8 +357,10 @@ Status:
 - Test membership and labels: materialized.
 - Completed evaluation found: no.
 - Selection use established: no.
+- Overlap with opened tests: all 189 test PDB IDs are exact test-side PDB IDs
+  (136 test-only plus 53 common), which were opened on 2026-09-22/23.
 - Scientific role: custom comparison split, not an automatically selected
-  final test.
+  final test and not an unopened test.
 
 Tracked generated metadata:
 [`prepare_training_and_test_set/provenance/common_pdbid_70_30/`](../prepare_training_and_test_set/provenance/common_pdbid_70_30/).
@@ -514,9 +519,9 @@ Tracked metadata:
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
 | Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set |
-| Exact Zenodo PinMyMetal | Yes | Unknown, possibly evaluated (fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No | Active evaluation status unconfirmed; treat as potentially opened |
-| Harsh PinMyMetal | No current root | No | No | Availability must be restored before use |
-| Common-PDBID 70/30 | Yes | No | No | Custom comparison only |
+| Exact Zenodo PinMyMetal | Yes | Unknown, possibly evaluated (fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No | Active evaluation status unconfirmed; treat as potentially opened. Source test-file metadata read on 2026-10-03 (below) |
+| Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
+| Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
 | CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation |
 
@@ -558,6 +563,18 @@ aggregate association statistics, training, or model selections used those
 snippets. Subsequent association inputs are explicitly allowlisted development
 artifacts. This records metadata exposure; it is not a held-out model
 evaluation or a claim that no test metadata has ever been viewed.
+
+**2026-10-03 incidental PinMyMetal test metadata access:** during a read-only
+check of the comparator label leak
+([TECH-028](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)),
+two verification agents also read the source `classmodel_test_set` and compared
+its `valence_3a`, `valence_4a` and `bvs_*` columns with its metal labels in
+aggregate. Their reports give only leak match rates (`valence_3a`: 1,488/1,488
+rows; `valence_4a`: about 79%), but both scratch scripts also printed the test
+file's per-label row counts into the agents' working output. No DeepMzyme or PMM
+model was evaluated on test rows, no predictions were made, and nothing was
+selected. This is label and feature metadata exposure of the source behind the
+exact Zenodo test, not an evaluation; any later use of that test must disclose it.
 
 ## Current bundles
 
