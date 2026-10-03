@@ -1,7 +1,7 @@
 # DeepMzyme Current Experiment Status
 
 - Status: paused (2026-09-28 user decision)
-- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-09-28.
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (storage retirement only).
 
 ## Current objective and stage
 
@@ -60,7 +60,7 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 ## Blockers and immediate next action
 
 - Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
-- GPU/VM: TERMINATED, independently checked 2026-09-28 06:00:18 UTC; the retained 150-GB disk costs approximately $15/month. This is historical provider evidence, not a new live resource check ([closeout](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md)).
+- GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/campaigns/pmm_ion_metal/log.md#pmm-011).
 
 Resume requires an explicit user request, refreshed remaining-budget authority
 and new readiness verification against the execution environment. The proposed

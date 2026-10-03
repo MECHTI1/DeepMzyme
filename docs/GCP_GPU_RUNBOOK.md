@@ -41,6 +41,23 @@ manufacture authorization or request it again when already provided. An
 existing VM starts through `vm-start --confirm` only when authorized. Never
 bypass controller refusals, price checks or Google-side STOP.
 
+## Archive a paused environment
+
+For a user-authorized retirement, the controller's `vm-archive` prepares a
+standard snapshot in the source region and verifies restoration to a temporary
+disk without starting compute. Read its `--help` and the controller README's
+"Preserve a paused environment at lower storage cost" procedure. Review the
+verified receipt and local artifact backup before `vm-delete --delete-disk`;
+then independently confirm the source VM/disk are absent and the snapshot is
+retained. Snapshot storage remains billable and requires billing to stay enabled.
+
+This is different from ordinary stop-only closeout and from stockout recovery.
+The public controller does not yet expose an archive-to-VM restore command;
+prepare and test that route under fresh resume authorization using its existing
+boot-disk creation and automatic-STOP safeguards. A default `vm-create` creates
+a fresh OS rather than restoring the archive. Current snapshot identity,
+verification and cost belong in the campaign receipt and STATUS, not here.
+
 ## Bounded stockout handling
 
 `ZONE_RESOURCE_POOL_EXHAUSTED` is a capacity failure, distinct from insufficient
