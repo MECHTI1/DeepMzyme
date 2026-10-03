@@ -119,7 +119,7 @@ stage, best-validation-result, authorization and GPU/VM lines, and a known
 caveats slot); that resolves the missing-template gap only.
 
 Drafts for review: [AGENTS](../../../AGENTS.md), [STATUS](../../../EXPERIMENT_STATUS.md),
-[PMM overview](../../campaigns/pmm_ion_metal/README.md),
+[PMM overview](../campaigns/pmm_ion_metal/README.md),
 [relocated stage format](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#required-answer-format-for-metal-notebook-stage-requests)
 and [Plan target selection](../../../Plan.md#per-campaign-target-selection).
 

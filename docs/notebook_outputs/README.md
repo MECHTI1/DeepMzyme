@@ -43,10 +43,10 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 ## PMM ion-level comparison with corrected protein context
 
-Current execution decision: retain the existing fold-0 comparison and defer
-the remaining 36 core fits. The fivefold design stays available for future
-explicit resumption. Historical rows below preserve the decisions at the time;
-see `EXPERIMENT_STATUS.md` for the active deferral.
+The campaign was closed at fold 0 on 2026-10-03 (user decision); the remaining
+36 core fits were not run
+([archived README](../archive/campaigns/pmm_ion_metal/README.md)). Historical rows
+below preserve the decisions at the time.
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|

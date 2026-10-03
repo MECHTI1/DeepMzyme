@@ -1,31 +1,26 @@
 # DeepMzyme Current Experiment Status
 
-- Status: paused (2026-09-28 user decision)
-- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (storage retirement only).
+- Status: planned (2026-10-03 PMM core v2 closed at fold 0; v3 planning only)
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (closure and verified findings).
 
 ## Current objective and stage
 
-- Current campaign: pmm_ion_metal, PMM core scope v2 (paused; scope `pmm-core-v2`, campaign `pmm_ion_metal_v2_context`) — [README](docs/campaigns/pmm_ion_metal/README.md)
+- Current campaign: pmm_ion_metal_v3, planning only (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: exploratory fold-0 comparison retained; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Stage: v3 design; no folds, runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
 
-**Nine ordinary-readout fits are retained; the remaining 36 fits are deferred.**
-No completed fivefold neural confirmation, model/target promotion, final refit
-or held-out evaluation is claimed. Exact scientific identities, sub-batches,
-results and evidence grades live in the campaign README and the
-[v2 scope](docs/plans/pmm_core_scope_v2.json).
+**The PMM core v2 campaign was closed at fold 0 on 2026-10-03 (user decision).**
+Its nine fold-0 fits are final validation-only evidence; 36 fits were not run and
+its neutral four-versus-five/six test is unanswered. No fivefold neural
+confirmation, model/target promotion, final refit or held-out evaluation is
+claimed ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
 
 ## Anchor and evidence state
 
-- Best validation result: none promoted; the fold-0 core fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the [PMM README](docs/campaigns/pmm_ion_metal/README.md); results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
+- Best validation result: none promoted; the closed PMM core fold-0 fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the [archived PMM README](docs/archive/campaigns/pmm_ion_metal/README.md); results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
 
-Seven original strict replay passes and the GVP5/GVP6 strict failures remain
-recorded. All nine core fits have separate retrospective `pmm-core-replay-v1`
-qualification; this does not rewrite the original `1e-6` failures as passes.
-The core summary owns the result table and diagnostic limits. The three earlier
-binding-aware fits remain separate exploratory evidence; further awareness work
-is paused.
-
+Fold 0 of that campaign holds only multi-ion PDB groups and six Cu groups, so its
+values are not representative ([findings](docs/PARAMETER_FINDINGS.md#pmm-ion-campaign-single-fold-target-and-readout-comparisons)).
 The [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md)
 retains twelve completed fixed-split runs (Grade 3), not promotion. Later EC
 workflow reconciliation and cross-task holdout certification remain required
@@ -33,46 +28,41 @@ before auxiliary learning; [issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md) own deta
 
 ### Known caveats and open mismatches
 
-- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme; the
-  paired-CI gate uses the Stage 6 selection metric (native by default), the
-  rare-recall gate is always native, and the default tie-breakers are native.
-  Comparing target schemes needs a campaign assessor on collapsed-four balanced
-  accuracy. Latent, not active now
+- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme; comparing
+  target schemes needs a campaign assessor on collapsed-four balanced accuracy
   ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
+- v3 inputs: size-strata k-fold splitter
+  ([TECH-020](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)),
+  CV versus refit checkpoint rule
+  ([TECH-027](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules)),
+  PMM comparator label leak
+  ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
 
 ## Dataset and test readiness
 
 The primary final-test route remains unresolved. [DATASETS](docs/DATASETS.md#test-use-ledger)
 owns the ledger; this short access reminder preserves the default-read safety boundary:
 
-- Non-overlap PMM test: 352 pockets; seven early reports plus six on 2026-09-18
-  (`benchmark_50epochs` ×3 and `benchmark_replicated_72pct` ×3).
-- Exact PMM test: the same structure set, 352 pockets / 316 structure files /
-  313 PDB IDs. Opened 2026-09-22 (three single-split reports) and 2026-09-23
-  (15 fold and three ensemble reports). Exploratory selection influence: yes;
-  no model promoted. See the [methodological qualification](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md).
-- Exact Zenodo PMM test: unknown, possibly evaluated; the relaunch outcome is
-  unrecorded. See its [history](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md).
-- No evaluation artifacts found for Harsh, Common-PDBID 70/30, CLEAN30 or CARE
-  clusterRes30. CARE had incidental test-metadata exposure on 2026-09-15,
-  not evaluation. Absence of found artifacts is not proof of no outside run.
+- Non-overlap and exact PMM tests (same 316-structure set): opened 13 and 21
+  times; not eligible as an unopened test. Harsh and Common-PDBID 70/30 test IDs
+  come from that opened set.
+- Exact Zenodo PMM test: unknown, possibly evaluated; its source test file's
+  label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
+- No evaluation artifacts found for CLEAN30 or CARE clusterRes30; CARE had
+  incidental test-metadata exposure on 2026-09-15. Absence of found artifacts is
+  not proof of no outside run.
 
 ## Blockers and immediate next action
 
 - Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
-- GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/campaigns/pmm_ion_metal/log.md#pmm-011).
+- GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/archive/campaigns/pmm_ion_metal/log.md#pmm-011).
 
-Resume requires an explicit user request, refreshed remaining-budget authority
-and new readiness verification against the execution environment. The proposed
-additional 34 hours/$34 is unapproved and no longer awaiting an immediate
-execution decision. No extra fold-0 fits or final refits are authorized
-([scope authorization](docs/plans/pmm_core_scope_v2.json);
-[pmm-001](docs/campaigns/pmm_ion_metal/log.md#pmm-001)).
-
-Stage 6 grouped-fold selection (or explicitly labeled fallback), completed/reused
-Stage 6B full non-test refit, frozen report/checkpoint rules and a scientifically
-resolved final-test route must precede one-shot Stage 7. No test-based tuning,
-ranking, promotion, rejection or checkpoint choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
+Next: user decisions on the v3 design listed in its README, starting with the
+final metal test route. Stage 6 grouped-fold selection (or an explicitly labeled
+fallback), a completed Stage 6B full non-test refit, frozen report/checkpoint
+rules and a scientifically resolved final-test route must precede one-shot
+Stage 7. No test-based tuning, ranking, promotion, rejection or checkpoint
+choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
 
 ## History and update rule
 

@@ -39,8 +39,8 @@ the four Antigravity/Opus proposals and link to their originals preserved in
 Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
 
 - [Metal-level prediction and PMM comparison](plans/metal_level_metal_task_compared_PMM_final_plan.md):
-  existing fold-0 comparison retained; remaining core fits are deferred for
-  future work, and further binding-awareness work is paused.
+  campaign closed at fold 0 on 2026-10-03; the remaining core fits were not
+  run, and binding-awareness work is closed with it.
   The [scope manifest](plans/pmm_core_scope_v2.json) and
   [execution recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
   define the four/five/six comparison. The additive
@@ -118,11 +118,10 @@ claim or change.
 - `Plan.md`: design authority for architecture, experiment policy, validation
   selection, and held-out test rules. Contains the document map for all
   related files.
-- `docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`: active scope
-  of the known-ion PMM comparison. Resolve its scope manifest and the metal
-  playbook's guarded entry point before resuming; the frozen low-level runner's
-  full grid is not automatically the current authorized queue. Preserve old
-  scientific identities and distinguish active, paused and historical arms.
+- `docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`: scope of the
+  known-ion PMM comparison, closed at fold 0 on 2026-10-03; do not resume it.
+  Preserve old scientific identities and distinguish its closed and historical
+  arms.
 - `docs/README.md`: top-level documentation index for validation/testing,
   notebook, playbook, copied-output documentation, Drive/local output
   handling, and copied-evidence placement rules.
@@ -130,8 +129,8 @@ claim or change.
   anchors, trusted evidence files, caveats, and next planned action.
 - `docs/DATASETS.md`: authoritative dataset/split/bundle inventory, current
   availability, provenance links, and historical test-use ledger.
-- `docs/plans/pmm_core_scope_v2.json`: current PMM ordinary-readout four/five/six
-  scope; use the metal playbook for its bounded five-class fold-0 recipe.
+- `docs/plans/pmm_core_scope_v2.json`: closed PMM ordinary-readout four/five/six
+  scope (fold 0 only); its `deferred_by_user` status keeps the runner refusing.
   Preserve the v1 manifest and historical awareness screen.
 - `docs/PARAMETER_FINDINGS.md`: validation/HPO findings with evidence grades;
   historical test metrics are excluded from parameter conclusions.
