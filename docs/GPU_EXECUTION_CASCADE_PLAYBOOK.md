@@ -22,7 +22,8 @@ full grid; do not repeat completed smokes or preparation merely because the
 larger recipe lists them. Preserve controller caps and recorded authorization;
 use the skill's resource-state decision table before considering any new start.
 
-For the active PMM continuation, resolve the
+The PMM core continuation was closed at fold 0 on 2026-10-03 and must not be
+allocated. Historical rule: for that continuation, resolve the
 [core-only scope and entry point](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)
 before allocation. Paused binding-aware fits are excluded from its queue and
 forecast; completed core and exploratory fits remain preserved. Resolve the

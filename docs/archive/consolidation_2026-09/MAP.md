@@ -11,7 +11,7 @@ links stay literal in text fences; README evidence links are navigable.
 
 | History | Destination |
 |---|---|
-| PMM ion, core scopes, replay diagnoses, five-class screen, pause | [PMM README](../../campaigns/pmm_ion_metal/README.md), [log](../../campaigns/pmm_ion_metal/log.md) |
+| PMM ion, core scopes, replay diagnoses, five-class screen, pause | [PMM README](../campaigns/pmm_ion_metal/README.md), [log](../campaigns/pmm_ion_metal/log.md) |
 | Zenodo reconstruction/relaunch | [README](../../campaigns/zenodo_pmm_exact_2026-09-24/README.md), [log](../../campaigns/zenodo_pmm_exact_2026-09-24/log.md) |
 | Single-GPU rejected admission and separately paused continuation | [README](../../campaigns/metal_single_gpu/README.md), [log](../../campaigns/metal_single_gpu/log.md) |
 | Exact-PMM exploratory pocket benchmark | [README](../campaigns/exact_pmm_5fold_2026-09-23/README.md), [log](../campaigns/exact_pmm_5fold_2026-09-23/log.md) |

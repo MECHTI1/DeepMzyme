@@ -86,6 +86,9 @@ none is a primary training objective. The old and new 45-fit grids contain diffe
 
 ### Active core-only continuation
 
+**Campaign closed at fold 0 on 2026-10-03 (user decision); this recipe is
+preserved history and must not be executed**
+([archived README](archive/campaigns/pmm_ion_metal/README.md)).
 **Execution deferred by user on 2026-09-28.** Retain the nine existing fold-0
 results. The following recipe preserves the 36 missing fits for a future
 explicitly resumed campaign; do not execute its training block now. The runner

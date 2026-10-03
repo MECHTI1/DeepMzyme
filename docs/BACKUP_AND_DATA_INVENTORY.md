@@ -14,7 +14,7 @@ Last updated: **2026-10-03** (GCP snapshot retirement; other inventories retain 
 | **GitHub** | [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) | Primary project code, configs, test suites, documentation, and `codex/pmm-source-audit` branch. |
 | **GitHub** | [`MECHTI1/deepmzyme-vm-manager`](https://github.com/MECHTI1/deepmzyme-vm-manager) | Cloud GPU VM orchestration tools and execution environments. |
 | **Google Drive** | `MyDrive/DeepMzyme/` (`1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I`) | Colab campaign artifacts, intermediate pilot archives, and Optuna persistent SQLite databases. |
-| **Google Cloud snapshot** | Project `deepmzyme-gpu-vm`, region `us-central1` | Paused VM disk contents, including its installed environment and caches. The [retirement receipt](campaigns/pmm_ion_metal/storage_retirement_20261003.json) records the snapshot identity, provider restore check and independent local backup. The original VM/disk were retired; [recovery procedure](GCP_GPU_RUNBOOK.md#archive-a-paused-environment). |
+| **Google Cloud snapshot** | Project `deepmzyme-gpu-vm`, region `us-central1` | Retired VM disk contents, including its installed environment and caches. The [retirement receipt](archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json) records the snapshot identity, provider restore check and independent local backup. The original VM/disk were retired; [recovery procedure](GCP_GPU_RUNBOOK.md#archive-a-paused-environment). |
 | **Zenodo Note** | Upstream Reference | DeepMzyme's input PMM data originated from Zenodo (`classmodel_train_set.csv` / `classmodel_test_set.csv`). DeepMzyme's own published cloud archives reside on Hugging Face. |
 
 ---

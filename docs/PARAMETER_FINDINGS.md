@@ -74,6 +74,11 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ### PMM ion campaign: single-fold target and readout comparisons
 
+**Closed 2026-10-03 at fold 0 (user decision):** the nine fold-0 fits below are
+this campaign's final validation-only evidence (Grade 5; incomplete grid Grade 6);
+no fivefold confirmation, promotion, refit or held-out evaluation
+([archived README](archive/campaigns/pmm_ion_metal/README.md)).
+
 **Research disposition, approved 2026-09-28:** pause further development and
 confirmation of the current binding-aware readout. Prioritize ordinary-readout
 core models under required four/six and the added five-class formulation, with

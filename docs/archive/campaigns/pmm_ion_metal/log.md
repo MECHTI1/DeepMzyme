@@ -2,10 +2,136 @@
 
 Historical text, copied verbatim before the Job B rewrite. Old next actions,
 permissions, counts and claims are dated evidence, not current instructions.
-Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
-Source ranges and hashes: [preservation manifest](../../../docs/archive/consolidation_2026-09/inventory/job_b_status_preservation.json).
+Current authority: [EXPERIMENT_STATUS.md](../../../../EXPERIMENT_STATUS.md).
+Source ranges and hashes: [preservation manifest](../../../../docs/archive/consolidation_2026-09/inventory/job_b_status_preservation.json).
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
+
+## pmm-013
+
+2026-10-03 — the user closed this campaign at fold 0 (explicit decision after a
+read-only re-audit). Nine of 45 fits are its final, validation-only evidence
+(Grade 5 per fit; incomplete grid Grade 6). The 36 fold 1–4 fits were not run;
+they did not fail. Timeline: fold-0 fits 2026-09-27/28; deferral 2026-09-28 for
+budget; post-hoc checkpoint analysis 2026-09-29; closure 2026-10-03.
+
+Under the pre-registered native-BA selection rule, direct-four was at or above
+six-class in all three families and five-class exceeded direct-four only for
+Only-ESMC; the post-hoc symmetric and selection-free rules reverse several of
+these comparisons and stay labelled post-hoc. The neutral four-versus-five/six
+test is therefore unanswered: not "no difference" and not "four wins". The
+closure reasons do not depend on which target leads: size-strata folds
+([TECH-020](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)),
+different checkpoint rules for CV and refit
+([TECH-027](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules)),
+a five-value percentile bootstrap that under-covers, and fold-0 Cu selection luck.
+The released PMM comparator's five-fold result stays recorded with the label-leak
+caveat of [TECH-028](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak).
+The three binding-aware fold-0 fits stay separate exploratory evidence; their
+remaining fits will not run here.
+
+No promotion, Stage 6 confirmation, Stage 6B refit or held-out evaluation
+occurred. Fold-0 results of this campaign are never confirmatory evidence for a
+later study. All run artifacts, caches, embeddings and the frozen code checkout
+`/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2` are
+preserved. `docs/plans/pmm_core_scope_v2.json` stays unchanged: its
+`deferred_by_user` status keeps the runner refusing execution. Successor planning:
+[pmm_ion_metal_v3](../../../campaigns/pmm_ion_metal_v3/README.md).
+
+## pmm-012
+
+Preserved verbatim from STATUS before the 2026-10-03 closure update.
+Source: `7221189:EXPERIMENT_STATUS.md:1-87`.
+
+```text
+# DeepMzyme Current Experiment Status
+
+- Status: paused (2026-09-28 user decision)
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (storage retirement only).
+
+## Current objective and stage
+
+- Current campaign: pmm_ion_metal, PMM core scope v2 (paused; scope `pmm-core-v2`, campaign `pmm_ion_metal_v2_context`) — [README](docs/campaigns/pmm_ion_metal/README.md)
+- Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
+- Stage: exploratory fold-0 comparison retained; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+
+**Nine ordinary-readout fits are retained; the remaining 36 fits are deferred.**
+No completed fivefold neural confirmation, model/target promotion, final refit
+or held-out evaluation is claimed. Exact scientific identities, sub-batches,
+results and evidence grades live in the campaign README and the
+[v2 scope](docs/plans/pmm_core_scope_v2.json).
+
+## Anchor and evidence state
+
+- Best validation result: none promoted; the fold-0 core fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the [PMM README](docs/campaigns/pmm_ion_metal/README.md); results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
+
+Seven original strict replay passes and the GVP5/GVP6 strict failures remain
+recorded. All nine core fits have separate retrospective `pmm-core-replay-v1`
+qualification; this does not rewrite the original `1e-6` failures as passes.
+The core summary owns the result table and diagnostic limits. The three earlier
+binding-aware fits remain separate exploratory evidence; further awareness work
+is paused.
+
+The [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md)
+retains twelve completed fixed-split runs (Grade 3), not promotion. Later EC
+workflow reconciliation and cross-task holdout certification remain required
+before auxiliary learning; [issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md) own details.
+
+### Known caveats and open mismatches
+
+- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme; the
+  paired-CI gate uses the Stage 6 selection metric (native by default), the
+  rare-recall gate is always native, and the default tie-breakers are native.
+  Comparing target schemes needs a campaign assessor on collapsed-four balanced
+  accuracy. Latent, not active now
+  ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
+
+## Dataset and test readiness
+
+The primary final-test route remains unresolved. [DATASETS](docs/DATASETS.md#test-use-ledger)
+owns the ledger; this short access reminder preserves the default-read safety boundary:
+
+- Non-overlap PMM test: 352 pockets; seven early reports plus six on 2026-09-18
+  (`benchmark_50epochs` ×3 and `benchmark_replicated_72pct` ×3).
+- Exact PMM test: the same structure set, 352 pockets / 316 structure files /
+  313 PDB IDs. Opened 2026-09-22 (three single-split reports) and 2026-09-23
+  (15 fold and three ensemble reports). Exploratory selection influence: yes;
+  no model promoted. See the [methodological qualification](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md).
+- Exact Zenodo PMM test: unknown, possibly evaluated; the relaunch outcome is
+  unrecorded. See its [history](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md).
+- No evaluation artifacts found for Harsh, Common-PDBID 70/30, CLEAN30 or CARE
+  clusterRes30. CARE had incidental test-metadata exposure on 2026-09-15,
+  not evaluation. Absence of found artifacts is not proof of no outside run.
+
+## Blockers and immediate next action
+
+- Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
+- GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/campaigns/pmm_ion_metal/log.md#pmm-011).
+
+Resume requires an explicit user request, refreshed remaining-budget authority
+and new readiness verification against the execution environment. The proposed
+additional 34 hours/$34 is unapproved and no longer awaiting an immediate
+execution decision. No extra fold-0 fits or final refits are authorized
+([scope authorization](docs/plans/pmm_core_scope_v2.json);
+[pmm-001](docs/campaigns/pmm_ion_metal/log.md#pmm-001)).
+
+Stage 6 grouped-fold selection (or explicitly labeled fallback), completed/reused
+Stage 6B full non-test refit, frozen report/checkpoint rules and a scientifically
+resolved final-test route must precede one-shot Stage 7. No test-based tuning,
+ranking, promotion, rejection or checkpoint choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
+
+## History and update rule
+
+Overwrite this file after preserving dated changes in the campaign's `log.md`.
+Keep only objective/stage with the current and other open campaign lines,
+anchor, best validation result and evidence grade, known caveats and open
+mismatches, dataset/test readiness, authorization and GPU/VM state, blockers,
+next action and evidence links. Exact budgets stay in the playbooks; parameter
+findings stay in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), scientific
+policy in [Plan](Plan.md), and batch evidence in the [index](docs/notebook_outputs/README.md).
+[History map](docs/archive/consolidation_2026-09/MAP.md) includes the recovered
+09-16/17 pause and earlier removed policy; historical next actions do not resume work.
+```
 
 ## pmm-010
 
@@ -47,7 +173,7 @@ not invoices. The receipt's snapshot-size calculation describes retained storage
 Resume requires a separately authorized controller restore route, using the
 saved snapshot and existing boot-disk/automatic-STOP safeguards. The public
 archive-to-VM restore command is not yet implemented; default `vm-create` would
-create a fresh OS. See the [archive procedure](../../GCP_GPU_RUNBOOK.md#archive-a-paused-environment).
+create a fresh OS. See the [archive procedure](../../../GCP_GPU_RUNBOOK.md#archive-a-paused-environment).
 
 ## pmm-001
 
