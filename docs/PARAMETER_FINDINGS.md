@@ -140,7 +140,10 @@ macro-F1 increased **77.2357% → 81.9963%** and Class VIII recall increased
 **64.6067% → 76.4045%**. Late fusion changed BA **89.4653% → 88.7277%**
 and macro-F1 **80.7283% → 81.0455%**. Thus no family improved the primary
 metric on this fold. These Grade-5 tradeoffs do not establish general benefit,
-equivalence, or lack of usefulness of binding information.
+equivalence, or lack of usefulness of binding information. Post-hoc check
+(2026-10-03): both BA drops are Cu ions only (two for GVP, one for late fusion);
+the mean of the three non-Cu recalls moved +0.27 and -0.12 points. Read this as
+no gain, not as harm.
 
 Matched six-class ESMC selected epoch 33 by native six-class BA (**72.2507%**).
 Its probability-sum collapsed-four BA is **85.8393%**, below direct-four
@@ -192,11 +195,35 @@ mean of the last 10 epochs:
 
 With symmetric common-four selection, six-class exceeds direct-four for late
 fusion; on the selection-free last-10 mean, six-class exceeds direct-four in all
-three families. Direct-four arms peak early (epochs 11–12) and then decline. Fold
-0 was already seen, so this is exploratory only and does not change the
+three families. The best 5-epoch moving average (four / five / six) gives the
+same direction: late fusion 88.02 / 88.85 / 88.84, Only-ESMC 85.31 / 85.38 /
+87.17, Only-GVP 79.19 / 77.18 / 80.32.
+
+Stability caveats (corrected 2026-09-29; verified from the same files). All nine
+fits used a fixed learning rate. Median epoch-to-epoch change in common-four BA
+is 3.0–3.8 points for Only-GVP, 1.5–2.3 for Only-ESMC and 1.3–1.7 for late
+fusion. The selected GVP4, ESM4 and ESM5 values are single-epoch spikes (no
+other epoch within 2 points); the common-four peak exceeds the best 5-epoch
+average by 6.83 (GVP4), 4.06 (ESM5), 3.08 (ESM4) and 1.2–1.8 points (late
+fusion). Only Only-GVP four-class peaks early (epoch 12) and then declines; late
+fusion four-class is a flat plateau with a spike at epoch 11, and Only-ESMC
+four-class peaks at epoch 36. The "best common-four epoch" column is itself
+selection-driven (GVP six-class is best at epoch 3). Fold 0 contains only PDB
+groups with at least three ions (see
+[TECH-020](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)),
+so fold-0 values are not representative of the cohort. Its 39 Cu ions come from
+six PDB groups. In the three direct-four arms, Cu recall at the selected epoch
+exceeds its epoch 11–50 mean by an amount worth +1.65 (late fusion), +2.88
+(Only-ESMC) and +3.35 (Only-GVP) BA points. A paired PDB-cluster bootstrap of
+the direct-four arms (2026-10-03) resolves late fusion over Only-GVP (+3.45
+points, 95% CI +0.39 to +6.51) but not over Only-ESMC (+1.09, CI -2.00 to +4.60).
+
+Fold 0 was already seen, so this is exploratory only and does not change the
 pre-declared PMM rule. Any rule for folds 1–4 must be declared before those
 fits run (Plan neutral target test); saved per-epoch metrics allow every rule
-to be computed from the same fits without extra GPU time.
+to be computed from the same fits without extra GPU time. The CV-versus-refit
+checkpoint mismatch is tracked as
+[TECH-027](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules).
 
 ### EC1 standalone v12 campaign: initial fixed-split evidence
 
@@ -535,7 +562,10 @@ Namespaced ID:
 
 Finding: the single inverse-sqrt-frequency result did not displace the original
 five-seed inverse-frequency anchor. Identical WD outcomes are local
-observations, not evidence that weight decay is generally irrelevant.
+observations, not evidence that weight decay is generally irrelevant: at the
+learning rates and step counts used here, every WD value in this and the other
+WD grids below is numerically inert under AdamW's decoupled decay
+([TECH-029](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)).
 `5e-5` is untested here, not a negative result.
 
 Evidence:
