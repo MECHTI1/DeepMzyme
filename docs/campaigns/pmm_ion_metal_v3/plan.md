@@ -59,15 +59,18 @@ run of the step it affects.
    - Sequences: the first-model ATOM-record sequence of every context chain,
      exactly the sequences hashed in the v2 ESMC plan (`sequence_sha256`, checked).
    - Near-copy: two chains of at least 30 residues whose global alignment with
-     free end gaps (BLOSUM62, gap open -11, extend -1) has identical aligned
-     residues of at least 90% of the shorter chain's length. A prefilter may skip
-     only pairs it provably cannot miss.
+     free end gaps (BLOSUM62, gap open -11, extend -1, Biopython convention) has
+     identical aligned standard residues of at least 90% of the shorter chain's
+     length plus its number of internal insertion events (each insertion counts
+     once, whatever its length; [log v3-005](log.md#v3-005)). A 5-mer prefilter
+     skips only pairs that provably cannot qualify (proof in the builder).
    - Groups: PDBs linked by any near-copy pair are merged transitively; a group
      is never split.
    - Assignment: each of 200 seeded starts shuffles the groups (no size sorting)
      and places each group where it least increases an imbalance score (sum of
      squared relative deviations of fold ion counts, native Mn/Fe/Co/Ni/Cu/Zn ion
-     counts and per-element group counts); the best start is kept.
+     counts and per-element group counts); the lowest-score start that passes
+     acceptance is kept.
    - Acceptance (default): every ion in exactly one fold; no PDB, group or
      near-copy pair across folds; every fold holds all six elements with at least
      15 groups each; fold ion counts within ±5% of one fifth; each element within
