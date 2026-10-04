@@ -84,7 +84,7 @@ status and freeze the test usage in [DATASETS](../../DATASETS.md#test-use-ledger
 
 ## Budget
 
-Ceiling $15 gross until the user confirms that Google Cloud free credits cover
-Compute Engine; then $40. Controller caps and gross-cost accounting are
-unchanged. Estimated total with concurrency: about $25–35, so step E/F may need
-the $40 ceiling.
+Ceiling **$40 gross** for steps B–F (credit coverage confirmed on 2026-10-04;
+[log](log.md#v3-003)). Controller session/daily caps and gross-cost accounting
+are unchanged. Estimated total with concurrency: about $25–35. Before any step
+would exceed the ceiling, ask the user to stop or to record a larger ceiling.

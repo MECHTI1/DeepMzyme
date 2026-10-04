@@ -3,6 +3,22 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-003
+
+2026-10-04 — the user confirmed active Google Cloud free-trial credits on the
+billing account (upgraded free trial; about ₪848 remaining, expiring
+2026-12-24; Google reports they cover all eligible usage). Under the user's
+rule from [v3-002](#v3-002), the v3 GPU budget ceiling is **$40 gross** for
+steps B–F. Costs stay tracked at gross list price; credits never widen the
+controller's session and daily caps or any limit, and usage is not described
+as free. Every GPU start still needs the user's explicit OK.
+
+STATUS line replaced by this update, preserved verbatim:
+
+```text
+- Authorized now: v3 CPU preparation only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); every GPU start needs the user's explicit OK within the [recorded ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-002); no refit or held-out evaluation.
+```
+
 ## v3-002
 
 2026-10-04 — user decisions after discussion:
