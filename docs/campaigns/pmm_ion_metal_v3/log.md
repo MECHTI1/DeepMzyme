@@ -3,6 +3,40 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-005
+
+2026-10-04 — plan step A1 complete: the v3 fold set `v3-seqid90-s42-b2` is
+frozen under `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/folds/`
+(`fold_membership.csv` SHA-256 `e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a`;
+receipt `fold_receipt.json` with input, output and code identities; builder
+`v3-near-copy-folds-2` at commit `3102c2a`, seed 42, 200 starts). Only training
+inputs were read, under the read guard; every one of the 7,664 context-chain
+sequences matched its frozen ESMC hash.
+
+Result: 7,398 ions, 3,992 PDB entries, 4,972 unique chains, 11,609 near-copy
+pairs, 2,208 groups. All acceptance checks pass (48 of 200 starts; start 198):
+fold ions 1,471–1,500 (target 1,479.6); Cu 67–73 ions from 24–25 groups per
+fold; at least 24 groups of every element in every fold. No near-copy under
+the builder's rule crosses folds (the v2 folds had 50.9% of ions with a
+cross-fold near-copy).
+
+Refinement of the A1 near-copy rule: identity divides by the shorter chain's
+length plus its number of internal insertion events, so the 5-mer prefilter is
+provably lossless. A first build (`v3-seqid90-s42`, builder version 1) counted
+every inserted residue instead; independent verification showed it split 25
+plan-rule near-copy pairs (54 ions) across folds, so it is marked superseded and
+must not be used. Under the plan's original wording, 9 borderline pairs
+(identity 90.0–90.6% of the shorter chain) still cross the frozen folds.
+
+Verification (read-only, independent methods): exhaustive screening of all
+11.9 million chain pairs with a different lossless filter found no qualifying
+pair the builder missed; 50,000+ skipped pairs aligned exactly stayed below 90%;
+balance recomputed exactly; byte-identical rebuilds under different Python hash
+seeds. Known limits: chains below 90% identity can cross folds (about 11% of
+ions have an 80–90% cross-fold partner), so this is near-copy, not homology,
+separation; and a few large families dominate one element in one fold (largest
+single-group shares: Ni 0.51 and Cu 0.43 in fold 4, Mn 0.40 in fold 1).
+
 ## v3-004
 
 2026-10-04 — an external review of the v3 plan (Codex, read-only) raised twelve

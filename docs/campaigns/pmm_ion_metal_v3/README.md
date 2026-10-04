@@ -18,6 +18,7 @@ and one evaluation of PMM's test set. Dated decisions, including the
 checkpoint rule, the PMM comparison basis and the budget ceiling, are in the
 [log](log.md).
 
-Fold, runtime and run identities are recorded here before use; v2 artifacts
-stay untouched. Nothing in this folder authorizes a GPU start, refit or
+Fold set: `v3-seqid90-s42-b2`, frozen 2026-10-04 ([log v3-005](log.md#v3-005)).
+Runtime and run identities are recorded here before use; v2 artifacts stay
+untouched. Nothing in this folder authorizes a GPU start, refit or
 held-out evaluation without the user's explicit OK.
