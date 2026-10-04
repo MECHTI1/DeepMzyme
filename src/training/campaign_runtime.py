@@ -42,6 +42,51 @@ def read_fold_membership(path: Path, expected_sha256: str) -> dict[str, dict[str
     return rows
 
 
+def membership_split(
+    pockets: list[PocketRecord],
+    membership: dict[str, dict[str, str]],
+    *,
+    fold_index: int,
+    n_folds: int,
+):
+    """Train/validation split taken directly from a frozen fold file (validation = fold ``fold_index``).
+
+    Keeps the loaded (cohort) order inside each partition and fails on any missing,
+    unknown or repeated example, on fold values outside ``range(n_folds)`` and on any
+    group that appears on both sides.
+    """
+    from training.splits import PocketSplit
+
+    folds = {int(row["fold"]) for row in membership.values()}
+    if not folds <= set(range(int(n_folds))):
+        raise CampaignContractError(f"Fold membership uses folds {sorted(folds)}, outside range({n_folds})")
+    if int(fold_index) not in folds:
+        raise CampaignContractError(f"Fold {fold_index} has no members in the frozen fold file")
+    seen: set[str] = set()
+    train, val = [], []
+    for pocket in pockets:
+        uid = pocket.metadata.get("source_uid")
+        if uid is None:
+            raise CampaignContractError(f"Example {pocket.pocket_id} lacks source_uid")
+        uid = str(uid)
+        if uid in seen:
+            raise CampaignContractError(f"Example {uid} was loaded twice")
+        seen.add(uid)
+        if uid not in membership:
+            raise CampaignContractError(f"Example {uid} is not in the frozen fold file")
+        (val if int(membership[uid]["fold"]) == int(fold_index) else train).append(pocket)
+    if seen != set(membership):
+        raise CampaignContractError(
+            f"{len(set(membership) - seen)} fold-file examples were not loaded"
+        )
+    train_groups = {membership[str(p.metadata["source_uid"])]["group_id"] for p in train}
+    val_groups = {membership[str(p.metadata["source_uid"])]["group_id"] for p in val}
+    crossing = sorted(train_groups & val_groups)
+    if crossing:
+        raise CampaignContractError(f"Groups on both sides of fold {fold_index}: {crossing[:5]}")
+    return PocketSplit(train, val)
+
+
 def membership_identity_sha256(rows: list[dict[str, Any]]) -> str:
     """Hash of ion identity and fold only (never labels of a scheme or model seeds)."""
     payload = "\n".join(
@@ -218,7 +263,13 @@ def export_selected_validation_predictions(
         "selected_epoch": int(best_checkpoint["epoch"]),
         "selection_metric": best_checkpoint.get("selection_metric"),
         "selection_metric_value": best_checkpoint.get("selection_metric_value"),
-        "tie_rule": "earliest epoch (strictly greater metric required to replace)",
+        "tie_rule": ("terminal epoch (no validation selection)"
+                     if best_checkpoint.get("checkpoint_rule") == "terminal"
+                     else "earliest epoch (strictly greater metric required to replace)"),
+        **({"checkpoint_rule": "terminal",
+            "descriptive_best_epoch": best_checkpoint.get("descriptive_best_epoch"),
+            "descriptive_best_metric_value": best_checkpoint.get("descriptive_best_metric_value")}
+           if best_checkpoint.get("checkpoint_rule") == "terminal" else {}),
         "campaign_run_identity": json.loads(config_payload["campaign_run_identity"])
         if config_payload.get("campaign_run_identity") else None,
         "validation_predictions": {"path": predictions_path.name, "sha256": sha256_file(predictions_path),
@@ -291,8 +342,11 @@ def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[st
     from benchmarking.pmm_ion_campaign import forbidden_read_roots
 
     install_forbidden_read_guard(forbidden_read_roots(train_dir))
-    checkpoint_path = run_dir / "best_model_checkpoint.pt"
     selected_receipt = json.loads((run_dir / "selected_checkpoint.json").read_text(encoding="utf-8"))
+    checkpoint_name = selected_receipt.get("selected_checkpoint", "best_model_checkpoint.pt")
+    if checkpoint_name not in {"best_model_checkpoint.pt", "terminal_model_checkpoint.pt"}:
+        raise CampaignContractError(f"Unsupported selected checkpoint name {checkpoint_name!r}")
+    checkpoint_path = run_dir / checkpoint_name
     if sha256_file(checkpoint_path) != selected_receipt["selected_checkpoint_sha256"]:
         raise CampaignContractError("Selected checkpoint content changed")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)

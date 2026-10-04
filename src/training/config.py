@@ -130,6 +130,8 @@ class TrainConfig:
     source_cohort_sha256: str | None = None
     fold_membership_csv: str | None = None
     fold_membership_sha256: str | None = None
+    fold_split_source: str = "computed"
+    checkpoint_rule: str = "best_validation"
     feature_inventory_sha256: str | None = None
     campaign_run_identity: str | None = None
     export_validation_predictions: bool = False
@@ -954,6 +956,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--fold-membership-sha256", default=None, help="Required SHA256 of --fold-membership-csv.")
     parser.add_argument(
+        "--checkpoint-rule", choices=("best_validation", "terminal"), default="best_validation",
+        help=(
+            "best_validation (default): select the epoch with the best --selection-metric. "
+            "terminal: select the final-epoch weights for every consumer (metadata, receipt, "
+            "validation export, replay, refit); the best epoch is kept only as a descriptive value. "
+            "Intended with --lr-schedule cosine."
+        ),
+    )
+    parser.add_argument(
+        "--fold-split-source", choices=("computed", "membership"), default="computed",
+        help=(
+            "computed (default): recompute the k-fold split and require it to equal --fold-membership-csv. "
+            "membership: take training and validation examples directly from --fold-membership-csv "
+            "(validation = rows whose fold equals --fold-index), for frozen group folds the splitter "
+            "cannot recompute. Requires --source-cohort-csv."
+        ),
+    )
+    parser.add_argument(
         "--feature-inventory-sha256", default=None,
         help="SHA256 of the frozen feature_inventory.json; binds parse-cache entries to immutable features.",
     )
@@ -1035,6 +1055,10 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         parser.error("--source-cohort-csv requires --source-cohort-sha256")
     if args.fold_membership_csv is not None and (not args.fold_membership_sha256 or args.n_folds is None):
         parser.error("--fold-membership-csv requires --fold-membership-sha256 and --n-folds")
+    if args.fold_split_source == "membership" and (
+        args.fold_membership_csv is None or args.source_cohort_csv is None or args.fold_index is None
+    ):
+        parser.error("--fold-split-source membership requires --source-cohort-csv, --fold-membership-csv and --fold-index")
     if args.export_validation_predictions:
         if args.source_cohort_csv is None or args.task != "metal" or args.metal_example_unit != "ion":
             parser.error("--export-validation-predictions requires --source-cohort-csv --task metal --metal-example-unit ion")
@@ -1082,6 +1106,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         source_cohort_sha256=args.source_cohort_sha256,
         fold_membership_csv=args.fold_membership_csv,
         fold_membership_sha256=args.fold_membership_sha256,
+        fold_split_source=args.fold_split_source,
+        checkpoint_rule=args.checkpoint_rule,
         feature_inventory_sha256=args.feature_inventory_sha256,
         campaign_run_identity=args.campaign_run_identity,
         export_validation_predictions=args.export_validation_predictions,

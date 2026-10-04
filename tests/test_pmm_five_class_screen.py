@@ -19,6 +19,14 @@ from benchmarking import pmm_ion_campaign as campaign
 from benchmarking import pmm_ion_features
 from benchmarking.pmm_execution import ExecutionBlocked
 from test_pmm_ion_campaign import _campaign_with_folds, _full_inventory
+
+# The closed v2 five-class screen refuses any source tree other than its frozen one.
+# Since v3 work changes src/ (user decision 2026-10-04), these runner tests apply only
+# to the frozen checkout _code/pmm_core_scope_v2, where they still run.
+requires_frozen_v2_source = pytest.mark.skipif(
+    campaign.source_tree_sha256() != screen.EXPECTED["source_tree_sha256"],
+    reason="closed v2 runner pins the frozen v2 source tree; run in _code/pmm_core_scope_v2",
+)
 from training.config import config_to_payload, parse_args
 
 
@@ -46,6 +54,7 @@ def runtime_cli(prepared):
                             "--persistence-mode", "mounted"]
 
 
+@requires_frozen_v2_source
 def test_plan_builds_three_actual_five_class_commands_without_writes(prepared, capsys):
     train, paths, _, weights = prepared
     before = {str(p): p.read_bytes() for p in paths.root.rglob("*") if p.is_file()}
@@ -154,6 +163,7 @@ def test_forbidden_overrides_and_actions_rejected(arguments):
         screen.parse_args(["--campaign-dir", "/fixture/campaign", "--train-dir", "/fixture/train"] + arguments)
 
 
+@requires_frozen_v2_source
 @pytest.mark.parametrize("artifact", ["directory", "log", "command", "status", "dangling_symlink", "archive"])
 def test_existing_artifacts_never_retrained_or_overwritten(prepared, artifact):
     paths = prepared[1]
@@ -182,6 +192,7 @@ def test_source_drift_and_changed_protocol_refused(prepared, monkeypatch):
         screen.main(cli(prepared))
 
 
+@requires_frozen_v2_source
 def test_real_admission_blocks_unbudgeted_child(prepared, monkeypatch):
     monkeypatch.setattr(campaign, "campaign_manifest_guard", lambda *a, **k: None)
     monkeypatch.setattr(pmm_ion_features, "verify_frozen_feature_inventory", lambda *a: None)
@@ -245,6 +256,7 @@ def test_tiny_cpu_five_fit_replays_and_original_strict_threshold_refuses_drift(p
     assert not (run / "strict_failure/replay_receipt.json").exists()
 
 
+@requires_frozen_v2_source
 @pytest.mark.parametrize("status,validation_failure", [("completed", False), ("failed_independent_replay", False),
                                                         ("completed", True)])
 def test_real_persistence_retains_success_or_refusal_without_retry(prepared, monkeypatch, capsys, status, validation_failure):

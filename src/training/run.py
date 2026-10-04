@@ -81,6 +81,7 @@ from training.campaign_runtime import (
     binding_bias_state,
     export_selected_validation_predictions,
     first_shell_support,
+    membership_split,
     read_fold_membership,
     verify_fold_membership,
 )
@@ -1270,6 +1271,13 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
 
         if membership is not None:
             split = fixed_split(pockets, membership)
+        elif config.fold_split_source == "membership":
+            split = membership_split(
+                pockets,
+                read_fold_membership(Path(config.fold_membership_csv), str(config.fold_membership_sha256)),
+                fold_index=int(config.fold_index),
+                n_folds=int(config.n_folds),
+            )
         elif config.n_folds is not None:
             split = split_pockets_k_fold(
                 pockets,
@@ -1739,7 +1747,45 @@ def train_and_select_checkpoint(
         if prepared.scheduler is not None:
             prepared.scheduler.step()
         print(format_epoch_log(record, include_per_class=config.log_per_class_metrics))
+    if config.checkpoint_rule == "terminal":
+        return history, terminal_checkpoint(prepared, config, history, best_checkpoint)
     return history, best_checkpoint
+
+
+def terminal_checkpoint(
+    prepared: PreparedRun,
+    config: TrainConfig,
+    history: list[dict[str, Any]],
+    best_checkpoint: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """The final-epoch weights as the selected checkpoint; the best epoch stays descriptive only."""
+    selected = checkpoint_payload(
+        model_state_dict=copy.deepcopy(prepared.model.state_dict()),
+        optimizer_state_dict=copy.deepcopy(prepared.optimizer.state_dict()),
+        scheduler_state_dict=(copy.deepcopy(prepared.scheduler.state_dict()) if prepared.scheduler is not None else None),
+        history=copy.deepcopy(history),
+        config_payload=prepared.config_payload,
+        normalization_stats=prepared.normalization_stats,
+        dataset_summary=prepared.dataset_summary,
+        ec_labels=prepared.ec_labels,
+    )
+    selected["epoch"] = len(history)
+    selected["checkpoint_rule"] = "terminal"
+    selected["selection_metric"] = "terminal_epoch"
+    selected["selection_metric_value"] = None
+    selected["descriptive_best_metric"] = config.selection_metric
+    selected["descriptive_best_epoch"] = None if best_checkpoint is None else best_checkpoint.get("epoch")
+    selected["descriptive_best_metric_value"] = (
+        None if best_checkpoint is None else best_checkpoint.get("selection_metric_value")
+    )
+    return selected
+
+
+def selected_checkpoint_filename(checkpoint: dict[str, Any] | None) -> str:
+    """File name of the selected checkpoint: terminal-rule runs never write a "best" file."""
+    if checkpoint is not None and checkpoint.get("checkpoint_rule") == "terminal":
+        return "terminal_model_checkpoint.pt"
+    return "best_model_checkpoint.pt"
 
 
 def _record_runtime_phase(run_dir: Path, config: TrainConfig, phase: str, started: float, *, reset: bool = False) -> None:
@@ -1974,6 +2020,18 @@ def evaluate_held_out_test_split(
         prepared.model.load_state_dict(current_state_dict)
 
 
+def _checkpoint_rule_fields(checkpoint: dict[str, Any] | None) -> dict[str, Any]:
+    """Terminal-rule provenance (empty for the default rule, so default outputs are unchanged)."""
+    if checkpoint is None or checkpoint.get("checkpoint_rule") != "terminal":
+        return {}
+    return {
+        "checkpoint_rule": "terminal",
+        "descriptive_best_metric": checkpoint.get("descriptive_best_metric"),
+        "descriptive_best_epoch": checkpoint.get("descriptive_best_epoch"),
+        "descriptive_best_metric_value": checkpoint.get("descriptive_best_metric_value"),
+    }
+
+
 def persist_run_outputs(
     prepared: PreparedRun,
     *,
@@ -1999,7 +2057,7 @@ def persist_run_outputs(
     )
 
     if best_checkpoint is not None:
-        best_checkpoint_path = prepared.run_dir / "best_model_checkpoint.pt"
+        best_checkpoint_path = prepared.run_dir / selected_checkpoint_filename(best_checkpoint)
         torch.save(best_checkpoint, best_checkpoint_path)
         selected_checkpoint_path = str(best_checkpoint_path)
         selected_checkpoint_epoch = best_checkpoint.get("epoch")
@@ -2035,6 +2093,7 @@ def persist_run_outputs(
         "selected_checkpoint": selected_checkpoint_path,
         "selected_checkpoint_epoch": selected_checkpoint_epoch,
         "selected_metric_value": selected_metric_value,
+        **_checkpoint_rule_fields(best_checkpoint),
         "split_name": prepared.config_payload.get("split_name"),
         "split_type": prepared.config_payload.get("split_type"),
         "train_test_overlap_detected": (
@@ -2079,6 +2138,7 @@ def persist_run_outputs(
             "selected_checkpoint": selected_checkpoint_path,
             "selected_checkpoint_epoch": selected_checkpoint_epoch,
             "selected_metric_value": selected_metric_value,
+            **_checkpoint_rule_fields(best_checkpoint),
             "history": history,
             "test_report": test_report,
         },
@@ -2089,7 +2149,7 @@ def persist_run_outputs(
 
     print(f"Saved checkpoint to {checkpoint_path}")
     if best_checkpoint is not None:
-        print(f"Saved best checkpoint to {prepared.run_dir / 'best_model_checkpoint.pt'}")
+        print(f"Saved selected checkpoint to {prepared.run_dir / selected_checkpoint_filename(best_checkpoint)}")
     print(f"Saved dataset summary to {prepared.run_dir / 'dataset_summary.json'}")
     print(f"Saved run config to {prepared.run_dir / 'run_config.json'}")
     print(f"Saved run metadata to {prepared.run_dir / 'run_metadata.json'}")
@@ -2123,7 +2183,7 @@ def run_training(config: TrainConfig) -> Path:
             val_loader=prepared.val_loader,
             val_pockets=prepared.split.val_pockets,
             best_checkpoint=best_checkpoint,
-            checkpoint_path=prepared.run_dir / "best_model_checkpoint.pt",
+            checkpoint_path=prepared.run_dir / selected_checkpoint_filename(best_checkpoint),
             history=history,
             config_payload=prepared.config_payload,
             run_dir=prepared.run_dir,
