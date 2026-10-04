@@ -110,11 +110,14 @@ the same Class VIII target under that scheme. Do not create a new label scheme
 for this target.
 
 For the direct-four arm, select the best checkpoint by highest validation
-balanced accuracy (`val_metal_ba
-
-
-
-lanced_acc`) over the active four-class target.
+balanced accuracy (`val_metal_balanced_acc`) over the active four-class target.
+A campaign may instead pre-declare a fixed-schedule rule: a cosine learning-rate
+schedule to zero over a fixed epoch count, using the terminal checkpoint for
+every arm, every grouped fold and the Stage 6B refit alike, so validation and
+the deployed model share one rule
+([TECH-027](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules)).
+Best-epoch metrics are then descriptive only. The user approved this rule for
+`pmm_ion_metal_v3` on 2026-10-04.
 
 Three training objectives can serve this four-class endpoint:
 
@@ -151,8 +154,9 @@ collapsed four is a neutral test. It requires:
 - no held-out test use.
 
 Select each arm's checkpoint from validation only with the pre-declared metric
-(by default `val_metal_balanced_acc` over the arm's active target) and report
-collapsed four from that same checkpoint. Any ranking across target schemes
+(by default `val_metal_balanced_acc` over the arm's active target), or use the
+pre-declared fixed-schedule terminal rule above, and report collapsed four from
+that same checkpoint. Any ranking across target schemes
 uses collapsed-four balanced accuracy, never native balanced accuracies of
 different class counts. The notebook Stage 6/6B route is single-scheme: Stage 6
 skips imported candidates whose recorded `metal_label_scheme` differs

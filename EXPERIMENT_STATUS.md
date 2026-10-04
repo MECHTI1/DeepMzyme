@@ -1,7 +1,7 @@
 # DeepMzyme Current Experiment Status
 
-- Status: planned (2026-10-03 PMM core v2 closed at fold 0; v3 planning only)
-- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (closure and verified findings).
+- Status: planned (2026-10-04 v3 plan approved; CPU preparation only)
+- Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-04 (v3 plan and decisions).
 
 ## Current objective and stage
 
@@ -54,7 +54,7 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 
 ## Blockers and immediate next action
 
-- Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
+- Authorized now: v3 CPU preparation only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); every GPU start needs the user's explicit OK within the [recorded ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-002); no refit or held-out evaluation.
 - GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/archive/campaigns/pmm_ion_metal/log.md#pmm-011).
 
 Next: user decisions on the v3 design listed in its README, starting with the
