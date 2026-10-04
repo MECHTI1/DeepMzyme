@@ -136,6 +136,11 @@ class TrainConfig:
     campaign_run_identity: str | None = None
     export_validation_predictions: bool = False
     binding_residue_pooling: str = "none"
+    gvp_residual_dropout: float = 0.0
+    gvp_vector_norm: bool = False
+    gvp_lr_scope: str = "trunk"
+    gvp_auxiliary_loss_weight: float = 0.0
+    esm_modality_dropout: float = 0.0
     train_metrics_every_n_epochs: int = 1
     allow_train_loss_test_eval_debug: bool = False
     allow_final_refit_test_eval: bool = False
@@ -992,6 +997,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Logging only: validation selection is unchanged. Default 1 keeps per-epoch evaluation."
         ),
     )
+    v3 = parser.add_argument_group("v3 improvement options (all off by default)")
+    v3.add_argument("--gvp-residual-dropout", type=float, default=0.0,
+                    help="Dropout on GVP residual updates: scalars elementwise, vectors as whole channels.")
+    v3.add_argument("--gvp-vector-norm", action="store_true",
+                    help="Normalize each node's vector channels to unit mean squared norm after every GVP layer.")
+    v3.add_argument("--gvp-lr-scope", choices=("trunk", "structural"), default="trunk",
+                    help="Parameters trained at --gvp-learning-rate: 'trunk' (GVP layers and scalar encoders) or "
+                         "'structural' (trunk plus input-vector projection and structural pooling/projection).")
+    v3.add_argument("--gvp-auxiliary-loss-weight", type=float, default=0.0,
+                    help="Late fusion only: weight of a training-only metal loss on the GVP branch.")
+    v3.add_argument("--esm-modality-dropout", type=float, default=0.0,
+                    help="Late fusion only: probability of zeroing the ESM branch per training example.")
     parser.add_argument(
         "--binding-residue-pooling", choices=VALID_BINDING_RESIDUE_POOLING_CHOICES, default="none",
         help=(
@@ -1055,6 +1072,22 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         parser.error("--source-cohort-csv requires --source-cohort-sha256")
     if args.fold_membership_csv is not None and (not args.fold_membership_sha256 or args.n_folds is None):
         parser.error("--fold-membership-csv requires --fold-membership-sha256 and --n-folds")
+    if not 0.0 <= args.gvp_residual_dropout < 1.0:
+        parser.error("--gvp-residual-dropout must be in [0, 1)")
+    if not 0.0 <= args.esm_modality_dropout < 1.0:
+        parser.error("--esm-modality-dropout must be in [0, 1)")
+    if args.gvp_auxiliary_loss_weight < 0.0:
+        parser.error("--gvp-auxiliary-loss-weight must be >= 0")
+    if (args.gvp_residual_dropout > 0.0 or args.gvp_vector_norm or args.gvp_lr_scope != "trunk") and \
+            args.model_architecture not in {"gvp", "only_gvp"}:
+        parser.error("GVP options require --model-architecture gvp or only_gvp")
+    if args.gvp_lr_scope != "trunk" and args.gvp_learning_rate is None:
+        parser.error("--gvp-lr-scope structural requires --gvp-learning-rate")
+    if (args.gvp_auxiliary_loss_weight > 0.0 or args.esm_modality_dropout > 0.0) and (
+        args.model_architecture != "gvp" or args.task != "metal"
+    ):
+        parser.error("--gvp-auxiliary-loss-weight and --esm-modality-dropout require --model-architecture gvp "
+                     "(late fusion) and --task metal")
     if args.fold_split_source == "membership" and (
         args.fold_membership_csv is None or args.source_cohort_csv is None or args.fold_index is None
     ):
@@ -1112,6 +1145,11 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         campaign_run_identity=args.campaign_run_identity,
         export_validation_predictions=args.export_validation_predictions,
         binding_residue_pooling=args.binding_residue_pooling,
+        gvp_residual_dropout=args.gvp_residual_dropout,
+        gvp_vector_norm=args.gvp_vector_norm,
+        gvp_lr_scope=args.gvp_lr_scope,
+        gvp_auxiliary_loss_weight=args.gvp_auxiliary_loss_weight,
+        esm_modality_dropout=args.esm_modality_dropout,
         train_metrics_every_n_epochs=args.train_metrics_every_n_epochs,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         allow_final_refit_test_eval=args.allow_final_refit_test_eval,
