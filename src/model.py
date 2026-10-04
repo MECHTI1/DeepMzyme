@@ -548,6 +548,20 @@ def vector_norm(v: Tensor, eps: float = 1e-8) -> Tensor:
     return torch.sqrt(torch.clamp((v * v).sum(dim=-1), min=eps))
 
 
+def vector_channel_dropout(v: Tensor, p: float, training: bool) -> Tensor:
+    """Drop whole vector channels (all three components together), rescaled like dropout."""
+    if not training or p <= 0.0:
+        return v
+    keep = (torch.rand(v.size(0), v.size(1), 1, device=v.device) >= p).to(v.dtype)
+    return v * keep / (1.0 - p)
+
+
+def vector_layer_norm(v: Tensor, eps: float = 1e-8) -> Tensor:
+    """Scale each node's vector channels to unit mean squared norm (the GVP vector norm)."""
+    mean_squared_norm = (v * v).sum(dim=-1).mean(dim=-1, keepdim=True)
+    return v / torch.sqrt(mean_squared_norm + eps).unsqueeze(-1)
+
+
 class SimpleGVP(nn.Module):
     def __init__(self, s_in: int, v_in: int, s_out: int, v_out: int):
         super().__init__()
@@ -598,9 +612,15 @@ class SimpleGVP(nn.Module):
 
 
 class SimpleGVPLayer(nn.Module):
-    def __init__(self, s_dim: int, v_dim: int, e_dim: int, *, normalize_message_aggregation: bool = False):
+    def __init__(self, s_dim: int, v_dim: int, e_dim: int, *, normalize_message_aggregation: bool = False,
+                 residual_dropout: float = 0.0, vector_norm: bool = False):
         super().__init__()
+        if not 0.0 <= float(residual_dropout) < 1.0:
+            raise ValueError(f"residual_dropout must be in [0, 1), got {residual_dropout}.")
         self.normalize_message_aggregation = bool(normalize_message_aggregation)
+        # Parameter-free options: they add no weights and leave initialization unchanged.
+        self.residual_dropout = float(residual_dropout)
+        self.vector_norm = bool(vector_norm)
 
         self.message_gvp = SimpleGVP(
             s_in=2 * s_dim + e_dim + 1,
@@ -644,9 +664,14 @@ class SimpleGVPLayer(nn.Module):
         u_s_in = torch.cat([s, agg_s], dim=-1)
         u_v_in = torch.cat([v, agg_v], dim=1)
         ds, dv = self.update_gvp(u_s_in, u_v_in)
+        if self.residual_dropout > 0.0:
+            ds = F.dropout(ds, p=self.residual_dropout, training=self.training)
+            dv = vector_channel_dropout(dv, self.residual_dropout, self.training)
 
         s_out = self.norm_s(s + ds)
         v_out = v + dv
+        if self.vector_norm:
+            v_out = vector_layer_norm(v_out)
         return s_out, v_out
 
 
@@ -767,8 +792,21 @@ class GVPPocketClassifier(nn.Module):
         use_site_angle_features: bool = False,
         site_geometry_features: str = "legacy",
         binding_residue_pooling: str = "none",
+        gvp_residual_dropout: float = 0.0,
+        gvp_vector_norm: bool = False,
+        gvp_auxiliary_loss_weight: float = 0.0,
+        esm_modality_dropout: float = 0.0,
     ):
         super().__init__()
+        if float(gvp_auxiliary_loss_weight) < 0.0:
+            raise ValueError(f"gvp_auxiliary_loss_weight must be >= 0, got {gvp_auxiliary_loss_weight}.")
+        if not 0.0 <= float(esm_modality_dropout) < 1.0:
+            raise ValueError(f"esm_modality_dropout must be in [0, 1), got {esm_modality_dropout}.")
+        if (float(gvp_auxiliary_loss_weight) > 0.0 or float(esm_modality_dropout) > 0.0) and (
+            not use_esm_branch or str(fusion_mode) != "late_fusion" or not predict_metal
+        ):
+            raise ValueError("gvp_auxiliary_loss_weight and esm_modality_dropout require metal late fusion "
+                             "with the ESM branch enabled.")
         if binding_residue_pooling not in BINDING_RESIDUE_POOLING_CHOICES:
             raise ValueError(f"Unsupported binding_residue_pooling {binding_residue_pooling!r}.")
         self.binding_residue_pooling = binding_residue_pooling
@@ -850,6 +888,8 @@ class GVPPocketClassifier(nn.Module):
                     v_dim=hidden_v,
                     e_dim=edge_hidden,
                     normalize_message_aggregation=self.normalize_message_aggregation,
+                    residual_dropout=gvp_residual_dropout,
+                    vector_norm=gvp_vector_norm,
                 )
                 for _ in range(n_layers)
             ]
@@ -998,6 +1038,10 @@ class GVPPocketClassifier(nn.Module):
             ec_class_weights.float() if ec_class_weights is not None else torch.empty(0),
         )
         self.gvp_binding_bias = BindingResidueBias() if binding_residue_pooling == "first_shell_bias" else None
+        self.gvp_auxiliary_loss_weight = float(gvp_auxiliary_loss_weight)
+        self.esm_modality_dropout = float(esm_modality_dropout)
+        # Built last: every shared module keeps the initial weights of its control for the same seed.
+        self.gvp_aux_head = nn.Linear(hidden_s, n_metal) if self.gvp_auxiliary_loss_weight > 0.0 else None
 
     def _early_esm_scalar_features(self, x_esm: Tensor) -> Tensor | None:
         if not self.use_early_esm:
@@ -1131,6 +1175,7 @@ class GVPPocketClassifier(nn.Module):
         logits_metal: Optional[Tensor],
         logits_ec: Optional[Tensor],
         data: Data,
+        logits_gvp_aux: Optional[Tensor] = None,
     ) -> tuple[Tensor, dict[str, Tensor]]:
         task_losses: dict[str, Tensor] = {}
         auxiliary_losses: dict[str, Tensor] = {}
@@ -1173,6 +1218,10 @@ class GVPPocketClassifier(nn.Module):
                         label_smoothing=self.metal_label_smoothing,
                     )
                 task_losses["metal"] = metal_loss
+                if logits_gvp_aux is not None and self.training:
+                    # Training-only GVP-branch signal; predictions never use this head.
+                    gvp_aux = F.cross_entropy(logits_gvp_aux[metal_mask], metal_targets, weight=metal_weights)
+                    auxiliary_losses["metal_gvp_aux"] = self.gvp_auxiliary_loss_weight * gvp_aux
         if self.predict_ec and logits_ec is not None and hasattr(data, "y_ec"):
             ec_mask = self._supervised_mask(data.y_ec)
             if bool(ec_mask.any().item()):
@@ -1313,6 +1362,10 @@ class GVPPocketClassifier(nn.Module):
             device=gvp_fused.device,
         )
         site_fused = self.site_feature_encoder(site_stats)
+        if self.esm_modality_dropout > 0.0 and self.training:
+            # Whole-example ESM dropout during training only; evaluation always sees ESM.
+            keep = (torch.rand(esm_fused.size(0), 1, device=esm_fused.device) >= self.esm_modality_dropout)
+            esm_fused = esm_fused * keep.to(esm_fused.dtype)
         # The gate lets the model decide how much ESM information to inject per pocket.
         fusion_gate = self.fusion_gate(torch.cat([gvp_fused, esm_fused], dim=-1))
         pocket_embed = torch.cat([gvp_fused, fusion_gate * esm_fused, site_fused], dim=-1)
@@ -1325,6 +1378,9 @@ class GVPPocketClassifier(nn.Module):
         }
         logits_metal = self.head_metal(pocket_embed) if self.head_metal is not None else None
         logits_ec = self.head_ec(pocket_embed) if self.head_ec is not None else None
+        logits_gvp_aux = self.gvp_aux_head(gvp_fused) if self.gvp_aux_head is not None else None
+        if logits_gvp_aux is not None:
+            outputs["logits_metal_gvp_aux"] = logits_gvp_aux
         if logits_metal is not None:
             outputs["logits_metal"] = logits_metal
         if logits_ec is not None:
@@ -1340,7 +1396,9 @@ class GVPPocketClassifier(nn.Module):
             and self._supervised_mask(data.y_ec).any().item()
         )
         if has_supervised_targets:
-            loss, loss_diagnostics = self._compute_supervised_loss(pocket_embed, logits_metal, logits_ec, data)
+            loss, loss_diagnostics = self._compute_supervised_loss(
+                pocket_embed, logits_metal, logits_ec, data, logits_gvp_aux=logits_gvp_aux,
+            )
             outputs.update(loss_diagnostics)
             outputs["loss"] = loss
 

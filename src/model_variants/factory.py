@@ -90,6 +90,21 @@ def _apply_fusion_defaults(kwargs: dict[str, Any]) -> dict[str, Any]:
     return resolved
 
 
+GVP_ONLY_OPTION_DEFAULTS = {
+    "gvp_residual_dropout": 0.0,
+    "gvp_vector_norm": False,
+    "gvp_auxiliary_loss_weight": 0.0,
+    "esm_modality_dropout": 0.0,
+}
+
+
+def _pop_disabled_gvp_options(kwargs: dict[str, Any], architecture: str) -> None:
+    """Non-GVP families accept the v3 GVP options only at their off values."""
+    for name, default in GVP_ONLY_OPTION_DEFAULTS.items():
+        if kwargs.pop(name, default) != default:
+            raise ValueError(f"{name} is not supported for {architecture}.")
+
+
 def build_pocket_classifier(
     *,
     model_architecture: str,
@@ -145,6 +160,7 @@ def build_pocket_classifier(
         resolved_kwargs.pop("hidden_v", None)
         resolved_kwargs.pop("edge_hidden", None)
         resolved_kwargs.pop("n_layers", None)
+        _pop_disabled_gvp_options(resolved_kwargs, architecture)
         return OnlyESMPocketClassifier(**resolved_kwargs)
     if architecture == "simple_gnn_esm":
         from model_variants.models import SimpleGNNPocketClassifier
@@ -158,5 +174,6 @@ def build_pocket_classifier(
         resolved_kwargs.pop("structural_readout_scope", None)
         resolved_kwargs.pop("use_node_type_embedding", None)
         resolved_kwargs.pop("use_site_angle_features", None)
+        _pop_disabled_gvp_options(resolved_kwargs, architecture)
         return SimpleGNNPocketClassifier(**resolved_kwargs)
     raise AssertionError(f"Unhandled model architecture: {architecture!r}")

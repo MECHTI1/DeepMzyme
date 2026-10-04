@@ -121,6 +121,15 @@ def verify_bound_run_files(entry, base):
         require(digest(path) == expected, f"Artifact hash mismatch: {name}")
 
 
+# Factory fields added for v3 (all off by default); older saved configs lack them.
+V3_OPTIONAL_CONFIG_DEFAULTS = {
+    "gvp_residual_dropout": 0.0,
+    "gvp_vector_norm": False,
+    "gvp_auxiliary_loss_weight": 0.0,
+    "esm_modality_dropout": 0.0,
+}
+
+
 def factory_kwargs(source_path, config, checkpoint, metal_labels, ec_labels):
     """Read the frozen factory call without invoking its training preparation.
 
@@ -144,6 +153,9 @@ def factory_kwargs(source_path, config, checkpoint, metal_labels, ec_labels):
             return names[node.id]
         if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
             if node.value.id == "config":
+                if node.attr not in config and node.attr in V3_OPTIONAL_CONFIG_DEFAULTS:
+                    # Runs saved before the v3 options existed trained with them off.
+                    return V3_OPTIONAL_CONFIG_DEFAULTS[node.attr]
                 require(node.attr in config, f"Frozen factory field absent from saved config: {node.attr}")
                 return config[node.attr]
             if node.value.id == "load_result" and node.attr == "ec_index_to_label":

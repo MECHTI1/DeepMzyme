@@ -1126,6 +1126,19 @@ def format_epoch_log(record: dict[str, Any], *, include_per_class: bool = False)
     return " ".join(parts)
 
 
+GVP_TRUNK_PREFIXES = ("layers.", "node_scalar_encoder.", "edge_scalar_encoder.")
+GVP_STRUCTURAL_PREFIXES = GVP_TRUNK_PREFIXES + ("init_vec_proj.", "gvp_attn_pool.", "gvp_fusion_proj.")
+
+
+def gvp_learning_rate_prefixes(scope: str) -> tuple[str, ...]:
+    """Parameter-name prefixes trained at --gvp-learning-rate (plan rank 4 extends the trunk)."""
+    if scope == "trunk":
+        return GVP_TRUNK_PREFIXES
+    if scope == "structural":
+        return GVP_STRUCTURAL_PREFIXES
+    raise ValueError(f"Unsupported --gvp-lr-scope {scope!r}")
+
+
 def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[float, bool]:
     if selection_metric not in record or record[selection_metric] is None:
         raise ValueError(f"Selection metric {selection_metric!r} is missing from the epoch record.")
@@ -1570,18 +1583,32 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             predict_metal=task_predicts_metal(config.task),
             predict_ec=task_predicts_ec(config.task),
             binding_residue_pooling=config.binding_residue_pooling,
+            gvp_residual_dropout=config.gvp_residual_dropout,
+            gvp_vector_norm=config.gvp_vector_norm,
+            gvp_auxiliary_loss_weight=config.gvp_auxiliary_loss_weight,
+            esm_modality_dropout=config.esm_modality_dropout,
         ).to(config.device)
         gvp_lr = config.gvp_learning_rate
         if gvp_lr is not None and gvp_lr != config.learning_rate and hasattr(model, "layers"):
             trunk_params = []
             head_params = []
+            trunk_names, head_names = [], []
+            prefixes = gvp_learning_rate_prefixes(config.gvp_lr_scope)
             for name, param in model.named_parameters():
                 if not param.requires_grad:
                     continue
-                if any(name.startswith(prefix) for prefix in ("layers.", "node_scalar_encoder.", "edge_scalar_encoder.")):
+                if any(name.startswith(prefix) for prefix in prefixes):
                     trunk_params.append(param)
+                    trunk_names.append(name)
                 else:
                     head_params.append(param)
+                    head_names.append(name)
+            if config.gvp_lr_scope != "trunk":
+                save_json(run_dir / "optimizer_groups.json", {
+                    "gvp_lr_scope": config.gvp_lr_scope, "gvp_learning_rate": gvp_lr,
+                    "learning_rate": config.learning_rate, "gvp_rate_parameters": trunk_names,
+                    "base_rate_parameters": head_names,
+                })
             param_groups = [
                 {
                     "params": trunk_params,
