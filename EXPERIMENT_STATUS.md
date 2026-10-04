@@ -7,7 +7,7 @@
 
 - Current campaign: pmm_ion_metal_v3, planning only (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 design; no folds, runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Stage: v3 step A (CPU preparation); no folds, runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
 
 **The PMM core v2 campaign was closed at fold 0 on 2026-10-03 (user decision).**
 Its nine fold-0 fits are final validation-only evidence; 36 fits were not run and
@@ -57,12 +57,13 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 - Authorized now: v3 CPU preparation only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); every GPU start needs the user's explicit OK within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003); no refit or held-out evaluation.
 - GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/archive/campaigns/pmm_ion_metal/log.md#pmm-011).
 
-Next: user decisions on the v3 design listed in its README, starting with the
-final metal test route. Stage 6 grouped-fold selection (or an explicitly labeled
-fallback), a completed Stage 6B full non-test refit, frozen report/checkpoint
-rules and a scientifically resolved final-test route must precede one-shot
-Stage 7. No test-based tuning, ranking, promotion, rejection or checkpoint
-choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
+Next: v3 step A (CPU preparation) per its [plan](docs/campaigns/pmm_ion_metal_v3/plan.md).
+Still open before step E: the final metal test label, after the user's check of
+the 2026-09-24 Zenodo run. Stage 6 grouped-fold selection (or an explicitly
+labeled fallback), a completed Stage 6B full non-test refit, frozen
+report/checkpoint rules and a scientifically resolved final-test route must
+precede one-shot Stage 7. No test-based tuning, ranking, promotion, rejection or
+checkpoint choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
 
 ## History and update rule
 

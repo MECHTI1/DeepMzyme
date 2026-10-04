@@ -3,6 +3,56 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-004
+
+2026-10-04 — an external review of the v3 plan (Codex, read-only) raised twelve
+points; each was checked against the repository by five read-only verifiers
+(no test files, no compute). All were accepted. Two were accepted only in part:
+policy does not require two confirmation seeds, and the step-D parameter values
+are a user choice rather than a wording fix. Minor inaccuracies (misplaced line
+references, a non-binding source cited as binding) did not change any verdict.
+The verifiers also found that the trainer cannot yet consume group-based v3
+folds, that a locally built graph cache does not match the VM's torch build,
+that augmented fits rebuild every training graph each epoch, and that no RING
+files exist for the v3 cohort. The [plan](plan.md) was revised accordingly and
+then checked once more for consistency; that check moved the A4 freeze before
+any GPU run, made every budget stop a user choice, and moved Round C out of the
+plan's code and budget pending a separate decision after Round B.
+
+User decisions:
+
+- Step E: the neutral four-versus-five/six test uses the step C baseline recipe,
+  frozen before step D, on all five folds; improvements are confirmed separately
+  in `four_class` on folds 1–4 against that baseline.
+- Decision statistics: bootstrap and t intervals must agree; a target tie keeps
+  `four_class`; a zero native recall blocks a five/six "better" call.
+- Step D gate: both seeds must improve, in addition to the 1.5-point mean and the
+  3-point class guard.
+- The final-test label is decided before step E, after the user checks the
+  2026-09-24 Zenodo run.
+
+Defaults set by Claude under the user's instruction to accept or reject the
+review's points (changeable by a dated entry before the affected step): seed 42
+only in step E; step-D values (modality dropout 0.2, outer-residue dropout 0.1,
+coordinate noise 0.1 Å, label smoothing 0.1, `counts_angles` against `none`);
+the step-B adoption thresholds; the 3.0-point regression band; the fold
+acceptance limits; the cost gate for augmentation; and the Stage 6 selection
+rule (Only-ESMC baseline `four_class` control, 0.2-point tie band,
+tie-breakers), which is shown to the user with the A4 specification before it
+is frozen.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Stage: v3 design; no folds, runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+Next: user decisions on the v3 design listed in its README, starting with the
+final metal test route. Stage 6 grouped-fold selection (or an explicitly labeled
+fallback), a completed Stage 6B full non-test refit, frozen report/checkpoint
+rules and a scientifically resolved final-test route must precede one-shot
+Stage 7. No test-based tuning, ranking, promotion, rejection or checkpoint
+choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
+```
+
 ## v3-003
 
 2026-10-04 — the user confirmed active Google Cloud free-trial credits on the
