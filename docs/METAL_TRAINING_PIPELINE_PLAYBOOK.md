@@ -59,11 +59,19 @@ Order (each step refuses to run out of order):
    to run until the A4 specification hash is pinned and matches the campaign.
 
 Every run (probe, unit or regression) also refuses until the A4 specification
-is frozen and describes this campaign, and refuses changed runner files or
-recipe definitions. A run name is claimed atomically for all lanes
-(`claims/`); `archive-failed` first checks on the same host that the claiming
-worker, its training child and the lane lock are gone, and a rerun must match
-the archived identity.
+is frozen and describes this campaign, and refuses changed runner files
+(`pmm_v3_campaign.py`, `run_pmm_v3_campaign.py`, `pmm_v3_probes.py`,
+`pmm_v3_speed_report.py`) or recipe definitions. A run name is claimed atomically
+for all lanes (`claims/`); `archive-failed` first checks on the same host that the
+claiming worker, its training child and the lane lock are gone, and a rerun must
+match the archived identity. Every replay uses the v3 replay policy
+`pmm-v3-replay-1` (probabilities within 1e-5, the pmm-core-replay-v1 tolerance,
+compared exactly on the saved decimals; identities, labels, predicted classes and
+confusion matrices exact; balanced-accuracy reconciliation within 1e-9), recorded
+in the manifest and in each replay receipt ([log v3-009](campaigns/pmm_ion_metal_v3/log.md#v3-009)).
+
+VM side (paths of the restored disk; the workstation launcher below builds these
+commands, so they are shown for reference and for steps C–E):
 
 ```bash
 PY=/home/mechti/venvs/deepmzyme/bin/python
@@ -72,24 +80,21 @@ V2=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
 TRAIN=/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
 ESM=$V2/inputs/esm_embeddings_esmc600m_v1
 FOLDS=/home/mechti/deepmzyme_runs/pmm_ion_metal_v3_folds/v3-seqid90-s42-b2
-# Allocation fields come from the controller session; FIT_SECONDS is the full-unit
-# forecast (load, training, replay, persistence). Admission needs 1.25 x FIT + 900 s.
+# The workstation's host-pull destination, passed verbatim to the VM runner (no symlinks):
+DURABLE=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable
+# SESSION_ID / ALLOCATION_STARTED / DEADLINE / SESSION_SECONDS: ~/deepmzyme-vm/state/current_session.json
+# (session_id, session_start, termination_ts as unix seconds, max_run_duration_s); `pmm_v3_step_b.py session`
+# prints them. FIT_SECONDS is the full-unit forecast; admission needs 1.25 x FIT + 900 s before the hard stop.
 ALLOC="--session-id $SESSION_ID --allocation-started $ALLOCATION_STARTED \
   --execution-deadline $DEADLINE --execution-max-seconds $SESSION_SECONDS \
   --estimated-fit-seconds $FIT_SECONDS --durable-root $DURABLE --persistence-mode host_pull"
 
 $PY run_pmm_v3_campaign.py --action prepare --campaign-dir $V3 --v2-root $V2 --fold-dir $FOLDS
 $PY run_pmm_v3_campaign.py --action plan --campaign-dir $V3 --step C        # read-only
-
-# Step B: probes (repeat with --amp on/off, tags per repetition and lane)
-$PY run_pmm_v3_campaign.py --action run --campaign-dir $V3 --train-dir $TRAIN --esm-dir $ESM \
-  --unit gvp_late_fusion__four_class__baseline__fold0__seed42 --probe w1-fp32-r1 --amp off \
-  --epochs 3 --lane 0 $ALLOC
 $PY run_pmm_v3_campaign.py --action set-execution --campaign-dir $V3 --amp off --lanes 2 \
   --evidence $V3/step_b/speed_report.json \
   --reuse gvp_late_fusion__four_class__baseline__fold0__seed42=probe-full-fp32__gvp_late_fusion__four_class__baseline__fold0__seed42
-
-# Steps C-E: one unit per call and lane
+# Steps C-E: one unit per call and lane (after set-execution)
 $PY run_pmm_v3_campaign.py --action run --campaign-dir $V3 --train-dir $TRAIN --esm-dir $ESM \
   --unit only_esm__six_class__baseline__fold0__seed42 --lane 1 $ALLOC
 $PY run_pmm_v3_campaign.py --action regression --campaign-dir $V3 --v2-root $V2 \
@@ -98,36 +103,75 @@ $PY run_pmm_v3_campaign.py --action status --campaign-dir $V3
 $PY pmm_v3_assessment.py --campaign-dir $V3 --step C
 ```
 
-Step B order (all probes on `gvp_late_fusion__four_class__baseline__fold0__seed42`;
-short probes share one `--epochs` value; tags and rules in `pmm_v3_speed_report.py`):
+`run_pmm_v3_campaign.py` exits 0 for a completed unit, 1 for a failed one, 2 when
+refused before anything ran, 3 when blocked (lane owner, time or a pending host
+acknowledgment; a unit already admitted is then recorded as interrupted) and 4
+when persistence failed.
 
-1. On the workstation: `pmm_v3_bundle.py build --out-dir BUNDLE` (committed code,
-   v3 runtime files, frozen A4 specification and fold set; held-out paths refused).
-   On the VM after `vm-restore`: copy BUNDLE and run `pmm_v3_bundle.py apply
-   --bundle-dir BUNDLE --code-dest ~/projects/DeepMzyme_v3 --folds-parent
-   ~/deepmzyme_runs/pmm_ion_metal_v3_folds`; it re-verifies every hash. Then
-   prepare the campaign root once from that code.
-2. Start the host sampler (`pmm_v3_speed_report.py --campaign-dir $V3 --sample-host
-   $V3/step_b/host.jsonl --seconds 10800 &`).
-3. FP32: `w1-fp32-r1` then `w1-fp32-r2` (lane 0); `w2-fp32-a`/`-b` started together
-   in lanes 0–1; `w3-fp32-a`/`-b`/`-c` in lanes 0–2. AMP: `w1-amp-r1`. Then
-   `full-fp32` (50 epochs).
-4. Persistence is host-pull per lane: after each unit run, on the workstation,
-   `pmm_host_pull.py --remote-root $V3/lanes/laneK --local-root $DURABLE/laneK`;
-   its acknowledgment time is the measured persistence (a missing acknowledgment
-   leaves the timing incomplete, never zero).
-5. Run the report (`pmm_v3_speed_report.py --campaign-dir $V3 --host-samples
-   $V3/step_b/host.jsonl`). It lists required probes still untested, failed
-   probes and incomplete timings. If the AMP speed gate passed it requires
-   `w1-amp-r2` and `full-amp`; if AMP then passes and FP32 adopted K > 1 lanes it
-   requires the AMP batch `wK-amp-*` (the combined setting needs its own evidence).
-   Repeat until `decision_ready`; it prints the `set-execution` command, including
-   `--reuse` of the full run that matches the chosen precision.
+Step B order. Probes, their AMP setting, epochs (short probes 10, full runs 50),
+lanes and batches are fixed in `pmm_v3_probes.py`; the runner refuses any other
+combination before admission, and an archived batch member is never relaunched.
+Workstation commands (`P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python`, run
+from the v3 worktree; `pmm_v3_step_b.py` and `pmm_v3_host_pull.py` use the
+standard library only, the bundle build needs the conda environment):
+
+1. Before the GPU: `$P pmm_v3_bundle.py build --out-dir BUNDLE --a3-acceptance
+   A3_REPORT` (committed code, v3 runtime files, frozen A4 specification and fold
+   set; held-out paths refused; refused unless the A3 report accepted exactly the
+   bundled source tree).
+2. GPU session (user-typed authorization): `~/deepmzyme-vm/bin/vm-restore --name
+   deepmzyme-paused-20261003 --authorize ...`, then `vm-setup --stages ssh,smoke`
+   (rewrites the SSH host-key alias for the new instance; the launcher refuses a
+   stale one). Then `$P pmm_v3_step_b.py session`, `verify-inputs`,
+   `push-bundle --bundle-dir BUNDLE` (re-verifies every hash on the VM),
+   `prepare`, `sampler-start` (samples the whole session; `sampler-check` before
+   each batch is automatic).
+3. Probes, each with `$P pmm_v3_step_b.py step NAME [--fit-seconds S]`: it first
+   refuses if a lane still awaits a host pull, holds a running or interrupted
+   unit, or an earlier launch of the step has no exit code; it then starts the
+   step's runners together under `setsid` on the VM, waits, then pulls and
+   acknowledges every lane used (a failed pull fails the command) (`pmm_v3_host_pull.py`; the acknowledgment time is
+   the measured persistence, a missing one leaves the timing incomplete). Order:
+   `w1-fp32-r1` (cold caches), `w1-fp32-r2`, `w2-fp32`, `w3-fp32`, `w1-amp-r1`,
+   then `report`; if the AMP speed gate passed: `w1-amp-r2`, then `full-fp32`
+   and `full-amp`, otherwise `full-fp32`; then `report` again. If FP32 adopts K >
+   1 lanes and AMP passes, `wK-amp`. After a dropped connection use `wait NAME`
+   or `pull --lanes ...`; nothing is relaunched.
+4. `report` runs `pmm_v3_speed_report.py` on the VM and keeps a dated copy on the
+   workstation. It lists untested, running and failed probes, incomplete timings,
+   `rerun_available`, `retry_required` and `diagnosis_required`. A failed serial
+   probe or full run in `rerun_available` gets its one unchanged rerun
+   (`archive-failed`, then the same step). A batch listed in `retry_required` (its
+   first attempt was invalid) is run once more as `step wK-PREC-retry`; the retry
+   decides. A diagnosis can only be closed by `step_b/diagnosis.json` with
+   outcome `serial_fp32`, a cause and the dated user decision; it then records
+   serial FP32 without concurrency or AMP. Repeat until `decision_ready`; it prints the `set-execution`
+   command, which recomputes the report and refuses any other setting, reuse or
+   evidence file.
+5. End of every GPU session: `$P pmm_v3_step_b.py sampler-stop`, `evidence`
+   (manifest, settings, claims, `step_b/`, lane states, events, statuses,
+   acknowledgments and archive receipts, checked by SHA-256 on both ends), then
+   `~/deepmzyme-vm/bin/vm-stop` and `vm-status` (TERMINATED).
+
+Gates (exact definitions in `pmm_v3_speed_report.py`): a batch attempt is valid if
+every member completed in its own lane, admissions lie within 10% of the shortest
+member's elapsed time and host samples cover the batch window (no gap over 30 s).
+It passes if the rate is at least 1.2x the serial rate (end to end, members
+charged their own preparation), every member agrees with serial r1 within 1.0
+common-four BA point and 3 points per common-four class recall, memory available
+stays at least 10%, GPU memory at most 90% (missing GPU samples fail), median
+load1 per CPU at most 1.0, no CPU overload (load1 per CPU above 1.0) lasts longer
+than 300 s, and the steady training phase (all members training, first 60 s
+skipped for the load1 lag, at least 60 s judged) is overloaded at most half the
+time. The two serial
+runs must agree within the same fixed limits; otherwise the report requires
+diagnosis and decides nothing.
 
 Failures: a failed or interrupted unit is rerun once, unchanged, after
 `--action archive-failed --unit NAME` moves its first attempt to
 `failed_attempts/`; a completed unit is never rerun. A second failure: step D
-"did not pass"; steps C and E stop for the user's decision.
+"did not pass"; steps C and E stop for the user's decision. The only exception
+is the whole-batch retry of a step-B timing batch described above.
 
 Costs measured in step A (A5, this PC's CPU, one process): augmented recipes
 (`posnoise01`, `outerdrop01`) rebuild every training graph each epoch,

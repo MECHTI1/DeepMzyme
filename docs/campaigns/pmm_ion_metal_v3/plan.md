@@ -147,14 +147,37 @@ run of the step it affects.
 
 **B. Speed check (first GPU session).**
 
-- Fresh VM through the controller, then short runs on real data (a few epochs
-  each): 1, 2 and 3 concurrent workers, AMP off/on, batch size unchanged;
-  record time per epoch, GPU memory, RAM and CPU.
-- Speed means completed, replay-verified fits per hour, including preparation,
-  replay and persistence.
-- Concurrency is adopted if that rate rises at least 1.2× (default) without
-  memory or CPU pressure, and same-seed concurrent runs differ from a serial run
-  no more than two same-seed serial runs differ from each other.
+- Fresh VM through the controller (restore of the archived disk), then short
+  runs on real data: 1, 2 and 3 concurrent workers, AMP off/on, batch size
+  unchanged; record time per epoch, GPU memory, RAM and CPU. Probe names, AMP,
+  epochs (10 for short probes, default), lanes and batches are fixed in
+  `pmm_v3_probes.py`; the runner refuses any other combination.
+- Speed means completed, replay-verified fits per hour end to end: pre-admission
+  checks, preparation, training, replay and measured host persistence; batch
+  members are charged their own (contended) preparation.
+- Concurrency (revised by the user on 2026-10-05, [log v3-009](log.md#v3-009))
+  is adopted if a valid batch raises that rate at least 1.2× (default), every
+  member agrees with the first serial run within fixed limits of 1.0 common-four
+  BA point and 3 points per common-four class recall, and the host shows no
+  pressure: memory available at least 10%, GPU memory at most 90% (missing GPU
+  samples fail), median load1 per CPU at most 1.0, no overload (load1 per CPU
+  above 1.0) longer than 300 seconds, and overload in at most half of the steady
+  training phase (all members training; it is about five times longer in a
+  50-epoch fit); median, peak and overload durations are reported. The two
+  serial runs must agree within the same limits; if they do not, nothing is
+  decided until the cause is diagnosed, and the limits are never widened. The
+  only pre-declared closure of a diagnosis, recorded after a dated user
+  decision, is serial FP32 without concurrency or AMP.
+  Probability and history differences are diagnostics only. Short probes are
+  early, coarse models (one fold-0 Cu ion moves Cu recall by 1.4 points), so
+  agreement guards against wrong inputs or interference between lanes; it does
+  not show that concurrent 50-epoch fits are equivalent.
+- A batch attempt is valid when every member completed in its own lane,
+  admissions lie within 10% of the shortest member's elapsed time and host
+  samples cover the batch window. An invalid first attempt is rerun once as a
+  whole under new tags and that retry decides; a retry after a valid first
+  attempt is refused. This exception applies to step-B timing batches only;
+  every attempt is preserved and completed fits are never rerun.
 - AMP is adopted only if at least 1.3× faster and one full 50-epoch AMP run (late
   fusion, `four_class`, new fold 0, seed 42) stays within 1.0 common-four BA
   point and 3 points per class recall (default) of its same-seed FP32
@@ -162,7 +185,15 @@ run of the step it affects.
   baseline.
 - Admission uses the slowest worker in a concurrent batch with the controller's
   safety margin (forecast × 1.25 plus 900 seconds). All later v3 runs use the
-  chosen configuration except the regression run.
+  chosen configuration except the regression run; `set-execution` records it
+  only if it equals a recomputed, decision-ready speed report.
+- Independent replay of every v3 fit, probe and the regression run accepts
+  probability differences up to 1e-5 (the pmm-core-replay-v1 tolerance, policy
+  `pmm-v3-replay-1`, recorded in the manifest and every replay receipt; only
+  the tolerance comes from pmm-core-replay-v1); identities, labels, predicted
+  classes and confusion matrices stay exact and the balanced-accuracy
+  reconciliation stays within 1e-9 ([log v3-009](log.md#v3-009)). A failed
+  serial probe or full run keeps its one unchanged rerun before step B decides.
 
 **C. Baseline on new fold 0 (13 runs).**
 
@@ -178,7 +209,8 @@ run of the step it affects.
 - One regression run of the new code with the v2 recipe on the old v2 fold 0 at
   v2 execution settings (FP32, one worker, v2 batch size, seed 42, fixed learning
   rate, best epoch). It passes only if all 50 epochs finish, its checkpoints
-  replay under `pmm-core-replay-v1`, and its best-epoch and epochs 41–50 mean
+  replay under `pmm-v3-replay-1` (the pmm-core-replay-v1 probability tolerance;
+  other fields exact), and its best-epoch and epochs 41–50 mean
   common-four BA are each within 3.0 points (default) of 89.47 and 85.78. The
   band is an engineering convention, not a statistical bound; the strict code
   check is A3. A failure stops v3 for diagnosis; the run is not repeated until it
@@ -286,11 +318,18 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 ## Budget
 
 Ceiling **$40 gross** for steps B–F ([log](log.md#v3-003)); controller session
-and daily caps and gross-cost accounting are unchanged. Rough estimate from the
-v2 forecast ($0.51 per warm serial fit including persistence, $0.78 with
-repeated preparation): about $31–39 if concurrency gives close to the 1.5× of
-the short 2026-09-28 probe and D stops after Round A or B; about $40–48 without
-a concurrency gain. Re-forecast from measured fits per hour after B, after C,
-and before each D round or cost-gated candidate. Before any step would exceed
-the ceiling, ask the user to stop and close out at the current evidence or to
-record a larger ceiling.
+and daily caps and gross-cost accounting are unchanged. Campaign storage counts
+toward the ceiling (user decision 2026-10-05, [log v3-009](log.md#v3-009)): the
+restored 150 GB disk at about $0.49 per calendar day while it exists, and the
+kept snapshot at its estimated actual charge (about $1.74 per month, $0.06 per
+day; the controller reserves a conservative $0.25 per day for its daily cap,
+which is not a forecast). Running hours are costed without the disk share of the
+hourly rate ($0.859 per hour), so the disk is counted once. The forecast in
+[log v3-009](log.md#v3-009) (from the measured v2 fit times) is about $28 with a
+1.5× concurrency gain and D ending after Round A, about $38 with that gain and
+the full D, about $40 without a concurrency gain and D ending after Round A, and
+about $55 without the gain and the full D. Re-forecast from measured fits per
+hour after B, after C, and before each D round or cost-gated candidate. Before
+any step would exceed the ceiling, ask the user to stop and close out at the
+current evidence or to record a larger ceiling. The snapshot is kept; recovery
+resources are never deleted without the user's decision.

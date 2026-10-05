@@ -50,7 +50,15 @@ def test_build_and_apply_round_trip_and_refusals(tmp_path):
         (folds / name).write_bytes(membership if name == "fold_membership.csv" else b"{}")
     (folds / "fold_receipt.json").write_text(json.dumps({
         "accepted": True, "outputs_sha256": {"fold_membership.csv": bundle.sha256_bytes(membership)}}))
-    manifest = bundle.build(tmp_path / "bundle", folds=folds)
+    a3 = tmp_path / "a3_report.json"
+    a3.write_text(json.dumps({"acceptance": {"verdict": "accepted", "tested_src_tree_sha256": "0" * 64}}))
+    with pytest.raises(bundle.BundleError, match="A3 accepted source tree"):
+        bundle.build(tmp_path / "refused", folds=folds, a3_acceptance=a3)
+    with pytest.raises(bundle.BundleError, match="--a3-acceptance"):
+        bundle.build(tmp_path / "refused2", folds=folds)
+    a3.write_text(json.dumps({"acceptance": {"verdict": "accepted", "tested_src_tree_sha256": source_tree_sha256()}}))
+    manifest = bundle.build(tmp_path / "bundle", folds=folds, a3_acceptance=a3)
+    assert manifest["a3_acceptance"]["tested_src_tree_sha256"] == source_tree_sha256()
     assert manifest["source_tree_sha256"] == source_tree_sha256()
     with tarfile.open(tmp_path / "bundle" / "v3_code.tar.gz") as tar:
         names = tar.getnames()
@@ -65,3 +73,25 @@ def test_build_and_apply_round_trip_and_refusals(tmp_path):
     archive.write_bytes(archive.read_bytes() + b"x")
     with pytest.raises(bundle.BundleError, match="code archive changed"):
         bundle.apply(tmp_path / "bundle", code_dest=tmp_path / "vm2", folds_parent=tmp_path / "f2")
+
+
+def test_runner_files_are_bundled_and_hashed_like_the_runner():
+    sys.path[:0] = [str(ROOT), str(ROOT / "src")]
+    import pmm_v3_campaign as v3
+
+    assert bundle.RUNNER_FILES == v3.RUNNER_FILES
+    assert set(bundle.RUNNER_FILES) <= set(bundle.RUNTIME_FILES) and "pmm_v3_probes.py" in bundle.RUNTIME_FILES
+    for workstation_only in ("pmm_v3_host_pull.py", "pmm_v3_step_b.py"):
+        assert not bundle.allowed(workstation_only)
+
+
+def test_a3_acceptance_must_be_accepted_and_bound_to_the_bundled_tree(tmp_path):
+    report = tmp_path / "a3.json"
+    for payload, message in (({"acceptance": {"verdict": "failed", "tested_src_tree_sha256": "a"}}, "not an accepted"),
+                             ({"acceptance": {"verdict": "partial diagnostic (not acceptance)"}}, "not an accepted"),
+                             ({"acceptance": {"verdict": "accepted", "tested_src_tree_sha256": "b"}}, "A3 accepted")):
+        report.write_text(json.dumps(payload))
+        with pytest.raises(bundle.BundleError, match=message):
+            bundle.require_a3_acceptance(report, "a")
+    report.write_text(json.dumps({"acceptance": {"verdict": "accepted", "tested_src_tree_sha256": "a"}}))
+    assert bundle.require_a3_acceptance(report, "a")["tested_src_tree_sha256"] == "a"

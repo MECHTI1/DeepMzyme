@@ -71,9 +71,12 @@ def main(argv=None) -> int:
         from training.campaign_runtime import replay_campaign_run
 
         v3.require(args.run_dir is not None, "replay needs --run-dir")
-        receipt = replay_campaign_run(args.run_dir.resolve(), device=args.device)
+        receipt = replay_campaign_run(args.run_dir.resolve(), device=args.device, replay_policy=v3.REPLAY_POLICY)
         print(json.dumps({"selected_epoch": receipt["selected_epoch"],
-                          "prediction_rows_verified": receipt["prediction_rows_verified"]}, sort_keys=True))
+                          "prediction_rows_verified": receipt["prediction_rows_verified"],
+                          "replay_policy_id": receipt["replay_policy"]["policy_id"],
+                          "max_probability_abs_difference": receipt["max_probability_abs_difference"]},
+                         sort_keys=True))
         return 0
     v3.require(args.campaign_dir is not None, "--campaign-dir is required")
     paths = v3.V3Paths(args.campaign_dir)
@@ -136,8 +139,17 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
+    from benchmarking.pmm_execution import ExecutionBlocked, PersistenceError
+
     try:
         raise SystemExit(main())
     except ValueError as exc:
         print(f"v3 campaign refused: {exc}", file=sys.stderr)
         raise SystemExit(2)
+    except ExecutionBlocked as exc:  # lane owner, time or a pending host acknowledgment; an already admitted
+        # unit stopped this way is recorded as interrupted (archive-failed, then its one rerun)
+        print(f"v3 campaign blocked: {exc}", file=sys.stderr)
+        raise SystemExit(3)
+    except PersistenceError as exc:
+        print(f"v3 campaign persistence failed: {exc}", file=sys.stderr)
+        raise SystemExit(4)

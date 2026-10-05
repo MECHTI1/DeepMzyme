@@ -191,8 +191,13 @@ def test_every_planned_unit_builds_a_valid_training_command(campaign):
 
 
 def settle(paths):
-    """Record a step-B execution setting (FP32, two lanes) so campaign units may run."""
-    return v3.set_execution_settings(paths, amp=False, lanes=2, evidence="test")
+    """Record a step-B execution setting (FP32, two lanes) so campaign units may run. The speed-report
+    evidence check is stubbed here; tests/test_v3_speed_report.py covers it."""
+    import pmm_v3_speed_report as speed
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(speed, "verify_execution_choice", lambda *args, **kwargs: {"stub": True})
+        return v3.set_execution_settings(paths, amp=False, lanes=2, evidence="test")
 
 
 def policy(tmp_path):
@@ -392,17 +397,27 @@ def test_runs_refuse_changed_runner_recipes_or_a_foreign_spec(campaign, tmp_path
     assert not v3.unit_artifacts(paths, unit.name)
 
 
-def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_path):
+def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_path, monkeypatch):
+    import pmm_v3_probes as probes
+    import pmm_v3_speed_report as speed
+
     train, esm_dir, paths, _, _ = campaign
+    monkeypatch.setattr(probes, "FULL_EPOCHS", 2)  # tiny CPU fits stand in for the 50-epoch probes
+    monkeypatch.setattr(probes, "SHORT_EPOCHS", 1)
+    monkeypatch.setattr(speed, "verify_execution_choice", lambda *args, **kwargs: {"stub": True})
     unit = v3.Unit("gvp_late_fusion", "four_class", "baseline", 0, 42)
     common = dict(lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
                   execution_policy=policy(tmp_path), load_workers=1, epochs=2)
     with pytest.raises(ValueError, match="before campaign units"):
         v3.run_unit(paths, unit, **common)
-    with pytest.raises(ValueError, match="must state AMP"):
-        v3.run_unit(paths, unit, probe="ampfull", **common)
-    result = v3.run_unit(paths, unit, probe="ampfull", amp=True, **common)
-    probe_name = "probe-ampfull__" + unit.name
+    with pytest.raises(ValueError, match="runs with AMP on"):
+        v3.run_unit(paths, unit, probe="full-amp", **common)
+    result = v3.run_unit(paths, unit, probe="full-amp", amp=True, **common)
+    probe_name = "probe-full-amp__" + unit.name
+    assert result["replay_policy_id"] == v3.REPLAY_POLICY["policy_id"]
+    assert 0 <= result["replay_max_probability_abs_difference"] <= v3.REPLAY_POLICY["probability_atol"]
+    status = json.loads((paths.lane(0) / f"run_status_{probe_name}.json").read_text())
+    assert status["preflight_seconds"] > 0
     assert result["status"] == "completed" and result["run_name"] == probe_name
     assert "--amp" in json.loads((paths.lane(0) / "commands" / f"{probe_name}.json").read_text())["argv"]
     # A probe recorded with other runner files cannot be reused.
@@ -426,7 +441,7 @@ def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_
     with pytest.raises(ValueError, match="recorded once"):
         v3.set_execution_settings(paths, amp=True, lanes=2, evidence="b.json")
     with pytest.raises(ValueError, match="only before"):
-        v3.run_unit(paths, unit, probe="late", amp=True, **common)
+        v3.run_unit(paths, unit, probe="w1-amp-r1", amp=True, **dict(common, epochs=1))
     with pytest.raises(ValueError, match="AMP differs"):
         v3.run_unit(paths, v3.Unit("only_gvp", "four_class", "baseline", 0, 42), amp=False, **common)
 
@@ -434,3 +449,84 @@ def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_
 
     record = assess.collect(paths, [unit], epochs=2)[unit.name]
     assert record["status"] == "completed" and record["run_name"] == probe_name
+
+
+@pytest.mark.parametrize("probe, kwargs, message", [
+    ("w2-fp32-z", {}, "not a step-B probe"), ("w2-fp32-b", {"lane": 1, "amp": True}, "AMP off"),
+    ("w2-fp32-b", {"lane": 0}, "lane 1"), ("w2-fp32-b", {"lane": 1, "epochs": 3}, "1 epochs"),
+    ("full-fp32", {"epochs": 3}, "2 epochs")])
+def test_probe_launches_must_match_the_manifest_before_admission(campaign, tmp_path, monkeypatch, probe, kwargs, message):
+    import pmm_v3_probes as probes
+
+    train, esm_dir, paths, _, _ = campaign
+    monkeypatch.setattr(probes, "FULL_EPOCHS", 2)
+    monkeypatch.setattr(probes, "SHORT_EPOCHS", 1)
+    args = dict(lane=1, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
+                execution_policy=policy(tmp_path), load_workers=1, epochs=1, amp=False)
+    args.update(kwargs)
+    unit = v3.Unit("gvp_late_fusion", "four_class", "baseline", 0, 42)
+    with pytest.raises(ValueError, match=message):
+        v3.run_unit(paths, unit, probe=probe, **args)
+    with pytest.raises(ValueError, match="run gvp_late_fusion"):
+        v3.run_unit(paths, v3.Unit("only_esm", "four_class", "baseline", 0, 42), probe="w1-fp32-r1",
+                    **dict(args, lane=0))
+    assert not any(paths.claims.glob("*.json")) if paths.claims.exists() else True
+
+
+def test_retry_probe_needs_an_invalid_first_attempt(campaign, tmp_path, monkeypatch):
+    import pmm_v3_probes as probes
+
+    train, esm_dir, paths, _, _ = campaign
+    monkeypatch.setattr(probes, "SHORT_EPOCHS", 1)
+    with pytest.raises(ValueError, match="complete, invalid first attempt"):
+        v3.run_unit(paths, v3.Unit("gvp_late_fusion", "four_class", "baseline", 0, 42), probe="w2-fp32-a-retry",
+                    lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
+                    execution_policy=policy(tmp_path), load_workers=1, epochs=1, amp=False)
+
+
+def test_runner_hash_covers_the_probe_manifest_and_report_and_refuses_missing_files(monkeypatch, tmp_path):
+    assert set(v3.runner_sha256()) == {"pmm_v3_campaign.py", "run_pmm_v3_campaign.py", "pmm_v3_probes.py",
+                                       "pmm_v3_speed_report.py"}
+    monkeypatch.setattr(v3, "RUNNER_FILES", (*v3.RUNNER_FILES, "absent_runner_file.py"))
+    with pytest.raises(ValueError, match="missing"):
+        v3.runner_sha256()
+
+
+def test_replay_verification_requires_the_v3_policy_and_intact_replay_predictions(campaign, tmp_path):
+    train, esm_dir, paths, _, _ = campaign
+    settle(paths)
+    unit = v3.Unit("only_esm", "four_class", "baseline", 2, 42)
+    assert v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
+                       execution_policy=policy(tmp_path), load_workers=1, epochs=2)["status"] == "completed"
+    run_dir = paths.lane(0) / "runs" / unit.name
+    receipt = json.loads((run_dir / "selected_checkpoint.json").read_text())
+    replay_path = run_dir / "independent_validation_replay" / "replay_receipt.json"
+    original = replay_path.read_text()
+    replay = json.loads(original)
+    assert replay["replay_policy"] == v3.REPLAY_POLICY
+    v3.verify_independent_replay(run_dir, receipt)
+    for change in ({"replay_policy": {**v3.REPLAY_POLICY, "probability_atol": 1e-6}},
+                   {"max_probability_abs_difference": 2e-5}, {"fit_status": "replay_failed"},
+                   {"validation_predictions": {**replay["validation_predictions"], "sha256": "0" * 64}}):
+        replay_path.write_text(json.dumps({**replay, **change}))
+        with pytest.raises(ValueError):
+            v3.verify_independent_replay(run_dir, receipt)
+    replay_path.write_text(original)
+    manifest = json.loads(paths.manifest.read_text())
+    manifest["replay_policy"] = {**v3.REPLAY_POLICY, "probability_atol": 1e-6}
+    paths.manifest.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="replay policy"):
+        v3.verify_campaign(paths, esm_dir=None)
+
+
+def test_an_archived_batch_member_is_never_relaunched(campaign, tmp_path, monkeypatch):
+    import pmm_v3_probes as probes
+
+    train, esm_dir, paths, _, _ = campaign
+    monkeypatch.setattr(probes, "SHORT_EPOCHS", 1)
+    unit = v3.Unit("gvp_late_fusion", "four_class", "baseline", 0, 42)
+    (paths.root / "failed_attempts" / v3.run_name_for(unit, "w2-fp32-b") / "attempt1").mkdir(parents=True)
+    with pytest.raises(ValueError, match="never rerun individually"):
+        v3.run_unit(paths, unit, probe="w2-fp32-b", lane=1, train_dir=train, esm_dir=esm_dir,
+                    python_bin=sys.executable, device="cpu", execution_policy=policy(tmp_path), load_workers=1,
+                    epochs=1, amp=False)
