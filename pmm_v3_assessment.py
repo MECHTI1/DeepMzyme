@@ -236,7 +236,7 @@ def expected_identity(paths: v3.V3Paths, unit: v3.Unit, *, epochs: int) -> dict[
 
 
 def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, Any]],
-              membership: dict[str, dict[str, str]], *, epochs: int) -> dict[str, Any]:
+              membership: dict[str, dict[str, str]], manifest: dict[str, Any], *, epochs: int) -> dict[str, Any]:
     """A verified unit, or a record saying why it does not count."""
     settings = v3.read_execution_settings(paths) or {}
     run_name = settings.get("reuse", {}).get(unit.name, unit.name)  # a step-B run reused as a step-C unit
@@ -251,9 +251,10 @@ def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, An
                                                  else "not run")}
     run_dir = Path(record["status_path"]).parent / "runs" / run_name
     recorded = record["identity"]
+    require(recorded.get("runner_sha256") == manifest["runner_sha256"],
+            f"{unit.name}: ran with runner files other than the ones frozen at preparation")
     expected = expected_identity(paths, unit, epochs=epochs)
-    differing = sorted(k for k in set(expected) | set(recorded)
-                       if k != "runner_sha256" and expected.get(k) != recorded.get(k))
+    differing = sorted(k for k in set(expected) | set(recorded) if expected.get(k) != recorded.get(k))
     require(not differing, f"{unit.name}: recorded identity differs from the plan in {differing}")
     recipe = v3.resolve_recipe(unit.recipe)
     receipt = v3.verify_completed_unit(run_dir, recorded, recipe)
@@ -284,9 +285,9 @@ def _read_rows(path: Path) -> list[dict[str, str]]:
 
 
 def collect(paths: v3.V3Paths, units: list[v3.Unit], *, epochs: int = v3.PROFILE["epochs"]) -> dict[str, Any]:
-    _, membership = read_contract(paths)
+    manifest, membership = read_contract(paths)
     statuses = v3.completed_units(paths)
-    return {unit.name: load_unit(paths, unit, statuses, membership, epochs=epochs) for unit in units}
+    return {unit.name: load_unit(paths, unit, statuses, membership, manifest, epochs=epochs) for unit in units}
 
 
 # ---------------------------------------------------------------------------
