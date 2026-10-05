@@ -3,6 +3,154 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-009
+
+2026-10-06 — **step B preparation completed on CPU** (nothing ran on a GPU; no
+VM exists). After the step-B readiness audit, the user decided and asked for one
+preparation pass (these decisions change step-B defaults before the first
+step-B run, as plan.md allows):
+
+1. Replay: every v3 fit, probe and the regression run is independently replayed
+   under the explicit policy `pmm-v3-replay-1`: probabilities within 1e-5 (the
+   pmm-core-replay-v1 tolerance), compared exactly on the saved 8-decimal values;
+   identities, labels, native and common-four predicted classes and confusion
+   matrices stay exact, and the balanced-accuracy reconciliation stays within
+   1e-9 (only the tolerance comes from pmm-core-replay-v1, not its other row
+   checks). It is an option of
+   `campaign_runtime.replay_campaign_run` (default unchanged: 1e-6, same messages,
+   same receipt), recorded in the campaign manifest, every replay receipt (with
+   the largest observed difference) and every unit status. Evidence: A3 on
+   2026-10-05 found 6 of 9 CPU replays of GPU-trained v2 checkpoints above 1e-6
+   (worst 4.53e-6) with every discrete field equal.
+2. Concurrency: fixed limits of 1.0 common-four BA point and 3 points per
+   common-four class recall against the first serial run; never widened. If the
+   two serial runs disagree beyond them, the report requires diagnosis and
+   decides nothing; the only pre-declared closure (`step_b/diagnosis.json`,
+   written after a dated user decision) records serial FP32 without concurrency
+   or AMP. Probability and history differences are diagnostics.
+3. CPU pressure: median, peak, longest and total overload (load1 per CPU above
+   1.0) are reported; pressure if the median exceeds 1.0, one overload lasts
+   longer than 300 s, or the steady training phase (all members training, first
+   60 s skipped for the load1 lag, at least 60 s judged) is overloaded more than
+   half the time; memory (at least 10% available) and GPU memory (at most 90%;
+   missing GPU samples fail) limits unchanged. Throughput is end to end: pre-admission checks (recorded per
+   unit), preparation, training, replay and measured host persistence; batch
+   members are charged their own (contended) preparation.
+4. Retries: completed fits are never rerun. Only a step-B timing batch (2 or 3
+   lanes) may be retried, once, as a whole under `-retry` tags, and only when
+   its first attempt is invalid under outcome-blind rules (a member failed or did
+   not run, members not in distinct lanes, admissions more than 10% of the
+   shortest elapsed time apart, or host samples not covering the batch window);
+   the retry then decides. A retry after a valid first attempt makes the report
+   refuse. All attempts are kept.
+5. Costs: storage counts toward the $40 gross ceiling, at estimated actual
+   charges (disk $15.00/month = $0.49/day while the restored disk exists;
+   snapshot about $1.74/month = $0.06/day, from the retirement receipt), apart
+   from the controller's conservative daily reservation (snapshot $7.50/month,
+   $0.25/day). Running hours are costed at $0.859/h (the gross $0.879/h minus its
+   disk share), so the disk is counted once. The snapshot is kept.
+6. Disk: the two archives were moved to `/media/mechti/Data1/archive_from_home/`
+   (SHA-256 equal on both sides, copies re-read with direct I/O, originals then
+   removed; `SHA256SUMS` beside them). `/` has 16 GB free. Nothing else was
+   deleted.
+
+Also built (all tested): the fixed probe manifest `pmm_v3_probes.py` (short
+probes 10 epochs, default, so a steady training phase can be judged), enforced
+by the runner before admission (an archived batch member is never relaunched;
+a failed serial probe or full run keeps its one rerun before the decision); the runner
+hash now covers `pmm_v3_probes.py` and `pmm_v3_speed_report.py`, so the gates
+are frozen at preparation, before any step-B data; `set-execution` records a
+setting only if it equals a recomputed, decision-ready speed report; the
+workstation launcher `pmm_v3_step_b.py` (never starts, stops or extends a VM;
+detached launches; waits; pulls) and the per-lane host-pull tool
+`pmm_v3_host_pull.py` (never re-stamps an acknowledgment; keeps a superseded
+local copy when a rerun reuses a run name; no torch); the launcher refuses a
+step while a lane awaits its host pull, holds a running or interrupted unit, or
+an earlier launch has no exit code, and a failed pull fails the command;
+evidence backup before every `vm-stop`; `pmm_v3_bundle.py build` refuses
+without an A3 report that accepted exactly the bundled source tree; runner exit
+codes 3 (blocked) and 4 (persistence).
+
+An independent five-agent review (read-only) found one blocker (a batch could
+start while a lane still awaited its host pull, wasting the single retry) and
+six major points (A3 binding after the src change, failed probes losing their
+rerun, no closure for a serial disagreement, archived batch members allowing
+extra attempts, reruns overwriting the workstation copy, a weak sustained-CPU
+check in short probes); all were fixed with tests, as were the cheap minor
+points. Deferred as minor: a guard against deliberately launching one batch
+member alone outside the launcher (the launcher always starts members
+together).
+
+Commits: `64f29de` (src replay option), `76395bf` (runner, gates, manifest,
+tools, tests, plan and playbook) and this entry's commit. Checks:
+
+- A3 repeated and **accepted** (`audits/a3_regression_20261005T194214Z`,
+  `a3_report.json` SHA-256 `50ecf905…`): tested source tree
+  `212db0e3865968701475e7172b2e4cad772e492b35855da293238437fd97c15c` (src at
+  `64f29de`, unchanged in `76395bf`), unchanged from start to end, no uncommitted
+  src change; the frozen v2 tree matches its pin. Replay: all nine pinned v2
+  fold-0 checkpoints pass pmm-core-replay-v1 (worst probability difference
+  4.53e-6; 6 of 9 above the strict 1e-6, every discrete field equal) and every
+  epoch-50 checkpoint matches its history; training: all four configurations
+  bit-identical to the frozen v2 checkout (difference 0.0). The default strict
+  replay path is therefore unchanged on real data. **Correction to v3-007 and
+  v3-008:** their A3 acceptance covers source tree `5a120b2c…` only and is
+  superseded by this one; `pmm_v3_bundle.py build` now refuses any bundle whose
+  source tree differs from an accepted A3 report.
+- A5 repeated and **passed** (`audits/a5_prefit_20261005T204150Z`): 82 of 82
+  planned units build valid commands on a scratch root whose manifest records the
+  committed runner files (`pmm_v3_campaign.py` `ce6ddec8…`,
+  `run_pmm_v3_campaign.py` `21b798ef…`, `pmm_v3_probes.py` `6c6a0d73…`,
+  `pmm_v3_speed_report.py` `6e4c2997…`) and the replay policy; augmented recipes
+  still need about 8.8 h (late fusion) to 12.4 h (Only-GVP) of graph rebuilding
+  per fit on this PC, so they stay cost-gated.
+- Tests: all 186 v3 tests pass. Full suite on `76395bf`: 1,167 passed, 19
+  skipped, 2 failed, 32 errors, all known and unrelated to this pass. The 2
+  failures fail identically on `f3510ba`:
+  `test_explicit_membership.py::test_outer_loader_not_deserialized` (patches a
+  `training.data.load_structure_pockets` that does not exist) and
+  `test_generalized_metal_5fold_cv.py::test_dry_run_flag` (expects the local
+  dataset folder `train_and_test_sets_structures_exact_pinmymetal`). The 32
+  errors are every setup of `test_pmm_core_assessment.py` ("Scientific module
+  already loaded from another tree: data_structures"), an order dependence: the
+  same 40 tests pass when that file runs alone.
+
+Step-B forecast (gross): one session of about 2.4–3.2 VM hours with 10-epoch
+probes, $2.06–2.75 of compute and IP (about 5.5 h and $4.72 if the AMP
+follow-ups, a retry or connection trouble need a second session), plus the
+restored disk at $0.49/day and the snapshot at $0.06/day. Whole campaign B–F,
+from the measured v2 fit times (late fusion 1,747 s, Only-GVP 1,619 s, Only-ESMC
+1,125 s per warm fit including replay, persistence and pre-admission checks; five
+further cold cache builds; about 25 minutes of overhead per session):
+
+| Scenario | VM hours | Compute + IP | Disk | Snapshot (actual) | Total |
+|---|---|---|---|---|---|
+| 1.5× concurrency, D ends after Round A | 26 | $22.6 | $4.9 (10 days) | $0.6 | $28 |
+| 1.5× concurrency, full D | 35 | $30.3 | $6.9 (14 days) | $0.8 | $38 |
+| no concurrency, D ends after Round A | 37 | $32.0 | $6.9 (14 days) | $0.8 | $40 |
+| no concurrency, full D | 51 | $43.6 | $10.4 (21 days) | $1.2 | $55 |
+
+Augmented candidates (9a, 9b) stay cost-gated and are excluded. Calendar days
+are an assumption; every extra day with the disk kept adds $0.49. Without a
+concurrency gain the full plan exceeds the ceiling, so the re-forecast after
+step B decides whether the user is asked to stop early or raise the ceiling.
+
+Unchanged: the frozen A4 specification (SHA-256 `29694070…`), the fold set and
+its caveat (near-copy, not homology, separation; about 11% of ions have an
+80–90% cross-fold partner), and the open final-test label decision before
+step E. No held-out data were read.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-05 v3 step A complete, CPU only; step B awaits the user's GPU OK)
+- Last execution evidence: 2026-10-05 (v3 step A CPU audits). Documentation reconciliation: 2026-10-05.
+- Current campaign: pmm_ion_metal_v3, step A complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 step A done ([log v3-008](docs/campaigns/pmm_ion_metal_v3/log.md#v3-008)): strict folds, code, CPU audits, frozen assessment rules; no GPU runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: CPU work only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); every GPU start needs the user's explicit OK within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003); no refit or held-out evaluation.
+Next: v3 step B (GPU speed check) per its [plan](docs/campaigns/pmm_ion_metal_v3/plan.md), after the user's explicit GPU OK and freeing 10–15 GB on `/`.
+```
+
 ## v3-008
 
 2026-10-05 — **plan step A complete** (CPU only; nothing ran on a GPU). After
