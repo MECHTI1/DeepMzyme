@@ -98,18 +98,31 @@ $PY run_pmm_v3_campaign.py --action status --campaign-dir $V3
 $PY pmm_v3_assessment.py --campaign-dir $V3 --step C
 ```
 
-Step B order (all probes on `gvp_late_fusion__four_class__baseline__fold0__seed42`,
-short probes with the same `--epochs`; tags as in `pmm_v3_speed_report.py`):
-start the host sampler (`pmm_v3_speed_report.py --campaign-dir $V3 --sample-host
-$V3/step_b/host.jsonl --seconds 7200 &`); run `w1-fp32-r1` then `w1-fp32-r2`
-in lane 0; start `w2-fp32-a`/`-b` together in lanes 0–1, then `w3-fp32-a`/`-b`/`-c`
-in lanes 0–2; run `w1-amp-r1`; run the report
-(`pmm_v3_speed_report.py --campaign-dir $V3 --host-samples $V3/step_b/host.jsonl`).
-Run `full-fp32` (50 epochs), and `full-amp` only if the AMP speed gate passed (both
-may share lanes if concurrency was adopted). Rerun the report; it prints the exact
-`set-execution` command, including `--reuse` of the full run matching the chosen
-AMP setting. Concurrency needs measured host samples without memory or CPU
-pressure; without samples it is not adopted.
+Step B order (all probes on `gvp_late_fusion__four_class__baseline__fold0__seed42`;
+short probes share one `--epochs` value; tags and rules in `pmm_v3_speed_report.py`):
+
+1. On the workstation: `pmm_v3_bundle.py build --out-dir BUNDLE` (committed code,
+   v3 runtime files, frozen A4 specification and fold set; held-out paths refused).
+   On the VM after `vm-restore`: copy BUNDLE and run `pmm_v3_bundle.py apply
+   --bundle-dir BUNDLE --code-dest ~/projects/DeepMzyme_v3 --folds-parent
+   ~/deepmzyme_runs/pmm_ion_metal_v3_folds`; it re-verifies every hash. Then
+   prepare the campaign root once from that code.
+2. Start the host sampler (`pmm_v3_speed_report.py --campaign-dir $V3 --sample-host
+   $V3/step_b/host.jsonl --seconds 10800 &`).
+3. FP32: `w1-fp32-r1` then `w1-fp32-r2` (lane 0); `w2-fp32-a`/`-b` started together
+   in lanes 0–1; `w3-fp32-a`/`-b`/`-c` in lanes 0–2. AMP: `w1-amp-r1`. Then
+   `full-fp32` (50 epochs).
+4. Persistence is host-pull per lane: after each unit run, on the workstation,
+   `pmm_host_pull.py --remote-root $V3/lanes/laneK --local-root $DURABLE/laneK`;
+   its acknowledgment time is the measured persistence (a missing acknowledgment
+   leaves the timing incomplete, never zero).
+5. Run the report (`pmm_v3_speed_report.py --campaign-dir $V3 --host-samples
+   $V3/step_b/host.jsonl`). It lists required probes still untested, failed
+   probes and incomplete timings. If the AMP speed gate passed it requires
+   `w1-amp-r2` and `full-amp`; if AMP then passes and FP32 adopted K > 1 lanes it
+   requires the AMP batch `wK-amp-*` (the combined setting needs its own evidence).
+   Repeat until `decision_ready`; it prints the `set-execution` command, including
+   `--reuse` of the full run that matches the chosen precision.
 
 Failures: a failed or interrupted unit is rerun once, unchanged, after
 `--action archive-failed --unit NAME` moves its first attempt to
