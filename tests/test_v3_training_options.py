@@ -152,3 +152,49 @@ def test_default_rule_outputs_carry_no_terminal_fields(tmp_path, monkeypatch):
     assert "descriptive_best_epoch" not in config and "checkpoint_rule" not in config
     receipt = json.loads((run_dir / "selected_checkpoint.json").read_text())
     assert "checkpoint_rule" not in receipt and receipt["tie_rule"].startswith("earliest epoch")
+
+
+def test_normalization_is_fitted_on_training_graphs_only(tmp_path, monkeypatch):
+    import csv
+
+    import torch
+    from training import run as run_module
+
+    captured = []
+    original = run_module.compute_feature_normalization_stats
+
+    def recording(graphs, **kwargs):
+        captured.append(list(graphs))
+        return original(graphs, **kwargs)
+
+    monkeypatch.setattr(run_module, "compute_feature_normalization_stats", recording)
+    argv = tiny_argv(tmp_path, monkeypatch, "normalization",
+                     ["--checkpoint-rule", "terminal", "--lr-schedule", "cosine", "--fold-split-source", "membership"])
+    run_dir = run_module.run_training(parse_args(argv))
+    fold_file = argv[argv.index("--fold-membership-csv") + 1]
+    with open(fold_file, encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    n_train = sum(int(row["fold"]) != 1 for row in rows)
+    assert len(captured) == 1 and len(captured[0]) == n_train and n_train < len(rows)
+    saved = torch.load(run_dir / "terminal_model_checkpoint.pt", weights_only=False)["normalization_stats"]
+    expected = original(captured[0], clamp_value=5.0)
+    assert saved["means"] and set(saved["means"]) == set(expected.means) and set(saved["stds"]) == set(expected.stds)
+    for key in expected.means:
+        assert torch.equal(torch.as_tensor(saved["means"][key]), expected.means[key]), key
+        assert torch.equal(torch.as_tensor(saved["stds"][key]), expected.stds[key]), key
+
+
+def test_residue_esm_rows_do_not_keep_whole_chain_matrices_alive(tmp_path, monkeypatch):
+    from training.structure_loading import load_structure_pockets
+
+    argv = tiny_argv(tmp_path, monkeypatch, "unused")
+    train = Path(argv[argv.index("--structure-dir") + 1])
+    esm = Path(argv[argv.index("--esm-embeddings-dir") + 1])
+    path = sorted((train / "structures").glob("*.pdb"))[0]
+    pockets, _, _ = load_structure_pockets(
+        structure_path=path, structure_root=train, allowed_site_metal_labels=None, esm_dim=8,
+        embeddings_dir=esm, require_esm_embeddings=True, ring_features_dir=None, feature_root_dir=None,
+        external_feature_source="updated", require_external_features=False,
+        unsupported_metal_policy="error", ec_label_depth=1, metal_example_unit="ion")
+    rows = [r.esm_embedding for pocket in pockets for r in pocket.residues if r.has_esm_embedding]
+    assert rows and all(row.untyped_storage().nbytes() == 8 * 4 for row in rows)

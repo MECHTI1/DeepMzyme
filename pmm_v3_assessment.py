@@ -85,7 +85,9 @@ def load_spec(path: Path = SPEC_PATH, *, expected_sha256: str | None = FROZEN_SP
     require(expected_sha256 is not None, "The A4 assessment specification is not frozen yet")
     require(sha256(path) == expected_sha256, "Assessment specification differs from the frozen SHA-256")
     spec = json.loads(Path(path).read_text(encoding="utf-8"))
-    require(set(SPEC_DEFAULTS) <= set(spec), "Assessment specification lacks required parameters")
+    # The frozen values must be the tested ones; a different value needs a new tested code drop.
+    differing = sorted(key for key in SPEC_DEFAULTS if spec.get(key) != SPEC_DEFAULTS[key])
+    require(not differing, f"Assessment specification differs from the tested rules in {differing}")
     return spec
 
 

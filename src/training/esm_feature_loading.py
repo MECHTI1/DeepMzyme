@@ -295,7 +295,9 @@ def load_esm_lookup_for_structure(
             raise ValueError(f"Duplicate ESM residue ids detected while loading {candidate}: {sorted(overlap)[:5]}")
 
         for residue_id, embedding in zip(residue_ids, embeddings):
-            esm_lookup[residue_id] = embedding.float()
+            # An owned copy: a row view would keep the whole chain's embedding matrix alive
+            # for as long as any pocket residue references it.
+            esm_lookup[residue_id] = embedding.to(dtype=torch.float32, copy=True)
         found_files.append(candidate)
 
     if not found_files:

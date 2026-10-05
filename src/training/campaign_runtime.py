@@ -310,23 +310,10 @@ def load_campaign_prediction_components(checkpoint: dict[str, Any], *, device: s
     return model, normalization_stats_from_payload(checkpoint["normalization_stats"]), options
 
 
-def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[str, str] | None = None,
-                        output_dir: Path | None = None) -> dict[str, Any]:
-    """Independently reload a campaign's selected checkpoint and frozen validation ions.
+def _validation_only_config(run_dir: Path, path_map: dict[str, str] | None):
+    """Saved run payload, its config and remapped input paths; refuses anything but validation-only runs."""
+    from export_validation_predictions import remap_path
 
-    Only validation structures are parsed. Saved normalization/class weights are
-    reused; no optimizer, data preparation or training/refit routine is called.
-    """
-    from export_validation_predictions import remap_path, verify_membership
-    from torch_geometric.loader import DataLoader
-    from training.access_guard import install_forbidden_read_guard
-    from training.data import _cohort_structure_files
-    from training.graph_dataset import PocketGraphDataset, build_graph_data_list
-    from training.source_cohort import read_cohort_csv, cohort_load_payload
-    from training.structure_loading import load_structure_pockets
-    from training.run import to_jsonable
-
-    run_dir = Path(run_dir)
     payload = json.loads((run_dir / "run_config.json").read_text(encoding="utf-8"))
     config = payload["config"]
     if (config.get("task") != "metal" or config.get("metal_example_unit") != "ion"
@@ -338,23 +325,47 @@ def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[st
         "structure_dir", "source_cohort_csv", "fold_membership_csv", "esm_embeddings_dir",
         "external_features_root_dir", "ring_features_dir",
     )}
-    train_dir = mapped["structure_dir"]
+    return payload, config, mapped
+
+
+def replay_epoch_checkpoint(run_dir: Path, checkpoint_name: str, *, output_dir: Path, device: str = "cpu",
+                            path_map: dict[str, str] | None = None) -> dict[str, Any]:
+    """Replay any saved checkpoint of a validation-only run against that epoch's history record.
+
+    Used to audit non-selected checkpoints (for example the epoch-50 checkpoint of
+    a best-epoch run). Raises CampaignContractError after writing its artifacts when
+    the replayed metrics or confusion matrices differ from the history record.
+    """
+    from training.access_guard import install_forbidden_read_guard
+    from training.run import to_jsonable
+
+    run_dir = Path(run_dir)
+    payload, config, mapped = _validation_only_config(run_dir, path_map)
     from benchmarking.pmm_ion_campaign import forbidden_read_roots
 
-    install_forbidden_read_guard(forbidden_read_roots(train_dir))
-    selected_receipt = json.loads((run_dir / "selected_checkpoint.json").read_text(encoding="utf-8"))
-    checkpoint_name = selected_receipt.get("selected_checkpoint", "best_model_checkpoint.pt")
-    if checkpoint_name not in {"best_model_checkpoint.pt", "terminal_model_checkpoint.pt"}:
-        raise CampaignContractError(f"Unsupported selected checkpoint name {checkpoint_name!r}")
+    install_forbidden_read_guard(forbidden_read_roots(mapped["structure_dir"]))
     checkpoint_path = run_dir / checkpoint_name
-    if sha256_file(checkpoint_path) != selected_receipt["selected_checkpoint_sha256"]:
-        raise CampaignContractError("Selected checkpoint content changed")
     checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     if to_jsonable(checkpoint["config"]) != config:
-        raise CampaignContractError("Selected checkpoint and saved run configuration differ")
-    saved_prediction_path = run_dir / selected_receipt["validation_predictions"]["path"]
-    if sha256_file(saved_prediction_path) != selected_receipt["validation_predictions"]["sha256"]:
-        raise CampaignContractError("Saved validation prediction content changed")
+        raise CampaignContractError("Checkpoint and saved run configuration differ")
+    # Per-epoch checkpoints carry their history instead of an epoch field.
+    epoch = int(checkpoint["epoch"]) if "epoch" in checkpoint else len(checkpoint["history"])
+    return _replay_loaded_checkpoint({**checkpoint, "epoch": epoch}, checkpoint_path, payload, mapped,
+                                     device=device, output_dir=Path(output_dir))
+
+
+def _replay_loaded_checkpoint(checkpoint: dict[str, Any], checkpoint_path: Path, payload: dict[str, Any],
+                              mapped: dict[str, Any], *, device: str, output_dir: Path) -> dict[str, Any]:
+    """Rebuild the frozen validation ions and export reconciled predictions for one loaded checkpoint."""
+    from export_validation_predictions import verify_membership
+    from torch_geometric.loader import DataLoader
+    from training.data import _cohort_structure_files
+    from training.graph_dataset import PocketGraphDataset, build_graph_data_list
+    from training.source_cohort import read_cohort_csv, cohort_load_payload
+    from training.structure_loading import load_structure_pockets
+
+    config = payload["config"]
+    train_dir = mapped["structure_dir"]
     model, normalization, graph_options = load_campaign_prediction_components(checkpoint, device=device)
     bindings = read_cohort_csv(mapped["source_cohort_csv"], config["source_cohort_sha256"])
     membership = read_fold_membership(mapped["fold_membership_csv"], config["fold_membership_sha256"])
@@ -396,13 +407,45 @@ def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[st
                         normalization_stats=normalization, **graph_options),
                         batch_size=config["batch_size"], shuffle=False, num_workers=0,
                         generator=torch.Generator().manual_seed(int(config["seed"]) + 2))
-    output_dir = Path(output_dir) if output_dir is not None else run_dir / "independent_validation_replay"
     output_dir.mkdir(parents=True, exist_ok=False)
-    receipt = export_selected_validation_predictions(
+    return export_selected_validation_predictions(
         model=model, val_loader=loader, val_pockets=pockets, best_checkpoint=checkpoint,
         checkpoint_path=checkpoint_path, history=payload["history"], config_payload=config,
         run_dir=output_dir, device=device,
     )
+
+
+def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[str, str] | None = None,
+                        output_dir: Path | None = None) -> dict[str, Any]:
+    """Independently reload a campaign's selected checkpoint and frozen validation ions.
+
+    Only validation structures are parsed. Saved normalization/class weights are
+    reused; no optimizer, data preparation or training/refit routine is called.
+    """
+    from training.access_guard import install_forbidden_read_guard
+    from training.run import to_jsonable
+
+    run_dir = Path(run_dir)
+    payload, config, mapped = _validation_only_config(run_dir, path_map)
+    from benchmarking.pmm_ion_campaign import forbidden_read_roots
+
+    install_forbidden_read_guard(forbidden_read_roots(mapped["structure_dir"]))
+    selected_receipt = json.loads((run_dir / "selected_checkpoint.json").read_text(encoding="utf-8"))
+    checkpoint_name = selected_receipt.get("selected_checkpoint", "best_model_checkpoint.pt")
+    if checkpoint_name not in {"best_model_checkpoint.pt", "terminal_model_checkpoint.pt"}:
+        raise CampaignContractError(f"Unsupported selected checkpoint name {checkpoint_name!r}")
+    checkpoint_path = run_dir / checkpoint_name
+    if sha256_file(checkpoint_path) != selected_receipt["selected_checkpoint_sha256"]:
+        raise CampaignContractError("Selected checkpoint content changed")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    if to_jsonable(checkpoint["config"]) != config:
+        raise CampaignContractError("Selected checkpoint and saved run configuration differ")
+    saved_prediction_path = run_dir / selected_receipt["validation_predictions"]["path"]
+    if sha256_file(saved_prediction_path) != selected_receipt["validation_predictions"]["sha256"]:
+        raise CampaignContractError("Saved validation prediction content changed")
+    output_dir = Path(output_dir) if output_dir is not None else run_dir / "independent_validation_replay"
+    receipt = _replay_loaded_checkpoint(checkpoint, checkpoint_path, payload, mapped, device=device,
+                                        output_dir=output_dir)
     with saved_prediction_path.open(encoding="utf-8", newline="") as handle:
         saved = {row["source_uid"]: row for row in csv.DictReader(handle)}
     with (output_dir / "val_predictions.csv").open(encoding="utf-8", newline="") as handle:
