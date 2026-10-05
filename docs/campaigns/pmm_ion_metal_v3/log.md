@@ -3,6 +3,44 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-007
+
+2026-10-05 — step A checkpoint; **step A not yet declared complete** (the A4
+specification is still to be frozen). The user's four code-review findings and
+a follow-up were verified against the code; all were real and are resolved
+with tests (`0f92bf1`, `afa4767`, `8eef4ef`):
+
+1. Step D now pools passes across completed rounds, blocks every decision
+   while a required run is missing, stops after a complete round without a
+   pass, and adopts a combination only if it passes and beats the best single
+   candidate.
+2. Runs refuse changed runner files or recipe definitions (manifest hashes)
+   and require the frozen A4 specification whose cohort, fold and baseline
+   identities match the campaign; the assessor checks the same before
+   assessing, and rejects completed runs recorded with other runner files.
+3. A run name is claimed atomically for all lanes; archiving a failed or
+   interrupted attempt requires, on the same host, a stopped worker, a stopped
+   training child and a free lane lock; a rerun must match the archived
+   identity.
+4. A3 gives an explicit verdict bound to the tested source-tree hash.
+
+A3 **accepted** (`audits/a3_acceptance_20261005T122647Z`): the replay
+(`a3_regression_20261005T102411Z`) passed all nine pinned v2 fold-0
+checkpoints (best checkpoints within `pmm-core-replay-v1`, worst probability
+difference 4.5e-6, all discrete fields equal; every epoch-50 checkpoint matches
+its history), and the training check (`a3_regression_20261005T101042Z`) passed
+all four configurations bit-identically. Tested source-tree hash
+`5a120b2c514f3b03ceefb8e9f5b30836d8bbb47968cc62ba2557f885f71c584d`, unchanged
+since both audits started (bound post hoc by `--accept`); frozen v2 tree
+`adc95c42…` matches its pin. No `src/` change followed, so no A3 check needs
+repeating. A5 was repeated on the final runner and passed
+(`audits/a5_prefit_20261005T122704Z`). Full test suite: only the 2 known
+failures and 32 known order-dependent errors.
+
+Known limit: claims are local coordination files, not persisted; a unit
+interrupted by the loss of its host cannot be archived without a user
+decision, because its worker's stop cannot be verified.
+
 ## v3-006
 
 2026-10-05 — plan step A2–A6 work, **step A not yet complete** (open: the A3
