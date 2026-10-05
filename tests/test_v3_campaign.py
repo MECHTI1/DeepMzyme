@@ -223,3 +223,30 @@ def test_regression_run_replays_and_applies_the_predeclared_gate(campaign, tmp_p
         v3.run_regression(paths, v2_root=v2_paths.root, lane=0, train_dir=train, esm_dir=esm_dir,
                           python_bin=sys.executable, device="cpu", execution_policy=policy(tmp_path),
                           load_workers=1, epochs=2)
+
+
+def test_failed_unit_is_archived_once_and_completed_units_never_rerun(campaign):
+    _, _, paths, _, _ = campaign
+    name = v3.Unit("only_gvp", "four_class", "baseline", 3, 42).name
+
+    def fake_attempt(status):
+        lane = paths.lane(1)
+        (lane / "runs" / name).mkdir(parents=True)
+        (lane / "runs" / name / "epoch_metrics.csv").write_text("epoch\n1\n")
+        (lane / "runs" / f"{name}.log").write_text("crashed\n")
+        if status is not None:
+            (lane / f"run_status_{name}.json").write_text(json.dumps({"run_name": name, "status": status}))
+
+    fake_attempt(None)  # interrupted: artifacts but no status record
+    target = v3.archive_failed_attempt(paths, name)
+    assert not v3.unit_artifacts(paths, name) and (target / "lane1" / "runs" / name / "epoch_metrics.csv").is_file()
+    assert json.loads((target / "archive_receipt.json").read_text())["status_meaning"].startswith("interrupted")
+    fake_attempt("failed")  # the single rerun fails as well
+    with pytest.raises(ValueError, match="already rerun"):
+        v3.archive_failed_attempt(paths, name)
+    other = v3.Unit("only_gvp", "four_class", "baseline", 4, 42).name
+    lane = paths.lane(0)
+    (lane / "runs" / other).mkdir(parents=True)
+    (lane / f"run_status_{other}.json").write_text(json.dumps({"run_name": other, "status": "completed"}))
+    with pytest.raises(ValueError, match="never rerun"):
+        v3.archive_failed_attempt(paths, other)

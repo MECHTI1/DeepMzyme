@@ -5,7 +5,9 @@ Actions:
   prepare  CPU: freeze a new v3 campaign root from the v2 cohort and a frozen fold set.
   plan     CPU, read-only: list a step's units and their training argv.
   run      Admit and run one unit in one lane (needs explicit allocation fields).
+  regression  Run the step C regression unit once (new code, v2 recipe, old v2 fold 0).
   replay   Independent validation replay of one completed run directory.
+  archive-failed  CPU: move a failed or interrupted unit aside so it can be rerun once.
   status   CPU, read-only: terminal status of every unit across lanes.
 
 No action provisions or stops compute, reads held-out data, or retries a unit.
@@ -27,7 +29,7 @@ RUNTIME_FIELDS = ("session_id", "execution_deadline", "allocation_started", "exe
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--action", choices=("prepare", "plan", "run", "regression", "replay", "status"),
+    parser.add_argument("--action", choices=("prepare", "plan", "run", "regression", "replay", "status", "archive-failed"),
                         required=True)
     parser.add_argument("--campaign-dir", type=Path)
     parser.add_argument("--v2-root", type=Path, help="prepare: frozen v2 context campaign root")
@@ -70,6 +72,10 @@ def main(argv=None) -> int:
         manifest = v3.prepare_campaign(paths.root, v2_root=args.v2_root, fold_dir=args.fold_dir)
         print(json.dumps({key: manifest[key] for key in ("campaign_id", "fold_set", "frozen_source_tree_sha256",
                                                           "git_commit")}, indent=2, sort_keys=True))
+        return 0
+    if args.action == "archive-failed":
+        v3.require(args.unit is not None, "archive-failed needs --unit")
+        print(json.dumps({"archived_to": str(v3.archive_failed_attempt(paths, args.unit))}, indent=2))
         return 0
     if args.action == "status":
         print(json.dumps({name: record["status"] for name, record in v3.completed_units(paths).items()},

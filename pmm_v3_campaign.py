@@ -553,6 +553,37 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
     return result
 
 
+MAX_RERUNS = 1  # plan: a failed run is repeated once, unchanged (same seed and identity)
+
+
+def archived_attempts(paths: V3Paths, name: str) -> list[Path]:
+    root = paths.root / "failed_attempts" / name
+    return sorted(root.glob("attempt*")) if root.is_dir() else []
+
+
+def archive_failed_attempt(paths: V3Paths, name: str) -> Path:
+    """Move a failed or interrupted unit's artifacts aside so the same unit can run once more."""
+    record = completed_units(paths).get(name)
+    require(record is None or record["status"] != "completed", f"{name} completed; a completed unit is never rerun")
+    previous = archived_attempts(paths, name)
+    require(len(previous) < MAX_RERUNS, f"{name} was already rerun {len(previous)} time(s); no further reruns")
+    existing = unit_artifacts(paths, name)
+    require(bool(existing), f"{name} has no artifacts to archive")
+    target = paths.root / "failed_attempts" / name / f"attempt{len(previous) + 1}"
+    moved = []
+    for path in existing:
+        destination = target / path.relative_to(paths.lanes)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        path.rename(destination)
+        moved.append(str(destination.relative_to(paths.root)))
+    v2.write_json(target / "archive_receipt.json", {
+        "run_name": name, "status": None if record is None else record["status"],
+        "status_meaning": "interrupted (no status record)" if record is None else "terminal failure",
+        "moved": moved, "archived_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "rerun_rule": "same seed and identity; at most one rerun"})
+    return target
+
+
 def completed_units(paths: V3Paths) -> dict[str, dict[str, Any]]:
     """Run name -> terminal status record across every lane (for planning and assessment)."""
     statuses = {}
