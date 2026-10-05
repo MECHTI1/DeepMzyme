@@ -65,6 +65,6 @@
   "secondary_estimand": "pooled out-of-fold (descriptive)",
   "spec_version": 1,
   "stage6_control": "only_esm__four_class__baseline",
-  "status": "approved 2026-10-05, not yet frozen",
+  "status": "frozen 2026-10-05 (step A close; approved by the user 2026-10-05)",
   "tie_band": 0.002
 }

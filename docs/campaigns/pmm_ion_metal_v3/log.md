@@ -3,6 +3,35 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-008
+
+2026-10-05 — **plan step A complete** (CPU only; nothing ran on a GPU). After
+the v3-007 checkpoint the user said to continue, and the A4 specification was
+frozen:
+
+- [`assessment_spec.md`](assessment_spec.md) SHA-256
+  `899005aaba036739519876860121fdf4e60241d55c393d435847aae56ece3667`;
+  [`assessment_spec.json`](assessment_spec.json) SHA-256
+  `2969407042dbb5858f15e1a114a2d602cc2fd764e788022ddaee1907ff17306c`, pinned as
+  `FROZEN_SPEC_SHA256` in `pmm_v3_assessment.py`. Its fold, cohort and baseline
+  identities match a real-data preparation of this campaign (the A5 scratch
+  root). Every run and assessment now requires it.
+
+Step A record: A1 strict folds (v3-005); A2 code (v3-006, v3-007), with the
+clean-subset and test-preparation builder **deferred** by the user to just
+before step F (outside `src/`, tested on synthetic or training-side data before
+any test access, keeping the agreed near-copy and previously-opened-PDB rules);
+A3 accepted (`audits/a3_acceptance_20261005T122647Z`, tested source tree
+`5a120b2c…`); A4 frozen (above); A5 passed
+(`audits/a5_prefit_20261005T122704Z`); A6 playbook recipe written. All 77 v3
+tests pass; the full suite shows only the known 2 failures and 32
+order-dependent errors.
+
+Before step B: the user's explicit GPU OK (within the $40 gross ceiling),
+about 10–15 GB freed on `/` (about 6 GB free), and the real campaign root
+prepared once from the final code. Still due before step E: the final-test
+reporting decision.
+
 ## v3-007
 
 2026-10-05 — step A checkpoint; **step A not yet declared complete** (the A4
