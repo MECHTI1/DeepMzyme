@@ -30,6 +30,78 @@ historical context only. Do not compare their scores as paired controls or use
 held-out test data to choose the unit. The ion option is currently
 implemented and unit-tested, not experimentally evaluated.
 
+## PMM ion metal v3 campaign (`pmm_ion_metal_v3`)
+
+Plan: [`docs/campaigns/pmm_ion_metal_v3/plan.md`](campaigns/pmm_ion_metal_v3/plan.md);
+decisions: [log](campaigns/pmm_ion_metal_v3/log.md); assessment rules:
+[`assessment_spec.md`](campaigns/pmm_ion_metal_v3/assessment_spec.md). Every
+GPU start needs the user's explicit OK within the recorded budget. Owners:
+`pmm_v3_campaign.py` (profile, recipes, units, guards), `run_pmm_v3_campaign.py`
+(command line), `pmm_v3_assessment.py` (all numbers and decisions). The v2
+tools and the frozen `_code/pmm_core_scope_v2` checkout stay untouched.
+
+Order (each step refuses to run out of order):
+
+1. **Prepare once, after the last `src/` change.** The manifest pins the
+   source-tree hash; any later `src/` or `scripts/` change makes every run
+   refuse. Inputs: the frozen v2 context root (cohort, ESMC plan, certified
+   inventory) and the frozen fold set `v3-seqid90-s42-b2`.
+2. **Step B probes** (short real-data runs in their own `probe-<tag>__`
+   namespace, AMP stated explicitly), then **record the setting once** with
+   `set-execution`; campaign units are refused until it exists. The full
+   50-epoch late-fusion `four_class` fold-0 run matching the chosen setting is
+   passed with `--reuse` and becomes that step C cell.
+3. **Steps C–E units**, one per lane (`--lane 0..2`, at most the recorded number
+   of concurrent lanes), each verified, independently replayed and persisted;
+   the step C regression run uses `--action regression`.
+4. **Assess** with `pmm_v3_assessment.py --step C|D-A|D-B|D-combo|E`; it refuses
+   to run until the A4 specification hash is pinned in the file.
+
+```bash
+PY=/home/mechti/venvs/deepmzyme/bin/python
+V3=/home/mechti/deepmzyme_runs/pmm_ion_metal_v3
+V2=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
+TRAIN=/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
+ESM=$V2/inputs/esm_embeddings_esmc600m_v1
+FOLDS=/home/mechti/deepmzyme_runs/pmm_ion_metal_v3_folds/v3-seqid90-s42-b2
+# Allocation fields come from the controller session; FIT_SECONDS is the full-unit
+# forecast (load, training, replay, persistence). Admission needs 1.25 x FIT + 900 s.
+ALLOC="--session-id $SESSION_ID --allocation-started $ALLOCATION_STARTED \
+  --execution-deadline $DEADLINE --execution-max-seconds $SESSION_SECONDS \
+  --estimated-fit-seconds $FIT_SECONDS --durable-root $DURABLE --persistence-mode host_pull"
+
+$PY run_pmm_v3_campaign.py --action prepare --campaign-dir $V3 --v2-root $V2 --fold-dir $FOLDS
+$PY run_pmm_v3_campaign.py --action plan --campaign-dir $V3 --step C        # read-only
+
+# Step B: probes (repeat with --amp on/off, tags per repetition and lane)
+$PY run_pmm_v3_campaign.py --action run --campaign-dir $V3 --train-dir $TRAIN --esm-dir $ESM \
+  --unit gvp_late_fusion__four_class__baseline__fold0__seed42 --probe w1-fp32-r1 --amp off \
+  --epochs 3 --lane 0 $ALLOC
+$PY run_pmm_v3_campaign.py --action set-execution --campaign-dir $V3 --amp off --lanes 2 \
+  --evidence $V3/step_b/speed_report.json \
+  --reuse gvp_late_fusion__four_class__baseline__fold0__seed42=probe-full-fp32__gvp_late_fusion__four_class__baseline__fold0__seed42
+
+# Steps C-E: one unit per call and lane
+$PY run_pmm_v3_campaign.py --action run --campaign-dir $V3 --train-dir $TRAIN --esm-dir $ESM \
+  --unit only_esm__six_class__baseline__fold0__seed42 --lane 1 $ALLOC
+$PY run_pmm_v3_campaign.py --action regression --campaign-dir $V3 --v2-root $V2 \
+  --train-dir $TRAIN --esm-dir $ESM --lane 0 $ALLOC
+$PY run_pmm_v3_campaign.py --action status --campaign-dir $V3
+$PY pmm_v3_assessment.py --campaign-dir $V3 --step C
+```
+
+Failures: a failed or interrupted unit is rerun once, unchanged, after
+`--action archive-failed --unit NAME` moves its first attempt to
+`failed_attempts/`; a completed unit is never rerun. A second failure: step D
+"did not pass"; steps C and E stop for the user's decision.
+
+Costs measured in step A (A5, this PC's CPU, one process): augmented recipes
+(`posnoise01`, `outerdrop01`) rebuild every training graph each epoch,
+about 7.6 h (Only-GVP) to 9.5 h (late fusion) of graph building per fit, so they
+fall under the plan's cost gate. Each unit rehashes the 9.8 GB ESMC payload set
+before it starts (about a minute on the VM). One fold-0 validation replay peaks
+near 1.9 GB of RAM after the 2026-10-05 ESM-row fix.
+
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
 
 Plan: [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](plans/metal_level_metal_task_compared_PMM_final_plan.md).
