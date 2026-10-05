@@ -13,6 +13,15 @@ Part 2, training: a short CPU fit on a synthetic campaign, run once with the new
   tree and once with the frozen v2 checkout from the same argv; every history value
   and every final weight must agree within 1e-6.
 
+Acceptance: every report records the tested source-tree hash (src/ and scripts/,
+the rule of pmm_ion_campaign.source_tree_sha256) at start and end, and the frozen
+tree's hash against its pin. The verdict is "accepted" only for a complete run of
+both parts (all nine pinned units and all four training configurations) that
+passed with an unchanged source; a subset or one part is a "partial diagnostic".
+The exit status is nonzero whenever anything failed. --accept re-derives the
+verdict from two existing report directories (replay and training) and binds them
+post hoc to the current source hash, which must be unchanged since they started.
+
 Kept outside src/ and scripts/ so it cannot change the frozen training identity.
 Read-only on v2 data (outputs go to a new directory); never reads held-out data.
 Each replay runs in its own process so label-scheme state never leaks between units.
@@ -21,6 +30,7 @@ Each replay runs in its own process so label-scheme state never leaks between un
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 import os
 import subprocess
@@ -40,6 +50,63 @@ WEIGHT_ATOL = 1e-6
 HISTORY_ATOL = 1e-6
 TRAINING_CONFIGS = (("only_esm", "four_class"), ("only_gvp", "six_class"),
                     ("gvp_late_fusion", "four_class"), ("gvp_late_fusion", "six_class"))
+
+
+TRAINING_CONFIG_IDS = tuple(f"{family}__{target}__none" for family, target in TRAINING_CONFIGS)
+
+
+def tree_sha256(root: Path) -> str:
+    """The pmm_ion_campaign.source_tree_sha256 rule (sorted src/**/*.py and scripts/*.py) for any tree."""
+    import hashlib
+
+    digest = hashlib.sha256()
+    for path in sorted([*(root / "src").rglob("*.py"), *(root / "scripts").glob("*.py")]):
+        if "__pycache__" in path.parts:
+            continue
+        digest.update(str(path.relative_to(root)).encode() + b"\0" + path.read_bytes())
+    return digest.hexdigest()
+
+
+def latest_source_mtime(root: Path) -> float:
+    files = [*(root / "src").rglob("*.py"), *(root / "scripts").glob("*.py")]
+    return max(path.stat().st_mtime for path in files if "__pycache__" not in path.parts)
+
+
+def source_binding() -> dict[str, Any]:
+    import pmm_core_replay as frozen_policy
+
+    def git(*args: str) -> str:
+        return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True).stdout.strip()
+
+    frozen = tree_sha256(FROZEN_V2_TREE)
+    return {"tested_tree": str(ROOT), "tested_src_tree_sha256": tree_sha256(ROOT), "git_head": git("rev-parse", "HEAD"),
+            "src_uncommitted_changes": bool(git("status", "--porcelain", "--", "src", "scripts")),
+            "frozen_tree": str(FROZEN_V2_TREE), "frozen_src_tree_sha256": frozen,
+            "frozen_tree_matches_pin": frozen == frozen_policy.SOURCE_SHA256,
+            "audit_sha256": sha256(Path(__file__)), "pmm_core_replay_sha256": sha256(ROOT / "pmm_core_replay.py")}
+
+
+def acceptance(report: dict[str, Any], *, pins: list[str]) -> dict[str, Any]:
+    """Explicit aggregate verdict: accepted / failed / partial diagnostic (not acceptance)."""
+    failures, missing = [], []
+    start, end = report.get("source_at_start") or {}, report.get("source_at_end") or {}
+    for key in ("tested_src_tree_sha256", "frozen_src_tree_sha256"):
+        if not start.get(key) or start.get(key) != end.get(key):
+            failures.append(f"source binding: {key} missing or changed during the audit")
+    if not start.get("frozen_tree_matches_pin"):
+        failures.append("the frozen v2 tree does not match its pinned source hash")
+    replay = report.get("replay") or {}
+    failures += [f"replay {name}: not passed" for name, item in sorted(replay.items()) if not item.get("passed")]
+    missing += [f"replay {name}" for name in pins if name not in replay]
+    training = (report.get("training") or {}).get("configs") or {}
+    failures += [f"training {name}: not passed" for name, item in sorted(training.items()) if not item.get("passed")]
+    missing += [f"training {name}" for name in TRAINING_CONFIG_IDS if name not in training]
+    verdict = "failed" if failures else "partial diagnostic (not acceptance)" if missing else "accepted"
+    return {"verdict": verdict, "failures": failures, "missing": missing,
+            "tested_src_tree_sha256": start.get("tested_src_tree_sha256"),
+            "rules": {"replay_policy": "pmm-core-replay-v1 (probability atol 1e-5; discrete fields exact)",
+                      "epoch50": "trainer reconciliation with the epoch-50 history",
+                      "training": f"history and weights within {WEIGHT_ATOL} (new tree vs frozen v2 tree)"}}
 
 
 def write_json(path: Path, payload: Any) -> None:
@@ -245,12 +312,71 @@ def training_check(out: Path, epochs: int) -> dict[str, Any]:
 
 # ---------------------------------------------------------------------------
 
+def rederive_replay(name: str, out: Path) -> dict[str, Any]:
+    """Recompute one unit's replay verdict from its saved files (no new replay)."""
+    import pmm_core_replay as frozen_policy
+
+    pin = frozen_policy.HISTORICAL_PINS[name]
+    run_dir = V2_CAMPAIGN / "runs" / name
+    labels = frozen_policy.NATIVE_LABELS[name.split("__")[1]]
+    record: dict[str, Any] = {"unit": name, "pins_match": (
+        sha256(run_dir / "best_model_checkpoint.pt") == pin["checkpoint_sha256"]
+        and sha256(run_dir / "val_predictions.csv") == pin["predictions_sha256"])}
+    replay_csv = out / name / "best_new" / "replay" / "val_predictions.csv"
+    try:
+        comparison = frozen_policy.compare_rows(frozen_policy.read_rows(run_dir / "val_predictions.csv"),
+                                                frozen_policy.read_rows(replay_csv), labels, frozen_policy.POLICY)
+    except (ValueError, OSError) as exc:
+        comparison = {"qualified": False, "error": str(exc)}
+    record["best_policy_comparison"] = comparison
+    receipt_path = out / name / "epoch50_new" / "replay" / "selected_checkpoint.json"
+    worker_path = out / name / "epoch50_new" / "worker_result.json"
+    epoch50 = json.loads(receipt_path.read_text()) if receipt_path.is_file() else {}
+    worker = json.loads(worker_path.read_text()) if worker_path.is_file() else {"error": "missing"}
+    record["epoch50_matches_history"] = (epoch50.get("reconciliation_status") == "match"
+                                         and epoch50.get("selected_epoch") == 50 and worker.get("error") is None)
+    record["passed"] = bool(record["pins_match"] and comparison.get("qualified") and record["epoch50_matches_history"])
+    return record
+
+
+def accept_existing(replay_dir: Path, training_dir: Path, out_root: Path) -> tuple[dict[str, Any], Path]:
+    """Aggregate verdict over two finished reports, re-derived from their saved files and bound post hoc
+    to the current source hash (which must not have changed since either audit started)."""
+    import pmm_core_replay as frozen_policy
+
+    reports = {"replay": json.loads((replay_dir / "a3_report.json").read_text()),
+               "training": json.loads((training_dir / "a3_report.json").read_text())}
+    started = min(datetime.strptime(r["started"], "%Y-%m-%dT%H:%M:%S%z").timestamp() for r in reports.values())
+    binding = source_binding()
+    unchanged = latest_source_mtime(ROOT) < started and not binding["src_uncommitted_changes"]
+    combined = {"source_at_start": binding if unchanged else {}, "source_at_end": binding,
+                "replay": {name: rederive_replay(name, replay_dir / "replay") for name in reports["replay"]["replay"]},
+                "training": {"configs": {name: compare_fits(training_dir / "training" / "runs_new" / f"{name}__fold1__seed42",
+                                                            training_dir / "training" / "runs_frozen" / f"{name}__fold1__seed42")
+                                         for name in reports["training"]["training"]["configs"]}}}
+    verdict = acceptance(combined, pins=sorted(frozen_policy.HISTORICAL_PINS))
+    payload = {"schema": "v3-a3-acceptance-1", "binding": "post hoc: tested source unchanged since the audits "
+               "started (no newer src/scripts file, no uncommitted change) and equal to the current hash",
+               "source_unchanged_since_audit_start": unchanged, "source": binding,
+               "reports": {key: str(path) for key, path in (("replay", replay_dir), ("training", training_dir))},
+               "report_sha256": {key: sha256(path / "a3_report.json")
+                                 for key, path in (("replay", replay_dir), ("training", training_dir))},
+               "replay": combined["replay"], "training": combined["training"], "acceptance": verdict,
+               "decided_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    out = out_root / f"a3_acceptance_{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}"
+    out.mkdir(parents=True, exist_ok=False)
+    write_json(out / "a3_acceptance.json", payload)
+    return payload, out
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--out-root", type=Path)
     parser.add_argument("--part", choices=("replay", "training", "both"), default="both")
-    parser.add_argument("--units", nargs="*", help="replay: subset of the nine pinned units")
+    parser.add_argument("--units", nargs="*", help="replay: subset of the nine pinned units (partial diagnostic)")
     parser.add_argument("--epochs", type=int, default=3)
+    parser.add_argument("--accept", nargs=2, type=Path, metavar=("REPLAY_DIR", "TRAINING_DIR"),
+                        help="aggregate verdict over two finished report directories")
     parser.add_argument("--worker", choices=("best", "epoch50"), help=argparse.SUPPRESS)
     parser.add_argument("--tree", choices=("new", "frozen"), help=argparse.SUPPRESS)
     parser.add_argument("--run-dir", help=argparse.SUPPRESS)
@@ -260,11 +386,18 @@ def main(argv=None) -> int:
         return worker(args)
     import pmm_core_replay as frozen_policy
 
+    if args.accept:
+        payload, out = accept_existing(args.accept[0].resolve(), args.accept[1].resolve(), args.out_root)
+        print(json.dumps({"verdict": payload["acceptance"]["verdict"], "failures": payload["acceptance"]["failures"],
+                          "missing": payload["acceptance"]["missing"], "report": str(out / "a3_acceptance.json")},
+                         indent=2))
+        return 0 if payload["acceptance"]["verdict"] == "accepted" else 1
     out = args.out_root / f"a3_regression_{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}"
     out.mkdir(parents=True, exist_ok=False)
-    report: dict[str, Any] = {"schema": "v3-a3-regression-1", "audit_sha256": sha256(Path(__file__)),
+    report: dict[str, Any] = {"schema": "v3-a3-regression-2", "audit_sha256": sha256(Path(__file__)),
                               "policy_id": frozen_policy.POLICY_ID, "policy_sha256": frozen_policy.POLICY_SHA256,
-                              "frozen_tree": str(FROZEN_V2_TREE), "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+                              "frozen_tree": str(FROZEN_V2_TREE), "part": args.part, "units_requested": args.units,
+                              "started": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "source_at_start": source_binding()}
     write_json(out / "a3_report.json", report)
     if args.part in ("replay", "both"):
         units = args.units or sorted(frozen_policy.HISTORICAL_PINS)
@@ -277,9 +410,12 @@ def main(argv=None) -> int:
         report["training"] = training_check(out / "training", args.epochs)
         print("training", "passed" if report["training"]["passed"] else "NOT PASSED", flush=True)
     report["finished"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    report["source_at_end"] = source_binding()
+    report["acceptance"] = acceptance(report, pins=sorted(frozen_policy.HISTORICAL_PINS))
     write_json(out / "a3_report.json", report)
-    print(json.dumps({"report": str(out / "a3_report.json")}))
-    return 0
+    print(json.dumps({"verdict": report["acceptance"]["verdict"], "failures": report["acceptance"]["failures"],
+                      "report": str(out / "a3_report.json")}, indent=2))
+    return 1 if report["acceptance"]["failures"] else 0
 
 
 if __name__ == "__main__":
