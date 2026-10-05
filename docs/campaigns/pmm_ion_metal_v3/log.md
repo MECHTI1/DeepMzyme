@@ -3,6 +3,52 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-006
+
+2026-10-05 — plan step A2–A6 work, **step A not yet complete** (open: the A3
+replay of all nine pinned checkpoints, the user's four code-review findings,
+then freezing the A4 specification). Branch `v3-step-a` (not merged or pushed):
+`2acef49`, `0a0c534`, `46c1515`, `335b9c0`, `2b4b220`, `22f4e29`, `ea086fb` and
+this entry's commit.
+
+- A2 code: v3 runner with lanes, independent replay, persistence and the step C
+  regression run; one-time rerun of a failed unit (`archive-failed`); step-B
+  probes and a write-once execution setting (AMP, lanes, reuse of the matching
+  full run as the step C cell); v3 assessor with the approved statistics.
+- Fix found in step A: each residue's ESMC row was a view of the whole float32
+  chain matrix, so every loaded structure kept all its chain embeddings in RAM
+  (a v2 late-fusion fit peaked at 8.0 GB; one fold-0 replay above 3 GB). Rows
+  are now owned copies (one fold-0 replay peaks near 1.9 GB); values are
+  unchanged.
+- A3 training check **passed**: on a synthetic campaign, 3-epoch CPU fits of
+  four configurations with the new code and with the frozen
+  `_code/pmm_core_scope_v2` checkout are bit-identical (every history value
+  and every weight; difference 0.0), after the fix
+  (`audits/a3_regression_20261005T101042Z`). The real-data replay of the nine
+  pinned v2 fold-0 checkpoints (best checkpoints against the saved predictions
+  under `pmm-core-replay-v1`; epoch-50 checkpoints against the epoch-50
+  history) is running on CPU; results go in the step A completion entry.
+- A4: the user approved the four new default rules on 2026-10-05 with
+  clarifications (eligibility is not an improvement claim; improved-recipe
+  five-fold results are development-validation; the five-class tie preference
+  is a selection convention). The specification is frozen only at step A
+  completion. The approval covers the assessment rules, not a GPU start.
+- A5 pre-fit gate **passed** on a scratch preparation
+  (`audits/a5_prefit_20261005T103224Z`): all 82 planned units build valid
+  commands; every native class is present in every fold (validation Co 55–58,
+  Cu 67–73); class weights equalize the four common classes; the trainer applies
+  them to five- and six-class targets (tests); normalization is fitted on the
+  training fold only (test). Augmented recipes would rebuild graphs for about
+  7.6–9.5 h per fit on this PC, so they fall under the cost gate.
+- Deferred by the user's decision: the label-blind clean-subset and
+  test-preparation builder is written just before step F, outside `src/`, and
+  tested on synthetic or training-side data before any test access, keeping the
+  agreed near-copy and previously-opened-PDB exclusion rules. The final-test
+  reporting decision stays due before step E.
+- A6: the executable v3 recipe is in the
+  [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3).
+  Free space on `/` is about 6 GB; the user decides what to remove before step B.
+
 ## v3-005
 
 2026-10-04 — plan step A1 complete: the v3 fold set `v3-seqid90-s42-b2` is

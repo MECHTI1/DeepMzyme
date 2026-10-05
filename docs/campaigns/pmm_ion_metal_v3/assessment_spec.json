@@ -1,0 +1,70 @@
+{
+  "assessment_seed": 42,
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 42,
+  "confidence": 0.95,
+  "identities": {
+    "amp_and_workers": "chosen by the plan step-B rule and logged before step C",
+    "baseline_profile_sha256": "b34cef3679b50221f34d10787d29039502b12702b7d6fd0cb2cb3b257d1228c8",
+    "baseline_recipe": {
+      "checkpoint_rule": "terminal",
+      "families": [
+        "only_esm",
+        "only_gvp",
+        "gvp_late_fusion"
+      ],
+      "flags": [],
+      "lr_schedule": "cosine",
+      "targets": [
+        "four_class",
+        "five_class",
+        "six_class"
+      ],
+      "weight_mode": "manual"
+    },
+    "campaign_id": "pmm_ion_metal_v3",
+    "cohort_rows": 7398,
+    "cohort_sha256": "745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd",
+    "fold_builder": "v3-near-copy-folds-2",
+    "fold_membership_sha256": "e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a",
+    "fold_set_id": "v3-seqid90-s42-b2"
+  },
+  "metric": "common-four balanced accuracy of the selected checkpoint; five/six probabilities summed into Class VIII",
+  "multiplicity": "bonferroni",
+  "neutral_contrast_count": 6,
+  "pmm_published": {
+    "cv": {
+      "Class VIII": 73.3,
+      "Cu": 62.9,
+      "Mn": 90.3,
+      "Zn": 73.8,
+      "mean": 75.1
+    },
+    "test_figure_2b": {
+      "Class VIII": 57.5,
+      "Cu": 59.4,
+      "Mn": 88.6,
+      "Zn": 65.9,
+      "mean": 67.85
+    },
+    "use": "descriptive context only; not a matched comparison; no interval for the difference"
+  },
+  "primary_estimand": "mean over folds",
+  "recall_drop_limit": 0.03,
+  "rules": {
+    "failed_runs": "rerun once unchanged; second failure: step D not passing, steps C/E stop for diagnosis",
+    "improvement_check": "final recipe vs baseline four_class on folds 1-4 (t df 3); fold 0 reported as the development fold; an improvement is claimed only when both lower bounds on folds 1-4 are above zero; five-fold results of improved recipes are development-validation",
+    "neutral_target": "per family five-vs-four and six-vs-four on folds 0-4; tie keeps four_class; both better: larger mean gain, within tie_band five_class (a selection convention, not evidence that five beats six)",
+    "outcome": "better: bootstrap and t lower bounds > 0; worse: both upper bounds < 0; else no clear difference",
+    "recall_gates": "no missing/zero common-four mean recall; no common-four class mean recall drop > recall_drop_limit; five/six: no zero native mean recall",
+    "screen": "fold 0, seeds 42 and 43: mean delta >= screen_min_mean_delta, delta > 0 both seeds, no common-four mean recall change < screen_min_recall_change",
+    "stage6": "control kept unless an eligible, interval-supported candidate is best by mean common-four BA; tie-breakers per pmm_v3_assessment.stage6_tie_key; a positive mean gain on folds 1-4 permits consideration only and is not an improvement claim"
+  },
+  "screen_min_mean_delta": 0.015,
+  "screen_min_recall_change": -0.03,
+  "secondary_estimand": "pooled out-of-fold (descriptive)",
+  "spec_version": 1,
+  "stage6_control": "only_esm__four_class__baseline",
+  "status": "approved 2026-10-05, not yet frozen",
+  "tie_band": 0.002
+}
