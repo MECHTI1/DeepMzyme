@@ -11,6 +11,8 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +25,10 @@ from training.source_cohort import sha256_file
 
 FOLD_MEMBERSHIP_COLUMNS = ("source_uid", "physical_ion_id", "group_id", "native_element", "fold")
 RECONCILIATION_TOLERANCE = 1.0e-9
+# Independent replay compares saved probability columns within this absolute tolerance unless a caller
+# passes an explicit replay policy. A policy may loosen it only up to the pmm-core-replay-v1 value.
+STRICT_REPLAY_PROBABILITY_ATOL = 1.0e-6
+MAX_REPLAY_PROBABILITY_ATOL = 1.0e-5
 
 
 class CampaignContractError(RuntimeError):
@@ -415,13 +421,78 @@ def _replay_loaded_checkpoint(checkpoint: dict[str, Any], checkpoint_path: Path,
     )
 
 
+def validate_replay_policy(policy: dict[str, Any]) -> dict[str, Any]:
+    """An explicit replay policy: a named probability tolerance no looser than pmm-core-replay-v1."""
+    if not isinstance(policy, dict) or not isinstance(policy.get("policy_id"), str) or not policy["policy_id"].strip():
+        raise CampaignContractError("A replay policy needs a non-empty policy_id")
+    atol = policy.get("probability_atol")
+    if (isinstance(atol, bool) or not isinstance(atol, (int, float)) or not math.isfinite(atol)
+            or not 0 < atol <= MAX_REPLAY_PROBABILITY_ATOL):
+        raise CampaignContractError(
+            f"Replay probability_atol must be finite, positive and at most {MAX_REPLAY_PROBABILITY_ATOL}")
+    if any(not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, (str, int, float))
+           for key, value in policy.items()):
+        raise CampaignContractError("Replay policy fields must be plain strings or numbers")
+    return dict(policy)
+
+
+def _decimal_difference(value: str, other: str) -> Decimal | None:
+    """Exact absolute difference of two serialized probabilities; None if either is not a finite number."""
+    try:
+        left, right = Decimal(str(value)), Decimal(str(other))
+    except InvalidOperation:
+        return None
+    return abs(left - right) if left.is_finite() and right.is_finite() else None
+
+
+def compare_replayed_predictions(saved: dict[str, dict[str, str]], replayed: dict[str, dict[str, str]], *,
+                                 probability_atol: float, require_same_columns: bool = False,
+                                 exact_decimal: bool = False) -> float:
+    """Every non-probability field must be identical; ``p_`` columns may differ by ``probability_atol``.
+
+    ``exact_decimal`` compares the serialized decimal strings exactly (no binary rounding at the
+    tolerance boundary). Returns the largest absolute probability difference; the first disagreement raises.
+    """
+    if saved.keys() != replayed.keys():
+        raise CampaignContractError("Independent replay UID set differs from saved predictions")
+    tolerance = Decimal(repr(probability_atol))
+    largest = 0.0
+    for uid, row in replayed.items():
+        if require_same_columns and row.keys() != saved[uid].keys():
+            raise CampaignContractError(f"Independent replay columns differ at {uid}")
+        for key, value in row.items():
+            if key.startswith("p_") and exact_decimal:
+                exact = _decimal_difference(value, saved[uid][key])
+                matches = exact is not None and exact <= tolerance
+                if matches:
+                    largest = max(largest, float(exact))
+            elif key.startswith("p_"):
+                difference = abs(float(value) - float(saved[uid][key]))
+                matches = difference <= probability_atol
+                if matches:
+                    largest = max(largest, difference)
+            else:
+                matches = value == saved[uid].get(key)
+            if not matches:
+                raise CampaignContractError(f"Independent replay differs at {uid}/{key}")
+    return largest
+
+
 def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[str, str] | None = None,
-                        output_dir: Path | None = None) -> dict[str, Any]:
+                        output_dir: Path | None = None,
+                        replay_policy: dict[str, Any] | None = None) -> dict[str, Any]:
     """Independently reload a campaign's selected checkpoint and frozen validation ions.
 
     Only validation structures are parsed. Saved normalization/class weights are
     reused; no optimizer, data preparation or training/refit routine is called.
+    Without ``replay_policy`` probabilities must agree within 1e-6 and the receipt is
+    unchanged. An explicit policy (``validate_replay_policy``) sets the probability
+    tolerance (compared exactly on the serialized decimals), also requires identical
+    prediction columns, and is recorded in the receipt with the largest observed
+    probability difference. Identities, labels, predicted classes, metric reconciliation
+    and confusion matrices stay exact either way.
     """
+    policy = validate_replay_policy(replay_policy) if replay_policy is not None else None
     from training.access_guard import install_forbidden_read_guard
     from training.run import to_jsonable
 
@@ -450,17 +521,12 @@ def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[st
         saved = {row["source_uid"]: row for row in csv.DictReader(handle)}
     with (output_dir / "val_predictions.csv").open(encoding="utf-8", newline="") as handle:
         replayed = {row["source_uid"]: row for row in csv.DictReader(handle)}
-    if saved.keys() != replayed.keys():
-        raise CampaignContractError("Independent replay UID set differs from saved predictions")
-    for uid, row in replayed.items():
-        for key, value in row.items():
-            if key.startswith("p_"):
-                matches = abs(float(value) - float(saved[uid][key])) <= 1e-6
-            else:
-                matches = value == saved[uid].get(key)
-            if not matches:
-                raise CampaignContractError(f"Independent replay differs at {uid}/{key}")
+    largest = compare_replayed_predictions(
+        saved, replayed, probability_atol=policy["probability_atol"] if policy else STRICT_REPLAY_PROBABILITY_ATOL,
+        require_same_columns=policy is not None, exact_decimal=policy is not None)
     receipt.update(independent_replay=True, prediction_rows_verified=True, source_run_dir=str(run_dir),
                    normalization_refitted=False, training_performed=False)
+    if policy is not None:
+        receipt.update(replay_policy=policy, max_probability_abs_difference=largest)
     (output_dir / "replay_receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     return receipt
