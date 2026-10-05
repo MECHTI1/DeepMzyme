@@ -350,6 +350,15 @@ def test_a_real_unit_is_collected_reconciled_and_tampering_is_refused(campaign, 
     assert collected["only_esm__four_class__baseline__fold1__seed42"]["status"] == "missing"
     with pytest.raises(ValueError, match="identity differs"):
         assess.collect(paths, [unit], epochs=3)
+    # A completed run whose recorded runner files differ from the frozen manifest is rejected.
+    status_path = paths.lane(0) / f"run_status_{unit.name}.json"
+    original = status_path.read_text()
+    tampered = json.loads(original)
+    tampered["identity"]["runner_sha256"] = {**tampered["identity"]["runner_sha256"], "pmm_v3_campaign.py": "0" * 64}
+    status_path.write_text(json.dumps(tampered))
+    with pytest.raises(ValueError, match="runner files other than the ones frozen"):
+        assess.collect(paths, [unit], epochs=2)
+    status_path.write_text(original)
 
     _, membership = assess.read_contract(paths)
     rows = record["rows"]

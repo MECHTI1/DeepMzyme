@@ -405,6 +405,16 @@ def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_
     probe_name = "probe-ampfull__" + unit.name
     assert result["status"] == "completed" and result["run_name"] == probe_name
     assert "--amp" in json.loads((paths.lane(0) / "commands" / f"{probe_name}.json").read_text())["argv"]
+    # A probe recorded with other runner files cannot be reused.
+    status_path = paths.lane(0) / f"run_status_{probe_name}.json"
+    original = status_path.read_text()
+    tampered = json.loads(original)
+    tampered["identity"]["runner_sha256"] = {**tampered["identity"]["runner_sha256"], "run_pmm_v3_campaign.py": "0" * 64}
+    status_path.write_text(json.dumps(tampered))
+    with pytest.raises(ValueError, match="runner files other than the ones frozen"):
+        v3.set_execution_settings(paths, amp=True, lanes=2, evidence="b.json", reuse={unit.name: probe_name},
+                                  epochs=2)
+    status_path.write_text(original)
     # The probe ran with AMP, so it cannot stand for the step C unit under an FP32 setting.
     with pytest.raises(ValueError, match="does not match"):
         v3.set_execution_settings(paths, amp=False, lanes=2, evidence="b.json", reuse={unit.name: probe_name},

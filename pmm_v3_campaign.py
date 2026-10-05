@@ -635,6 +635,8 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
     require(not paths.execution_settings.exists(), "The step-B execution setting is recorded once")
     require(type(lanes) is int and 1 <= lanes <= 3, "Concurrent lanes must be 1, 2 or 3")
     require(bool(str(evidence).strip()), "Name the step-B evidence (report path)")
+    manifest = json.loads(paths.manifest.read_text())
+    verify_runner_identity(manifest)
     statuses = completed_units(paths)
     checked = {}
     for unit_name, run_name in sorted((reuse or {}).items()):
@@ -644,10 +646,12 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
                 f"{run_name} is not a probe of {unit_name}")
         record = statuses.get(run_name)
         require(record is not None and record["status"] == "completed", f"{run_name} did not complete")
+        require(record["identity"].get("runner_sha256") == manifest["runner_sha256"],
+                f"{run_name} ran with runner files other than the ones frozen at preparation")
         expected = build_command(paths, unit, python_bin="python", train_dir=paths.root / "train",
                                  esm_dir=paths.root / "esm", device="cuda", lane=0, epochs=epochs, amp=amp)[2]
         differing = sorted(k for k in set(expected) | set(record["identity"])
-                           if k != "runner_sha256" and expected.get(k) != record["identity"].get(k))
+                           if expected.get(k) != record["identity"].get(k))
         require(not differing, f"{run_name} does not match {unit_name} under this setting: {differing}")
         checked[unit_name] = run_name
     settings = {"amp": bool(amp), "concurrent_lanes": lanes, "evidence": str(evidence), "reuse": checked,
