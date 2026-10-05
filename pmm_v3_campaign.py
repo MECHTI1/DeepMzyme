@@ -92,6 +92,13 @@ RECIPES: dict[str, dict[str, Any]] = {
 EXCLUSIVE_PAIRS = ({"gvpaux03", "esmdrop02"}, {"posnoise01", "outerdrop01"}, {"sitenone", "sitecountsangles"})
 NON_COMBINABLE = {"baseline", "v2recipe", "sitenone"}
 
+# Independent replay of every v3 fit, probe and the regression run (user decision 2026-10-05, log v3-009):
+# probabilities within the pmm-core-replay-v1 tolerance; identities, labels, predicted classes and confusion
+# matrices stay exact and the selected-epoch BA reconciliation stays within 1e-9. Recorded in the manifest
+# and every receipt. Only the tolerance comes from pmm-core-replay-v1, not its other row checks.
+REPLAY_POLICY: dict[str, Any] = {"policy_id": "pmm-v3-replay-1", "probability_atol": 1e-5,
+                                 "probability_atol_source": "pmm-core-replay-v1"}
+
 
 def require(condition: bool, message: str) -> None:
     if not condition:
@@ -231,9 +238,15 @@ class V3Paths:
         return self.lanes / f"lane{index}"
 
 
+# Files whose content every run binds: the runner, the step-B probe manifest and the step-B speed report
+# (its gates decide the execution setting, so they are frozen at preparation, before any step-B data).
+RUNNER_FILES = ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py", "pmm_v3_probes.py", "pmm_v3_speed_report.py")
+
+
 def runner_sha256() -> dict[str, str]:
-    return {name: file_sha(ROOT / name) for name in ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py")
-            if (ROOT / name).is_file()}
+    missing = [name for name in RUNNER_FILES if not (ROOT / name).is_file()]
+    require(not missing, f"Runner files are missing: {missing}")
+    return {name: file_sha(ROOT / name) for name in RUNNER_FILES}
 
 
 def git_commit() -> str | None:
@@ -297,7 +310,7 @@ def prepare_campaign(v3_root: Path, *, v2_root: Path, fold_dir: Path) -> dict[st
         "feature_inventory_identity_sha256": v2.inventory_identity_sha256(v2_paths),
         "frozen_source_tree_sha256": v2.source_tree_sha256(), "git_commit": git_commit(),
         "runner_sha256": runner_sha256(), "parent_campaign": v2_manifest["campaign_id"],
-        "held_out_access": False,
+        "replay_policy": REPLAY_POLICY, "held_out_access": False,
     }
     v2.write_json(paths.manifest, manifest)
     return manifest
@@ -320,7 +333,8 @@ def verify_frozen_esm(paths: V3Paths, esm_dir: Path) -> dict[str, Any]:
 def verify_runner_identity(manifest: dict[str, Any]) -> None:
     """The runner files and every recipe definition must be the ones recorded at preparation."""
     require(runner_sha256() == manifest["runner_sha256"],
-            "pmm_v3_campaign.py or run_pmm_v3_campaign.py changed since preparation")
+            f"A runner file ({', '.join(RUNNER_FILES)}) changed since preparation")
+    require(manifest.get("replay_policy") == REPLAY_POLICY, "The replay policy differs from the one prepared")
     recipes = {name: resolve_recipe(name) for name in RECIPES}
     require(stable_hash(recipes) == manifest["recipes_sha256"], "Recipe definitions changed since preparation")
 
@@ -490,12 +504,22 @@ def verify_completed_unit(run_dir: Path, identity: dict[str, Any], recipe: dict[
 
 
 def verify_independent_replay(run_dir: Path, receipt: dict[str, Any]) -> dict[str, Any]:
-    replay = v2.read_json(run_dir / "independent_validation_replay" / "replay_receipt.json")
+    replay_dir = run_dir / "independent_validation_replay"
+    replay = v2.read_json(replay_dir / "replay_receipt.json")
+    replayed = replay.get("validation_predictions") or {}
+    require(replay.get("fit_status") == "completed" and isinstance(replayed.get("path"), str)
+            and Path(replayed["path"]).name == replayed["path"]
+            and sha256_file(replay_dir / replayed["path"]) == replayed.get("sha256"),
+            "Independent replay predictions are incomplete or changed")
     require(replay.get("independent_replay") is True and replay.get("prediction_rows_verified") is True
             and replay.get("reconciliation_status") == "match"
             and replay.get("selected_checkpoint_sha256") == receipt["selected_checkpoint_sha256"]
             and replay.get("campaign_run_identity") == receipt["campaign_run_identity"],
             "Independent replay does not confirm the selected checkpoint")
+    require(replay.get("replay_policy") == REPLAY_POLICY
+            and 0 <= float(replay.get("max_probability_abs_difference", float("nan")))
+            <= REPLAY_POLICY["probability_atol"],
+            "Independent replay was not checked under the v3 replay policy")
     return replay
 
 
@@ -541,10 +565,33 @@ def execute_unit(paths: V3Paths, lane: int, unit: Unit, command: list[str], env_
     return {"run_name": name, "status": "completed", "elapsed_seconds": time.time() - started,
             "selected_epoch": receipt["selected_epoch"], "selected_checkpoint": receipt["selected_checkpoint"],
             "selected_checkpoint_sha256": receipt["selected_checkpoint_sha256"],
-            "replay_selected_epoch": replay["selected_epoch"]}
+            "replay_selected_epoch": replay["selected_epoch"], "replay_policy_id": REPLAY_POLICY["policy_id"],
+            "replay_max_probability_abs_difference": replay["max_probability_abs_difference"]}
 
 
 PROBE_TAG = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+
+
+def validate_probe_launch(paths: V3Paths, unit: Unit, *, probe: str, lane: int, epochs: int | None,
+                          amp: bool | None) -> dict[str, Any]:
+    """A step-B probe must match its fixed manifest entry (pmm_v3_probes); a whole-batch retry also needs
+    an invalid first attempt (pmm_v3_speed_report.require_retry_permitted). Refused before admission."""
+    import pmm_v3_probes as probes
+
+    spec = probes.probe_spec(probe)
+    require(unit.name == probes.PROBE_UNIT_NAME, f"Step-B probes run {probes.PROBE_UNIT_NAME} only")
+    require(amp is not None and bool(amp) == spec["amp"], f"{probe} runs with AMP {'on' if spec['amp'] else 'off'}")
+    require(int(epochs if epochs is not None else PROFILE["epochs"]) == spec["epochs"],
+            f"{probe} runs {spec['epochs']} epochs")
+    require(lane == spec["lane"], f"{probe} runs in lane {spec['lane']}")
+    if spec["kind"] == "batch":  # an archived batch member counts as failed; only the whole-batch retry reruns it
+        require(not archived_attempts(paths, run_name_for(unit, probe)),
+                f"{probe} was archived; batch members are never rerun individually")
+    if spec["attempt"] == 2:
+        import pmm_v3_speed_report as report  # imported lazily: the report imports this module
+
+        report.require_retry_permitted(paths, spec["batch"])
+    return spec
 
 
 def run_name_for(unit: Unit, probe: str | None) -> str:
@@ -578,9 +625,12 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
     from benchmarking.pmm_execution import CampaignExecution, ExecutionPolicy
     from training.access_guard import install_forbidden_read_guard
 
+    preflight_started = time.time()  # pre-admission checks (ESMC rehash) count toward measured throughput
     install_forbidden_read_guard(v2.forbidden_read_roots(train_dir))
     require(Path(train_dir).name == "train", "Only the training-side directory named train is allowed")
     name = run_name_for(unit, probe)
+    if probe is not None:
+        validate_probe_launch(paths, unit, probe=probe, lane=lane, epochs=epochs, amp=amp)
     amp = resolve_amp(paths, probe=probe, amp=amp)
     existing = unit_artifacts(paths, name)
     if existing:
@@ -605,7 +655,8 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
             execution.admit(name, float(execution_policy["estimated_fit_seconds"]))
             admitted = True
             result = _run_admitted(paths, lane, unit, name, probe, command, env, identity, execution,
-                                   python_bin=python_bin, device=device)
+                                   python_bin=python_bin, device=device,
+                                   preflight_seconds=time.time() - preflight_started)
     finally:
         if not admitted:  # nothing ran: the lane or the admission refused, so the name is released
             claim.unlink(missing_ok=True)
@@ -614,13 +665,14 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
 
 def _run_admitted(paths: V3Paths, lane: int, unit: Unit, name: str, probe: str | None, command: list[str],
                   env: dict[str, str], identity: dict[str, Any], execution, *, python_bin: str,
-                  device: str) -> dict[str, Any]:
+                  device: str, preflight_seconds: float | None = None) -> dict[str, Any]:
     """Run, record and persist one admitted unit inside its lane's execution."""
     lane_root = paths.lane(lane)
     result = execute_unit(paths, lane, unit, command, env, identity, execution=execution,
                           python_bin=python_bin, device=device, run_name=name)
     status_path = lane_root / f"run_status_{name}.json"
-    v2.write_json(status_path, {**result, "identity": identity, "lane": lane, "unit": unit.name, "probe": probe})
+    v2.write_json(status_path, {**result, "identity": identity, "lane": lane, "unit": unit.name, "probe": probe,
+                                "preflight_seconds": preflight_seconds})
     execution.record_result(name, result["status"], result["elapsed_seconds"])
     execution.persist([path for path in (lane_root / "runs" / name, lane_root / "runs" / f"{name}.log",
                                          lane_root / "commands" / f"{name}.json", status_path)
@@ -632,11 +684,15 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
                            reuse: dict[str, str] | None = None, epochs: int | None = None) -> dict[str, Any]:
     """Record the step-B choice once. ``reuse`` maps a step-C unit to the completed full-length probe
     that matches the chosen setting (plan: that run becomes the cell's step C baseline)."""
+    import pmm_v3_speed_report as speed  # imported lazily: the report imports this module
+
     require(not paths.execution_settings.exists(), "The step-B execution setting is recorded once")
     require(type(lanes) is int and 1 <= lanes <= 3, "Concurrent lanes must be 1, 2 or 3")
     require(bool(str(evidence).strip()), "Name the step-B evidence (report path)")
     manifest = json.loads(paths.manifest.read_text())
     verify_runner_identity(manifest)
+    # The request must equal the choice of a recomputed, decision-ready speed report (written as evidence).
+    verified = speed.verify_execution_choice(paths, amp=amp, lanes=lanes, evidence=str(evidence), reuse=reuse or {})
     statuses = completed_units(paths)
     checked = {}
     for unit_name, run_name in sorted((reuse or {}).items()):
@@ -655,7 +711,7 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
         require(not differing, f"{run_name} does not match {unit_name} under this setting: {differing}")
         checked[unit_name] = run_name
     settings = {"amp": bool(amp), "concurrent_lanes": lanes, "evidence": str(evidence), "reuse": checked,
-                "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+                "evidence_verification": verified, "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     v2.write_json(paths.execution_settings, settings)
     return settings
 
@@ -807,7 +863,9 @@ def regression_gate(run_dir: Path, *, epochs: int = 50) -> dict[str, Any]:
     checks = {
         "all_epochs_completed": len(history) == epochs and receipt.get("fit_status") == "completed",
         "replay_confirmed": replay.get("prediction_rows_verified") is True
-        and replay.get("selected_checkpoint_sha256") == receipt["selected_checkpoint_sha256"],
+        and replay.get("reconciliation_status") == "match"
+        and replay.get("selected_checkpoint_sha256") == receipt["selected_checkpoint_sha256"]
+        and replay.get("replay_policy") == REPLAY_POLICY,
         "best_epoch_within_band": abs(best - reference["best_epoch_common_four_ba"]) <= reference["tolerance"],
         "last10_within_band": abs(last10 - reference["last10_mean_common_four_ba"]) <= reference["tolerance"],
     }

@@ -29,7 +29,7 @@ from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parent
 RUNTIME_FILES = ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py", "pmm_v3_assessment.py", "pmm_v3_speed_report.py",
-                 "pmm_v3_bundle.py")
+                 "pmm_v3_probes.py", "pmm_v3_bundle.py")
 SPEC_FILES = ("docs/campaigns/pmm_ion_metal_v3/assessment_spec.json", "docs/campaigns/pmm_ion_metal_v3/assessment_spec.md")
 FOLD_FILES = ("fold_membership.csv", "fold_receipt.json", "pdb_groups.csv", "fold_balance_report.json",
               "near_copy_pairs.csv")
@@ -75,15 +75,31 @@ def tree_sha256(files: dict[str, bytes]) -> str:
     return digest.hexdigest()
 
 
+# Must equal pmm_v3_campaign.RUNNER_FILES (tested): the files every run binds at preparation.
+RUNNER_FILES = ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py", "pmm_v3_probes.py", "pmm_v3_speed_report.py")
+
+
 def runner_sha256(files: dict[str, bytes]) -> dict[str, str]:
-    return {name: sha256_bytes(files[name]) for name in ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py")}
+    return {name: sha256_bytes(files[name]) for name in RUNNER_FILES}
 
 
 def _git(*args: str) -> str:
     return subprocess.run(["git", *args], cwd=ROOT, check=True, capture_output=True, text=True).stdout
 
 
-def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS) -> dict:
+def require_a3_acceptance(report_path: Path, src_sha: str) -> dict:
+    """Plan A3 must have accepted exactly the source tree being bundled (a direct --part both report or an
+    --accept aggregate); a later src/ or scripts/ change voids it."""
+    report = json.loads(Path(report_path).read_text())
+    acceptance = report.get("acceptance") or {}
+    require(acceptance.get("verdict") == "accepted", f"{report_path} is not an accepted A3 verdict")
+    require(acceptance.get("tested_src_tree_sha256") == src_sha,
+            f"A3 accepted source tree {acceptance.get('tested_src_tree_sha256')}, not the bundled {src_sha}")
+    return {"path": str(Path(report_path).resolve()), "sha256": sha256_file(Path(report_path)),
+            "tested_src_tree_sha256": acceptance["tested_src_tree_sha256"]}
+
+
+def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS, a3_acceptance: Path | None = None) -> dict:
     tracked = [n for n in _git("ls-files", "-z").split("\0") if n]
     names = sorted(n for n in tracked if allowed(n))
     for required in (*RUNTIME_FILES, *SPEC_FILES):
@@ -93,6 +109,8 @@ def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS) -> dict:
     head = _git("rev-parse", "HEAD").strip()
     files = {n: subprocess.run(["git", "show", f"{head}:{n}"], cwd=ROOT, check=True, capture_output=True).stdout
              for n in names}
+    require(a3_acceptance is not None, "build needs --a3-acceptance (the accepted A3 report for this source)")
+    a3 = require_a3_acceptance(a3_acceptance, tree_sha256(files))  # refused before anything is written
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=False)
     code = out_dir / "v3_code.tar.gz"
@@ -130,6 +148,7 @@ def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS) -> dict:
                 "folds": {"path": fold_archive.name, "sha256": sha256_file(fold_archive), "fold_set": Path(folds).name,
                           "fold_membership_sha256": sha256_bytes(fold_files["fold_membership.csv"])},
                 "source_tree_sha256": src_sha, "runner_sha256": runner_sha256(files), "spec_sha256": spec_sha,
+                "a3_acceptance": a3,
                 "held_out_check": f"no member path has a component in {sorted(FORBIDDEN_PARTS)}"}
     (out_dir / "v3_bundle_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return manifest
@@ -185,12 +204,14 @@ def main(argv=None) -> int:
     b = sub.add_parser("build")
     b.add_argument("--out-dir", type=Path, required=True)
     b.add_argument("--folds", type=Path, default=DEFAULT_FOLDS)
+    b.add_argument("--a3-acceptance", type=Path, required=True,
+                   help="a3_report.json (or a3_acceptance.json) whose verdict accepted this source tree")
     a = sub.add_parser("apply")
     a.add_argument("--bundle-dir", type=Path, required=True)
     a.add_argument("--code-dest", type=Path, required=True)
     a.add_argument("--folds-parent", type=Path, required=True)
     args = parser.parse_args(argv)
-    result = (build(args.out_dir, folds=args.folds) if args.cmd == "build"
+    result = (build(args.out_dir, folds=args.folds, a3_acceptance=args.a3_acceptance) if args.cmd == "build"
               else apply(args.bundle_dir, code_dest=args.code_dest, folds_parent=args.folds_parent))
     print(json.dumps({k: v for k, v in result.items() if k != "code"}, indent=2, sort_keys=True, default=str))
     return 0
