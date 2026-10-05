@@ -113,7 +113,26 @@ def campaign(tmp_path, monkeypatch):
     write_fold_set(v2_paths, fold_dir)
     paths = v3.V3Paths(tmp_path / "v3")
     v3.prepare_campaign(paths.root, v2_root=v2_paths.root, fold_dir=fold_dir)
+    freeze_test_spec(paths, monkeypatch, tmp_path)
     return train, esm_dir, paths, fold_dir, v2_paths
+
+
+def freeze_test_spec(paths, monkeypatch, tmp_path, **identity_overrides):
+    """A frozen A4 specification that describes this synthetic campaign (pinned by monkeypatch)."""
+    import pmm_v3_assessment as assess
+
+    manifest = json.loads(paths.manifest.read_text())
+    identities = {"campaign_id": manifest["campaign_id"], "fold_set_id": manifest["fold_set"]["id"],
+                  "fold_membership_sha256": manifest["fold_set"]["fold_membership_sha256"],
+                  "fold_builder": manifest["fold_set"]["builder_version"],
+                  "cohort_sha256": manifest["cohort"]["sha256"], "cohort_rows": manifest["cohort"]["n_rows"],
+                  "baseline_profile_sha256": manifest["profile_sha256"],
+                  "baseline_recipe": manifest["recipes"]["baseline"], **identity_overrides}
+    spec_path = tmp_path / "assessment_spec.json"
+    spec_path.write_text(json.dumps({**assess.SPEC_DEFAULTS, "identities": identities}, sort_keys=True))
+    monkeypatch.setattr(assess, "SPEC_PATH", spec_path)
+    monkeypatch.setattr(assess, "FROZEN_SPEC_SHA256", sha256_file(spec_path))
+    return spec_path
 
 
 def test_prepare_freezes_inputs_and_never_reprepares(campaign):
@@ -241,31 +260,136 @@ def test_regression_run_replays_and_applies_the_predeclared_gate(campaign, tmp_p
                           load_workers=1, epochs=2)
 
 
+def dead_worker():
+    """A process identity of a worker that has exited."""
+    import subprocess as sp
+
+    from benchmarking.pmm_execution import _process_identity
+
+    child = sp.Popen([sys.executable, "-c", "import time; time.sleep(0.2)"])
+    identity = _process_identity(child.pid)
+    child.wait()
+    return identity
+
+
+def fake_attempt(paths, name, status, *, lane=1, worker=None, identity=None):
+    root = paths.lane(lane)
+    (root / "runs" / name).mkdir(parents=True)
+    (root / "runs" / name / "epoch_metrics.csv").write_text("epoch\n1\n")
+    (root / "runs" / f"{name}.log").write_text("crashed\n")
+    if status is not None:
+        (root / f"run_status_{name}.json").write_text(json.dumps({"run_name": name, "status": status}))
+    paths.claims.mkdir(parents=True, exist_ok=True)
+    (paths.claims / f"{name}.json").write_text(json.dumps({
+        "run_name": name, "lane": lane, "worker": worker or dead_worker(), "identity": identity or {"id": 1}}))
+
+
 def test_failed_unit_is_archived_once_and_completed_units_never_rerun(campaign):
     _, _, paths, _, _ = campaign
     name = v3.Unit("only_gvp", "four_class", "baseline", 3, 42).name
-
-    def fake_attempt(status):
-        lane = paths.lane(1)
-        (lane / "runs" / name).mkdir(parents=True)
-        (lane / "runs" / name / "epoch_metrics.csv").write_text("epoch\n1\n")
-        (lane / "runs" / f"{name}.log").write_text("crashed\n")
-        if status is not None:
-            (lane / f"run_status_{name}.json").write_text(json.dumps({"run_name": name, "status": status}))
-
-    fake_attempt(None)  # interrupted: artifacts but no status record
+    fake_attempt(paths, name, None)  # interrupted: artifacts but no status record
     target = v3.archive_failed_attempt(paths, name)
-    assert not v3.unit_artifacts(paths, name) and (target / "lane1" / "runs" / name / "epoch_metrics.csv").is_file()
-    assert json.loads((target / "archive_receipt.json").read_text())["status_meaning"].startswith("interrupted")
-    fake_attempt("failed")  # the single rerun fails as well
+    assert not v3.unit_artifacts(paths, name)
+    assert (target / "lanes" / "lane1" / "runs" / name / "epoch_metrics.csv").is_file()
+    assert (target / "claims" / f"{name}.json").is_file()
+    receipt = json.loads((target / "archive_receipt.json").read_text())
+    assert receipt["status_meaning"].startswith("interrupted") and receipt["identity"] == {"id": 1}
+    assert receipt["worker_stopped"]["lane_lock_free"]
+    fake_attempt(paths, name, "failed")  # the single rerun fails as well
     with pytest.raises(ValueError, match="already rerun"):
         v3.archive_failed_attempt(paths, name)
     other = v3.Unit("only_gvp", "four_class", "baseline", 4, 42).name
-    lane = paths.lane(0)
-    (lane / "runs" / other).mkdir(parents=True)
-    (lane / f"run_status_{other}.json").write_text(json.dumps({"run_name": other, "status": "completed"}))
+    fake_attempt(paths, other, "completed", lane=0)
     with pytest.raises(ValueError, match="never rerun"):
         v3.archive_failed_attempt(paths, other)
+
+
+def test_archiving_needs_a_stopped_worker_not_just_a_missing_status(campaign):
+    import fcntl
+    import os
+
+    from benchmarking.pmm_execution import _process_identity
+
+    _, _, paths, _, _ = campaign
+    name = v3.Unit("only_gvp", "four_class", "baseline", 2, 42).name
+    fake_attempt(paths, name, None, worker=_process_identity(os.getpid()))  # this process is alive
+    with pytest.raises(ValueError, match="still running"):
+        v3.archive_failed_attempt(paths, name)
+    (paths.claims / f"{name}.json").write_text(json.dumps({"run_name": name, "lane": 1, "worker": dead_worker(),
+                                                           "identity": {"id": 1}}))
+    with (paths.lane(1) / "execution.lock").open("a+") as held:  # a worker still owns the lane
+        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(ValueError, match="still owned"):
+            v3.archive_failed_attempt(paths, name)
+        fcntl.flock(held, fcntl.LOCK_UN)
+    (paths.claims / f"{name}.json").unlink()  # no claim: the worker cannot be shown to have stopped
+    with pytest.raises(ValueError, match="no claim"):
+        v3.archive_failed_attempt(paths, name)
+
+
+def test_claims_are_atomic_across_lanes(campaign, tmp_path):
+    train, esm_dir, paths, _, _ = campaign
+    unit = v3.Unit("only_gvp", "four_class", "baseline", 3, 43)
+    first = v3.claim_run(paths, unit.name, lane=0, identity={"a": 1}, session_id="s")
+    with pytest.raises(ValueError, match="already claimed"):
+        v3.claim_run(paths, unit.name, lane=2, identity={"a": 1}, session_id="s")
+    assert json.loads(first.read_text())["lane"] == 0
+    settle(paths)
+    with pytest.raises(ValueError, match="artifacts exist"):
+        v3.run_unit(paths, unit, lane=1, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
+                    device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)
+
+
+def test_admission_refusal_releases_the_claim(campaign, tmp_path):
+    train, esm_dir, paths, _, _ = campaign
+    settle(paths)
+    unit = v3.Unit("only_gvp", "four_class", "baseline", 3, 42)
+    tight = {**policy(tmp_path), "deadline_unix": time.time() + 60}  # less than 1.25 x 60 s + 900 s
+    from benchmarking.pmm_execution import ExecutionBlocked
+
+    with pytest.raises(ExecutionBlocked):
+        v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
+                    device="cpu", execution_policy=tight, load_workers=1, epochs=2)
+    assert not v3.unit_artifacts(paths, unit.name)
+
+
+def test_a_rerun_must_match_the_archived_identity(campaign, tmp_path):
+    train, esm_dir, paths, _, _ = campaign
+    settle(paths)
+    unit = v3.Unit("only_esm", "four_class", "baseline", 2, 42)
+    _, _, identity = v3.build_command(paths, unit, python_bin=sys.executable, train_dir=train, esm_dir=esm_dir,
+                                      device="cpu", lane=0, epochs=2)
+    fake_attempt(paths, unit.name, "failed", identity={**identity, "epochs": 50})
+    v3.archive_failed_attempt(paths, unit.name)
+    with pytest.raises(ValueError, match="differs from the archived attempt"):
+        v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
+                    device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)
+    assert not v3.unit_artifacts(paths, unit.name)  # refused before claiming
+
+
+def test_runs_refuse_changed_runner_recipes_or_a_foreign_spec(campaign, tmp_path, monkeypatch):
+    train, esm_dir, paths, _, _ = campaign
+    settle(paths)
+    unit = v3.Unit("only_gvp", "four_class", "baseline", 1, 42)
+    common = dict(lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
+                  execution_policy=policy(tmp_path), load_workers=1, epochs=2)
+    with monkeypatch.context() as patch:
+        patch.setattr(v3, "runner_sha256", lambda: {"pmm_v3_campaign.py": "0" * 64})
+        with pytest.raises(ValueError, match="changed since preparation"):
+            v3.run_unit(paths, unit, **common)
+    with monkeypatch.context() as patch:
+        patch.setitem(v3.RECIPES, "meanagg", {"families": v3.GVP_FAMILIES, "flags": ["--gvp-residual-dropout", "0.2"]})
+        with pytest.raises(ValueError, match="Recipe definitions changed"):
+            v3.run_unit(paths, unit, **common)
+    freeze_test_spec(paths, monkeypatch, tmp_path, fold_set_id="v3-other")
+    with pytest.raises(ValueError, match="another campaign: \\['fold_set_id'\\]"):
+        v3.run_unit(paths, unit, **common)
+    import pmm_v3_assessment as assess
+
+    monkeypatch.setattr(assess, "FROZEN_SPEC_SHA256", None)
+    with pytest.raises(ValueError, match="not frozen"):
+        v3.run_unit(paths, unit, **common)
+    assert not v3.unit_artifacts(paths, unit.name)
 
 
 def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_path):

@@ -80,8 +80,13 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def load_spec(path: Path = SPEC_PATH, *, expected_sha256: str | None = FROZEN_SPEC_SHA256) -> dict[str, Any]:
+_PINNED = object()
+
+
+def load_spec(path: Path | None = None, *, expected_sha256: Any = _PINNED) -> dict[str, Any]:
     """The frozen A4 specification; refused until its SHA-256 is pinned in this file."""
+    path = SPEC_PATH if path is None else path
+    expected_sha256 = FROZEN_SPEC_SHA256 if expected_sha256 is _PINNED else expected_sha256
     require(expected_sha256 is not None, "The A4 assessment specification is not frozen yet")
     require(sha256(path) == expected_sha256, "Assessment specification differs from the frozen SHA-256")
     spec = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -89,6 +94,19 @@ def load_spec(path: Path = SPEC_PATH, *, expected_sha256: str | None = FROZEN_SP
     differing = sorted(key for key in SPEC_DEFAULTS if spec.get(key) != SPEC_DEFAULTS[key])
     require(not differing, f"Assessment specification differs from the tested rules in {differing}")
     return spec
+
+
+def check_spec_against_campaign(spec: dict[str, Any], manifest: dict[str, Any]) -> None:
+    """The specification's cohort, fold and baseline identities must be this campaign's."""
+    identities = spec.get("identities") or {}
+    expected = {"campaign_id": manifest["campaign_id"], "fold_set_id": manifest["fold_set"]["id"],
+                "fold_membership_sha256": manifest["fold_set"]["fold_membership_sha256"],
+                "fold_builder": manifest["fold_set"]["builder_version"],
+                "cohort_sha256": manifest["cohort"]["sha256"], "cohort_rows": manifest["cohort"]["n_rows"],
+                "baseline_profile_sha256": manifest["profile_sha256"],
+                "baseline_recipe": manifest["recipes"]["baseline"]}
+    differing = sorted(key for key, value in expected.items() if identities.get(key) != value)
+    require(not differing, f"Assessment specification describes another campaign: {differing}")
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +158,7 @@ def read_contract(paths: v3.V3Paths) -> tuple[dict[str, Any], dict[str, dict[str
     """Frozen manifest and v3 fold membership, checked against the cohort and class-weight bindings."""
     manifest = json.loads(paths.manifest.read_text(encoding="utf-8"))
     require(manifest.get("campaign_id") == v3.CAMPAIGN_ID, "Not a v3 campaign root")
+    v3.verify_runner_identity(manifest)
     require(sha256(paths.cohort) == manifest["cohort"]["sha256"], "Frozen cohort changed")
     require(sha256(paths.fold_membership) == manifest["fold_set"]["fold_membership_sha256"], "Fold file changed")
     require(sha256(paths.fold_class_weights) == manifest["fold_class_weights_sha256"], "Class weights changed")
@@ -563,10 +582,75 @@ def family_recipe_decision(screens: list[dict[str, Any]], family: str,
         return {"family": family, "decision": "run combination", "recipe": combo,
                 "best_single": best["recipe"], "best_single_mean_delta": best["mean_delta"]}
     require(combo_screen["recipe"] == combo and combo_screen["family"] == family, "Combination screen differs")
-    adopt = combo_screen["passed"] and combo_screen["mean_delta"] > best["mean_delta"]
+    adopt = bool(combo_screen["passed"]) and combo_screen["mean_delta"] > best["mean_delta"]
     return {"family": family, "decision": "combination" if adopt else "single",
             "recipe": combo if adopt else best["recipe"], "combination_mean_delta": combo_screen.get("mean_delta"),
             "best_single": best["recipe"], "best_single_mean_delta": best["mean_delta"]}
+
+
+ROUND_ORDER = ("D-A", "D-B")
+
+
+def step_d_base_units(through: str) -> list[v3.Unit]:
+    """Controls (step C seed 42, Round A seed 43) and every round up to ``through``."""
+    units = [v3.Unit(f, "four_class", "baseline", 0, 42) for f in v3.GVP_FAMILIES]
+    for name in ROUND_ORDER[: ROUND_ORDER.index(through) + 1]:
+        units += v3.step_units(name)
+    return list(dict.fromkeys(units))
+
+
+def step_d_decision(collected: dict[str, Any], spec: dict[str, Any], *, through: str) -> dict[str, Any]:
+    """Plan step D on all completed rounds: rounds run in order and to completion; D ends after a
+    complete round without any pass; passes are pooled across rounds for the combination rule; no
+    decision while a required run is missing; a combination must beat the best single candidate."""
+    require(through in ROUND_ORDER, f"through must be one of {ROUND_ORDER}")
+    out: dict[str, Any] = {"rounds": {}, "families": {}, "final": False}
+    pooled: list[dict[str, Any]] = []
+    for name in ROUND_ORDER[: ROUND_ORDER.index(through) + 1]:
+        screens = screen_round(collected, name, spec)
+        waiting = [s for s in screens if s["status"] == "incomplete"]
+        out["rounds"][name] = {"screens": screens, "complete": not waiting,
+                               "passed": sorted(f"{s['family']}:{s['recipe']}" for s in screens if s["passed"])}
+        if waiting:
+            out["status"] = f"blocked: {name} has runs still missing or awaiting their one rerun"
+            out["missing"] = sorted({m for s in waiting for m in s["missing"]})
+            return out
+        pooled += screens
+        if not any(s["passed"] for s in screens):
+            out["stopped_after"] = name
+            break
+    last_complete = list(out["rounds"])[-1]
+    if "stopped_after" not in out and last_complete != ROUND_ORDER[-1]:
+        out["status"] = f"provisional: run {ROUND_ORDER[ROUND_ORDER.index(last_complete) + 1]} next"
+        out["families"] = {f: family_recipe_decision(pooled, f) for f in v3.GVP_FAMILIES}
+        return out
+    blocked = False
+    for family in v3.GVP_FAMILIES:
+        decision = family_recipe_decision(pooled, family)
+        if decision["decision"] == "run combination":
+            combo = screen_candidate(collected, family, decision["recipe"], spec)
+            if combo["status"] == "incomplete":
+                blocked = True
+                decision["combination_status"] = combo["status"]
+                decision["missing"] = combo["missing"]
+            else:
+                decision = family_recipe_decision(pooled, family, combo)
+        out["families"][family] = decision
+    out["final"] = not blocked
+    out["status"] = ("final" if not blocked else "blocked: a combination run is still missing")
+    if "stopped_after" in out:
+        out["status"] += f" (D stopped after {out['stopped_after']}: no candidate passed)"
+    return out
+
+
+def required_combinations(collected: dict[str, Any], spec: dict[str, Any], *, through: str) -> list[v3.Unit]:
+    """Combination units the plan needs once every round up to ``through`` is complete."""
+    decision = step_d_decision(collected, spec, through=through)
+    units = []
+    for family, item in decision["families"].items():
+        if item.get("decision") == "run combination" and decision["status"].startswith(("final", "blocked: a comb")):
+            units += v3.step_units("D-combo", combo=item["recipe"], family=family)
+    return units
 
 
 # ---------------------------------------------------------------------------
@@ -632,30 +716,26 @@ def write_assessment(paths: v3.V3Paths, kind: str, result: dict[str, Any], colle
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--campaign-dir", type=Path, required=True)
-    parser.add_argument("--step", choices=("C", "D-A", "D-B", "D-combo", "E"), required=True)
-    parser.add_argument("--family", choices=v3.GVP_FAMILIES, help="D-combo: the family")
-    parser.add_argument("--recipe", help="D-combo: combo-a+b")
+    parser.add_argument("--step", choices=("C", "D-A", "D-B", "E"), required=True,
+                        help="D-A / D-B assess every round up to that one, plus any combination runs")
     parser.add_argument("--final-recipe", action="append", default=[], help="E: FAMILY=RECIPE, repeatable")
     args = parser.parse_args(argv)
     spec = load_spec()
     paths = v3.V3Paths(args.campaign_dir)
+    manifest, _ = read_contract(paths)
+    check_spec_against_campaign(spec, manifest)
     if args.step == "C":
         collected = collect(paths, v3.step_units("C"))
         result = assess_step_c(collected, spec)
         regression = v3.completed_units(paths).get(v3.REGRESSION_NAME)
         result["regression_run"] = (None if regression is None else
                                     {"status": regression["status"], "gate": regression.get("gate")})
-    elif args.step in ("D-A", "D-B"):
-        units = v3.step_units("C")[:9] + v3.step_units("D-A")[:2] + v3.step_units(args.step)
-        collected = collect(paths, list(dict.fromkeys(units)))
-        screens = screen_round(collected, args.step, spec)
-        result = {"step": args.step, "screens": screens,
-                  "families": [family_recipe_decision(screens, family) for family in v3.GVP_FAMILIES]}
-    elif args.step == "D-combo":
-        units = v3.step_units("C")[:9] + v3.step_units("D-A")[:2] + v3.step_units(
-            "D-combo", combo=args.recipe, family=args.family)
-        collected = collect(paths, list(dict.fromkeys(units)))
-        result = {"step": "D-combo", "screen": screen_candidate(collected, args.family, args.recipe, spec)}
+    elif args.step in ROUND_ORDER:
+        collected = collect(paths, step_d_base_units(args.step))
+        combos = required_combinations(collected, spec, through=args.step)
+        if combos:
+            collected.update(collect(paths, combos))
+        result = {"step": args.step, **step_d_decision(collected, spec, through=args.step)}
     else:
         finals = dict(item.split("=", 1) for item in args.final_recipe)
         units = v3.step_units("C")[:9] + v3.step_units("E-neutral")
