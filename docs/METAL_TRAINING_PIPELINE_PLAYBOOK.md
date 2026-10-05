@@ -98,6 +98,19 @@ $PY run_pmm_v3_campaign.py --action status --campaign-dir $V3
 $PY pmm_v3_assessment.py --campaign-dir $V3 --step C
 ```
 
+Step B order (all probes on `gvp_late_fusion__four_class__baseline__fold0__seed42`,
+short probes with the same `--epochs`; tags as in `pmm_v3_speed_report.py`):
+start the host sampler (`pmm_v3_speed_report.py --campaign-dir $V3 --sample-host
+$V3/step_b/host.jsonl --seconds 7200 &`); run `w1-fp32-r1` then `w1-fp32-r2`
+in lane 0; start `w2-fp32-a`/`-b` together in lanes 0–1, then `w3-fp32-a`/`-b`/`-c`
+in lanes 0–2; run `w1-amp-r1`; run the report
+(`pmm_v3_speed_report.py --campaign-dir $V3 --host-samples $V3/step_b/host.jsonl`).
+Run `full-fp32` (50 epochs), and `full-amp` only if the AMP speed gate passed (both
+may share lanes if concurrency was adopted). Rerun the report; it prints the exact
+`set-execution` command, including `--reuse` of the full run matching the chosen
+AMP setting. Concurrency needs measured host samples without memory or CPU
+pressure; without samples it is not adopted.
+
 Failures: a failed or interrupted unit is rerun once, unchanged, after
 `--action archive-failed --unit NAME` moves its first attempt to
 `failed_attempts/`; a completed unit is never rerun. A second failure: step D
