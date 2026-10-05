@@ -180,15 +180,24 @@ def policy(tmp_path):
 
 def test_one_unit_runs_replays_persists_and_is_never_retried(campaign, tmp_path):
     train, esm_dir, paths, _, _ = campaign
-    unit = v3.Unit("only_esm", "four_class", "baseline", 1, 42)
+    unit = v3.Unit("only_esm", "six_class", "baseline", 1, 42)
     result = v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
                          device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)
     assert result["status"] == "completed", result
     assert result["selected_epoch"] == 2 and result["selected_checkpoint"] == "terminal_model_checkpoint.pt"
     run_dir = paths.lane(0) / "runs" / unit.name
+    # The trainer applies the v3 fold weights: Fe, Co and Ni each carry the Class VIII weight.
+    w = json.loads(paths.fold_class_weights.read_text())["folds"]["1"]["common_four_weights"]
+    applied = json.loads((run_dir / "run_metadata.json").read_text())["metal_class_weights"]
+    assert applied == pytest.approx({"Mn": w["Mn"], "Cu": w["Cu"], "Zn": w["Zn"], "Fe": w["Class VIII"],
+                                     "Co": w["Class VIII"], "Ni": w["Class VIII"]})
     assert (run_dir / "independent_validation_replay" / "replay_receipt.json").is_file()
     assert (tmp_path / "durable" / "lane0" / "runs" / unit.name / "terminal_model_checkpoint.pt").is_file()
     assert v3.completed_units(paths)[unit.name]["status"] == "completed"
+    from training.campaign_runtime import replay_epoch_checkpoint
+
+    last = replay_epoch_checkpoint(run_dir, "last_model_checkpoint.pt", output_dir=tmp_path / "last_replay")
+    assert last["selected_epoch"] == 2 and last["reconciliation_status"] == "match"
     with pytest.raises(ValueError, match="never retried"):
         v3.run_unit(paths, unit, lane=1, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
                     device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)

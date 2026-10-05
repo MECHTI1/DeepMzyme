@@ -93,6 +93,11 @@ def test_load_spec_is_refused_until_frozen(tmp_path):
         assess.load_spec(path, expected_sha256=None)
     with pytest.raises(ValueError, match="differs"):
         assess.load_spec(path, expected_sha256="0" * 64)
+    path.write_text(json.dumps({**SPEC, "tie_band": 0.005}))
+    with pytest.raises(ValueError, match="tested rules in \\['tie_band'\\]"):
+        assess.load_spec(path, expected_sha256=assess.sha256(path))
+    path.write_text(json.dumps({**SPEC, "identities": {"fold_set_id": "x"}}))
+    assert assess.load_spec(path, expected_sha256=assess.sha256(path))["identities"]["fold_set_id"] == "x"
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +289,11 @@ def test_a_real_unit_is_collected_reconciled_and_tampering_is_refused(campaign, 
     collected = assess.collect(paths, [unit, v3.Unit("only_esm", "four_class", "baseline", 1, 42)], epochs=2)
     record = collected[unit.name]
     assert record["status"] == "completed" and record["selected_epoch"] == 2
+    # Five-class: native Fe and Class VIII (Co+Ni) each carry the common-four Class VIII weight.
+    w = json.loads(paths.fold_class_weights.read_text())["folds"]["1"]["common_four_weights"]
+    applied = json.loads((paths.lane(0) / "runs" / unit.name / "run_metadata.json").read_text())["metal_class_weights"]
+    assert applied == pytest.approx({"Mn": w["Mn"], "Cu": w["Cu"], "Zn": w["Zn"], "Fe": w["Class VIII"],
+                                     "Class VIII": w["Class VIII"]})
     assert set(record["metrics"]["native"]["recall"]) == {"Mn", "Cu", "Zn", "Fe", "Class VIII"}
     assert collected["only_esm__four_class__baseline__fold1__seed42"]["status"] == "missing"
     with pytest.raises(ValueError, match="identity differs"):
