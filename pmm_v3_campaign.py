@@ -23,6 +23,7 @@ import csv
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -220,6 +221,7 @@ class V3Paths:
     parse_cache = property(lambda self: self.root / "parse_cache")
     graph_cache = property(lambda self: self.root / "raw_graph_cache")
     lanes = property(lambda self: self.root / "lanes")
+    execution_settings = property(lambda self: self.root / "execution_settings.json")
 
     def lane(self, index: int) -> Path:
         require(type(index) is int and 0 <= index < 8, "lane must be 0..7")
@@ -337,9 +339,9 @@ def verify_campaign(paths: V3Paths, *, esm_dir: Path | None) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Path, esm_dir: Path | None,
-                  device: str, lane: int, load_workers: int | None = None,
-                  epochs: int | None = None) -> tuple[list[str], dict[str, str], dict[str, Any]]:
-    """Training argv, environment and run identity for one admitted unit."""
+                  device: str, lane: int, load_workers: int | None = None, epochs: int | None = None,
+                  amp: bool = False, run_name: str | None = None) -> tuple[list[str], dict[str, str], dict[str, Any]]:
+    """Training argv, environment and run identity for one admitted unit (AMP from the step-B setting)."""
     from training.config import config_to_payload, parse_args
 
     manifest = json.loads(paths.manifest.read_text())
@@ -384,7 +386,7 @@ def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Pat
         "--export-validation-predictions",
         "--train-metrics-every-n-epochs", str(PROFILE["train_metrics_every_n_epochs"]),
         "--feature-inventory-sha256", manifest["feature_inventory_identity_sha256"],
-        "--device", device, "--runs-dir", str(runs_dir), "--run-name", unit.name,
+        "--device", device, "--runs-dir", str(runs_dir), "--run-name", run_name or unit.name,
     ]
     if recipe["weight_mode"] == "manual":
         command += ["--metal-class-weight-mode", "manual"]
@@ -402,6 +404,8 @@ def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Pat
     if family["rbf_raw"]:
         command.append("--rbf-use-raw-distances")
     command += list(recipe["flags"])
+    if amp:
+        command.append("--amp")
     if load_workers is not None:
         command += ["--load-workers", str(load_workers)]
     resolved = config_to_payload(parse_args(command[3:]))
@@ -413,7 +417,7 @@ def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Pat
         "feature_inventory_sha256": manifest["feature_inventory_identity_sha256"],
         "source_tree_sha256": manifest["frozen_source_tree_sha256"], "runner_sha256": runner_sha256(),
         "family": unit.family, "target_scheme": unit.target, "recipe": unit.recipe,
-        "recipe_definition": recipe, "fold": unit.fold, "model_seed": unit.seed, "epochs": epochs,
+        "recipe_definition": recipe, "fold": unit.fold, "model_seed": unit.seed, "epochs": epochs, "amp": bool(amp),
         "resolved_config_sha256": stable_hash({k: v for k, v in resolved.items()
                                                if k not in v2.NON_IDENTITY_CONFIG_KEYS}),
     }
@@ -475,31 +479,33 @@ def verify_independent_replay(run_dir: Path, receipt: dict[str, Any]) -> dict[st
 
 
 def execute_unit(paths: V3Paths, lane: int, unit: Unit, command: list[str], env_extra: dict[str, str],
-                 identity: dict[str, Any], *, execution, python_bin: str, device: str) -> dict[str, Any]:
+                 identity: dict[str, Any], *, execution, python_bin: str, device: str,
+                 run_name: str | None = None) -> dict[str, Any]:
     """Train, verify and independently replay one admitted unit inside a lane's execution."""
     from training.config import config_to_payload, parse_args
 
+    name = run_name or unit.name
     lane_root = paths.lane(lane)
     runs_dir, commands_dir = lane_root / "runs", lane_root / "commands"
     runs_dir.mkdir(parents=True, exist_ok=True)
     commands_dir.mkdir(parents=True, exist_ok=True)
     resolved = config_to_payload(parse_args(command[3:]))
-    v2.write_json(commands_dir / f"{unit.name}.json", {
-        "run_name": unit.name, "argv": command, "env": env_extra, "identity": identity,
+    v2.write_json(commands_dir / f"{name}.json", {
+        "run_name": name, "argv": command, "env": env_extra, "identity": identity,
         "resolved_config": resolved, "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")})
     env = {**os.environ, **env_extra}
-    log_path = runs_dir / f"{unit.name}.log"
+    log_path = runs_dir / f"{name}.log"
     started = time.time()
     with log_path.open("w", encoding="utf-8") as log:
         process = execution.run_subprocess(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=ROOT)
     if process.returncode != 0:
-        return {"run_name": unit.name, "status": "failed", "return_code": process.returncode,
+        return {"run_name": name, "status": "failed", "return_code": process.returncode,
                 "elapsed_seconds": time.time() - started}
-    run_dir = runs_dir / unit.name
+    run_dir = runs_dir / name
     try:
         receipt = verify_completed_unit(run_dir, identity, resolve_recipe(unit.recipe))
     except (ValueError, KeyError, OSError) as exc:
-        return {"run_name": unit.name, "status": "failed_verification", "error": str(exc),
+        return {"run_name": name, "status": "failed_verification", "error": str(exc),
                 "elapsed_seconds": time.time() - started}
     replay_command = [python_bin, str(ROOT / "run_pmm_v3_campaign.py"), "--action", "replay",
                       "--run-dir", str(run_dir), "--device", device]
@@ -509,30 +515,59 @@ def execute_unit(paths: V3Paths, lane: int, unit: Unit, command: list[str], env_
         require(replayed.returncode == 0, "Independent replay process failed")
         replay = verify_independent_replay(run_dir, receipt)
     except (ValueError, KeyError, OSError) as exc:
-        return {"run_name": unit.name, "status": "failed_independent_replay", "error": str(exc),
+        return {"run_name": name, "status": "failed_independent_replay", "error": str(exc),
                 "elapsed_seconds": time.time() - started}
-    return {"run_name": unit.name, "status": "completed", "elapsed_seconds": time.time() - started,
+    return {"run_name": name, "status": "completed", "elapsed_seconds": time.time() - started,
             "selected_epoch": receipt["selected_epoch"], "selected_checkpoint": receipt["selected_checkpoint"],
             "selected_checkpoint_sha256": receipt["selected_checkpoint_sha256"],
             "replay_selected_epoch": replay["selected_epoch"]}
 
 
+PROBE_TAG = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+
+
+def run_name_for(unit: Unit, probe: str | None) -> str:
+    """Campaign units keep their unit name; step-B probes live in their own ``probe-<tag>__`` namespace."""
+    if probe is None:
+        return unit.name
+    require(bool(PROBE_TAG.match(probe)), "A probe tag is 1-40 lowercase letters, digits or hyphens")
+    return f"probe-{probe}__{unit.name}"
+
+
+def read_execution_settings(paths: V3Paths) -> dict[str, Any] | None:
+    return json.loads(paths.execution_settings.read_text()) if paths.execution_settings.exists() else None
+
+
+def resolve_amp(paths: V3Paths, *, probe: str | None, amp: bool | None) -> bool:
+    """Probes choose AMP explicitly (step B); every campaign unit follows the recorded step-B setting."""
+    settings = read_execution_settings(paths)
+    if probe is not None:
+        require(settings is None, "Step-B probes run only before the execution setting is recorded")
+        require(amp is not None, "A probe must state AMP on or off")
+        return bool(amp)
+    require(settings is not None, "Record the step-B execution setting (set-execution) before campaign units")
+    require(amp is None or bool(amp) == settings["amp"], "AMP differs from the recorded step-B setting")
+    return bool(settings["amp"])
+
+
 def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir: Path | None, python_bin: str,
              device: str, execution_policy: dict[str, Any], load_workers: int | None = None,
-             epochs: int | None = None) -> dict[str, Any]:
-    """Admit one unit into a lane, run it once, and persist every artifact it produced."""
+             epochs: int | None = None, probe: str | None = None, amp: bool | None = None) -> dict[str, Any]:
+    """Admit one unit (or one step-B probe of it) into a lane, run it once, and persist its artifacts."""
     from benchmarking.pmm_execution import CampaignExecution, ExecutionPolicy
     from training.access_guard import install_forbidden_read_guard
 
     install_forbidden_read_guard(v2.forbidden_read_roots(train_dir))
     require(Path(train_dir).name == "train", "Only the training-side directory named train is allowed")
-    existing = unit_artifacts(paths, unit.name)
+    name = run_name_for(unit, probe)
+    amp = resolve_amp(paths, probe=probe, amp=amp)
+    existing = unit_artifacts(paths, name)
     if existing:
         raise ValueError(f"Unit artifacts exist ({existing[0]}); runs are never retried automatically")
     verify_campaign(paths, esm_dir=esm_dir)
     command, env, identity = build_command(paths, unit, python_bin=python_bin, train_dir=train_dir,
                                            esm_dir=esm_dir, device=device, lane=lane,
-                                           load_workers=load_workers, epochs=epochs)
+                                           load_workers=load_workers, epochs=epochs, amp=amp, run_name=name)
     lane_root = paths.lane(lane)
     policy = ExecutionPolicy(deadline_unix=execution_policy["deadline_unix"],
                              max_total_seconds=execution_policy["max_total_seconds"],
@@ -541,16 +576,45 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
                                   durable_root=Path(execution_policy["durable_root"]) / lane_root.name,
                                   persistence_mode=execution_policy["persistence_mode"])
     with execution:
-        execution.admit(unit.name, float(execution_policy["estimated_fit_seconds"]))
+        execution.admit(name, float(execution_policy["estimated_fit_seconds"]))
         result = execute_unit(paths, lane, unit, command, env, identity, execution=execution,
-                              python_bin=python_bin, device=device)
-        status_path = lane_root / f"run_status_{unit.name}.json"
-        v2.write_json(status_path, {**result, "identity": identity, "lane": lane})
-        execution.record_result(unit.name, result["status"], result["elapsed_seconds"])
-        execution.persist([path for path in (lane_root / "runs" / unit.name, lane_root / "runs" / f"{unit.name}.log",
-                                             lane_root / "commands" / f"{unit.name}.json", status_path)
+                              python_bin=python_bin, device=device, run_name=name)
+        status_path = lane_root / f"run_status_{name}.json"
+        v2.write_json(status_path, {**result, "identity": identity, "lane": lane, "unit": unit.name,
+                                    "probe": probe})
+        execution.record_result(name, result["status"], result["elapsed_seconds"])
+        execution.persist([path for path in (lane_root / "runs" / name, lane_root / "runs" / f"{name}.log",
+                                             lane_root / "commands" / f"{name}.json", status_path)
                            if path.exists()])
     return result
+
+
+def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: str,
+                           reuse: dict[str, str] | None = None, epochs: int | None = None) -> dict[str, Any]:
+    """Record the step-B choice once. ``reuse`` maps a step-C unit to the completed full-length probe
+    that matches the chosen setting (plan: that run becomes the cell's step C baseline)."""
+    require(not paths.execution_settings.exists(), "The step-B execution setting is recorded once")
+    require(type(lanes) is int and 1 <= lanes <= 3, "Concurrent lanes must be 1, 2 or 3")
+    require(bool(str(evidence).strip()), "Name the step-B evidence (report path)")
+    statuses = completed_units(paths)
+    checked = {}
+    for unit_name, run_name in sorted((reuse or {}).items()):
+        unit = Unit.parse(unit_name)
+        require(unit in step_units("C"), f"{unit_name} is not a step C unit")
+        require(run_name.startswith("probe-") and run_name.endswith("__" + unit_name),
+                f"{run_name} is not a probe of {unit_name}")
+        record = statuses.get(run_name)
+        require(record is not None and record["status"] == "completed", f"{run_name} did not complete")
+        expected = build_command(paths, unit, python_bin="python", train_dir=paths.root / "train",
+                                 esm_dir=paths.root / "esm", device="cuda", lane=0, epochs=epochs, amp=amp)[2]
+        differing = sorted(k for k in set(expected) | set(record["identity"])
+                           if k != "runner_sha256" and expected.get(k) != record["identity"].get(k))
+        require(not differing, f"{run_name} does not match {unit_name} under this setting: {differing}")
+        checked[unit_name] = run_name
+    settings = {"amp": bool(amp), "concurrent_lanes": lanes, "evidence": str(evidence), "reuse": checked,
+                "recorded_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+    v2.write_json(paths.execution_settings, settings)
+    return settings
 
 
 MAX_RERUNS = 1  # plan: a failed run is repeated once, unchanged (same seed and identity)

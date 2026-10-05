@@ -209,16 +209,20 @@ def prediction_metrics(rows: list[dict[str, str]], target: str) -> dict[str, Any
 
 
 def expected_identity(paths: v3.V3Paths, unit: v3.Unit, *, epochs: int) -> dict[str, Any]:
-    """The identity the runner assigns to this unit (placement-independent fields only)."""
+    """The identity the runner assigns to this unit under the recorded step-B setting."""
+    settings = v3.read_execution_settings(paths)
     return v3.build_command(paths, unit, python_bin="python", train_dir=paths.root / "train",
-                            esm_dir=paths.root / "esm", device="cuda", lane=0, epochs=epochs)[2]
+                            esm_dir=paths.root / "esm", device="cuda", lane=0, epochs=epochs,
+                            amp=bool(settings and settings["amp"]))[2]
 
 
 def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, Any]],
               membership: dict[str, dict[str, str]], *, epochs: int) -> dict[str, Any]:
     """A verified unit, or a record saying why it does not count."""
-    record = statuses.get(unit.name)
-    reruns = len(v3.archived_attempts(paths, unit.name))
+    settings = v3.read_execution_settings(paths) or {}
+    run_name = settings.get("reuse", {}).get(unit.name, unit.name)  # a step-B run reused as a step-C unit
+    record = statuses.get(run_name)
+    reruns = len(v3.archived_attempts(paths, run_name))
     if record is None or record["status"] != "completed":
         status = "missing" if record is None else record["status"]
         final = status != "missing" and reruns >= v3.MAX_RERUNS
@@ -226,7 +230,7 @@ def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, An
                 "final_failure": final, "note": ("failed after its one rerun" if final else
                                                  "rerun once (archive-failed, then run)" if status != "missing"
                                                  else "not run")}
-    run_dir = Path(record["status_path"]).parent / "runs" / unit.name
+    run_dir = Path(record["status_path"]).parent / "runs" / run_name
     recorded = record["identity"]
     expected = expected_identity(paths, unit, epochs=epochs)
     differing = sorted(k for k in set(expected) | set(recorded)
@@ -245,7 +249,8 @@ def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, An
                 f"{unit.name}: {key} from predictions differs from the receipt")
     with (run_dir / "epoch_metrics.csv").open(encoding="utf-8", newline="") as handle:
         history = [float(row["val_metal_collapsed4_balanced_acc"]) for row in csv.DictReader(handle)]
-    return {"name": unit.name, "status": "completed", "unit": unit, "rows": rows, "metrics": metrics,
+    return {"name": unit.name, "run_name": run_name, "status": "completed", "unit": unit, "rows": rows,
+            "metrics": metrics,
             "selected_epoch": receipt["selected_epoch"], "selected_checkpoint": receipt["selected_checkpoint"],
             "descriptive_best_epoch": receipt.get("descriptive_best_epoch"),
             "terminal_history_common4_ba": history[-1] if history else None,
@@ -365,8 +370,11 @@ def neutral_target_test(collected: dict[str, Any], spec: dict[str, Any]) -> dict
         else:
             top = max(value for value, _ in better)
             tied = sorted(target for value, target in better if top - value <= spec["tie_band"])
-            decisions[family] = {"target": tied[0], "reason": ("interval-supported gain" if len(better) == 1 else
-                                                               "both better; larger mean gain, tie keeps five_class")}
+            decisions[family] = {"target": tied[0], "reason": (
+                "interval-supported gain" if len(better) == 1 else
+                "both better; larger mean gain" if len(tied) == 1 else
+                "both better within the tie band; five_class by selection convention "
+                "(not evidence that five beats six)")}
     complete = all(c["status"] == "complete" for c in contrasts.values())
     across = (all(c["adjusted_claim_supported"] for c in contrasts.values()) if complete else None)
     return {"contrasts": contrasts, "family_target_decisions": decisions,
@@ -398,9 +406,13 @@ def improvement_check(collected: dict[str, Any], final_recipes: dict[str, str], 
             status = "no positive mean gain on folds 1-4" if result["mean_difference"] <= 0 else "blocked by a recall gate"
         out[family] = {"recipe": recipe, "folds_1_4": result, "development_fold0_difference": development,
                        "status": status,
+                       "improvement_claim_supported": status == "improvement interval-supported on folds 1-4",
                        "stage6_matched_pass": status in ("improvement interval-supported on folds 1-4",
                                                          "positive mean gain on folds 1-4, not interval-supported"),
-                       "label": "development-validation evidence, not an unbiased estimate of generalization"}
+                       "stage6_eligibility_note": "a positive mean gain permits Stage 6 consideration only; "
+                                                  "it is not an improvement claim",
+                       "label": "development-validation evidence (fold 0 influenced recipe selection), "
+                                "not an unbiased estimate of generalization"}
     return out
 
 
@@ -440,6 +452,8 @@ def stage6_selection(collected: dict[str, Any], neutral: dict[str, Any], improve
         versus = None if name == control_name else compare(control, cell, spec, challenger_target=target)
         eligible = (name == control_name or (matched and versus["verdict"] == "better"))
         rows.append({"cell": name, "family": family, "target": target, "recipe": recipe,
+                     "label": ("development-validation (fold 0 influenced recipe selection)"
+                               if recipe != "baseline" else "baseline recipe frozen before any GPU run"),
                      "mean_common4_ba": summary["mean_common4_ba"], "mean_min_recall": summary["mean_min_recall"],
                      "worst_fold_common4_ba": summary["worst_fold_common4_ba"],
                      "sd_common4_ba": summary["sd_common4_ba"], "matched_pass": matched,

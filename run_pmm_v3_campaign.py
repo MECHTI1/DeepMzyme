@@ -4,7 +4,10 @@
 Actions:
   prepare  CPU: freeze a new v3 campaign root from the v2 cohort and a frozen fold set.
   plan     CPU, read-only: list a step's units and their training argv.
-  run      Admit and run one unit in one lane (needs explicit allocation fields).
+  run      Admit and run one unit in one lane (needs explicit allocation fields). With --probe TAG
+           it runs a step-B probe of that unit (own namespace; --amp and optional --epochs), allowed
+           only before the execution setting is recorded.
+  set-execution  CPU: record the step-B choice once (--amp, --lanes, --evidence, --reuse UNIT=PROBE_RUN).
   regression  Run the step C regression unit once (new code, v2 recipe, old v2 fold 0).
   replay   Independent validation replay of one completed run directory.
   archive-failed  CPU: move a failed or interrupted unit aside so it can be rerun once.
@@ -29,7 +32,8 @@ RUNTIME_FIELDS = ("session_id", "execution_deadline", "allocation_started", "exe
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--action", choices=("prepare", "plan", "run", "regression", "replay", "status", "archive-failed"),
+    parser.add_argument("--action", choices=("prepare", "plan", "run", "regression", "replay", "status", "archive-failed",
+                                 "set-execution"),
                         required=True)
     parser.add_argument("--campaign-dir", type=Path)
     parser.add_argument("--v2-root", type=Path, help="prepare: frozen v2 context campaign root")
@@ -47,6 +51,12 @@ def parse_args(argv=None):
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--load-workers", type=int)
     parser.add_argument("--run-dir", type=Path, help="replay: completed run directory")
+    parser.add_argument("--probe", help="run: step-B probe tag (lowercase letters, digits, hyphens)")
+    parser.add_argument("--amp", choices=("on", "off"), help="run --probe / set-execution: mixed precision")
+    parser.add_argument("--epochs", type=int, help="run --probe only: shorter probe fits")
+    parser.add_argument("--lanes", type=int, help="set-execution: adopted concurrent lanes (1-3)")
+    parser.add_argument("--evidence", help="set-execution: path of the step-B speed report")
+    parser.add_argument("--reuse", action="append", default=[], help="set-execution: STEP_C_UNIT=PROBE_RUN_NAME")
     parser.add_argument("--session-id")
     for name in ("execution-deadline", "allocation-started", "execution-max-seconds", "estimated-fit-seconds"):
         parser.add_argument("--" + name, type=float)
@@ -72,6 +82,13 @@ def main(argv=None) -> int:
         manifest = v3.prepare_campaign(paths.root, v2_root=args.v2_root, fold_dir=args.fold_dir)
         print(json.dumps({key: manifest[key] for key in ("campaign_id", "fold_set", "frozen_source_tree_sha256",
                                                           "git_commit")}, indent=2, sort_keys=True))
+        return 0
+    if args.action == "set-execution":
+        v3.require(args.amp is not None and args.lanes is not None and args.evidence,
+                   "set-execution needs --amp, --lanes and --evidence")
+        reuse = dict(item.split("=", 1) for item in args.reuse)
+        print(json.dumps(v3.set_execution_settings(paths, amp=args.amp == "on", lanes=args.lanes,
+                                                   evidence=args.evidence, reuse=reuse), indent=2, sort_keys=True))
         return 0
     if args.action == "archive-failed":
         v3.require(args.unit is not None, "archive-failed needs --unit")
@@ -108,9 +125,12 @@ def main(argv=None) -> int:
                                    execution_policy=policy, load_workers=args.load_workers)
     else:
         v3.require(args.unit is not None, "run needs --unit")
+        v3.require(args.probe is not None or (args.epochs is None and args.amp is None),
+                   "--epochs and --amp apply to step-B probes only; units follow the recorded setting")
         result = v3.run_unit(paths, v3.Unit.parse(args.unit), lane=args.lane, train_dir=args.train_dir.resolve(),
                              esm_dir=esm_dir, python_bin=args.python_bin, device=args.device,
-                             load_workers=args.load_workers, execution_policy=policy)
+                             load_workers=args.load_workers, execution_policy=policy, probe=args.probe,
+                             epochs=args.epochs, amp=None if args.amp is None else args.amp == "on")
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["status"] == "completed" else 1
 
