@@ -385,8 +385,10 @@ def replay_campaign_run(run_dir: Path, *, device: str = "cpu", path_map: dict[st
     pockets = [by_example[key] for key in keys]
     for pocket in pockets:
         row = membership[pocket.metadata["source_uid"]]
+        # v3 group folds keep the PDB entry in "pdbid"; v2 fold files use it as the group.
+        cohort_group = row["pdbid"] if "pdbid" in row else row["group_id"]
         if (row["physical_ion_id"] != pocket.metadata["physical_ion_id"]
-                or row["group_id"] != pocket.metadata["cohort_group_id"]
+                or cohort_group != pocket.metadata["cohort_group_id"]
                 or row["native_element"] != pocket.metal_element):
             raise CampaignContractError("Reloaded physical ion identity differs from frozen membership")
     graphs = build_graph_data_list(pockets, **graph_options)
