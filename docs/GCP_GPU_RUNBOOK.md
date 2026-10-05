@@ -52,10 +52,12 @@ then independently confirm the source VM/disk are absent and the snapshot is
 retained. Snapshot storage remains billable and requires billing to stay enabled.
 
 This is different from ordinary stop-only closeout and from stockout recovery.
-The public controller does not yet expose an archive-to-VM restore command;
-prepare and test that route under fresh resume authorization using its existing
-boot-disk creation and automatic-STOP safeguards. A default `vm-create` creates
-a fresh OS rather than restoring the archive. Current snapshot identity,
+To resume from the archive, preview `vm-restore --name SNAPSHOT --dry-run`,
+then run `vm-restore --name SNAPSHOT --authorize 'AUTHORIZE VM START'` only after
+the user types that phrase (billable; the snapshot is kept), followed by
+`vm-setup --stages ssh,smoke` and `vm-pycharm-info --write-ssh-config`. The
+controller README ("Preserve a paused environment") owns its safeguards. A
+default `vm-create` creates a fresh OS rather than restoring the archive. Current snapshot identity,
 verification and cost belong in the campaign receipt and STATUS, not here.
 
 ## Bounded stockout handling

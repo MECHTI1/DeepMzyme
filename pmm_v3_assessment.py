@@ -31,7 +31,6 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-from scipy import stats
 
 ROOT = Path(__file__).resolve().parent
 sys.path[:0] = [str(ROOT), str(ROOT / "src")]
@@ -127,6 +126,8 @@ def _single_method(interval: tuple[float, float]) -> str:
 
 def paired_intervals(differences, spec: dict[str, Any], *, n_contrasts: int = 1) -> dict[str, Any]:
     """Fold bootstrap and t intervals on paired fold differences, unadjusted and Bonferroni-adjusted."""
+    from scipy import stats  # imported here: the runner (GPU host) imports this module without scipy
+
     d = np.asarray(differences, dtype=float)
     require(d.ndim == 1 and len(d) >= 2 and np.all(np.isfinite(d)), "Need two or more finite fold differences")
     require(n_contrasts >= 1, "n_contrasts must be positive")
