@@ -20,11 +20,13 @@ admitted once: an existing artifact for the same unit in any lane refuses the ru
 from __future__ import annotations
 
 import csv
+import fcntl
 import hashlib
 import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -222,6 +224,7 @@ class V3Paths:
     graph_cache = property(lambda self: self.root / "raw_graph_cache")
     lanes = property(lambda self: self.root / "lanes")
     execution_settings = property(lambda self: self.root / "execution_settings.json")
+    claims = property(lambda self: self.root / "claims")
 
     def lane(self, index: int) -> Path:
         require(type(index) is int and 0 <= index < 8, "lane must be 0..7")
@@ -314,10 +317,28 @@ def verify_frozen_esm(paths: V3Paths, esm_dir: Path) -> dict[str, Any]:
     return {"verified": True, "n_files": len(esm["files"]), "esm_dir": str(esm_dir)}
 
 
+def verify_runner_identity(manifest: dict[str, Any]) -> None:
+    """The runner files and every recipe definition must be the ones recorded at preparation."""
+    require(runner_sha256() == manifest["runner_sha256"],
+            "pmm_v3_campaign.py or run_pmm_v3_campaign.py changed since preparation")
+    recipes = {name: resolve_recipe(name) for name in RECIPES}
+    require(stable_hash(recipes) == manifest["recipes_sha256"], "Recipe definitions changed since preparation")
+
+
+def require_frozen_spec(paths: V3Paths) -> dict[str, Any]:
+    """Plan A4: no fit before the assessment specification is frozen and describes this campaign."""
+    import pmm_v3_assessment as assessment  # imported lazily: the assessor imports this module
+
+    spec = assessment.load_spec()
+    assessment.check_spec_against_campaign(spec, json.loads(paths.manifest.read_text()))
+    return spec
+
+
 def verify_campaign(paths: V3Paths, *, esm_dir: Path | None) -> dict[str, Any]:
     """Refuse fitting unless every frozen identity still matches (run-time guard)."""
     manifest = json.loads(paths.manifest.read_text())
     require(manifest.get("campaign_id") == CAMPAIGN_ID, "Not a v3 campaign root")
+    verify_runner_identity(manifest)
     for name, digest in manifest["frozen_inputs_sha256"].items():
         require(file_sha(paths.frozen / name) == digest, f"Frozen input changed: {name}")
     require(sha256_file(paths.cohort) == manifest["cohort"]["sha256"], "Cohort changed")
@@ -434,7 +455,7 @@ def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Pat
 # ---------------------------------------------------------------------------
 
 def unit_artifacts(paths: V3Paths, name: str) -> list[Path]:
-    found = []
+    found = [paths.claims / f"{name}.json"] if (paths.claims / f"{name}.json").exists() else []
     if paths.lanes.is_dir():
         for lane in sorted(paths.lanes.iterdir()):
             for path in (lane / "runs" / name, lane / "runs" / f"{name}.log", lane / "commands" / f"{name}.json",
@@ -565,9 +586,11 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
     if existing:
         raise ValueError(f"Unit artifacts exist ({existing[0]}); runs are never retried automatically")
     verify_campaign(paths, esm_dir=esm_dir)
+    require_frozen_spec(paths)
     command, env, identity = build_command(paths, unit, python_bin=python_bin, train_dir=train_dir,
                                            esm_dir=esm_dir, device=device, lane=lane,
                                            load_workers=load_workers, epochs=epochs, amp=amp, run_name=name)
+    require_retry_identity(paths, name, identity)
     lane_root = paths.lane(lane)
     policy = ExecutionPolicy(deadline_unix=execution_policy["deadline_unix"],
                              max_total_seconds=execution_policy["max_total_seconds"],
@@ -575,17 +598,33 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
     execution = CampaignExecution(lane_root, policy=policy, session_id=execution_policy["session_id"],
                                   durable_root=Path(execution_policy["durable_root"]) / lane_root.name,
                                   persistence_mode=execution_policy["persistence_mode"])
-    with execution:
-        execution.admit(name, float(execution_policy["estimated_fit_seconds"]))
-        result = execute_unit(paths, lane, unit, command, env, identity, execution=execution,
-                              python_bin=python_bin, device=device, run_name=name)
-        status_path = lane_root / f"run_status_{name}.json"
-        v2.write_json(status_path, {**result, "identity": identity, "lane": lane, "unit": unit.name,
-                                    "probe": probe})
-        execution.record_result(name, result["status"], result["elapsed_seconds"])
-        execution.persist([path for path in (lane_root / "runs" / name, lane_root / "runs" / f"{name}.log",
-                                             lane_root / "commands" / f"{name}.json", status_path)
-                           if path.exists()])
+    claim = claim_run(paths, name, lane=lane, identity=identity, session_id=execution_policy["session_id"])
+    admitted = False
+    try:
+        with execution:
+            execution.admit(name, float(execution_policy["estimated_fit_seconds"]))
+            admitted = True
+            result = _run_admitted(paths, lane, unit, name, probe, command, env, identity, execution,
+                                   python_bin=python_bin, device=device)
+    finally:
+        if not admitted:  # nothing ran: the lane or the admission refused, so the name is released
+            claim.unlink(missing_ok=True)
+    return result
+
+
+def _run_admitted(paths: V3Paths, lane: int, unit: Unit, name: str, probe: str | None, command: list[str],
+                  env: dict[str, str], identity: dict[str, Any], execution, *, python_bin: str,
+                  device: str) -> dict[str, Any]:
+    """Run, record and persist one admitted unit inside its lane's execution."""
+    lane_root = paths.lane(lane)
+    result = execute_unit(paths, lane, unit, command, env, identity, execution=execution,
+                          python_bin=python_bin, device=device, run_name=name)
+    status_path = lane_root / f"run_status_{name}.json"
+    v2.write_json(status_path, {**result, "identity": identity, "lane": lane, "unit": unit.name, "probe": probe})
+    execution.record_result(name, result["status"], result["elapsed_seconds"])
+    execution.persist([path for path in (lane_root / "runs" / name, lane_root / "runs" / f"{name}.log",
+                                         lane_root / "commands" / f"{name}.json", status_path)
+                       if path.exists()])
     return result
 
 
@@ -620,6 +659,67 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
 MAX_RERUNS = 1  # plan: a failed run is repeated once, unchanged (same seed and identity)
 
 
+def claim_run(paths: V3Paths, name: str, *, lane: int, identity: dict[str, Any], session_id: str) -> Path:
+    """Atomically claim a run name for every lane (O_CREAT | O_EXCL); a claim is only ever archived."""
+    from benchmarking.pmm_execution import _process_identity
+
+    paths.claims.mkdir(parents=True, exist_ok=True)
+    path = paths.claims / f"{name}.json"
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError:
+        raise ValueError(f"{name} is already claimed ({path}); a run name is launched once across lanes") from None
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump({"run_name": name, "lane": lane, "session_id": session_id, "identity": identity,
+                   "worker": _process_identity(os.getpid()),
+                   "claimed_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}, handle, indent=2, sort_keys=True)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return path
+
+
+def _process_alive(identity: dict[str, Any] | None) -> bool:
+    from benchmarking.pmm_execution import _process_identity
+
+    if not identity:
+        return False
+    try:
+        return _process_identity(int(identity["pid"])) == identity
+    except (FileNotFoundError, ProcessLookupError, ValueError, KeyError):
+        return False
+
+
+def verify_worker_stopped(paths: V3Paths, claim: dict[str, Any]) -> dict[str, Any]:
+    """A missing terminal status is not enough: the claiming worker, its training child and the lane
+    lock must all be gone (checked on the host that ran the unit)."""
+    worker = claim.get("worker") or {}
+    require(worker.get("hostname") == socket.gethostname(),
+            "Archive on the host that ran the unit; its worker cannot be checked from here")
+    require(not _process_alive(worker), f"Worker PID {worker.get('pid')} is still running")
+    lane_root = paths.lane(int(claim["lane"]))
+    state_path = lane_root / "execution_state.json"
+    child = json.loads(state_path.read_text()).get("active_child") if state_path.exists() else None
+    require(not _process_alive(child), f"Training child PID {child and child.get('pid')} is still running")
+    lock_path = lane_root / "execution.lock"
+    if lock_path.exists():
+        with lock_path.open("a+") as handle:
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise ValueError(f"Lane {claim['lane']} is still owned by a running worker") from None
+            fcntl.flock(handle, fcntl.LOCK_UN)
+    return {"worker_alive": False, "training_child_alive": False, "lane_lock_free": True,
+            "checked_on": socket.gethostname(), "checked_at": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+
+
+def require_retry_identity(paths: V3Paths, name: str, identity: dict[str, Any]) -> None:
+    """A rerun after an archived attempt must be unchanged: the same identity, seed included."""
+    attempts = archived_attempts(paths, name)
+    if attempts:
+        archived = json.loads((attempts[-1] / "archive_receipt.json").read_text()).get("identity")
+        require(archived == identity, f"{name}: the rerun identity differs from the archived attempt")
+
+
 def archived_attempts(paths: V3Paths, name: str) -> list[Path]:
     root = paths.root / "failed_attempts" / name
     return sorted(root.glob("attempt*")) if root.is_dir() else []
@@ -631,18 +731,25 @@ def archive_failed_attempt(paths: V3Paths, name: str) -> Path:
     require(record is None or record["status"] != "completed", f"{name} completed; a completed unit is never rerun")
     previous = archived_attempts(paths, name)
     require(len(previous) < MAX_RERUNS, f"{name} was already rerun {len(previous)} time(s); no further reruns")
+    claim_path = paths.claims / f"{name}.json"
+    require(claim_path.is_file(), f"{name} has no claim, so its worker cannot be shown to have stopped")
+    try:
+        claim = json.loads(claim_path.read_text())
+    except json.JSONDecodeError:
+        raise ValueError(f"{claim_path} is unreadable; inspect the lane before archiving") from None
+    stopped = verify_worker_stopped(paths, claim)
     existing = unit_artifacts(paths, name)
-    require(bool(existing), f"{name} has no artifacts to archive")
     target = paths.root / "failed_attempts" / name / f"attempt{len(previous) + 1}"
     moved = []
     for path in existing:
-        destination = target / path.relative_to(paths.lanes)
+        destination = target / path.relative_to(paths.root)
         destination.parent.mkdir(parents=True, exist_ok=True)
         path.rename(destination)
         moved.append(str(destination.relative_to(paths.root)))
     v2.write_json(target / "archive_receipt.json", {
         "run_name": name, "status": None if record is None else record["status"],
         "status_meaning": "interrupted (no status record)" if record is None else "terminal failure",
+        "identity": claim["identity"], "worker_stopped": stopped,
         "moved": moved, "archived_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "rerun_rule": "same seed and identity; at most one rerun"})
     return target
@@ -717,9 +824,13 @@ def run_regression(paths: V3Paths, *, v2_root: Path, lane: int, train_dir: Path,
     if existing:
         raise ValueError(f"Regression artifacts exist ({existing[0]}); it is never repeated automatically")
     verify_campaign(paths, esm_dir=esm_dir)
+    require_frozen_spec(paths)
     command, env_extra, identity = build_regression_command(
         paths, v2_root=v2_root, python_bin=python_bin, train_dir=train_dir, esm_dir=esm_dir, device=device,
         lane=lane, load_workers=load_workers, epochs=epochs)
+    identity = json.loads(json.dumps(identity, sort_keys=True))
+    require_retry_identity(paths, REGRESSION_NAME, identity)
+    claim = claim_run(paths, REGRESSION_NAME, lane=lane, identity=identity, session_id=execution_policy["session_id"])
     lane_root = paths.lane(lane)
     (lane_root / "runs").mkdir(parents=True, exist_ok=True)
     (lane_root / "commands").mkdir(parents=True, exist_ok=True)
@@ -734,29 +845,36 @@ def run_regression(paths: V3Paths, *, v2_root: Path, lane: int, train_dir: Path,
     run_dir = lane_root / "runs" / REGRESSION_NAME
     log_path = lane_root / "runs" / f"{REGRESSION_NAME}.log"
     env = {**os.environ, **env_extra}
-    with execution:
-        execution.admit(REGRESSION_NAME, float(execution_policy["estimated_fit_seconds"]))
-        started = time.time()
-        with log_path.open("w", encoding="utf-8") as log:
-            trained = execution.run_subprocess(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=ROOT)
-        result: dict[str, Any] = {"run_name": REGRESSION_NAME}
-        if trained.returncode != 0:
-            result.update(status="failed", return_code=trained.returncode)
-        else:
-            replay_command = [python_bin, str(ROOT / "run_pmm_v3_campaign.py"), "--action", "replay",
-                              "--run-dir", str(run_dir), "--device", device]
-            with log_path.open("a", encoding="utf-8") as log:
-                replayed = execution.run_subprocess(replay_command, stdout=log, stderr=subprocess.STDOUT,
-                                                    env=env, cwd=ROOT)
-            if replayed.returncode != 0:
-                result.update(status="failed_independent_replay")
+    admitted = False
+    try:
+        with execution:
+            execution.admit(REGRESSION_NAME, float(execution_policy["estimated_fit_seconds"]))
+            admitted = True
+            started = time.time()
+            with log_path.open("w", encoding="utf-8") as log:
+                trained = execution.run_subprocess(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=ROOT)
+            result: dict[str, Any] = {"run_name": REGRESSION_NAME}
+            if trained.returncode != 0:
+                result.update(status="failed", return_code=trained.returncode)
             else:
-                gate = regression_gate(run_dir, epochs=int(epochs if epochs is not None else PROFILE["epochs"]))
-                result.update(status="completed" if gate["passed"] else "failed_regression_gate", gate=gate)
-        result["elapsed_seconds"] = time.time() - started
-        status_path = lane_root / f"run_status_{REGRESSION_NAME}.json"
-        v2.write_json(status_path, {**result, "identity": identity, "lane": lane})
-        execution.record_result(REGRESSION_NAME, result["status"], result["elapsed_seconds"])
-        execution.persist([path for path in (run_dir, log_path, lane_root / "commands" / f"{REGRESSION_NAME}.json",
-                                             status_path) if path.exists()])
+                replay_command = [python_bin, str(ROOT / "run_pmm_v3_campaign.py"), "--action", "replay",
+                                  "--run-dir", str(run_dir), "--device", device]
+                with log_path.open("a", encoding="utf-8") as log:
+                    replayed = execution.run_subprocess(replay_command, stdout=log, stderr=subprocess.STDOUT,
+                                                        env=env, cwd=ROOT)
+                if replayed.returncode != 0:
+                    result.update(status="failed_independent_replay")
+                else:
+                    gate = regression_gate(run_dir, epochs=int(epochs if epochs is not None else PROFILE["epochs"]))
+                    result.update(status="completed" if gate["passed"] else "failed_regression_gate", gate=gate)
+            result["elapsed_seconds"] = time.time() - started
+            status_path = lane_root / f"run_status_{REGRESSION_NAME}.json"
+            v2.write_json(status_path, {**result, "identity": identity, "lane": lane})
+            execution.record_result(REGRESSION_NAME, result["status"], result["elapsed_seconds"])
+            execution.persist([path for path in (run_dir, log_path, lane_root / "commands" / f"{REGRESSION_NAME}.json",
+                                                 status_path) if path.exists()])
+    finally:
+        if not admitted:  # nothing ran: the lane or the admission refused, so the name is released
+            claim.unlink(missing_ok=True)
+            (lane_root / "commands" / f"{REGRESSION_NAME}.json").unlink(missing_ok=True)
     return result

@@ -54,8 +54,16 @@ Order (each step refuses to run out of order):
 3. **Steps C–E units**, one per lane (`--lane 0..2`, at most the recorded number
    of concurrent lanes), each verified, independently replayed and persisted;
    the step C regression run uses `--action regression`.
-4. **Assess** with `pmm_v3_assessment.py --step C|D-A|D-B|D-combo|E`; it refuses
-   to run until the A4 specification hash is pinned in the file.
+4. **Assess** with `pmm_v3_assessment.py --step C|D-A|D-B|E`; `D-B` pools the
+   passes of every completed round and resolves combination runs. It refuses
+   to run until the A4 specification hash is pinned and matches the campaign.
+
+Every run (probe, unit or regression) also refuses until the A4 specification
+is frozen and describes this campaign, and refuses changed runner files or
+recipe definitions. A run name is claimed atomically for all lanes
+(`claims/`); `archive-failed` first checks on the same host that the claiming
+worker, its training child and the lane lock are gone, and a rerun must match
+the archived identity.
 
 ```bash
 PY=/home/mechti/venvs/deepmzyme/bin/python

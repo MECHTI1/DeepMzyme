@@ -278,6 +278,55 @@ def test_combination_rule_per_family():
     assert smaller["decision"] == "single" and smaller["recipe"] == "esmdrop02"
 
 
+def d_grid(deltas, *, rounds=("D-A", "D-B"), skip=()):
+    """Fold-0 screen data: controls at 0.80; each candidate at 0.80 + delta for both seeds."""
+    collected = {}
+    for family in v3.GVP_FAMILIES:
+        for seed in v3.SEEDS:
+            put(collected, family, "four_class", "baseline", [[0.80] * 4], folds=(0,), seed=seed)
+    for round_name in rounds:
+        for unit in v3.step_units(round_name):
+            if unit.recipe == "baseline" or unit.name in skip:
+                continue
+            delta = deltas.get((unit.family, unit.recipe), 0.0)
+            put(collected, unit.family, "four_class", unit.recipe, [[0.80 + delta] * 4], folds=(0,), seed=unit.seed)
+    return collected
+
+
+def test_step_d_pools_passes_across_rounds_and_needs_the_combination():
+    collected = d_grid({("gvp_late_fusion", "meanagg"): 0.02, ("gvp_late_fusion", "invsqrtw"): 0.03})
+    result = assess.step_d_decision(collected, SPEC, through="D-B")
+    fusion = result["families"]["gvp_late_fusion"]
+    # Round B alone would adopt invsqrtw; pooled with Round A the plan requires the combination run.
+    assert fusion["decision"] == "run combination" and fusion["recipe"] == "combo-invsqrtw+meanagg"
+    assert not result["final"] and result["status"].startswith("blocked: a combination")
+    assert result["families"]["only_gvp"]["recipe"] == "baseline"
+    combos = assess.required_combinations(collected, SPEC, through="D-B")
+    assert [u.name for u in combos] == [v3.Unit("gvp_late_fusion", "four_class", "combo-invsqrtw+meanagg", 0, s).name
+                                       for s in v3.SEEDS]
+    put(collected, "gvp_late_fusion", "four_class", "combo-invsqrtw+meanagg", [[0.84] * 4], folds=(0,), seed=42)
+    put(collected, "gvp_late_fusion", "four_class", "combo-invsqrtw+meanagg", [[0.84] * 4], folds=(0,), seed=43)
+    adopted = assess.step_d_decision(collected, SPEC, through="D-B")
+    assert adopted["final"] and adopted["families"]["gvp_late_fusion"]["decision"] == "combination"
+    for seed in v3.SEEDS:  # passes the gate but does not beat the best single candidate (+3.0 points)
+        put(collected, "gvp_late_fusion", "four_class", "combo-invsqrtw+meanagg", [[0.825] * 4], folds=(0,), seed=seed)
+    single = assess.step_d_decision(collected, SPEC, through="D-B")["families"]["gvp_late_fusion"]
+    assert single["decision"] == "single" and single["recipe"] == "invsqrtw"
+
+
+def test_step_d_blocks_on_missing_runs_and_stops_after_a_round_without_passes():
+    missing = v3.Unit("only_gvp", "four_class", "resdrop01", 0, 43).name
+    blocked = assess.step_d_decision(d_grid({}, skip={missing}), SPEC, through="D-B")
+    assert blocked["status"].startswith("blocked: D-A") and not blocked["final"] and not blocked["families"]
+    assert any(missing in m for m in blocked["missing"])
+    stopped = assess.step_d_decision(d_grid({}, rounds=("D-A",)), SPEC, through="D-B")
+    assert stopped["final"] and stopped["stopped_after"] == "D-A" and "D-B" not in stopped["rounds"]
+    assert {d["recipe"] for d in stopped["families"].values()} == {"baseline"}
+    provisional = assess.step_d_decision(d_grid({("only_gvp", "meanagg"): 0.02}, rounds=("D-A",)), SPEC,
+                                         through="D-A")
+    assert provisional["status"] == "provisional: run D-B next" and not provisional["final"]
+
+
 # ---------------------------------------------------------------------------
 # Rows of a real tiny unit
 # ---------------------------------------------------------------------------
