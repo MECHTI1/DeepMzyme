@@ -39,7 +39,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 import pmm_v3_campaign as v3  # noqa: E402
 
 SPEC_PATH = ROOT / "docs" / "campaigns" / "pmm_ion_metal_v3" / "assessment_spec.json"
-FROZEN_SPEC_SHA256: str | None = None  # pinned when the A4 specification is frozen (log entry)
+FROZEN_SPEC_SHA256: str | None = "2969407042dbb5858f15e1a114a2d602cc2fd764e788022ddaee1907ff17306c"  # A4, frozen 2026-10-05 (log v3-008)
 
 COMMON4 = ("Mn", "Cu", "Zn", "Class VIII")
 NATIVE = {"four_class": COMMON4, "five_class": ("Mn", "Cu", "Zn", "Fe", "Class VIII"),

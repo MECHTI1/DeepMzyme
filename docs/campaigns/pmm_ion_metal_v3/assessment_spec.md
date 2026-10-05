@@ -1,10 +1,11 @@
 # PMM ion metal v3 — assessment specification (plan step A4)
 
-Status: **approved by the user on 2026-10-05, not yet frozen.** It is frozen at
-the close of step A; the log then records the SHA-256 of this page and of
+Status: **frozen on 2026-10-05 at the close of step A** (approved by the user
+the same day). The log records the SHA-256 of this page and of
 [`assessment_spec.json`](assessment_spec.json), and the assessor
 ([`pmm_v3_assessment.py`](../../../pmm_v3_assessment.py)) pins the JSON hash.
-Until then the assessor command line refuses to run. The JSON holds the numbers;
+Every run and every assessment refuses a different specification or one whose
+cohort, fold and baseline identities differ from the campaign's. The JSON holds the numbers;
 the assessor refuses a JSON whose numbers differ from the tested code.
 
 Rules marked **(new default)** were not spelled out in the approved
