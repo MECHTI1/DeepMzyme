@@ -16,7 +16,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src"), str(ROOT / "tests")]
 
 import pmm_v3_assessment as assess  # noqa: E402
 import pmm_v3_campaign as v3  # noqa: E402
-from test_v3_campaign import campaign, policy  # noqa: E402,F401  (fixture reuse)
+from test_v3_campaign import campaign, policy, settle  # noqa: E402,F401  (fixture reuse)
 
 SPEC = assess.SPEC_DEFAULTS
 NOISE = (0.0, 0.004, -0.003, 0.002, -0.001)
@@ -118,6 +118,7 @@ def test_supported_gains_pick_the_larger_target_and_ties_keep_five_class():
     decisions = result["family_target_decisions"]
     assert decisions["only_esm"]["target"] == "six_class"
     assert decisions["only_gvp"]["target"] == "five_class"  # 0.1 point apart: within the tie band
+    assert "selection convention" in decisions["only_gvp"]["reason"]
     assert decisions["gvp_late_fusion"]["target"] == "four_class"
 
 
@@ -171,6 +172,7 @@ def test_improvement_check_uses_folds_1_to_4_and_reports_fold_0_separately():
     fusion = result["gvp_late_fusion"]
     assert fusion["status"] == "positive mean gain on folds 1-4, not interval-supported"
     assert fusion["stage6_matched_pass"] and fusion["folds_1_4"]["adjusted"]["n_contrasts"] == 2
+    assert result["only_gvp"]["improvement_claim_supported"] and not fusion["improvement_claim_supported"]
 
 
 def test_stage6_keeps_the_control_without_an_eligible_replacement():
@@ -282,6 +284,7 @@ def test_combination_rule_per_family():
 
 def test_a_real_unit_is_collected_reconciled_and_tampering_is_refused(campaign, tmp_path):  # noqa: F811
     train, esm_dir, paths, _, _ = campaign
+    settle(paths)
     unit = v3.Unit("gvp_late_fusion", "five_class", "baseline", 1, 42)
     result = v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
                          device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)

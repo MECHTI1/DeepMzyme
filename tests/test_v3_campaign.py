@@ -171,6 +171,11 @@ def test_every_planned_unit_builds_a_valid_training_command(campaign):
     assert len(hashes) == len(set(units))  # every unit resolves to its own configuration
 
 
+def settle(paths):
+    """Record a step-B execution setting (FP32, two lanes) so campaign units may run."""
+    return v3.set_execution_settings(paths, amp=False, lanes=2, evidence="test")
+
+
 def policy(tmp_path):
     now = time.time()
     return {"session_id": "test-session", "deadline_unix": now + 3600, "allocation_started_unix": now - 1,
@@ -180,6 +185,7 @@ def policy(tmp_path):
 
 def test_one_unit_runs_replays_persists_and_is_never_retried(campaign, tmp_path):
     train, esm_dir, paths, _, _ = campaign
+    settle(paths)
     unit = v3.Unit("only_esm", "six_class", "baseline", 1, 42)
     result = v3.run_unit(paths, unit, lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable,
                          device="cpu", execution_policy=policy(tmp_path), load_workers=1, epochs=2)
@@ -208,6 +214,7 @@ def test_run_refuses_a_changed_source_tree(campaign, tmp_path, monkeypatch):
     from benchmarking import pmm_ion_campaign as v2
 
     monkeypatch.setattr(v2, "source_tree_sha256", lambda: "0" * 64)
+    settle(paths)
     with pytest.raises(ValueError, match="frozen source tree"):
         v3.run_unit(paths, v3.Unit("only_esm", "four_class", "baseline", 1, 42), lane=0, train_dir=train,
                     esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
@@ -259,3 +266,37 @@ def test_failed_unit_is_archived_once_and_completed_units_never_rerun(campaign):
     (lane / f"run_status_{other}.json").write_text(json.dumps({"run_name": other, "status": "completed"}))
     with pytest.raises(ValueError, match="never rerun"):
         v3.archive_failed_attempt(paths, other)
+
+
+def test_step_b_probes_setting_and_reuse_of_the_matching_full_run(campaign, tmp_path):
+    train, esm_dir, paths, _, _ = campaign
+    unit = v3.Unit("gvp_late_fusion", "four_class", "baseline", 0, 42)
+    common = dict(lane=0, train_dir=train, esm_dir=esm_dir, python_bin=sys.executable, device="cpu",
+                  execution_policy=policy(tmp_path), load_workers=1, epochs=2)
+    with pytest.raises(ValueError, match="before campaign units"):
+        v3.run_unit(paths, unit, **common)
+    with pytest.raises(ValueError, match="must state AMP"):
+        v3.run_unit(paths, unit, probe="ampfull", **common)
+    result = v3.run_unit(paths, unit, probe="ampfull", amp=True, **common)
+    probe_name = "probe-ampfull__" + unit.name
+    assert result["status"] == "completed" and result["run_name"] == probe_name
+    assert "--amp" in json.loads((paths.lane(0) / "commands" / f"{probe_name}.json").read_text())["argv"]
+    # The probe ran with AMP, so it cannot stand for the step C unit under an FP32 setting.
+    with pytest.raises(ValueError, match="does not match"):
+        v3.set_execution_settings(paths, amp=False, lanes=2, evidence="b.json", reuse={unit.name: probe_name},
+                                  epochs=2)
+    assert not paths.execution_settings.exists()
+    settings = v3.set_execution_settings(paths, amp=True, lanes=2, evidence="b.json",
+                                         reuse={unit.name: probe_name}, epochs=2)
+    assert settings["reuse"] == {unit.name: probe_name}
+    with pytest.raises(ValueError, match="recorded once"):
+        v3.set_execution_settings(paths, amp=True, lanes=2, evidence="b.json")
+    with pytest.raises(ValueError, match="only before"):
+        v3.run_unit(paths, unit, probe="late", amp=True, **common)
+    with pytest.raises(ValueError, match="AMP differs"):
+        v3.run_unit(paths, v3.Unit("only_gvp", "four_class", "baseline", 0, 42), amp=False, **common)
+
+    import pmm_v3_assessment as assess
+
+    record = assess.collect(paths, [unit], epochs=2)[unit.name]
+    assert record["status"] == "completed" and record["run_name"] == probe_name
