@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-05 v3 step A complete, CPU only; step B awaits the user's GPU OK)
-- Last execution evidence: 2026-10-05 (v3 step A CPU audits). Documentation reconciliation: 2026-10-05.
+- Status: active (2026-10-06 v3 step B prepared, CPU only; awaits the user's typed GPU authorization)
+- Last execution evidence: 2026-10-06 (v3 A3/A5 repeated, CPU). Documentation reconciliation: 2026-10-06.
 
 ## Current objective and stage
 
-- Current campaign: pmm_ion_metal_v3, step A complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Current campaign: pmm_ion_metal_v3, step B prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 step A done ([log v3-008](docs/campaigns/pmm_ion_metal_v3/log.md#v3-008)): strict folds, code, CPU audits, frozen assessment rules; no GPU runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Stage: v3 step A done ([log v3-008](docs/campaigns/pmm_ion_metal_v3/log.md#v3-008)) and step B prepared ([log v3-009](docs/campaigns/pmm_ion_metal_v3/log.md#v3-009)); no GPU runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
 
 **The PMM core v2 campaign was closed at fold 0 on 2026-10-03 (user decision).**
 Its nine fold-0 fits are final validation-only evidence; 36 fits were not run and
@@ -54,10 +54,10 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 
 ## Blockers and immediate next action
 
-- Authorized now: CPU work only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); every GPU start needs the user's explicit OK within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003); no refit or held-out evaluation.
+- Authorized now: CPU work only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); a GPU start needs the user to type AUTHORIZE VM START, within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) that includes campaign storage ([log v3-009](docs/campaigns/pmm_ion_metal_v3/log.md#v3-009)); no refit or held-out evaluation.
 - GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/archive/campaigns/pmm_ion_metal/log.md#pmm-011).
 
-Next: v3 step B (GPU speed check) per its [plan](docs/campaigns/pmm_ion_metal_v3/plan.md), after the user's explicit GPU OK and freeing 10–15 GB on `/`.
+Next: v3 step B (GPU speed check) per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) (`vm-restore` after the user's typed authorization, then `pmm_v3_step_b.py`); `/` has 16 GB free.
 Still open before step E: the final metal test label, after the user's check of
 the 2026-09-24 Zenodo run. Stage 6 grouped-fold selection (or an explicitly
 labeled fallback), a completed Stage 6B full non-test refit, frozen
