@@ -44,8 +44,9 @@ import shlex
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
@@ -105,8 +106,36 @@ def rc_meaning(rc: str | None, *, regression: bool = False) -> str:
     return f"killed by signal {int(rc) - 128}" if rc.isdigit() and int(rc) > 128 else f"unexpected exit code {rc}"
 
 
-def launch_dir() -> str:
-    return f"{b.REMOTE_V3}/step_c/launch"
+@dataclass(frozen=True)
+class Step:
+    """What differs between plan steps for this launcher. The defaults are step C; pmm_v3_step_d.py passes its
+    own steps D and E to the same lane, launch, wait, pull, recovery and evidence logic."""
+    key: str = "c"  # the VM launch folder step_<key>/launch and the batch prefix
+    label: str = "step C"
+    outside: str = "steps D-E need their own authorization"
+    second_failure: str = "step C stops for diagnosis and the user's decision"
+    done_hint: str = "every step C unit has run: 'assess', then 'evidence' and vm-stop"
+    units: Callable[[dict[str, Any]], tuple[str, ...]] | None = None  # None: STEP_C_UNITS
+    batch_blockers: Callable[[list[str], dict[str, Any]], list[str]] | None = None  # step gates, before any launch
+    forecast: Callable[[str, dict[str, Any]], float] | None = None  # None: forecast_seconds
+    code: str | None = None  # the code directory on the VM (None: the step-B bundle's)
+    evidence: Path | None = None  # None: EVIDENCE
+    evidence_patterns: tuple[str, ...] | None = None  # None: EVIDENCE_PATTERNS
+
+
+STEP_C = Step()
+
+
+def units_of(step: Step, state: dict[str, Any]) -> tuple[str, ...]:
+    return STEP_C_UNITS if step.units is None else step.units(state)
+
+
+def remote_code(step: Step) -> str:
+    return step.code or b.REMOTE_CODE
+
+
+def launch_dir(step: Step = STEP_C) -> str:
+    return f"{b.REMOTE_V3}/step_{step.key}/launch"
 
 
 def family_target(name: str) -> tuple[str, str]:
@@ -114,24 +143,36 @@ def family_target(name: str) -> tuple[str, str]:
     return parts[0], parts[1]
 
 
+def graph_variant(recipe: str | None) -> str:
+    """Site-geometry recipes build their own graph caches; every other recipe shares the baseline's."""
+    parts = (recipe or "").removeprefix("combo-").split("+")
+    return next((part for part in ("sitenone", "sitecountsangles") if part in parts), "legacy")
+
+
 # ---------------------------------------------------------------------------
 # VM state (one read-only snapshot per poll)
 # ---------------------------------------------------------------------------
 
 STATE_PROBE = r"""
-import json, sys, time
+import hashlib, json, sys, time
 from pathlib import Path
 root, launch_dir, grace = Path(sys.argv[1]), Path(sys.argv[2]), float(sys.argv[3])
 boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
 settings = root / "execution_settings.json"
 out = {"settings": json.loads(settings.read_text()) if settings.is_file() else None,
-       "statuses": {}, "claims": [], "archived": {}, "launches": {}}
+       "statuses": {}, "claims": [], "archived": {}, "launches": {}, "extension": None}
+extension = root / "campaign_extension.json"
+if extension.is_file():
+    record = json.loads(extension.read_text())
+    out["extension"] = {"id": record.get("extension_id"), "runner_sha256": record.get("runner_sha256"),
+                        "sha256": hashlib.sha256(extension.read_bytes()).hexdigest()}
 for path in sorted(root.glob("lanes/lane*/run_status_*.json")):
     record = json.loads(path.read_text())
     identity = record.get("identity") or {}
     out["statuses"][record["run_name"]] = {"status": record.get("status"), "lane": record.get("lane"),
                                            "gate_passed": (record.get("gate") or {}).get("passed"),
-                                           "family": identity.get("family"), "target": identity.get("target_scheme")}
+                                           "family": identity.get("family"), "target": identity.get("target_scheme"),
+                                           "recipe": identity.get("recipe")}
 out["claims"] = sorted(path.name[:-5] for path in (root / "claims").glob("*.json"))
 for directory in sorted((root / "failed_attempts").glob("*")):
     out["archived"][directory.name] = len(list(directory.glob("attempt*")))
@@ -160,9 +201,9 @@ print(json.dumps(out))
 """
 
 
-def vm_state(remote: b.Remote, lanes: int = 3) -> dict[str, Any]:
+def vm_state(remote: b.Remote, lanes: int = 3, step: Step = STEP_C) -> dict[str, Any]:
     """Launch records, statuses, claims and settings, plus the step-B lane probe of lanes 0..lanes-1."""
-    state = json.loads(remote.run(f"{b.REMOTE_PY} -c {shlex.quote(STATE_PROBE)} {b.REMOTE_V3} {launch_dir()} "
+    state = json.loads(remote.run(f"{b.REMOTE_PY} -c {shlex.quote(STATE_PROBE)} {b.REMOTE_V3} {launch_dir(step)} "
                                  f"{STARTING_GRACE_SECONDS}").stdout)
     width = int((state.get("settings") or {}).get("concurrent_lanes", lanes))
     state["lanes"] = json.loads(remote.run(f"{b.REMOTE_PY} -c {shlex.quote(b.LANE_PROBE)} {b.REMOTE_V3} "
@@ -210,8 +251,10 @@ def interrupted_lanes(state: dict[str, Any]) -> dict[int, str]:
 def cache_warm(name: str, statuses: dict[str, dict[str, Any]]) -> bool:
     """A completed fit (any lane, step-B probes included) already built this unit's cache set."""
     family, target = family_target(name)
+    variant = graph_variant(name.split("__")[2])
     return any(record.get("status") == "completed" and record.get("target") == target
                and record.get("family") in USES_ESM and USES_ESM[record["family"]] == USES_ESM[family]
+               and graph_variant(record.get("recipe")) == variant
                for record in statuses.values())
 
 
@@ -239,10 +282,10 @@ def regression_blockers(state: dict[str, Any]) -> list[str]:
     return []
 
 
-def unit_blockers(name: str, state: dict[str, Any]) -> list[str]:
+def unit_blockers(name: str, state: dict[str, Any], step: Step = STEP_C) -> list[str]:
     settings = state.get("settings") or {}
-    if name not in STEP_C_UNITS:
-        return [f"{name}: not a step C unit (steps D-E need their own authorization)"]
+    if name not in units_of(step, state):
+        return [f"{name}: not a {step.label} unit ({step.outside})"]
     if name in settings.get("reuse", {}):
         return [f"{name}: reused from step B ({settings['reuse'][name]}); never launched"]
     record, archived = state["statuses"].get(name), state["archived"].get(name, 0)
@@ -253,8 +296,7 @@ def unit_blockers(name: str, state: dict[str, Any]) -> list[str]:
         if record.get("status") == "completed":
             return [f"{name}: completed; a completed unit is never rerun"]
         if archived:
-            return [f"{name}: failed after its one rerun ('{record.get('status')}'); step C stops for diagnosis "
-                    "and the user's decision"]
+            return [f"{name}: failed after its one rerun ('{record.get('status')}'); {step.second_failure}"]
         return [f"{name}: ended '{record.get('status')}'; after its lane is pulled, run 'archive-failed {name}' "
                 "(its one unchanged rerun)"]
     stranded = [k for k, run in interrupted_lanes(state).items() if run == name]
@@ -283,7 +325,7 @@ def pull_problems(state: dict[str, Any]) -> list[str]:
 
 
 def plan_units(requests: list[tuple[str, int]], state: dict[str, Any], *,
-               fit_seconds: float | None = None) -> list[dict[str, Any]]:
+               fit_seconds: float | None = None, step: Step = STEP_C) -> list[dict[str, Any]]:
     require(state.get("settings") is not None, "No execution setting is recorded on the VM (set-execution)")
     width = int(state["settings"]["concurrent_lanes"])
     require(1 <= len(requests) <= width, f"Launch 1-{width} units at once (the recorded concurrent lanes)")
@@ -296,10 +338,13 @@ def plan_units(requests: list[tuple[str, int]], state: dict[str, Any], *,
     problems += [f"lane {k} is outside the recorded {width} lanes (0..{width - 1})" for k in lanes if not 0 <= k < width]
     problems += regression_blockers(state) + pull_problems(state)
     for name in dict.fromkeys(names):
-        problems += unit_blockers(name, state)
+        problems += unit_blockers(name, state, step)
+    if step.batch_blockers is not None:
+        problems += step.batch_blockers(list(dict.fromkeys(names)), state)
     problems += lane_problems(state, sorted({k for k in lanes if 0 <= k < width}))
     require(not problems, "Nothing was launched:\n  " + "\n  ".join(problems))
-    return [{"unit": name, "lane": lane, "fit_seconds": float(fit_seconds or forecast_seconds(name, state["statuses"]))}
+    forecast = step.forecast or (lambda name, current: forecast_seconds(name, current["statuses"]))
+    return [{"unit": name, "lane": lane, "fit_seconds": float(fit_seconds or forecast(name, state))}
             for name, lane in requests]
 
 
@@ -334,12 +379,12 @@ def unit_command(name: str, lane: int, session: dict[str, Any], *, fit_seconds: 
     return head + b.allocation_args(session, fit_seconds=fit_seconds)
 
 
-def launch_script(batch: str, planned: list[dict[str, Any]], session: dict[str, Any]) -> str:
+def launch_script(batch: str, planned: list[dict[str, Any]], session: dict[str, Any], step: Step = STEP_C) -> str:
     """One detached shell that starts every planned unit at once; per unit it records the launch, the boot ID
     and the member PID (so a later 'wait' can tell running from lost) and finally the runner's exit code."""
-    directory = launch_dir()
+    directory = launch_dir(step)
     q = shlex.quote
-    lines = ["set -eu", f"cd {q(b.REMOTE_CODE)}", f"mkdir -p {q(directory)}"]
+    lines = ["set -eu", f"cd {q(remote_code(step))}", f"mkdir -p {q(directory)}"]
     for item in planned:  # keep earlier attempts' files (a rerun after archive-failed reuses the name)
         base = f"{directory}/{item['unit']}"
         files = " ".join(q(f"{base}.{suffix}") for suffix in ("out", "rc", "pid", "boot", "launch.json"))
@@ -369,18 +414,18 @@ def launch_script(batch: str, planned: list[dict[str, Any]], session: dict[str, 
 # ---------------------------------------------------------------------------
 
 def start(remote: b.Remote, session: dict[str, Any], planned: list[dict[str, Any]], *, wait: bool,
-          sleep=time.sleep) -> dict[str, Any]:
+          sleep=time.sleep, step: Step = STEP_C) -> dict[str, Any]:
     b.admission_check(session, max(item["fit_seconds"] for item in planned))
-    batch = "c-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+    batch = f"{step.key}-" + time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     try:
-        out = remote.run(launch_script(batch, planned, session)).stdout
+        out = remote.run(launch_script(batch, planned, session, step)).stdout
     except (LauncherError, subprocess.SubprocessError, OSError) as exc:
         raise LauncherError(f"The launch command failed ({exc}). The runners may have started: check with "
                             "'status' and resume with 'wait'; never relaunch") from exc
     require("launched" in out, f"launch did not confirm: {out}; check with 'status' and 'wait' before anything else")
     result: dict[str, Any] = {"batch": batch, "launched": planned}
     if wait:
-        result.update(cmd_wait(remote, session, names=[item["unit"] for item in planned], sleep=sleep))
+        result.update(cmd_wait(remote, session, names=[item["unit"] for item in planned], sleep=sleep, step=step))
     else:
         result["next"] = "wait (or wait --any to refill a lane as soon as its unit ends)"
     return result
@@ -392,20 +437,21 @@ def cmd_regression(remote: b.Remote, session: dict[str, Any], *, fit_seconds: fl
 
 
 def cmd_launch(remote: b.Remote, session: dict[str, Any], requests: list[tuple[str, int]], *,
-               fit_seconds: float | None = None, wait: bool = True, sleep=time.sleep) -> dict[str, Any]:
-    return start(remote, session, plan_units(requests, vm_state(remote), fit_seconds=fit_seconds), wait=wait,
-                 sleep=sleep)
+               fit_seconds: float | None = None, wait: bool = True, sleep=time.sleep,
+               step: Step = STEP_C) -> dict[str, Any]:
+    planned = plan_units(requests, vm_state(remote, step=step), fit_seconds=fit_seconds, step=step)
+    return start(remote, session, planned, wait=wait, sleep=sleep, step=step)
 
 
 def cmd_wait(remote: b.Remote, session: dict[str, Any], *, names: list[str] | None = None, any_unit: bool = False,
-             poll: float = b.POLL_SECONDS, sleep=time.sleep) -> dict[str, Any]:
+             poll: float = b.POLL_SECONDS, sleep=time.sleep, step: Step = STEP_C) -> dict[str, Any]:
     """Wait for launched units and pull every lane whose unit ended. It never launches anything, so it is the
     recovery after a dropped connection. A pull is retried (it is idempotent); a lane whose pull still fails
     stays closed, which blocks every new launch, and the command fails."""
     failures, awaited, ended, pulls, pull_failures = 0, None, {}, {}, {}
     while True:
         try:
-            state = vm_state(remote)
+            state = vm_state(remote, step=step)
             failures = 0
         except (LauncherError, subprocess.SubprocessError, OSError, ValueError) as exc:
             failures += 1
@@ -439,16 +485,16 @@ def cmd_wait(remote: b.Remote, session: dict[str, Any], *, names: list[str] | No
                                "status": status.get("status"), "gate_passed": status.get("gate_passed")}
         if not unpulled and (len(ended) == len(awaited) or (any_unit and ended)):
             return {"ended": ended, "still_running": [n for n in awaited if n not in ended], "pulls": pulls,
-                    **summary(state), "next": next_hint(state, ended)}
+                    **summary(state, step), "next": next_hint(state, ended, step)}
         require(time.time() < session["deadline"], "The session hard stop passed while waiting")
         sleep(poll)
 
 
-def summary(state: dict[str, Any]) -> dict[str, Any]:
+def summary(state: dict[str, Any], step: Step = STEP_C) -> dict[str, Any]:
     """Unit outcomes from the VM statuses, so a 'wait' after a dropped connection still reports them."""
     reuse = (state.get("settings") or {}).get("reuse", {})
     outcomes = {name: state["statuses"].get(reuse.get(name, name), {}).get("status")
-                for name in (REGRESSION_NAME, *STEP_C_UNITS)}
+                for name in (REGRESSION_NAME, *units_of(step, state))}
     return {"completed_units": sorted(n for n, s in outcomes.items() if s == "completed" and n != REGRESSION_NAME),
             "failed_units": sorted(n for n, s in outcomes.items() if s not in (None, "completed")),
             "not_started": sorted(n for n, s in outcomes.items() if s is None and n not in state["launches"]
@@ -458,7 +504,7 @@ def summary(state: dict[str, Any]) -> dict[str, Any]:
             "interrupted_lanes": interrupted_lanes(state)}
 
 
-def next_hint(state: dict[str, Any], ended: dict[str, dict[str, Any]]) -> str:
+def next_hint(state: dict[str, Any], ended: dict[str, dict[str, Any]], step: Step = STEP_C) -> str:
     regression = state["statuses"].get(REGRESSION_NAME)
     if regression is not None and regression_blockers(state):
         return regression_blockers(state)[0]  # STOP: failed run or gate
@@ -468,49 +514,53 @@ def next_hint(state: dict[str, Any], ended: dict[str, dict[str, Any]]) -> str:
                 "(the regression instead stops for diagnosis)")
     if REGRESSION_NAME in ended and regression is None:
         return "the regression did not start (refused or blocked; see its .out); fix the cause and run 'regression' again"
-    failed = [name for name in STEP_C_UNITS if state["statuses"].get(name, {}).get("status") not in (None, "completed")]
+    failed = [name for name in units_of(step, state)
+              if state["statuses"].get(name, {}).get("status") not in (None, "completed")]
     if failed:
         return (f"failed units {failed}: 'archive-failed UNIT' (after its lane is pulled), then relaunch it once, "
-                "unchanged; a second failure stops step C for the user's decision")
+                f"unchanged; after a second failure {step.second_failure}")
     if regression is None:
         return "run 'regression' first (alone)"
-    remaining = summary(state)["not_started"]
+    remaining = summary(state, step)["not_started"]
     if remaining:
         return f"refill free lanes ('launch UNIT@LANE'); not started yet: {remaining}"
-    return "every step C unit has run: 'assess', then 'evidence' and vm-stop"
+    return step.done_hint
 
 
-def cmd_status(remote: b.Remote) -> dict[str, Any]:
-    state = vm_state(remote)
+def cmd_status(remote: b.Remote, step: Step = STEP_C) -> dict[str, Any]:
+    state = vm_state(remote, step=step)
     reuse = (state.get("settings") or {}).get("reuse", {})
+    forecast = step.forecast or (lambda name, current: forecast_seconds(name, current["statuses"]))
     units = {}
-    for name in (REGRESSION_NAME, *STEP_C_UNITS):
+    for name in (REGRESSION_NAME, *units_of(step, state)):
         record = state["statuses"].get(reuse.get(name, name), {})
         launch = state["launches"].get(name, {})
         units[name] = {"status": record.get("status"), "launch": launch.get("state"), "lane": launch.get("lane"),
                        "claimed": name in state["claims"], "archived_attempts": state["archived"].get(name, 0),
                        "reused_from": reuse.get(name)}
         if record.get("status") is None and name != REGRESSION_NAME:
-            units[name]["forecast_seconds"] = forecast_seconds(name, state["statuses"])
+            units[name]["forecast_seconds"] = forecast(name, state)
     return {"units": units, "regression_blockers": regression_blockers(state), "awaiting_pull": awaiting_pull(state),
             "lane_blockers": lane_problems(state, list(range(int(state["width"])))),
-            "active_launches": sorted(active_launches(state)), "next": next_hint(state, {}),
+            "active_launches": sorted(active_launches(state)), "next": next_hint(state, {}, step),
+            "extension": state.get("extension"),
             "settings": {k: (state.get("settings") or {}).get(k) for k in ("amp", "concurrent_lanes")}}
 
 
-def cmd_archive_failed(remote: b.Remote, name: str) -> dict[str, Any]:
+def cmd_archive_failed(remote: b.Remote, name: str, step: Step = STEP_C) -> dict[str, Any]:
     require(name != REGRESSION_NAME, "A regression failure stops v3 for diagnosis; it is rerun only after the "
                                      "user's decision (use the runner directly then)")
-    require(name in STEP_C_UNITS, f"{name} is not a step C unit")
-    state = vm_state(remote)
+    require(step.units is not None or name in STEP_C_UNITS, f"{name} is not a {step.label} unit")
+    state = vm_state(remote, step=step)
+    require(name in units_of(step, state), f"{name} is not a {step.label} unit")
     require(name not in active_launches(state), f"{name} still has a running launch; wait for it first")
     # Archiving moves files that a pending transfer lists, so that pull could never verify again.
     require(not awaiting_pull(state), f"lanes {awaiting_pull(state)} await their host pull; run 'pull' first")
     stranded = [k for k, run in interrupted_lanes(state).items() if run == name]
     require(not stranded, f"{name} was interrupted in lane{stranded[0] if stranded else ''}; run 'recover-lane "
                           f"{stranded[0] if stranded else ''}' first")
-    out = remote.run(f"cd {shlex.quote(b.REMOTE_CODE)} && {b.REMOTE_PY} run_pmm_v3_campaign.py --action archive-failed "
-                     f"--campaign-dir {b.REMOTE_V3} --unit {shlex.quote(name)}").stdout
+    out = remote.run(f"cd {shlex.quote(remote_code(step))} && {b.REMOTE_PY} run_pmm_v3_campaign.py "
+                     f"--action archive-failed --campaign-dir {b.REMOTE_V3} --unit {shlex.quote(name)}").stdout
     return json.loads(out)
 
 
@@ -534,14 +584,14 @@ except module.ExecutionBlocked as exc:
 """
 
 
-def cmd_recover_lane(remote: b.Remote, session: dict[str, Any], lane: int) -> dict[str, Any]:
+def cmd_recover_lane(remote: b.Remote, session: dict[str, Any], lane: int, step: Step = STEP_C) -> dict[str, Any]:
     """Run the lane's own recovery (benchmarking.pmm_execution, unchanged): an interrupted unit is recorded as
     'interrupted' and its artifacts are offered for a host pull, which is then verified and acknowledged."""
-    state = vm_state(remote)
+    state = vm_state(remote, step=step)
     stranded = interrupted_lanes(state)
     require(lane in stranded, f"lane{lane} holds no interrupted unit (lock free, child dead, no live launch); "
                               "nothing to recover")
-    out = remote.run(f"{b.REMOTE_PY} -c {shlex.quote(RECOVER_LANE)} {shlex.quote(b.REMOTE_CODE)} "
+    out = remote.run(f"{b.REMOTE_PY} -c {shlex.quote(RECOVER_LANE)} {shlex.quote(remote_code(step))} "
                      f"{b.REMOTE_V3}/lanes/lane{lane} {shlex.quote(str(b.DURABLE / f'lane{lane}'))} "
                      f"{shlex.quote(session['session_id'])} {float(session['deadline'])!r} "
                      f"{float(session['allocation_started'])!r} {float(session['max_seconds'])!r}").stdout
@@ -554,27 +604,30 @@ def cmd_recover_lane(remote: b.Remote, session: dict[str, Any], lane: int) -> di
     return {"lane": lane, "unit": name, "recovery": recovered, "pull": pulled, "next": after}
 
 
-def cmd_assess(remote: b.Remote, *, evidence_root: Path | None = None) -> dict[str, Any]:
-    """Run the frozen step C assessor on the VM (validation predictions only) and keep a checked copy."""
-    out = remote.run(f"cd {shlex.quote(b.REMOTE_CODE)} && {b.REMOTE_PY} pmm_v3_assessment.py "
-                     f"--campaign-dir {b.REMOTE_V3} --step C").stdout
+def cmd_assess(remote: b.Remote, *, evidence_root: Path | None = None, step: Step = STEP_C,
+               assess_args: tuple[str, ...] = ("--step", "C")) -> dict[str, Any]:
+    """Run the assessor on the VM (validation predictions only) and keep a checked copy on the workstation."""
+    out = remote.run(f"cd {shlex.quote(remote_code(step))} && {b.REMOTE_PY} pmm_v3_assessment.py "
+                     f"--campaign-dir {b.REMOTE_V3} {shlex.join(assess_args)}").stdout
     remote_dir = json.loads(out)["assessment"]
     require(remote_dir.startswith(f"{b.REMOTE_V3}/assessments/"), f"unexpected assessment path {remote_dir}")
     data = remote.transport.read_bytes(f"{remote_dir}/assessment.json")
     require(data is not None, "the assessor wrote no assessment.json")
     digest = remote.run(f"sha256sum {shlex.quote(remote_dir + '/assessment.json')}").stdout.split()[0]
     require(hashlib.sha256(data).hexdigest() == digest, "the copied assessment differs from the VM file")
-    target = (evidence_root or EVIDENCE) / "assessments" / Path(remote_dir).name / "assessment.json"
+    target = (evidence_root or step.evidence or EVIDENCE) / "assessments" / Path(remote_dir).name / "assessment.json"
     target.parent.mkdir(parents=True, exist_ok=False)
     target.write_bytes(data)
     return {"remote": remote_dir, "copy": str(target), "sha256": digest, "result": json.loads(data)["result"]}
 
 
-def cmd_evidence(remote: b.Remote, *, destination: Path | None = None, allow_running: bool = False) -> dict[str, Any]:
-    """The step-B evidence copy with step C patterns. The copy is always made; the command then fails while a
-    unit still runs or a lane awaits its pull, because a vm-stop now would kill a paid fit or strand a transfer."""
-    state = vm_state(remote)
-    copied = b.cmd_evidence(remote, destination=destination, patterns=EVIDENCE_PATTERNS, evidence_root=EVIDENCE)
+def cmd_evidence(remote: b.Remote, *, destination: Path | None = None, allow_running: bool = False,
+                 step: Step = STEP_C) -> dict[str, Any]:
+    """The step-B evidence copy with the step's patterns. The copy is always made; the command then fails while
+    a unit still runs or a lane awaits its pull, because a vm-stop now would kill a paid fit or strand a transfer."""
+    state = vm_state(remote, step=step)
+    copied = b.cmd_evidence(remote, destination=destination, patterns=step.evidence_patterns or EVIDENCE_PATTERNS,
+                            evidence_root=step.evidence or EVIDENCE, code=remote_code(step))
     unsafe = {"active_launches": sorted(active_launches(state)), "awaiting_pull": awaiting_pull(state),
               "interrupted_lanes": interrupted_lanes(state),
               "busy_lanes": sorted(int(lane[4:]) for lane, info in state["lanes"].items() if lane_busy(info))}

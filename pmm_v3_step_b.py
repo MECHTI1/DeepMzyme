@@ -418,14 +418,15 @@ print(json.dumps({"campaign": out, "code": extra}))
 
 
 def cmd_evidence(remote: Remote, *, destination: Path | None = None, patterns: tuple[str, ...] = EVIDENCE_PATTERNS,
-                 evidence_root: Path | None = None) -> dict[str, Any]:
+                 evidence_root: Path | None = None, code: str | None = None) -> dict[str, Any]:
     """Copy the evidence while no step runs; the sampler's live file is copied as a frozen snapshot.
-    pmm_v3_step_c passes its own patterns and workstation folder."""
+    pmm_v3_step_c passes its own patterns and workstation folder (and, for steps D-E, the code directory)."""
+    code = code or REMOTE_CODE
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
     if "step_b/**/*" in patterns:
         remote.run(f"if [ -f {REMOTE_V3}/step_b/host.jsonl ]; then mkdir -p {REMOTE_V3}/step_b/host_snapshots && "
                    f"cp {REMOTE_V3}/step_b/host.jsonl {REMOTE_V3}/step_b/host_snapshots/host_{stamp}.jsonl; fi")
-    listing = json.loads(remote.run(f"{REMOTE_PY} -c {shlex.quote(EVIDENCE_LISTER)} {REMOTE_V3} {REMOTE_CODE} "
+    listing = json.loads(remote.run(f"{REMOTE_PY} -c {shlex.quote(EVIDENCE_LISTER)} {REMOTE_V3} {code} "
                                     f"{shlex.quote(json.dumps(list(patterns)))}").stdout)
     target = destination or (evidence_root or EVIDENCE) / f"evidence_{stamp}"
     target.mkdir(parents=True, exist_ok=False)
@@ -433,7 +434,7 @@ def cmd_evidence(remote: Remote, *, destination: Path | None = None, patterns: t
     if campaign:
         remote.transport.fetch(REMOTE_V3, sorted(campaign), target / "campaign")
     if listing["code"]:
-        remote.transport.fetch(REMOTE_CODE, ["v3_bundle_apply_receipt.json"], target / "code")
+        remote.transport.fetch(code, ["v3_bundle_apply_receipt.json"], target / "code")
     import hashlib
 
     mismatched = [name for name, digest in {**{f"campaign/{k}": v for k, v in campaign.items()}, **listing["code"]}.items()

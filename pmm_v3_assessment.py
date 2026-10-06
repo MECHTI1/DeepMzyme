@@ -50,10 +50,9 @@ COMMON4_INDEX = NATIVE_INDEX["four_class"]
 PROBABILITY_TOLERANCE = 2.0e-6  # predictions are exported with eight decimals
 RECONCILIATION_TOLERANCE = 1e-9
 STAGE6_CONTROL = "only_esm__four_class__baseline"
-# Step D: candidates screened against a matched control other than the family baseline.
-SCREEN_CONTROLS = {"sitecountsangles": "sitenone"}
-ROUND_CANDIDATES = {"D-A": ("meanagg", "resdrop01", "structlr", "gvpaux03", "esmdrop02"),
-                    "D-B": ("sitecountsangles", "posnoise01", "outerdrop01", "vecnorm", "invsqrtw")}
+# Step D rounds, candidates and matched controls are frozen with the runner (extension 1 adds Round R).
+SCREEN_CONTROLS = v3.SCREEN_CONTROLS
+ROUND_CANDIDATES = v3.ROUND_CANDIDATES
 
 SPEC_DEFAULTS: dict[str, Any] = {
     "spec_version": 1,
@@ -159,7 +158,7 @@ def read_contract(paths: v3.V3Paths) -> tuple[dict[str, Any], dict[str, dict[str
     """Frozen manifest and v3 fold membership, checked against the cohort and class-weight bindings."""
     manifest = json.loads(paths.manifest.read_text(encoding="utf-8"))
     require(manifest.get("campaign_id") == v3.CAMPAIGN_ID, "Not a v3 campaign root")
-    v3.verify_runner_identity(manifest)
+    v3.verify_runner_identity(manifest, paths)
     require(sha256(paths.cohort) == manifest["cohort"]["sha256"], "Frozen cohort changed")
     require(sha256(paths.fold_membership) == manifest["fold_set"]["fold_membership_sha256"], "Fold file changed")
     require(sha256(paths.fold_class_weights) == manifest["fold_class_weights_sha256"], "Class weights changed")
@@ -252,9 +251,8 @@ def load_unit(paths: v3.V3Paths, unit: v3.Unit, statuses: dict[str, dict[str, An
                                                  else "not run")}
     run_dir = Path(record["status_path"]).parent / "runs" / run_name
     recorded = record["identity"]
-    require(recorded.get("runner_sha256") == manifest["runner_sha256"],
-            f"{unit.name}: ran with runner files other than the ones frozen at preparation")
-    expected = expected_identity(paths, unit, epochs=epochs)
+    expected = v3.recorded_identity_expectation(paths, manifest, run_name, recorded,
+                                                expected_identity(paths, unit, epochs=epochs))
     differing = sorted(k for k in set(expected) | set(recorded) if expected.get(k) != recorded.get(k))
     require(not differing, f"{unit.name}: recorded identity differs from the plan in {differing}")
     recipe = v3.resolve_recipe(unit.recipe)
@@ -555,11 +553,22 @@ def screen_candidate(collected: dict[str, Any], family: str, recipe: str, spec: 
             "status": "passed the one-fold screen" if passed else "did not pass the one-fold screen"}
 
 
-def screen_round(collected: dict[str, Any], round_name: str, spec: dict[str, Any]) -> list[dict[str, Any]]:
+def screen_round(collected: dict[str, Any], round_name: str, spec: dict[str, Any], *,
+                 not_tested: tuple[str, ...] = ()) -> list[dict[str, Any]]:
+    """Every candidate of a round. A cost-gated candidate named in ``not_tested`` is recorded
+    "not tested (cost)" (plan cost gate): it neither passes nor keeps the round waiting."""
     out = []
     for recipe in ROUND_CANDIDATES[round_name]:
-        for family in v3.RECIPES[recipe]["families"]:
-            out.append(screen_candidate(collected, family, recipe, spec))
+        for family in v3.resolve_recipe(recipe)["families"]:
+            if recipe in not_tested:
+                started = [name for seed in v3.SEEDS
+                           for name in [v3.Unit(family, "four_class", recipe, 0, seed).name]
+                           if collected.get(name, {"status": "missing"})["status"] != "missing"]
+                require(not started, f"{recipe} was run ({started}); it cannot be recorded as not tested")
+                out.append({"family": family, "recipe": recipe, "control": SCREEN_CONTROLS.get(recipe, "baseline"),
+                            "passed": False, "status": "not tested (cost)"})
+            else:
+                out.append(screen_candidate(collected, family, recipe, spec))
     return out
 
 
@@ -573,10 +582,10 @@ def family_recipe_decision(screens: list[dict[str, Any]], family: str,
     if len(passed) == 1:
         return {"family": family, "decision": "single", "recipe": best["recipe"], "mean_delta": best["mean_delta"]}
     kept = {s["recipe"]: s for s in passed}
-    for pair in v3.EXCLUSIVE_PAIRS:
-        both = [kept[r] for r in sorted(pair) if r in kept]
-        if len(both) == 2:
-            del kept[min(both, key=lambda s: (s["mean_delta"], s["recipe"]))["recipe"]]
+    for group in v3.exclusive_groups():  # alternatives: only the best passing member stays
+        members = [kept[r] for r in sorted(group) if r in kept]
+        for loser in sorted(members, key=lambda s: (s["mean_delta"], s["recipe"]))[:-1]:
+            del kept[loser["recipe"]]
     if len(kept) == 1:
         return {"family": family, "decision": "single", "recipe": best["recipe"], "mean_delta": best["mean_delta"]}
     combo = "combo-" + "+".join(sorted(kept))
@@ -590,7 +599,7 @@ def family_recipe_decision(screens: list[dict[str, Any]], family: str,
             "best_single": best["recipe"], "best_single_mean_delta": best["mean_delta"]}
 
 
-ROUND_ORDER = ("D-A", "D-B")
+ROUND_ORDER = v3.ROUND_ORDER
 
 
 def step_d_base_units(through: str) -> list[v3.Unit]:
@@ -601,15 +610,18 @@ def step_d_base_units(through: str) -> list[v3.Unit]:
     return list(dict.fromkeys(units))
 
 
-def step_d_decision(collected: dict[str, Any], spec: dict[str, Any], *, through: str) -> dict[str, Any]:
-    """Plan step D on all completed rounds: rounds run in order and to completion; D ends after a
-    complete round without any pass; passes are pooled across rounds for the combination rule; no
-    decision while a required run is missing; a combination must beat the best single candidate."""
+def step_d_decision(collected: dict[str, Any], spec: dict[str, Any], *, through: str,
+                    not_tested: tuple[str, ...] = ()) -> dict[str, Any]:
+    """Plan step D on all completed rounds (stopping amended by log v3-017): rounds run in order and to
+    completion; D-A is always followed by D-R; D ends after D-R when neither round has a pass, otherwise
+    D-B follows; passes are pooled across rounds for the combination rule; no decision while a required
+    run is missing; a combination must beat the best single candidate."""
     require(through in ROUND_ORDER, f"through must be one of {ROUND_ORDER}")
-    out: dict[str, Any] = {"rounds": {}, "families": {}, "final": False}
+    require(set(not_tested) <= set(v3.COST_GATED), f"Only cost-gated candidates {v3.COST_GATED} can be 'not tested'")
+    out: dict[str, Any] = {"rounds": {}, "families": {}, "final": False, "not_tested_cost": sorted(not_tested)}
     pooled: list[dict[str, Any]] = []
     for name in ROUND_ORDER[: ROUND_ORDER.index(through) + 1]:
-        screens = screen_round(collected, name, spec)
+        screens = screen_round(collected, name, spec, not_tested=not_tested)
         waiting = [s for s in screens if s["status"] == "incomplete"]
         out["rounds"][name] = {"screens": screens, "complete": not waiting,
                                "passed": sorted(f"{s['family']}:{s['recipe']}" for s in screens if s["passed"])}
@@ -618,7 +630,7 @@ def step_d_decision(collected: dict[str, Any], spec: dict[str, Any], *, through:
             out["missing"] = sorted({m for s in waiting for m in s["missing"]})
             return out
         pooled += screens
-        if not any(s["passed"] for s in screens):
+        if name == "D-R" and not any(s["passed"] for s in pooled):
             out["stopped_after"] = name
             break
     last_complete = list(out["rounds"])[-1]
@@ -641,13 +653,14 @@ def step_d_decision(collected: dict[str, Any], spec: dict[str, Any], *, through:
     out["final"] = not blocked
     out["status"] = ("final" if not blocked else "blocked: a combination run is still missing")
     if "stopped_after" in out:
-        out["status"] += f" (D stopped after {out['stopped_after']}: no candidate passed)"
+        out["status"] += f" (D stopped after {out['stopped_after']}: no candidate of D-A or D-R passed)"
     return out
 
 
-def required_combinations(collected: dict[str, Any], spec: dict[str, Any], *, through: str) -> list[v3.Unit]:
+def required_combinations(collected: dict[str, Any], spec: dict[str, Any], *, through: str,
+                          not_tested: tuple[str, ...] = ()) -> list[v3.Unit]:
     """Combination units the plan needs once every round up to ``through`` is complete."""
-    decision = step_d_decision(collected, spec, through=through)
+    decision = step_d_decision(collected, spec, through=through, not_tested=not_tested)
     units = []
     for family, item in decision["families"].items():
         if item.get("decision") == "run combination" and decision["status"].startswith(("final", "blocked: a comb")):
@@ -706,8 +719,12 @@ def write_assessment(paths: v3.V3Paths, kind: str, result: dict[str, Any], colle
     out = paths.root / "assessments" / f"{kind}_{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}"
     out.mkdir(parents=True, exist_ok=False)
     evidence = {name: record.get("evidence") for name, record in sorted(collected.items())}
+    extension = v3.load_extension(paths)
     payload = {"campaign_id": v3.CAMPAIGN_ID, "kind": kind, "assessor_sha256": sha256(Path(__file__)),
                "spec_sha256": spec_sha256, "manifest_sha256": sha256(paths.manifest),
+               "campaign_extension": None if extension is None else {
+                   "id": extension["extension_id"], "sha256": sha256(paths.extension),
+                   "assessor_is_the_one_recorded": extension["assessor_sha256"] == sha256(Path(__file__))},
                "runner_sha256": sorted({json.dumps(r["runner_sha256"], sort_keys=True)
                                         for r in collected.values() if r.get("status") == "completed"}),
                "unit_evidence": evidence, "result": _jsonable(result)}
@@ -718,9 +735,11 @@ def write_assessment(paths: v3.V3Paths, kind: str, result: dict[str, Any], colle
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--campaign-dir", type=Path, required=True)
-    parser.add_argument("--step", choices=("C", "D-A", "D-B", "E"), required=True,
-                        help="D-A / D-B assess every round up to that one, plus any combination runs")
+    parser.add_argument("--step", choices=("C", "D-A", "D-R", "D-B", "E"), required=True,
+                        help="D-A / D-R / D-B assess every round up to that one, plus any combination runs")
     parser.add_argument("--final-recipe", action="append", default=[], help="E: FAMILY=RECIPE, repeatable")
+    parser.add_argument("--not-tested-cost", nargs="*", default=[], choices=v3.COST_GATED,
+                        help="D-B: cost-gated candidates recorded as 'not tested (cost)' (never run)")
     args = parser.parse_args(argv)
     spec = load_spec()
     paths = v3.V3Paths(args.campaign_dir)
@@ -733,11 +752,12 @@ def main(argv=None) -> int:
         result["regression_run"] = (None if regression is None else
                                     {"status": regression["status"], "gate": regression.get("gate")})
     elif args.step in ROUND_ORDER:
+        not_tested = tuple(args.not_tested_cost)
         collected = collect(paths, step_d_base_units(args.step))
-        combos = required_combinations(collected, spec, through=args.step)
+        combos = required_combinations(collected, spec, through=args.step, not_tested=not_tested)
         if combos:
             collected.update(collect(paths, combos))
-        result = {"step": args.step, **step_d_decision(collected, spec, through=args.step)}
+        result = {"step": args.step, **step_d_decision(collected, spec, through=args.step, not_tested=not_tested)}
     else:
         finals = dict(item.split("=", 1) for item in args.final_recipe)
         units = v3.step_units("C")[:9] + v3.step_units("E-neutral")

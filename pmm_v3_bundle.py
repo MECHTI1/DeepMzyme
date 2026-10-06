@@ -13,6 +13,11 @@ aborts the build: held-out data never travels.
 apply (GPU host; standard library only): verifies the archive hashes, extracts the code into a NEW
 directory and the folds into another, and re-verifies the source-tree, runner, specification and fold
 hashes before anything can run. It never starts compute.
+
+A later code drop for the same campaign (extension 1, step D Round R) is built with --parent-manifest,
+which refuses a different source tree, specification or fold set, and applied with
+--reuse-existing-folds into its own new code directory: the first code directory and the fold set on
+the host stay untouched, and the existing fold files must equal the bundled ones byte for byte.
 """
 
 from __future__ import annotations
@@ -99,7 +104,19 @@ def require_a3_acceptance(report_path: Path, src_sha: str) -> dict:
             "tested_src_tree_sha256": acceptance["tested_src_tree_sha256"]}
 
 
-def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS, a3_acceptance: Path | None = None) -> dict:
+def require_same_campaign_inputs(parent_path: Path, *, src_sha: str, spec_sha: str, fold_sha: str) -> dict:
+    """A later code drop keeps the parent bundle's source tree, specification and fold set."""
+    parent = json.loads(Path(parent_path).read_text())
+    differing = [key for key, value in (("source_tree_sha256", src_sha), ("spec_sha256", spec_sha)) if parent.get(key) != value]
+    if parent.get("folds", {}).get("fold_membership_sha256") != fold_sha:
+        differing.append("fold_membership_sha256")
+    require(not differing, f"the new bundle differs from its parent in {differing}; only runner files may change")
+    return {"manifest_sha256": sha256_file(Path(parent_path)), "git_commit": parent.get("git_commit"),
+            "runner_sha256": parent.get("runner_sha256")}
+
+
+def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS, a3_acceptance: Path | None = None,
+          parent_manifest: Path | None = None) -> dict:
     tracked = [n for n in _git("ls-files", "-z").split("\0") if n]
     names = sorted(n for n in tracked if allowed(n))
     for required in (*RUNTIME_FILES, *SPEC_FILES):
@@ -111,6 +128,11 @@ def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS, a3_acceptance: Path | N
              for n in names}
     require(a3_acceptance is not None, "build needs --a3-acceptance (the accepted A3 report for this source)")
     a3 = require_a3_acceptance(a3_acceptance, tree_sha256(files))  # refused before anything is written
+    parent = None
+    if parent_manifest is not None:  # refused before anything is written
+        parent = require_same_campaign_inputs(
+            parent_manifest, src_sha=tree_sha256(files), spec_sha=sha256_bytes(files[SPEC_FILES[0]]),
+            fold_sha=sha256_file(Path(folds) / "fold_membership.csv"))
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=False)
     code = out_dir / "v3_code.tar.gz"
@@ -148,7 +170,7 @@ def build(out_dir: Path, *, folds: Path = DEFAULT_FOLDS, a3_acceptance: Path | N
                 "folds": {"path": fold_archive.name, "sha256": sha256_file(fold_archive), "fold_set": Path(folds).name,
                           "fold_membership_sha256": sha256_bytes(fold_files["fold_membership.csv"])},
                 "source_tree_sha256": src_sha, "runner_sha256": runner_sha256(files), "spec_sha256": spec_sha,
-                "a3_acceptance": a3,
+                "a3_acceptance": a3, "parent_bundle": parent,
                 "held_out_check": f"no member path has a component in {sorted(FORBIDDEN_PARTS)}"}
     (out_dir / "v3_bundle_manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return manifest
@@ -166,14 +188,15 @@ def _members(tar: tarfile.TarFile, root: str) -> dict[str, bytes]:
     return out
 
 
-def apply(bundle_dir: Path, *, code_dest: Path, folds_parent: Path) -> dict:
+def apply(bundle_dir: Path, *, code_dest: Path, folds_parent: Path, reuse_existing_folds: bool = False) -> dict:
     bundle_dir = Path(bundle_dir)
     manifest = json.loads((bundle_dir / "v3_bundle_manifest.json").read_text())
     for key in ("code", "folds"):
         require(sha256_file(bundle_dir / manifest[key]["path"]) == manifest[key]["sha256"], f"{key} archive changed")
     code_dest, folds_dest = Path(code_dest), Path(folds_parent) / manifest["folds"]["fold_set"]
     require(not code_dest.exists(), f"{code_dest} exists; apply only into a new directory")
-    require(not folds_dest.exists(), f"{folds_dest} exists; apply only into a new directory")
+    require(reuse_existing_folds or not folds_dest.exists(), f"{folds_dest} exists; apply only into a new directory")
+    require(not reuse_existing_folds or folds_dest.is_dir(), f"{folds_dest} is missing; there is no fold set to reuse")
     with tarfile.open(bundle_dir / manifest["code"]["path"], "r:gz") as tar:
         files = _members(tar, manifest["code_root"])
     require(sorted(files) == sorted(manifest["code"]["members"]), "code archive members differ from the manifest")
@@ -184,7 +207,11 @@ def apply(bundle_dir: Path, *, code_dest: Path, folds_parent: Path) -> dict:
         fold_files = _members(tar, manifest["folds"]["fold_set"])
     require(sha256_bytes(fold_files["fold_membership.csv"]) == manifest["folds"]["fold_membership_sha256"],
             "fold file hash differs")
-    for dest, content in ((code_dest, files), (folds_dest, fold_files)):
+    if reuse_existing_folds:  # a later code drop: the fold set already on the host must be the bundled one
+        changed = sorted(name for name, data in fold_files.items()
+                         if not (folds_dest / name).is_file() or (folds_dest / name).read_bytes() != data)
+        require(not changed, f"the existing fold set differs from the bundled one in {changed}")
+    for dest, content in ((code_dest, files),) if reuse_existing_folds else ((code_dest, files), (folds_dest, fold_files)):
         for relative, data in content.items():
             path = dest / relative
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +219,8 @@ def apply(bundle_dir: Path, *, code_dest: Path, folds_parent: Path) -> dict:
     on_disk = {str(p.relative_to(code_dest)): p.read_bytes() for p in code_dest.rglob("*") if p.is_file()}
     require(tree_sha256(on_disk) == manifest["source_tree_sha256"], "extracted source-tree hash differs")
     receipt = {"applied_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "code_dest": str(code_dest),
-               "folds_dest": str(folds_dest), "manifest_sha256": sha256_file(bundle_dir / "v3_bundle_manifest.json"),
+               "folds_dest": str(folds_dest), "folds_reused": bool(reuse_existing_folds),
+               "runner_sha256": manifest["runner_sha256"], "manifest_sha256": sha256_file(bundle_dir / "v3_bundle_manifest.json"),
                "source_tree_sha256": manifest["source_tree_sha256"], "git_commit": manifest["git_commit"]}
     (code_dest / "v3_bundle_apply_receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     return receipt
@@ -206,13 +234,19 @@ def main(argv=None) -> int:
     b.add_argument("--folds", type=Path, default=DEFAULT_FOLDS)
     b.add_argument("--a3-acceptance", type=Path, required=True,
                    help="a3_report.json (or a3_acceptance.json) whose verdict accepted this source tree")
+    b.add_argument("--parent-manifest", type=Path,
+                   help="v3_bundle_manifest.json of the campaign's first bundle (a later code drop only)")
     a = sub.add_parser("apply")
     a.add_argument("--bundle-dir", type=Path, required=True)
     a.add_argument("--code-dest", type=Path, required=True)
     a.add_argument("--folds-parent", type=Path, required=True)
+    a.add_argument("--reuse-existing-folds", action="store_true",
+                   help="a later code drop: verify the fold set already on the host instead of extracting it")
     args = parser.parse_args(argv)
-    result = (build(args.out_dir, folds=args.folds, a3_acceptance=args.a3_acceptance) if args.cmd == "build"
-              else apply(args.bundle_dir, code_dest=args.code_dest, folds_parent=args.folds_parent))
+    result = (build(args.out_dir, folds=args.folds, a3_acceptance=args.a3_acceptance,
+                    parent_manifest=args.parent_manifest) if args.cmd == "build"
+              else apply(args.bundle_dir, code_dest=args.code_dest, folds_parent=args.folds_parent,
+                         reuse_existing_folds=args.reuse_existing_folds))
     print(json.dumps({k: v for k, v in result.items() if k != "code"}, indent=2, sort_keys=True, default=str))
     return 0
 

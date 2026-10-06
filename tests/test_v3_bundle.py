@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 import sys
@@ -95,3 +96,72 @@ def test_a3_acceptance_must_be_accepted_and_bound_to_the_bundled_tree(tmp_path):
             bundle.require_a3_acceptance(report, "a")
     report.write_text(json.dumps({"acceptance": {"verdict": "accepted", "tested_src_tree_sha256": "a"}}))
     assert bundle.require_a3_acceptance(report, "a")["tested_src_tree_sha256"] == "a"
+
+
+def hand_built_bundle(directory: Path, *, runner_marker: bytes = b"") -> dict:
+    """A bundle written without git, so a later code drop can be applied next to the first one."""
+    directory.mkdir(parents=True)
+    files = {name: b"# runner " + name.encode() + runner_marker for name in bundle.RUNNER_FILES}
+    files.update({bundle.SPEC_FILES[0]: b"{}", "src/train.py": b"print('train')\n", "pmm_v3_bundle.py": b"# tool\n"})
+    fold_files = {name: (b"source_uid,fold\nu1,0\n" if name == "fold_membership.csv" else b"{}")
+                  for name in bundle.FOLD_FILES}
+    for archive, root, content in (("v3_code.tar.gz", bundle.CODE_ROOT, files), ("v3_folds.tar.gz", "v3-test", fold_files)):
+        with tarfile.open(directory / archive, "w:gz") as tar:
+            for name, data in content.items():
+                info = tarfile.TarInfo(f"{root}/{name}")
+                info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+    manifest = {"git_commit": "0" * 40, "code_root": bundle.CODE_ROOT,
+                "code": {"path": "v3_code.tar.gz", "sha256": bundle.sha256_file(directory / "v3_code.tar.gz"),
+                         "members": sorted(files)},
+                "folds": {"path": "v3_folds.tar.gz", "sha256": bundle.sha256_file(directory / "v3_folds.tar.gz"),
+                          "fold_set": "v3-test",
+                          "fold_membership_sha256": bundle.sha256_bytes(fold_files["fold_membership.csv"])},
+                "source_tree_sha256": bundle.tree_sha256(files), "runner_sha256": bundle.runner_sha256(files),
+                "spec_sha256": bundle.sha256_bytes(files[bundle.SPEC_FILES[0]])}
+    (directory / "v3_bundle_manifest.json").write_text(json.dumps(manifest))
+    return manifest
+
+
+def test_a_later_code_drop_goes_to_its_own_directory_and_reuses_the_verified_fold_set(tmp_path):
+    first = hand_built_bundle(tmp_path / "first")
+    later = hand_built_bundle(tmp_path / "later", runner_marker=b" (extension 1)")
+    vm = tmp_path / "vm"
+    bundle.apply(tmp_path / "first", code_dest=vm / "DeepMzyme_v3", folds_parent=vm / "folds")
+    original = {p: p.read_bytes() for p in sorted((vm / "DeepMzyme_v3").rglob("*")) if p.is_file()}
+    with pytest.raises(bundle.BundleError, match="exists"):  # the default never touches an existing fold set
+        bundle.apply(tmp_path / "later", code_dest=vm / "DeepMzyme_v3_ext1", folds_parent=vm / "folds")
+    with pytest.raises(bundle.BundleError, match="exists"):  # nor an existing code directory
+        bundle.apply(tmp_path / "later", code_dest=vm / "DeepMzyme_v3", folds_parent=vm / "folds",
+                     reuse_existing_folds=True)
+    with pytest.raises(bundle.BundleError, match="no fold set to reuse"):
+        bundle.apply(tmp_path / "later", code_dest=vm / "DeepMzyme_v3_ext1", folds_parent=vm / "elsewhere",
+                     reuse_existing_folds=True)
+    fold_file = vm / "folds" / "v3-test" / "fold_membership.csv"
+    kept = fold_file.read_bytes()
+    fold_file.write_bytes(kept + b"u2,1\n")
+    with pytest.raises(bundle.BundleError, match="existing fold set differs"):
+        bundle.apply(tmp_path / "later", code_dest=vm / "DeepMzyme_v3_ext1", folds_parent=vm / "folds",
+                     reuse_existing_folds=True)
+    assert not (vm / "DeepMzyme_v3_ext1").exists()  # refused before anything was written
+    fold_file.write_bytes(kept)
+    receipt = bundle.apply(tmp_path / "later", code_dest=vm / "DeepMzyme_v3_ext1", folds_parent=vm / "folds",
+                           reuse_existing_folds=True)
+    assert receipt["folds_reused"] is True and receipt["runner_sha256"] == later["runner_sha256"]
+    assert later["runner_sha256"] != first["runner_sha256"] and later["source_tree_sha256"] == first["source_tree_sha256"]
+    assert {p: p.read_bytes() for p in sorted((vm / "DeepMzyme_v3").rglob("*")) if p.is_file()} == original
+    assert fold_file.read_bytes() == kept
+
+
+def test_a_later_bundle_must_keep_its_parents_source_specification_and_folds(tmp_path):
+    parent = hand_built_bundle(tmp_path / "parent")
+    same = dict(src_sha=parent["source_tree_sha256"], spec_sha=parent["spec_sha256"],
+                fold_sha=parent["folds"]["fold_membership_sha256"])
+    bound = bundle.require_same_campaign_inputs(tmp_path / "parent" / "v3_bundle_manifest.json", **same)
+    assert bound == {"manifest_sha256": bundle.sha256_file(tmp_path / "parent" / "v3_bundle_manifest.json"),
+                     "git_commit": parent["git_commit"], "runner_sha256": parent["runner_sha256"]}
+    for key, label in (("src_sha", "source_tree_sha256"), ("spec_sha", "spec_sha256"),
+                       ("fold_sha", "fold_membership_sha256")):
+        with pytest.raises(bundle.BundleError, match=label):
+            bundle.require_same_campaign_inputs(tmp_path / "parent" / "v3_bundle_manifest.json",
+                                                **{**same, key: "f" * 64})
