@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-06 step C complete; regularization amendment planned, log v3-017)
+Status: active (2026-10-06 step C complete; amended step D CPU-verified, log v3-018)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
@@ -22,6 +22,6 @@ Fold set: `v3-seqid90-s42-b2`, frozen 2026-10-04 ([log v3-005](log.md#v3-005)).
 Assessment rules: [frozen A4 specification](assessment_spec.md) (2026-10-05).
 How to run: [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3).
 Runtime and run identities are recorded before use; v2 artifacts stay untouched.
-The [regularization amendment](log.md#v3-017) needs CPU integration before D.
+The [regularization amendment](log.md#v3-017) is [implemented](log.md#v3-018).
 Execution follows the authorization and readiness state in
 [STATUS](../../../EXPERIMENT_STATUS.md); this amendment does not raise the ceiling.

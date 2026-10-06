@@ -3,6 +3,195 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-018
+
+2026-10-06 — **amended step D: CPU integration, readiness gate, early-stopping
+audit and cost reforecast** (CPU only: no fit, GPU action or test access).
+Scope, from the user's continuation request of the same day: implement and
+execute the amended step D, Round R included, within the existing ceiling. It
+grants no larger budget, Round C, new model family, new training objective or
+other checkpoint policy. Commits `43d26ff` and `d03c047` (code and tests).
+
+**Implemented** (planned in [v3-017](#v3-017), now code):
+
+- Extension 1, `v3-ext1-round-r`: seven Round R recipes (`wd001`, `wd01`,
+  `wd10`, `headdrop01`, `headdrop03`, `resdrop02`, `esmdrop04`), groups of
+  alternative strengths, round order A → R → B and the 26-fit Round R list.
+  `--action extend` records `campaign_extension.json` once, before the first
+  step D fit. It binds the prepared manifest, runner, recipe, profile, source,
+  step-B setting and A4 hashes and every completed run to the new runner
+  files. It is refused if step D has started or if the new code rebuilds any
+  completed unit's identity differently. Later runs bind the record; earlier
+  runs are reused by a checked identity and are never relabelled.
+- Assessor: Round R, the amended stopping rule, one strength per setting in
+  the single combination, and cost-gated candidates recorded as "not tested
+  (cost)". The numerical A4 gates are unchanged.
+- Bundle `43d26ff`, bound to the first bundle `20d5b06` (same source tree, A4
+  specification and folds). Four files differ: the two changed runner files,
+  the assessor and the bundle tool. It is applied into its own code directory;
+  the first one and the fold set on the VM are not touched.
+- Launcher `pmm_v3_step_d.py` for steps D and E, reusing the step-C lane, wait,
+  pull, recovery and evidence logic. Its gates are listed in the
+  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment).
+- CPU audits: effective decay, readiness and early stopping (below).
+
+**Readiness gate: ready** (`audits/d_readiness_20261006T180939Z`, SHA-256
+`a69fb126…`; 13 checks, all passed):
+
+- source tree, prepared recipes, profile, replay policy and A4 unchanged; only
+  `pmm_v3_campaign.py` and `run_pmm_v3_campaign.py` differ from the prepared
+  runner files;
+- unit counts 16 + 26 + 18, at most 4 combination fits, 36 + at most 8 for E;
+- each of the 58 candidates resolves to its control plus exactly its own
+  setting (Round R: one key, the intended value; `gvp_weight_decay` unset);
+- all 12 completed step C units keep their recorded identity and argv under
+  the new code; both seed-42 controls verify on the workstation (checkpoint,
+  predictions, replay);
+- alternatives cannot combine; R follows A without a pass; D ends after R
+  without any pass; a pass in R enters B;
+- screen thresholds are the frozen A4 values; none of 96 planned commands
+  names held-out data; the launcher refuses before readiness;
+- 256 tests passed in the gate (270 with the two v3 test files outside it); 43 CPU
+  smoke checks passed.
+
+A dry run on a workstation shadow of the real campaign root (evidence copy,
+frozen inputs, pulled runs; both bundles applied as on the VM) recorded the
+extension, reproduced the stored step C assessment exactly under the new
+code, reported Round A as 16 missing fits and refused a changed runner file.
+
+Limits: the real extension record is written on the VM in the first step D
+session, where `extend` repeats these checks. The decay audit uses terminal
+checkpoint weights (initial weights are not saved) and this workstation's
+torch 2.11.0; the VM has the same version with another CUDA build. Step E
+launcher gates are covered by tests only. Step F tooling (refit, test pass)
+is not part of this extension. The first readiness report was "not ready"
+for a tool reason (its test subprocess inherited an MKL setting) and is kept
+as `audits/not_ready_d_readiness_20261006T175949Z_tool_env_error`.
+
+**Effective weight decay** (`audits/d_decay_audit_20261006T175933Z`, SHA-256
+`db1e6ad2…`; real AdamW and cosine schedule, zero gradients, 18,550 steps =
+371 per epoch × 50, from the real runs' step counters; 5,927 training ions).
+Cumulative factor on a weight that receives no gradient signal, ideal / FP32:
+
+| Family, group (parameter tensors) | Initial LR | 0.0001 (baseline) | 0.01 | 0.1 | 1.0 |
+|---|---|---|---|---|---|
+| Only-GVP, all (115) | 3e-4 | 0.99972 / 0.99990 | 0.9720 / 0.9720 | 0.7529 / 0.7529 | 0.0585 / 0.0585 |
+| Late fusion, GVP rate (84) | 3e-4 | 0.99972 / 0.99990 | 0.9720 / 0.9720 | 0.7529 / 0.7529 | 0.0585 / 0.0585 |
+| Late fusion, base rate (31) | 3e-5 | 0.99997 / 1.00000 | 0.9972 / 0.9971 | 0.9720 / 0.9720 | 0.7529 / 0.7529 |
+
+- The baseline coefficient is numerically inert, as
+  [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)
+  states: 0.01% in the GVP-rate group and exactly nothing in FP32 in the
+  base-rate group.
+- One coefficient acts about ten times more strongly on the GVP-rate group
+  than on the base-rate group (ESM branch, gate, head). In late fusion,
+  `1.0` removes 94% against 25%, `0.1` 25% against 2.8%, `0.01` 2.8% against
+  0.3%.
+- For every tested strength the median FP32 factor is within 0.0002 of the
+  ideal one. No parameter is exempt; parameters without a gradient are never
+  updated (15 tensors in Only-GVP, 3 in late fusion).
+- `structlr` moves 9 tensors to the GVP rate (93 / 22). A combination of
+  `structlr` with a decay strength is audited again before it runs.
+
+This measures the decay operation only. It predicts neither trained weight
+norms nor accuracy.
+
+**Early-stopping audit: exploratory, separate from the official results**
+(`audits/early_stopping_audit_20261006T174022Z`). No trainer, checkpoint or A4
+change. Rule simulated sequentially on logged validation common-four BA:
+patience 10, `min_delta` 0, at most 50 epochs, earliest epoch on a tie, best
+epoch before the stop. Nine cosine fold-0 runs (seed 42):
+
+| Run | Min val-loss epoch | Best BA epoch, full history (retrospective) | Simulated stop | Simulated selection: epoch, BA | Official epoch 50 BA | Difference |
+|---|---|---|---|---|---|---|
+| Only-ESMC four | 6 | 3 | 13 | 3, 72.1 | 67.9 | +4.2 |
+| Only-ESMC five | 8 | 8 | 18 | 8, 72.2 | 69.6 | +2.6 |
+| Only-ESMC six | 8 | 8 | 18 | 8, 72.4 | 69.4 | +3.1 |
+| Only-GVP four | 12 | 33 | 43 | 33, 69.8 | 64.7 | +5.1 |
+| Only-GVP five | 7 | 7 | 17 | 7, 69.7 | 66.1 | +3.6 |
+| Only-GVP six | 7 | 7 | 17 | 7, 68.7 | 62.0 | +6.6 |
+| Late fusion four | 7 | 4 | 14 | 4, 75.2 | 71.6 | +3.6 |
+| Late fusion five | 7 | 9 | 19 | 9, 76.0 | 71.8 | +4.3 |
+| Late fusion six | 7 | 34 | 15 | 5, 75.7 | 74.1 | +1.5 |
+
+- The rule stops all nine runs early (epochs 13–43, a mean of 31 epochs
+  saved). Its selected epoch is above epoch 50 in all nine: +1.5 to +6.6
+  points, mean +3.8. The selected-minus-terminal recall differences average
+  Mn +7.9, Cu +6.2, Zn +0.7 and Class VIII +0.5 points; single runs range
+  from −6.5 (Zn) to +20.0 (Mn).
+- One later improvement would have been missed (late fusion six-class,
+  epoch 34, under 0.1 point).
+- **None of the nine selected checkpoints was saved.** Every score in the
+  "simulated selection" column is a logged hypothetical, not a recovered or
+  replayed model.
+- The difference is optimistic: the epoch is chosen and scored on the same
+  validation fold. This is the selection luck of
+  [TECH-027](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules),
+  which the terminal rule was chosen to avoid. It is not an estimate of the
+  gain on new data.
+- Stopping a 50-epoch cosine run at epoch t is not a t-epoch cosine run, so
+  a shorter schedule is not measured here. The validation-loss minimum
+  (epochs 6–12) is not the BA optimum in every run.
+- Fixed-LR runs, kept apart (four runs, the old-fold regression included):
+  +3.1 to +11.3 points, on histories that oscillate late ([v3-016](#v3-016)).
+
+No rule is adopted. The audit is repeated on the two-seed step D histories;
+regularization may change the useful duration. If earlier stopping still
+looks useful then, the proposal will be a separate prospective comparison of
+a shorter fixed duration, frozen before confirmation and used in the final
+refit as well.
+
+**Forecast** (measured warm three-lane times of [v3-016](#v3-016); the
+controller's gross rate of $0.879 per hour; storage $0.55 per day):
+
+| Work | Fits | Three-lane hours |
+|---|---|---|
+| D Round A | 16 | 3.4 |
+| D Round R | 26 | 5.5 |
+| D Round B, if entered | 14 runnable | 3.7 (four cold cache builds) |
+| D combination | at most 4 | at most 1.3 |
+| E neutral | 36 | 7.1 |
+| E improvement | at most 8 | at most 1.7 |
+| F refit and test pass | — | 1.5 |
+
+- Spent by 2026-10-07 00:00 UTC: $5.52 compute (B $1.88, C $3.64) plus about
+  $0.69 storage = **about $6.2; about $33.8 remains**.
+- Full path (B entered, both families improved): 24.2 fit hours, about 3.6 h
+  of session overhead over about 12 sessions, 1.2 h of lane and admission
+  slack and 1.0 h for reruns: about 30 h, $26.4. Storage for about 7 more
+  days: $3.9. **Total about $36.5 of $40; margin about $3.5.**
+- If no candidate passes in A or R (no B, combination or improvement runs):
+  about $28.6 in total.
+- Reserved for confirmation and the final refit (E neutral, F, their sessions
+  and storage): about $10.3. Step D is not allowed to consume it.
+- The four cost-gated augmentation fits are outside this forecast. Each
+  rebuilds its graphs every epoch (7.6–9.5 h of graph building per fit on
+  this PC, [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3)),
+  so they do not fit the ceiling. Without the user's recorded OK they are
+  "not tested (cost)".
+- Reforecast before Round B and before step E. A zone stockout that delays
+  sessions adds storage days; the margin covers about six.
+
+Session plan: per UTC day one session at the 4-hour cap and one of about
+2 hours (6-hour daily cap). Each launches three units per round and refills
+lanes as units end; the admission rule (1.25 × forecast + 900 s) is
+unchanged. The first session applies the bundle and records the extension
+before any fit.
+
+Open decisions (asked of the user; work that does not depend on them
+continues): the final-test label, due before step E; the cost-gated
+augmentations, due at Round B (default "not tested (cost)").
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step C complete: all 12 fold-0 cells, regression gate passed; step D next)
+- Current campaign: pmm_ion_metal_v3, step C complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A–C done ([log v3-016](docs/campaigns/pmm_ion_metal_v3/log.md#v3-016)): fold-0 baselines and diagnostic closeout (exploratory); no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $34.2 left 2026-10-06). Step F only after its gates and the final-test label decision; no Round C.
+Next: CPU integration and checks for amended D (A → regularization R → conditional B) and the D/E launcher; then execution within recorded scope. The [planning amendment](docs/campaigns/pmm_ion_metal_v3/log.md#v3-017) is not yet implemented; it preserves A4 and requires a fresh D–F cost forecast before fits.
+```
+
 ## v3-017
 
 2026-10-06 — **regularization planning amendment**, requested by the user after

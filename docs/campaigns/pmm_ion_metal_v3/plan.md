@@ -226,9 +226,10 @@ setting from its control; fold file, code commit, cache identity and the step-B
 configuration stay fixed.
 
 The 2026-10-06 user-requested regularization amendment ([log v3-017](log.md#v3-017))
-adds Round R between A and B. It is planned, pending the CPU readiness gate
-below. It was motivated by the completed step C curves, so its fold-0 results
-are exploratory development evidence. The baseline neutral target test and
+adds Round R between A and B. Its CPU integration and readiness checks were
+completed on 2026-10-06 ([log v3-018](log.md#v3-018)). It was motivated by the
+completed step C curves, so its fold-0 results are exploratory development
+evidence. The baseline neutral target test and
 frozen A4 numerical assessment rules are unchanged.
 
 - Controls: the step C four-class baseline of each family (seed 42) plus one
@@ -302,13 +303,14 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 
 **CPU readiness for the amended D.** Before its first fit, register and freeze
 the complete A/R/B recipe list, run identities, round order and mutually
-exclusive strengths. The existing runner and assessor implement A/B only;
-their recipe registry, stopping and combination handling need an explicit
-versioned extension, plus the workstation D/E launcher. Preserve the original
-manifest, frozen A4 files, source bundle, assessments and run receipts. Bind
-the extension to their hashes, verify unchanged baseline commands and source,
-and support checked reuse of C and A controls without relabeling old runs or
-bypassing hash guards. This docs amendment does not implement that extension.
+exclusive strengths. This is extension 1 of the campaign (`v3-ext1-round-r`),
+implemented on 2026-10-06 ([log v3-018](log.md#v3-018)) with the workstation
+D/E launcher; the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+owns its commands. It preserves the original manifest, frozen A4 files, source
+bundle, assessments and run receipts, binds itself to their hashes, verifies
+unchanged baseline commands and source, and reuses the C controls by a checked
+identity without relabeling old runs or bypassing hash guards. The extension
+record is written on the campaign root once, before the first D fit.
 Required CPU checks: effective optimizer settings, complete unit counts,
 one-setting overrides, round stopping, incompatible-strength rejection,
 unchanged numerical gates, provenance/replay reuse and launch refusal before

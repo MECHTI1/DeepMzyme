@@ -344,7 +344,7 @@ def check_tests(skip: bool) -> dict[str, Any]:
 
 def git_state() -> dict[str, Any]:
     def run(*args: str) -> str:
-        return subprocess.run(["git", "--no-optional-locks", *args], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        return subprocess.run(["git", "--no-optional-locks", *args], cwd=ROOT, capture_output=True, text=True).stdout.rstrip()
 
     return {"commit": run("rev-parse", "HEAD"), "branch": run("rev-parse", "--abbrev-ref", "HEAD"),
             "uncommitted_paths": [line[3:] for line in run("status", "--porcelain").splitlines()]}

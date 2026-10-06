@@ -38,7 +38,8 @@ decisions: [log](campaigns/pmm_ion_metal_v3/log.md); assessment rules:
 GPU start uses applicable recorded authorization within the budget; see
 [STATUS](../EXPERIMENT_STATUS.md). Owners:
 `pmm_v3_campaign.py` (profile, recipes, units, guards), `run_pmm_v3_campaign.py`
-(command line), `pmm_v3_assessment.py` (all numbers and decisions). The v2
+(command line), `pmm_v3_assessment.py` (all numbers and decisions); steps D–E are
+launched with `pmm_v3_step_d.py` ([Round R section](#v3-step-d-regularization-amendment)). The v2
 tools and the frozen `_code/pmm_core_scope_v2` checkout stay untouched.
 
 Order (each step refuses to run out of order):
@@ -55,7 +56,7 @@ Order (each step refuses to run out of order):
 3. **Steps C–E units**, one per lane (`--lane 0..2`, at most the recorded number
    of concurrent lanes), each verified, independently replayed and persisted;
    the step C regression run uses `--action regression`.
-4. **Assess** with `pmm_v3_assessment.py --step C|D-A|D-B|E`; `D-B` pools the
+4. **Assess** with `pmm_v3_assessment.py --step C|D-A|D-R|D-B|E`; `D-B` pools the
    passes of every completed round and resolves combination runs. It refuses
    to run until the A4 specification hash is pinned and matches the campaign.
 
@@ -239,12 +240,13 @@ near 1.9 GB of RAM after the 2026-10-05 ESM-row fix.
 
 ### v3 step D regularization amendment
 
-**Planned, not yet executable through the campaign runner.** Requested on
-2026-10-06 ([decision and forecast](campaigns/pmm_ion_metal_v3/log.md#v3-017)).
-The trainer implements these flags, but the frozen campaign registry and
-assessor do not yet implement Round R. Complete the
-[plan's CPU readiness gate](campaigns/pmm_ion_metal_v3/plan.md#steps) before
-launching amended D. Do not pass a fabricated `D-R` option to the existing CLI.
+**Implemented and CPU-verified on 2026-10-06** ([log v3-018](campaigns/pmm_ion_metal_v3/log.md#v3-018));
+requested the same day ([decision v3-017](campaigns/pmm_ion_metal_v3/log.md#v3-017)). Round R runs
+through extension 1 of the campaign (`v3-ext1-round-r`): `campaign_extension.json`, recorded once on
+the campaign root before the first step D fit. The prepared manifest, the frozen A4 files, the first
+bundle and every completed run stay as they are. The extension binds their hashes to the new runner
+files and definitions, and refuses to be recorded unless the new code rebuilds the recorded identity
+of every completed campaign unit.
 
 Fixed context: Only-GVP and graph-level late fusion, `four_class`, new fold 0,
 seeds 42/43; existing data/features, group membership, class weights, loss,
@@ -253,12 +255,12 @@ row/strength below is a separate baseline-relative recipe, not a Cartesian
 product. Reuse the matched C seed-42 and A seed-43 controls and completed A
 dropout arms after checking identity.
 
-| Setting and existing trainer flag | Baseline / reused A strength | New R strengths | Families | Additional fits |
+| Setting and existing trainer flag | Baseline / reused A strength | New R strengths (recipe ID) | Families | Additional fits |
 |---|---|---|---|---:|
-| AdamW `--weight-decay` | baseline `0.0001` | `0.01`, `0.1`, `1.0` | GVP, fusion | 12 |
-| Classifier `--head-mlp-dropout` | baseline `0.2` | `0.1`, `0.3` | GVP, fusion | 8 |
-| GVP `--gvp-residual-dropout` | baseline `0`; A `0.1` | `0.2` | GVP, fusion | 4 |
-| ESM branch `--esm-modality-dropout` | baseline `0`; A `0.2` | `0.4` | fusion | 2 |
+| AdamW `--weight-decay` | baseline `0.0001` | `0.01` (`wd001`), `0.1` (`wd01`), `1.0` (`wd10`) | GVP, fusion | 12 |
+| Classifier `--head-mlp-dropout` | baseline `0.2` | `0.1` (`headdrop01`), `0.3` (`headdrop03`) | GVP, fusion | 8 |
+| GVP `--gvp-residual-dropout` | baseline `0`; A `0.1` | `0.2` (`resdrop02`) | GVP, fusion | 4 |
+| ESM branch `--esm-modality-dropout` | baseline `0`; A `0.2` | `0.4` (`esmdrop04`) | fusion | 2 |
 
 Round R totals **26 additional fits**, with no additional baseline controls.
 A plus R is 42 fits; if B is entered, A/R/B is up to 60, plus the existing
@@ -266,6 +268,13 @@ allowance of at most four combination fits (two seeds per family). B's four
 augmentation fits retain their cost gate. No automatic follow-on search when
 the best strength lies at a boundary. A wider range or separate branch decay
 would need a dated plan amendment before its runs.
+
+A Round R recipe appends its one flag after the baseline's flag of the same
+name, and the trainer resolves the later value; the readiness report lists the
+resolved difference of every candidate against its control. Strengths of one
+setting are alternatives and cannot be combined (`wd001`/`wd01`/`wd10`,
+`headdrop01`/`headdrop03`, `resdrop01`/`resdrop02`, `gvpaux03`/`esmdrop02`/`esmdrop04`).
+A combination is named `combo-` plus its sorted recipe IDs joined by `+`.
 
 For decay, leave `gvp_weight_decay=None`, so the GVP group inherits the tested
 coefficient; do not introduce parameter exemptions. The same coefficient can
@@ -279,6 +288,53 @@ a proposed combination that changes learning-rate group membership. AdamW's
 decay is learning-rate dependent ([PyTorch AdamW](https://docs.pytorch.org/docs/stable/generated/torch.optim.AdamW.html));
 the local evidence and motivation are in [TECH-029](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect).
 
+Commands (workstation, from the v3 worktree; `pmm_v3_step_d.py` uses the standard
+library only and reuses the step-C lane, wait, pull, recovery and evidence logic):
+
+```bash
+P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+DATA=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3
+# CPU readiness, no GPU: the decay audit, then the gate report the launcher requires
+$P audit_v3_effective_decay.py                    # add --recipe combo-... for a combination with structlr
+$P audit_v3_step_d_readiness.py                   # writes $DATA/audits/d_readiness_<UTC>/readiness_report.json
+# Extension bundle from the committed tree, bound to the first bundle (same source, A4 spec and folds)
+$P pmm_v3_bundle.py build --out-dir $DATA/bundles/COMMIT12 \
+  --a3-acceptance $DATA/audits/a3_regression_20261005T194214Z/a3_report.json \
+  --parent-manifest $DATA/bundles/20d5b06/v3_bundle_manifest.json
+# First step D session only (VM running): new code directory, then the extension record
+$P pmm_v3_step_d.py push-bundle --bundle-dir $DATA/bundles/COMMIT12
+$P pmm_v3_step_d.py extend
+# Every step D session
+$P pmm_v3_step_d.py status
+$P pmm_v3_step_d.py launch UNIT@0 UNIT@1 UNIT@2 --no-wait
+$P pmm_v3_step_d.py wait --any                    # then launch into the freed lane
+$P pmm_v3_step_d.py assess --round D-A            # later D-R, then D-B [--not-tested-cost posnoise01 outerdrop01]
+$P pmm_v3_step_d.py evidence                      # before every vm-stop
+# Step E, after the final-test label decision and a final step D assessment
+$P pmm_v3_step_d.py record-e-gate --label LABEL --log-entry v3-NNN
+$P pmm_v3_step_d.py --step E launch UNIT@0 UNIT@1 UNIT@2 --no-wait
+```
+
+`units` and `gates` list the frozen rounds and the current gate records offline.
+The launcher refuses, before anything starts:
+
+- any unit without a ready CPU readiness report for exactly the worktree's
+  runner files, or without a VM extension record that froze the same files;
+- a Round R unit while a Round A unit has not started (R then runs whatever A shows);
+- a Round B unit without a checked assessment of A and R that shows a pass in
+  either family; without one, step D ends after R and the baselines are kept;
+- a cost-gated augmentation (`posnoise01`, `outerdrop01`) without the user's
+  recorded OK (`record-cost-gate`) and a measured `--fit-seconds`; the assessor
+  records it as "not tested (cost)" with `--not-tested-cost`;
+- any combination other than the one recipe per family that the assessment of
+  every completed round requires;
+- a step E unit before the recorded final-test label decision and a final
+  step D assessment.
+
+The VM runs from `/home/mechti/projects/DeepMzyme_v3_ext1`; the first code
+directory is not touched. A failed unit is rerun once, unchanged; after a
+second failure the candidate "did not pass the one-fold screen".
+
 Report terminal common-four BA and recalls, per-seed deltas, training/validation
 loss curves and the effective-decay audit. Loss curves are diagnostics; selection
 uses the unchanged [A4 D gate](campaigns/pmm_ion_metal_v3/assessment_spec.md#5-step-d-one-fold-screen-not-an-improvement-claim).
@@ -288,12 +344,17 @@ on folds 1–4 against the baseline under A4 before promotion, with fold 0 shown
 separately. Carry the selected configuration into the existing final-refit
 rule; the neutral four/five/six baseline grid remains separate.
 
-Readiness outputs: versioned recipe/identity extension and parent hashes,
-optimizer audit, CPU check report, complete unit inventory and updated D–F
-cost forecast. Execution outputs retain run configuration, histories,
-terminal validation predictions, independent replay and persistence receipts,
-and assessment tables including every tested strength and failure. The $40
-gross ceiling and one-shot held-out policy are unchanged.
+`audit_v3_early_stopping.py` is a separate, exploratory diagnostic on saved
+histories (patience 10 on validation common-four BA, simulated sequentially).
+It never changes a selected checkpoint: the official rule stays the terminal
+epoch, and a logged score of an unsaved epoch is not a recovered model.
+
+Readiness outputs: the extension record and its parent hashes, the decay audit,
+the readiness report with the complete unit inventory, and the D–F cost
+forecast in the campaign log. Execution outputs retain run configuration,
+histories, terminal validation predictions, independent replay and persistence
+receipts, and assessment tables including every tested strength and failure.
+The $40 gross ceiling and one-shot held-out policy are unchanged.
 
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
 
