@@ -35,7 +35,8 @@ implemented and unit-tested, not experimentally evaluated.
 Plan: [`docs/campaigns/pmm_ion_metal_v3/plan.md`](campaigns/pmm_ion_metal_v3/plan.md);
 decisions: [log](campaigns/pmm_ion_metal_v3/log.md); assessment rules:
 [`assessment_spec.md`](campaigns/pmm_ion_metal_v3/assessment_spec.md). Every
-GPU start needs the user's explicit OK within the recorded budget. Owners:
+GPU start uses applicable recorded authorization within the budget; see
+[STATUS](../EXPERIMENT_STATUS.md). Owners:
 `pmm_v3_campaign.py` (profile, recipes, units, guards), `run_pmm_v3_campaign.py`
 (command line), `pmm_v3_assessment.py` (all numbers and decisions). The v2
 tools and the frozen `_code/pmm_core_scope_v2` checkout stay untouched.
@@ -235,6 +236,64 @@ about 7.6 h (Only-GVP) to 9.5 h (late fusion) of graph building per fit, so they
 fall under the plan's cost gate. Each unit rehashes the 9.8 GB ESMC payload set
 before it starts (about a minute on the VM). One fold-0 validation replay peaks
 near 1.9 GB of RAM after the 2026-10-05 ESM-row fix.
+
+### v3 step D regularization amendment
+
+**Planned, not yet executable through the campaign runner.** Requested on
+2026-10-06 ([decision and forecast](campaigns/pmm_ion_metal_v3/log.md#v3-017)).
+The trainer implements these flags, but the frozen campaign registry and
+assessor do not yet implement Round R. Complete the
+[plan's CPU readiness gate](campaigns/pmm_ion_metal_v3/plan.md#steps) before
+launching amended D. Do not pass a fabricated `D-R` option to the existing CLI.
+
+Fixed context: Only-GVP and graph-level late fusion, `four_class`, new fold 0,
+seeds 42/43; existing data/features, group membership, class weights, loss,
+learning rates, FP32 execution and 50-epoch cosine terminal checkpoint. Each
+row/strength below is a separate baseline-relative recipe, not a Cartesian
+product. Reuse the matched C seed-42 and A seed-43 controls and completed A
+dropout arms after checking identity.
+
+| Setting and existing trainer flag | Baseline / reused A strength | New R strengths | Families | Additional fits |
+|---|---|---|---|---:|
+| AdamW `--weight-decay` | baseline `0.0001` | `0.01`, `0.1`, `1.0` | GVP, fusion | 12 |
+| Classifier `--head-mlp-dropout` | baseline `0.2` | `0.1`, `0.3` | GVP, fusion | 8 |
+| GVP `--gvp-residual-dropout` | baseline `0`; A `0.1` | `0.2` | GVP, fusion | 4 |
+| ESM branch `--esm-modality-dropout` | baseline `0`; A `0.2` | `0.4` | fusion | 2 |
+
+Round R totals **26 additional fits**, with no additional baseline controls.
+A plus R is 42 fits; if B is entered, A/R/B is up to 60, plus the existing
+allowance of at most four combination fits (two seeds per family). B's four
+augmentation fits retain their cost gate. No automatic follow-on search when
+the best strength lies at a boundary. A wider range or separate branch decay
+would need a dated plan amendment before its runs.
+
+For decay, leave `gvp_weight_decay=None`, so the GVP group inherits the tested
+coefficient; do not introduce parameter exemptions. The same coefficient can
+produce different shrinkage in different learning-rate groups. Before fitting,
+record parameter names, group learning rates, resolved decay coefficients,
+optimizer-step counts and the ideal shrink factor `product(1 - lr_step * wd)`
+over the actual schedule, together with a zero-gradient FP32 optimizer check.
+This is a numerical check of the decay operation, not a forecast of the trained
+weights or accuracy. Include baseline and every candidate; rerun the audit for
+a proposed combination that changes learning-rate group membership. AdamW's
+decay is learning-rate dependent ([PyTorch AdamW](https://docs.pytorch.org/docs/stable/generated/torch.optim.AdamW.html));
+the local evidence and motivation are in [TECH-029](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect).
+
+Report terminal common-four BA and recalls, per-seed deltas, training/validation
+loss curves and the effective-decay audit. Loss curves are diagnostics; selection
+uses the unchanged [A4 D gate](campaigns/pmm_ion_metal_v3/assessment_spec.md#5-step-d-one-fold-screen-not-an-improvement-claim).
+Apply the amended plan's A/R/B stopping and mutually exclusive strength rules;
+only one combination per family may be tested. Confirm the chosen improvement
+on folds 1–4 against the baseline under A4 before promotion, with fold 0 shown
+separately. Carry the selected configuration into the existing final-refit
+rule; the neutral four/five/six baseline grid remains separate.
+
+Readiness outputs: versioned recipe/identity extension and parent hashes,
+optimizer audit, CPU check report, complete unit inventory and updated D–F
+cost forecast. Execution outputs retain run configuration, histories,
+terminal validation predictions, independent replay and persistence receipts,
+and assessment tables including every tested strength and failure. The $40
+gross ceiling and one-shot held-out policy are unchanged.
 
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
 

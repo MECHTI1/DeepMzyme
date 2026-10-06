@@ -3,9 +3,9 @@
 Approved by the user on 2026-10-04 and revised the same day after a verified
 external review ([log v3-004](log.md#v3-004)). Decisions and their dates are in
 the [campaign log](log.md); scientific policy stays in [Plan](../../../Plan.md).
-Each step ends with a results table, a dated log entry and a commit. Nothing
-here authorizes a GPU start: every start needs the user's explicit OK within
-the recorded budget ceiling. Values marked "(default)" were set under the
+Each step ends with a results table, a dated log entry and a commit. GPU work
+uses the recorded authorization in [STATUS](../../../EXPERIMENT_STATUS.md);
+this plan does not increase its budget ceiling. Values marked "(default)" were set under the
 user's delegation; each may change only by a dated log entry before the first
 run of the step it affects.
 
@@ -225,6 +225,12 @@ run of the step it affects.
 setting from its control; fold file, code commit, cache identity and the step-B
 configuration stay fixed.
 
+The 2026-10-06 user-requested regularization amendment ([log v3-017](log.md#v3-017))
+adds Round R between A and B. It is planned, pending the CPU readiness gate
+below. It was motivated by the completed step C curves, so its fold-0 results
+are exploratory development evidence. The baseline neutral target test and
+frozen A4 numerical assessment rules are unchanged.
+
 - Controls: the step C four-class baseline of each family (seed 42) plus one
   seed-43 baseline per family (2 runs).
 - Score: terminal common-four BA and class recalls on fold 0; Δ = candidate
@@ -250,6 +256,20 @@ Plan ranks are those of the
 [improvement plan](../../plans/gvp_and_esmc_evidence_ranked_improvement_plan.md).
 Round A is 16 runs including the two seed-43 controls; Round B is 18.
 
+- **Round R: regularization strength.** The original residual and modality
+  dropout candidates each test one strength; neither is a weight-decay sweep.
+  Add the bounded [regularization recipe](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+  (26 additional fits), reusing A's controls and dropout arms. Test weight
+  decay, classifier-head dropout, residual dropout and modality dropout as
+  separate changes from the baseline. This is an initial strength screen,
+  not exhaustive optimization or a promise of better generalization.
+- The reason for a broad decay range is [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect):
+  the existing coefficient has little effect at these learning rates. Audit
+  effective decay for each optimizer group before fitting; do not infer its
+  strength from the coefficient alone. ESM encoder dropout, parameter-group
+  membership, loss and label smoothing remain at baseline. Only-ESMC is not
+  tuned in this amendment; its regularization is not claimed to be optimized.
+
 - Round C (gate concatenation, RING edges, linear head and width 256,
   final-vector readout, sequence-separation encoding, label smoothing 0.1;
   [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect))
@@ -259,20 +279,42 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 - Cost gate (default): a candidate whose measured per-fit forecast exceeds three
   normal fits needs the user's explicit OK; otherwise it is recorded "not tested
   (cost)". Augmentation (9a, 9b) falls under this gate.
-- Stopping: rounds run in order and to completion; D ends after a complete
-  round in which no candidate passes in either family. If a reforecast shows
+- Stopping (amended before D): complete A, then R even if A has no passes.
+  Proceed to B if any candidate in A or R passes in either family; otherwise
+  end D after R and retain the baselines. Complete B when entered, then resolve
+  the combination from all completed rounds. If a reforecast shows
   that B–F would exceed the ceiling, the user chooses between stopping and
   closing out at the current evidence or recording a larger ceiling. Untested
   candidates are "not tested"; failed ones "did not pass the one-fold screen",
   never "ineffective".
 - Combination per family: no pass keeps the baseline; one pass adopts it; with
-  two or more, keep the better of each alternative pair (5a/5b, 9a/9b), run that
-  combination once with both seeds against the same controls, and adopt it only
+  two or more, keep only the best passing strength for each regularization
+  setting. Treat 5a and every 5b strength as alternatives, and retain the 9a/9b
+  exclusion. Rank by mean paired BA gain, with lexicographically larger recipe
+  ID breaking an exact tie, matching the existing assessor. If only one
+  candidate remains, adopt it; otherwise run that combination once with both
+  seeds against the same controls, and adopt it only
   if it passes the gate with a larger mean Δ than the best single candidate;
   otherwise adopt the best single candidate. No other subsets are tested.
   Only-ESMC keeps the baseline recipe.
 - Excluded: hybrid fusion, blends and ensembles, PMM features, ESMC layer
   changes (separate re-embedding project).
+
+**CPU readiness for the amended D.** Before its first fit, register and freeze
+the complete A/R/B recipe list, run identities, round order and mutually
+exclusive strengths. The existing runner and assessor implement A/B only;
+their recipe registry, stopping and combination handling need an explicit
+versioned extension, plus the workstation D/E launcher. Preserve the original
+manifest, frozen A4 files, source bundle, assessments and run receipts. Bind
+the extension to their hashes, verify unchanged baseline commands and source,
+and support checked reuse of C and A controls without relabeling old runs or
+bypassing hash guards. This docs amendment does not implement that extension.
+Required CPU checks: effective optimizer settings, complete unit counts,
+one-setting overrides, round stopping, incompatible-strength rejection,
+unchanged numerical gates, provenance/replay reuse and launch refusal before
+readiness. Reforecast all remaining D–F work and storage under the existing
+ceiling. The original advance authorization remains recorded; plan editing
+alone is not a GPU launch request or wider spending authority.
 
 **E. Five-fold confirmation (seed 42; rules from A4).**
 
@@ -327,11 +369,10 @@ restored 150 GB disk at about $0.49 per calendar day while it exists, and the
 kept snapshot at its estimated actual charge (about $1.74 per month, $0.06 per
 day; the controller reserves a conservative $0.25 per day for its daily cap,
 which is not a forecast). Running hours are costed without the disk share of the
-hourly rate ($0.859 per hour), so the disk is counted once. The forecast in
-[log v3-009](log.md#v3-009) (from the measured v2 fit times) is about $28 with a
-1.5× concurrency gain and D ending after Round A, about $38 with that gain and
-the full D, about $40 without a concurrency gain and D ending after Round A, and
-about $55 without the gain and the full D. Re-forecast from measured fits per
+hourly rate ($0.859 per hour), so the disk is counted once. Historical forecasts
+are retained in [log v3-009](log.md#v3-009); the measured step C forecast is in
+[log v3-016](log.md#v3-016), and the regularization amendment's incremental
+forecast is in [log v3-017](log.md#v3-017). Re-forecast from measured fits per
 hour after B, after C, and before each D round or cost-gated candidate. Before
 any step would exceed the ceiling, ask the user to stop and close out at the
 current evidence or to record a larger ceiling. The snapshot is kept; recovery
