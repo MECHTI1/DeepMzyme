@@ -153,18 +153,23 @@ class Remote:
 # Commands built for the VM
 # ---------------------------------------------------------------------------
 
+def allocation_args(session: dict[str, Any], *, fit_seconds: float) -> list[str]:
+    """Runner allocation and persistence flags for the controller session (shared with pmm_v3_step_c)."""
+    return ["--device", "cuda", "--session-id", session["session_id"],
+            "--allocation-started", repr(float(session["allocation_started"])),
+            "--execution-deadline", repr(float(session["deadline"])),
+            "--execution-max-seconds", repr(float(session["max_seconds"])),
+            "--estimated-fit-seconds", repr(float(fit_seconds)),
+            "--durable-root", str(DURABLE), "--persistence-mode", "host_pull"]
+
+
 def run_command(tag: str, session: dict[str, Any], *, fit_seconds: float) -> list[str]:
     """The runner command of one probe, exactly as the manifest fixes it."""
     spec = probes.probe_spec(tag)
     command = [REMOTE_PY, "-u", "run_pmm_v3_campaign.py", "--action", "run", "--campaign-dir", REMOTE_V3,
                "--train-dir", REMOTE_TRAIN, "--esm-dir", REMOTE_ESM, "--unit", probes.PROBE_UNIT_NAME,
                "--probe", tag, "--amp", "on" if spec["amp"] else "off", "--lane", str(spec["lane"]),
-               "--device", "cuda", "--session-id", session["session_id"],
-               "--allocation-started", repr(float(session["allocation_started"])),
-               "--execution-deadline", repr(float(session["deadline"])),
-               "--execution-max-seconds", repr(float(session["max_seconds"])),
-               "--estimated-fit-seconds", repr(float(fit_seconds)),
-               "--durable-root", str(DURABLE), "--persistence-mode", "host_pull"]
+               *allocation_args(session, fit_seconds=fit_seconds)]
     if spec["kind"] != "full":
         command += ["--epochs", str(spec["epochs"])]
     return command
@@ -391,19 +396,20 @@ def cmd_report(remote: Remote) -> dict[str, Any]:
             "saved_copy": str(saved) if saved else None}
 
 
+EVIDENCE_PATTERNS = ("campaign_manifest.json", "execution_settings.json", "fold_class_weights.json", "claims/*.json",
+                     "step_b/**/*", "lanes/lane*/execution_state.json", "lanes/lane*/execution_events.jsonl",
+                     "lanes/lane*/run_status_*.json", "lanes/lane*/persistence_receipts/*.ack.json",
+                     "failed_attempts/**/*")
 EVIDENCE_LISTER = r"""
 import hashlib, json, sys
 from pathlib import Path
-root, code = Path(sys.argv[1]), Path(sys.argv[2])
-patterns = ["campaign_manifest.json", "execution_settings.json", "fold_class_weights.json", "claims/*.json",
-            "step_b/**/*", "lanes/lane*/execution_state.json", "lanes/lane*/execution_events.jsonl",
-            "lanes/lane*/run_status_*.json", "lanes/lane*/persistence_receipts/*.ack.json",
-            "failed_attempts/**/*"]
+root, code, patterns = Path(sys.argv[1]), Path(sys.argv[2]), json.loads(sys.argv[3])
 out = {}
 for pattern in patterns:
     for path in sorted(root.glob(pattern)):
         relative = str(path.relative_to(root))
-        if path.is_file() and not path.is_symlink() and relative != "step_b/host.jsonl":  # live file: snapshot below
+        if (path.is_file() and not path.is_symlink() and relative != "step_b/host.jsonl"  # live file: snapshot below
+                and not path.name.endswith((".tmp", ".partial"))):  # transient files renamed while copying
             out[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
 receipt = code / "v3_bundle_apply_receipt.json"
 extra = {"code/v3_bundle_apply_receipt.json": hashlib.sha256(receipt.read_bytes()).hexdigest()} if receipt.is_file() else {}
@@ -411,13 +417,17 @@ print(json.dumps({"campaign": out, "code": extra}))
 """
 
 
-def cmd_evidence(remote: Remote, *, destination: Path | None = None) -> dict[str, Any]:
-    """Copy the evidence while no step runs; the sampler's live file is copied as a frozen snapshot."""
+def cmd_evidence(remote: Remote, *, destination: Path | None = None, patterns: tuple[str, ...] = EVIDENCE_PATTERNS,
+                 evidence_root: Path | None = None) -> dict[str, Any]:
+    """Copy the evidence while no step runs; the sampler's live file is copied as a frozen snapshot.
+    pmm_v3_step_c passes its own patterns and workstation folder."""
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
-    remote.run(f"if [ -f {REMOTE_V3}/step_b/host.jsonl ]; then mkdir -p {REMOTE_V3}/step_b/host_snapshots && "
-               f"cp {REMOTE_V3}/step_b/host.jsonl {REMOTE_V3}/step_b/host_snapshots/host_{stamp}.jsonl; fi")
-    listing = json.loads(remote.run(f"{REMOTE_PY} -c {shlex.quote(EVIDENCE_LISTER)} {REMOTE_V3} {REMOTE_CODE}").stdout)
-    target = destination or EVIDENCE / f"evidence_{stamp}"
+    if "step_b/**/*" in patterns:
+        remote.run(f"if [ -f {REMOTE_V3}/step_b/host.jsonl ]; then mkdir -p {REMOTE_V3}/step_b/host_snapshots && "
+                   f"cp {REMOTE_V3}/step_b/host.jsonl {REMOTE_V3}/step_b/host_snapshots/host_{stamp}.jsonl; fi")
+    listing = json.loads(remote.run(f"{REMOTE_PY} -c {shlex.quote(EVIDENCE_LISTER)} {REMOTE_V3} {REMOTE_CODE} "
+                                    f"{shlex.quote(json.dumps(list(patterns)))}").stdout)
+    target = destination or (evidence_root or EVIDENCE) / f"evidence_{stamp}"
     target.mkdir(parents=True, exist_ok=False)
     campaign = listing["campaign"]
     if campaign:

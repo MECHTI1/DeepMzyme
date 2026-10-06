@@ -70,8 +70,8 @@ compared exactly on the saved decimals; identities, labels, predicted classes an
 confusion matrices exact; balanced-accuracy reconciliation within 1e-9), recorded
 in the manifest and in each replay receipt ([log v3-009](campaigns/pmm_ion_metal_v3/log.md#v3-009)).
 
-VM side (paths of the restored disk; the workstation launcher below builds these
-commands, so they are shown for reference and for steps C–E):
+VM side (paths of the restored disk; the workstation launchers below build these
+commands for steps B and C, so they are shown for reference and for steps D–E):
 
 ```bash
 PY=/home/mechti/venvs/deepmzyme/bin/python
@@ -91,7 +91,8 @@ ALLOC="--session-id $SESSION_ID --allocation-started $ALLOCATION_STARTED \
 
 $PY run_pmm_v3_campaign.py --action prepare --campaign-dir $V3 --v2-root $V2 --fold-dir $FOLDS
 $PY run_pmm_v3_campaign.py --action plan --campaign-dir $V3 --step C        # read-only
-$PY run_pmm_v3_campaign.py --action set-execution --campaign-dir $V3 --amp off --lanes 2 \
+# Recorded once on 2026-10-06 (log v3-010): FP32, three lanes; never repeated (a second call is refused)
+$PY run_pmm_v3_campaign.py --action set-execution --campaign-dir $V3 --amp off --lanes 3 \
   --evidence $V3/step_b/speed_report.json \
   --reuse gvp_late_fusion__four_class__baseline__fold0__seed42=probe-full-fp32__gvp_late_fusion__four_class__baseline__fold0__seed42
 # Steps C-E: one unit per call and lane (after set-execution)
@@ -172,6 +173,61 @@ Failures: a failed or interrupted unit is rerun once, unchanged, after
 `failed_attempts/`; a completed unit is never rerun. A second failure: step D
 "did not pass"; steps C and E stop for the user's decision. The only exception
 is the whole-batch retry of a step-B timing batch described above.
+
+Step C order. Workstation commands (`$P pmm_v3_step_c.py ...` from the v3
+worktree; standard library only). The tool reuses the step-B launcher's session,
+SSH, lane-readiness, host-pull and evidence helpers. It never starts or stops a VM.
+
+1. GPU session (user-typed authorization). The restored VM exists, so start it
+   with `~/deepmzyme-vm/bin/vm-start --confirm`, then run `vm-setup --stages
+   ssh,smoke`. Then run `session` and `status`. `status` is read-only and shows
+   lanes, launches, claims, unit statuses, the regression gate and forecasts.
+   `units` lists the units and a suggested order offline.
+2. `regression`: the regression fit runs alone in lane 0, then the tool waits,
+   pulls lane 0 and prints the gate. It is refused while any lane is busy or
+   awaits a pull, or while any launch has no exit code. It is never repeated
+   automatically. A failed gate stops step C for diagnosis.
+3. `launch UNIT@LANE [UNIT@LANE ...] [--no-wait]`: starts one to three step C
+   units together, one per lane 0–2, each detached under `setsid`. By default it
+   waits and pulls each lane as its unit ends. A launch is refused in any of
+   these cases:
+   - the regression has not passed its gate;
+   - any lane awaits its host pull;
+   - the target lane holds a running or interrupted unit, a live child, a held
+     lock, or a launch without an exit code;
+   - the unit is not a step C unit, is the reused late-fusion `four_class` cell,
+     is completed, claimed or already launched, or is listed twice;
+   - 1.25 × forecast + 900 s (+60 s) no longer fit before the hard stop.
+
+   Admission forecasts, from step B (`--fit-seconds` overrides):
+   - late fusion 2,400 s, Only-GVP 2,300 s, Only-ESMC 1,800 s;
+   - plus 2,000 s while the unit's cache set (target, with or without ESMC) has
+     no completed fit (the measured cold gap of 1,508 s × 1.3 for overlap);
+   - the regression run 3,800 s.
+
+   To refill lanes as they free up, run `launch ... --no-wait`, then `wait
+   --any`, then launch into the freed lane.
+4. After a dropped connection, run `wait` or `pull --lanes K`. `wait` pulls
+   every lane whose unit ended (retrying a pull up to three times) and never
+   relaunches. It reports unit outcomes from the VM statuses. A launch whose VM
+   stopped or rebooted, or whose detached shell never started, is reported as
+   lost. A pull that still fails fails the command and blocks every new launch
+   until that lane is acknowledged.
+
+   For a failed unit, pull its lane first, then run `archive-failed UNIT`, then
+   its one unchanged rerun with `launch`. `archive-failed` is refused while any
+   lane awaits its pull, because archiving moves the files the transfer lists.
+   A lane whose runner died mid-unit (VM stop, reboot, killed runner) is
+   refused until `recover-lane K`. That command runs the lane's own recovery
+   (the unit is recorded as interrupted) and a verified pull; then archive and
+   rerun as above. A second failure stops step C for the user's decision. A
+   regression failure always stops for diagnosis.
+5. `assess` runs `pmm_v3_assessment.py --step C` on the VM and keeps a checked
+   copy under `step_c_evidence/assessments/`. At the end of every GPU session,
+   run `evidence` (SHA-256 checked on both ends, under `step_c_evidence/`).
+   It always makes the copy, but fails while a unit still runs or a lane
+   awaits its pull or recovery; `--allow-running` is for an emergency stop
+   only. Then run `~/deepmzyme-vm/bin/vm-stop` and `vm-status` (TERMINATED).
 
 Costs measured in step A (A5, this PC's CPU, one process): augmented recipes
 (`posnoise01`, `outerdrop01`) rebuild every training graph each epoch,

@@ -3,6 +3,248 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-014
+
+2026-10-06 — **user decision: advance, conditional GPU authorization for the
+remaining approved plan.** It is recorded here and in STATUS so that later
+sessions do not ask again for routine start authorization. Across three
+messages the user said, in substance:
+
+- Do not start the VM yet. First finish the CPU preparation, the review, the
+  necessary corrections and the execution plan, then present the session plan
+  and the cost estimate.
+- Once that work is complete and the required checks pass, the GPU start and
+  the automatic execution of the remaining approved plan are authorized,
+  without asking again. This replaces the earlier rule that the user types
+  AUTHORIZE VM START before each routine start.
+- The authorization covers steps C, D, E and F. Step F starts only after its
+  existing gates pass (Stage 6 selection by the A4 rule; the report,
+  checkpoint, test-row and clean-subset rules frozen in the
+  [DATASETS ledger](../../DATASETS.md#test-use-ledger) before any test access)
+  and after the outstanding final-test label decision is resolved.
+- The $40 gross ceiling for the whole campaign is unchanged; it includes
+  earlier spending and storage. All scientific and test gates stay. Round C
+  stays outside scope.
+- Ask the user only for a genuine blocker, a necessary budget increase or an
+  unresolved scientific decision. Under the plan these are:
+  - the final-test label, due before step E;
+  - any cost-gated candidate (9a, 9b, or any candidate forecast above three
+    normal fits);
+  - a failed regression gate, or a second failure in step C or E (stop for
+    diagnosis);
+  - a forecast above the ceiling (stop and close out, or record a larger
+    ceiling).
+- Keep a lightweight diagnostic closeout of step C. It answers five questions:
+  - whether the old-fold, old-recipe regression passed its gate;
+  - fixed learning rate versus cosine at epoch 50 per family, kept separate
+    from best-versus-terminal reporting;
+  - whether the decrease is shared by Only-ESMC, Only-GVP and late fusion, and
+    how the four-, five- and six-class arms compare on common-four;
+  - which class recalls explain the decrease, especially Mn and Class VIII;
+  - what the training and validation curves suggest about overfitting.
+
+  It reuses the assessor, histories, replay receipts and predictions, with no
+  new fits and no new reporting framework. Only if the aggregates leave the
+  Fe-to-Mn problem unexplained, it adds one focused CPU replay of the fixed-LR
+  late-fusion epoch-50 checkpoint against the cosine run on the same validation
+  ions. The interpretation is updated when step D's seed-43 controls exist.
+
+Unchanged operating rules: one active GPU; every session ends with the
+evidence copy, `vm-stop` and a verified TERMINATED; the disk and the snapshot
+are kept; every step is logged and committed; no merge or push without the
+user's OK.
+
+## v3-013
+
+2026-10-06 — **step C prepared on CPU** (no GPU; the VM stayed TERMINATED).
+The user decided the same day that nothing new is added to the approved plan.
+The four/five/six-class arms stay as they are. A shorter-schedule candidate, a
+PMM-parity refit on 7,901 sites and Mn-specific features were discussed and not
+added. The two items the plan foresees are recorded in
+[v3-011](#v3-011) (paper recheck) and [v3-012](#v3-012) (test-row rule).
+
+State check (03:10 UTC). Data1 is mounted with 88 GB free, and the worktree is
+clean at `71fd9bc`. `vm-status` reports TERMINATED. `vm-report --no-ssh`
+(gross rate $0.87917/h; session caps 4 h and $6.00; daily caps 6 h and $10)
+shows 1 h 05 min and an estimated $2.17 used today (UTC). Spending toward the
+$40 ceiling: step B $1.88, snapshot since 2026-10-03 $0.15, stopped disk since
+01:05 UTC $0.05. **$37.92 remains** (03:33 UTC).
+
+Throughput note: the 4.61 completed, replay-verified fits per hour with three
+lanes ([v3-010](#v3-010)) is a **projection**. It extrapolates 50-epoch
+throughput from 10-epoch concurrent probes; the only measured 50-epoch fit ran
+serially. The measured step C rate replaces it in the step C closeout
+(end to end, mixed families, cold cache builds included), and every later
+forecast uses the measured rate.
+
+Step C session plan and forecast (gross). It is simulated from the step-B
+measurements and the launcher's admission rule:
+
+- **Session 1** (at most 237 min; today's UTC cap has 4 h 55 min left):
+  - setup and checks, about 15 min;
+  - the regression fit alone, about 30 min (about 52 min if its cache set is
+    cold);
+  - then the 11 units, refilled three at a time, longest and cold-cache units
+    first. Each family's measured end-to-end time replaces its forecast after
+    its first fit; the 1.25 × + 900 s margin stays.
+  - Expected: all 11 or 10 of them. Up to 4 remain if the regression cache is
+    cold and the fits run 15% slower.
+- **Session 2**, only if units remain: 0.8–1.6 h, on the next UTC day if
+  today's cap is short.
+- **Cost:** session 1 at most $3.47 (237 min × $0.879/h; the controller's
+  estimate with its 15% margin is $3.99); session 2 $0.7–1.4; storage about
+  $0.55 per day. Step C totals about $4–6, leaving about $32–34.
+
+Launcher: `pmm_v3_step_c.py` (new, workstation, standard library only). It
+reuses the step-B launcher's session, SSH, lane-readiness, host-pull and
+evidence helpers. Commands:
+
+- `units`, `session`, `status`: read-only views;
+- `regression`: runs alone in lane 0;
+- `launch UNIT@LANE ...`: one to three units, each detached under `setsid`;
+- `wait [--any]`, `pull`: recovery and per-lane pulls;
+- `recover-lane K`, `archive-failed`, `assess`, `evidence`.
+
+A launch is refused in any of these cases:
+
+- the regression run has not passed its gate (a failed gate prints STOP);
+- any lane awaits its verified host pull;
+- the target lane holds a running or interrupted unit, a live child, a held
+  lock, or a launch without an exit code;
+- the unit is outside step C, is the reused late-fusion `four_class` cell, is
+  completed, claimed or already launched, or is listed twice;
+- the lane is outside the recorded three;
+- the session is expired or lacks 1.25 × forecast + 900 s (+60 s).
+
+`wait` never launches anything. It pulls every lane whose unit ended
+(retrying a pull up to three times) and reports outcomes from the VM statuses.
+It reports a launch from before a VM stop or reboot (boot ID changed), or one
+whose detached shell never started, as lost instead of waiting for it.
+
+`archive-failed` is refused while any lane awaits its pull. `recover-lane K`
+runs the lane's own recovery code (unchanged `pmm_execution`) for a runner that
+died mid-unit, then a verified pull. `evidence` always copies, but fails while
+a unit still runs or a lane awaits its pull or recovery.
+
+Admission forecasts come from step B: late fusion 2,400 s, Only-GVP 2,300 s,
+Only-ESMC 1,800 s, plus 2,000 s while the unit's cache set has no completed
+fit. The cache set is the target with or without ESMC; the parse and graph
+caches are keyed by label scheme and ESMC directory. The 2,000 s is the
+measured cold-minus-warm gap of 1,508 s × 1.3 for overlapping cold builds. The
+regression run gets 3,800 s.
+
+The step-B launcher gained two shared helpers (`allocation_args`, and
+`cmd_evidence` patterns) with unchanged step-B behaviour. Nothing in `src/`,
+`scripts/` or the four hashed runner files changed. Their SHA-256 still begin
+`ce6ddec8`, `21b798ef`, `6c6a0d73` and `6e4c2997`, so the prepared VM root stays
+valid. The VM needs no new bundle, because the launcher runs on the
+workstation.
+
+Tests and checks:
+
+- `tests/test_v3_step_c_launcher.py` covers each required protection,
+  including a real local run of the detached launch script and state probe.
+- A rehearsal on a copy of the step-B evidence: all three lanes are ready, the
+  regression run is admitted alone in lane 0, the units are refused until its
+  gate passes, and the reused cell shows as completed.
+- An independent read-only review (three lenses, each finding checked by a
+  skeptic, mutation testing on scratch copies) confirmed these issues. All
+  were fixed with tests:
+  - one blocker: `archive-failed` while a lane awaited its pull would have
+    broken that pull for good;
+  - two major gaps: no recovery for a lane whose runner died mid-unit (now
+    `recover-lane`), and a running unit whose PID record is missing could
+    read as lost, so `evidence` would have called a vm-stop safe (a held
+    lane lock or live child now counts as running);
+  - untested protections: "never relaunch" on every wait path, the evidence
+    SHA comparison, admission by the slowest unit of a batch, and the
+    command-line wiring;
+  - minor points: hints from the VM statuses, pull retries, `evidence`
+    refusing an unsafe stop, a contention allowance on cold caches, a grace
+    period for a launch that never started, and exit-code labels.
+
+  Three findings were refuted. The step-B refactor was checked equivalent on
+  every step-B command.
+- All 239 v3 tests pass (186 before this step), and the docs contract has no
+  strict failure.
+- The playbook documents the step C commands, and its illustrative
+  `set-execution` example now shows the recorded three-lane setting.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step B complete: FP32, three concurrent lanes; step C awaits the user's spending authorization)
+- Current campaign: pmm_ion_metal_v3, step B complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A and B done ([log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)); execution setting recorded (FP32, three lanes); no step C runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: CPU work only; step C needs the user's spending authorization within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage; no refit or held-out evaluation.
+- GPU/VM: `deepmzyme-l4` restored from the snapshot 2026-10-05, TERMINATED after step B (150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+Next: v3 step C per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) after the user authorizes its spending (about two sessions, [log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)).
+```
+
+## v3-012
+
+2026-10-06 — **user decision: which PMM test rows count** (the plan's open
+decision before step F; asked and answered before step C; no test data were
+read). The user chose the recommended rule:
+
+- every reconstructable row is scored under the training input contract;
+- symmetry-LINK rows are flagged, not dropped;
+- rows that cannot be scored count as errors;
+- the report states "N of 1,488 scored", with the training-eligible subset as
+  a sensitivity line.
+
+Under its default context policy, the PMM cohort code
+(`src/benchmarking/pmm_ion_cohort.py`, the `missing_protein_symmetry_context`
+branch) marks symmetry-LINK rows unresolved. The deferred step-F
+test-preparation builder must therefore apply this rule itself. It lives
+outside `src/`, because any `src/` change makes every run on the prepared
+campaign root refuse, including the Stage 6B refit. It is tested on synthetic
+or training-side data before any test access, and its membership hashes are
+frozen in the [DATASETS ledger](../../DATASETS.md#test-use-ledger).
+
+Unchanged: the clean subset is never compared with PMM; the final-test label
+decision is still due before step E.
+
+## v3-011
+
+2026-10-06 — **PMM paper recheck before step C**, required by the plan's fixed
+decisions (CPU only; no test data). Source: PinMyMetal, Nat. Commun. 2025,
+16:3043, main PDF page 4, Figure 2. Two independent readers and a reconciler
+read 300–600 dpi renders, and all 32 cells of panels a and b agree.
+
+- **Panel a** (5-fold CV; rows "True metal", columns "Predicted metal"):
+  columns sum to 1.000/1.000/1.001/1.001 and rows to 1.077/1.104/0.704/1.117,
+  so it is **column-normalized**. Under the printed axes, the diagonal (Mn
+  90.3, Class VIII 73.3, Cu 62.9, Zn 73.8; mean 75.1, a number the paper never
+  prints) is per-class precision, although the text calls these values
+  "accuracies". The cited numbers are correct, but 75.1 is not a balanced
+  accuracy.
+- **Inference, not a figure value:** back-solving panel a with the oversampled
+  training counts of Supplementary Table 10 (Mn 2,590, Class VIII 2,629, Cu
+  400, Zn 2,301; these 7,920 rows match PMM's released `classmodel_train_set`)
+  gives implied CV recalls Mn 84.2, Class VIII 75.3, Cu 52.0 and Zn 79.3. That
+  is a **BA-equivalent of about 72.7** (72.5–72.9 under rounding). It assumes
+  the CV matrix pooled that set once and the axes were not swapped when
+  plotted; the figure alone cannot exclude a swap, and PMM's released code has
+  no CV or plotting step.
+- **Panel b** (test, 1,488 rows): rows sum to 1.000, and the rows times the
+  Supplementary Table 10 test counts (Mn 167, Class VIII 252, Cu 64, Zn 1,005)
+  give whole numbers. It is **row-normalized**: Mn 88.6, Class VIII 57.5, Cu
+  59.4 and Zn 65.9 are recalls, so **67.85 is a valid mean recall** (balanced
+  accuracy).
+
+Consequence for reporting (no plan change): step F's comparison target stays
+67.85 (Fig. 2b), worded as the plan fixes. PMM's CV values are cited as
+per-class precisions of a column-normalized matrix, never as a balanced
+accuracy. Any CV context line shows 72.7 labelled "BA-equivalent inferred from
+Supplementary Table 10 counts". The frozen A4 specification is unchanged; its
+`pmm_published` numbers appear in the step C assessment as context only.
+
+Evidence: renders, transcriptions, solver and reconciled verdicts in
+`/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/pmm_paper_recheck_20261006/`
+(`SHA256SUMS`). The 2026-10-06 outlook review reached the same reading
+independently.
+
 ## v3-010
 
 2026-10-06 — **plan step B complete** (one GPU session, authorized by the user
