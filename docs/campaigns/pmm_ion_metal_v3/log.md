@@ -3,6 +3,97 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-019
+
+2026-10-06 — **step D session 1, the evening's user decisions and the second
+start** (validation data only; fold 0; exploratory development evidence).
+
+User decisions, each confirmed in the session after a pasted message:
+
+- About 19:05 UTC: the controller's daily caps were raised to 12 h and $18 per
+  UTC day (`MAX_DAILY_RUNNING_HOURS`, `MAX_DAILY_ESTIMATED_COST_USD`; backup
+  `~/deepmzyme-vm/state/config.env.before_daily_caps_20261006`). The 4 h / $6
+  session cap and the campaign's $40 gross ceiling are unchanged. A bounded
+  same-region `vm-fallback` pass (4 h) was authorized for the `us-central1-a`
+  stockout, including archiving the completed 2026-09-28 receipt. Commits
+  `43d26ff`…`88c6d9d` were pushed to `origin/v3-step-a`.
+- 22:10 UTC: the work window runs until **2026-10-07 04:10 UTC (07:10 IDT)**,
+  as back-to-back sessions of at most 4 h; no change to the ceiling, the
+  experiments or the test gates. Hidden-dimension tuning was assessed on
+  existing evidence and deferred (widths were never tuned for the ion task;
+  the results point at overfitting and inputs, not capacity; a width change
+  alters several components at once).
+
+Starts: four same-VM attempts between 18:13 and 19:03 UTC hit the L4 stockout
+in `us-central1-a` (nothing started or charged); the attempt at 19:09 UTC
+succeeded.
+
+**Session 1** `session-20261006T191031Z-2d26fe96`, 19:10:31–22:23 UTC:
+**3 h 13 min, $2.83 gross**; stopped and verified TERMINATED at 22:24 UTC.
+Bundle `43d26ff` was applied into `/home/mechti/projects/DeepMzyme_v3_ext1`
+(fold set reused after a byte-level check), and the extension was recorded at
+19:13:33 UTC (SHA-256 `ade3f022…`, the worktree's runner hashes; all 12
+completed units resolve unchanged; copy under `step_d_evidence/extension/`).
+Twelve fits completed, replayed (largest probability difference 5e-6), pulled
+and acknowledged; evidence `step_d_evidence/evidence_20261006T222239Z` (220
+files, SHA-256 checked on both ends). The first round parsed structures cold
+(14.8 min): the parse-cache key contains the default RING path, which is
+derived from the code directory; RING is off, so the loaded data are
+unchanged. The graph cache was warm (5,927 and 1,471 hits, no miss) and later
+rounds parsed in 0.6 min. One-time cost: about 13 min per cache set, four
+more sets in step E.
+
+Terminal epoch-50 common-four BA, fold 0; Δ against the same-seed control:
+
+| Candidate | Family | Seed 42 | Seed 43 | Mean Δ | Screen |
+|---|---|---|---|---|---|
+| baseline (control) | Only-GVP | 64.70 (step C) | 63.22 | — | — |
+| baseline (control) | late fusion | 71.62 (step C) | 68.58 | — | — |
+| `meanagg` | Only-GVP | 67.54 (+2.84) | 68.85 (+5.64) | +4.24 | passed |
+| `meanagg` | late fusion | 73.30 (+1.69) | 71.98 (+3.39) | +2.54 | passed (Mn −2.1) |
+| `resdrop01` | Only-GVP | 62.56 (−2.14) | 68.78 (+5.57) | +1.71 | not passed (seed 42) |
+| `resdrop01` | late fusion | 73.54 (+1.93) | 71.17 (+2.59) | +2.26 | passed |
+| `structlr` | late fusion | 71.71 (+0.10) | 70.31 (+1.73) | +0.91 | not passed |
+
+`gvpaux03` and `esmdrop02` run in session 2. Assessment copies:
+`step_d_evidence/assessments/D-A_20261006T222219Z` (blocked, four fits
+missing). The seed spread of the controls is 1.5 (Only-GVP) and 3.0 (late
+fusion) points, so the single-seed target differences of step C ([v3-016](#v3-016))
+lie within seed noise. Round B will be entered, since Round A has passes.
+Every gain is a one-fold screen; an improvement is claimed only after folds
+1–4 in step E.
+
+**Second start.** 22:24 and 22:26 UTC: stockout. 22:28–22:38 UTC: fallback
+pass `873d08b26968` (authorized above): snapshot
+`deepmzyme-fallback-873d08b26968` created; `us-central1-b` stocked out; the
+`us-central1-c` create also failed with `ZONE_RESOURCE_POOL_EXHAUSTED`
+(operation record; no instance exists), but the operator's 10-minute command
+limit cut the controller before it recorded that, so the receipt
+(`state/fallback.json`) still shows that attempt as requested and refuses
+further allocation; the attempt window has expired, and the controller state
+was not edited by hand. **Leftovers, kept pending the user's cleanup
+decision and counted toward the ceiling:** recovery disks
+`deepmzyme-l4-recovery-873d08b26968` in `us-central1-b` and `us-central1-c`
+(150 GB each, about $0.49 per day each) and the snapshot (47.9 GB, about
+$0.08 per day). At 22:41 UTC the same VM started in `us-central1-a`:
+`session-20261006T224120Z-22b521f0`, hard stop 02:11:13 UTC; the smoke check
+passed and `gvpaux03` (both seeds) and `esmdrop02` (seed 42) were launched at
+22:43 UTC. Spending to date: compute $8.35 (B $1.88, C $3.64, D session 1
+$2.83) plus storage; about $30.9 remained before session 2, before the
+leftover storage above.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 amended step D ready on CPU: Round R extension, launcher, audits; D fits next)
+- Last execution evidence: 2026-10-06 (v3 step C session 2, 58 min, $0.86 gross). Documentation reconciliation: 2026-10-06.
+- Current campaign: pmm_ion_metal_v3, step D prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A–C done; amended step D (A → R → conditional B) is CPU-verified ([log v3-018](docs/campaigns/pmm_ion_metal_v3/log.md#v3-018)), no D fit yet; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $33.8 left; forecast $29–37). Step F only after its gates and the final-test label decision; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 10:08 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+Next: step D Round A (16 fits), then Round R (26), per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment); the first session records the extension on the VM. Reforecast before Round B; cost-gated augmentations need the user's OK.
+```
+
 ## v3-018
 
 2026-10-06 — **amended step D: CPU integration, readiness gate, early-stopping
