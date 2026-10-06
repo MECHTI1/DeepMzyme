@@ -3,6 +3,98 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-010
+
+2026-10-06 — **plan step B complete** (one GPU session, authorized by the user
+with AUTHORIZE VM START for step B only). `vm-restore` recreated `deepmzyme-l4`
+from snapshot `deepmzyme-paused-20261003` (new instance `8553555212712383956`,
+restore receipt in `~/deepmzyme-vm/state/`); session
+`session-20261005T225707Z-26ada0e5` ran 2 h 08 min, **$1.88 gross**, and the VM
+was stopped and verified TERMINATED. The 150 GB disk and the snapshot are kept.
+
+Setup: `vm-setup --stages ssh,smoke` passed (L4, torch 2.11.0+cu128). The
+restored VM had no loader setting, so `~/.config/deepmzyme/runtime.json` was set
+to the documented `load_workers` 4 before any probe (speed only; not part of
+any run identity). The bundle `bundles/20d5b06` was applied with every hash
+re-verified (source tree `212db0e3…`, the A3-accepted tree), and the campaign
+root was prepared once (fold set `e6b21364…`, replay policy `pmm-v3-replay-1`).
+
+Probes (gvp_late_fusion four_class baseline fold 0 seed 42; short probes 10
+epochs; every completed probe passed the independent replay under the v3 policy
+and was pulled and acknowledged on the workstation):
+
+| Probe | Lanes | Per epoch | Elapsed (fit + replay) | Projected 50-epoch fit, end to end |
+|---|---|---|---|---|
+| w1-fp32-r1 (cold caches, prepare 1,400 s) | 1 | 24.4 s | 2,155 s | 1,756 s (warm caps) |
+| w1-fp32-r2 | 1 | 24.0 s | 647 s | 1,722 s |
+| w2-fp32-a/b | 2 | 27.1 s | 699 / 697 s | 1,923 / 1,922 s |
+| w3-fp32-a/b/c | 3 | 34.1–34.3 s | 793–795 s | 2,336–2,344 s |
+| full-fp32 (50 epochs) | 1 | 24.0 s | 1,664 s | 1,719 s (actual 1,727 s incl. checks and pull) |
+
+Measured completed, replay-verified fits per hour (end to end, including
+pre-admission checks of 31–36 s and host persistence of 32–60 s): serial FP32
+2.07; two lanes 3.74 (1.81×); **three lanes 4.61 (2.23×)**. Gates (as frozen in
+`76395bf`): serial pair agrees (common-four BA difference 0.20 points, largest
+class recall difference 0.6 points); every batch member agrees with w1-fp32-r1
+(BA within 0.46 points; largest class recall difference 2.74 points, Cu, two
+ions); host: memory available at least 24% (three lanes), GPU memory at most 8%,
+median load1 per CPU 0.55 and peak 0.81 (three lanes), no CPU overload at all.
+Peak process memory 7.4 GiB per lane.
+
+AMP is **rejected**: `w1-amp-r1` failed in its first training batch with
+`RuntimeError: index_add_(): self (Float) and source (Half) must have the same
+scalar type` (GVP message aggregation, `src/model.py:654`, under autocast). Its
+one unchanged rerun (after `archive-failed`; attempt 1 kept on the VM and on the
+workstation under `superseded/`) failed identically, so the failure is final
+and the AMP follow-ups were not required. Making AMP work would need a `src/`
+change, a new A3 and a new preparation; with the concurrency gain it is not
+needed for the budget.
+
+Decision (`speed_report.json` SHA-256 `8fccd2e1…`, recomputed and matched by
+`set-execution`): **FP32, three concurrent lanes**; the full-fp32 run is reused
+as step C cell `gvp_late_fusion__four_class__baseline__fold0__seed42`
+(terminal common-four BA 0.716 on the new fold 0; best epoch 4 at 0.752 is
+descriptive only; replay largest difference 1.1e-6). The new fold 0 is not
+comparable with the v2 fold 0 (near-copy-disjoint, size-balanced); step C
+reports fold-0 values as exploratory context.
+
+Evidence: workstation copies of every attempt under
+`/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable/lane0..2`
+(10 acknowledged transfers); 75 evidence files (manifest, settings, claims,
+`step_b/` with host samples and reports, lane states and events, statuses,
+acknowledgments, archived attempt) in `step_b_evidence/evidence_20261006T010332Z`,
+SHA-256 checked on both ends; dated report copies in `step_b_evidence/reports/`.
+
+Spending toward the $40 gross ceiling: step B $1.88, snapshot storage since
+2026-10-03 about $0.14; about **$37.98 remains**. Forecast for C–F from the
+measured rate (late fusion 1,739 s serial; Only-GVP and Only-ESMC scaled by the
+v2 family ratios; 2.23× with three lanes; five further cold cache builds and the
+serial regression run in C; 15% packing loss at session ends; 0.4 h overhead per
+session; disk $0.49 and snapshot $0.06 per calendar day):
+
+| Scenario | Remaining VM h | Compute + IP | Disk | Snapshot | B–F total |
+|---|---|---|---|---|---|
+| D ends after Round A | 20.5 | $17.6 | $4.0 (8 days) | $0.5 | **$24** |
+| Full D (A, B, combinations, improvement check) | 27.6 | $23.7 | $5.9 (12 days) | $0.7 | **$32** |
+
+Step C alone: about 4.3 h of work, about 5.8 VM hours over two sessions (the
+237-minute session limit), about $5.0 of compute plus disk days. Augmented
+candidates (9a, 9b) remain cost-gated. Unchanged: the frozen A4 specification,
+the fold caveat (near-copy, not homology, separation) and the final-test label
+decision due before step E. No held-out data were read.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step B prepared, CPU only; awaits the user's typed GPU authorization)
+- Last execution evidence: 2026-10-06 (v3 A3/A5 repeated, CPU). Documentation reconciliation: 2026-10-06.
+- Current campaign: pmm_ion_metal_v3, step B prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 step A done ([log v3-008](docs/campaigns/pmm_ion_metal_v3/log.md#v3-008)) and step B prepared ([log v3-009](docs/campaigns/pmm_ion_metal_v3/log.md#v3-009)); no GPU runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: CPU work only ([plan](docs/campaigns/pmm_ion_metal_v3/plan.md)); a GPU start needs the user to type AUTHORIZE VM START, within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) that includes campaign storage ([log v3-009](docs/campaigns/pmm_ion_metal_v3/log.md#v3-009)); no refit or held-out evaluation.
+- GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/archive/campaigns/pmm_ion_metal/log.md#pmm-011).
+Next: v3 step B (GPU speed check) per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) (`vm-restore` after the user's typed authorization, then `pmm_v3_step_b.py`); `/` has 16 GB free.
+```
+
 ## v3-009
 
 2026-10-06 — **step B preparation completed on CPU** (nothing ran on a GPU; no
