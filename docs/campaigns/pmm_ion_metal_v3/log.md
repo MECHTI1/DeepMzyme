@@ -3,6 +3,55 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-017
+
+2026-10-06 — **regularization planning amendment**, requested by the user after
+the step C discussion. Documentation only: no code change, new fit, GPU action
+or test access. This amendment follows the step C observations; it is not a
+claim that the new candidates were predeclared before those observations.
+
+The existing D plan tested one residual-dropout strength and one modality-dropout
+strength, with no weight-decay or head-dropout screen. The user asked to update
+the plan if this was insufficient. Add a bounded Round R between A and B;
+the [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+owns its exact strengths, counts and readiness outputs. The
+[campaign plan](plan.md#steps) owns the amended stopping and combination rules.
+The historical improvement ranking now points to this current route.
+
+Rationale: step C shows a training/validation gap, and TECH-029 identifies
+near-inert baseline decay at the configured learning rates. These justify a
+controlled regularization screen, not a predicted accuracy gain. Use the same
+D families, target, seeds and metric. Keep the numerical A4 gates, baseline
+neutral target test, terminal checkpoint policy and final-refit/test rules.
+Different strengths of the same setting are alternatives; combine only passing
+choices, once per family, before confirmation on folds 1–4. Only-ESMC remains
+the original baseline, so this is not equal-budget tuning of all three families.
+
+Implementation status: the trainer flags exist. The frozen campaign runner,
+manifest registry and assessor still support the original A/B recipes and
+stopping rule. A versioned, hash-bound extension and CPU verification are
+required before the amended D; no frozen manifest, A4 specification or existing
+evidence is rewritten by this amendment. The user's advance authorization in
+[v3-014](#v3-014) remains recorded for its approved scope. This request updates
+plans; it launches no work and grants no budget increase.
+
+**Provisional forecast, not measured R runtime:** 26 additional warm fits,
+about 6–8 VM hours including lane/session overhead, inferred from the measured
+GVP/fusion times in [v3-016](#v3-016). Allow about $6–9 extra including 1–2
+additional storage days. Reserving roughly $1–2 for up to four combination fits
+not itemized in that earlier forecast gives approximately **$35–39 total**
+against the unchanged $40 gross ceiling. This assumes the original cost-gated
+augmentations remain unrun and no prolonged retries or storage delay. Before
+execution, reforecast all accepted D–F work, combinations, recovery allowance
+and accrued storage. If it no longer fits, use the existing stop/close-out or
+increase-ceiling decision; never silently omit confirmation to fund tuning.
+
+STATUS next-action text replaced by this amendment, preserved verbatim:
+
+```text
+Next: extend the workstation launcher to step D/E units (CPU), then step D Round A (16 warm fits, about two sessions) under [log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014).
+```
+
 ## v3-016
 
 2026-10-06 — **step C complete; diagnostic closeout** (validation data only;
