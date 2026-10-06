@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-06 v3 step C complete: all 12 fold-0 cells, regression gate passed; step D next)
+- Status: active (2026-10-06 v3 amended step D ready on CPU: Round R extension, launcher, audits; D fits next)
 - Last execution evidence: 2026-10-06 (v3 step C session 2, 58 min, $0.86 gross). Documentation reconciliation: 2026-10-06.
 
 ## Current objective and stage
 
-- Current campaign: pmm_ion_metal_v3, step C complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Current campaign: pmm_ion_metal_v3, step D prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 steps A–C done ([log v3-016](docs/campaigns/pmm_ion_metal_v3/log.md#v3-016)): fold-0 baselines and diagnostic closeout (exploratory); no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Stage: v3 steps A–C done; amended step D (A → R → conditional B) is CPU-verified ([log v3-018](docs/campaigns/pmm_ion_metal_v3/log.md#v3-018)), no D fit yet; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 
 **The PMM core v2 campaign was closed at fold 0 on 2026-10-03 (user decision).**
 Its nine fold-0 fits are final validation-only evidence; 36 fits were not run and
@@ -54,10 +54,10 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 
 ## Blockers and immediate next action
 
-- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $34.2 left 2026-10-06). Step F only after its gates and the final-test label decision; no Round C.
+- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $33.8 left; forecast $29–37). Step F only after its gates and the final-test label decision; no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 10:08 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
 
-Next: CPU integration and checks for amended D (A → regularization R → conditional B) and the D/E launcher; then execution within recorded scope. The [planning amendment](docs/campaigns/pmm_ion_metal_v3/log.md#v3-017) is not yet implemented; it preserves A4 and requires a fresh D–F cost forecast before fits.
+Next: step D Round A (16 fits), then Round R (26), per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment); the first session records the extension on the VM. Reforecast before Round B; cost-gated augmentations need the user's OK.
 Still open before step E: the final metal test label, after the user's check of
 the 2026-09-24 Zenodo run. Stage 6 grouped-fold selection (or an explicitly
 labeled fallback), a completed Stage 6B full non-test refit, frozen
