@@ -3,6 +3,80 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-015
+
+2026-10-06 — **step C, GPU session 1** (under the advance authorization of
+[v3-014](#v3-014); validation data only). The first `vm-start` at 04:51 UTC
+hit a zone stockout (`ZONE_RESOURCE_POOL_EXHAUSTED`, us-central1-a). Nothing
+started. A same-VM retry at 05:02 succeeded; no zone move was made, because a
+new `vm-fallback` pass needs separate authorization. Session
+`session-20261006T050327Z-157a0187` ran 05:03–08:12 UTC: **3 h 09 min, $2.78
+gross**. The VM was stopped and verified TERMINATED. `vm-setup --stages
+ssh,smoke` passed; inputs, `load_workers` 4 and the VM's runner hashes were
+verified before any launch.
+
+**Regression gate passed** (old v2 fold 0, v2 recipe and execution settings,
+alone in lane 0; cold cache, 2,112 s):
+
+- all 50 epochs completed, replay confirmed;
+- best-epoch common-four BA 89.11 (reference 89.47, difference −0.35);
+- epochs 41–50 mean 85.70 (reference 85.78, difference −0.08);
+- band ±3.0 points.
+
+Then seven units ran, refilled three at a time; all completed and passed
+replay under `pmm-v3-replay-1`:
+
+- late fusion five- and six-class;
+- Only-GVP four-, five- and six-class;
+- Only-ESMC four- and five-class.
+
+The largest probability difference was 9.96e-6 (Only-GVP five-class, inside
+the 1e-5 tolerance). Every lane was pulled and acknowledged.
+
+Measured end-to-end times under three lanes:
+
+| Units | Fit + replay | Preflight |
+|---|---|---|
+| Late fusion, cold | 4,507–4,526 s | 31 s |
+| Only-GVP, cold | 4,064–4,380 s | 32–61 s |
+| Only-ESMC, warm | 1,739–1,849 s | 46–60 s |
+
+Cold parsing took 15 min under contention, against 6.1 min serially. The
+Only-GVP cold forecast (4,300 s) undershot by about 170 s and the Only-ESMC
+warm forecast (1,800 s) by about 100 s. Later launches used measured values
+(`--fit-seconds 4600` and `2000`); the 1.25 × + 900 s rule was unchanged.
+
+Measured rate: 7 units in the three-lane phase (05:43–08:11, with five cold
+cache builds) is 2.8 fits per hour. With the regression run and setup in the
+3.15-hour session it is 2.5 per hour. The step-B projection of 4.61 per hour
+does not hold for mixed families with cold caches; the warm rate is
+re-measured in session 2.
+
+Not yet run: Only-ESMC six-class and the three v2-recipe runs. No unit fit the
+admission rule after 08:11; 2,930 s remained before the hard stop and the
+shortest unit needed about 3,400 s.
+
+Evidence:
+
+- `step_c_evidence/evidence_20261006T081147Z` (133 files, SHA-256 checked on
+  both ends);
+- workstation copies of every unit under `durable/lane0..2`.
+
+Spending toward the $40 ceiling: $40 − ($1.88 step B + $2.78 session 1 +
+storage about $0.25 to date) ≈ **$35.1 remains**. Results are reported after
+step C completes (the closeout of v3-014).
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step C prepared on CPU; step C awaits the user's typed GPU authorization)
+- Last execution evidence: 2026-10-06 (v3 step B GPU session, 2 h 08 min, $1.88 gross). Documentation reconciliation: 2026-10-06.
+- Current campaign: pmm_ion_metal_v3, step C prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A and B done ([log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)); step C prepared on CPU (launcher, PMM paper recheck, test-row rule; [log v3-013](docs/campaigns/pmm_ion_metal_v3/log.md#v3-013)); no step C runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 03:09 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+Next: v3 step C per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) after the user's typed authorization: `vm-start --confirm`, the regression fit alone, then the other 11 fits three at a time (about two sessions, [log v3-013](docs/campaigns/pmm_ion_metal_v3/log.md#v3-013)).
+```
+
 ## v3-014
 
 2026-10-06 — **user decision: advance, conditional GPU authorization for the
