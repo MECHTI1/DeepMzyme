@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 import time
@@ -331,10 +332,13 @@ def check_tests(skip: bool) -> dict[str, Any]:
     if skip:
         return {"passed": False, "reason": "skipped (--skip-tests); the report cannot be ready"}
     started = time.time()
+    # This process has loaded MKL, which exports an Intel threading layer the child's torch import refuses;
+    # the campaign runner gives its training children the same setting (pmm_v3_campaign.build_command).
     result = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *TEST_FILES], cwd=ROOT,
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, env={**os.environ, "MKL_THREADING_LAYER": "GNU"})
     tail = [line for line in result.stdout.strip().splitlines() if line.strip()][-1:] or [""]
     return {"passed": result.returncode == 0, "returncode": result.returncode, "summary": tail[0],
+            "error": result.stderr.strip()[-600:] if result.returncode else "",
             "files": list(TEST_FILES), "seconds": round(time.time() - started, 1)}
 
 
@@ -385,7 +389,7 @@ def main(argv=None) -> int:
     (out_dir / "readiness_report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     print(json.dumps({"report": str(out_dir / "readiness_report.json"), "ready": report["ready"],
                       "checks": {name: check["passed"] for name, check in checks.items()},
-                      "failed_detail": {name: {k: v for k, v in check.items() if k in ("failures", "reason", "missing", "summary")}
+                      "failed_detail": {name: {k: v for k, v in check.items() if k in ("failures", "reason", "missing", "summary", "error")}
                                         for name, check in checks.items() if not check["passed"]}}, indent=2))
     return 0 if report["ready"] else 1
 
