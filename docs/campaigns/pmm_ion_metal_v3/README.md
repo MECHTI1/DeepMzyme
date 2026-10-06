@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-06 step B complete, log v3-010; step C after the user's spending authorization)
+Status: active (2026-10-06 step C prepared on CPU, log v3-013; step C GPU sessions after the user's typed authorization)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.

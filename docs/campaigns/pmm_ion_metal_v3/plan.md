@@ -34,7 +34,9 @@ run of the step it affects.
 - PMM comparison: published PinMyMetal numbers only, cited as reported; PMM is
   not retrained. 5-fold CV per-class Mn 90.3, Cu 62.9, Zn 73.8, Class VIII 73.3
   (mean 75.1); test (Figure 2b) Mn 88.6, Cu 59.4, Zn 65.9, Class VIII 57.5
-  (mean 67.85), rechecked against the paper before step C. PMM fold IDs were
+  (mean 67.85), rechecked against the paper before step C
+  ([log v3-011](log.md#v3-011): the CV panel is column-normalized, so its
+  values are not recalls). PMM fold IDs were
   never released and its features carry
   [TECH-028](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak).
   The comparison is descriptive, not matched (folds, eligible ions and inputs
@@ -309,10 +311,11 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 - Before step E: the label of the final test (clean subset as "primary, not
   pristine, history disclosed", or both results secondary), after the user's
   Drive/Colab check of the 2026-09-24 Zenodo run.
-- Before step F: which PMM test rows count. Recommended: score every
-  reconstructable row under the training input contract, flag rather than drop
-  symmetry-LINK rows, count unscorable rows as errors, and report "N of 1,488
-  scored", with the training-eligible subset as a sensitivity line.
+- Decided 2026-10-06 ([log v3-012](log.md#v3-012)): which PMM test rows count.
+  The recommended rule was chosen: score every reconstructable row under the
+  training input contract, flag rather than drop symmetry-LINK rows, count
+  unscorable rows as errors, and report "N of 1,488 scored", with the
+  training-eligible subset as a sensitivity line.
 - After Round B: whether Round C runs (see step D).
 
 ## Budget
