@@ -70,6 +70,8 @@ def test_a_run_reports_the_simulated_rule_next_to_labelled_retrospective_context
     assert row["later_improvement_missed"] and (row["best_later_epoch"], row["missed_gain"]) == (6, pytest.approx(0.10))
     assert row["retrospective"]["best_common4_ba_epoch"] == 6 and row["retrospective"]["min_val_loss_epoch"] == 3
     assert row["retrospective"]["label"].startswith("uses the full history")
+    assert row["curves"]["epochs"] == [1, 5] and row["curves"]["val_loss"] == [1.0, 1.1]
+    assert row["curves"]["val_common4_ba"] == [0.50, 0.64] and row["curves"]["train_loss"] == [None, None]
     # Only the terminal checkpoint exists, so the selected epoch's score is a logged hypothetical.
     assert row["simulated_selected_checkpoint_saved"] is False
     assert "not a recovered or replayed model" in row["simulated_selected_score_status"]
