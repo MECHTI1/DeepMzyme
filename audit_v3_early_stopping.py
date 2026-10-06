@@ -36,6 +36,7 @@ CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
 METRIC = "val_metal_collapsed4_balanced_acc"
 RECALLS = {"Mn": "val_metal_collapsed4_mn_recall", "Cu": "val_metal_collapsed4_cu_recall",
            "Zn": "val_metal_collapsed4_zn_recall", "Class VIII": "val_metal_collapsed4_class_viii_recall"}
+CURVE_EPOCHS = (1, 5, 10, 20, 30, 40, 50)  # descriptive curve samples (training metrics are logged every 10th epoch)
 LIMITS = ("A logged score of an epoch without a saved checkpoint is a hypothetical, not a recovered or replayed model.",
           "Stopping a 50-epoch cosine run at epoch t is not a t-epoch cosine run; a shorter schedule is not measured here.",
           "One fold: exploratory development evidence, not confirmation; official results keep the terminal epoch.",
@@ -132,6 +133,7 @@ def analyse_run(run_dir: Path, *, patience: int, min_delta: float, max_epochs: i
             "missed_gain": None if best_later is None else best_later[1] - simulated["selected_value"],
             "simulated_selected_checkpoint_saved": selected in saved,
             "simulated_selected_checkpoint": saved.get(selected),
+            "curves": curves(rows),
             "simulated_selected_score_status": (
                 "saved checkpoint exists" if selected in saved else
                 "logged hypothetical: this epoch's checkpoint was not saved (not a recovered or replayed model)"),
@@ -142,6 +144,16 @@ def analyse_run(run_dir: Path, *, patience: int, min_delta: float, max_epochs: i
                                                      min(range(len(losses)), key=lambda k: (losses[k], k)) + 1),
                               "min_val_loss": None if any(v is None for v in losses) else min(losses),
                               "terminal_val_loss": losses[-1]}}
+
+
+def curves(rows: list[dict[str, str]]) -> dict[str, Any]:
+    """Descriptive training/validation curve samples of one run (diagnostics; they select nothing)."""
+    picked = [epoch for epoch in CURVE_EPOCHS if epoch <= len(rows)]
+    return {"epochs": picked,
+            "train_loss": [number(rows[e - 1].get("train_loss")) for e in picked],
+            "val_loss": [number(rows[e - 1].get("val_loss")) for e in picked],
+            "val_common4_ba": [number(rows[e - 1].get(METRIC)) for e in picked],
+            "train_common4_ba": [number(rows[e - 1].get("train_metal_collapsed4_balanced_acc")) for e in picked]}
 
 
 def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
