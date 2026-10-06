@@ -3,6 +3,7 @@
 
 Actions:
   prepare  CPU: freeze a new v3 campaign root from the v2 cohort and a frozen fold set.
+  extend   CPU: record extension 1 (step D Round R) once on a prepared root, before the first step D fit.
   plan     CPU, read-only: list a step's units and their training argv.
   run      Admit and run one unit in one lane (needs explicit allocation fields). With --probe TAG
            it runs a step-B probe of that unit (own namespace; --amp and optional --epochs), allowed
@@ -33,14 +34,14 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--action", choices=("prepare", "plan", "run", "regression", "replay", "status", "archive-failed",
-                                 "set-execution"),
+                                 "set-execution", "extend"),
                         required=True)
     parser.add_argument("--campaign-dir", type=Path)
     parser.add_argument("--v2-root", type=Path, help="prepare: frozen v2 context campaign root")
     parser.add_argument("--fold-dir", type=Path, help="prepare: frozen v3 fold-set directory")
     parser.add_argument("--train-dir", type=Path)
     parser.add_argument("--esm-dir", type=Path, help="Directory holding the frozen ESMC-600M payloads")
-    parser.add_argument("--step", choices=("C", "D-A", "D-B", "D-combo", "E-neutral", "E-improvement"))
+    parser.add_argument("--step", choices=("C", "D-A", "D-R", "D-B", "D-combo", "E-neutral", "E-improvement"))
     parser.add_argument("--unit", help="run: one unit name, family__target__recipe__foldK__seedS")
     parser.add_argument("--family", choices=v3.FAMILIES)
     parser.add_argument("--recipe", help="plan D-combo: combo-a+b")
@@ -85,6 +86,16 @@ def main(argv=None) -> int:
         manifest = v3.prepare_campaign(paths.root, v2_root=args.v2_root, fold_dir=args.fold_dir)
         print(json.dumps({key: manifest[key] for key in ("campaign_id", "fold_set", "frozen_source_tree_sha256",
                                                           "git_commit")}, indent=2, sort_keys=True))
+        return 0
+    if args.action == "extend":
+        record = v3.extend_campaign(paths)
+        print(json.dumps({"extension_id": record["extension_id"], "extension_sha256": v3.file_sha(paths.extension),
+                          "parent_manifest_sha256": record["parent"]["manifest_sha256"],
+                          "runner_sha256": record["runner_sha256"],
+                          "definitions_sha256": record["definitions_sha256"],
+                          "unchanged_unit_identities": record["parent"]["unchanged_unit_identities"],
+                          "units": {step: len(names) for step, names in record["units"].items()}},
+                         indent=2, sort_keys=True))
         return 0
     if args.action == "set-execution":
         v3.require(args.amp is not None and args.lanes is not None and args.evidence,

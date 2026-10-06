@@ -278,7 +278,7 @@ def test_combination_rule_per_family():
     assert smaller["decision"] == "single" and smaller["recipe"] == "esmdrop02"
 
 
-def d_grid(deltas, *, rounds=("D-A", "D-B"), skip=()):
+def d_grid(deltas, *, rounds=("D-A", "D-R", "D-B"), skip=()):
     """Fold-0 screen data: controls at 0.80; each candidate at 0.80 + delta for both seeds."""
     collected = {}
     for family in v3.GVP_FAMILIES:
@@ -314,17 +314,98 @@ def test_step_d_pools_passes_across_rounds_and_needs_the_combination():
     assert single["decision"] == "single" and single["recipe"] == "invsqrtw"
 
 
-def test_step_d_blocks_on_missing_runs_and_stops_after_a_round_without_passes():
+def test_step_d_blocks_on_missing_runs_and_follows_the_amended_round_order():
     missing = v3.Unit("only_gvp", "four_class", "resdrop01", 0, 43).name
     blocked = assess.step_d_decision(d_grid({}, skip={missing}), SPEC, through="D-B")
     assert blocked["status"].startswith("blocked: D-A") and not blocked["final"] and not blocked["families"]
     assert any(missing in m for m in blocked["missing"])
-    stopped = assess.step_d_decision(d_grid({}, rounds=("D-A",)), SPEC, through="D-B")
-    assert stopped["final"] and stopped["stopped_after"] == "D-A" and "D-B" not in stopped["rounds"]
+    # Amended stopping (log v3-017): Round R follows Round A even when A has no pass ...
+    after_a = assess.step_d_decision(d_grid({}, rounds=("D-A",)), SPEC, through="D-A")
+    assert after_a["status"] == "provisional: run D-R next" and not after_a["final"] and "stopped_after" not in after_a
+    waiting = assess.step_d_decision(d_grid({}, rounds=("D-A",)), SPEC, through="D-B")
+    assert waiting["status"].startswith("blocked: D-R") and "D-B" not in waiting["rounds"]
+    # ... D ends after R when neither round has a pass, and the baselines are kept ...
+    stopped = assess.step_d_decision(d_grid({}, rounds=("D-A", "D-R")), SPEC, through="D-B")
+    assert stopped["final"] and stopped["stopped_after"] == "D-R" and "D-B" not in stopped["rounds"]
     assert {d["recipe"] for d in stopped["families"].values()} == {"baseline"}
-    provisional = assess.step_d_decision(d_grid({("only_gvp", "meanagg"): 0.02}, rounds=("D-A",)), SPEC,
-                                         through="D-A")
-    assert provisional["status"] == "provisional: run D-B next" and not provisional["final"]
+    # ... and a pass in either round, in either family, enters Round B.
+    for passing in (("only_gvp", "meanagg"), ("gvp_late_fusion", "wd01")):
+        entered = assess.step_d_decision(d_grid({passing: 0.02}, rounds=("D-A", "D-R")), SPEC, through="D-R")
+        assert entered["status"] == "provisional: run D-B next" and not entered["final"]
+        needs_b = assess.step_d_decision(d_grid({passing: 0.02}, rounds=("D-A", "D-R")), SPEC, through="D-B")
+        assert needs_b["status"].startswith("blocked: D-B")
+
+
+def test_round_r_strengths_are_alternatives_and_only_the_best_enters_one_combination():
+    def screen(recipe, delta, passed=True, family="gvp_late_fusion"):
+        return {"family": family, "recipe": recipe, "mean_delta": delta, "passed": passed}
+
+    decide = assess.family_recipe_decision
+    # Three passing decay strengths: one candidate remains, so it is adopted without a combination run.
+    only_decay = decide([screen("wd001", 0.02), screen("wd01", 0.035), screen("wd10", 0.03)], "gvp_late_fusion")
+    assert only_decay["decision"] == "single" and only_decay["recipe"] == "wd01"
+    # An exact tie keeps the lexicographically larger recipe ID (the existing assessor rule).
+    assert decide([screen("headdrop01", 0.02), screen("headdrop03", 0.02)], "gvp_late_fusion")["recipe"] == "headdrop03"
+    # One strength per setting; 5a and every 5b strength are alternatives; Round A and R strengths pool.
+    plan = decide([screen("wd001", 0.02), screen("wd01", 0.035), screen("headdrop03", 0.02),
+                   screen("resdrop01", 0.03), screen("resdrop02", 0.025), screen("gvpaux03", 0.02),
+                   screen("esmdrop02", 0.021), screen("esmdrop04", 0.04), screen("meanagg", 0.016),
+                   screen("wd10", 0.5, passed=False)], "gvp_late_fusion")
+    assert plan["decision"] == "run combination"
+    assert plan["recipe"] == "combo-esmdrop04+headdrop03+meanagg+resdrop01+wd01"
+    assert plan["best_single"] == "esmdrop04"
+    assert v3.resolve_recipe(plan["recipe"])["flags"] == [
+        "--esm-modality-dropout", "0.4", "--head-mlp-dropout", "0.3", "--gvp-normalize-message-aggregation",
+        "--gvp-residual-dropout", "0.1", "--weight-decay", "0.1"]
+    for bad in ("combo-wd001+wd01", "combo-headdrop01+headdrop03", "combo-resdrop01+resdrop02",
+                "combo-esmdrop02+esmdrop04", "combo-esmdrop04+gvpaux03", "combo-posnoise01+outerdrop01"):
+        with pytest.raises(ValueError):
+            v3.resolve_recipe(bad)
+
+
+def test_round_r_passes_pool_with_the_other_rounds_for_the_single_combination():
+    collected = d_grid({("only_gvp", "wd01"): 0.03, ("only_gvp", "wd10"): 0.02, ("only_gvp", "vecnorm"): 0.02,
+                        ("gvp_late_fusion", "esmdrop04"): 0.02})
+    result = assess.step_d_decision(collected, SPEC, through="D-B")
+    assert result["rounds"]["D-R"]["passed"] == ["gvp_late_fusion:esmdrop04", "only_gvp:wd01", "only_gvp:wd10"]
+    assert result["families"]["gvp_late_fusion"] == {"family": "gvp_late_fusion", "decision": "single",
+                                                     "recipe": "esmdrop04", "mean_delta": pytest.approx(0.02)}
+    gvp = result["families"]["only_gvp"]
+    assert gvp["decision"] == "run combination" and gvp["recipe"] == "combo-vecnorm+wd01"
+    combos = assess.required_combinations(collected, SPEC, through="D-B")
+    assert [u.name for u in combos] == [v3.Unit("only_gvp", "four_class", "combo-vecnorm+wd01", 0, s).name
+                                       for s in v3.SEEDS]  # at most one combination per family, both seeds
+
+
+def test_cost_gated_candidates_can_be_recorded_not_tested_but_never_after_a_run():
+    skip = {v3.Unit("only_gvp", "four_class", r, 0, s).name for r in v3.COST_GATED for s in v3.SEEDS}
+    deltas = {("gvp_late_fusion", "meanagg"): 0.02, ("only_gvp", "vecnorm"): 0.02}  # the Round A pass enters B
+    collected = d_grid(deltas, skip=skip)
+    assert assess.step_d_decision(collected, SPEC, through="D-B")["status"].startswith("blocked: D-B")
+    result = assess.step_d_decision(collected, SPEC, through="D-B", not_tested=v3.COST_GATED)
+    assert result["final"] and result["not_tested_cost"] == sorted(v3.COST_GATED)
+    statuses = {s["recipe"]: s["status"] for s in result["rounds"]["D-B"]["screens"] if s["family"] == "only_gvp"}
+    assert statuses["posnoise01"] == statuses["outerdrop01"] == "not tested (cost)"
+    assert result["families"]["only_gvp"]["recipe"] == "vecnorm"
+    assert result["families"]["gvp_late_fusion"]["recipe"] == "meanagg"
+    with pytest.raises(ValueError, match="Only cost-gated"):
+        assess.step_d_decision(collected, SPEC, through="D-B", not_tested=("vecnorm",))
+    with pytest.raises(ValueError, match="cannot be recorded as not tested"):
+        assess.step_d_decision(d_grid(deltas), SPEC, through="D-B", not_tested=("posnoise01",))
+
+
+def test_the_numerical_screen_gate_is_the_frozen_a4_one():
+    spec = json.loads((ROOT / "docs" / "campaigns" / "pmm_ion_metal_v3" / "assessment_spec.json").read_text())
+    assert assess.sha256(ROOT / "docs" / "campaigns" / "pmm_ion_metal_v3" / "assessment_spec.json") == \
+        "2969407042dbb5858f15e1a114a2d602cc2fd764e788022ddaee1907ff17306c" == assess.FROZEN_SPEC_SHA256
+    assert (spec["screen_min_mean_delta"], spec["screen_min_recall_change"]) == (0.015, -0.03)
+    edge = screen_grid({"wd01": {42: 0.0299, 43: 0.0001}, "wd001": {42: 0.0298, 43: 0.0001},
+                        "headdrop03": {42: 0.02, 43: 0.02}},
+                       recall_override={("headdrop03", 42): [0.90, 0.90, 0.769, 0.75],
+                                        ("headdrop03", 43): [0.90, 0.90, 0.769, 0.75]})
+    assert assess.screen_candidate(edge, "gvp_late_fusion", "wd01", SPEC)["passed"]           # mean exactly 1.5 points
+    assert not assess.screen_candidate(edge, "gvp_late_fusion", "wd001", SPEC)["passed"]      # just below it
+    assert not assess.screen_candidate(edge, "gvp_late_fusion", "headdrop03", SPEC)["passed"]  # a recall falls 3.1+
 
 
 # ---------------------------------------------------------------------------

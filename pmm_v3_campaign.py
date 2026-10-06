@@ -1,11 +1,12 @@
 """PMM ion metal v3 campaign: frozen inputs, recipes, units, commands and lane execution.
 
-Plan: docs/campaigns/pmm_ion_metal_v3/plan.md (steps A2 and C-E). This module lives
+Plan: docs/campaigns/pmm_ion_metal_v3/plan.md (steps A2 and C-E; extension 1 adds step D Round R). This module lives
 at the repository root, outside the hashed ``src/`` tree, so defining a step-D
 combination recipe never invalidates graph caches or the frozen source identity.
 
 Layout of a v3 campaign root (relocatable; nothing outside it is written):
   campaign_manifest.json   frozen identities, profile, recipes, source tree
+  campaign_extension.json  extension 1 (Round R): recorded once, bound to the manifest and completed runs
   frozen_inputs/           hash-checked copies of the v2 cohort, ESMC plan and inventory
   fold_membership.csv      copy of the frozen v3 fold file
   fold_class_weights.json  common-four equalized weights per v3 training fold
@@ -92,6 +93,37 @@ RECIPES: dict[str, dict[str, Any]] = {
 EXCLUSIVE_PAIRS = ({"gvpaux03", "esmdrop02"}, {"posnoise01", "outerdrop01"}, {"sitenone", "sitecountsangles"})
 NON_COMBINABLE = {"baseline", "v2recipe", "sitenone"}
 
+# Extension 1: step D Round R (regularization amendment, log v3-017). Everything above stays as prepared (its
+# hash is the manifest's); the definitions below are frozen by campaign_extension.json (extend_campaign).
+# Each recipe changes one trainer setting from the baseline; its flag follows the baseline's in the argv, so
+# the later value is the one the trainer resolves (checked on CPU before step D).
+EXTENSION_ID = "v3-ext1-round-r"
+EXTENSION_RECIPES: dict[str, dict[str, Any]] = {
+    "wd001": {"families": GVP_FAMILIES, "flags": ["--weight-decay", "0.01"]},
+    "wd01": {"families": GVP_FAMILIES, "flags": ["--weight-decay", "0.1"]},
+    "wd10": {"families": GVP_FAMILIES, "flags": ["--weight-decay", "1.0"]},
+    "headdrop01": {"families": GVP_FAMILIES, "flags": ["--head-mlp-dropout", "0.1"]},
+    "headdrop03": {"families": GVP_FAMILIES, "flags": ["--head-mlp-dropout", "0.3"]},
+    "resdrop02": {"families": GVP_FAMILIES, "flags": ["--gvp-residual-dropout", "0.2"]},
+    "esmdrop04": {"families": ("gvp_late_fusion",), "flags": ["--esm-modality-dropout", "0.4"]},
+}
+# Strengths of one setting are alternatives, as are the auxiliary loss and every modality-dropout strength.
+EXTENSION_EXCLUSIVE_GROUPS = ({"wd001", "wd01", "wd10"}, {"headdrop01", "headdrop03"}, {"resdrop01", "resdrop02"},
+                              {"gvpaux03", "esmdrop02", "esmdrop04"})
+ROUND_ORDER = ("D-A", "D-R", "D-B")
+ROUND_CANDIDATES = {"D-A": ("meanagg", "resdrop01", "structlr", "gvpaux03", "esmdrop02"),
+                    "D-R": tuple(EXTENSION_RECIPES),
+                    "D-B": ("sitecountsangles", "posnoise01", "outerdrop01", "vecnorm", "invsqrtw")}
+# Candidates screened against a matched control other than the family baseline.
+SCREEN_CONTROLS = {"sitecountsangles": "sitenone"}
+COST_GATED = ("posnoise01", "outerdrop01")  # need the user's OK; otherwise recorded "not tested (cost)"
+STOPPING_RULE = ("Complete D-A, then D-R even if D-A has no pass. Enter D-B if any candidate of D-A or D-R passes "
+                 "in either family; otherwise step D ends after D-R and the baselines are kept.")
+COMBINATION_RULE = ("Per family: no pass keeps the baseline; one pass adopts it; otherwise keep the best passing "
+                    "member of each group of alternatives (mean paired gain, larger recipe ID on an exact tie) and "
+                    "run their combination once with both seeds; adopt it only if it passes the screen with a "
+                    "larger mean gain than the best single candidate, else adopt the best single candidate.")
+
 # Independent replay of every v3 fit, probe and the regression run (user decision 2026-10-05, log v3-009):
 # probabilities within the pmm-core-replay-v1 tolerance; identities, labels, predicted classes and confusion
 # matrices stay exact and the selected-epoch BA reconciliation stays within 1e-9. Recorded in the manifest
@@ -117,26 +149,42 @@ def file_sha(path: Path) -> str:
 # Recipes and units
 # ---------------------------------------------------------------------------
 
+def recipe_table() -> dict[str, dict[str, Any]]:
+    """Every single recipe: the prepared ones and those of extension 1."""
+    require(not set(RECIPES) & set(EXTENSION_RECIPES), "An extension recipe reuses a prepared recipe name")
+    return {**RECIPES, **EXTENSION_RECIPES}
+
+
+def exclusive_groups() -> tuple[set[str], ...]:
+    """Groups of alternatives; at most one member of a group enters a combination."""
+    return (*EXCLUSIVE_PAIRS, *EXTENSION_EXCLUSIVE_GROUPS)
+
+
+def recipe_components(name: str) -> list[str]:
+    return name[len("combo-"):].split("+") if name.startswith("combo-") else [name]
+
+
 def resolve_recipe(name: str) -> dict[str, Any]:
     """A single recipe, or ``combo-a+b`` joining two or more combinable single recipes."""
-    if name in RECIPES:
-        recipe = dict(RECIPES[name])
+    table = recipe_table()
+    if name in table:
+        recipe = dict(table[name])
     else:
         require(name.startswith("combo-"), f"Unknown recipe {name!r}")
         parts = name[len("combo-"):].split("+")
         require(len(parts) >= 2 and len(set(parts)) == len(parts) and parts == sorted(parts),
                 "A combination lists two or more distinct recipes in sorted order")
         for part in parts:
-            require(part in RECIPES and part not in NON_COMBINABLE, f"{part!r} cannot be combined")
-        for pair in EXCLUSIVE_PAIRS:
-            require(len(pair & set(parts)) < 2, f"Alternatives {sorted(pair)} cannot be combined")
+            require(part in table and part not in NON_COMBINABLE, f"{part!r} cannot be combined")
+        for group in exclusive_groups():
+            require(len(group & set(parts)) < 2, f"Alternatives {sorted(group)} cannot be combined")
         families = set(FAMILIES)
         flags: list[str] = []
         weight_mode = None
         for part in parts:
-            families &= set(RECIPES[part]["families"])
-            flags += RECIPES[part]["flags"]
-            weight_mode = RECIPES[part].get("weight_mode", weight_mode)
+            families &= set(table[part]["families"])
+            flags += table[part]["flags"]
+            weight_mode = table[part].get("weight_mode", weight_mode)
         recipe = {"families": tuple(f for f in FAMILIES if f in families), "flags": flags}
         if weight_mode:
             recipe["weight_mode"] = weight_mode
@@ -178,7 +226,7 @@ class Unit:
 
 def step_units(step: str, *, final_recipes: dict[str, str] | None = None,
                combo: str | None = None, family: str | None = None) -> list[Unit]:
-    """The frozen unit list of a plan step (C, D-A, D-B, D-combo, E-neutral, E-improvement)."""
+    """The frozen unit list of a plan step (C, D-A, D-R, D-B, D-combo, E-neutral, E-improvement)."""
     if step == "C":
         units = [Unit(f, t, "baseline", 0, 42) for f in FAMILIES for t in TARGETS]
         return units + [Unit(f, "four_class", "v2recipe", 0, 42) for f in FAMILIES]
@@ -186,6 +234,11 @@ def step_units(step: str, *, final_recipes: dict[str, str] | None = None,
         units = [Unit(f, "four_class", "baseline", 0, 43) for f in GVP_FAMILIES]
         for recipe in ("meanagg", "resdrop01", "structlr", "gvpaux03", "esmdrop02"):
             units += [Unit(f, "four_class", recipe, 0, s) for f in RECIPES[recipe]["families"] for s in SEEDS]
+        return units
+    if step == "D-R":  # extension 1: 26 fits; the controls and the weaker dropout arms are Round A's
+        units = []
+        for recipe in ROUND_CANDIDATES["D-R"]:
+            units += [Unit(f, "four_class", recipe, 0, s) for f in EXTENSION_RECIPES[recipe]["families"] for s in SEEDS]
         return units
     if step == "D-B":
         units = []
@@ -232,6 +285,7 @@ class V3Paths:
     lanes = property(lambda self: self.root / "lanes")
     execution_settings = property(lambda self: self.root / "execution_settings.json")
     claims = property(lambda self: self.root / "claims")
+    extension = property(lambda self: self.root / "campaign_extension.json")
 
     def lane(self, index: int) -> Path:
         require(type(index) is int and 0 <= index < 8, "lane must be 0..7")
@@ -330,13 +384,18 @@ def verify_frozen_esm(paths: V3Paths, esm_dir: Path) -> dict[str, Any]:
     return {"verified": True, "n_files": len(esm["files"]), "esm_dir": str(esm_dir)}
 
 
-def verify_runner_identity(manifest: dict[str, Any]) -> None:
-    """The runner files and every recipe definition must be the ones recorded at preparation."""
-    require(runner_sha256() == manifest["runner_sha256"],
-            f"A runner file ({', '.join(RUNNER_FILES)}) changed since preparation")
+def verify_runner_identity(manifest: dict[str, Any], paths: V3Paths | None = None) -> None:
+    """The runner files and every recipe definition must be the ones recorded at preparation, or the ones a
+    recorded extension of this very preparation froze (the prepared recipes stay unchanged either way)."""
+    extension = load_extension(paths) if paths is not None else None
+    if extension is None:
+        require(runner_sha256() == manifest["runner_sha256"],
+                f"A runner file ({', '.join(RUNNER_FILES)}) changed since preparation")
     require(manifest.get("replay_policy") == REPLAY_POLICY, "The replay policy differs from the one prepared")
     recipes = {name: resolve_recipe(name) for name in RECIPES}
     require(stable_hash(recipes) == manifest["recipes_sha256"], "Recipe definitions changed since preparation")
+    if extension is not None:
+        verify_extension(paths, manifest, extension)
 
 
 def require_frozen_spec(paths: V3Paths) -> dict[str, Any]:
@@ -345,14 +404,40 @@ def require_frozen_spec(paths: V3Paths) -> dict[str, Any]:
 
     spec = assessment.load_spec()
     assessment.check_spec_against_campaign(spec, json.loads(paths.manifest.read_text()))
+    extension = load_extension(paths)
+    require(extension is None or extension["parent"]["assessment_spec_sha256"] == assessment.FROZEN_SPEC_SHA256,
+            "The frozen A4 specification differs from the one the extension was recorded with")
     return spec
 
 
-def verify_campaign(paths: V3Paths, *, esm_dir: Path | None) -> dict[str, Any]:
-    """Refuse fitting unless every frozen identity still matches (run-time guard)."""
-    manifest = json.loads(paths.manifest.read_text())
-    require(manifest.get("campaign_id") == CAMPAIGN_ID, "Not a v3 campaign root")
-    verify_runner_identity(manifest)
+# ---------------------------------------------------------------------------
+# Extension 1 (Round R): a versioned record bound to the prepared campaign
+# ---------------------------------------------------------------------------
+
+def extension_definitions() -> dict[str, Any]:
+    """Everything the amendment adds: recipes, round order, candidates, alternatives and the two rules."""
+    return json.loads(json.dumps({
+        "recipes": {name: resolve_recipe(name) for name in EXTENSION_RECIPES},
+        "round_order": ROUND_ORDER, "round_candidates": ROUND_CANDIDATES, "screen_controls": SCREEN_CONTROLS,
+        "exclusive_groups": [sorted(group) for group in exclusive_groups()],
+        "non_combinable": sorted(NON_COMBINABLE), "cost_gated": COST_GATED,
+        "families": GVP_FAMILIES, "target": "four_class", "fold": 0, "seeds": SEEDS,
+        "stopping_rule": STOPPING_RULE, "combination_rule": COMBINATION_RULE}))
+
+
+def load_extension(paths: V3Paths) -> dict[str, Any] | None:
+    return json.loads(paths.extension.read_text()) if paths.extension.exists() else None
+
+
+def parent_identity(identity: dict[str, Any], manifest: dict[str, Any]) -> dict[str, Any]:
+    """The identity a run of the same unit recorded before the extension: the prepared runner files."""
+    out = {key: value for key, value in identity.items() if key != "campaign_extension"}
+    out["runner_sha256"] = manifest["runner_sha256"]
+    return out
+
+
+def verify_frozen_inputs(paths: V3Paths, manifest: dict[str, Any]) -> None:
+    """Every prepared input, the profile and the source tree are the ones recorded at preparation."""
     for name, digest in manifest["frozen_inputs_sha256"].items():
         require(file_sha(paths.frozen / name) == digest, f"Frozen input changed: {name}")
     require(sha256_file(paths.cohort) == manifest["cohort"]["sha256"], "Cohort changed")
@@ -362,6 +447,129 @@ def verify_campaign(paths: V3Paths, *, esm_dir: Path | None) -> dict[str, Any]:
             "Profile changed since preparation")
     require(v2.source_tree_sha256() == manifest["frozen_source_tree_sha256"],
             "src/ or scripts/ changed since preparation; all v3 fits share one frozen source tree")
+
+
+def extend_campaign(paths: V3Paths, *, epochs: int | None = None) -> dict[str, Any]:
+    """Freeze extension 1 on a prepared campaign root: once, on CPU, before the first step D fit.
+
+    Nothing prepared is rewritten. The record binds the manifest, the prepared runner and recipe hashes, the
+    source tree, the step-B setting, the A4 specification and every completed run to the runner files and
+    definitions of this code, after checking that this code still resolves each completed campaign unit to
+    the identity it recorded (so its command is unchanged and the unit can be reused as a control)."""
+    import pmm_v3_assessment as assessment  # imported lazily: the assessor imports this module
+
+    require(not paths.extension.exists(), f"{paths.extension} exists; an extension is recorded once")
+    manifest = json.loads(paths.manifest.read_text())
+    require(manifest.get("campaign_id") == CAMPAIGN_ID, "Not a v3 campaign root")
+    require(manifest.get("replay_policy") == REPLAY_POLICY, "The replay policy differs from the one prepared")
+    require(stable_hash({name: resolve_recipe(name) for name in RECIPES}) == manifest["recipes_sha256"],
+            "Recipe definitions changed since preparation")
+    verify_frozen_inputs(paths, manifest)
+    require_frozen_spec(paths)
+    settings = read_execution_settings(paths)
+    require(settings is not None, "Record the step-B execution setting (set-execution) before extending")
+    planned = sorted({unit.name for step in ROUND_ORDER for unit in step_units(step)})
+    started = [name for name in planned if unit_artifacts(paths, name) or archived_attempts(paths, name)]
+    require(not started, f"Step D already started ({', '.join(started[:3])}); the amended step D is frozen "
+                         "before its first fit")
+    reused_as = {run: unit for unit, run in settings.get("reuse", {}).items()}
+    completed, unchanged = {}, []
+    for name, record in sorted(completed_units(paths).items()):
+        if record.get("status") != "completed":
+            continue
+        recorded = record.get("identity") or {}
+        completed[name] = {"identity_sha256": stable_hash(recorded), "status_sha256": file_sha(record["status_path"])}
+        unit_name = reused_as.get(name, name)
+        if name == REGRESSION_NAME or unit_name.startswith("probe-"):
+            continue  # the v2-recipe regression run and step-B timing probes are never controls
+        require(recorded.get("runner_sha256") == manifest["runner_sha256"],
+                f"{name}: completed with runner files other than the prepared ones")
+        expected = parent_identity(build_command(
+            paths, Unit.parse(unit_name), python_bin="python", train_dir=paths.root / "train",
+            esm_dir=paths.root / "esm", device="cuda", lane=0, epochs=epochs, amp=bool(settings["amp"]))[2], manifest)
+        differing = sorted(key for key in set(expected) | set(recorded) if expected.get(key) != recorded.get(key))
+        require(not differing, f"{name}: this code resolves the completed unit differently in {differing}")
+        unchanged.append(name)
+    definitions = extension_definitions()
+    record = {
+        "schema_version": 1, "extension_id": EXTENSION_ID, "campaign_id": CAMPAIGN_ID,
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "decision": "log v3-017 (2026-10-06): user-requested step D regularization amendment (Round R)",
+        "parent": {"manifest_sha256": file_sha(paths.manifest), "runner_sha256": manifest["runner_sha256"],
+                   "recipes_sha256": manifest["recipes_sha256"], "profile_sha256": manifest["profile_sha256"],
+                   "frozen_source_tree_sha256": manifest["frozen_source_tree_sha256"],
+                   "execution_settings_sha256": file_sha(paths.execution_settings),
+                   "assessment_spec_sha256": assessment.FROZEN_SPEC_SHA256,
+                   "completed_runs": completed, "unchanged_unit_identities": unchanged},
+        "runner_sha256": runner_sha256(), "definitions": definitions, "definitions_sha256": stable_hash(definitions),
+        "units": {step: [unit.name for unit in step_units(step)] for step in ROUND_ORDER},
+        "assessor_sha256": file_sha(ROOT / "pmm_v3_assessment.py"), "git_commit": git_commit(),
+        "held_out_access": False,
+    }
+    try:
+        descriptor = os.open(paths.extension, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError:
+        raise ValueError(f"{paths.extension} exists; an extension is recorded once") from None
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump(record, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    return record
+
+
+def verify_extension(paths: V3Paths, manifest: dict[str, Any], extension: dict[str, Any]) -> None:
+    """The recorded extension belongs to this preparation and froze exactly this code's runner and definitions."""
+    require(extension.get("extension_id") == EXTENSION_ID and extension.get("campaign_id") == CAMPAIGN_ID,
+            "Unknown campaign extension")
+    parent = extension["parent"]
+    require(parent["manifest_sha256"] == file_sha(paths.manifest),
+            "The campaign manifest changed since the extension was recorded")
+    differing = sorted(key for key in ("runner_sha256", "recipes_sha256", "profile_sha256", "frozen_source_tree_sha256")
+                       if parent.get(key) != manifest[key])
+    require(not differing, f"The extension belongs to another preparation: {differing}")
+    require(runner_sha256() == extension["runner_sha256"],
+            f"A runner file ({', '.join(RUNNER_FILES)}) changed since the extension was recorded")
+    definitions = extension_definitions()
+    require(extension.get("definitions") == definitions and stable_hash(definitions) == extension["definitions_sha256"],
+            "Extension definitions changed since the extension was recorded")
+    require(paths.execution_settings.exists()
+            and file_sha(paths.execution_settings) == parent["execution_settings_sha256"],
+            "The step-B execution setting changed since the extension was recorded")
+
+
+def require_extension_for(paths: V3Paths, unit: "Unit") -> None:
+    """An extension recipe runs only on a campaign whose extension record exists (it is verified with the runner)."""
+    used = [part for part in recipe_components(unit.recipe) if part in EXTENSION_RECIPES]
+    require(not used or paths.extension.exists(),
+            f"{unit.name} uses extension recipes {used}; record the extension first (--action extend)")
+
+
+def recorded_identity_expectation(paths: V3Paths, manifest: dict[str, Any], run_name: str,
+                                  recorded: dict[str, Any], expected: dict[str, Any]) -> dict[str, Any]:
+    """Checked reuse: what a completed run's recorded identity must equal. A run that completed before the
+    extension keeps its own identity (never relabelled) and must be one the extension record froze."""
+    extension = load_extension(paths)
+    if extension is None:
+        require(recorded.get("runner_sha256") == manifest["runner_sha256"],
+                f"{run_name}: ran with runner files other than the ones frozen at preparation")
+        return expected
+    if recorded.get("runner_sha256") == extension["runner_sha256"] and "campaign_extension" in recorded:
+        return expected
+    frozen = extension["parent"]["completed_runs"].get(run_name)
+    require(frozen is not None and recorded.get("runner_sha256") == manifest["runner_sha256"],
+            f"{run_name}: ran with runner files other than the prepared ones or the extension's")
+    require(frozen["identity_sha256"] == stable_hash(recorded),
+            f"{run_name}: its recorded identity changed since the extension froze it")
+    return parent_identity(expected, manifest)
+
+
+def verify_campaign(paths: V3Paths, *, esm_dir: Path | None) -> dict[str, Any]:
+    """Refuse fitting unless every frozen identity still matches (run-time guard)."""
+    manifest = json.loads(paths.manifest.read_text())
+    require(manifest.get("campaign_id") == CAMPAIGN_ID, "Not a v3 campaign root")
+    verify_runner_identity(manifest, paths)
+    verify_frozen_inputs(paths, manifest)
     for directory in (paths.empty_external_features, paths.empty_esm):
         require(directory.is_dir() and not any(directory.iterdir()), f"{directory} must exist and stay empty")
     if esm_dir is not None:
@@ -456,6 +664,8 @@ def build_command(paths: V3Paths, unit: Unit, *, python_bin: str, train_dir: Pat
         "resolved_config_sha256": stable_hash({k: v for k, v in resolved.items()
                                                if k not in v2.NON_IDENTITY_CONFIG_KEYS}),
     }
+    if paths.extension.exists():  # every run after the extension binds the frozen record
+        identity["campaign_extension"] = {"id": EXTENSION_ID, "sha256": file_sha(paths.extension)}
     identity = json.loads(json.dumps(identity, sort_keys=True))  # the form the run records
     command += ["--campaign-run-identity", json.dumps(identity, sort_keys=True)]
     env = {FORBIDDEN_READ_ROOTS_ENV: forbidden_roots_environment(v2.forbidden_read_roots(train_dir)),
@@ -635,6 +845,7 @@ def run_unit(paths: V3Paths, unit: Unit, *, lane: int, train_dir: Path, esm_dir:
     existing = unit_artifacts(paths, name)
     if existing:
         raise ValueError(f"Unit artifacts exist ({existing[0]}); runs are never retried automatically")
+    require_extension_for(paths, unit)
     verify_campaign(paths, esm_dir=esm_dir)
     require_frozen_spec(paths)
     command, env, identity = build_command(paths, unit, python_bin=python_bin, train_dir=train_dir,
@@ -690,7 +901,7 @@ def set_execution_settings(paths: V3Paths, *, amp: bool, lanes: int, evidence: s
     require(type(lanes) is int and 1 <= lanes <= 3, "Concurrent lanes must be 1, 2 or 3")
     require(bool(str(evidence).strip()), "Name the step-B evidence (report path)")
     manifest = json.loads(paths.manifest.read_text())
-    verify_runner_identity(manifest)
+    verify_runner_identity(manifest, paths)
     # The request must equal the choice of a recomputed, decision-ready speed report (written as evidence).
     verified = speed.verify_execution_choice(paths, amp=amp, lanes=lanes, evidence=str(evidence), reuse=reuse or {})
     statuses = completed_units(paths)
