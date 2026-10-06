@@ -3,6 +3,140 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-016
+
+2026-10-06 — **step C complete; diagnostic closeout** (validation data only;
+fold 0, seed 42; exploratory, not confirmation).
+
+GPU session 2 (`session-20261006T090942Z-90d418df`) ran 09:09–10:07 UTC:
+**58 min, $0.86 gross**. Its start needed five same-VM retries over 43 min
+because of a zone stockout. The VM was stopped and verified TERMINATED. It ran
+the three v2-recipe runs and Only-ESMC six-class; all completed and replayed
+(largest probability difference 1.22e-6). All 12 step C cells exist:
+11 new fits plus the reused step-B cell. The frozen assessor
+(`assessments/C_20261006T100621Z`, SHA-256 `4d1867c1…`, copied and checked) and
+the evidence (`step_c_evidence/evidence_20261006T100646Z`, 174 files) are on
+the workstation.
+
+Common-four BA, fold 0 (cosine = v3 baseline at its terminal epoch 50;
+fixed = v2 recipe; best epoch descriptive only):
+
+| Family | Four, cosine | Five, cosine | Six, cosine | Four, fixed LR, epoch 50 | Fixed LR, best epoch |
+|---|---|---|---|---|---|
+| Only-ESMC | 67.9 | 69.6 | 69.4 | 67.6 | 72.1 (epoch 3) |
+| Only-GVP | 64.7 | 66.1 | 62.0 | 58.9 | 70.2 (epoch 25) |
+| Late fusion | 71.6 | 71.8 | **74.1** | 71.0 | 74.2 (epoch 48) |
+
+Only-ESMC `four_class`, the likely Stage 6 control, has recalls Mn 56.5,
+Cu 69.9, Zn 72.2 and Class VIII 73.2. These are higher or lower than PMM's
+published values only descriptively, and not a matched comparison
+([v3-011](#v3-011)).
+
+Diagnostic answers. They come from existing histories, predictions and replay
+receipts, with no new fits. Script and outputs:
+`step_c_evidence/diagnostic_20261006/`.
+
+1. **Old-fold, old-recipe reproduction: passed its gate.** Best epoch 89.11
+   against 89.47, and the epochs 41–50 mean 85.70 against 85.78. The code
+   reproduces v2.
+2. **Fixed LR versus cosine at epoch 50** (cosine minus fixed): Only-ESMC
+   +0.3, late fusion +0.6, Only-GVP **+5.8**. Separately, fixed LR leaves the
+   Mn/Class VIII balance oscillating at the end. Over epochs 41–50, Mn recall
+   spans 49.7–78.2 (late fusion) and 23.4–63.5 (Only-GVP) under fixed LR,
+   against standard deviations of 1.5–3.5 points under cosine. A fixed-LR
+   best epoch (late fusion 74.2 at epoch 48) is therefore a noisy peak, not a
+   stable level. This is best-versus-terminal reporting, kept apart from the
+   epoch-50 contrast.
+3. **The decrease is shared across families**, largest in Only-GVP. Two
+   decreases must be kept apart:
+   - From v2's 89.5 to about 72 on the new fold: the same code and recipe give
+     89.1 on the old fold, so this is a fold effect. The near-copy-disjoint,
+     size-balanced fold is harder; it is not a code regression.
+   - From the best to the terminal epoch: 1.5–6.6 points under cosine
+     (Only-ESMC 2.6–4.2, late fusion 1.5–4.3, Only-GVP 3.6–6.6), and 3.2–11.3
+     points under fixed LR.
+4. **Mn explains most of it, through Mn→Class VIII.** Mn recall at epoch 50
+   is 45–69 (cosine) in every family, against 84 on the old fold. 17–42% of
+   Mn ions are predicted Class VIII, plus a share predicted Zn. Class VIII
+   recall is 59–74. These errors are systematic: 79 Mn ions are wrong in at
+   least 5 of 7 cosine models and 28 in all 7, concentrated in a few PDB
+   groups (`4uxa` alone has 20 ions, about 4 recall points). Fe→Mn (3–21% of
+   346 Fe ions; highest in late fusion, lowest in Only-ESMC) is mostly
+   model-specific: 72 of those ions are wrong in only one model and 12 in at
+   least 5. Five- and six-class training reduces the same errors only in late
+   fusion and Only-ESMC:
+   - late fusion: Mn→VIII 17–20% against 25%, Fe→Mn 14–17% against 21%;
+     six-class 74.1 against 71.6;
+   - Only-ESMC: Mn 59–61 against 57;
+   - Only-GVP six-class is worse.
+
+   One fold and one seed, so this is not the neutral test.
+5. **Curves: overfitting in every run.** Validation loss is lowest at epochs
+   6–14, then rises 1.5–4× by epoch 50. Training common-four BA at epoch 50
+   is 94.6–100%. Validation BA falls far less than validation loss, so the
+   late epochs mostly add overconfidence. Cosine stabilizes the terminal point
+   but does not prevent the overfitting.
+
+**Most likely explanation.** The new fold has no near-copies across the
+split. Mn and Class VIII (mostly Fe) sites that are not near-copies of
+training sites are hard to separate with the current inputs, and every family
+overfits the training sites after about epoch 10. The fixed-LR schedule adds
+end-of-training oscillation of the Mn/Class VIII boundary; cosine removes the
+oscillation but not the overfitting.
+
+**Evidence.** The regression run reproduces v2 on the old fold. The pattern is
+the same in all three families and both schedules. Mn→VIII errors are
+concentrated on the same ions and groups across models. Fe→Mn errors move
+between models. The late-epoch recall spread is large under fixed LR and small
+under cosine.
+
+**Uncertain.** One fold and one seed: seed variability is unmeasured until
+step D's seed-43 controls. Fold 0's group composition can shift Mn recall
+(one group holds about 4 points). Whether earlier stopping or a lower learning
+rate would help is not tested; the terminal rule is fixed by the plan. Why
+`4uxa`-like Mn sites look Class-VIII-like is not examined (no new
+investigation).
+
+**One additional targeted check is not necessary.** The focused replay of the
+fixed-LR late-fusion epoch-50 checkpoint would compare one snapshot of a run
+whose Mn recall spans 49.7–78.2 over epochs 41–50, so its per-ion
+Fe→Mn overlap would mostly measure that oscillation. The aggregates and the
+cross-model overlap already show Fe→Mn to be model-specific. The step D
+seed-43 controls update this interpretation.
+
+**Forecast update** (measured). Warm three-lane fits take about 2,330 s (late
+fusion), 2,220 s (Only-GVP) and 1,190–1,870 s (Only-ESMC) end to end, about
+4.6 fits per hour, which matches the step-B projection for warm fits. Cold
+cache builds add about 2,000–2,200 s each; none remain for the fold-0 recipes
+of Round A.
+
+Remaining approved work:
+
+| Work | Fits | Three-lane hours |
+|---|---|---|
+| D Round A | 16 | about 4.3 |
+| D Round B | 14 runnable (+4 cost-gated) | about 4 |
+| E neutral (36) and improvement (up to 8) | 36–44 | about 9.5 |
+| F refit and test pass | — | about 1.5 |
+
+With about 0.3 h of overhead per session over roughly 9 sessions (the 6 h
+daily cap), that is about 22 VM hours, or $19 compute, plus about $3 of storage
+over 5–6 days. **About $28 of the $40 ceiling in total; about $12 margin.**
+
+Spending: step B $1.88, step C $2.78 + $0.86, storage about $0.28.
+**About $34.2 remains.**
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step C session 1 done: regression gate passed, 8 of 12 cells; 4 units remain)
+- Last execution evidence: 2026-10-06 (v3 step C session 1, 3 h 09 min, $2.78 gross). Documentation reconciliation: 2026-10-06.
+- Current campaign: pmm_ion_metal_v3, step C running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A and B done; step C session 1 done ([log v3-015](docs/campaigns/pmm_ion_metal_v3/log.md#v3-015)): regression gate passed, 7 new fold-0 cells plus the reused one; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 08:13 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+Next: step C session 2 (the three v2-recipe runs and Only-ESMC six-class) with `pmm_v3_step_c.py`, then `assess`, the step C diagnostic closeout ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) and step D Round A.
+```
+
 ## v3-015
 
 2026-10-06 — **step C, GPU session 1** (under the advance authorization of
