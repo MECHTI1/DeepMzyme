@@ -348,6 +348,9 @@ rule; the neutral four/five/six baseline grid remains separate.
 histories (patience 10 on validation common-four BA, simulated sequentially).
 It never changes a selected checkpoint: the official rule stays the terminal
 epoch, and a logged score of an unsaved epoch is not a recovered model.
+`audit_v3_train_val_gap.py` is its companion: the terminal-epoch
+training-minus-validation common-four BA gap of every four-class fold-0
+candidate against its same-seed control (descriptive; it selects nothing).
 
 Readiness outputs: the extension record and its parent hashes, the decay audit,
 the readiness report with the complete unit inventory, and the D–F cost
