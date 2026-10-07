@@ -3,6 +3,133 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-021
+
+2026-10-07 — **step D session 4: Round R complete, the two CPU audits, Round B
+started** (validation data only; fold 0; exploratory development evidence).
+Continuation of the authorized step D work ([v3-014](#v3-014), [v3-018](#v3-018));
+no new authority was used.
+
+**Session 4** `session-20261007T091548Z-fab4dad3`, `deepmzyme-l4` in
+`us-central1-a`, started 09:15:48 UTC at the first attempt (no stockout),
+stopped 12:39:54 UTC and verified TERMINATED: **3 h 24 min, $2.99 gross**.
+Five batches of three, all first attempts, every fit completed, replayed under
+`pmm-v3-replay-1`, pulled and acknowledged: `d-20261007T091821Z`,
+`…T095751Z`, `…T103657Z` (Round R), `…T111854Z`, `…T115750Z` (Round B).
+Evidence copy `step_d_evidence/evidence_20261007T123827Z` (565 files, SHA-256
+checked on both ends, none mismatched). Assessment copies
+`step_d_evidence/assessments/D-R_20261007T111811Z` (SHA-256 `baae64a8…`,
+"provisional: run D-B next") and `D-B_20261007T123755Z` (SHA-256 `ec8ed981…`,
+blocked: the eight site-geometry fits are missing; `posnoise01` and
+`outerdrop01` recorded "not tested (cost)").
+
+**Round R complete (26 of 26).** Terminal common-four BA, Δ against the
+same-seed control, seeds 42 / 43, mean recall changes in points:
+
+| Candidate | Only-GVP | Late fusion |
+|---|---|---|
+| `headdrop03` (head dropout 0.3) | −2.27 / −1.04, mean −1.65, Class VIII −9.3: not passed | +3.74 / +3.43, **mean +3.58**, Cu +8.9, Class VIII +4.8: **passed** |
+| `resdrop02` (residual dropout 0.2) | −4.50 / +4.58, mean +0.04, Class VIII −7.1: not passed | −0.33 / +2.10, mean +0.89: not passed |
+| `esmdrop04` (modality dropout 0.4) | — | −1.87 / +4.46, mean +1.30: not passed |
+
+With [v3-020](#v3-020): Round R passes are `wd10` in both families and
+`headdrop03` in late fusion; `wd001`, `wd01`, `headdrop01`, `resdrop02` and
+`esmdrop04` did not pass. Residual dropout disagrees between seeds in Only-GVP
+at both strengths (−2.14 / +5.57 and −4.50 / +4.58).
+
+**Round B, 6 of 18.** `vecnorm` (Only-GVP) +0.68 / −2.34, mean −0.83, Cu −6.8:
+not passed. `invsqrtw` Only-GVP +0.56 / −0.64, mean −0.04, Class VIII −7.3:
+not passed; late fusion +1.74 / +3.99, **mean +2.87**, Mn +4.1, Cu +5.5,
+Class VIII +2.0: **passed**. Remaining: the eight site-geometry fits
+(`sitenone` controls and `sitecountsangles`, four cold cache sets), then the
+combinations. Provisional combinations named by the D-R assessment, before
+Round B: late fusion `combo-gvpaux03+headdrop03+meanagg+resdrop01+wd10`
+(`gvpaux03` over `esmdrop02`, +2.51 against +2.21; best single `headdrop03`),
+Only-GVP `combo-meanagg+wd10` (best single `meanagg`); the complete D-B
+assessment will add `invsqrtw` to the late-fusion set and may add site geometry.
+
+**Audits before Round B** (CPU; exploratory; no rule, checkpoint or A4 change):
+
+- Early stopping, `audits/early_stopping_audit_20261007T111826Z`, 51 cosine
+  runs: every run stops early under the simulated patience-10 rule (median
+  selected epoch 8), the selected epoch beats the terminal one by +3.4 points
+  on average (one exception, Only-GVP `wd10` seed 43, −3.1), and 11 runs have
+  a later improvement after the stop. The passing recipes reduce but do not
+  remove the early peak: late fusion `headdrop03` +1.7, `resdrop01` +1.6,
+  `wd10` +2.3, `esmdrop02` +2.2, `gvpaux03` +3.1, `meanagg` +4.7 against the
+  baseline's +4.8; Only-GVP `wd10` −0.5 and `meanagg` +2.9 against +4.8. The
+  v3-018 conclusion stands: no rule is adopted; the selected epochs were never
+  saved and the margin is selection-optimistic.
+- Train/validation gap, `audits/train_val_gap_20261007T111847Z`
+  (`audit_v3_train_val_gap.py`, commit `7c1b299`; 40 paired units): every
+  control fits the training fold almost perfectly (training BA 98.1–99.9
+  against validation 63.2–71.6; gaps 27.4–36.3 points). The late-fusion passes
+  shrink the gap by 1.7–3.4 points almost entirely through validation BA
+  (training BA changes −0.8 to +0.9 points, all saturated above 97). Only-GVP `wd10` is the one recipe that fits the training fold
+  less (training BA −11.5, gap −14.3, validation +2.9); `resdrop01`/`resdrop02`
+  lower it by 2.2 / 1.5 without passing; `headdrop01` and `wd001` widen the gap
+  by about 3 points in Only-GVP. The gap is an identity in the two deltas and
+  says nothing about generalization.
+
+**User guidance received during the session (recorded, no action taken):**
+fusion is being tuned while Only-ESMC keeps its original settings, so once the
+selected fusion recipe is known the user wants a small fairness assessment:
+list the *shared* settings that changed (weight decay, classifier dropout,
+class weighting; never ESM-branch dropout or the GVP auxiliary loss), judge
+whether one adjusted Only-ESMC recipe with those settings would strengthen the
+comparison, keep the original Only-ESMC baseline and the four/five/six-class
+comparisons unchanged and report original and adjusted results separately. The
+proposal (exact settings, fits, time, cost, question) precedes any fit;
+additional training awaits the user's approval; the recipe and comparison
+rules must be recorded before any fold 1–4 result is inspected; no automatic
+transfer of four-class improvements to five/six-class training.
+
+Preliminary proposal, to be finalized after the combination fits: the shared
+settings in the provisional late-fusion recipe are `headdrop03` and `wd10`,
+now joined by `invsqrtw`. A coefficient of 1.0 shrinks the base-rate group
+(3e-5) by 25% over the schedule ([v3-018](#v3-018) decay audit), and Only-ESMC
+trains entirely at that rate, so the same coefficient gives the fusion
+ESM-branch strength, not Only-GVP's 94%. One recipe, Only-ESMC `four_class`
+baseline plus head dropout 0.3, weight decay 1.0 and inverse-square-root class
+weights, seed 42, folds 0–4 (5 fits, about 1,800 s each warm, about 1.1 three-lane
+hours, about $1.0 gross), as a comparison arm only: paired per-fold contrasts
+against the Only-ESMC baseline and against the final fusion recipe under the
+A4 intervals, labelled conditional on four-class development, next to the
+unchanged primary contrast. It would need a chained extension of the frozen
+runner (the current `extend` is refused once step D has started), the recipe,
+two descriptive assessor contrasts and tests, about 2–3 h of CPU work before
+step E. Expected value moderate: Only-ESMC overfits earliest (training BA
+97.6, validation 67.9, best logged epoch 3) and head dropout acts on the same
+head module. Decision pending with the user.
+
+**Spending and reforecast.** Compute $15.64 gross (B $1.88, C $3.64, D $10.12
+over four sessions); storage about $1.6 (campaign disk and snapshot about
+$1.0, failed-fallback leftovers about $0.6). **About $17.3 spent; about $22.7
+remains** of the $40 ceiling. Remaining work: Round B 8 cold fits (about 3.2 h
+in three rounds), combinations up to 4 (1.3 h), step E 36 + up to 8 fits
+(8.8 h plus about 0.6 h for the four cold five/six-class cache sets), step F
+1.5 h: about 15.4 fit-hours, with session overhead and a rerun allowance about
+18 h, $15.8. Storage for about four more days: $2.2, or $6.4 while the
+leftovers exist. **Total about $35.3–39.5 of $40.** The optional Only-ESMC
+arm (+$1.0) fits only if the leftovers are deleted soon; otherwise it needs a
+ceiling decision. Daily use on 2026-10-07 after this session: 6 h 58 min,
+$8.46 of 12 h / $18, so one more 4-hour session is possible today.
+
+Commits: `7c1b299` (gap audit tool and tests, playbook sentence); this entry.
+
+STATUS text replaced by this update, preserved verbatim (the dated lines; in
+the same update the file's other wording was shortened under its 6,000-byte
+cap without changing any fact, date or number):
+
+```text
+- Status: active (2026-10-07 v3 step D: Round A done, Round R 17 of 26; `meanagg`, `wd10` passed)
+- Last execution evidence: 2026-10-07 (v3 step D sessions 1–3, 8 h 06 min, $7.13 gross). Documentation reconciliation: 2026-10-07.
+- Stage: v3 steps A–C done; step D Round A complete, Round R 17 of 26 ([log v3-020](docs/campaigns/pmm_ion_metal_v3/log.md#v3-020)); Round B follows; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $26.3 left; forecast $34.6–37.7). Step F only after its gates and the final-test label decision; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 03:37 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: the 9 remaining Round R fits, then Round B (14) and the combinations, per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment); the user's work window ended 2026-10-07 04:10 UTC. Reforecast before Round B; cost-gated augmentations need the user's OK.
+```
+
 ## v3-020
 
 2026-10-07 — **step D sessions 2 and 3; closeout of the user's work window**
