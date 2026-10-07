@@ -3,6 +3,216 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-022
+
+2026-10-07 — **step D session 5: the eight site-geometry Round B fits and the
+complete D-B assessment** (validation data only; fold 0; exploratory
+development evidence). Continuation of the authorized step D work
+([v3-014](#v3-014), [v3-018](#v3-018)); no new authority was used.
+
+**Resume.** The workstation rebooted at 15:48 UTC, which unmounted the Data1
+drive; it was remounted before any action (the worktree and campaign root were
+unchanged, `git status` clean at `dca385e` = `origin/v3-step-a`). The start at
+16:53 UTC hit the L4 stockout in `us-central1-a` (the fourth of the day, after
+13:01, 13:06 and 13:12; nothing allocated or charged); a bounded same-VM retry
+loop (five-minute spacing, at most twelve attempts, no fallback) succeeded at
+the first retry.
+
+**Session 5** `session-20261007T170135Z-a208a882`, `deepmzyme-l4` in
+`us-central1-a`, started 17:01:35 UTC, hard stop 20:57:46 UTC; smoke check
+passed (L4, torch 2.11.0+cu128). Units were launched by refilling each lane as
+soon as its unit ended (`wait --any`), seed-43 units only after the seed-42
+unit of the same cache set had completed, so that each of the four site-geometry
+cache sets was built once; every launch went through the launcher's admission
+and gate checks. First batch `d-20261007T170429Z` at 17:04 UTC: Only-GVP
+`sitenone` 42 (lane 0), late fusion `sitenone` 42 (lane 1), Only-GVP
+`sitecountsangles` 42 (lane 2), all cold.
+
+Batches: `d-20261007T170429Z` (three cold sets, 17:04 UTC; all three completed
+by 17:43 UTC, about 37 min each: the parse cache was warm, 0.6 min for 3,992
+structures, and each site-geometry graph set built inside the 2-minute prepare
+phase, so the 2,000 s cold allowance was not needed), `d-20261007T174535Z`,
+`…T174547Z`, `…T174559Z` (late fusion `sitecountsangles` 42, Only-GVP
+`sitenone` 43, late fusion `sitenone` 43; 17:45–17:46 UTC, completed 18:25 UTC),
+then Only-GVP and late fusion `sitecountsangles` 43 together (18:28 UTC,
+completed 18:59 UTC). Every fit completed at its first attempt, replayed under
+`pmm-v3-replay-1`, pulled and acknowledged. The workstation-side refill script
+(scratchpad only, not part of the repository; it only calls the launcher's
+`status`, `pull`, `launch --no-wait` and `wait --any`) stopped twice on timing
+edges — a routine "lane awaits its verified host pull" refusal at 17:42 UTC and
+all three lanes ending within the same status snapshot at 18:25 UTC — costing
+about 3 minutes of idle lanes each time; the launcher's own lane, pull,
+completed-unit and admission refusals were never bypassed, and no unit was
+launched twice. Assessment copies: `step_d_evidence/assessments/D-B_20261007T190153Z`
+(SHA-256 `17721dda…`, "blocked: a combination run is still missing", names the
+combinations) and the **final** `D-B_20261007T201334Z` (SHA-256 `bba7c728…`,
+status `final`): **final step D recipes — late fusion `headdrop03`, Only-GVP
+`meanagg`; Only-ESMC baseline.** Evidence copy `step_d_evidence/evidence_20261007T201431Z` (682 files, SHA-256 checked on both ends, none mismatched; `safe_to_stop` true).
+
+**Round B complete (14 of 18 run; `posnoise01`, `outerdrop01` not tested (cost)).**
+Terminal common-four BA, Δ against the same-seed control, seeds 42 / 43, mean
+recall changes in points:
+
+| Candidate | Only-GVP | Late fusion |
+|---|---|---|
+| `sitecountsangles` (`--site-geometry-features counts_angles` against the matched `none` control) | +0.50 / +5.29, **mean +2.90**, Cu +7.5, Class VIII +3.4, Mn −0.6: **passed** | −0.91 / −0.44, mean −0.68: not passed |
+
+Terminal common-four BA of the eight fits (seed 42 / 43): Only-GVP `sitenone`
+61.95 / 62.63, `sitecountsangles` 62.45 / 67.92; late fusion `sitenone`
+73.71 / 71.78, `sitecountsangles` 72.80 / 71.34. The `sitenone` controls differ
+from the baseline (whose setting is `legacy`) by −2.75 / −0.59 (Only-GVP) and
++2.09 / +3.20 (late fusion) points: descriptive only, within the 1.5–3 point
+seed spread of the controls, and not a screened candidate. Round B passes:
+`invsqrtw` in late fusion ([v3-021](#v3-021)) and `sitecountsangles` in
+Only-GVP; `vecnorm`, Only-GVP `invsqrtw` and late-fusion `sitecountsangles`
+did not pass; `posnoise01` and `outerdrop01` are "not tested (cost)".
+
+**Combinations named by the complete D-B assessment**
+(`step_d_evidence/assessments/D-B_20261007T190153Z`, SHA-256 `17721dda…`,
+status "blocked: a combination run is still missing"): late fusion
+`combo-gvpaux03+headdrop03+invsqrtw+meanagg+resdrop01+wd10` (best single
+`headdrop03`, +3.58) and Only-GVP `combo-meanagg+sitecountsangles+wd10` (best
+single `meanagg`, +4.24), each with seeds 42 and 43 against the baseline
+controls. Neither combination changes learning-rate group membership (no
+`structlr`), so the [v3-018](#v3-018) decay audit covers them.
+
+**Combination fits** (batch `d-20261007T190314Z` at 19:03 UTC, three lanes;
+the fourth at 19:44 UTC after the lanes were pulled, completed 20:12 UTC; terminal common-four BA,
+Δ against the same-seed baseline control):
+
+| Family | Combination | Seed 42 | Seed 43 | Mean Δ | Best single | Final recipe (assessor) |
+|---|---|---|---|---|---|---|
+| Late fusion | `combo-gvpaux03+headdrop03+invsqrtw+meanagg+resdrop01+wd10` | 74.44 (+2.82) | 72.27 (+3.69) | +3.25 | `headdrop03` +3.58 | **`headdrop03`** (single: the combination passed the gate but gained less) |
+| Only-GVP | `combo-meanagg+sitecountsangles+wd10` | 62.74 (−1.96) | 69.51 (+6.29) | +2.17 | `meanagg` +4.24 | **`meanagg`** (single: the combination failed the gate at seed 42) |
+
+Measured, not explained: stacking every passing late-fusion change gains less
+than head dropout 0.3 alone, and the Only-GVP stack is below its baseline at
+seed 42 (recalls against the seed-42 baseline: Mn +3.4, Cu -0.0, Zn +0.7, Class VIII -12.0 points). Under the plan's combination rule the best single
+candidate is adopted when the combination does not beat it. All of this is a
+one-fold screen with 1.5–3 point seed noise; nothing is an improvement until
+folds 1–4 confirm it in step E.
+
+**Session 5 and spending.** `session-20261007T170135Z-a208a882`: 17:01:35–20:16:42
+UTC, **3 h 15 min, $2.86 gross** (stopped by `vm-stop` after the evidence copy;
+TERMINATED verified 20:16:42 UTC). Twelve fits in one session (eight site-geometry,
+four combination), every one at its first attempt. Daily use 2026-10-07 after
+this session: 10 h 13 min, $11.25 of 12 h / $18. Compute to date **$18.50 gross**
+(B $1.88, C $3.64, D $12.98 over five sessions). Storage: the campaign disk and
+paused snapshot plus the failed-fallback leftovers are reserved by the controller
+at about $2.00 per day in total (two of three disks and one of two snapshots are
+the leftovers, about $1.23 per day of it); about $2.2 accrued to date. **About
+$20.7 spent; about $19.3 remains** of the $40 ceiling.
+
+Reforecast with the measured fit times (31–37 min wall per Only-GVP or
+late-fusion fit, about 28 min per Only-ESMC fit, site-geometry and five/six-class
+cache sets build inside the 2-minute prepare phase): step E 44 fits (36 neutral
++ 8 improvement) about 8.8 three-lane hours plus overhead, about 9.5 h, $8.4;
+step F about 1.5 h, $1.3; storage for about three more days $2.2 without the
+leftovers, $6.0 with them. **Total about $32.6–36.4 of $40**; the optional
+Only-ESMC arm would add about $1.0.
+
+**Only-ESMC fairness arm: proposal (user request of 2026-10-07, [v3-021](#v3-021)); kept separate for the user's decision, neither approved nor rejected; no fit runs without approval.**
+
+The final late-fusion recipe is `headdrop03` alone (final D assessment above), so BRANCH B applies; BRANCH A is kept only as the record of what a combination recipe would have implied.
+
+Question answered: does the late-fusion gain over Only-ESMC survive when Only-ESMC
+receives the same *shared* training settings that the selected fusion recipe
+carries, i.e. is the gain "structure adds information" rather than "fusion got
+regularization that Only-ESMC did not"?
+
+Shared settings in the selected late-fusion recipe (transferable: weight decay,
+classifier-head dropout, class weighting; never transferred: `meanagg`,
+`resdrop01`, `gvpaux03`, `esmdrop02/04`, `structlr`, any GVP-side change):
+
+| Selected fusion recipe | Shared settings | Adjusted Only-ESMC recipe |
+|---|---|---|
+| BRANCH A: `combo-gvpaux03+headdrop03+invsqrtw+meanagg+resdrop01+wd10` adopted | `headdrop03` (head dropout 0.3), `wd10` (AdamW decay 1.0), `invsqrtw` (inverse-square-root class weights) | `only_esm__four_class__esmfair-headdrop03+invsqrtw+wd10` |
+| BRANCH B: best single `headdrop03` adopted (combination not better) | `headdrop03` only | `only_esm__four_class__esmfair-headdrop03` |
+
+Decay note: decay coefficient 1.0 removes 25% of a no-gradient weight over the
+schedule at the base rate 3e-5 ([v3-018](#v3-018) audit) and Only-ESMC trains
+entirely at that rate, so the same coefficient gives the fusion ESM-branch
+strength, not Only-GVP's 94%. Head dropout acts on the same classifier module in
+both models; `invsqrtw` changes only the loss weights.
+
+Fits: 5 (seed 42, folds 0–4; the Only-ESMC baseline on folds 0–4 is already
+part of step E). Time: about 1,800 s warm each, about 1.1 three-lane hours
+(one session segment). Cost: about $1.0 gross at $0.879/h. Reuses every
+completed run; no hidden-dimension or exhaustive search.
+
+Comparison rules, recorded here BEFORE any fold 1–4 result is inspected:
+(1) comparison arm only; the primary contrasts of A4 (Only-ESMC baseline vs
+fusion baseline/final recipe; four/five/six neutral test) are unchanged;
+(2) two descriptive paired per-fold contrasts under the A4 interval method:
+adjusted Only-ESMC vs original Only-ESMC baseline, and final fusion recipe vs
+adjusted Only-ESMC; fold 0 shown separately; (3) labelled "conditional on
+four-class development" because the shared settings were selected on fold 0;
+(4) original and adjusted Only-ESMC results are reported separately and the
+original baseline is never replaced; (5) no transfer to five/six-class
+training; (6) no checkpoint-rule, data, fold or test-policy change.
+
+Implementation: a chained extension 2 of the frozen runner (one recipe, two
+assessor contrasts, tests; the current `extend` is refused once step D has
+started, so the extension tool needs a chained-record path), about 2–3 h CPU
+before step E, then the 5 fits inside step E's sessions.
+
+Recommendation for the applicable BRANCH B (`only_esm__four_class__esmfair-headdrop03`, 5 fits, about 1.1 three-lane hours, about $1.0 gross, plus 2–3 h CPU for the chained runner extension): low-to-moderate value. Head dropout 0.3 is the only shared setting; Only-ESMC already carries head dropout 0.2 at baseline, its best logged epoch is 3 and the audits show head dropout mainly damps the early validation peak, so the expected effect on the terminal-epoch Only-ESMC score is small. The arm would still remove the objection that the fusion gain came from a classifier-regularization difference. Skipping is defensible; running it is cheap. Decision: the user's; nothing is prepared or launched until then.
+
+**Audit of the session's scratch refill tooling** (user request; read-only
+inspection and CPU mocks, no change applied): report, mock test and the tools
+themselves are kept under `audits/driver_audit_20261007T193000Z/` on the
+campaign data root and summarized in [handoff.md](handoff.md). Findings in
+short: both premature stops were snapshot races on temporary launcher refusals
+("lane awaits its verified host pull"), the launcher's lane, pull, completed-unit
+and admission guards were never bypassed, no unit ran twice, and proposed
+corrections await the user's review before any such tool is reused.
+
+**User decisions of 2026-10-07 (evening, this session):**
+
+- **Final-test label: `both_results_secondary`.** Both step F reports — the
+  full PMM test ("exact, possibly overlapped PMM test; includes rows from
+  previously opened tests") and the clean subset — are secondary results; no
+  primary, pristine held-out claim is made. Recorded uncertainty: the
+  2026-09-24 Zenodo PMM run on Colab may have scored the whole PMM test set
+  (its artifacts were lost with the Colab VM and no evaluation record exists
+  either way), the non-overlap/exact PMM test set was opened 13 and 21 times in
+  earlier campaigns, and PMM test label counts were read in aggregate on
+  2026-10-03 without evaluation ([DATASETS ledger](../../DATASETS.md#test-use-ledger)).
+  The decision changes no step E or F prerequisite: Stage 6 selection by A4,
+  the Stage 6B full refit, the frozen test-row rule ([v3-012](#v3-012)), the
+  clean-subset membership hashes, the refit checkpoint and seed, no ensemble
+  and the calibration rule must still be recorded in the DATASETS ledger before
+  any test access. Recorded for the launcher with `record-e-gate --label
+  both_results_secondary --log-entry v3-022`.
+- **Working window:** continue the approved plan until 03:38 UTC on 2026-10-08
+  (06:38 Israel time) at the latest, eight hours from 19:38 UTC, including
+  verified persistence, VM shutdown, documentation, commit and push; work that
+  does not fit safely stays pending. The controller's 4 h / $6 session and
+  12 h / $18 daily caps and the $40 gross ceiling are unchanged. Nothing can run
+  between this session's stop and 00:00 UTC (about 1 h 10 min of today's daily
+  cap remain, less than one admitted fit), so step E starts after midnight UTC
+  if its gates pass, in one session planned backward from the 03:38 deadline.
+- **Only-ESMC fairness arm:** kept separate for the user's decision (proposal
+  below); neither approved nor rejected; it replaces no planned work.
+- **Push:** the user asked for the closeout commits to be pushed to
+  `origin/v3-step-a`.
+
+Open and unchanged: fallback leftovers; cost-gated augmentations ("not tested
+(cost)"); Round C (out of scope).
+
+Commits: this entry (log, STATUS, the decided item in plan.md, the campaign handoff `handoff.md`); pushed to `origin/v3-step-a` at the user's request.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-07 v3 step D: Rounds A and R done, Round B 6 of 18; `headdrop03` and `invsqrtw` passed in late fusion)
+- Last execution evidence: 2026-10-07 (v3 step D session 4, 3 h 24 min, $2.99 gross). Docs reconciliation: 2026-10-07.
+- Stage: v3 steps A–C done; step D Rounds A and R complete, Round B 6 of 18 ([log v3-021](docs/campaigns/pmm_ion_metal_v3/log.md#v3-021)); no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $22.7 left; forecast $35.3–39.5, the upper value with the fallback leftovers). Step F only after its gates and the final-test label decision; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 12:39 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: the 8 site-geometry Round B fits, then one combination per family from the complete D-B assessment ([playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)); cost-gated augmentations stay "not tested (cost)" without the user's OK; the proposed Only-ESMC fairness arm ([log v3-021](docs/campaigns/pmm_ion_metal_v3/log.md#v3-021)) awaits the user's decision, recorded before any fold 1–4 result.
+```
+
 ## v3-021
 
 2026-10-07 — **step D session 4: Round R complete, the two CPU audits, Round B

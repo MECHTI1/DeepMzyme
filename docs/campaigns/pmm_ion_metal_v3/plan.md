@@ -352,9 +352,10 @@ alone is not a GPU launch request or wider spending authority.
 
 ## Open decisions
 
-- Before step E: the label of the final test (clean subset as "primary, not
-  pristine, history disclosed", or both results secondary), after the user's
-  Drive/Colab check of the 2026-09-24 Zenodo run.
+- Decided 2026-10-07 ([log v3-022](log.md#v3-022)): the final-test label is
+  `both_results_secondary`; both step F reports stay secondary, the clean subset
+  is not promoted to primary, and the 2026-09-24 Zenodo-run uncertainty is
+  recorded there. No step E or F prerequisite changes.
 - Decided 2026-10-06 ([log v3-012](log.md#v3-012)): which PMM test rows count.
   The recommended rule was chosen: score every reconstructable row under the
   training input contract, flag rather than drop symmetry-LINK rows, count
