@@ -3,6 +3,90 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-020
+
+2026-10-07 — **step D sessions 2 and 3; closeout of the user's work window**
+(validation data only; fold 0; exploratory development evidence). The window
+recorded in [v3-019](#v3-019) ended at 04:10 UTC; the VM was stopped and
+verified TERMINATED at 03:37 UTC.
+
+Sessions, all on `deepmzyme-l4` in `us-central1-a` after same-VM retries
+(each failed start is free; the fallback pass of v3-019 stays spent):
+
+| Session | UTC | Running | Gross | Fits |
+|---|---|---|---|---|
+| 1 `session-20261006T191031Z-2d26fe96` | 19:10–22:23 | 3 h 13 min | $2.83 | 12 |
+| 2 `session-20261006T224120Z-22b521f0` | 22:41–01:32 | 2 h 51 min | $2.51 | 12 |
+| 3 `session-20261007T013440Z-cb560726` | 01:34–03:37 | 2 h 02 min | $1.79 | 9 |
+
+33 fits, 8 h 06 min, **$7.13 gross**; every fit completed on its first
+attempt, replayed under `pmm-v3-replay-1`, pulled and acknowledged; evidence
+copies `step_d_evidence/evidence_20261006T222239Z`, `…T013116Z` and
+`…T033532Z` (423 files in the last, SHA-256 checked on both ends);
+assessment copies under `step_d_evidence/assessments/` (latest
+`D-R_20261007T033512Z`, blocked: nine Round R fits missing).
+
+**Round A complete (16 of 16).** Passed: `meanagg` in both families
+(+4.24 Only-GVP, +2.54 late fusion), and in late fusion `resdrop01` (+2.26),
+`gvpaux03` (+2.51) and `esmdrop02` (+2.21; alternatives with `gvpaux03`).
+Not passed: `resdrop01` in Only-GVP (−2.14 / +5.57), `structlr` (+0.91).
+
+**Round R, 17 of 26** (terminal common-four BA, Δ against the same-seed
+control; mean over seeds 42 and 43):
+
+| Candidate | Only-GVP | Late fusion |
+|---|---|---|
+| `wd001` (decay 0.01) | −5.22 / −0.66, mean −2.94, Class VIII −12.3: not passed | −0.01 / +1.16, mean +0.57: not passed |
+| `wd01` (decay 0.1) | +0.17 / −0.35, mean −0.09: not passed | −0.25 / +1.76, mean +0.75: not passed |
+| `wd10` (decay 1.0) | +2.05 / +3.70, **mean +2.88**, Mn +10.1, Class VIII −2.8: **passed** | +1.18 / +3.05, **mean +2.11**: **passed** |
+| `headdrop01` (0.1) | −3.39 / −2.02, mean −2.70: not passed | −2.56 / +0.26, mean −1.15: not passed |
+| `headdrop03` (0.3) | not run | seed 42 done, seed 43 missing |
+| `resdrop02`, `esmdrop04` | not run | not run |
+
+Measured, not explained: of the three decay strengths only the strongest
+passes, in both families; the smaller strengths are within seed noise or
+harmful; a lower head dropout hurts both families. Step D is on the full
+path: Round B is entered after Round R, and each family will have a
+combination run (late fusion: `meanagg`, `resdrop01`, the better of
+`gvpaux03`/`esmdrop02`, `wd10` and whatever else passes; Only-GVP: `meanagg`,
+`wd10`, …). All of this is a one-fold screen with seed noise of 1.5–3
+points; nothing is an improvement until folds 1–4 confirm it in step E.
+
+Remaining D–F work: Round R 9 fits (`headdrop03` ×3, `resdrop02` ×4,
+`esmdrop04` ×2), Round B 14 runnable fits (the four cost-gated augmentations
+default to "not tested (cost)"), at most 4 combination fits, step E 36 + up
+to 8 fits, step F.
+
+**Spending.** Compute to date $12.65 gross (B $1.88, C $3.64, D $7.13).
+Storage: the campaign disk and the paused snapshot about $0.8 to date; the
+failed-fallback leftovers (two 150 GB recovery disks and snapshot
+`deepmzyme-fallback-873d08b26968`, 44.7 GiB) add about $1.06 per day while
+they exist. **About $13.7 spent; about $26.3 remains.** Reforecast of the
+remaining work: about 18 fit hours plus session overhead, slack and one
+rerun allowance, about 22 h, $19.2; storage for about three more days $1.7,
+or $4.8 if the leftovers stay. **Total about $34.6–37.7 of $40.** The
+leftovers' cleanup is the user's decision (controller `vm-fallback
+--finalize` is for a successful recovery; these need a separate deletion
+decision); they are not needed, every result being on the workstation.
+
+The parse cache of the new code directory now holds the four-class sets;
+five- and six-class sets (step E) parse cold once each.
+
+Still open: the final-test label (before step E); the cost-gated
+augmentations (Round B; default not tested); cleanup of the fallback
+leftovers.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-06 v3 step D running: Round A 12 of 16 fits done; `meanagg` passed)
+- Current campaign: pmm_ion_metal_v3, step D running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A–C done; step D Round A 12 of 16 fits ([log v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)): `meanagg` passed in both families; Round R next; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $30.9 left before session 2; forecast about $36.5). Step F only after its gates and the final-test label decision; no Round C.
+- GPU/VM: `deepmzyme-l4` RUNNING (session 2 from 2026-10-06 22:41 UTC, hard stop 02:11 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: finish Round A (4 fits), then Round R (26) per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment), in sessions of at most 4 h until 2026-10-07 04:10 UTC. Reforecast before Round B; cost-gated augmentations need the user's OK.
+```
+
 ## v3-019
 
 2026-10-06 — **step D session 1, the evening's user decisions and the second
