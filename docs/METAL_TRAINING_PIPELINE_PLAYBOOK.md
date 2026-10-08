@@ -353,6 +353,11 @@ epoch, and a logged score of an unsaved epoch is not a recovered model.
 `audit_v3_train_val_gap.py` is its companion: the terminal-epoch
 training-minus-validation common-four BA gap of every four-class fold-0
 candidate against its same-seed control (descriptive; it selects nothing).
+`audit_v3_epoch_contrast.py` reports logged epoch-t against terminal common-four
+BA, class recalls and confusion on explicit folds and one seed, refusing
+missing, duplicated, mismatched or incomplete runs and reconciling terminal
+values with an assessment copy (descriptive; epoch t inside a 50-epoch cosine
+run is not a t-epoch schedule; it selects nothing).
 
 Readiness outputs: the extension record and its parent hashes, the decay audit,
 the readiness report with the complete unit inventory, and the D–F cost
@@ -364,8 +369,8 @@ The $40 gross ceiling and one-shot held-out policy are unchanged.
 ### v3 step E2 individual-confirmation amendment (planned; not implemented)
 
 **Planned on 2026-10-08 ([log v3-025](campaigns/pmm_ion_metal_v3/log.md#v3-025));
-no code, command, manifest, specification or evidence exists for it, and nothing
-has been run.** This section names what exists, what refuses today and what must
+its assessment specification is frozen (2026-10-08); no code, command,
+manifest or evidence exists for it, and nothing has been run.** This section names what exists, what refuses today and what must
 be built; it contains no E2 command, because none exists. Executable E2 commands
 are added here only after the tooling exists and passes its checks. The rules
 (fits, comparisons, replacement, completion) are owned by the
@@ -460,7 +465,7 @@ To build before any E2 fit (not started; names are descriptions, not commands):
    its selection by assessment-file hash (never a projected winner), the E2
    specification hash, and hashes binding source, configuration and evidence; refused when
    provenance differs, the original E assessment is incomplete, the user's
-   recorded go-ahead is missing or a persistence check fails;
+   recorded E2 GPU-start authorization is missing or a persistence check fails;
 3. the E2 launcher (own launch and evidence directories; canonical run
    identities; the existing admission, session, lane and host-pull guards;
    every listed unit completed regardless of intermediate scores; one
@@ -479,18 +484,19 @@ To build before any E2 fit (not started; names are descriptions, not commands):
    results and retention of the original selection; mixed-target controls (a
    five- or six-class original selection compared on common-four BA with its
    native metrics preserved); launch refusal without the user's recorded E2
-   go-ahead; persistence and recovery; and the unchanged behaviour of the
+   GPU-start authorization; persistence and recovery; and the unchanged behaviour of the
    original step E assessor and launcher;
 6. before GPU execution: the existing launcher and assessment tests
    (`tests/test_v3_step_d_launcher.py`, `tests/test_v3_step_c_launcher.py`,
    `tests/test_v3_assessment.py`, `tests/test_v3_extension.py`,
    `tests/test_v3_campaign.py`) with the new E2 tests, `tests/smoke_checks.py`,
    and `tools/check_docs_contract.py`; a refreshed forecast; the revised
-   ceiling recorded in execution controls; the user's go-ahead for the GPU
-   start.
+   ceiling recorded in execution controls; the user's separate E2 GPU-start
+   authorization (the CPU implementation is accepted planned work after the
+   original E assessment and is not a GPU start).
 
 Step F does not start until E2 is complete (all 36 fits with verified
-evidence, the eight comparisons reported, one final selection), unless the
+evidence, all 17 declared comparisons reported, one final selection), unless the
 user cancels E2 by a dated log entry; step F then takes the unchanged A4
 selection as its input.
 

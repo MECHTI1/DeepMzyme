@@ -35,10 +35,10 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 
 ## Blockers and immediate next action
 
-- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.6 left at 16:50 UTC; E+F forecast $35.7–41.5 with storage, log v3-028); confirm the next GPU start with the user. The $55 planning ceiling for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after its tooling and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled); no Round C.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $26.4 spent, $13.6 left at 17:30 UTC; E+F forecast $34.0–39.9, log v3-029); confirm the next GPU start with the user. The $55 E2 planning ceiling authorizes no start. E2 GPU fits only after its CPU tooling and checks, a refreshed forecast and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 
-Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized yet); then the original E assessment, the E2 CPU tooling and checks, the E2 go-ahead; step F after E2; open: step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review after step E.
+Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized); then the original E assessment, the deferred read-only schedule/error review (log v3-029), the E2 CPU tooling and checks; open: E2 GPU authorization, step F plan, fairness arm, leftover cleanup (proposal v3-029), cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
