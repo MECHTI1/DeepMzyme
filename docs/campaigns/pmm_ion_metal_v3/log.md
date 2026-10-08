@@ -3,6 +3,280 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-026
+
+2026-10-08 — **pending review of the E2 assessment rules saved; the E2
+documentation committed and pushed** (documentation only; no code change, fit,
+GPU action, inference or test access). The user, closing the workstation, asked
+that the review below be saved durably, that the documentation work of
+[v3-025](#v3-025) be committed and pushed, and that no further investigation or
+implementation begin. Step E2 stays planned, not implemented and not
+experimentally evaluated; its assessment and replacement rules
+([plan step E2](plan.md#steps), items 2 and 3) are **pending review** and not
+frozen. The eight candidates, the 36-fit scope, seed 42 and the $55 gross total
+planning ceiling are unchanged; the planning ceiling authorizes no GPU start.
+
+**Pending review (user, 2026-10-08; unresolved; to be discussed before the E2
+specification is frozen or any implementation or training starts; also in
+[handoff section 9](handoff.md#9-pending-review-of-the-e2-assessment-rules-saved-2026-10-08-unresolved)):**
+
+1. Promotion threshold. Bonferroni correction across 17 comparisons with only
+   four folds creates a very demanding replacement gate, approximately 99.7%
+   confidence intervals per comparison. A hypothetical improvement of +1, +2,
+   +3 and +4 percentage points averages +2.5 points but still fails the
+   adjusted t-interval check. Recorded as an unresolved design tradeoff: the
+   threshold, comparison family, folds, seeds and budget are not changed
+   silently, are discussed with the user before the specification is frozen,
+   and are never changed after E2 results are seen to obtain a preferred
+   outcome.
+2. Separate experiment conclusions. Each candidate needs two separate
+   conclusions: whether the change helps its own model compared with its
+   matched control, and whether it qualifies to replace the overall selected
+   model. Failure to replace the overall winner must not be interpreted as
+   "the change is useless"; positive average gains must not conceal failed
+   class-recall checks.
+3. Documentation consistency. The handoff's old E → F sequence and reading
+   list are reconciled with E → E2 → F and v3-025 in this update. The step F
+   draft (`audits/session_notes_20261008/step_f_plan_DRAFT.md` on the campaign
+   data root) takes the A4 selection as its only input and is marked as
+   requiring reconciliation before implementation: step F must consume the
+   final E2 selection, or the original A4 selection if the user explicitly
+   cancels E2.
+4. Interpretation. The development-validation/exploratory label is preserved.
+   Four folds and one seed do not establish robustness across training seeds,
+   and the adjusted intervals do not remove the uncertainty caused by reused
+   validation data and overlapping cross-validation training sets.
+
+**Next task (recorded):** "Read the saved review, discuss the unresolved
+assessment tradeoffs with the user, agree any changes, then update the
+documentation before implementation or training." The scientific questions
+are not resolved here.
+
+**Commit and push (user authorization of 2026-10-08, replacing the earlier
+instruction not to commit or push):** the documentation changes of v3-025 and
+this entry (plan, README, log, handoff, STATUS, playbook, improvement-plan
+pointer) are committed with the campaign hook as "docs: record E2 draft and
+pending review" and pushed to `origin/v3-step-a` without force; no other file
+is included; training code, executable spending controls, frozen
+specifications, manifests and evidence are untouched; no GPU resource,
+training, inference or test evaluation was started. The commit ID and the
+push verification are in the session's closeout report and in `git log`.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-08 v3 step E in progress: 24 of 44 fits done; step E2 amendment planned, not implemented)
+- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (the eight remaining step D passes on folds 1–4, 36 fits) planned, not implemented, required before step F unless the user cancels it ([log v3-025](docs/campaigns/pmm_ion_metal_v3/log.md#v3-025)); no Stage 6 confirmation, 6B refit or Stage 7.
+- Best validation result: none promoted; the closed PMM core fold-0 fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the archived README above; results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
+- Fold 0 of the closed campaign (multi-ion PDB groups, six Cu groups) is not representative ([findings](docs/PARAMETER_FINDINGS.md#pmm-ion-campaign-single-fold-target-and-readout-comparisons)).
+- EC: the [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md) has twelve fixed-split runs (Grade 3), not promotion; reconciliation and cross-task holdout certification precede auxiliary learning ([issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md)).
+- Exact Zenodo PMM test: unknown, possibly evaluated; its source test file's label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; E+F forecast $33.5–36.4); confirm the next GPU start with the user. The $55 planning ceiling selected for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after its tooling, frozen specification and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled) and its gates; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: continue from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the 20 remaining five/six-class fits, the original E assessment, then the E2 CPU implementation and the deferred 10-epoch review; open decisions: E2 go-ahead, step F plan, fairness arm, fallback leftovers, cost-gated augmentations, v3-024 corrections.
+Overwrite this file after preserving dated changes in the campaign's `log.md`; keep the objective/stage and campaign lines, anchor, best result and grade, caveats, dataset/test readiness, authorization and GPU/VM state, blockers, next action and evidence links. Budgets stay in the playbooks, findings in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), policy in [Plan](Plan.md), batch evidence in the [index](docs/notebook_outputs/README.md); the [history map](docs/archive/consolidation_2026-09/MAP.md) holds the recovered 09-16/17 pause and removed policy; historical next actions do not resume work.
+```
+
+## v3-025
+
+2026-10-08 — **step E2 amendment recorded: the eight remaining step D passes,
+tested one at a time on folds 1–4** (documentation only; CPU; no code change,
+fit, GPU action, inference or test access; nothing in this entry authorizes a
+GPU start). Requested by the user after the fold 1–4 results of
+[v3-024](#v3-024) had been examined. The attached plan is recorded in the
+[campaign plan, step E2](plan.md#steps), the [README](README.md), the
+[handoff](handoff.md), [STATUS](../../../EXPERIMENT_STATUS.md) and the
+[playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented).
+E2 is **planned**: not implemented, not smoke-tested, not experimentally
+evaluated.
+
+**User decisions of 2026-10-08 (this update):**
+
+- Insert step E2 between E and F. After the remaining 20 original step E fits
+  and the unchanged original A4 assessment (whose Stage 6 selection is kept as
+  the reference), 36 additional fits on folds 1–4, seed 42, direct
+  `four_class`, existing recipes only: 32 candidate fits (Only-GVP `wd10` and
+  `sitecountsangles`; late fusion `invsqrtw`, `meanagg`, `gvpaux03`,
+  `resdrop01`, `esmdrop02` and `wd10`) and four `sitenone` geometry controls.
+  These are the eight step D passes that were not chosen as final recipes
+  ([v3-022](#v3-022)); nothing is combined, re-tuned, re-seeded or extended to
+  five/six-class training; the 10-epoch schedule proposal stays separate.
+- Eight separate comparisons, each against its matched control (the complete
+  step E four-class baselines, reused by checked identity; `sitenone` for
+  geometry, plus the Only-GVP baseline) and each against the original step E
+  selection: a fixed family of 17 comparisons with ordinary and
+  Bonferroni-adjusted 95% intervals from the A4 methods (four paired
+  differences, 10,000 bootstrap resamples, bootstrap seed 42, t with 3 df).
+  Repeatability on folds 1–4 is reported per fold with per-class recalls; the
+  fold-0 seed-42 value is the development fold; five-fold summaries are
+  descriptive.
+- Proposed replacement rule, to be frozen in a separate E2 specification
+  before the first E2 fit with the A4 specification unchanged: both adjusted
+  lower bounds above zero against the matched control and the original
+  selection (geometry also against the Only-GVP baseline), a mean gain over
+  the original selection above 0.2 points, no missing or zero common-four mean
+  recall and no class mean recall drop above 3 points; the highest mean BA on
+  folds 1–4 among eligible candidates, ties within 0.2 points by mean minimum
+  recall, worst fold, SD, simpler family, stable recipe name; otherwise the
+  original selection stands.
+- **Step F requires E2 completion** (36 fits with verified evidence, the eight
+  comparisons reported, one final selection) unless the user cancels E2 by a
+  dated log entry; step F then takes the A4 selection. The selected
+  configuration is step F's refit input (seed 42, terminal checkpoint, no
+  ensemble, no calibration; the `both_results_secondary` label stands).
+- Planning ceiling: **$55 gross in total**, storage included, for the campaign
+  expanded by E2, in place of the [$40](#v3-003) figure of the original plan
+  (the E+F forecast of [v3-024](#v3-024), $33.5–36.4, still fits $40, so the
+  increase funds E2 only). Planning figures: about 9–12 additional VM hours,
+  total about $44–51; consistent with the measured 31–37 min per three-lane
+  fit of [v3-022](#v3-022) (36 fits about 6.2–7.4 three-lane hours before
+  session overhead, admission slack and one rerun allowance). One L4 VM, at
+  most three concurrent fits, the controller's session and daily caps
+  unchanged. **The budget decision authorizes no GPU start**: the next start
+  needs the user's confirmation (STATUS), and E2 fits need in addition the
+  tooling, the frozen E2 specification and manifest, a refreshed forecast,
+  the ceiling recorded in execution controls and the user's go-ahead.
+- Documentation only: no training resumed, no VM started, no inference, no
+  test evaluation, no change to training code, executable spending controls
+  or frozen artifacts; the edits are staged, not committed or pushed.
+
+**Requirements the user added during the update:**
+
+- The E2 assessor must support an original step E selection trained with
+  four, five or six classes. The existing `compare` helper summarizes its
+  control as `four_class` (`summarize(control, "four_class")`) and takes only
+  `challenger_target`, so it is reused unchanged for the eight
+  candidate-versus-control comparisons only; "candidate versus the original
+  selection" with a five- or six-class selection needs a control-target-aware
+  comparison (common-four BA from the collapsed predictions on matched folds,
+  the selection's native recalls under its own scheme, the same interval
+  rule).
+- Correction of an over-claim in the first draft of the playbook section: not
+  every execution path blocks E2 today. The workstation launcher refuses E2
+  units (`--step E` admits only the original 44); the VM runner's
+  `--action run` checks fold, ESMC directory, extension record, hashes and
+  retry identity but not step membership, so an E2 unit name passed to it
+  directly would not be refused. This is a gap, closed only by the E2 manifest
+  gate once built and, until then, by the rule never to call the VM runner
+  directly.
+
+**Labels and policy notes (reported, not resolved silently):**
+
+- E2 was proposed after fold 1–4 results had been examined, so every E2
+  result is development-validation evidence and, in the neutral-test wording
+  of [Plan](../../../Plan.md#2-train-the-metal-classification-model) and
+  AGENTS, a post-hoc exploratory arm. The original neutral four/five/six
+  conclusions and the A4 Stage 6 selection are preserved separately; an E2
+  replacement, if any, carries this label into step F's report.
+- The frozen A4 specification is untouched: `assessment_spec.md` SHA-256
+  `899005aa…` and `assessment_spec.json` SHA-256 `29694070…` equal the values
+  frozen in [v3-008](#v3-008) (verified today). A4 §4 keeps its selection
+  rule; E2 adds a second, stricter rule in a separate specification that may
+  override that selection. This is the material change the user accepted by
+  attaching the plan; the campaign's own mechanism applies (a dated log entry
+  before the first run of the affected step), and the E2 specification must be
+  frozen before any E2 fit.
+- "Candidate versus the original step E selection" is a cross-family or
+  cross-target comparison on common-four BA whenever that selection is not an
+  Only-GVP or late-fusion `four_class` cell (the A4 control is Only-ESMC
+  `four_class`); Plan allows ranking across targets on collapsed-four BA only,
+  which this respects.
+- AGENTS asks that an approved ceiling increase be recorded in campaign
+  evidence and executable controls. The evidence record is this entry and the
+  plan's Budget section. No executable control encodes the campaign ceiling
+  (the controller has session and daily caps and an advisory `vm-budget`
+  amount only), and this task excluded changes to spending controls, so that
+  recording is pending and precedes any authorized E2 launch.
+- Handoff correction: the ready-to-paste prompt still said "about $16.8 left on
+  2026-10-08 02:30 UTC"; it now carries the [v3-024](#v3-024) figure (about
+  $12.9 left at 12:17 UTC). No other number changed.
+
+**Implementation status: none.** Exists: the trainer options and the eight
+recipe definitions in the hash-frozen runner; the eight reusable controls; the
+fold-0 seed-42/43 runs of every candidate and of `sitenone` (step D); the A4
+interval, summary, tie-key and artifact-validation helpers; the shared lane,
+admission, wait, pull, recovery and evidence logic. Refuses today: the step E
+launcher (not the VM runner, see above); `extend` once step D has started (a
+chained extension record is needed, as the fairness proposal noted in
+[v3-022](#v3-022)); the A4 assessor's pinned specification hash. To build, in
+order, before any E2 fit: the frozen E2 specification; the chained amendment
+manifest (36 units, reused controls by identity, the original selection by
+assessment hash, the rules, source/configuration/evidence hashes; refusals for
+differing provenance, an incomplete original E assessment, missing
+authorization and persistence failures); the E2 launcher with its own launch
+and evidence directories and the admission check the VM runner lacks; the
+separate E2 assessor accepting a four-, five- or six-class original selection,
+with a machine-readable final selection; tests for the required CPU checks
+(exact unit counts, one-setting overrides, geometry comparisons and baseline
+reuse, refusal of missing, duplicated, mismatched or unreplayed evidence,
+interval adjustment, recall gates, ties, incomplete results, retention of the
+original selection, launch admission, recovery, unchanged original E
+behaviour); then the existing launcher and assessment tests, the CPU smoke
+checks and the documentation-contract check, a refreshed forecast and the
+recorded ceiling. The playbook section lists these and contains no E2 command.
+
+Order of work: the remaining 20 five/six-class E fits → `--step E assess` and
+`evidence` (the original assessment, unchanged) → E2 CPU implementation and
+checks → the user's go-ahead → E2 fits → E2 assessment and final selection →
+step F. The step F draft (`audits/session_notes_20261008/step_f_plan_DRAFT.md`
+on the campaign data root) still names the A4 selection as its input and is
+not updated here.
+
+Checks: `tools/check_docs_contract.py` passed after the edits (0 strict
+failures; the 11 pre-existing warnings only). Commits: committed together with
+[v3-026](#v3-026) as "docs: record E2 draft and pending review" and pushed to
+`origin/v3-step-a` under the authorization recorded there.
+
+STATUS text replaced by this update, preserved verbatim (every line of the
+previous file that this overwrite changed or removed):
+
+```text
+- Status: active (2026-10-08 v3 step E in progress: 24 of 44 confirmation fits done; four-class baselines and improvement fits done on folds 1–4; five/six-class started)
+- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); no Stage 6 confirmation, Stage 6B refit or Stage 7.
+**The PMM core v2 campaign was closed at fold 0 on 2026-10-03 (user decision).**
+Its nine fold-0 fits are final validation-only evidence; 36 fits were not run and
+its neutral four-versus-five/six test is unanswered. No fivefold confirmation,
+model/target promotion, final refit or held-out evaluation is claimed ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
+- Best validation result: none promoted; the closed PMM core fold-0 fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the [archived PMM README](docs/archive/campaigns/pmm_ion_metal/README.md); results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md).
+- v3 step E (descriptive): the two selected recipes show no clear gain on folds 1–4; the late-fusion baseline is above Only-ESMC on every fold so far ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)).
+Fold 0 of that campaign holds only multi-ion PDB groups and six Cu groups, so it is
+not representative ([findings](docs/PARAMETER_FINDINGS.md#pmm-ion-campaign-single-fold-target-and-readout-comparisons)).
+The [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md)
+retains twelve completed fixed-split runs (Grade 3), not promotion. EC workflow
+reconciliation and cross-task holdout certification precede auxiliary learning
+([issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md)).
+- Cross-scheme ranking: the notebook Stage 6/6B route is single-scheme; comparing
+  target schemes needs a campaign assessor on collapsed-four balanced accuracy
+  ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
+- v3 replaces the size-strata folds
+  ([TECH-020](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0))
+  and uses one terminal checkpoint rule in CV and refit
+  ([TECH-027](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules));
+  PMM comparator citations keep the label-leak caveat
+  ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
+The primary final-test route remains unresolved. [DATASETS](docs/DATASETS.md#test-use-ledger)
+owns the ledger; this reminder preserves the default-read safety boundary:
+- Non-overlap and exact PMM tests (same 316-structure set): opened 13 and 21
+  times; not eligible as an unopened test. Harsh and Common-PDBID 70/30 test IDs
+  come from that opened set.
+- Exact Zenodo PMM test: unknown, possibly evaluated; its source test file's
+  label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
+- No evaluation artifacts found for CLEAN30 or CARE clusterRes30; CARE had
+  incidental test-metadata exposure on 2026-09-15. Absence of found artifacts is
+  not proof of no outside run.
+- Authorized now: today's single-session arrangement has ended; the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) stands within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; forecast $33.5–36.4), but confirm the next GPU start with the user. Step F only after its plan and gates; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:16:58 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: a new chat continues from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the remaining 20 five/six-class fits (about 4.3 h), then the E assessment and the deferred 10-epoch-schedule review; user decisions open: step F plan (draft in the campaign audits folder), fairness arm, fallback leftovers, cost-gated augmentations, log v3-024 corrections.
+Overwrite this file after preserving dated changes in the campaign's `log.md`.
+Keep the objective/stage and campaign lines, anchor, best validation
+result and grade, caveats and mismatches, dataset/test readiness,
+authorization and GPU/VM state, blockers, next action and evidence links. Exact budgets stay in the playbooks; parameter
+findings stay in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), scientific
+policy in [Plan](Plan.md), and batch evidence in the [index](docs/notebook_outputs/README.md).
+[History map](docs/archive/consolidation_2026-09/MAP.md) includes the recovered
+09-16/17 pause and earlier removed policy; historical next actions do not resume work.
+```
+
 ## v3-024
 
 2026-10-08 — **step E session 7: the improvement fits, the last four-class baselines and
