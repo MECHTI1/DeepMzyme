@@ -57,7 +57,8 @@ execution controls and the user's explicit go-ahead.
 Next task (user, 2026-10-08): "Read the saved review, discuss the unresolved assessment tradeoffs with the user, agree
 any changes, then update the documentation before implementation or training." The review is handoff.md section 9
 and log v3-026. Nothing of E2 (specification freeze, implementation, training) starts before that discussion; the
-eight candidates, 36-fit scope, seed 42 and the $55 planning ceiling stay as recorded.
+eight candidates, 36-fit scope, seed 42 and the $55 planning ceiling stay as recorded. A proposed resolution with
+options (A as drafted, B recommended, C in between) is recorded in log v3-027 and section 9; the user's choice is pending.
 
 Session procedure: vm-status; vm-report --no-ssh; vm-start --confirm; on a stockout, spaced same-VM retries only;
 vm-setup --stages ssh,smoke; `pmm_v3_step_d.py --step E status` (reconciles: completed units are never rerun;
@@ -317,3 +318,16 @@ or any implementation or training starts.
 
 Next task: "Read the saved review, discuss the unresolved assessment tradeoffs with the user, agree any changes, then
 update the documentation before implementation or training."
+
+**Proposed resolution (recorded 2026-10-08 about 16:30 UTC in [log v3-027](log.md#v3-027); for the user's decision;
+nothing frozen).** Verified basis: A4 decides every verdict on the unadjusted 95% intervals plus the recall gates and
+only reports the Bonferroni-adjusted ones, so the drafted E2 rule 3(b) is stricter than any A4 verdict; with four folds
+the adjusted t critical value is 6.9 (over 8) or 8.95 (over 17) against 3.18 unadjusted, the percentile bootstrap cannot
+reach beyond the fold minimum, and the power of the adjusted rules at a +2-point gain is 2–22% against 29–75% unadjusted.
+Options for point 1: A (as drafted, Bonferroni over 17), **B (recommended: the A4 verdict rule unchanged, adjusted
+intervals reported as sensitivity, plus the 0.2-point minimum gain, both comparators and the recall gates; family-wise
+false-replacement rate about 0.18 disclosed)**, C (B plus Bonferroni over the replacement comparisons only). Point 2:
+two labelled conclusions per candidate in the A4 vocabulary, recall-gate failures printed in both. Point 3: no decision
+needed (step F draft reconciled with the step F plan). Point 4: label accepted; optional seed-43 repeat of a selected
+replacement only (four fits) if the user adds it. Decisions requested: option A/B/C, the vocabulary, the extra seed,
+and the next GPU start and window for the 20 remaining step E fits.
