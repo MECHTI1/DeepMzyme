@@ -3,6 +3,94 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-023
+
+2026-10-08 — **step E session 6 (first confirmation fits) and the end of the
+user's working window** (validation data only; folds 1–4; seed 42). Continuation
+of the authorized plan ([v3-014](#v3-014)) under the user's window decision of
+[v3-022](#v3-022) (finish by 03:38 UTC, eight hours maximum).
+
+**Start.** The first start at 00:00:50 UTC hit the L4 stockout in
+`us-central1-a` (nothing allocated or charged); bounded same-VM retries at
+five-minute spacing followed, with the session length computed so that the
+Google-side hard stop stayed at or before 03:05 UTC. The first retry succeeded: `session-20261008T000829Z-f23d379e` started
+00:08:29 UTC with `--hours 2.94` (Google-side hard stop 03:00:42 UTC, at most
+$2.53 gross); smoke check passed (L4, torch 2.11.0+cu128); the step E gates
+(readiness, extension record, final D assessment, recorded label) all passed on
+the VM. Units were launched with the launcher directly (no scratch driver), one
+lane refilled at a time after `wait --any`, `status` checked before each refill
+from 01:09 UTC on.
+
+**Fits.** Ten of the twelve four-class baseline fits of the neutral test (seed 42,
+folds 1–4) completed, each at its first attempt, replayed under
+`pmm-v3-replay-1`, pulled and acknowledged (batches `e-20261008T001047Z`,
+`…T004448Z`, `…T004942Z`, `…T010949Z`, `…T012249Z`, `…T014046Z`,
+`…T014856Z`). Late fusion fold 4 was refused by the admission rule at 01:58:29
+UTC (3,742 s left, 3,960 s needed; nothing started) and Only-GVP fold 4 was
+never launched: both stay pending with the 24 five/six-class and 8 improvement
+units. Terminal common-four BA and recalls (descriptive; the paired contrasts
+are the assessor's, and no fold-1–4 contrast is complete yet):
+
+| Family | Fold 1 | Fold 2 | Fold 3 | Fold 4 |
+|---|---|---|---|---|
+| Only-ESMC | 71.81 | 70.92 | 74.72 | 76.26 |
+| Only-GVP | 74.07 | 67.10 | 69.68 | — |
+| Late fusion | 73.34 | 72.96 | 75.17 | — |
+
+Measured, not interpreted: the confirmation folds score 3–11 points above fold
+0 for every family (fold 0 holds the multi-ion groups, [v3-005](#v3-005)), Cu
+recall on fold 2 is 50.0 / 50.0 / 55.9, and Class VIII recall on fold 1 is
+47.5 / 48.3 / 49.1 for Only-ESMC / Only-GVP / late fusion. Phase times
+14–31 min per fit. Step E assessment copy
+`step_e_evidence/assessments/E_20261008T022125Z` (SHA-256 `477d173a…`,
+incomplete: every contrast has missing folds; `held_out_test_accessed` false).
+Evidence copy `step_e_evidence/evidence_20261008T022159Z` (457 files, SHA-256
+checked on both ends; `safe_to_stop` true). One operational note: Only-GVP
+fold 1 ended between a launch and the next `wait --any` snapshot, so its lane
+was pulled but not reported and sat idle for 19 minutes (00:50–01:09 UTC; the
+manual variant of the audit's concern 2); from then on `status` was checked
+before every refill.
+
+**Spending.** `session-20261008T000829Z-f23d379e`: 00:08:29–02:23:45 UTC, **2 h 15 min,
+$1.98 gross** (stopped by `vm-stop` after the evidence copy; TERMINATED
+verified 02:23:45 UTC). Daily use 2026-10-08 after this session: 2 h 15 min,
+$4.40 of 12 h / $18. Compute to date **$20.48 gross** (B $1.88, C $3.64, D
+$12.98, E $1.98); storage about $2.7 accrued (controller reservation about
+$2.00 per day in total, of which the failed-fallback leftovers about $1.23).
+**About $23.2 spent; about $16.8 remains** of the $40 ceiling. Reforecast:
+step E 34 remaining fits (2 four-class baselines, 24 five/six-class with four
+cold cache sets, 8 improvement) about 6.8 three-lane hours plus overhead, about
+7.5 h, $6.6; step F about 1.5 h, $1.3; storage for about three more days $2.2
+without the leftovers, $6.0 with them. **Total about $33.3–37.1 of $40**; the
+optional Only-ESMC arm would add about $1.0.
+
+**Closeout at the window's end.** The window's work ended with this entry: STATUS overwritten, the campaign
+[handoff](handoff.md) refreshed to the verified state (ready-to-paste prompt
+for a new chat), committed with the campaign hook and pushed to
+`origin/v3-step-a` as the user asked; evidence on Data1 verified separately
+from git (both evidence copies, both assessment copies, every pulled run and
+acknowledgment); the audit folder `audits/driver_audit_20261007T193000Z/` holds
+the session notes as well. The working-window
+authorization of [v3-022](#v3-022) has ended; the standing advance
+authorization of [v3-014](#v3-014) still covers the approved plan within the
+ceiling, but the user asked that the next GPU start be confirmed with them.
+
+Open and unchanged: the Only-ESMC fairness arm (proposal in [v3-022](#v3-022)),
+the fallback leftovers, the cost-gated augmentations, the step F plan.
+
+Commits: this entry (log, STATUS, handoff refresh); pushed to `origin/v3-step-a` at the user's request.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-07 v3 step D complete: 60 + 4 combination fits done; final recipes late fusion `headdrop03`, Only-GVP `meanagg`; step E awaits the final-test label)
+- Last execution evidence: 2026-10-07 (v3 step D session 5, 3 h 15 min, $2.86 gross). Docs reconciliation: 2026-10-07.
+- Stage: v3 steps A–D done ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)): one-fold screen closed, final recipes named by the final D-B assessment; step E not started; no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); no new start request. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $19.3 left; forecast $32.6–36.4). Step E only after the user's final-test label is recorded (`record-e-gate`); step F only after its gates; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 20:16 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: the user records the final-test label (then `pmm_v3_step_d.py record-e-gate --label … --log-entry v3-022`) and decides the Only-ESMC fairness arm ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)); then step E (36 neutral-test + 8 improvement fits, final recipes; five/six-class cache sets build cold once); cost-gated augmentations stay "not tested (cost)".
+```
+
 ## v3-022
 
 2026-10-07 — **step D session 5: the eight site-geometry Round B fits and the
