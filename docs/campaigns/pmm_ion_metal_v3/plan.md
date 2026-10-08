@@ -427,8 +427,11 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    completed original selection stands (a projected winner is never
    substituted). The neutral four/five/six conclusions of the original
    assessment are preserved separately and unchanged.
-4. Implementation (nothing exists; the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented)
-   lists what exists, what refuses today and what must be built): an E2
+4. Implementation (no tooling exists; the frozen E2 specification does,
+   [log v3-028](log.md#v3-028); the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented)
+   lists what exists, what refuses today and what must be built; the CPU
+   implementation is accepted planned work after the original E assessment
+   and is not a GPU start): an E2
    launcher and a separate E2 assessor (accepting a four-, five- or
    six-class original selection) around the frozen training runner,
    reusing the existing lane, persistence, recovery, duplicate-run,
@@ -437,7 +440,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    (the 36 allowed fits, reused controls, the original selection, the
    assessment rules, and hashes binding source, configuration and evidence);
    refusal when provenance differs, the original E assessment is incomplete,
-   authorization is missing or a persistence check fails; every listed
+   the user's E2 GPU-start authorization is missing or a persistence check fails; every listed
    comparison completed regardless of intermediate scores; the existing single
    unchanged retry after a failed fit, a second failure blocking the final
    assessment for diagnosis; an assessment report and a machine-readable final
@@ -445,7 +448,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    The required CPU checks, existing tests, smoke checks and the
    documentation-contract check precede any GPU execution.
 5. Completion and budget. E2 is complete when all 36 fits have verified
-   evidence, the eight individual comparisons are reported and one final
+   evidence, all 17 declared comparisons are reported and one final
    configuration is selected (the original selection unless replaced under
    rule 3). **Step F does not start until E2 is complete, unless the user
    cancels E2 by a dated log entry; step F then takes the A4 selection.**
@@ -516,9 +519,10 @@ For the campaign expanded by step E2 the user selected a planning ceiling of
 the E+F forecast of about $33.5–36.4 still fits $40, so the increase funds E2
 only. Planning figures of the amendment, from the saved three-lane fit times
 ([log v3-022](log.md#v3-022): 31–37 min per Only-GVP or late-fusion fit; 36
-fits about 6.2–7.4 three-lane hours before session overhead, admission slack
-and one rerun allowance): about 9–12 additional VM hours and a total expanded
-campaign cost of about $44–51. The forecast is refreshed from measured use
+fits about 6.2–7.4 h of three-lane VM wall time before session overhead,
+admission slack and one rerun allowance): about 9–12 additional VM hours and a
+total expanded campaign cost of about $44–51 (refreshed with the disk counted
+once in [log v3-029](log.md#v3-029): E2 7.9–9.6 VM hours, total about $42–51). The forecast is refreshed from measured use
 before execution and at every session. The revised ceiling is recorded here
 and in the log as campaign evidence; no execution control encodes the campaign
 ceiling today (the controller's session and daily caps are unchanged), and

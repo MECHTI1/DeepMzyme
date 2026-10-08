@@ -3,6 +3,203 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-029
+
+2026-10-08 — **dated correction of the chat analysis of remaining
+opportunities; reproducible logged-epoch audit; spending recalculated with the
+disk counted once; documentation reconciled; cleanup proposal for the
+failed-fallback leftovers** (CPU and documentation only; no fit, GPU action,
+fallback, resource deletion, refit, inference or test access; the original
+assessments, raw evidence, frozen A4 and E2 specifications and the settled
+Option B rules are unchanged). Requested and authorized by the user on
+2026-10-08 after reviewing the chat answer of about 17:00 UTC ("what is left
+with potential benefit"), which was not recorded in these documents.
+
+**Error.** That answer aggregated per-epoch values in fold-sorted order and
+then filtered them with fold labels from a list in lane order. For the
+Only-ESMC and Only-GVP baselines this included development fold 0 and dropped
+fold 4; the `headdrop03` and `meanagg` summaries and the best-epoch column were
+affected the same way. Its interpretation also over-stated the evidence (below).
+
+**Corrected values** (folds 1–4 exactly, seed 42, `four_class`, common-four BA
+in points; epoch 10 is a logged epoch inside the 50-epoch cosine run, not a
+10-epoch schedule; audit `audits/epoch_contrast_20261008T171843Z` on the
+campaign data root):
+
+| Cell | epoch 50 | epoch 10 | difference | per-fold differences (folds 1/2/3/4) | mean recall difference Mn / Cu / Zn / Class VIII |
+|---|---:|---:|---:|---|---|
+| Late fusion baseline | 74.9474 | 76.3474 | +1.4001 | +7.108 / +0.405 / −0.759 / −1.154 | +1.29 / +0.74 / −1.35 / +4.92 |
+| Only-ESMC baseline | 73.4299 | 74.4033 | +0.9734 | +7.158 / −0.175 / −1.449 / −1.640 | −4.17 / +3.71 / +0.78 / +3.57 |
+| Only-GVP baseline | 70.9015 | 72.4303 | +1.5288 | +2.789 / +1.887 / +2.365 / −0.926 | −0.76 / +4.81 / +1.14 / +0.93 |
+| Late fusion `headdrop03` | 74.6126 | 76.7284 | +2.1158 | +7.398 / +1.374 / +0.448 / −0.758 | +1.54 / +4.07 / −2.12 / +4.98 |
+| Only-GVP `meanagg` | 71.2582 | 71.7563 | +0.4981 | +4.491 / −4.111 / +0.909 / +0.702 | +0.60 / −1.82 / −3.65 / +6.87 |
+
+Best logged epoch per fold (validation-selected, therefore optimistic and
+outside the frozen terminal rule; descriptive only): late fusion 77.84
+(+2.90; epochs 4/31/8/25), Only-ESMC 76.29 (+2.86; 9/19/9/30), Only-GVP 75.32
+(+4.42; 17/15/11/11), `headdrop03` 77.61 (+2.99), `meanagg` 74.96 (+3.71).
+
+**Corrected interpretation:**
+
+- The late-fusion and Only-ESMC mean epoch-10 advantages come mainly from
+  fold 1 (+7.1 and +7.2 points); on folds 2–4 the differences are small or
+  negative. Only-ESMC's positive mean BA difference hides a mean Mn recall
+  decrease of 4.17 points. Only-GVP is positive on three folds.
+- Fold-1 error direction for the late-fusion baseline: Class VIII predicted as
+  Mn rises from 36 to 158 between epochs 10 and 50, while Mn predicted as
+  Class VIII falls from 62 to 41 (the same rise appears in all five cells on
+  fold 1: 35–45 → 141–160). The chat answer's "systematic Mn → Class VIII"
+  wording was wrong for fold 1. No annotation or input problem is inferred
+  from this pattern alone.
+- The actual 10-epoch fusion probes (two, fold 0, seed 42) are useful
+  exploratory evidence on one development fold and one seed; epoch 10 inside a
+  50-epoch cosine run is a different treatment from a complete 10-epoch cosine
+  schedule. A shorter schedule is a **promising hypothesis**, not an
+  established highest-return intervention; these values do not decide the
+  outcome of an actual short-schedule experiment.
+
+**Withdrawn from the chat answer:** the "one-in-five" E2 replacement
+probability (unsupported); the statement that fold-1 six-class fusion and
+Only-GVP results are poor (those fits have not run); any suggestion that the
+Only-ESMC fairness arm cannot improve performance (its comparison-only role is
+a scope restriction, not a measured outcome); the ranking of the shorter
+schedule as the highest-return item.
+
+**Reproducible audit (new, CPU only, outside the frozen training source):**
+`audit_v3_epoch_contrast.py` reads, for explicit (family, target, recipe,
+fold, seed) identities, the one completed run per identity, refuses missing or
+duplicated run directories, a recorded identity that differs from the request,
+a history that is not exactly epochs 1..planned once each, a non-terminal or
+incomplete fit, and a terminal BA that differs (tolerance 1e-9) from the run's
+selected-checkpoint record or from the assessment copy passed in; aggregates
+are keyed by identity in the requested fold order. Tests
+`tests/test_v3_epoch_contrast.py`: 11 passed (shuffled lane and directory order
+gives identical results with fold 0 excluded and fold 4 included; missing fold,
+duplicate run directory, duplicate history record, incomplete history,
+identity mismatch, wrong seed, assessment mismatch, non-terminal late epoch and
+CLI refusal are all refused). Run on the real evidence with
+`--assessment step_e_evidence/assessments/E_20261008T121456Z/assessment.json`
+(SHA-256 `2ab142eb…`, unchanged): all 20 contributing runs found once each,
+identities and complete 50-epoch histories verified, all 20 terminal values
+equal to the assessment. Report files: `report.json` SHA-256 `931945a6…`,
+`report.md` `69b19a47…`, `inputs.json` `526fec2b…`.
+
+**Order and scope (user, 2026-10-08; unchanged):** the 20 remaining original E
+fits are the next GPU task (configurations, targets, folds, seeds, checkpoint
+rule and A4 assessment unchanged); E2 stays accepted planned work (eight
+candidates, 36 fits, frozen Option B rules), not cancelled, shrunk, reordered
+or replaced. After the original E completes, the deferred read-only
+schedule/error review runs on the corrected evidence, focused on class-specific
+deterioration, native Fe/Co/Ni composition and protein-group concentration,
+training versus validation behaviour, and whether there is concrete evidence of
+an input or provenance problem; it then separates the questions and costs of
+(a) completing the E2 comparisons, (b) a narrowly scoped actual 10-epoch
+schedule comparison for the selected configuration and (c) the larger proposed
+schedule matrix. No schedule study is added without an explicit decision.
+Authorization terms: the E2 CPU implementation is accepted planned work after
+the original E assessment and is not a GPU start; E2 GPU execution needs the
+user's separate start authorization.
+
+**Spending, one dated calculation (2026-10-08 17:30 UTC; gross list prices;
+estimated charges, disk counted once; supersedes the figures of
+[v3-028](#v3-028), which added the controller's daily storage reservation to
+running costs that already contained the disk share):**
+
+| Item | Basis | Estimated charge |
+|---|---|---:|
+| Running, steps B–E | 10 sessions, 26.78 h × $0.858624/h (compute + IP, without the disk share; ledger gross $23.55 contains $0.55 of disk) | $23.00 |
+| Campaign boot disk `deepmzyme-l4-from-deepmzyme-paused-20261003` | 150 GB pd-balanced, $0.493/day since 2026-10-05 22:56 UTC (2.77 days) | $1.37 |
+| Archive snapshot `deepmzyme-paused-20261003` | 34.8 GiB × $0.05/GiB-month = $0.057/day since the restore | $0.16 |
+| Failed-fallback leftovers (two disks, one snapshot) | $1.060/day since 2026-10-06 22:30 UTC (1.79 days) | $1.90 |
+| **Spent** | | **$26.42** |
+| **Left of the $40 gross ceiling** | | **$13.58** |
+
+Controller reserves are a guard, not a charge: the daily cap reserves $2.00
+per day of storage ($60/month: three disks at $15 and both snapshots at a
+full-disk $7.50), against estimated charges of $1.61 per day ($0.55 campaign
+storage, $1.06 leftovers). Forecast: the 20 remaining E fits need about
+4.2–4.8 h of three-lane VM wall time (launcher forecast with perfect packing to
+the measured rate of sessions 6–7 including session overhead; about 12–13
+cumulative lane-hours, three times larger), $3.6–4.1; step F about 1.5 h, $1.3
+(planning figure; no step F plan yet); storage $0.55 per day plus $1.06 per day
+while the leftovers exist. **E+F total about $34.0–34.5** if the leftovers go
+after one day and E+F finish within three calendar days, **about $39.4–39.9**
+if the leftovers stay and the calendar stretches to five days. E2 adds about
+7.9–9.6 h of three-lane VM wall time (36 fits; 24–26 lane-hours; one rerun
+allowance), $6.8–8.2, plus two to three storage days: **about $42–51 in
+total** against the $55 planning ceiling. Corrections: the "4.2 lane-hours"
+of [v3-027](#v3-027) and the chat answer, and the "4.2–4.3 three-lane hours"
+of v3-028, mean VM wall time with three lanes; cumulative lane-hours are about
+three times larger. The forecast is refreshed again before any execution
+request.
+
+**Documentation reconciled:** the E2 specification now exists (playbook E2
+header, plan step E2 item 4, handoff); E2 completion requires all 17 declared
+comparisons, not eight (plan item 5, playbook; the frozen E2 specification
+section 8 already said so); "go-ahead" wording split into the accepted E2 CPU
+implementation and the separate E2 GPU-start authorization (playbook items 2,
+5 and 6, plan item 4, handoff, STATUS); handoff spending, prompt balance and
+evidence paths; playbook note for the new audit.
+
+**Cleanup proposal for the failed-fallback leftovers (proposal only; nothing
+deleted; needs the user's separate authorization).** Exact resources, verified
+read-only at about 17:25 UTC with `gcloud compute … describe/list` (no
+change):
+
+| Resource | Zone | ID | State |
+|---|---|---|---|
+| disk `deepmzyme-l4-recovery-873d08b26968` | us-central1-b | 5611272327395854787 | 150 GB, READY, no users; created 22:33 UTC 2026-10-06 from snapshot 6673686273936902278; attached only during its failed create (22:35 UTC) |
+| disk `deepmzyme-l4-recovery-873d08b26968` | us-central1-c | 8920682037852555612 | 150 GB, READY, no users; created 22:35 UTC; attached only during its failed create (22:37 UTC) |
+| snapshot `deepmzyme-fallback-873d08b26968` | global | 6673686273936902278 | STANDARD, 44.65 GiB, source disk 8244066857274414107 (the campaign disk), created 22:30 UTC |
+
+Kept and never touched: VM `deepmzyme-l4` (us-central1-a, ID
+8553555212712383956, TERMINATED), its boot disk (ID 8244066857274414107; the
+VM-side campaign root and caches), the archive snapshot
+`deepmzyme-paused-20261003`, the Data1 evidence. The complete instance listing
+shows only `deepmzyme-l4`; no instance exists in us-central1-b or -c.
+
+Preservation checks immediately before any deletion: (1) `vm-status`
+TERMINATED, no active session, controller lock free; (2) a complete instance
+listing with no instance in us-central1-b or -c; (3) each disk's zone, name,
+ID, `fallback-pass` label and source snapshot ID equal the receipt
+`state/fallback.json`, and `users` is empty; (4) the snapshot's ID, label and
+source disk ID equal the receipt, and no disk other than the two leftovers was
+created from it; (5) the campaign disk is READY and attached to the TERMINATED
+VM; (6) the leftovers hold nothing absent from the campaign disk: they are its
+copies as of 22:30 UTC 2026-10-06 and never booted (both creates failed with
+`ZONE_RESOURCE_POOL_EXHAUSTED`); (7) the recycle bin is checked for a retained
+copy of the deleted snapshot, and only that matching copy is removed, with its
+one-hour minimum counted.
+
+Supported path: **the controller has none for this case.** `vm-fallback
+--finalize` refuses without a selected replacement and is designed to delete a
+superseded source after a successful replacement, so it must not be used;
+`vm-delete` acts on the selected VM; rerunning `vm-fallback --confirm` only
+reconciles and refuses ("window expired"), deleting nothing. Recommended route:
+a small, tested addition to the controller in `~/deepmzyme-vm` (for example
+`vm-fallback --abandon`, with `--dry-run` preview and `--confirm`) that applies
+only to a pass with no selected replacement and an expired window, reconciles
+every attempt, runs checks 1–7, deletes exactly the recorded disks and
+snapshot by zone, name and ID (and the matching recycle-bin copy), writes
+`STORAGE_CLOSED` ledger events, archives the receipt as
+`fallback-873d08b26968.abandoned.json` and leaves `config.env` unchanged, with
+offline tests beside the existing fallback tests (refusal for a selected
+replacement, an ID mismatch, an attached disk, an existing instance and an
+open window). Alternative, not recommended: a one-time user-authorized
+controller-debug deletion with raw `gcloud` by exact ID after the same checks,
+which bypasses the ledger and receipt bookkeeping. Saving about $1.06 per day.
+
+Checks: `tests/test_v3_epoch_contrast.py` 11 passed (capped CPU run);
+`tools/check_docs_contract.py` after the edits. Commit and push under the
+user's 2026-10-08 closeout authorization.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.6 left at 16:50 UTC; E+F forecast $35.7–41.5 with storage, log v3-028); confirm the next GPU start with the user. The $55 planning ceiling for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after its tooling and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled); no Round C.
+Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized yet); then the original E assessment, the E2 CPU tooling and checks, the E2 go-ahead; step F after E2; open: step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review after step E.
+```
+
 ## v3-028
 
 2026-10-08 — **E2 review resolved by the user (Option B with clarifications);
@@ -95,7 +292,7 @@ assessment is not rewritten and its verdicts are unchanged):**
   label nor a possibly opened test removes selection bias. The frozen A4
   method is preserved.
 
-**Spending refreshed (16:50 UTC; gross list prices):** compute to date $23.55
+**Superseded by [v3-029](#v3-029) (one dated calculation with the disk counted once; "three-lane hours" below means VM wall time).** **Spending refreshed (16:50 UTC; gross list prices):** compute to date $23.55
 (B $1.88, C $3.64, D $12.98, E $5.05; ledger session `…3bbc7d8d` stopped
 12:16:58 UTC at $3.07); storage accrued about $3.9 (the controller's $2.00/day
 reservation; about $1.6/day at estimated actual charges: campaign disk $0.49,
@@ -260,7 +457,7 @@ specification, `pmm_v3_assessment.py`, and the assessments
 **Decisions requested:** (1) Option A, B or C; (2) the two-conclusion
 vocabulary; (3) no extra seed (default) or the optional seed-43 repeat;
 (4) the next GPU start and its window for the 20 remaining step E fits
-(forecast 4.2 lane-hours, about $3.9 plus storage: one 4 h session and one
+(forecast 4.2 lane-hours [corrected in v3-029: about 4.2–4.8 h of three-lane VM wall time, about 12–13 cumulative lane-hours], about $3.9 plus storage: one 4 h session and one
 short session; at 16:11 UTC the daily allowance left was 6 h 16 min /
 $10.60). After the decisions: update plan.md step E2 items 2–3, freeze the
 E2 specification (SHA-256 in the log), then the E2 CPU tooling of

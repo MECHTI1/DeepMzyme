@@ -19,7 +19,7 @@ missing, mount it first: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/mi
 -p MemoryMax=3G.
 
 Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (all
-sections, section 9 first); plan.md steps E, E2 and F; assessment_spec.md; e2_assessment_spec.md; log.md entries v3-028
+sections, section 9 first); plan.md steps E, E2 and F; assessment_spec.md; e2_assessment_spec.md; log.md entries v3-029
 back to v3-017;
 docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment"; .agents/skills/gpu-use-skill/SKILL.md;
 ~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
@@ -39,7 +39,7 @@ step membership: never call run_pmm_v3_campaign.py directly.
 Rules that stay fixed: 50-epoch cosine, terminal checkpoint; A4 gates unchanged; seed 42 for E; one active GPU;
 controller only via ~/deepmzyme-vm/bin (vm-status, vm-report --no-ssh, vm-start --confirm [--hours H], vm-setup
 --stages ssh,smoke, vm-stop, vm-status); session cap 4 h / $6, daily cap 12 h / $18 (UTC day); campaign ceiling $40
-gross including storage (about $12.9 left on 2026-10-08 12:17 UTC; see handoff.md section 5); the $55 gross
+gross including storage (estimated $13.6 left at 2026-10-08 17:30 UTC, disk counted once, log v3-029; section 5); the $55 gross
 planning ceiling selected for E2 (log v3-025) is recorded in the plan and log only, not in any execution control,
 and authorizes no GPU start;
 every session ends with `pmm_v3_step_d.py --step E evidence`, vm-stop and a verified TERMINATED; log + STATUS +
@@ -51,9 +51,11 @@ Authorization to check first: the user's single-session arrangement of 2026-10-0
 session's closeout. The standing advance authorization (log v3-014) covers the approved plan through F within the
 ceiling, but ask the user to confirm the next GPU start and its time window before starting the VM. A deferred
 read-only review (10-epoch schedule amendment; audits/session_notes_20261008/ on the campaign data root) is due
-after the next closeout, with no implementation or spending. E2 fits need, beyond the standing authorization,
-the CPU tooling, a frozen E2 specification and chained manifest, a refreshed forecast, the ceiling recorded in
-execution controls and the user's explicit go-ahead.
+after the original step E completes, on the corrected evidence and focus of log v3-029, with no implementation or
+spending. The E2 CPU implementation is accepted planned work after the original E assessment (not a GPU start);
+E2 GPU fits need, beyond the standing authorization, the CPU tooling and checks (the frozen E2 specification
+exists; the chained manifest, launcher, assessor and tests do not), a refreshed forecast, the ceiling recorded in
+execution controls and the user's separate E2 GPU-start authorization.
 
 The E2 review is resolved (log v3-028; section 9): Option B with the user's clarifications, two separate conclusions
 per candidate, no extra seed; the rules are frozen in e2_assessment_spec.md/.json and are not changed after E2
@@ -74,7 +76,8 @@ dated text in the log), tools/check_docs_contract.py, explicit `git add -- <path
 
 Open user decisions (never infer them): Only-ESMC fairness arm (proposal in log v3-022; neither approved nor
 rejected); cleanup of the fallback leftovers; cost-gated augmentations; step F plan and test-access ledger entries;
-the go-ahead for the E2 implementation and, later, for its GPU fits (or a dated cancellation of E2).
+the E2 GPU-start authorization once its CPU tooling passes (or a dated cancellation of E2); the leftover cleanup
+route (proposal in log v3-029).
 At each closeout report completed/pending units, spending and forecast, evidence copies, verified VM state, the
 exact next action and any decision the user must make.
 ```
@@ -86,7 +89,7 @@ exact next action and any decision the user must make.
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = the commit of log v3-024 (see `git log -1`); `origin/v3-step-a` = same) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
 | Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
 | Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
-| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 9 (E2 review, resolved) → plan.md (steps D–F, E2 included) → assessment_spec.md → e2_assessment_spec.md → log.md entries v3-028 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
+| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 9 (E2 review, resolved) → plan.md (steps D–F, E2 included) → assessment_spec.md → e2_assessment_spec.md → log.md entries v3-029 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
 | Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record) |
 | VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
@@ -170,7 +173,7 @@ only input and REQUIRES RECONCILIATION with E2 before implementation (final E2 s
 **Step E2:** planned only (log v3-025): 0 of 36 fits; the assessment specification is frozen (e2_assessment_spec.md,
 log v3-028); no launcher, assessor, manifest or evidence directory exists; `pmm_v3_step_d.py --step E` refuses E2 units (the VM runner alone would not); it starts only after
 the original E assessment, the CPU implementation and checks, a refreshed forecast, the recorded ceiling and the
-user's go-ahead, and step F waits for it unless the user cancels E2.
+user's separate E2 GPU-start authorization, and step F waits for it unless the user cancels E2.
 
 ## 4. User decisions and authorization boundaries
 
@@ -193,7 +196,8 @@ failed-fallback leftovers, editing the frozen runner files, editing controller c
 (granted for the 2026-10-07/08 closeouts only), step F before its gates and plan. **Decisions still open:** fallback
 leftovers cleanup (two 150 GB recovery disks `deepmzyme-l4-recovery-873d08b26968` in us-central1-b/c and snapshot
 `deepmzyme-fallback-873d08b26968`, about $1.06/day); Only-ESMC fairness arm; cost-gated augmentations; step F plan;
-the E2 implementation go-ahead and, later, its GPU go-ahead (or a dated cancellation of E2).
+the E2 GPU-start authorization after the accepted CPU implementation (or a dated cancellation of E2); the cleanup
+proposal for the leftovers is in log v3-029 (exact resources, preservation checks, no supported controller path yet).
 The 2026-10-08 single-session arrangement ended with session 7's closeout: any later execution needs the user's
 renewed go-ahead (the standing advance authorization of v3-014 covers the approved plan, but the user asked to be
 told what must be renewed, so ask before the next GPU start). Push authorization was given for the 2026-10-08
@@ -204,8 +208,8 @@ closeouts only.
 | Item | Value (verified 2026-10-07 20:16:45 UTC by `vm-status`/`vm-report --no-ssh`) |
 |---|---|
 | VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 2026-10-08 12:16:58 UTC, session `session-20261008T084732Z-3bbc7d8d`, 3 h 29 min, $3.07 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | compute to date $23.55 gross (B $1.88, C $3.64, D $12.98, E $5.05); storage about $3.9 accrued at 16:50 UTC; **about $27.4 spent, about $12.6 of the $40 gross ceiling left** (log v3-028); forecast to finish E and F $35.7–41.5 including storage at $1.6–2.0/day (upper value if the leftovers remain and the calendar stretches); with E2 (9–12 VM hours, $7.7–10.3, plus storage days) about $45–55 against the $55 gross planning ceiling (plan and log only; no execution control; no start authorized); refresh before any execution request |
-| Retained storage | campaign disk $15/month + snapshot `deepmzyme-paused-20261003` (reserved $7.50/month) + failed-fallback leftovers: disks `deepmzyme-l4-recovery-873d08b26968` in us-central1-b and -c ($15/month each) and snapshot `deepmzyme-fallback-873d08b26968` ($7.50/month reserved) → controller reservation about $2.00/day in total; leftovers cleanup is the user's decision (never delete them yourself; `state/fallback.json` is a stuck receipt, do not edit) |
+| Spending | one dated calculation, log v3-029 (2026-10-08 17:30 UTC; estimated charges, disk counted once): running B–E 26.78 h at $0.8586/h = $23.00 (ledger gross $23.55 includes $0.55 of disk); campaign disk $1.37; archive snapshot $0.16; leftovers $1.90; **about $26.4 spent, $13.6 of the $40 gross ceiling left**; E+F about $34.0–39.9 (20 E fits 4.2–4.8 h three-lane VM wall time, about 12–13 lane-hours); with E2 about $42–51 against the $55 planning ceiling (plan and log only; no execution control; no start authorized); refresh before any execution request |
+| Retained storage | estimated charges $1.61/day: campaign disk $0.49 + snapshot `deepmzyme-paused-20261003` $0.06 + failed-fallback leftovers $1.06 (disks `deepmzyme-l4-recovery-873d08b26968` in us-central1-b and -c, $0.49 each; snapshot `deepmzyme-fallback-873d08b26968`, $0.07); the controller reserves $2.00/day (a guard, not a charge); cleanup proposal in log v3-029; leftovers cleanup is the user's decision (never delete them yourself; `state/fallback.json` is a stuck receipt, do not edit) |
 | Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-08 used 5 h 44 min / $7.40 (the day is over for GPU work: the PC closes about 13:07 UTC) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and eight in a row 07:58–08:40 on 2026-10-08); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
 
@@ -245,6 +249,7 @@ from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 ch
 | Step D assessments (checked copies; SHA-256 in the launcher output and the log) | `$DATA/step_d_evidence/assessments/D-A_*/`, `D-R_*/`, `D-B_*/assessment.json` (final: `D-B_20261007T201334Z`, SHA-256 `bba7c728…`) |
 | Extension record copy, readiness and decay audits, early-stopping and train/val-gap audits | `$DATA/step_d_evidence/extension/`, `$DATA/audits/d_readiness_20261006T180939Z/`, `d_decay_audit_20261006T175933Z/`, `early_stopping_audit_20261007T111826Z/`, `train_val_gap_20261007T111847Z/` |
 | Scratch-driver audit (report, mock, tools, logs, interim drafts) | `$DATA/audits/driver_audit_20261007T193000Z/` |
+| Logged-epoch contrast, folds 1–4 (log v3-029; `audit_v3_epoch_contrast.py`) | `$DATA/audits/epoch_contrast_20261008T171843Z/` |
 | Step E gate record (label) and future E evidence | `$DATA/step_e_evidence/step_e_gate.json`; `$DATA/step_e_evidence/evidence_<UTC>/` (latest `evidence_20261008T022159Z (457 files)`), assessments `$DATA/step_e_evidence/assessments/` |
 | Bundles (source + extension) and folds | `$DATA/bundles/20d5b06/`, `$DATA/bundles/43d26ff/`; `$DATA/folds/` |
 | Steps B and C evidence | `$DATA/step_b_evidence/`, `$DATA/step_c_evidence/` |
@@ -262,8 +267,11 @@ rerun); never relaunch a unit that has a launch record without an exit code. Run
 
 **E2 review resolved (user, 2026-10-08; log v3-028):** the E2 assessment rules are frozen in `e2_assessment_spec.md`
 and `e2_assessment_spec.json` (SHA-256 in log v3-028). Next in order: the user's GPU start confirmation for the 20
-remaining E fits; the original E assessment; the E2 CPU implementation and checks; the user's separate E2 go-ahead;
-step F after E2. The steps below describe the original step E work and the later E2 route.
+remaining E fits; the original E assessment; the deferred read-only schedule/error review on the corrected evidence
+(log v3-029 focus: class-specific deterioration, native Fe/Co/Ni and protein-group concentration, training versus
+validation, concrete input/provenance evidence; then the questions and costs of E2, a narrow actual 10-epoch
+comparison and the larger matrix, no scope change without a decision); the E2 CPU implementation and checks; the
+user's separate E2 GPU-start authorization; step F after E2. The steps below describe the original step E work and the later E2 route.
 
 Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;
 `~/deepmzyme-vm/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
@@ -289,7 +297,7 @@ Step E session (P = /home/mechti/miniconda3/envs/DeepMzyme/bin/python, in the wo
    admission check the VM runner lacks, assessor pinning the E2 JSON hash and accepting a four-/five-/six-class
    original selection, tests), run the existing launcher and assessment
    tests, the smoke checks and the docs-contract check, refresh the forecast, record the ceiling in execution
-   controls, then ask the user for the go-ahead. No E2 command exists yet; never run E2 units through `--step E` or
+   controls, then ask the user for the E2 GPU-start authorization. No E2 command exists yet; never run E2 units through `--step E` or
    the VM runner. Step F waits for E2 unless the user cancels E2 by a dated log entry.
 
 <a id="9-pending-review-of-the-e2-assessment-rules-saved-2026-10-08-unresolved"></a>
