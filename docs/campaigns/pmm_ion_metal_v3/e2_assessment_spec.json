@@ -1,0 +1,150 @@
+{
+  "a4_spec_sha256": {
+    "assessment_spec.json": "2969407042dbb5858f15e1a114a2d602cc2fd764e788022ddaee1907ff17306c",
+    "assessment_spec.md": "899005aaba036739519876860121fdf4e60241d55c393d435847aae56ece3667"
+  },
+  "adjusted_intervals_role": "sensitivity evidence only; not the gate",
+  "assessment_seed": 42,
+  "bootstrap_interval": "percentile",
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 42,
+  "candidates": [
+    {
+      "family": "only_gvp",
+      "matched_control": "only_gvp__four_class__baseline",
+      "recipe": "wd10"
+    },
+    {
+      "additional_comparator": "only_gvp__four_class__baseline",
+      "family": "only_gvp",
+      "matched_control": "only_gvp__four_class__sitenone",
+      "recipe": "sitecountsangles"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "invsqrtw"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "meanagg"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "gvpaux03"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "resdrop01"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "esmdrop02"
+    },
+    {
+      "family": "gvp_late_fusion",
+      "matched_control": "gvp_late_fusion__four_class__baseline",
+      "recipe": "wd10"
+    }
+  ],
+  "checkpoint_rule": "terminal",
+  "comparison_family": {
+    "C1-C8": "each candidate vs its matched control",
+    "C10-C17": "each candidate vs the original step E selection",
+    "C9": "only_gvp sitecountsangles vs only_gvp__four_class__baseline",
+    "coincident": "flagged in the report; family and divisor unchanged after results are seen"
+  },
+  "comparison_family_size": 17,
+  "completion": "36 fits with verified evidence, 17 comparisons reported, one final selection",
+  "confidence": 0.95,
+  "development_fold": {
+    "fold": 0,
+    "role": "reported separately; never inside an interval",
+    "seed": 42
+  },
+  "epochs": 50,
+  "failed_runs": "rerun once unchanged (first attempt archived); a second failure blocks the final assessment",
+  "fit_counts": {
+    "candidate_fits": 32,
+    "control_fits": 4,
+    "total": 36
+  },
+  "five_fold_summaries": "descriptive only",
+  "folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "held_out_test_accessed": false,
+  "interpretation": "exploratory extension selecting a promising configuration from reused development-validation evidence (one seed, four folds, validation folds reused from the original selection, candidates chosen on fold 0); passing the rule does not establish independently confirmed superiority or robustness across seeds; step F one-shot, both_results_secondary, prior-exposure caveats; neither the label nor a possibly opened test removes selection bias; the 0.18 and power figures in the log are illustrative calculations, not estimates for this campaign",
+  "lr_schedule": "cosine",
+  "metric": "common-four balanced accuracy of the terminal checkpoint's validation predictions; five/six probabilities summed into Class VIII before argmax; native metrics of a five/six-class selection preserved and reported",
+  "multiplicity": "bonferroni",
+  "new_control_fits": {
+    "only_gvp__four_class__sitenone": [
+      1,
+      2,
+      3,
+      4
+    ]
+  },
+  "no_eligible_candidate": "the original selection is retained",
+  "original_selection": {
+    "allowed_targets": [
+      "four_class",
+      "five_class",
+      "six_class"
+    ],
+    "bound_by": "assessment.json SHA-256 in the E2 manifest",
+    "required_state": [
+      "all six neutral contrasts complete",
+      "both improvement checks complete",
+      "stage6_selection non-null",
+      "held_out_test_accessed false"
+    ],
+    "source": "stage6_selection.selected of the completed original step E assessment (kind E)",
+    "substitution": "never; the actual completed selection only"
+  },
+  "own_model_conclusion": [
+    "improvement interval-supported on folds 1-4",
+    "positive mean gain on folds 1-4, not interval-supported",
+    "no positive mean gain on folds 1-4",
+    "blocked by a recall gate against the matched control"
+  ],
+  "primary_estimand": "mean over folds 1-4",
+  "ranking": "highest mean common-four BA on folds 1-4 among eligible candidates",
+  "recall_drop_limit": 0.03,
+  "recall_gates": "no missing/zero common-four mean recall of the candidate; no common-four class mean recall decrease > recall_drop_limit against each required comparator",
+  "replacement_labels": [
+    "selected",
+    "eligible, not best",
+    "not eligible: <failed conditions by comparator, class, magnitude>"
+  ],
+  "replacement_rule": {
+    "a_complete_evidence": "candidate, matched control(s) and original selection complete, identity-checked, replayed and durably verified on folds 1-4",
+    "b_interval_support": "both unadjusted 95% lower bounds > 0 vs the matched control and vs the original selection; sitecountsangles also vs only_gvp__four_class__baseline",
+    "c_min_mean_gain_over_original_selection": 0.002,
+    "c_min_mean_gain_strict": true,
+    "d_recall_gates": "against every required comparator"
+  },
+  "spec_version": 1,
+  "status": "frozen 2026-10-08 (user decisions of 2026-10-08, Option B with clarifications; log v3-028)",
+  "step": "E2",
+  "step_f_input": "the E2 final selection, or the unchanged A4 selection if the user cancels E2 by a dated log entry",
+  "t_degrees_of_freedom": 3,
+  "target": "four_class",
+  "tie_band": 0.002,
+  "tie_breakers": [
+    "mean minimum common-four recall (higher)",
+    "worst-fold BA (higher)",
+    "SD over folds 1-4 (lower)",
+    "simpler family (only_gvp before gvp_late_fusion)",
+    "stable recipe name"
+  ],
+  "verdict": "better: both unadjusted lower bounds > 0 and recall gates pass; worse: both upper bounds < 0; blocked by a recall gate: intervals better but a gate fails; else no clear difference"
+}

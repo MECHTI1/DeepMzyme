@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-08 step E 24 of 44 fits; step E2 planned, not implemented, rules pending review; log v3-026)
+Status: active (2026-10-08 step E 24 of 44 fits; step E2 planned, rules frozen, not implemented; log v3-028)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
@@ -25,8 +25,9 @@ Runtime and run identities are recorded before use; v2 artifacts stay untouched.
 The [regularization amendment](log.md#v3-017) is [implemented](log.md#v3-018).
 [Step E2](plan.md#steps) ([log v3-025](log.md#v3-025)): planned, not implemented; the
 eight remaining step D passes tested singly on folds 1–4 (36 fits, seed 42) after the
-original E assessment and before step F unless the user cancels it; rules pending
-review ([log v3-026](log.md#v3-026)); its $55 planning ceiling authorizes no GPU start.
+original E assessment and before step F unless the user cancels it; rules frozen in the
+[E2 specification](e2_assessment_spec.md) ([log v3-028](log.md#v3-028)); tooling not built;
+its $55 planning ceiling authorizes no GPU start.
 A new chat continues from the [handoff](handoff.md) (ready-to-paste prompt, verified state, evidence paths).
 Execution follows the authorization and readiness state in
 [STATUS](../../../EXPERIMENT_STATUS.md); this amendment does not raise the ceiling.

@@ -1,4 +1,4 @@
-# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added 2026-10-08 ~13:00 UTC and the pending E2 review saved ~13:20 UTC, documentation only)
+# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; documentation only)
 
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
@@ -9,9 +9,8 @@ the current authority.
 ## Ready-to-paste continuation prompt
 
 ```text
-Continue the DeepMzyme PMM ion metal v3 campaign (step E, five-fold confirmation; step E2 planned, its rules pending
-review) from the verified
-stopping point recorded in docs/campaigns/pmm_ion_metal_v3/handoff.md.
+Continue the DeepMzyme PMM ion metal v3 campaign (step E, five-fold confirmation; step E2 planned, its rules frozen,
+tooling not built) from the verified stopping point recorded in docs/campaigns/pmm_ion_metal_v3/handoff.md.
 
 Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; HEAD must equal
 origin/v3-step-a; `git status` clean). Not in /home/mechti/PycharmProjects/DeepMzyme. If /media/mechti/Data1 is
@@ -20,7 +19,8 @@ missing, mount it first: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/mi
 -p MemoryMax=3G.
 
 Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (all
-sections, section 9 first); plan.md steps E, E2 and F; assessment_spec.md; log.md entries v3-026 back to v3-017;
+sections, section 9 first); plan.md steps E, E2 and F; assessment_spec.md; e2_assessment_spec.md; log.md entries v3-028
+back to v3-017;
 docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment"; .agents/skills/gpu-use-skill/SKILL.md;
 ~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
 
@@ -30,8 +30,9 @@ five/six) + 8 improvement fits (gvp_late_fusion__four_class__headdrop03__fold{1-
 only_gvp__four_class__meanagg__fold{1-4}__seed42); 24 of 44 are complete (section 3 lists them); the rest are pending, none failed. Final-test label
 both_results_secondary is recorded (record-e-gate done). Step F has no tooling yet: plan it and get the user's
 approval before any refit or test access. Step E2 (log v3-025; plan.md step E2) is PLANNED ONLY: the eight
-remaining step D passes tested one at a time on folds 1–4 (36 fits, seed 42; original E assessment first); no
-launcher, assessor, manifest or specification exists and nothing has run. Step F requires E2 completion unless the
+remaining step D passes tested one at a time on folds 1–4 (36 fits, seed 42; original E assessment first); its
+assessment specification is frozen (e2_assessment_spec.md/.json, log v3-028: Option B); no launcher, assessor or
+manifest exists and nothing has run. Step F requires E2 completion unless the
 user cancels E2 by a dated log entry. `--step E` refuses E2 units, but the VM runner's `--action run` does not check
 step membership: never call run_pmm_v3_campaign.py directly.
 
@@ -54,11 +55,11 @@ after the next closeout, with no implementation or spending. E2 fits need, beyon
 the CPU tooling, a frozen E2 specification and chained manifest, a refreshed forecast, the ceiling recorded in
 execution controls and the user's explicit go-ahead.
 
-Next task (user, 2026-10-08): "Read the saved review, discuss the unresolved assessment tradeoffs with the user, agree
-any changes, then update the documentation before implementation or training." The review is handoff.md section 9
-and log v3-026. Nothing of E2 (specification freeze, implementation, training) starts before that discussion; the
-eight candidates, 36-fit scope, seed 42 and the $55 planning ceiling stay as recorded. A proposed resolution with
-options (A as drafted, B recommended, C in between) is recorded in log v3-027 and section 9; the user's choice is pending.
+The E2 review is resolved (log v3-028; section 9): Option B with the user's clarifications, two separate conclusions
+per candidate, no extra seed; the rules are frozen in e2_assessment_spec.md/.json and are not changed after E2
+results are seen. Sequence: finish the original E and save its unchanged assessment → E2 CPU implementation and
+checks (playbook E2 section) → the user's separate E2 GPU go-ahead → E2 fits and assessment → the separately
+approved step F. The eight candidates, 36-fit scope, seed 42 and the $55 planning ceiling stay as recorded.
 
 Session procedure: vm-status; vm-report --no-ssh; vm-start --confirm; on a stockout, spaced same-VM retries only;
 vm-setup --stages ssh,smoke; `pmm_v3_step_d.py --step E status` (reconciles: completed units are never rerun;
@@ -85,7 +86,7 @@ exact next action and any decision the user must make.
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = the commit of log v3-024 (see `git log -1`); `origin/v3-step-a` = same) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
 | Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
 | Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
-| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 9 (pending E2 review) → plan.md (steps D–F, E2 included) → assessment_spec.md → log.md entries v3-026 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
+| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 9 (E2 review, resolved) → plan.md (steps D–F, E2 included) → assessment_spec.md → e2_assessment_spec.md → log.md entries v3-028 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
 | Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record) |
 | VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
@@ -99,7 +100,7 @@ exact next action and any decision the user must make.
   baselines with regression gate → D one-fold improvement screen (Round A → R → B → one combination per
   family) → E five-fold confirmation (seed 42: 36 neutral-test fits on folds 1–4 + up to 8 improvement fits)
   → E2 (planned 2026-10-08, log v3-025: the eight remaining step D passes singly on folds 1–4, 36 fits, seed 42;
-  assessment rules pending review, log v3-026 and section 9) → F Stage 6 selection (the final E2 selection, or the
+  assessment rules frozen 2026-10-08, e2_assessment_spec.md, log v3-028) → F Stage 6 selection (the final E2 selection, or the
   original A4 selection if the user explicitly cancels E2), Stage 6B full refit, one test pass. Steps A–D are
   complete.
 - **Frozen identities:** fold set `v3-seqid90-s42-b2` (log v3-005); A4 assessment specification
@@ -127,11 +128,12 @@ exact next action and any decision the user must make.
   eight step D passes not chosen as final recipes (Only-GVP `wd10`, `sitecountsangles`; late fusion `invsqrtw`,
   `meanagg`, `gvpaux03`, `resdrop01`, `esmdrop02`, `wd10`) each on folds 1–4, seed 42, `four_class`, 50-epoch cosine,
   terminal checkpoint, against the reused step E baselines (`sitenone` × 4 as the geometry control): 36 fits, 17
-  predeclared comparisons (ordinary and Bonferroni-adjusted A4 intervals), a proposed replacement rule kept in a
-  separate E2 specification (A4 unchanged); the E2 assessor must accept a four-, five- or six-class original
-  selection (the existing `compare` assumes a four-class control). Development-validation evidence, proposed after
-  fold 1–4 results were seen. Step F requires E2 completion unless the user cancels E2. Rules: plan.md step E2;
-  tooling gaps: the playbook's E2 section.
+  declared comparisons (unadjusted A4 intervals decide; Bonferroni-adjusted ones are sensitivity evidence), the
+  Option B replacement rule frozen 2026-10-08 in e2_assessment_spec.md/.json (A4 unchanged; log v3-028); the E2
+  assessor must accept a four-, five- or six-class original selection (the existing `compare` assumes a four-class
+  control). Exploratory development-validation evidence, proposed after fold 1–4 results were seen; passing the
+  rule is not independently confirmed superiority. Step F requires E2 completion unless the user cancels E2. Rules:
+  plan.md step E2 and the E2 specification; tooling gaps: the playbook's E2 section.
 - **Persistence contract:** every fit → run_status written → host-pull manifest (SHA-256 per file) → worker exit
   code → host `pull` verifies and uploads the acknowledgment (lane closed until then) → `evidence` copies the step
   evidence to Data1 with SHA-256 checked on both ends; `assess` keeps a checked copy of each assessment. A unit is
@@ -165,8 +167,8 @@ SHA-256 manifests, host acknowledgment uploaded) and replayed under `pmm-v3-repl
 Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step F:** not started; tooling absent;
 the draft `audits/session_notes_20261008/step_f_plan_DRAFT.md` (campaign data root) takes the A4 selection as its
 only input and REQUIRES RECONCILIATION with E2 before implementation (final E2 selection, or A4 if E2 is cancelled).
-**Step E2:** planned only (log v3-025): 0 of 36 fits; no launcher, assessor, manifest, specification or evidence
-directory exists; `pmm_v3_step_d.py --step E` refuses E2 units (the VM runner alone would not); it starts only after
+**Step E2:** planned only (log v3-025): 0 of 36 fits; the assessment specification is frozen (e2_assessment_spec.md,
+log v3-028); no launcher, assessor, manifest or evidence directory exists; `pmm_v3_step_d.py --step E` refuses E2 units (the VM runner alone would not); it starts only after
 the original E assessment, the CPU implementation and checks, a refreshed forecast, the recorded ceiling and the
 user's go-ahead, and step F waits for it unless the user cancels E2.
 
@@ -180,6 +182,7 @@ user's go-ahead, and step F waits for it unless the user cancels E2.
 | 2026-10-07 | Only-ESMC fairness assessment requested as a proposal only (training awaits approval) | log v3-021 |
 | 2026-10-08 morning | Next GPU start confirmed; up to three capped sessions with closeout by 17:30 UTC, then (PC closing) one session only; commit and push at every closeout (today); two read-only reviewers; a deferred read-only review of a 10-epoch schedule amendment after the next closeout (no implementation or spending); the arrangement is for 2026-10-08 only | log v3-024 |
 | 2026-10-08 midday | Step E2 amendment recorded as planned, not implemented: the eight remaining step D passes tested separately on folds 1–4 (36 fits, seed 42), proposed selection rules kept separate from A4, E2 completion required before step F unless the user cancels E2, a $55 gross total planning ceiling for the expanded campaign; documentation only, no GPU start authorized, execution controls unchanged | log v3-025, plan.md step E2 |
+| 2026-10-08 afternoon | E2 review resolved: Option B with clarifications (unadjusted A4 verdict rule, 0.2-point minimum mean gain, both comparators, recall gates by comparator; adjusted intervals as sensitivity only), two separate conclusions per candidate, no extra seed, exploratory label with no claim of independent protection; E2 specification frozen; v3-024/v3-027 corrected; no GPU start authorized | log v3-028, e2_assessment_spec.md |
 | 2026-10-07 evening | Final-test label `both_results_secondary`; continue the approved plan until 03:38 UTC 2026-10-08 at the latest (eight hours maximum, not a target), step E after midnight UTC if gates pass, caps and ceiling unchanged; fairness arm kept separate for the user's decision; audit of the scratch drivers delivered before any correction or driver reuse; closeout commits pushed to `origin/v3-step-a`; a complete handoff for a new chat | log v3-022 |
 
 **Authorization boundaries:** GPU starts for the approved D–F work are pre-authorized within the $40 gross ceiling
@@ -201,7 +204,7 @@ closeouts only.
 | Item | Value (verified 2026-10-07 20:16:45 UTC by `vm-status`/`vm-report --no-ssh`) |
 |---|---|
 | VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 2026-10-08 12:16:58 UTC, session `session-20261008T084732Z-3bbc7d8d`, 3 h 29 min, $3.07 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | compute to date $23.55 gross (B $1.88, C $3.64, D $12.98, E $5.05); storage about $3.5 accrued; **about $27.1 spent, about $12.9 of the $40 gross ceiling left**; forecast to finish E and F $33.5–36.4 (upper value while the leftovers exist); E2 planning (log v3-025): about 9–12 additional VM hours, total about $44–51 against the selected $55 gross planning ceiling (recorded in plan and log only; no execution control; no start authorized) |
+| Spending | compute to date $23.55 gross (B $1.88, C $3.64, D $12.98, E $5.05); storage about $3.9 accrued at 16:50 UTC; **about $27.4 spent, about $12.6 of the $40 gross ceiling left** (log v3-028); forecast to finish E and F $35.7–41.5 including storage at $1.6–2.0/day (upper value if the leftovers remain and the calendar stretches); with E2 (9–12 VM hours, $7.7–10.3, plus storage days) about $45–55 against the $55 gross planning ceiling (plan and log only; no execution control; no start authorized); refresh before any execution request |
 | Retained storage | campaign disk $15/month + snapshot `deepmzyme-paused-20261003` (reserved $7.50/month) + failed-fallback leftovers: disks `deepmzyme-l4-recovery-873d08b26968` in us-central1-b and -c ($15/month each) and snapshot `deepmzyme-fallback-873d08b26968` ($7.50/month reserved) → controller reservation about $2.00/day in total; leftovers cleanup is the user's decision (never delete them yourself; `state/fallback.json` is a stuck receipt, do not edit) |
 | Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-08 used 5 h 44 min / $7.40 (the day is over for GPU work: the PC closes about 13:07 UTC) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and eight in a row 07:58–08:40 on 2026-10-08); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
@@ -257,10 +260,10 @@ rerun); never relaunch a unit that has a launch record without an exit code. Run
 
 ## 8. Next actions and commands
 
-**Next task (user, 2026-10-08):** "Read the saved review, discuss the unresolved assessment tradeoffs with the user,
-agree any changes, then update the documentation before implementation or training." The review is section 9 (also
-log v3-026). The E2 assessment rules are not frozen; nothing of E2 starts before that discussion. The steps below
-describe the original step E work and the later E2 route.
+**E2 review resolved (user, 2026-10-08; log v3-028):** the E2 assessment rules are frozen in `e2_assessment_spec.md`
+and `e2_assessment_spec.json` (SHA-256 in log v3-028). Next in order: the user's GPU start confirmation for the 20
+remaining E fits; the original E assessment; the E2 CPU implementation and checks; the user's separate E2 go-ahead;
+step F after E2. The steps below describe the original step E work and the later E2 route.
 
 Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;
 `~/deepmzyme-vm/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
@@ -282,52 +285,47 @@ Step E session (P = /home/mechti/miniconda3/envs/DeepMzyme/bin/python, in the wo
 5. Log a dated entry (newest first in log.md), overwrite STATUS (≤ 6,000 bytes; preserve replaced dated text in the log),
    `P tools/check_docs_contract.py`, `git add -- <paths>`, `git -c core.hooksPath=.githooks commit`, push only with the user's OK.
 6. Step E2, only after the original E assessment and on CPU first (no GPU): build what the playbook's E2 section lists
-   (frozen E2 specification, chained amendment manifest, launcher with the admission check the VM runner lacks,
-   assessor accepting a four-/five-/six-class original selection, tests), run the existing launcher and assessment
+   (the E2 specification exists; chained amendment manifest bound to the actual assessment hash, launcher with the
+   admission check the VM runner lacks, assessor pinning the E2 JSON hash and accepting a four-/five-/six-class
+   original selection, tests), run the existing launcher and assessment
    tests, the smoke checks and the docs-contract check, refresh the forecast, record the ceiling in execution
    controls, then ask the user for the go-ahead. No E2 command exists yet; never run E2 units through `--step E` or
    the VM runner. Step F waits for E2 unless the user cancels E2 by a dated log entry.
 
-## 9. Pending review of the E2 assessment rules (saved 2026-10-08; unresolved)
+<a id="9-pending-review-of-the-e2-assessment-rules-saved-2026-10-08-unresolved"></a>
+## 9. Review of the E2 assessment rules (saved 2026-10-08; resolved by the user the same day, log v3-028)
 
-Saved in substance from the user's request of 2026-10-08 (also [log v3-026](log.md#v3-026)). The eight separate
-experiments and the 36-fit E2 design remain the intended scope (eight candidates, seed 42, $55 gross total planning
-ceiling; the planning ceiling does not authorize a GPU start). E2 is planned, not implemented and not experimentally
-evaluated; its assessment rules (plan.md step E2, items 2 and 3) are pending this review and are not frozen. The
-scientific questions below are NOT resolved; they are discussed with the user before the E2 specification is frozen
-or any implementation or training starts.
+The user's review of 2026-10-08 (also [log v3-026](log.md#v3-026)) raised four points; a proposed resolution with
+options was recorded in [log v3-027](log.md#v3-027) and the user decided on Option B with clarifications
+([log v3-028](log.md#v3-028)). The result is frozen in [`e2_assessment_spec.md`](e2_assessment_spec.md) and
+[`e2_assessment_spec.json`](e2_assessment_spec.json) (SHA-256 in v3-028) and is not changed after E2 results are seen.
+E2 is planned and not implemented; the eight candidates, 32 candidate fits plus four `sitenone` controls, seed 42,
+folds 1–4, the 50-epoch cosine schedule, the terminal checkpoint and the $55 gross planning ceiling are unchanged; no
+GPU start is authorized.
 
-1. **Promotion threshold.** Bonferroni correction across 17 comparisons with only four folds creates a very demanding
-   replacement gate, approximately 99.7% confidence intervals per comparison. A hypothetical improvement of +1, +2, +3
-   and +4 percentage points averages +2.5 points but still fails the adjusted t-interval check. This is recorded as an
-   unresolved design tradeoff. Do not silently change the threshold, comparison family, folds, seeds or budget; discuss
-   it with the user before freezing the specification, and never change it after seeing E2 results to obtain a
-   preferred outcome.
-2. **Separate experiment conclusions.** Each candidate needs two separate conclusions: (a) does this change help its
-   own model compared with its matched control? (b) does it qualify to replace the overall selected model? Failure to
-   replace the overall winner must not be interpreted as "the change is useless". Positive average gains must not
-   conceal failed class-recall checks.
-3. **Documentation consistency.** The handoff's old E → F sequence and reading list are reconciled with E → E2 → F and
-   log v3-025 (sections 1, 2 and 8 above). The existing step F draft (`audits/session_notes_20261008/step_f_plan_DRAFT.md`
-   on the campaign data root) takes the A4 selection as its only input and is marked as requiring reconciliation before
-   implementation: step F must consume the final E2 selection, or the original A4 selection if the user explicitly
-   cancels E2.
-4. **Interpretation.** Preserve the development-validation/exploratory label. Four folds and one seed do not establish
-   robustness across training seeds, and the adjusted intervals do not remove the uncertainty caused by reused
-   validation data and overlapping cross-validation training sets.
+1. **Promotion threshold → decided.** Replacement uses the A4 verdict rule unchanged: both unadjusted 95% lower bounds
+   (10,000 fold-bootstrap resamples with seed 42; t with 3 degrees of freedom) above zero against the matched control
+   and against the original completed E selection (`sitecountsangles` also against the Only-GVP baseline), an
+   estimated mean gain over the original selection strictly greater than 0.2 points, and the recall gates against every
+   required comparator. The 17 declared contrasts are reported with unadjusted and Bonferroni-adjusted intervals; the
+   adjusted results are sensitivity evidence, not the gate; coincident comparisons are identified without changing
+   the declared family. The illustrative figures of v3-027 (about 0.18 over eight independent nulls; the power table)
+   are calculations under stated assumptions, not estimates of this campaign's false-replacement rate or power.
+2. **Separate conclusions → decided.** Each candidate carries an own-model conclusion against its matched control
+   (numerical differences, interval verdict, recall gates; A4 improvement-check vocabulary; a matched-control recall
+   failure overrides "promising") and a replacement conclusion with the exact reason when it does not qualify; every
+   failed gate is named by comparator, class and magnitude; a failure against the original selection blocks
+   replacement without erasing a supported own-control finding; failure to replace is not evidence of no effect.
+3. **Documentation consistency → done.** The handoff reads E → E2 → F; the step F draft
+   (`audits/session_notes_20261008/step_f_plan_DRAFT.md` on the campaign data root) still takes the A4 selection as its
+   only input and is reconciled when the step F plan is written: step F consumes the final E2 selection, or the
+   original A4 selection if the user explicitly cancels E2.
+4. **Interpretation → decided.** E2 is an exploratory extension that selects a promising configuration from reused
+   development-validation evidence; passing its rule does not establish independently confirmed superiority or
+   robustness across training seeds; step F stays one-shot with `both_results_secondary` and the prior-exposure
+   caveats; neither the exploratory label nor a possibly opened test removes selection bias. No extra seed.
 
-Next task: "Read the saved review, discuss the unresolved assessment tradeoffs with the user, agree any changes, then
-update the documentation before implementation or training."
-
-**Proposed resolution (recorded 2026-10-08 about 16:30 UTC in [log v3-027](log.md#v3-027); for the user's decision;
-nothing frozen).** Verified basis: A4 decides every verdict on the unadjusted 95% intervals plus the recall gates and
-only reports the Bonferroni-adjusted ones, so the drafted E2 rule 3(b) is stricter than any A4 verdict; with four folds
-the adjusted t critical value is 6.9 (over 8) or 8.95 (over 17) against 3.18 unadjusted, the percentile bootstrap cannot
-reach beyond the fold minimum, and the power of the adjusted rules at a +2-point gain is 2–22% against 29–75% unadjusted.
-Options for point 1: A (as drafted, Bonferroni over 17), **B (recommended: the A4 verdict rule unchanged, adjusted
-intervals reported as sensitivity, plus the 0.2-point minimum gain, both comparators and the recall gates; family-wise
-false-replacement rate about 0.18 disclosed)**, C (B plus Bonferroni over the replacement comparisons only). Point 2:
-two labelled conclusions per candidate in the A4 vocabulary, recall-gate failures printed in both. Point 3: no decision
-needed (step F draft reconciled with the step F plan). Point 4: label accepted; optional seed-43 repeat of a selected
-replacement only (four fits) if the user adds it. Decisions requested: option A/B/C, the vocabulary, the extra seed,
-and the next GPU start and window for the 20 remaining step E fits.
+Corrections recorded in v3-028: the v3-024 t intervals labelled "unadjusted" were the adjusted-over-two intervals
+(unadjusted: `headdrop03` t [−1.38, +0.71], `meanagg` t [−3.76, +4.48]; verdicts unchanged), and the bootstrap
+explanation of v3-027 is qualified (exact endpoint mass 1/256; the finite estimate need not return the exact minimum;
+bootstrap and t bounds are not independent confirmations).
