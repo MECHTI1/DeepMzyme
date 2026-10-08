@@ -3,6 +3,149 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-030
+
+2026-10-08 — **failed-fallback leftovers removed through a new, tested
+controller abandonment path; spending and the E → E2 → F forecast refreshed;
+the $52.90 upper scenario reconciled; step F draft corrected; handoff
+navigation fixed** (CPU, documentation and guarded storage cleanup only; no VM
+start, training, fallback allocation, schedule experiment, refit or test
+access; frozen A4 and E2 specifications, original assessments, raw evidence and
+hash-bound training source unchanged).
+
+**User instructions of 2026-10-08 (this update):** priority is the strongest
+defensible model obtainable from this campaign; continue in the accepted order;
+no GPU start yet (the window comes separately); the 20 remaining original E
+fits stay unchanged, then the unchanged A4 assessment, then the read-only
+schedule/error review on the corrected evidence, then the E2 CPU
+implementation and checks (eight candidates, 36 fits, frozen Option B rules,
+bound to the actual completed E selection with four-, five- or six-class
+comparators) before its separate GPU request; the shorter-schedule hypothesis
+stays separate ((a) completing E2, (b) a narrow actual schedule comparison for
+the selected configuration and (c) the larger matrix are distinguished; nothing
+added, reordered or substituted without a decision). Authorized: the narrowly
+scoped controller abandonment addition and the cleanup of exactly the two
+recovery disks and the fallback snapshot of [v3-029](#v3-029), after offline
+tests, a dry-run and fresh preservation checks, with additional requirements
+(every pending creation reconciled to a terminal state, the lock held
+throughout, immutable IDs verified immediately before deletion, backups and
+hashes verified, safe resumption after partial deletion, removal verified and
+ledger events recorded before the receipt is archived; never `--finalize`,
+`vm-delete` or raw deletion; only while the VM is stopped; stop on any
+ambiguity). Also requested: the refreshed forecast with the $52.90
+reconciliation, the corrected step F draft and the handoff fixes.
+
+**Controller addition** (`~/deepmzyme-vm`, commit `a349294`, pushed to its
+`origin/main`): `vm-fallback --abandon --evidence PATH [--dry-run|--confirm]`
+for a pass with no selected replacement and an expired window. Under one
+controller lock it requires: no open session; the selected endpoint equal to
+the pass source, positively TERMINATED with its recorded boot disk attached; a
+complete instance listing with nothing in an attempt slot and no other running
+instance; exactly one matching zonal insert operation per attempt that
+requested a VM, `DONE` with an error (missing, duplicated or in-flight refuses);
+each target's immutable ID, pass label and provenance as recorded, disks
+unattached, no other disk derived from the snapshot; the backup evidence
+rehashed. It records per-resource state before each deletion, verifies removal
+by name and by ID listing, removes only the matching recycle-bin copy, closes
+the storage ledger events, and archives the receipt. The report now prices kept
+snapshots from the open ledger rate when no active receipt exists (archiving
+the receipt had blanked that line). Tests: 8 new offline tests pass (preview,
+uncertain-create reconciliation and archival, window/flags/evidence refusals,
+unknown/in-flight/unexpected creation states, identity/attachment/provenance/
+source-state refusals, partial-deletion resumption without duplicates or
+double closing, matching-only recycle purge, report pricing). Full suite: 114
+tests; the only failures are three daily-cap tests that also fail on the
+unmodified controller (their expectations predate the 12 h / $18 caps of
+controller commit `fc0d414`) and intermittent timing failures in existing
+fallback tests that also occur on the unmodified controller; neither touches
+the new path.
+
+**Execution** (records in `audits/fallback_abandon_20261008T181921Z/` on the
+campaign data root: evidence builder, evidence, receipt before, dry-run,
+confirmed run, post-verification, archived receipt). Backup evidence: every
+file of the 106 acknowledged host-pull manifests of lanes 0–2 (each manifest
+hash equal to its acknowledgment) and of the latest step D and E evidence
+copies, 3,574 files, 4.14 GB, rehashed by the controller in the dry-run and
+again under the lock in the confirmed run. Creation attempts reconciled:
+us-central1-b `operation-1791326109448-…` and us-central1-c
+`operation-1791326275542-…`, both `DONE` with
+`ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS`. Deleted at 18:23 UTC: disk
+`deepmzyme-l4-recovery-873d08b26968` us-central1-b (ID 5611272327395854787),
+the same name in us-central1-c (ID 8920682037852555612), snapshot
+`deepmzyme-fallback-873d08b26968` (ID 6673686273936902278). The snapshot
+deletion produced a recycle-bin copy although the bin was empty before; the
+guarded purge removed exactly that copy (one-hour minimum charge, under $0.01).
+`STORAGE_CLOSED` events for all four keys precede `FALLBACK_ABANDONED`
+(18:23:45 UTC); the receipt is archived as
+`state/fallback-873d08b26968.abandoned.json`. Independent post-verification:
+only VM `deepmzyme-l4` (TERMINATED, ID 8553555212712383956), its boot disk (ID
+8244066857274414107, attached) and the archive snapshot
+`deepmzyme-paused-20261003` remain; the recycle bin is empty.
+
+**Spending, one dated calculation (2026-10-08 18:40 UTC; estimated charges at
+gross list prices; disk counted once):** running B–E $23.00 (26.78 h ×
+$0.858624/h); campaign disk $1.40; archive snapshot $0.16; leftovers final
+$1.94 (two disks $0.90 each, snapshot $0.13, recycle copy under $0.01). **Spent
+$26.49; $13.51 of the $40 gross ceiling left.** Storage from now: $0.55 per
+calendar day in estimated charges; the controller reserves $0.75 per day (a
+guard, not a charge).
+
+**$52.90 reconciled.** [v3-029](#v3-029) gave an E2-inclusive upper of about
+$51, which contradicts its own stated assumptions: E+F upper $39.88 (E 4.8 h,
+leftovers kept, five calendar days) plus E2 9.6 h ($8.24) plus three more
+storage days at the then $1.61 per day ($4.83) is **$52.95**. The leftovers'
+removal makes that scenario obsolete.
+
+**Refreshed forecast for the accepted sequence** (estimated charges; VM wall
+time with three lanes at $0.858624/h; upper values include session overhead
+and the one-rerun allowance):
+
+| Work | VM hours | Charge |
+|---|---:|---:|
+| 20 remaining E fits (launcher forecast with the cold Only-GVP six-class parse, to the measured session rate plus one rerun; about 12–14 cumulative lane-hours) | 4.2–5.5 | $3.6–4.7 |
+| E2, 36 fits | 7.9–9.6 | $6.8–8.2 |
+| Step F refit, test embeddings and inference | 1.0–2.25 | $0.9–1.9 |
+| Storage until F completes, 5–12 calendar days at $0.55 | | $2.8–6.6 |
+| **Total E → E2 → F, including the $26.49 spent** | | **$40.5–48.0** |
+
+E and F alone total about $32.6–36.5, within the operative $40 ceiling, so the
+remaining original E fits fit the recorded ceiling and controller caps. With
+E2 the total passes $40: before any E2 GPU execution the applicable ceiling
+(the user's $55 planning figure, or another the user records) must be written
+into the E2 execution controls; the $55 figure is not start permission. Each
+extra calendar day adds $0.55.
+
+**Step F draft corrected** as [`step_f_plan_draft.md`](step_f_plan_draft.md)
+(draft v2; not approved; nothing built). It takes the E2 final selection (the
+A4 selection only after a dated E2 cancellation); builds a validation-free
+terminal refit (removes the fold options, `--export-validation-predictions`,
+which the trainer's parser refuses without a validation split, and the
+validation selection metric; adds `--val-fraction 0.0`; keeps the terminal
+50-epoch cosine rule); recomputes the manual common-four equalized multipliers
+on the full 7,398-ion cohort for four-, five- and six-class winners; binds the
+terminal checkpoint and `run_config` hashes through the test pass; and lists
+CPU readiness checks for label blindness, source-row accounting,
+unscorable-row denominators, report recovery from immutable predictions and
+one-shot refusal, on synthetic or training-side data. The session draft on the
+data root stays unchanged as history. The F tooling is built after the E2
+implementation and before the step F approval request.
+
+**Handoff navigation fixed:** worktree HEAD row, latest step E evidence path
+(`evidence_20261008T121514Z`, 591 files), the leftovers and the stuck receipt
+(now archived), the step F draft location, the VM/limits rows, the cold
+Only-GVP six-class recipe, and the open-decision lists.
+
+**Next action:** the user's GPU-start window for the 20 remaining original E
+fits; then the original A4 assessment, evidence and closeout.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $26.4 spent, $13.6 left at 17:30 UTC; E+F forecast $34.0–39.9, log v3-029); confirm the next GPU start with the user. The $55 E2 planning ceiling authorizes no start. E2 GPU fits only after its CPU tooling and checks, a refreshed forecast and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized); then the original E assessment, the deferred read-only schedule/error review (log v3-029), the E2 CPU tooling and checks; open: E2 GPU authorization, step F plan, fairness arm, leftover cleanup (proposal v3-029), cost-gated augmentations.
+```
+
 ## v3-029
 
 2026-10-08 — **dated correction of the chat analysis of remaining
@@ -100,7 +243,7 @@ Authorization terms: the E2 CPU implementation is accepted planned work after
 the original E assessment and is not a GPU start; E2 GPU execution needs the
 user's separate start authorization.
 
-**Spending, one dated calculation (2026-10-08 17:30 UTC; gross list prices;
+**Superseded by [v3-030](#v3-030): the E2-inclusive upper below should read about $52.95 under its own assumptions, and the leftovers were removed.** **Spending, one dated calculation (2026-10-08 17:30 UTC; gross list prices;
 estimated charges, disk counted once; supersedes the figures of
 [v3-028](#v3-028), which added the controller's daily storage reservation to
 running costs that already contained the disk share):**
