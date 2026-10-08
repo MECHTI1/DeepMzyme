@@ -371,8 +371,10 @@ are added here only after the tooling exists and passes its checks. The rules
 (fits, comparisons, replacement, completion) are owned by the
 [campaign plan, step E2](campaigns/pmm_ion_metal_v3/plan.md#steps); the budget by
 its [Budget section](campaigns/pmm_ion_metal_v3/plan.md#budget). The assessment and
-replacement rules are pending the review saved in
-[log v3-026](campaigns/pmm_ion_metal_v3/log.md#v3-026) and are not frozen.
+replacement rules were frozen on 2026-10-08 in the separate
+[E2 assessment specification](campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)
+([log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)); the specification is a
+document, not tooling, and nothing below exists as code.
 
 Fixed context (planned): Only-GVP and graph-level late fusion, `four_class`,
 folds 1–4, seed 42, the recorded step-B execution setting (FP32, three lanes),
@@ -447,12 +449,16 @@ gap, not a safeguard):
 
 To build before any E2 fit (not started; names are descriptions, not commands):
 
-1. the frozen E2 assessment specification (Markdown and JSON next to the A4
-   files, SHA-256 in the log) with the 17 predeclared comparisons, the
-   Bonferroni family, the replacement rule and the tie order of the plan;
+1. the frozen E2 assessment specification: **done on 2026-10-08**
+   (`e2_assessment_spec.md` and `e2_assessment_spec.json` next to the A4 files,
+   SHA-256 values in [log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)) with
+   the 17 declared comparisons, the Bonferroni sensitivity family, the Option B
+   replacement rule, the two-conclusion vocabulary and the tie order; the E2
+   assessor pins the JSON hash;
 2. the chained amendment manifest: the 36 allowed units, the reused controls
-   by checked identity, the original step E selection by assessment hash, the
-   rules, and hashes binding source, configuration and evidence; refused when
+   by checked identity, the actual completed original step E assessment and
+   its selection by assessment-file hash (never a projected winner), the E2
+   specification hash, and hashes binding source, configuration and evidence; refused when
    provenance differs, the original E assessment is incomplete, the user's
    recorded go-ahead is missing or a persistence check fails;
 3. the E2 launcher (own launch and evidence directories; canonical run
@@ -469,9 +475,12 @@ To build before any E2 fit (not started; names are descriptions, not commands):
    controls, no combinations or extra seeds; each candidate resolves to its
    control plus exactly its own setting; the geometry comparisons and the
    baseline reuse; refusal of missing, duplicated, mismatched or unreplayed
-   evidence; interval adjustment, recall gates, ties, incomplete results and
-   retention of the original selection; launch admission, recovery and the
-   unchanged behaviour of the original step E;
+   evidence; interval adjustment, recall gates by comparator, ties, incomplete
+   results and retention of the original selection; mixed-target controls (a
+   five- or six-class original selection compared on common-four BA with its
+   native metrics preserved); launch refusal without the user's recorded E2
+   go-ahead; persistence and recovery; and the unchanged behaviour of the
+   original step E assessor and launcher;
 6. before GPU execution: the existing launcher and assessment tests
    (`tests/test_v3_step_d_launcher.py`, `tests/test_v3_step_c_launcher.py`,
    `tests/test_v3_assessment.py`, `tests/test_v3_extension.py`,

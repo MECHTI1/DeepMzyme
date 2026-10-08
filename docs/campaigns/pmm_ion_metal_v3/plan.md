@@ -343,9 +343,15 @@ therefore development-validation evidence, proposed after earlier validation
 results were seen; under the [neutral-test wording](../../../Plan.md#2-train-the-metal-classification-model)
 such post-hoc arms are exploratory, and no E2 result is a neutral or
 pre-registered claim. Its assessment and replacement rules (items 2 and 3)
-are proposals **pending the review saved in [log v3-026](log.md#v3-026)**,
-not frozen: they are discussed with the user before the E2 specification is
-frozen and never changed after E2 results are seen. Question: which fold-0 improvements also help on
+were reviewed ([log v3-026](log.md#v3-026), [v3-027](log.md#v3-027)) and
+**frozen on 2026-10-08 in the separate
+[E2 assessment specification](e2_assessment_spec.md)** ([log v3-028](log.md#v3-028)
+records the SHA-256 values); they are not changed after E2 results are seen.
+E2 selects a promising configuration from reused development-validation
+evidence; passing its rule does not establish independently confirmed
+superiority or robustness across training seeds, and neither the exploratory
+label nor the one-shot, `both_results_secondary` step F test removes
+selection bias. Question: which fold-0 improvements also help on
 folds 1–4 when tested one at a time? Order: complete the remaining 20
 original step E fits; run the original A4 assessment unchanged and keep its
 Stage 6 selection (`stage6_selection.selected`; "the original step E
@@ -380,44 +386,47 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    development"), or the cost-gated augmentations. The proposed 10-epoch
    schedule study ([log v3-024](log.md#v3-024), deferred review) stays a
    separate proposal and is not part of E2.
-2. Assessment (proposed; to be frozen as a separate E2 specification, with its
-   SHA-256 in the log, before the first E2 fit; the A4 specification is not
-   edited). Repeatability on folds 1–4: for every candidate each fold's
-   common-four balanced-accuracy change, the mean change, the SD and the
-   per-class recalls; the existing fold-0 seed-42 result shown separately as
-   the development fold; any five-fold summary descriptive only. Intervals:
-   the A4 methods on four paired differences (fold bootstrap, 10,000
-   resamples, seed 42; t interval with 3 degrees of freedom). Individual ions
-   and the fold-0 screening seeds are never confirmation replicates.
-   Predeclared family of 17 comparisons: the eight candidates against their
-   matched controls; `sitecountsangles` against the Only-GVP baseline; the
-   eight candidates against the original step E selection (a cross-family or
-   cross-target comparison on common-four BA if that selection is not a
-   late-fusion or Only-GVP `four_class` cell). Ordinary 95% intervals and
-   Bonferroni-adjusted intervals (95% split over the 17) are both reported;
-   this extends the campaign's existing interval approach conservatively.
-   The E2 assessor must support an original step E selection trained with
-   four, five or six classes: the existing `compare` helper summarizes its
-   control as `four_class` and takes only the challenger's target, so it is
-   reused unchanged for the candidate-versus-control comparisons only; the
-   comparison against the original selection needs a control-target-aware
-   implementation (common-four BA on collapsed predictions, the selection's
-   native recalls under its own scheme, the same interval rule).
-3. Replacement (proposed rule). A candidate may replace the original step E
-   selection only when (a) all its required fits, replay checks and evidence
-   checks are complete; (b) both adjusted lower bounds (bootstrap and t) are
+2. Assessment (frozen 2026-10-08; owner: the
+   [E2 specification](e2_assessment_spec.md), sections 2–5 and 7; the A4
+   specification is not edited). Repeatability on folds 1–4 per candidate:
+   each fold's common-four balanced-accuracy change, mean, SD and per-class
+   recalls; the fold-0 seed-42 result shown separately as the development
+   fold; five-fold summaries descriptive only. Intervals: the A4 methods on
+   four paired differences (fold bootstrap, 10,000 resamples, seed 42; t
+   interval with 3 degrees of freedom), unadjusted 95% for the verdicts and
+   Bonferroni-adjusted over the declared family of 17 comparisons as
+   sensitivity evidence only (the adjusted intervals are not the gate; the
+   bootstrap and t bounds are not independent confirmations). Declared family:
+   the eight candidates against their matched controls (`sitenone` for
+   `sitecountsangles`); `sitecountsangles` against the Only-GVP baseline; the
+   eight candidates against the original step E selection, which may be a
+   four-, five- or six-class cell (common-four BA from collapsed predictions,
+   native metrics preserved; the existing `compare` helper assumes a four-class
+   control and is reused only where that holds). Coincident comparisons are
+   flagged; the family and divisor do not change after results are seen. Every
+   candidate receives two separate conclusions: its effect against its matched
+   control (A4 improvement-check vocabulary, with numerical differences,
+   interval verdict and recall gates, a matched-control recall failure
+   overriding "promising") and whether it qualifies to replace the original
+   selection, with the exact reason when it does not; failure to replace is
+   not evidence of no effect.
+3. Replacement (frozen 2026-10-08, Option B of [log v3-027](log.md#v3-027)
+   with the user's clarifications; [E2 specification](e2_assessment_spec.md)
+   section 6). A candidate may replace the original step E selection only
+   when (a) its fits, its comparators' fits, replay checks and evidence checks
+   are complete; (b) both unadjusted 95% lower bounds (bootstrap and t) are
    above zero against its matched control and against the original selection,
-   and `sitecountsangles` also against the Only-GVP baseline; (c) its mean
-   gain over the original selection on folds 1–4 exceeds 0.2 points; (d) no
-   common-four class has a missing or zero mean recall and no class mean recall
-   drops by more than 3 points against any required comparator. Among eligible
-   candidates the highest mean common-four BA on folds 1–4 is selected; within
-   0.2 points the order is higher mean minimum recall, higher worst-fold BA,
-   lower SD, simpler family, then the stable recipe name. If none qualifies
-   the original selection stands. A positive mean with inconclusive intervals
-   is reported as promising; it is not evidence that the change is useless.
-   The neutral four/five/six conclusions of the original assessment are
-   preserved separately and unchanged.
+   and `sitecountsangles` also against the Only-GVP baseline; (c) its
+   estimated mean gain over the original selection on folds 1–4 is strictly
+   greater than 0.2 points; (d) against every required comparator no
+   common-four class has a missing or zero mean recall and no class mean
+   recall decreases by more than 3 points. Among eligible candidates the
+   highest mean common-four BA on folds 1–4 is selected; within 0.2 points
+   the order is higher mean minimum recall, higher worst-fold BA, lower SD,
+   simpler family, then the stable recipe name. If none qualifies the actual
+   completed original selection stands (a projected winner is never
+   substituted). The neutral four/five/six conclusions of the original
+   assessment are preserved separately and unchanged.
 4. Implementation (nothing exists; the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented)
    lists what exists, what refuses today and what must be built): an E2
    launcher and a separate E2 assessor (accepting a four-, five- or

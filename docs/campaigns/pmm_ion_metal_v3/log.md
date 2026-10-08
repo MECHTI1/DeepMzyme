@@ -3,7 +3,159 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-028
+
+2026-10-08 — **E2 review resolved by the user (Option B with clarifications);
+the E2 assessment specification frozen; dated corrections to v3-024 and
+v3-027; spending refreshed** (documentation only; CPU; no code change, fit,
+GPU action, fallback, resource deletion, refit, inference or test access;
+nothing here authorizes a GPU start). State reconciled before editing:
+worktree clean at 07bf8f9 = `origin/v3-step-a`; `deepmzyme-l4` TERMINATED
+(verified 16:11 UTC); nothing running. The frozen A4 specification
+(`assessment_spec.md` SHA-256 `899005aa…`, `assessment_spec.json`
+`29694070…`), the original assessor, the original E results and the raw
+evidence are unchanged.
+
+**User decisions of 2026-10-08 (this update):** Option B of [v3-027](#v3-027)
+for exploratory model selection; the two-conclusion approach accepted; the
+no-extra-seed default accepted; the message authorizes no GPU start (to be
+given separately); the eight candidates, 32 candidate fits plus four
+`sitenone` controls, existing recipes, folds 1–4, seed 42, the 50-epoch cosine
+schedule and terminal checkpoints are kept; no extra seeds, combinations,
+strengths, targets or schedule changes; the recorded sequence stands (finish
+the original E and save its unchanged assessment → E2 implementation and
+checks → separately authorized E2 execution → separately approved step F);
+the deferred 10-epoch review stays separate and read-only after the original
+E completes; the $55 figure remains a planning ceiling, not start permission.
+
+**Frozen E2 assessment specification** ([`e2_assessment_spec.md`](e2_assessment_spec.md)
+SHA-256 `71606fa62d251236e47dfc731d6ba13fadadf229e7fa747d7c3f3c6697ef2419`;
+[`e2_assessment_spec.json`](e2_assessment_spec.json) SHA-256
+`ea2d71ca36848ee23a84ca4b1480a4aa7c231778a02ecde81f73e05740a1ef98`), written before any E2 result exists. Exact
+replacement rule (folds 1–4, seed 42, common-four BA, the A4 interval methods:
+10,000 fold-bootstrap resamples with bootstrap seed 42 and a t interval with 3
+degrees of freedom): (a) complete, identity-checked, independently replayed and
+durably verified evidence for the candidate, its comparators and the original
+completed E selection; (b) both unadjusted 95% lower bounds above zero against
+the matched control and against the original selection, `sitecountsangles`
+also against the Only-GVP baseline; (c) estimated mean gain over the original
+selection strictly greater than 0.2 percentage points (0.002), a mean-gain
+requirement while the interval lower bounds must exceed zero; (d) no
+missing or zero common-four mean recall and no class mean recall decrease
+greater than 3 points against any required comparator. The 17 declared
+contrasts are reported with unadjusted and Bonferroni-adjusted intervals; the
+adjusted results are sensitivity evidence, not the gate; coincident
+comparisons are identified without changing the declared family after results
+are seen. Ranking and tie rules as proposed; if none qualifies the actual
+completed original selection stands (never the projected fusion winner). Two
+genuinely separate conclusions per candidate: the effect against its matched
+control (numerical differences, interval verdict, recall gates) and whether it
+qualifies to replace the original selection with the exact reason when not;
+every failed recall gate named by comparator, class and magnitude; a failure
+against the original selection blocks replacement without erasing a supported
+own-control finding; a matched-control recall failure overrides "promising";
+failure to replace is not evidence of no effect. The E2 manifest must bind
+the actual original assessment and selection by file hash, and the comparison
+interface must support an original selection trained with four, five or six
+classes on common-four BA while preserving native metrics. Interpretation
+(specification section 0, verbatim in every report): E2 selects a promising
+configuration from reused development-validation evidence; passing its rule
+does not establish independently confirmed superiority or robustness across
+training seeds; step F stays one-shot with `both_results_secondary` and the
+prior-exposure caveats; neither the label nor a possibly opened test removes
+selection bias.
+
+**Dated corrections (verified against the saved assessment
+`step_e_evidence/assessments/E_20261008T121456Z/assessment.json`, SHA-256
+`2ab142ebde790543de3d903425567294a4df64c93adbdee2f4070e83c20e5327`; the
+assessment is not rewritten and its verdicts are unchanged):**
+
+- [v3-024](#v3-024), assessor paragraph: the t intervals labelled "unadjusted"
+  are the Bonferroni-adjusted-over-two intervals, and the `headdrop03`
+  bootstrap upper bound was mistyped. Correct unadjusted 95% intervals, in
+  percentage points: late fusion `headdrop03` bootstrap [−0.8676, +0.1792],
+  t [−1.3828, +0.7133]; Only-GVP `meanagg` bootstrap [−1.6188, +2.5291],
+  t [−3.7630, +4.4764]. The adjusted (over two, 97.5%) intervals are
+  `headdrop03` bootstrap [−1.0181, +0.2230], t [−1.7101, +1.0406]; `meanagg`
+  bootstrap [−1.8277, +3.0524], t [−5.0498, +5.7633]. Both verdicts remain
+  "no clear difference" under either level; the statuses and the Stage 6
+  matched-pass flags are unchanged. The handoff and STATUS never quoted the
+  wrong figures.
+- [v3-027](#v3-027): the "about 0.18" figure is an illustrative calculation
+  for eight independent null comparisons, not an estimated or guaranteed
+  false-replacement rate for this campaign; the power table assumes
+  independent normally distributed fold differences and is an illustrative
+  calculation, not a forecast of E2's actual power; the statement that the
+  adjusted bootstrap bound "equals the minimum fold difference" holds for the
+  exact four-fold resampling distribution (endpoint mass 1/256), while the
+  implemented finite 10,000-resample estimate need not return the exact
+  minimum at every adjusted quantile, and the bootstrap and t bounds are not
+  independent confirmations; the sentence that the exploratory label and the
+  one-shot step F test "remain the real safeguard" is withdrawn: neither a
+  label nor a possibly opened test removes selection bias. The frozen A4
+  method is preserved.
+
+**Spending refreshed (16:50 UTC; gross list prices):** compute to date $23.55
+(B $1.88, C $3.64, D $12.98, E $5.05; ledger session `…3bbc7d8d` stopped
+12:16:58 UTC at $3.07); storage accrued about $3.9 (the controller's $2.00/day
+reservation; about $1.6/day at estimated actual charges: campaign disk $0.49,
+paused snapshot $0.06, failed-fallback leftovers about $1.06). **About $27.4
+spent, about $12.6 of the $40 gross ceiling left.** Forecast to finish the
+original plan: the 20 remaining E fits 4.2–4.3 three-lane hours, one 4 h
+session plus one short session, about $3.8–4.8; step F about 1.5 h, $1.3;
+storage $1.6–2.0 per calendar day while the campaign runs (the leftovers are
+$1.06/day of it): **about $35.7–41.5 of $40**, the upper value if the
+leftovers remain and the calendar stretches to four days. With E2 (36 fits,
+9–12 VM hours, $7.7–10.3, plus two to three more storage days): about
+$45–55 against the $55 gross planning ceiling, which is tight at the upper
+end; the leftovers decision and the calendar dominate the spread. The figures
+are refreshed again before any execution request; the earlier balance is not
+current.
+
+**Remaining execution prerequisites (exact):** (1) the user's confirmation of
+the next GPU start and its window for the 20 remaining step E fits (not
+given); the controller caps (4 h / $6 per session, 12 h / $18 per UTC day;
+today 5 h 44 min / $7.40 used at 16:11 UTC) and the $40 ceiling apply, so the
+budget question above is raised at the first safe boundary if the forecast
+no longer fits. (2) After those fits: `pmm_v3_step_d.py --step E assess`
+and `evidence`, a complete original assessment (six neutral contrasts, both
+improvement checks, non-null `stage6_selection`), closeout documentation.
+(3) E2 CPU implementation and checks per the playbook's E2 section (chained
+manifest binding the actual assessment hash, launcher with the admission
+check the VM runner lacks, assessor pinning the E2 JSON hash, the listed
+tests including mixed-target controls, launch authorization,
+persistence/recovery and unchanged original E behaviour; existing tests,
+smoke checks, docs check), the ceiling recorded in execution controls, a
+refreshed forecast. (4) The user's separate E2 GPU go-ahead. (5) Step F only
+after E2 (or its dated cancellation) and the separately approved step F plan.
+No VM start, fallback, resource deletion, refit or test access is authorized
+by this entry.
+
+Checks: `tools/check_docs_contract.py` after the edits (0 strict failures; the
+11 pre-existing warnings). Files: `e2_assessment_spec.md` and
+`e2_assessment_spec.json` (new), plan step E2 items 2–3 and its label
+paragraph, README, playbook E2 section (specification done; tests list
+extended), handoff (prompt, sections 1–5, 8, 9), STATUS, this log (entry plus
+dated pointers in v3-024 and v3-027).
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-08 v3 step E 24 of 44 fits; step E2 planned, not implemented, rules pending review)
+- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, not implemented, rules pending review, required before F unless cancelled ([log v3-025](docs/campaigns/pmm_ion_metal_v3/log.md#v3-025)); no Stage 6 confirmation, 6B refit or Stage 7.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; E+F forecast $33.5–36.4); confirm the next GPU start with the user. The $55 planning ceiling selected for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after the saved review, its tooling, frozen specification and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled); no Round C.
+Next: the user decides the E2 rule options of [log v3-027](docs/campaigns/pmm_ion_metal_v3/log.md#v3-027) (threshold A/B/C, vocabulary, extra seed) and confirms the next GPU start for the 20 remaining E fits; then the original E assessment, the E2 specification freeze and tooling; open: E2 go-ahead, step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review after step E, v3-024 corrections.
+```
+
 ## v3-027
+
+**Corrected on 2026-10-08 by [v3-028](#v3-028):** the 0.18 figure and the power
+table below are illustrative calculations under stated assumptions, not
+estimates for this campaign; the adjusted-bootstrap "equals the minimum"
+statement holds for the exact resampling distribution, not necessarily the
+finite estimate; the sentence that the exploratory label and the step F test
+"remain the real safeguard" is withdrawn. The user chose Option B with
+clarifications (v3-028).
 
 2026-10-08 — **proposed resolution of the pending E2 review, recorded for the
 user's decision** (documentation only; CPU; no code change, fit, GPU action,
@@ -465,6 +617,8 @@ over two seeds) do not reappear as clear gains on the confirmation folds; under 
 can be "improvement interval-supported on folds 1–4" (the assessor's verdict is below).
 Family contrast, baseline recipes, folds 1–4: late fusion minus Only-ESMC +1.53 / +2.04 /
 +0.45 / +2.06 (fold 0 +3.68); Only-GVP minus Only-ESMC +2.26 / −3.82 / −5.04 / −3.50.
+**Correction 2026-10-08 ([v3-028](#v3-028)):** in the paragraph below the t intervals labelled "unadjusted" are the Bonferroni-adjusted-over-two intervals and the `headdrop03` bootstrap upper bound is +0.18, not +0.14; the unadjusted t intervals are `headdrop03` [−1.38, +0.71] and `meanagg` [−3.76, +4.48]; verdicts and statuses unchanged.
+
 **Assessor (A4, folds 1–4, both improvement checks complete; copy `step_e_evidence/assessments/E_20261008T121456Z`, SHA-256 `2ab142eb…`):** late fusion `headdrop03` — mean difference −0.33 points, bootstrap interval [−0.87, +0.14] and t interval (3 df) [−1.71, +1.04] unadjusted, "no clear difference", status **"no positive mean gain on folds 1–4"**, no improvement claim, not Stage 6 matched; Only-GVP `meanagg` — mean +0.36 points, bootstrap [−1.62, +2.53] and t [−5.05, +5.76] unadjusted, "no clear difference", status **"positive mean gain on folds 1–4, not interval-supported"**, no improvement claim, Stage 6 matched pass only (eligibility, not a claim); recall gates passed in both. Under A4 §3 neither recipe is an improvement; the baseline recipes stay the step E reference. Every neutral contrast (five/six vs four per family) is still incomplete and no Stage 6 selection exists.
 
 **Reviewer reports (user request, read-only; copies in

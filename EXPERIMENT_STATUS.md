@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-08 v3 step E 24 of 44 fits; step E2 planned, not implemented, rules pending review)
+- Status: active (2026-10-08 v3 step E 24 of 44 fits; step E2 rules frozen, not implemented)
 - Last execution evidence: 2026-10-08 (v3 step E session 7, 3 h 29 min, $3.07 gross).
 
 ## Current objective and stage
 
 - Current campaign: pmm_ion_metal_v3, step E running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, not implemented, rules pending review, required before F unless cancelled ([log v3-025](docs/campaigns/pmm_ion_metal_v3/log.md#v3-025)); no Stage 6 confirmation, 6B refit or Stage 7.
+- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, rules frozen ([E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md), [log v3-028](docs/campaigns/pmm_ion_metal_v3/log.md#v3-028)), not implemented, required before F unless cancelled; no Stage 6 confirmation, 6B refit or Stage 7.
 
 **PMM core v2 was closed at fold 0 on 2026-10-03 (user decision):** nine fold-0 fits
 are final validation-only evidence; 36 fits were not run; its neutral four-versus-five/six
@@ -35,10 +35,10 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 
 ## Blockers and immediate next action
 
-- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; E+F forecast $33.5–36.4); confirm the next GPU start with the user. The $55 planning ceiling selected for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after the saved review, its tooling, frozen specification and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled); no Round C.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.6 left at 16:50 UTC; E+F forecast $35.7–41.5 with storage, log v3-028); confirm the next GPU start with the user. The $55 planning ceiling for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after its tooling and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled); no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 
-Next: the user decides the E2 rule options of [log v3-027](docs/campaigns/pmm_ion_metal_v3/log.md#v3-027) (threshold A/B/C, vocabulary, extra seed) and confirms the next GPU start for the 20 remaining E fits; then the original E assessment, the E2 specification freeze and tooling; open: E2 go-ahead, step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review after step E, v3-024 corrections.
+Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized yet); then the original E assessment, the E2 CPU tooling and checks, the E2 go-ahead; step F after E2; open: step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review after step E.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
