@@ -3,6 +3,124 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-027
+
+2026-10-08 — **proposed resolution of the pending E2 review, recorded for the
+user's decision** (documentation only; CPU; no code change, fit, GPU action,
+inference or test access; nothing here freezes the E2 specification, changes
+the plan's drafted rules or authorizes a GPU start). Context recovered from
+[v3-026](#v3-026); `deepmzyme-l4` verified TERMINATED at 16:11 UTC (today
+5 h 44 min / $7.40 of the 12 h / $18 daily caps; nothing running; worktree
+clean at df054b4 = `origin/v3-step-a`). The user asked to continue from the
+recorded stopping point; the recorded next task is this review, so the
+options below are prepared for the discussion. The eight candidates, the
+36-fit scope, seed 42 and the $55 gross total planning ceiling are unchanged.
+
+**Facts the proposal rests on (verified today from the frozen A4
+specification, `pmm_v3_assessment.py`, and the assessments
+`D-B_20261007T201334Z` and `E_20261008T121456Z`):**
+
+- A4 decides every verdict ("better") on the **unadjusted** 95% intervals
+  (both lower bounds above zero) plus the recall gates (`compare`, `_outcome`);
+  the Bonferroni-adjusted intervals are reported as `adjusted_claim_supported`
+  and decide nothing except the explicit multi-contrast claim of the neutral
+  test ([spec](assessment_spec.md) section 2, last bullet). The drafted E2
+  rule 3(b) (adjusted lower bounds over 17) is therefore stricter than any A4
+  verdict in the campaign.
+- Critical t values with 3 degrees of freedom: unadjusted 95% 3.18;
+  Bonferroni over 2: 4.18; over 8: 6.90; over 17: 8.95. The review's example
+  (+1, +2, +3, +4 points; mean +2.50, SE 0.65, t 3.87): unadjusted t lower
+  bound +0.45 (passes); adjusted over 8: −1.95; over 17: −3.28 (both fail).
+- With four folds the percentile bootstrap cannot reach beyond the fold
+  minimum or maximum: each tail has a floor of 1/256 = 0.0039, so every
+  adjusted bootstrap bound (tail 0.0031 for 8, 0.0015 for 17) equals the
+  minimum fold difference (example: +1.00) and the adjusted bootstrap passes
+  whenever all four folds improve. The t interval is the binding one; the
+  bootstrap adds no protection at n = 4.
+- Power of "t lower bound above zero" (four folds): a true gain of +2 points
+  with a fold SD of 1.0 / 1.5 / 2.0 → unadjusted 0.75 / 0.45 / 0.29,
+  Bonferroni over 8: 0.22 / 0.09 / 0.05, over 17: 0.11 / 0.04 / 0.02; a true
+  gain of +3 with SD 1.5 → 0.75 / 0.22 / 0.11. Under a null, "all four folds
+  positive" is implied by the t rule (joint 0.025 = t alone), so sign
+  consistency adds no guard. The family-wise probability of a false
+  replacement under the unadjusted rule over eight null candidates is about
+  0.18 (independent nulls; the candidates are not null-exchangeable, each
+  passed the two-seed fold-0 screen).
+- Observed fold SD of the paired differences in step E: 0.66 (`headdrop03`)
+  and 2.5 (`meanagg`). The eight E2 candidates' two-seed fold-0 mean gains
+  were +2.1 to +2.9 (fusion `invsqrtw` +2.87, `meanagg` +2.54, `gvpaux03`
+  +2.51, `resdrop01` +2.26, `esmdrop02` +2.21, `wd10` +2.11; Only-GVP `wd10`
+  +2.88, `sitecountsangles` +2.90 against `sitenone`), below the +3.58
+  (`headdrop03`) and +4.24 (`meanagg`) of the two chosen recipes, whose fold
+  1–4 mean changes were −0.33 and +0.36 ([v3-024](#v3-024)).
+- Projection, not a result: the four-class late-fusion baseline leads
+  Only-ESMC on every fold (+3.68 / +1.53 / +2.04 / +0.45 / +2.06; mean +1.95;
+  t lower bound with 4 df about +0.5) with no recall-gate failure, so unless
+  a five/six-class cell is "better" than its four-class arm and exceeds
+  74.28 mean common-four BA, the A4 Stage 6 selection will be
+  `gvp_late_fusion__four_class__baseline`. The matched control and the
+  original selection then coincide for the six fusion candidates, the 17
+  comparisons reduce to 11 distinct ones, and the control-target-aware
+  comparison is needed only if a five/six-class cell is selected (the
+  requirement of [v3-025](#v3-025) stays).
+
+**Proposed options (the user chooses; nothing is frozen):**
+
+1. Threshold (review point 1).
+   - Option A, as drafted: both Bonferroni-adjusted (over 17) lower bounds
+     above zero for replacement. Honest, but 2–11% power at realistic
+     effects: E2 becomes a descriptive study whose replacement rule cannot
+     realistically fire.
+   - **Option B (recommended):** apply the frozen A4 verdict rule unchanged
+     to E2: both unadjusted 95% lower bounds above zero and the recall gates,
+     with the Bonferroni-adjusted intervals over the predeclared family
+     reported as a sensitivity line (`adjusted_claim_supported`), exactly as
+     A4 does. Replacement additionally needs a mean gain over the original
+     selection above 0.2 points, a "better" verdict against both comparators
+     (own control and original selection; `sitecountsangles` also against the
+     Only-GVP baseline) and the recall gates against both. Power 29–75% at +2
+     points; the family-wise false-replacement rate of about 0.18 over eight
+     nulls is disclosed in the report; the exploratory label and the single
+     one-shot step F test remain the real safeguard.
+   - Option C: Option B plus Bonferroni over the replacement comparisons only
+     (at most 8, six if the selection is the fusion baseline): t critical
+     6.9 → 5–22% power at +2 points.
+2. Two conclusions (review point 2): accepted as a requirement. Every
+   candidate carries `own_model_conclusion` in the A4 improvement-check
+   vocabulary ("improvement interval-supported on folds 1–4"; "positive mean
+   gain on folds 1–4, not interval-supported" = promising; "no positive mean
+   gain on folds 1–4"; "blocked by a recall gate", naming the class and the
+   drop) and `replacement_conclusion` ("selected"; "eligible, not best";
+   "not eligible: reason"). A failed recall gate is printed in both and
+   overrides "promising"; "not eligible to replace" is never summarized as
+   "no effect".
+3. Documentation consistency (review point 3): the handoff was reconciled in
+   v3-026; the step F draft is reconciled when the step F plan is written,
+   after the user approves that plan; the E2 specification names its output
+   to step F explicitly. No decision needed.
+4. Interpretation (review point 4): accepted. The E2 report header states
+   "one seed, four folds, development-validation evidence; validation folds
+   reused from the original selection; exploratory under Plan". Optional and
+   outside the recorded scope unless the user adds it: a seed-43 repeat on
+   folds 1–4 of a selected replacement only (four fits, about $1.6) before
+   step F, reported as initialization sensitivity, never as confirmation.
+
+**Decisions requested:** (1) Option A, B or C; (2) the two-conclusion
+vocabulary; (3) no extra seed (default) or the optional seed-43 repeat;
+(4) the next GPU start and its window for the 20 remaining step E fits
+(forecast 4.2 lane-hours, about $3.9 plus storage: one 4 h session and one
+short session; at 16:11 UTC the daily allowance left was 6 h 16 min /
+$10.60). After the decisions: update plan.md step E2 items 2–3, freeze the
+E2 specification (SHA-256 in the log), then the E2 CPU tooling of
+[v3-025](#v3-025). The deferred 10-epoch review stays deferred until step E
+is complete (its completeness checks need the 20 pending fits).
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+Next: read the saved review ([handoff §9](docs/campaigns/pmm_ion_metal_v3/handoff.md), log v3-026), discuss the unresolved assessment tradeoffs with the user, agree any changes, then update the documentation before implementation or training; then the 20 remaining E fits and the original E assessment; open: E2 go-ahead, step F plan, fairness arm, fallback leftovers, cost-gated augmentations, 10-epoch review, v3-024 corrections.
+```
+
 ## v3-026
 
 2026-10-08 — **pending review of the E2 assessment rules saved; the E2
