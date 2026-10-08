@@ -1,4 +1,4 @@
-# PMM ion metal v3 — continuation handoff (written 2026-10-07 20:20 UTC)
+# PMM ion metal v3 — continuation handoff (written 2026-10-08 02:30 UTC)
 
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
@@ -19,21 +19,21 @@ missing, mount it first: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/mi
 -p MemoryMax=3G.
 
 Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (all
-sections); plan.md steps E and F; assessment_spec.md; log.md entries v3-022 back to v3-017;
+sections); plan.md steps E and F; assessment_spec.md; log.md entries v3-023 back to v3-017;
 docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment"; .agents/skills/gpu-use-skill/SKILL.md;
 ~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
 
 State: steps A–D complete; final step D recipes late fusion `headdrop03`, Only-GVP `meanagg`, Only-ESMC baseline
 (final assessment D-B_20261007T201334Z). Step E: 36 neutral-test fits (seed 42, folds 1–4, three families × four/
 five/six) + 8 improvement fits (gvp_late_fusion__four_class__headdrop03__fold{1-4}__seed42,
-only_gvp__four_class__meanagg__fold{1-4}__seed42); see handoff.md section 3 for which are complete. Final-test label
+only_gvp__four_class__meanagg__fold{1-4}__seed42); 10 of 44 are complete (section 3 lists them); the rest are pending, none failed. Final-test label
 both_results_secondary is recorded (record-e-gate done). Step F has no tooling yet: plan it and get the user's
 approval before any refit or test access.
 
 Rules that stay fixed: 50-epoch cosine, terminal checkpoint; A4 gates unchanged; seed 42 for E; one active GPU;
 controller only via ~/deepmzyme-vm/bin (vm-status, vm-report --no-ssh, vm-start --confirm [--hours H], vm-setup
 --stages ssh,smoke, vm-stop, vm-status); session cap 4 h / $6, daily cap 12 h / $18 (UTC day); campaign ceiling $40
-gross including storage (about $19.3 left on 2026-10-07 20:16 UTC; see handoff.md section 5 for the latest);
+gross including storage (about $16.8 left on 2026-10-08 02:30 UTC; see handoff.md section 5);
 every session ends with `pmm_v3_step_d.py --step E evidence`, vm-stop and a verified TERMINATED; log + STATUS +
 commit after each session with `git -c core.hooksPath=.githooks commit`; push only with the user's OK. Never edit
 pmm_v3_campaign.py or run_pmm_v3_campaign.py (hash-frozen). Never run vm-fallback, delete the failed-fallback
@@ -63,10 +63,10 @@ exact next action and any decision the user must make.
 
 | Item | Value |
 |---|---|
-| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = the commit of log v3-022 (see `git log -1`); `origin/v3-step-a` = same) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
+| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = the commit of log v3-023 (see `git log -1`); `origin/v3-step-a` = same) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
 | Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
 | Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
-| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → plan.md (steps D–F) → assessment_spec.md → log.md entries v3-022 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
+| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → plan.md (steps D–F) → assessment_spec.md → log.md entries v3-023 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
 | Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record) |
 | VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
@@ -106,12 +106,12 @@ exact next action and any decision the user must make.
   evidence to Data1 with SHA-256 checked on both ends; `assess` keeps a checked copy of each assessment. A unit is
   "complete" only when all four happened: training completed, worker exited 0, artifacts persisted, host acknowledged.
 
-## 3. Work state (verified 2026-10-07 20:20 UTC)
+## 3. Work state (verified 2026-10-08 02:30 UTC)
 
 **Step D: complete (final assessment `D-B_20261007T201334Z`, status `final`).** Every listed unit below is complete
 in all four senses (training completed at epoch 50, worker exit code 0, artifacts persisted by host pull with
 SHA-256 manifests, host acknowledgment uploaded) and replayed under `pmm-v3-replay-1`; the pulled copies are in
-`$DATA/durable/lane*/runs/<unit>/`. Nothing is running; no lane awaits a pull; no unit failed in step D.
+`$DATA/durable/lane*/runs/<unit>/`. Nothing is running; no lane awaits a pull; no unit failed in steps D or E.
 
 | Round | Units | State |
 |---|---|---|
@@ -122,11 +122,11 @@ SHA-256 manifests, host acknowledgment uploaded) and replayed under `pmm-v3-repl
 | D-B cost-gated (4) | `only_gvp__four_class__{posnoise01,outerdrop01}__fold0__seed{42,43}` | never run: "not tested (cost)" (user OK never given) |
 | D combination (4) | `gvp_late_fusion__four_class__combo-gvpaux03+headdrop03+invsqrtw+meanagg+resdrop01+wd10__fold0__seed{42,43}` (+2.82/+3.69, mean +3.25 < headdrop03 +3.58), `only_gvp__four_class__combo-meanagg+sitecountsangles+wd10__fold0__seed{42,43}` (−1.96/+6.29, mean +2.17, fails the both-seeds rule) | complete; **final recipes: late fusion `headdrop03`, Only-GVP `meanagg`, Only-ESMC baseline** |
 
-**Step E: not started** (gate recorded: final-test label `both_results_secondary`, `step_e_evidence/step_e_gate.json`, log v3-022; final D assessment `D-B_20261007T201334Z` is final). Planned first: the four-class baselines of all three families on folds 1–4 (warm caches, the paired baselines of the improvement check), then the 8 improvement fits, then five/six-class.
+**Step E: in progress, 10 of 44 units complete** (session 6 of 2026-10-08, log v3-023; gate recorded: final-test label `both_results_secondary`, `step_e_evidence/step_e_gate.json`, log v3-022; final D assessment `D-B_20261007T201334Z` is final). Order used so far: the four-class baselines of all three families on folds 1–4 (the paired baselines of the improvement check); next the remaining four-class baselines, then the 8 improvement fits, then five/six-class (cache sets cold once).
 
 | Group | Units (seed 42, folds 1–4) | State |
 |---|---|---|
-| E neutral, four_class (12) | `{only_esm,only_gvp,gvp_late_fusion}__four_class__baseline__fold{1,2,3,4}__seed42` | not started |
+| E neutral, four_class (12) | `{only_esm,only_gvp,gvp_late_fusion}__four_class__baseline__fold{1,2,3,4}__seed42` | complete: only_esm fold1, only_esm fold2, only_esm fold3, only_esm fold4, only_gvp fold1, only_gvp fold2, only_gvp fold3, gvp_late_fusion fold1, gvp_late_fusion fold2, gvp_late_fusion fold3 |
 | E neutral, five_class (12) | `{only_esm,only_gvp,gvp_late_fusion}__five_class__baseline__fold{1,2,3,4}__seed42` (cache sets cold once) | not started |
 | E neutral, six_class (12) | `{only_esm,only_gvp,gvp_late_fusion}__six_class__baseline__fold{1,2,3,4}__seed42` (cache sets cold once) | not started |
 | E improvement (8) | `gvp_late_fusion__four_class__headdrop03__fold{1,2,3,4}__seed42`, `only_gvp__four_class__meanagg__fold{1,2,3,4}__seed42` | not started |
@@ -155,14 +155,14 @@ The working-window authorization expires at 03:38 UTC on 2026-10-08: any executi
 renewed go-ahead (the standing advance authorization of v3-014 covers the approved plan, but the user asked to be
 told what must be renewed, so ask before the next GPU start).
 
-## 5. VM, spending and limits (verified 2026-10-07 20:20 UTC)
+## 5. VM, spending and limits (verified 2026-10-08 02:30 UTC)
 
 | Item | Value (verified 2026-10-07 20:16:45 UTC by `vm-status`/`vm-report --no-ssh`) |
 |---|---|
-| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 20:16:42 UTC, session `session-20261007T170135Z-a208a882`, 3 h 15 min, $2.86 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | compute to date $18.50 gross (B $1.88, C $3.64, D $12.98 over five sessions); storage about $2.2 accrued; **about $20.7 spent, about $19.3 of the $40 gross ceiling left**; forecast to finish E and F $32.6–36.4 (upper value while the leftovers exist) |
+| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 2026-10-08 02:23:45 UTC, session `session-20261008T000829Z-f23d379e`, 2 h 15 min, $1.98 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
+| Spending | compute to date $20.48 gross (B $1.88, C $3.64, D $12.98, E $1.98); storage about $2.7 accrued; **about $23.2 spent, about $16.8 of the $40 gross ceiling left**; forecast to finish E and F $33.3–37.1 (upper value while the leftovers exist) |
 | Retained storage | campaign disk $15/month + snapshot `deepmzyme-paused-20261003` (reserved $7.50/month) + failed-fallback leftovers: disks `deepmzyme-l4-recovery-873d08b26968` in us-central1-b and -c ($15/month each) and snapshot `deepmzyme-fallback-873d08b26968` ($7.50/month reserved) → controller reservation about $2.00/day in total; leftovers cleanup is the user's decision (never delete them yourself; `state/fallback.json` is a stuck receipt, do not edit) |
-| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-07 used 10 h 13 min / $11.25, so no further fit fits today; 2026-10-08 starts fresh at 00:00 UTC |
+| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-08 used 2 h 15 min / $4.40 so far (9 h 45 min left today) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (four on 2026-10-07 before 17:00); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
 
 ## 6. Audit of the session-5 scratch drivers (delivered 2026-10-07)
@@ -197,11 +197,11 @@ from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 ch
 | What | Where |
 |---|---|
 | Pulled runs (per lane; run dir = config, metrics CSVs, terminal + selected checkpoints, validation predictions, `independent_validation_replay/`, `.log`) | `$DATA/durable/lane{0,1,2}/runs/<unit>/`; host-pull manifests and acknowledgments in `$DATA/durable/lane*/persistence_receipts/` |
-| Step D evidence copies (statuses, launch records, lane state, events) | `$DATA/step_d_evidence/evidence_<UTC>/` (latest: `evidence_20261007T201431Z`, 682 files) |
+| Step D evidence copies (statuses, launch records, lane state, events) | `$DATA/step_d_evidence/evidence_<UTC>/` (latest D: `evidence_20261007T201431Z`, 682 files; E: `evidence_20261008T022159Z (457 files)`) |
 | Step D assessments (checked copies; SHA-256 in the launcher output and the log) | `$DATA/step_d_evidence/assessments/D-A_*/`, `D-R_*/`, `D-B_*/assessment.json` (final: `D-B_20261007T201334Z`, SHA-256 `bba7c728…`) |
 | Extension record copy, readiness and decay audits, early-stopping and train/val-gap audits | `$DATA/step_d_evidence/extension/`, `$DATA/audits/d_readiness_20261006T180939Z/`, `d_decay_audit_20261006T175933Z/`, `early_stopping_audit_20261007T111826Z/`, `train_val_gap_20261007T111847Z/` |
 | Scratch-driver audit (report, mock, tools, logs, interim drafts) | `$DATA/audits/driver_audit_20261007T193000Z/` |
-| Step E gate record (label) and future E evidence | `$DATA/step_e_evidence/step_e_gate.json`; `$DATA/step_e_evidence/evidence_<UTC>/` (none yet unless listed in section 3) |
+| Step E gate record (label) and future E evidence | `$DATA/step_e_evidence/step_e_gate.json`; `$DATA/step_e_evidence/evidence_<UTC>/` (latest `evidence_20261008T022159Z (457 files)`), assessments `$DATA/step_e_evidence/assessments/` |
 | Bundles (source + extension) and folds | `$DATA/bundles/20d5b06/`, `$DATA/bundles/43d26ff/`; `$DATA/folds/` |
 | Steps B and C evidence | `$DATA/step_b_evidence/`, `$DATA/step_c_evidence/` |
 | VM-side originals (kept on the stopped 150 GB disk) | `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3/{lanes,step_d,step_e,assessments,campaign_extension.json}`; code `/home/mechti/projects/DeepMzyme_v3_ext1`; caches `/home/mechti/deepmzyme_cache/{parse,esm,ring}` |
