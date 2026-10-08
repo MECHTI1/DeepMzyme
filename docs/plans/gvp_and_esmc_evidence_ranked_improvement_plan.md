@@ -2,7 +2,8 @@ Evidence-ranked plan to improve GVP and GVP+ESMC
 
 For v3, use the [campaign plan](../campaigns/pmm_ion_metal_v3/plan.md): it
 supersedes this historical ranking's execution order and selection rules,
-including the [regularization amendment](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment).
+including the [regularization amendment](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+and the planned, unimplemented [step E2 amendment](../campaigns/pmm_ion_metal_v3/plan.md#steps).
 The earlier measurements and planning estimates below remain historical.
 
 1. Objective and evidence

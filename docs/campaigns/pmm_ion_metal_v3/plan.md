@@ -5,7 +5,9 @@ external review ([log v3-004](log.md#v3-004)). Decisions and their dates are in
 the [campaign log](log.md); scientific policy stays in [Plan](../../../Plan.md).
 Each step ends with a results table, a dated log entry and a commit. GPU work
 uses the recorded authorization in [STATUS](../../../EXPERIMENT_STATUS.md);
-this plan does not increase its budget ceiling. Values marked "(default)" were set under the
+this plan does not increase its budget ceiling (the 2026-10-08 step E2 amendment
+records a revised *planning* ceiling in the [Budget](#budget) section; it
+authorizes no GPU start). Values marked "(default)" were set under the
 user's delegation; each may change only by a dated log entry before the first
 run of the step it affects.
 
@@ -332,9 +334,127 @@ alone is not a GPU launch request or wider spending authority.
 3. Not planned (default): the final recipe with five/six classes; if ever run,
    it is labelled conditional on four-class development.
 
+**E2. Individual confirmation of the eight remaining step D passes (amendment
+of 2026-10-08; planned, not implemented, not experimentally evaluated;
+[log v3-025](log.md#v3-025)).** Requested by the user after the fold 1–4
+results of step E's two selected recipes and of the four-class baselines had
+been examined ([log v3-024](log.md#v3-024)). Everything E2 produces is
+therefore development-validation evidence, proposed after earlier validation
+results were seen; under the [neutral-test wording](../../../Plan.md#2-train-the-metal-classification-model)
+such post-hoc arms are exploratory, and no E2 result is a neutral or
+pre-registered claim. Its assessment and replacement rules (items 2 and 3)
+are proposals **pending the review saved in [log v3-026](log.md#v3-026)**,
+not frozen: they are discussed with the user before the E2 specification is
+frozen and never changed after E2 results are seen. Question: which fold-0 improvements also help on
+folds 1–4 when tested one at a time? Order: complete the remaining 20
+original step E fits; run the original A4 assessment unchanged and keep its
+Stage 6 selection (`stage6_selection.selected`; "the original step E
+selection") as the reference; only then the 36 E2 fits (32 candidate fits
+and four geometry controls). The original results and assessment stay
+available next to the extension; an E2 candidate may replace the original
+selection only under rule 3 below. Step F follows E2: it does not start
+until E2 is complete, unless the user cancels E2 by a dated log entry.
+
+1. Fits (none run). Every row on folds 1–4, seed 42, direct `four_class`,
+   the existing prepared recipe (recipe IDs and trainer flags already exist;
+   no `src/` change); data, grouped folds, training settings, the 50-epoch
+   cosine schedule and the terminal checkpoint rule are unchanged; only
+   training-fold-specific quantities (class weights) are recomputed, as in
+   every v3 fit. The verified step E four-class baselines are reused as
+   controls after an identity check; `sitenone` on folds 1–4 supplies the
+   missing geometry-disabled controls and is a control, not a ninth candidate.
+
+   | Family | Single change | Recipe (exists) | Matched control on folds 1–4 |
+   |---|---|---|---|
+   | Only-GVP | weight decay 1.0 | `wd10` | Only-GVP baseline (complete) |
+   | Late fusion | inverse-square-root class weighting | `invsqrtw` | late fusion baseline (complete) |
+   | Late fusion | mean message aggregation | `meanagg` | late fusion baseline |
+   | Late fusion | GVP auxiliary loss, weight 0.3 | `gvpaux03` | late fusion baseline |
+   | Late fusion | residual dropout 0.1 | `resdrop01` | late fusion baseline |
+   | Late fusion | ESM modality dropout 0.2 | `esmdrop02` | late fusion baseline |
+   | Late fusion | weight decay 1.0 | `wd10` | late fusion baseline |
+   | Only-GVP | coordination counts and angles | `sitecountsangles` | `sitenone` (4 new control fits), plus the Only-GVP baseline |
+
+   Not allowed: combining changes, other strengths, extra seeds, five/six-class
+   versions of any candidate (if ever run, "conditional on four-class
+   development"), or the cost-gated augmentations. The proposed 10-epoch
+   schedule study ([log v3-024](log.md#v3-024), deferred review) stays a
+   separate proposal and is not part of E2.
+2. Assessment (proposed; to be frozen as a separate E2 specification, with its
+   SHA-256 in the log, before the first E2 fit; the A4 specification is not
+   edited). Repeatability on folds 1–4: for every candidate each fold's
+   common-four balanced-accuracy change, the mean change, the SD and the
+   per-class recalls; the existing fold-0 seed-42 result shown separately as
+   the development fold; any five-fold summary descriptive only. Intervals:
+   the A4 methods on four paired differences (fold bootstrap, 10,000
+   resamples, seed 42; t interval with 3 degrees of freedom). Individual ions
+   and the fold-0 screening seeds are never confirmation replicates.
+   Predeclared family of 17 comparisons: the eight candidates against their
+   matched controls; `sitecountsangles` against the Only-GVP baseline; the
+   eight candidates against the original step E selection (a cross-family or
+   cross-target comparison on common-four BA if that selection is not a
+   late-fusion or Only-GVP `four_class` cell). Ordinary 95% intervals and
+   Bonferroni-adjusted intervals (95% split over the 17) are both reported;
+   this extends the campaign's existing interval approach conservatively.
+   The E2 assessor must support an original step E selection trained with
+   four, five or six classes: the existing `compare` helper summarizes its
+   control as `four_class` and takes only the challenger's target, so it is
+   reused unchanged for the candidate-versus-control comparisons only; the
+   comparison against the original selection needs a control-target-aware
+   implementation (common-four BA on collapsed predictions, the selection's
+   native recalls under its own scheme, the same interval rule).
+3. Replacement (proposed rule). A candidate may replace the original step E
+   selection only when (a) all its required fits, replay checks and evidence
+   checks are complete; (b) both adjusted lower bounds (bootstrap and t) are
+   above zero against its matched control and against the original selection,
+   and `sitecountsangles` also against the Only-GVP baseline; (c) its mean
+   gain over the original selection on folds 1–4 exceeds 0.2 points; (d) no
+   common-four class has a missing or zero mean recall and no class mean recall
+   drops by more than 3 points against any required comparator. Among eligible
+   candidates the highest mean common-four BA on folds 1–4 is selected; within
+   0.2 points the order is higher mean minimum recall, higher worst-fold BA,
+   lower SD, simpler family, then the stable recipe name. If none qualifies
+   the original selection stands. A positive mean with inconclusive intervals
+   is reported as promising; it is not evidence that the change is useless.
+   The neutral four/five/six conclusions of the original assessment are
+   preserved separately and unchanged.
+4. Implementation (nothing exists; the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented)
+   lists what exists, what refuses today and what must be built): an E2
+   launcher and a separate E2 assessor (accepting a four-, five- or
+   six-class original selection) around the frozen training runner,
+   reusing the existing lane, persistence, recovery, duplicate-run,
+   artifact-validation and statistical helpers; E2's own launch and evidence
+   directories with canonical run identities; a frozen amendment manifest
+   (the 36 allowed fits, reused controls, the original selection, the
+   assessment rules, and hashes binding source, configuration and evidence);
+   refusal when provenance differs, the original E assessment is incomplete,
+   authorization is missing or a persistence check fails; every listed
+   comparison completed regardless of intermediate scores; the existing single
+   unchanged retry after a failed fit, a second failure blocking the final
+   assessment for diagnosis; an assessment report and a machine-readable final
+   selection naming the chosen recipe, configuration and evidence references.
+   The required CPU checks, existing tests, smoke checks and the
+   documentation-contract check precede any GPU execution.
+5. Completion and budget. E2 is complete when all 36 fits have verified
+   evidence, the eight individual comparisons are reported and one final
+   configuration is selected (the original selection unless replaced under
+   rule 3). **Step F does not start until E2 is complete, unless the user
+   cancels E2 by a dated log entry; step F then takes the A4 selection.**
+   That configuration is step F's input: full non-test refit, seed
+   42, terminal checkpoint, no ensemble, no calibration; the refit and
+   reporting rules are frozen before any held-out evaluation and the recorded
+   `both_results_secondary` label stands. Resources: one L4 VM, at most three
+   concurrent fits, the existing session and daily caps; the revised planning
+   ceiling and forecast are in the [Budget](#budget) section and must be
+   refreshed before execution and at every session. This amendment authorizes
+   no GPU start.
+
 **F. Final model and the one test.**
 
-- Stage 6 selection by the A4 rule, Stage 6B full refit with the same checkpoint
+- Step E2 must be complete first, unless the user cancels it by a dated log
+  entry. Stage 6 selection: the E2 final selection (the A4 selection unless
+  replaced under E2 rule 3; the A4 selection alone if E2 was cancelled),
+  Stage 6B full refit with the same checkpoint
   rule, then one prediction pass on PMM's full test set; the clean-subset
   summary is computed from the same predictions.
 - Full test: compared with PMM's published test values and labelled "exact,
@@ -380,3 +500,19 @@ hour after B, after C, and before each D round or cost-gated candidate. Before
 any step would exceed the ceiling, ask the user to stop and close out at the
 current evidence or to record a larger ceiling. The snapshot is kept; recovery
 resources are never deleted without the user's decision.
+
+**Step E2 planning ceiling (user decision 2026-10-08, [log v3-025](log.md#v3-025)).**
+For the campaign expanded by step E2 the user selected a planning ceiling of
+**$55 gross in total**, storage included, in place of the $40 figure above;
+the E+F forecast of about $33.5–36.4 still fits $40, so the increase funds E2
+only. Planning figures of the amendment, from the saved three-lane fit times
+([log v3-022](log.md#v3-022): 31–37 min per Only-GVP or late-fusion fit; 36
+fits about 6.2–7.4 three-lane hours before session overhead, admission slack
+and one rerun allowance): about 9–12 additional VM hours and a total expanded
+campaign cost of about $44–51. The forecast is refreshed from measured use
+before execution and at every session. The revised ceiling is recorded here
+and in the log as campaign evidence; no execution control encodes the campaign
+ceiling today (the controller's session and daily caps are unchanged), and
+recording it there precedes any authorized E2 launch. The decision authorizes
+no GPU start: the next start needs the user's confirmation
+([STATUS](../../../EXPERIMENT_STATUS.md)).
