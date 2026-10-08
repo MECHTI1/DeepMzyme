@@ -464,7 +464,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
 **F. Final model and the one test.**
 
 - Step E2 must be complete first, unless the user cancels it by a dated log
-  entry. Stage 6 selection: the E2 final selection (the A4 selection unless
+  entry. Execution draft for approval: [step_f_plan_draft.md](step_f_plan_draft.md). Stage 6 selection: the E2 final selection (the A4 selection unless
   replaced under E2 rule 3; the A4 selection alone if E2 was cancelled),
   Stage 6B full refit with the same checkpoint
   rule, then one prediction pass on PMM's full test set; the clean-subset
@@ -522,7 +522,8 @@ only. Planning figures of the amendment, from the saved three-lane fit times
 fits about 6.2–7.4 h of three-lane VM wall time before session overhead,
 admission slack and one rerun allowance): about 9–12 additional VM hours and a
 total expanded campaign cost of about $44–51 (refreshed with the disk counted
-once in [log v3-029](log.md#v3-029): E2 7.9–9.6 VM hours, total about $42–51). The forecast is refreshed from measured use
+once in [log v3-030](log.md#v3-030): E2 7.9–9.6 VM hours; E → E2 → F total about
+$40.5–48.0 after the failed-fallback leftovers were deleted). The forecast is refreshed from measured use
 before execution and at every session. The revised ceiling is recorded here
 and in the log as campaign evidence; no execution control encodes the campaign
 ceiling today (the controller's session and daily caps are unchanged), and
