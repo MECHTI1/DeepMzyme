@@ -3,6 +3,131 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-024
+
+2026-10-08 — **step E session 7: the improvement fits, the last four-class baselines and
+the first five-class fits** (validation data only; folds 1–4; seed 42). Continuation of the
+authorized plan ([v3-014](#v3-014)) under the user's go-ahead of 2026-10-08 ~07:45 UTC
+(recorded below); no new authority was used.
+
+**User decisions of 2026-10-08 (morning, this session):**
+
+- ~07:45 UTC: the next GPU start confirmed; up to three capped sessions today (4 h + 4 h +
+  about 1 h 45 min) within the remaining daily allowance, with persistence and a verified VM
+  shutdown completed by 17:30 UTC; stop earlier if step E finishes; caps, reserves and the $40
+  ceiling unchanged; the remaining 34 fits and the E assessment only; frozen settings unchanged;
+  the existing launcher; `status` before every refill; no scratch drivers without reviewed
+  corrections; the Only-ESMC fairness arm stays separate; step F, the refit and any test access
+  need their own plan and approval; closeout to show baseline versus improved results, per-class
+  recalls, uncertainty, completed/pending work and spending, confirmed versus inconclusive.
+- ~08:55 UTC: two additional read-only reviewers authorized (completion tracking; reporting
+  accuracy), consolidated below; review-driven changes await the user's decision.
+- ~09:35 UTC: the workstation closes about 13:07 UTC, so session 7 is the only session today;
+  commit **and push** at every closeout to keep the record complete (push authorized for the
+  closeout commits of today); the arrangement is for today only, the standing rules stay.
+- ~08:55 and ~11:05 UTC: a **deferred** read-only review request (a fixed 10-epoch cosine
+  schedule as a possible amendment; four questions added at 11:05) starts only after this
+  closeout; it authorizes no implementation, experiment, spending, refit or test access. Copies:
+  `audits/session_notes_20261008/DEFERRED_amendment_review_request.md` on the campaign data root.
+
+**Pre-flight (read-only, before the start).** A seven-agent workflow re-verified the handoff
+against disk and ledger: all 10 completed E units complete in the four senses and replayed;
+scores equal to the v3-023 table; ledger sums $20.48 compute; about $16.8 left at 02:30 UTC;
+daily cap 9 h 45 min / $13.60 left at 07:31 UTC. Two corrections to the handoff: (1) the
+launcher forecasts five/six-class units as WARM (`cache_warm` ignores folds and the step C
+fold-0 records exist), so the cold cost is the parse only (6–15 min, not 2,000 s) and a cold
+builder must be launched by session minute ~160; (2) `status` needs an active controller
+session, not only SSH. Also: `--step` defaults to D, so every E command carries `--step E`.
+
+**Start.** Eight same-VM retries hit the L4 stockout in `us-central1-a` (07:58, 08:05,
+08:11, 08:17, 08:23, 08:28, 08:34, 08:40 UTC; nothing allocated or charged); the ninth
+succeeded: `session-20261008T084732Z-3bbc7d8d` started 08:47:32 UTC with `--hours 4`
+(Google-side hard stop 12:43:40 UTC, at most $3.47 gross); smoke check passed (L4, torch
+2.11.0+cu128); `--step E status` reconciled 10 completed units, no lane awaiting a pull.
+
+**Fits.** Units were launched with the launcher directly, lanes refilled after a **named**
+`wait --any` (every running unit named, so a unit that ends before the first snapshot is
+reported; reviewer 1's rule), `status` before every refill. Batches `e-20261008T084956Z`,
+`…T093135Z`, `…T101219Z`, `…T105137Z`, `…T113642Z`, `…T114328Z`. 14 fits completed,
+each at its first attempt, replayed under `pmm-v3-replay-1`, pulled and acknowledged
+(24 of 44 complete; 20 pending: 9 five-class and 11 six-class baseline fits on folds 1–4; the Only-GVP six_class parse cache is the one cold set left). One refusal at 09:29 UTC
+("lane0: an ended unit awaits its verified host pull") was resolved with `pull --lanes 0`
+(no idle lane beyond 2 min). Terminal common-four BA and recalls (descriptive; the paired
+contrasts are the assessor's):
+
+| Unit (seed 42) | BA | Mn | Cu | Zn | Class VIII |
+|---|---|---|---|---|---|
+| Only-GVP baseline fold 4 | 72.76 | 66.7 | 70.1 | 78.8 | 75.4 |
+| Late fusion baseline fold 4 | 78.32 | 78.6 | 74.6 | 82.5 | 77.6 |
+| Late fusion headdrop03 fold 1 / 2 / 3 / 4 | 73.44 / 71.77 / 74.66 / 78.58 | 81.1 / 82.3 / 71.7 / 80.2 | 76.1 / 51.5 / 77.9 / 73.1 | 87.6 / 81.3 / 78.2 / 84.2 | 48.9 / 71.9 / 70.9 / 76.8 |
+| Only-GVP meanagg fold 1 / 2 / 3 / 4 | 74.97 / 70.87 / 67.64 / 71.56 | 81.3 / 80.8 / 69.3 / 73.9 | 80.6 / 55.9 / 60.3 / 61.2 | 86.2 / 85.6 / 77.2 / 80.2 | 51.7 / 61.3 / 63.8 / 70.8 |
+| Late fusion five_class fold 1 | 72.06 | 81.1 | 74.6 | 88.1 | 44.4 (native Fe 43.0; native BA 62.8) |
+| Only-GVP five_class fold 1 | 71.40 | 82.1 | 76.1 | 84.8 | 42.6 (native Fe 36.5; native BA 62.0) |
+| Only-ESMC five_class fold 1 | 71.86 | 79.4 | 79.1 | 84.3 | 44.6 (native Fe 41.5; native BA 63.4) |
+| Only-ESMC six_class fold 1 | 71.19 | 78.2 | 77.6 | 86.0 | 43.0 (native Fe 39.2; native BA 53.9) |
+
+Measured, not interpreted (paired differences on folds 1–4, recipe minus same-fold baseline):
+late fusion headdrop03 +0.10 / −1.19 / −0.51 / +0.26 (mean −0.34); Only-GVP meanagg
++0.90 / +3.77 / −2.04 / −1.20 (mean +0.36). The fold-0 screening gains (+3.58 and +4.24
+over two seeds) do not reappear as clear gains on the confirmation folds; under A4 §3 neither
+can be "improvement interval-supported on folds 1–4" (the assessor's verdict is below).
+Family contrast, baseline recipes, folds 1–4: late fusion minus Only-ESMC +1.53 / +2.04 /
++0.45 / +2.06 (fold 0 +3.68); Only-GVP minus Only-ESMC +2.26 / −3.82 / −5.04 / −3.50.
+**Assessor (A4, folds 1–4, both improvement checks complete; copy `step_e_evidence/assessments/E_20261008T121456Z`, SHA-256 `2ab142eb…`):** late fusion `headdrop03` — mean difference −0.33 points, bootstrap interval [−0.87, +0.14] and t interval (3 df) [−1.71, +1.04] unadjusted, "no clear difference", status **"no positive mean gain on folds 1–4"**, no improvement claim, not Stage 6 matched; Only-GVP `meanagg` — mean +0.36 points, bootstrap [−1.62, +2.53] and t [−5.05, +5.76] unadjusted, "no clear difference", status **"positive mean gain on folds 1–4, not interval-supported"**, no improvement claim, Stage 6 matched pass only (eligibility, not a claim); recall gates passed in both. Under A4 §3 neither recipe is an improvement; the baseline recipes stay the step E reference. Every neutral contrast (five/six vs four per family) is still incomplete and no Stage 6 selection exists.
+
+**Reviewer reports (user request, read-only; copies in
+`audits/session_notes_20261008/` on the campaign data root).** Reviewer 1 (completion
+tracking): no integrity or persistence risk; the idle-lane race of v3-023 is real (bare
+`wait --any` takes `awaited` from the first snapshot, pmm_v3_step_c.py:463-466) and not
+handled by code; closed procedurally by naming every running unit in `wait --any` (used from
+this session on); optional code change (add lanes awaiting a pull to `awaited`) and a
+playbook/handoff wording fix await the user's decision. Reviewer 2 (reporting accuracy):
+every number of v3-021/v3-022/v3-023 and the E assessment reproduces from the terminal
+validation predictions; two sentences of v3-023 need correction — "3–11 points above fold 0"
+was computed against the seed-43 baselines (against the paired seed-42 fold-0 baselines the
+range is +1.3 to +9.4) and "fold 0 holds the multi-ion groups [v3-005]" describes the v2
+folds (v3 folds are size-balanced; fold 0 has 2.05 ions per entry against 1.67–1.93) —
+plus stale STATUS lines (fixed in this update), a one-session-stale README line, the
+v3-022 fairness-proposal wording ("gain" → "fold-0 lead, unconfirmed"; "better" is A4's
+reserved word) and a handoff restatement of the E rule that omits the bootstrap interval.
+The v3-023 sentences are corrected here, not edited in place: against the paired seed-42 fold-0 baselines the range is +1.3 to +9.4, and fold 0 is the development fold of size-balanced folds (v3-005); whether v3-023 is annotated in place is the user's decision.
+
+**Session and spending.** `session-20261008T084732Z-3bbc7d8d`: 08:47:32–12:16:54 UTC,
+**3 h 29 min, $3.07 gross** (stopped by `vm-stop` after the evidence copy;
+TERMINATED verified 12:16:58 UTC). Daily use 2026-10-08 after this session:
+5 h 44 min / $7.40 of 12 h / $18. Compute to date **$23.55 gross** (B $1.88, C $3.64,
+D $12.98, E $5.05); storage about $3.5 accrued. **About $27.1 spent; about
+$12.9 remains** of the $40 ceiling. Reforecast: 20 E fits about 4.3 h
+three-lane plus overhead, about $3.8; step F about 1.5 h, $1.3; storage about $2.0 per
+day reserved while the leftovers exist. **Total about $33.5–36.4 of $40.**
+Evidence copy `step_e_evidence/evidence_20261008T121514Z` (591 files, SHA-256 checked on
+both ends; `safe_to_stop` true); assessment copy `step_e_evidence/assessments/E_20261008T121456Z`
+(SHA-256 `2ab142eb…`, both improvement checks complete, all six neutral contrasts incomplete, no Stage 6 selection; `held_out_test_accessed` false).
+
+Open and unchanged: the Only-ESMC fairness arm ([v3-022](#v3-022)), the fallback leftovers,
+the cost-gated augmentations, the step F plan (a draft for the user's approval is in
+`audits/session_notes_20261008/step_f_plan_DRAFT.md`; nothing built), the reviewer
+corrections above, the deferred schedule-amendment review.
+
+Commits: this entry (log, STATUS, handoff refresh); pushed to `origin/v3-step-a` as the user asked.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-08 v3 step E in progress: 10 of 44 confirmation fits done, four-class baselines on folds 1–4; final D recipes late fusion `headdrop03`, Only-GVP `meanagg`)
+- Last execution evidence: 2026-10-08 (v3 step E session 6, 2 h 15 min, $1.98 gross). Docs reconciliation: 2026-10-08.
+- Current campaign: pmm_ion_metal_v3, step D running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A–D done; step E 10 of 44 fits ([log v3-023](docs/campaigns/pmm_ion_metal_v3/log.md#v3-023)); no Stage 6 confirmation, Stage 6B refit or Stage 7.
+- Authorized now: the user's 2026-10-07/08 working window has ended; the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) stands within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $16.8 left; forecast $33.3–37.1), but confirm the next GPU start with the user. Step F only after its plan and gates; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 02:23 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+Next: a new chat continues from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the remaining step E fits ($16.8_E: four-class baselines first, then the 8 improvement fits, then five/six-class, cache sets cold once), then the step E assessment; open user decisions: Only-ESMC fairness arm, fallback leftovers, cost-gated augmentations, step F plan.
+Still open before step E: the final metal test label, after the user's check of
+the 2026-09-24 Zenodo run. Stage 6 grouped-fold selection (or a labeled
+fallback), a completed Stage 6B full non-test refit, frozen report/checkpoint
+rules and a resolved final-test route must precede one-shot Stage 7. No test-based tuning, ranking, promotion, rejection or
+checkpoint choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
+```
+
 ## v3-023
 
 2026-10-08 — **step E session 6 (first confirmation fits) and the end of the
