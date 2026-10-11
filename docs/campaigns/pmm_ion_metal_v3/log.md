@@ -3,6 +3,46 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-034
+
+2026-10-11 — **user decisions at the E2 GPU-start gate: E2 authorized now, the
+$55 ceiling kept, the three commits pushed, no optional item** (decision only;
+no fit before this entry). The gate questions were put at about 14:27 UTC with
+the report of [v3-033](#v3-033); the user's answers arrived at about 20:10 UTC.
+
+**User decisions of 2026-10-11 (about 20:10 UTC, answers to the gate
+questions):**
+- **E2: "Authorize E2 now".** Record the authorization and run step E2 with
+  `pmm_v3_step_e2.py`. The answer option also said that two sessions fit the day's
+  remaining cap and the third runs after 00:00 UTC. At 20:10 UTC only one session
+  fits before midnight, so the plan is session 1 now (`--hours 4`) and the
+  remaining sessions after 00:00 UTC under the new UTC day's caps. On a stockout
+  the standing rule applies: same-VM retries 5 minutes apart, at most 12, never
+  `vm-fallback`.
+- **Ceiling: "Keep $55".** The recorded `e2_ceiling.json` (`a4c31da1…`)
+  stands.
+- **Push: "Push now".** Commits `4c65474`, `e4ce93c` and `ae2834f` were pushed
+  to `origin/v3-step-a` without force. Later commits are pushed only with the
+  user's OK.
+- **Optional items of [v3-032](#v3-032): "None".** E2 stays exactly as frozen;
+  there is no per-group display, schedule test or weighting ablation.
+
+Recorded after this entry: `pmm_v3_step_e2.py record-authorization --log-entry
+v3-034` names manifest `37c2ff05…` and ceiling `a4c31da1…`. Unchanged: the E2
+specification and rules, the A4 assessment and selection, the 50-epoch cosine
+schedule and terminal checkpoint, seed 42, one active GPU, the controller caps
+(4 h / $6 per session, 12 h / $18 per UTC day), every session ending with
+`evidence`, `vm-stop` and a verified TERMINATED, and no test access before step
+F. Step F needs its own plan approval.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage; the user's $55 E2 ceiling is in E2's launch control, granting nothing (about $32.00 spent at 2026-10-11 14:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033); E2 fits need the user's recorded E2 authorization (none yet); step F after E2 (unless cancelled); no Round C.
+Next: the user's decision at the E2 GPU-start gate ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)): authorize E2 (window), keep or change the $55 ceiling, or cancel E2 by a dated entry; then three E2 sessions and the E2 assessment; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: optional items of [log v3-032](docs/campaigns/pmm_ion_metal_v3/log.md#v3-032), fairness arm, cost-gated augmentations.
+- Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 GPU start awaits the user)
+```
+
 ## v3-033
 
 2026-10-11 — **step E2 CPU implementation and checks complete; the E2
