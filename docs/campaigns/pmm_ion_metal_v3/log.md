@@ -3,6 +3,165 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-031
+
+2026-10-11 — **step E complete: sessions 8 and 9 ran the 20 remaining fits;
+the final A4 assessment selects the late-fusion four-class baseline; a
+deferred read-only review item recorded as PENDING** (validation data only;
+folds 1–4; seed 42; no held-out access; frozen source, folds, A4 rules and
+earlier assessments unchanged).
+
+**User decisions of 2026-10-11:**
+
+- About 08:15 UTC: the next GPU start confirmed — start now, both sessions
+  today (session 1 `--hours 4`, session 2 about 2 h for the rest), on a
+  stockout same-VM retries only (5 minutes apart, at most 12, never
+  `vm-fallback`); commit **and push** at every closeout of this window. Scope:
+  the 20 remaining original step E fits and the E assessment.
+- About 08:30 and 12:05 UTC (two messages): a deferred read-only CPU review
+  item — a minibatch-weighting audit and three observations to verify
+  (concentrated Fe→Mn errors in one fold-1 protein group, training-versus-
+  validation deterioration, structural information missed by fusion) — joined
+  to the planned schedule/error review. **Status PENDING; prerequisite
+  "Original Step E complete and unchanged A4 assessment saved"**; the full
+  self-contained item is [handoff section 10](handoff.md#10-deferred-review).
+  Read-only apart from documentation; no GPU, budget increase, refit, test
+  access or new experiment. After the review the accepted E2 CPU
+  implementation and checks continue without another approval stop, and the
+  review conclusions, refreshed cost and remaining effort are presented at the
+  existing E2 GPU-start gate.
+
+**Sessions** (`deepmzyme-l4`, `us-central1-a`, both at the first attempt, no
+stockout; smoke checks passed, L4, torch 2.11.0+cu128):
+
+| Session | UTC | Running | Gross | Fits |
+|---|---|---|---|---|
+| 8 `session-20261011T082141Z-2e94653e` (`--hours 4`, hard stop 12:18:12) | 08:21:41–11:52:42 | 3 h 31 min | $3.09 | 15 |
+| 9 `session-20261011T115703Z-cf28c51f` (`--hours 2`, hard stop 13:51:07) | 11:57:03–13:03:24 | 1 h 06 min | $0.97 | 5 |
+
+Batches: `e-20261011T082422Z` (the cold Only-GVP six-class fold 1 alone with
+`--fit-seconds 4300`; its parse cache built inside the fit, which kept pace
+with the warm units), `…T082441Z`, `…T090826Z`, `…T091208Z`, `…T094959Z`,
+`…T095308Z`, `…T103153Z`, `…T103515Z`, `…T111429Z`, `…T111639Z`,
+`…T111852Z`, `…T115916Z`, `…T123033Z`, `…T124033Z`. Every fit completed at
+its first attempt, replayed under `pmm-v3-replay-1`, pulled and acknowledged;
+`status` ran before every refill and every `wait --any` named all running
+units; two routine "awaits its verified host pull" refusals were resolved with
+`pull --lanes K` (no idle lane above 2 minutes). Measured at three lanes:
+about 40 minutes from launch to acknowledgment per Only-GVP or late-fusion fit,
+30–35 minutes per Only-ESMC fit. Only-GVP five-class fold 4 missed session 8's
+Only-GVP admission limit by two seconds (lane free 11:14:15 UTC, limit
+11:14:17) and ran in session 9. **Step E: 44 of 44 units complete; none
+failed.** Interim assessment `E_20261011T115055Z` and evidence
+`evidence_20261011T115117Z` (737 files) closed session 8.
+
+**Final A4 assessment** `step_e_evidence/assessments/E_20261011T130128Z/assessment.json`
+(SHA-256 `d6d27c0c2bf4668cae2f03170faf06e3ab99e90654a0279f171260bab2681a45`;
+assessor `781394fe…`, manifest `478603d8…`; `held_out_test_accessed` false).
+Evidence copy `step_e_evidence/evidence_20261011T130145Z` (786 files, SHA-256
+checked on both ends, `safe_to_stop` true). Common-four BA differences in
+points, five folds (fold 0 from step C), unadjusted 95% intervals (bootstrap;
+t with 4 df); a recall gate is listed when a common-four class mean recall
+drops by more than 3 points:
+
+| Neutral contrast | Mean | Folds 0 / 1 / 2 / 3 / 4 | Bootstrap | t | Verdict | Gate |
+|---|---:|---|---|---|---|---|
+| Late fusion five vs four | −0.29 | +0.14 / −1.28 / +2.14 / −2.12 / −0.33 | [−1.50, +1.06] | [−2.29, +1.72] | no clear difference | Class VIII −3.85 |
+| Late fusion six vs four | +0.63 | +2.52 / +0.59 / +1.34 / −0.42 / −0.89 | [−0.41, +1.70] | [−1.07, +2.33] | no clear difference | Class VIII −3.84 |
+| Only-ESMC five vs four | +0.43 | +1.66 / +0.04 / +2.23 / −0.60 / −1.18 | [−0.70, +1.56] | [−1.38, +2.24] | no clear difference | passed |
+| Only-ESMC six vs four | −0.06 | +1.43 / −0.62 / +2.89 / −1.77 / −2.24 | [−1.73, +1.66] | [−2.76, +2.63] | no clear difference | Class VIII −3.62 |
+| Only-GVP five vs four | −1.22 | +1.38 / −2.67 / −0.05 / −3.85 / −0.88 | [−2.86, +0.36] | [−3.79, +1.36] | no clear difference | Class VIII −3.66 |
+| Only-GVP six vs four | −2.05 | −2.67 / +1.46 / −1.96 / −6.86 / −0.21 | [−4.69, +0.13] | [−5.94, +1.84] | no clear difference | Cu −9.12 |
+
+**Neutral target test answered: no family shows a supported gain from five- or
+six-class training on common-four BA; the tie rule keeps `four_class` for
+Only-ESMC, Only-GVP and late fusion** (cross-family claim false; the
+Bonferroni-adjusted intervals over six contrasts are wider and agree). The
+recall gates never decided a verdict here (every interval already said no
+clear difference). Native rare-class recalls stay low in every five/six-class
+cell (five-folds mean): six-class Co 2.8–5.3 and Ni 25.3–31.2, five-class
+Co+Ni 22.5–27.9; Fe 51.6–62.8. Improvement checks unchanged from
+[v3-024](#v3-024): late fusion `headdrop03` "no positive mean gain on folds
+1–4" (mean −0.33), Only-GVP `meanagg` "positive mean gain on folds 1–4, not
+interval-supported" (mean +0.36); neither is an improvement.
+
+| Cell (five folds) | Mean BA | SD | Worst fold | Mean min recall | Mn / Cu / Zn / Class VIII |
+|---|---:|---:|---:|---:|---|
+| Late fusion six-class | 74.91 | 1.44 | 73.93 | 60.2 | 78.5 / 73.9 / 84.3 / 62.9 |
+| Late fusion `headdrop03` | 74.76 | 2.53 | 71.77 | 62.1 | 76.3 / 72.7 / 81.9 / 68.1 |
+| **Late fusion four-class** | **74.28** | 2.59 | 71.62 | 62.5 | 75.6 / 73.4 / 81.3 / 66.8 |
+| Late fusion five-class | 73.99 | 2.59 | 71.75 | 61.2 | 77.2 / 72.6 / 83.3 / 62.9 |
+| Only-ESMC five-class | 72.76 | 2.14 | 69.60 | 60.4 | 74.8 / 71.7 / 79.2 / 65.3 |
+| Only-ESMC four-class (control) | 72.33 | 3.27 | 67.94 | 58.9 | 74.0 / 69.1 / 79.3 / 66.9 |
+| Only-ESMC six-class | 72.27 | 1.97 | 69.37 | 58.3 | 73.9 / 72.0 / 79.9 / 63.3 |
+| Only-GVP `meanagg` | 70.52 | 3.09 | 67.54 | 56.8 | 72.0 / 65.6 / 81.7 / 62.8 |
+| Only-GVP four-class | 69.66 | 3.88 | 64.70 | 54.6 | 70.6 / 64.7 / 80.4 / 62.9 |
+| Only-GVP five-class | 68.45 | 2.96 | 65.83 | 53.0 | 69.7 / 64.9 / 80.0 / 59.2 |
+| Only-GVP six-class | 67.61 | 6.07 | 62.04 | 48.1 | 69.7 / 55.6 / 81.4 / 63.6 |
+
+**Stage 6 selection (A4 §4, the original step E selection):
+`gvp_late_fusion__four_class__baseline`**, "best eligible candidate", refit
+seed 42, terminal checkpoint, no calibration, no ensemble. It is "better" than
+the Only-ESMC four-class control on all five folds: differences +3.68 / +1.53
+/ +2.04 / +0.45 / +2.05, mean +1.95; unadjusted bootstrap [+1.09, +2.92], t
+(4 df) [+0.50, +3.39] (the assessment stores the verdict; these bounds were
+recomputed with the frozen `paired_intervals` helper from the assessment's
+fold values); mean recall changes Mn +1.61, Cu +4.31, Zn +2.01, Class VIII
+−0.13. Only it and the control were eligible; the two cells with a higher mean
+were not (late fusion six-class: not better than its four-class arm;
+`headdrop03`: no positive mean gain on folds 1–4). This equals the projection
+of [v3-027](#v3-027); the five-fold result is development-validation
+evidence. PMM context (descriptive, not a matched comparison): the selection's
+mean 74.28 is lower than PMM's published 5-fold CV mean 75.1 (Mn 75.6 against
+90.3; Cu 73.4 against 62.9).
+
+**Consequences for E2 (planned, rules frozen):** the original selection is a
+four-class late-fusion cell, so for the six late-fusion candidates the matched
+control and the original selection coincide (their six candidate-versus-
+selection comparisons within C10–C17 duplicate their matched-control
+comparisons and are flagged "coincident" under E2 specification §4; the family
+and divisor 17 stay); only
+Only-GVP `wd10` and `sitecountsangles` are compared across families against
+the selection. The E2 manifest binds this assessment by its SHA-256 above. The
+A4 assessment and selection are saved unchanged; the prerequisite of the
+deferred review item is met, so the review is the next task.
+
+**Spending, one dated calculation (2026-10-11 13:10 UTC; estimated charges at
+gross list prices, disk counted once):** running B–E 31.40 h × $0.858624/h =
+$26.96 (sessions 8 and 9 add 4.62 h, $3.97); campaign disk 5.59 days ×
+$0.493 = $2.76; archive snapshot $0.32; failed-fallback leftovers final $1.94.
+**Spent $31.98; $8.02 of the $40 gross ceiling left.** Step E sessions 6–9
+ran 10 h 21 min, $9.11 gross by the ledger. Refreshed forecast from today's measured rate
+(about 15 Only-GVP/late-fusion fits per 4 h session): E2, 36 fits, 8.6–9.6 h,
+$7.4–8.2; step F 1.0–2.25 h, $0.9–1.9; storage $0.55 per calendar day for
+4–12 days, $2.2–6.6. **Total E → E2 → F about $42.4–48.8**, above the
+operative $40 ceiling and within the user's $55 planning ceiling, which must
+be written into the E2 execution controls before any E2 GPU fit; step F alone
+(after a dated E2 cancellation) about $33.9–36.7. Daily use 2026-10-11:
+4 h 37 min / $5.20 of 12 h / $18. VM `deepmzyme-l4` TERMINATED (verified
+13:03 UTC); disk and archive snapshot kept.
+
+**Next:** the deferred read-only review (handoff section 10; PENDING; one
+focused pass on saved evidence) → the E2 CPU implementation and checks
+(playbook E2 section) → the E2 GPU-start gate with the review conclusions,
+refreshed cost and remaining effort (the user's separate authorization; the
+ceiling recorded in execution controls) → step F after E2 under its own
+approval. Open: Only-ESMC fairness arm, cost-gated augmentations, step F plan
+approval.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-08 v3 step E 24 of 44 fits; step E2 rules frozen, not implemented)
+- Last execution evidence: 2026-10-08 (v3 step E session 7, 3 h 29 min, $3.07 gross).
+- Current campaign: pmm_ion_metal_v3, step E running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, rules frozen ([E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md), [log v3-028](docs/campaigns/pmm_ion_metal_v3/log.md#v3-028)), not implemented, required before F unless cancelled; no Stage 6 confirmation, 6B refit or Stage 7.
+- v3 step E (descriptive): no clear gain for the two selected recipes on folds 1–4; late fusion above Only-ESMC on every fold so far (log v3-024).
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $26.49 spent, $13.51 left at 18:40 UTC; E→E2→F forecast $40.5–48.0, log v3-030); confirm the next GPU start with the user. E2 GPU fits only after its CPU tooling and checks, its ceiling recorded in execution controls and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 18:24 UTC); disk and archive snapshot kept (about $0.55/day); failed-fallback leftovers deleted 2026-10-08 under the user's authorization ([v3-030](docs/campaigns/pmm_ion_metal_v3/log.md#v3-030)).
+Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized); then the original E assessment, the read-only schedule/error review, the E2 CPU tooling and checks, the E2 GPU request; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-030
 
 2026-10-08 — **failed-fallback leftovers removed through a new, tested
