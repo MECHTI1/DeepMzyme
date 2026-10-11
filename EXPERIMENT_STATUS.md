@@ -1,6 +1,6 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 GPU start awaits the user)
+- Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 authorized, running)
 - Last execution evidence: 2026-10-11 (v3 step E sessions 8 and 9, 4 h 37 min, $4.06 gross).
 
 ## Current objective and stage
@@ -35,10 +35,10 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 
 ## Blockers and immediate next action
 
-- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage; the user's $55 E2 ceiling is in E2's launch control, granting nothing (about $32.00 spent at 2026-10-11 14:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033); E2 fits need the user's recorded E2 authorization (none yet); step F after E2 (unless cancelled); no Round C.
+- Authorized now: E2 GPU sessions ([log v3-034](docs/campaigns/pmm_ion_metal_v3/log.md#v3-034), user 2026-10-11 20:10 UTC) within the $55 ceiling recorded in E2's launch control (about $32.15 spent at 20:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033) and the controller caps; the advance authorization through step F stands ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); step F after E2 with its own plan approval; no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 13:03 UTC); disk and archive snapshot kept (about $0.55/day).
 
-Next: the user's decision at the E2 GPU-start gate ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)): authorize E2 (window), keep or change the $55 ceiling, or cancel E2 by a dated entry; then three E2 sessions and the E2 assessment; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: optional items of [log v3-032](docs/campaigns/pmm_ion_metal_v3/log.md#v3-032), fairness arm, cost-gated augmentations.
+Next: E2 sessions with `pmm_v3_step_e2.py` (session 1 from 20:15 UTC, then after 00:00 UTC), then the workstation E2 assessment and log; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
