@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-11 v3 step E complete, 44 of 44 fits; Stage 6 selection late fusion four-class; review pending, then E2 CPU tooling)
+- Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 GPU start awaits the user)
 - Last execution evidence: 2026-10-11 (v3 step E sessions 8 and 9, 4 h 37 min, $4.06 gross).
 
 ## Current objective and stage
 
 - Current campaign: pmm_ion_metal_v3, step E complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 steps A–E done ([log v3-031](docs/campaigns/pmm_ion_metal_v3/log.md#v3-031)): A4 Stage 6 selection `gvp_late_fusion__four_class__baseline` (five folds, development-validation); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, rules frozen ([E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)), not implemented, required before F unless cancelled; no 6B refit or Stage 7.
+- Stage: v3 steps A–E done ([log v3-031](docs/campaigns/pmm_ion_metal_v3/log.md#v3-031)): A4 Stage 6 selection `gvp_late_fusion__four_class__baseline` (five folds, development-validation); step E2 (36 fits; [E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)) built and CPU-checked ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)), not run, required before F unless cancelled; no 6B refit or Stage 7.
 
 **PMM core v2 was closed at fold 0 on 2026-10-03 (user decision):** nine fold-0 fits
 are final validation-only evidence; 36 fits were not run; its neutral four-versus-five/six
@@ -30,15 +30,15 @@ test is unanswered; nothing is confirmed, promoted, refit or test-evaluated
 The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use-ledger) owns the ledger. Safety boundary:
 
 - Non-overlap and exact PMM tests (same 316-structure set): opened 13 and 21 times; not eligible as an unopened test. Harsh and Common-PDBID 70/30 test IDs come from that opened set.
-- Exact Zenodo PMM test: unknown, possibly evaluated; its test file's label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
+- Exact Zenodo PMM test: unknown, possibly evaluated; test-file label/feature metadata read in aggregate on 2026-10-03, test-directory bytes scanned without display on 2026-10-11 (no evaluation).
 - No evaluation artifacts found for CLEAN30 or CARE clusterRes30; CARE had incidental test-metadata exposure on 2026-09-15. Absence of found artifacts is not proof of no outside run.
 
 ## Blockers and immediate next action
 
-- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $31.98 spent, $8.02 left at 2026-10-11 13:10 UTC; E→E2→F forecast $42.4–48.8, log v3-031); E2 GPU fits only after its CPU tooling and checks, its ceiling recorded in execution controls and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage; the user's $55 E2 ceiling is in E2's launch control, granting nothing (about $32.00 spent at 2026-10-11 14:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033); E2 fits need the user's recorded E2 authorization (none yet); step F after E2 (unless cancelled); no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 13:03 UTC); disk and archive snapshot kept (about $0.55/day).
 
-Next: the PENDING read-only schedule/error/weighting review ([handoff section 10](docs/campaigns/pmm_ion_metal_v3/handoff.md#10-deferred-review)), then the E2 CPU tooling and checks, then the E2 GPU-start request with the review conclusions and refreshed cost; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+Next: the user's decision at the E2 GPU-start gate ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)): authorize E2 (window), keep or change the $55 ceiling, or cancel E2 by a dated entry; then three E2 sessions and the E2 assessment; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: optional items of [log v3-032](docs/campaigns/pmm_ion_metal_v3/log.md#v3-032), fairness arm, cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule

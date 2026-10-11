@@ -1,4 +1,4 @@
-# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031)
+# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033)
 
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
@@ -10,55 +10,47 @@ the current authority.
 
 ```text
 Continue the DeepMzyme PMM ion metal v3 campaign from the verified stopping point recorded in
-docs/campaigns/pmm_ion_metal_v3/handoff.md. Step E is complete (44 of 44 fits, final A4 assessment
-E_20261011T130128Z, Stage 6 selection gvp_late_fusion__four_class__baseline; log v3-031). Next, in this order:
-(1) the PENDING read-only review of handoff section 10 (schedule, errors and minibatch weighting; one focused pass
-on saved evidence; CPU only); (2) the accepted E2 CPU implementation and checks (playbook E2 section; frozen E2
-specification), without another approval stop for this routine authorized preparation; (3) the existing E2
-GPU-start approval gate, where you present the review conclusions, the refreshed cost and the remaining effort and
-ask for the user's separate E2 GPU-start authorization. Step F comes after E2 under its own approval.
+docs/campaigns/pmm_ion_metal_v3/handoff.md. Steps A–E are complete (final A4 assessment E_20261011T130128Z,
+Stage 6 selection gvp_late_fusion__four_class__baseline; log v3-031). The read-only section 10 review is done
+(log v3-032: no small extra GPU intervention justified; E2 unchanged; optional later proposals named there). The E2
+CPU tooling is built and checked (pmm_v3_step_e2.py, pmm_v3_e2_assessment.py; log v3-033); the write-once E2
+manifest (SHA-256 37c2ff05…) and the $55 ceiling record (a4c31da1…) are recorded in step_e2_evidence on the
+campaign data root; NO E2 authorization record exists. The E2 GPU-start gate is reached: the user's decision is
+pending (authorize E2 with a window, keep or change the $55 ceiling, or cancel E2 by a dated log entry; optional
+items of v3-032 only by separate decision). Do not start a GPU without that recorded decision.
 
-Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; HEAD must equal
-origin/v3-step-a; `git status` clean). Not in /home/mechti/PycharmProjects/DeepMzyme. If /media/mechti/Data1 is
-missing, mount it first: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/miniconda3/envs/DeepMzyme/bin/python
-(verify with -c "import sys; print(sys.executable)"). Cap local CPU runs: systemd-run --user --scope -p CPUQuota=200%
--p MemoryMax=3G.
+Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; check `git status` and
+`git log -3`; the 2026-10-11 commits may be unpushed). Not in /home/mechti/PycharmProjects/DeepMzyme. If
+/media/mechti/Data1 is missing, mount it first: `udisksctl mount -b /dev/sda1`. Python:
+/home/mechti/miniconda3/envs/DeepMzyme/bin/python (verify with -c "import sys; print(sys.executable)"). Cap local CPU
+runs: systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G.
 
-Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (all
-sections, section 10 first); plan.md steps E, E2 and F; assessment_spec.md; e2_assessment_spec.md; log.md entries
-v3-031 back to v3-017; docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" and "v3 step
-E2 individual-confirmation amendment"; .agents/skills/gpu-use-skill/SKILL.md, ~/deepmzyme-vm/AGENTS.md and
-config.env before any GPU action.
+Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (sections 8
+and 10 first); log.md v3-033, v3-032, v3-031; plan.md steps E2 and F; e2_assessment_spec.md; the playbook section
+"v3 step E2 individual-confirmation amendment" (commands); .agents/skills/gpu-use-skill/SKILL.md,
+~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
 
-State: steps A–E complete. Final step D recipes late fusion `headdrop03`, Only-GVP `meanagg` (D-B_20261007T201334Z);
-step E: neutral test answered (no family gains from five/six-class training; tie keeps four_class in all three),
-neither recipe is an improvement, Stage 6 selection gvp_late_fusion__four_class__baseline (74.28 mean common-four
-BA, "better" than the Only-ESMC four-class control on all five folds). Final-test label both_results_secondary is
-recorded. Step E2 (log v3-025; plan.md step E2) is PLANNED ONLY: the eight remaining step D passes tested one at a
-time on folds 1–4 (36 fits, seed 42); its assessment specification is frozen (e2_assessment_spec.md/.json, log
-v3-028: Option B); no launcher, assessor or manifest exists and nothing has run; the E2 manifest binds the A4
-assessment above by its SHA-256 (d6d27c0c…). `--step E` refuses E2 units, but the VM runner's `--action run` does not
-check step membership: never call run_pmm_v3_campaign.py directly. Step F requires E2 completion unless the user
-cancels E2 by a dated log entry; step F has no tooling yet (draft v2: step_f_plan_draft.md, not approved).
+After the user's authorization is logged: `pmm_v3_step_e2.py record-authorization --log-entry v3-NNN`, then E2
+sessions with `pmm_v3_step_e2.py` only (status before every refill; name every running unit in `wait --any`;
+`evidence` before every vm-stop; verified TERMINATED), then `pmm_v3_e2_assessment.py` on the workstation (no VM).
+Three sessions are forecast (8.3–9.4 VM hours, stress 10.1; about $7.1–8.9). Never call run_pmm_v3_campaign.py
+directly; never edit the hash-frozen runner files or any E2/reused module after the manifest (a change refuses
+every launch until a new manifest and a new authorization are recorded).
 
-Rules that stay fixed: 50-epoch cosine, terminal checkpoint; A4 gates and the frozen E2 rules unchanged; seed 42;
-one active GPU; controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap 12 h / $18 (UTC day);
-campaign ceiling $40 gross including storage (estimated $8.02 left at 2026-10-11 13:10 UTC, log v3-031); the E→E2→F
-forecast $42.4–48.8 exceeds it, so the user's $55 E2 planning ceiling (log v3-025) must be written into the E2
-execution controls before any E2 GPU fit and is not start permission. Every GPU session ends with evidence, vm-stop
-and a verified TERMINATED; log + STATUS + commit after each session or step with `git -c core.hooksPath=.githooks
-commit`; push only with the user's OK (the 2026-10-11 push authorization covered that window's closeouts). Never
-edit pmm_v3_campaign.py or run_pmm_v3_campaign.py (hash-frozen). Never run vm-fallback, delete resources, raise
-controller caps, run the cost-gated augmentations or Round C, or start step F without the user.
+Rules that stay fixed: 50-epoch cosine, terminal checkpoint; A4 and E2 rules unchanged; seed 42; one active GPU;
+controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap 12 h / $18 (UTC day); campaign ceiling as
+recorded ($55 gross including storage in E2's control; spent about $32.00 at 14:10 UTC 2026-10-11; E → E2 → F
+forecast $41.7–48.9). Every GPU session ends with evidence, vm-stop and a verified TERMINATED; log + STATUS +
+commit after each session or step with `git -c core.hooksPath=.githooks commit`; push only with the user's OK.
+Never run vm-fallback, delete resources, raise controller caps, run the cost-gated augmentations or Round C, or
+start step F without the user. No test-set access before step F (record any incidental exposure in the DATASETS
+test-use ledger, as done in v3-032).
 
-The review (handoff section 10) is read-only apart from campaign documentation: no training, inference, parameter
-search, test access, GPU, budget increase, refit or new model/feature/schedule/loss experiment; frozen source,
-data, assessments and E2 rules preserved; it ends with a concise decision report recorded in a dated log entry.
-
-Open user decisions (never infer them): the E2 GPU-start authorization and the recorded E2 ceiling (or a dated
-cancellation of E2); Only-ESMC fairness arm (proposal in log v3-022); cost-gated augmentations; step F plan approval
-and test-access ledger entries. At each closeout report completed/pending work, spending and forecast, evidence
-copies, verified VM state, the exact next action and any decision the user must make.
+Open user decisions (never infer them): the E2 GPU-start authorization and window (or a dated E2 cancellation);
+the recorded $55 ceiling; optional v3-032 items (narrow 10-epoch comparison, weighting ablation, CPU provenance
+checks, a non-decision-bearing per-group E2 display declared before results); Only-ESMC fairness arm; cost-gated
+augmentations; step F plan approval; push of v3-step-a. At each closeout report completed/pending work, spending
+and forecast, evidence copies, verified VM state, the exact next action and any decision the user must make.
 ```
 
 ## 1. Where to work and what to read
@@ -69,7 +61,7 @@ copies, verified VM state, the exact next action and any decision the user must 
 | Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
 | Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
 | Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 10 (pending review) and section 9 (E2 rules, resolved) → plan.md (steps D–F, E2 included) → assessment_spec.md → e2_assessment_spec.md → log.md entries v3-031 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" and "v3 step E2 individual-confirmation amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
-| Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record) |
+| Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_e2.py` (step E2 only: units, gates, build-manifest, record-ceiling, record-authorization, spend, status, launch, wait, pull, recover-lane, archive-failed, evidence) and `pmm_v3_e2_assessment.py` (workstation E2 assessment from Data1); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record), and not the E2 or reused modules pinned by the E2 manifest |
 | VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
 ## 2. Approved objective, pipeline and frozen settings
@@ -106,7 +98,7 @@ copies, verified VM state, the exact next action and any decision the user must 
   access the primary report, test-row and clean-subset rules with membership hashes, refit checkpoint and seed,
   ensemble (none) and calibration rule (none) are recorded in docs/DATASETS.md's test-use ledger. Step F tooling
   (refit, label-blind clean-subset/test-preparation builder) does not exist yet and needs planning and user approval.
-- **Step E2 amendment (planned 2026-10-08, log v3-025; not implemented):** after the original E assessment, the
+- **Step E2 amendment (planned 2026-10-08, log v3-025; tooling built and CPU-checked 2026-10-11, log v3-033; not run):** after the original E assessment, the
   eight step D passes not chosen as final recipes (Only-GVP `wd10`, `sitecountsangles`; late fusion `invsqrtw`,
   `meanagg`, `gvpaux03`, `resdrop01`, `esmdrop02`, `wd10`) each on folds 1–4, seed 42, `four_class`, 50-epoch cosine,
   terminal checkpoint, against the reused step E baselines (`sitenone` × 4 as the geometry control): 36 fits, 17
@@ -161,13 +153,14 @@ Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step
 the corrected execution draft is `step_f_plan_draft.md` (draft v2, log v3-030; not approved): it takes the final E2
 selection (A4 only after a dated E2 cancellation) and a validation-free terminal refit; the 08:45 UTC session draft
 on the data root is kept unchanged as history.
-**Step E2:** planned only (log v3-025): 0 of 36 fits; the assessment specification is frozen (e2_assessment_spec.md,
-log v3-028); no launcher, assessor, manifest or evidence directory exists; `pmm_v3_step_d.py --step E` refuses E2 units (the VM runner alone would not). Its prerequisite original
-assessment now exists (above; the manifest binds it by SHA-256); with the fusion four-class baseline as the original
-selection, the six late-fusion candidates' comparisons against the selection coincide with their matched-control
-comparisons (flagged "coincident"; family and divisor 17 unchanged). E2 GPU fits start only after the pending
-review (section 10), the CPU implementation and checks, a refreshed forecast, the recorded ceiling and the
-user's separate E2 GPU-start authorization, and step F waits for it unless the user cancels E2.
+**Step E2:** tooling built and CPU-checked (log v3-033, commits `4c65474`, `e4ce93c`): 0 of 36 fits. Records in
+`$DATA/step_e2_evidence/`: manifest `e2_manifest.json` (SHA-256 `37c2ff05…`; binds the original assessment `d6d27c0c…`
+and its selection, the final D assessment, the extension record, runner, E2 tooling and reused modules, and 19 reused
+units), ceiling `e2_ceiling.json` (`a4c31da1…`; $55, reserve $6), **no `e2_authorization.json`** (every E2 launch is
+refused until the user's decision is recorded). Readiness dry run `audits/e2_readiness_20261011T142030Z/` (A4 result
+re-derived exactly from the Data1 copies; reused units verified). The six late-fusion candidates' comparisons against
+the selection coincide with their matched-control comparisons (C12–C17 = C3–C8; divisor 17 unchanged). Step F waits
+for E2 unless the user cancels E2 by a dated log entry.
 
 ## 4. User decisions and authorization boundaries
 
@@ -182,6 +175,7 @@ user's separate E2 GPU-start authorization, and step F waits for it unless the u
 | 2026-10-08 afternoon | E2 review resolved: Option B with clarifications (unadjusted A4 verdict rule, 0.2-point minimum mean gain, both comparators, recall gates by comparator; adjusted intervals as sensitivity only), two separate conclusions per candidate, no extra seed, exploratory label with no claim of independent protection; E2 specification frozen; v3-024/v3-027 corrected; no GPU start authorized | log v3-028, e2_assessment_spec.md |
 | 2026-10-08 evening | Priority: the strongest defensible model; accepted order kept (20 original E fits → A4 assessment → read-only schedule/error review → E2 CPU → E2 GPU request → F); controller abandonment addition and deletion of exactly the failed-fallback disks and snapshot authorized and executed; step F draft corrected; no GPU start authorized | log v3-030 |
 | 2026-10-11 | Next GPU start confirmed: both sessions that day for the 20 remaining E fits (stockout: spaced same-VM retries only); commit and push at every closeout of that window; two messages adding the deferred read-only review item of section 10 (PENDING; prerequisite met at 13:03 UTC); after the review, the E2 CPU implementation and checks continue without another approval stop and the findings, refreshed cost and remaining effort are presented at the E2 GPU-start gate | log v3-031 |
+| 2026-10-11 afternoon | Continue: complete the section 10 review, then the E2 CPU implementation and checks without another approval stop, then present at the E2 GPU-start gate; E2 unchanged; no GPU start, experiment, budget increase, refit or test access | log v3-032, v3-033 |
 | 2026-10-07 evening | Final-test label `both_results_secondary`; continue the approved plan until 03:38 UTC 2026-10-08 at the latest (eight hours maximum, not a target), step E after midnight UTC if gates pass, caps and ceiling unchanged; fairness arm kept separate for the user's decision; audit of the scratch drivers delivered before any correction or driver reuse; closeout commits pushed to `origin/v3-step-a`; a complete handoff for a new chat | log v3-022 |
 
 **Authorization boundaries:** GPU starts for the approved D–F work are pre-authorized within the $40 gross ceiling
@@ -202,10 +196,10 @@ the user's separate E2 GPU-start authorization; ask before any GPU start. Push a
 | Item | Value (verified 2026-10-11 13:03 UTC by `vm-status` and `vm-report --no-ssh`) |
 |---|---|
 | VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 2026-10-11 13:03:24 UTC, session `session-20261011T115703Z-cf28c51f`, 1 h 06 min, $0.97 gross; before it `session-20261011T082141Z-2e94653e`, 3 h 31 min, $3.09); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
+| Spending | refreshed in log v3-033 (14:10 UTC): about **$32.00 spent**; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
 | Retained storage | campaign disk `deepmzyme-l4-from-deepmzyme-paused-20261003` ($0.49/day) and archive snapshot `deepmzyme-paused-20261003` ($0.06/day): $0.55/day in estimated charges; the controller reserves $0.75/day (a guard, not a charge). The failed-fallback disks and snapshot were deleted on 2026-10-08 (log v3-030; receipt archived as `state/fallback-873d08b26968.abandoned.json`) |
 | Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-11 used 4 h 37 min / $5.20 of running time; a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
-| Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and eight in a row 07:58–08:40 on 2026-10-08; none on 2026-10-11); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
+| Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and nine in a row 07:58:51–08:41:04 on 2026-10-08 by the ledger; none on 2026-10-11); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
 
 ## 6. Audit of the session-5 scratch drivers (delivered 2026-10-07)
 
@@ -245,7 +239,8 @@ from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 ch
 | Scratch-driver audit (report, mock, tools, logs, interim drafts) | `$DATA/audits/driver_audit_20261007T193000Z/` |
 | Logged-epoch contrast, folds 1–4 (log v3-029; `audit_v3_epoch_contrast.py`) | `$DATA/audits/epoch_contrast_20261008T171843Z/` |
 | Step E gate record (label), evidence and assessments | `$DATA/step_e_evidence/step_e_gate.json`; `$DATA/step_e_evidence/evidence_<UTC>/` (final `evidence_20261011T130145Z`, 786 files), assessments `$DATA/step_e_evidence/assessments/` (**final `E_20261011T130128Z`, SHA-256 `d6d27c0c…`**; earlier E_20261008T022125Z, E_20261008T121456Z, E_20261011T115055Z are incomplete interim copies) |
-| Deferred-review requests (section 10) | `$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md` (2026-10-08 request and addendum); the 2026-10-11 additions are written out in full in section 10 |
+| Section 10 review (done, log v3-032) | requests: `$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md`; scripts and outputs: `$DATA/audits/schedule_error_review_20261011T131706Z/` (`r1_weighting` … `r6_throughput`, `verify/`) |
+| Step E2 records and readiness | `$DATA/step_e2_evidence/e2_manifest.json` (`37c2ff05…`; superseded first manifest kept as `e2_manifest.superseded_20261011T141045Z.json`), `e2_ceiling.json` (`a4c31da1…`), later `e2_authorization.json`, `evidence_<UTC>/`, `assessments/E2_<UTC>/`; readiness dry run `$DATA/audits/e2_readiness_20261011T142030Z/assessment.json` (`ea0c6dbd…`; the earlier `…T141052Z` run used the superseded manifest) |
 | Bundles (source + extension) and folds | `$DATA/bundles/20d5b06/`, `$DATA/bundles/43d26ff/`; `$DATA/folds/` |
 | Steps B and C evidence | `$DATA/step_b_evidence/`, `$DATA/step_c_evidence/` |
 | VM-side originals (kept on the stopped 150 GB disk) | `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3/{lanes,step_d,step_e,assessments,campaign_extension.json}`; code `/home/mechti/projects/DeepMzyme_v3_ext1`; caches `/home/mechti/deepmzyme_cache/{parse,esm,ring}` |
@@ -261,13 +256,13 @@ rerun); never relaunch a unit that has a launch record without an exit code. Run
 
 ## 8. Next actions and commands
 
-**Step E complete (2026-10-11, log v3-031); the E2 rules are frozen (log v3-028).** Next in order: (1) the PENDING
-read-only review of section 10 (one focused pass on saved evidence, CPU only, ending in a dated log entry with its
-decision report); (2) the E2 CPU implementation and checks (item 6 below; routine authorized preparation, no extra
-approval stop); (3) the E2 GPU-start gate: present the review conclusions, the refreshed cost and the remaining
-effort, record the applicable ceiling in the E2 execution controls and ask for the user's separate E2 GPU-start
-authorization; (4) step F after E2 under its own approval. Items 1–5 below describe the GPU session procedure used
-for step E, reused for E2 sessions once an E2 launcher exists.
+**Section 10 review done (log v3-032); E2 tooling built and checked, manifest and ceiling recorded (log v3-033).**
+Next in order: (1) the user's decision at the E2 GPU-start gate (authorize E2 with a window, keep or change the $55
+ceiling, or cancel E2 by a dated log entry); (2) after a logged authorization, `record-authorization`, then the E2
+GPU sessions with `pmm_v3_step_e2.py` (procedure below, with `pmm_v3_step_e2.py` in place of `pmm_v3_step_d.py
+--step E`; commands in the playbook E2 section); (3) the workstation E2 assessment (`pmm_v3_e2_assessment.py`, CPU,
+after `evidence`) and its log entry; (4) step F tooling, plan approval and step F under its own approval. Items 1–5
+below describe the GPU session procedure used for step E.
 
 Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;
 `~/deepmzyme-vm/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
@@ -291,13 +286,12 @@ GPU session procedure as used for step E (P = /home/mechti/miniconda3/envs/DeepM
    their missing units), `P pmm_v3_step_d.py --step E evidence`, `vm-stop`, `vm-status` (TERMINATED), `vm-report --no-ssh`.
 5. Log a dated entry (newest first in log.md), overwrite STATUS (≤ 6,000 bytes; preserve replaced dated text in the log),
    `P tools/check_docs_contract.py`, `git add -- <paths>`, `git -c core.hooksPath=.githooks commit`, push only with the user's OK.
-6. Step E2, after the original E assessment (done) and the section 10 review, on CPU first (no GPU): build what the playbook's E2 section lists
-   (the E2 specification exists; chained amendment manifest bound to the actual assessment hash, launcher with the
-   admission check the VM runner lacks, assessor pinning the E2 JSON hash and accepting a four-/five-/six-class
-   original selection, tests), run the existing launcher and assessment
-   tests, the smoke checks and the docs-contract check, refresh the forecast, record the ceiling in execution
-   controls, then ask the user for the E2 GPU-start authorization. No E2 command exists yet; never run E2 units through `--step E` or
-   the VM runner. Step F waits for E2 unless the user cancels E2 by a dated log entry.
+6. Step E2 (CPU part done 2026-10-11, log v3-033): `P pmm_v3_step_e2.py gates` and `spend` (offline) show the
+   records; after the user's logged authorization `P pmm_v3_step_e2.py record-authorization --log-entry v3-NNN`; each
+   session `P pmm_v3_step_e2.py status`, `launch U@0 U@1 U@2 --no-wait`, `wait --any <every running unit>`,
+   `evidence`, vm-stop; afterwards `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G P
+   pmm_v3_e2_assessment.py` (newest E2 evidence copy). Never run E2 units through `--step E` or the VM runner. Step F
+   waits for E2 unless the user cancels E2 by a dated log entry.
 
 <a id="9-pending-review-of-the-e2-assessment-rules-saved-2026-10-08-unresolved"></a>
 ## 9. Review of the E2 assessment rules (saved 2026-10-08; resolved by the user the same day, log v3-028)
@@ -337,75 +331,33 @@ explanation of v3-027 is qualified (exact endpoint mass 1/256; the finite estima
 bootstrap and t bounds are not independent confirmations).
 
 <a id="10-deferred-review"></a>
-## 10. Deferred read-only review: schedule, errors and minibatch weighting (PENDING)
+## 10. Deferred read-only review: schedule, errors and minibatch weighting (DONE 2026-10-11, log v3-032)
 
-**Status: PENDING.** **Prerequisite: Original Step E complete and unchanged A4 assessment saved** (met on
-2026-10-11 at 13:03 UTC: `E_20261011T130128Z`, SHA-256 `d6d27c0c…`; the review itself has not started). Requested by
-the user on 2026-10-11 during step E sessions 8 and 9 (two messages; [log v3-031](log.md#v3-031)); it consolidates
-the earlier deferred schedule/error review (log v3-024, v3-029; request and addendum in
-`$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md`) with a minibatch-weighting audit and
-three observations to verify. Documentation alone does not complete it: it is done only when a dated log entry
-reports its results. Local working copy of the user's two 2026-10-11 messages (not needed to perform the task):
-`~/.claude/plans/deepmzyme-2026-10-11/DEFERRED_minibatch_weighting_audit.md`.
+**Status: DONE** ([log v3-032](log.md#v3-032), decision report; scripts and outputs in
+`$DATA/audits/schedule_error_review_20261011T131706Z/`). Requested by the user on 2026-10-08 and 2026-10-11
+(request and addendum in `$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md`; the
+2026-10-11 additions in [log v3-031](log.md#v3-031)). Read-only, CPU, saved validation evidence; every terminal
+value reconciled with `E_20261011T130128Z`. One boundary incident is disclosed in v3-032 and in the
+[DATASETS test-use ledger](../../DATASETS.md#test-use-ledger) (a recursive search read bytes under the exact
+Zenodo test directory; nothing was displayed or used).
 
-**Authority and boundaries.** Read-only apart from campaign documentation; local CPU only, capped
-(`systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G`; Python
-`/home/mechti/miniconda3/envs/DeepMzyme/bin/python`). No training, inference, parameter search, test access, GPU
-execution, budget increase, refit, or new model, feature, schedule or loss experiment; nothing is added, replaced or
-reordered without a separate user decision. Frozen training source, data, original assessments, raw evidence, E/E2
-configurations, the 50-epoch cosine schedule, the terminal checkpoint rule and the E2 rules stay unchanged. No
-separate agent is needed solely to remember this task.
+Conclusions (details, numbers and corrections in v3-032):
 
-**Place in the sequence:** finish original step E → save its unchanged A4 assessment and actual selection → this
-review (one focused pass on saved evidence; reuse the existing audits, complete only missing checks) → prepare and
-check the accepted E2 tooling (routine authorized preparation, no extra approval stop) → present the review
-conclusions, refreshed cost and remaining effort at the existing E2 GPU-start approval gate.
-
-**A. Minibatch weighting (question: does minibatch normalization materially alter the intended common-four class
-weighting?).** Hypothesis from a Codex inspection, not verified in this campaign: with ordinary shuffled batches of
-16, Cu receives about 20.1–20.3% of the expected normalized loss coefficients instead of 25% (from the frozen v3
-training counts), and about 46–47% of full batches contain no Cu. These are expected loss coefficients, not
-measured gradients, parameter updates or accuracy; weighted-mean cross-entropy (PyTorch `reduction="mean"` with
-`weight=` divides by the summed weights of the batch's targets) is standard PyTorch behaviour. Treat it as a
-hypothesis about the training objective, not a performance bug. Checks:
-1. from the saved runs (`run_config.json`, `dataset_summary.json` under `$DATA/durable/lane*/runs/<unit>/`) and the
-   frozen trainer source: class-weight values and mode (baseline and `invsqrtw`), sampler, batch size, `drop_last`,
-   loss reduction, label smoothing, for four-, five- and six-class targets and per training fold;
-2. small CPU calculation: the expected normalized-coefficient share per common-four class (and native class) under
-   the actual batch size and sampler; the fraction of batches without each class;
-3. synthetic loss/gradient check on random logits: per-class gradient contribution under the actual reduction and
-   under a population-normalized alternative (weights normalized against the training population; weighted
-   per-example losses averaged over the batch size);
-4. assess population-normalized weighted cross-entropy only as a possible later ablation, accounting for AdamW,
-   gradient clipping, update variance from batches without Cu and tradeoffs in the other class recalls. E2 already
-   includes inverse-square-root weighting (`invsqrtw`); stronger Cu emphasis must not be assumed better.
-
-**B. Observations to verify before relying on them (identities and calculations; Codex):**
-1. *Concentrated Fe→Mn errors.* Four-class baselines, seed 42, fold 1: protein group `v3g_1q0c` holds 105 Fe ion
-   examples across a group of 32 PDB entries; late fusion predicts Mn for all 105, Only-GVP misses all 105,
-   Only-ESMC misses 101. Examine it inside the native-metal/protein-group review: is there a recurring input,
-   training-composition or generalization problem that also affects other independent groups? Do not infer bad
-   labels or missing-ligand causality from the pattern. Perfectly correcting these 105 alone would add only about
-   1.07 points to the five-fold mean balanced accuracy (verify).
-2. *Training versus validation deterioration.* Folds 1–4, four-class baselines, seed 42: terminal mean training /
-   validation BA about Only-GVP 99.74% / 70.90%, late fusion 98.72% / 74.95%; validation loss rises late in
-   training across the baseline families. Use the existing trajectory audits (`audits/epoch_contrast_20261008T171843Z`,
-   `early_stopping_audit_20261007T111826Z`, `train_val_gap_20261007T111847Z`) to separate recurring deterioration
-   from fold- or class-specific effects. Logged epoch-10 scores do not prove that a complete ten-epoch schedule
-   would improve performance.
-3. *Structural information missed by fusion.* Folds 1–4, the same baseline comparisons: 562 examples that Only-GVP
-   gets right and Only-ESMC gets wrong; late fusion recovers 171 of them. This supports investigating the already
-   planned E2 candidates `gvpaux03` and `esmdrop02`; it does not establish how much of the remaining disagreement a
-   learnable model can recover.
-
-The review keeps its recorded focus (log v3-029): native Fe/Co/Ni (including the six-class native Co and Ni
-recalls), protein-group concentration, class-specific deterioration, training versus validation behaviour and
-concrete input/provenance evidence; then it separates the questions and costs of (a) completing E2, (b) a narrow
-actual 10-epoch schedule comparison and (c) the larger proposed matrix, with no scope change without a decision.
-
-**Report (concise decision report, recorded in a dated log entry):** what is verified and what remains
-hypothetical; which findings E2 already addresses; whether any small additional intervention is sufficiently
-supported to propose later, with its evidence, tradeoffs, effort and smallest decisive comparison ("none currently
-justified" is a valid answer); for the weighting audit: whether the coefficient effect is confirmed for the actual
-run configuration, what it establishes and what remains unknown about predictive performance, and whether a small
-separately declared matched ablation is worth its effort.
+- **Minibatch weighting:** confirmed for the actual configuration: Cu gets 20.13–20.27% of the expected per-step
+  loss coefficients instead of 25%, and 46.4–47.4% of full batches contain no Cu. The effect on accuracy is
+  unknown. Population-normalized weighting is available without a source change (`focal`, gamma 0), but it needs a
+  new runner extension. A 4-fit matched ablation is possible and not currently justified.
+- **Fe→Mn in `v3g_1q0c`:** verified. Correcting the group's 105 Fe adds +1.07 points to the five-fold mean; with its
+  8 Co, +1.44 on the folds 1–4 mean, so one group can pass or block a 3-point recall gate. Whole-group failures
+  recur in every fold and family, and mixed-metal near-copy groups err more; no input or label problem is
+  established. Co is the weakest native class (six-class 2.8–5.3%).
+- **Training versus validation:** validation loss rises late in 55 of 55 units, but validation BA does not decline
+  recurrently. The decline from logged epoch 10 is concentrated in fold 1 (Class VIII→Mn, largely `1q0c`), and
+  seed noise is large. A logged epoch is not a schedule.
+- **"Structural information missed by fusion":** the counts are verified (562; fusion recovers 171), but the premise
+  is not established: two seeds of the same Only-GVP model disagree almost as much as Only-GVP and Only-ESMC do.
+- **10-epoch schedule:** the seven complete 10-epoch fold-0 runs (76.0–76.6) are above all 35 fold-0 50-epoch
+  late-fusion units (at most 75.35), but this is one development fold and one seed. A narrow comparison (4 fits on
+  folds 1–4) needs a new runner extension and a separate decision.
+- **Decision:** no small additional GPU intervention is currently justified; E2 proceeds unchanged. Optional
+  proposals for separate decisions are listed in v3-032.

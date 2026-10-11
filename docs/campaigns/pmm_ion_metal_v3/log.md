@@ -3,6 +3,400 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-033
+
+2026-10-11 — **step E2 CPU implementation and checks complete; the E2
+manifest and the campaign ceiling recorded in E2's execution controls; the E2
+GPU-start gate is reached** (CPU and documentation; no GPU action, fit, refit,
+inference or test access; the frozen runner, A4 and E2 specifications, original
+assessments and raw evidence unchanged). This is routine authorized preparation
+after the review of [v3-032](#v3-032) (user instruction of 2026-10-11, [v3-031](#v3-031)):
+no extra approval stop. **No E2 fit is authorized.**
+
+**Built** (commits `4c65474` and `e4ce93c`, committed with the campaign hook, not pushed):
+- `pmm_v3_step_e2.py`, standard library only, is the admission check for the 36
+  E2 units. The VM runner does not check step membership.
+  - The fits run from the unchanged extension code directory
+    (`DeepMzyme_v3_ext1`), so the parse and graph caches stay warm. They go
+    through the step C lane, launch, wait, pull, recovery and evidence logic,
+    with launch folder `step_e2/launch` and evidence under `step_e2_evidence/`.
+  - `--step E` refuses E2 units, and this launcher refuses every other unit.
+  - Write-once records: the manifest; the ceiling (with an estimated-spend
+    check: closed controller sessions at $0.858624 per running hour, the running
+    session counted to its hard stop, storage at $0.55 per calendar day over the
+    same span, plus a reserve); and the authorization, which names the manifest
+    and ceiling SHA-256.
+- `pmm_v3_e2_assessment.py` assesses on the workstation from the Data1 copies,
+  so it needs no VM.
+  - It builds a temporary view of the campaign root from the newest E2
+    evidence copy and the durable lanes.
+  - Every unit it uses must match an acknowledged host-pull receipt file by
+    file, and the acknowledgment must also be on the VM lane in the evidence
+    copy (uploaded).
+  - The frozen `load_unit` checks then apply unchanged.
+  - It reports the 17 declared comparisons (unadjusted intervals decide;
+    Bonferroni over 17 is sensitivity) and both conclusions per candidate.
+  - It applies replacement rule (a)–(d) with every failed condition named by
+    comparator, class and magnitude, then the tie order, and writes a
+    machine-readable final selection.
+  - A five- or six-class original selection is compared on common-four BA, with
+    its native metrics kept.
+  - Parity self-check: it re-derives the original A4 result from the same view.
+    If that fails, it withholds the final selection.
+- `tests/test_v3_step_e2.py`: 69 tests, covering every item of the playbook
+  list.
+- After the review's completeness critic ([v3-032](#v3-032)), a real E2 assessment
+  may no longer skip the parity self-check; `--no-a4-parity` is accepted only for
+  a readiness dry run (commit `e4ce93c`).
+
+**Adversarial tooling review before the manifest was recorded.** Five lenses
+reviewed the tooling (specification conformance, launch safety, data
+integrity, statistics and mixed targets, test adequacy), and each finding was
+independently verified. All 16 confirmed findings were minor and are fixed,
+together with the A4 coverage safeguard of [v3-032](#v3-032). The fixes:
+- the "acknowledgment uploaded" evidence condition is checked;
+- replacement labels stay consistent with an incomplete or blocked result;
+- the reserve covers step F and its storage days;
+- the reused launcher and assessor modules (`pmm_v3_assessment.py`,
+  `pmm_v3_step_b/c/d.py`, `pmm_v3_host_pull.py`) are pinned in the manifest, and
+  the A4 assessor must equal the one the extension record and the original
+  assessment name;
+- the original assessment must cover exactly the 55 units and 11 cells;
+- tests were added for recall gates by each comparator, zero recall, reason
+  (a), "unadjusted decides", the tie band and tie order, parity blocking, every
+  manifest binding, duplicated and unreplayed evidence.
+
+Eleven other claimed findings were refuted on verification.
+
+**Checks (CPU, capped):**
+- 69 E2 tests passed. On the final code the v3 suites passed: 268 tests across the step B/C/D
+  launchers, assessment, extension, campaign, replay, bundle, epoch-contrast
+  and E2.
+- `tests/smoke_checks.py`: 43 passed. `tools/check_docs_contract.py`: 0 strict
+  failures (pre-existing warnings only).
+- Real-data readiness dry run with the recorded manifest
+  (`audits/e2_readiness_20261011T142030Z/assessment.json`, SHA-256 `ea0c6dbd…`; the earlier
+  run `e2_readiness_20261011T141052Z` used the superseded manifest;
+  not an E2 assessment):
+  - all 19 reused controls and development units verified against their
+    receipts, uploaded acknowledgments and bound hashes;
+  - the original A4 result re-derived exactly from the Data1 copies (55 units);
+  - the 36 E2 units reported missing, as expected.
+
+**Records** (`step_e2_evidence/` on the campaign data root):
+- **Manifest** `e2_manifest.json`, SHA-256
+  `37c2ff05d5bfeb097d57d9376dc1e39eef1a1fb4a77833cb91c0aa932f540341`. The first
+  manifest (`09b45739…`, before the parity fix) is archived unchanged as
+  `e2_manifest.superseded_20261011T141045Z.json`; no authorization named it. The
+  manifest binds:
+  - git `e4ce93c`;
+  - the original assessment `E_20261011T130128Z` (`d6d27c0c…`), selection
+    `gvp_late_fusion__four_class__baseline` (C12–C17 coincide with C3–C8);
+  - the final step D assessment (`bba7c728…`);
+  - the extension record (`ade3f022…`), runner, tooling and specification
+    hashes, and 19 reused units.
+- **Ceiling** `e2_ceiling.json`, SHA-256
+  `a4c31da1d3d96334d62cf30bed1bb1f4be4acdeb63797aa8156f2126b47b9ea8`:
+  - **$55 gross campaign total**, the user's E2 planning ceiling of
+    [v3-025](#v3-025), now in the E2 launch control;
+  - baseline $31.98 at 13:10 UTC ([v3-031](#v3-031));
+  - reserve $6.00 (step F up to 2.25 VM hours, $1.93, plus 7 storage days,
+    $3.85).
+  It grants nothing.
+- **Authorization:** `e2_authorization.json` does not exist. Every E2 launch is
+  refused until the user's decision is logged and recorded with
+  `record-authorization`.
+
+**Refreshed spending and forecast (estimated charges, disk counted once; 14:10
+UTC).**
+- **Spent about $32.00** ($31.98 + storage since 13:10).
+- E2, from measured step D/E throughput ([v3-032](#v3-032) `r6`): three
+  sessions; 8.3–9.4 VM hours central and 10.1 in the stress case (4 sessions);
+  $7.1–8.1, stress $8.6–8.9.
+- The 4-hour session limit with the admission rule allows about 15 Only-GVP or
+  late-fusion fits per session; the last admissible late-fusion launch is about
+  170 minutes after the start.
+- Step F: 1.0–2.25 VM hours, $0.9–1.9.
+- Storage: $0.55 per calendar day until the disk is retired, 3–11 days, $1.7–6.1.
+- **Total E → E2 → F about $41.7–48.9**: above the original $40 and within the
+  recorded $55. Step F alone, after a dated E2 cancellation: about $33.5–36.7.
+  Daily cap use today: 4 h 37 min / $5.20 of 12 h / $18.
+
+**Remaining effort:**
+- E2: three GPU sessions; they can run back to back in one UTC day (under 12 h).
+- The E2 assessment on the workstation (about 5 minutes after `evidence`).
+- Step F: CPU tooling (refit runner and label-blind test preparation, not
+  built), plan approval, 1–2.25 VM hours, one test pass.
+- The optional items of [v3-032](#v3-032), only by separate decisions.
+
+**Gate (the user decides; nothing is inferred):**
+- (1) the E2 GPU-start authorization and its window, recorded with
+  `record-authorization`, or a dated cancellation of E2;
+- (2) whether the recorded $55 stands; a different ceiling would replace the
+  record before authorization;
+- (3) optionally, option (b) or the reporting display of [v3-032](#v3-032),
+  declared before any E2 result;
+- (4) push of `v3-step-a` (the 2026-10-11 push authorization covered step E's
+  closeouts);
+- (5) whether the step F prior-exposure wording should name the 2026-10-11 byte
+  scan of the exact Zenodo test ([v3-032](#v3-032)).
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-11 v3 step E complete, 44 of 44 fits; Stage 6 selection late fusion four-class; review pending, then E2 CPU tooling)
+- Stage: v3 steps A–E done ([log v3-031](docs/campaigns/pmm_ion_metal_v3/log.md#v3-031)): A4 Stage 6 selection `gvp_late_fusion__four_class__baseline` (five folds, development-validation); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, rules frozen ([E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)), not implemented, required before F unless cancelled; no 6B refit or Stage 7.
+- Exact Zenodo PMM test: unknown, possibly evaluated; its test file's label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
+- Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $31.98 spent, $8.02 left at 2026-10-11 13:10 UTC; E→E2→F forecast $42.4–48.8, log v3-031); E2 GPU fits only after its CPU tooling and checks, its ceiling recorded in execution controls and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
+Next: the PENDING read-only schedule/error/weighting review ([handoff section 10](docs/campaigns/pmm_ion_metal_v3/handoff.md#10-deferred-review)), then the E2 CPU tooling and checks, then the E2 GPU-start request with the review conclusions and refreshed cost; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+```
+
+## v3-032
+
+2026-10-11 — **the deferred read-only review of handoff section 10 is complete
+(schedule, errors and minibatch weighting); decision report** (CPU only, saved
+validation evidence and training-side metadata; no fit, inference, parameter
+search, GPU action, refit or budget change; frozen source, data, assessments,
+schedule, checkpoint rule and E2 rules unchanged). It answers the item recorded
+as PENDING in [v3-031](#v3-031) and handoff section 10.
+
+**Method.** Six read-only analyses (weighting; protein groups and native
+Fe/Co/Ni; training-versus-validation trajectories; Only-GVP/Only-ESMC
+complementarity; the 10-epoch proposal and A4 completeness; measured
+throughput). Each analysis was recomputed by an independent script (identity-
+strict, keyed by unit and `source_uid`) and challenged by a separate skeptic.
+A completeness critic then checked the result against section 10 and the
+deferred requests. Every terminal common-four BA used (55 A4 units, the step D
+units, the step-B probes) reconciles with
+`E_20261011T130128Z` (SHA-256 `d6d27c0c…`) or its receipt within 1e-9 (largest
+difference 1.1e-16). Scripts and outputs:
+`audits/schedule_error_review_20261011T131706Z/` on the campaign data root
+(`r1_weighting` … `r6_throughput`, `verify/`; SHA-256 of all 120 files in
+`review_manifest.json`, itself `fa92dddb…`). The run inventory is 125 run
+directories: 115 step C–E units, 9 step-B probes and the step C regression run.
+The statements below are the verified ones, with the verifiers' and the
+critic's corrections applied.
+
+**Boundary incident (disclosed; recorded in the
+[DATASETS test-use ledger](../../DATASETS.md#test-use-ledger)).** At 13:32:31 and
+13:32:38–13:34:41 UTC one analysis agent ran two recursive `grep -rl` searches
+over `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`. They looked for
+the strings `audit_internal_residue_id_recovery` and `internal_residue_id`, and
+their output was filtered through `grep -v '/test'`. The searches read file
+bytes under `dataset/test/`, `dataset/site_crosswalk.csv` and the combined
+train-and-test tarball. The second search was stopped after about two minutes.
+Neither displayed a match. The only output was the names of the dataset's
+top-level entries. The tarball's access time (13:32:38 UTC) confirms that it was
+read; this was checked without opening anything under `dataset/test/`. No test content, label, prediction or count was shown or
+used, and nothing in this review depends on it. Which files were read cannot be
+reconstructed. This breaks the review's rule never to read a held-out path. It
+adds to, and does not change, the existing "possibly opened" status of the exact
+Zenodo test.
+
+**A. Minibatch weighting.** (1) *Confirmed for the actual run configuration.*
+Every v3 fit uses the same loss setup:
+- batch 16; ordinary shuffled loader with a seeded generator, no sampler,
+  `drop_last` False (optimizer steps equal 50 × ⌈N/16⌉ in all 116 runs);
+- `F.cross_entropy(weight=w)` with the default mean reduction, Σw·l / Σw
+  over the batch; no label smoothing; AdamW; gradient clipping at norm 1.0;
+- the GVP auxiliary loss reuses the same weights;
+- the class weights stored in each checkpoint equal the frozen per-fold weights
+  (Cu 5.34–5.49, others 0.73–0.92; population mean exactly 1.0).
+
+Exact enumeration over the real training counts, folds 0–4:
+- Cu receives **20.13–20.27%** of the expected per-step loss coefficients
+  instead of the intended 25%. Mn and Class VIII receive about 6.7–7.0% more
+  than intended (relative), Zn 5.4–5.7% more.
+- **46.40–47.38%** of full batches contain no Cu.
+- The common-four shares are the same for four-, five- and six-class targets.
+- `invsqrtw` gives Cu about 10.3–10.5%.
+
+Synthetic logits confirm the mechanism. The actual-to-population ratio of Cu's
+gradient share is about 0.80–0.86; absolute shares depend on the gradient
+metric.
+
+(2) *What this establishes:* the realized objective weights Cu about a fifth
+less than the population rule intends. *What it does not:* any effect on
+balanced accuracy or Cu recall, in either direction.
+- Cu is the weakest validation class in 2 of 5 folds in every family.
+- `invsqrtw` halves Cu's share and moved fold-0 Cu recall both ways
+  (late fusion +5.5, Only-GVP −1.4; two seeds, inside the seed noise).
+
+Coefficient share does not predict recall at this noise level. (3)
+*Population-normalized weighted CE needs no source change.* The frozen trainer
+computes Σw·l / B with `--metal-loss-function focal --metal-focal-gamma 0`;
+this was checked numerically. The existing step E baselines would therefore
+stay valid matched controls. The hash-frozen runner, however, admits no new
+recipe, so the ablation needs a new versioned runner extension and a user
+decision. Smallest matched comparison: the selected configuration, folds 1–4,
+seed 42, 4 fits, against the existing baselines under the A4 rule (one session,
+about 1.4–1.6 VM hours, $1.2–1.4; beyond the recorded E2 scope). Whether
+gradient clipping binds during most of training is untested: no gradient norms
+or intermediate checkpoints are saved. **Not currently justified:** the effect on performance is unknown, the power of four
+paired folds and one seed is low, and E2's `invsqrtw` adds a (confounded, all-
+class) data point on Cu emphasis at no extra cost. Revisit only with a
+pre-declared criterion after E2.
+
+**B1. Concentrated Fe→Mn errors and protein groups.** *Verified:*
+- Group: `v3g_1q0c` (fold 1; near-copy group, ≥ 0.90 chain identity, merged
+  transitively) has 32 PDB entries and 121 ions (105 Fe, 8 Mn, 8 Co).
+- Predictions, four-class baselines, seed 42: late fusion predicts Mn for all
+  105 Fe. Only-GVP misses all 105 (104 Mn, 1 Zn). Only-ESMC misses 101 (Mn) and
+  gets 4 right. All three predict Mn for the 8 Co; the 8 Mn are correct.
+- Size of the effect: correcting the 105 Fe adds **+1.07** points to the
+  five-fold mean (Only-ESMC +1.03). With the 8 Co: +5.75 on fold 1, +1.15 on the
+  five-fold mean and **+1.44 on the folds 1–4 mean**. The group moves the folds
+  1–4 mean Class VIII recall by 5.6–5.8 points, more than the 3-point recall
+  gate, so one group can pass or block an E2 gate by itself.
+
+*Recurring pattern:*
+- Whole-group failures (groups with ≥ 5 ions, ≥ 90% wrong) occur in every fold
+  and every family: 57 distinct (fold, group) failures, 10 shared by all three
+  families. They exceed a class-stratified permutation null in 14 of 15
+  family-fold cells. The Gini and top-10 error-share contrasts first cited are
+  reproduced by that null and are not evidence.
+- Groups whose near-copy entries carry different metals (170 of 2,208 groups,
+  23% of ions) have higher error rates in all 15 family-fold cells, also without
+  `1q0c`. This is a descriptive association; no label error is inferred.
+- Fold 1 is extreme because one large group lands in its validation set (23% of
+  its Class VIII support); training composition is stable across folds.
+- Single-seed caveat: on fold 0, seeds 42 and 43 share only about half their
+  whole-group failures.
+
+*Cu on fold 2 and Mn→Class VIII:*
+- Fold 2: Cu is the weakest class in all three four-class baselines (recall
+  50.0 / 50.0 / 55.9 for Only-ESMC / Only-GVP / late fusion; 30–34 of 68 Cu ions
+  wrong, mostly predicted Zn, then Class VIII). Three groups (`2xmk`, `3re7`,
+  `7eus`) fail entirely in every family and hold 41–47% of the Cu errors.
+- Mn→Class VIII: concentrated in whole Mn groups on folds 0 and 3 for Only-ESMC
+  and late fusion; spread out for Only-GVP.
+- Whether the recurring groups are independent at the protein-family level is
+  untested: the saved fold files hold only pairs at ≥ 0.90 identity.
+
+*Native classes:* Co is the weakest native element in every target (six-class
+Co 2.8–5.3%, mostly predicted Zn). Six-class Co, Ni and Fe share the Class VIII
+weight by design.
+
+*Input/provenance:* nothing establishes an input problem. The 305
+audit-recovered sites err more for Mn, Cu, Ni and Co but not for Zn; this is a
+lead only. A test would need per-entry structural checks (training side only;
+not done).
+
+**B2. Training versus validation.** *Verified:*
+- Terminal training/validation common-four BA, folds 1–4: Only-GVP 99.74/70.90,
+  late fusion 98.72/74.95, Only-ESMC 97.35/73.43.
+- Validation loss rises late in **55 of 55** assessed units: minimum at epochs
+  1–17, epoch-50 loss 1.4–4.8× the minimum. Training BA is at least 97 in 53 of
+  55.
+- Validation BA does not decline recurrently. From logged epoch 10 to 50, 10 of
+  the 11 fold-1 cells decline (Class VIII→Mn; for late fusion
+  four-class 36→158, of which `1q0c` is 63–93% by bounds). Excluding fold 1:
+  14 units decline by more than 1 point, 15 improve, mean change +0.40.
+- Exception: Only-GVP four-class also declines on folds 2 and 3.
+- Seed noise is large. On fold 0 (31 step D pairs, seeds 42 and 43), the
+  epoch-10-to-50 change differs between seeds by an SD of 5.5 points. The
+  terminal BA difference has an SD of 3.1. For the 17 late-fusion recipe pairs,
+  seed 42 minus seed 43 is +1.48 on average (SD 1.56).
+
+Logged epoch 10 (learning rate still 92% of peak) is not a 10-epoch schedule.
+Why loss rises while BA holds (for example confidence or calibration) is
+untested. No intervention follows from the trajectories alone.
+
+**B3. "Structural information missed by fusion".** *Counts verified:*
+- Folds 1–4: 562 examples are right for Only-GVP and wrong for Only-ESMC;
+  fusion gets 171 of them right (30.4%).
+- Reverse direction: 682 examples are right for Only-ESMC and wrong for
+  Only-GVP; fusion gets 553 right (81.1%).
+- Fusion's predictions agree with Only-ESMC on 87.5% of examples and with
+  Only-GVP on 75.7%.
+
+*Interpretation corrected:*
+- The premise is **not established.** On fold 0, two seeds of the same Only-GVP
+  model disagree on 334 examples, against 368–452 between Only-GVP and
+  Only-ESMC, and the Only-GVP-right set changes with the seed (Jaccard 0.43).
+  Most of the "oracle" headroom is per-example instability.
+- An equal-weight probability average of the two single models is not better
+  than fusion (mean −0.69 points on folds 1–4). It is a descriptive diagnostic,
+  not a configuration; ensembles are excluded by the refit rule.
+- On fold 0 the two seeds cannot attribute `gvpaux03`/`esmdrop02` gains to any
+  example set. E2's C5 and C7 test their BA effect, not this mechanism.
+
+**10-epoch schedule proposal and A4 completeness.** *Verified:*
+- Complete 10-epoch runs: seven exist, all FP32 step-B probes (late fusion
+  four-class baseline, fold 0, seed 42; cosine over 10 epochs, terminal
+  checkpoint, replayed, identity equal to the 50-epoch run except epochs). Their
+  terminal BA is 76.03–76.60 (SD 0.19: GPU nondeterminism within one seed),
+  against 71.62 for the 50-epoch run.
+- None of the 35 fold-0 50-epoch late-fusion units (17 recipes × 2 seeds plus
+  the baseline) reaches 76.03; the highest is 75.35.
+- The evidence is one development fold, one seed and one cell. The hypothesis
+  came from it, and fold 0 is the selection's worst fold (folds 1–4:
+  72.96–78.32). The in-run epoch-10 proxy on fold 0 has the opposite sign
+  (69.55).
+- Correction to [v3-029](#v3-029): there are seven complete 10-epoch probes,
+  not two.
+- A4 is complete (9 cells × 5 folds plus both recipes × 5 folds). The A4
+  assessor would silently drop an improvement check without its
+  `--final-recipe` mapping. The safeguard is in the E2 manifest
+  ([v3-033](#v3-033)): it refuses an original assessment unless the improvement
+  recipes equal the final step D recipes and the evidence covers exactly the 55
+  units and 11 cells.
+- The frozen runner cannot run a non-probe 10-epoch unit. A schedule study needs
+  a new versioned runner extension with its own namespace, manifest and
+  assessor; probes may not be reused as evidence or namespace. Because src/ is
+  unchanged, the existing 50-epoch units stay valid matched controls. The
+  assessor functions already take an epoch count, so the effort is low to
+  medium.
+- Items 5–8 of the 2026-10-08 request (rule audit, rare-class protections,
+  refit integration, acceptance checks) apply only if the user selects (b) or
+  (c). Any (b) design must carry the item-6 protections (no missing or zero
+  common-four recall; the 3-point recall gate; fold supports and zero-recall
+  events reported) and a rule declared before any fit. It is the smallest
+  complete design, not a decisive one: a failed gate is not evidence of no
+  effect, and the 50-epoch control is the selected winner, whose values carry a
+  winner's-curse inflation.
+
+The three options of [v3-029](#v3-029)/[v3-030](#v3-030), compute only
+(three lanes, $0.858624 per VM hour, plus $0.55 per calendar day of storage):
+
+| Option | Fits | VM hours | Running cost | Other effort | Assessment |
+|---|---:|---:|---:|---|---|
+| (a) E2, accepted | 36 | 3 sessions, 8.3–9.4 central; stress 10.1 (4 sessions) | $7.1–8.1; stress $8.6–8.9 | built ([v3-033](#v3-033)) | next, unchanged |
+| (b) 10-epoch cosine for the final selection, folds 1–4, seed 42, against its existing 50-epoch units | 4 | 0.6–0.8 standalone | $0.55–0.71 | new runner extension, launcher and assessor (low–medium); gate (A4 rule + recall gates) declared before any fit; low power (needs mean gain above about 1.6 × fold SD); not runnable through the E2 launcher | optional, separate decision, after E2 and before step F; step F's draft hard-codes 50 epochs |
+| (c) 11-configuration matrix with a fold-0 two-seed futility screen | 9–10 short + 1 control, then 50 short | 6.0–6.5; stress 7.7 | $5.1–5.6; stress $6.6 | as (b), larger | not recommended now: the screen adds little to the existing fold-0 evidence; Bonferroni over 11 needs very consistent gains |
+
+**What E2 addresses.**
+- `invsqrtw` gives a confounded data point on Cu weighting.
+- `gvpaux03` and `esmdrop02` test BA effects of the fusion branches.
+- `wd10`, `resdrop01` and `esmdrop02` regularize, but late-loss rise is not a
+  BA loss, so a lower loss or a smaller gap is not an improvement.
+- Nothing in E2 targets group-level generalization, mixed-metal near-copy
+  groups or native Co.
+
+**Absolute model performance and recipe gains (2026-10-08 addendum item 1).**
+- The selection, late fusion four-class baseline, scores 74.28 (five folds) and
+  74.95 (folds 1–4).
+- The two screened recipes changed it by −0.33 (`headdrop03`) and +0.36
+  (`meanagg`, Only-GVP) on folds 1–4; neither is an improvement.
+- Two recipes do not show that all regularization is ineffective; simpler
+  classifier heads remain a lower-priority possibility.
+
+**Decision report.**
+- No small additional GPU intervention is currently justified; E2 proceeds
+  unchanged.
+- One proposal is sufficiently supported to offer for a separate decision:
+  option (b), the narrow 10-epoch comparison. It is the only lead with a
+  consistent signal, but that signal is one development fold and one seed.
+- Lower priority: the population-normalized weighting ablation (A3).
+- CPU-only options, each needing a user decision: a provenance check of
+  mixed-metal near-copy groups and of the audit-recovered sites (training side
+  only).
+- Reporting option: a descriptive, non-decision-bearing per-group display of
+  `1q0c` and of the GVP/ESMC agreement for the E2 candidates. If wanted, it must
+  be declared before any E2 result is seen.
+
+Section 10 of the handoff is closed by this entry.
+
 ## v3-031
 
 2026-10-11 — **step E complete: sessions 8 and 9 ran the 20 remaining fits;

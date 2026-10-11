@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-11 step E complete; review pending; step E2 planned, not implemented; log v3-031)
+Status: active (2026-10-11 review done; step E2 built, CPU-checked, awaiting GPU authorization; log v3-033)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
@@ -23,11 +23,10 @@ Assessment rules: [frozen A4 specification](assessment_spec.md) (2026-10-05).
 How to run: [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3).
 Runtime and run identities are recorded before use; v2 artifacts stay untouched.
 The [regularization amendment](log.md#v3-017) is [implemented](log.md#v3-018).
-[Step E2](plan.md#steps) ([log v3-025](log.md#v3-025)): planned, not implemented; the
-eight remaining step D passes tested singly on folds 1–4 (36 fits, seed 42) after the
-original E assessment and before step F unless the user cancels it; rules frozen in the
-[E2 specification](e2_assessment_spec.md) ([log v3-028](log.md#v3-028)); tooling not built;
-its $55 planning ceiling authorizes no GPU start.
+[Step E2](plan.md#steps) ([log v3-025](log.md#v3-025)): the eight remaining step D passes
+singly on folds 1–4 (36 fits, seed 42), before step F unless the user cancels it; rules
+frozen in the [E2 specification](e2_assessment_spec.md) ([log v3-028](log.md#v3-028));
+tooling built ([log v3-033](log.md#v3-033)); no E2 fit is authorized.
 A new chat continues from the [handoff](handoff.md) (ready-to-paste prompt, verified state, evidence paths).
 Execution follows the authorization and readiness state in
 [STATUS](../../../EXPERIMENT_STATUS.md); this amendment does not raise the ceiling.

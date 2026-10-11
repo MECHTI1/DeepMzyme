@@ -335,8 +335,8 @@ alone is not a GPU launch request or wider spending authority.
    it is labelled conditional on four-class development.
 
 **E2. Individual confirmation of the eight remaining step D passes (amendment
-of 2026-10-08; planned, not implemented, not experimentally evaluated;
-[log v3-025](log.md#v3-025)).** Requested by the user after the fold 1–4
+of 2026-10-08, [log v3-025](log.md#v3-025); implemented and CPU-checked on
+2026-10-11, [log v3-033](log.md#v3-033); not experimentally evaluated).** Requested by the user after the fold 1–4
 results of step E's two selected recipes and of the four-class baselines had
 been examined ([log v3-024](log.md#v3-024)). Everything E2 produces is
 therefore development-validation evidence, proposed after earlier validation
@@ -427,11 +427,10 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    completed original selection stands (a projected winner is never
    substituted). The neutral four/five/six conclusions of the original
    assessment are preserved separately and unchanged.
-4. Implementation (no tooling exists; the frozen E2 specification does,
-   [log v3-028](log.md#v3-028); the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented)
-   lists what exists, what refuses today and what must be built; the CPU
-   implementation is accepted planned work after the original E assessment
-   and is not a GPU start): an E2
+4. Implementation (built and CPU-checked on 2026-10-11, [log v3-033](log.md#v3-033):
+   `pmm_v3_step_e2.py` and `pmm_v3_e2_assessment.py`; commands and gates in the
+   [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented);
+   the CPU implementation was accepted planned work and is not a GPU start): an E2
    launcher and a separate E2 assessor (accepting a four-, five- or
    six-class original selection) around the frozen training runner,
    reusing the existing lane, persistence, recovery, duplicate-run,
@@ -525,8 +524,9 @@ total expanded campaign cost of about $44–51 (refreshed with the disk counted
 once in [log v3-030](log.md#v3-030): E2 7.9–9.6 VM hours; E → E2 → F total about
 $40.5–48.0 after the failed-fallback leftovers were deleted). The forecast is refreshed from measured use
 before execution and at every session. The revised ceiling is recorded here
-and in the log as campaign evidence; no execution control encodes the campaign
-ceiling today (the controller's session and daily caps are unchanged), and
-recording it there precedes any authorized E2 launch. The decision authorizes
-no GPU start: the next start needs the user's confirmation
-([STATUS](../../../EXPERIMENT_STATUS.md)).
+and in the log as campaign evidence, and since 2026-10-11 in E2's execution
+control: the write-once ceiling record checked before every E2 launch
+([log v3-033](log.md#v3-033); estimated charges with the running session to
+its hard stop plus a $6 reserve for step F; the controller's session and daily
+caps are unchanged). The decision authorizes no GPU start: E2 fits need the
+user's recorded E2 GPU-start authorization ([STATUS](../../../EXPERIMENT_STATUS.md)).
