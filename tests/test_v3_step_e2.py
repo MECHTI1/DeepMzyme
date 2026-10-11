@@ -954,3 +954,8 @@ def test_the_manifest_pins_the_reused_modules():
     assert set(e2.REUSED_FILES) == {"pmm_v3_assessment.py", "pmm_v3_step_b.py", "pmm_v3_step_c.py",
                                     "pmm_v3_step_d.py", "pmm_v3_host_pull.py"}
     assert set(e2.TOOL_FILES) == set(e2.REUSED_FILES) | {"pmm_v3_step_e2.py", "pmm_v3_e2_assessment.py"}
+
+
+def test_a_real_e2_assessment_cannot_skip_the_a4_parity_check(tmp_path):
+    with pytest.raises(ValueError, match="readiness dry runs only"):
+        e2a.main(["--no-a4-parity", "--data-root", str(tmp_path)])
