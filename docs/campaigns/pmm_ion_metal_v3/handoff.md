@@ -153,7 +153,7 @@ Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step
 the corrected execution draft is `step_f_plan_draft.md` (draft v2, log v3-030; not approved): it takes the final E2
 selection (A4 only after a dated E2 cancellation) and a validation-free terminal refit; the 08:45 UTC session draft
 on the data root is kept unchanged as history.
-**Step E2:** tooling built and CPU-checked (log v3-033, commits `4c65474`, `e4ce93c`): 0 of 36 fits. Records in
+**Step E2:** authorized (log v3-034) and running: **13 of 36 fits complete after E2 session 1** (log v3-035; Only-GVP `wd10`, `sitecountsangles` and `sitenone` folds 1–4, late fusion `invsqrtw` fold 1; two `sitenone` replay-tolerance failures rerun once and passed; no unit has a second failure; latest evidence `step_e2_evidence/evidence_20261011T233244Z`; VM TERMINATED 23:34 UTC). Tooling: log v3-033, commits `4c65474`, `e4ce93c`. Records in
 `$DATA/step_e2_evidence/`: manifest `e2_manifest.json` (SHA-256 `37c2ff05…`; binds the original assessment `d6d27c0c…`
 and its selection, the final D assessment, the extension record, runner, E2 tooling and reused modules, and 19 reused
 units), ceiling `e2_ceiling.json` (`a4c31da1…`; $55, reserve $6), **no `e2_authorization.json`** (every E2 launch is

@@ -3,6 +3,85 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-035
+
+2026-10-11 — **E2 session 1 (campaign session 10): 13 of 36 E2 fits complete;
+two first-attempt replay-tolerance failures rerun once and passed** (validation
+data only; folds 1–4; seed 42; no held-out access; frozen source, rules, A4
+assessment and E2 manifest unchanged). Under the user's authorization of
+[v3-034](#v3-034).
+
+**Session.**
+- `session-20261011T201525Z-5ac0fd4f`, `--hours 4`, started at the first attempt
+  with no stockout, 20:15:25–23:34 UTC: **3 h 18 min, $2.91 gross** by the
+  ledger. Google-side hard stop 00:09:34 UTC.
+- Smoke check passed (L4, torch 2.11.0+cu128).
+- All E2 gates passed before the first launch: readiness, extension record,
+  manifest `37c2ff05…`, authorization, ceiling. TERMINATED verified at 23:34:19
+  UTC.
+
+**Fits.** Batches `e2-20261011T201745Z`, `…T205642Z`, `…T213505Z`,
+`…T221332Z` and `…T225321Z`. `status` ran before every refill, and every
+`wait --any` named all running units. Twice, the two other units of a batch
+ended just after the wait's first snapshot; their lanes were pulled with
+`pull --lanes K` before the next launch (idle under 2 minutes). Completed,
+replayed, pulled and acknowledged:
+- Only-GVP `wd10` folds 1–4;
+- `sitecountsangles` folds 1–4;
+- `sitenone` folds 1–4;
+- late fusion `invsqrtw` fold 1.
+
+**Failures and reruns.**
+- The first attempts of `only_gvp__four_class__sitenone__fold3__seed42` and
+  `…fold4…` trained to completion, but their independent replay exceeded the
+  frozen `pmm-v3-replay-1` probability tolerance of 1e-5.
+- Maximum replay difference 1.651e-5 and 1.562e-5; 4 probability values per unit
+  above 1e-5; no identity, label or predicted-class difference.
+- This is GPU floating-point nondeterminism. Only-GVP replays run closest to the
+  tolerance: across 57 earlier passing replays the maximum is 9.96e-6, the median
+  3.5e-6, and 18 exceed 5e-6. Late fusion's maximum is 2.3e-6 and Only-ESMC's
+  6e-7.
+- Each attempt was archived with `archive-failed` (VM
+  `failed_attempts/<unit>/attempt1`) and rerun once, unchanged; both reruns
+  completed and replayed within tolerance.
+- A second failure of any unit would block the final E2 assessment for the
+  user's diagnosis (E2 specification section 8). The frozen tolerance is not
+  changed.
+
+**Evidence.**
+- Copy `step_e2_evidence/evidence_20261011T233244Z` (713 files, SHA-256 checked
+  on both ends, `safe_to_stop` true).
+- Interim workstation assessment `step_e2_evidence/assessments/E2_20261011T233436Z`
+  (SHA-256 `1875ee9b…`): 77 units verified against their receipts and uploaded
+  acknowledgments (13 E2 and 64 reused or A4 units), 23 E2 units missing, none
+  invalid; the original A4 result re-derived exactly.
+- Interim comparisons, descriptive only. Every declared comparison is completed
+  regardless of intermediate scores:
+  - C1, Only-GVP `wd10` vs the Only-GVP baseline: mean +3.59 (folds +6.04 /
+    +3.59 / +3.50 / +1.21), verdict "better";
+  - C10, Only-GVP `wd10` vs the original selection: −0.46, no clear difference;
+  - C2, C9 and C11 (`sitecountsangles`): no clear difference.
+
+**Spending (estimated charges, disk counted once; 23:34 UTC).**
+- **About $35.06 spent**; the E2 launch control projects $41.06 with its reserve,
+  within $55.
+- Daily use 2026-10-11: 7 h 56 min / $8.05 of 12 h / $18.
+- Remaining E2: 23 fits, two sessions (about 15 + 8), about 5–5.6 VM hours,
+  $4.3–4.8.
+- Total E → E2 → F about $41.3–48.3.
+
+**Next:** E2 session 2 after 00:00 UTC (new UTC day), then session 3, the final
+workstation E2 assessment and its log entry.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 authorized, running)
+- Last execution evidence: 2026-10-11 (v3 step E sessions 8 and 9, 4 h 37 min, $4.06 gross).
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 13:03 UTC); disk and archive snapshot kept (about $0.55/day).
+Next: E2 sessions with `pmm_v3_step_e2.py` (session 1 from 20:15 UTC, then after 00:00 UTC), then the workstation E2 assessment and log; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-034
 
 2026-10-11 — **user decisions at the E2 GPU-start gate: E2 authorized now, the
