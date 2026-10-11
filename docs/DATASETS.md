@@ -519,7 +519,7 @@ Tracked metadata:
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
 | Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set |
-| Exact Zenodo PinMyMetal | Yes | Unknown, possibly evaluated (fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No | Active evaluation status unconfirmed; treat as potentially opened. Source test-file metadata read on 2026-10-03 (below) |
+| Exact Zenodo PinMyMetal | Yes | Unknown, possibly evaluated (fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No | Active evaluation status unconfirmed; treat as potentially opened. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11 (below) |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
@@ -575,6 +575,19 @@ file's per-label row counts into the agents' working output. No DeepMzyme or PMM
 model was evaluated on test rows, no predictions were made, and nothing was
 selected. This is label and feature metadata exposure of the source behind the
 exact Zenodo test, not an evaluation; any later use of that test must disclose it.
+
+**2026-10-11 incidental byte scan of the exact Zenodo test directory:** during the
+read-only v3 schedule/error review
+([log v3-032](campaigns/pmm_ion_metal_v3/log.md#v3-032)), one analysis agent ran two
+recursive `grep -rl` searches (13:32:31 and 13:32:38–13:34:41 UTC; the second
+stopped after about two minutes) over `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`
+for two site-resolution method names, filtering out `/test` paths. They read file
+bytes under `dataset/test/`, `dataset/site_crosswalk.csv` and the combined tarball.
+No match, test content, label, prediction or count was displayed (only the names
+of the dataset's top-level entries); nothing was used or selected, and which files
+were read cannot be reconstructed. This is a rule breach of held-out file reads
+without exposure of content, not an evaluation; any later use of that test must
+disclose it.
 
 ## Current bundles
 

@@ -40,8 +40,8 @@ GPU start uses applicable recorded authorization within the budget; see
 `pmm_v3_campaign.py` (profile, recipes, units, guards), `run_pmm_v3_campaign.py`
 (command line), `pmm_v3_assessment.py` (all numbers and decisions); steps D–E are
 launched with `pmm_v3_step_d.py` ([Round R section](#v3-step-d-regularization-amendment));
-the planned step E2 ([E2 section](#v3-step-e2-individual-confirmation-amendment-planned-not-implemented))
-has no launcher, assessor or manifest yet. The v2
+step E2 ([E2 section](#v3-step-e2-individual-confirmation-amendment-planned-not-implemented))
+with `pmm_v3_step_e2.py` and assessed with `pmm_v3_e2_assessment.py`. The v2
 tools and the frozen `_code/pmm_core_scope_v2` checkout stay untouched.
 
 Order (each step refuses to run out of order):
@@ -366,26 +366,22 @@ histories, terminal validation predictions, independent replay and persistence
 receipts, and assessment tables including every tested strength and failure.
 The $40 gross ceiling and one-shot held-out policy are unchanged.
 
-### v3 step E2 individual-confirmation amendment (planned; not implemented)
+<a id="v3-step-e2-individual-confirmation-amendment-planned-not-implemented"></a>
+### v3 step E2 individual-confirmation amendment (implemented and CPU-checked; not run)
 
 **Planned on 2026-10-08 ([log v3-025](campaigns/pmm_ion_metal_v3/log.md#v3-025));
-its assessment specification is frozen (2026-10-08); no code, command,
-manifest or evidence exists for it, and nothing has been run.** This section names what exists, what refuses today and what must
-be built; it contains no E2 command, because none exists. Executable E2 commands
-are added here only after the tooling exists and passes its checks. The rules
-(fits, comparisons, replacement, completion) are owned by the
-[campaign plan, step E2](campaigns/pmm_ion_metal_v3/plan.md#steps); the budget by
-its [Budget section](campaigns/pmm_ion_metal_v3/plan.md#budget). The assessment and
-replacement rules were frozen on 2026-10-08 in the separate
-[E2 assessment specification](campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)
-([log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)); the specification is a
-document, not tooling, and nothing below exists as code.
+rules frozen the same day in the [E2 assessment specification](campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)
+([log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)); tooling implemented and
+CPU-checked on 2026-10-11 ([log v3-033](campaigns/pmm_ion_metal_v3/log.md#v3-033)); no E2
+fit has run and no GPU start is authorized.** The rules (fits, comparisons, replacement,
+completion) are owned by the [campaign plan, step E2](campaigns/pmm_ion_metal_v3/plan.md#steps)
+and the specification; the budget by the plan's [Budget section](campaigns/pmm_ion_metal_v3/plan.md#budget).
 
-Fixed context (planned): Only-GVP and graph-level late fusion, `four_class`,
-folds 1–4, seed 42, the recorded step-B execution setting (FP32, three lanes),
-50-epoch cosine schedule, terminal checkpoint; class weights recomputed per
-training fold as in every v3 fit. Each candidate is an existing prepared recipe
-that changes exactly one setting from its control:
+Fixed context: Only-GVP and graph-level late fusion, `four_class`, folds 1–4, seed 42,
+the recorded step-B execution setting (FP32, three lanes), 50-epoch cosine schedule,
+terminal checkpoint; class weights recomputed per training fold as in every v3 fit.
+Each candidate is an existing prepared recipe that changes exactly one setting from its
+control (checked on CPU against the resolved trainer configuration):
 
 | Family | Recipe ID (exists in the frozen runner) | Trainer setting | Control on folds 1–4 | Fits |
 |---|---|---|---|---:|
@@ -398,115 +394,81 @@ that changes exactly one setting from its control:
 | Late fusion | `wd10` | `--weight-decay 1.0` | late fusion `baseline` | 4 |
 | Only-GVP | `sitecountsangles` | `--site-geometry-features counts_angles` | `sitenone` (`--site-geometry-features none`; 4 new control fits) and the Only-GVP `baseline` | 4 + 4 |
 
-**36 fits in total** (32 candidate fits, 4 `sitenone` controls); no combination,
-other strength, extra seed or five/six-class variant; the cost-gated
-augmentations (`posnoise01`, `outerdrop01`) stay "not tested (cost)". The
-`sitenone` and `sitecountsangles` fold-0 runs of step D showed that their
-site-geometry graph sets build inside the prepare phase
-([log v3-022](campaigns/pmm_ion_metal_v3/log.md#v3-022)), so no cold-cache
-allowance is expected; the admission forecast is still refreshed before launch.
+**36 fits in total** (32 candidate fits, 4 `sitenone` controls); no combination, other
+strength, extra seed or five/six-class variant; the cost-gated augmentations stay "not
+tested (cost)". The site-geometry graph sets were built in step D, so every E2 unit is
+forecast warm.
 
-What exists today (verified 2026-10-08):
+Tools (workstation; `P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python` from the v3
+worktree):
 
-- the trainer options and the eight recipe definitions above, in the
-  hash-frozen `pmm_v3_campaign.py` (never edited; the E2 manifest must bind
-  the existing definitions, not add new ones);
-- the step E four-class baselines on folds 1–4 (all 12 complete; the eight
-  Only-GVP and late-fusion ones are E2's reused controls) and the step D
-  fold-0 seed-42 and seed-43 runs of every candidate and of `sitenone`
-  (screening evidence; the seed-42 run is the development-fold value);
-- the A4 statistical helpers in `pmm_v3_assessment.py` (`paired_intervals`,
-  `compare`, `summarize`, `stage6_tie_key`) and its artifact validation
-  (`load_unit`, `validate_rows`, `expected_identity`), which the E2 assessor
-  is to reuse, not copy;
-- the lane, launch, admission, wait, pull, recovery, duplicate-run and
-  evidence logic of `pmm_v3_step_c.py`, reused by `pmm_v3_step_d.py`.
+- `pmm_v3_step_e2.py` (standard library only) is the only admission check for E2 units:
+  the VM runner checks fold, ESMC, extension and hashes but not step membership, so never
+  call `run_pmm_v3_campaign.py` directly. It reuses the step C lane, launch, wait, pull,
+  recovery and evidence logic unchanged; the fits run from the step D/E extension code
+  directory (`DeepMzyme_v3_ext1`, hash-frozen runner files), launch folder
+  `step_e2/launch`, evidence under `step_e2_evidence/` on Data1. `pmm_v3_step_d.py --step E`
+  refuses every E2 unit and this launcher refuses every other unit.
+- `pmm_v3_e2_assessment.py` assesses on the workstation, after `evidence`, from the
+  Data1 copies (no VM needed): a temporary read-only view of the campaign root from the
+  newest E2 evidence copy and the durable lane copies; every unit it uses must equal an
+  acknowledged host-pull receipt file by file; the frozen artifact checks of
+  `pmm_v3_assessment.load_unit` apply unchanged; as a self-check the original A4 step E
+  result is re-derived from the same view and must equal the saved assessment, or no
+  final selection is written. It pins the E2 JSON hash, uses the A4 interval methods
+  (`paired_intervals`, `compare`; a five- or six-class original selection is summarized
+  under its own scheme), and writes `step_e2_evidence/assessments/E2_<UTC>/assessment.json`
+  with all 17 comparisons, both conclusions per candidate, the replacement reasons and a
+  machine-readable final selection.
 
-What refuses today, and what does not (verified 2026-10-08; the second point is a
-gap, not a safeguard):
+Every E2 launch is refused before anything starts unless all of these hold: the CPU
+readiness report and the VM extension record agree with the worktree (as for steps D and
+E); the write-once E2 manifest verifies (it binds the frozen E2 and A4 specifications, the
+complete original step E assessment and its selection by SHA-256, the final step D
+assessment, the extension record, the runner files, the E2 launcher and assessor, and the
+checkpoint and prediction hashes of every reused control and development unit); the
+write-once ceiling record exists; the write-once authorization record names exactly this
+manifest and this ceiling record; and the estimated campaign charges since the ceiling's
+baseline (closed controller sessions at $0.858624 per running hour, the running session
+counted to its hard stop, storage at $0.55 per calendar day) plus the recorded reserve stay
+within the ceiling. A tooling change after the manifest was recorded refuses every launch
+until a new manifest and a new authorization are recorded (old records archived by hand
+with a dated log entry).
 
-- the workstation launcher refuses: `pmm_v3_step_d.py --step E launch` admits
-  only the 36 neutral-test units and the final-recipe improvement units
-  (`units --step E`), so every E2 unit is refused as outside step E;
-- the VM runner does not: `run_pmm_v3_campaign.py --action run --unit …` checks
-  the fold, the ESMC directory, the extension record (needed by `wd10`), the
-  campaign and specification hashes and the retry identity, but not whether
-  the unit belongs to a planned step, so an E2 unit name passed to it directly
-  would not be refused by that path. Until the E2 manifest gate exists, the only
-  protections are the handoff rule never to call the VM runner directly and
-  the controller's session requirement; the E2 manifest and launcher must add
-  the admission check before any E2 unit may run;
-- `pmm_v3_step_d.py extend` and the runner's `extend_campaign` refuse once step
-  D has started, so the E2 amendment manifest needs a chained extension record
-  bound to `v3-ext1-round-r` (the same gap the Only-ESMC fairness proposal
-  recorded in [log v3-022](campaigns/pmm_ion_metal_v3/log.md#v3-022));
-- the A4 assessor pins its specification hash, so an E2 assessment needs its
-  own frozen specification and entry point, with the A4 files and
-  `FROZEN_SPEC_SHA256` untouched. Its `compare` helper summarizes the control
-  as `four_class` (`summarize(control, "four_class")`) and takes only
-  `challenger_target`, so it is reusable unchanged for the eight
-  candidate-versus-control comparisons but not for "candidate versus the
-  original step E selection" when that selection is a five- or six-class
-  cell. The E2 assessor must support an original selection trained with four,
-  five or six classes: common-four BA from the collapsed predictions on
-  matched folds, the selection's native recalls under its own scheme, and the
-  same interval rule.
+```bash
+P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
+# CPU, once (done 2026-10-11, log v3-033; a second call is refused): the manifest and the ceiling record
+$P pmm_v3_step_e2.py build-manifest --log-entry v3-033
+$P pmm_v3_step_e2.py record-ceiling --usd 55 --spent-usd 31.98 --spent-at 2026-10-11T13:10:00Z \
+  --spent-source "log v3-031 (one dated calculation, estimated charges, disk counted once)" --log-entry v3-033
+$P pmm_v3_step_e2.py units; $P pmm_v3_step_e2.py gates; $P pmm_v3_step_e2.py spend   # offline
+# Only after the user's E2 GPU-start authorization is logged (dated entry v3-NNN):
+$P pmm_v3_step_e2.py record-authorization --log-entry v3-NNN
+# Every E2 GPU session (gpu-use-skill; VM running under the controller):
+$P pmm_v3_step_e2.py status
+$P pmm_v3_step_e2.py launch UNIT@0 UNIT@1 UNIT@2 --no-wait
+$P pmm_v3_step_e2.py wait --any UNIT_A UNIT_B UNIT_C      # name every running unit; 'status' before each refill
+$P pmm_v3_step_e2.py pull --lanes K                       # after "awaits its verified host pull"
+$P pmm_v3_step_e2.py evidence                             # before every vm-stop
+# After any session (workstation, CPU; the newest E2 evidence copy):
+$CAP $P pmm_v3_e2_assessment.py
+```
 
-To build before any E2 fit (not started; names are descriptions, not commands):
+Failures: as in steps C–E, a failed or interrupted unit is pulled, `archive-failed UNIT`
+moves its first attempt aside and it is rerun once, unchanged (`recover-lane K` first for
+an interrupted lane); a second failure blocks the final E2 assessment for diagnosis (E2
+specification section 8). E2 is complete when all 36 fits have verified evidence, all 17
+comparisons are reported and the assessment names one final selection; step F takes that
+selection, or the unchanged A4 selection if the user cancels E2 by a dated log entry.
 
-1. the frozen E2 assessment specification: **done on 2026-10-08**
-   (`e2_assessment_spec.md` and `e2_assessment_spec.json` next to the A4 files,
-   SHA-256 values in [log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)) with
-   the 17 declared comparisons, the Bonferroni sensitivity family, the Option B
-   replacement rule, the two-conclusion vocabulary and the tie order; the E2
-   assessor pins the JSON hash;
-2. the chained amendment manifest: the 36 allowed units, the reused controls
-   by checked identity, the actual completed original step E assessment and
-   its selection by assessment-file hash (never a projected winner), the E2
-   specification hash, and hashes binding source, configuration and evidence; refused when
-   provenance differs, the original E assessment is incomplete, the user's
-   recorded E2 GPU-start authorization is missing or a persistence check fails;
-3. the E2 launcher (own launch and evidence directories; canonical run
-   identities; the existing admission, session, lane and host-pull guards;
-   every listed unit completed regardless of intermediate scores; one
-   unchanged retry after a failure; a second failure blocks the final
-   assessment);
-4. the E2 assessor (report plus a machine-readable final selection naming the
-   chosen recipe, configuration and evidence references; the original A4
-   outputs preserved; a comparison that accepts a four-, five- or six-class
-   original selection as the control, since `compare` cannot be reused
-   unchanged for that case);
-5. tests for the required CPU checks: exactly 32 candidate fits plus four
-   controls, no combinations or extra seeds; each candidate resolves to its
-   control plus exactly its own setting; the geometry comparisons and the
-   baseline reuse; refusal of missing, duplicated, mismatched or unreplayed
-   evidence; interval adjustment, recall gates by comparator, ties, incomplete
-   results and retention of the original selection; mixed-target controls (a
-   five- or six-class original selection compared on common-four BA with its
-   native metrics preserved); launch refusal without the user's recorded E2
-   GPU-start authorization; persistence and recovery; and the unchanged behaviour of the
-   original step E assessor and launcher;
-6. before GPU execution: the existing launcher and assessment tests
-   (`tests/test_v3_step_d_launcher.py`, `tests/test_v3_step_c_launcher.py`,
-   `tests/test_v3_assessment.py`, `tests/test_v3_extension.py`,
-   `tests/test_v3_campaign.py`) with the new E2 tests, `tests/smoke_checks.py`,
-   and `tools/check_docs_contract.py`; a refreshed forecast; the revised
-   ceiling recorded in execution controls; the user's separate E2 GPU-start
-   authorization (the CPU implementation is accepted planned work after the
-   original E assessment and is not a GPU start).
-
-Step F does not start until E2 is complete (all 36 fits with verified
-evidence, all 17 declared comparisons reported, one final selection), unless the
-user cancels E2 by a dated log entry; step F then takes the unchanged A4
-selection as its input.
-
-Outputs when run: per-unit configuration, histories, terminal validation
-predictions, independent replay and persistence receipts as for every v3 unit;
-the E2 assessment with every fold's change, mean, SD, per-class recalls,
-ordinary and adjusted intervals for all 17 comparisons, the fold-0 development
-value shown separately, and the final selection. The original step E
-assessment, the A4 specification and the `both_results_secondary` final-test
-label are unchanged by E2.
+Outputs: per-unit configuration, histories, terminal validation predictions, independent
+replay and persistence receipts as for every v3 unit; the E2 assessment with every fold's
+change, mean, SD, per-class recalls, ordinary and adjusted intervals for all 17
+comparisons, the fold-0 development value shown separately, five-fold descriptive
+summaries, the original selection unchanged and the final selection. The original step E
+assessment, the A4 specification and the `both_results_secondary` final-test label are
+unchanged by E2.
 
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
 
