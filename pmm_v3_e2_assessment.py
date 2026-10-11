@@ -595,8 +595,11 @@ def main(argv=None) -> int:
     parser.add_argument("--readiness-dry-run", action="store_true",
                         help="CPU readiness check before any E2 fit: allows another step's evidence copy and needs "
                              "--out-dir outside the E2 assessments")
-    parser.add_argument("--no-a4-parity", action="store_true", help="skip re-deriving the original A4 result")
+    parser.add_argument("--no-a4-parity", action="store_true",
+                        help="readiness dry run only: skip re-deriving the original A4 result")
     args = parser.parse_args(argv)
+    require(args.readiness_dry_run or not args.no_a4_parity,
+            "An E2 assessment always re-derives the original A4 result; --no-a4-parity is for readiness dry runs only")
     data = args.data_root
     evidence_root = data / e2.EVIDENCE_DIR
     manifest_path = args.manifest or evidence_root / e2.MANIFEST_NAME
