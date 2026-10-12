@@ -3,6 +3,44 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-036
+
+2026-10-12 — **E2 session 2 (campaign session 11): 25 of 36 E2 fits complete;
+no failure** (validation data only; folds 1–4; seed 42; no held-out access;
+frozen source, rules and manifest unchanged; user authorization of
+[v3-034](#v3-034)).
+
+**Session.**
+- `session-20261012T000416Z-99fbf5c8`, `--hours 4`, started at the first attempt
+  under the new UTC day's caps, 00:04:16–02:55 UTC: **2 h 51 min, $2.51 gross**.
+- Smoke check passed; every E2 gate passed.
+- Batches `e2-20261012T000637Z`, `…T004854Z`, `…T013043Z` and
+  `…T021229Z`, each waited on as a whole and pulled.
+- 12 fits completed, replayed, pulled and acknowledged at the first attempt:
+  late fusion `invsqrtw` folds 2–4, `meanagg` folds 1–4, `gvpaux03` folds 1–4
+  and `resdrop01` fold 1.
+- The next late-fusion admission at 02:53:42 UTC was refused by the launcher's
+  rule: 3,861 s were left and 3,960 s are needed.
+- Evidence copy `step_e2_evidence/evidence_20261012T025417Z` (825 files,
+  `safe_to_stop` true). TERMINATED verified at 02:55:45 UTC.
+
+**Spending (estimated charges; 02:56 UTC):** about **$37.59 spent**. The E2
+launch control projects $43.59 with session 3 counted to its hard stop and the
+$6 reserve, within $55. Daily use 2026-10-12: 2 h 51 min / $3.69 of 12 h / $18.
+
+**Session 3** (`session-20261012T025638Z-baee022b`, hard stop 06:53:29 UTC)
+started at 02:56:38 UTC for the remaining 11 fits: `resdrop01` folds 2–4,
+`esmdrop02` folds 1–4 and `wd10` folds 1–4.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-11 v3 step E2 running: 13 of 36 fits after session 1)
+- Last execution evidence: 2026-10-11 (v3 E2 session 1, 3 h 18 min, $2.91 gross).
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 23:34 UTC); disk and archive snapshot kept (about $0.55/day); about $35.06 spent ([log v3-035](docs/campaigns/pmm_ion_metal_v3/log.md#v3-035)).
+Next: E2 sessions 2 and 3 with `pmm_v3_step_e2.py` after 00:00 UTC (23 fits left, [log v3-035](docs/campaigns/pmm_ion_metal_v3/log.md#v3-035)), then the workstation E2 assessment and log; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-035
 
 2026-10-11 — **E2 session 1 (campaign session 10): 13 of 36 E2 fits complete;
