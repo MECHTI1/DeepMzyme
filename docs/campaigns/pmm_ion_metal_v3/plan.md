@@ -492,16 +492,22 @@ rule and labels are frozen in
   summary is computed from the same predictions.
 - Full test: compared with PMM's published test values and labelled "exact,
   possibly overlapped PMM test; includes rows from previously opened tests".
-- Clean subset (no chain that is a near-copy of a training chain under the A1
-  rule; previously opened PDB IDs removed): secondary by default, because the
+- Clean subset (the explicit rule approved 2026-10-12, [log v3-045](log.md#v3-045); step F plan implementation
+  notes): rows whose PDB ID is a training PDB ID, rows with a context chain of at least 30 residues that is
+  identical to or a near-copy of a training chain under the A1 rule, rows whose context chains cannot be verified,
+  and previously opened PDB IDs are removed; chains under 30 residues are never compared, a disclosed limitation.
+  Secondary by default, because the
   2026-09-24 Zenodo run may have scored the whole test set and test label counts
   were seen on 2026-10-03. It becomes the primary route only if the user records
   it so in Plan before step E, and it is then still labelled "not pristine".
-- Before any test access, freeze the primary report, the test-row and
-  clean-subset rules with membership hashes, the refit checkpoint and seed, no
-  ensemble, and the calibration rule (none unless declared), and record them in
-  the [DATASETS ledger](../../DATASETS.md#test-use-ledger). Reading test
-  sequences and structures for this preparation is recorded there too.
+- Before any test-side read, freeze the primary report, the test-row and
+  clean-subset rules, the preparation code, the refit checkpoint, seed and epoch
+  count, no ensemble and the calibration rule; after the label-blind preparation
+  and before any prediction or label read, freeze the derived memberships by
+  hash; record both in the [DATASETS ledger](../../DATASETS.md#test-use-ledger)
+  (two freezes, approved 2026-10-12, [log v3-045](log.md#v3-045); procedure,
+  amendment and one-pass rules in the [step F plan](step_f_plan_draft.md)).
+  Reading test sequences and structures for this preparation is recorded there too.
 
 ## Open decisions
 

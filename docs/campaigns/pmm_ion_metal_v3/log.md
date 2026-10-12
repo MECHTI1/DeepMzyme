@@ -3,6 +3,64 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-045
+
+2026-10-12 (about 18:30 UTC) — **the user approved the step F plan and authorized F1–F2: the commit of the prepared
+work, the binding records and one bounded GPU session for the Stage 6B refit. The later test stages stay separately
+gated.**
+
+**User decision:**
+- **Approved design:** the current step F plan (draft v3 with the implementation notes of v3-042 to v3-044). This
+  includes the documented clean-subset rule, the workstation-CPU test ESMC route, the two-freeze procedure, the
+  Freeze 1 amendment procedure and the both_results_secondary disclosures. The execution authorization ends after F2.
+- **Finalize and commit:**
+  - record this approval and align the remaining campaign plan wording with the approved design;
+  - run the documentation check and verify that the staged implementation matches the tested files;
+  - commit the reviewed v3-038 to v3-044 work and these approval documents with the repository hook;
+  - include only the intended campaign paths, preserve existing work, and do not push;
+  - reuse completed verification, with no repeated broad audit, compatibility check or cross-validation fit.
+- **Bind the selection:** use the canonical playbook sequence to bind the selection, manifest, ceiling and
+  authorization to the committed files and verified evidence. Retained settings:
+  - `gvp_late_fusion__four_class__baseline`;
+  - the 50-epoch cosine schedule and the terminal checkpoint at epoch 50;
+  - seed 42, batch 16, FP32 and the selected optimizer settings;
+  - the full 7,398-ion non-test cohort with full-cohort class weights and normalization;
+  - no validation-based checkpoint selection, calibration or ensemble.
+
+  The 10-epoch comparison stays completed and not adopted. No other optimization candidate is authorized.
+- **One bounded GPU session:**
+  - start the existing managed VM after the required preflight, for this training-only refit, with the two-hour
+    automatic stop, unchanged controller safeguards and the $55 campaign ceiling;
+  - report the verified limits and the spending before the start, then proceed without asking again;
+  - use only the sanctioned controller and the campaign launcher;
+  - one unchanged rerun only if it fits the remaining session and admission limits;
+  - a second billable start, an extension, a migration or a fallback needs separate authorization;
+  - the fit is not shortened, and no safeguard is weakened.
+- **Verify, persist and stop:** the reload check, the terminal checkpoint and configuration, verified durable
+  evidence, the refit receipt, vm-stop with a verified TERMINATED, then an updated handoff and STATUS.
+- **Stop before Freeze 1:** no read of test structures, sequences, identifiers or labels, no test embeddings,
+  predictions or report. Prepare the concrete Freeze 1 approval package without opening test data.
+
+**Done before the binding:**
+- Commit `0e845d8` holds the reviewed v3-038 to v3-044 work (18 paths); the hook ran with 0 strict failures. The
+  staged blobs equal the tested files: `pmm_v3_step_f.py` `a91e0db3…`, `run_pmm_v3_step_f.py` `29427650…`,
+  `pmm_v3_test_prep.py` `2df11024…`, `pmm_v3_step_f_report.py` `b4c7dacd…`, `step_f_spec.json` `04d22cc4…`,
+  `tests/test_v3_step_f.py` `89468a62…`.
+- `src/` is unchanged since the VM's extension bundle `43d26ff`, so the VM code has every function the refit and its
+  reload check use.
+- **Aligned on approval** (step F plan F7 item 5): the plan.md step F freeze sentence and the clean-subset summary.
+  The step F plan is marked approved.
+- **Spending:** $40.81 at 18:31 UTC (offline `pmm_v3_sched10.py spend`; estimated gross charges).
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-12 v3: finalizing at 50 epochs; step F tooling ready, CPU ESMC check passed; approvals pending)
+- Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted); step F not started, tooling CPU-checked and the CPU test ESMC route checked ([log v3-044](docs/campaigns/pmm_ion_metal_v3/log.md#v3-044)), plan not approved; no Stage 7.
+- Authorized now: nothing to run; the $55 gross ceiling (about $40.8 spent at 2026-10-12 17:30 UTC; to finish $42.8–48.2); [v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) not activated; no Round C.
+Next: the user's decisions in [step F plan F7](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md#f7-decisions-for-the-user-none-inferred): plan approval, the commit, the refit's GPU start (one session, $0.9–1.3); later the freezes and the one test pass; open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-044
 
 2026-10-12 (about 18:00–18:30 UTC) — **the CPU ESMC compatibility check passed: the workstation-CPU test ESMC route is

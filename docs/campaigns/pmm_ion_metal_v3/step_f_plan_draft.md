@@ -1,6 +1,6 @@
-# PMM ion metal v3 — step F execution plan (draft v3 for approval)
+# PMM ion metal v3 — step F execution plan (draft v3, approved 2026-10-12)
 
-Status: **draft, not approved; tooling prepared, corrected and CPU-checked, nothing run on real test data**
+Status: **approved by the user on 2026-10-12 ([log v3-045](log.md#v3-045)); F1–F2 (the refit) authorized; Freeze 1, Freeze 2 and the single test pass remain separately gated; tooling prepared, corrected and CPU-checked, nothing run on real test data**
 (2026-10-12: the user chose to finalize with the 50-epoch selection, [log v3-042](log.md#v3-042); one CPU
 correction round, [log v3-043](log.md#v3-043); the CPU ESMC compatibility check passed, [log v3-044](log.md#v3-044);
 see [Implementation notes](#implementation-notes-2026-10-12-log-v3-042) and the [specification](step_f_spec.json)).
@@ -54,8 +54,8 @@ report recovery from immutable predictions are tested requirements.
    refit launch ($55 recorded for E2 and S10; forecast in F6).
 6. The CPU readiness checks of F8 pass on synthetic or training-side data. **Met** (log v3-043: the corrected tools,
    38 tests including the two synthetic fits, and a scripted rerun of readiness stages A–D).
-7. The user approves this plan. Later, separately, the user gives three go-aheads: Freeze 1 before F3b, Freeze 2
-   after F3b, and the single test pass (F4) after Freeze 2 (see F7).
+7. The user approves this plan. **Met** (log v3-045). Later, separately, the user gives three go-aheads: Freeze 1
+   before F3b, Freeze 2 after F3b, and the single test pass (F4) after Freeze 2 (see F7).
 
 ## F1. Selection input (CPU; no fit; no judgment)
 
@@ -274,6 +274,9 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
 ## F7. Decisions for the user (none inferred)
 
 One list, in order; the handoff, the log and STATUS use the same one.
+
+**Status 2026-10-12 ([log v3-045](log.md#v3-045)):** items 1–5 are decided (the plan approved, the check done, the
+commit and the refit's GPU start authorized, plan.md aligned). Item 6, the three later go-aheads, is pending.
 
 1. Approve or amend this plan (draft v3 with the implementation notes of log v3-042 and v3-043), including:
    - the two-freeze order, the epoch binding (`E_sel` = 50), and the F4 go-ahead with its campaign-wide claim;

@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-12 finalizing at 50 epochs; step F tooling ready, CPU ESMC checked, approvals pending; log v3-044)
+Status: active (2026-10-12 step F plan approved; the Stage 6B refit authorized; log v3-045)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
