@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-12 step E2 complete, selection unchanged; step F next; log v3-037)
+Status: active (2026-10-12 finalizing at 50 epochs; step F tooling ready, CPU ESMC checked, approvals pending; log v3-044)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
@@ -26,7 +26,10 @@ The [regularization amendment](log.md#v3-017) is [implemented](log.md#v3-018).
 [Step E2](plan.md#steps) ([log v3-025](log.md#v3-025)): the eight remaining step D passes
 singly on folds 1–4 (36 fits, seed 42), before step F unless the user cancels it; rules
 frozen in the [E2 specification](e2_assessment_spec.md) ([log v3-028](log.md#v3-028));
-completed: no candidate replaced the A4 selection ([log v3-037](log.md#v3-037)).
+completed: no candidate replaced the A4 selection ([log v3-037](log.md#v3-037)). The pre-step-F
+10-epoch schedule comparison ran and was not adopted ([handoff section 11](handoff.md#11-pre-step-f-review), [log v3-041](log.md#v3-041)).
+Step F tooling is ready ([handoff section 12](handoff.md#12-step-f-tooling-prepared-2026-10-12-log-v3-042)); its
+[plan](step_f_plan_draft.md) awaits approval.
 A new chat continues from the [handoff](handoff.md) (ready-to-paste prompt, verified state, evidence paths).
 Execution follows the authorization and readiness state in
-[STATUS](../../../EXPERIMENT_STATUS.md); this amendment does not raise the ceiling.
+[STATUS](../../../EXPERIMENT_STATUS.md); the ceiling is $55 ([log v3-025](log.md#v3-025)).

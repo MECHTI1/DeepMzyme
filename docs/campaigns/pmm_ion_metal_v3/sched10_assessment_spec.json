@@ -1,0 +1,95 @@
+{
+  "adoption_rule": {
+    "a_complete": "all four comparison fits completed in all four senses (training completed, worker exit 0, artifacts persisted, host acknowledgment uploaded), replayed under pmm-v3-replay-1, with verified durable copies; the four 50-epoch controls equal the evidence bound by the launch manifest",
+    "b_interval": "both unadjusted 95% lower bounds of S1 above zero: fold bootstrap (percentile, 10,000 resamples, seed 42) and t interval with 3 degrees of freedom",
+    "c_min_mean_gain": 0.002,
+    "c_min_mean_gain_strict": true,
+    "d_no_missing_or_zero_common4_recall_in_any_fold": true,
+    "d_recall_drop_limit": 0.03,
+    "decision": "adopt the 10-epoch schedule for the step F refit only if (a), (b), (c) and (d) all hold; otherwise not adopted, with every failed condition named by class and magnitude"
+  },
+  "bootstrap_interval": "percentile",
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 42,
+  "candidate_epochs": 10,
+  "candidate_label": "sched10",
+  "checkpoint_rule": "terminal",
+  "comparison": {
+    "candidate": "the four 10-epoch fits",
+    "control": "the four verified 50-epoch fits of the selected cell",
+    "estimand": "mean over folds 1-4 of the paired common-four balanced-accuracy differences (candidate minus control)",
+    "id": "S1",
+    "metric": "common-four balanced accuracy at the terminal checkpoint"
+  },
+  "confidence": 0.95,
+  "control_epochs": 50,
+  "controls": [
+    "gvp_late_fusion__four_class__baseline__fold1__seed42",
+    "gvp_late_fusion__four_class__baseline__fold2__seed42",
+    "gvp_late_fusion__four_class__baseline__fold3__seed42",
+    "gvp_late_fusion__four_class__baseline__fold4__seed42"
+  ],
+  "decision_log_entry": "v3-039",
+  "development_fold": {
+    "candidate_run": "probe-w1-fp32-r1__gvp_late_fusion__four_class__baseline__fold0__seed42",
+    "control_run": "probe-full-fp32__gvp_late_fusion__four_class__baseline__fold0__seed42",
+    "fold": 0,
+    "role": "reported separately as the development fold; never inside an interval; step-B probes are not reused as evidence or namespace for the gate",
+    "seed": 42
+  },
+  "excluded": [
+    "other epoch counts",
+    "other seeds",
+    "a fold-0 rerun",
+    "other recipes, families or targets",
+    "combinations with any other change",
+    "sweeps",
+    "a second assessment of the same fits with changed rules"
+  ],
+  "family": "gvp_late_fusion",
+  "folds": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "held_out_test_accessed": false,
+  "id": "v3-ext2-sched10",
+  "interpretation": "Exploratory and post hoc: the hypothesis came from fold-0 step-B probes that were seen before this comparison was proposed. Folds 1-4 were already used by the A4 and E2 decisions; one training seed (42). Passing the adoption rule does not establish independently confirmed superiority or robustness across training seeds. The 50-epoch controls were selected on these folds, so their values may be optimistic, which works against the candidate. A failed rule is not evidence of no effect. The step F test stays one-shot and both_results_secondary.",
+  "lr_schedule": "cosine",
+  "outcomes": {
+    "adopted": "adopt the 10-epoch cosine schedule with its terminal checkpoint for the step F refit of the same cell (E_sel = 10); the plan's fixed 50-epoch decision is amended for that refit only, by a dated log entry",
+    "blocked": "a fit failed after its one unchanged rerun: no decision is made; the 50-epoch selection stands unless the user decides otherwise",
+    "not_adopted": "the 50-epoch selection stands (E_sel = 50)"
+  },
+  "recipe": "baseline",
+  "schema_version": 1,
+  "seed": 42,
+  "selection_cell": "gvp_late_fusion__four_class__baseline",
+  "selection_source": {
+    "e2_assessment": "step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json",
+    "e2_assessment_sha256": "6e8047968b6fb086aac8723c4f1ae8ac6289f72f975a9e6cd4b3715a2182058e"
+  },
+  "sensitivity": {
+    "basis": "the 17 declared E2 comparisons plus S1, all on folds 1-4",
+    "method": "bonferroni",
+    "n_contrasts": 18,
+    "role": "sensitivity evidence only; never a gate"
+  },
+  "single_change": "--epochs 10 instead of 50 (the cosine schedule then spans 10 epochs from the same peak learning rates, and the terminal checkpoint is epoch 10); every other trainer setting, input, fold, class weight, seed, precision and lane setting is that of the 50-epoch controls",
+  "step": "S10",
+  "stopping_rule": [
+    "exactly the four listed fits; a failed fit gets one unchanged rerun (same seed and identity)",
+    "a second failure blocks the decision",
+    "one assessment, after all four fits are verified",
+    "whatever the result, the next step is step F; no further pre-step-F experiment follows from this one"
+  ],
+  "t_degrees_of_freedom": 3,
+  "target": "four_class",
+  "units": [
+    "gvp_late_fusion__four_class__sched10__fold1__seed42",
+    "gvp_late_fusion__four_class__sched10__fold2__seed42",
+    "gvp_late_fusion__four_class__sched10__fold3__seed42",
+    "gvp_late_fusion__four_class__sched10__fold4__seed42"
+  ]
+}

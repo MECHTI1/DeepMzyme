@@ -1,0 +1,235 @@
+{
+  "campaign_id": "pmm_ion_metal_v3",
+  "clean_subset": {
+    "c2_details": [
+      "reference chains: the first-model sequences of the frozen training ESMC generation plan (every context chain of every training-cohort ion; the A1 fold builder's input, src/benchmarking/v3_folds.load_inputs), checked against the v3 cohort SHA-256",
+      "query chains: the row's context chains (chains with a residue within 10 A of the target ion in model 0), first-model sequences",
+      "identical eligible chains always match (log v3-043): a chain with more than 10% non-standard residues (mapped to X, never counted as identical by near_copy_identity) cannot reach 90% identity even against itself, so without this clause an exact copy of such a training chain would not exclude its row (training side: 1 of the 1,049 fold-1 context sequences of at least 30 residues, 4uer chain 9, 51 of 71 residues standard)",
+      "limitation, retained and disclosed: a chain shorter than 30 residues is never a near-copy under A1 and is not compared, so a row whose context chains are all shorter is evaluated and not excluded by C2, even when the same peptide is in training (training side: 2 of the 1,500 fold-1 rows); no short-chain exclusion is added; the preparation summary counts such rows",
+      "C2_unverifiable: the row has no context chain (every unscorable row) or a context chain without a first-model sequence",
+      "the near-copy test is symmetric (either chain may be the shorter); the 5-mer prefilter only skips non-identical pairs that cannot reach 90% identity"
+    ],
+    "criteria": [
+      {
+        "definition": "the row's PDB ID (lowercase, four characters) is the PDB ID of any ion in the frozen v3 training cohort (frozen_inputs/train_cohort.csv, all 7,398 training ions)",
+        "id": "C1_training_pdb_id",
+        "reads": "training side only"
+      },
+      {
+        "definition": "any context chain of the row's pocket (a chain with a residue within 10 A of the target ion; first-model ATOM sequence, at least 30 residues) is identical to, or a near-copy of, any training-cohort context chain of at least 30 residues under the A1 rule of the frozen fold set: an identical sequence always matches, as A1 links identical sequences (src/benchmarking/v3_folds.group_pdbs), whatever its standard-residue identity; otherwise global alignment with free end gaps, BLOSUM62, gap open -11, extend -1; identical aligned standard residues >= 90% of the shorter chain's length plus its internal insertion events (src/benchmarking/v3_folds.near_copy_identity with its 5-mer prefilter)",
+        "id": "C2_near_copy_chain",
+        "reads": "training-side sequences and test-side sequences (label-free)"
+      },
+      {
+        "definition": "the row's PDB ID is in the previously opened PDB ID list: the PDB IDs of the structures of the test side of the exact (= non-overlapped) PinMyMetal test set that the DATASETS ledger records as opened (train_and_test_sets_structures_exact_pinmymetal/test, the 316-structure set; Harsh and Common-PDBID 70/30 test IDs are subsets of it), read from structure file names only during the label-blind preparation; its SHA-256 and count are recorded in Freeze 2",
+        "id": "C3_previously_opened_pdb_id",
+        "reads": "identifiers of a previously opened test set (label-free)"
+      }
+    ],
+    "evaluation_order": "every source row receives every applicable code (C1, C2_near_copy_chain or C2_unverifiable, C3); clean_subset = no code",
+    "membership": "a source row belongs to the clean subset only if none of C1-C3 applies and C2 could be evaluated (a row without resolvable context chains cannot be certified and is excluded with reason C2_unverifiable)",
+    "not_excluded": "the exact Zenodo PinMyMetal test itself (possibly evaluated on 2026-09-24) is not an exclusion criterion, because it is the evaluated set; this is disclosed",
+    "role": "secondary; 'not pristine'; never compared with PMM; unscorable members count as errors as in the full test"
+  },
+  "disclosures": [
+    "Labels: both_results_secondary. The full test is an 'exact, possibly overlapped PMM test; includes rows from previously opened tests'. The clean subset is 'not pristine' and is never compared with PMM.",
+    "The exact and non-overlapped PinMyMetal test structure set (the same 316 structures) was opened repeatedly before v3 (DATASETS ledger: 2026-09-18, 2026-09-22, 2026-09-23 and earlier reports). The Harsh and Common-PDBID 70/30 test IDs come from that set.",
+    "The exact Zenodo PinMyMetal test is possibly evaluated: the 2026-09-24 pmm-zenodo-v2 fold-0 relaunch is unconfirmed.",
+    "2026-10-03: the source test file's label and feature metadata were read in aggregate (leak match rates; per-label row counts printed); no evaluation.",
+    "2026-10-11: a recursive byte scan of the exact Zenodo test directory without display (log v3-032); no evaluation.",
+    "Selection used development-validation folds: folds 1-4 were reused across A4, the exploratory E2 and the post-hoc 10-epoch comparison (not adopted); one training seed (42); the terminal-checkpoint rule was chosen after the v2 fold-0 post-hoc epoch analysis; E2 and the schedule comparison do not establish independently confirmed superiority.",
+    "The PMM comparison uses published values only and is not matched; PMM features carry a true-metal label leak (TECH-028); no superiority claim, interval or p-value for the difference is given.",
+    "Clean-subset limitation: a context chain shorter than 30 residues is never a near-copy under the A1 rule, so a pocket whose context chains are all shorter is not excluded by C2 even when the same peptide is in training; the preparation summary counts such rows.",
+    "Test-side ESMC embeddings were generated on the workstation CPU with the model in bfloat16 under bfloat16 autocast, as the ESMC SDK runs on the L4 GPU that generated the training embeddings; same model and precision on a different device, so small numerical differences are possible."
+  ],
+  "freeze1_amendment": {
+    "not_allowed": "after Freeze 2 (the memberships are final) or after the prediction claim: step F stops for the user's decision",
+    "procedure": [
+      "a dated log entry describing the defect and the fix, with the user's go-ahead for the amendment",
+      "the old step_f_evidence/freeze1.json is archived by hand as freeze1.superseded_<UTC>.json (never deleted)",
+      "the fix is committed, and its tests and the affected readiness checks are rerun on synthetic or training-side data",
+      "pmm_v3_step_f.py record-freeze1 --amends <old SHA-256> --prior-test-side-read none|yes --log-entry v3-NNN writes the amended record: it names the superseded record, whether a test-side read happened under it, and every step F tool whose hash differs from the refit manifest's",
+      "a dated DATASETS ledger entry; outputs made under the old Freeze 1 are never reused (their summaries name the old record), so the preparation and the embeddings are repeated into new directories",
+      "the report discloses the amendment"
+    ],
+    "when": "a code fix after Freeze 1 and before Freeze 2; the specification is bound into the refit identity from bind-selection on, so changing it is not an amendment (refit-receipt and Freeze 1 refuse it) and needs the user's decision on a refit rerun or a tooling change"
+  },
+  "freeze_order": [
+    "F1 selection record (CPU; binds the E2 selection and the schedule decision)",
+    "F2 refit (training data only) with its receipt and reload check",
+    "Freeze 1: rules, code hashes (equal to the refit manifest's), bound checkpoint, seed, epochs, report specification and disclosures recorded in the DATASETS ledger, with the user's go-ahead, before any test-side read; the test-side tools run only under the recorded Freeze 1 (its canonical path, a v3-NNN go-ahead, no placeholder) and only with the exact code it binds; a code fix after Freeze 1 needs an amended Freeze 1 (freeze1_amendment)",
+    "F3b label-blind preparation and test-side ESMC generation on the workstation CPU (test structures, sequences and identifiers; label-bearing cells pass through the CSV reader and are discarded unused)",
+    "Freeze 2: the derived memberships and inventories by SHA-256, bound to Freeze 1, with the user's go-ahead, before any prediction or label read; the preparation and the embeddings must record the same Freeze 1",
+    "F4 single prediction pass, after its own logged go-ahead (recorded in the claim): a campaign-wide write-once claim before any test structure is opened or any prediction is made, immutable predictions, then the report, the only component that uses a label value"
+  ],
+  "held_out_test_accessed": false,
+  "label_file": {
+    "code_to_common_four": {
+      "1": "Mn",
+      "2": "Class VIII",
+      "6": "Cu",
+      "7": "Zn"
+    },
+    "column": "label_metal",
+    "other_codes": "rows whose label code is not one of the four are counted and listed in the report and excluded from every metric",
+    "reader": "pmm_v3_step_f_report.py is the only component that uses a label value, after the predictions are frozen (F3b passes the label-bearing cells of the source CSV and the site manifest through the CSV reader and discards them record by record, unused)",
+    "row_key": "source_row (1-based data row of the pinned PMM test source CSV; source_uid = sha256:<source SHA-256>:row:<source_row>)"
+  },
+  "prediction": {
+    "caches": "graph and parse caches disabled; no test-derived file enters a training cache",
+    "denied_reads": "every file of the test directory except structure_manifest.csv (structures/ stays readable), every file of the dataset root, and the source CSV (process-wide read guard installed before any test structure is opened)",
+    "external_features": "an empty directory, as in training (the training contract used an intentionally empty external-feature root)",
+    "labels_in_memory": "none: pockets are built from in-memory bindings re-resolved from the structures and their label field is cleared before graphs are built",
+    "one_shot": "campaign-wide: predict, given the user's logged F4 go-ahead (--log-entry v3-NNN, recorded in the claim), first creates the write-once claim step_f_evidence/f4_prediction_claim.json and is refused when it exists, whatever the output directory; the report accepts only the predictions directory the claim names; another checkpoint, a changed membership or embedding file, or code other than Freeze 1's is refused; a pass that fails after its claim is not rerun without the user's dated decision (the claim is archived by hand, never deleted, and the failure is disclosed)",
+    "rows": "one prediction row per source row (1,488): aliases carry their primary ion's prediction, unscorable rows carry none"
+  },
+  "refit": {
+    "added_flags": {
+      "--selection-metric": "train_loss",
+      "--val-fraction": "0.0"
+    },
+    "calibration": null,
+    "checkpoint_rule": "terminal",
+    "class_weights": "manual common-four equalized multipliers w_c = N / (4 n_c) recomputed on the full non-test cohort (all 7,398 training ions); four_class flags --mn/--cu/--zn/--class-viii-loss-multiplier",
+    "cohort": "the full non-test training cohort of the campaign root (frozen_inputs/train_cohort.csv)",
+    "ensemble": false,
+    "epochs": 50,
+    "lr_schedule": "cosine",
+    "reload_check": "CPU or GPU reload of the bound terminal checkpoint: configuration equality with the refit identity, finite parameters, val_fraction 0 and no folds, and a re-evaluation of the training-set common-four BA at epoch 50 against the logged value within 0.001",
+    "removed_flags": [
+      "--n-folds",
+      "--fold-index",
+      "--fold-membership-csv",
+      "--fold-membership-sha256",
+      "--fold-split-source",
+      "--export-validation-predictions",
+      "--selection-metric",
+      "--mn-loss-multiplier",
+      "--cu-loss-multiplier",
+      "--zn-loss-multiplier",
+      "--class-viii-loss-multiplier",
+      "--campaign-run-identity",
+      "--run-name"
+    ],
+    "run_name": "stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42",
+    "seed": 42,
+    "test_flags": "absent (--run-test-eval, --allow-final-refit-test-eval); inference happens in F4 outside the trainer"
+  },
+  "report": {
+    "bootstrap": {
+      "confidence": 0.95,
+      "draws": "each line starts numpy.random.default_rng(42) and draws integer PDB-entry indices of shape (1,000, n_entries) in ten consecutive chunks",
+      "interval": "percentile",
+      "resamples": 10000,
+      "role": "uncertainty of the reported values only; never a comparison with PMM",
+      "seed": 42,
+      "undefined_resamples": "a resample without a row of some class has no balanced accuracy (and no recall for that class); such resamples are counted and left out of that statistic's interval",
+      "unit": "PDB entry (lowercase PDB ID)"
+    },
+    "lines": [
+      "full test: every source row with a four-class label code; unscorable rows count as errors in every class-recall denominator; 'N of M scored'",
+      "LINK-free sensitivity: the full test without rows flagged for explicit protein symmetry LINK records",
+      "training-eligible sensitivity: scored, not LINK-flagged, first row of each physical ion; the training cohort's element-label compatibility check is not applied (it would need the structure's element)",
+      "clean subset (secondary; not pristine)"
+    ],
+    "metrics": "common-four balanced accuracy (mean of the Mn, Cu, Zn and Class VIII recalls) and the four recalls, with counts",
+    "pmm_comparison": {
+      "allowed_wording": "higher (or lower) than PMM's published test values; not a matched comparison",
+      "applies_to": "the full-test line only",
+      "published_test_figure_2b": {
+        "Class VIII": 57.5,
+        "Cu": 59.4,
+        "Mn": 88.6,
+        "Zn": 65.9,
+        "mean": 67.85
+      }
+    },
+    "reproducibility": "the report is a pure function of the frozen predictions, the label file and the Freeze 2 row lists; rerunning it reproduces report.json and report.md byte for byte"
+  },
+  "schema_version": 1,
+  "selection": {
+    "cell": "gvp_late_fusion__four_class__baseline",
+    "e2_assessment": "step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json",
+    "e2_assessment_sha256": "6e8047968b6fb086aac8723c4f1ae8ac6289f72f975a9e6cd4b3715a2182058e",
+    "epochs": 50,
+    "family": "gvp_late_fusion",
+    "recipe": "baseline",
+    "schedule_assessment": "step_s10_evidence/assessments/S10_20261012T111859Z/assessment.json",
+    "schedule_assessment_sha256": "8fbce69b9fc84c1f69e3d359f389364992c3eaabad522734d516aa245918fd20",
+    "seed": 42,
+    "target": "four_class"
+  },
+  "step": "F",
+  "test_esm": {
+    "autocast": "bfloat16, as the ESMC SDK sets on CUDA (on CPU the SDK sets none, so the tool sets it)",
+    "device": "cpu",
+    "difference_disclosed": "same model, weight precision and autocast dtype on a different device; small numerical differences from different kernels are possible and are disclosed",
+    "model": "esmc_600m",
+    "model_dtype": "bfloat16",
+    "model_dtype_basis": "the training embeddings were generated on the L4 GPU, where the ESMC SDK casts the model to bfloat16 and runs it under bfloat16 autocast (training sidecars: model_dtype bfloat16, storage float32, device cuda); on CPU the SDK does neither, so the tool casts the model and sets the autocast; the emitted dtype is recorded in the receipt",
+    "route": "workstation CPU: run_pmm_v3_step_f.py --action test-embeddings --device cpu (the only tooled route; test data never goes to the VM)",
+    "storage_dtype": "float32",
+    "storage_dtype_basis": "emitted values are stored as float32, as in the training files"
+  },
+  "test_inputs": {
+    "label_reading": "F3b reads the site manifest and the source CSV through column allowlists: label-bearing cells pass through the CSV reader and are discarded record by record, never kept, used or written; the resolver uses the target residue's metal in memory only to ask whether it is one of the supported transition-metal ions, never which",
+    "previously_opened_dir": "DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test",
+    "previously_opened_structure_files": 316,
+    "source_csv": "prepare_training_and_test_set/pinmymetal_files/classmodel_test_set",
+    "source_csv_sha256": "ec6427ad0b8a18261dbc1d6822bdcfe7194730c7da4a36c208957bcb00f6a0f2",
+    "test_dir": "Data1: DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/test (site_manifest.csv through the allowlist; structure_manifest.csv; structures/)"
+  },
+  "test_rows": {
+    "accounting": "every source row has exactly one disposition; an alias points to the earlier primary row with the same ion_key and identical coordinates; distinct ion keys = physical ions = primary scored rows (pmm_v3_test_prep.check_row_accounting)",
+    "aliases": "rows that resolve to the same physical ion (same structure content, model, chain, residue number, insertion code and alternate location) are each scored with that ion's single prediction; the first row by source_row is the primary",
+    "dispositions": [
+      "scored",
+      "scored_link_flagged",
+      "unscorable"
+    ],
+    "ion_key": "SHA-256 of the structure content SHA-256, model, chain, residue number, insertion code and alternate location of the target atom: a function of stored identifier columns only, with no atom name, element or residue name input (log v3-043; the earlier key hashed the atom name, from which the element could be recovered by trying the six supported metals)",
+    "label_blind_inputs": {
+      "forbidden_site_manifest_columns": [
+        "element",
+        "metaltype",
+        "label_metal"
+      ],
+      "site_manifest_allowlist": [
+        "source_uid",
+        "source_row",
+        "source_side",
+        "pdbid",
+        "chain",
+        "resseq",
+        "structure_name",
+        "residueid_ion"
+      ],
+      "source_csv_allowlist": [
+        "pdbid",
+        "residueid_ion"
+      ],
+      "stored_outputs_exclude": [
+        "element",
+        "residue name",
+        "atom name",
+        "readable physical ion ID"
+      ]
+    },
+    "link_flag": "explicit protein symmetry LINK records involving the target atom (PDB files), as in the PMM cohort code; flagged, never dropped",
+    "rule": "log v3-012: every reconstructable row is scored under the training input contract; symmetry-LINK rows are flagged, not dropped; rows that cannot be scored count as errors; the report states 'N of 1,488 scored'",
+    "scorable": "the manifest row binds the pinned source row; the structure file is the manifest's by SHA-256; exactly one hetero residue at the row's chain and residue number in model 0 is a supported transition-metal ion residue (which of the six it is is never read or stored), it has exactly one atom without alternate locations (as in the training cohort), and at least one residue lies within 10 A",
+    "source_rows": 1488,
+    "unscorable_reasons": [
+      "missing_reconstruction_row",
+      "manifest_source_identifier_mismatch",
+      "structure_unverified",
+      "structure_parse_error",
+      "target_residue_absent_in_model_0",
+      "target_not_a_supported_metal_ion",
+      "ambiguous_target_residue",
+      "multiple_atoms_in_target_residue",
+      "target_atom_alternate_locations",
+      "no_context_residues"
+    ]
+  }
+}
