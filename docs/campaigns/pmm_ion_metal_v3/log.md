@@ -3,6 +3,114 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-037
+
+2026-10-12 — **step E2 complete: 36 of 36 fits; the final E2 assessment
+retains the original selection `gvp_late_fusion__four_class__baseline`; no
+candidate is eligible to replace it** (validation data only; folds 1–4; seed
+42; no held-out access; frozen source, E2 rules, A4 assessment and manifest
+unchanged; under the user's authorization of [v3-034](#v3-034)).
+
+**Session 3 (campaign session 12).**
+- `session-20261012T025638Z-baee022b`, `--hours 4`, started at the first
+  attempt, 02:56:38–05:39 UTC: **2 h 42 min, $2.38 gross**.
+- Batches `e2-20261012T025848Z`, `…T034040Z`, `…T042234Z` and `…T050446Z`.
+- 11 fits completed at the first attempt: `resdrop01` folds 2–4, `esmdrop02`
+  folds 1–4 and `wd10` folds 1–4.
+- Evidence copy `step_e2_evidence/evidence_20261012T053726Z` (928 files,
+  `safe_to_stop` true). TERMINATED verified at 05:39:06 UTC.
+
+**E2 totals:**
+- three sessions, 8 h 51 min of VM running time, $7.80 gross by the ledger;
+- 36 of 36 fits; two first-attempt replay-tolerance failures, each rerun once
+  and passed ([v3-035](#v3-035)); no second failure.
+
+**Final E2 assessment.** Workstation, from the Data1 copies:
+`step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json`, SHA-256
+`6e8047968b6fb086aac8723c4f1ae8ac6289f72f975a9e6cd4b3715a2182058e`;
+manifest `37c2ff05…`; E2 specification `ea2d71ca…`/`71606fa6…`;
+`held_out_test_accessed` false.
+- Status "complete". 100 units verified against their receipts and uploaded
+  acknowledgments (36 E2 and 64 reused or A4 units), none invalid.
+- The original A4 result was re-derived exactly from the same copies (55 units).
+- Common-four BA differences in points, folds 1–4. Unadjusted 95% intervals
+  decide; the Bonferroni intervals over 17 are sensitivity only. A gate is listed
+  when a class mean recall drops by more than 3 points.
+
+| Candidate (comparison) | Mean | Folds 1 / 2 / 3 / 4 | Bootstrap | t (3 df) | Own-model conclusion |
+|---|---:|---|---|---|---|
+| Only-GVP `wd10` vs Only-GVP baseline (C1) | **+3.59** | +6.04 / +3.59 / +3.50 / +1.21 | [+1.81, +5.41] | [+0.45, +6.73] | **improvement interval-supported on folds 1-4** (adjusted t [−5.24, +12.41]) |
+| Only-GVP `sitecountsangles` vs `sitenone` (C2) | +1.36 | +7.69 / +2.79 / −3.08 / −1.96 | [−2.52, +5.28] | [−6.48, +9.20] | blocked by a recall gate against the matched control (Mn −3.79, Cu −3.68) |
+| `sitecountsangles` vs Only-GVP baseline (C9) | −0.87 | +4.80 / −0.20 / −5.33 / −2.76 | [−4.05, +2.91] | [−7.75, +6.01] | no positive mean gain (Cu −6.61) |
+| late fusion `invsqrtw` (C3 = C12) | −0.09 | −0.94 / +1.22 / −0.99 / +0.35 | [−0.97, +0.79] | [−1.80, +1.62] | no positive mean gain |
+| late fusion `meanagg` (C4 = C13) | −0.48 | +0.01 / −0.64 / −0.47 / −0.84 | [−0.75, −0.15] | [−1.06, +0.09] | no positive mean gain |
+| late fusion `gvpaux03` (C5 = C14) | −1.12 | +0.83 / −2.86 / −1.38 / −1.06 | [−2.41, +0.28] | [−3.53, +1.30] | no positive mean gain (Cu −4.80) |
+| late fusion `resdrop01` (C6 = C15) | −0.10 | −0.47 / −0.44 / −0.71 / +1.20 | [−0.64, +0.78] | [−1.50, +1.29] | no positive mean gain |
+| late fusion `esmdrop02` (C7 = C16) | +0.53 | +2.37 / −0.26 / −1.08 / +1.09 | [−0.67, +1.73] | [−1.89, +2.94] | positive mean gain on folds 1-4, not interval-supported |
+| late fusion `wd10` (C8 = C17) | −0.61 | +0.23 / −1.54 / −0.54 / −0.59 | [−1.29, +0.03] | [−1.76, +0.54] | no positive mean gain |
+
+The late-fusion candidates' comparisons against the original selection are the
+same comparisons as against their matched control (coincident, as declared).
+
+**Against the original selection** (late fusion four-class baseline, folds 1–4
+mean 74.95, five folds 74.28):
+- Only-GVP `wd10` (C10): −0.46 (+6.77 / −2.27 / −1.99 / −4.34), no clear
+  difference.
+- `sitecountsangles` (C11): −4.92, with recall gates Cu −14.72 and Mn −4.52.
+
+**Replacement conclusions:** every candidate is "not eligible". Each fails (b)
+interval support against the selection, and most fail (c) the mean gain over
+0.2 points; `gvpaux03` and `sitecountsangles` also fail (d) recall gates. The
+assessment names every failed condition by comparator, class and magnitude.
+**Final selection: `gvp_late_fusion__four_class__baseline`, not replaced** ("no
+eligible candidate; the original selection is retained"). Refit: seed 42,
+terminal checkpoint, no calibration, no ensemble.
+
+Descriptive five-fold means (fold 0 from step D): late fusion `esmdrop02` 75.21,
+`resdrop01` 74.58, `invsqrtw` 74.56, `meanagg` 74.23, `wd10` 74.03,
+`gvpaux03` 73.80; Only-GVP `wd10` 72.94, `sitecountsangles` 68.51; `sitenone`
+on folds 1–4 68.67. The fold-0 seed-42 development gains of the late-fusion
+candidates over their baseline (+1.2 to +2.5) did not reappear on folds 1–4,
+as with `headdrop03` and `meanagg` in step E.
+
+**Interpretation** (E2 specification section 0): E2 is an exploratory
+extension that selects a promising configuration from reused
+development-validation evidence. It has one training seed (42) and four folds
+(1–4), on validation folds that were also used to choose the original step E
+selection, and its candidates were chosen on fold 0. Passing its replacement
+rule would not establish independently confirmed superiority or robustness
+across training seeds. The only interval-supported own-model improvement,
+Only-GVP `wd10`, is not adjusted-supported and does not change the selection.
+
+**Spending (estimated charges, disk counted once; 05:40 UTC).**
+- **About $39.98 spent.** E2 added 8.88 VM running hours, $7.62 at
+  $0.858624/h, plus storage.
+- Daily use 2026-10-12: 5 h 33 min / $6.01 of 12 h / $18.
+- Forecast to finish: step F 1.0–2.25 VM hours, $0.9–1.9, plus storage at
+  $0.55 per calendar day until the disk is retired (2–10 days, $1.1–5.5).
+  **Total about $42.0–47.4**, within the recorded $55.
+
+**Next:** step F. Its input is the E2 final selection
+`gvp_late_fusion__four_class__baseline` (refit seed 42, terminal 50-epoch
+cosine, no calibration, no ensemble; the `both_results_secondary` label and
+the prior-exposure caveats, including the 2026-10-11 byte scan of
+[v3-032](#v3-032)). Step F tooling does not exist; the execution draft v2 is
+[`step_f_plan_draft.md`](step_f_plan_draft.md), not approved. Step F needs the
+user's plan approval before any tooling-dependent GPU use or test access. Push
+of the local commits needs the user's OK.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-12 v3 step E2 running: 25 of 36 fits after session 2; session 3 running)
+- Last execution evidence: 2026-10-12 (v3 E2 session 2, 2 h 51 min, $2.51 gross; session 3 started 02:56 UTC).
+- Stage: v3 steps A–E done ([log v3-031](docs/campaigns/pmm_ion_metal_v3/log.md#v3-031)): A4 Stage 6 selection `gvp_late_fusion__four_class__baseline` (five folds, development-validation); step E2 (36 fits; [E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)) built and CPU-checked ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)), not run, required before F unless cancelled; no 6B refit or Stage 7.
+- v3 step E (A4 assessment `E_20261011T130128Z`): no family gains from five/six-class training (tie keeps `four_class`); `headdrop03`, `meanagg` not improvements; late fusion four-class 74.28 mean common-four BA, "better" than Only-ESMC (72.33) on all five folds.
+- Authorized now: E2 GPU sessions ([log v3-034](docs/campaigns/pmm_ion_metal_v3/log.md#v3-034), user 2026-10-11 20:10 UTC) within the $55 ceiling recorded in E2's launch control (about $32.15 spent at 20:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033) and the controller caps; the advance authorization through step F stands ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); step F after E2 with its own plan approval; no Round C.
+- GPU/VM: `deepmzyme-l4` RUNNING for E2 session 3 (`session-20261012T025638Z-baee022b`, hard stop 06:53 UTC); disk and archive snapshot kept; about $37.59 spent at 02:56 UTC ([log v3-036](docs/campaigns/pmm_ion_metal_v3/log.md#v3-036)).
+Next: finish E2 session 3 (11 fits; evidence, vm-stop, verified TERMINATED), then the workstation E2 assessment and its log entry; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-036
 
 2026-10-12 — **E2 session 2 (campaign session 11): 25 of 36 E2 fits complete;

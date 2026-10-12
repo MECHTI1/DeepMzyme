@@ -336,7 +336,8 @@ alone is not a GPU launch request or wider spending authority.
 
 **E2. Individual confirmation of the eight remaining step D passes (amendment
 of 2026-10-08, [log v3-025](log.md#v3-025); implemented and CPU-checked on
-2026-10-11, [log v3-033](log.md#v3-033); not experimentally evaluated).** Requested by the user after the fold 1–4
+2026-10-11, [log v3-033](log.md#v3-033); completed 2026-10-12, [log v3-037](log.md#v3-037):
+no candidate replaced the original selection).** Requested by the user after the fold 1–4
 results of step E's two selected recipes and of the four-class baselines had
 been examined ([log v3-024](log.md#v3-024)). Everything E2 produces is
 therefore development-validation evidence, proposed after earlier validation
