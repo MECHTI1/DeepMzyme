@@ -1,13 +1,13 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-12 v3 step E2 complete, 36 of 36 fits; selection unchanged: late fusion four-class; step F next)
-- Last execution evidence: 2026-10-12 (v3 E2 sessions 1–3, 8 h 51 min, $7.80 gross).
+- Status: active (2026-10-12 v3: finalizing at 50 epochs; step F tooling ready, CPU ESMC check passed; approvals pending)
+- Last execution evidence: 2026-10-12 (v3 10-epoch comparison, 1 session, 37 min, $0.55 gross; [log v3-041](docs/campaigns/pmm_ion_metal_v3/log.md#v3-041)).
 
 ## Current objective and stage
 
-- Current campaign: pmm_ion_metal_v3, step E complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Current campaign: pmm_ion_metal_v3, steps A–E2 complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: v3 steps A–E2 done ([log v3-037](docs/campaigns/pmm_ion_metal_v3/log.md#v3-037)): Stage 6 selection `gvp_late_fusion__four_class__baseline` (A4, retained by E2; development-validation); step F (6B refit + one test pass) not started, tooling absent, plan draft not approved; no Stage 7.
+- Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted); step F not started, tooling CPU-checked and the CPU test ESMC route checked ([log v3-044](docs/campaigns/pmm_ion_metal_v3/log.md#v3-044)), plan not approved; no Stage 7.
 
 **PMM core v2 was closed at fold 0 on 2026-10-03 (user decision):** nine fold-0 fits
 are final validation-only evidence; 36 fits were not run; its neutral four-versus-five/six
@@ -35,10 +35,10 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 
 ## Blockers and immediate next action
 
-- Authorized now: the $55 gross campaign ceiling recorded for E2 (about $39.98 spent at 2026-10-12 05:40 UTC; to finish about $42.0–47.4, log v3-037); the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) applies only after the step F plan is approved; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 05:39 UTC); disk and archive snapshot kept (about $0.55/day).
+- Authorized now: nothing to run; the $55 gross ceiling (about $40.8 spent at 2026-10-12 17:30 UTC; to finish $42.8–48.2); [v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) not activated; no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 16:16 UTC); disk and archive snapshot kept (about $0.55/day).
 
-Next: step F planning: the user's approval of the [step F draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) (input: the E2 final selection), then step F CPU tooling and checks, then the refit and one test pass; open: fairness arm, cost-gated augmentations.
+Next: the user's decisions in [step F plan F7](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md#f7-decisions-for-the-user-none-inferred): plan approval, the commit, the refit's GPU start (one session, $0.9–1.3); later the freezes and the one test pass; open: fairness arm, cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule

@@ -21,7 +21,9 @@ run of the step it affects.
   values are descriptive only. Its reason is the CV/refit mismatch of
   [TECH-027](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules);
   every report states that it was chosen after the v2 fold-0 post-hoc epoch
-  analysis.
+  analysis. The one exception is the user-approved pre-step-F comparison of a complete
+  10-epoch cosine schedule ([log v3-039](log.md#v3-039); see before step F), which keeps
+  the cosine schedule and the terminal checkpoint.
 - Neutral four-versus-five/six test: the baseline recipe, frozen in the A4
   specification before any GPU run, on all five folds (step E). A comparison
   that uses a recipe developed on `four_class` in step D is only "conditional on
@@ -362,7 +364,7 @@ available next to the extension; an E2 candidate may replace the original
 selection only under rule 3 below. Step F follows E2: it does not start
 until E2 is complete, unless the user cancels E2 by a dated log entry.
 
-1. Fits (none run). Every row on folds 1–4, seed 42, direct `four_class`,
+1. Fits (all 36 run 2026-10-11/12, [log v3-037](log.md#v3-037)). Every row on folds 1–4, seed 42, direct `four_class`,
    the existing prepared recipe (recipe IDs and trainer flags already exist;
    no `src/` change); data, grouped folds, training settings, the 50-epoch
    cosine schedule and the terminal checkpoint rule are unchanged; only
@@ -461,13 +463,32 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    refreshed before execution and at every session. This amendment authorizes
    no GPU start.
 
+**Pre-step-F 10-epoch schedule comparison (user decision 2026-10-12,
+[log v3-039](log.md#v3-039)).** One exploratory, post-hoc comparison precedes step F. The
+selected cell runs on folds 1–4, seed 42, with a complete 10-epoch cosine schedule and its
+terminal checkpoint, against its four existing 50-epoch fits (4 new fits). Its gates, stopping
+rule and labels are frozen in
+[`sched10_assessment_spec.json`](sched10_assessment_spec.json) and summarized in
+[handoff section 11](handoff.md#11-pre-step-f-review). Commands are in the
+[playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
+- If adopted, step F refits the same cell with 10 epochs. This amends the 50-epoch fixed
+  decision for that refit only; the cosine schedule and the terminal rule stay, and CV and
+  refit use the same epoch count.
+- Otherwise the 50-epoch selection stands.
+- The comparison authorizes no GPU start: its fits need the user's separate GPU-start
+  authorization.
+- **Result (2026-10-12, [log v3-041](log.md#v3-041)): not adopted.** Mean +1.99 points on folds
+  1–4, but the bootstrap and t lower bounds are below zero. The 50-epoch selection stands, so step
+  F refits with 50 epochs.
+
 **F. Final model and the one test.**
 
 - Step E2 must be complete first, unless the user cancels it by a dated log
   entry. Execution draft for approval: [step_f_plan_draft.md](step_f_plan_draft.md). Stage 6 selection: the E2 final selection (the A4 selection unless
   replaced under E2 rule 3; the A4 selection alone if E2 was cancelled),
   Stage 6B full refit with the same checkpoint
-  rule, then one prediction pass on PMM's full test set; the clean-subset
+  rule at the epoch count of the schedule decision (50 unless the pre-step-F
+  comparison adopts 10), then one prediction pass on PMM's full test set; the clean-subset
   summary is computed from the same predictions.
 - Full test: compared with PMM's published test values and labelled "exact,
   possibly overlapped PMM test; includes rows from previously opened tests".
@@ -523,7 +544,8 @@ fits about 6.2–7.4 h of three-lane VM wall time before session overhead,
 admission slack and one rerun allowance): about 9–12 additional VM hours and a
 total expanded campaign cost of about $44–51 (refreshed with the disk counted
 once in [log v3-030](log.md#v3-030): E2 7.9–9.6 VM hours; E → E2 → F total about
-$40.5–48.0 after the failed-fallback leftovers were deleted). The forecast is refreshed from measured use
+$40.5–48.0 after the failed-fallback leftovers were deleted; latest, after E2 and the pre-step-F comparison: about
+$42.8–48.2 to finish, [log v3-043](log.md#v3-043)). The forecast is refreshed from measured use
 before execution and at every session. The revised ceiling is recorded here
 and in the log as campaign evidence, and since 2026-10-11 in E2's execution
 control: the write-once ceiling record checked before every E2 launch

@@ -1,4 +1,4 @@
-# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; step E2 run and completed 2026-10-11/12, log v3-034–v3-037; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033)
+# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; step E2 run and completed 2026-10-11/12, log v3-034–v3-037; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033; the pre-step-F review, its recommendation (section 11, PENDING) and step F draft v3 added 2026-10-12 ~09:30 UTC, log v3-038; the user chose the comparison and its CPU preparation was completed 2026-10-12 ~10:30 UTC, log v3-039; it ran and was not adopted 2026-10-12 11:19 UTC, log v3-040/v3-041; the user chose to finalize with the 50-epoch selection and the step F tooling was prepared and CPU-checked 2026-10-12, log v3-042, section 12, and corrected in one CPU round the same day, log v3-043)
 
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
@@ -11,37 +11,48 @@ the current authority.
 ```text
 Continue the DeepMzyme PMM ion metal v3 campaign from the verified stopping point recorded in
 docs/campaigns/pmm_ion_metal_v3/handoff.md. Steps A–E2 are complete: the A4 Stage 6 selection
-gvp_late_fusion__four_class__baseline (E_20261011T130128Z) was retained by step E2 (final E2 assessment
-E2_20261012T053919Z, SHA-256 6e804796…; no candidate eligible; log v3-037). Next is step F (Stage 6B full
-refit of that selection, seed 42, terminal 50-epoch cosine, no calibration, no ensemble, then one prediction pass
-on PMM's test set with the recorded both_results_secondary label and the prior-exposure caveats, including the
-2026-10-11 byte scan recorded in the DATASETS ledger). Step F has NO tooling and its execution draft
-(step_f_plan_draft.md, draft v2) is NOT approved: present the plan for the user's approval first; no refit, GPU
-start or test access before that approval and the frozen report/test-row/clean-subset rules in the DATASETS
-test-use ledger.
+gvp_late_fusion__four_class__baseline (E_20261011T130128Z) was retained by step E2 (E2_20261012T053919Z, SHA-256
+6e804796…; log v3-037). The pre-step-F 10-epoch comparison ran and was NOT adopted (S10_20261012T111859Z, SHA-256
+8fbce69b…; log v3-041), so E_sel = 50; the user chose to finalize v3 with this 50-epoch model (log v3-042). Next is
+step F: the Stage 6B validation-free refit of the selection (seed 42, 50-epoch cosine schedule, terminal checkpoint;
+no calibration, no ensemble), then one prediction pass on PMM's test set with the both_results_secondary label and
+every prior-exposure disclosure of the DATASETS ledger. The step F tooling is prepared, corrected in one CPU round and
+CPU-checked (handoff section 12; log v3-042 to v3-044, including a passed CPU ESMC check): run_pmm_v3_step_f.py, pmm_v3_test_prep.py,
+pmm_v3_step_f_report.py, pmm_v3_step_f.py, step_f_spec.json (SHA-256 pinned in two tools), tests/test_v3_step_f.py,
+and the scripted readiness rerun in audits/f_readiness_20261012T170111Z. The execution plan (step_f_plan_draft.md,
+draft v3 with implementation notes) is NOT approved. No step F record exists (F1 selection, manifest, ceiling,
+authorization, Freeze 1 or 2, prediction claim), and nothing has run on test data.
 
 Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; check `git status`, `git
 log -5` and whether the latest commits are pushed). Not in /home/mechti/PycharmProjects/DeepMzyme. If
 /media/mechti/Data1 is missing: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/miniconda3/envs/DeepMzyme/bin/python
 (verify with -c "import sys; print(sys.executable)"). Cap local CPU runs: systemd-run --user --scope -p CPUQuota=200%
--p MemoryMax=3G. Subagents must never search dataset roots that contain test/ (prune test paths before reading).
+-p MemoryMax=3G (the test ESMC run needs 6G; step F plan F6). Subagents must never search dataset roots that contain
+test/ (prune test paths before reading).
 
-Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (sections 3,
-5 and 8); log.md v3-037 back to v3-031; plan.md step F; step_f_plan_draft.md; docs/DATASETS.md (test-use ledger);
-.agents/skills/gpu-use-skill/SKILL.md, ~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
+Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (sections 12,
+11, 3, 5 and 8); log.md v3-044 back to v3-031; plan.md step F; step_f_plan_draft.md (F3, F6, F7 and the
+implementation notes); step_f_spec.json; docs/DATASETS.md (test-use ledger); .agents/skills/gpu-use-skill/SKILL.md,
+~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
 
 Rules that stay fixed: Stage 6 selection as above; seed 42; terminal checkpoint; one-shot test after frozen rules;
-no test-based selection; one active GPU; controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap
-12 h / $18; the $55 gross campaign ceiling (about $39.98 spent at 2026-10-12 05:40 UTC; to finish about
-$42.0–47.4). Every GPU session ends with evidence, vm-stop and a verified TERMINATED; log + STATUS + commit after
-each session or step with `git -c core.hooksPath=.githooks commit`; push only with the user's OK. Never edit the
-hash-frozen runner files; never run vm-fallback, delete resources, raise controller caps, run the cost-gated
-augmentations or Round C without the user.
+no test-based selection; the test side (preparation, ESMC, prediction, report) on the workstation CPU only, the VM
+only refits; one active GPU; controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap 12 h / $18;
+the $55 gross campaign ceiling (about $40.8 spent at 2026-10-12 17:30 UTC; to finish about $42.8–48.2). Every GPU
+session ends with evidence, vm-stop and a verified TERMINATED; log + STATUS + commit after each session or step with
+`git -c core.hooksPath=.githooks commit`; push only with the user's OK. Never edit the hash-frozen runner files; never
+run vm-fallback, delete resources, raise controller caps, run the cost-gated augmentations or Round C without the
+user. The step F record commands refuse until every bound step F file is committed.
 
-Open user decisions (never infer them): step F plan approval and its test-access ledger entries; push of the
-local commits; Only-ESMC fairness arm; cost-gated augmentations; the optional items of log v3-032. At each
-closeout report completed/pending work, spending and forecast, evidence copies, verified VM state, the exact next
-action and any decision the user must make.
+Open user decisions, in the order of step_f_plan_draft.md F7 (never infer them): 1 approve or amend the step F plan
+(the clean-subset rule with the identical-chain clause and the disclosed short-chain limitation, the label-blind
+reads, the workstation-CPU test ESMC route in bfloat16, the Freeze 1 amendment procedure, the F4 go-ahead and
+campaign-wide claim); 2 the training-side CPU ESMC check is done (log v3-044, passed); 3 commit (and push?) of the
+v3-038 to v3-044 work; 4 the refit's GPU-start authorization (one session, about 1.0–1.5 VM h, $0.9–1.3); 5 the
+plan.md alignment on approval; 6 later go-aheads: Freeze 1, Freeze 2, the single test pass. Also open: the Only-ESMC
+fairness arm; cost-gated augmentations; the optional items of log v3-032. At each closeout report completed/pending
+work, spending and forecast, evidence copies, verified VM state, the exact next action and any decision the user must
+make.
 ```
 
 ## 1. Where to work and what to read
@@ -51,8 +62,8 @@ action and any decision the user must make.
 | Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = `origin/v3-step-a`, see `git log -1`) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
 | Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
 | Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
-| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md section 10 (pending review) and section 9 (E2 rules, resolved) → plan.md (steps D–F, E2 included) → assessment_spec.md → e2_assessment_spec.md → log.md entries v3-031 back to v3-017 → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step D regularization amendment" and "v3 step E2 individual-confirmation amendment" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
-| Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_e2.py` (step E2 only: units, gates, build-manifest, record-ceiling, record-authorization, spend, status, launch, wait, pull, recover-lane, archive-failed, evidence) and `pmm_v3_e2_assessment.py` (workstation E2 assessment from Data1); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record), and not the E2 or reused modules pinned by the E2 manifest |
+| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md sections 12, 11, 3, 5 and 8 → log.md v3-044 back to v3-031 → plan.md step F (and the pre-step-F comparison note) → step_f_plan_draft.md (F3, F6, F7 and the implementation notes) and step_f_spec.json → docs/DATASETS.md test-use ledger → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step F: Stage 6B refit and the one test pass" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
+| Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_e2.py` (step E2 only: units, gates, build-manifest, record-ceiling, record-authorization, spend, status, launch, wait, pull, recover-lane, archive-failed, evidence) and `pmm_v3_e2_assessment.py` (workstation E2 assessment from Data1); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record), and not the E2 or reused modules pinned by the E2 manifest; step F: `pmm_v3_step_f.py` (workstation: F1 record, manifest, ceiling, authorization, deploy, the lane logic, `refit-receipt`, the freeze records) and `run_pmm_v3_step_f.py` (VM refit; workstation-CPU `prepare-test`, `test-embeddings`, `predict`), with `pmm_v3_test_prep.py` and `pmm_v3_step_f_report.py` (section 12); the 10-epoch comparison's `pmm_v3_sched10*.py` (done, not adopted) |
 | VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
 ## 2. Approved objective, pipeline and frozen settings
@@ -66,8 +77,8 @@ action and any decision the user must make.
   family) → E five-fold confirmation (seed 42: 36 neutral-test fits on folds 1–4 + up to 8 improvement fits)
   → E2 (planned 2026-10-08, log v3-025: the eight remaining step D passes singly on folds 1–4, 36 fits, seed 42;
   assessment rules frozen 2026-10-08, e2_assessment_spec.md, log v3-028) → F Stage 6 selection (the final E2 selection, or the
-  original A4 selection if the user explicitly cancels E2), Stage 6B full refit, one test pass. Steps A–E are
-  complete (log v3-031).
+  original A4 selection if the user explicitly cancels E2), Stage 6B full refit, one test pass. Steps A–E2 and the
+  pre-step-F comparison are complete (log v3-031, v3-037, v3-041); step F is prepared, not approved (section 12).
 - **Frozen identities:** fold set `v3-seqid90-s42-b2` (log v3-005); A4 assessment specification
   `assessment_spec.md` (frozen 2026-10-05); first bundle `20d5b06`, extension bundle `43d26ff`
   (`v3-ext1-round-r`, record SHA-256 `ade3f022…` on the VM campaign root; runner files hash-frozen);
@@ -85,11 +96,15 @@ action and any decision the user must make.
   3 df; "improvement interval-supported" only if both lower bounds are above zero; fold 0 reported separately as
   the development fold); Stage 6 control = Only-ESMC baseline four_class, kept unless a candidate is eligible and
   interval-supported on all five folds; refit seed 42, same checkpoint rule, no calibration, no ensemble.
-- **Selection and test access:** validation-only selection; no held-out use before step F; before any test
-  access the primary report, test-row and clean-subset rules with membership hashes, refit checkpoint and seed,
-  ensemble (none) and calibration rule (none) are recorded in docs/DATASETS.md's test-use ledger. Step F tooling
-  (refit, label-blind clean-subset/test-preparation builder) does not exist yet and needs planning and user approval.
-- **Step E2 amendment (planned 2026-10-08, log v3-025; tooling built and CPU-checked 2026-10-11, log v3-033; not run):** after the original E assessment, the
+- **Selection and test access:** validation-only selection; no held-out use before step F. Proposed in step F draft
+  v3 (log v3-038; not approved), two dated freezes in docs/DATASETS.md's test-use ledger. Before any test-side read:
+  the primary report, the test-row and clean-subset rules, the preparation code hashes, the refit checkpoint, seed
+  and epoch count, ensemble (none), calibration (none) and the disclosures. After the label-blind preparation and
+  before any prediction or label read: the derived memberships by hash. This replaces the earlier wording "rules with
+  membership hashes before any test access", which could not be met literally. The step F tooling was prepared and
+  CPU-checked on 2026-10-12 under a preparation-only authorization and corrected in one CPU round (log v3-042,
+  v3-043; section 12); running it needs the approvals of step_f_plan_draft.md F7.
+- **Step E2 amendment (planned 2026-10-08, log v3-025; tooling built and CPU-checked 2026-10-11, log v3-033; completed 2026-10-12, log v3-037: no candidate replaced the selection):** after the original E assessment, the
   eight step D passes not chosen as final recipes (Only-GVP `wd10`, `sitecountsangles`; late fusion `invsqrtw`,
   `meanagg`, `gvpaux03`, `resdrop01`, `esmdrop02`, `wd10`) each on folds 1–4, seed 42, `four_class`, 50-epoch cosine,
   terminal checkpoint, against the reused step E baselines (`sitenone` × 4 as the geometry control): 36 fits, 17
@@ -104,13 +119,13 @@ action and any decision the user must make.
   evidence to Data1 with SHA-256 checked on both ends; `assess` keeps a checked copy of each assessment. A unit is
   "complete" only when all four happened: training completed, worker exited 0, artifacts persisted, host acknowledged.
 
-## 3. Work state (verified 2026-10-11 13:05 UTC)
+## 3. Work state (verified 2026-10-11 13:05 UTC; rechecked 2026-10-12 after a reboot, log v3-043)
 
 **Step D: complete (final assessment `D-B_20261007T201334Z`, status `final`).** Every listed unit below is complete
 in all four senses (training completed at epoch 50, worker exit code 0, artifacts persisted by host pull with
 SHA-256 manifests, host acknowledgment uploaded) and replayed under `pmm-v3-replay-1`; the pulled copies are in
 `$DATA/durable/lane*/runs/<unit>/`. Nothing is running; no lane awaits a pull; no unit failed in steps D or E;
-the VM is TERMINATED (verified 2026-10-11 13:03 UTC).
+the VM is TERMINATED (verified 2026-10-11 13:03 UTC and again 2026-10-12 16:16 UTC).
 
 | Round | Units | State |
 |---|---|---|
@@ -140,10 +155,16 @@ interval-supported" — neither is an improvement. **Stage 6 selection (the orig
 [+1.09, +2.92], t [+0.50, +3.39]); refit seed 42, terminal checkpoint, no calibration, no ensemble. Development-
 validation evidence. Native rare classes stay weak in five/six-class cells (six-class Co 2.8–5.3, Ni 25.3–31.2).
 
-Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step F:** not started; tooling absent;
-the corrected execution draft is `step_f_plan_draft.md` (draft v2, log v3-030; not approved): it takes the final E2
-selection (A4 only after a dated E2 cancellation) and a validation-free terminal refit; the 08:45 UTC session draft
-on the data root is kept unchanged as history.
+Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step F:** not started; tooling prepared
+and CPU-checked 2026-10-12 (log v3-042) and corrected in one CPU round (log v3-043; section 12; no record written,
+nothing run on test data); the execution draft is `step_f_plan_draft.md` (draft v3 with implementation notes, log
+v3-038/v3-042/v3-043; not approved; v2 of log v3-030 superseded). It
+takes the final E2 selection (A4 only after a dated E2 cancellation) and a schedule decision (50 epochs unless the
+section 11 comparison is approved, run and adopted), and makes a validation-free terminal refit. Test access is
+gated by two ledger freezes. The 08:45 UTC session draft on the data root is kept unchanged as history.
+**Pre-step-F review (2026-10-12, log v3-038): done. The user chose the 10-epoch comparison (log v3-039); readiness
+and authorization log v3-040; it ran 4 of 4 fits and was NOT adopted (log v3-041): S1 mean +1.99, bootstrap
+[−0.39, +5.90], t [−4.28, +8.26]; the 50-epoch selection stands (E_sel = 50).**
 **Step E2: complete, 36 of 36 fits** (log v3-035–v3-037; sessions 10–12 on 2026-10-11/12, 8 h 51 min, $7.80
 gross; two first-attempt replay-tolerance failures rerun once and passed). Final E2 assessment
 `step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json` (SHA-256 `6e804796…`; workstation, from the Data1
@@ -168,29 +189,40 @@ candidates show no positive mean gain; `sitecountsangles` is blocked by recall g
 | 2026-10-08 evening | Priority: the strongest defensible model; accepted order kept (20 original E fits → A4 assessment → read-only schedule/error review → E2 CPU → E2 GPU request → F); controller abandonment addition and deletion of exactly the failed-fallback disks and snapshot authorized and executed; step F draft corrected; no GPU start authorized | log v3-030 |
 | 2026-10-11 | Next GPU start confirmed: both sessions that day for the 20 remaining E fits (stockout: spaced same-VM retries only); commit and push at every closeout of that window; two messages adding the deferred read-only review item of section 10 (PENDING; prerequisite met at 13:03 UTC); after the review, the E2 CPU implementation and checks continue without another approval stop and the findings, refreshed cost and remaining effort are presented at the E2 GPU-start gate | log v3-031 |
 | 2026-10-11 afternoon | Continue: complete the section 10 review, then the E2 CPU implementation and checks without another approval stop, then present at the E2 GPU-start gate; E2 unchanged; no GPU start, experiment, budget increase, refit or test access | log v3-032, v3-033 |
+| 2026-10-11 evening | E2 GPU sessions authorized; the $55 ceiling kept; push of the three pending commits; no optional items | log v3-034 |
+| 2026-10-12 | Pre-step-F CPU review: improved-GVP complementarity against the selected fusion, then at most one recommendation among the 10-epoch schedule comparison, one selective GVP weight-decay recipe or step F directly, with a concrete proposal, step F changes and the recommendation recorded here; no training, inference, refit, test access, GPU work, change to frozen E/E2 records or budget increase | log v3-038, section 11 |
+| 2026-10-12 ~10:00 | The 4-fit 10-epoch comparison of section 11 is the next experiment, exactly as specified (no other candidate or sweep); CPU-only preparation of its isolated runner extension and checks authorized; record the reconciliation of an independent report, separating measured observations from causal hypotheses and deferring the other proposals without calling them disproven; no GPU start, training, inference, step F, held-out access, commit or push; step F approval pending | log v3-039 |
+| 2026-10-12 ~10:35 | Readiness first (synthetic CPU fit and smoke checks explicitly authorized; command comparisons do not replace them); if they pass, one GPU session for the comparison exactly as specified (2 h stop, existing caps, $55 ceiling, same-VM stockout retries ≤ 12 at 5 min, no fallback, one unchanged rerun); evidence, stop, assessment and documentation; no other experiment, step F, held-out test, commit or push | log v3-040, v3-041 |
+| 2026-10-12 ~11:40 | Finalize v3 with the selected 50-epoch model; keep the 10-epoch comparison recorded as not adopted under its frozen gates; leave the other optimization hypotheses deferred and untested, not disproven; implement the step F tooling and its CPU readiness checks on synthetic or training-side data only (tiny synthetic CPU training, replay and persistence checks explicitly authorized); follow draft v3's two freezes, bind the selection and the 50-epoch terminal rule, keep `both_results_secondary` and the prior-exposure disclosures, prepare the freeze-record templates and make the clean-subset rules explicit; preparation only (the earlier step F GPU authorization is not activated); no GPU start, real refit, test-side read, test embedding, test inference, commit or push | log v3-042, section 12 |
+| 2026-10-12 ~16:45 | After the post-reboot verification: one focused CPU-only correction round using the reviewed findings (campaign-wide one-shot prediction protection, freeze-record validation and code-hash bindings, an explicit Freeze 1 amendment procedure, a label-independent `ion_key` with uniqueness and row-accounting checks); keep the A1 clean-subset policy, fix missed identical chains of at least 30 residues (including the non-standard-residue case), keep and disclose the short-chain limitation (no short-chain exclusion); use the workstation-CPU test ESMC route and state its requirements; align documentation, approval sequence, costs and readiness evidence (original results preserved, corrections by a saved script); targeted regression tests and the authorized synthetic CPU fits; stage for review; no GPU start, real refit, test-data access, real selection binding, freeze record, commit or push | log v3-043 |
 | 2026-10-07 evening | Final-test label `both_results_secondary`; continue the approved plan until 03:38 UTC 2026-10-08 at the latest (eight hours maximum, not a target), step E after midnight UTC if gates pass, caps and ceiling unchanged; fairness arm kept separate for the user's decision; audit of the scratch drivers delivered before any correction or driver reuse; closeout commits pushed to `origin/v3-step-a`; a complete handoff for a new chat | log v3-022 |
 
-**Authorization boundaries:** GPU starts for the approved D–F work are pre-authorized within the $40 gross ceiling
-(storage included) and the controller caps (4 h / $6 per session, 12 h / $18 per UTC day); one active GPU, controller
+**Authorization boundaries:** the operative ceiling is $55 gross, storage included (log v3-025, v3-034; about $40.8
+spent at 2026-10-12 17:30 UTC). The advance step F GPU authorization of v3-014 was given within the old $40 ceiling,
+which spending now exceeds, and it is not activated (log v3-042): the refit's GPU start needs the user's explicit,
+logged authorization (step_f_plan_draft.md F7 item 4), recorded with `pmm_v3_step_f.py record-authorization`.
+Controller caps: 4 h / $6 per session, 12 h / $18 per UTC day; one active GPU, controller
 only via `~/deepmzyme-vm/bin`; every session ends with `evidence`, `vm-stop` and a verified TERMINATED. Never:
 Round C, cost-gated augmentations (`posnoise01`, `outerdrop01`) without a recorded OK, `vm-fallback`, deleting cloud
 resources, editing the frozen runner files, editing controller caps, pushing without the user's OK
-(granted for the 2026-10-07/08 and 2026-10-11 closeouts only), step F before its gates and plan. **Decisions still open:** Only-ESMC
-fairness arm; cost-gated augmentations; step F plan approval; the E2 GPU-start authorization after the accepted CPU
-implementation (or a dated cancellation of E2). The failed-fallback leftovers were deleted on 2026-10-08 under the
-user's authorization through `vm-fallback --abandon` (log v3-030).
-The 2026-10-11 arrangement ended with session 9's closeout (step E complete): the next GPU use is E2, which needs
-the user's separate E2 GPU-start authorization; ask before any GPU start. Push authorization was given for the
-2026-10-07/08 and 2026-10-11 closeouts only.
+(granted for the 2026-10-07/08 and 2026-10-11 closeouts and the v3-034 commits only), step F before its gates and plan.
+**Decisions still open:** the six items of step_f_plan_draft.md F7, in order (section 12): plan approval (with the
+clean-subset rule, the label-blind reads, the CPU test ESMC route, the amendment procedure and the F4 claim), the
+CPU ESMC check (done, log v3-044), commit/push of the v3-038 to v3-044 work, the refit GPU start, the plan.md
+alignment, then the Freeze 1, Freeze 2 and single-test-pass go-aheads;
+Only-ESMC fairness arm; cost-gated augmentations. E2 is complete (its GPU-start authorization of v3-034 is used up).
+The failed-fallback leftovers were deleted on 2026-10-08 under the user's authorization through `vm-fallback
+--abandon` (log v3-030). Ask before any GPU start: the advance authorization of v3-014 covers approved step F work
+only, not a pre-step-F experiment.
 
-## 5. VM, spending and limits (verified 2026-10-12 05:39 UTC)
+## 5. VM, spending and limits (verified 2026-10-12 16:16 UTC)
 
-| Item | Value (verified 2026-10-11 13:03 UTC by `vm-status` and `vm-report --no-ssh`) |
+| Item | Value (`vm-status` 2026-10-12 16:16 UTC; the controller ledger) |
 |---|---|
-| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (verified 2026-10-12 05:39:06 UTC after E2 session 12 `session-20261012T025638Z-baee022b`, 2 h 42 min, $2.38 gross; E2 sessions 10–12 ran 8 h 51 min, $7.80 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | after E2 (log v3-037, 2026-10-12 05:40 UTC): about **$39.98 spent**; to finish (step F 1.0–2.25 VM h, $0.9–1.9, plus storage $0.55/day) about **$42.0–47.4**, within the recorded $55. Before E2: refreshed in log v3-033 (14:10 UTC): about $32.00 spent; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
+| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (verified 2026-10-12 11:18:48 UTC after the 10-epoch comparison session `session-20261012T104112Z-c41caba4`, 37 min, $0.55 gross; before that 05:39:06 UTC after E2 session 12 `session-20261012T025638Z-baee022b`, 2 h 42 min, $2.38 gross; E2 sessions 10–12 ran 8 h 51 min, $7.80 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
+| Spending | 2026-10-12 17:30 UTC (log v3-043, an estimate; no VM use since 11:18:47 UTC): about **$40.8**; to finish about **$42.8–48.2** (the refit $0.9–1.9, storage for 2–10 days; the test side on the workstation CPU costs no VM time). 2026-10-12 11:20 UTC (log v3-041): about **$40.65** after the comparison session (37 min, $0.55 gross by the ledger); to finish about **$42.6–48.1** (step F 50-epoch path plus storage). 10:24 UTC (log v3-039, offline `pmm_v3_sched10.py spend`): about **$40.09**; the comparison's launch control projects $46.09 with its $6 reserve against $55; the comparison adds about 0.8–1.1 VM h ($0.7–0.95, up to $1.4 with a rerun) plus 1–2 storage days. 2026-10-12 09:02 UTC (log v3-038; `vm-status` TERMINATED, today 5 h 33 min / $6.01): about **$40.06 spent**; to finish about **$42.1–47.5** straight to step F or **$42.8–49.7** with the section 11 comparison (A 0.6–1.0 VM h, $0.5–0.9, plus 1–2 storage days). After E2 (log v3-037, 2026-10-12 05:40 UTC): about **$39.98 spent**; to finish (step F 1.0–2.25 VM h, $0.9–1.9, plus storage $0.55/day) about **$42.0–47.4**, within the recorded $55. Before E2: refreshed in log v3-033 (14:10 UTC): about $32.00 spent; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
 | Retained storage | campaign disk `deepmzyme-l4-from-deepmzyme-paused-20261003` ($0.49/day) and archive snapshot `deepmzyme-paused-20261003` ($0.06/day): $0.55/day in estimated charges; the controller reserves $0.75/day (a guard, not a charge). The failed-fallback disks and snapshot were deleted on 2026-10-08 (log v3-030; receipt archived as `state/fallback-873d08b26968.abandoned.json`) |
-| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-11 used 4 h 37 min / $5.20 of running time; a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
+| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-12 used 6 h 11 min / $6.55 of running time (2026-10-11: 4 h 37 min / $5.20); a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and nine in a row 07:58:51–08:41:04 on 2026-10-08 by the ledger; none on 2026-10-11); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
 
 ## 6. Audit of the session-5 scratch drivers (delivered 2026-10-07)
@@ -232,6 +264,11 @@ from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 ch
 | Logged-epoch contrast, folds 1–4 (log v3-029; `audit_v3_epoch_contrast.py`) | `$DATA/audits/epoch_contrast_20261008T171843Z/` |
 | Step E gate record (label), evidence and assessments | `$DATA/step_e_evidence/step_e_gate.json`; `$DATA/step_e_evidence/evidence_<UTC>/` (final `evidence_20261011T130145Z`, 786 files), assessments `$DATA/step_e_evidence/assessments/` (**final `E_20261011T130128Z`, SHA-256 `d6d27c0c…`**; earlier E_20261008T022125Z, E_20261008T121456Z, E_20261011T115055Z are incomplete interim copies) |
 | Section 10 review (done, log v3-032) | requests: `$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md`; scripts and outputs: `$DATA/audits/schedule_error_review_20261011T131706Z/` (`r1_weighting` … `r6_throughput`, `verify/`) |
+| 10-epoch comparison records, evidence and assessment (log v3-039–v3-041) | `$DATA/step_s10_evidence/s10_manifest.json` (`a9779c05…`), `s10_ceiling.json` (`3a6710a6…`), `s10_authorization.json` (`43465211…`), `evidence_20261012T111709Z/` (763 files), **`assessments/S10_20261012T111859Z/assessment.json` (`8fbce69b…`; not adopted)**; pulled runs `$DATA/durable/lane{0,1,2}/runs/gvp_late_fusion__four_class__sched10__fold{1..4}__seed42/`; readiness `$DATA/audits/s10_readiness_20261012T102309Z/` (`real_config_check.*`, two dry runs, `readiness_manifest.json` `e57b4a7e…`) |
+| Pre-step-F review (done, log v3-038; section 11) | `$DATA/audits/pre_f_gvp_complementarity_20261012T085520Z/` (`gvp_complementarity_review.py`, `complementarity_results.json`, `complementarity_tables.md`, `verify/`, `review_manifest.json` `1fd779b5…`) |
+| Step F readiness (log v3-042, v3-043) | original run `$DATA/audits/f_readiness_20261012T122926Z/` (`readiness_checks.json` `561190f8…`, preserved unchanged; its stage C pass was a recorded reassessment, not as run); an aborted rerun `f_readiness_20261012T165246Z/` (`ABORTED.txt`; not evidence); the scripted rerun on the final tools `f_readiness_20261012T170111Z/` (`step_f_readiness.py` `e73c09c5…`, `readiness_checks.json` `5b1ce5f0…`: A, B, D passed, C failed by the script's scope error); the corrected stage C rerun `f_readiness_20261012T174408Z/` (`step_f_readiness.py` `b73ece28…`, `readiness_checks.json` `7e61a339…`: C passed, combined ready true) |
+| Pre-shutdown worktree backup (2026-10-12 14:32 UTC) | `$DATA/backups/v3_worktree_uncommitted_20261012T143217Z/` (staged and unstaged patches, untracked-file tarball, `SHA256SUMS`, HEAD `f5c7f89`): the v3-042 state before the v3-043 round |
+| CPU ESMC check (log v3-044) | `$DATA/audits/esmc_cpu_check_20261012T180322Z/` (attempt 1, failed on the spec defect before any result; `ATTEMPT1_FAILED.txt`) and `$DATA/audits/esmc_cpu_check_20261012T180915Z/` (attempt 2: `selection.json` `e3843acb…`, `criteria.json` `d1bd7a78…`, `cpu_esmc_check.py` `89b97cc8…`, `esmc_cpu_check.json` `e9c3c3d4…`, payloads in `tool_bf16/` and `fp32/`, `*_time.txt`); readiness stage A recheck `$DATA/audits/f_readiness_20261012T181114Z/` (`b99e9c2c…`); weights in `~/.cache/huggingface/hub/models--EvolutionaryScale--esmc-600m-2024-12` |
 | Step E2 records and readiness | `$DATA/step_e2_evidence/e2_manifest.json` (`37c2ff05…`; superseded first manifest kept as `e2_manifest.superseded_20261011T141045Z.json`), `e2_ceiling.json` (`a4c31da1…`), later `e2_authorization.json`, `evidence_<UTC>/`, `assessments/E2_<UTC>/`; readiness dry run `$DATA/audits/e2_readiness_20261011T142030Z/assessment.json` (`ea0c6dbd…`; the earlier `…T141052Z` run used the superseded manifest) |
 | Bundles (source + extension) and folds | `$DATA/bundles/20d5b06/`, `$DATA/bundles/43d26ff/`; `$DATA/folds/` |
 | Steps B and C evidence | `$DATA/step_b_evidence/`, `$DATA/step_c_evidence/` |
@@ -248,11 +285,19 @@ rerun); never relaunch a unit that has a launch record without an exit code. Run
 
 ## 8. Next actions and commands
 
-**Step E2 complete (log v3-037); the selection is unchanged.** Next in order: (1) present the step F plan
-(`step_f_plan_draft.md`, input the E2 final selection) for the user's approval; (2) after approval, the step F CPU
-tooling and checks (validation-free refit runner, label-blind test preparation, report rules frozen in the DATASETS
-test-use ledger); (3) the refit and one test pass under that approval. Items 1–5
-below describe the GPU session procedure used for step E.
+**Step E2 complete (log v3-037); the selection is unchanged; the pre-step-F 10-epoch comparison ran and was not
+adopted (log v3-041), so step F uses 50 epochs. The step F tooling is prepared, corrected and CPU-checked (log v3-042,
+v3-043).** Next, in the order of step_f_plan_draft.md F7 (section 12 has the commands, checks and costs):
+1. The user's step F plan approval (the clean-subset rule, the label-blind reads, the CPU test ESMC route, the
+   amendment procedure, the F4 go-ahead and claim, the plan.md alignment).
+2. Done: the training-side CPU ESMC check passed (log v3-044); the bfloat16 CPU route stays.
+3. Commit (and push?) of the v3-038 to v3-044 work: the record commands refuse until the bound files are committed.
+4. The refit's GPU-start authorization; then `bind-selection`, `build-manifest`, `record-ceiling`,
+   `record-authorization` and the refit session: `deploy`, `launch`, `evidence`, vm-stop, `refit-receipt`.
+5. Freeze 1 (go-ahead), F3b on the workstation CPU, Freeze 2 (go-ahead), the single prediction pass (its own
+   go-ahead, `predict --log-entry`) and the report.
+
+Items 1–5 below describe the GPU session procedure used for step E.
 
 Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;
 `~/deepmzyme-vm/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
@@ -351,3 +396,197 @@ Conclusions (details, numbers and corrections in v3-032):
   folds 1–4) needs a new runner extension and a separate decision.
 - **Decision:** no small additional GPU intervention is currently justified; E2 proceeds unchanged. Optional
   proposals for separate decisions are listed in v3-032.
+
+<a id="11-pre-step-f-review"></a>
+## 11. Pre-step-F review and recommendation (2026-10-12, log v3-038): option A chosen, run, NOT ADOPTED (log v3-041)
+
+**Result (log v3-041): DONE, not adopted; the 50-epoch selection stands (E_sel = 50).**
+- 4 of 4 fits completed on the first attempt in one session (37 min, $0.55 gross; VM TERMINATED 11:18:48 UTC).
+- 10-epoch minus 50-epoch common-four BA on folds 1–4: +7.82, +0.15, −0.78 and +0.77 (mean +1.99, SD 3.94).
+- Unadjusted bootstrap [−0.39, +5.90] and t [−4.28, +8.26]: gate (b) fails. Gates (a), (c) and (d) pass.
+- Mean recalls: Mn +0.33, Cu +2.61, Zn +0.04, Class VIII +4.97.
+- Fold 1's gain is mostly the whole-group switch of `v3g_1q0c` (+5.36). Without each fold's top group the
+  differences are +2.45, −0.30, −1.15 and −0.22.
+- Assessment `S10_20261012T111859Z` (`8fbce69b…`). Readiness and authorization: log v3-040.
+
+**Status before the run (log v3-039):**
+- The user chose option A below on 2026-10-12, exactly as specified.
+- Its CPU preparation is DONE: extension `v3-ext2-sched10`, the frozen
+  [specification](sched10_assessment_spec.json) (`14c4b572…`), and the manifest (`a9779c05…`) and ceiling
+  (`3a6710a6…`) records. The checks are in log v3-039.
+- The GPU-start authorization was given and recorded in log v3-040. Commands:
+  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
+- Required CPU check 9 (the tiny synthetic CPU fit) and `tests/smoke_checks.py` ran under the user's authorization of
+  log v3-040 and passed. The fit showed 10-epoch execution, the terminal checkpoint, the replay and persistence.
+- Reconciliation with an independent report (log v3-039):
+  - Measured: LayerNorm-gain shrinkage under `wd10`; lower validation confidence and NLL for Only-GVP `wd10` and the
+    fold-0 10-epoch fit; the fold-0 breadth of the 10-epoch gain compared with the candidates that failed.
+  - Not established: that any of these causes the Only-GVP gain.
+  - Deferred, untested and not disproven: trunk learning rate 1e-4, three GVP layers, ESM dropout after pooling, a
+    LayerNorm decay exemption, population-normalized weighting and label smoothing.
+
+The original proposal follows unchanged. The review was requested by the user on 2026-10-12. It used CPU only and
+saved validation evidence: no fit, inference, refit, GPU action or test access. The findings, the optimizer
+verification and the cost refresh are in [log v3-038](log.md#v3-038). Scripts, outputs and an independent cross-check
+are in `$DATA/audits/pre_f_gvp_complementarity_20261012T085520Z/` (manifest `1fd779b5…`). Nothing below is
+authorized until the user decides.
+
+Findings in brief:
+
+- **Improved Only-GVP (`wd10`) against the selected fusion, folds 1–4, seed 42.**
+  - It corrects 618 fusion errors (9.27 points per fold) and loses 668 (9.73): net −0.46 (C10).
+  - Only fold 1 is net positive. 5.36 of its 6.77 points come from one whole-group switch: Class VIII for all 121
+    ions of `v3g_1q0c`, its 8 Mn included.
+  - Without each fold's top group the net is +1.41, −3.38, −3.70 and −5.09.
+  - Half of its +3.59 gain over the original Only-GVP falls on examples fusion already gets right; outside fold 1,
+    most of it does.
+  - About half of its differing answers change with the seed (fold 0, Jaccard 0.51).
+- **Option B, checked against the implementation.** The evaluated global fusion `wd10` already decayed the GVP trunk
+  (84 tensors at learning rate 3e-4) by exactly the Only-GVP `wd10` factor (0.0585). It did not move fusion toward the
+  improved GVP's answers (12.5% against a 10.5% base rate), and its result was −0.61 (C8). A selective
+  `--gvp-weight-decay 1.0` would only remove the 0.753 decay on the 31 base-rate tensors. Reaching the GVP pooling,
+  projection and site encoder at Only-GVP strength needs a source change or a learning-rate change.
+- **Option A, on the development fold.** The 10-epoch fits gain +4.42 to +4.99 (one seed). The gain is broad: all four
+  classes, about 14 effective groups, +2.70 to +3.28 without the top group, and no whole-group switch. The 10-epoch
+  fit also recovers 111 of the 174 examples where Only-GVP `wd10` is right and the 50-epoch fusion wrong; fusion `wd10`
+  recovers 63.
+
+### Recommended: option A, the 10-epoch schedule comparison (one experiment, 4 fits)
+
+- **Question.** Does a complete 10-epoch cosine schedule with a terminal checkpoint improve the selected cell
+  `gvp_late_fusion__four_class__baseline` on folds 1–4 over its verified 50-epoch units?
+- **Evidence for it.** The fold-0 development signal above and in v3-032: the only remaining lead with a broad,
+  consistent signal.
+- **Remaining uncertainty.** Whether the fold-0 gain transfers to folds 1–4 (fold 0 is the selection's worst fold);
+  whether it holds across seeds; whether it survives the full-cohort refit; and its effect on the test.
+- **Exact comparison.**
+  - Candidates: four new fits `gvp_late_fusion__four_class__sched10__fold{1,2,3,4}__seed42`.
+  - Each command equals the selected cell's command for the same fold except `--epochs 10` and the run name. The
+    cosine runs over 10 epochs from the same peaks (GVP trunk 3e-4, rest 3e-5) with a terminal checkpoint at epoch
+    10. Weight decay 1e-4, batch 16, FP32, three lanes, the frozen data, folds, per-fold class weights, inputs and
+    model are all unchanged.
+  - Controls: the four 50-epoch units `gvp_late_fusion__four_class__baseline__fold{1,2,3,4}__seed42`, bound by
+    their E2 unit-evidence checkpoint and prediction hashes and never rerun.
+  - Fold 0: the existing step-B probe `probe-w1-fp32-r1…` (76.14) is reported separately as the development fold. It
+    is never inside an interval, and probes are not reused as evidence or as a namespace.
+- **Frozen gates.** They are written into an assessment specification whose SHA-256 is logged before any fit, and
+  they are not changed after results. Comparison S1 is `sched10` minus `baseline`, the common-four BA difference per
+  fold at the terminal checkpoints. The 10-epoch schedule is adopted for step F only if all four gates hold:
+  - (a) Completeness: the 4 fits complete in all four senses, replayed under `pmm-v3-replay-1`, evidence copied, and
+    the control hashes match.
+  - (b) Paired interval: both unadjusted 95% lower bounds above zero, using the A4/E2 methods unchanged (fold
+    bootstrap with 10,000 resamples and seed 42; t interval with 3 df).
+  - (c) Minimum gain: a mean gain strictly greater than 0.2 points (the A4/E2 tie band; a tie keeps 50 epochs).
+  - (d) Class recalls: against the control, no common-four class mean recall drops by more than 3 points, and no
+    common-four recall is missing or zero in any fold. Fold supports and zero-recall events are reported.
+
+  Otherwise the result is "not adopted", with every failed gate named by class and magnitude. Reported without gating:
+  per-fold differences, class recalls, a Bonferroni t interval over the 18 post-A4 comparisons on folds 1–4 (the 17
+  of E2 and S1; sensitivity only), a labelled five-fold descriptive mean with the probe, and the v3-038 breakdown.
+- **Labels.** Exploratory and post hoc: the hypothesis came from fold-0 probes already seen. Folds 1–4 are reused
+  after A4 and E2 used them. There is one training seed. Passing does not establish independently confirmed
+  superiority or robustness across seeds. The 50-epoch control was selected on these folds, so its values may be
+  optimistic; this works against the challenger. The step F test stays one-shot and `both_results_secondary`.
+- **Required CPU checks before any fit.**
+  1. A versioned runner extension `v3-ext2-sched10` with its own namespace, manifest, launcher and assessor. It binds
+     the original manifest, extension 1, the E2 manifest and assessment and the source tree by hash. The hash-frozen
+     runner, E2 modules and `src/` stay unchanged.
+  2. A command diff for each fold: only `--epochs` and the run name differ, and the trainer's parser accepts the
+     command.
+  3. Schedule and optimizer: the per-epoch learning rates equal the recorded probe schedule. Both AdamW groups match
+     the baseline in membership, learning rate and decay (the decay-audit group dump). The receipt fields require
+     `planned = completed = selected = 10` and the terminal rule.
+  4. Identity: `sched10` is distinct from every 50-epoch unit and probe, and the identity carries the epochs.
+  5. Control binding: the controls are refused unless their hashes equal the E2 unit evidence.
+  6. Replay and persistence: the existing lane, pull, acknowledgment and evidence contract.
+  7. Assessor tests on synthetic data: all-pass, an interval failure, a minimum-gain failure, a recall-gate failure,
+     zero recall and an incomplete set. It writes a machine-readable schedule decision with the resolved epochs and
+     the hashes.
+  8. Launch controls: the write-once $55 ceiling record and a user GPU-start authorization record. The admission rule
+     is the measured short-fit forecast × 1.25 + 900 s.
+  9. A tiny CPU smoke through the extension, `tests/smoke_checks.py` and the docs-contract check.
+- **Execution.** After the checks, one GPU session (three fits, then one) with `--hours 2`, under the unchanged
+  controller caps and only after the user's explicit GPU-start authorization. Approving the experiment does not start
+  a GPU, and the advance authorization of v3-014 covers approved step F work only.
+- **Cost (09:02 UTC).**
+  - Option A alone: about 0.6–1.0 VM hours, $0.5–0.9 (up to $1.1 with a rerun), plus 1–2 storage days at
+    $0.55/day.
+  - Campaign total with A: about $42.8–49.7, against $42.1–47.5 going straight to F.
+  - Both are within the recorded $55; no increase is requested.
+- **Stopping rule.**
+  - Exactly these four fits; a failed fit gets one unchanged rerun.
+  - A second failure blocks the decision, and the 50-epoch selection stands unless the user decides otherwise.
+  - No other epoch counts, seeds, folds, recipes or families.
+  - One assessment, after all four fits.
+  - Whatever the result, the next step is step F; no further pre-step-F experiment follows from this one.
+- **Fallback if it fails.** Step F proceeds on draft v3's default path: the selection unchanged, 50 epochs. The
+  10-epoch result is reported as exploratory and never as evidence of no effect.
+- **If adopted.** Step F refits the same cell with a 10-epoch cosine schedule and a terminal checkpoint at epoch 10.
+  The refit identity and every binding carry the schedule-decision SHA-256 and the epoch count. The plan's fixed
+  "50 epochs" decision is amended for the step F refit only, by a dated log entry.
+
+### Not recommended
+
+- **Option B** (selective GVP weight decay inside fusion): its premise is not supported (see above), and it costs
+  about twice A's GPU time (1.5–1.8 VM hours, $1.3–1.6).
+- **Both options, a combination, a sweep or a warm start:** excluded by the request.
+- **Step F directly** is the defensible alternative if the user prefers no further reuse of folds 1–4.
+
+### Decisions for the user (none inferred)
+
+1. Decided 2026-10-12 (log v3-039): option A; authorized (log v3-040); run and not adopted (log v3-041).
+2. Superseded by section 12 (approval 1 of step_f_plan_draft.md F7).
+3. Superseded by section 12 (commit and push of the v3-038 to v3-044 work, F7 item 3).
+
+## 12. Step F tooling prepared (2026-10-12, log v3-042)
+
+**State.** The user chose to finalize v3 with `gvp_late_fusion__four_class__baseline` at 50 epochs (log v3-042). The
+10-epoch comparison stays recorded as not adopted, and the other optimization hypotheses are deferred and untested,
+not disproven. The step F tooling was prepared and CPU-checked under a preparation-only authorization (log v3-042),
+verified after a reboot and corrected in one CPU-only round (log v3-043). The earlier step F GPU authorization of
+v3-014 is **not** activated. Nothing ran on test data. No step F record is written: the F1 selection record was
+dry-run only, and there is no manifest, ceiling, authorization, freeze record or prediction claim. The commands are in
+the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run);
+the implementation choices and the explicit clean-subset rule are in the
+[step F draft's implementation notes](step_f_plan_draft.md#implementation-notes-2026-10-12-log-v3-042).
+
+| File (worktree, untracked) | Role |
+|---|---|
+| `docs/campaigns/pmm_ion_metal_v3/step_f_spec.json` | the rules as data; SHA-256 `04d22cc4…` (log v3-044), pinned in `pmm_v3_test_prep.py` and `pmm_v3_step_f.py` |
+| `run_pmm_v3_step_f.py` (`29427650…`) | VM refit (`plan-refit`, `refit` with its in-process reload check, `reload-check`); workstation CPU `prepare-test` and `test-embeddings` (recorded Freeze 1 required, closed after Freeze 2) and `predict` (Freeze 1 and 2 verified, the F4 go-ahead, one campaign-wide claim) |
+| `pmm_v3_test_prep.py` (`2df11024…`) | label-blind dispositions, the label-independent `ion_key`, row accounting, aliases, LINK flags, clean subset C1–C3, the test ESMC plan and bfloat16 payloads, and the record checks shared with the runner and the report |
+| `pmm_v3_step_f_report.py` (`b4c7dacd…`) | the only component that uses a label value; the claimed predictions only; four lines, PDB-entry bootstrap, PMM wording, disclosures; byte-reproducible |
+| `pmm_v3_step_f.py` (`a91e0db3…`) | workstation (standard library): F1 record, manifest, ceiling, authorization, deploy (three files), step C lane logic, `refit-receipt`, Freeze 1 (bound to the refit manifest's code; `--amends`) and Freeze 2 records and their ledger text; records that name a commit need the bound files committed |
+| `tests/test_v3_step_f.py` (`89468a62…`) | 39 tests, two of them opt-in synthetic CPU fits (run as authorized) |
+
+**Checks** (details in [log v3-043](log.md#v3-043)):
+- The 39 step F tests pass, including the two authorized synthetic fits. Smoke checks: 43 passed; the docs contract has 0 strict failures.
+- CPU ESMC check (log v3-044): three training chains fixed in advance, embedded on two cores under a 6 GB cap and
+  compared with their stored GPU embeddings. Mean per-residue cosine 0.99979–0.99982 (minimum 0.99941), mean absolute
+  difference 6.2–7.0e-4, peak memory 5.3 GB, 3.4–14.9 s per chain; suitable. Its first attempt exposed a
+  specification defect (`storage_dtype`), now fixed and tested; readiness stage A was rechecked on the fixed
+  specification (`$DATA/audits/f_readiness_20261012T181114Z/`).
+- The original readiness run `$DATA/audits/f_readiness_20261012T122926Z/` (`561190f8…`) is preserved; its stage C
+  passed by a recorded reassessment, and stage B ran with an earlier runner (`9e663f11…`). The scripted rerun on the
+  final tools is `$DATA/audits/f_readiness_20261012T170111Z/` (`readiness_checks.json` `5b1ce5f0…`). There A, B and D passed. C failed as run because of a scope error in the script's sequence-count check (every row-level check passed); the corrected script reran stage C in `$DATA/audits/f_readiness_20261012T174408Z/` (`step_f_readiness.py` `b73ece28…`, `readiness_checks.json` `7e61a339…`) and it passed: all 1,049 fold-1 context sequences of at least 30 residues are identical to a reference and flagged (1,048 in the first run; 4uer chain 9 is now caught), all 1,498 rows with such a chain are excluded by C2, and only the two short-chain rows (5wlm, 6wbe) remain. That script combines the earlier A, B and D (verified by SHA-256 and identical tool hashes) and computes ready: true.
+
+**Next approvals** (step_f_plan_draft.md F7, in order; none inferred):
+1. Approve or amend the step F plan. It includes:
+   - the clean-subset rule as implemented: A1 with the identical-chain clause, the short-chain limitation kept and
+     disclosed;
+   - the label-blind test-side reads;
+   - the workstation-CPU test ESMC route in bfloat16 and its requirements (plan F6: weights cached, a 6 GB memory
+     cap with a measured peak of 5.3 GB, about 1.5–3 hours on two cores);
+   - the Freeze 1 amendment procedure, the F4 go-ahead and campaign-wide claim, and the plan.md alignment.
+2. Done: the training-side CPU ESMC check passed (log v3-044); the bfloat16 CPU route stays.
+3. Commit (and decide whether to push) the v3-038 to v3-044 work. `bind-selection`, `build-manifest` and
+   `record-freeze1` refuse until the bound files are committed.
+4. Authorize the refit's GPU start: one session, `vm-start --confirm --hours 2`; one 50-epoch full-cohort fit
+   (admission forecast 3,300 s) with its reload check. That is about 1.0–1.5 VM hours, $0.9–1.3 at $0.8586/h, or up
+   to 2.25 h ($1.9) with the one unchanged rerun, plus storage at $0.55/day. Before launch: `bind-selection`,
+   `build-manifest`, `record-ceiling` and, after the logged decision, `record-authorization`.
+5. The plan.md alignment (F7 item 5), on approval.
+6. Later, three logged go-aheads:
+   - Freeze 1, then F3b on the workstation CPU;
+   - Freeze 2;
+   - the single test pass (`predict --log-entry`) and the report.

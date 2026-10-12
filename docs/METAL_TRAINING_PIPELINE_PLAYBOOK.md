@@ -471,6 +471,181 @@ summaries, the original selection unchanged and the final selection. The origina
 assessment, the A4 specification and the `both_results_secondary` final-test label are
 unchanged by E2.
 
+### v3 pre-step-F 10-epoch schedule comparison (completed 2026-10-12, not adopted)
+
+**Chosen by the user on 2026-10-12 ([log v3-039](campaigns/pmm_ion_metal_v3/log.md#v3-039)),
+authorized after the readiness checks ([log v3-040](campaigns/pmm_ion_metal_v3/log.md#v3-040)), run in one
+session and not adopted ([log v3-041](campaigns/pmm_ion_metal_v3/log.md#v3-041)): gate (b) failed, so the
+50-epoch selection stands.** The proposal is in
+[handoff section 11](campaigns/pmm_ion_metal_v3/handoff.md#11-pre-step-f-review). The rules
+(fits, gates, stopping rule, labels) are frozen in
+[`sched10_assessment_spec.json`](campaigns/pmm_ion_metal_v3/sched10_assessment_spec.json)
+(SHA-256 in log v3-039), extension `v3-ext2-sched10`.
+
+Fixed context: the selected cell `gvp_late_fusion__four_class__baseline`, folds 1–4, seed 42,
+the recorded step-B setting (FP32, three lanes). The single change is `--epochs 10`: a complete
+cosine schedule over 10 epochs from the same peak learning rates, with the terminal checkpoint
+at epoch 10. The four fits are `gvp_late_fusion__four_class__sched10__fold{1,2,3,4}__seed42`.
+The four 50-epoch fits of the same cell are reused as controls and never rerun.
+
+Tools (workstation; nothing in `src/` or the hash-frozen runner files changes):
+
+- `run_pmm_v3_sched10.py` (VM side) repeats the frozen `run_unit` admission sequence with
+  the frozen building blocks, under the comparison's run names and 10 epochs.
+  - It refuses a run unless the resolved trainer configuration differs from the 50-epoch
+    control only in `epochs`, `run_name` and the run identity.
+  - It binds its own SHA-256 into every run identity (`schedule_extension`).
+  - `deploy` copies it into the extension code directory `DeepMzyme_v3_ext1`, never over a
+    different file.
+  - Archive, replay and status use `run_pmm_v3_campaign.py` unchanged.
+- `pmm_v3_sched10.py` (standard library only) is the only admission check. It reuses the
+  step C lane, launch, wait, pull, recovery and evidence logic, with launch folder
+  `step_s10/launch` and evidence under `step_s10_evidence/` on Data1.
+- `pmm_v3_sched10_assessment.py` assesses on the workstation from the Data1 copies, as for
+  E2. Each candidate must carry the bound `schedule_extension`. The controls must reproduce the
+  final E2 assessment, or no decision is written. Output:
+  `step_s10_evidence/assessments/S10_<UTC>/assessment.json`, with a machine-readable
+  `schedule_decision` (epochs 10 or 50) for step F.
+
+Every launch is refused before anything starts unless all of these hold:
+
+- the readiness report and the VM extension record agree with the worktree;
+- the write-once manifest `s10_manifest.json` verifies (specification, A4 specification, final
+  E2 assessment and selection, E2 manifest, extension record, runner files, this tooling
+  including the VM runner, and the hashes of the four controls and the two fold-0 development
+  runs);
+- the VM copy of `run_pmm_v3_sched10.py` is the bound one;
+- the write-once ceiling `s10_ceiling.json` exists and the write-once authorization names
+  exactly this manifest and ceiling;
+- the estimated charges, with the running session to its hard stop, plus the reserve, stay
+  within the ceiling.
+
+```bash
+P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
+# CPU, once (done 2026-10-12, log v3-039; a second call is refused): manifest and ceiling
+$P pmm_v3_sched10.py build-manifest --log-entry v3-039
+$P pmm_v3_sched10.py record-ceiling --usd 55 --spent-usd 40.06 --spent-at 2026-10-12T09:02:00Z \
+  --spent-source "log v3-038 (estimated charges, disk counted once; vm-status TERMINATED)" --log-entry v3-039
+$P pmm_v3_sched10.py units; $P pmm_v3_sched10.py gates; $P pmm_v3_sched10.py spend   # offline
+# Only after the user's GPU-start authorization for this comparison is logged (dated entry v3-NNN):
+$P pmm_v3_sched10.py record-authorization --log-entry v3-NNN
+# The GPU session (gpu-use-skill; VM running under the controller, e.g. vm-start --confirm --hours 2):
+$P pmm_v3_sched10.py deploy
+$P pmm_v3_sched10.py status
+$P pmm_v3_sched10.py launch gvp_late_fusion__four_class__sched10__fold1__seed42@0 \
+  gvp_late_fusion__four_class__sched10__fold2__seed42@1 gvp_late_fusion__four_class__sched10__fold3__seed42@2
+$P pmm_v3_sched10.py launch gvp_late_fusion__four_class__sched10__fold4__seed42@0   # the launch above waits and pulls
+$P pmm_v3_sched10.py evidence                             # before vm-stop
+# After the session (workstation, CPU; the newest step_s10 evidence copy):
+$CAP $P pmm_v3_sched10_assessment.py
+```
+
+Failures are handled as in steps C–E2. A failed or interrupted fit is pulled, `archive-failed
+UNIT` moves its first attempt aside, and it is rerun once, unchanged; a second failure blocks
+the decision. Step F takes `E_sel` from the decision: 10 only if adopted, otherwise 50
+([step F draft v3](campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)).
+
+### v3 step F: Stage 6B refit and the one test pass (tooling prepared 2026-10-12; not approved, not run)
+
+**Prepared on CPU only ([log v3-042](campaigns/pmm_ion_metal_v3/log.md#v3-042); corrected in
+[log v3-043](campaigns/pmm_ion_metal_v3/log.md#v3-043)).** Beyond synthetic fixtures, only the
+training-side readiness checks have run. The execution plan is
+[step F draft v3](campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) with its implementation notes.
+The rules are frozen in [`step_f_spec.json`](campaigns/pmm_ion_metal_v3/step_f_spec.json), whose
+SHA-256 the tools pin. Each step below needs the user's logged go-ahead (`v3-NNN`), and the command
+that acts on it records that go-ahead.
+
+Fixed settings:
+
+- model: `gvp_late_fusion__four_class__baseline`, 50-epoch cosine schedule, terminal checkpoint,
+  seed 42, FP32;
+- data: the full non-test cohort (7,398 ions) with full-cohort weights `N / (4 n_c)`;
+- no validation, calibration or ensemble;
+- run name `stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42`;
+- the test side (preparation, ESMC, prediction, report) runs on the workstation CPU; no test file
+  goes to the VM.
+
+Tools (nothing in `src/` or the hash-frozen runner files changes):
+
+- `run_pmm_v3_step_f.py` (VM for the refit, workstation CPU for the test side):
+  - `plan-refit`: read-only differences from the fold-1 command;
+  - `refit`: the frozen admission sequence, with an in-process reload check that the
+    training-set common-four BA is reproduced within 0.001;
+  - `reload-check`: reruns that check on a completed refit;
+  - `prepare-test` and `test-embeddings --device cpu`: refused unless the recorded Freeze 1 under
+    `--campaign-dir` (canonical path, `v3-NNN` go-ahead, no placeholder) binds this exact code and
+    specification, and refused after Freeze 2 or the prediction claim;
+  - `predict`: refused unless the recorded Freeze 1 and Freeze 2 verify (every membership file, the
+    recomputed embedding inventory, the bound checkpoint); it first writes the campaign-wide
+    write-once claim `step_f_evidence/f4_prediction_claim.json` with the user's F4 go-ahead
+    (`--log-entry`), so a second pass is refused into any directory.
+- `pmm_v3_test_prep.py`: label-blind dispositions, the label-independent `ion_key`, row accounting,
+  aliases, LINK flags, the C1–C3 clean subset (an identical eligible chain always matches), the test
+  ESMC plan and payloads (model in bfloat16 under bfloat16 autocast, as for the training files), and
+  the record checks shared with the runner and the report.
+- `pmm_v3_step_f_report.py`: the only component that uses a label value; it accepts only the
+  claimed predictions under Freeze 1 (its own code hash) and Freeze 2, and writes deterministic
+  `report.json` and `report.md`.
+- `pmm_v3_step_f.py` (standard library only):
+  - the F1 selection record, the refit's manifest, ceiling and authorization;
+  - `deploy`: copies three files into `DeepMzyme_v3_ext1`, never over a different file;
+  - the step C lane logic, with launch folder `step_f/launch` and evidence in `step_f_evidence/`;
+  - `refit-receipt`;
+  - the Freeze 1 and Freeze 2 templates and records, with their DATASETS ledger text. Freeze 1 binds
+    the refit manifest's code; `--amends` records an amended Freeze 1.
+  - F1, the manifest and Freeze 1 name the git commit and are written only when every bound step F
+    file is committed unchanged there.
+
+```bash
+P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
+C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3   # the records' campaign root
+$P pmm_v3_step_f.py units; $P pmm_v3_step_f.py gates                  # offline
+$P pmm_v3_step_f.py bind-selection --dry-run; $P pmm_v3_step_f.py freeze1-template   # print only
+# After the commit of the bound files, the plan approval and the refit authorization (dated entries v3-NNN):
+$P pmm_v3_step_f.py bind-selection --log-entry v3-NNN
+$P pmm_v3_step_f.py build-manifest --log-entry v3-NNN
+$P pmm_v3_step_f.py record-ceiling --usd 55 --spent-usd S --spent-at UTC --spent-source "log v3-NNN" --log-entry v3-NNN
+$P pmm_v3_step_f.py record-authorization --log-entry v3-NNN
+# The refit session (gpu-use-skill; vm-start --confirm --hours 2):
+$P pmm_v3_step_f.py deploy
+$P pmm_v3_step_f.py status
+$P pmm_v3_step_f.py launch stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42@0   # waits, pulls
+$P pmm_v3_step_f.py evidence                                          # before vm-stop
+$P pmm_v3_step_f.py refit-receipt                                     # workstation, offline
+# Freeze 1 (before any test-side read; prints the ledger paragraph):
+$P pmm_v3_step_f.py record-freeze1 --log-entry v3-NNN
+# F3b on the workstation CPU, label-blind:
+$CAP $P run_pmm_v3_step_f.py --action prepare-test --campaign-dir $C --test-dir TEST \
+  --source-csv prepare_training_and_test_set/pinmymetal_files/classmodel_test_set \
+  --previously-opened-dir DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test \
+  --v2-root V2 --train-dir TRAIN --out-dir PREPARED
+# ESMC-600M on CPU (weights cached; checked in log v3-044): a 6 GB cap (peak 5.3 GB measured), about 1.5–3 h:
+systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=6G -p MemorySwapMax=0 $P run_pmm_v3_step_f.py \
+  --action test-embeddings --campaign-dir $C --prepared-dir PREPARED --test-dir TEST --out-dir TEST_ESM --device cpu
+# Freeze 2 (before any prediction or label read):
+$P pmm_v3_step_f.py record-freeze2 --log-entry v3-NNN --prepared-dir PREPARED --test-esm-dir TEST_ESM
+# F4, after its own logged go-ahead: the single prediction pass (campaign-wide claim), then the report:
+$CAP $P run_pmm_v3_step_f.py --action predict --campaign-dir $C --log-entry v3-NNN --prepared-dir PREPARED \
+  --test-dir TEST --esm-dir TEST_ESM --checkpoint CHECKPOINT --source-csv SOURCE --out-dir PREDICTIONS --device cpu
+$P pmm_v3_step_f_report.py --campaign-dir $C --predictions-dir PREDICTIONS --prepared-dir PREPARED \
+  --source-csv SOURCE --out-dir REPORT
+```
+
+A failed or interrupted refit is pulled, and `archive-failed` moves it aside. It is then rerun
+once, unchanged; a second failure stops step F for diagnosis. A code fix needed after Freeze 1
+and before Freeze 2 follows the specification's `freeze1_amendment` procedure: a dated log entry with
+the user's go-ahead; the old `freeze1.json` archived by hand as `freeze1.superseded_<UTC>.json`
+(never deleted); the fix committed and its checks rerun; `record-freeze1 --amends <old SHA-256>
+--prior-test-side-read none|yes --log-entry v3-NNN`; a DATASETS ledger entry; and the preparation
+and embeddings repeated into new directories. After Freeze 2 or the prediction claim there is no
+amendment: step F stops for the user's decision. The specification is bound into the refit from
+`bind-selection` on, so changing it later is not an amendment (a refit rerun or a tooling change,
+by the user's decision). A prediction pass that fails after its claim is
+not rerun without the user's dated decision (the claim is archived by hand and the failure
+disclosed).
+
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
 
 Plan: [`docs/plans/metal_level_metal_task_compared_PMM_final_plan.md`](plans/metal_level_metal_task_compared_PMM_final_plan.md).
