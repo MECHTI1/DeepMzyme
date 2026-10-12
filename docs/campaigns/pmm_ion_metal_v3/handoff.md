@@ -1,4 +1,4 @@
-# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033)
+# PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; step E2 run and completed 2026-10-11/12, log v3-034–v3-037; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033)
 
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
@@ -10,47 +10,38 @@ the current authority.
 
 ```text
 Continue the DeepMzyme PMM ion metal v3 campaign from the verified stopping point recorded in
-docs/campaigns/pmm_ion_metal_v3/handoff.md. Steps A–E are complete (final A4 assessment E_20261011T130128Z,
-Stage 6 selection gvp_late_fusion__four_class__baseline; log v3-031). The read-only section 10 review is done
-(log v3-032: no small extra GPU intervention justified; E2 unchanged; optional later proposals named there). The E2
-CPU tooling is built and checked (pmm_v3_step_e2.py, pmm_v3_e2_assessment.py; log v3-033); the write-once E2
-manifest (SHA-256 37c2ff05…) and the $55 ceiling record (a4c31da1…) are recorded in step_e2_evidence on the
-campaign data root; NO E2 authorization record exists. The E2 GPU-start gate is reached: the user's decision is
-pending (authorize E2 with a window, keep or change the $55 ceiling, or cancel E2 by a dated log entry; optional
-items of v3-032 only by separate decision). Do not start a GPU without that recorded decision.
+docs/campaigns/pmm_ion_metal_v3/handoff.md. Steps A–E2 are complete: the A4 Stage 6 selection
+gvp_late_fusion__four_class__baseline (E_20261011T130128Z) was retained by step E2 (final E2 assessment
+E2_20261012T053919Z, SHA-256 6e804796…; no candidate eligible; log v3-037). Next is step F (Stage 6B full
+refit of that selection, seed 42, terminal 50-epoch cosine, no calibration, no ensemble, then one prediction pass
+on PMM's test set with the recorded both_results_secondary label and the prior-exposure caveats, including the
+2026-10-11 byte scan recorded in the DATASETS ledger). Step F has NO tooling and its execution draft
+(step_f_plan_draft.md, draft v2) is NOT approved: present the plan for the user's approval first; no refit, GPU
+start or test access before that approval and the frozen report/test-row/clean-subset rules in the DATASETS
+test-use ledger.
 
-Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; check `git status` and
-`git log -3`; the 2026-10-11 commits may be unpushed). Not in /home/mechti/PycharmProjects/DeepMzyme. If
-/media/mechti/Data1 is missing, mount it first: `udisksctl mount -b /dev/sda1`. Python:
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python (verify with -c "import sys; print(sys.executable)"). Cap local CPU
-runs: systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G.
+Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; check `git status`, `git
+log -5` and whether the latest commits are pushed). Not in /home/mechti/PycharmProjects/DeepMzyme. If
+/media/mechti/Data1 is missing: `udisksctl mount -b /dev/sda1`. Python: /home/mechti/miniconda3/envs/DeepMzyme/bin/python
+(verify with -c "import sys; print(sys.executable)"). Cap local CPU runs: systemd-run --user --scope -p CPUQuota=200%
+-p MemoryMax=3G. Subagents must never search dataset roots that contain test/ (prune test paths before reading).
 
-Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (sections 8
-and 10 first); log.md v3-033, v3-032, v3-031; plan.md steps E2 and F; e2_assessment_spec.md; the playbook section
-"v3 step E2 individual-confirmation amendment" (commands); .agents/skills/gpu-use-skill/SKILL.md,
-~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
+Read in order: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; handoff.md (sections 3,
+5 and 8); log.md v3-037 back to v3-031; plan.md step F; step_f_plan_draft.md; docs/DATASETS.md (test-use ledger);
+.agents/skills/gpu-use-skill/SKILL.md, ~/deepmzyme-vm/AGENTS.md and config.env before any GPU action.
 
-After the user's authorization is logged: `pmm_v3_step_e2.py record-authorization --log-entry v3-NNN`, then E2
-sessions with `pmm_v3_step_e2.py` only (status before every refill; name every running unit in `wait --any`;
-`evidence` before every vm-stop; verified TERMINATED), then `pmm_v3_e2_assessment.py` on the workstation (no VM).
-Three sessions are forecast (8.3–9.4 VM hours, stress 10.1; about $7.1–8.9). Never call run_pmm_v3_campaign.py
-directly; never edit the hash-frozen runner files or any E2/reused module after the manifest (a change refuses
-every launch until a new manifest and a new authorization are recorded).
+Rules that stay fixed: Stage 6 selection as above; seed 42; terminal checkpoint; one-shot test after frozen rules;
+no test-based selection; one active GPU; controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap
+12 h / $18; the $55 gross campaign ceiling (about $39.98 spent at 2026-10-12 05:40 UTC; to finish about
+$42.0–47.4). Every GPU session ends with evidence, vm-stop and a verified TERMINATED; log + STATUS + commit after
+each session or step with `git -c core.hooksPath=.githooks commit`; push only with the user's OK. Never edit the
+hash-frozen runner files; never run vm-fallback, delete resources, raise controller caps, run the cost-gated
+augmentations or Round C without the user.
 
-Rules that stay fixed: 50-epoch cosine, terminal checkpoint; A4 and E2 rules unchanged; seed 42; one active GPU;
-controller only via ~/deepmzyme-vm/bin; session cap 4 h / $6, daily cap 12 h / $18 (UTC day); campaign ceiling as
-recorded ($55 gross including storage in E2's control; spent about $32.00 at 14:10 UTC 2026-10-11; E → E2 → F
-forecast $41.7–48.9). Every GPU session ends with evidence, vm-stop and a verified TERMINATED; log + STATUS +
-commit after each session or step with `git -c core.hooksPath=.githooks commit`; push only with the user's OK.
-Never run vm-fallback, delete resources, raise controller caps, run the cost-gated augmentations or Round C, or
-start step F without the user. No test-set access before step F (record any incidental exposure in the DATASETS
-test-use ledger, as done in v3-032).
-
-Open user decisions (never infer them): the E2 GPU-start authorization and window (or a dated E2 cancellation);
-the recorded $55 ceiling; optional v3-032 items (narrow 10-epoch comparison, weighting ablation, CPU provenance
-checks, a non-decision-bearing per-group E2 display declared before results); Only-ESMC fairness arm; cost-gated
-augmentations; step F plan approval; push of v3-step-a. At each closeout report completed/pending work, spending
-and forecast, evidence copies, verified VM state, the exact next action and any decision the user must make.
+Open user decisions (never infer them): step F plan approval and its test-access ledger entries; push of the
+local commits; Only-ESMC fairness arm; cost-gated augmentations; the optional items of log v3-032. At each
+closeout report completed/pending work, spending and forecast, evidence copies, verified VM state, the exact next
+action and any decision the user must make.
 ```
 
 ## 1. Where to work and what to read
@@ -153,14 +144,15 @@ Fold 0 of every E contrast reuses the step C / step D runs (never rerun). **Step
 the corrected execution draft is `step_f_plan_draft.md` (draft v2, log v3-030; not approved): it takes the final E2
 selection (A4 only after a dated E2 cancellation) and a validation-free terminal refit; the 08:45 UTC session draft
 on the data root is kept unchanged as history.
-**Step E2:** authorized (log v3-034) and running: **25 of 36 fits complete after E2 session 2; session 3 running** (log v3-035, v3-036; session 2 completed `invsqrtw` folds 2–4, `meanagg`, `gvpaux03` and `resdrop01` fold 1; Only-GVP `wd10`, `sitecountsangles` and `sitenone` folds 1–4, late fusion `invsqrtw` fold 1; two `sitenone` replay-tolerance failures rerun once and passed; no unit has a second failure; latest evidence `step_e2_evidence/evidence_20261011T233244Z`; VM TERMINATED 23:34 UTC). Tooling: log v3-033, commits `4c65474`, `e4ce93c`. Records in
-`$DATA/step_e2_evidence/`: manifest `e2_manifest.json` (SHA-256 `37c2ff05…`; binds the original assessment `d6d27c0c…`
-and its selection, the final D assessment, the extension record, runner, E2 tooling and reused modules, and 19 reused
-units), ceiling `e2_ceiling.json` (`a4c31da1…`; $55, reserve $6), **no `e2_authorization.json`** (every E2 launch is
-refused until the user's decision is recorded). Readiness dry run `audits/e2_readiness_20261011T142030Z/` (A4 result
-re-derived exactly from the Data1 copies; reused units verified). The six late-fusion candidates' comparisons against
-the selection coincide with their matched-control comparisons (C12–C17 = C3–C8; divisor 17 unchanged). Step F waits
-for E2 unless the user cancels E2 by a dated log entry.
+**Step E2: complete, 36 of 36 fits** (log v3-035–v3-037; sessions 10–12 on 2026-10-11/12, 8 h 51 min, $7.80
+gross; two first-attempt replay-tolerance failures rerun once and passed). Final E2 assessment
+`step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json` (SHA-256 `6e804796…`; workstation, from the Data1
+copies; 100 units verified; A4 parity exact): **no candidate eligible; the original selection
+`gvp_late_fusion__four_class__baseline` is retained**. Only-GVP `wd10` is an interval-supported Only-GVP improvement
+(+3.59) but not better than the selection; late fusion `esmdrop02` +0.53 not interval-supported; the other fusion
+candidates show no positive mean gain; `sitecountsangles` is blocked by recall gates. Latest evidence
+`step_e2_evidence/evidence_20261012T053726Z`; VM TERMINATED 05:39 UTC. Records: manifest `37c2ff05…`, ceiling
+`a4c31da1…`, authorization (log v3-034).
 
 ## 4. User decisions and authorization boundaries
 
@@ -191,12 +183,12 @@ The 2026-10-11 arrangement ended with session 9's closeout (step E complete): th
 the user's separate E2 GPU-start authorization; ask before any GPU start. Push authorization was given for the
 2026-10-07/08 and 2026-10-11 closeouts only.
 
-## 5. VM, spending and limits (verified 2026-10-11 13:03 UTC)
+## 5. VM, spending and limits (verified 2026-10-12 05:39 UTC)
 
 | Item | Value (verified 2026-10-11 13:03 UTC by `vm-status` and `vm-report --no-ssh`) |
 |---|---|
-| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (ledger STOPPED 2026-10-11 13:03:24 UTC, session `session-20261011T115703Z-cf28c51f`, 1 h 06 min, $0.97 gross; before it `session-20261011T082141Z-2e94653e`, 3 h 31 min, $3.09); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
-| Spending | refreshed in log v3-033 (14:10 UTC): about **$32.00 spent**; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
+| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (verified 2026-10-12 05:39:06 UTC after E2 session 12 `session-20261012T025638Z-baee022b`, 2 h 42 min, $2.38 gross; E2 sessions 10–12 ran 8 h 51 min, $7.80 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
+| Spending | after E2 (log v3-037, 2026-10-12 05:40 UTC): about **$39.98 spent**; to finish (step F 1.0–2.25 VM h, $0.9–1.9, plus storage $0.55/day) about **$42.0–47.4**, within the recorded $55. Before E2: refreshed in log v3-033 (14:10 UTC): about $32.00 spent; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
 | Retained storage | campaign disk `deepmzyme-l4-from-deepmzyme-paused-20261003` ($0.49/day) and archive snapshot `deepmzyme-paused-20261003` ($0.06/day): $0.55/day in estimated charges; the controller reserves $0.75/day (a guard, not a charge). The failed-fallback disks and snapshot were deleted on 2026-10-08 (log v3-030; receipt archived as `state/fallback-873d08b26968.abandoned.json`) |
 | Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-11 used 4 h 37 min / $5.20 of running time; a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and nine in a row 07:58:51–08:41:04 on 2026-10-08 by the ledger; none on 2026-10-11); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
@@ -256,12 +248,10 @@ rerun); never relaunch a unit that has a launch record without an exit code. Run
 
 ## 8. Next actions and commands
 
-**Section 10 review done (log v3-032); E2 tooling built and checked, manifest and ceiling recorded (log v3-033).**
-Next in order: (1) the user's decision at the E2 GPU-start gate (authorize E2 with a window, keep or change the $55
-ceiling, or cancel E2 by a dated log entry); (2) after a logged authorization, `record-authorization`, then the E2
-GPU sessions with `pmm_v3_step_e2.py` (procedure below, with `pmm_v3_step_e2.py` in place of `pmm_v3_step_d.py
---step E`; commands in the playbook E2 section); (3) the workstation E2 assessment (`pmm_v3_e2_assessment.py`, CPU,
-after `evidence`) and its log entry; (4) step F tooling, plan approval and step F under its own approval. Items 1–5
+**Step E2 complete (log v3-037); the selection is unchanged.** Next in order: (1) present the step F plan
+(`step_f_plan_draft.md`, input the E2 final selection) for the user's approval; (2) after approval, the step F CPU
+tooling and checks (validation-free refit runner, label-blind test preparation, report rules frozen in the DATASETS
+test-use ledger); (3) the refit and one test pass under that approval. Items 1–5
 below describe the GPU session procedure used for step E.
 
 Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;

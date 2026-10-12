@@ -367,13 +367,14 @@ receipts, and assessment tables including every tested strength and failure.
 The $40 gross ceiling and one-shot held-out policy are unchanged.
 
 <a id="v3-step-e2-individual-confirmation-amendment-planned-not-implemented"></a>
-### v3 step E2 individual-confirmation amendment (implemented and CPU-checked; not run)
+### v3 step E2 individual-confirmation amendment (completed 2026-10-12)
 
 **Planned on 2026-10-08 ([log v3-025](campaigns/pmm_ion_metal_v3/log.md#v3-025));
 rules frozen the same day in the [E2 assessment specification](campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)
 ([log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)); tooling implemented and
-CPU-checked on 2026-10-11 ([log v3-033](campaigns/pmm_ion_metal_v3/log.md#v3-033)); no E2
-fit has run and no GPU start is authorized.** The rules (fits, comparisons, replacement,
+CPU-checked on 2026-10-11 ([log v3-033](campaigns/pmm_ion_metal_v3/log.md#v3-033)); run on
+2026-10-11/12 under the user's authorization and completed, with the original selection
+retained ([log v3-037](campaigns/pmm_ion_metal_v3/log.md#v3-037)).** The rules (fits, comparisons, replacement,
 completion) are owned by the [campaign plan, step E2](campaigns/pmm_ion_metal_v3/plan.md#steps)
 and the specification; the budget by the plan's [Budget section](campaigns/pmm_ion_metal_v3/plan.md#budget).
 
