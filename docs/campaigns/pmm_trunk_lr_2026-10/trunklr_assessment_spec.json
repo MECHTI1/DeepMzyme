@@ -1,0 +1,103 @@
+{
+  "adoption_rule": {
+    "a_complete": "all five comparison fits completed in all four senses (training completed, worker exit 0, artifacts persisted, host acknowledgment uploaded), replayed under pmm-v3-replay-1, with verified durable copies; each fit's optimizer has the control's two parameter groups with the trunk group at initial learning rate 1e-4 and the base group at 3e-5; the five controls equal the evidence bound by the launch manifest and reproduce the A4 fold values",
+    "b_interval": "both unadjusted 95% lower bounds of T1 (folds 0-4) above zero: fold bootstrap (percentile, 10,000 resamples, seed 42) and t interval with 4 degrees of freedom",
+    "c_min_mean_gain": 0.002,
+    "c_min_mean_gain_strict": true,
+    "d_no_missing_or_zero_common4_recall_in_any_fold": true,
+    "d_recall_drop_limit": 0.03,
+    "decision": "a promising candidate for further confirmation only if (a), (b), (c), (d) and (e) all hold; otherwise the reference is retained, with every failed condition named by class and magnitude",
+    "e_folds_1_4_mean_gain_positive": true
+  },
+  "base_learning_rate": "3e-5",
+  "bootstrap_interval": "percentile",
+  "bootstrap_resamples": 10000,
+  "bootstrap_seed": 42,
+  "campaign_id": "pmm_trunk_lr_2026-10",
+  "candidate_gvp_learning_rate": "1e-4",
+  "candidate_label": "trunklr1e4",
+  "checkpoint_rule": "terminal",
+  "comparison": {
+    "candidate": "the five fits with GVP-trunk learning rate 1e-4",
+    "control": "the five verified fits of the v3-selected cell (fold 0: the reused step-B full-fp32 run)",
+    "estimand": "mean over folds 0-4 of the paired common-four balanced-accuracy differences (candidate minus control)",
+    "id": "T1",
+    "metric": "common-four balanced accuracy at the terminal checkpoint"
+  },
+  "confidence": 0.95,
+  "control_gvp_learning_rate": "3e-4",
+  "control_source": {
+    "a4_assessment": "step_e_evidence/assessments/E_20261011T130128Z/assessment.json",
+    "a4_assessment_sha256": "d6d27c0c2bf4668cae2f03170faf06e3ab99e90654a0279f171260bab2681a45",
+    "e2_assessment": "step_e2_evidence/assessments/E2_20261012T053919Z/assessment.json",
+    "e2_assessment_sha256": "6e8047968b6fb086aac8723c4f1ae8ac6289f72f975a9e6cd4b3715a2182058e",
+    "fold0_control_run": "probe-full-fp32__gvp_late_fusion__four_class__baseline__fold0__seed42",
+    "reference_mean_common4_ba": 0.7428102942092367
+  },
+  "controls": [
+    "gvp_late_fusion__four_class__baseline__fold0__seed42",
+    "gvp_late_fusion__four_class__baseline__fold1__seed42",
+    "gvp_late_fusion__four_class__baseline__fold2__seed42",
+    "gvp_late_fusion__four_class__baseline__fold3__seed42",
+    "gvp_late_fusion__four_class__baseline__fold4__seed42"
+  ],
+  "decision_log_entry": "tlr-001",
+  "epochs": 50,
+  "excluded": [
+    "other learning rates or scopes",
+    "other seeds",
+    "other recipes, families or targets",
+    "combinations with any other change",
+    "sweeps",
+    "a final refit or any held-out evaluation",
+    "a second assessment of the same fits with changed rules"
+  ],
+  "family": "gvp_late_fusion",
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "held_out_test_accessed": false,
+  "id": "pmm-trunk-lr-2026-10",
+  "interpretation": "Exploratory development evidence: all five folds were already used for the v3 selection and one training seed (42) is used. Passing marks a promising candidate for further confirmation; it does not establish independently confirmed superiority or robustness across seeds. The controls were selected on these folds, so their values may be optimistic, which works against the candidate. A failed rule means the reference (74.28%) is retained, not that the trunk learning rate cannot help.",
+  "lr_schedule": "cosine",
+  "outcomes": {
+    "blocked": "a fit failed after its one unchanged rerun: no decision; the reference is retained unless the user decides otherwise",
+    "promising_candidate": "the 1e-4 GVP-trunk learning rate is a promising candidate for further confirmation; the v3 selection, its refit and its test result are unchanged",
+    "reference_retained": "the v3-selected configuration (GVP-trunk learning rate 3e-4) remains the reference"
+  },
+  "recipe": "baseline",
+  "schema_version": 1,
+  "seed": 42,
+  "selection_cell": "gvp_late_fusion__four_class__baseline",
+  "sensitivity": {
+    "folds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "method": "T1 recomputed on folds 1-4 (paired intervals with 3 degrees of freedom)",
+    "role": "reported as sensitivity; only its mean enters the rule, through (e)"
+  },
+  "single_change": "--gvp-learning-rate 1e-4 instead of 3e-4: the GVP trunk group (GVP layers and node/edge scalar encoders) starts at 1e-4 under the same cosine schedule; base learning rate 3e-5, optimizer group membership, weight decay, epochs, inputs, folds, class weights, seed, precision and lane settings are the controls'",
+  "step": "TLR",
+  "stopping_rule": [
+    "exactly the five listed fits; a failed fit gets one unchanged rerun (same seed and identity)",
+    "a second failure blocks the decision",
+    "one assessment, after all five fits are verified",
+    "no automatic refit, test evaluation or follow-up sweep"
+  ],
+  "t_degrees_of_freedom": 4,
+  "target": "four_class",
+  "units": [
+    "gvp_late_fusion__four_class__trunklr1e4__fold0__seed42",
+    "gvp_late_fusion__four_class__trunklr1e4__fold1__seed42",
+    "gvp_late_fusion__four_class__trunklr1e4__fold2__seed42",
+    "gvp_late_fusion__four_class__trunklr1e4__fold3__seed42",
+    "gvp_late_fusion__four_class__trunklr1e4__fold4__seed42"
+  ]
+}
