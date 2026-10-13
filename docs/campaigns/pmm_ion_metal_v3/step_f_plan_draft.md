@@ -1,6 +1,6 @@
 # PMM ion metal v3 — step F execution plan (draft v3, approved 2026-10-12)
 
-Status: **approved by the user on 2026-10-12 ([log v3-045](log.md#v3-045)); F1–F2 (the refit) authorized; Freeze 1, Freeze 2 and the single test pass remain separately gated; tooling prepared, corrected and CPU-checked, nothing run on real test data**
+Status: **approved by the user on 2026-10-12 ([log v3-045](log.md#v3-045)) and executed: the refit, both freezes, the label-blind preparation, the single test pass and the report are complete ([log v3-046 to v3-048](log.md#v3-048)); step F is complete**
 (2026-10-12: the user chose to finalize with the 50-epoch selection, [log v3-042](log.md#v3-042); one CPU
 correction round, [log v3-043](log.md#v3-043); the CPU ESMC compatibility check passed, [log v3-044](log.md#v3-044);
 see [Implementation notes](#implementation-notes-2026-10-12-log-v3-042) and the [specification](step_f_spec.json)).
@@ -277,6 +277,8 @@ One list, in order; the handoff, the log and STATUS use the same one.
 
 **Status 2026-10-12 ([log v3-045](log.md#v3-045)):** items 1–5 are decided (the plan approved, the check done, the
 commit and the refit's GPU start authorized, plan.md aligned). Item 6, the three later go-aheads, is pending.
+The refit ran and was receipted ([log v3-046](log.md#v3-046)): checkpoint `a0007846…`. Freeze 1, F3b, Freeze 2, the single
+test pass and the report followed ([log v3-047](log.md#v3-047), [log v3-048](log.md#v3-048)): step F is complete.
 
 1. Approve or amend this plan (draft v3 with the implementation notes of log v3-042 and v3-043), including:
    - the two-freeze order, the epoch binding (`E_sel` = 50), and the F4 go-ahead with its campaign-wide claim;
@@ -345,7 +347,8 @@ commit and the refit's GPU start authorized, plan.md aligned). Item 6, the three
 
 Prepared on CPU under the user's preparation-only authorization (log v3-042) and corrected in one CPU round
 ([log v3-043](log.md#v3-043)); the rules above include that round's corrections.
-**Not run:** no GPU start, refit, test-side read, test embedding or prediction. **Not recorded:** no
+As of log v3-043 (all executed later, log v3-045 to v3-048): **Not run:** no GPU start, refit, test-side read, test
+embedding or prediction. **Not recorded:** no
 write-once record (F1 selection, manifest, ceiling, authorization, Freeze 1 or 2, prediction claim); the F1 record
 was dry-run only.
 

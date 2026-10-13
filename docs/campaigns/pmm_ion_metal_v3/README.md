@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison v3
 
-Status: active (2026-10-12 step F plan approved; the Stage 6B refit authorized; log v3-045)
+Status: active (2026-10-13 all steps complete; closure pending the user's decision; log v3-049)
 
 Successor to the [closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md),
 whose fold-0 results are never confirmatory evidence here.
@@ -28,8 +28,9 @@ singly on folds 1–4 (36 fits, seed 42), before step F unless the user cancels 
 frozen in the [E2 specification](e2_assessment_spec.md) ([log v3-028](log.md#v3-028));
 completed: no candidate replaced the A4 selection ([log v3-037](log.md#v3-037)). The pre-step-F
 10-epoch schedule comparison ran and was not adopted ([handoff section 11](handoff.md#11-pre-step-f-review), [log v3-041](log.md#v3-041)).
-Step F tooling is ready ([handoff section 12](handoff.md#12-step-f-tooling-prepared-2026-10-12-log-v3-042)); its
-[plan](step_f_plan_draft.md) awaits approval.
+Step F ran under the approved [plan](step_f_plan_draft.md) (refit, two freezes, one secondary test pass;
+[log v3-048](log.md#v3-048)); results in the
+[completion summary](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md).
 A new chat continues from the [handoff](handoff.md) (ready-to-paste prompt, verified state, evidence paths).
 Execution follows the authorization and readiness state in
 [STATUS](../../../EXPERIMENT_STATUS.md); the ceiling is $55 ([log v3-025](log.md#v3-025)).

@@ -546,11 +546,14 @@ UNIT` moves its first attempt aside, and it is rerun once, unchanged; a second f
 the decision. Step F takes `E_sel` from the decision: 10 only if adopted, otherwise 50
 ([step F draft v3](campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)).
 
-### v3 step F: Stage 6B refit and the one test pass (tooling prepared 2026-10-12; not approved, not run)
+<a id="v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run"></a>
 
-**Prepared on CPU only ([log v3-042](campaigns/pmm_ion_metal_v3/log.md#v3-042); corrected in
-[log v3-043](campaigns/pmm_ion_metal_v3/log.md#v3-043)).** Beyond synthetic fixtures, only the
-training-side readiness checks have run. The execution plan is
+### v3 step F: Stage 6B refit and the one test pass (executed 2026-10-12/13; complete)
+
+**Executed 2026-10-12/13 ([log v3-045 to v3-048](campaigns/pmm_ion_metal_v3/log.md#v3-048)); prepared in
+[log v3-042](campaigns/pmm_ion_metal_v3/log.md#v3-042) and corrected in
+[log v3-043](campaigns/pmm_ion_metal_v3/log.md#v3-043).** The block below is the sequence that ran; the
+campaign's single test pass is used, so `predict` refuses any second pass. The execution plan is
 [step F draft v3](campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) with its implementation notes.
 The rules are frozen in [`step_f_spec.json`](campaigns/pmm_ion_metal_v3/step_f_spec.json), whose
 SHA-256 the tools pin. Each step below needs the user's logged go-ahead (`v3-NNN`), and the command
@@ -619,7 +622,7 @@ $P pmm_v3_step_f.py record-freeze1 --log-entry v3-NNN
 # F3b on the workstation CPU, label-blind:
 $CAP $P run_pmm_v3_step_f.py --action prepare-test --campaign-dir $C --test-dir TEST \
   --source-csv prepare_training_and_test_set/pinmymetal_files/classmodel_test_set \
-  --previously-opened-dir DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test \
+  --previously-opened-dir /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test \
   --v2-root V2 --train-dir TRAIN --out-dir PREPARED
 # ESMC-600M on CPU (weights cached; checked in log v3-044): a 6 GB cap (peak 5.3 GB measured), about 1.5–3 h:
 systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=6G -p MemorySwapMax=0 $P run_pmm_v3_step_f.py \
