@@ -32,9 +32,13 @@ implemented and unit-tested, not experimentally evaluated.
 
 ## PMM ion metal v3 campaign (`pmm_ion_metal_v3`)
 
-Plan: [`docs/campaigns/pmm_ion_metal_v3/plan.md`](campaigns/pmm_ion_metal_v3/plan.md);
-decisions: [log](campaigns/pmm_ion_metal_v3/log.md); assessment rules:
-[`assessment_spec.md`](campaigns/pmm_ion_metal_v3/assessment_spec.md). Every
+**Closed on 2026-10-13** ([archived README](archive/campaigns/pmm_ion_metal_v3/README.md)). The sections below
+are the historical procedure. The frozen tools still find their specifications through the registered alias
+`docs/campaigns/pmm_ion_metal_v3`, and new VM bundles build only from tag `pmm-ion-metal-v3-final`.
+
+Plan: [`plan.md`](archive/campaigns/pmm_ion_metal_v3/plan.md);
+decisions: [log](archive/campaigns/pmm_ion_metal_v3/log.md); assessment rules:
+[`assessment_spec.md`](archive/campaigns/pmm_ion_metal_v3/assessment_spec.md). Every
 GPU start uses applicable recorded authorization within the budget; see
 [STATUS](../EXPERIMENT_STATUS.md). Owners:
 `pmm_v3_campaign.py` (profile, recipes, units, guards), `run_pmm_v3_campaign.py`

@@ -6,7 +6,7 @@ documents when a link is sufficient.
 ## Agent default read path
 
 [AGENTS](../AGENTS.md) → [STATUS](../EXPERIMENT_STATUS.md) → the active
-campaign README linked from STATUS. Other owners below are read on demand;
+campaign README linked from STATUS (none while STATUS says `Current campaign: none active`). Other owners below are read on demand;
 read [`Plan.md`](../Plan.md) before experiment design, split, selection-metric or
 test-set decisions and [`DATASETS.md`](DATASETS.md) before any test-set use.
 [History map](archive/consolidation_2026-09/MAP.md) records the Job B section copies;

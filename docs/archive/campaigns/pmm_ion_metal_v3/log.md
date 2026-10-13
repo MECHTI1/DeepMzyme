@@ -1,7 +1,144 @@
 # PMM ion metal v3 — decision log
 
 Dated user decisions and STATUS history for this campaign, newest first.
-Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
+Current authority: [EXPERIMENT_STATUS.md](../../../../EXPERIMENT_STATUS.md).
+
+## v3-052
+
+2026-10-13 (about 03:50 UTC) — **v3 is closed by the user's decision. The folder moved to
+`docs/archive/campaigns/pmm_ion_metal_v3` with a byte-preserving alias. The recovery snapshot was created and
+verified. The VM and its disk are kept until the user types the deletion phrase.**
+
+**User decision:**
+- **Closure:** complete the v3 closure by applying the archive move and alias of log v3-051, preserving every frozen
+  specification, tool, receipt and hash.
+- **Bundle-test guard:**
+  - a missing specification alone must not cause a skip;
+  - verify the registered alias, the archive destination, the closed README and the pinned hashes;
+  - unexpected missing files fail;
+  - test the documented bundle-build refusal after closure;
+  - reuse the final-tag round-trip evidence.
+- **Contract:** the narrowly scoped contract changes for archival and an explicit "no active campaign" state are
+  approved. No other campaign is selected or resumed to satisfy the checker, and the other campaigns stay paused.
+- **Records and git:**
+  - update the closure records, PARAMETER_FINDINGS, STATUS and the navigation links, and run the checks;
+  - commit and push the closure and the v3-051 records with the hook;
+  - keep `pmm-ion-metal-v3-final` unchanged, with no merge and no force-push.
+- **Snapshot:**
+  - create the recovery snapshot through the controller, at most $7.50/month recurring plus the bounded temporary
+    restore-check disk;
+  - keep the existing snapshot;
+  - verify the restoration and the receipt.
+- **Not authorized:**
+  - deleting the VM or disk yet: present the exact deletion inventory and the required confirmation instead;
+  - a GPU start, training, embeddings or test predictions.
+
+**Done:**
+- **Archive move** (from `cb30a45`, the v3-051 records commit):
+  - all 11 files moved with `git mv`; the six hash-bound files are byte-identical renames equal to the tag's blobs;
+  - the alias `docs/campaigns/pmm_ion_metal_v3` → `../archive/campaigns/pmm_ion_metal_v3`;
+  - the registry `docs/archive/frozen_moves.json` pins the six files and records the alias and the tag;
+  - link-only rebasing of the living documents (rebased of total): README 5 of 22, handoff 5 of 20, log 20 of 137,
+    plan 16 of 62 and step F plan 4 of 27;
+  - the proof is on Data1 at `audits/closure_20261013T032640Z/link_only_proof.json`: every rebased link has the same destination and the
+    text outside the links is identical.
+- **Contract** (`tools/check_docs_contract.py`):
+  - a pinned file must keep its SHA-256, and its links resolve from its origin folder as written;
+  - an alias must be a registered symlink to a closed archived campaign of the same id, and any other symlink under
+    `docs/campaigns/` fails;
+  - `Current campaign: none active (...)` is accepted only while no campaign under `docs/campaigns/` is active.
+- **Bundle test** (`tests/test_v3_bundle.py`):
+  - the round trip skips only after `_archived_and_verified()` confirms the registry entry, the alias and its target,
+    the closed README and every pinned hash; a missing specification without that layout fails;
+  - new tests: the guard accepts the verified layout, returns false for an open one, and fails on a missing registry,
+    a missing or changed pinned file, a README that is not closed, and a missing alias;
+  - `test_build_refuses_after_closure` checks that `build` refuses with "…assessment_spec.json is not committed" and
+    writes nothing;
+  - the round trip itself passed at the tag (log v3-051 baseline, 417 passed).
+- **Records:**
+  - the README is closed;
+  - the PARAMETER_FINDINGS line;
+  - STATUS rewritten: no active campaign; `metal_single_gpu` and `zenodo_pmm_exact_2026-09-24` stay paused;
+  - navigation: the docs index read path, the evidence-index v3 section, the playbook's v3 introduction and the
+    `docs/MOVED.md` row;
+  - unchanged, and resolving through the alias: the DATASETS ledger entries, executable blocks, the protected plan,
+    immutable summaries and the archived v2 campaign.
+- **Checks:**
+  - docs contract 0 strict failures;
+  - v3 tests 423 passed and 4 skipped (three opt-in synthetic fits and the uncommitted-tree skip);
+  - smoke checks 43 passed;
+  - from the moved layout: `check_freeze1`, `check_freeze2` and `check_prediction_claim` pass (`54a724be…`,
+    `949bc899…`, `d097add2…`); the four step F tools and four runners match Freeze 1; the six pinned files match
+    through the alias and the archive path; the F1 specification path resolves with its hash;
+  - nine negative checks on a throwaway copy of the final tree, listed in handoff section 13.
+- **Recovery snapshot** (`vm-archive --name deepmzyme-v3-final-20261013 --max-monthly-usd 7.50 --confirm`,
+  03:24–03:31 UTC):
+  - standard snapshot `deepmzyme-v3-final-20261013` (id `1682974889195084387`), READY in `us-central1`;
+  - source disk `deepmzyme-l4-from-deepmzyme-paused-20261003` (id `8244066857274414107`, matching the recorded disk);
+  - 52.68 GiB stored, estimated gross $2.63/month against the $7.50 ceiling;
+  - restore check: the temporary disk `deepmzyme-v3-final-20261013-restore-check` was created from this snapshot,
+    reached READY and was deleted; its scope is provider snapshot and disk restoration, with no filesystem mount or
+    boot test;
+  - receipt `state/archive-deepmzyme-v3-final-20261013.json` (`751d6c2e…`) and the controller config (`f2950360…`,
+    matching the receipt) copied to Data1 `audits/closure_20261013T032640Z/`;
+  - the 2026-10-03 snapshot is kept.
+- **Deletion inventory** (`vm-delete --delete-disk` without the phrase; refused, exit 4):
+  - would delete: VM `deepmzyme-l4` (TERMINATED, deletion protection on) and its boot disk
+    `deepmzyme-l4-from-deepmzyme-paused-20261003` (150 GB pd-balanced, autoDelete false);
+  - kept: both snapshots, the network and the firewall.
+
+**Not done:** no VM or disk deletion, GPU start, training, embeddings or test predictions.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+# DeepMzyme Current Experiment Status
+
+- Status: active (2026-10-13 v3: all steps complete; closeout committed, tagged and pushed, log v3-051; closure is the user's decision)
+- Last execution evidence: 2026-10-13 (v3 step F test pass and report on the workstation CPU; [log v3-048](docs/campaigns/pmm_ion_metal_v3/log.md#v3-048)).
+
+## Current objective and stage
+
+- Current campaign: pmm_ion_metal_v3, steps A–F complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
+- Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
+- Stage: v3 Stage 6 selection `gvp_late_fusion__four_class__baseline` (50 epochs), Stage 6B refit `a0007846…`, one-shot test done: full-test common-four BA 67.55% [62.93, 71.65], label both_results_secondary ([log v3-048](docs/campaigns/pmm_ion_metal_v3/log.md#v3-048)).
+
+**PMM core v2 was closed at fold 0 on 2026-10-03 (user decision):** nine fold-0 fits
+are final validation-only evidence; 36 fits were not run; its neutral four-versus-five/six
+test is unanswered; nothing is confirmed, promoted, refit or test-evaluated
+([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
+
+## Anchor and evidence state
+
+- Best validation result: none promoted; the closed PMM core fold-0 fits are Grade 5 exploratory evidence (incomplete grid Grade 6) per the archived README above; results in the [core summary](docs/notebook_outputs/summaries/summary_pmm_core_continuation_20260928.md); its fold 0 is not representative ([findings](docs/PARAMETER_FINDINGS.md#pmm-ion-campaign-single-fold-target-and-readout-comparisons)).
+- v3 steps E/E2: no supported gain from five/six-class training for any family (tie keeps `four_class`); late fusion four-class 74.28 mean common-four BA, "better" than Only-ESMC on all five folds; E2 (`E2_20261012T053919Z`): no candidate eligible to replace it; Only-GVP `wd10` is an interval-supported Only-GVP improvement (+3.59).
+- EC: the [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md) has twelve fixed-split runs (Grade 3), not promotion; cross-task holdout certification precedes auxiliary learning ([issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md)).
+
+### Known caveats and open mismatches
+
+- Cross-scheme ranking needs a campaign assessor on collapsed-four BA; the notebook Stage 6/6B route is single-scheme ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)).
+- v3 replaces the size-strata folds ([TECH-020](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)) and uses one terminal checkpoint rule in CV and refit ([TECH-027](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules)); PMM comparator citations keep the label-leak caveat ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
+
+## Dataset and test readiness
+
+The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use-ledger) owns the ledger. Safety boundary:
+
+- Non-overlap and exact PMM tests (same 316-structure set): opened 13 and 21 times; not eligible as an unopened test. Harsh and Common-PDBID 70/30 test IDs come from that opened set.
+- Exact Zenodo PMM test: evaluated once by v3 step F on 2026-10-13 (frozen rules, secondary report); earlier possible evaluation, 2026-10-03 metadata read and 2026-10-11 byte scan disclosed in the ledger.
+- No evaluation artifacts found for CLEAN30 or CARE clusterRes30; CARE had incidental test-metadata exposure on 2026-09-15. Absence of found artifacts is not proof of no outside run.
+
+## Blockers and immediate next action
+
+- Authorized now: nothing to run (step F complete); the $55 gross ceiling (about $41.8 spent); no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-13 02:15 UTC); disk and archive snapshot kept (about $0.55/day).
+
+Next: the user's closure decision (the byte-preserving archive move) and storage retirement A/B/C ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)); open: fairness arm, cost-gated augmentations.
+Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
+
+## History and update rule
+
+Overwrite this file after preserving dated changes in the campaign's `log.md`; keep the objective/stage and campaign lines, anchor, best result and grade, caveats, dataset/test readiness, authorization and GPU/VM state, blockers, next action and evidence links. Budgets stay in the playbooks, findings in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), policy in [Plan](Plan.md), batch evidence in the [index](docs/notebook_outputs/README.md); the [history map](docs/archive/consolidation_2026-09/MAP.md) holds the recovered 09-16/17 pause and removed policy.
+```
 
 ## v3-051
 
@@ -82,7 +219,7 @@ pending.**
   - the originals are unchanged; there is still no off-site copy.
 - **Wording:**
   - the three corrections in the
-    [completion summary](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md);
+    [completion summary](../../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md);
   - STATUS now says "no supported gain" for the neutral test;
   - [handoff section 13](handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval) records the backup,
     marks the earlier closure sequence as not approved, and updates the decisions.
@@ -117,10 +254,10 @@ or deleted.**
 
 **Done (documentation only):**
 - **Completion summary:**
-  [summary_pmm_ion_metal_v3_20261013.md](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md). It
+  [summary_pmm_ion_metal_v3_20261013.md](../../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md). It
   lists the fairness arm, the cost-gated augmentations, Round C, the v3-039 hypotheses, a matched PMM rerun and more
   seeds as untested.
-- **Evidence index:** a v3 section in [docs/notebook_outputs/README.md](../../notebook_outputs/README.md) with five
+- **Evidence index:** a v3 section in [docs/notebook_outputs/README.md](../../../notebook_outputs/README.md) with five
   batches: steps D, E and E2, the 10-epoch comparison, and step F (not graded).
 - **Step F status reconciled:**
   - the campaign README;
@@ -654,7 +791,7 @@ test data** (preparation only; the step F GPU authorization of [v3-014](#v3-014)
   `pmm_v3_test_prep.py` and `pmm_v3_step_f.py`.
 - `run_pmm_v3_step_f.py`, `pmm_v3_test_prep.py`, `pmm_v3_step_f_report.py`, `pmm_v3_step_f.py` and
   `tests/test_v3_step_f.py` ([handoff section 12](handoff.md#12-step-f-tooling-prepared-2026-10-12-log-v3-042),
-  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run)).
+  [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run)).
 - The choices made in the implementation and the explicit clean-subset rule are in the
   [draft's implementation notes](step_f_plan_draft.md#implementation-notes-2026-10-12-log-v3-042).
 
@@ -977,7 +1114,7 @@ hash-frozen runner file or a module the E2 manifest pins. SHA-256:
 - `tests/test_v3_sched10.py` (`665b780e…`).
 - Documentation: this entry; [plan](plan.md) (a dated note before step F, step F's
   epoch count and the fixed-decision exception); the
-  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted)
+  [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted)
   commands; [handoff](handoff.md) section 11 and its other sections; STATUS;
   README; step F draft v3 (the decision artifact).
 
@@ -1780,7 +1917,7 @@ The statements below are the verified ones, with the verifiers' and the
 critic's corrections applied.
 
 **Boundary incident (disclosed; recorded in the
-[DATASETS test-use ledger](../../DATASETS.md#test-use-ledger)).** At 13:32:31 and
+[DATASETS test-use ledger](../../../DATASETS.md#test-use-ledger)).** At 13:32:31 and
 13:32:38–13:34:41 UTC one analysis agent ran two recursive `grep -rl` searches
 over `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`. They looked for
 the strings `audit_internal_residue_id_recovery` and `internal_residue_id`, and
@@ -2850,8 +2987,8 @@ fit, GPU action, inference or test access; nothing in this entry authorizes a
 GPU start). Requested by the user after the fold 1–4 results of
 [v3-024](#v3-024) had been examined. The attached plan is recorded in the
 [campaign plan, step E2](plan.md#steps), the [README](README.md), the
-[handoff](handoff.md), [STATUS](../../../EXPERIMENT_STATUS.md) and the
-[playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented).
+[handoff](handoff.md), [STATUS](../../../../EXPERIMENT_STATUS.md) and the
+[playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented).
 E2 is **planned**: not implemented, not smoke-tested, not experimentally
 evaluated.
 
@@ -2929,7 +3066,7 @@ evaluated.
 
 - E2 was proposed after fold 1–4 results had been examined, so every E2
   result is development-validation evidence and, in the neutral-test wording
-  of [Plan](../../../Plan.md#2-train-the-metal-classification-model) and
+  of [Plan](../../../../Plan.md#2-train-the-metal-classification-model) and
   AGENTS, a post-hoc exploratory arm. The original neutral four/five/six
   conclusions and the A4 Stage 6 selection are preserved separately; an E2
   replacement, if any, carries this label into step F's report.
@@ -3431,7 +3568,7 @@ corrections await the user's review before any such tool is reused.
   (its artifacts were lost with the Colab VM and no evaluation record exists
   either way), the non-overlap/exact PMM test set was opened 13 and 21 times in
   earlier campaigns, and PMM test label counts were read in aggregate on
-  2026-10-03 without evaluation ([DATASETS ledger](../../DATASETS.md#test-use-ledger)).
+  2026-10-03 without evaluation ([DATASETS ledger](../../../DATASETS.md#test-use-ledger)).
   The decision changes no step E or F prerequisite: Stage 6 selection by A4,
   the Stage 6B full refit, the frozen test-row rule ([v3-012](#v3-012)), the
   clean-subset membership hashes, the refit checkpoint and seed, no ensemble
@@ -3798,7 +3935,7 @@ other checkpoint policy. Commits `43d26ff` and `d03c047` (code and tests).
   the first one and the fold set on the VM are not touched.
 - Launcher `pmm_v3_step_d.py` for steps D and E, reusing the step-C lane, wait,
   pull, recovery and evidence logic. Its gates are listed in the
-  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment).
+  [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment).
 - CPU audits: effective decay, readiness and early stopping (below).
 
 **Readiness gate: ready** (`audits/d_readiness_20261006T180939Z`, SHA-256
@@ -3846,7 +3983,7 @@ Cumulative factor on a weight that receives no gradient signal, ideal / FP32:
 | Late fusion, base rate (31) | 3e-5 | 0.99997 / 1.00000 | 0.9972 / 0.9971 | 0.9720 / 0.9720 | 0.7529 / 0.7529 |
 
 - The baseline coefficient is numerically inert, as
-  [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)
+  [TECH-029](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)
   states: 0.01% in the GVP-rate group and exactly nothing in FP32 in the
   base-rate group.
 - One coefficient acts about ten times more strongly on the GVP-rate group
@@ -3892,7 +4029,7 @@ epoch before the stop. Nine cosine fold-0 runs (seed 42):
   replayed model.
 - The difference is optimistic: the epoch is chosen and scored on the same
   validation fold. This is the selection luck of
-  [TECH-027](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules),
+  [TECH-027](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules),
   which the terminal rule was chosen to avoid. It is not an estimate of the
   gain on new data.
 - Stopping a 50-epoch cosine run at epoch t is not a t-epoch cosine run, so
@@ -3932,7 +4069,7 @@ controller's gross rate of $0.879 per hour; storage $0.55 per day):
   and storage): about $10.3. Step D is not allowed to consume it.
 - The four cost-gated augmentation fits are outside this forecast. Each
   rebuilds its graphs every epoch (7.6–9.5 h of graph building per fit on
-  this PC, [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3)),
+  this PC, [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3)),
   so they do not fit the ceiling. Without the user's recorded OK they are
   "not tested (cost)".
 - Reforecast before Round B and before step E. A zone stockout that delays
@@ -3968,7 +4105,7 @@ claim that the new candidates were predeclared before those observations.
 The existing D plan tested one residual-dropout strength and one modality-dropout
 strength, with no weight-decay or head-dropout screen. The user asked to update
 the plan if this was insufficient. Add a bounded Round R between A and B;
-the [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+the [metal playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
 owns its exact strengths, counts and readiness outputs. The
 [campaign plan](plan.md#steps) owns the amended stopping and combination rules.
 The historical improvement ranking now points to this current route.
@@ -4232,7 +4369,7 @@ messages the user said, in substance:
 - The authorization covers steps C, D, E and F. Step F starts only after its
   existing gates pass (Stage 6 selection by the A4 rule; the report,
   checkpoint, test-row and clean-subset rules frozen in the
-  [DATASETS ledger](../../DATASETS.md#test-use-ledger) before any test access)
+  [DATASETS ledger](../../../DATASETS.md#test-use-ledger) before any test access)
   and after the outstanding final-test label decision is resolved.
 - The $40 gross ceiling for the whole campaign is unchanged; it includes
   earlier spending and storage. All scientific and test gates stay. Round C
@@ -4412,7 +4549,7 @@ test-preparation builder must therefore apply this rule itself. It lives
 outside `src/`, because any `src/` change makes every run on the prepared
 campaign root refuse, including the Stage 6B refit. It is tested on synthetic
 or training-side data before any test access, and its membership hashes are
-frozen in the [DATASETS ledger](../../DATASETS.md#test-use-ledger).
+frozen in the [DATASETS ledger](../../../DATASETS.md#test-use-ledger).
 
 Unchanged: the clean subset is never compared with PMM; the final-test label
 decision is still due before step E.
@@ -4807,7 +4944,7 @@ this entry's commit.
   agreed near-copy and previously-opened-PDB exclusion rules. The final-test
   reporting decision stays due before step E.
 - A6: the executable v3 recipe is in the
-  [metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3).
+  [metal playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3).
   Free space on `/` is about 6 GB; the user decides what to remove before step B.
 
 ## v3-005
@@ -4939,4 +5076,4 @@ STATUS lines replaced by this update, preserved verbatim:
 2026-10-03 — campaign opened in planning status. The user chose separate
 `four_class`, `five_class` and `six_class` arms for Only-ESMC, Only-GVP and
 graph-level late fusion. Predecessor:
-[closed PMM campaign](../../archive/campaigns/pmm_ion_metal/README.md).
+[closed PMM campaign](../pmm_ion_metal/README.md).

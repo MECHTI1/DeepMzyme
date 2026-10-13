@@ -72,6 +72,18 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 ## Current validation anchors and challengers
 
+### PMM ion metal v3: objective test and Stage 6 selection (closed 2026-10-13)
+
+**Grade 2, validation only** (five grouped folds `v3-seqid90-s42-b2`, seed 42;
+[archived README](archive/campaigns/pmm_ion_metal_v3/README.md)):
+- **Objective test:** five- or six-class training gave no supported common-four gain over `four_class` for any
+  family.
+- **Selection:** four-class graph-level late fusion (mean common-four BA 74.28%) beat Only-ESMC (72.33%) on all
+  five folds (mean +1.95, bootstrap [+1.09, +2.92]).
+- **Not adopted:** the step D recipes, the E2 candidates and a 10-epoch schedule.
+- **Test result:** the secondary test result and its caveats stay in the
+  [completion summary](notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md).
+
 ### PMM ion campaign: single-fold target and readout comparisons
 
 **Closed 2026-10-03 at fold 0 (user decision):** the nine fold-0 fits below are
