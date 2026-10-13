@@ -2,9 +2,9 @@
 
 Approved by the user on 2026-10-04 and revised the same day after a verified
 external review ([log v3-004](log.md#v3-004)). Decisions and their dates are in
-the [campaign log](log.md); scientific policy stays in [Plan](../../../Plan.md).
+the [campaign log](log.md); scientific policy stays in [Plan](../../../../Plan.md).
 Each step ends with a results table, a dated log entry and a commit. GPU work
-uses the recorded authorization in [STATUS](../../../EXPERIMENT_STATUS.md);
+uses the recorded authorization in [STATUS](../../../../EXPERIMENT_STATUS.md);
 this plan does not increase its budget ceiling (the 2026-10-08 step E2 amendment
 records a revised *planning* ceiling in the [Budget](#budget) section; it
 authorizes no GPU start). Values marked "(default)" were set under the
@@ -17,9 +17,9 @@ run of the step it affects.
   Only-ESMC, Only-GVP and graph-level late fusion, all evaluated on common-four.
 - Checkpoint rule for every v3 arm, fold and refit: cosine learning-rate schedule
   to zero over 50 epochs and the terminal checkpoint
-  ([Plan](../../../Plan.md#2-train-the-metal-classification-model)); best-epoch
+  ([Plan](../../../../Plan.md#2-train-the-metal-classification-model)); best-epoch
   values are descriptive only. Its reason is the CV/refit mismatch of
-  [TECH-027](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules);
+  [TECH-027](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules);
   every report states that it was chosen after the v2 fold-0 post-hoc epoch
   analysis. The one exception is the user-approved pre-step-F comparison of a complete
   10-epoch cosine schedule ([log v3-039](log.md#v3-039); see before step F), which keeps
@@ -42,7 +42,7 @@ run of the step it affects.
   ([log v3-011](log.md#v3-011): the CV panel is column-normalized, so its
   values are not recalls). PMM fold IDs were
   never released and its features carry
-  [TECH-028](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak).
+  [TECH-028](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak).
   The comparison is descriptive, not matched (folds, eligible ions and inputs
   differ). Allowed wording: "higher (or lower) than PMM's published CV (or test)
   values; not a matched comparison". No superiority claim and no interval or
@@ -60,7 +60,7 @@ run of the step it affects.
 **A. CPU preparation (no cost).**
 
 1. Strict folds, near-copy-disjoint
-   ([TECH-020](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)):
+   ([TECH-020](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-020--greedy-k-fold-assignment-concentrates-large-groups-in-fold-0)):
    - Unit: the PDB entry; all ions of one PDB stay in one fold.
    - Sequences: the first-model ATOM-record sequence of every context chain,
      exactly the sequences hashed in the v2 ESMC plan (`sequence_sha256`, checked).
@@ -258,17 +258,17 @@ frozen A4 numerical assessment rules are unchanged.
 | B | 11 `--metal-class-weight-mode inverse_sqrt_frequency` (exists) | GVP, fusion | 4 |
 
 Plan ranks are those of the
-[improvement plan](../../plans/gvp_and_esmc_evidence_ranked_improvement_plan.md).
+[improvement plan](../../../plans/gvp_and_esmc_evidence_ranked_improvement_plan.md).
 Round A is 16 runs including the two seed-43 controls; Round B is 18.
 
 - **Round R: regularization strength.** The original residual and modality
   dropout candidates each test one strength; neither is a weight-decay sweep.
-  Add the bounded [regularization recipe](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+  Add the bounded [regularization recipe](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
   (26 additional fits), reusing A's controls and dropout arms. Test weight
   decay, classifier-head dropout, residual dropout and modality dropout as
   separate changes from the baseline. This is an initial strength screen,
   not exhaustive optimization or a promise of better generalization.
-- The reason for a broad decay range is [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect):
+- The reason for a broad decay range is [TECH-029](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect):
   the existing coefficient has little effect at these learning rates. Audit
   effective decay for each optimizer group before fitting; do not infer its
   strength from the coefficient alone. ESM encoder dropout, parameter-group
@@ -277,7 +277,7 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 
 - Round C (gate concatenation, RING edges, linear head and width 256,
   final-vector readout, sequence-separation encoding, label smoothing 0.1;
-  [TECH-029](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect))
+  [TECH-029](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect))
   is outside this plan's code and budget. Running it needs a separate user
   decision after Round B, a new code drop, new cache sets and new seed-matched
   controls.
@@ -309,7 +309,7 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 the complete A/R/B recipe list, run identities, round order and mutually
 exclusive strengths. This is extension 1 of the campaign (`v3-ext1-round-r`),
 implemented on 2026-10-06 ([log v3-018](log.md#v3-018)) with the workstation
-D/E launcher; the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
+D/E launcher; the [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)
 owns its commands. It preserves the original manifest, frozen A4 files, source
 bundle, assessments and run receipts, binds itself to their hashes, verifies
 unchanged baseline commands and source, and reuses the C controls by a checked
@@ -343,7 +343,7 @@ no candidate replaced the original selection).** Requested by the user after the
 results of step E's two selected recipes and of the four-class baselines had
 been examined ([log v3-024](log.md#v3-024)). Everything E2 produces is
 therefore development-validation evidence, proposed after earlier validation
-results were seen; under the [neutral-test wording](../../../Plan.md#2-train-the-metal-classification-model)
+results were seen; under the [neutral-test wording](../../../../Plan.md#2-train-the-metal-classification-model)
 such post-hoc arms are exploratory, and no E2 result is a neutral or
 pre-registered claim. Its assessment and replacement rules (items 2 and 3)
 were reviewed ([log v3-026](log.md#v3-026), [v3-027](log.md#v3-027)) and
@@ -432,7 +432,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    assessment are preserved separately and unchanged.
 4. Implementation (built and CPU-checked on 2026-10-11, [log v3-033](log.md#v3-033):
    `pmm_v3_step_e2.py` and `pmm_v3_e2_assessment.py`; commands and gates in the
-   [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented);
+   [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-e2-individual-confirmation-amendment-planned-not-implemented);
    the CPU implementation was accepted planned work and is not a GPU start): an E2
    launcher and a separate E2 assessor (accepting a four-, five- or
    six-class original selection) around the frozen training runner,
@@ -470,7 +470,7 @@ terminal checkpoint, against its four existing 50-epoch fits (4 new fits). Its g
 rule and labels are frozen in
 [`sched10_assessment_spec.json`](sched10_assessment_spec.json) and summarized in
 [handoff section 11](handoff.md#11-pre-step-f-review). Commands are in the
-[playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
+[playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
 - If adopted, step F refits the same cell with 10 epochs. This amends the 50-epoch fixed
   decision for that refit only; the cosine schedule and the terminal rule stay, and CV and
   refit use the same epoch count.
@@ -504,7 +504,7 @@ rule and labels are frozen in
   clean-subset rules, the preparation code, the refit checkpoint, seed and epoch
   count, no ensemble and the calibration rule; after the label-blind preparation
   and before any prediction or label read, freeze the derived memberships by
-  hash; record both in the [DATASETS ledger](../../DATASETS.md#test-use-ledger)
+  hash; record both in the [DATASETS ledger](../../../DATASETS.md#test-use-ledger)
   (two freezes, approved 2026-10-12, [log v3-045](log.md#v3-045); procedure,
   amendment and one-pass rules in the [step F plan](step_f_plan_draft.md)).
   Reading test sequences and structures for this preparation is recorded there too.
@@ -558,4 +558,4 @@ control: the write-once ceiling record checked before every E2 launch
 ([log v3-033](log.md#v3-033); estimated charges with the running session to
 its hard stop plus a $6 reserve for step F; the controller's session and daily
 caps are unchanged). The decision authorizes no GPU start: E2 fits need the
-user's recorded E2 GPU-start authorization ([STATUS](../../../EXPERIMENT_STATUS.md)).
+user's recorded E2 GPU-start authorization ([STATUS](../../../../EXPERIMENT_STATUS.md)).

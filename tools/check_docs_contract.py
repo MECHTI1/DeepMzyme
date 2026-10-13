@@ -11,10 +11,12 @@ Standard library only; nothing is read at import time. Checks the working tree.
 from __future__ import annotations
 
 import hashlib
+import json
+import posixpath
 import re
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import unquote
 
 KB = 1000
@@ -45,6 +47,9 @@ ALLOWED_DOCS_TOP_LEVEL = frozenset({
 
 # Immutable evidence is never edited, so its links are not checked here.
 IMMUTABLE_PREFIXES = ("docs/notebook_outputs/raw/", "docs/notebook_outputs/summaries/")
+# Closure moves that keep bytes: pinned files resolve links from their origin folder; aliases keep an old campaign
+# path valid for frozen tools and records.
+FROZEN_MOVES_PATH = "docs/archive/frozen_moves.json"
 
 STATUS_PATH = "EXPERIMENT_STATUS.md"
 STATUS_TITLE = "# DeepMzyme Current Experiment Status"
@@ -62,6 +67,8 @@ STATUS_SECTION_LINES = {
 STATUS_BLOCKER_LEAD = ("Authorized now:", "GPU/VM:")
 STATUS_CAVEATS_HEADING = "### Known caveats and open mismatches"
 STATUS_LINE = re.compile(r"^Status: (active|paused|closed|planned) \(\d{4}-\d{2}-\d{2}[^)]*\)\s*$")
+# STATUS may state that no campaign is active; refused while any campaign under docs/campaigns/ is active.
+NO_ACTIVE_CAMPAIGN = "Current campaign: none active"
 
 PLAYBOOK_HEADING = "### Exact standalone notebook block"
 # SHA-256 of each playbook's first python block, recorded before Job A (inventory/job_b_before.json).
@@ -156,7 +163,50 @@ def anchors_of(root: Path, name: str, cache: dict[str, set[str]]) -> set[str]:
     return cache[name]
 
 
-def check_links(root: Path, names: list[str], findings: Findings) -> int:
+def check_frozen_moves(root: Path, findings: Findings) -> dict[str, str]:
+    """Pinned moved files keep their SHA-256; each alias is a registered symlink to a closed archived campaign of the
+    same id; any other symlink under docs/campaigns/ fails. Returns {pinned path: origin folder} for check_links."""
+    registry = root / FROZEN_MOVES_PATH
+    moves = json.loads(registry.read_text(encoding="utf-8"))["moves"] if registry.is_file() else []
+    origins: dict[str, str] = {}
+    aliases: dict[str, str] = {}
+    for move in moves:
+        for entry in move["pinned"]:
+            moved = root / entry["path"]
+            if not moved.is_file() or moved.is_symlink():
+                findings.add("STRICT", entry["path"], "frozen-moves", "pinned moved file is missing",
+                             f"restore it from tag {move['tag']}")
+            elif hashlib.sha256(moved.read_bytes()).hexdigest() != entry["sha256"]:
+                findings.add("STRICT", entry["path"], "frozen-moves", "pinned moved file changed",
+                             f"restore its bytes from tag {move['tag']}; a pinned file is never edited")
+            else:
+                origins[entry["path"]] = str(PurePosixPath(entry["origin"]).parent)
+        aliases[move["alias"]["path"]] = move["alias"]["target"]
+    campaigns = root / "docs" / "campaigns"
+    found = ({p.relative_to(root).as_posix() for p in campaigns.iterdir() if p.is_symlink()}
+             if campaigns.is_dir() else set())
+    for name in sorted(found | set(aliases)):
+        target = aliases.get(name)
+        expected = f"docs/archive/campaigns/{PurePosixPath(name).name}"
+        link = root / name
+        if target is None:
+            findings.add("STRICT", name, "frozen-moves", "unregistered symlink under docs/campaigns/",
+                         f"register the alias in {FROZEN_MOVES_PATH} or remove it")
+        elif target != expected or not link.is_symlink() or link.resolve() != (root / expected).resolve():
+            findings.add("STRICT", name, "frozen-moves", f"alias is not a symlink to {expected}",
+                         "restore the registered symlink")
+        else:
+            readme = f"{expected}/README.md"
+            lines = text_of(root, readme).split("\n") if (root / readme).is_file() else []
+            match = STATUS_LINE.match(next((line for line in lines[:8] if line.startswith("Status:")), ""))
+            if not match or match.group(1) != "closed":
+                findings.add("STRICT", name, "frozen-moves", "alias to a campaign that is not closed",
+                             "close the archived campaign or remove the alias")
+    return origins
+
+
+def check_links(root: Path, names: list[str], findings: Findings, origins: dict[str, str] | None = None) -> int:
+    origins = origins or {}
     cache: dict[str, set[str]] = {}
     checked = 0
     for name in names:
@@ -173,8 +223,12 @@ def check_links(root: Path, names: list[str], findings: Findings) -> int:
                 path_part, _, fragment = target.partition("#")
                 if path_part.startswith("/"):
                     dest = (root / path_part.lstrip("/")).resolve()
+                elif not path_part:
+                    dest = source.resolve()
+                elif name in origins:  # a pinned file's links keep the meaning they had in its origin folder
+                    dest = (root / posixpath.normpath(posixpath.join(origins[name], path_part))).resolve()
                 else:
-                    dest = (source.parent / path_part).resolve() if path_part else source.resolve()
+                    dest = (source.parent / path_part).resolve()
                 where = f"{name}:{number}"
                 try:
                     relative = dest.relative_to(root.resolve()).as_posix()
@@ -274,10 +328,22 @@ def check_status(root: Path, findings: Findings) -> str | None:
                 findings.add("WARN", STATUS_PATH, "status", f"caveat without a FOLLOW_UP link: {bullet[:60]}",
                              "link the tracking TECH-### issue")
     campaign_line = next((line for line in map(fixed_line, lines) if line.startswith("Current campaign:")), "")
+    if campaign_line.startswith(NO_ACTIVE_CAMPAIGN):
+        campaigns = root / "docs" / "campaigns"
+        for readme in sorted(campaigns.glob("*/README.md")) if campaigns.is_dir() else []:
+            if readme.parent.is_symlink():  # a registered alias of an archived campaign
+                continue
+            name = readme.relative_to(root).as_posix()
+            status = next((line for line in text_of(root, name).split("\n")[:8] if line.startswith("Status:")), "")
+            found = STATUS_LINE.match(status)
+            if found and found.group(1) == "active":
+                findings.add("STRICT", STATUS_PATH, "status", f"'{NO_ACTIVE_CAMPAIGN}' while {name} is active",
+                             "link the active campaign README on the 'Current campaign:' line")
+        return None
     match = re.search(r"\]\((docs/campaigns/[^/)]+/README\.md)\)", campaign_line)
     if not match:
         findings.add("STRICT", STATUS_PATH, "status", "'Current campaign:' line lacks a docs/campaigns/<id>/README.md link",
-                     "link the active campaign README on that line")
+                     "link the active campaign README on that line or write 'Current campaign: none active (...)'")
         return None
     readme = match.group(1)
     if not (root / readme).is_file():
@@ -421,7 +487,8 @@ def main(root: Path | None = None) -> int:
     root = (root or repo_root()).resolve()
     findings = Findings()
     names = list_markdown(root)
-    checked = check_links(root, names, findings)
+    origins = check_frozen_moves(root, findings)
+    checked = check_links(root, names, findings, origins)
     check_allowed_files(names, findings)
     campaign_readme = check_status(root, findings)
     check_campaigns(root, names, findings)

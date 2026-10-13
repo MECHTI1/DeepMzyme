@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "purpose": "Closure moves that keep bytes: each pinned file keeps its SHA-256 and resolves its relative links from its origin folder; each alias keeps an original campaign path valid for frozen tools, tests and records. Checked by tools/check_docs_contract.py.",
+  "moves": [
+    {
+      "campaign": "pmm_ion_metal_v3",
+      "closed": "2026-10-13",
+      "closure_log_entry": "v3-052",
+      "tag": "pmm-ion-metal-v3-final",
+      "tag_commit": "a909721f2211c54e97f2f57412d00dae951bab73",
+      "pinned": [
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/assessment_spec.json",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/assessment_spec.json",
+          "sha256": "2969407042dbb5858f15e1a114a2d602cc2fd764e788022ddaee1907ff17306c",
+          "reason": "hash-bound in campaign records"
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/assessment_spec.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/assessment_spec.md",
+          "sha256": "899005aaba036739519876860121fdf4e60241d55c393d435847aae56ece3667",
+          "reason": "hash-bound in campaign records"
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/e2_assessment_spec.json",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.json",
+          "sha256": "ea2d71ca36848ee23a84ca4b1480a4aa7c231778a02ecde81f73e05740a1ef98",
+          "reason": "hash-bound in campaign records"
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md",
+          "sha256": "71606fa62d251236e47dfc731d6ba13fadadf229e7fa747d7c3f3c6697ef2419",
+          "reason": "hash-bound in campaign records"
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/sched10_assessment_spec.json",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/sched10_assessment_spec.json",
+          "sha256": "14c4b5721aa3d15ce8c14dc1e0bbac2c8b47edd9140daa9dfbb8a1391dd7cd7c",
+          "reason": "hash-bound in campaign records"
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/step_f_spec.json",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/step_f_spec.json",
+          "sha256": "04d22cc432de6aaece0ea5a140cbaac0799d1194f79eb37f50aa1bec24d9b77c",
+          "reason": "hash-bound in campaign records"
+        }
+      ],
+      "rebased": [
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/README.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/README.md",
+          "tag_sha256": "360505a2b43246cc02f903cab2f574c1e50cf25590b83fd28b575add108acc7d",
+          "pre_move_sha256": "360505a2b43246cc02f903cab2f574c1e50cf25590b83fd28b575add108acc7d",
+          "links_rebased": 5
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/handoff.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/handoff.md",
+          "tag_sha256": "4e9695b03b45fb129132e2b382a02e3146df2bb3c4e23deaef0916d028113e5c",
+          "pre_move_sha256": "509e8169398a02b1e9ce4be78a6bbbd408ad860f94d766e3cc799bc5a6d64715",
+          "links_rebased": 5
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/log.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/log.md",
+          "tag_sha256": "9c211d6fa826c6b1e3a5ad01059b21f6e8315e1f2c96878b87a530e8e1bbd68a",
+          "pre_move_sha256": "f2e81851439d45a24ec05741d17a4711542d7b1179fac1bb7248a4528b22b8f7",
+          "links_rebased": 20
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/plan.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/plan.md",
+          "tag_sha256": "62ed762df8ec4151e5e52084d97366c35198a261cce1b0ea1c5d4b365b8eed14",
+          "pre_move_sha256": "62ed762df8ec4151e5e52084d97366c35198a261cce1b0ea1c5d4b365b8eed14",
+          "links_rebased": 16
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md",
+          "origin": "docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md",
+          "tag_sha256": "d83f70157343bf7cd3ed45d9a3ed8d9278911afdaf3fcc23480e7fd2fca80199",
+          "pre_move_sha256": "d83f70157343bf7cd3ed45d9a3ed8d9278911afdaf3fcc23480e7fd2fca80199",
+          "links_rebased": 4
+        }
+      ],
+      "alias": {
+        "path": "docs/campaigns/pmm_ion_metal_v3",
+        "target": "docs/archive/campaigns/pmm_ion_metal_v3"
+      }
+    }
+  ]
+}

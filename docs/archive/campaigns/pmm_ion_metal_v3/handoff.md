@@ -3,7 +3,7 @@
 Self-contained handoff for a new Claude Code chat. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
 `/media/mechti/Data1`, `~/deepmzyme-vm`). Newest state first; the
-[log](log.md) holds the dated history and [STATUS](../../../EXPERIMENT_STATUS.md)
+[log](log.md) holds the dated history and [STATUS](../../../../EXPERIMENT_STATUS.md)
 the current authority.
 
 ## Ready-to-paste continuation prompt
@@ -343,7 +343,7 @@ bootstrap and t bounds are not independent confirmations).
 (request and addendum in `$DATA/audits/session_notes_20261008/DEFERRED_amendment_review_request.md`; the
 2026-10-11 additions in [log v3-031](log.md#v3-031)). Read-only, CPU, saved validation evidence; every terminal
 value reconciled with `E_20261011T130128Z`. One boundary incident is disclosed in v3-032 and in the
-[DATASETS test-use ledger](../../DATASETS.md#test-use-ledger) (a recursive search read bytes under the exact
+[DATASETS test-use ledger](../../../DATASETS.md#test-use-ledger) (a recursive search read bytes under the exact
 Zenodo test directory; nothing was displayed or used).
 
 Conclusions (details, numbers and corrections in v3-032):
@@ -385,7 +385,7 @@ Conclusions (details, numbers and corrections in v3-032):
   [specification](sched10_assessment_spec.json) (`14c4b572…`), and the manifest (`a9779c05…`) and ceiling
   (`3a6710a6…`) records. The checks are in log v3-039.
 - The GPU-start authorization was given and recorded in log v3-040. Commands:
-  [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
+  [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-pre-step-f-10-epoch-schedule-comparison-completed-2026-10-12-not-adopted).
 - Required CPU check 9 (the tiny synthetic CPU fit) and `tests/smoke_checks.py` ran under the user's authorization of
   log v3-040 and passed. The fit showed 10-epoch execution, the terminal checkpoint, the replay and persistence.
 - Reconciliation with an independent report (log v3-039):
@@ -529,7 +529,7 @@ not disproven. The step F tooling was prepared and CPU-checked under a preparati
 verified after a reboot and corrected in one CPU-only round (log v3-043). The earlier step F GPU authorization of
 v3-014 is **not** activated. Nothing ran on test data. No step F record is written: the F1 selection record was
 dry-run only, and there is no manifest, ceiling, authorization, freeze record or prediction claim. The commands are in
-the [playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run);
+the [playbook](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run);
 the implementation choices and the explicit clean-subset rule are in the
 [step F draft's implementation notes](step_f_plan_draft.md#implementation-notes-2026-10-12-log-v3-042).
 
@@ -605,6 +605,11 @@ the implementation choices and the explicit clean-subset rule are in the
    - the single test pass (`predict --log-entry`) and the report.
 
 ## 13. Closeout proposal (2026-10-13, pending the user's approval)
+
+**Executed ([log v3-052](log.md#v3-052)):**
+- the closure: the archive move with its alias, the pinned files, the contract and the verified test guard;
+- the recovery snapshot `deepmzyme-v3-final-20261013`.
+Only the VM and disk deletion remains (below).
 
 Prepared read-only ([log v3-049](log.md#v3-049)). Approved and done since ([log v3-050](log.md#v3-050)): the NVMe backup,
 the summary wording corrections, the commit of the closeout records and the tag `pmm-ion-metal-v3-final`. Not done:
@@ -738,7 +743,7 @@ outside `docs/archive/campaigns/`.
 folds, seed 42): five- or six-class training gave no supported common-four gain over `four_class` for any family;
 four-class graph-level late fusion (mean common-four BA 74.28%) beat Only-ESMC (72.33%) on all five folds; the step D
 recipes, the E2 candidates and a 10-epoch schedule were not adopted. Secondary test result and caveats: the
-[completion summary](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)." (link
+[completion summary](../../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)." (link
 relative to this file; written relative to `docs/` when applied)
 
 ### Storage retirement (controller; dry run only)
@@ -764,9 +769,52 @@ relative to this file; written relative to `docs/` when applied)
 
 The independent backup above must come first for A and B, because the VM disk is currently the only second copy.
 
+### Closure verification (log v3-052)
+
+The nine negative checks on a throwaway copy of the final tree each give the expected strict failure:
+- an edited pinned file;
+- a changed pin;
+- a retargeted or removed alias;
+- an unregistered symlink;
+- an archived README that is not closed;
+- a broken link in a rebased document;
+- `none active` while a campaign is active;
+- a campaign line with neither a link nor the `none active` state.
+
+The clean tree has 0 strict failures.
+
+### Recovery snapshot and deletion inventory (2026-10-13)
+
+**Snapshot:**
+- `deepmzyme-v3-final-20261013` is READY: 52.68 GiB stored, estimated gross $2.63/month.
+- The provider restore check passed; the temporary disk was deleted. There was no filesystem mount or boot test.
+- Receipt: `~/deepmzyme-vm/state/archive-deepmzyme-v3-final-20261013.json`, with a copy on Data1
+  `audits/closure_20261013T032640Z/`.
+- The 2026-10-03 snapshot (about $1.74/month) is kept.
+
+**Storage now:**
+- the disk: $15.00/month;
+- the two snapshots: about $4.37/month actual;
+- about $19.4/month in total, or $0.64/day;
+- the controller's conservative full-disk reservation counts $7.50/month per snapshot.
+
+**Deletion inventory** (`vm-delete --delete-disk`, run without the phrase and refused):
+- would delete: VM `deepmzyme-l4` (TERMINATED, deletion protection on) and its boot disk
+  `deepmzyme-l4-from-deepmzyme-paused-20261003` (150 GB pd-balanced);
+- kept: both snapshots, the network and the firewall;
+- the saving is $15.00/month; about $4.37/month for the two snapshots remains.
+
+**Required confirmation:** the user types `DELETE deepmzyme-l4`. The command is then
+`~/deepmzyme-vm/bin/vm-delete --delete-disk --confirm 'DELETE deepmzyme-l4'`, followed by `vm-status`, which should
+show `NOT_CREATED`, and `vm-report --no-ssh`, which should show both snapshots.
+
+**Backup coverage after a deletion:**
+- step F artifacts: Data1 and the NVMe backup, with the refit also in the new snapshot;
+- steps B–E2 run originals: Data1 durable copies and the new snapshot;
+- no off-site copy exists.
+
 ### Decisions for the user (none inferred)
-1. **Backup:** done locally (above); an off-site copy is optional.
-2. **Commit, tag and push:** approved in log v3-050.
-3. **Closure:** approve the byte-preserving move (with the contract extension and the test guard), and choose the
-   campaign STATUS names as current afterwards; or keep v3 open for now.
-4. **Storage:** option A, B or C (the archive storage authorization, and the delete phrase typed by the user).
+1. **VM and disk deletion:** type `DELETE deepmzyme-l4`, or keep them (about $0.49/day).
+2. **Snapshot `deepmzyme-paused-20261003`:** keep it, or remove it later. The controller has no command for removing
+   it.
+3. **Off-site copy** of the NVMe backup: optional.

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
+import re
 import subprocess
 import sys
 import tarfile
@@ -42,8 +44,101 @@ def _bundled_files_dirty() -> bool:
                                text=True, check=True).stdout.strip())
 
 
+CAMPAIGN = "pmm_ion_metal_v3"
+ALIAS, ARCHIVE = f"docs/campaigns/{CAMPAIGN}", f"docs/archive/campaigns/{CAMPAIGN}"
+
+
+def _archived_and_verified(root: Path = ROOT) -> bool:
+    """False while the specification is tracked at its original path (campaign open). True only for the verified
+    closure layout (log v3-052): the registered alias to the archive destination, a closed README and every pinned
+    hash. Anything else, such as an unexpectedly missing specification, fails the test."""
+    spec = bundle.SPEC_FILES[0]
+    tracked = subprocess.run(["git", "ls-files", "--error-unmatch", "--", spec], cwd=root, capture_output=True)
+    if tracked.returncode == 0:
+        return False
+    registry = root / "docs" / "archive" / "frozen_moves.json"
+    assert registry.is_file(), f"{spec} is not tracked and no archive registry exists"
+    moves = [m for m in json.loads(registry.read_text())["moves"] if m["campaign"] == CAMPAIGN]
+    assert len(moves) == 1, f"{CAMPAIGN} is not registered exactly once"
+    move = moves[0]
+    assert move["alias"] == {"path": ALIAS, "target": ARCHIVE}, f"unexpected alias {move['alias']}"
+    alias = root / ALIAS
+    assert alias.is_symlink() and alias.resolve() == (root / ARCHIVE).resolve(), \
+        "the alias is not the registered symlink"
+    readme = root / ARCHIVE / "README.md"
+    assert readme.is_file(), "the archived README is missing"
+    status = next((line for line in readme.read_text().split("\n")[:8] if line.startswith("Status:")), "")
+    assert status.startswith("Status: closed ("), f"the archived campaign is not closed: {status!r}"
+    pinned = {entry["origin"]: entry for entry in move["pinned"]}
+    assert set(bundle.SPEC_FILES) <= set(pinned), "a bundled specification is not pinned"
+    for entry in move["pinned"]:
+        path = root / entry["path"]
+        assert path.is_file() and not path.is_symlink(), f"{entry['path']} is missing"
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == entry["sha256"], f"{entry['path']} changed"
+        assert (root / entry["origin"]).resolve() == path.resolve(), f"{entry['origin']} does not reach the archive"
+    return True
+
+
+def _closed_repo(tmp_path: Path) -> Path:
+    root = tmp_path / "repo"
+    archive = root / ARCHIVE
+    archive.mkdir(parents=True)
+    (archive / "README.md").write_text("# v3\n\nStatus: closed (2026-10-13 test)\n")
+    pinned = []
+    for name in bundle.SPEC_FILES:
+        path = archive / Path(name).name
+        path.write_bytes(name.encode())
+        pinned.append({"path": f"{ARCHIVE}/{path.name}", "origin": name,
+                       "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    (root / "docs" / "campaigns").mkdir()
+    (root / ALIAS).symlink_to(f"../archive/campaigns/{CAMPAIGN}")
+    (root / "docs" / "archive" / "frozen_moves.json").write_text(json.dumps(
+        {"moves": [{"campaign": CAMPAIGN, "pinned": pinned, "alias": {"path": ALIAS, "target": ARCHIVE}}]}))
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+    return root
+
+
+def test_closure_guard_accepts_only_the_verified_archive(tmp_path):
+    root = _closed_repo(tmp_path)
+    assert _archived_and_verified(root) is True
+    open_repo = tmp_path / "open"
+    (open_repo / Path(bundle.SPEC_FILES[0]).parent).mkdir(parents=True)
+    (open_repo / bundle.SPEC_FILES[0]).write_text("{}")
+    subprocess.run(["git", "init", "-q"], cwd=open_repo, check=True)
+    subprocess.run(["git", "add", "-A"], cwd=open_repo, check=True)
+    assert _archived_and_verified(open_repo) is False
+
+
+@pytest.mark.parametrize("damage, message", [
+    (lambda root: (root / "docs/archive/frozen_moves.json").unlink(), "no archive registry"),
+    (lambda root: (root / ARCHIVE / Path(bundle.SPEC_FILES[1]).name).unlink(), "is missing"),
+    (lambda root: (root / ARCHIVE / Path(bundle.SPEC_FILES[0]).name).write_text("edited"), "changed"),
+    (lambda root: (root / ARCHIVE / "README.md").write_text("Status: active (2026-10-13 test)\n"), "not closed"),
+    (lambda root: (root / ALIAS).unlink(), "not the registered symlink"),
+])
+def test_closure_guard_fails_on_an_unverified_archive(tmp_path, damage, message):
+    root = _closed_repo(tmp_path)
+    damage(root)
+    with pytest.raises(AssertionError, match=message):
+        _archived_and_verified(root)
+
+
+def test_build_refuses_after_closure(tmp_path):
+    """After the v3 closure, bundles are built only from tag pmm-ion-metal-v3-final: build refuses before writing."""
+    if not _archived_and_verified():
+        pytest.skip("the campaign is open; the refusal applies only after the archive move")
+    out = tmp_path / "bundle"
+    with pytest.raises(bundle.BundleError, match=re.escape(f"{bundle.SPEC_FILES[0]} is not committed")):
+        bundle.build(out, folds=tmp_path, a3_acceptance=tmp_path / "a3_report.json")
+    assert not out.exists()
+
+
 @pytest.mark.skipif(_bundled_files_dirty(), reason="bundle ships committed code only; commit first")
 def test_build_and_apply_round_trip_and_refusals(tmp_path):
+    if _archived_and_verified():
+        pytest.skip("pmm_ion_metal_v3 is closed and verified (docs/archive/frozen_moves.json); bundles build only "
+                    "from tag pmm-ion-metal-v3-final, where this round trip passed")
     folds = tmp_path / "folds" / "v3-test"
     folds.mkdir(parents=True)
     membership = b"source_uid,fold\nu1,0\n"

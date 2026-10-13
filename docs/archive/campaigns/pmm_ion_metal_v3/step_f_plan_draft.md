@@ -10,7 +10,7 @@ Draft v3 of
 08:45 UTC (`audits/session_notes_20261008/step_f_plan_DRAFT.md` on the campaign
 data root, kept unchanged). The rules stay owned by [plan step F](plan.md#steps),
 the [A4](assessment_spec.md) and [E2](e2_assessment_spec.md) specifications and
-the [DATASETS ledger](../../DATASETS.md#test-use-ledger); this page plans their
+the [DATASETS ledger](../../../DATASETS.md#test-use-ledger); this page plans their
 execution. No refit, test-data access or GPU start is authorized by it.
 
 **Changes in v3:**
@@ -115,7 +115,7 @@ report recovery from immutable predictions are tested requirements.
 
 ## F3. Test access in two dated freezes
 
-Both freezes are dated entries in the [DATASETS test-use ledger](../../DATASETS.md#test-use-ledger), each with a log
+Both freezes are dated entries in the [DATASETS test-use ledger](../../../DATASETS.md#test-use-ledger), each with a log
 entry, and each needs the user's go-ahead. The tools enforce the order from the records (F8 item 10): the test-side
 actions read the freezes only at their canonical paths under the campaign root, need a `v3-NNN` go-ahead and no
 template placeholder, run only with the exact code and specification Freeze 1 binds, and are refused after Freeze 2
@@ -211,7 +211,7 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
   - the clean subset, from the same predictions;
   - PMM's published values beside the full-test numbers, in the allowed wording only.
 - **Mandatory labels and disclosures** (the report carries all of them; the
-  [ledger](../../DATASETS.md#test-use-ledger) owns the details):
+  [ledger](../../../DATASETS.md#test-use-ledger) owns the details):
   1. Labels: `both_results_secondary`; the full test is an "exact, possibly overlapped PMM test; includes rows from
      previously opened tests"; the clean subset is "not pristine" and is never compared with PMM.
   2. The exact and non-overlapped PinMyMetal test structure set (the same 316 structures) was opened repeatedly
@@ -360,7 +360,7 @@ was dry-run only.
 - prediction guard, disclosures and freeze order.
 
 Its SHA-256 is pinned in `pmm_v3_test_prep.py` and `pmm_v3_step_f.py`; any other file is refused.
-The [playbook section](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run)
+The [playbook section](../../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-f-stage-6b-refit-and-the-one-test-pass-tooling-prepared-2026-10-12-not-approved-not-run)
 lists the tools and commands.
 
 **Choices made in the implementation:**
