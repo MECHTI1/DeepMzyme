@@ -647,11 +647,6 @@ copy of the refit and the only second copy of the step B–E2 run originals.
 
 ### Campaign closure (the AGENTS procedure: `Status: closed`, `git mv` to `docs/archive/campaigns/`, one PARAMETER_FINDINGS line, STATUS)
 
-**Under revision (log v3-050):** the user requires the original files, receipts and hashes to stay valid, without
-weakening the documentation contract or closing in place silently. The proposed sequence below changes frozen tool
-bytes and breaks the relative links of moved Markdown, so it is not approved; a compatibility solution is prepared
-separately for approval.
-
 **Dependencies found before any move:**
 - Six code modules read their specifications by path from `docs/campaigns/pmm_ion_metal_v3/`: `pmm_v3_test_prep.py`
   (fails at import if the file is missing), `pmm_v3_step_f.py`, `pmm_v3_step_e2.py`, `pmm_v3_sched10.py`,
@@ -662,20 +657,82 @@ separately for approval.
   campaign README and log, and the protected `docs/plans/gvp_and_esmc_evidence_ranked_improvement_plan.md`.
 - The step F records bind the specification path and the tool hashes, so they verify together only at the closing
   commit.
+- Six files in the folder are hash-bound in the records:
+  - `assessment_spec.json` (267 records), `assessment_spec.md` (11), `e2_assessment_spec.json` (7),
+    `e2_assessment_spec.md` (6), `sched10_assessment_spec.json` (5) and `step_f_spec.json` (9);
+  - `assessment_spec.md` links to `../../../pmm_v3_assessment.py`, a link that breaks one folder deeper;
+  - the README, handoff, log, plan and step F plan are not hash-bound.
+- Freeze 1 binds the SHA-256 of eight code files: the four step F tools and the four runners.
 
-**Proposed sequence:**
-1. Commit the staged v3-046 to v3-049 records with the hook.
-2. Tag that commit `pmm-ion-metal-v3-final`: the state where every tool, specification and record verifies together.
-3. In one closure commit:
-   - `git mv` the folder to `docs/archive/campaigns/pmm_ion_metal_v3` and set `Status: closed`;
-   - point the six path constants and the two tests at the archive (no logic change; the pinned specification hashes
-     stay the same, while the tool file hashes change by design after the tag);
-   - repair the 39 links, using `docs/MOVED.md` where protected or archived files must stay unedited;
-   - add the PARAMETER_FINDINGS line below and overwrite STATUS.
-4. Rerun the v3 CPU test suites (no fits), the smoke checks and the documentation contract.
+**Withdrawn (log v3-051): the log v3-049 sequence.** Repointing the path constants changes the bytes of tools whose
+SHA-256 Freeze 1 and the prediction claim bind. Closing in place fails the contract, which rejects a closed campaign
+outside `docs/archive/campaigns/`.
 
-The smaller alternative is to close in place (`Status: closed`, no move) as an explicit exception to the AGENTS move
-rule, which avoids the code and link changes.
+**Proposed: a byte-preserving archive move** (log v3-051; not approved, not applied):
+1. `git mv` the folder to `docs/archive/campaigns/pmm_ion_metal_v3`; the move changes no file content.
+2. **Alias:** a tracked relative symlink `docs/campaigns/pmm_ion_metal_v3` → `../archive/campaigns/pmm_ion_metal_v3`.
+   - The frozen tools, the tests, the path strings inside the records (`f1_selection.json`, `f_manifest.json`,
+     `s10_manifest.json`) and inbound links keep resolving.
+   - No tool, runner or specification file changes.
+   - The 39 outside link mentions need no edit. That includes the protected plan, the archived v2 campaign and the
+     immutable summaries.
+3. **Pinned files:** the six hash-bound files are never edited. A new registry, `docs/archive/frozen_moves.json`,
+   records their origin paths and SHA-256 values, the tag and the alias.
+4. **Living documents** (README, handoff, log, plan, step F plan):
+   - they get only the closure edits (the README status, the closing log entry) plus link-only rebasing of the 50
+     links that leave the folder (5, 5, 20, 16 and 4); links inside the folder stay unchanged;
+   - a proof script shows that each rebased link reaches the same file and anchor, and that all other text is
+     byte-identical;
+   - the registry keeps their pre-move SHA-256 values; the original bytes stay at the tag.
+5. **Contract extension** (59 added lines in `tools/check_docs_contract.py`; it adds checks and removes none;
+   changing the checker needs the user's approval):
+   - a pinned file must still match its SHA-256;
+   - every relative link in a pinned file is still checked, resolved from its origin folder as written;
+   - an alias must be a registered symlink from `docs/campaigns/<id>` to `docs/archive/campaigns/<id>` whose README
+     is `closed`;
+   - any other symlink under `docs/campaigns/` fails.
+6. **One test guard:** `tests/test_v3_bundle.py` skips its build round trip once the specification is no longer
+   tracked at its original path.
+   - `pmm_v3_bundle.py build` reads `git show HEAD:<path>` and, after the move, refuses with "…assessment_spec.json is
+     not committed".
+   - New VM bundles for this closed campaign are then built only from the tag.
+   - Neither file is hash-bound in any record.
+7. **Closure records:** the `docs/MOVED.md` row, the PARAMETER_FINDINGS line below, and STATUS rewritten. Its
+   `Current campaign:` line must name a campaign, and which one is the user's choice.
+
+**Prototype evidence:**
+- **Setup:** a throwaway copy of the tag in the session scratchpad, with nothing applied to the branch. The scripts,
+  patch and results are saved on Data1 under `audits/closure_compat_20261013T030717Z/`.
+- **Contract:** 0 strict failures with the extension, and 1 without it (`assessment_spec.md:6`).
+- **Hashes:**
+  - the six hash-bound files are byte-identical through the alias and the archive path, and equal the tag's blobs;
+  - the eight frozen code files match Freeze 1;
+  - the F1 specification path resolves with its recorded hash.
+- **Step F checks from the moved layout:** `check_freeze1`, `check_freeze2` and `check_prediction_claim` pass
+  (Freeze 1 `54a724be…`, Freeze 2 `949bc899…`, claim `d097add2…`).
+- **v3 test suites** (CPU, no fits): 417 passed and 3 skipped at the tag; 416 passed and 4 skipped after
+  the move. The only new skip is the guarded bundle round trip.
+- **Links:** the five living documents contain 267 links, 50 of them rebased, each to the same destination. The 8
+  links from immutable summaries into the folder resolve.
+- **Negative checks:** each of seven mutations produces the expected strict failure:
+  - an edited pinned file;
+  - a changed pin;
+  - a retargeted alias;
+  - a missing alias;
+  - an unregistered symlink;
+  - an archived README that is not closed;
+  - a broken link in a rebased document.
+
+**Limits:**
+- **Viewers:** at its archive path, `assessment_spec.md` shows one link that resolves only from its origin path.
+  GitHub's web view may not follow the directory alias, so old GitHub URLs rely on the `docs/MOVED.md` row.
+- **Windows:** a checkout without symlink support gets a text file at the alias (no current use).
+
+**Rejected alternatives:**
+- repointing the constants: it changes frozen tool bytes;
+- rewriting the pinned Markdown: it changes bound hashes;
+- closing in place: a strict contract failure, or an exemption that weakens the contract;
+- moving the tools too: they locate the repository from their own path.
 
 **Draft PARAMETER_FINDINGS line** (validation-only): "PMM ion metal v3 (closed 2026-10-13; Grade 2, five grouped
 folds, seed 42): five- or six-class training gave no supported common-four gain over `four_class` for any family;
@@ -710,5 +767,6 @@ The independent backup above must come first for A and B, because the VM disk is
 ### Decisions for the user (none inferred)
 1. **Backup:** done locally (above); an off-site copy is optional.
 2. **Commit, tag and push:** approved in log v3-050.
-3. **Closure:** the compatibility solution (pending; the sequence above is not approved).
+3. **Closure:** approve the byte-preserving move (with the contract extension and the test guard), and choose the
+   campaign STATUS names as current afterwards; or keep v3 open for now.
 4. **Storage:** option A, B or C (the archive storage authorization, and the delete phrase typed by the user).

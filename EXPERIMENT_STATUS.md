@@ -1,6 +1,6 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-13 v3: all steps complete; closeout recorded and backed up, log v3-050; closure is the user's decision)
+- Status: active (2026-10-13 v3: all steps complete; closeout committed, tagged and pushed, log v3-051; closure is the user's decision)
 - Last execution evidence: 2026-10-13 (v3 step F test pass and report on the workstation CPU; [log v3-048](docs/campaigns/pmm_ion_metal_v3/log.md#v3-048)).
 
 ## Current objective and stage
@@ -38,7 +38,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 - Authorized now: nothing to run (step F complete); the $55 gross ceiling (about $41.8 spent); no Round C.
 - GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-13 02:15 UTC); disk and archive snapshot kept (about $0.55/day).
 
-Next: the user's closure decision (a compatibility solution for the archive move) and storage retirement A/B/C ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)); open: fairness arm, cost-gated augmentations.
+Next: the user's closure decision (the byte-preserving archive move) and storage retirement A/B/C ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)); open: fairness arm, cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
