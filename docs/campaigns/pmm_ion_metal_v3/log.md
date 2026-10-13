@@ -3,6 +3,48 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-051
+
+2026-10-13 (about 03:15 UTC) — **the closeout commit, tag and push are done; a byte-preserving archive move was
+prototyped for the user's decision; nothing was closed or moved.**
+
+**Done under log v3-050:**
+- **Commit** `a909721` ("Complete v3 step F and record the closeout package (log v3-046 to v3-050)"), made with the
+  repository hook: docs contract 0 strict failures.
+- **Pre-tag check:** in the committed tree, the four step F tools and the step F specification match Freeze 1,
+  Freeze 2 and the claim, and the four runners match Freeze 1.
+- **Tag:** annotated `pmm-ion-metal-v3-final` (tag object `82bc8d0…`) on `a909721`.
+- **Push:**
+  - `v3-step-a` went `f5c7f89..a909721` as a fast-forward that includes `0e845d8` and `7bd7884`;
+  - the tag was pushed on its own;
+  - `git ls-remote` shows both on origin;
+  - no force-push and no merge.
+
+**Compatibility solution (proposal):** [handoff section 13](handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval).
+- **Design:** `git mv` with a registered directory alias at the old path. The six hash-bound files are pinned and never
+  edited; the living documents get link-only rebasing. The contract gains checks for pinned files and aliases, and one
+  bundle test gets a guard.
+- **Why the v3-049 sequence is withdrawn:** it changed frozen tool bytes.
+- **Prototype on a throwaway copy of the tag** (evidence on Data1 `audits/closure_compat_20261013T030717Z/`):
+  - contract 0 strict failures with the extension, 1 without it;
+  - every hash-bound file and frozen code file unchanged;
+  - the step F record checks pass from the moved layout;
+  - v3 tests: 416 passed and 4 skipped, against 417 and 3 at the tag;
+  - all seven negative checks fail as intended.
+- **First-run problems, fixed in the prototype before the final run:**
+  - the first contract patch resolved a pinned file's origin links through the alias before applying `..`;
+  - the bundle round-trip test failed until it was guarded.
+
+**Not done:** no closure, move, contract or test change on the branch; no new snapshot or deletion; no training,
+embeddings or predictions. The VM stays TERMINATED.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-13 v3: all steps complete; closeout recorded and backed up, log v3-050; closure is the user's decision)
+Next: the user's closure decision (a compatibility solution for the archive move) and storage retirement A/B/C ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-050
 
 2026-10-13 (about 02:25 UTC) — **the user approved the NVMe backup, three wording corrections, the commit of the
