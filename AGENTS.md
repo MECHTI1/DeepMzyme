@@ -63,6 +63,16 @@ Save model configuration, feature set, seed, all splits, loss, weights/sampling,
 After code changes run the smallest relevant syntax/smoke checks first, then required checks; `tests/smoke_checks.py` is the CPU smoke entry. If relevant, smoke before long training. Temporary test files belong outside `DeepMzyme_Data/` unless explicitly needed; clean them immediately.
 Summarize what changed and what did not, verification and limitations. When editing AGENTS, summarize the policy delta for review.
 
+### Efficient execution
+
+- Before substantial work, state the deliverable, completion criteria, reusable artifacts and required checks. Continue routine authorized work without repeated approval requests.
+- Reuse existing tools and make the smallest sufficient change. Separate correctness, scientific-validity, persistence and spending blockers from optional improvements; defer unrelated work.
+- Review critical execution and recovery paths before expensive validation. Keep relevant source unchanged during its checks.
+- Reuse verification when source, inputs and environment remain applicable. Repeat expensive checks only for invalidated evidence, failures or unresolved risks.
+- Additional agents or reviews need a specific independent question. Consolidate findings; reopen broad review only for a concrete unresolved risk.
+- Report completed and remaining work, blockers and evidence-based estimate ranges. Finish when agreed criteria pass.
+- Efficiency never weakens required scientific checks, provenance, test-access restrictions, compute authorization or budget safeguards.
+
 ## Documentation contract
 
 Follow the [coordination protocol](docs/README.md#documentation-coordination-protocol); identify all coupled owners before editing and repair cross-references together. Report unresolved conflicts.
