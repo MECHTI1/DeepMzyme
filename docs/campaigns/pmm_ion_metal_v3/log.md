@@ -3,6 +3,304 @@
 Dated user decisions and STATUS history for this campaign, newest first.
 Current authority: [EXPERIMENT_STATUS.md](../../../EXPERIMENT_STATUS.md).
 
+## v3-050
+
+2026-10-13 (about 02:25 UTC) — **the user approved the NVMe backup, three wording corrections, the commit of the
+closeout records, the tag `pmm-ion-metal-v3-final` and the push of `v3-step-a`; closure and the archive move stay
+pending.**
+
+**User decision:**
+- Make the full NVMe backup of handoff section 13, with a `SHA256SUMS` manifest, verifying every copied file and
+  keeping the originals.
+- Before committing, correct the completion summary:
+  - distinguish the separate exploratory 10-epoch comparison from the 50-epoch fits;
+  - say that neither step D recipe demonstrated an improvement under the specified gates;
+  - use "no supported gain" instead of implying that five- or six-class training cannot help.
+- Record the backup receipt and run the documentation checks.
+- Commit with the repository hook and create the tag `pmm-ion-metal-v3-final`.
+- Push `v3-step-a`, including its two earlier unpushed commits, and this tag only, with no force-push and no merge.
+- Keep formal closure and the archive move pending. Prepare a compatibility solution that keeps the original files,
+  receipts and hashes, does not weaken the documentation contract and does not close in place silently.
+- Keep the VM stopped. Not authorized: new snapshot spending, deletion, training, embeddings or test predictions.
+
+**Done:**
+- **NVMe backup, verified:**
+  - location: `/home/mechti/deepmzyme_backups/pmm_ion_metal_v3_closeout_20261013T023038Z/` (`/dev/nvme0n1p6`, ext4);
+  - copied 02:30–02:33 UTC under the 2-core, 3 GB cap;
+  - 4,836 files, 2,639,602,614 bytes;
+  - each source file was hashed before the copy into `SHA256SUMS` (`b9b6d44f3056…`); after `rsync -a`, all 4,836
+    copies passed `sha256sum -c --strict`, with no symlinks or missing files;
+  - the 16 key files match the hashes recorded in the step F records: terminal checkpoint `a0007846…`, run config
+    `8db9c5e2…`, run metadata `f9b442c4…`, reload check `45759713…`, run status `f48e5d24…`, F1 `e8a2e8cd…`, manifest
+    `d37ba100…`, ceiling `bdb044f7…`, authorization `27956449…`, Freeze 1 `54a724be…`, Freeze 2 `949bc899…`, claim
+    `d097add2…`, predictions `cd8231d9…`, report.json `240ca831…`, report.md `592f4a8f…`, F3b verification
+    `b2bd525d…`;
+  - receipt `BACKUP_RECEIPT.json` `ddbec5de14da…`, with a copy and the manifest on Data1 at
+    `campaigns/pmm_ion_metal_v3/backups/nvme_closeout_20261013T023038Z/`;
+  - the originals are unchanged; there is still no off-site copy.
+- **Wording:**
+  - the three corrections in the
+    [completion summary](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md);
+  - STATUS now says "no supported gain" for the neutral test;
+  - [handoff section 13](handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval) records the backup,
+    marks the earlier closure sequence as not approved, and updates the decisions.
+- **Commit:** this entry is committed with the v3-046 to v3-050 records, and that commit is tagged
+  `pmm-ion-metal-v3-final`. The push result is recorded in the next entry.
+
+**Not done:** no closure, archive move, new snapshot, deletion, training, embeddings or predictions. The VM stays
+TERMINATED.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- v3 steps E/E2: no family gains from five/six-class training (tie keeps `four_class`); [rest of the line unchanged]
+- Status: active (2026-10-13 v3: all steps complete; closeout package prepared, log v3-049; closure is the user's decision)
+Next: the user's closeout decisions ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)): backup copy, commit/push of v3-046 to v3-049, closure, storage retirement; open: fairness arm, cost-gated augmentations.
+```
+
+## v3-049
+
+2026-10-13 (about 02:20 UTC) — **closeout package prepared for the user's decisions; nothing closed, committed, copied
+or deleted.**
+
+**User request:**
+- Reconcile the documentation that still described step F as pending or unapproved.
+- Prepare a concise completion summary that separates the validation findings, the secondary test result and the
+  deferred experiments.
+- Verify the independent backup coverage.
+- Prepare a campaign-closure and storage-retirement proposal.
+- Run the documentation checks and stage only the intended changes.
+- No training, embeddings, predictions, new compute or storage spending. Closure, archive, commit, push, merge and
+  cloud deletion wait for the user's approval.
+
+**Done (documentation only):**
+- **Completion summary:**
+  [summary_pmm_ion_metal_v3_20261013.md](../../notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md). It
+  lists the fairness arm, the cost-gated augmentations, Round C, the v3-039 hypotheses, a matched PMM rerun and more
+  seeds as untested.
+- **Evidence index:** a v3 section in [docs/notebook_outputs/README.md](../../notebook_outputs/README.md) with five
+  batches: steps D, E and E2, the 10-epoch comparison, and step F (not graded).
+- **Step F status reconciled:**
+  - the campaign README;
+  - the `step_f_plan_draft.md` status line (approved in v3-045 and executed), with its v3-043 "Not run" note dated;
+  - the playbook's step F heading (the old anchor kept);
+  - handoff sections 2, 3, 8 and 12 (the Freeze 1 package marked historical).
+- **Unchanged:** frozen specifications, executable blocks, earlier log entries and raw evidence.
+- **Handoff section 13**
+  ([closeout proposal](handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)): backup coverage,
+  closure dependencies and sequence, the draft PARAMETER_FINDINGS line and the storage options.
+
+**Findings:**
+- **Backup coverage:**
+  - the 16 key step F files on Data1 match their recorded SHA-256 values;
+  - the refit run folder also exists on the VM disk (the original);
+  - everything written on the workstation after the refit has a single copy, on Data1 (96% full): the records,
+    freezes and claim, the memberships, the 2.3 GB of test ESMC, the predictions, the report and the F3b
+    verification;
+  - the VM disk is the only second copy of the refit and of the earlier runs.
+- **Closure dependencies:** six code modules and two test files read specifications from the campaign folder by
+  path; 39 link mentions in six outside files point into the folder; there are no git tags.
+- **Resource state** (`vm-status` at 02:15 UTC; `vm-report --no-ssh` and
+  `vm-archive --name deepmzyme-v3-final-20261013 --max-monthly-usd 10 --dry-run` at about 02:00 UTC):
+  - VM TERMINATED;
+  - the 150 GB disk bills $15.00/month;
+  - the 2026-10-03 snapshot (34.8 GiB) bills about $1.74/month;
+  - about $0.55/day in total;
+  - a new archive snapshot is estimated at $7.50/month at most (conservative).
+- **Housekeeping:** a leftover local polling loop from the 2026-10-12 stockout retries was stopped. It was idle and
+  took no cloud action.
+
+**Checks:** docs contract 0 strict failures; `git diff --check` clean; default read path 24,819 bytes.
+
+**Not done:** no closure, `git mv`, tag, commit, push, merge, backup copy, archive snapshot or deletion; no training,
+embeddings or predictions; no new spending.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-13 v3: step F complete; one-shot test report done, secondary; closure is the user's decision)
+- Current campaign: pmm_ion_metal_v3, steps A–E2 complete
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 20:06 UTC); disk and archive snapshot kept (about $0.55/day).
+Next: the user's decision on closing v3 (closure procedure; PARAMETER_FINDINGS line) and on the commit/push of the v3-046 to v3-048 records; open: fairness arm, cost-gated augmentations.
+```
+
+## v3-048
+
+2026-10-13 (about 00:45 UTC) — **the user gave the Freeze 2 go-ahead and the go-ahead for the single test pass and the
+frozen report, conditional on every required check passing.**
+
+**User decision:**
+- After all required checks of the label-blind preparation and the test embeddings pass, record Freeze 2, then run
+  the single CPU test pass and the frozen report.
+- Stop on any failed check or prediction failure: no automatic retry, and no change to the model or the evaluation
+  rules.
+- Preserve all both_results_secondary disclosures.
+
+**Done** (each step only after the previous one's checks passed; nothing retried or changed):
+- **Freeze 2** recorded at 01:03:45 UTC: `step_f_evidence/freeze2.json` `949bc899…` (go-ahead v3-048). It binds
+  Freeze 1 `54a724be…`, the checkpoint `a0007846…`, the nine membership files and the preparation summary, and the
+  inventory `2c500580…`. Its ledger paragraph is in DATASETS.
+- **The single prediction pass** (workstation CPU, 2 cores, 3 GB cap, 21 minutes, peak 1.57 GB):
+  - claim `step_f_evidence/f4_prediction_claim.json` `d097add2…` written at 01:05:16 UTC before any test structure
+    was opened;
+  - predictions `step_f_test/predictions_20261013T010419Z/test_predictions.csv` `cd8231d9…`: 1,488 rows, 1,485
+    scored rows predicted for 1,485 physical ions, the 3 unscorable rows without a prediction, no label read.
+- **The frozen report** (`pmm_v3_step_f_report.py` `b4c7dacd…`; `step_f_test/report_20261013T012534Z/report.json`
+  `240ca831…`, `report.md` `592f4a8f…`). Label **both_results_secondary**; 1,485 of 1,488 scored; no label code
+  outside the four classes.
+
+| Line | Common-four BA (95% PDB-entry bootstrap) | Mn | Cu | Zn | Class VIII |
+|---|---|---:|---:|---:|---:|
+| Full test (1,488 rows, 1,179 PDB entries) | **67.55** [62.93, 71.65] | 55.69 (93/167) | 70.31 (45/64) | 85.07 (855/1005) | 59.13 (149/252) |
+| LINK-free sensitivity (1,349 rows) | 68.99 [64.40, 73.13] | 56.88 | 72.13 | 85.63 | 61.30 |
+| Training-eligible sensitivity (1,346 rows) | 69.33 [64.85, 73.33] | 56.88 | 73.33 | 85.83 | 61.30 |
+| Clean subset (secondary; not pristine; 423 rows) | 48.85 [39.39, 57.34] | 32.43 (12/37) | 43.75 (7/16) | 82.61 (247/299) | 36.62 (26/71) |
+
+- **Beside PMM's published test values** (full test only, allowed wording; not a matched comparison, with no
+  interval, p-value or superiority claim for the difference): mean 67.55 is lower than PMM's 67.85. Mn 55.69 is lower
+  than 88.60. Cu 70.31, Zn 85.07 and Class VIII 59.13 are higher than 59.40, 65.90 and 57.50.
+- **All nine disclosures are in the report** (both_results_secondary, the previously opened sets, the possibly
+  evaluated Zenodo test, the 2026-10-03 metadata read, the 2026-10-11 byte scan, selection on reused development
+  folds, the unmatched PMM comparison with its label leak, the clean-subset short-chain limitation, and the CPU test
+  ESMC).
+- **Measured observation, not a causal claim:** the full-test BA (67.55) is below the cross-validation mean of the
+  selection (74.28, development validation). Mn falls furthest (55.7 against 75.6 in CV). The clean subset, with no
+  training PDB IDs, near-copy chains or previously opened IDs, is much lower (48.85) on few rows (Mn 37, Cu 16).
+- **Exposure state:** the exact Zenodo PinMyMetal test is now evaluated once by v3 (DATASETS ledger). Nothing was
+  selected or changed after the labels were read.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-12 v3: Stage 6B refit done and receipted; Freeze 1 pending the user's go-ahead)
+- Last execution evidence: 2026-10-12 (v3 Stage 6B refit, 1 session, 1 h 06 min, $0.97 gross; [log v3-046](docs/campaigns/pmm_ion_metal_v3/log.md#v3-046)).
+- Stage: v3 Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted); Stage 6B refit done (checkpoint `a0007846…`, reload check passed; [log v3-046](docs/campaigns/pmm_ion_metal_v3/log.md#v3-046)); no test-side read; no Stage 7.
+- Exact Zenodo PMM test: unknown, possibly evaluated; test-file label/feature metadata read in aggregate on 2026-10-03, test-directory bytes scanned without display on 2026-10-11 (no evaluation).
+- Authorized now: nothing to run (F1–F2 of [log v3-045](docs/campaigns/pmm_ion_metal_v3/log.md#v3-045) complete); the $55 gross ceiling (about $41.80 spent at 2026-10-12 20:07 UTC); no Round C.
+Next: the user's Freeze 1 go-ahead ([handoff section 12](docs/campaigns/pmm_ion_metal_v3/handoff.md#12-step-f-tooling-prepared-2026-10-12-log-v3-042)), then F3b on the workstation CPU, Freeze 2 and the single test pass, each separately gated; open: fairness arm, cost-gated augmentations.
+```
+
+## v3-047
+
+2026-10-12 (about 20:45 UTC) — **the user approved Freeze 1 and the F3b workstation-CPU preparation for the verified
+50-epoch refit checkpoint `a0007846…`.**
+
+**User decision:**
+- Approved: Freeze 1, and the specified F3b label-blind preparation and test ESMC on the workstation CPU, for the
+  verified 50-epoch checkpoint `a0007846…`.
+- Preserve the recorded selection, code, filtering rules and secondary-report disclosures.
+- Check the available RAM before starting and keep the documented resource caps (preparation 2 cores / 3 GB; test
+  ESMC 2 cores / 6 GB).
+- Complete the label-blind preparation and the embeddings, verify their artifacts, and present the Freeze 2 package.
+- Not approved: predictions, report generation, additional training or another GPU allocation.
+
+**Done:**
+- **Freeze 1** recorded at 20:46:09 UTC: `step_f_evidence/freeze1.json` `54a724be…` (go-ahead v3-047, commit `7bd7884`
+  with every bound file committed, checkpoint `a0007846…`, tools equal to the refit manifest's, no test-side read
+  before it). Its DATASETS ledger paragraph was added before any test-side read.
+- **RAM before F3b:** 6.2 GB available, enough for the preparation's 3 GB cap.
+- **Label-blind preparation** (2 cores, 3 GB cap, 19.5 minutes, peak 1.05 GB): `step_f_test/prepared_20261012T204640Z`
+  (summary written 21:06 UTC; the folder name is the launch time).
+  - 1,488 source rows: 1,346 scored, 139 LINK-flagged, 3 unscorable (1 missing reconstruction row, 2 targets that are
+    not a supported metal ion): "1,485 of 1,488 scored".
+  - 1,485 physical ions with 0 aliases; 1,281 structures resolved.
+  - Clean subset 423 rows (exclusions: C1 809, C2 near-copy 907, `C2_unverifiable` 3, C3 379). 710 of the 1,528
+    unique context sequences are identical to a training reference; 5 rows have only short context chains (the
+    disclosed limitation). 313 previously opened PDB IDs from 316 files.
+  - All nine membership files match the summary, which names Freeze 1; no label value was used.
+- **Test ESMC:**
+  - available RAM was 5.5 GB, below the documented 6 GB, so the user closed Firefox (8.8 GB available);
+  - a 2-core run was aborted on purpose after 71 payloads (no receipt) when the user chose 4 cores to finish sooner
+    (`test_esm_20261012T212200Z`, `ABORTED.txt`);
+  - the 4-core run (6 GB cap) finished in 3 h 30 min with peak 5.23 GB: `step_f_test/test_esm_20261012T213123Z`,
+    1,918 payloads for 1,559 unique sequences, inventory `2c500580…`, model `esmc_600m` in bfloat16 (emitted
+    bfloat16, stored float32), device CPU, made under Freeze 1.
+- **Verification** (`step_f_test/verify_f3b.py` `9cec564d…`, `f3b_verification.json` `b2bd525d…`): passed.
+  - Every payload and sidecar matches the inventory, which equals the plan once each, and its hash recomputes;
+    no extra files.
+  - All values are finite, with correct shapes, float32 storage and metadata.
+  - Both outputs were made under Freeze 1, and the row accounting holds.
+- **DATASETS:** the F3b reads are recorded in the test-use ledger.
+
+## v3-046
+
+2026-10-12 — **step F F1–F2 complete: the Stage 6B full non-test refit of `gvp_late_fusion__four_class__baseline`
+ran once, passed its reload check, was persisted, pulled and receipted; the VM is TERMINATED. Stopped before
+Freeze 1; no test-side read.**
+
+**Commits** (repository hook, not pushed): `0e845d8` (the reviewed v3-038 to v3-044 work) and `7bd7884` (the v3-045
+approval and the plan.md alignment).
+
+**Records** (`$DATA/step_f_evidence/`, write-once; each names log v3-045 and commit `7bd7884`, with every bound file
+committed):
+
+| Record | SHA-256 | What it holds |
+|---|---|---|
+| `f1_selection.json` | `e8a2e8cd…` | E2 assessment `6e804796…`, S10 decision not adopted, `E_sel` = 50 |
+| `f_manifest.json` | `d37ba100…` | specification `04d22cc4…`, the step F and reused tool hashes, VM files |
+| `f_ceiling.json` | `bdb044f7…` | $55; $40.81 spent at 18:31:16 UTC; $3 storage reserve |
+| `f_authorization.json` | `27956449…` | the refit GPU start, F2 only |
+
+**GPU session** `session-20261012T185958Z-c995e05c`:
+- **Start:** the first start (18:34 UTC) and same-VM retries 1–4 hit an L4 `ZONE_RESOURCE_POOL_EXHAUSTED` stockout in
+  us-central1-a, so nothing was billed. Retry 5 started the VM at 18:59:58 UTC.
+- **Retry loop:** the user then asked to reassess, cancel further retries if the VM stayed TERMINATED, and prepare a
+  fallback proposal without running it. Retry 5 was already in flight; its start succeeded, and no further attempt
+  ran. The refit then ran in this one authorized session, so no fallback was needed or prepared.
+- **Before launch:** the hard STOP was 117 minutes (20:56:49 UTC); `vm-setup` (SSH, smoke) passed; `deploy` copied the
+  three bound files (hashes verified); the launch gates were clean; projected spend $45.54 against $55.
+- **Run:** launched on lane 0 at 19:13:24 UTC. Training took about 25 s per epoch; the run ended in 2,910 s after a
+  69 s preflight, longer than the 3,300 s forecast assumed for the reload check: its single-threaded pocket loading
+  over the 3,992 training structures took about 22 minutes. Exit code 0, status `completed`; the host pull verified
+  and acknowledged 17 files.
+- **Close-out:** evidence `step_f_evidence/evidence_20261012T200435Z` (751 files; `safe_to_stop` true), then `vm-stop`
+  at 20:05 UTC with TERMINATED verified by `vm-status` and `vm-report`. The session ran 1 h 06 min for **$0.97
+  gross** (controller ledger). There was no rerun, no extension and no second start.
+
+**Refit** (`refit-receipt`, workstation, from the pulled copy):
+- **Run:** `stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42`; terminal checkpoint
+  `terminal_model_checkpoint.pt` **`a0007846…`** (`a00078466cf60c93287315883dd0e5565ce3e9e5c6c5c4654d2d5da357e59593`).
+- **Hashes:** `run_config.json` `8db9c5e2…`, `run_metadata.json` `f9b442c4…`, run status `f48e5d24…`,
+  `refit_reload_check.json` `45759713…`.
+- **Epochs:** 50 planned, completed and selected (terminal rule); 50 history rows; fit completed with no test report.
+- **Retained settings:** batch 16, seed 42, cosine schedule, learning rate 3e-5 with the campaign's GVP scope, weight
+  decay 1e-4, FP32 (no AMP); no validation partition, no folds; selection metric `train_loss` (descriptive only);
+  no calibration or ensemble.
+- **Data:** the full non-test cohort `745b19c1…` (7,398 ions) with full-cohort weights Mn 0.7316, Cu 5.3921, Zn 0.9102
+  and Class VIII 0.7413 (`272fb6f4…`), and normalization fitted on that cohort.
+- **Identity:** selection record `e8a2e8cd…`, specification `04d22cc4…`, runner `29427650…`, resolved
+  configuration `19a2372d…`.
+- **Reload check** (in-process, CUDA): re-evaluated training-set common-four BA 0.9903277 against the logged
+  0.9903277 (difference 1.1e-16, tolerance 0.001); finite parameters; recalls Mn 0.989, Cu 0.997, Zn 0.986 and
+  Class VIII 0.989.
+- **Consistency with the CV fits** (training side only, not evidence of generalization): final training loss 0.041
+  and training common-four BA 0.990, inside the range of the selected cell's fold 1–4 fits (0.035–0.062 and
+  0.983–0.990).
+
+**Spending:** about **$41.80** (offline `pmm_v3_step_f.py spend`; estimated charges), with **$13.20** left under the $55
+ceiling. Today's controller use is 7 h 17 min / $7.50 of 12 h / $18.
+
+**Freeze 1 preparation** (no test-side read; `freeze1-template` prints only):
+- The record is complete except the go-ahead entry: checkpoint `a0007846…`, the four tool hashes equal to the refit
+  manifest's (`tools_differ_from_refit_manifest` empty), commit `7bd7884` with every bound file committed, the 9
+  disclosures, `test_side_read_before_this_record` false.
+- `record-freeze1` will refuse until the user's logged go-ahead names a `v3-NNN` entry.
+- The F3b previously-opened-PDB-ID folder is in the main checkout:
+  `/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test`. The
+  worktree's `DeepMzyme_Data` lacks it, so the playbook command now uses that absolute path. Only the folder's
+  existence was checked: nothing under it was listed or read. The tool requires exactly 316 structure files and reads
+  names only.
+
+STATUS text replaced by this update, preserved verbatim:
+
+```text
+- Status: active (2026-10-12 v3: step F plan approved; the Stage 6B refit authorized, one GPU session)
+- Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted); step F plan approved ([log v3-045](docs/campaigns/pmm_ion_metal_v3/log.md#v3-045)), refit in progress; no Stage 7.
+- Authorized now: step F F1–F2 only (binding records and one refit GPU session, `--hours 2`, one unchanged rerun if it fits; [log v3-045](docs/campaigns/pmm_ion_metal_v3/log.md#v3-045)); the $55 gross ceiling (about $40.81 spent at 2026-10-12 18:31 UTC); no Round C.
+- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 16:16 UTC); disk and archive snapshot kept (about $0.55/day).
+Next: the refit, its receipt and the Freeze 1 approval package; Freeze 1, Freeze 2 and the single test pass stay separately gated ([step F plan F7](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md#f7-decisions-for-the-user-none-inferred)); open: fairness arm, cost-gated augmentations.
+```
+
 ## v3-045
 
 2026-10-12 (about 18:30 UTC) — **the user approved the step F plan and authorized F1–F2: the commit of the prepared
