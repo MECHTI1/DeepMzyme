@@ -20,6 +20,9 @@ Relevant facts:
 - The non-overlapped PinMyMetal root is present locally but its historical test
   was already accessed; it is included in v11/v12 (absent from historical v10).
   The harsh root is absent locally and from v10/v11/v12.
+- The exact Zenodo PinMyMetal test was evaluated once by the frozen v3 step F
+  one-shot report on 2026-10-13 (secondary report; an earlier 2026-09-24 access
+  remains possible), so it is not an unopened test either (see the ledger).
 - CLEAN and CARE datasets have different scientific purposes and cannot be
   silently designated as replacement final tests.
 - This documentation cleanup does not select a replacement dataset or change
@@ -134,6 +137,7 @@ is owned by [`Plan.md`](../Plan.md).
 | Dataset ID | Scientific purpose | Materialized locally | In current v12 bundle | Test/fold evaluation record | Current interpretation |
 |---|---|---:|---:|---|---|
 | `pinmymetal-source` | Original PinMyMetal class-model membership and site provenance | Source files tracked | No, source membership only | Not an executable split by itself | Primary membership evidence |
+| `pinmymetal-zenodo-exact` | Exact ion-level Zenodo PinMyMetal train/test reconstruction ([details](#exact-zenodo-pinmymetal-train_and_test_sets_structures_zenodo_pmm_exact)) | Yes | Separate Hugging Face archive | Evaluated once by v3 step F on 2026-10-13; an earlier 2026-09-24 access is possible (see ledger) | Opened test; the v3/successor training cohort's source |
 | `pinmymetal-exact` | Supported-structure projection preserving original train/test side | Yes | Yes | Opened 2026-09-22/23 (see ledger) | Opened test; possibly overlapped comparison route |
 | `pinmymetal-nonoverlap` | Remove exact-test PDB IDs from train; retain the original exact test | Yes | Yes | Seven early and six 2026-09-18 test evaluations found | Historically accessed; not pristine |
 | `pinmymetal-harsh` | Put all common exact-split PDB IDs on the test side | No | No | No evaluation of this split found | Severe comparison variant; its test PDB IDs are the opened exact test side |

@@ -6330,22 +6330,33 @@ the closed v3 campaign. The user selected four, five and six training objectives
 v3 ion cohort, five near-copy/PDB grouped folds, late-fusion architecture, feature set, FP32, optimizer and rates,
 50-epoch cosine schedule and terminal checkpoint. No HPO or Optuna study is introduced.
 
-| Recipe | Exact trainer delta from frozen baseline |
+| Recipe | Exact trainer loss flags (B equals the frozen baseline; P/S change only these) |
 |---|---|
-| B | `--metal-loss-function cross_entropy --metal-label-smoothing 0` |
-| P | `--metal-loss-function focal --metal-focal-gamma 0 --metal-label-smoothing 0` |
-| S | `--metal-loss-function cross_entropy --metal-label-smoothing 0.1` |
+| B | `--metal-loss-function cross_entropy --metal-label-smoothing 0.0` (`--metal-focal-gamma 2.0`, inert) |
+| P | `--metal-loss-function focal --metal-focal-gamma 0.0 --metal-label-smoothing 0.0` |
+| S | `--metal-loss-function cross_entropy --metal-label-smoothing 0.1` (`--metal-focal-gamma 2.0`, inert) |
 
-The manual common-four class weights stay fixed per training fold. P uses the existing focal implementation at
+Every successor argv carries all three loss flags explicitly, so B differs from the frozen v3 baseline argv only
+by the inert, explicit focal-gamma default; the seed and the successor runs directory are the other two permitted
+differences, and the builder refuses any other change. The manual common-four class weights stay fixed per
+training fold: `w_c = N_train / (4 n_c)` on the common four, Fe/Co/Ni each receiving `w_VIII` under six-class and
+Fe plus Class VIII (Co+Ni) each receiving `w_VIII` under five-class. P uses the existing focal implementation at
 gamma zero: weighted CE divided by the number of supervised examples. B uses PyTorch's batch-weight-normalized
-CE. S smooths in the native label space; its collapsed smoothing mass differs across target counts. No combination
-of focal and smoothing is permitted. Command/config identities distinguish all three objectives and recipes.
+CE. S smooths in the native label space with PyTorch's weighted smoothing term, so (i) the smoothing pull toward a
+class scales with that class's manual weight (roughly seven times stronger toward Cu than toward Mn or Class VIII, fold-dependent), and
+(ii) after collapse to common four the off-true coarse mass depends on the target and on the true class: four-class
+0.025 per other class; five-class 0.02 to each other native class so 0.04 reaches Class VIII from a Mn/Cu/Zn
+example (0.08 off-true in total) but 0.06 in total from an Fe or Co/Ni example; six-class 0.0167 per native class so
+0.05 reaches Class VIII from a Mn/Cu/Zn example (0.083 in total) but 0.05 in total from an Fe/Co/Ni example. No
+combination of focal and smoothing is permitted. Command/config identities distinguish all three objectives and
+recipes, and the collector additionally checks the trainer's own `run_config.json` seed and loss keys.
 
 Discovery: 3 recipes × 3 targets × 5 folds, seed 42, 45 units; reuse the 15 verified B units. Compare P/S against B
 within each target: gain strictly above 0.2 common-four BA points, positive mean gain on folds 1–4, no mean common
 class recall drop above 3 points, nonzero common-class recall in every fit, and nonzero aggregate native recalls.
 Choose one shared recipe: largest qualifying target gain; ties within 0.2 points compare mean gain over all three
-targets; an exact remaining tie prefers P then S. No qualifying target retains B.
+targets (that mean includes targets that did not qualify, as the frozen rule states); an exact remaining tie prefers
+P then S. No qualifying target retains B.
 
 Confirmation: shared R4/R5/R6 plus unchanged B4 on seeds 43 and 44, all five folds; deduplicate R4/B4 when R=B.
 This is 40 units for P/S or 30 for B, with one verified B4/fold0/seed43 reusable. Average paired seed differences
@@ -6357,38 +6368,49 @@ Five/six must pass both the B4-anchor and matched-R4 contrast. Rank eligible con
 BA; within 0.2 points prefer four, five, six. If none qualify, retain B4. Better, tied and worse outcomes are valid.
 These seeds reuse development folds and do not provide independent data. Missing cells never silently pass.
 The [machine specification](campaigns/metal_completion_2026-10/assessment_spec.json) and tested assessor implement
-these rules; native five/six metrics and rare recalls remain reportable.
+these rules; native five/six metrics and rare recalls remain reportable, and every receipt names the ranking metric
+(probability-summed common-four balanced accuracy).
 
 ### CPU preparation block
 
 Run only from the separately verified frozen package. The example paths describe the prepared local artifacts;
 they are not permission to copy, download or modify remote storage. Parent, code, train/ESM and successor paths
 must be identical on the execution host and evidence mirror; relocation is not implemented. Set a new successor
-output root rather than overwriting an existing manifest.
+output root rather than overwriting an existing manifest. Always run the package with `-B`, so the host and worker
+processes do not write bytecode into the sealed package.
 
 ```bash
 MC_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-MC_PREP=/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014
+MC_PREP=/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z
 MC_TRAIN=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
 MC_ESM=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1
 "$MC_PY" -c 'import sys; print(sys.executable)'
-"$MC_PY" "$MC_PREP/code/metal_completion.py" prepare \
+"$MC_PY" -B "$MC_PREP/code/metal_completion.py" prepare \
   --parent-dir "$MC_PREP/parent" --successor-root "$MC_PREP/execution" \
   --train-dir "$MC_TRAIN" --esm-dir "$MC_ESM" \
   --assessment-spec-path "$MC_PREP/code/docs/campaigns/metal_completion_2026-10/assessment_spec.json"
 ```
 
-Preparation verifies frozen source, metadata, training structures and ESM hashes, and emits
-`execution/manifest_discovery.json` plus its printed SHA-256. Reuse the existing verified manifest when already
-prepared. It contains `execution_authorized: false`. A worker preview uses the exact manifest hash:
+Preparation verifies frozen source, metadata, training structures and ESM hashes, binds the seven executing
+modules (the six completion modules and `pmm_v3_assessment.py`, which must also equal the assessor hash frozen
+by the parent extension), and emits `execution/manifest_discovery.json` plus its printed SHA-256. Reuse the
+existing verified manifest when already prepared. It contains `execution_authorized: false`. A worker preview uses
+the exact manifest hash:
 
 ```bash
 : "${MC_MANIFEST_SHA:?Set the verified discovery manifest SHA-256}"
-"$MC_PY" "$MC_PREP/code/run_metal_completion.py" --action plan \
+"$MC_PY" -B "$MC_PREP/code/run_metal_completion.py" --action plan \
   --manifest "$MC_PREP/execution/manifest_discovery.json" --manifest-sha256 "$MC_MANIFEST_SHA" \
   --unit metal_completion__discovery__P__four_class__fold0__seed42 \
   --train-dir "$MC_TRAIN" --esm-dir "$MC_ESM"
 ```
+
+**Deployment prerequisite (not yet performed).** The manifest binds the five absolute Data1 paths above, and the
+training-input receipt records the resolved train directory, so the GPU host must hold real directories (or a bind
+mount recorded in `/etc/fstab` so it survives the controller's STOP/START) at exactly these paths: `code/`,
+`parent/`, the train dataset and the ESM directory. A symlinked train directory resolves to another path and fails
+closed. Before any paid unit, the coordinator runs the `plan` command above on the host and compares the host's
+library versions with `evidence/cpu_verification.json`; a passing `plan` proves the bindings, not authorization.
 
 ### Execution, evidence and transition gates
 
@@ -6404,38 +6426,66 @@ The sole coordinator uses the [GPU skill](../.agents/skills/gpu-use-skill/SKILL.
 Before submitting, bind the explicit user decision text/file/hash, manifest hash, exact permitted units, price,
 aggregate hours/gross ceiling/reserve, session count/duration, expiry, lanes and persistence destination in the
 authorization policy. Fresh controller and spending snapshots must agree on session identity, allocation start,
-original deadline, owner, provider automatic STOP and costs including the entire active session. Worker admission
-uses the earlier stop/deadline, forecast ×1.25 and 900-second reserve. Reconnects cannot reset the clock or session
-count; a superseding approved policy must explicitly name the earlier policy hashes and retain accounting.
+original deadline, owner, provider automatic STOP and costs including the entire active session, and neither may
+predate the allocation start. Worker admission uses the earlier stop/deadline, forecast ×1.25 and 900-second reserve.
+Reconnects cannot reset the clock or session count; a superseding approved policy must explicitly name the earlier
+policy hashes and retain accounting.
 
 `run_metal_completion.py --action run` requires the same manifest/unit/input arguments as preview plus `--policy`,
-`--session` and `--spending`; missing authorization refuses execution. Its external controller-launched wrapper must
-record `<exact-unit-name>.rc` and preserve root claims, authorization/session records and each lane's command,
-configuration, metadata, terminal checkpoint, epoch history, predictions, replay and run status. The host must
-acknowledge durable copies before another unit; do not assume worker completion proves independent persistence.
+`--session` and `--spending`; missing authorization refuses execution. Launch every unit through this wrapper
+contract, which is what records the external exit status the collector requires:
+
+```bash
+: "${MC_UNIT:?exact unit name}"; : "${MC_LANE:?lane index}"
+mkdir -p "$MC_PREP/execution/launch"
+f="$MC_PREP/execution/launch/$MC_UNIT.rc"
+if [ -e "$f" ]; then n=1; while [ -e "$f.$n" ]; do n=$((n+1)); done; mv "$f" "$f.$n"; fi
+( "$MC_PY" -B "$MC_PREP/code/run_metal_completion.py" --action run \
+    --manifest "$MC_PREP/execution/manifest_discovery.json" --manifest-sha256 "$MC_MANIFEST_SHA" \
+    --unit "$MC_UNIT" --lane "$MC_LANE" --train-dir "$MC_TRAIN" --esm-dir "$MC_ESM" \
+    --policy "$MC_POLICY" --session "$MC_SESSION" --spending "$MC_SPENDING" \
+    > "$MC_PREP/execution/launch/$MC_UNIT.out" 2>&1; echo $? > "$f.tmp"; mv "$f.tmp" "$f" ) &
+```
+
+The worker preserves root claims, authorization/session records and each lane's command, configuration,
+metadata, terminal checkpoint, epoch history, predictions, replay and run status. Rotate an existing `.rc` only
+before the single permitted unchanged rerun (`archive-failed` moves the unit's lane artifacts, not the exit file).
 No automatic retries exist. Recovery requires stopped-worker proof and the unchanged one-retry v3 contract.
 
-The CPU host collector accepts an explicit JSON run map keyed by exact unit name, each entry containing
-`run_dir`, `status_path`, `worker_rc_path`, plus the hash-bound reusable-control packet. `collect` requires every
+**Persistence layout.** The policy's `durable_root` must be a staging path that is not the lane root and not nested
+with it (for example `$MC_PREP/execution/host_pull`); the worker records `<durable_root>/laneK` as each lane's
+destination and, in `host_pull` mode, admits nothing new on that lane until the workstation has downloaded,
+re-hashed and acknowledged the lane's transfer manifest (`pmm_v3_host_pull.py` performs this per lane). The
+acknowledged copies land at `<durable_root>/laneK`, not where the collector reads. Before `collect`, the
+coordinator therefore (i) also pulls `execution/claims/`, `execution/authorization_sessions/` and
+`execution/launch/*.rc`, which no lane manifest lists, and (ii) places each acknowledged lane tree at
+`$MC_PREP/execution/lanes/laneK/` on the workstation at the identical absolute path. The collector re-verifies
+every checkpoint, prediction, replay, status, claim and command byte against the receipts, so this placement
+cannot smuggle an unverified fit; it also refuses relative run-map paths. The host must acknowledge durable copies
+before another unit; do not assume worker completion proves independent persistence.
+
+The CPU host collector accepts an explicit JSON run map keyed by exact unit name, each entry containing absolute
+`run_dir`, `status_path` and `worker_rc_path`, plus the hash-bound reusable-control packet. `collect` requires every
 cell and verifies actual bytes and predictions; `assess` reproduces the collection before writing a decision:
 
 ```bash
 : "${MC_RUNS_MAP:?Set the completed-unit source map}"
 : "${MC_REUSE_SHA:?Set the verified control packet SHA-256}"
-"$MC_PY" "$MC_PREP/code/metal_completion.py" collect \
+"$MC_PY" -B "$MC_PREP/code/metal_completion.py" collect \
   --manifest-path "$MC_PREP/execution/manifest_discovery.json" --manifest-sha256 "$MC_MANIFEST_SHA" \
   --esm-dir "$MC_ESM" --runs-map "$MC_RUNS_MAP" \
   --reuse-packet-path "$MC_PREP/evidence/control_records.json" --reuse-packet-sha256 "$MC_REUSE_SHA" \
   --output-path "$MC_PREP/execution/collection_discovery.json"
 : "${MC_COLLECTION_SHA:?Set the verified collection SHA-256}"
-"$MC_PY" "$MC_PREP/code/metal_completion.py" assess \
+"$MC_PY" -B "$MC_PREP/code/metal_completion.py" assess \
   --collection-path "$MC_PREP/execution/collection_discovery.json" --collection-sha256 "$MC_COLLECTION_SHA" \
   --esm-dir "$MC_ESM" --output-path "$MC_PREP/execution/selection_discovery.json"
 ```
 
 For confirmation, the preparation command additionally takes `--phase confirmation`,
-`--selection-receipt-path` and `--selection-receipt-sha256`; it recomputes the discovery decision and freezes the
-shared recipe. Use the corresponding confirmation manifest, complete run map and separate output filenames.
+`--selection-receipt-path` and `--selection-receipt-sha256`; it recomputes the discovery decision, requires the
+discovery-era assessment specification hash, records the discovery manifest hash and freezes the shared recipe.
+Use the corresponding confirmation manifest, complete run map and separate output filenames.
 No discovery assessment exists until all 45 cells are verified; the current 16 controls alone cannot select R.
 
 After complete Stage 6 assessment, **Stage 6B final full non-test refit** must complete or be verified reusable

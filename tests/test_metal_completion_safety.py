@@ -54,6 +54,19 @@ def test_invalid_packet_fails(tmp_path, part, key, value):
                             session=values[2], spending=values[3], unit_name="u", now=2000)
 
 
+@pytest.mark.parametrize("part", [2, 3])
+def test_snapshot_captured_before_allocation_start_is_refused(tmp_path, part):
+    values = list(packet(tmp_path))
+    values[2]["allocation_started_unix"] = 1900
+    values[part]["captured_unix"] = 1850  # fresh (150 s old) but before the session started
+    with pytest.raises(ValueError, match="predates the allocation start"):
+        check_authorization(manifest=values[0], manifest_sha256="hash", policy=values[1],
+                            session=values[2], spending=values[3], unit_name="u", now=2000)
+    values[part]["captured_unix"] = 1900
+    check_authorization(manifest=values[0], manifest_sha256="hash", policy=values[1],
+                        session=values[2], spending=values[3], unit_name="u", now=2000)
+
+
 def write_packet(tmp_path, values):
     m, p, s, cost = deepcopy(values)
     paths = [tmp_path / f"{name}.json" for name in ("manifest", "policy", "session", "spending")]

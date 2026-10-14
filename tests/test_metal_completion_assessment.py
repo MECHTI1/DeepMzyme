@@ -64,6 +64,8 @@ def test_discovery_no_gain_retains_shared_baseline_and_is_descriptive():
     assert result["unit_count"] == 45
     assert not result["independent_validation"] and not result["improvement_claim_supported"]
     assert "not independent validation" in result["evidence_boundary"]
+    assert result["ranking_metric"] == assess.RANKING_METRIC == "probability_summed_common_four_balanced_accuracy"
+    assert "Independent validation" in result["unsupported_claims"]
     assert len(result["configurations"]) == 9
 
 

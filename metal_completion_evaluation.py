@@ -11,9 +11,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 SCHEMA = "metal-completion-evaluation-provenance-v1"
+# Every dataset family in the DATASETS ledger, including EC-side sets whose structures the metal model never
+# saw: each must be accounted as ``used`` with IDs or ``not_used`` with an evidence-backed reason.
 REQUIRED_SOURCES = (
     "pinmymetal-source", "pinmymetal-zenodo-exact", "pinmymetal-exact",
     "pinmymetal-nonoverlap", "pinmymetal-harsh", "pinmymetal-common70",
+    "clean30-original", "clean30-conservative", "care-task1-clusterres30", "care-task1-legacy30",
 )
 # Explicit free-ion CCD codes; cofactors/metal-containing compounds are excluded.
 ION_COMPONENTS = {
@@ -131,8 +134,11 @@ def validate_provenance(manifest: dict, through_date: str) -> tuple[str, list[st
         releases[identifier] = iso_date(entry["initial_release_date"], identifier)
     require(set(releases) == excluded, "Release dates must cover exactly every known/excluded PDB ID")
     cutoff = max(releases.values())
-    require(cutoff < iso_date(through_date, "query upper date"),
+    upper = iso_date(through_date, "query upper date")
+    require(cutoff < upper,
             "Query upper date must be later than every prior source entry; no nonempty temporal window")
+    # A window ending in the future would be realised by whenever the query is run, not by this freeze.
+    require(upper <= date.today(), "Query upper date must not be in the future")
     return cutoff.isoformat(), sorted(excluded)
 
 
@@ -171,6 +177,7 @@ def prepare(manifest_path: Path, expected_sha256: str, through_date: str, output
         "provenance_sha256": digest(raw), "tool_sha256": digest(Path(__file__).read_bytes()),
         "protocol_sha256": digest(protocol.read_bytes()), "query_sha256": digest(query),
         "cutoff_exclusive": cutoff, "through_date_inclusive": through_date,
+        "prepared_on": date.today().isoformat(),
         "excluded_pdb_count": len(excluded), "objectives": OBJECTIVES,
         "elemental_components": ION_COMPONENTS, "reporting_classes": ["Mn", "Cu", "Zn", "Fe+Co+Ni"],
         "candidate_query_executed": False, "downloads_authorized": False,

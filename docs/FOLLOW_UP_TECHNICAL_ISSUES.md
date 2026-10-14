@@ -1299,3 +1299,18 @@ sequence across folds.
 The review reproduced the inventory bypass with synthetic files outside `DeepMzyme_Data/`; no actual held-out file was read. This establishes a guard gap, not historical contamination or invalidity of the already recorded inventory. Existing root-path tests do not cover this discovered-child case.
 
 Before reuse, validate each child immediately before opening/hashing it, including reporter paths reached through the inventory tool. Add a sentinel-open synthetic regression for a valid training directory containing a child symlink to a forbidden path; preserve normal permitted files. Do not rewrite existing evidence, rerun the inventory, or broaden held-out access to repair the code. EC is currently deferred; this metal implementation records the issue without changing the frozen source tree.
+
+## TECH-031 — The focal metal loss silently ignores label smoothing and uses weighted-CE confidence
+
+**Status:** Open; trainer-level, deliberately unfixed in the frozen source (2026-10-14 metal completion review).
+
+In `src/model.py` the `focal` branch of `_compute_supervised_loss` calls `F.cross_entropy(..., weight=w, reduction="none")`
+without the `label_smoothing` argument, so `--metal-label-smoothing` is accepted by the parser but has no effect when
+`--metal-loss-function focal` is active, and nothing in `src/training/run.py` refuses the combination. The branch also
+derives its confidence as `pt = exp(-ce_per_sample)`, which equals `p_true ** w[y]` rather than `p_true` whenever class
+weights differ from one, so any future gamma above zero with manual weights is a non-standard focal loss.
+
+The metal completion successor is unaffected: recipe P uses gamma zero (where the weighting term is identically one and
+the loss is exact population-normalized weighted CE), and `metal_completion_campaign.validate_recipe_config` refuses
+focal with nonzero smoothing before any command is built. Repair belongs to a future trainer change (refuse the
+combination at validation time; document or correct the weighted confidence), not to the frozen v3 source tree.

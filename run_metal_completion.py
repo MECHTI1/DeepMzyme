@@ -58,8 +58,9 @@ def run(*, manifest_path: Path, manifest_sha256: str, policy_path: Path, session
         esm_dir=esm_dir, device=device, lane=lane, amp=amp, load_workers=load_workers)
     v3.require_retry_identity(paths, unit.name, identity)
     lane_root = paths.lane(lane)
-    campaign.require(not lane_root.is_symlink() and lane_root.resolve().is_relative_to(paths.root),
-                     "Unsafe lane path")
+    for child in (lane_root, lane_root / "runs", lane_root / "commands"):
+        campaign.require(not child.is_symlink() and child.resolve().is_relative_to(paths.root),
+                         f"Unsafe lane path: {child}")
     execution = CampaignExecution(
         lane_root, policy=ExecutionPolicy(deadline_unix=runtime["deadline_unix"],
                                          max_total_seconds=runtime["max_total_seconds"],

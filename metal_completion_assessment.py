@@ -29,6 +29,8 @@ EVIDENCE_BOUNDARY = (
     "are not independent validation or independent evaluation. No final-refit, "
     "promotion or held-out evaluation authority follows from this assessment."
 )
+# Cross-target ranking uses one metric only; native five/six metrics stay descriptive.
+RANKING_METRIC = "probability_summed_common_four_balanced_accuracy"
 
 
 def _require(condition: bool, message: str) -> None:
@@ -234,8 +236,13 @@ def discover(records: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> dict[s
     return {"phase": "discovery", "complete": True, "shared_recipe": selected, "reason": reason,
             "recipes": recipes, "eligible_recipes": eligible, "primary_tie_recipes": tied,
             "configurations": configs, "unit_count": len(records), "seeds": [42], "folds": list(range(5)),
+            "ranking_metric": RANKING_METRIC,
+            "tie_break_note": ("The all-target mean gain used inside the tie band averages every target's "
+                               "paired gain, including targets that did not qualify, as the frozen rule states."),
             "evidence_boundary": EVIDENCE_BOUNDARY, "independent_validation": False,
-            "improvement_claim_supported": False}
+            "improvement_claim_supported": False,
+            "unsupported_claims": ["Independent validation", "Interval-supported recipe improvement",
+                                   "Final-refit or test readiness"]}
 
 
 def _contrast(candidate, control, family_size: int) -> dict[str, Any]:
@@ -304,6 +311,7 @@ def confirmation(records: Mapping[str, Any] | Sequence[Mapping[str, Any]], share
             "eligible": eligible, "selection_ties": tied, "candidates": candidates,
             "contrasts": contrasts, "family_size": family_size, "configurations": configs,
             "unit_count": len(records), "seeds": [43, 44], "folds": list(range(5)),
+            "ranking_metric": RANKING_METRIC,
             "evidence_boundary": EVIDENCE_BOUNDARY, "independent_validation": False,
             "target_contrast_scope": "Matched target contrasts conditional on the discovery-selected shared recipe.",
             "unsupported_claims": ["Independent validation", "Fresh recipe effect versus B five/six controls",

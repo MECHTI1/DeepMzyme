@@ -65,6 +65,10 @@ def test_refuses_incomplete_or_nonmetadata_provenance(provenance, change, messag
 def test_no_invented_temporal_window_or_unreviewed_template(provenance):
     with pytest.raises(evaluation.PreparationError, match="temporal window"):
         evaluation.validate_provenance(provenance, "2021-06-02")
+    with pytest.raises(evaluation.PreparationError, match="not be in the future"):
+        evaluation.validate_provenance(provenance, "2999-01-01")
+    assert {"clean30-original", "clean30-conservative", "care-task1-clusterres30",
+            "care-task1-legacy30"} <= set(evaluation.REQUIRED_SOURCES)
     with pytest.raises(evaluation.PreparationError, match="intentionally blocked"):
         evaluation.validate_provenance(evaluation.provenance_template(), "2022-01-01")
 
@@ -90,6 +94,7 @@ def test_prepare_is_offline_hash_bound_and_does_not_overwrite(provenance, tmp_pa
         guard.setattr(Path, "read_bytes", metadata_and_tool_only)
         receipt = evaluation.prepare(source, evaluation.digest(raw), "2022-01-01", output)
     assert receipt["query_sha256"] == evaluation.digest((output / "query.json").read_bytes())
+    assert receipt["prepared_on"] == evaluation.date.today().isoformat()
     assert receipt["candidate_query_executed"] is False
     assert receipt["heldout_access_authorized"] is False
     assert receipt["evaluation_authorized"] is False

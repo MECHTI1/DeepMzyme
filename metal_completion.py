@@ -24,8 +24,13 @@ import pmm_v3_campaign as v3
 ROOT = Path(__file__).resolve().parent
 require = campaign.require
 sha256 = campaign.sha256_file
+# pmm_v3_assessment.py executes on the collect/assess path (unit verification, metrics, intervals) and on the
+# worker (frozen v3 specification check); the v3 runner files are bound by the parent extension's runner hashes.
 CODE_FILES = ("metal_completion.py", "metal_completion_assessment.py", "metal_completion_campaign.py",
-              "metal_completion_safety.py", "metal_completion_evaluation.py", "run_metal_completion.py")
+              "metal_completion_safety.py", "metal_completion_evaluation.py", "run_metal_completion.py",
+              "pmm_v3_assessment.py")
+RUN_MAP_KEYS = ("run_dir", "status_path", "worker_rc_path")
+RECIPE_CONFIG_KEYS = ("metal_loss_function", "metal_focal_gamma", "metal_label_smoothing")
 ASSESSOR_RULES = {"minimum_gain": 0.002, "recall_drop_limit": 0.03, "tie_band": 0.002,
                   "bootstrap_resamples": 10000, "bootstrap_seed": 42, "confidence": 0.95,
                   "discovery_seed": 42, "confirmation_seeds": [43, 44], "folds": list(range(5)),
@@ -80,6 +85,14 @@ def _guard_training_paths(train_dir: Path) -> None:
     install_forbidden_read_guard(v3.v2.forbidden_read_roots(train_dir))
 
 
+def _check_assessor_binding(parent) -> None:
+    """The executing v3 assessor must be the one the frozen parent extension recorded."""
+    extension = v3.load_extension(parent)
+    if extension is not None:
+        require(sha256(ROOT / "pmm_v3_assessment.py") == extension.get("assessor_sha256"),
+                "pmm_v3_assessment.py differs from the assessor frozen by the parent extension")
+
+
 def prepare(*, parent_dir: Path, successor_root: Path, train_dir: Path, esm_dir: Path,
             assessment_spec_path: Path, phase: str = "discovery", selection_receipt_path: Path | None = None,
             selection_receipt_sha256: str | None = None) -> dict:
@@ -94,6 +107,7 @@ def prepare(*, parent_dir: Path, successor_root: Path, train_dir: Path, esm_dir:
     verified = v3.verify_campaign(parent, esm_dir=esm_dir)
     training_inputs = campaign.verify_training_inputs(parent, train_dir)
     v3.require_frozen_spec(parent)
+    _check_assessor_binding(parent)
     result = {"schema_version": 1, "campaign_id": campaign.CAMPAIGN_ID, "phase": phase,
               "execution_authorized": False, "held_out_accessed": False,
               "code_root": str(ROOT), "code_sha256": code_hashes(),
@@ -115,8 +129,16 @@ def prepare(*, parent_dir: Path, successor_root: Path, train_dir: Path, esm_dir:
         selected = selection["result"]["shared_recipe"]
         require(selection["parent_manifest_sha256"] == result["parent_manifest_sha256"],
                 "Discovery selection belongs to another frozen parent")
+        # The receipt chain (receipt -> collection -> discovery manifest) is hash-bound; confirmation must
+        # freeze the same specification text the discovery phase was prepared with, not only the same rules.
+        discovery_collection = bound_json(Path(selection["collection_path"]), selection["collection_sha256"])
+        discovery_manifest = bound_json(Path(discovery_collection["manifest_path"]),
+                                        discovery_collection["manifest_sha256"])
+        require(discovery_manifest["assessment_spec_sha256"] == result["assessment_spec_sha256"],
+                "Confirmation must use the discovery-era assessment specification")
         result.update(shared_recipe=selected, selection_receipt_path=str(Path(selection_receipt_path).resolve()),
-                      selection_receipt_sha256=selection_receipt_sha256)
+                      selection_receipt_sha256=selection_receipt_sha256,
+                      discovery_manifest_sha256=discovery_collection["manifest_sha256"])
         units = campaign.confirmation_units(selected)
     else:
         require(selection_receipt_path is None and selection_receipt_sha256 is None,
@@ -135,6 +157,7 @@ def _manifest(path: Path, digest: str, esm_dir: Path) -> dict:
     require(manifest["code_sha256"] == code_hashes(), "Host/assessor code binding differs")
     _verify_spec(Path(manifest["assessment_spec_path"]))
     _check_implementation_rules()
+    _check_assessor_binding(v3.V3Paths(Path(manifest["parent_campaign_dir"])))
     return manifest
 
 
@@ -174,6 +197,9 @@ def _flat_record(unit, metrics, **extra) -> dict:
 
 def _new_unit(unit, source: dict, manifest: dict, manifest_digest: str, membership: dict) -> dict:
     root = Path(manifest["successor_root"]).resolve()
+    require(isinstance(source, dict) and all(isinstance(source.get(key), str) and Path(source[key]).is_absolute()
+                                             for key in RUN_MAP_KEYS),
+            f"{unit.name}: run map entries must be absolute run_dir, status_path and worker_rc_path")
     run_dir = Path(source["run_dir"])
     require(run_dir.name == unit.name and run_dir.resolve().is_relative_to(root), "Run directory differs from unit")
     status_path = _safe_file(Path(source["status_path"]), root)
@@ -211,6 +237,13 @@ def _new_unit(unit, source: dict, manifest: dict, manifest_digest: str, membersh
             "Saved command configuration differs")
     evidence = _run_evidence(run_dir, status_path)
     receipt = v3.verify_completed_unit(run_dir, expected, v3.resolve_recipe("baseline"))
+    # The trainer's own record of what it ran must name the admitted seed and recipe, not only carry the
+    # identity string it was given.
+    saved = read_json(run_dir / "run_config.json").get("config")
+    require(isinstance(saved, dict) and saved.get("seed") == expected["model_seed"]
+            and saved.get("metal_class_weight_mode") == "manual"
+            and all(saved.get(key) == expected["recipe_definition"][key] for key in RECIPE_CONFIG_KEYS),
+            "Trainer-recorded configuration differs from the admitted seed/recipe")
     v3.verify_independent_replay(run_dir, receipt)
     with (run_dir / receipt["validation_predictions"]["path"]).open(newline="") as handle:
         rows = list(csv.DictReader(handle))
@@ -234,9 +267,12 @@ def _reused_unit(unit, proposed: dict, parent, parent_manifest: dict, membership
     old_unit = v3.Unit(campaign.FAMILY, unit.target, "baseline", unit.fold, unit.seed)
     require(proposed.get("parent_unit_name") == old_unit.name, "Reuse record identifies another parent unit")
     run_dir, status_path = Path(proposed["run_dir"]), Path(proposed["status_path"])
+    require(run_dir.is_absolute() and status_path.is_absolute(), "Reuse record paths must be absolute")
     status = read_json(status_path)
     require(status.get("identity") == proposed.get("parent_identity"), "Reuse parent identity changed")
+    # The hashed directory and the one the frozen v3 verifier recomputes (<lane>/runs/<run_name>) must coincide.
     require(status.get("run_name") == run_dir.name
+            and run_dir.resolve() == (status_path.parent / "runs" / status["run_name"]).resolve()
             and status_path.resolve() == (run_dir.parent.parent / f"run_status_{run_dir.name}.json").resolve(),
             "Reuse status/run directory mismatch")
     evidence = _run_evidence(run_dir, status_path)
