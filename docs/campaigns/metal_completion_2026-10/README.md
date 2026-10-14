@@ -24,6 +24,7 @@ BA, with native metrics/recall protection and fixed contrasts/ties. Repeated see
 
 [evidence.md](evidence.md) owns verified reuse/checks/progress; [log.md](log.md) owns dated decisions.
 Successor identities/output paths are separate. Frozen parent source, manifests and evidence remain read-only.
+The 2026-10-14 independent review re-sealed the package; the first package is superseded history.
 
 Use the [canonical metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#metal-completion-successor-cpu-preparation-and-execution-gates)
 for executable preparation and execution gates. Future fits require a forecast, approved ceiling and

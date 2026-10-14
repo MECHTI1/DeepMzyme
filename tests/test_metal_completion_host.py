@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import csv
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -34,7 +35,8 @@ def new_unit(tmp_path, monkeypatch):
     checkpoint = run / "terminal_model_checkpoint.pt"
     checkpoint.write_bytes(b"synthetic terminal bytes; never loaded as a model")
     checkpoint_sha = host.sha256(checkpoint)
-    identity = {"epochs": 50, "resolved_config_sha256": "b" * 64}
+    identity = {"epochs": 50, "resolved_config_sha256": "b" * 64, "model_seed": unit.seed,
+                "recipe_definition": mc.effective_loss(unit.recipe)}
     rows, membership = [], {}
     for index, element in enumerate(("MN", "CU", "ZN", "FE", "CO", "NI")):
         label = min(index, 3)
@@ -59,7 +61,9 @@ def new_unit(tmp_path, monkeypatch):
                "metrics": {"val_metal_collapsed4_balanced_acc": 1.0, "val_metal_balanced_acc": 1.0}}
     put(run / "selected_checkpoint.json", receipt)
     put(run / "run_metadata.json", {"fit_status": "completed", "campaign_run_identity": identity, "test_report": None})
-    put(run / "run_config.json", {"history": [{}] * 50})
+    put(run / "run_config.json", {"history": [{}] * 50,
+                                  "config": {"seed": unit.seed, "metal_class_weight_mode": "manual",
+                                             **mc.recipe_config(unit.recipe)}})
     (run / "epoch_metrics.csv").write_text("epoch,val_metal_collapsed4_balanced_acc\n50,1\n")
     replay_root = run / "independent_validation_replay"
     replay_root.mkdir()
@@ -102,12 +106,22 @@ def test_new_unit_verifies_actual_terminal_and_prediction_replay_bytes(new_unit)
     ("rc", "exit code"), ("rc_name", "exact worker"), ("claim", "claim differs"),
     ("checkpoint", "Checkpoint changed"), ("prediction", "Predictions changed"),
     ("replay", "replay predictions"), ("identity", "identity differs"), ("test_report", "held-out report"),
+    ("relative_rc", "absolute"), ("config_seed", "Trainer-recorded"), ("config_loss", "Trainer-recorded"),
+    ("config_weights", "Trainer-recorded"),
 ])
-def test_new_unit_rejects_incomplete_or_changed_artifacts(new_unit, mutation, message):
+def test_new_unit_rejects_incomplete_or_changed_artifacts(new_unit, mutation, message, monkeypatch):
     unit, source, manifest, membership = new_unit
     run = Path(source["run_dir"])
     if mutation == "rc":
         Path(source["worker_rc_path"]).write_text("1")
+    elif mutation == "relative_rc":
+        monkeypatch.chdir(Path(manifest["successor_root"]))
+        source["worker_rc_path"] = str(Path(source["worker_rc_path"]).relative_to(manifest["successor_root"]))
+    elif mutation.startswith("config_"):
+        saved = host.read_json(run / "run_config.json")
+        saved["config"].update({"config_seed": {"seed": 43}, "config_loss": {"metal_label_smoothing": 0.1},
+                                "config_weights": {"metal_class_weight_mode": "inverse_frequency"}}[mutation])
+        put(run / "run_config.json", saved)
     elif mutation == "rc_name":
         wrong = Path(source["worker_rc_path"]).with_name("another-unit.rc")
         wrong.write_text("0")
@@ -163,6 +177,62 @@ def test_historical_control_requires_actual_matching_bytes_and_recomputed_metric
     changed["evidence"][str(run / "terminal_model_checkpoint.pt")] = "0" * 64
     with pytest.raises(ValueError, match="artifact bytes"):
         host._reused_unit(unit, changed, object(), {}, membership)
+    # The hashed directory must be the lane's runs/<run_name>, which the frozen v3 verifier recomputes.
+    moved = run.parent.parent / "bar" / run.name
+    shutil.copytree(run, moved)
+    elsewhere = copy.deepcopy(proposed)
+    elsewhere["run_dir"] = str(moved)
+    elsewhere["evidence"] = host._run_evidence(moved, Path(source["status_path"]))
+    with pytest.raises(ValueError, match="directory mismatch"):
+        host._reused_unit(unit, elsewhere, object(), {}, membership)
+
+
+def test_confirmation_prepare_binds_the_discovery_era_specification(tmp_path, monkeypatch):
+    parent = v3.V3Paths(tmp_path / "parent")
+    parent.root.mkdir()
+    put(parent.manifest, {"parent": True})
+    spec = put(tmp_path / "spec.json", {"campaign_id": mc.CAMPAIGN_ID, "assessor_rules": host.ASSESSOR_RULES})
+    monkeypatch.setattr(v3, "verify_campaign", lambda *args, **kwargs: {
+        "frozen_source_tree_sha256": "d" * 64, "cohort": {"sha256": "e" * 64},
+        "fold_set": {"fold_membership_sha256": "f" * 64}})
+    monkeypatch.setattr(v3, "require_frozen_spec", lambda *args: {})
+    monkeypatch.setattr(v3, "load_extension", lambda *args: None)
+    monkeypatch.setattr(mc, "verify_training_inputs", lambda *args: {"verified": "synthetic"})
+    monkeypatch.setattr(host, "code_hashes", lambda: {"host": "a" * 64})
+    discovery_manifest = put(tmp_path / "discovery" / "manifest_discovery.json",
+                             {"assessment_spec_sha256": host.sha256(spec)})
+    collection = put(tmp_path / "discovery" / "collection.json",
+                     {"manifest_path": str(discovery_manifest), "manifest_sha256": host.sha256(discovery_manifest)})
+    receipt = {"result": {"phase": "discovery", "shared_recipe": "P"},
+               "parent_manifest_sha256": host.sha256(parent.manifest),
+               "collection_path": str(collection), "collection_sha256": host.sha256(collection)}
+    monkeypatch.setattr(host, "verify_assessment_receipt", lambda *args, **kwargs: receipt)
+    args = dict(parent_dir=parent.root, train_dir=tmp_path / "train", esm_dir=tmp_path / "esm",
+                assessment_spec_path=spec, phase="confirmation",
+                selection_receipt_path=tmp_path / "selection.json", selection_receipt_sha256="a" * 64)
+    result = host.prepare(successor_root=tmp_path / "successor", **args)
+    assert result["manifest"]["shared_recipe"] == "P"
+    assert result["manifest"]["discovery_manifest_sha256"] == host.sha256(discovery_manifest)
+    assert len(result["manifest"]["authorized_grid_units"]) == 40
+    put(discovery_manifest, {"assessment_spec_sha256": "0" * 64})
+    collection = put(collection, {"manifest_path": str(discovery_manifest),
+                                  "manifest_sha256": host.sha256(discovery_manifest)})
+    receipt["collection_sha256"] = host.sha256(collection)
+    with pytest.raises(ValueError, match="discovery-era"):
+        host.prepare(successor_root=tmp_path / "successor2", **args)
+    assert not (tmp_path / "successor2").exists()
+
+
+def test_assessor_binding_follows_the_parent_extension(monkeypatch):
+    actual = host.sha256(host.ROOT / "pmm_v3_assessment.py")
+    monkeypatch.setattr(v3, "load_extension", lambda parent: None)
+    host._check_assessor_binding(object())
+    monkeypatch.setattr(v3, "load_extension", lambda parent: {"assessor_sha256": actual})
+    host._check_assessor_binding(object())
+    monkeypatch.setattr(v3, "load_extension", lambda parent: {"assessor_sha256": "0" * 64})
+    with pytest.raises(ValueError, match="pmm_v3_assessment.py differs"):
+        host._check_assessor_binding(object())
+    assert "pmm_v3_assessment.py" in host.CODE_FILES and host.code_hashes()["pmm_v3_assessment.py"] == actual
 
 
 @pytest.fixture

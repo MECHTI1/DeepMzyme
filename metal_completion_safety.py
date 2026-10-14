@@ -68,6 +68,8 @@ def check_authorization(*, manifest: dict, manifest_sha256: str, policy: dict,
     for item in (session, spending):
         captured = number(item["captured_unix"], "snapshot capture", positive=True)
         require(0 <= now - captured <= fresh, "Stale or future controller/spending snapshot")
+        # A RUNNING session cannot be observed, nor its spending accounted, before it started.
+        require(captured >= start, "Controller/spending snapshot predates the allocation start")
     rate = number(spending["gross_running_usd_per_hour"], "gross running rate", positive=True)
     prior = number(spending["spent_before_session_usd"], "previous gross spending")
     storage = number(spending["storage_and_snapshot_forecast_usd"], "storage/snapshot allowance")

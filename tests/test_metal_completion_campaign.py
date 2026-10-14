@@ -301,7 +301,7 @@ def test_confirmation_requires_frozen_complete_matching_selection(manifest_fixtu
         mc.verify_manifest(path, mc.sha256_file(path), esm_dir=path.parent / "esm")
 
 
-@pytest.mark.parametrize("retry", ["none", "matching", "changed", "excessive"])
+@pytest.mark.parametrize("retry", ["none", "matching", "changed", "excessive", "symlinked_runs"])
 def test_mocked_worker_keeps_seed44_identity_and_persists_only_successor_lane(campaign, tmp_path, monkeypatch, retry):
     import benchmarking.pmm_execution as execution_module
     import training.access_guard as guard
@@ -373,8 +373,12 @@ def test_mocked_worker_keeps_seed44_identity_and_persists_only_successor_lane(ca
                   policy_path=policy, session_path=tmp_path / "session.json",
                   spending_path=tmp_path / "spend.json", unit=unit, lane=0, train_dir=train,
                   esm_dir=esm, python_bin=sys.executable, device="cpu")
-    if retry in ("changed", "excessive"):
-        with pytest.raises(ValueError, match="archived attempt|one unchanged rerun"):
+    if retry == "symlinked_runs":
+        (output / "lanes" / "lane0").mkdir(parents=True)
+        (tmp_path / "elsewhere").mkdir()
+        (output / "lanes" / "lane0" / "runs").symlink_to(tmp_path / "elsewhere", target_is_directory=True)
+    if retry in ("changed", "excessive", "symlinked_runs"):
+        with pytest.raises(ValueError, match="archived attempt|one unchanged rerun|Unsafe lane path"):
             worker.run(**kwargs)
         assert events == [] and not (output / "claims").exists()
         return

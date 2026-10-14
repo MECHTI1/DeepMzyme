@@ -12,9 +12,12 @@ and this protocol. It never follows an evidence reference into a dataset or test
 The proposed source is protein-containing experimental RCSB/wwPDB structures initially released strictly after the latest initial release
 of every accounted-for previously used source entry, through an explicitly supplied upper date. Previously used or
 opened PDB IDs are excluded independently of date. The payload uses the [official Search API](https://search.rcsb.org/)
-and its [attribute schema](https://search.rcsb.org/rcsbsearch/v2/metadata/schema), inspected on 2026-10-14. API submission
-and request-size/pagination validation are untested; a large exclusion list may need an equivalent reviewed retrieval
-strategy. Query preparation does not establish that a nonempty, adequate cohort exists.
+and its [attribute schema](https://search.rcsb.org/rcsbsearch/v2/metadata/schema); the 2026-10-14 implementation
+session reported inspecting that schema but recorded no snapshot hash, so the attribute names must be re-verified
+against the live schema before any authorized submission. API submission and request-size/pagination validation are
+untested; a large exclusion list may need an equivalent reviewed retrieval strategy. The upper date may not lie in the
+future, and the receipt records the preparation date, so the frozen window cannot grow with the execution date.
+Query preparation does not establish that a nonempty, adequate cohort exists.
 
 ## Input and offline interface
 
@@ -22,7 +25,8 @@ Run `metal_completion_evaluation.py template --output <new-path.json>` with the 
 write a deliberately blocked template. It contains no invented dates or verified-coverage declarations. After a
 separately authorized provenance review, `prepare --provenance <path> --provenance-sha256 <sha256>
 --through-date <YYYY-MM-DD> --output-dir <new-directory>` produces `query.json`, a byte-identical `provenance.json`
-and `preparation.json`. Existing output directories are refused. No live query is submitted.
+and `preparation.json` (which records `prepared_on`). A through date later than the preparation day is refused.
+Existing output directories are refused. No live query is submitted.
 
 The manifest schema is `metal-completion-evaluation-provenance-v1`:
 
@@ -30,8 +34,11 @@ The manifest schema is `metal-completion-evaluation-provenance-v1`:
   `evidence_sha256`, and true declarations for all supervised-development sources, previously opened test IDs and
   custom split variants. These are review attestations, not independently proved by the preparer.
 - `sources`: unique source IDs, verified status, an evidence SHA-256, `use_status` and `pdb_ids`. Required accounting
-  covers `pinmymetal-source`, `pinmymetal-zenodo-exact`, `pinmymetal-exact`, `pinmymetal-nonoverlap`, `pinmymetal-harsh`
-  and `pinmymetal-common70`; add every other used source. `not_used` needs an evidence-backed reason and no IDs;
+  covers every family in the [DATASETS overview](../../DATASETS.md#dataset-overview): `pinmymetal-source`,
+  `pinmymetal-zenodo-exact`, `pinmymetal-exact`, `pinmymetal-nonoverlap`, `pinmymetal-harsh`, `pinmymetal-common70`,
+  and the EC-side `clean30-original`, `clean30-conservative`, `care-task1-clusterres30` and `care-task1-legacy30`,
+  whose structures the standalone metal model never saw and which are therefore expected to be recorded as
+  `not_used` with an evidence-backed reason; add every other used source. `not_used` needs that reason and no IDs;
   missing evidence remains unresolved. A family name alone never proves complete membership coverage.
 - `entries`: exactly one record per excluded PDB ID with only `pdb_id`, `initial_release_date` and `evidence_sha256`.
   Missing/unverified dates block preparation; do not replace them with download dates, revisions or guesses.
