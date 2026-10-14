@@ -87,6 +87,42 @@
         "path": "docs/campaigns/pmm_ion_metal_v3",
         "target": "docs/archive/campaigns/pmm_ion_metal_v3"
       }
+    },
+    {
+      "campaign": "pmm_trunk_lr_2026-10",
+      "closed": "2026-10-13",
+      "closure_log_entry": "tlr-004",
+      "tag": null,
+      "source_commit": "ad99c5fe734e202b7bd18acbb50570abd24562df",
+      "note": "no tag was created for this campaign; the specification's original bytes are at source_commit",
+      "pinned": [
+        {
+          "path": "docs/archive/campaigns/pmm_trunk_lr_2026-10/trunklr_assessment_spec.json",
+          "origin": "docs/campaigns/pmm_trunk_lr_2026-10/trunklr_assessment_spec.json",
+          "sha256": "61728a8f8b637537e00b0744cba468759cc08328cb553e5ca2e5bb511efa8a9c",
+          "reason": "pinned by pmm_trunklr.FROZEN_SPEC_SHA256 and bound in the launch manifest and assessment"
+        }
+      ],
+      "rebased": [
+        {
+          "path": "docs/archive/campaigns/pmm_trunk_lr_2026-10/README.md",
+          "origin": "docs/campaigns/pmm_trunk_lr_2026-10/README.md",
+          "source_commit_sha256": "f29453e043aebbf5c31b6606b6706cc0fb1295f48de820536a6e436eb945cd3e",
+          "pre_move_sha256": "5076c8cc97665a6a9d5c84da8f0fd414b911a922b9edae4a0f12119fb51dbf81",
+          "links_rebased": 0
+        },
+        {
+          "path": "docs/archive/campaigns/pmm_trunk_lr_2026-10/log.md",
+          "origin": "docs/campaigns/pmm_trunk_lr_2026-10/log.md",
+          "source_commit_sha256": "53632d4153ce04de8df5c36c0df690712772897c47ecacf890b6428b1ea501c9",
+          "pre_move_sha256": "ccfcbb1630863cf278121ecd6747b9d71c22df84b0b3723606ce505dec948c73",
+          "links_rebased": 0
+        }
+      ],
+      "alias": {
+        "path": "docs/campaigns/pmm_trunk_lr_2026-10",
+        "target": "docs/archive/campaigns/pmm_trunk_lr_2026-10"
+      }
     }
   ]
 }

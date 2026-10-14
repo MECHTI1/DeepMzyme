@@ -716,9 +716,12 @@ required for shared training.
 
 The approximate cross-task experimental order is:
 
-1. **Phase 1:** establish or reconcile the paired metal-only target-formulation
-   baselines: direct four-class training and matched six-class training with
-   collapsed-four evaluation.
+1. **Phase 1:** establish or reconcile the metal-only target-formulation
+   baselines for the objectives each campaign selects
+   ([per-campaign target selection](#per-campaign-target-selection): any mix of
+   `four_class`, `five_class` and `six_class`, all evaluated on collapsed four);
+   a five- or six-class objective is compared against a matched direct-four arm
+   under the neutral-test rules.
 2. **Phase 2:** establish or reconcile EC depth-1 standalone baselines.
 3. **Phase 3:** measure the metal-EC association in permitted development data.
 4. **Phase 4:** run one controlled EC-primary comparison: EC-only versus EC

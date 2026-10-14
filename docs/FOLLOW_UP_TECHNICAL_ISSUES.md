@@ -1244,13 +1244,16 @@ review. Not defects in recorded results: training, validation and every arm used
 the same behaviour, so recorded comparisons remain matched. Change any item only
 in a new study with its own source and feature identity.
 
-- Weight decay is numerically inert. AdamW's decoupled decay shrinks each weight
+- Weight decay at the historical small coefficients is numerically inert. AdamW's
+  decoupled decay shrinks each weight
   by `lr × wd` per step (`src/training/run.py:1566-1595`; no parameter is excluded
   from decay). With about 18,500 steps (5,906 training ions, batch 16, 50 epochs),
   `wd=1e-4` removes under 0.06% at `lr=3e-4` (about 0.16% in float32) and nothing
   at `lr=3e-5`, where `float32(1 - 3e-9)` equals 1. Historical WD grids up to
   `1e-3` were equally inert. A decay strength with any effect would be a new,
-  untuned regime.
+  untuned regime. Later (v3 steps D and E2) that regime was tested: weight decay 1.0
+  gave Only-GVP +3.59 common-four points on folds 1–4, interval-supported within
+  Only-GVP (exploratory; [findings](PARAMETER_FINDINGS.md#pmm-ion-metal-v3-objective-test-and-stage-6-selection-closed-2026-10-13)).
 - The coordination sphere is incomplete. Waters, ligands, other metals and
   HETATM residues are dropped (`src/graph/structure_parsing.py:37-42`;
   `src/training/source_cohort.py:325`), so the water-inclusive coordination number
@@ -1286,3 +1289,13 @@ in a new study with its own source and feature identity.
 Not re-verified: backbone-N or Met-SD donor sites (for example NiSOD), the
 occupancy-below-one subset, and a reported 18% of ions sharing an identical chain
 sequence across folds.
+
+## TECH-030 — Discovered EC cache files can bypass the training-path guard
+
+**Status:** Open; implementation repair required before future EC inventory reuse (2026-10-14 CPU review).
+
+`scripts/inventory_ec_support_sources.py` validates the AlphaFill `train/json` directory, then reads a discovered child at line 281 without resolving that child through `training_path`. A symlink inside the permitted directory can therefore point to a forbidden held-out JSON. `scripts/report_ec1_component_support.py` has the corresponding direct child read in `asset_rejections` (line 497). Directory validation does not validate every resolved file.
+
+The review reproduced the inventory bypass with synthetic files outside `DeepMzyme_Data/`; no actual held-out file was read. This establishes a guard gap, not historical contamination or invalidity of the already recorded inventory. Existing root-path tests do not cover this discovered-child case.
+
+Before reuse, validate each child immediately before opening/hashing it, including reporter paths reached through the inventory tool. Add a sentinel-open synthetic regression for a valid training directory containing a child symlink to a forbidden path; preserve normal permitted files. Do not rewrite existing evidence, rerun the inventory, or broaden held-out access to repair the code. EC is currently deferred; this metal implementation records the issue without changing the frozen source tree.

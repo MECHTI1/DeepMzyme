@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "campaign_id": "metal_completion_2026-10",
+  "execution_authorized": false,
+  "target_objectives": ["four_class", "five_class", "six_class"],
+  "family": "gvp_late_fusion",
+  "parent_campaign": "pmm_ion_metal_v3",
+  "fold_set": "v3-seqid90-s42-b2",
+  "metal_example_unit": "ion",
+  "checkpoint_rule": "terminal_epoch_50",
+  "reporting_endpoint": "collapsed_four_probability_sum",
+  "recipes": {
+    "B": {"metal_loss_function": "cross_entropy", "metal_label_smoothing": 0.0},
+    "P": {"metal_loss_function": "focal", "metal_focal_gamma": 0.0, "metal_label_smoothing": 0.0},
+    "S": {"metal_loss_function": "cross_entropy", "metal_label_smoothing": 0.1}
+  },
+  "assessor_rules": {
+    "minimum_gain": 0.002,
+    "recall_drop_limit": 0.03,
+    "tie_band": 0.002,
+    "bootstrap_resamples": 10000,
+    "bootstrap_seed": 42,
+    "confidence": 0.95,
+    "discovery_seed": 42,
+    "confirmation_seeds": [43, 44],
+    "folds": [0, 1, 2, 3, 4],
+    "nonbaseline_contrasts": 5,
+    "baseline_contrasts": 2
+  },
+  "discovery_rule": {
+    "grid_cells": 45,
+    "control_reuse_expected": 15,
+    "gain_strictly_greater_than_minimum": true,
+    "folds_1_through_4_mean_gain_positive": true,
+    "common_class_mean_recall_drop_at_most_limit": true,
+    "each_common_class_recall_positive_in_each_fit": true,
+    "each_native_class_aggregate_recall_positive": true,
+    "shared_recipe": "largest eligible target gain; within tie_band compare mean gain over all three targets; remaining exact tie P before S; no eligible target keeps B"
+  },
+  "confirmation_rule": {
+    "seed_average_within_fold_first": true,
+    "statistical_units": 5,
+    "contrasts_nonbaseline": ["R4-B4", "R5-B4", "R6-B4", "R5-R4", "R6-R4"],
+    "contrasts_baseline": ["B5-B4", "B6-B4"],
+    "both_bonferroni_adjusted_bootstrap_and_paired_t_lower_bounds_positive": true,
+    "gain_strictly_greater_than_minimum": true,
+    "common_class_mean_recall_drop_at_most_limit": true,
+    "each_common_class_recall_positive_in_each_fit": true,
+    "each_native_class_aggregate_recall_positive": true,
+    "native_targets_must_pass_anchor_and_matched_direct_four": true,
+    "selection": "highest eligible common-four balanced accuracy; within tie_band prefer four then five then six; no eligible challenger retains B4",
+    "folds_1_through_4_extra_gate": false,
+    "independent_validation": false
+  },
+  "future_refit": {
+    "full_non_test": true,
+    "seed": 42,
+    "epochs": 50,
+    "checkpoint": "terminal",
+    "baseline_retained": "reuse only after exact configuration and source-checkpoint compatibility verification",
+    "ensemble": "none",
+    "calibration": "none",
+    "execution_authorized": false
+  },
+  "held_out_access": false
+}

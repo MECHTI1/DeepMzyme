@@ -2,7 +2,7 @@
 
 This document serves as the authoritative, permanent inventory of all cloud-backed files, datasets, trained model weights, benchmark checkpoints, and repository branches for the **DeepMzyme** project.
 
-Last updated: **2026-10-03** (GCP snapshot retirement; other inventories retain their original verification dates).
+Last updated: **2026-10-13** (local NVMe backups and GCP state, section 5A; other inventories retain their original verification dates).
 
 ---
 
@@ -14,7 +14,7 @@ Last updated: **2026-10-03** (GCP snapshot retirement; other inventories retain 
 | **GitHub** | [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) | Primary project code, configs, test suites, documentation, and `codex/pmm-source-audit` branch. |
 | **GitHub** | [`MECHTI1/deepmzyme-vm-manager`](https://github.com/MECHTI1/deepmzyme-vm-manager) | Cloud GPU VM orchestration tools and execution environments. |
 | **Google Drive** | `MyDrive/DeepMzyme/` (`1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I`) | Colab campaign artifacts, intermediate pilot archives, and Optuna persistent SQLite databases. |
-| **Google Cloud snapshot** | Project `deepmzyme-gpu-vm`, region `us-central1` | Retired VM disk contents, including its installed environment and caches. The [retirement receipt](archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json) records the snapshot identity, provider restore check and independent local backup. The original VM/disk were retired; [recovery procedure](GCP_GPU_RUNBOOK.md#archive-a-paused-environment). |
+| **Google Cloud snapshot** | Project `deepmzyme-gpu-vm`, region `us-central1` | VM disk contents, including the installed environment and caches: snapshots `deepmzyme-paused-20261003` ([retirement receipt](archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json)) and `deepmzyme-v3-final-20261013`, plus the kept disk of the TERMINATED VM `deepmzyme-l4` (state and limits in section 5A); [recovery procedure](GCP_GPU_RUNBOOK.md#archive-a-paused-environment). |
 | **Zenodo Note** | Upstream Reference | DeepMzyme's input PMM data originated from Zenodo (`classmodel_train_set.csv` / `classmodel_test_set.csv`). DeepMzyme's own published cloud archives reside on Hugging Face. |
 
 ---
@@ -79,6 +79,27 @@ For large-scale processing that exceeds local root partition limits:
   - `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`: Reconstructed uncompressed dataset structures.
   - `/media/mechti/Data1/clean_sets/`, `/media/mechti/Data1/care_sets/`, `/media/mechti/Data1/pinmymetal_sets/`: Raw upstream downloads.
   - `mgy_proteins_pfam.tsv.gz` (33 GB), `5-allmembers-repId-entryId-cluFlag-taxId.tar.xz` (528 MB): Source sequence and clan databases.
+
+### 5A. Local independent backups and GCP state (verified 2026-10-13)
+
+Copies on the workstation NVMe (`/dev/nvme0n1p6`, ext4), a different physical disk from Data1 (`/dev/sda1`), under
+`/home/mechti/deepmzyme_backups/`. Each folder holds `SHA256SUMS` and a receipt; originals stay in place.
+
+| Folder | Coverage | Verification |
+|---|---|---|
+| `pmm_ion_metal_v3_closeout_20261013T023038Z/` | v3 refit, step F evidence, test preparation/report artifacts, selected audits (4,836 files, 2.64 GB); not every earlier run | `sha256sum -c` re-run 2026-10-13 ~18:55 UTC: all OK |
+| `post_v3_diagnostics_20261013T141136Z/` | post-v3 structural-context diagnostics (811 files) | three `SHA256SUMS` re-run: all OK; file set equals Data1 |
+| `deepmzyme_closeout_ec_readiness_20261013T190136Z/initial/` | repository bundle (`main` `ad99c5f` + tag `pmm-ion-metal-v3-final`), staged patch, frozen trunk-LR source; the whole Data1 trunk-LR records folder; the five trunk-LR candidate and five v3 control runs with lane receipts and v3 dependencies; the EC readiness inputs (2,102 files, 0.93 GB) | all files re-hashed after copy; one candidate run and its records restored and validated without reading the originals; `RESTORE.md` and `BACKUP_RECEIPT.json` in the folder |
+| `deepmzyme_closeout_ec_readiness_20261013T190136Z/final_state/` | the completed task's source, tests, patches, EC reports, maintenance receipts and docs | its own `BACKUP_RECEIPT.json` |
+
+GCP (controller `vm-status` / `vm-report --no-ssh`, 2026-10-13 18:50 UTC): VM `deepmzyme-l4` TERMINATED, its 150 GB
+disk kept, snapshots `deepmzyme-paused-20261003` (34.8 GiB) and `deepmzyme-v3-final-20261013` (52.7 GiB) present.
+Their content claims come from the historical receipts: provider restore-disk checks only, no filesystem mount or boot
+test, and provider existence is not a checksum of remote files. The 2026-10-13 snapshot predates the trunk-LR fits.
+
+**Gap:** no off-site copy of workstation-only outputs (the trunk-LR records and assessment, the step F records, the
+EC readiness reports); Data1 and the NVMe backups are in one machine. The trunk-LR fits' VM-side originals may remain
+on the kept disk but were not verified. Adding an off-site copy needs the user's decision.
 
 ---
 

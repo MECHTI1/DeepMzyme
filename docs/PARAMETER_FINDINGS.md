@@ -25,8 +25,9 @@ future search spaces in the metal and EC playbooks.
 | 6 | Exploratory, smoke, partial, or incomplete | Diagnostic/context only |
 | 7 | Superseded historical evidence | Preserve to avoid repetition; do not treat as current |
 
-No copied model-family result currently qualifies for Grade 1 or 2. The leading
-historical anchors are Grade 3 at best.
+The closed v3 campaign below is the first model-family evidence at Grade 2 (five
+grouped folds, one seed); no result qualifies for Grade 1. Earlier anchors are
+Grade 3 at best.
 
 ## Evidence exclusion: historical test access
 
@@ -81,8 +82,21 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 - **Selection:** four-class graph-level late fusion (mean common-four BA 74.28%) beat Only-ESMC (72.33%) on all
   five folds (mean +1.95, bootstrap [+1.09, +2.92]).
 - **Not adopted:** the step D recipes, the E2 candidates and a 10-epoch schedule.
+  Separately qualified and kept as hypotheses: the 10-epoch schedule (folds 1–4 mean +1.99, not
+  interval-supported) and Only-GVP weight decay 1.0 (`wd10`, +3.59 within Only-GVP, interval-supported; exploratory).
+- **Fairness arm (never run):** the Only-ESMC head-dropout arm was designed to match the step D fusion recipe
+  `headdrop03`. Step E did not confirm it, and the selected `baseline` fusion shares the Only-ESMC baseline's generic
+  settings (weight decay 1e-4, head dropout 0.2, class weighting), so that arm no longer repairs a mismatch. Whether
+  Only-ESMC gains from its own tuning stays untested.
 - **Test result:** the secondary test result and its caveats stay in the
   [completion summary](notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md).
+
+### PMM trunk-learning-rate comparison (closed 2026-10-13)
+
+PMM trunk-LR comparison (closed 2026-10-13; Grade 2, five grouped folds, seed 42; rule frozen before any fit): GVP-trunk
+LR 1e-4 instead of 3e-4 in the v3 four-class late fusion gave mean common-four BA 75.45% vs 74.28% (+1.16, bootstrap
+[−0.65, +3.11]; folds 1–4 +0.24), rule (b) not met, so the reference is retained; the lower rate stays a promising,
+unpromoted and not disproven configuration ([archived log tlr-003](archive/campaigns/pmm_trunk_lr_2026-10/log.md#tlr-003)).
 
 ### PMM ion campaign: single-fold target and readout comparisons
 
@@ -581,8 +595,10 @@ Finding: the single inverse-sqrt-frequency result did not displace the original
 five-seed inverse-frequency anchor. Identical WD outcomes are local
 observations, not evidence that weight decay is generally irrelevant: at the
 learning rates and step counts used here, every WD value in this and the other
-WD grids below is numerically inert under AdamW's decoupled decay
+WD grids below (coefficients up to `1e-3`) is numerically inert under AdamW's decoupled decay
 ([TECH-029](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)).
+Larger coefficients are a different regime: v3 weight decay 1.0 gave Only-GVP +3.59 points
+([v3 findings](#pmm-ion-metal-v3-objective-test-and-stage-6-selection-closed-2026-10-13)).
 `5e-5` is untested here, not a negative result.
 
 Evidence:
@@ -847,19 +863,18 @@ record and causal RING question.
 
 ## Required comparison conclusions still open
 
-The direct four-class metal research plan requires four controlled conclusions
-that the current evidence cannot yet support:
+The controlled metal comparison matrix has the following evidence boundaries.
+The closed v3 results supersede the earlier screen-only status for its matched
+late-fusion target and modality comparisons; other axes remain open:
 
 | Comparison | Current limitation |
 |---|---|
-| Direct four-class training vs six-class training with collapsed-four evaluation | Initial matched four/five/six screen and selected-LR repeats are complete; target preference depends on family/recipe. No grouped-fold paired CI or class-recall promotion gate is satisfied |
+| Direct four vs five/six training on collapsed four | v3 completed the matched five-fold seed-42 neutral test (Grade 2); no supported improvement over direct four. Native metrics and rare recalls remain reported. This does not establish equivalence for every recipe |
 | Early vs late vs hybrid ESMC fusion | Matched direct-four early/late two-LR screens and selected-LR repeats completed; hybrid was deferred. No full three-way grouped-fold/seed comparison or paired CI establishes an advantage |
-| Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | Completed direct-four screen and selected-LR repeats provide Grade-3 evidence; no shared grouped-fold Stage 6 comparison or paired confidence interval exists |
+| Only-ESM (using ESMC) vs Only-GVP vs combined GVP+ESMC | v3 supplies shared five-fold seed-42 Stage 6 evidence with paired intervals (Grade 2); selected late fusion exceeds Only-ESMC on all five folds. Scope is the frozen v3 ion cohort and recipes |
 | GVP with vs without RING | The completed direct-four, two-LR/two-seed GVP and late-fusion comparison supplies Grade-3 existing-edge annotation evidence, with no observed topology or on/off normalization difference. Shared grouped-fold paired CIs and rare-class promotion gates remain outstanding |
 
-Treat numerical differences as hypotheses until the candidates use the same
-dataset, label scheme, folds, active seeds, metric, and comparable training/HPO
-budgets. Publication claims of an advantage require the Stage 6 paired-CI and
+See the [v3 conclusion](#pmm-ion-metal-v3-objective-test-and-stage-6-selection-closed-2026-10-13) for its measured limits. For remaining axes, keep dataset, training target, folds, active seeds, reporting metric and tuning budget matched. Publication claims of an advantage require the Stage 6 paired-CI and
 rare-class-recall policy in `Plan.md` and the metal playbook.
 
 ## Parameter-domain conclusions
