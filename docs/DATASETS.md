@@ -519,11 +519,11 @@ Tracked metadata:
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
 | Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set |
-| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No (rules and model frozen before the label read) | Active evaluation status unconfirmed; treat as potentially opened. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; v3 step F Freeze 1, F3b, Freeze 2 and the single test pass 2026-10-12/13 (below) |
+| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No (rules and model frozen before the label read) | Evaluated once by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11 |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
-| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation |
+| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15 and 2026-10-13 (below) |
 
 ### Local test-access artifacts (git-ignored)
 
@@ -563,6 +563,18 @@ aggregate association statistics, training, or model selections used those
 snippets. Subsequent association inputs are explicitly allowlisted development
 artifacts. This records metadata exposure; it is not a held-out model
 evaluation or a claim that no test metadata has ever been viewed.
+
+**2026-10-13 incidental CARE test metadata access:** during the read-only
+training-source mapping for the EC7/EC6/EC5 inventory (campaign
+`ec1_independent_support_2026-10`, log ec1s-002), one agent printed the header
+and first data row of `/media/mechti/Data1/care_sets/task1_30/uniprot/uniprot_annotation_cache.csv`.
+That row is a test-split record: one accession, its status and the start of its
+cofactor text (truncated at 300 bytes). A log grep in the same work root printed
+combined train-plus-test fetch totals, which imply the test-split size. Nothing
+was retained or used. The inventory tool and every later read filter
+`split == "train"` while streaming and never print rows. No prediction,
+evaluation, selection or training used test data. This records metadata
+exposure; it is not a held-out model evaluation.
 
 **2026-10-03 incidental PinMyMetal test metadata access:** during a read-only
 check of the comparator label leak
@@ -862,5 +874,8 @@ DeepMzyme structures, ESMC embeddings, RING files, and graph external features.
 - Exact PinMyMetal retains 177 overlapping PDB IDs.
 - Historical non-overlap test access exists, but its influence on subsequent
   selection cannot be established.
+- Exact Zenodo PinMyMetal: the v3 step F evaluation (2026-10-13) is confirmed;
+  whether the 2026-09-24 `pmm-zenodo-v2` fold-0 relaunch evaluated the test
+  remains unresolved.
 - CLEAN materialized fold views must record their original versus conservative
   source explicitly.

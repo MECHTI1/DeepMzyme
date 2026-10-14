@@ -36,9 +36,10 @@ new run. Exact future metal and EC recipes remain in the task playbooks.
 | 6 | Exploratory, smoke, partial, or incomplete |
 | 7 | Superseded historical evidence |
 
-No copied neural-model experiment currently has Grade-1 or Grade-2 confirmation.
-The PMM comparator below has Grade-2 grouped-fold evidence; its neural comparison
-grid remains incomplete.
+No neural-model experiment has Grade-1 confirmation. The closed v3 campaign
+(step E below) supplies Grade-2 grouped-fold evidence for the selected metal
+families; earlier copied neural rows are Grade 3 at best. The PMM comparator also
+has Grade-2 grouped-fold evidence.
 Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 ## PMM ion-level comparison with corrected protein context
@@ -93,6 +94,7 @@ hashes are in the [campaign log](../archive/campaigns/pmm_ion_metal_v3/log.md). 
 | `metal/pmm-ion-v3/step-e2/2026-10-12` | The eight remaining step D passes on folds 1–4, seed 42 (36 fits); exploratory, post hoc | No candidate eligible; the selection is retained. Only-GVP `wd10` +3.59, interval-supported within Only-GVP only | 2 (exploratory) | None | [log v3-037](../archive/campaigns/pmm_ion_metal_v3/log.md#v3-037); `step_e2_evidence/assessments/E2_20261012T053919Z/` |
 | `metal/pmm-ion-v3/sched10/2026-10-12` | 10-epoch cosine schedule of the selection on folds 1–4, seed 42 (4 fits); post hoc | Mean +1.99, bootstrap [−0.39, +5.90]; not adopted, so 50 epochs stay | 2 (exploratory) | None | [log v3-041](../archive/campaigns/pmm_ion_metal_v3/log.md#v3-041); `step_s10_evidence/assessments/S10_20261012T111859Z/` |
 | `metal/pmm-ion-v3/step-f/2026-10-13` | Stage 6B validation-free refit (50 epochs, seed 42) and one label-blind test pass under two freezes; workstation-CPU test side | Secondary test report (`both_results_secondary`): full-test common-four BA 67.55% [62.93, 71.65]; clean subset 48.85% (not pristine); beside PMM's published 67.85 (lower; not matched) | Not graded: one held-out pass | **Yes: the exact Zenodo PinMyMetal test, evaluated once (2026-10-13)** | [log v3-045 to v3-048](../archive/campaigns/pmm_ion_metal_v3/log.md#v3-048); [DATASETS ledger](../DATASETS.md#test-use-ledger); `step_f_evidence/`, `step_f_test/report_20261013T012534Z/` |
+| `metal/pmm-trunk-lr/2026-10-13` | Separate campaign `pmm_trunk_lr_2026-10`: the selection with GVP-trunk LR 1e-4 instead of 3e-4, five grouped folds, seed 42, against the five v3 controls; rule frozen before any fit | Mean +1.16 (75.45 vs 74.28), bootstrap [−0.65, +3.11], folds 1–4 +0.24; reference retained; candidate not promoted, not disproven | 2 | None | [log tlr-003](../archive/campaigns/pmm_trunk_lr_2026-10/log.md#tlr-003); Data1 `campaigns/pmm_trunk_lr_2026-10/assessments/TLR_20261013T174637Z/` |
 
 ## GPU runtime efficiency planning
 
