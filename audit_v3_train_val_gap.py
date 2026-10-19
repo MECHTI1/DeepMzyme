@@ -35,7 +35,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
+CAMPAIGN = Path(__file__).resolve().parent / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3"
 FAMILIES = ("only_gvp", "gvp_late_fusion")
 TRAIN_BA = "train_metal_collapsed4_balanced_acc"
 VAL_BA = "val_metal_collapsed4_balanced_acc"

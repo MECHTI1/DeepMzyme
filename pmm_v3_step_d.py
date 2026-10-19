@@ -57,7 +57,7 @@ import pmm_v3_step_c as c  # noqa: E402
 LauncherError = b.LauncherError
 require = b.require
 
-CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
+CAMPAIGN = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3"
 REMOTE_CODE = f"{b.REMOTE_HOME}/projects/DeepMzyme_v3_ext1"  # the extension bundle's own code directory
 EXTENSION_ID = "v3-ext1-round-r"  # pmm_v3_campaign.EXTENSION_ID
 RUNNER_FILES = ("pmm_v3_campaign.py", "run_pmm_v3_campaign.py", "pmm_v3_probes.py", "pmm_v3_speed_report.py")

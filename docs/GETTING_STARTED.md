@@ -30,22 +30,18 @@ are verified, while enforcing one active GPU.
 
 ## Five-minute orientation
 
-From the repository root, verify the required interpreter:
+From the repository root, install the locked Python 3.12 CPU environment and verify the interpreter:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -c "import sys; print(sys.executable)"
-```
-
-The expected output is:
-
-```text
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+uv python install 3.12
+uv sync --frozen
+uv run --frozen --no-sync python -c "import sys; print(sys.executable)"
 ```
 
 Inspect the unified training interface without loading a dataset:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --help
+uv run --frozen --no-sync python src/train.py --help
 ```
 
 Then answer these questions in order:
@@ -83,17 +79,8 @@ uv run --frozen --no-sync pytest
 environment. The default groups include tests and reporting; ESMC generation is
 an explicit optional group. This contract does not select a local CUDA wheel.
 
-The existing workstation continues to use this interpreter:
+If using a dedicated local Conda or virtual environment prefix on a GPU workstation:
 
-```text
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-```
-
-That Conda prefix is a real local execution path, but its installed versions do
-not currently equal the canonical CPU lock. Therefore:
-
-- use the configured interpreter on the existing workstation;
-- identify workstation runs as using the existing non-canonical prefix;
 - record actual library versions in every serious validation or final-report
   run;
 - do not install the Linux lock or `src/requirements.txt` in Colab. Use the
@@ -101,12 +88,10 @@ not currently equal the canonical CPU lock. Therefore:
   [Colab runbook](COLAB_GPU_RUNBOOK.md).
 
 `src/requirements.txt` remains a pinned compatibility file for older local pip
-commands, not the transitive reconstruction authority. If dependencies are
-intentionally being repaired in the existing prefix, use that interpreter
-explicitly:
+commands, not the transitive reconstruction authority:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m pip install -r src/requirements.txt
+python -m pip install -r src/requirements.txt
 ```
 
 That command is an environment mutation, not a routine orientation step.
@@ -146,16 +131,16 @@ Before a run, confirm all of the following:
 The unified CLI supports all tasks:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --task metal --help
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --task ec --help
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train.py --task joint --help
+uv run --frozen --no-sync python src/train.py --task metal --help
+uv run --frozen --no-sync python src/train.py --task ec --help
+uv run --frozen --no-sync python src/train.py --task joint --help
 ```
 
 Thin wrappers are also present:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train_metal.py --help
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/train_ec.py --help
+uv run --frozen --no-sync python src/train_metal.py --help
+uv run --frozen --no-sync python src/train_ec.py --help
 ```
 
 These help commands prove interface availability only. A training launch still

@@ -45,7 +45,7 @@ import pmm_v3_probes as probes  # noqa: E402
 
 CONTROLLER = Path.home() / "deepmzyme-vm"
 HOST = "deepmzyme-vm"
-REMOTE_HOME = "/home/mechti"
+REMOTE_HOME = os.environ.get("DEEPMZYME_REMOTE_HOME", str(Path.home()))
 REMOTE_CODE = f"{REMOTE_HOME}/projects/DeepMzyme_v3"
 REMOTE_PY = f"{REMOTE_HOME}/venvs/deepmzyme/bin/python"
 REMOTE_V3 = f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v3"
@@ -55,8 +55,8 @@ REMOTE_ESM = f"{REMOTE_V2}/inputs/esm_embeddings_esmc600m_v1"
 REMOTE_FOLDS_PARENT = f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v3_folds"
 REMOTE_FOLDS = f"{REMOTE_FOLDS_PARENT}/v3-seqid90-s42-b2"
 REMOTE_BUNDLES = f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v3_bundles"
-DURABLE = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable")
-EVIDENCE = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/step_b_evidence")
+DURABLE = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3" / "durable"
+EVIDENCE = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3" / "step_b_evidence"
 LAUNCH_DIR = f"{REMOTE_V3}/step_b/launch"
 # Admission forecasts (seconds) until measured values replace them (--fit-seconds). The runner admits a
 # unit only if 1.25 x forecast + 900 s remain before the session's hard stop.

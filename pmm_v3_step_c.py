@@ -82,7 +82,7 @@ SUGGESTED_ORDER = (
     "only_gvp__four_class__v2recipe__fold0__seed42", "only_esm__four_class__baseline__fold0__seed42",
     "only_esm__five_class__baseline__fold0__seed42", "only_esm__six_class__baseline__fold0__seed42",
     "only_esm__four_class__v2recipe__fold0__seed42")
-EVIDENCE = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/step_c_evidence")
+EVIDENCE = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3" / "step_c_evidence"
 EVIDENCE_PATTERNS = ("campaign_manifest.json", "execution_settings.json", "fold_class_weights.json", "claims/*.json",
                      "step_c/**/*", "assessments/**/*", "lanes/lane*/execution_state.json",
                      "lanes/lane*/execution_events.jsonl", "lanes/lane*/run_status_*.json",

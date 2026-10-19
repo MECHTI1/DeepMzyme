@@ -25,9 +25,9 @@ import subprocess
 import time
 
 
-COLAB_CLI = "/home/mechti/.local/bin/colab"
+COLAB_CLI = os.environ.get("COLAB_CLI", str(Path.home() / ".local" / "bin" / "colab"))
 SESSION_NAME = "pmm-5fold"
-REPO_ROOT = Path("/home/mechti/PycharmProjects/DeepMzyme")
+REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_RUNS_DIR = REPO_ROOT / "runs" / "benchmark_exact_pinmymetal_5fold"
 CHECK_INTERVAL_SECONDS = 120
 

@@ -22,19 +22,13 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 # root filesystem, and writing ~1.1 GB of dataset into it would silently fill /.
 DEFAULT_DATA_ROOT=""
 DEFAULT_RUNS_DIR=""
-if [ -d "/content/DeepMzyme_Data/DeepMzyme_Data" ]; then
+if [ -n "${DEEPMZYME_DATA_ROOT:-}" ] && [ -d "${DEEPMZYME_DATA_ROOT}" ]; then
+    DEFAULT_DATA_ROOT="${DEEPMZYME_DATA_ROOT}"
+    DEFAULT_RUNS_DIR="${DEEPMZYME_DATA_ROOT}/runs_zenodo_pmm_exact"
+elif [ -d "/content/DeepMzyme_Data/DeepMzyme_Data" ]; then
     DEFAULT_DATA_ROOT="/content/DeepMzyme_Data/DeepMzyme_Data"
     DEFAULT_RUNS_DIR="/content/runs/runs_zenodo_pmm_exact"
 else
-    for candidate in /media/mechti/Data1 /media/mechti/Data; do
-        if [ -d "${candidate}/DeepMzyme_Data" ] && mountpoint -q "${candidate}" 2>/dev/null; then
-            DEFAULT_DATA_ROOT="${candidate}/DeepMzyme_Data"
-            DEFAULT_RUNS_DIR="${candidate}/DeepMzyme_Data/runs_zenodo_pmm_exact"
-            break
-        fi
-    done
-fi
-if [ -z "${DEFAULT_DATA_ROOT}" ]; then
     DEFAULT_DATA_ROOT="${REPO_ROOT}/DeepMzyme_Data"
     DEFAULT_RUNS_DIR="${REPO_ROOT}/runs/runs_zenodo_pmm_exact"
 fi

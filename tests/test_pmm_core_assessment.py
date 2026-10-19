@@ -14,7 +14,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import pmm_core_assessment as core
 
-FROZEN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2")
+import os
+
+FROZEN = Path(
+    os.environ.get(
+        "DEEPMZYME_PMM_FROZEN_CHECKOUT",
+        Path(__file__).resolve().parents[1] / "DeepMzyme_Data" / "campaigns" / "_code" / "pmm_core_scope_v2",
+    )
+)
 
 
 @pytest.fixture(scope="module")

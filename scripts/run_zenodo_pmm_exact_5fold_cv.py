@@ -140,16 +140,16 @@ def write_json(path: str | Path, data: Any) -> None:
 
 
 def resolve_default_paths() -> dict[str, Path]:
-    data1_dir = Path("/media/mechti/Data1/DeepMzyme_Data")
+    env_data_root = os.environ.get("DEEPMZYME_DATA_ROOT")
     colab_root = Path("/content/DeepMzyme_Data/DeepMzyme_Data")
-    local_root = REPO_ROOT / "DeepMzyme_Data"
+    local_root = Path(env_data_root) if env_data_root else (REPO_ROOT / "DeepMzyme_Data")
 
     data_dir = colab_root if colab_root.exists() else local_root
 
     if Path("/content").exists():
         runs_dir = Path("/content/runs/runs_zenodo_pmm_exact")
-    elif data1_dir.exists():
-        runs_dir = data1_dir / "runs_zenodo_pmm_exact"
+    elif env_data_root and Path(env_data_root).exists():
+        runs_dir = Path(env_data_root) / "runs_zenodo_pmm_exact"
     else:
         runs_dir = REPO_ROOT / "runs" / "runs_zenodo_pmm_exact"
 

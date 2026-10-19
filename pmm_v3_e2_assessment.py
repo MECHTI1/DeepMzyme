@@ -42,7 +42,7 @@ import pmm_v3_assessment as pa  # noqa: E402
 import pmm_v3_campaign as v3  # noqa: E402
 import pmm_v3_step_e2 as e2  # noqa: E402
 
-COHORT_SOURCE = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/train_cohort.csv")
+COHORT_SOURCE = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v2_context" / "train_cohort.csv"
 ROOT_FILES = ("campaign_manifest.json", "execution_settings.json", "fold_class_weights.json", "campaign_extension.json")
 FAMILY_ORDER = ("only_gvp", "gvp_late_fusion")  # E2 tie-breaker: simpler family first
 PARITY_TOLERANCE = 1e-9

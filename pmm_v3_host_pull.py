@@ -6,8 +6,8 @@ lane admits nothing new until this tool has, on the workstation, downloaded ever
 each SHA-256 from the downloaded bytes (``benchmarking.pmm_execution.verify_host_pull``) and uploaded the
 small acknowledgment back to the lane. It never starts, stops or extends a VM and never runs fits.
 
-  python3 pmm_v3_host_pull.py --remote-root /home/mechti/deepmzyme_runs/pmm_ion_metal_v3 \
-      --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable --lanes 0 1 2
+  python3 pmm_v3_host_pull.py --remote-root ~/deepmzyme_runs/pmm_ion_metal_v3 \
+      --durable-root DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable --lanes 0 1 2
 
 Per lane K the VM root is ``<remote-root>/lanes/laneK`` and the workstation root ``<durable-root>/laneK``,
 which must equal (as a string) the destination the worker recorded from ``--durable-root``. Lanes are
@@ -37,7 +37,7 @@ from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_SSH_CONFIG = Path.home() / "deepmzyme-vm" / "state" / "ssh_config"
-CONDA_PYTHON = "/home/mechti/miniconda3/envs/DeepMzyme/bin/python"  # gcloud's IAP proxy (ssh ProxyCommand)
+CONDA_PYTHON = os.environ.get("CLOUDSDK_PYTHON", sys.executable)  # gcloud's IAP proxy (ssh ProxyCommand)
 
 
 class HostPullError(RuntimeError):

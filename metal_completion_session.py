@@ -30,15 +30,16 @@ sys.path.insert(0, str(ROOT))
 import pmm_v3_host_pull as host_pull  # noqa: E402
 
 CAMPAIGN_ID = "metal_completion_2026-10"
-DEFAULT_PREP = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z")
-TRAIN_DIR = Path("/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train")
-ESM_DIR = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1")
+DEFAULT_PREP = ROOT / "DeepMzyme_Data" / "campaigns" / "metal_completion_2026-10" / "preparation_20261014T164111Z"
+TRAIN_DIR = ROOT / "DeepMzyme_Data" / "DeepMzyme_PMM_Zenodo_Exact_Dataset" / "dataset" / "train"
+ESM_DIR = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v2_context" / "inputs" / "esm_embeddings_esmc600m_v1"
 CONTROLLER = Path.home() / "deepmzyme-vm"
 HOST = "deepmzyme-vm"
-REMOTE_PY = "/home/mechti/venvs/deepmzyme/bin/python"
-# Where the restored VM disk already holds the frozen inputs (v3 campaign layout); bind-mounted onto the Data1 paths.
-REMOTE_TRAIN_SOURCE = "/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train"
-REMOTE_ESM_SOURCE = "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1"
+REMOTE_HOME = os.environ.get("DEEPMZYME_REMOTE_HOME", str(Path.home()))
+REMOTE_PY = f"{REMOTE_HOME}/venvs/deepmzyme/bin/python"
+# Where the restored VM disk already holds the frozen inputs (v3 campaign layout); bind-mounted onto the local paths.
+REMOTE_TRAIN_SOURCE = f"{REMOTE_HOME}/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train"
+REMOTE_ESM_SOURCE = f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1"
 GCLOUD = "/snap/bin/gcloud"
 FIT_SECONDS = 2400.0  # one 50-epoch late-fusion fit with three lanes and warm caches (v3 step C forecast)
 LAUNCH_MARGIN_SECONDS = 300.0  # the worker re-verifies the package (minutes) before its own admission check

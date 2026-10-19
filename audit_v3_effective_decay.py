@@ -37,7 +37,7 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 
 import pmm_v3_campaign as v3  # noqa: E402
 
-CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
+CAMPAIGN = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3"
 DEFAULT_RECIPES = ("baseline", "wd001", "wd01", "wd10", "structlr")
 # Recipes whose model has other parameters or input widths than the family baseline.
 ARCHITECTURE_CHANGING = {"gvpaux03", "vecnorm", "sitenone", "sitecountsangles"}

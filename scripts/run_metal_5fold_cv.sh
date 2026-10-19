@@ -4,11 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
-CONDA_PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
 VENV_PYTHON="${REPO_ROOT}/.venv/bin/python"
 
-if [ -f "$CONDA_PYTHON" ]; then
-    PYTHON_BIN="$CONDA_PYTHON"
+if [ -n "${PYTHON_BIN:-}" ]; then
+    PYTHON_BIN="$PYTHON_BIN"
 elif [ -f "$VENV_PYTHON" ]; then
     PYTHON_BIN="$VENV_PYTHON"
 else

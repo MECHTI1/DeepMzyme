@@ -40,7 +40,7 @@ def prep(tmp_path, monkeypatch):
                        units=ms.new_units(p, "discovery"), gross_ceiling_usd=32.0, max_sessions=8,
                        max_session_seconds=14400, max_total_gpu_seconds=86400, lanes=3,
                        estimated_fit_seconds=2400, reserve_usd=0.5, expires_unix=2_000_000_000,
-                       controller_owner="mechti@mechti-pc", superseded=[], approval_unix=1_899_900_000,
+                       controller_owner="dev@workstation", superseded=[], approval_unix=1_899_900_000,
                        storage_usd_per_day=1.0)
     return p
 

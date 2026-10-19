@@ -32,7 +32,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
+CAMPAIGN = Path(__file__).resolve().parent / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3"
 METRIC = "val_metal_collapsed4_balanced_acc"
 RECALLS = {"Mn": "val_metal_collapsed4_mn_recall", "Cu": "val_metal_collapsed4_cu_recall",
            "Zn": "val_metal_collapsed4_zn_recall", "Class VIII": "val_metal_collapsed4_class_viii_recall"}

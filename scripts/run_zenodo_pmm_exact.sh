@@ -9,10 +9,7 @@ if [ ! -f "$VENV_PYTHON" ]; then
     VENV_PYTHON="python3"
 fi
 
-RUNS_DIR="/media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact"
-if [ ! -d "/media/mechti/Data1" ]; then
-    RUNS_DIR="${REPO_ROOT}/runs/runs_zenodo_pmm_exact"
-fi
+RUNS_DIR="${RUNS_DIR:-${REPO_ROOT}/runs/runs_zenodo_pmm_exact}"
 
 mkdir -p "$RUNS_DIR"
 

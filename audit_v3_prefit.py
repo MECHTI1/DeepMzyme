@@ -38,9 +38,9 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
 import pmm_v3_campaign as v3  # noqa: E402
 from benchmarking import pmm_ion_campaign as v2  # noqa: E402
 
-V2_ROOT = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context")
-FOLD_DIR = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/folds/v3-seqid90-s42-b2")
-TRAIN_DIR = Path("/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train")
+V2_ROOT = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v2_context"
+FOLD_DIR = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3" / "folds" / "v3-seqid90-s42-b2"
+TRAIN_DIR = ROOT / "DeepMzyme_Data" / "DeepMzyme_PMM_Zenodo_Exact_Dataset" / "dataset" / "train"
 ESM_DIR = V2_ROOT / "inputs" / "esm_embeddings_esmc600m_v1"
 COMMON4 = ("Mn", "Cu", "Zn", "Class VIII")
 ELEMENT_TO_COMMON4 = {"MN": 0, "CU": 1, "ZN": 2, "FE": 3, "CO": 3, "NI": 3}

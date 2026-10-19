@@ -39,7 +39,7 @@ SPEC_FILES = ("docs/campaigns/pmm_ion_metal_v3/assessment_spec.json", "docs/camp
 FOLD_FILES = ("fold_membership.csv", "fold_receipt.json", "pdb_groups.csv", "fold_balance_report.json",
               "near_copy_pairs.csv")
 FORBIDDEN_PARTS = {"test", "site_crosswalk.csv", "classmodel_test_set"}
-DEFAULT_FOLDS = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/folds/v3-seqid90-s42-b2")
+DEFAULT_FOLDS = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v3" / "folds" / "v3-seqid90-s42-b2"
 CODE_ROOT = "DeepMzyme_v3"
 
 

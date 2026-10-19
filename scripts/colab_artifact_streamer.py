@@ -31,7 +31,7 @@ import subprocess
 import sys
 import time
 
-DEFAULT_COLAB_BIN = "/home/mechti/.local/bin/colab"
+DEFAULT_COLAB_BIN = os.environ.get("COLAB_CLI", str(Path.home() / ".local" / "bin" / "colab"))
 
 # Small, always-worth-having outputs. Checkpoints are handled separately because they
 # are large and the local root filesystem is routinely short on space.

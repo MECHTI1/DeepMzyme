@@ -40,12 +40,15 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent
-FROZEN_V2_TREE = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2")
-V2_CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context")
-TRAIN_DIR = Path("/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train")
+import os
+
+FROZEN_V2_TREE = ROOT / "DeepMzyme_Data" / "campaigns" / "_code" / "pmm_core_scope_v2"
+V2_CAMPAIGN = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v2_context"
+TRAIN_DIR = ROOT / "DeepMzyme_Data" / "DeepMzyme_PMM_Zenodo_Exact_Dataset" / "dataset" / "train"
+REMOTE_HOME = os.environ.get("DEEPMZYME_REMOTE_HOME", str(Path.home()))
 # Paths recorded on the training VM -> their local copies.
-PATH_MAP = {"/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact": str(TRAIN_DIR.parent),
-            "/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context": str(V2_CAMPAIGN)}
+PATH_MAP = {f"{REMOTE_HOME}/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact": str(TRAIN_DIR.parent),
+            f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v2_context": str(V2_CAMPAIGN)}
 WEIGHT_ATOL = 1e-6
 HISTORY_ATOL = 1e-6
 TRAINING_CONFIGS = (("only_esm", "four_class"), ("only_gvp", "six_class"),

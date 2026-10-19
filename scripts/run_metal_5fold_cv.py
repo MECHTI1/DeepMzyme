@@ -208,7 +208,6 @@ def resolve_dataset_layout(
         Path(dataset_name_or_path),
         data_root / dataset_name_or_path,
         REPO_ROOT / "DeepMzyme_Data" / dataset_name_or_path,
-        Path("/media/mechti/Data1/DeepMzyme_Data") / dataset_name_or_path,
     ]
     dataset_root = None
     for cand in candidates:
@@ -1248,10 +1247,11 @@ def main() -> None:
     if args.runs_dir is not None:
         runs_dir = args.runs_dir
     else:
+        env_data_root = os.environ.get("DEEPMZYME_DATA_ROOT")
         if Path("/content").exists():
             runs_root = Path(f"/content/runs/runs_{dataset_id}_{args.metal_example_unit}")
-        elif Path("/media/mechti/Data1").exists():
-            runs_root = Path(f"/media/mechti/Data1/DeepMzyme_Data/runs_{dataset_id}_{args.metal_example_unit}")
+        elif env_data_root and Path(env_data_root).exists():
+            runs_root = Path(env_data_root) / f"runs_{dataset_id}_{args.metal_example_unit}"
         else:
             runs_root = REPO_ROOT / "runs" / f"runs_{dataset_id}_{args.metal_example_unit}"
         runs_dir = runs_root

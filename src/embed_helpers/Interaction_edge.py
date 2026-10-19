@@ -142,6 +142,5 @@ def create_ring_edges_batch(
 
 
 if __name__ == "__main__":
-    # path_test_structure = "/home/mechti/Downloads/AF-P06965-F1-model_v6.cif"
     path_test_structure = "/media/Data/pinmymetal_sets/mahomes/train_set/job_0/1a0e__chain_A__EC_5.3.1.5.pdb"
     ring_create_results(DIR_RESULTS, path_test_structure)
