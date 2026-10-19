@@ -3,18 +3,18 @@
 [![CPU CI](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml/badge.svg)](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](pyproject.toml)
 
-DeepMzyme predicts catalytic metal-ion identity and enzyme commission (EC) function from protein structures. It combines 3D binding-pocket graphs encoded with Geometric Vector Perceptrons (GVP-GNN) and evolutionary sequence context from ESM-C protein language models.
+DeepMzyme predicts which metal occupies a known binding site in an experimental, metal-bound protein structure: Mn, Cu, Zn or the Fe/Co/Ni group. It combines a Geometric Vector Perceptron graph network (GVP-GNN) over the site's 3D neighbourhood with ESM-C protein language model embeddings. Enzyme Commission (EC) number prediction is a separate, earlier-stage task.
 
 ## Approach
 
-Metalloenzymes rely on transition-metal cofactors (Mn, Cu, Zn, Fe, Co, Ni) whose local coordination geometry and broader sequence context jointly determine catalytic activity. DeepMzyme models each metal-binding site or pocket using two complementary branches:
+Which metal a site binds depends on its local coordination geometry and on the wider sequence context, so DeepMzyme encodes each site with two branches:
 
-1. **3D Structural Pocket Graph (GVP-GNN):** Encodes residue-level scalar features (physicochemical descriptors, PROPKA electrostatics, first- and second-shell coordination indicators) and 3D vector channels (backbone and side-chain geometry) over spatial radius edges and optional RING chemical interaction edges.
-2. **Sequence Context Branch (ESM-C):** Projects and normalizes precomputed ESM-C residue embeddings across the parent protein chain before pooling at the binding-site level.
+1. **3D Structural Pocket Graph (GVP-GNN):** Represents residues around the site as nodes with scalar features (amino-acid identity, physicochemical flags, first- and second-shell roles, distances to the metal) and vector features (side-chain and residue-to-metal directions), connected by 8 Å radius edges. PROPKA electrostatics and RING interaction edges are supported but unused by the reported models.
+2. **Sequence Context Branch (ESM-C):** Projects per-residue ESM-C 600M embeddings of the chain and pools them (mean and attention) over the same site residues.
 
 ```mermaid
 flowchart LR
-    Pocket["3D Pocket Graph\n(Coordinates + RING Edges)"] --> GVP["GVP-GNN\nStructural Encoder"]
+    Pocket["3D Pocket Graph\n(Residue Features + Radius Edges)"] --> GVP["GVP-GNN\nStructural Encoder"]
     Seq["Protein Sequence\n(ESM-C Embeddings)"] --> ESM["ESM-C\nSequence Branch"]
     GVP --> Fusion["Graph Readout &\nLate Fusion"]
     ESM --> Fusion
@@ -22,27 +22,27 @@ flowchart LR
     Fusion --> EC["EC Function Classifier\n(Independent Task Head)"]
 ```
 
-Metal classification (`--task metal`) and EC classification (`--task ec`) are independently trainable primary tasks, with shared-encoder multi-task learning (`--task joint`) supported for controlled transfer experiments. Standalone unimodal baselines (`Only-GVP`, `Only-ESM`), alternative fusion modes (early, hybrid, cross-attention), and training objectives (`four_class`, `five_class`, `six_class`) are documented in [`Plan.md`](Plan.md).
+Metal classification (`--task metal`) and EC classification (`--task ec`) are independently trainable primary tasks, with shared-encoder multi-task learning (`--task joint`) for transfer experiments. Standalone unimodal baselines (`Only-GVP`, `Only-ESM`), alternative fusion modes (early, hybrid, cross-attention), and training objectives (`four_class`, `five_class`, `six_class`) are documented in [`Plan.md`](Plan.md).
 
 ## Results
 
-Metal-classification models are evaluated on the common four-class endpoint—Mn, Cu, Zn, and the Fe/Co/Ni grouped class (Class VIII in PinMyMetal notation)—using unweighted four-class balanced accuracy across a near-copy-grouped 5-fold cross-validation cohort (7,398 ion sites) and the PinMyMetal reference test set (1,488 ion sites):
+Models are scored with unweighted balanced accuracy on four classes (Mn, Cu, Zn and the Fe/Co/Ni group, "Class VIII" in PinMyMetal notation): 5-fold cross-validation on 7,398 ion sites, with chains of ≥90% sequence identity kept in one fold, and PinMyMetal's 1,488-site reference test set:
 
-| Model | Models combined | Pooled out-of-fold balanced accuracy | Full reference-test balanced accuracy |
+| Model | Checkpoints | Pooled out-of-fold balanced accuracy | Reference-test balanced accuracy |
 |:---|---:|---:|---:|
-| Single-model baseline | 1 | 74.34% | 67.55% |
+| Single model (pre-declared full-data refit) | 1 | 74.34%\* | 67.55% |
 | Late-fusion ensemble | 30 | 76.81% | 72.20% |
-| Combined-model ensemble | 55 | 77.17% | 71.00% |
+| Combined ensemble (late fusion + Only-ESM + Only-GVP) | 55 | 77.17% | 71.00% |
 
-**Evaluation notes and project status:**
-- **Four-class endpoint and model selection:** Models trained under 4-class, 5-class, or 6-class objectives are evaluated on the common 4-class endpoint (Mn, Cu, Zn, Fe/Co/Ni grouped class). The single-model baseline achieves 74.28% mean-fold balanced accuracy (74.34% pooled out-of-fold across all 7,398 validation sites). All hyperparameter and ensemble selections were locked strictly on 5-fold cross-validation out-of-fold predictions.
-- **Reference-test qualification:** The 1,488-site PinMyMetal reference test set enables comparison with published PinMyMetal (75.08% CV / 67.85% test) and Metal3D (61.70% test) results. Because the single-model baseline was the predeclared one-shot test evaluation and the 30-model and 55-model ensembles were evaluated afterward on a previously accessed reference test set, all test scores are documented as reference-test evaluations (`both_results_secondary`) rather than an unopened independent final test; see [`docs/DATASETS.md`](docs/DATASETS.md#final-reporting-status).
-- **Filtered test subsets and full reports:** On the 1,346-site eligible reference-test subset, the 30-model late-fusion ensemble reaches 73.94% balanced accuracy (vs. 69.33% for the single-model baseline); on the 423-site homology-filtered clean subset, the 55-model ensemble reaches 61.33%. Complete 27-tier tables, 10,000-draw PDB-cluster bootstrap confidence intervals, and per-class recalls are in [`docs/campaigns/phase2_unified_2026-10/README.md`](docs/campaigns/phase2_unified_2026-10/README.md).
-- **Task maturity and dataset coverage:** Metal classification has completed 5-fold cross-validation and reference-test evaluations; EC classification has preliminary fixed-split validation; joint multi-task learning remains experimental ([`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md)). The Zenodo PinMyMetal ion-level dataset reconstruction achieves 99.89% site coverage (9,398 / 9,408 ions across 7,724 PDB entries; [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)).
+\*Five-fold CV of the same recipe; the refit itself has no out-of-fold score.
+
+- **Model selection:** The 55-model ensemble scores best out of fold, but its 0.4–0.8 pp gain over the 20- to 30-model late-fusion ensembles is not significant (95% intervals include zero), and larger ensembles also average more checkpoints per out-of-fold site, which favours them. Complexity is added only when validation evidence justifies it ([`Plan.md`](Plan.md#7-baseline-first-model-comparison-policy)), so no deployment default is chosen yet. Repeating the ensemble selection inside cross-validation gives 76.5% either way ([release audit](docs/campaigns/phase2_unified_2026-10/release_audit/README.md)).
+- **Reference test:** Published PinMyMetal reaches 75.08% CV / 67.85% test; Metal3D reaches 61.70% test. Only the single model was a pre-declared one-shot evaluation. The ensembles were scored later on the already-opened test set, and their membership may be test-informed, so their test scores are secondary ([`docs/DATASETS.md`](docs/DATASETS.md#final-reporting-status)). On the 1,346-site eligible and 423-site near-copy-filtered subsets, the single model reaches 69.33% / 48.85%, the 30-model 73.94% / 59.18% and the 55-model 72.76% / 61.33%. Full tables: [campaign report](docs/campaigns/phase2_unified_2026-10/README.md).
+- **Task maturity and dataset coverage:** Metal classification has completed cross-validation and reference-test evaluation; EC classification has preliminary fixed-split validation, and joint multi-task learning is experimental ([`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md)). The Zenodo PinMyMetal ion-level reconstruction covers 99.89% of sites (9,398 of 9,408 ions in 7,724 structure files; [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)).
 
 ## Installation and verification
 
-The commands below create the locked Linux x86_64 Python 3.12 CPU environment and verify the CLI entry points, unit test suite, and synthetic smoke checks without requiring external datasets or GPU hardware:
+These commands create the locked Linux x86_64 Python 3.12 CPU environment and run the CLI, unit tests and synthetic smoke checks without datasets or a GPU:
 
 ```bash
 git clone https://github.com/MECHTI1/DeepMzyme.git
@@ -55,31 +55,35 @@ uv run --frozen --no-sync python tests/smoke_checks.py
 
 ## Example usage
 
-Once the dataset bundle and precomputed feature directories are placed under `DeepMzyme_Data/`, run a grouped 5-fold cross-validation metal-classification experiment with late fusion (`GVP-GNN + ESM-C`):
+Unpack the reconstructed PinMyMetal structures (see below) so that the archive's `dataset/` folder becomes `DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/`. Generate ESM-C 600M embeddings once (optional `esm` dependency group), then train fold 0 of a grouped 5-fold late-fusion (`GVP-GNN + ESM-C`) metal classifier:
 
 ```bash
+uv sync --frozen --group esm
+uv run --frozen --no-sync python src/embed_helpers/esmc.py \
+  --structure-dir DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --out-dir DeepMzyme_Data/esm_embeddings_esmc600m \
+  --model-name esmc_600m
 uv run --frozen --no-sync python src/train.py \
   --task metal \
-  --model-Variant gvp_late_fusion \
   --metal-example-unit ion \
   --metal-label-scheme merge_fe_class_viii \
-  --train-dir DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train \
-  --summary-csv DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train_sites_summary.csv \
-  --esm-dir DeepMzyme_Data/esm_embeddings_esmc600m_v1 \
-  --split-strategy group_kfold \
-  --group-col pdbid \
-  --n-splits 5 \
+  --structure-dir DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --summary-csv DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train/final_data_summarazing_table.csv \
+  --esm-embeddings-dir DeepMzyme_Data/esm_embeddings_esmc600m \
+  --esm-dim 1152 \
+  --n-folds 5 \
   --fold-index 0 \
+  --train-val-split-by pdbid \
   --epochs 50 \
-  --output-dir runs/example_metal_late_fusion_fold0
+  --runs-dir runs \
+  --run-name example_metal_late_fusion_fold0
 ```
 
-- **Inputs:** PDB/mmCIF structure directory (`--train-dir`), ion- or pocket-level label summary CSV (`--summary-csv`), and precomputed ESM-C residue embeddings (`--esm-dir`).
-- **Outputs:** Structured run artifacts in `--output-dir`, including `config.json`, per-epoch validation history (`history.json`), best-validation checkpoint metadata (`selected_checkpoint.json`), and out-of-fold predictions (`val_predictions.csv`, `metrics.json`) reporting four-class balanced accuracy and per-metal recalls.
+The run folder under `--runs-dir` holds `run_config.json`, per-epoch metrics, `selected_checkpoint.json` and out-of-fold `val_predictions.csv`. The reported results use the frozen near-copy folds instead (`--fold-membership-csv`).
 
 ## Data and pretrained models
 
-- **Public dataset & checkpoint archive (Hugging Face):** Reconstructed PinMyMetal benchmark structures, fold memberships, precomputed ESM-C / PROPKA / RING feature bundles, and trained model checkpoints (`Step F` single-model refit, `Top-4 LF` 30-model ensemble, and `CV-Locked Tri-Modal` 55-model ensemble) are indexed in [`docs/DATASETS.md`](docs/DATASETS.md), [`docs/STRUCTURE_STORE.md`](docs/STRUCTURE_STORE.md), and [`docs/BACKUP_AND_DATA_INVENTORY.md`](docs/BACKUP_AND_DATA_INVENTORY.md) ([`MECHTI1/DeepMzyme-Benchmark`](https://huggingface.co/datasets/MECHTI1/DeepMzyme-Benchmark)).
+- **Public data (Hugging Face):** [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) hosts the reconstructed PinMyMetal ion-level structures and site tables (1.1 GB), an earlier 4.7 GB data bundle (structures, CLEAN/CARE splits, ESM-C 300M embeddings, RING and PROPKA features) and archived benchmark runs. Only 5 of the 55 ensemble checkpoints (the five folds of one five-class recipe) are public; the other checkpoints and the ESM-C 600M embeddings are unpublished. Inventory: [`docs/DATASETS.md`](docs/DATASETS.md#hugging-face-repository-inventory), [`docs/STRUCTURE_STORE.md`](docs/STRUCTURE_STORE.md).
 
 ## Technical documentation
 

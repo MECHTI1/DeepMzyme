@@ -13,7 +13,7 @@ Last broad evidence audit: 2026-09-14. Pilot PROPKA overlay audit: 2026-09-15.
 
 Relevant facts:
 
-- **Completed reference-test benchmark evaluations:** The 1,488-site Zenodo PinMyMetal reference test set was evaluated in the predeclared v3 Step F single-model baseline report (`2026-10-13`, `67.55%` full-test BA) and the Phase 2 CV-locked multi-checkpoint ensemble evaluations (`2026-10-18`, `72.20%` full-test BA for the 30-model late-fusion ensemble and `71.00%` full-test BA / `76.00%` deduplicated-subset BA for the 55-model multimodal ensemble). Because this test set was previously accessed, all evaluations on it are documented as reference-test benchmark comparisons (`both_results_secondary`; see the [test-use ledger](#test-use-ledger) below) rather than an unopened independent final test.
+- **Completed reference-test benchmark evaluations:** The 1,488-site Zenodo PinMyMetal reference test set was evaluated in the predeclared v3 Step F single-model baseline report (`2026-10-13`, `67.55%` full-test BA) and the Phase 2 multi-checkpoint ensemble evaluation (`2026-10-19`, `72.20%` full-test BA for the 30-model late-fusion ensemble and `71.00%` for the 55-model ensemble). Because this test set was previously accessed, all evaluations on it are documented as reference-test benchmark comparisons (`both_results_secondary`; see the [test-use ledger](#test-use-ledger) below) rather than an unopened independent final test.
 - The legacy non-overlap PinMyMetal test was historically evaluated in seven
   early Only-GVP runs and six runs on 2026-09-18 and is not pristine or unopened.
 - Exact PinMyMetal contains train/test PDB-ID overlap; its test side (the same
@@ -27,7 +27,7 @@ Relevant facts:
   source is only proposed ([metal completion protocol](campaigns/metal_completion_2026-10/evaluation.md#preparation-inventory-2026-10-16));
   no candidate list, structure, label, prediction or certification exists.
 
-All historical and reference-test evaluations are recorded in the test-use ledger; model and ensemble selection strictly used 5-fold cross-validation out-of-fold predictions.
+All historical and reference-test evaluations are recorded in the test-use ledger. Ensembles are compared on 5-fold cross-validation out-of-fold predictions; the historical membership of the 20- to 30-model ensembles may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)).
 
 ### Bounded metal architecture pilot and later PinMyMetal comparison
 

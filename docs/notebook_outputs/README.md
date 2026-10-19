@@ -5,6 +5,13 @@ the storage contract for copied run evidence. Current project state belongs in
 [`EXPERIMENT_STATUS.md`](../../EXPERIMENT_STATUS.md); empirical parameter
 conclusions belong in [`PARAMETER_FINDINGS.md`](../PARAMETER_FINDINGS.md).
 
+## Metal ensemble release audit
+
+The [2026-10-19 release audit](../campaigns/phase2_unified_2026-10/release_audit/README.md) rebuilds the metal
+ensembles' out-of-fold scores from saved validation predictions, compares ensemble sizes, repeats the ensemble choice
+inside cross-validation, checks prediction parity on development sites and records CPU inference cost. It adds no
+training, promotion, test access or new evidence grade.
+
 ## Sequence-remoteness evidence
 
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |

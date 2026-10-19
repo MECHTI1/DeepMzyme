@@ -1,0 +1,3557 @@
+{
+  "schema": "deepmzyme-metal-release-audit-v1",
+  "status": "complete",
+  "reference": "unified_trimodal_cv_locked",
+  "held_out_accessed": false,
+  "catalog_id": "phase2-unified-20261019-v2",
+  "manifest_sha256": "4d671105b93061f28f7f93fcea8e1b7d4174a826db2adc59e8ed75de8e9e9a07",
+  "selection_provenance": {
+    "note": "Historical CV locking needs dated evidence.",
+    "status": "unverified"
+  },
+  "selection_or_promotion": false,
+  "selection_optimism_corrected": false,
+  "disclosure": "Historical fixed-shortlist OOF reconstruction; no unbiased estimate of the selected deployment ensemble is claimed.",
+  "similarity_bar": {
+    "definition": "One-sided 95% related-group bootstrap lower bound of (candidate - reference) pooled common-four BA >= -1.5 pp, and no class's pooled recall more than 3 pp below the reference.",
+    "margin_pp": 1.5,
+    "class_recall_floor_pp": 3.0,
+    "declared": "after the OOF results were seen; descriptive only, never a selection or promotion rule"
+  },
+  "blockers": [],
+  "comparisons": {
+    "baseline_5fold_s42": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.028156237648507366,
+      "fold_deltas": [
+        -0.04448760658612516,
+        -0.027182196041864226,
+        -0.019272749264494404,
+        -0.027901723552650637,
+        -0.021936912797402397
+      ],
+      "fold_mean_delta_pp": -2.8156237648507365,
+      "fold_bootstrap_ci95": [
+        -0.03651638571952842,
+        -0.02153137682870725
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -3.651638571952842,
+        -2.153137682870725
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": -0.032862371994003416,
+        "Cu": -0.014031775049009543,
+        "Zn": -0.054366432503808085,
+        "Class VIII": -0.011364371047208555
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": -3.2862371994003414,
+        "Cu": -1.4031775049009543,
+        "Zn": -5.436643250380809,
+        "Class VIII": -1.1364371047208555
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.06061372830584888,
+          -0.002466411422065895
+        ],
+        "Cu": [
+          -0.03887139644244526,
+          0.017559262510974595
+        ],
+        "Zn": [
+          -0.06636520192002542,
+          -0.04236766308759075
+        ],
+        "Class VIII": [
+          -0.042604048582995956,
+          0.021198474802593827
+        ]
+      },
+      "pooled_delta": -0.028290352683495223,
+      "pooled_delta_pp": -2.8290352683495223,
+      "pooled_recall_delta_pp": {
+        "Mn": -3.322784810126578,
+        "Cu": -1.4577259475218596,
+        "Zn": -5.4133858267716555,
+        "Class VIII": -1.1222444889779637
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.04545758589718388,
+          -0.01247712885384276
+        ],
+        "ci95_pp": [
+          -4.545758589718388,
+          -1.2477128853842758
+        ],
+        "one_sided95_lower_pp": -4.271626143316138
+      },
+      "prediction_disagreement_n": 980,
+      "prediction_disagreement_rate": 0.1324682346580157,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": false,
+      "reference_advantage_supported": true
+    },
+    "recipe_p_5class_3seed": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.01341787567928492,
+      "fold_deltas": [
+        -0.011003018568465195,
+        -0.024284197166068555,
+        0.010726938898580785,
+        -0.04272268316813144,
+        0.00019358160765980958
+      ],
+      "fold_mean_delta_pp": -1.3417875679284919,
+      "fold_bootstrap_ci95": [
+        -0.03045173301256061,
+        0.0021676044888031985
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -3.045173301256061,
+        0.21676044888031984
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": -0.0034683056782764065,
+        "Cu": -0.003028972783143091,
+        "Zn": -0.024085739800358174,
+        "Class VIII": -0.023088484455361935
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": -0.34683056782764066,
+        "Cu": -0.3028972783143091,
+        "Zn": -2.4085739800358175,
+        "Class VIII": -2.3088484455361935
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.04801457471728469,
+          0.0320243661927029
+        ],
+        "Cu": [
+          -0.017910447761194014,
+          0.00882352941176474
+        ],
+        "Zn": [
+          -0.035485653135096905,
+          -0.009925502759157023
+        ],
+        "Class VIII": [
+          -0.05415420236318509,
+          0.012117171717171703
+        ]
+      },
+      "pooled_delta": -0.013457753177172016,
+      "pooled_delta_pp": -1.3457753177172016,
+      "pooled_recall_delta_pp": {
+        "Mn": -0.39556962025316666,
+        "Cu": -0.2915451895043719,
+        "Zn": -2.4114173228346414,
+        "Class VIII": -2.28456913827656
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.024854836665828498,
+          -0.0020621913236865165
+        ],
+        "ci95_pp": [
+          -2.4854836665828497,
+          -0.20621913236865164
+        ],
+        "one_sided95_lower_pp": -2.3140659913054087
+      },
+      "prediction_disagreement_n": 733,
+      "prediction_disagreement_rate": 0.099080832657475,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": false,
+      "reference_advantage_supported": false
+    },
+    "step_f_single_refit_s42": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.028156237648507366,
+      "fold_deltas": [
+        -0.04448760658612516,
+        -0.027182196041864226,
+        -0.019272749264494404,
+        -0.027901723552650637,
+        -0.021936912797402397
+      ],
+      "fold_mean_delta_pp": -2.8156237648507365,
+      "fold_bootstrap_ci95": [
+        -0.03651638571952842,
+        -0.02153137682870725
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -3.651638571952842,
+        -2.153137682870725
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": -0.032862371994003416,
+        "Cu": -0.014031775049009543,
+        "Zn": -0.054366432503808085,
+        "Class VIII": -0.011364371047208555
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": -3.2862371994003414,
+        "Cu": -1.4031775049009543,
+        "Zn": -5.436643250380809,
+        "Class VIII": -1.1364371047208555
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.06061372830584888,
+          -0.002466411422065895
+        ],
+        "Cu": [
+          -0.03887139644244526,
+          0.017559262510974595
+        ],
+        "Zn": [
+          -0.06636520192002542,
+          -0.04236766308759075
+        ],
+        "Class VIII": [
+          -0.042604048582995956,
+          0.021198474802593827
+        ]
+      },
+      "pooled_delta": -0.028290352683495223,
+      "pooled_delta_pp": -2.8290352683495223,
+      "pooled_recall_delta_pp": {
+        "Mn": -3.322784810126578,
+        "Cu": -1.4577259475218596,
+        "Zn": -5.4133858267716555,
+        "Class VIII": -1.1222444889779637
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.04545758589718388,
+          -0.01247712885384276
+        ],
+        "ci95_pp": [
+          -4.545758589718388,
+          -1.2477128853842758
+        ],
+        "one_sided95_lower_pp": -4.271626143316138
+      },
+      "prediction_disagreement_n": 980,
+      "prediction_disagreement_rate": 0.1324682346580157,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": false,
+      "reference_advantage_supported": true
+    },
+    "top3_lf": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.005462584092364264,
+      "fold_deltas": [
+        0.012642839563839492,
+        -0.021383040523600294,
+        0.002783466443427529,
+        -0.03249721800961636,
+        0.011141032064128309
+      ],
+      "fold_mean_delta_pp": -0.5462584092364264,
+      "fold_bootstrap_ci95": [
+        -0.02154673249766421,
+        0.010070241939872627
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -2.154673249766421,
+        1.0070241939872626
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": 0.004496139121009613,
+        "Cu": -4.389815627741101e-05,
+        "Zn": -0.018361410330784332,
+        "Class VIII": -0.007941167003404914
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": 0.44961391210096124,
+        "Cu": -0.0043898156277411005,
+        "Zn": -1.8361410330784331,
+        "Class VIII": -0.7941167003404914
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.04005027016581801,
+          0.04405636670165729
+        ],
+        "Cu": [
+          -0.008955223880596974,
+          0.00882352941176474
+        ],
+        "Zn": [
+          -0.03433987732191111,
+          0.0006100855731546063
+        ],
+        "Class VIII": [
+          -0.034102096852659636,
+          0.018219762845849807
+        ]
+      },
+      "pooled_delta": -0.005467048918928352,
+      "pooled_delta_pp": -0.5467048918928352,
+      "pooled_recall_delta_pp": {
+        "Mn": 0.39556962025316666,
+        "Cu": 0.0,
+        "Zn": -1.8208661417322802,
+        "Class VIII": -0.7615230460921829
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.016108839907347395,
+          0.005088929690190252
+        ],
+        "ci95_pp": [
+          -1.6108839907347394,
+          0.5088929690190253
+        ],
+        "one_sided95_lower_pp": -1.4466829738257052
+      },
+      "prediction_disagreement_n": 635,
+      "prediction_disagreement_rate": 0.08583400919167343,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": true,
+      "reference_advantage_supported": false
+    },
+    "top4_lf": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.0035635209621144083,
+      "fold_deltas": [
+        0.01644118432215813,
+        -0.017479019233360038,
+        0.0013032136044790477,
+        -0.03210101957599343,
+        0.014018036072144247
+      ],
+      "fold_mean_delta_pp": -0.3563520962114408,
+      "fold_bootstrap_ci95": [
+        -0.019952808377839214,
+        0.012444330878616761
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -1.9952808377839213,
+        1.244433087861676
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": 0.0017287780466436198,
+        "Cu": 0.005680902497985496,
+        "Zn": -0.01293423774613749,
+        "Class VIII": -0.008729526646949181
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": 0.17287780466436198,
+        "Cu": 0.5680902497985496,
+        "Zn": -1.293423774613749,
+        "Class VIII": -0.8729526646949182
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.04315339701777095,
+          0.04124677927283142
+        ],
+        "Cu": [
+          0.0,
+          0.01156325543916199
+        ],
+        "Zn": [
+          -0.029858450429618343,
+          0.007533498759305224
+        ],
+        "Class VIII": [
+          -0.03491676080377981,
+          0.01745770750988145
+        ]
+      },
+      "pooled_delta": -0.003548624151759716,
+      "pooled_delta_pp": -0.3548624151759716,
+      "pooled_recall_delta_pp": {
+        "Mn": 0.11867088607595555,
+        "Cu": 0.5830903790087438,
+        "Zn": -1.2795275590551158,
+        "Class VIII": -0.84168336673347
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.013623311835474028,
+          0.006335330573689886
+        ],
+        "ci95_pp": [
+          -1.3623311835474028,
+          0.6335330573689886
+        ],
+        "one_sided95_lower_pp": -1.216188161248051
+      },
+      "prediction_disagreement_n": 621,
+      "prediction_disagreement_rate": 0.08394160583941605,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": true,
+      "reference_advantage_supported": false
+    },
+    "top4_lf_seed42": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.008161549973812087,
+      "fold_deltas": [
+        0.011733212089713119,
+        -0.023065919301342608,
+        -0.007611194685334777,
+        -0.030033620055946453,
+        0.00816977208385028
+      ],
+      "fold_mean_delta_pp": -0.8161549973812087,
+      "fold_bootstrap_ci95": [
+        -0.02276205467998258,
+        0.006438954732358404
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -2.276205467998258,
+        0.6438954732358404
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": 0.009688663021026955,
+        "Cu": 0.00020145044319097583,
+        "Zn": -0.018235507298001764,
+        "Class VIII": -0.024300806061464487
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": 0.9688663021026954,
+        "Cu": 0.020145044319097583,
+        "Zn": -1.8235507298001763,
+        "Class VIII": -2.430080606146449
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.039691694917071474,
+          0.060272295563890445
+        ],
+        "Cu": [
+          -0.008219178082191813,
+          0.00882352941176474
+        ],
+        "Zn": [
+          -0.03811724522490854,
+          0.005182477221090087
+        ],
+        "Class VIII": [
+          -0.043888493283969744,
+          -0.004812547838634762
+        ]
+      },
+      "pooled_delta": -0.008289664085971316,
+      "pooled_delta_pp": -0.8289664085971316,
+      "pooled_recall_delta_pp": {
+        "Mn": 0.9098101265822778,
+        "Cu": 0.0,
+        "Zn": -1.8208661417322802,
+        "Class VIII": -2.4048096192384794
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.019310522626967575,
+          0.0032410162989189944
+        ],
+        "ci95_pp": [
+          -1.9310522626967574,
+          0.32410162989189945
+        ],
+        "one_sided95_lower_pp": -1.7587840088328814
+      },
+      "prediction_disagreement_n": 648,
+      "prediction_disagreement_rate": 0.08759124087591241,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": false,
+      "reference_advantage_supported": false
+    },
+    "trunklr1e4_5fold_s42": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": -0.016508693963828057,
+      "fold_deltas": [
+        0.004024600682808854,
+        -0.022194488797926293,
+        -0.014655156351963128,
+        -0.0464820087852138,
+        -0.0032364165668459233
+      ],
+      "fold_mean_delta_pp": -1.6508693963828056,
+      "fold_bootstrap_ci95": [
+        -0.03297538634408272,
+        -0.002615757624007453
+      ],
+      "fold_bootstrap_ci95_pp": [
+        -3.2975386344082724,
+        -0.2615757624007453
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": -0.011234268785393641,
+        "Cu": -0.011449601308525837,
+        "Zn": -0.04551503955060414,
+        "Class VIII": 0.0021641337892112644
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": -1.1234268785393642,
+        "Cu": -1.1449601308525836,
+        "Zn": -4.551503955060414,
+        "Class VIII": 0.21641337892112644
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          -0.06433675351676113,
+          0.03994837924876991
+        ],
+        "Cu": [
+          -0.02584037908763994,
+          0.0033440773569702207
+        ],
+        "Zn": [
+          -0.06280940676196992,
+          -0.02667151523668987
+        ],
+        "Class VIII": [
+          -0.022395084770007345,
+          0.023870255348516233
+        ]
+      },
+      "pooled_delta": -0.01659991927992821,
+      "pooled_delta_pp": -1.659991927992821,
+      "pooled_recall_delta_pp": {
+        "Mn": -1.186708860759489,
+        "Cu": -1.1661807580174877,
+        "Zn": -4.527559055118113,
+        "Class VIII": 0.24048096192383905
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          -0.029672286869425878,
+          -0.0037899553996296863
+        ],
+        "ci95_pp": [
+          -2.9672286869425877,
+          -0.37899553996296864
+        ],
+        "one_sided95_lower_pp": -2.7524062006526204
+      },
+      "prediction_disagreement_n": 877,
+      "prediction_disagreement_rate": 0.11854555285212219,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false,
+      "meets_similarity_bar": false,
+      "reference_advantage_supported": true
+    },
+    "unified_trimodal_cv_locked": {
+      "interpretation": "descriptive paired intervals, conditional on fixed historical candidates; not promotion evidence",
+      "bootstrap_samples": 10000,
+      "bootstrap_seed": 42,
+      "units": "balanced-accuracy fraction",
+      "fold_mean_delta": 0.0,
+      "fold_deltas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fold_mean_delta_pp": 0.0,
+      "fold_bootstrap_ci95": [
+        0.0,
+        0.0
+      ],
+      "fold_bootstrap_ci95_pp": [
+        0.0,
+        0.0
+      ],
+      "fold_mean_recall_delta": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 0.0,
+        "Class VIII": 0.0
+      },
+      "fold_mean_recall_delta_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 0.0,
+        "Class VIII": 0.0
+      },
+      "fold_recall_delta_ci95": {
+        "Mn": [
+          0.0,
+          0.0
+        ],
+        "Cu": [
+          0.0,
+          0.0
+        ],
+        "Zn": [
+          0.0,
+          0.0
+        ],
+        "Class VIII": [
+          0.0,
+          0.0
+        ]
+      },
+      "pooled_delta": 0.0,
+      "pooled_delta_pp": 0.0,
+      "pooled_recall_delta_pp": {
+        "Mn": 0.0,
+        "Cu": 0.0,
+        "Zn": 0.0,
+        "Class VIII": 0.0
+      },
+      "related_group_bootstrap": {
+        "group_field": "group_id",
+        "n_groups": 2208,
+        "valid_resamples": 10000,
+        "missing_class_resamples": 0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "ci95_pp": [
+          0.0,
+          0.0
+        ],
+        "one_sided95_lower_pp": 0.0
+      },
+      "prediction_disagreement_n": 0,
+      "prediction_disagreement_rate": 0.0,
+      "selection_optimism_corrected": false,
+      "promotion_authorized": false
+    }
+  },
+  "simplicity_rule": {
+    "rule": "Plan section 7 sequential rule: start from each simplest candidate and move to the least complex more complex candidate whose paired 95% CI of OOF balanced-accuracy advantage over the current choice excludes zero; stop when none does. Reported for the fold bootstrap, the related-group bootstrap and both together. Complexity order: checkpoints, then members per OOF example.",
+    "complexity_order": [
+      "baseline_5fold_s42",
+      "trunklr1e4_5fold_s42",
+      "recipe_p_5class_3seed",
+      "top4_lf_seed42",
+      "top3_lf",
+      "top4_lf",
+      "unified_trimodal_cv_locked"
+    ],
+    "pairs": [
+      {
+        "simpler": "baseline_5fold_s42",
+        "more_complex": "recipe_p_5class_3seed",
+        "pooled_delta_pp": 1.4832599506323207,
+        "fold_bootstrap_ci95_pp": [
+          -0.2313038361514308,
+          2.9819809353306503
+        ],
+        "related_group_ci95_pp": [
+          0.3989196692829963,
+          2.709719537733781
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "baseline_5fold_s42",
+        "more_complex": "top4_lf_seed42",
+        "pooled_delta_pp": 2.000068859752391,
+        "fold_bootstrap_ci95_pp": [
+          0.31260630107222465,
+          4.055233839908691
+        ],
+        "related_group_ci95_pp": [
+          0.660862004615851,
+          3.518450957665511
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "baseline_5fold_s42",
+        "more_complex": "top3_lf",
+        "pooled_delta_pp": 2.282330376456687,
+        "fold_bootstrap_ci95_pp": [
+          0.4892707566103671,
+          4.205368776593772
+        ],
+        "related_group_ci95_pp": [
+          1.0850132314311307,
+          3.6648529238788337
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "baseline_5fold_s42",
+        "more_complex": "top4_lf",
+        "pooled_delta_pp": 2.4741728531735507,
+        "fold_bootstrap_ci95_pp": [
+          0.6316744887859249,
+          4.568889968058014
+        ],
+        "related_group_ci95_pp": [
+          1.2736693939496888,
+          3.887306834458993
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "baseline_5fold_s42",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 2.8290352683495223,
+        "fold_bootstrap_ci95_pp": [
+          2.153137682870725,
+          3.651638571952842
+        ],
+        "related_group_ci95_pp": [
+          1.2477128853842754,
+          4.545758589718388
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "trunklr1e4_5fold_s42",
+        "more_complex": "recipe_p_5class_3seed",
+        "pooled_delta_pp": 0.3142166102756194,
+        "fold_bootstrap_ci95_pp": [
+          -0.757870679244681,
+          1.5563180600114368
+        ],
+        "related_group_ci95_pp": [
+          -0.9199287199612703,
+          1.5543495051885818
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "trunklr1e4_5fold_s42",
+        "more_complex": "top4_lf_seed42",
+        "pooled_delta_pp": 0.8310255193956895,
+        "fold_bootstrap_ci95_pp": [
+          0.3167171761415122,
+          1.2984424882730616
+        ],
+        "related_group_ci95_pp": [
+          0.09141876314651555,
+          1.6416952535047153
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "trunklr1e4_5fold_s42",
+        "more_complex": "top3_lf",
+        "pooled_delta_pp": 1.1132870360999858,
+        "fold_bootstrap_ci95_pp": [
+          0.5698241299879858,
+          1.5523386725665445
+        ],
+        "related_group_ci95_pp": [
+          0.31229318475437884,
+          1.9844858703962667
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "trunklr1e4_5fold_s42",
+        "more_complex": "top4_lf",
+        "pooled_delta_pp": 1.3051295128168494,
+        "fold_bootstrap_ci95_pp": [
+          0.8581677422427902,
+          1.6161326880017015
+        ],
+        "related_group_ci95_pp": [
+          0.4254944975184892,
+          2.2279859511403703
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "trunklr1e4_5fold_s42",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 1.659991927992821,
+        "fold_bootstrap_ci95_pp": [
+          0.2615757624007453,
+          3.2975386344082724
+        ],
+        "related_group_ci95_pp": [
+          0.37899553996296853,
+          2.9672286869425872
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "recipe_p_5class_3seed",
+        "more_complex": "top4_lf_seed42",
+        "pooled_delta_pp": 0.51680890912007,
+        "fold_bootstrap_ci95_pp": [
+          -0.6869829432674246,
+          1.6423206590289174
+        ],
+        "related_group_ci95_pp": [
+          -0.45877558081756453,
+          1.5406677750147124
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "recipe_p_5class_3seed",
+        "more_complex": "top3_lf",
+        "pooled_delta_pp": 0.7990704258243664,
+        "fold_bootstrap_ci95_pp": [
+          -0.06758974096859216,
+          1.681283923957948
+        ],
+        "related_group_ci95_pp": [
+          0.049817860398857786,
+          1.5825456962811437
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "recipe_p_5class_3seed",
+        "more_complex": "top4_lf",
+        "pooled_delta_pp": 0.99091290254123,
+        "fold_bootstrap_ci95_pp": [
+          -0.0765011565136553,
+          1.9951890039343299
+        ],
+        "related_group_ci95_pp": [
+          0.2691087329629058,
+          1.7611980988823082
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "recipe_p_5class_3seed",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 1.3457753177172016,
+        "fold_bootstrap_ci95_pp": [
+          -0.21676044888031984,
+          3.045173301256061
+        ],
+        "related_group_ci95_pp": [
+          0.20621913236865122,
+          2.4854836665828492
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": true
+      },
+      {
+        "simpler": "top4_lf_seed42",
+        "more_complex": "top3_lf",
+        "pooled_delta_pp": 0.28226151670429633,
+        "fold_bootstrap_ci95_pp": [
+          -0.07019812813210624,
+          0.6909948188354309
+        ],
+        "related_group_ci95_pp": [
+          -0.2312285841566738,
+          0.8140245811701464
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "top4_lf_seed42",
+        "more_complex": "top4_lf",
+        "pooled_delta_pp": 0.47410399342115994,
+        "fold_bootstrap_ci95_pp": [
+          0.09943203151648428,
+          0.7407619433973811
+        ],
+        "related_group_ci95_pp": [
+          -0.08751476019107379,
+          1.0202826344392586
+        ],
+        "fold_interval_excludes_zero": true,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "top4_lf_seed42",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 0.8289664085971316,
+        "fold_bootstrap_ci95_pp": [
+          -0.6438954732358404,
+          2.276205467998258
+        ],
+        "related_group_ci95_pp": [
+          -0.32410162989189967,
+          1.9310522626967574
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "top3_lf",
+        "more_complex": "top4_lf",
+        "pooled_delta_pp": 0.1918424767168636,
+        "fold_bootstrap_ci95_pp": [
+          -0.004924306498077513,
+          0.3635211914642422
+        ],
+        "related_group_ci95_pp": [
+          -0.11621320339040919,
+          0.5337093555227493
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "top3_lf",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 0.5467048918928352,
+        "fold_bootstrap_ci95_pp": [
+          -1.0070241939872626,
+          2.154673249766421
+        ],
+        "related_group_ci95_pp": [
+          -0.5088929690190257,
+          1.6108839907347385
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      },
+      {
+        "simpler": "top4_lf",
+        "more_complex": "unified_trimodal_cv_locked",
+        "pooled_delta_pp": 0.3548624151759716,
+        "fold_bootstrap_ci95_pp": [
+          -1.244433087861676,
+          1.9952808377839213
+        ],
+        "related_group_ci95_pp": [
+          -0.6335330573689888,
+          1.3623311835474028
+        ],
+        "fold_interval_excludes_zero": false,
+        "related_group_interval_excludes_zero": false
+      }
+    ],
+    "walks": {
+      "both_intervals": {
+        "baseline_5fold_s42": [
+          "baseline_5fold_s42",
+          "top4_lf_seed42"
+        ],
+        "trunklr1e4_5fold_s42": [
+          "trunklr1e4_5fold_s42",
+          "top4_lf_seed42"
+        ]
+      },
+      "related_group_interval": {
+        "baseline_5fold_s42": [
+          "baseline_5fold_s42",
+          "recipe_p_5class_3seed",
+          "top3_lf"
+        ],
+        "trunklr1e4_5fold_s42": [
+          "trunklr1e4_5fold_s42",
+          "top4_lf_seed42"
+        ]
+      },
+      "fold_interval": {
+        "baseline_5fold_s42": [
+          "baseline_5fold_s42",
+          "top4_lf_seed42",
+          "top4_lf"
+        ],
+        "trunklr1e4_5fold_s42": [
+          "trunklr1e4_5fold_s42",
+          "top4_lf_seed42",
+          "top4_lf"
+        ]
+      }
+    },
+    "stopping_points": {
+      "both_intervals": [
+        "top4_lf_seed42"
+      ],
+      "related_group_interval": [
+        "top4_lf_seed42",
+        "top3_lf"
+      ],
+      "fold_interval": [
+        "top4_lf"
+      ]
+    },
+    "interpretation": "Descriptive OOF evidence on historically chosen candidates; not a promotion."
+  },
+  "n_examples": 7398,
+  "related_group_field": "group_id",
+  "n_related_groups": 2208,
+  "candidates": {
+    "baseline_5fold_s42": {
+      "status": "verified",
+      "oof_source": "baseline_5fold_s42",
+      "checkpoints": 5,
+      "members_per_oof_example": 1,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.741551770748851,
+        "balanced_accuracy": 0.7433841108940309,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7563291139240507,
+          "Cu": 0.7346938775510204,
+          "Zn": 0.8139763779527559,
+          "Class VIII": 0.6685370741482966
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1912,
+            7,
+            239,
+            370
+          ],
+          [
+            9,
+            252,
+            54,
+            28
+          ],
+          [
+            101,
+            30,
+            1654,
+            247
+          ],
+          [
+            377,
+            20,
+            430,
+            1668
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.6927260367097213,
+          "balanced_accuracy": 0.7161574410192996,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.6733466933867736,
+            "Cu": 0.7808219178082192,
+            "Zn": 0.7844611528822055,
+            "Class VIII": 0.626
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              336,
+              0,
+              38,
+              125
+            ],
+            [
+              0,
+              57,
+              16,
+              0
+            ],
+            [
+              20,
+              3,
+              313,
+              63
+            ],
+            [
+              91,
+              2,
+              94,
+              313
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7166666666666667,
+          "balanced_accuracy": 0.7334446704223628,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7976653696498055,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.8691588785046729,
+            "Class VIII": 0.4908350305498982
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              410,
+              1,
+              62,
+              41
+            ],
+            [
+              1,
+              52,
+              11,
+              3
+            ],
+            [
+              12,
+              6,
+              372,
+              38
+            ],
+            [
+              158,
+              3,
+              89,
+              241
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7743243243243243,
+          "balanced_accuracy": 0.7296038012377193,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8075396825396826,
+            "Cu": 0.5588235294117647,
+            "Zn": 0.8109452736318408,
+            "Class VIII": 0.741106719367589
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              407,
+              1,
+              28,
+              68
+            ],
+            [
+              2,
+              38,
+              18,
+              10
+            ],
+            [
+              19,
+              8,
+              326,
+              49
+            ],
+            [
+              48,
+              1,
+              82,
+              375
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7332430602572783,
+          "balanced_accuracy": 0.751687195918143,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.716796875,
+            "Cu": 0.8088235294117647,
+            "Zn": 0.7766749379652605,
+            "Class VIII": 0.7044534412955465
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              367,
+              4,
+              52,
+              89
+            ],
+            [
+              3,
+              55,
+              3,
+              7
+            ],
+            [
+              34,
+              8,
+              313,
+              48
+            ],
+            [
+              46,
+              7,
+              93,
+              348
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.791156462585034,
+          "balanced_accuracy": 0.7831583624486594,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7855711422845691,
+            "Cu": 0.746268656716418,
+            "Zn": 0.825,
+            "Class VIII": 0.7757936507936508
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              392,
+              1,
+              59,
+              47
+            ],
+            [
+              3,
+              50,
+              6,
+              8
+            ],
+            [
+              16,
+              5,
+              330,
+              49
+            ],
+            [
+              34,
+              7,
+              72,
+              391
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7428102942092367,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 74.34,
+        "reconstructed_percent": 74.3384110894031,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.19861018213300893,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 1.3865029851958497,
+        "multiclass_brier": 0.4499000927791934,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.8183292781832928,
+        "accuracy_at_threshold": 0.800792864222002,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.814873417721519,
+            "accuracy": 0.8339805825242719
+          },
+          "Cu": {
+            "coverage": 0.8221574344023324,
+            "accuracy": 0.8085106382978723
+          },
+          "Zn": {
+            "coverage": 0.8499015748031497,
+            "accuracy": 0.8772437753329473
+          },
+          "Class VIII": {
+            "coverage": 0.7955911823647295,
+            "accuracy": 0.6987405541561713
+          }
+        }
+      }
+    },
+    "recipe_p_5class_3seed": {
+      "status": "verified",
+      "oof_source": "recipe_p_5class_3seed",
+      "checkpoints": 15,
+      "members_per_oof_example": 3,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.7564206542308732,
+        "balanced_accuracy": 0.7582167104003541,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7856012658227848,
+          "Cu": 0.7463556851311953,
+          "Zn": 0.843996062992126,
+          "Class VIII": 0.6569138276553106
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1986,
+            6,
+            237,
+            299
+          ],
+          [
+            6,
+            256,
+            45,
+            36
+          ],
+          [
+            110,
+            25,
+            1715,
+            182
+          ],
+          [
+            410,
+            23,
+            423,
+            1639
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.7199184228416043,
+          "balanced_accuracy": 0.7496420290369595,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7014028056112225,
+            "Cu": 0.8356164383561644,
+            "Zn": 0.8195488721804511,
+            "Class VIII": 0.642
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              350,
+              1,
+              51,
+              97
+            ],
+            [
+              1,
+              61,
+              8,
+              3
+            ],
+            [
+              23,
+              3,
+              327,
+              46
+            ],
+            [
+              82,
+              0,
+              97,
+              321
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7246666666666667,
+          "balanced_accuracy": 0.7363426692981585,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8287937743190662,
+            "Cu": 0.7611940298507462,
+            "Zn": 0.8808411214953271,
+            "Class VIII": 0.4745417515274949
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              426,
+              0,
+              49,
+              39
+            ],
+            [
+              1,
+              51,
+              12,
+              3
+            ],
+            [
+              12,
+              7,
+              377,
+              32
+            ],
+            [
+              161,
+              2,
+              95,
+              233
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.8081081081081081,
+          "balanced_accuracy": 0.7596034894007945,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.876984126984127,
+            "Cu": 0.5735294117647058,
+            "Zn": 0.8507462686567164,
+            "Class VIII": 0.7371541501976284
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              442,
+              0,
+              28,
+              34
+            ],
+            [
+              0,
+              39,
+              14,
+              15
+            ],
+            [
+              24,
+              4,
+              342,
+              32
+            ],
+            [
+              57,
+              2,
+              74,
+              373
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7203791469194313,
+          "balanced_accuracy": 0.7368662363026622,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.705078125,
+            "Cu": 0.7794117647058824,
+            "Zn": 0.7990074441687345,
+            "Class VIII": 0.6639676113360324
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              361,
+              5,
+              61,
+              85
+            ],
+            [
+              3,
+              53,
+              5,
+              7
+            ],
+            [
+              33,
+              7,
+              322,
+              41
+            ],
+            [
+              58,
+              15,
+              93,
+              328
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.8095238095238095,
+          "balanced_accuracy": 0.8052888568537216,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8156312625250501,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.8675,
+            "Class VIII": 0.7619047619047619
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              407,
+              0,
+              48,
+              44
+            ],
+            [
+              1,
+              52,
+              6,
+              8
+            ],
+            [
+              18,
+              4,
+              347,
+              31
+            ],
+            [
+              52,
+              4,
+              64,
+              384
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7575486561784592,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 75.82,
+        "reconstructed_percent": 75.82167104003541,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.1349675014292151,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 0.9654078755876371,
+        "multiclass_brier": 0.3878841814331005,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.6768045417680454,
+        "accuracy_at_threshold": 0.859596564809267,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.711629746835443,
+            "accuracy": 0.8877153974430239
+          },
+          "Cu": {
+            "coverage": 0.7405247813411079,
+            "accuracy": 0.8267716535433071
+          },
+          "Zn": {
+            "coverage": 0.7544291338582677,
+            "accuracy": 0.9347684279191129
+          },
+          "Class VIII": {
+            "coverage": 0.5695390781563127,
+            "accuracy": 0.7487684729064039
+          }
+        }
+      }
+    },
+    "step_f_single_refit_s42": {
+      "status": "verified",
+      "oof_source": "baseline_5fold_s42",
+      "checkpoints": 1,
+      "members_per_oof_example": 1,
+      "interpretation": "configuration OOF proxy only; no deployed full-refit OOF score",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.741551770748851,
+        "balanced_accuracy": 0.7433841108940309,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7563291139240507,
+          "Cu": 0.7346938775510204,
+          "Zn": 0.8139763779527559,
+          "Class VIII": 0.6685370741482966
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1912,
+            7,
+            239,
+            370
+          ],
+          [
+            9,
+            252,
+            54,
+            28
+          ],
+          [
+            101,
+            30,
+            1654,
+            247
+          ],
+          [
+            377,
+            20,
+            430,
+            1668
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.6927260367097213,
+          "balanced_accuracy": 0.7161574410192996,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.6733466933867736,
+            "Cu": 0.7808219178082192,
+            "Zn": 0.7844611528822055,
+            "Class VIII": 0.626
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              336,
+              0,
+              38,
+              125
+            ],
+            [
+              0,
+              57,
+              16,
+              0
+            ],
+            [
+              20,
+              3,
+              313,
+              63
+            ],
+            [
+              91,
+              2,
+              94,
+              313
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7166666666666667,
+          "balanced_accuracy": 0.7334446704223628,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7976653696498055,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.8691588785046729,
+            "Class VIII": 0.4908350305498982
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              410,
+              1,
+              62,
+              41
+            ],
+            [
+              1,
+              52,
+              11,
+              3
+            ],
+            [
+              12,
+              6,
+              372,
+              38
+            ],
+            [
+              158,
+              3,
+              89,
+              241
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7743243243243243,
+          "balanced_accuracy": 0.7296038012377193,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8075396825396826,
+            "Cu": 0.5588235294117647,
+            "Zn": 0.8109452736318408,
+            "Class VIII": 0.741106719367589
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              407,
+              1,
+              28,
+              68
+            ],
+            [
+              2,
+              38,
+              18,
+              10
+            ],
+            [
+              19,
+              8,
+              326,
+              49
+            ],
+            [
+              48,
+              1,
+              82,
+              375
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7332430602572783,
+          "balanced_accuracy": 0.751687195918143,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.716796875,
+            "Cu": 0.8088235294117647,
+            "Zn": 0.7766749379652605,
+            "Class VIII": 0.7044534412955465
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              367,
+              4,
+              52,
+              89
+            ],
+            [
+              3,
+              55,
+              3,
+              7
+            ],
+            [
+              34,
+              8,
+              313,
+              48
+            ],
+            [
+              46,
+              7,
+              93,
+              348
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.791156462585034,
+          "balanced_accuracy": 0.7831583624486594,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7855711422845691,
+            "Cu": 0.746268656716418,
+            "Zn": 0.825,
+            "Class VIII": 0.7757936507936508
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              392,
+              1,
+              59,
+              47
+            ],
+            [
+              3,
+              50,
+              6,
+              8
+            ],
+            [
+              16,
+              5,
+              330,
+              49
+            ],
+            [
+              34,
+              7,
+              72,
+              391
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7428102942092367,
+      "near_ties_within_export_tolerance": 0,
+      "calibration": {
+        "ece": 0.19861018213300893,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 1.3865029851958497,
+        "multiclass_brier": 0.4499000927791934,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.8183292781832928,
+        "accuracy_at_threshold": 0.800792864222002,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.814873417721519,
+            "accuracy": 0.8339805825242719
+          },
+          "Cu": {
+            "coverage": 0.8221574344023324,
+            "accuracy": 0.8085106382978723
+          },
+          "Zn": {
+            "coverage": 0.8499015748031497,
+            "accuracy": 0.8772437753329473
+          },
+          "Class VIII": {
+            "coverage": 0.7955911823647295,
+            "accuracy": 0.6987405541561713
+          }
+        }
+      }
+    },
+    "top3_lf": {
+      "status": "verified",
+      "oof_source": "top3_lf",
+      "checkpoints": 25,
+      "members_per_oof_example": 5,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.7660178426601785,
+        "balanced_accuracy": 0.7662074146585978,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7935126582278481,
+          "Cu": 0.749271137026239,
+          "Zn": 0.8499015748031497,
+          "Class VIII": 0.6721442885771544
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            2006,
+            5,
+            236,
+            281
+          ],
+          [
+            9,
+            257,
+            43,
+            34
+          ],
+          [
+            102,
+            24,
+            1727,
+            179
+          ],
+          [
+            356,
+            14,
+            448,
+            1677
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.7511896668932699,
+          "balanced_accuracy": 0.7732878871692642,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7274549098196392,
+            "Cu": 0.8356164383561644,
+            "Zn": 0.8320802005012531,
+            "Class VIII": 0.698
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              363,
+              1,
+              50,
+              85
+            ],
+            [
+              0,
+              61,
+              10,
+              2
+            ],
+            [
+              20,
+              2,
+              332,
+              45
+            ],
+            [
+              52,
+              0,
+              99,
+              349
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7233333333333334,
+          "balanced_accuracy": 0.7392438259406268,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8268482490272373,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.9018691588785047,
+            "Class VIII": 0.45213849287169044
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              425,
+              0,
+              60,
+              29
+            ],
+            [
+              1,
+              52,
+              10,
+              4
+            ],
+            [
+              7,
+              6,
+              386,
+              29
+            ],
+            [
+              163,
+              2,
+              104,
+              222
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7986486486486486,
+          "balanced_accuracy": 0.7516600169456412,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.873015873015873,
+            "Cu": 0.5735294117647058,
+            "Zn": 0.8308457711442786,
+            "Class VIII": 0.7292490118577075
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              440,
+              1,
+              24,
+              39
+            ],
+            [
+              2,
+              39,
+              13,
+              14
+            ],
+            [
+              25,
+              6,
+              334,
+              37
+            ],
+            [
+              49,
+              2,
+              86,
+              369
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7339201083276913,
+          "balanced_accuracy": 0.7470917014611773,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.71875,
+            "Cu": 0.7794117647058824,
+            "Zn": 0.8039702233250621,
+            "Class VIII": 0.6862348178137652
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              368,
+              3,
+              59,
+              82
+            ],
+            [
+              3,
+              53,
+              5,
+              7
+            ],
+            [
+              33,
+              6,
+              324,
+              40
+            ],
+            [
+              57,
+              5,
+              93,
+              339
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.8238095238095238,
+          "balanced_accuracy": 0.8162363073101901,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8216432865731463,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.8775,
+            "Class VIII": 0.7896825396825397
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              410,
+              0,
+              43,
+              46
+            ],
+            [
+              3,
+              52,
+              5,
+              7
+            ],
+            [
+              17,
+              4,
+              351,
+              28
+            ],
+            [
+              35,
+              5,
+              66,
+              398
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.76550394776538,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 76.62,
+        "reconstructed_percent": 76.62074146585978,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.1261560496089034,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 0.9280412777150624,
+        "multiclass_brier": 0.37360718180995356,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.6773452284401189,
+        "accuracy_at_threshold": 0.8635002993414488,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.7041139240506329,
+            "accuracy": 0.897191011235955
+          },
+          "Cu": {
+            "coverage": 0.7551020408163265,
+            "accuracy": 0.8494208494208494
+          },
+          "Zn": {
+            "coverage": 0.7455708661417323,
+            "accuracy": 0.9386138613861386
+          },
+          "Class VIII": {
+            "coverage": 0.5839679358717434,
+            "accuracy": 0.7467398764584763
+          }
+        }
+      }
+    },
+    "top4_lf": {
+      "status": "verified",
+      "oof_source": "top4_lf",
+      "checkpoints": 30,
+      "members_per_oof_example": 6,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.766558529332252,
+        "balanced_accuracy": 0.7681258394257664,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.790743670886076,
+          "Cu": 0.7551020408163265,
+          "Zn": 0.8553149606299213,
+          "Class VIII": 0.6713426853707415
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1999,
+            6,
+            247,
+            276
+          ],
+          [
+            9,
+            259,
+            41,
+            34
+          ],
+          [
+            99,
+            24,
+            1738,
+            171
+          ],
+          [
+            353,
+            18,
+            449,
+            1675
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.751869476546567,
+          "balanced_accuracy": 0.7770862319275829,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7154308617234469,
+            "Cu": 0.8493150684931506,
+            "Zn": 0.8395989974937343,
+            "Class VIII": 0.704
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              357,
+              1,
+              55,
+              86
+            ],
+            [
+              0,
+              62,
+              9,
+              2
+            ],
+            [
+              18,
+              2,
+              335,
+              44
+            ],
+            [
+              52,
+              0,
+              96,
+              352
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.724,
+          "balanced_accuracy": 0.743147847230867,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8249027237354085,
+            "Cu": 0.7910447761194029,
+            "Zn": 0.9065420560747663,
+            "Class VIII": 0.45010183299389
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              424,
+              1,
+              61,
+              28
+            ],
+            [
+              1,
+              53,
+              10,
+              3
+            ],
+            [
+              7,
+              6,
+              388,
+              27
+            ],
+            [
+              161,
+              2,
+              107,
+              221
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7966216216216216,
+          "balanced_accuracy": 0.7501797641066927,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.875,
+            "Cu": 0.5735294117647058,
+            "Zn": 0.8308457711442786,
+            "Class VIII": 0.7213438735177866
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              441,
+              0,
+              25,
+              38
+            ],
+            [
+              2,
+              39,
+              13,
+              14
+            ],
+            [
+              25,
+              6,
+              334,
+              37
+            ],
+            [
+              53,
+              2,
+              86,
+              365
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7339201083276913,
+          "balanced_accuracy": 0.7474878998948002,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.712890625,
+            "Cu": 0.7794117647058824,
+            "Zn": 0.8114143920595533,
+            "Class VIII": 0.6862348178137652
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              365,
+              4,
+              64,
+              79
+            ],
+            [
+              3,
+              53,
+              5,
+              7
+            ],
+            [
+              32,
+              6,
+              327,
+              38
+            ],
+            [
+              54,
+              8,
+              93,
+              339
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.8272108843537415,
+          "balanced_accuracy": 0.8191133113182061,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8256513026052105,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.885,
+            "Class VIII": 0.7896825396825397
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              412,
+              0,
+              42,
+              45
+            ],
+            [
+              3,
+              52,
+              4,
+              8
+            ],
+            [
+              17,
+              4,
+              354,
+              25
+            ],
+            [
+              33,
+              6,
+              67,
+              398
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7674030108956298,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 76.81,
+        "reconstructed_percent": 76.81258394257664,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.07508921472087049,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 0.7457577384875229,
+        "multiclass_brier": 0.3584584966728633,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.5450121654501217,
+        "accuracy_at_threshold": 0.9099702380952381,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.5680379746835443,
+            "accuracy": 0.9331476323119777
+          },
+          "Cu": {
+            "coverage": 0.7055393586005831,
+            "accuracy": 0.9008264462809917
+          },
+          "Zn": {
+            "coverage": 0.6589566929133859,
+            "accuracy": 0.964152352501867
+          },
+          "Class VIII": {
+            "coverage": 0.40681362725450904,
+            "accuracy": 0.8078817733990148
+          }
+        }
+      }
+    },
+    "top4_lf_seed42": {
+      "status": "verified",
+      "oof_source": "top4_lf_seed42",
+      "checkpoints": 20,
+      "members_per_oof_example": 4,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.7622330359556637,
+        "balanced_accuracy": 0.7633847994915548,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7986550632911392,
+          "Cu": 0.749271137026239,
+          "Zn": 0.8499015748031497,
+          "Class VIII": 0.6557114228456914
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            2019,
+            5,
+            225,
+            279
+          ],
+          [
+            9,
+            257,
+            43,
+            34
+          ],
+          [
+            99,
+            28,
+            1727,
+            178
+          ],
+          [
+            365,
+            17,
+            477,
+            1636
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.7539089055064582,
+          "balanced_accuracy": 0.7723782596951378,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7575150300601202,
+            "Cu": 0.821917808219178,
+            "Zn": 0.8320802005012531,
+            "Class VIII": 0.678
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              378,
+              1,
+              30,
+              90
+            ],
+            [
+              0,
+              60,
+              11,
+              2
+            ],
+            [
+              20,
+              2,
+              332,
+              45
+            ],
+            [
+              62,
+              0,
+              99,
+              339
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7173333333333334,
+          "balanced_accuracy": 0.7375609471628845,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8287937743190662,
+            "Cu": 0.7910447761194029,
+            "Zn": 0.8925233644859814,
+            "Class VIII": 0.4378818737270876
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              426,
+              1,
+              61,
+              26
+            ],
+            [
+              1,
+              53,
+              10,
+              3
+            ],
+            [
+              9,
+              6,
+              382,
+              31
+            ],
+            [
+              163,
+              3,
+              110,
+              215
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7851351351351351,
+          "balanced_accuracy": 0.7412653558168789,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.871031746031746,
+            "Cu": 0.5735294117647058,
+            "Zn": 0.8208955223880597,
+            "Class VIII": 0.6996047430830039
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              439,
+              0,
+              24,
+              41
+            ],
+            [
+              2,
+              39,
+              14,
+              13
+            ],
+            [
+              21,
+              9,
+              330,
+              42
+            ],
+            [
+              50,
+              2,
+              100,
+              354
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7366283006093433,
+          "balanced_accuracy": 0.7495552994148472,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.720703125,
+            "Cu": 0.7794117647058824,
+            "Zn": 0.8138957816377171,
+            "Class VIII": 0.6842105263157895
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              369,
+              3,
+              66,
+              74
+            ],
+            [
+              3,
+              53,
+              5,
+              7
+            ],
+            [
+              34,
+              6,
+              328,
+              35
+            ],
+            [
+              52,
+              7,
+              97,
+              338
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.819047619047619,
+          "balanced_accuracy": 0.8132650473299121,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8156312625250501,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.8875,
+            "Class VIII": 0.7738095238095238
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              407,
+              0,
+              44,
+              48
+            ],
+            [
+              3,
+              52,
+              3,
+              9
+            ],
+            [
+              15,
+              5,
+              355,
+              25
+            ],
+            [
+              38,
+              5,
+              71,
+              390
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7628049818839321,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 76.34,
+        "reconstructed_percent": 76.33847994915548,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.08194907750912406,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 0.7685434441544001,
+        "multiclass_brier": 0.3652471253252962,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.5575831305758313,
+        "accuracy_at_threshold": 0.8996363636363637,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.5791139240506329,
+            "accuracy": 0.921448087431694
+          },
+          "Cu": {
+            "coverage": 0.7230320699708455,
+            "accuracy": 0.8911290322580645
+          },
+          "Zn": {
+            "coverage": 0.6742125984251969,
+            "accuracy": 0.9605839416058394
+          },
+          "Class VIII": {
+            "coverage": 0.41803607214428856,
+            "accuracy": 0.7909875359539789
+          }
+        }
+      }
+    },
+    "trunklr1e4_5fold_s42": {
+      "status": "verified",
+      "oof_source": "trunklr1e4_5fold_s42",
+      "checkpoints": 5,
+      "members_per_oof_example": 1,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.7560151392268181,
+        "balanced_accuracy": 0.7550745442975979,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7776898734177216,
+          "Cu": 0.7376093294460642,
+          "Zn": 0.8228346456692913,
+          "Class VIII": 0.6821643286573146
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1966,
+            8,
+            231,
+            323
+          ],
+          [
+            10,
+            253,
+            45,
+            35
+          ],
+          [
+            110,
+            34,
+            1672,
+            216
+          ],
+          [
+            347,
+            16,
+            430,
+            1702
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.7498300475866757,
+          "balanced_accuracy": 0.7646696482882336,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7334669338677354,
+            "Cu": 0.8082191780821918,
+            "Zn": 0.7969924812030075,
+            "Class VIII": 0.72
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              366,
+              3,
+              27,
+              103
+            ],
+            [
+              0,
+              59,
+              12,
+              2
+            ],
+            [
+              20,
+              4,
+              318,
+              57
+            ],
+            [
+              48,
+              2,
+              90,
+              360
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7186666666666667,
+          "balanced_accuracy": 0.7384323776663008,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8093385214007782,
+            "Cu": 0.7910447761194029,
+            "Zn": 0.8808411214953271,
+            "Class VIII": 0.4725050916496945
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              416,
+              1,
+              62,
+              35
+            ],
+            [
+              1,
+              53,
+              9,
+              4
+            ],
+            [
+              10,
+              4,
+              377,
+              37
+            ],
+            [
+              160,
+              2,
+              97,
+              232
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7804054054054054,
+          "balanced_accuracy": 0.7342213941502506,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8511904761904762,
+            "Cu": 0.5588235294117647,
+            "Zn": 0.8134328358208955,
+            "Class VIII": 0.7134387351778656
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              429,
+              0,
+              23,
+              52
+            ],
+            [
+              3,
+              38,
+              12,
+              15
+            ],
+            [
+              23,
+              8,
+              327,
+              44
+            ],
+            [
+              48,
+              2,
+              95,
+              361
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7169939065673663,
+          "balanced_accuracy": 0.7331069106855799,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.689453125,
+            "Cu": 0.7794117647058824,
+            "Zn": 0.7692307692307693,
+            "Class VIII": 0.694331983805668
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              353,
+              3,
+              73,
+              83
+            ],
+            [
+              3,
+              53,
+              5,
+              7
+            ],
+            [
+              37,
+              11,
+              310,
+              45
+            ],
+            [
+              55,
+              4,
+              92,
+              343
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.8149659863945579,
+          "balanced_accuracy": 0.8018588586792159,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8056112224448898,
+            "Cu": 0.746268656716418,
+            "Zn": 0.85,
+            "Class VIII": 0.8055555555555556
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              402,
+              1,
+              46,
+              50
+            ],
+            [
+              3,
+              50,
+              7,
+              7
+            ],
+            [
+              20,
+              7,
+              340,
+              33
+            ],
+            [
+              36,
+              6,
+              56,
+              406
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7544578378939161,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 75.51,
+        "reconstructed_percent": 75.50745442975979,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.18840774336036767,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 1.3968681598075858,
+        "multiclass_brier": 0.42543778034034796,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.830765071640984,
+        "accuracy_at_threshold": 0.8119101854864953,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.8441455696202531,
+            "accuracy": 0.837863167760075
+          },
+          "Cu": {
+            "coverage": 0.8483965014577259,
+            "accuracy": 0.7972508591065293
+          },
+          "Zn": {
+            "coverage": 0.860236220472441,
+            "accuracy": 0.8844393592677345
+          },
+          "Class VIII": {
+            "coverage": 0.7907815631262525,
+            "accuracy": 0.7217435377597567
+          }
+        }
+      }
+    },
+    "unified_trimodal_cv_locked": {
+      "status": "verified",
+      "oof_source": "unified_trimodal_cv_locked",
+      "checkpoints": 55,
+      "members_per_oof_example": 11,
+      "interpretation": "fold-eligible OOF configuration mixture; deployment averages additional fold models",
+      "common_four": {
+        "n": 7398,
+        "accuracy": 0.772235739389024,
+        "balanced_accuracy": 0.7716744635775261,
+        "all_classes_present": true,
+        "recall": {
+          "Mn": 0.7895569620253164,
+          "Cu": 0.749271137026239,
+          "Zn": 0.8681102362204725,
+          "Class VIII": 0.6797595190380762
+        },
+        "support": {
+          "Mn": 2528,
+          "Cu": 343,
+          "Zn": 2032,
+          "Class VIII": 2495
+        },
+        "confusion_matrix": [
+          [
+            1996,
+            1,
+            231,
+            300
+          ],
+          [
+            6,
+            257,
+            47,
+            33
+          ],
+          [
+            99,
+            17,
+            1764,
+            152
+          ],
+          [
+            347,
+            7,
+            445,
+            1696
+          ]
+        ],
+        "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+      },
+      "folds": {
+        "0": {
+          "n": 1471,
+          "accuracy": 0.7321549966009517,
+          "balanced_accuracy": 0.7606450476054247,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.657314629258517,
+            "Cu": 0.8356164383561644,
+            "Zn": 0.8596491228070176,
+            "Class VIII": 0.69
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 73,
+            "Zn": 399,
+            "Class VIII": 500
+          },
+          "confusion_matrix": [
+            [
+              328,
+              0,
+              62,
+              109
+            ],
+            [
+              0,
+              61,
+              9,
+              3
+            ],
+            [
+              18,
+              1,
+              343,
+              37
+            ],
+            [
+              46,
+              1,
+              108,
+              345
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "1": {
+          "n": 1500,
+          "accuracy": 0.7473333333333333,
+          "balanced_accuracy": 0.7606268664642271,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8540856031128404,
+            "Cu": 0.7910447761194029,
+            "Zn": 0.9065420560747663,
+            "Class VIII": 0.4908350305498982
+          },
+          "support": {
+            "Mn": 514,
+            "Cu": 67,
+            "Zn": 428,
+            "Class VIII": 491
+          },
+          "confusion_matrix": [
+            [
+              439,
+              0,
+              52,
+              23
+            ],
+            [
+              1,
+              53,
+              12,
+              1
+            ],
+            [
+              10,
+              5,
+              388,
+              25
+            ],
+            [
+              155,
+              2,
+              93,
+              241
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "2": {
+          "n": 1480,
+          "accuracy": 0.7918918918918919,
+          "balanced_accuracy": 0.7488765505022137,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.8571428571428571,
+            "Cu": 0.5735294117647058,
+            "Zn": 0.8731343283582089,
+            "Class VIII": 0.691699604743083
+          },
+          "support": {
+            "Mn": 504,
+            "Cu": 68,
+            "Zn": 402,
+            "Class VIII": 506
+          },
+          "confusion_matrix": [
+            [
+              432,
+              0,
+              24,
+              48
+            ],
+            [
+              2,
+              39,
+              16,
+              11
+            ],
+            [
+              20,
+              3,
+              351,
+              28
+            ],
+            [
+              57,
+              0,
+              99,
+              350
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "3": {
+          "n": 1477,
+          "accuracy": 0.7806364251861883,
+          "balanced_accuracy": 0.7795889194707937,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.787109375,
+            "Cu": 0.7647058823529411,
+            "Zn": 0.8337468982630273,
+            "Class VIII": 0.7327935222672065
+          },
+          "support": {
+            "Mn": 512,
+            "Cu": 68,
+            "Zn": 403,
+            "Class VIII": 494
+          },
+          "confusion_matrix": [
+            [
+              403,
+              1,
+              52,
+              56
+            ],
+            [
+              2,
+              52,
+              5,
+              9
+            ],
+            [
+              32,
+              5,
+              336,
+              30
+            ],
+            [
+              51,
+              0,
+              81,
+              362
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        },
+        "4": {
+          "n": 1470,
+          "accuracy": 0.8095238095238095,
+          "balanced_accuracy": 0.8050952752460618,
+          "all_classes_present": true,
+          "recall": {
+            "Mn": 0.7895791583166333,
+            "Cu": 0.7761194029850746,
+            "Zn": 0.865,
+            "Class VIII": 0.7896825396825397
+          },
+          "support": {
+            "Mn": 499,
+            "Cu": 67,
+            "Zn": 400,
+            "Class VIII": 504
+          },
+          "confusion_matrix": [
+            [
+              394,
+              0,
+              41,
+              64
+            ],
+            [
+              1,
+              52,
+              5,
+              9
+            ],
+            [
+              19,
+              3,
+              346,
+              32
+            ],
+            [
+              38,
+              4,
+              64,
+              398
+            ]
+          ],
+          "native_label_note": "Five-class Class VIII means Co+Ni; common-four Class VIII means Fe+Co+Ni."
+        }
+      },
+      "fold_mean_balanced_accuracy": 0.7709665318577441,
+      "near_ties_within_export_tolerance": 0,
+      "historical_score_reconciliation": {
+        "reported_percent": 77.17,
+        "reconstructed_percent": 77.16744635775261,
+        "matches_reported_rounding": true
+      },
+      "calibration": {
+        "ece": 0.05253204446570321,
+        "ece_binning": "10 equal-width bins of the maximum common-four probability on [0, 1]; last bin closed",
+        "nll": 0.6949524779866717,
+        "multiclass_brier": 0.33534164502208935,
+        "max_probability_threshold": 0.9,
+        "coverage_at_threshold": 0.5012165450121655,
+        "accuracy_at_threshold": 0.9217907227615966,
+        "by_true_class_at_threshold": {
+          "Mn": {
+            "coverage": 0.507120253164557,
+            "accuracy": 0.9360374414976599
+          },
+          "Cu": {
+            "coverage": 0.5276967930029155,
+            "accuracy": 0.8839779005524862
+          },
+          "Zn": {
+            "coverage": 0.6215551181102362,
+            "accuracy": 0.9746634996041171
+          },
+          "Class VIII": {
+            "coverage": 0.3935871743486974,
+            "accuracy": 0.8421588594704684
+          }
+        }
+      }
+    }
+  },
+  "calibration_note": "OOF calibration depends on members per OOF example; a deployed fold ensemble averages more members per input than its OOF reconstruction. No calibrator fitted.",
+  "raw_evidence": {
+    "audit.json": {
+      "sha256": "27d62f403f8d3b2197665aaab5e91b00e42cdde919a5674740468680bc0e4cf0"
+    },
+    "comparison.csv": {
+      "sha256": "ca4b8e7e492cebaf75cbcc8c6c406388892bc6bbde86ab48a11031ebf9c580f7"
+    },
+    "development_oof_predictions.csv": {
+      "sha256": "d4a59c23b2e0b09e028c20c320c1443e5478a30865f56a48869540a0dd070a21"
+    }
+  },
+  "scope": "Saved development predictions and metadata only; no held-out reads, inference or training."
+}

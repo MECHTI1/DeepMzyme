@@ -1,0 +1,452 @@
+{
+  "schema": "deepmzyme-metal-benchmark-summary-v1",
+  "status": "complete",
+  "manifest": {
+    "path": "<private-v1-manifest.json>",
+    "sha256": "7422a714d69854cbadeba957b4311233c6b8f0142445114f71ecee2009c9fcbe"
+  },
+  "fixture": {
+    "path": "<private-benchmark-fixture.json>",
+    "sha256": "74e9ae383c4a4d2e9a0954ab16f848c540d56d3075f1ad018fa18af526f9bbb3"
+  },
+  "fixture_certification": {
+    "path": "<private>/benchmark_fixture_certification.json",
+    "sha256": "317db631654fbc5607ff9eacb815910a32da8e89e21506b141b7b524ecb5c377"
+  },
+  "raw_cached_benchmark": {
+    "path": "<private>/cpu_benchmark/benchmark.json",
+    "sha256": "7df2ec70c61f7218a0abe5abc33fdb25c466e933ea7ddef8e31643d19a44cfae"
+  },
+  "measured_runner": {
+    "path": "<private>/benchmark_runner_original.py",
+    "sha256": "80b4fcb0ac5314952ce47ebeb4bb6ad4c0f2e946cac68b1a2fa4e177e18fdf33"
+  },
+  "cold_runner": {
+    "path": "<private>/cold_benchmark_runner.py",
+    "sha256": "374ee28339dd196550ae50163d65cede36349f77c0161f3915a8de251810397c"
+  },
+  "raw_cold_benchmark": {
+    "path": "<private>/cold_reference/benchmark.json",
+    "sha256": "9c6d83032817d42a2448875cdbb077b052945ba33b84f365c31177bdd6dae837"
+  },
+  "hardware": {
+    "cpu": "Intel Core i7-1165G7 @ 2.80GHz",
+    "physical_cores": 4,
+    "logical_cpus": 8,
+    "host_ram_bytes": 16441630720,
+    "torch_threads": 4,
+    "device": "cpu"
+  },
+  "reference": "unified_trimodal_cv_locked",
+  "cached_repeats_per_case": 3,
+  "candidates": {
+    "step_f_single_refit_s42": {
+      "cached_single_site": {
+        "median_wall_seconds": 4.455809734000013,
+        "range_wall_seconds": [
+          4.360071466000136,
+          4.682020957000077
+        ],
+        "max_peak_process_rss_bytes": 747819008,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 0.10366377499985902,
+          "structure_and_site_seconds": 0.02016784399984317,
+          "embeddings_seconds": 0.006198553000103857,
+          "total_seconds": 0.4766323650001141,
+          "checkpoint_load_seconds": 0.2123560179998094,
+          "graph_prepare_seconds": 0.06832275099986873,
+          "forward_and_normalization_seconds": 0.019008795999980066
+        }
+      },
+      "same_protein_sites": {
+        "median_wall_seconds": 4.8516699679998965,
+        "range_wall_seconds": [
+          4.6334975780000605,
+          5.201090681000096
+        ],
+        "max_peak_process_rss_bytes": 748003328,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 0.11374796700010847,
+          "structure_and_site_seconds": 0.034993145000044024,
+          "embeddings_seconds": 0.007730004000222834,
+          "total_seconds": 0.6403519870000309,
+          "checkpoint_load_seconds": 0.28155315599997266,
+          "graph_prepare_seconds": 0.15602186700016318,
+          "forward_and_normalization_seconds": 0.028078402999653918
+        }
+      }
+    },
+    "top4_lf": {
+      "cached_single_site": {
+        "median_wall_seconds": 11.360606065999946,
+        "range_wall_seconds": [
+          11.233177377000175,
+          13.675901094999972
+        ],
+        "max_peak_process_rss_bytes": 992653312,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 1.8520270459998756,
+          "structure_and_site_seconds": 0.0617202109997379,
+          "embeddings_seconds": 0.009448783000152616,
+          "total_seconds": 6.61305211600029,
+          "checkpoint_load_seconds": 3.96239469000011,
+          "graph_prepare_seconds": 0.11721666700123023,
+          "forward_and_normalization_seconds": 0.6100346710009035
+        }
+      },
+      "same_protein_sites": {
+        "median_wall_seconds": 10.196124975999737,
+        "range_wall_seconds": [
+          10.194413244000316,
+          10.442803813999944
+        ],
+        "max_peak_process_rss_bytes": 992845824,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 1.5339039119999143,
+          "structure_and_site_seconds": 0.049157613000261335,
+          "embeddings_seconds": 0.0054268369999590504,
+          "total_seconds": 6.414212535999923,
+          "checkpoint_load_seconds": 4.051224290001301,
+          "graph_prepare_seconds": 0.11707243500086406,
+          "forward_and_normalization_seconds": 0.6284390390001136
+        }
+      }
+    },
+    "top4_lf_seed42": {
+      "cached_single_site": {
+        "median_wall_seconds": 8.270628764000321,
+        "range_wall_seconds": [
+          8.208107079000001,
+          8.753134744999898
+        ],
+        "max_peak_process_rss_bytes": 913956864,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 1.2876377820002745,
+          "structure_and_site_seconds": 0.02066122299993367,
+          "embeddings_seconds": 0.005502554000031523,
+          "total_seconds": 4.557531842999651,
+          "checkpoint_load_seconds": 2.672393605000252,
+          "graph_prepare_seconds": 0.09878555100021913,
+          "forward_and_normalization_seconds": 0.3906861370005572
+        }
+      },
+      "same_protein_sites": {
+        "median_wall_seconds": 9.401012489000095,
+        "range_wall_seconds": [
+          9.379895901000054,
+          10.017521146000036
+        ],
+        "max_peak_process_rss_bytes": 912801792,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 1.3321078799999668,
+          "structure_and_site_seconds": 0.03209012099978281,
+          "embeddings_seconds": 0.007768145000227378,
+          "total_seconds": 4.883227887999965,
+          "checkpoint_load_seconds": 2.7182629280000583,
+          "graph_prepare_seconds": 0.15821026799994797,
+          "forward_and_normalization_seconds": 0.490450313999645
+        }
+      }
+    },
+    "trunklr1e4_5fold_s42": {
+      "cached_single_site": {
+        "median_wall_seconds": 5.853876503000265,
+        "range_wall_seconds": [
+          5.768668714999876,
+          6.039677086000211
+        ],
+        "max_peak_process_rss_bytes": 792317952,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 0.3380960990002677,
+          "structure_and_site_seconds": 0.03497923600025388,
+          "embeddings_seconds": 0.006995977000315179,
+          "total_seconds": 1.4636264569999184,
+          "checkpoint_load_seconds": 0.8491612609996082,
+          "graph_prepare_seconds": 0.10048419900022054,
+          "forward_and_normalization_seconds": 0.10622072300020591
+        }
+      },
+      "same_protein_sites": {
+        "median_wall_seconds": 5.238415925000027,
+        "range_wall_seconds": [
+          5.161642774000029,
+          5.66036911800029
+        ],
+        "max_peak_process_rss_bytes": 791609344,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 0.295523244999913,
+          "structure_and_site_seconds": 0.04264331800004584,
+          "embeddings_seconds": 0.005535309000151756,
+          "total_seconds": 1.3199964339996768,
+          "checkpoint_load_seconds": 0.6990494770002442,
+          "graph_prepare_seconds": 0.12489761999995608,
+          "forward_and_normalization_seconds": 0.10642786999960663
+        }
+      }
+    },
+    "unified_trimodal_cv_locked": {
+      "cached_single_site": {
+        "median_wall_seconds": 16.7229563599999,
+        "range_wall_seconds": [
+          16.39860491399986,
+          16.77057435200004
+        ],
+        "max_peak_process_rss_bytes": 1222205440,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 3.467894222000268,
+          "structure_and_site_seconds": 0.0651487619998079,
+          "embeddings_seconds": 0.008955420999882335,
+          "total_seconds": 11.98162215299999,
+          "checkpoint_load_seconds": 7.358703760003664,
+          "graph_prepare_seconds": 0.09821869499864988,
+          "forward_and_normalization_seconds": 0.9558682029996817
+        }
+      },
+      "same_protein_sites": {
+        "median_wall_seconds": 16.67254538999987,
+        "range_wall_seconds": [
+          16.430105360000198,
+          17.265662998000153
+        ],
+        "max_peak_process_rss_bytes": 1222488064,
+        "median_component_seconds": {
+          "artifact_verification_seconds": 3.23647946400024,
+          "structure_and_site_seconds": 0.06929121299981489,
+          "embeddings_seconds": 0.006850114999906509,
+          "total_seconds": 12.088953921000211,
+          "checkpoint_load_seconds": 7.430080438999084,
+          "graph_prepare_seconds": 0.16972999600056937,
+          "forward_and_normalization_seconds": 1.1651237869996294
+        }
+      }
+    }
+  },
+  "raw_predictions": [
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__cached_single_site__0.json",
+      "sha256": "44956ddccb1cd08d7279d88cb7f61d25d17df889866ca33a3979efb2e73842f6"
+    },
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__cached_single_site__1.json",
+      "sha256": "556086e5ac7e902bc0b7a882b455d987887fbc0c2d51979a5c4adda7bb1c8e4d"
+    },
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__cached_single_site__2.json",
+      "sha256": "7b9b59c0a75308c9fd14e625e2d2781adc9f4c33ab40e150955ec20960191cc4"
+    },
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__same_protein_sites__0.json",
+      "sha256": "83b68a42d5b24ffb6edce132253b91304b4393f82766a4107ab4791af4c0eab3"
+    },
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__same_protein_sites__1.json",
+      "sha256": "1bc03b8569386d019aefb9c1615ff3b610c64df543072d07dfc8f53115d435e0"
+    },
+    {
+      "path": "<private>/cpu_benchmark/step_f_single_refit_s42__same_protein_sites__2.json",
+      "sha256": "1cf3801495c52d7b6b81ba610428b2c0bc31a63cb791176a1e4a5d909b2dc1e7"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__cached_single_site__0.json",
+      "sha256": "213f0df344893f74d82ea3138f931d02543a8c7cee392cfbed47c3ac6dd200d2"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__cached_single_site__1.json",
+      "sha256": "84e1bbfed715bb381bcde06175c39131d1d016cc1c68c4b4a90bb91237afb38a"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__cached_single_site__2.json",
+      "sha256": "62fe711729fa5dd8d717ba7bdd3b87e9babe86c74f432b18e739e917034e38d4"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__same_protein_sites__0.json",
+      "sha256": "11f1a51fb93a99d52a0056d7351999bd222731383607f84355ef08e096da275e"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__same_protein_sites__1.json",
+      "sha256": "8778904cbf8a80e3a3e4444e429c00e632d7fd1468164628f906c577fe559022"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf__same_protein_sites__2.json",
+      "sha256": "41c98eeb0f4ed0291959bdd25542aaa97c7d3e8244f08cca23d30d7335ef3153"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__cached_single_site__0.json",
+      "sha256": "1afd1188c10192a91f067385cc760afba6b9c65de859b5786a58efc9146a9de9"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__cached_single_site__1.json",
+      "sha256": "70287399f51ec7525fe22054c1496ced0375fe393ed45cbfc09ec09758ad5f8a"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__cached_single_site__2.json",
+      "sha256": "5b2f3fba94f6fba620abb255d55428f3b8ae4ea1645dda37fd6010fe2323bf20"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__same_protein_sites__0.json",
+      "sha256": "d8c09e755e6b2366613035f3e0de7daf43123613ab0eedeedd7d0553c095276c"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__same_protein_sites__1.json",
+      "sha256": "7eaf38a5bb9d31e5a582b60cafbd36034820d0ad9a74871541c7dd181e77c4b8"
+    },
+    {
+      "path": "<private>/cpu_benchmark/top4_lf_seed42__same_protein_sites__2.json",
+      "sha256": "7df42a2ec59ca66a9036aa39ddcfa0da4034a21cb1ede0e9c98d9e78986b0cda"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__cached_single_site__0.json",
+      "sha256": "71e14323919e1df3757d8bc839eb4260423f76707b84138c8b4a82d5fa0a7a9c"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__cached_single_site__1.json",
+      "sha256": "9ad81d413813c0ff1be2a17397c7ac88d47e63be0b3f8f3b20f132906a5b0fda"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__cached_single_site__2.json",
+      "sha256": "df5b3e8b0b1b5335951ee907e9a90be171846d82eb416db1cc7c4a95bef0ee1b"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__same_protein_sites__0.json",
+      "sha256": "08d789367cd6ca620c99bfa708d9bd4ceb24108b8d1337023e23d01658daebca"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__same_protein_sites__1.json",
+      "sha256": "d7fa7f43375b128f20a389c004dc9b3cc1dc3ef338a512af91e47254ad0254b4"
+    },
+    {
+      "path": "<private>/cpu_benchmark/trunklr1e4_5fold_s42__same_protein_sites__2.json",
+      "sha256": "5e8770ef12962e4546155b078ec02bea2bfec8a237b46bbd5a1b52d31822673a"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__cached_single_site__0.json",
+      "sha256": "8914dc43d91d1ced809b7148250a95b50a2c0fb561a1871b0e675947db2b8ce6"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__cached_single_site__1.json",
+      "sha256": "0ee965ac0b1e1f346a9929f8c7877132b333d191577057b734e078bcb07aefe4"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__cached_single_site__2.json",
+      "sha256": "c265172618c7b32f7cd426616685fb71593f56b4ae49fa949283f4f75872f1da"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__same_protein_sites__0.json",
+      "sha256": "12ba9d68c0225decab56c6bb8f7b2826ec4cee50ab0d9d61d8382d613657632d"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__same_protein_sites__1.json",
+      "sha256": "126eb7e5f54b50115858c3a098828ad4db186f8216868d18e3bd804adcdb01f9"
+    },
+    {
+      "path": "<private>/cpu_benchmark/unified_trimodal_cv_locked__same_protein_sites__2.json",
+      "sha256": "067e2ebd89d1db53f8450363cb64a70d40d8fa8ab45a86f0435316711b86aac6"
+    }
+  ],
+  "same_cache_predictions_consistent": true,
+  "limitations": [
+    "Shared desktop with background IDE activity; no controlled machine-load claim.",
+    "Five candidates in a fixed order; 30 isolated-process cached calls, only one protein/two sites.",
+    "Wall times include imports, artifact verification, checkpoint loads and computation.",
+    "Two-site call is total latency, not an isolated estimate of marginal per-site cost.",
+    "Fresh embeddings use CPU kernels; historical embeddings were generated on GPU.",
+    "No GPU timing, accuracy comparison, selection, promotion or new test access."
+  ],
+  "runtime": {
+    "compatibility_status": "unverified_until_development_prediction_parity_passes_for_this_runtime",
+    "executable": "<project-python>",
+    "packages": {
+      "biopython": "1.86",
+      "biotite": "1.6.0",
+      "esm": "3.2.3",
+      "gemmi": null,
+      "matplotlib": "3.10.9",
+      "numpy": "2.4.4",
+      "optuna": "4.8.0",
+      "pandas": "3.0.1",
+      "propka": "3.5.1",
+      "pytest": "9.1.1",
+      "scikit_learn": "1.8.0",
+      "torch": "2.11.0",
+      "torch_geometric": "2.7.0"
+    },
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "python": "3.12.13",
+    "source_sha256": {
+      "data_structures.py": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6",
+      "embed_helpers/esmc.py": "1651505cf27a36ae0d1e99af208a51863930c93e2a4161313a1a393bafeb7a07",
+      "export_validation_predictions.py": "5e3394a96765beae513fa4ebf8091a49f82e4e086da06b864dd2094b7c9813d8",
+      "featurization.py": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d",
+      "graph/__init__.py": "9727f29a515573f7e0cbb0f052bb212d2182818466a3b548ba2a04702dfc7397",
+      "graph/construction.py": "8e9b6294bbf604f9f75bf09316a1bf07d769f13932b00cdd2069093fd2dfbff3",
+      "graph/edge_geometry.py": "66811c344703a65111a0436cb21b0fb43905e5c1c45b4710f38fb69bdda557a8",
+      "graph/edge_postprocess.py": "88d3c31b4e37ce0b6d4310ffe5410d831153c8a3ad0a00ee62d0e68e9c04e111",
+      "graph/edge_records.py": "78cead0066f029e5f29ec00ffab191929df813cfb2014fbe97cec93c99408d39",
+      "graph/edge_sources.py": "91baeed8a75ba328104934f18d400cdabdd64a2caed9240f1c91f53a77e5dcf2",
+      "graph/feature_utils.py": "fd6d833e804d076df5f20be0074b62054fce6d8340e6ec4bca5d47dd3dd24bef",
+      "graph/ring_edges.py": "aa96cfe0a24a753bd6e34d7de857e90ddd2285cf8372d4cd1509a4ade217eb7c",
+      "graph/shell_roles.py": "bb3f10b121e07b60fdd264c2f9f9942134f84b0f7b74dbeb8d8d671a2b27e665",
+      "graph/structure_parsing.py": "a339c4ac5ec8291adaa3269be7ffa9dc68c2f27e810ab84d799bac4061ba50a7",
+      "label_schemes.py": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99",
+      "metal_release/catalog.py": "bfbd2fc5c941412b5c71457d3375e3efd9dec2bb4ec50f083224b2989530f7d3",
+      "metal_release/manifest.py": "97b240514bbdc4da153efcab04fc9b811bb394a3b85f89b523a5e84ec355c026",
+      "metal_release/predict.py": "3992edfbb6f3ec83c2e6953358419dbf4e75a20030a72a91f145878bcfc44acd",
+      "model.py": "1e780e1725d51211af7fb95ccd237e5f2218433728236ebee92b681ef763c821",
+      "model_variants/__init__.py": "a7625910fbe38737e588b81ebdb0d36a919c3edb7814882c648e9b736d240c8b",
+      "model_variants/factory.py": "649aa683770143c347fc8e053ffb131a479d688c8de7477f31f857a85989b6da",
+      "model_variants/models.py": "65c20b5596180a7cfc4ae766ad8de88c6a15027034406822bb610494ca579855",
+      "training/campaign_runtime.py": "b66a29df6234ca64f1702f3ac237a4972445e553c5ebbbe4e5c40b7bce77b183",
+      "training/esm_feature_loading.py": "57711f0fc7676c6b40cc6ee41264768cbf3241924bf33156b201bae9a496d1f8",
+      "training/graph_dataset.py": "cf8284eb2f7246b09f45caec43272909e6b442e3e50bf46fc8727b0d83e75f9c",
+      "training/raw_graph_cache.py": "c2ca28d720b13a8b3b2a02ba37b4311695d2253e1e421d46a6820618495c7800",
+      "training/run.py": "592071240793ccb9aac5da50ad4d47dc776e043347f516f1e16606154f4fb61c"
+    },
+    "torch_num_interop_threads": 4,
+    "torch_num_threads": 4
+  },
+  "cold_reference": {
+    "status": "complete",
+    "generated_cache_parity": {
+      "max_abs_score_difference": 0.0,
+      "class_agreement": true,
+      "tolerance": 1e-05,
+      "status": "passed"
+    },
+    "historical_embedding_comparison": {
+      "historical_prediction_sha256": "8914dc43d91d1ced809b7148250a95b50a2c0fb561a1871b0e675947db2b8ce6",
+      "max_abs_score_difference": 0.00010306203004095682,
+      "class_agreement": true,
+      "interpretation": "Different embedding generation devices/kernels; descriptive drift, not same-input parity or an accuracy estimate."
+    },
+    "measurements": {
+      "fresh_embedding": {
+        "wall_seconds": 43.24932577099935,
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null,
+          "peak_process_rss_bytes": 5564903424,
+          "rss_scope": "process_lifetime_high_water_mark"
+        },
+        "embeddings_seconds": 12.646058171999357,
+        "prediction": {
+          "path": "<private>/cold_reference/fresh_embedding.json",
+          "sha256": "4675113b0951b201af38704aabe015ee25bb3f839e961bc4c28d9dd39b5ad13e"
+        }
+      },
+      "generated_cache_reuse": {
+        "wall_seconds": 26.95147051799995,
+        "memory": {
+          "peak_cuda_allocated_bytes": null,
+          "peak_cuda_reserved_bytes": null,
+          "peak_process_rss_bytes": 1205514240,
+          "rss_scope": "process_lifetime_high_water_mark"
+        },
+        "embeddings_seconds": 0.008316540000123496,
+        "prediction": {
+          "path": "<private>/cold_reference/generated_cache_reuse.json",
+          "sha256": "f0b7717173b761935b6fd0548f67168e3d15e4456189acb266b0c88ca1b14189"
+        }
+      }
+    }
+  }
+}

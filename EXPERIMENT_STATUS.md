@@ -1,35 +1,34 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-19 metal OOF-CV and held-out evaluation complete; `deepmzyme-l4` TERMINATED)
-- Last execution evidence: 2026-10-19 Phase 2 Unified 5-fold L4 run (`1h 09m`, $1.02) and 180-checkpoint OOF-CV / test evaluation ([report](docs/campaigns/phase2_unified_2026-10/README.md); [log](docs/campaigns/phase2_unified_2026-10/log.md)).
+- Status: active (2026-10-19 metal ensembles compared on OOF; deployment default not yet chosen)
+- Last execution evidence: 2026-10-19 CPU-only [release audit](docs/campaigns/phase2_unified_2026-10/release_audit/README.md): OOF scores, nested selection, parity, timing; no training or test access.
 
 ## Current objective and stage
 
-- Current campaign: [phase2_unified_2026-10](docs/campaigns/phase2_unified_2026-10/README.md) (complete; [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md) complete)
-- Objective: metal ion classification benchmark complete; EC classification is next when authorized.
-- Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
-- Stage: one-shot Step F refit (`67.55%` Full Test) and 180-checkpoint 5-Fold OOF-CV / held-out progression complete ([summary JSON](docs/campaigns/phase2_unified_2026-10/phase2_unified_summary.json)).
+- Current campaign: [phase2_unified_2026-10](docs/campaigns/phase2_unified_2026-10/README.md) (evaluation and release audit complete).
+- Objective: choose a deployment ensemble on OOF evidence. The 55-model is the best-CV reference and the predictor's code default; the 20-, 25- and 30-model late-fusion ensembles are the compact candidates.
+- Stage: evaluation complete; no rerun, refit, calibration or promotion.
+- Other open campaigns: [EC support](docs/campaigns/ec1_independent_support_2026-10/README.md) deferred; [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) and [exact Zenodo](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) paused.
 
 ## Anchor and evidence state
 
-- Best validation result: pre-declared single-model `B 4-class` baseline (`74.28%` mean / `74.34%` OOF CV; Step F refit `67.55%` Full, `69.33%` Eligible, `48.85%` Clean; [v3 summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)). By 7,398-ion OOF CV ([report](docs/campaigns/phase2_unified_2026-10/README.md)): 5-Fold `trunklr1e4` (`75.51%` OOF $\rightarrow$ `70.75%` Full / `72.25%` Eligible); 15-Model `P 5-class` (`75.82%` OOF $\rightarrow$ `71.10%` Full / `72.68%` Eligible); 5-Fold Unified `P+5c+trunklr1e4` (`74.91%` OOF $\rightarrow$ `71.72%` Full / `73.08%` Eligible); `Top-4 LF` (`76.81%` OOF $\rightarrow$ **`72.20%` Full** / `73.94%` Eligible); `CV-Locked Tri-Modal` (**`77.17%` OOF** $\rightarrow$ **`61.33%` Clean**).
-- EC stays at fixed-split Grade 3 evidence (deferred).
+- Best validation result: 55-model ensemble, `77.17%` pooled OOF, with no CI-supported gain over the 20-, 25- or 30-model late-fusion ensembles (`76.34–76.81%`), so [Plan §7](Plan.md#7-baseline-first-model-comparison-policy) does not justify its extra members; nested selection gives `76.56%` (late fusion) and `76.54%` (55-model blocks). Pre-declared single model: `B 4-class`, `74.34%` OOF; refit `67.55%` Full test ([v3 summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)). Test scores never select.
 
 ### Known caveats and open mismatches
 
-- Cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)); post-Step-F multi-checkpoint evaluations carry `both_results_secondary` disclosure and PMM label-leak caveat ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
-- EC child-file guard ([TECH-030](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard)) and focal-loss label smoothing ([TECH-031](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-031--the-focal-metal-loss-silently-ignores-label-smoothing-and-uses-weighted-ce-confidence)) remain open.
+- The 20-, 25- and 30-model recipes follow the full-test order (possibly test-informed; OOF-only nested selection reaches a similar level). Larger ensembles average more checkpoints per OOF site, which favours them; OOF-selected scores are optimistic (nested: −0.25 / −0.63 pp). Test disclosures: [DATASETS](docs/DATASETS.md#test-use-ledger), [TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak).
+- EC remains fixed-split Grade 3 evidence; TECH-030/031 stay open ([issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md)).
 
 ## Dataset and test readiness
 
-[DATASETS](docs/DATASETS.md#test-use-ledger) records both test evaluations (2026-10-13 Step F pass and 2026-10-19 180-checkpoint evaluation). External temporal PDB evaluation remains optional ([protocol](docs/campaigns/metal_completion_2026-10/evaluation.md)).
+[DATASETS](docs/DATASETS.md#test-use-ledger) records both test evaluations (Step F, 2026-10-13; 180 checkpoints, 2026-10-19). Choose and freeze the default on OOF; an independent cohort can then evaluate it once (temporal PDB [protocol](docs/campaigns/metal_completion_2026-10/evaluation.md), optional).
 
 ## Blockers and immediate next action
 
-- Authorized now: nothing to run; no active GPU session.
-- GPU/VM: `deepmzyme-l4` TERMINATED (2026-10-19); all artifacts backed up across 5 tiers ([inventory](docs/BACKUP_AND_DATA_INVENTORY.md)).
-- Next: metal paper writing, or user decision to open standalone EC classification.
+- Authorized now: nothing is running.
+- GPU/VM: none in use.
+- Next: choose the deployment default, write the metal paper, or open standalone EC work.
 
 ## History and update rule
 
-Previous STATUS is preserved in [`docs/campaigns/phase2_unified_2026-10/log.md`](docs/campaigns/phase2_unified_2026-10/log.md). Policy: [Plan](Plan.md), [DATASETS](docs/DATASETS.md), [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md).
+The [campaign log](docs/campaigns/phase2_unified_2026-10/log.md) preserves the previous STATUS. Policy: [Plan](Plan.md), [DATASETS](docs/DATASETS.md), [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md).

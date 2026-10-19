@@ -2,6 +2,79 @@
 
 Dated entries, newest first. `EXPERIMENT_STATUS.md` is overwritten only after preserving its previous text here.
 
+## p2u-003 (2026-10-19 — Release audit and ensemble comparison)
+
+CPU-only audit of the existing checkpoints from saved development artifacts: no training, refit, calibration, GPU use
+or test-set access. Results and commands are in the [release audit](release_audit/README.md).
+
+- **OOF reconstruction:** every shortlisted ensemble reproduces its reported pooled OOF score (`74.34%` to `77.17%`),
+  with each checkpoint scoring only its excluded fold. The catalog now also covers the 15-model P 5-class and the
+  25-model late-fusion ensembles.
+- **Ensemble size:** walking the [Plan §7](../../../Plan.md#7-baseline-first-model-comparison-policy) sequential rule
+  from the two five-checkpoint models stops at the 20-, 25- or 30-model, depending on the interval and the start, and
+  never reaches the 55-model: its OOF gain over those ensembles is not CI-supported by the near-copy-group or the
+  fold-level interval. Larger ensembles also average more checkpoints per OOF site, which favours them. The 55-model
+  remains the best-CV reference and the predictor's code default; the deployment default is not yet chosen. A
+  practical-similarity bar, set after the results were seen, is met by the 25- and 30-model only.
+- **Nested selection:** choosing the ensemble on four folds and scoring the fifth gives `76.56%` for late fusion (fixed
+  30-model `76.81%`) and `76.54%` for the 55-model's three-block procedure (fixed `77.17%`); the audit lists its limits.
+- **Corrections to p2u-001:** `resdrop01`, `meanagg`, `invsqrtw`, `esmdrop02` and `wd10`, listed there without OOF,
+  have complete five-fold seed-42 OOF on the same folds (`74.63%`, `74.29%`, `74.63%`, `75.26%`, `74.08%`). The
+  recomputed pooled OOF in `families` of [`nested_selection.json`](release_audit/nested_selection.json) supersedes
+  seven other entries: S 4-class `74.63%` (listed `74.12%`), P 4-class three seeds `75.62%` (`75.55%`), P 6-class
+  three seeds `75.22%` (`75.16%`), `headdrop03` `74.85%` (`74.76%`), five-class `74.03%` (`73.99%`), Only-ESM 6-class
+  `72.32%` (`72.42%`) and Only-GVP 6-class `67.67%` (`69.63%`); the 15-model B 4-class, listed by fold mean, pools to
+  `75.58%`. The 20-, 25- and 30-model recipes follow the full-test order in that table, not the OOF order.
+- **Prediction parity and cost:** on six development sites the predictor reproduced the saved validation predictions
+  of all 55 reference members (66 comparisons, maximum probability difference `6.85e-8`). A first replay failed on
+  tuple/list differences in saved configuration; the comparison was made canonical and the failed attempt kept.
+  One-site CPU time ranges from `4.46 s` (1 checkpoint) to `16.72 s` (55). Parity and timing predate the two added
+  catalog entries; `predict.py` is unchanged since.
+- **Machine-bound files:** the release manifest, its inventory and receipt, and the parity and benchmark fixtures
+  record local paths and are kept outside the repository.
+
+### Previous STATUS (before this update; lightly redacted)
+
+```markdown
+# DeepMzyme Current Experiment Status
+
+- Status: active (2026-10-19 metal OOF-CV and held-out evaluation complete; GPU VM TERMINATED)
+- Last execution evidence: 2026-10-19 Phase 2 Unified 5-fold L4 run (`1h 09m`, $1.02) and 180-checkpoint OOF-CV / test evaluation ([report](docs/campaigns/phase2_unified_2026-10/README.md); [log](docs/campaigns/phase2_unified_2026-10/log.md)).
+
+## Current objective and stage
+
+- Current campaign: [phase2_unified_2026-10](docs/campaigns/phase2_unified_2026-10/README.md) (complete; [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md) complete)
+- Objective: metal ion classification benchmark complete; EC classification is next when authorized.
+- Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
+- Stage: one-shot Step F refit (`67.55%` Full Test) and 180-checkpoint 5-Fold OOF-CV / held-out progression complete ([summary JSON](docs/campaigns/phase2_unified_2026-10/phase2_unified_summary.json)).
+
+## Anchor and evidence state
+
+- Best validation result: pre-declared single-model `B 4-class` baseline (`74.28%` mean / `74.34%` OOF CV; Step F refit `67.55%` Full, `69.33%` Eligible, `48.85%` Clean; [v3 summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)). By 7,398-ion OOF CV ([report](docs/campaigns/phase2_unified_2026-10/README.md)): 5-Fold `trunklr1e4` (`75.51%` OOF $\rightarrow$ `70.75%` Full / `72.25%` Eligible); 15-Model `P 5-class` (`75.82%` OOF $\rightarrow$ `71.10%` Full / `72.68%` Eligible); 5-Fold Unified `P+5c+trunklr1e4` (`74.91%` OOF $\rightarrow$ `71.72%` Full / `73.08%` Eligible); `Top-4 LF` (`76.81%` OOF $\rightarrow$ **`72.20%` Full** / `73.94%` Eligible); `CV-Locked Tri-Modal` (**`77.17%` OOF** $\rightarrow$ **`61.33%` Clean**).
+- EC stays at fixed-split Grade 3 evidence (deferred).
+
+### Known caveats and open mismatches
+
+- Cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)); post-Step-F multi-checkpoint evaluations carry `both_results_secondary` disclosure and PMM label-leak caveat ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
+- EC child-file guard ([TECH-030](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard)) and focal-loss label smoothing ([TECH-031](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-031--the-focal-metal-loss-silently-ignores-label-smoothing-and-uses-weighted-ce-confidence)) remain open.
+
+## Dataset and test readiness
+
+[DATASETS](docs/DATASETS.md#test-use-ledger) records both test evaluations (2026-10-13 Step F pass and 2026-10-19 180-checkpoint evaluation). External temporal PDB evaluation remains optional ([protocol](docs/campaigns/metal_completion_2026-10/evaluation.md)).
+
+## Blockers and immediate next action
+
+- Authorized now: nothing to run; no active GPU session.
+- GPU/VM: TERMINATED (2026-10-19).
+- Next: metal paper writing, or a decision to open standalone EC classification.
+
+## History and update rule
+
+Previous STATUS is preserved in [`docs/campaigns/phase2_unified_2026-10/log.md`](docs/campaigns/phase2_unified_2026-10/log.md). Policy: [Plan](Plan.md), [DATASETS](docs/DATASETS.md), [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md).
+```
+
+---
+
 ## p2u-002 (2026-10-19 — Verification Audit, OOF-CV Reconciliation & Documentation Repair)
 
 - **Audit of OOF-CV vs. Held-Out Test Selection:**

@@ -1,0 +1,739 @@
+{
+  "schema": "deepmzyme-metal-nested-selection-v1",
+  "held_out_accessed": false,
+  "note": "Measures selection optimism at the OOF level: each outer fold's recipe is chosen from the other folds' OOF predictions and applied to that fold. The other folds' OOF predictions come from models whose training data included the outer fold (standard approximation for selection on OOF predictions); the outer fold's own predictions never come from a model trained on it. Families average their complete seeds, so multi-seed families score more members per OOF example. Test data are not used.",
+  "manifest_sha256": "4d671105b93061f28f7f93fcea8e1b7d4174a826db2adc59e8ed75de8e9e9a07",
+  "catalog_id": "phase2-unified-20261019-v2",
+  "fold_membership_sha256": "e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a",
+  "n_examples": 7398,
+  "related_group_field": "group_id",
+  "n_related_groups": 2208,
+  "bootstrap_samples": 10000,
+  "bootstrap_seed": 42,
+  "procedure": {
+    "late_fusion": "Rank late-fusion families by selection pooled common-four BA; choose N in 1..6 for an equal-family Top-N mean by selection BA (ties keep the smaller N).",
+    "trimodal": "On the chosen late-fusion block (weight 1), choose an Only-ESM family subset or none and an Only-GVP subset or none, each family-equal, with block weights from the grids, by selection BA (ties keep fewer families, then lower weights).",
+    "esm_weights": [
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "gvp_weights": [
+      0.25,
+      0.5,
+      0.75,
+      0.95,
+      1.0
+    ],
+    "family": "One recipe; its complete seeds are averaged equally."
+  },
+  "summary": {
+    "late_fusion": {
+      "fixed_candidate": "top4_lf",
+      "fixed_reported_oof_ba_percent": 76.81,
+      "fixed_pooled_ba_percent": 76.8126,
+      "fixed_mean_fold_ba_percent": 76.7403,
+      "fixed_outer_fold_ba_percent": [
+        77.7086,
+        74.3148,
+        75.018,
+        74.7488,
+        81.9113
+      ],
+      "full_data_reselection_apparent_ba_percent": 76.7163,
+      "nested_pooled_ba_percent": 76.5622,
+      "nested_mean_fold_ba_percent": 76.4961,
+      "nested_minus_fixed": {
+        "pooled_delta_pp": -0.2503,
+        "related_group_ci95_pp": [
+          -0.9118,
+          0.3882
+        ],
+        "missing_class_resamples": 0
+      }
+    },
+    "trimodal": {
+      "fixed_candidate": "unified_trimodal_cv_locked",
+      "fixed_reported_oof_ba_percent": 77.17,
+      "fixed_pooled_ba_percent": 77.1674,
+      "fixed_mean_fold_ba_percent": 77.0967,
+      "fixed_outer_fold_ba_percent": [
+        76.0645,
+        76.0627,
+        74.8877,
+        77.9589,
+        80.5095
+      ],
+      "full_data_reselection_apparent_ba_percent": 77.9351,
+      "nested_pooled_ba_percent": 76.5413,
+      "nested_mean_fold_ba_percent": 76.4972,
+      "nested_minus_fixed": {
+        "pooled_delta_pp": -0.6262,
+        "related_group_ci95_pp": [
+          -1.5332,
+          0.2577
+        ],
+        "missing_class_resamples": 0
+      }
+    },
+    "nested_trimodal_minus_nested_late_fusion": {
+      "pooled_delta_pp": -0.021,
+      "related_group_ci95_pp": [
+        -1.1558,
+        1.0761
+      ],
+      "missing_class_resamples": 0
+    }
+  },
+  "per_fold": [
+    {
+      "outer_fold": 0,
+      "selection_examples": 5927,
+      "evaluation_examples": 1471,
+      "late_fusion": {
+        "top_n": 6,
+        "families": [
+          "mc_P_five_class",
+          "gvp_late_fusion__four_class__baseline",
+          "mc_P_four_class",
+          "mc_P_six_class",
+          "gvp_late_fusion__four_class__esmdrop02",
+          "gvp_late_fusion__four_class__trunklr1e4"
+        ],
+        "selection_ba_percent": 76.4018,
+        "ranking": [
+          {
+            "family": "mc_P_five_class",
+            "selection_ba_percent": 75.9788
+          },
+          {
+            "family": "gvp_late_fusion__four_class__baseline",
+            "selection_ba_percent": 75.8
+          },
+          {
+            "family": "mc_P_four_class",
+            "selection_ba_percent": 75.711
+          },
+          {
+            "family": "mc_P_six_class",
+            "selection_ba_percent": 75.6598
+          },
+          {
+            "family": "gvp_late_fusion__four_class__esmdrop02",
+            "selection_ba_percent": 75.5048
+          },
+          {
+            "family": "gvp_late_fusion__four_class__trunklr1e4",
+            "selection_ba_percent": 75.2229
+          }
+        ],
+        "outer_fold_ba_percent": 77.7523
+      },
+      "trimodal": {
+        "esm_families": [],
+        "esm_weight": 0.0,
+        "gvp_families": [
+          "only_gvp__four_class__sitecountsangles",
+          "only_gvp__four_class__wd10"
+        ],
+        "gvp_weight": 1.0,
+        "selection_ba_percent": 78.499,
+        "outer_fold_ba_percent": 75.5318
+      }
+    },
+    {
+      "outer_fold": 1,
+      "selection_examples": 5898,
+      "evaluation_examples": 1500,
+      "late_fusion": {
+        "top_n": 3,
+        "families": [
+          "mc_P_five_class",
+          "mc_P_four_class",
+          "gvp_late_fusion__four_class__trunklr1e4"
+        ],
+        "selection_ba_percent": 77.5492,
+        "ranking": [
+          {
+            "family": "mc_P_five_class",
+            "selection_ba_percent": 76.3273
+          },
+          {
+            "family": "mc_P_four_class",
+            "selection_ba_percent": 76.0472
+          },
+          {
+            "family": "gvp_late_fusion__four_class__trunklr1e4",
+            "selection_ba_percent": 75.8785
+          },
+          {
+            "family": "gvp_late_fusion__four_class__baseline",
+            "selection_ba_percent": 75.8407
+          },
+          {
+            "family": "mc_P_six_class",
+            "selection_ba_percent": 75.4996
+          },
+          {
+            "family": "unified__P_five_class_trunklr1e4",
+            "selection_ba_percent": 75.3207
+          }
+        ],
+        "outer_fold_ba_percent": 74.2133
+      },
+      "trimodal": {
+        "esm_families": [],
+        "esm_weight": 0.0,
+        "gvp_families": [
+          "only_gvp__five_class__baseline",
+          "only_gvp__four_class__meanagg",
+          "only_gvp__six_class__baseline"
+        ],
+        "gvp_weight": 0.75,
+        "selection_ba_percent": 78.1499,
+        "outer_fold_ba_percent": 75.475
+      }
+    },
+    {
+      "outer_fold": 2,
+      "selection_examples": 5918,
+      "evaluation_examples": 1480,
+      "late_fusion": {
+        "top_n": 6,
+        "families": [
+          "gvp_late_fusion__four_class__trunklr1e4",
+          "mc_P_four_class",
+          "gvp_late_fusion__four_class__baseline",
+          "gvp_late_fusion__four_class__esmdrop02",
+          "mc_P_five_class",
+          "gvp_late_fusion__four_class__headdrop03"
+        ],
+        "selection_ba_percent": 76.7581,
+        "ranking": [
+          {
+            "family": "gvp_late_fusion__four_class__trunklr1e4",
+            "selection_ba_percent": 76.0142
+          },
+          {
+            "family": "mc_P_four_class",
+            "selection_ba_percent": 75.9952
+          },
+          {
+            "family": "gvp_late_fusion__four_class__baseline",
+            "selection_ba_percent": 75.9199
+          },
+          {
+            "family": "gvp_late_fusion__four_class__esmdrop02",
+            "selection_ba_percent": 75.8889
+          },
+          {
+            "family": "mc_P_five_class",
+            "selection_ba_percent": 75.7692
+          },
+          {
+            "family": "gvp_late_fusion__four_class__headdrop03",
+            "selection_ba_percent": 75.5974
+          }
+        ],
+        "outer_fold_ba_percent": 74.5549
+      },
+      "trimodal": {
+        "esm_families": [],
+        "esm_weight": 0.0,
+        "gvp_families": [
+          "only_gvp__four_class__sitecountsangles",
+          "only_gvp__four_class__wd10"
+        ],
+        "gvp_weight": 1.0,
+        "selection_ba_percent": 78.3862,
+        "outer_fold_ba_percent": 75.7242
+      }
+    },
+    {
+      "outer_fold": 3,
+      "selection_examples": 5921,
+      "evaluation_examples": 1477,
+      "late_fusion": {
+        "top_n": 3,
+        "families": [
+          "mc_P_five_class",
+          "gvp_late_fusion__four_class__trunklr1e4",
+          "mc_P_four_class"
+        ],
+        "selection_ba_percent": 77.4171,
+        "ranking": [
+          {
+            "family": "mc_P_five_class",
+            "selection_ba_percent": 76.3633
+          },
+          {
+            "family": "gvp_late_fusion__four_class__trunklr1e4",
+            "selection_ba_percent": 76.0657
+          },
+          {
+            "family": "mc_P_four_class",
+            "selection_ba_percent": 75.7522
+          },
+          {
+            "family": "gvp_late_fusion__four_class__baseline",
+            "selection_ba_percent": 75.7413
+          },
+          {
+            "family": "mc_S_six_class",
+            "selection_ba_percent": 75.5886
+          },
+          {
+            "family": "gvp_late_fusion__four_class__esmdrop02",
+            "selection_ba_percent": 75.5551
+          }
+        ],
+        "outer_fold_ba_percent": 74.9447
+      },
+      "trimodal": {
+        "esm_families": [],
+        "esm_weight": 0.0,
+        "gvp_families": [
+          "only_gvp__five_class__baseline",
+          "only_gvp__four_class__meanagg",
+          "only_gvp__four_class__wd10",
+          "only_gvp__six_class__baseline"
+        ],
+        "gvp_weight": 1.0,
+        "selection_ba_percent": 78.2112,
+        "outer_fold_ba_percent": 75.5411
+      }
+    },
+    {
+      "outer_fold": 4,
+      "selection_examples": 5928,
+      "evaluation_examples": 1470,
+      "late_fusion": {
+        "top_n": 6,
+        "families": [
+          "mc_P_five_class",
+          "mc_P_four_class",
+          "gvp_late_fusion__four_class__baseline",
+          "mc_P_six_class",
+          "gvp_late_fusion__six_class__baseline",
+          "gvp_late_fusion__four_class__trunklr1e4"
+        ],
+        "selection_ba_percent": 75.6969,
+        "ranking": [
+          {
+            "family": "mc_P_five_class",
+            "selection_ba_percent": 74.648
+          },
+          {
+            "family": "mc_P_four_class",
+            "selection_ba_percent": 74.5862
+          },
+          {
+            "family": "gvp_late_fusion__four_class__baseline",
+            "selection_ba_percent": 74.5584
+          },
+          {
+            "family": "mc_P_six_class",
+            "selection_ba_percent": 74.4204
+          },
+          {
+            "family": "gvp_late_fusion__six_class__baseline",
+            "selection_ba_percent": 74.3765
+          },
+          {
+            "family": "gvp_late_fusion__four_class__trunklr1e4",
+            "selection_ba_percent": 74.3359
+          }
+        ],
+        "outer_fold_ba_percent": 81.015
+      },
+      "trimodal": {
+        "esm_families": [],
+        "esm_weight": 0.0,
+        "gvp_families": [
+          "only_gvp__four_class__sitecountsangles",
+          "only_gvp__four_class__wd10"
+        ],
+        "gvp_weight": 1.0,
+        "selection_ba_percent": 77.2548,
+        "outer_fold_ba_percent": 80.214
+      }
+    }
+  ],
+  "full_data_choice": {
+    "late_fusion": {
+      "top_n": 6,
+      "families": [
+        "mc_P_five_class",
+        "mc_P_four_class",
+        "gvp_late_fusion__four_class__baseline",
+        "gvp_late_fusion__four_class__trunklr1e4",
+        "gvp_late_fusion__four_class__esmdrop02",
+        "mc_P_six_class"
+      ],
+      "selection_ba_percent": 76.7163,
+      "ranking": [
+        {
+          "family": "mc_P_five_class",
+          "selection_ba_percent": 75.8217
+        },
+        {
+          "family": "mc_P_four_class",
+          "selection_ba_percent": 75.6232
+        },
+        {
+          "family": "gvp_late_fusion__four_class__baseline",
+          "selection_ba_percent": 75.5765
+        },
+        {
+          "family": "gvp_late_fusion__four_class__trunklr1e4",
+          "selection_ba_percent": 75.5075
+        },
+        {
+          "family": "gvp_late_fusion__four_class__esmdrop02",
+          "selection_ba_percent": 75.257
+        },
+        {
+          "family": "mc_P_six_class",
+          "selection_ba_percent": 75.2164
+        }
+      ]
+    },
+    "trimodal": {
+      "esm_families": [],
+      "esm_weight": 0.0,
+      "gvp_families": [
+        "only_gvp__four_class__sitecountsangles",
+        "only_gvp__four_class__wd10"
+      ],
+      "gvp_weight": 1.0,
+      "selection_ba_percent": 77.9351
+    }
+  },
+  "families": [
+    {
+      "family": "gvp_late_fusion__five_class__baseline",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.0332,
+      "inputs_sha256": "d459ae03a9a54c7c059e4c42b043b1da7f7467649ae1a8f041b0b6a60686c87b"
+    },
+    {
+      "family": "gvp_late_fusion__four_class__baseline",
+      "branch": "late_fusion",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "pooled_oof_ba_percent": 75.5765,
+      "inputs_sha256": "5bb09452cda769d57fbb2a665479bc7aeda748bac06a1d7a5254ca81de2b0081"
+    },
+    {
+      "family": "gvp_late_fusion__four_class__esmdrop02",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 75.257,
+      "inputs_sha256": "74e8d3d41edec8b16fc3b37ebfe42a8fb321558ddb3e2219adf379e4f01a6eb2",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__gvpaux03",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 73.8639,
+      "inputs_sha256": "579126b91f68454636952ea4718884e5931c9966ad37215fee8efa027052978c",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__headdrop03",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.8467,
+      "inputs_sha256": "efb45653debb5a709750422243d7dbd9df30ce053f08486c40932751c87bdc45",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__invsqrtw",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.626,
+      "inputs_sha256": "e04b79fb5c8dda07c9de1d26e25e447f5925b9d819e9d9c7f67f3e9fd0b3ab1e",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__meanagg",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.2928,
+      "inputs_sha256": "4e4e695d0706f3e789eee71acef10abaef981d677ca01b6c7802d735d6b7ad8b",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__resdrop01",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.6279,
+      "inputs_sha256": "577d1596ad2235f748311293a768b8972a2ad144921126915b8110bb51a21b3f",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__four_class__trunklr1e4",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 75.5075,
+      "inputs_sha256": "2ec7a0b3ecc209c22bfbd18dbc0ddd750b15c5ee337f421ce00bdcb53a44e699"
+    },
+    {
+      "family": "gvp_late_fusion__four_class__wd10",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.0757,
+      "inputs_sha256": "f8a52ccb4aac93eecbc2647720a05a6431f434547124452c791c1f4d414f2e5d",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "gvp_late_fusion__six_class__baseline",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.9848,
+      "inputs_sha256": "24761fe252b136d9c706692895751664c8b16fdc624220a0346731fdb56e3578"
+    },
+    {
+      "family": "mc_P_five_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "pooled_oof_ba_percent": 75.8217,
+      "inputs_sha256": "40c1bce319b3f66a029575342ad3b154e440452234cdfbc9b1bb17f9147cd170"
+    },
+    {
+      "family": "mc_P_four_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "pooled_oof_ba_percent": 75.6232,
+      "inputs_sha256": "3edad38d589c34f2d54bce871b290d1b4e76f6e64b4d385c2661f99370a8db78"
+    },
+    {
+      "family": "mc_P_six_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42,
+        43,
+        44
+      ],
+      "pooled_oof_ba_percent": 75.2164,
+      "inputs_sha256": "d298ea27359b7800be9ab9dd9b12f470072249c7af9482f9fdfab1dcd0e24039"
+    },
+    {
+      "family": "mc_S_five_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.1609,
+      "inputs_sha256": "d6f070f8eefd77178290d39e2e31eef919741d496ee43d8c0031d5326d75517b"
+    },
+    {
+      "family": "mc_S_four_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.6272,
+      "inputs_sha256": "cb888ba5b07813f483ea97624fe22405063228a72c843be7b6ad145fb2ed3685"
+    },
+    {
+      "family": "mc_S_six_class",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.927,
+      "inputs_sha256": "3338c6b8cfe85e78aa2f27ad62f58243be91e4c9394f5f447e74e4b44c322963"
+    },
+    {
+      "family": "only_esm__five_class__baseline",
+      "branch": "only_esm",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 72.8035,
+      "inputs_sha256": "aedd5849cf6aa5e381ced72bb5146ff372bd51fd4e8deaa313cb3d7f6d35b1ff"
+    },
+    {
+      "family": "only_esm__four_class__baseline",
+      "branch": "only_esm",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 72.3752,
+      "inputs_sha256": "0d08606635af9fb436d921d71e41562d996600938f9600518e308a5ac06d6f22"
+    },
+    {
+      "family": "only_esm__six_class__baseline",
+      "branch": "only_esm",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 72.3202,
+      "inputs_sha256": "6bead89c18907cb1e74f57add5de5c8f0fee06c9a623f3713aaa7d0f77063e8f"
+    },
+    {
+      "family": "only_gvp__five_class__baseline",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 68.5128,
+      "inputs_sha256": "a6e23a434837e641ec57678513bb7d680d66186a830d3c049467d452e1f15e91"
+    },
+    {
+      "family": "only_gvp__four_class__baseline",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 69.7121,
+      "inputs_sha256": "231d75dd64b28c81a64e74ec46a6cd29f9deec79048e72a46902047ecd8a851f",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "only_gvp__four_class__meanagg",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 70.5646,
+      "inputs_sha256": "d00358bbad027f9e63b4da98630a17db3bbe05d5bc3a13df586d0866af2557f4",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "only_gvp__four_class__sitecountsangles",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 68.57,
+      "inputs_sha256": "15ceede7ce58109af4bf9b038ece5bc93af8b8c4b883ea7319b5c7cb663fd4ed",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "only_gvp__four_class__wd10",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 72.9374,
+      "inputs_sha256": "a78b31d7fdf1ab872317655ddad488dc03e5bc2147e05c0c3012a796d0812c82",
+      "ignored_seeds": [
+        "seed 43: folds [0] only"
+      ]
+    },
+    {
+      "family": "only_gvp__six_class__baseline",
+      "branch": "only_gvp",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 67.6739,
+      "inputs_sha256": "5e83a825b14e9c234889e182a2bb4b9e2777a0356f4c2df6bad643dcb6dd5ad6"
+    },
+    {
+      "family": "unified__P_five_class_trunklr1e4",
+      "branch": "late_fusion",
+      "seeds": [
+        42
+      ],
+      "pooled_oof_ba_percent": 74.9121,
+      "inputs_sha256": "6b8cb3cc89cec6881845c223784707fc92f75a7d60fdecb3f39c7b1a7846f827"
+    }
+  ],
+  "excluded_families": {
+    "gvp_late_fusion__four_class__combo-gvpaux03+headdrop03+invsqrtw+meanagg+resdrop01+wd10": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__esmdrop04": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__headdrop01": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__resdrop02": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__sched10": "seed 42: folds [1, 2, 3, 4] only",
+    "gvp_late_fusion__four_class__sitecountsangles": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__sitenone": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__structlr": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__v2recipe": "seed 42: folds [0] only",
+    "gvp_late_fusion__four_class__wd001": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "gvp_late_fusion__four_class__wd01": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_esm__four_class__v2recipe": "seed 42: folds [0] only",
+    "only_gvp__four_class__combo-meanagg+sitecountsangles+wd10": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__headdrop01": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__headdrop03": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__invsqrtw": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__resdrop01": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__resdrop02": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__sitenone": "seed 42: fold 3 has conflicting copies; no copy chosen; seed 43: folds [0] only",
+    "only_gvp__four_class__v2recipe": "seed 42: folds [0] only",
+    "only_gvp__four_class__vecnorm": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__wd001": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "only_gvp__four_class__wd01": "seed 42: folds [0] only; seed 43: folds [0] only",
+    "probe-w1-fp32-r1__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w1-fp32-r2__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w2-fp32-a__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w2-fp32-b__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w3-fp32-a__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w3-fp32-b__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only",
+    "probe-w3-fp32-c__gvp_late_fusion__four_class__baseline": "seed 42: folds [0] only"
+  },
+  "expected_families": {
+    "gvp_late_fusion__four_class__resdrop01": "included",
+    "gvp_late_fusion__four_class__meanagg": "included",
+    "gvp_late_fusion__four_class__invsqrtw": "included",
+    "gvp_late_fusion__four_class__esmdrop02": "included",
+    "gvp_late_fusion__four_class__wd10": "included"
+  },
+  "selection_or_promotion": false
+}

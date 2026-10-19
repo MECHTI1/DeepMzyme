@@ -1,0 +1,118 @@
+{
+  "batch_size": 32,
+  "comparison": {
+    "path": "<private>/parity_retry1/comparison.json",
+    "sha256": "7c6305bedf5f1e2f1b3066051f641e1e1042f9dfbc97825fddface89df1b2da2"
+  },
+  "completed_utc": "2026-10-19T18:25:30.485204+00:00",
+  "covered_reference_members": 55,
+  "device": "cpu",
+  "eligible_member_site_comparisons": 66,
+  "errors": [],
+  "exact_native_and_common4_class_agreement": true,
+  "execution_receipt": {
+    "path": "<private>/parity_retry1/execution_receipt.json",
+    "sha256": "cebc215072c21b3b5addee272b84b83dff37ca443263a56375db6b17b44fef93"
+  },
+  "fixture": {
+    "path": "<private-parity-fixture.json>",
+    "sha256": "94c148bf896acb6770bea866cb4c646a5dd4163d42d763de601cf78df86262e9"
+  },
+  "fixture_sites": 6,
+  "generated_embeddings": false,
+  "max_abs_difference": 6.84684944157743e-08,
+  "prediction_reports": [
+    {
+      "path": "<private>/parity_retry1/5sbi__chain_C__EC_0.0.0.0.json",
+      "sha256": "09ab35dbc3d4beaa0e4cc2cce26d62bfa4cd306052a6272e081175c937e52e94"
+    },
+    {
+      "path": "<private>/parity_retry1/6paz__chain_A__EC_0.0.0.0.json",
+      "sha256": "2b89d3f776ec647e3edbbb5f93b0eb4e52c50b34134883c88798ef1be52d1c77"
+    },
+    {
+      "path": "<private>/parity_retry1/3vhs__chain_A__EC_0.0.0.0.json",
+      "sha256": "ac9bcdd319ab3d9c5518dd93bfe258af49747ef2478bae6549eaf4e356311c7b"
+    },
+    {
+      "path": "<private>/parity_retry1/7duf__chain_A__EC_0.0.0.0.json",
+      "sha256": "aeb97076f264312fc20e5d71326e2c3f4039fe65faad37d8c74e78f54c0ecb01"
+    },
+    {
+      "path": "<private>/parity_retry1/2ds5__chain_A__EC_0.0.0.0.json",
+      "sha256": "47159aea46a607ab707de74c8ae927910e0753aa4182243b6db0253fae116fc6"
+    }
+  ],
+  "prior_failed_attempt": {
+    "evidence": {
+      "path": "<private>/parity/failure.json",
+      "sha256": "1c523dd9a5657f69efdcd948c758810d3633b3dc6a3f2844cff80418fd6310ff"
+    },
+    "reason": "JSON serialization converted tuple configuration fields to lists; canonical-equivalence comparison was repaired before successful replay."
+  },
+  "probability_tolerance": 1e-05,
+  "reference": "unified_trimodal_cv_locked",
+  "release_manifest": {
+    "path": "<private-v1-manifest.json>",
+    "sha256": "7422a714d69854cbadeba957b4311233c6b8f0142445114f71ecee2009c9fcbe"
+  },
+  "runtime": {
+    "compatibility_status": "unverified_until_development_prediction_parity_passes_for_this_runtime",
+    "executable": "<project-python>",
+    "packages": {
+      "biopython": "1.86",
+      "biotite": "1.6.0",
+      "esm": "3.2.3",
+      "gemmi": null,
+      "matplotlib": "3.10.9",
+      "numpy": "2.4.4",
+      "optuna": "4.8.0",
+      "pandas": "3.0.1",
+      "propka": "3.5.1",
+      "pytest": "9.1.1",
+      "scikit_learn": "1.8.0",
+      "torch": "2.11.0",
+      "torch_geometric": "2.7.0"
+    },
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "python": "3.12.13",
+    "source_sha256": {
+      "data_structures.py": "a931ee53961b10af424b95419b47069442c0d9b342ef762318d5716c50b88ce6",
+      "embed_helpers/esmc.py": "1651505cf27a36ae0d1e99af208a51863930c93e2a4161313a1a393bafeb7a07",
+      "export_validation_predictions.py": "5e3394a96765beae513fa4ebf8091a49f82e4e086da06b864dd2094b7c9813d8",
+      "featurization.py": "af02dab90eaf8ad3c4fdfc41a25e303ead8586c29431d08784c72c8ad529385d",
+      "graph/__init__.py": "9727f29a515573f7e0cbb0f052bb212d2182818466a3b548ba2a04702dfc7397",
+      "graph/construction.py": "8e9b6294bbf604f9f75bf09316a1bf07d769f13932b00cdd2069093fd2dfbff3",
+      "graph/edge_geometry.py": "66811c344703a65111a0436cb21b0fb43905e5c1c45b4710f38fb69bdda557a8",
+      "graph/edge_postprocess.py": "88d3c31b4e37ce0b6d4310ffe5410d831153c8a3ad0a00ee62d0e68e9c04e111",
+      "graph/edge_records.py": "78cead0066f029e5f29ec00ffab191929df813cfb2014fbe97cec93c99408d39",
+      "graph/edge_sources.py": "91baeed8a75ba328104934f18d400cdabdd64a2caed9240f1c91f53a77e5dcf2",
+      "graph/feature_utils.py": "fd6d833e804d076df5f20be0074b62054fce6d8340e6ec4bca5d47dd3dd24bef",
+      "graph/ring_edges.py": "aa96cfe0a24a753bd6e34d7de857e90ddd2285cf8372d4cd1509a4ade217eb7c",
+      "graph/shell_roles.py": "bb3f10b121e07b60fdd264c2f9f9942134f84b0f7b74dbeb8d8d671a2b27e665",
+      "graph/structure_parsing.py": "a339c4ac5ec8291adaa3269be7ffa9dc68c2f27e810ab84d799bac4061ba50a7",
+      "label_schemes.py": "d298d0b970d099091417216533c79abff5ae969ae84c74d2f044fabed510ab99",
+      "metal_release/catalog.py": "bfbd2fc5c941412b5c71457d3375e3efd9dec2bb4ec50f083224b2989530f7d3",
+      "metal_release/manifest.py": "97b240514bbdc4da153efcab04fc9b811bb394a3b85f89b523a5e84ec355c026",
+      "metal_release/predict.py": "3992edfbb6f3ec83c2e6953358419dbf4e75a20030a72a91f145878bcfc44acd",
+      "model.py": "1e780e1725d51211af7fb95ccd237e5f2218433728236ebee92b681ef763c821",
+      "model_variants/__init__.py": "a7625910fbe38737e588b81ebdb0d36a919c3edb7814882c648e9b736d240c8b",
+      "model_variants/factory.py": "649aa683770143c347fc8e053ffb131a479d688c8de7477f31f857a85989b6da",
+      "model_variants/models.py": "65c20b5596180a7cfc4ae766ad8de88c6a15027034406822bb610494ca579855",
+      "training/campaign_runtime.py": "b66a29df6234ca64f1702f3ac237a4972445e553c5ebbbe4e5c40b7bce77b183",
+      "training/esm_feature_loading.py": "57711f0fc7676c6b40cc6ee41264768cbf3241924bf33156b201bae9a496d1f8",
+      "training/graph_dataset.py": "cf8284eb2f7246b09f45caec43272909e6b442e3e50bf46fc8727b0d83e75f9c",
+      "training/raw_graph_cache.py": "c2ca28d720b13a8b3b2a02ba37b4311695d2253e1e421d46a6820618495c7800",
+      "training/run.py": "592071240793ccb9aac5da50ad4d47dc776e043347f516f1e16606154f4fb61c"
+    },
+    "torch_num_interop_threads": 4,
+    "torch_num_threads": 4
+  },
+  "schema": "deepmzyme-metal-development-parity-summary-v1",
+  "scope": "development fixture preprocessing/numerical compatibility; not an unbiased performance estimate",
+  "status": "passed",
+  "structures": 5,
+  "threads": 4,
+  "total_duration_seconds": 75.75210044200003,
+  "uncovered_members": []
+}

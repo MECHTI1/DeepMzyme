@@ -2,8 +2,15 @@
 
 This directory is the authority for DeepMzyme compute-benchmark files,
 schemas, commands, checksums, and interpretation. These workloads measure
-training-step compute behavior; they do not measure model quality and do not
+training or inference compute behavior; they do not measure model quality and do not
 authorize held-out-test access.
+
+## Metal ensemble inference
+
+The [release audit](../docs/campaigns/phase2_unified_2026-10/release_audit/README.md#prediction-parity-and-cost)
+records development-only CPU inference timings for the metal ensembles, measured in isolated processes by
+[`src/metal_release/benchmark.py`](../src/metal_release/benchmark.py). The historical training-step inventories below
+are unchanged.
 
 ## Immutable historical v1 inventory
 
