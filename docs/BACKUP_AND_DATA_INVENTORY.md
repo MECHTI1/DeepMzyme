@@ -11,7 +11,7 @@ Last updated: **2026-10-16** (section 5A: refit checkpoint re-hash and the compl
 | Destination | Primary Host | Role & Content |
 |---|---|---|
 | **Hugging Face** | [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) | Core dataset bundles (PMM, CLEAN, CARE), precomputed ESM embeddings, RING features, 5-fold CV trained model checkpoints, and source audit crosswalks. |
-| **GitHub** | [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) | Primary project code, configs, test suites, documentation, and `codex/pmm-source-audit` branch. |
+| **GitHub** | [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) | Primary project code, configs, test suites, documentation, and PinMyMetal source audit tools on `main`. |
 | **GitHub** | [`MECHTI1/deepmzyme-vm-manager`](https://github.com/MECHTI1/deepmzyme-vm-manager) | Cloud GPU VM orchestration tools and execution environments. |
 | **Google Drive** | `MyDrive/DeepMzyme/` (`1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I`) | Colab campaign artifacts, intermediate pilot archives, and Optuna persistent SQLite databases. |
 | **Google Cloud snapshot** | Project `deepmzyme-gpu-vm`, region `us-central1` | VM disk contents, including the installed environment and caches: snapshots `deepmzyme-paused-20261003` ([retirement receipt](archive/campaigns/pmm_ion_metal/storage_retirement_20261003.json)) and `deepmzyme-v3-final-20261013`, plus the kept disk of the TERMINATED VM `deepmzyme-l4` (state and limits in section 5A); [recovery procedure](GCP_GPU_RUNBOOK.md#archive-a-paused-environment). |
@@ -49,13 +49,7 @@ Published to Hugging Face commit: [`d8372220f2a3d0ce2d098a19f4728fa2d9882f90`](h
 ## 3. GitHub Repositories and Branches
 
 ### A. DeepMzyme Repository: [`git@github.com:MECHTI1/DeepMzyme.git`](https://github.com/MECHTI1/DeepMzyme)
-- **`main`**: Canonical development branch. All source code (`src/`), tests (`tests/`), pipelines (`scripts/`), and documentation summaries (`docs/`) are tracked here.
-- **`codex/pmm-source-audit`**: Source audit and crosswalk branch. Contains:
-  - Crosswalk audit tools: `src/audit_pmm_deposition_crosswalk.py`, `src/audit_pmm_feature_crosswalk.py`
-  - Site dataset builder: `src/build_pmm_site_dataset.py`
-  - Review scripts: `src/review_pmm_feature_matches.py`, `src/summarize_pmm_feature_crosswalk.py`
-  - Documentation: `docs/PMM_*.md`, `docs/VERY_EXACT_PMM_SETS_PLAN.md`
-  - Unit tests: `tests/test_pmm_deposition_crosswalk.py`, `tests/test_pmm_site_dataset.py`
+- **`main`**: Single canonical branch. All source code (`src/`), tests (`tests/`), pipelines (`scripts/`), documentation (`docs/`), and PinMyMetal source audit/crosswalk tools (`src/audit_pmm_deposition_crosswalk.py`, `src/audit_pmm_feature_crosswalk.py`, `src/build_pmm_site_dataset.py`, `src/review_pmm_feature_matches.py`, `src/summarize_pmm_feature_crosswalk.py`, `docs/PMM_*.md`, `tests/test_pmm_deposition_crosswalk.py`, `tests/test_pmm_site_dataset.py`) are consolidated here.
 
 ### B. VM Manager Repository: [`git@github.com:MECHTI1/deepmzyme-vm-manager.git`](https://github.com/MECHTI1/deepmzyme-vm-manager)
 - Branch `main`: Provisioning, environment configuration, and execution tools for GCP GPU VMs (G4, L4, A100).

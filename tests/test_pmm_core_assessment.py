@@ -21,7 +21,23 @@ FROZEN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope
 def modules():
     if not FROZEN.is_dir():
         pytest.skip("Frozen PMM scientific checkout is required")
-    return core.bind_source(FROZEN)
+    repo_src = Path(__file__).resolve().parents[1] / "src"
+    saved_modules = {
+        name: mod
+        for name, mod in list(sys.modules.items())
+        if getattr(mod, "__file__", None) and Path(mod.__file__).resolve().is_relative_to(repo_src)
+    }
+    saved_path = list(sys.path)
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    try:
+        yield core.bind_source(FROZEN)
+    finally:
+        for name, mod in list(sys.modules.items()):
+            if getattr(mod, "__file__", None) and Path(mod.__file__).resolve().is_relative_to(FROZEN / "src"):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
+        sys.path[:] = saved_path
 
 
 def make_rows(fold, target):

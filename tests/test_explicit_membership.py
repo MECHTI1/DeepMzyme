@@ -287,6 +287,7 @@ def test_checkpoint_selection_uses_inner_validation(monkeypatch, tmp_path, cohor
 
 def test_outer_loader_not_deserialized(monkeypatch, tmp_path):
     import training.data as data
+    import training.parallel_loading as parallel_loading
     paths = [tmp_path / f"{n}.pdb" for n in ("train", "inner", "outer")]
     monkeypatch.setattr(data, "find_structure_files", lambda p: paths)
     monkeypatch.setattr(data, "resolve_allowed_site_metal_labels", lambda p: {})
@@ -297,7 +298,7 @@ def test_outer_loader_not_deserialized(monkeypatch, tmp_path):
         assert name != "outer"
         seen.append(name)
         return [], [], []
-    monkeypatch.setattr(data, "load_structure_pockets", load)
+    monkeypatch.setattr(parallel_loading, "load_structure_pockets", load)
     with pytest.raises(ValueError, match="No metal-centered"):
         data.load_training_pockets_with_report_from_dir(tmp_path, allowed_structure_ids={"train", "inner"})
     assert seen == ["train", "inner"]
