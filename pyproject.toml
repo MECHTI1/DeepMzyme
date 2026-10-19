@@ -17,6 +17,7 @@ dependencies = [
 
 [dependency-groups]
 test = [
+    "pandas==3.0.1",
     "pytest==8.4.2",
 ]
 reporting = [

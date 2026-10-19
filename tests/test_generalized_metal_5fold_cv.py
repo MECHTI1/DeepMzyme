@@ -115,9 +115,19 @@ def test_exact_pinmymetal_runner_supports_both_units():
     assert i_cmd[i_cmd.index("--metal-example-unit") + 1] == "ion"
 
 
-def test_dry_run_flag(monkeypatch, capsys):
+def test_dry_run_flag(monkeypatch, capsys, tmp_path):
+    ds_root = tmp_path / "train_and_test_sets_structures_exact_pinmymetal"
+    for split in ("train", "test"):
+        split_dir = ds_root / split
+        split_dir.mkdir(parents=True)
+        (split_dir / "final_data_summarazing_table_transition_metals_only_catalytic.csv").write_text(
+            "PDB_ID,Chain,Metal\n1ABC,A,ZN\n",
+            encoding="utf-8",
+        )
     test_args = [
         "run_metal_5fold_cv.py",
+        "--data-root",
+        str(tmp_path),
         "--dataset",
         "train_and_test_sets_structures_exact_pinmymetal",
         "--metal-example-unit",
