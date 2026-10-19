@@ -225,7 +225,6 @@ Do not rank runs only by the largest number visible in an output file. Check the
 task, target scheme, dataset, validation split, metric, model family, seeds,
 folds, and evidence grade first.
 
-The current project has fixed-split metal anchors and exploratory joint
-results, but no Grade-1 or Grade-2 grouped-fold result, no completed Stage 6B
-final refit, and no approved primary final-test route. The concise current
-matrix and exact values live in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
+Current anchors, evidence grades, the Stage 6B source and exact values live in
+[`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md); the primary final-test route
+is unresolved ([DATASETS](DATASETS.md#final-reporting-status)).

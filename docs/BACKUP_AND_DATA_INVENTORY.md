@@ -2,7 +2,7 @@
 
 This document serves as the authoritative, permanent inventory of all cloud-backed files, datasets, trained model weights, benchmark checkpoints, and repository branches for the **DeepMzyme** project.
 
-Last updated: **2026-10-13** (local NVMe backups and GCP state, section 5A; other inventories retain their original verification dates).
+Last updated: **2026-10-16** (section 5A: refit checkpoint re-hash and the completion-package backup gap; GCP state 2026-10-13; other inventories retain their original verification dates).
 
 ---
 
@@ -41,6 +41,8 @@ Published to Hugging Face commit: [`d8372220f2a3d0ce2d098a19f4728fa2d9882f90`](h
 | [`benchmarks/DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz) | 511 MB | `374c888132f99345ee5ca97a7a515b1a468ec4bdace69c77f72ecde4e5b23dfc` | **Full 5-Fold CV Benchmark Runs & Model Weights.** Contains `best_checkpoint.pt`, test predictions (`test_predictions.pt`), per-fold logs, and comparison tables for: Enhanced GVP+ESMC (Folds 0-4), Enhanced Only GVP (Folds 0-4), Only ESM (Folds 0-4), plus recovery and pilot runs. |
 | [`benchmarks/DeepMzyme_pmm_source_audit_output_20260924.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_pmm_source_audit_output_20260924.tar.gz) | 144 MB | `8ca96f245e4ae015080f0b18b156e04c87155e4b024101137752bb2bc653f6ac` | **PinMyMetal Source Audit & Crosswalk Data.** Deposition crosswalks v1–v3, full feature crosswalks, and upstream audit summaries. |
 | [`benchmarks/benchmark_5fold_comparison_table.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/benchmark_5fold_comparison_table.md) | 2.4 KB | — | Markdown summary table of 5-fold cross-validation balanced accuracy and per-metal recalls across models. |
+| [`benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz) | 99 MB | `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe` | **Phase 2 Unified 5-Fold Checkpoints & Full 180-Checkpoint Held-Out Test Evaluation Bundle (2026-10-19).** Contains all 5 `unified__P_five_class_trunklr1e4__fold{0..4}__seed42` `terminal_model_checkpoint.pt` weights and `val_predictions.csv`, the `180 x 1485 x 4` test probability archive (`test_checkpoint_probs.npz`), 10,000-resample PDB-cluster bootstrap CI summaries (`phase1_test_summary.json`, `phase2_unified_summary.json`), and reproduction scripts. |
+| [`benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md) | 16 KB | — | Complete Phase 1 & Phase 2 evaluation report across all 180 checkpoints and all 5 test slices (`72.20%` Full Test BA / `73.94%` Eligible Test BA / `77.17%` OOF CV BA). |
 
 ---
 
@@ -87,19 +89,23 @@ Copies on the workstation NVMe (`/dev/nvme0n1p6`, ext4), a different physical di
 
 | Folder | Coverage | Verification |
 |---|---|---|
-| `pmm_ion_metal_v3_closeout_20261013T023038Z/` | v3 refit, step F evidence, test preparation/report artifacts, selected audits (4,836 files, 2.64 GB); not every earlier run | `sha256sum -c` re-run 2026-10-13 ~18:55 UTC: all OK |
+| `pmm_ion_metal_v3_closeout_20261013T023038Z/` | v3 refit (`terminal_model_checkpoint.pt` `a00078466cf6…`, `last_model_checkpoint.pt` `f899a42d…`; source role in the [campaign evidence](campaigns/metal_completion_2026-10/evidence.md#stage-6b-source-and-compatibility-2026-10-16)), step F evidence, test preparation/report artifacts, selected audits (4,836 files, 2.64 GB); not every earlier run | `sha256sum -c` re-run 2026-10-13 ~18:55 UTC: all OK; the terminal checkpoint re-hashed 2026-10-16 here and on Data1: equal |
 | `post_v3_diagnostics_20261013T141136Z/` | post-v3 structural-context diagnostics (811 files) | three `SHA256SUMS` re-run: all OK; file set equals Data1 |
 | `deepmzyme_closeout_ec_readiness_20261013T190136Z/initial/` | repository bundle (`main` `ad99c5f` + tag `pmm-ion-metal-v3-final`), staged patch, frozen trunk-LR source; the whole Data1 trunk-LR records folder; the five trunk-LR candidate and five v3 control runs with lane receipts and v3 dependencies; the EC readiness inputs (2,102 files, 0.93 GB) | all files re-hashed after copy; one candidate run and its records restored and validated without reading the originals; `RESTORE.md` and `BACKUP_RECEIPT.json` in the folder |
 | `deepmzyme_closeout_ec_readiness_20261013T190136Z/final_state/` | the completed task's source, tests, patches, EC reports, maintenance receipts and docs | its own `BACKUP_RECEIPT.json` |
+| `phase2_unified_and_180ckpt_eval_20261019T0317Z/` & `DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz` | Phase 2 Unified 5-fold checkpoints (`unified__P_five_class_trunklr1e4__fold{0..4}__seed42`), `test_checkpoint_probs.npz` (`180` checkpoints), `phase1_test_summary.json`, `phase2_unified_summary.json`, and scripts (99 MB) | `SHA256SUMS` verified (`sha256sum -c` OK); tarball SHA-256 `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe`; also uploaded to Hugging Face `GMBioinformatics/DeepMzyme` |
 
 GCP (controller `vm-status` / `vm-report --no-ssh`, 2026-10-13 18:50 UTC): VM `deepmzyme-l4` TERMINATED, its 150 GB
 disk kept, snapshots `deepmzyme-paused-20261003` (34.8 GiB) and `deepmzyme-v3-final-20261013` (52.7 GiB) present.
 Their content claims come from the historical receipts: provider restore-disk checks only, no filesystem mount or boot
-test, and provider existence is not a checksum of remote files. The 2026-10-13 snapshot predates the trunk-LR fits.
+test, and provider existence is not a checksum of remote files. Both snapshots predate the trunk-LR and completion
+fits; later provider state is in the [metal completion execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516).
 
 **Gap:** no off-site copy of workstation-only outputs (the trunk-LR records and assessment, the step F records, the
 EC readiness reports); Data1 and the NVMe backups are in one machine. The trunk-LR fits' VM-side originals may remain
-on the kept disk but were not verified. Adding an off-site copy needs the user's decision.
+on the kept disk but were not verified. The metal completion package on Data1
+(`campaigns/metal_completion_2026-10/preparation_20261014T164111Z/`, with the 69 new fits and all receipts) has no
+NVMe or off-site copy (checked 2026-10-16). Adding an off-site copy needs the user's decision.
 
 ---
 

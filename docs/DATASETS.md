@@ -25,8 +25,9 @@ Relevant facts:
   remains possible), so it is not an unopened test either (see the ledger).
 - CLEAN and CARE datasets have different scientific purposes and cannot be
   silently designated as replacement final tests.
-- This documentation cleanup does not select a replacement dataset or change
-  evaluation behavior.
+- No replacement final-test dataset is selected. A temporal experimental-PDB
+  source is only proposed ([metal completion protocol](campaigns/metal_completion_2026-10/evaluation.md#preparation-inventory-2026-10-16));
+  no candidate list, structure, label, prediction or certification exists.
 
 The historical test values are preserved as access evidence, not parameter or
 model-selection evidence.
@@ -526,7 +527,7 @@ Tracked metadata:
 | Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | No (rules and model frozen before the label read) | Evaluated once by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11 |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
-| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test |
+| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; incidental fold-0 test-metadata exposure 2026-10-16 (below) |
 | CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15 and 2026-10-13 (below) |
 
 ### Local test-access artifacts (git-ignored)
@@ -579,6 +580,18 @@ was retained or used. The inventory tool and every later read filter
 `split == "train"` while streaming and never print rows. No prediction,
 evaluation, selection or training used test data. This records metadata
 exposure; it is not a held-out model evaluation.
+
+**2026-10-16 incidental CLEAN test-fold metadata access:** during the read-only
+evaluation-preparation review of campaign `metal_completion_2026-10`
+([log](campaigns/metal_completion_2026-10/log.md)), one verification agent's
+repository-wide text search for a training PDB ID printed one row of
+`CLEAN_prepare_training_and_test_set/provenance/conservative_single_donor/metadata/single_donor_selection_audit.csv`
+that belongs to CLEAN fold 0's test file: one accession, its donor PDB ID and a
+metal-support status. CLEAN folds are a five-fold benchmark, not a sealed test.
+In the same review, agents read the NVMe backup's `SHA256SUMS`, which lists the
+names and hashes of the already-evaluated v3 step F test outputs, without opening
+them. Nothing was used, and no prediction, evaluation, selection or training
+followed. This records metadata exposure; it is not a held-out evaluation.
 
 **2026-10-03 incidental PinMyMetal test metadata access:** during a read-only
 check of the comparator label leak
@@ -870,7 +883,14 @@ DeepMzyme structures, ESMC embeddings, RING files, and graph external features.
 
 ## Unresolved records
 
-- Primary final-test route requires a separate scientific decision.
+- Primary final-test route requires a separate scientific decision; the proposed
+  temporal route's open gates are in the [metal completion protocol](campaigns/metal_completion_2026-10/evaluation.md#remaining-blockers).
+- Exact Zenodo PinMyMetal test identity count: 1,029 unique PDB IDs in the
+  [Exact Zenodo table](#exact-zenodo-pinmymetal-train_and_test_sets_structures_zenodo_pmm_exact)
+  (test side not re-audited) versus 1,179 for the 1,488 source test rows in the
+  [original membership](#original-membership) table and the v3 step F report
+  ([archived log v3-048](archive/campaigns/pmm_ion_metal_v3/log.md#v3-048));
+  reconcile in the next authorized label-free identifier read.
 - CARE upstream source URL/citation is missing.
 - The non-overlapped PinMyMetal root is present locally but absent from the
   historical v10 bundle (included in v11/v12); the harsh root is unavailable

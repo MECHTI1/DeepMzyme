@@ -96,6 +96,16 @@ hashes are in the [campaign log](../archive/campaigns/pmm_ion_metal_v3/log.md). 
 | `metal/pmm-ion-v3/step-f/2026-10-13` | Stage 6B validation-free refit (50 epochs, seed 42) and one label-blind test pass under two freezes; workstation-CPU test side | Secondary test report (`both_results_secondary`): full-test common-four BA 67.55% [62.93, 71.65]; clean subset 48.85% (not pristine); beside PMM's published 67.85 (lower; not matched) | Not graded: one held-out pass | **Yes: the exact Zenodo PinMyMetal test, evaluated once (2026-10-13)** | [log v3-045 to v3-048](../archive/campaigns/pmm_ion_metal_v3/log.md#v3-048); [DATASETS ledger](../DATASETS.md#test-use-ledger); `step_f_evidence/`, `step_f_test/report_20261013T012534Z/` |
 | `metal/pmm-trunk-lr/2026-10-13` | Separate campaign `pmm_trunk_lr_2026-10`: the selection with GVP-trunk LR 1e-4 instead of 3e-4, five grouped folds, seed 42, against the five v3 controls; rule frozen before any fit | Mean +1.16 (75.45 vs 74.28), bootstrap [−0.65, +3.11], folds 1–4 +0.24; reference retained; candidate not promoted, not disproven | 2 | None | [log tlr-003](../archive/campaigns/pmm_trunk_lr_2026-10/log.md#tlr-003); Data1 `campaigns/pmm_trunk_lr_2026-10/assessments/TLR_20261013T174637Z/` |
 
+## Metal completion successor (`metal_completion_2026-10`)
+
+The evidence stays on Data1 (`/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/`)
+and is not copied under `raw/`; hashes are in the [campaign evidence](../campaigns/metal_completion_2026-10/evidence.md).
+
+| Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
+|---|---|---|---:|---|---|
+| `metal/metal-completion/discovery/2026-10-15` | Recipes B/P/S × four/five/six × five grouped folds, seed 42 (45 cells: 30 new fits, 15 reused B controls); rules frozen before any fit | Shared recipe P frozen for confirmation (qualified on five-class only, +0.44 common-four points); S failed the recall guard on every target | 2 | None | [log](../campaigns/metal_completion_2026-10/log.md#2026-10-15--discovery-decision-frozen-rule); `execution/selection_discovery.json` |
+| `metal/metal-completion/confirmation/2026-10-16` | P four/five/six and B four on seeds 43/44, five folds (40 cells: 39 new fits, 1 reused control); Bonferroni-adjusted paired gates | No challenger passed; B four-class (the v3 recipe) retained; P4−B4 +0.36, adjusted bootstrap [−0.39, +1.42] | 2 (seeds reuse the discovery folds) | None | [findings](../PARAMETER_FINDINGS.md#metal-completion-bps-loss-recipes-on-fourfivesix-objectives-executed-2026-10-1516); `execution/selection_confirmation.json` |
+
 ## GPU runtime efficiency planning
 
 The [efficiency plan](../GPU_RUNTIME_EFFICIENCY_PLAN.md) uses the authorized

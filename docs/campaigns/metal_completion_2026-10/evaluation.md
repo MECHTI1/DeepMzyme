@@ -34,7 +34,8 @@ The manifest schema is `metal-completion-evaluation-provenance-v1`:
   `evidence_sha256`, and true declarations for all supervised-development sources, previously opened test IDs and
   custom split variants. These are review attestations, not independently proved by the preparer.
 - `sources`: unique source IDs, verified status, an evidence SHA-256, `use_status` and `pdb_ids`. Required accounting
-  covers every family in the [DATASETS overview](../../DATASETS.md#dataset-overview): `pinmymetal-source`,
+  covers every family in the [DATASETS overview](../../DATASETS.md#dataset-overview) except `clean10`, which has
+  no root or documented use: `pinmymetal-source`,
   `pinmymetal-zenodo-exact`, `pinmymetal-exact`, `pinmymetal-nonoverlap`, `pinmymetal-harsh`, `pinmymetal-common70`,
   and the EC-side `clean30-original`, `clean30-conservative`, `care-task1-clusterres30` and `care-task1-legacy30`,
   whose structures the standalone metal model never saw and which are therefore expected to be recorded as
@@ -69,9 +70,60 @@ verified manifest. The example values in tests are synthetic and must never serv
   after scores are known.
 - Freeze query, eligibility/disposition rules, source snapshots and provenance before candidate materialization.
   Keep labels outside development selection. Freeze the selected configuration, full non-test refit, reporting set,
-  calibration/ensemble rule, exclusions and denominator policy before one-shot scoring. Record access in DATASETS.
+  calibration/ensemble rule, exclusion rules and denominator policy before any candidate read; certify exclusions and
+  freeze memberships before one-shot scoring. Record access in DATASETS.
   Preserve v3's historical secondary reports; do not rerun them to select this successor.
 
-Completion of this preparation means only tested offline tooling and a reviewable protocol. Actual source dates,
-verified complete source coverage, precise quality/support rules, candidate retrieval authority, cohort certification,
-and the final model/report freezes remain prerequisites. None is implied by a `query.json` file.
+Completion of this preparation means tested offline tooling, a reviewable protocol, the conditionally designated model source and
+the training-side evidence below. Opened-test IDs and dates, verified complete source coverage, precise
+quality/support rules, candidate retrieval authority, cohort certification and the report freeze remain
+prerequisites. None is implied by a `query.json` file.
+
+## Preparation inventory (2026-10-16)
+
+This reconciliation used the CPU only, with no network access and no deliberate test-side read; incidental metadata
+exposure during the review is recorded in the [DATASETS ledger](../../DATASETS.md#test-use-ledger). Its evidence is in the package's
+`evidence/evaluation_prep_20261016/` (generator `d7d2bdb6…`); [log](log.md) records the session. All of it is
+unverified provenance evidence, not a verified manifest, candidate list or certified cohort.
+
+| Item | State |
+|---|---|
+| Model source | Designated under conditions: refit `a0007846…` ([evidence](evidence.md#stage-6b-source-and-compatibility-2026-10-16)); valid only for an external cohort disjoint from the training cohort, every opened test and their near-copies; a primary report needs the user's one-shot decision (blocker 1) |
+| Training-side prior use | All 4,195 PMM source-train PDB IDs dated from local REVDAT 1 headers, 1988-10-09 to 2024-04-17: 4,191 in two snapshots (Zenodo train and raw upstream train) with no disagreement, and 5fle, 5mfu, 6ilb and 8f9x from the raw upstream train only. These IDs cover the Zenodo-train (4,191), v3-cohort (3,992), exact (1,472), non-overlap (1,295) and common70 (1,419) train sides. CSV `788a7f0a…`, summary `3b992424…` |
+| Obsolete training entries | Seven: 5wv4→8wqz, 7zik→9he3, 8h4x→8zcr, 8ius→9ixg, 8iuu→9ixc, 8iuv→9ixf, 8iuw→9ixd. The replacements can fall inside a post-2024 window, and their release dates are not local. The tool has no related-entry exclusion yet |
+| Opened tests | Not enumerated here. The exact Zenodo test has 1,488 rows; its unique-PDB-ID count is unreconciled ([DATASETS](../../DATASETS.md#unresolved-records)). 136 of the 313 previously opened exact/non-overlap test IDs cannot be derived from train-side files (the other 177 are the exact split's train/test overlap). Their release dates may move the cutoff past 2024-04-17 |
+| EC-side families | CLEAN30 and CARE are UniProt/AlphaFill sets that B-four never used (all 7,398 training rows come from `classmodel_train_set`); `not_used` reasons are available, and donor PDB IDs are not inventoried |
+| Provenance template | The current tool's blocked ten-family template `c896d9d3…` supersedes the stored six-family `88b87be6…` |
+| Exclusion and similarity tooling | v3 `pmm_v3_test_prep.py` provides C1 (training PDB ID), C2 (A1 near-copy chain; misses pockets whose context chains are all shorter than 30 residues), C3 (opened PDB ID) and dispositions for the PMM layout only. A new layout needs an adapter, plus opened-test reference chains. The MMseqs2 remote-homology protocol exists, but no run on this cohort was found |
+| Eligibility and quality | Only the v3 dispositions and the symmetry-context rule exist. Atom identity, alias, occupancy, method/resolution, missing-context and multi-ion rules for new deposits are unfrozen. The aliases MN3, CU1, CU3, 3CO and 3NI never occur in training, and pocket-builder support for them is unverified |
+| Support | There is no precision objective and no per-class group threshold. Training-side context: Cu has 123 near-copy groups (Zn 1,175, Class VIII 626, Mn 474). v3's C1–C3 exclusions left 423 of 1,488 opened-test rows. No test score informs the rule |
+| Query | The offline tool tests pass (14). The live schema, request size and pagination are unverified. The negated ID list is a safety net and is not redundant unless local dates equal wwPDB's |
+| Pretrained encoder | The ESMC-600M training-data cutoff is not recorded; disclose possible sequence exposure |
+
+### Remaining blockers
+
+Each step depends on the previous one and needs the approval shown:
+
+1. **Route and one-shot rule (user decisions):** confirm the external temporal cohort as the primary Stage 7 route,
+   and approve an explicit exception to Plan's one-shot rule (or amend Plan) for this refit, which already had one
+   secondary held-out pass. The source designation is conditional on both.
+2. **Prior-use completion (approval of a label-free test-side read and a read-only wwPDB metadata request; CPU
+   minutes, $0):**
+   - read only the PDB IDs, REVDAT 1 dates and SEQRES/context-chain sequences of the opened tests through a record
+     allowlist (no HET, HETNAM, FORMUL, LINK, SITE or REMARK 620 records, which name metals), from local test headers
+     or the hash-pinned step F inventories, and record the read in DATASETS;
+   - reconcile the 1,029/1,179 count;
+   - get the replacement entries' dates (wwPDB metadata, network).
+3. **Manifest review:** assemble the ten-family manifest and have a reviewer record `verified`. Then check the live
+   Search API schema, request size and pagination (network, read-only, no candidate query).
+4. **Preregistration (user decisions; before any candidate read):**
+   - the precision objective and per-class independent-group support;
+   - eligibility, quality, alias and related-entry rules;
+   - the near-copy adapter with opened-test references, tested on training-side or synthetic data;
+   - a Freeze-1 analog binding the checkpoint, primary label and metrics, PDB-group bootstrap, no
+     ensemble/calibration, denominators, disclosures, evaluation environment and tool hashes.
+5. **Query and feasibility:** run the offline `prepare` (query freeze), then a metadata-only feasibility count
+   (network, recorded in DATASETS). Insufficient support blocks a strong primary claim; it does not relax the rules.
+6. **Cohort and scoring:** candidate retrieval, exclusion/similarity certification, label-blind preparation and
+   test-side ESMC on the CPU, a Freeze-2 analog, then one prediction claim and the report. Each step needs its own
+   authorization.

@@ -1,6 +1,6 @@
 # Metal completion successor
 
-Status: active (2026-10-14 CPU preparation only; no execution authority)
+Status: active (2026-10-16 optimization complete; B four-class retained; Stage 6B source verified; Stage 7 not started)
 
 ## Scope and authority
 
@@ -24,14 +24,14 @@ BA, with native metrics/recall protection and fixed contrasts/ties. Repeated see
 
 [evidence.md](evidence.md) owns verified reuse/checks/progress; [log.md](log.md) owns dated decisions.
 Successor identities/output paths are separate. Frozen parent source, manifests and evidence remain read-only.
-The 2026-10-14 independent review re-sealed the package; the first package is superseded history.
+The 2026-10-14 review re-sealed the package; the first package is superseded history.
 
 Use the [canonical metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#metal-completion-successor-cpu-preparation-and-execution-gates)
 for executable preparation and execution gates. Future fits require a forecast, approved ceiling and
 bound policy/session/spending receipts; preparation grants no compute authority.
 
-[evaluation.md](evaluation.md) owns the offline test proposal and unresolved gates. Full non-test refit and
-report freeze precede one-shot scoring. Preparation is not a trained model or certified test cohort.
+[evaluation.md](evaluation.md) owns the test proposal, inventory and blockers; the Stage 6B source is in
+[evidence.md](evidence.md#stage-6b-source-and-compatibility-2026-10-16). No certified test cohort exists.
 
 [handoff.md](handoff.md) is the next-session prompt. [Plan](../../../Plan.md) owns science;
 [DATASETS](../../DATASETS.md#final-reporting-status) owns test history. EC remains deferred; repair

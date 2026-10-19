@@ -1,47 +1,48 @@
 # Next Claude Code session prompt
 
-Paste the following prompt into a new session. It authorizes reading, CPU checks and the preparation of gate
-artifacts; it does not authorize a GPU session, spending, candidate-test collection or held-out evaluation. The
-2026-10-14 independent review is complete ([log](log.md), [evidence](evidence.md)); do not repeat it.
+Paste the following prompt into a new session. It authorizes reading and CPU work only. It does not authorize a
+GPU session, spending, training, candidate-test collection, a test-side read or held-out evaluation. Optimization is
+complete ([log](log.md)) and the Stage 6B source is designated
+([evidence](evidence.md#stage-6b-source-and-compatibility-2026-10-16)); do not rerun either.
 
 ---
 
-Work in `/home/mechti/PycharmProjects/DeepMzyme`. My priority is still to finish metal classification first:
-compare `four_class`, `five_class` and `six_class`, retain a robust final model using development evidence,
-and establish a defensible independent final evaluation. EC stays deferred.
+Work in `/home/mechti/PycharmProjects/DeepMzyme`. My priority is the independent evaluation of the selected metal
+model. The completion campaign retained the unchanged B four-class configuration (the v3 late-fusion direct-four
+recipe), and the v3 full non-test refit `a0007846…` is its verified, designated Stage 7 source. Keep its features
+and architecture unchanged: no atom-level encoder and no extra surrounding-atom inputs. EC stays deferred.
 
-First read `AGENTS.md`, `EXPERIMENT_STATUS.md`, the campaign README, the relevant `Plan.md` sections and the
-documentation owner table. Verify the prescribed conda interpreter before Python commands. Read the GPU skill
-before any compute planning or controller interaction; reading it grants no spending authority. Inspect the
-worktree and index and preserve existing work.
+First read `AGENTS.md`, `EXPERIMENT_STATUS.md`, the campaign README, `evaluation.md`, the relevant `Plan.md`
+sections, `docs/DATASETS.md` and the documentation owner table. Verify the prescribed conda interpreter before
+Python commands. Read the GPU skill before any compute planning; reading it grants no spending authority. Inspect
+the worktree and index.
 
-The active successor is [metal_completion_2026-10](README.md). Its CPU preparation was implemented, independently
-reviewed and re-sealed; `evidence.md` owns the package root, manifest hash and verified controls, and the
-[canonical playbook block](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#metal-completion-successor-cpu-preparation-and-execution-gates)
-owns the executable commands, the wrapper/exit-file contract, the persistence layout and the deployment
-prerequisite. Reuse that evidence; repeat a check only when source, inputs or environment changed.
+Evidence lives in Data1 `campaigns/metal_completion_2026-10/preparation_20261014T164111Z/evidence/`:
+- `execution_closeout.json`: the campaign fits;
+- `stage6b_source_20261016/`: the compatibility record, 25 of 25 checks passed;
+- `evaluation_prep_20261016/`: training-side prior-use release dates, obsolete entries and the blocked template.
 
-Decide with me, in this order, and act only on what I explicitly approve in this conversation:
+Reuse this evidence. Repeat a check only when source, inputs or environment changed. The completion package has no
+NVMe or off-site copy yet (see the backup inventory, section 5A).
 
-1. The costed validation-only proposal in `evidence.md` (24 aggregate GPU hours, $30 gross, eight sessions of at
-   most four hours, three FP32 lanes on the existing L4). If I approve it, record my exact decision text, bind it in
-   the authorization policy with the manifest hash and the permitted units, and prepare the controller session and
-   spending snapshots through `~/deepmzyme-vm/bin` only after I ask for a start. Fresh price verification and the
-   provider automatic STOP are mandatory. The storage line is about $1.00/day while the VM is TERMINATED.
-2. The deployment prerequisite: the GPU host must hold the package, parent, train dataset and ESM directory at the
-   identical absolute Data1 paths; run the `plan` command there before any unit. If that is not feasible, propose a
-   reviewed relocation mechanism instead of improvising paths.
-3. Discovery (30 new fits), the frozen recipe decision, confirmation (29 or 39 new fits), the selected configuration,
-   then verified reuse or a full non-test refit, frozen reporting/checkpoint/ensemble/calibration rules, and only
-   then one-shot independent evaluation. Preserve the specification's refit policy. Historical secondary test
-   results cannot select anything.
+Work through the [remaining blockers](evaluation.md#remaining-blockers) in order. Act only on what I explicitly
+approve in this conversation:
 
-Keep the independent-evaluation work offline: `evaluation.md` and `docs/DATASETS.md` own its gates; candidate
-queries, downloads, new test reads, embeddings, predictions and scoring each need their own reviewed authorization.
-Do not reopen the closed structural-context, symmetry or trunk-LR investigations, and keep EC paused until TECH-030
-is repaired and verified.
+1. **Route and one-shot rule (blocker 1):** ask me to confirm an external temporal PDB cohort as the primary
+   route, disjoint from the training cohort, every opened test and their near-copies. Also ask whether I approve an
+   explicit exception to Plan's one-shot Stage 7 rule (or a Plan amendment) for this refit, which already had one
+   secondary held-out pass. The source designation depends on both.
+2. **Prior-use completion (blocker 2, with my approval):** carry out exactly what blocker 2 lists, including its
+   record allowlist and its separate network request, and record the read in DATASETS.
+3. **Later blockers:** each needs its own approval, in the listed order.
 
-Preserve the accepted-work escalation rule: if an authorized ceiling becomes insufficient, offer the stop-and-close
-or continue-with-larger-recorded-ceiling choices at a safe boundary. Do not silently expand scope or exceed recorded
-authority. Conclude with completed changes, verification evidence, unresolved blockers and the exact next authorized
-step, linking evidence and canonical commands. Follow the explicit-path staging rules; leave commit/push to me.
+Closure stays my decision; the campaign remains open while Stage 7 preparation continues.
+
+Host note: the GCP VM boots kernel 7.0.0-1014-gcp, for which the NVIDIA driver does not build; the playbook block
+records the per-boot kernel selection.
+
+Do not reopen the closed structural-context, symmetry or trunk-LR investigations. Keep EC paused until TECH-030 is
+repaired and verified.
+
+Conclude with the completed changes, verification evidence, unresolved blockers and the exact next authorized step.
+Follow the explicit-path staging rules and leave commit/push to me.

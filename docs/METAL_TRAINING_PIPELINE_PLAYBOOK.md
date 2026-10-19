@@ -6325,7 +6325,7 @@ updated separately to match the canonical workflow.
 ## Metal completion successor: CPU preparation and execution gates
 
 This additive CLI route belongs to [metal_completion_2026-10](campaigns/metal_completion_2026-10/README.md).
-Current stage is CPU preparation, before discovery and **Stage 6 grouped-fold confirmation**. It does not reopen
+Discovery and **Stage 6 grouped-fold confirmation** ran on 2026-10-15/16 ([execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516)). It does not reopen
 the closed v3 campaign. The user selected four, five and six training objectives. All targets use the same frozen
 v3 ion cohort, five near-copy/PDB grouped folds, late-fusion architecture, feature set, FP32, optimizer and rates,
 50-epoch cosine schedule and terminal checkpoint. No HPO or Optuna study is introduced.
@@ -6405,7 +6405,7 @@ the exact manifest hash:
   --train-dir "$MC_TRAIN" --esm-dir "$MC_ESM"
 ```
 
-**Deployment prerequisite (not yet performed).** The manifest binds the five absolute Data1 paths above, and the
+**Deployment prerequisite (performed for the 2026-10-15/16 sessions).** The manifest binds the five absolute Data1 paths above, and the
 training-input receipt records the resolved train directory, so the GPU host must hold real directories (or a bind
 mount recorded in `/etc/fstab` so it survives the controller's STOP/START) at exactly these paths: `code/`,
 `parent/`, the train dataset and the ESM directory. A symlinked train directory resolves to another path and fails
@@ -6414,10 +6414,10 @@ library versions with `evidence/cpu_verification.json`; a passing `plan` proves 
 
 ### Execution, evidence and transition gates
 
-**Authorized execution budget now: zero.** Proposed validation-only ceiling, awaiting the user's scoped approval:
-24 aggregate GPU hours, $30 gross, eight sessions maximum, four hours maximum per session on the existing GCP L4;
-three FP32 lanes only after rechecking applicability of the frozen Step-B certification. The
-[cost evidence](campaigns/metal_completion_2026-10/evidence.md#proposed-execution-ceiling--approval-pending)
+**Authorized execution budget now: zero** (the 2026-10-15 authorization of 24 aggregate GPU hours, $32 gross, eight
+sessions of at most four hours on the existing GCP L4 with three FP32 lanes was consumed by the executed discovery and
+confirmation; see the campaign evidence). The gates below remain the contract for any newly authorized session. The
+[execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516)
 records measured timing, dated prices and forecast uncertainty. Provider caps may be tighter. No migration,
 hardware upgrade, extra recipe, final refit or independent-cohort construction is included. Preserve AGENTS'
 accepted-work escalation rule at the first safe boundary if a ceiling becomes insufficient.
@@ -6482,16 +6482,50 @@ cell and verifies actual bytes and predictions; `assess` reproduces the collecti
   --esm-dir "$MC_ESM" --output-path "$MC_PREP/execution/selection_discovery.json"
 ```
 
+### Coordinator tool and session procedure
+
+`metal_completion_session.py` (workstation only; standard library plus the frozen host-pull tool) performs the
+coordinator steps above without touching the bound modules: `record-approval` writes the immutable policy from the
+user's own decision text; `snapshot` refreshes `session.json`/`spending.json` from the controller's session record,
+ledger and price cache plus the provider's scheduling fields (provider STOP verified, snapshots never predate the
+allocation start); `deploy --plan-unit U` creates the identical absolute paths on the host (real directories for
+the package, `/etc/fstab` bind mounts for the train and ESM trees), uploads code/parent/manifest, re-hashes the bound
+modules there and runs the canonical `plan`; `run-session` keeps the three lanes busy with the permitted units
+through the wrapper above, pulls and acknowledges each ended lane (`pmm_v3_host_pull.py`), places the acknowledged
+copies under `execution/lanes/laneK/`, recovers interrupted lanes, reruns a failed unit once after `archive-failed`,
+and refuses to launch while the host venv reports no CUDA device; `collect-map` writes the absolute run map for
+`collect`. Each unit's launch refreshes the snapshots and runs the worker's own authorization check locally first.
+
+```bash
+MC_SESS="$MC_PY -B /home/mechti/PycharmProjects/DeepMzyme/metal_completion_session.py --prep $MC_PREP"
+$MC_SESS --phase discovery units                      # the permitted units (no verified control)
+$MC_SESS --phase discovery deploy --plan-unit metal_completion__discovery__P__four_class__fold0__seed42
+$MC_SESS --phase discovery run-session                # one coordinator; detach it from the shell
+$MC_SESS --phase discovery collect-map                # after every unit has a verified lane copy
+```
+
+Session order: `vm-status`, `vm-report --no-ssh`, `vm-start --confirm` (controller; hard stop 237 min, about
+$3.47 gross), kernel selection if needed (below), `deploy`, `run-session`, final `pull`, `vm-stop`, `vm-status`
+(TERMINATED). Host incident 2026-10-15: unattended upgrades had installed kernel 7.0.0-1014-gcp on 2026-10-13, for
+which NVIDIA driver 615.71.09 does not build (`dma_buf_move_notify` API change), so the VM booted without a GPU.
+The working kernel 7.0.0-1013-gcp still has the module; kernel packages are now held. Until a persistent GRUB
+default is applied on the host, select it once per boot before launching:
+
+```bash
+~/deepmzyme-vm/bin/vm-connect -- "sudo grub-reboot 'gnulinux-advanced-c2b7f3c6-0400-442a-8a70-a6e478f0f437>gnulinux-7.0.0-1013-gcp-advanced-c2b7f3c6-0400-442a-8a70-a6e478f0f437' && sudo systemctl reboot"
+~/deepmzyme-vm/bin/vm-connect -- "uname -r; /home/mechti/venvs/deepmzyme/bin/python -c 'import torch; print(torch.cuda.is_available())'"
+```
+
 For confirmation, the preparation command additionally takes `--phase confirmation`,
 `--selection-receipt-path` and `--selection-receipt-sha256`; it recomputes the discovery decision, requires the
 discovery-era assessment specification hash, records the discovery manifest hash and freezes the shared recipe.
 Use the corresponding confirmation manifest, complete run map and separate output filenames.
-No discovery assessment exists until all 45 cells are verified; the current 16 controls alone cannot select R.
+No discovery assessment exists until all 45 cells are verified; the 16 reusable controls alone cannot select R.
 
 After complete Stage 6 assessment, **Stage 6B final full non-test refit** must complete or be verified reusable
-before **Stage 7 one-shot independent evaluation**. The planned single-model refit uses the selected recipe/target,
-seed 42 and the same 50-epoch terminal rule. If B4 is retained, inspect compatibility before reusing the historical
-refit; never assume it or select a source using test scores. Freeze source checkpoint, primary reporting cohort,
+before **Stage 7 one-shot independent evaluation**. A new single-model refit, if ever needed, uses the selected
+recipe/target, seed 42 and the same 50-epoch terminal rule. If B4 is retained, inspect compatibility before reusing the historical
+refit; never assume it or select a source using test scores ([recorded Stage 6B source](campaigns/metal_completion_2026-10/evidence.md#stage-6b-source-and-compatibility-2026-10-16)). Freeze source checkpoint, primary reporting cohort,
 no-ensemble/no-calibration rule, exclusions and denominator policy first. The
 [independent-evaluation protocol](campaigns/metal_completion_2026-10/evaluation.md) has unresolved provenance and
 feasibility gates. Its offline query preparation, or this validation-fit approval, never authorizes test access.

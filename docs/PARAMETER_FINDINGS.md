@@ -91,6 +91,20 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 - **Test result:** the secondary test result and its caveats stay in the
   [completion summary](notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md).
 
+### Metal completion: B/P/S loss recipes on four/five/six objectives (executed 2026-10-15/16)
+
+**Grade 2, validation only** (five grouped folds `v3-seqid90-s42-b2`; discovery seed 42, confirmation seeds 43/44
+averaged within fold; frozen rules in the [campaign specification](campaigns/metal_completion_2026-10/assessment_spec.json)):
+- **Discovery:** the population-normalized weighted CE recipe (P, focal gamma zero) qualified on five-class only
+  (+0.44 common-four points over its B control); label smoothing 0.1 (S) failed the mean-recall-drop guard on every
+  target; P was frozen as the shared confirmation recipe.
+- **Confirmation:** no challenger passed the Bonferroni-adjusted paired bootstrap and t gates. P four-class +0.36
+  points over B four-class (adjusted bootstrap [−0.39, +1.42]); P five-class +0.10; P six-class −0.56 with a Class
+  VIII recall drop above three points. **The unchanged B four-class configuration (the v3 late-fusion direct-four
+  recipe) is retained.** Seed-averaged mean common-four BA: B four 73.87, P four 74.24, P five 73.97, P six 73.31.
+- Additional optimizer seeds on reused development folds are not independent validation; no five-versus-six claim
+  follows, and validation alone establishes no test readiness ([evidence](campaigns/metal_completion_2026-10/evidence.md)).
+
 ### PMM trunk-learning-rate comparison (closed 2026-10-13)
 
 PMM trunk-LR comparison (closed 2026-10-13; Grade 2, five grouped folds, seed 42; rule frozen before any fit): GVP-trunk
