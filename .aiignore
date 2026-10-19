@@ -1,4 +1,0 @@
-# Mirrors .ignore (PLAN_v2 contradiction 11); prepare_training_and_test_set stays visible by default.
-docs/archive/
-docs/notebook_outputs/raw/
-uv.lock

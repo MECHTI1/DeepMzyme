@@ -1,6 +1,0 @@
-interface:
-  display_name: "DeepMzyme GPU Use"
-  short_description: "Find, connect, monitor and close DeepMzyme GPUs"
-  default_prompt: "Use $gpu-use-skill to recover GPU state and execute the authorized DeepMzyme workload through the bounded cascade."
-policy:
-  allow_implicit_invocation: true

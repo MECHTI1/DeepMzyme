@@ -3,9 +3,9 @@
 Use this page to locate the owner of a fact. Do not copy mutable values between
 documents when a link is sufficient.
 
-## Agent default read path
+## Default read path
 
-[AGENTS](../AGENTS.md) → [STATUS](../EXPERIMENT_STATUS.md) → the active
+[STATUS](../EXPERIMENT_STATUS.md) → the active
 campaign README linked from STATUS (none while STATUS says `Current campaign: none active`). Other owners below are read on demand;
 read [`Plan.md`](../Plan.md) before experiment design, split, selection-metric or
 test-set decisions and [`DATASETS.md`](DATASETS.md) before any test-set use.
@@ -35,7 +35,7 @@ clustered pockets, ion-centered examples, record IDs, and validation groups.
 ## Task plans and reviews
 
 Keep current task plans in `docs/plans/`. The two final plans below supersede
-the four Antigravity/Opus proposals and link to their originals preserved in
+the four earlier draft proposals and link to their originals preserved in
 Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
 
 - [Metal-level prediction and PMM comparison](plans/metal_level_metal_task_compared_PMM_final_plan.md):
@@ -71,7 +71,6 @@ scientific authority or establish implemented or evaluated behavior.
 | Generalized 5-fold CV runner guide (arbitrary splits, ion & pocket levels) | [`GENERALIZED_METAL_5FOLD_CV_GUIDE.md`](GENERALIZED_METAL_5FOLD_CV_GUIDE.md) | Single dataset-specific fixed scripts |
 | PinMyMetal 5-fold three-architecture benchmark summary | [`notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md`](notebook_outputs/summaries/summary_pinmymetal_5fold_three_models_20260923.md) | Unverified pilot results |
 | Colab browser/CLI connection and environment procedure | [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) | Scientific stage values or model selection |
-| Required agent GPU entry point, bounded routing and optional monitor delegation | [`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) | New spending permission, a second controller or guaranteed GPU availability |
 | GCP GPU provisioning, stopped-VM recovery, disk restoration, connection and cleanup | [`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md) | Scientific stage values or model selection |
 | PMM application of GPU routing, measured admission and persistence | [`GPU_EXECUTION_CASCADE_PLAYBOOK.md`](GPU_EXECUTION_CASCADE_PLAYBOOK.md) | A second provisioning controller or a hardware speed guarantee |
 | GPU orchestration rollout, preparation and performance gates | [`GPU_RUNTIME_EFFICIENCY_PLAN.md`](GPU_RUNTIME_EFFICIENCY_PLAN.md) | Launch authorization or new scientific recipes |
@@ -87,14 +86,12 @@ scientific authority or establish implemented or evaluated behavior.
 | Stable notebook option semantics | [`METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`](METAL_NOTEBOOK_CONFIGURATION_GUIDE.md) | Live cell-value snapshot |
 | Implemented notebook behavior | [`DeepMzyme_training_colab.ipynb`](../notebooks/DeepMzyme_training_colab.ipynb) | Scientific policy |
 | Verified but unfixed workflow issues | [`FOLLOW_UP_TECHNICAL_ISSUES.md`](FOLLOW_UP_TECHNICAL_ISSUES.md) | Status or policy |
-| Agent operating behavior | [`AGENTS.md`](../AGENTS.md) | Scientific evidence |
 | Completed 2026-08-20 cleanup plan | [`archive/plans/PROJECT_CLEANUP_PLAN_2026-08-20.md`](archive/plans/PROJECT_CLEANUP_PLAN_2026-08-20.md) | Active project authority |
 
 ## Execution references
 
 For the end-to-end entry path, start with
-[`GETTING_STARTED.md`](GETTING_STARTED.md). Agents must first use the project
-[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) for GPU operations.
+[`GETTING_STARTED.md`](GETTING_STARTED.md).
 For Colab provisioning, stock
 PyTorch preservation, browser/CLI same-VM attachment, Drive authorization,
 artifact transfer, and teardown, use
@@ -216,8 +213,7 @@ claim or change.
 #### Model source code
 
 - `src/model.py`: model definitions; may contain experimental or non-final
-  code. See the `src/model.py` caution in
-  [AGENTS](../AGENTS.md#development-and-verification) before editing.
+  code. Preserve additive and backward-compatible options against [`Plan.md`](../Plan.md) before editing.
 - `src/model_variants/factory.py`: model instantiation factory.
 - `src/model_variants/models.py`: concrete model variant definitions.
 
@@ -297,9 +293,8 @@ above exists.
 
 #### Internal and staging
 
-- No `internal/` workflow is part of the active pipeline. If an
-  `internal/codex_suggested/` directory is reintroduced later, treat it as
-  unreviewed staging material only, not production code.
+- No `internal/` workflow is part of the active pipeline. Unreviewed staging
+  directories are never treated as production code.
 
 
 **On-demand only** (large; do not bulk-load):
