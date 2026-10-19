@@ -60,8 +60,8 @@ def profile_training(entrypoint, argv=None, *, torch_module=None):
                 if status_path.is_file():
                     status = json.loads(status_path.read_text())
                     ready_epoch = status_path.stat().st_mtime
-                    if status.get("status") == "ready" and started_epoch <= ready_epoch <= record["ended_epoch"]:
-                        setup = min(record["elapsed_seconds"], ready_epoch - started_epoch)
+                    if status.get("status") == "ready" and (started_epoch - 0.02) <= ready_epoch <= (record["ended_epoch"] + 0.02):
+                        setup = max(0., min(record["elapsed_seconds"], ready_epoch - started_epoch))
                         record.update(prepare_seconds=setup, setup_seconds=setup,
                                       training_seconds=max(0., record["elapsed_seconds"] - setup),
                                       preparation_timing_source="same_process_prepare_status_ready_mtime")
