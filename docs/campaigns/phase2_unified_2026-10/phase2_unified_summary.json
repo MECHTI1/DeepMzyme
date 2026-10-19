@@ -1,24 +1,439 @@
 {
-  "unified_oof_cv": {
-    "oof_ba": 74.91,
-    "fold_mean_ba": 74.84,
-    "fold_bas": [
-      73.88,
-      73.08,
-      73.19,
-      74.86,
-      79.18
-    ],
-    "oof_recalls": {
-      "Mn": 77.81,
-      "Cu": 73.47,
-      "Zn": 83.12,
-      "Class VIII": 65.25
-    }
+  "oof_cv": {
+    "baseline_4class_s42": {
+      "oof_ba": 74.34,
+      "fold_mean_ba": 74.28,
+      "fold_bas": [
+        71.62,
+        73.34,
+        72.96,
+        75.17,
+        78.32
+      ],
+      "oof_recalls": {
+        "Mn": 75.63,
+        "Cu": 73.47,
+        "Zn": 81.4,
+        "Class VIII": 66.85
+      }
+    },
+    "trunklr1e4_4class_s42": {
+      "oof_ba": 75.51,
+      "fold_mean_ba": 75.45,
+      "fold_bas": [
+        76.47,
+        73.84,
+        73.42,
+        73.31,
+        80.19
+      ],
+      "oof_recalls": {
+        "Mn": 77.77,
+        "Cu": 73.76,
+        "Zn": 82.28,
+        "Class VIII": 68.22
+      }
+    },
+    "unified_P_5class_trunklr1e4_s42": {
+      "oof_ba": 74.91,
+      "fold_mean_ba": 74.84,
+      "fold_bas": [
+        73.88,
+        73.08,
+        73.19,
+        74.86,
+        79.18
+      ],
+      "oof_recalls": {
+        "Mn": 77.81,
+        "Cu": 73.47,
+        "Zn": 83.12,
+        "Class VIII": 65.25
+      }
+    },
+    "recipe_p_5class_15model_3s_oof_ba": 75.82,
+    "top3_lf_oof_ba": 76.62,
+    "top4_lf_oof_ba": 76.81,
+    "top5_lf_oof_ba": 76.37,
+    "trimodal_cv_locked_top3_lf_oof_ba": 77.05,
+    "unified_trimodal_cv_locked_oof_ba": 77.17
   },
   "test_models": {
+    "step_f_single_refit_s42": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 67.55,
+        "ci95": [
+          62.93,
+          71.65
+        ],
+        "recalls": {
+          "Mn": 55.69,
+          "Cu": 70.31,
+          "Zn": 85.07,
+          "Class VIII": 59.13
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 68.99,
+        "ci95": [
+          64.4,
+          73.13
+        ],
+        "recalls": {
+          "Mn": 56.88,
+          "Cu": 72.13,
+          "Zn": 85.63,
+          "Class VIII": 61.3
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 69.33,
+        "ci95": [
+          64.85,
+          73.33
+        ],
+        "recalls": {
+          "Mn": 56.88,
+          "Cu": 73.33,
+          "Zn": 85.83,
+          "Class VIII": 61.3
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 48.85,
+        "ci95": [
+          39.39,
+          57.34
+        ],
+        "recalls": {
+          "Mn": 32.43,
+          "Cu": 43.75,
+          "Zn": 82.61,
+          "Class VIII": 36.62
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 68.45
+      }
+    },
+    "baseline_5fold_s42": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 69.02,
+        "ci95": [
+          64.47,
+          73.05
+        ],
+        "recalls": {
+          "Mn": 58.08,
+          "Cu": 70.31,
+          "Zn": 86.17,
+          "Class VIII": 61.51
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 70.4,
+        "ci95": [
+          65.85,
+          74.48
+        ],
+        "recalls": {
+          "Mn": 60.0,
+          "Cu": 72.13,
+          "Zn": 86.86,
+          "Class VIII": 62.61
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 70.75,
+        "ci95": [
+          66.19,
+          74.78
+        ],
+        "recalls": {
+          "Mn": 60.0,
+          "Cu": 73.33,
+          "Zn": 87.05,
+          "Class VIII": 62.61
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 52.32,
+        "ci95": [
+          42.79,
+          60.87
+        ],
+        "recalls": {
+          "Mn": 37.84,
+          "Cu": 43.75,
+          "Zn": 82.61,
+          "Class VIII": 45.07
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 69.76
+      }
+    },
+    "baseline_15model_3s": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 69.94,
+        "ci95": [
+          65.46,
+          74.03
+        ],
+        "recalls": {
+          "Mn": 59.28,
+          "Cu": 70.31,
+          "Zn": 87.86,
+          "Class VIII": 62.3
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 71.48,
+        "ci95": [
+          66.9,
+          75.59
+        ],
+        "recalls": {
+          "Mn": 61.25,
+          "Cu": 72.13,
+          "Zn": 88.64,
+          "Class VIII": 63.91
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 71.83,
+        "ci95": [
+          67.45,
+          75.81
+        ],
+        "recalls": {
+          "Mn": 61.25,
+          "Cu": 73.33,
+          "Zn": 88.84,
+          "Class VIII": 63.91
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 53.49,
+        "ci95": [
+          43.93,
+          62.16
+        ],
+        "recalls": {
+          "Mn": 37.84,
+          "Cu": 43.75,
+          "Zn": 87.29,
+          "Class VIII": 45.07
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 71.13
+      }
+    },
+    "trunklr1e4_5fold_s42": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 70.75,
+        "ci95": [
+          66.29,
+          74.77
+        ],
+        "recalls": {
+          "Mn": 60.48,
+          "Cu": 71.88,
+          "Zn": 86.37,
+          "Class VIII": 64.29
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 71.89,
+        "ci95": [
+          67.37,
+          75.99
+        ],
+        "recalls": {
+          "Mn": 62.5,
+          "Cu": 73.77,
+          "Zn": 86.08,
+          "Class VIII": 65.22
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 72.25,
+        "ci95": [
+          67.87,
+          76.3
+        ],
+        "recalls": {
+          "Mn": 62.5,
+          "Cu": 75.0,
+          "Zn": 86.27,
+          "Class VIII": 65.22
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 55.87,
+        "ci95": [
+          46.26,
+          64.42
+        ],
+        "recalls": {
+          "Mn": 37.84,
+          "Cu": 50.0,
+          "Zn": 84.95,
+          "Class VIII": 50.7
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 71.43
+      }
+    },
+    "recipe_p_5class_5fold_s42": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 69.9,
+        "ci95": [
+          65.27,
+          74.03
+        ],
+        "recalls": {
+          "Mn": 62.87,
+          "Cu": 68.75,
+          "Zn": 88.86,
+          "Class VIII": 59.13
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 71.31,
+        "ci95": [
+          66.63,
+          75.52
+        ],
+        "recalls": {
+          "Mn": 65.0,
+          "Cu": 70.49,
+          "Zn": 88.86,
+          "Class VIII": 60.87
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 71.65,
+        "ci95": [
+          67.21,
+          75.75
+        ],
+        "recalls": {
+          "Mn": 65.0,
+          "Cu": 71.67,
+          "Zn": 89.06,
+          "Class VIII": 60.87
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 59.05,
+        "ci95": [
+          49.44,
+          67.63
+        ],
+        "recalls": {
+          "Mn": 45.95,
+          "Cu": 50.0,
+          "Zn": 90.97,
+          "Class VIII": 49.3
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 70.65
+      }
+    },
+    "recipe_p_5class_15model_3s": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 71.1,
+        "ci95": [
+          66.65,
+          75.14
+        ],
+        "recalls": {
+          "Mn": 62.28,
+          "Cu": 71.88,
+          "Zn": 89.15,
+          "Class VIII": 61.11
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 72.33,
+        "ci95": [
+          67.78,
+          76.4
+        ],
+        "recalls": {
+          "Mn": 64.38,
+          "Cu": 73.77,
+          "Zn": 89.42,
+          "Class VIII": 61.74
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 72.68,
+        "ci95": [
+          68.37,
+          76.56
+        ],
+        "recalls": {
+          "Mn": 64.38,
+          "Cu": 75.0,
+          "Zn": 89.62,
+          "Class VIII": 61.74
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 58.21,
+        "ci95": [
+          48.51,
+          66.95
+        ],
+        "recalls": {
+          "Mn": 43.24,
+          "Cu": 50.0,
+          "Zn": 90.3,
+          "Class VIII": 49.3
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 71.83
+      }
+    },
     "unified_5fold_s42": {
       "full_test": {
+        "rows": 1488,
         "ba": 71.72,
         "ci95": [
           67.34,
@@ -32,6 +447,7 @@
         }
       },
       "link_free": {
+        "rows": 1349,
         "ba": 72.71,
         "ci95": [
           68.31,
@@ -45,6 +461,7 @@
         }
       },
       "training_eligible": {
+        "rows": 1346,
         "ba": 73.08,
         "ci95": [
           68.87,
@@ -58,6 +475,7 @@
         }
       },
       "clean_subset": {
+        "rows": 423,
         "ba": 57.58,
         "ci95": [
           48.09,
@@ -71,11 +489,137 @@
         }
       },
       "pdb_dedup": {
+        "pairs": 1098,
         "ba": 72.24
+      }
+    },
+    "top3_lf": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 71.7,
+        "ci95": [
+          67.19,
+          75.67
+        ],
+        "recalls": {
+          "Mn": 63.47,
+          "Cu": 71.88,
+          "Zn": 89.55,
+          "Class VIII": 61.9
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 73.1,
+        "ci95": [
+          68.56,
+          77.1
+        ],
+        "recalls": {
+          "Mn": 65.62,
+          "Cu": 73.77,
+          "Zn": 89.53,
+          "Class VIII": 63.48
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 73.46,
+        "ci95": [
+          69.13,
+          77.41
+        ],
+        "recalls": {
+          "Mn": 65.62,
+          "Cu": 75.0,
+          "Zn": 89.73,
+          "Class VIII": 63.48
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 58.39,
+        "ci95": [
+          48.72,
+          66.96
+        ],
+        "recalls": {
+          "Mn": 43.24,
+          "Cu": 50.0,
+          "Zn": 89.63,
+          "Class VIII": 50.7
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 72.57
+      }
+    },
+    "top4_lf": {
+      "full_test": {
+        "rows": 1488,
+        "ba": 72.2,
+        "ci95": [
+          67.73,
+          76.17
+        ],
+        "recalls": {
+          "Mn": 64.07,
+          "Cu": 71.88,
+          "Zn": 89.75,
+          "Class VIII": 63.1
+        }
+      },
+      "link_free": {
+        "rows": 1349,
+        "ba": 73.58,
+        "ci95": [
+          69.04,
+          77.59
+        ],
+        "recalls": {
+          "Mn": 66.25,
+          "Cu": 73.77,
+          "Zn": 89.53,
+          "Class VIII": 64.78
+        }
+      },
+      "training_eligible": {
+        "rows": 1346,
+        "ba": 73.94,
+        "ci95": [
+          69.63,
+          77.9
+        ],
+        "recalls": {
+          "Mn": 66.25,
+          "Cu": 75.0,
+          "Zn": 89.73,
+          "Class VIII": 64.78
+        }
+      },
+      "clean_subset": {
+        "rows": 423,
+        "ba": 59.18,
+        "ci95": [
+          49.46,
+          67.75
+        ],
+        "recalls": {
+          "Mn": 43.24,
+          "Cu": 50.0,
+          "Zn": 89.97,
+          "Class VIII": 53.52
+        }
+      },
+      "pdb_dedup": {
+        "pairs": 1098,
+        "ba": 73.11
       }
     },
     "unified_plus_top4_lf": {
       "full_test": {
+        "rows": 1488,
         "ba": 71.48,
         "ci95": [
           66.96,
@@ -89,6 +633,7 @@
         }
       },
       "link_free": {
+        "rows": 1349,
         "ba": 72.71,
         "ci95": [
           68.18,
@@ -102,6 +647,7 @@
         }
       },
       "training_eligible": {
+        "rows": 1346,
         "ba": 73.06,
         "ci95": [
           68.79,
@@ -115,6 +661,7 @@
         }
       },
       "clean_subset": {
+        "rows": 423,
         "ba": 58.13,
         "ci95": [
           48.56,
@@ -128,121 +675,132 @@
         }
       },
       "pdb_dedup": {
+        "pairs": 1098,
         "ba": 72.12
       }
     },
-    "unified_plus_tlr_p5_3s": {
+    "trimodal_cv_locked_top3_lf": {
       "full_test": {
-        "ba": 71.11,
+        "rows": 1488,
+        "ba": 71.17,
         "ci95": [
-          66.63,
-          75.07
+          66.52,
+          75.36
         ],
         "recalls": {
           "Mn": 63.47,
-          "Cu": 71.88,
-          "Zn": 88.36,
-          "Class VIII": 60.71
+          "Cu": 67.19,
+          "Zn": 90.55,
+          "Class VIII": 63.49
         }
       },
       "link_free": {
-        "ba": 72.36,
+        "rows": 1349,
+        "ba": 72.64,
         "ci95": [
-          67.83,
-          76.39
+          67.92,
+          76.83
         ],
         "recalls": {
           "Mn": 65.62,
-          "Cu": 73.77,
-          "Zn": 88.31,
-          "Class VIII": 61.74
+          "Cu": 68.85,
+          "Zn": 90.42,
+          "Class VIII": 65.65
         }
       },
       "training_eligible": {
-        "ba": 72.72,
+        "rows": 1346,
+        "ba": 72.98,
         "ci95": [
-          68.42,
-          76.66
+          68.37,
+          77.11
         ],
         "recalls": {
           "Mn": 65.62,
-          "Cu": 75.0,
-          "Zn": 88.5,
-          "Class VIII": 61.74
+          "Cu": 70.0,
+          "Zn": 90.62,
+          "Class VIII": 65.65
         }
       },
       "clean_subset": {
-        "ba": 57.55,
+        "rows": 423,
+        "ba": 60.56,
         "ci95": [
-          48.04,
-          66.1
+          50.85,
+          69.11
         ],
         "recalls": {
-          "Mn": 40.54,
+          "Mn": 43.24,
           "Cu": 50.0,
-          "Zn": 88.96,
-          "Class VIII": 50.7
+          "Zn": 92.64,
+          "Class VIII": 56.34
         }
       },
       "pdb_dedup": {
-        "ba": 71.86
+        "pairs": 1098,
+        "ba": 71.89
       }
     },
     "unified_trimodal_cv_locked": {
       "full_test": {
-        "ba": 70.67,
+        "rows": 1488,
+        "ba": 71.0,
         "ci95": [
-          66.11,
-          74.8
+          66.39,
+          75.15
         ],
         "recalls": {
-          "Mn": 65.27,
-          "Cu": 68.75,
-          "Zn": 89.55,
-          "Class VIII": 59.13
+          "Mn": 65.87,
+          "Cu": 67.19,
+          "Zn": 90.25,
+          "Class VIII": 60.71
         }
       },
       "link_free": {
-        "ba": 72.18,
+        "rows": 1349,
+        "ba": 72.42,
         "ci95": [
-          67.51,
-          76.37
+          67.79,
+          76.57
         ],
         "recalls": {
-          "Mn": 67.5,
-          "Cu": 70.49,
-          "Zn": 89.42,
-          "Class VIII": 61.3
+          "Mn": 68.12,
+          "Cu": 68.85,
+          "Zn": 90.09,
+          "Class VIII": 62.61
         }
       },
       "training_eligible": {
-        "ba": 72.52,
+        "rows": 1346,
+        "ba": 72.76,
         "ci95": [
-          68.05,
-          76.66
+          68.21,
+          76.88
         ],
         "recalls": {
-          "Mn": 67.5,
-          "Cu": 71.67,
-          "Zn": 89.62,
-          "Class VIII": 61.3
+          "Mn": 68.12,
+          "Cu": 70.0,
+          "Zn": 90.29,
+          "Class VIII": 62.61
         }
       },
       "clean_subset": {
-        "ba": 59.94,
+        "rows": 423,
+        "ba": 61.33,
         "ci95": [
-          50.21,
-          68.45
+          51.67,
+          69.79
         ],
         "recalls": {
           "Mn": 45.95,
           "Cu": 50.0,
-          "Zn": 90.3,
-          "Class VIII": 53.52
+          "Zn": 91.64,
+          "Class VIII": 57.75
         }
       },
       "pdb_dedup": {
-        "ba": 71.51
+        "pairs": 1098,
+        "ba": 71.64
       }
     }
   }

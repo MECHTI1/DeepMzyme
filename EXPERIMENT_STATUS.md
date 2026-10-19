@@ -1,36 +1,35 @@
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-16 optimization complete; B four-class retained; Stage 6B source verified; independent evaluation not started)
-- Last execution evidence: 2026-10-16 confirmation fits on the GCP L4 (69 campaign fits, seven sessions); no test evaluations.
+- Status: active (2026-10-19 metal OOF-CV and held-out evaluation complete; `deepmzyme-l4` TERMINATED)
+- Last execution evidence: 2026-10-19 Phase 2 Unified 5-fold L4 run (`1h 09m`, $1.02) and 180-checkpoint OOF-CV / test evaluation ([report](docs/campaigns/phase2_unified_2026-10/README.md); [log](docs/campaigns/phase2_unified_2026-10/log.md)).
 
 ## Current objective and stage
 
-- Current campaign: [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md)
-- Objective: independently evaluate the selected metal model; EC is deferred (the user's metal-first choice).
+- Current campaign: [phase2_unified_2026-10](docs/campaigns/phase2_unified_2026-10/README.md) (complete; [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md) complete)
+- Objective: metal ion classification benchmark complete; EC classification is next when authorized.
 - Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
-- Stage: optimization complete (validation only): discovery (45 cells) froze recipe P; Stage 6 confirmation (40 cells) passed no challenger, so the unchanged B four-class v3 recipe is retained. Stage 6B source: v3 full non-test refit `a0007846…`, compatible (25/25 CPU checks), designated without retraining under the [evidence](docs/campaigns/metal_completion_2026-10/evidence.md#stage-6b-source-and-compatibility-2026-10-16) conditions. Stage 7 has not started; the [log](docs/campaigns/metal_completion_2026-10/log.md) records decisions.
+- Stage: one-shot Step F refit (`67.55%` Full Test) and 180-checkpoint 5-Fold OOF-CV / held-out progression complete ([summary JSON](docs/campaigns/phase2_unified_2026-10/phase2_unified_summary.json)).
 
 ## Anchor and evidence state
 
-- Best validation result: retained v3 late-fusion direct-four, terminal 50-epoch cosine. Grade 2: five grouped folds, seed 42, common-four BA 74.28%; no supported benefit from five/six training ([v3](docs/PARAMETER_FINDINGS.md#pmm-ion-metal-v3-objective-test-and-stage-6-selection-closed-2026-10-13)) or from recipes P/S ([completion](docs/PARAMETER_FINDINGS.md#metal-completion-bps-loss-recipes-on-fourfivesix-objectives-executed-2026-10-1516)).
-- Trunk LR unpromoted ([closed](docs/archive/campaigns/pmm_trunk_lr_2026-10/README.md)).
+- Best validation result: pre-declared single-model `B 4-class` baseline (`74.28%` mean / `74.34%` OOF CV; Step F refit `67.55%` Full, `69.33%` Eligible, `48.85%` Clean; [v3 summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)). By 7,398-ion OOF CV ([report](docs/campaigns/phase2_unified_2026-10/README.md)): 5-Fold `trunklr1e4` (`75.51%` OOF $\rightarrow$ `70.75%` Full / `72.25%` Eligible); 15-Model `P 5-class` (`75.82%` OOF $\rightarrow$ `71.10%` Full / `72.68%` Eligible); 5-Fold Unified `P+5c+trunklr1e4` (`74.91%` OOF $\rightarrow$ `71.72%` Full / `73.08%` Eligible); `Top-4 LF` (`76.81%` OOF $\rightarrow$ **`72.20%` Full** / `73.94%` Eligible); `CV-Locked Tri-Modal` (**`77.17%` OOF** $\rightarrow$ **`61.33%` Clean**).
 - EC stays at fixed-split Grade 3 evidence (deferred).
 
 ### Known caveats and open mismatches
 
-- Seeds 43/44 reuse development folds; cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)). The refit already had one secondary held-out pass ([summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)); a primary Stage 7 report from it conflicts with Plan's one-shot rule until the user approves an exception or amends Plan.
-- EC child-file guard repair remains open ([TECH-030](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard)); the trainer's focal branch ignores label smoothing, unreachable here ([TECH-031](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-031--the-focal-metal-loss-silently-ignores-label-smoothing-and-uses-weighted-ce-confidence)).
+- Cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)); post-Step-F multi-checkpoint evaluations carry `both_results_secondary` disclosure and PMM label-leak caveat ([TECH-028](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).
+- EC child-file guard ([TECH-030](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard)) and focal-loss label smoothing ([TECH-031](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-031--the-focal-metal-loss-silently-ignores-label-smoothing-and-uses-weighted-ce-confidence)) remain open.
 
 ## Dataset and test readiness
 
-The primary independent final-test route remains unresolved; the reused refit is valid only for an external cohort disjoint from its training cohort, every opened test and their near-copies. [DATASETS](docs/DATASETS.md#test-use-ledger) owns historical exposure; opened PMM tests are not pristine. The proposed temporal PDB cohort is neither assembled nor certified; the [protocol](docs/campaigns/metal_completion_2026-10/evaluation.md#preparation-inventory-2026-10-16) owns its inventory and blockers.
+[DATASETS](docs/DATASETS.md#test-use-ledger) records both test evaluations (2026-10-13 Step F pass and 2026-10-19 180-checkpoint evaluation). External temporal PDB evaluation remains optional ([protocol](docs/campaigns/metal_completion_2026-10/evaluation.md)).
 
 ## Blockers and immediate next action
 
-- Authorized now: nothing to run; the 2026-10-15 GPU authorization is consumed. No GPU start, refit, test access, download, commit or push.
-- GPU/VM: `deepmzyme-l4` TERMINATED (confirmed 2026-10-16T11:59Z) after seven sessions: 18 h 37 min, $16.37 gross running; $0.87917/h; storage ~$1/day. [Backup inventory](docs/BACKUP_AND_DATA_INVENTORY.md#5a-local-independent-backups-and-gcp-state-verified-2026-10-13).
-- Next: the user's route and one-shot decisions, then approval of the label-free prior-use read ([blockers](docs/campaigns/metal_completion_2026-10/evaluation.md#remaining-blockers); [handoff](docs/campaigns/metal_completion_2026-10/handoff.md)).
+- Authorized now: nothing to run; no active GPU session.
+- GPU/VM: `deepmzyme-l4` TERMINATED (2026-10-19); all artifacts backed up across 5 tiers ([inventory](docs/BACKUP_AND_DATA_INVENTORY.md)).
+- Next: metal paper writing, or user decision to open standalone EC classification.
 
 ## History and update rule
 
-The exact previous STATUS is preserved in the [campaign log](docs/campaigns/metal_completion_2026-10/log.md). Overwrite this page only after preserving dated history. Scientific policy remains in Plan, recipes in the metal playbook, dataset/test access in DATASETS, and validation conclusions in PARAMETER_FINDINGS.
+Previous STATUS is preserved in [`docs/campaigns/phase2_unified_2026-10/log.md`](docs/campaigns/phase2_unified_2026-10/log.md). Policy: [Plan](Plan.md), [DATASETS](docs/DATASETS.md), [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md).
