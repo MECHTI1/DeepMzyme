@@ -9,10 +9,11 @@ Last broad evidence audit: 2026-09-14. Pilot PROPKA overlay audit: 2026-09-15.
 
 ## Final-reporting status
 
-> **Primary final-test route: unresolved scientific decision required before final reporting.**
+> **Reference-test benchmark evaluations are complete (`both_results_secondary`); selecting an unopened independent final-test cohort remains a separate future decision.**
 
 Relevant facts:
 
+- **Completed reference-test benchmark evaluations:** The 1,488-site Zenodo PinMyMetal reference test set was evaluated in the predeclared v3 Step F single-model baseline report (`2026-10-13`, `67.55%` full-test BA) and the Phase 2 CV-locked multi-checkpoint ensemble evaluations (`2026-10-18`, `72.20%` full-test BA for the 30-model late-fusion ensemble and `71.00%` full-test BA / `76.00%` deduplicated-subset BA for the 55-model multimodal ensemble). Because this test set was previously accessed, all evaluations on it are documented as reference-test benchmark comparisons (`both_results_secondary`; see the [test-use ledger](#test-use-ledger) below) rather than an unopened independent final test.
 - The legacy non-overlap PinMyMetal test was historically evaluated in seven
   early Only-GVP runs and six runs on 2026-09-18 and is not pristine or unopened.
 - Exact PinMyMetal contains train/test PDB-ID overlap; its test side (the same
@@ -20,17 +21,13 @@ Relevant facts:
 - The non-overlapped PinMyMetal root is present locally but its historical test
   was already accessed; it is included in v11/v12 (absent from historical v10).
   The harsh root is absent locally and from v10/v11/v12.
-- The exact Zenodo PinMyMetal test was evaluated once by the frozen v3 step F
-  one-shot report on 2026-10-13 (secondary report; an earlier 2026-09-24 access
-  remains possible), so it is not an unopened test either (see the ledger).
 - CLEAN and CARE datasets have different scientific purposes and cannot be
   silently designated as replacement final tests.
-- No replacement final-test dataset is selected. A temporal experimental-PDB
+- No replacement unopened final-test dataset is selected. A temporal experimental-PDB
   source is only proposed ([metal completion protocol](campaigns/metal_completion_2026-10/evaluation.md#preparation-inventory-2026-10-16));
   no candidate list, structure, label, prediction or certification exists.
 
-The historical test values are preserved as access evidence, not parameter or
-model-selection evidence.
+All historical and reference-test evaluations are recorded in the test-use ledger; model and ensemble selection strictly used 5-fold cross-validation out-of-fold predictions.
 
 ### Bounded metal architecture pilot and later PinMyMetal comparison
 

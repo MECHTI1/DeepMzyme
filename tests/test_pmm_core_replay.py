@@ -158,7 +158,7 @@ def fixture_diagnostic(tmp_path):
     snapshot = prepared / 'input_snapshot.pt'
     snapshot.write_bytes(b'input snapshot test fixture')
     tool = tmp_path / 'diagnostic.py'
-    tool.write_bytes((Path(__file__).parents[1] / 'audit_pmm_replay.py').read_bytes())
+    tool.write_bytes((Path(__file__).parents[1] / 'tools/analysis/analyze_pmm_replay.py').read_bytes())
     fields = {'x': {'sha256': 'a' * 64}, 'y_metal': {'sha256': 'b' * 64}}
     cache = {'path': '/original/cache.pkl', 'sha256': 'd' * 64, 'fields': fields}
     manifest = {'schema': 'pmm-replay-diagnostic-v1', 'status': 'predictive_inputs_matched',

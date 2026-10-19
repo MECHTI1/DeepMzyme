@@ -1,0 +1,5 @@
+from __future__ import annotations
+
+from project_paths import install_relocated_module_aliases
+
+install_relocated_module_aliases()

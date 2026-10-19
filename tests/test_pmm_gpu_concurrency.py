@@ -83,7 +83,7 @@ def test_cleanup_terminates_and_reaps_process_group():
 
 def test_child_deadline_and_parent_identity(tmp_path):
     code = f"""import importlib.util, os, time
-s=importlib.util.spec_from_file_location('probe', {str(ROOT / 'benchmark_pmm_gpu_concurrency.py')!r})
+s=importlib.util.spec_from_file_location('probe', {str(ROOT / 'bench/benchmark_pmm_gpu_concurrency.py')!r})
 m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
 m.set_child_lifetime({os.getpid()}, time.time()+0.1)
 time.sleep(30)

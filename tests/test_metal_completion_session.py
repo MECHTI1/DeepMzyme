@@ -25,7 +25,7 @@ def prep(tmp_path, monkeypatch):
     root = tmp_path / "prep"
     (root / "code").mkdir(parents=True)
     for name in ("metal_completion_safety.py", "metal_completion_campaign.py"):
-        (root / "code" / name).write_bytes((Path(ms.ROOT) / name).read_bytes())
+        (root / "code" / name).write_bytes(ms.resolve_existing_path(Path(ms.ROOT) / name).read_bytes())
     units = [u.name for u in mc.discovery_units()]
     manifest = put(root / "execution" / "manifest_discovery.json",
                    {"campaign_id": ms.CAMPAIGN_ID, "phase": "discovery", "authorized_grid_units": units,

@@ -22,11 +22,9 @@ are verified, while enforcing one active GPU.
 
 | Path | Use it when | Setup status |
 |---|---|---|
-| Existing project workstation | The configured DeepMzyme Conda environment is already present | Directly executable with the interpreter below |
-| Primary cloud execution (GCP L4 VM) | Production training, HPO, screen campaigns, and benchmark runners via CLI | Primary cloud route; follow [`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md) |
-| Colab browser notebook | You want the supported staged workflow and interactive Drive authorization | Authorized fallback; secondary interface |
-| Colab CLI plus browser | You want terminal provisioning, environment checks, transfers, or monitoring while retaining the notebook UI on the same VM | Secondary/fallback; follow [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) |
-| Fresh Linux x86_64 machine | You need a newly reconstructed development/CPU-test environment | Python 3.12 and all resolved packages are pinned in `uv.lock`; follow the environment contract |
+| Fresh Linux x86_64 checkout | Standard local development, CLI verification, and CPU test execution | Python 3.12 and all resolved packages are pinned in `uv.lock`; follow the environment contract below |
+| GPU workstation or cloud VM | Production training, HPO, screen campaigns, and benchmark runners via CLI | Primary GPU route; follow [`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md) |
+| Colab browser notebook | Interactive staged workflow with Google Drive persistence | Supported fallback; follow [`COLAB_GPU_RUNBOOK.md`](COLAB_GPU_RUNBOOK.md) |
 
 ## Five-minute orientation
 

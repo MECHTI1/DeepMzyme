@@ -2855,7 +2855,7 @@ def check_benchmark_failure_exit_and_schema() -> None:
         completed = subprocess.run(
             [
                 PYTHON,
-                str(REPO_ROOT / "benchmark_step_realistic.py"),
+                str(REPO_ROOT / "bench" / "benchmark_step_realistic.py"),
                 "--subset",
                 str(root / "missing-v2.pt"),
                 "--subset-sha256",
@@ -2883,7 +2883,7 @@ def check_benchmark_failure_exit_and_schema() -> None:
         synthetic = subprocess.run(
             [
                 PYTHON,
-                str(REPO_ROOT / "benchmark_step.py"),
+                str(REPO_ROOT / "bench" / "benchmark_step.py"),
                 "--source-commit",
                 commit,
                 "--result",
@@ -2909,8 +2909,8 @@ def check_benchmark_inventory_links() -> None:
     for relative_path in (
         "bench/schemas/realistic-subset-v2.schema.json",
         "bench/schemas/benchmark-result-v2.schema.json",
-        "benchmark_step_realistic.py",
-        "build_realistic_benchmark_subset.py",
+        "bench/benchmark_step_realistic.py",
+        "bench/build_realistic_benchmark_subset.py",
     ):
         if not (REPO_ROOT / relative_path).is_file():
             raise AssertionError(f"Benchmark inventory target is missing: {relative_path}")

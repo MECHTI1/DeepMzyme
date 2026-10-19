@@ -48,12 +48,12 @@ Version 2 is additive and does not overwrite v1:
 - [`../src/benchmarking/artifacts.py`](../src/benchmarking/artifacts.py)
   performs executable validation, safe loading, and in-runner `PocketData`
   reconstruction;
-- [`../build_realistic_benchmark_subset.py`](../build_realistic_benchmark_subset.py)
+- [`build_realistic_benchmark_subset.py`](build_realistic_benchmark_subset.py)
   builds a versioned v2 subset and provenance manifest;
-- [`../benchmark_step_realistic.py`](../benchmark_step_realistic.py) runs the
+- [`benchmark_step_realistic.py`](benchmark_step_realistic.py) runs the
   realistic v2 workload and returns nonzero after writing diagnostics on any
   failure;
-- [`../benchmark_step.py`](../benchmark_step.py) provides the synthetic v2
+- [`benchmark_step.py`](benchmark_step.py) provides the synthetic v2
   diagnostic workload with the same failure semantics.
 
 No v2 subset or GPU result is tracked or published yet. Artifact generation,
@@ -65,7 +65,7 @@ Run only after artifact-regeneration authorization and with the documented
 CARE/ESM/RING/external-feature inputs present:
 
 ```bash
-uv run --frozen --no-sync python build_realistic_benchmark_subset.py \
+uv run --frozen --no-sync python bench/build_realistic_benchmark_subset.py \
   --source-bundle-id DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst \
   --source-bundle-sha256 09525aad00d6c35e32a3601ff3ecf338978c465cec1ccfc18e47b9222b220aba \
   --output-dir bench/gvp_esm_hybrid_realistic_subset_v2
@@ -92,7 +92,7 @@ Build the archive from the exact commit that will be recorded in the result:
 git status --short
 git rev-parse HEAD
 tar -czf /tmp/deepmzyme_benchmark_src.tar.gz -C src .
-sha256sum /tmp/deepmzyme_benchmark_src.tar.gz benchmark_step_realistic.py
+sha256sum /tmp/deepmzyme_benchmark_src.tar.gz bench/benchmark_step_realistic.py
 ```
 
 Do not use a dirty checkout for a reportable GPU result. Transfer the runner,
@@ -105,7 +105,7 @@ Replace all angle-bracket placeholders with values from the generated v2
 manifest and pinned clean checkout:
 
 ```bash
-python benchmark_step_realistic.py \
+python bench/benchmark_step_realistic.py \
   --subset /content/realistic_subset_v2.pt \
   --subset-url <V2_HUGGING_FACE_URL> \
   --subset-sha256 <V2_SHA256> \

@@ -11,6 +11,9 @@ from benchmarking.artifacts import (
     validate_benchmark_result,
     validate_portable_subset,
 )
+from project_paths import install_relocated_module_aliases
+
+install_relocated_module_aliases()
 
 __all__ = [
     "BENCHMARK_RESULT_ARTIFACT_TYPE",

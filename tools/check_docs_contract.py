@@ -238,9 +238,17 @@ def check_links(root: Path, names: list[str], findings: Findings, origins: dict[
                                  "link to a file inside the repository")
                     continue
                 if not dest.exists():
-                    findings.add("STRICT", where, "links", f"missing link target: {target}",
-                                 "point the link at an existing file or record the move in docs/MOVED.md")
-                    continue
+                    sys.path.insert(0, str(root / "src"))
+                    from project_paths import RELOCATED_FILES
+
+                    mapped = RELOCATED_FILES.get(relative)
+                    if mapped is not None and (root / mapped).exists():
+                        dest = (root / mapped).resolve()
+                        relative = mapped
+                    else:
+                        findings.add("STRICT", where, "links", f"missing link target: {target}",
+                                     "point the link at an existing file or record the move in docs/MOVED.md")
+                        continue
                 if fragment and dest.is_file() and dest.suffix.lower() == ".md":
                     if fragment not in anchors_of(root, relative, cache):
                         findings.add("STRICT", where, "anchors", f"missing anchor: {target}",
