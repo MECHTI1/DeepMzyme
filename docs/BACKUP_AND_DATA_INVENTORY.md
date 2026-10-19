@@ -2,7 +2,7 @@
 
 This document serves as the authoritative, permanent inventory of all cloud-backed files, datasets, trained model weights, benchmark checkpoints, and repository branches for the **DeepMzyme** project.
 
-Last updated: **2026-10-16** (section 5A: refit checkpoint re-hash and the completion-package backup gap; GCP state 2026-10-13; other inventories retain their original verification dates).
+Last updated: **2026-10-19** (section 2C & 5A: private maintainer and full Git history backup archives; section 5A: refit checkpoint re-hash and completion-package status).
 
 ---
 
@@ -10,7 +10,8 @@ Last updated: **2026-10-16** (section 5A: refit checkpoint re-hash and the compl
 
 | Destination | Primary Host | Role & Content |
 |---|---|---|
-| **Hugging Face** | [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) | Core dataset bundles (PMM, CLEAN, CARE), precomputed ESM embeddings, RING features, 5-fold CV trained model checkpoints, and source audit crosswalks. |
+| **Hugging Face (Public)** | [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) | Core dataset bundles (PMM, CLEAN, CARE), precomputed ESM embeddings, RING features, 5-fold CV trained model checkpoints, and source audit crosswalks. |
+| **Hugging Face (Private)** | [`GMBioinformatics/DeepMzyme-private-backups`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme-private-backups) | Strictly private (`private=True`) maintainer workspace archive and full 26-ref Git history bundle (`DeepMzyme_full_git_history_and_branches_20261019.bundle`). |
 | **GitHub** | [`MECHTI1/DeepMzyme`](https://github.com/MECHTI1/DeepMzyme) | Primary project code, configs, test suites, documentation, and PinMyMetal source audit tools on `main`. |
 | **GitHub** | [`MECHTI1/deepmzyme-vm-manager`](https://github.com/MECHTI1/deepmzyme-vm-manager) | Cloud GPU VM orchestration tools and execution environments. |
 | **Google Drive** | `MyDrive/DeepMzyme/` (`1slTff0joKjL-gZJDhYSGbHzOPnYhGk6I`) | Colab campaign artifacts, intermediate pilot archives, and Optuna persistent SQLite databases. |
@@ -44,12 +45,22 @@ Published to Hugging Face commit: [`d8372220f2a3d0ce2d098a19f4728fa2d9882f90`](h
 | [`benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz) | 99 MB | `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe` | **Phase 2 Unified 5-Fold Checkpoints & Full 180-Checkpoint Held-Out Test Evaluation Bundle (2026-10-19).** Contains all 5 `unified__P_five_class_trunklr1e4__fold{0..4}__seed42` `terminal_model_checkpoint.pt` weights and `val_predictions.csv`, the `180 x 1485 x 4` test probability archive (`test_checkpoint_probs.npz`), 10,000-resample PDB-cluster bootstrap CI summaries (`phase1_test_summary.json`, `phase2_unified_summary.json`), and reproduction scripts. |
 | [`benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md) | 16 KB | — | Complete Phase 1 & Phase 2 evaluation report across all 180 checkpoints and all 5 test slices (`72.20%` Full Test BA / `73.94%` Eligible Test BA / `77.17%` OOF CV BA). |
 
+### C. Private Maintainer & Full Git History Backups
+
+Hosted on: **[`https://huggingface.co/datasets/GMBioinformatics/DeepMzyme-private-backups`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme-private-backups)** (`private=True`) and mirrored locally in `DeepMzyme_Data/backups/` on both physical drives:
+
+| File Path in Repository | Size | SHA-256 Checksum | Description & Inclusions |
+|---|---:|---|---|
+| `DeepMzyme_full_git_history_and_branches_20261019.bundle` | 371 MB | `c05b16cae84020564e3a438016ed6adb2519e47a9203d83783587a560cc0e937` | **Full Git History & Historical Branches Bundle.** Verified `git bundle` containing `main` plus all 26 historical development branches, tags, and backup refs prior to single-branch consolidation. |
+| `DeepMzyme_local_ai_agent_configs_20261019.tar.gz` | 46 KB | `cfb3ada6f85c889b69521ae6c92b689397b1a586b0ccec9c14afc9185bf69ec0` | **Excluded Local Maintainer & IDE Configuration Archive.** Separate tarball of all local-only maintainer instructions, IDE workspace metadata, and `.git/info/exclude` rules omitted from the public repository. |
+| `SHA256SUMS_20261019.txt` | 237 B | — | SHA-256 manifest for verifying both private backup archives (`sha256sum -c`). |
+
 ---
 
 ## 3. GitHub Repositories and Branches
 
 ### A. DeepMzyme Repository: [`git@github.com:MECHTI1/DeepMzyme.git`](https://github.com/MECHTI1/DeepMzyme)
-- **`main`**: Single canonical branch. All source code (`src/`), tests (`tests/`), pipelines (`scripts/`), documentation (`docs/`), and PinMyMetal source audit/crosswalk tools (`src/audit_pmm_deposition_crosswalk.py`, `src/audit_pmm_feature_crosswalk.py`, `src/build_pmm_site_dataset.py`, `src/review_pmm_feature_matches.py`, `src/summarize_pmm_feature_crosswalk.py`, `docs/PMM_*.md`, `tests/test_pmm_deposition_crosswalk.py`, `tests/test_pmm_site_dataset.py`) are consolidated here.
+- **`main`**: Single canonical branch. All source code (`src/`), benchmark runners (`scripts/`), read-only analysis utilities (`tools/analysis/`), compute profiling scripts (`bench/`), tests (`tests/`), documentation (`docs/`), and PinMyMetal source audit/crosswalk tools (`src/audit_pmm_deposition_crosswalk.py`, `src/audit_pmm_feature_crosswalk.py`, `src/build_pmm_site_dataset.py`, `src/review_pmm_feature_matches.py`, `src/summarize_pmm_feature_crosswalk.py`, `docs/PMM_*.md`, `tests/test_pmm_deposition_crosswalk.py`, `tests/test_pmm_site_dataset.py`) are consolidated here.
 
 ### B. VM Manager Repository: [`git@github.com:MECHTI1/deepmzyme-vm-manager.git`](https://github.com/MECHTI1/deepmzyme-vm-manager)
 - Branch `main`: Provisioning, environment configuration, and execution tools for GCP GPU VMs (G4, L4, A100).
@@ -69,20 +80,20 @@ Published to Hugging Face commit: [`d8372220f2a3d0ce2d098a19f4728fa2d9882f90`](h
 ## 5. Local Storage & Secondary Disk Hierarchy
 
 For large-scale processing that exceeds local root partition limits:
-- **Local Machine Root:** `/home/mechti/PycharmProjects/DeepMzyme`
-- **Secondary HDD Partition (`/media/mechti/Data1`):**
-  - `/media/mechti/Data1/DeepMzyme_Data/`: Overflow storage for runs and caches.
-  - `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`: Reconstructed uncompressed dataset structures.
-  - `/media/mechti/Data1/clean_sets/`, `/media/mechti/Data1/care_sets/`, `/media/mechti/Data1/pinmymetal_sets/`: Raw upstream downloads.
+- **Repository Root:** `<repo-root>` (`DeepMzyme/`)
+- **Secondary Storage Volume (`<secondary-drive>`):**
+  - `<secondary-drive>/DeepMzyme_Data/`: Overflow storage for runs, campaigns, and mirrored backups (`DeepMzyme_Data/backups/`).
+  - `<secondary-drive>/DeepMzyme_PMM_Zenodo_Exact_Dataset/`: Reconstructed uncompressed dataset structures.
+  - `<secondary-drive>/clean_sets/`, `<secondary-drive>/care_sets/`, `<secondary-drive>/pinmymetal_sets/`: Raw upstream downloads.
   - `mgy_proteins_pfam.tsv.gz` (33 GB), `5-allmembers-repId-entryId-cluFlag-taxId.tar.xz` (528 MB): Source sequence and clan databases.
 
-### 5A. Local independent backups and GCP state (verified 2026-10-13)
+### 5A. Local independent backups and GCP state (verified 2026-10-19)
 
-Copies on the workstation NVMe (`/dev/nvme0n1p6`, ext4), a different physical disk from Data1 (`/dev/sda1`), under
-`/home/mechti/deepmzyme_backups/`. Each folder holds `SHA256SUMS` and a receipt; originals stay in place.
+Copies on the primary workstation NVMe (`/dev/nvme0n1p6`, ext4), a separate physical disk from the secondary storage volume (`/dev/sda1`), under `DeepMzyme_Data/backups/` and the workstation backup root. Each folder holds `SHA256SUMS` and a receipt; originals stay in place.
 
-| Folder | Coverage | Verification |
+| Folder / Archive | Coverage | Verification |
 |---|---|---|
+| `DeepMzyme_Data/backups/` (mirrored on `<secondary-drive>/DeepMzyme_Data/backups/` and private HF `GMBioinformatics/DeepMzyme-private-backups`) | `DeepMzyme_full_git_history_and_branches_20261019.bundle` (371 MB, 26 refs) and `DeepMzyme_local_ai_agent_configs_20261019.tar.gz` (46 KB, excluded local maintainer/IDE files) | `git bundle verify` and `sha256sum -c SHA256SUMS_20261019.txt` verified 2026-10-19 on both local disks and uploaded to private Hugging Face dataset |
 | `pmm_ion_metal_v3_closeout_20261013T023038Z/` | v3 refit (`terminal_model_checkpoint.pt` `a00078466cf6…`, `last_model_checkpoint.pt` `f899a42d…`; source role in the [campaign evidence](campaigns/metal_completion_2026-10/evidence.md#stage-6b-source-and-compatibility-2026-10-16)), step F evidence, test preparation/report artifacts, selected audits (4,836 files, 2.64 GB); not every earlier run | `sha256sum -c` re-run 2026-10-13 ~18:55 UTC: all OK; the terminal checkpoint re-hashed 2026-10-16 here and on Data1: equal |
 | `post_v3_diagnostics_20261013T141136Z/` | post-v3 structural-context diagnostics (811 files) | three `SHA256SUMS` re-run: all OK; file set equals Data1 |
 | `deepmzyme_closeout_ec_readiness_20261013T190136Z/initial/` | repository bundle (`main` `ad99c5f` + tag `pmm-ion-metal-v3-final`), staged patch, frozen trunk-LR source; the whole Data1 trunk-LR records folder; the five trunk-LR candidate and five v3 control runs with lane receipts and v3 dependencies; the EC readiness inputs (2,102 files, 0.93 GB) | all files re-hashed after copy; one candidate run and its records restored and validated without reading the originals; `RESTORE.md` and `BACKUP_RECEIPT.json` in the folder |
@@ -113,8 +124,8 @@ wget https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/ben
 # 2. Verify SHA-256
 echo "374c888132f99345ee5ca97a7a515b1a468ec4bdace69c77f72ecde4e5b23dfc  DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz" | sha256sum -c
 
-# 3. Extract to project root
-tar -xzvf DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz -C /home/mechti/PycharmProjects/DeepMzyme/
+# 3. Extract to repository root
+tar -xzvf DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz -C .
 ```
 
 ### Restoring the Exact PinMyMetal Benchmark Dataset
@@ -128,4 +139,16 @@ echo "24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296  train_an
 # 3. Extract to DeepMzyme_Data
 mkdir -p DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact
 tar -xzvf train_and_test_sets_structures_zenodo_pmm_exact.tar.gz -C DeepMzyme_Data/
+```
+
+### Restoring Private Maintainer Files & Historical Git Branches
+```bash
+# 1. Download from the private Hugging Face dataset (requires authenticated GMBioinformatics token)
+hf download GMBioinformatics/DeepMzyme-private-backups --repo-type dataset --local-dir DeepMzyme_Data/backups
+
+# 2. Verify SHA-256 checksums
+(cd DeepMzyme_Data/backups && sha256sum -c SHA256SUMS_20261019.txt)
+
+# 3. Restore excluded local workspace files into the repository root
+tar -xzf DeepMzyme_Data/backups/DeepMzyme_local_ai_agent_configs_20261019.tar.gz -C .
 ```
