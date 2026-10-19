@@ -125,3 +125,19 @@ Stored under `/media/mechti/Data1/DeepMzyme_Data/campaigns/phase2_unified_2026-1
 /home/mechti/miniconda3/envs/DeepMzyme/bin/python \
   /home/mechti/.gemini/antigravity-acp/brain/cf778493-da21-4e11-8c95-1b2e43ed808a/scratch/phase2_unified/eval_phase2_unified.py
 ```
+
+---
+
+## 5. Complete Backup Locations & Cloud Inventory
+
+All checkpoints, probability matrices, evaluation scripts, datasets, and reports from Phase 1 (`175` checkpoints) and Phase 2 (`5` Unified checkpoints) are backed up across **four independent storage tiers** (also recorded in [`docs/BACKUP_AND_DATA_INVENTORY.md`](../../BACKUP_AND_DATA_INVENTORY.md)):
+
+| Storage Tier | Location / URL | SHA-256 / Commit | Contents |
+|:---|:---|:---|:---|
+| **1. GitHub (`MECHTI1/DeepMzyme`)** | [`docs/campaigns/phase2_unified_2026-10/`](https://github.com/MECHTI1/DeepMzyme/tree/main/docs/campaigns/phase2_unified_2026-10) | Branch `main` (`657b72b`+) | `README.md`, `phase1_test_summary.json`, `phase2_unified_summary.json`, `unified_commands.json`, `run_waves.py`, `eval_phase2_unified.py`, and [`docs/BACKUP_AND_DATA_INVENTORY.md`](../../BACKUP_AND_DATA_INVENTORY.md). |
+| **2. Hugging Face (`GMBioinformatics/DeepMzyme`)** | [`benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz) (`99 MB`) | `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe` | All 5 Phase 2 Unified `terminal_model_checkpoint.pt` weights + `val_predictions.csv` (`folds 0..4`), `test_checkpoint_probs.npz` (`180 x 1485 x 4`), `phase1_test_summary.json`, `phase2_unified_summary.json`, and scripts. |
+| **2b. Hugging Face Report** | [`benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md) | — | Standalone Markdown evaluation & replication report. |
+| **2c. Hugging Face Datasets** | [`train_and_test_sets_structures_zenodo_pmm_exact.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/train_and_test_sets_structures_zenodo_pmm_exact.tar.gz) (`1.14 GB`) | `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296` | Exact PinMyMetal Zenodo train (`7,398` cohort) and held-out test (`1,488` ions) structures and manifests. |
+| **3. Local NVMe Disk (`/dev/nvme0n1p6`)** | `/home/mechti/deepmzyme_backups/phase2_unified_and_180ckpt_eval_20261019T0317Z/` & `/home/mechti/deepmzyme_backups/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz` | Verified via `SHA256SUMS` (`sha256sum -c` OK) | Complete copy of `runs/` and `evaluation/` on a separate physical disk from Data1. |
+| **4. Local Data1 HDD (`/dev/sda1`)** | `/media/mechti/Data1/DeepMzyme_Data/campaigns/phase2_unified_2026-10/` | — | `runs/` (5 fold directories + logs) and `evaluation/` (including `test_pockets_and_graphs.pt` `613 MB` and `test_checkpoint_probs.npz` `8.3 MB`). |
+| **5. GCP Persistent Disk (`deepmzyme-l4`, `TERMINATED`)** | `/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/execution/phase2_unified_runs/` | — | Original VM training output directory on the stopped L4 instance (`us-central1-a`). |
