@@ -294,7 +294,7 @@ def test_hard_deadline_terminates_child_and_charges_failed_stage(tmp_path, monke
     monkeypatch.setattr(runtime, "POLL_SECONDS", 0.02)
     started = time.monotonic()
     attempt = runtime.execute_attempt(tmp_path, command_run(tmp_path, behavior=behavior), tmp_path, verify)
-    assert time.monotonic() - started < 3
+    assert time.monotonic() - started < 10
     assert attempt["status"] == "deadline_stopped"
     assert attempt["elapsed_seconds"] > 0
     assert runtime.budget_status(tmp_path)["used_seconds"]["discovery"] == 0

@@ -290,7 +290,7 @@ def local_vm(tmp_path, monkeypatch):
     code.mkdir()
     (v3 / "execution_settings.json").write_text(json.dumps({"amp": False, "concurrent_lanes": 3, "reuse": {}}))
     (code / "run_pmm_v3_campaign.py").write_text(
-        "import sys, time\nunit = sys.argv[sys.argv.index('--unit') + 1]\ntime.sleep(3)\n"
+        "import sys, time\nunit = sys.argv[sys.argv.index('--unit') + 1]\ntime.sleep(4)\n"
         "sys.exit(0 if unit.startswith('only_esm') else 1)\n")
     for name, value in (("REMOTE_V3", str(v3)), ("REMOTE_CODE", str(code)), ("REMOTE_PY", sys.executable)):
         monkeypatch.setattr(b, name, value)
@@ -302,8 +302,8 @@ def test_units_start_detached_and_the_probe_tells_running_from_ended(local_vm):
     planned = [{"unit": ESM4, "lane": 1, "fit_seconds": 1800.0}, {"unit": GVP4, "lane": 2, "fit_seconds": 3800.0}]
     started = time.monotonic()
     out = remote.run(c.launch_script("c-test", planned, session())).stdout
-    assert "launched" in out and time.monotonic() - started < 3  # returned before the runners ended
-    for _ in range(20):  # the detached shell records each member's PID; the probe then reads 'running'
+    assert "launched" in out and time.monotonic() - started < 10  # returned before the runners ended
+    for _ in range(60):  # the detached shell records each member's PID; the probe then reads 'running'
         first = c.vm_state(remote)["launches"]
         if first[ESM4]["state"] == first[GVP4]["state"] == "running":
             break

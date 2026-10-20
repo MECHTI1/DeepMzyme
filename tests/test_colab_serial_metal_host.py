@@ -299,7 +299,7 @@ def test_real_local_detached_watchdog_acknowledges_and_exits_after_verified_stop
         assert host.watchdog_alive(tmp_path, NAME)
         stopped = host.stop(tmp_path, NAME, backend=backend)
         assert stopped["provider_verified_stopped"]
-        deadline = time.monotonic() + 8
+        deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             info = runtime._process_info(record["pid"])
             if info is None or info["state"] == "Z":

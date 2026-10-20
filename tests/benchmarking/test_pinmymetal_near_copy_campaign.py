@@ -284,8 +284,9 @@ def dead_worker():
 
     from benchmarking.pmm_execution import _process_identity
 
-    child = sp.Popen([sys.executable, "-c", "import time; time.sleep(0.2)"])
+    child = sp.Popen([sys.executable, "-c", "import time; time.sleep(2.0)"])
     identity = _process_identity(child.pid)
+    child.terminate()
     child.wait()
     return identity
 

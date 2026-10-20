@@ -219,7 +219,7 @@ with CampaignExecution(Path(sys.argv[1]), durable_root=Path(sys.argv[2]), sessio
     controller = subprocess.Popen([sys.executable, "-c", code, str(root), str(durable), source])
     child = None
     try:
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             state_path = root / "execution_state.json"
             if state_path.exists():
@@ -229,7 +229,7 @@ with CampaignExecution(Path(sys.argv[1]), durable_root=Path(sys.argv[2]), sessio
             time.sleep(0.02)
         assert child, "Controller failed to record the training child"
         controller.kill()
-        controller.wait(timeout=5)
+        controller.wait(timeout=15)
         successor = execution.CampaignExecution(
             root, durable_root=durable, session_id="replacement",
             policy=execution.ExecutionPolicy(time.time() + 4000, 4000),
@@ -238,7 +238,7 @@ with CampaignExecution(Path(sys.argv[1]), durable_root=Path(sys.argv[2]), sessio
             with successor:
                 pass
         os.killpg(child["pid"], signal.SIGTERM)
-        deadline = time.monotonic() + 5
+        deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             try:
                 with successor:

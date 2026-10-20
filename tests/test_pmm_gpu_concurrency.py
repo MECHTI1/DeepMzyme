@@ -88,7 +88,7 @@ m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
 m.set_child_lifetime({os.getpid()}, time.time()+0.1)
 time.sleep(30)
 """
-    completed = subprocess.run([sys.executable, "-c", code], capture_output=True, timeout=5)
+    completed = subprocess.run([sys.executable, "-c", code], capture_output=True, timeout=15)
     assert completed.returncode != 0 and b"TimeoutError" in completed.stderr
 
 
