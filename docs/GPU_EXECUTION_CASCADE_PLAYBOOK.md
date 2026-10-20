@@ -1,9 +1,9 @@
 # GPU execution routing for the PMM ion campaign
 
-First read the required project
-[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md), which owns resource
-reuse, bounded capacity routing, connection and optional monitoring. This guide
-applies that workflow to PMM runtime measurement, admission and persistence.
+First read the maintainer's local `gpu-use-skill` policy (not published),
+which owns resource reuse, bounded capacity routing, connection and optional
+monitoring. This guide applies that workflow to PMM runtime measurement,
+admission and persistence.
 The [PMM ion campaign recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-level-metal-comparison-campaign-pmm_ion_metal_v2_context)
 owns scientific configuration and exact commands. The [GCP runbook](GCP_GPU_RUNBOOK.md)
 and [Colab runbook](COLAB_GPU_RUNBOOK.md) own provider procedures;
@@ -20,7 +20,7 @@ bundle and output destination before allocating. Recover prior receipts and
 verified artifacts. A narrower approved screen takes precedence over a deferred
 full grid; do not repeat completed smokes or preparation merely because the
 larger recipe lists them. Preserve controller caps and recorded authorization;
-use the skill's resource-state decision table before considering any new start.
+use the policy's resource-state decision table before considering any new start.
 
 The PMM core continuation was closed at fold 0 on 2026-10-03 and must not be
 allocated. Historical rule: for that continuation, resolve the

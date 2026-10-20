@@ -1,4 +1,5 @@
 # EC1 independent-support preparation: log
+Public-release note (2026-10-20): host paths, device names and cloud resource names below are generalized; facts, hashes and timings are unchanged.
 
 Dated entries, newest last. Campaign [README](README.md).
 
@@ -13,7 +14,7 @@ Tooling (new, additive): `scripts/report_ec1_component_support.py` (SHA-256 `ca7
 (`9137ba06…`), `CARE_prepare_training_and_test_set/care_prepare.py` (`493330bd…`). Commands and inputs:
 [instructions](instructions.md).
 
-Run: output Data1 `campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/`, `artifact_manifest.json`
+Run: output `<secondary-drive>/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/`, `artifact_manifest.json`
 SHA-256 `6674d052dcf6b31ca5c3dd364d4a0c36281ca9980a2b19154d5cb6adde6cbf69`; `support_report.json` `ee82536e…`;
 `next_scientific_decision.md` `47d9e065…`. 39 input files were hashed before and after: unchanged (key inputs:
 baseline split `428aa0be…`, memberships `853cd192…`, EC alignments `a4aec7a6…`, train build summary `ea3df04a…`,
@@ -62,7 +63,7 @@ Tooling (new, additive): `scripts/inventory_ec_support_sources.py` (SHA-256 `f39
 (cohort attrition and asset checks), `care_prepare.py` (candidate extraction, the annotation rule) and the training
 label rule `src/training/labels.py`. Inputs, command and boundaries: [instructions](instructions.md#training-source-inventory-ec1s-002).
 
-Run: Data1 `campaigns/ec1_independent_support_2026-10/inventory_20261013T211519Z/`, `artifact_manifest.json`
+Run: `<secondary-drive>/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/inventory_20261013T211519Z/`, `artifact_manifest.json`
 `3513f315…` (binds 22 inputs, the 3,369 AlphaFill JSON files read, 72 reused clusterRes30 assets, file listings, git HEAD
 `ad99c5f` and the tool hashes); `candidate_inventory.csv` `95cae1a0…`, `recommendation.md` `c5f76fc9…`. The 34 input files
 hashed before the task are unchanged. All 27 values computed independently during the source mapping match.
@@ -131,7 +132,7 @@ STATUS text replaced by this entry, preserved verbatim:
 
 - Current campaign: [ec1_independent_support_2026-10](docs/campaigns/ec1_independent_support_2026-10/README.md): CPU evidence and data preparation toward stronger EC1 evidence; no training, inference, download, promotion or GPU use.
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
-- Stage: evidence boundary = Data1 `campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/` (all expected values reproduced). Development support 793 proteins, 1,168 pockets, 319 dependence components; the six EC7 proteins form one component. Under current eligibility the CARE clusterRes30 training source adds no EC7 example (141 lack a supported metal, 24 lack assets by deliberate filtering, 8 carry only noncatalytic-predicted sites). Recommended: Route 1, preserve eligibility ([proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md)).
+- Stage: evidence boundary = `<secondary-drive>/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/` (all expected values reproduced). Development support 793 proteins, 1,168 pockets, 319 dependence components; the six EC7 proteins form one component. Under current eligibility the CARE clusterRes30 training source adds no EC7 example (141 lack a supported metal, 24 lack assets by deliberate filtering, 8 carry only noncatalytic-predicted sites). Recommended: Route 1, preserve eligibility ([proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md)).
 
 The trunk-LR comparison closed on 2026-10-13: reference retained (+1.16 points, rule (b) not met); the lower trunk rate stays an unpromoted, undisproven candidate ([archived README](docs/archive/campaigns/pmm_trunk_lr_2026-10/README.md)). PMM core v2 closed at fold 0 on 2026-10-03 ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
 
@@ -157,7 +158,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run; no GPU start, training, inference, download, new held-out evaluation or eligibility change.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-13 18:50 UTC); disk kept; snapshots `deepmzyme-paused-20261003` and `deepmzyme-v3-final-20261013` kept. Local backups and the off-site gap: [inventory 5A](docs/BACKUP_AND_DATA_INVENTORY.md#5a-local-independent-backups-and-gcp-state-verified-2026-10-13).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 18:50 UTC); disk kept; snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept. Local backups and the off-site gap: the private backup record.
 
 Next: the user's route decision ([proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md#recommendation-and-remaining-decision): which training-side sources the Route 1 inventory may use; whether Route 2 is scoped) and the commit/push of the staged records. Later: cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 

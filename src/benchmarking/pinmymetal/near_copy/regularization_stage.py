@@ -3,7 +3,7 @@
 
 It reuses the step-C launcher's lane, launch, wait, pull, recovery and evidence logic (pmm_v3_step_c.Step) and
 adds the gates of the amended step D (extension 1, log v3-017) and of step E. Like the other launchers it never
-starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing.
+starts, stops, restores or extends a VM: the external VM controller ($DEEPMZYME_VM_CONTROLLER/bin) owns billing.
 
 Commands (see the metal playbook, "v3 step D regularization amendment"):
   units [--step D|E]      offline: the frozen unit lists per round and the admission forecasts

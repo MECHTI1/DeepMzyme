@@ -2,9 +2,9 @@
 """Workstation launcher for v3 plan step C (standard library only).
 
 Like pmm_v3_step_b.py, whose session, SSH, lane-readiness, host-pull and evidence helpers it reuses, it never
-starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing, and a GPU start needs
-the user's typed authorization. Every VM command talks to an already RUNNING VM over the controller's IAP SSH
-configuration and starts the VM-side runner (run_pmm_v3_campaign.py) detached under setsid/nohup.
+starts, stops, restores or extends a VM: the external VM controller ($DEEPMZYME_VM_CONTROLLER/bin) owns billing, and a
+GPU start needs the user's typed authorization. Every VM command talks to an already RUNNING VM over the controller's
+IAP SSH configuration and starts the VM-side runner (run_pmm_v3_campaign.py) detached under setsid/nohup.
 
 Commands (step C order; see the metal playbook, "PMM ion metal v3 campaign"):
   units                   offline: the step C units, the reused cell, admission forecasts and the suggested order

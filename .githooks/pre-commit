@@ -6,10 +6,16 @@
 # extensions.worktreeConfig it reaches every worktree, frozen checkouts included.
 # Runs only when staged Markdown outside docs/notebook_outputs/raw/ changes;
 # exits 0 when the interpreter is missing. Override it with DEEPMZYME_PYTHON
-# (a path or a command on PATH).
+# (a path or a command on PATH); the default is the repo .venv, else python3.
 
-PY="${DEEPMZYME_PYTHON:-/home/mechti/miniconda3/envs/DeepMzyme/bin/python}"
 ROOT="$(git rev-parse --show-toplevel)" || exit 0
+if [ -n "${DEEPMZYME_PYTHON:-}" ]; then
+    PY="$DEEPMZYME_PYTHON"
+elif [ -x "$ROOT/.venv/bin/python" ]; then
+    PY="$ROOT/.venv/bin/python"
+else
+    PY="python3"
+fi
 
 if ! git diff --cached --name-only -- '*.md' ':(exclude)docs/notebook_outputs/raw/**' | grep -q .; then
     exit 0

@@ -28,7 +28,7 @@ feature-generation or split-writing mode, and it never reads held-out records.
   `build_summary.csv`, `candidate_site_summary.csv`, `prediction_results_summary.csv` and
   `data_summarazing_table_transition_metals_whether_catalytic.csv`. `fetch_summary.csv` is filtered as it is read
   to `split == "train"` and the 24-accession allowlist; every other row is discarded unused.
-- `--care-work-root`: `/media/mechti/Data1/care_sets/task1_30_clusterRes30`: for allowlisted accessions only,
+- `--care-work-root`: `<secondary-drive>/care_sets/task1_30_clusterRes30`: for allowlisted accessions only,
   `alphafill/train/json/<ACC>.json`, `alphafill/train/cif/<ACC>.cif` and `uniprot/train/<ACC>.json` are checked, and
   `uniprot/uniprot_annotation_cache.csv` is read for allowlisted training rows only. No directory is scanned.
 
@@ -38,14 +38,14 @@ baseline whose recorded build status is `MISSING_ALPHAFILL_JSON_OR_CIF`.
 ## Command
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+P="${DEEPMZYME_PYTHON:-.venv/bin/python}"
 systemd-run --user --scope --quiet -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0 \
   env OMP_NUM_THREADS=1 taskset -c 0,1 nice -n 10 $P scripts/report_ec1_component_support.py \
   --baseline-split docs/notebook_outputs/raw/ec1_standalone_v12_20260914/expected_split.json \
   --remoteness-root DeepMzyme_Data/notebook_outputs/remote_homology_v1 \
   --care-metadata-root CARE_prepare_training_and_test_set/provenance/clusterRes30/metadata \
-  --care-work-root /media/mechti/Data1/care_sets/task1_30_clusterRes30 \
-  --output-dir /media/mechti/Data1/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_<UTC>
+  --care-work-root "${SECONDARY_DRIVE:?}/care_sets/task1_30_clusterRes30" \
+  --output-dir "${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_<UTC>"
 ```
 
 The output directory must be new or empty and outside every input root; a file with different content is never
@@ -84,7 +84,7 @@ Sources and what is read (training side only):
 - **CARE full training metadata**, `--care-full-train` `DeepMzyme_Data/CARE_dataset/CARE_datasets/splits/task1/protein_train.csv`.
   An accession's EC numbers are the union of its rows. It is a representative when its `clusterRes30` value is itself.
   Non-representatives are the source-A units and are never independent of their representative.
-- **The unclustered CARE work root**, `--care-full-work-root` `/media/mechti/Data1/care_sets/task1_30`:
+- **The unclustered CARE work root**, `--care-full-work-root` `<secondary-drive>/care_sets/task1_30`:
   - `uniprot/uniprot_annotation_cache.csv`: training rows of allowlisted accessions only, filtered while streaming
     (its first data row is a test row; never print it);
   - listings of `alphafill/train/json` and `alphafill/train/cif`, and the JSON files of supported-metal candidates;
@@ -101,19 +101,19 @@ Sources and what is read (training side only):
   `--previous-report` (the ec1s-001 report: its `proteins.csv` must match its manifest and the membership).
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+P="${DEEPMZYME_PYTHON:-.venv/bin/python}"
 systemd-run --user --scope --quiet -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0 \
   env OMP_NUM_THREADS=1 taskset -c 0,1 nice -n 10 $P scripts/inventory_ec_support_sources.py \
   --baseline-split docs/notebook_outputs/raw/ec1_standalone_v12_20260914/expected_split.json \
   --remoteness-root DeepMzyme_Data/notebook_outputs/remote_homology_v1 \
-  --previous-report /media/mechti/Data1/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_20261013T191929Z \
+  --previous-report "${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_20261013T191929Z" \
   --care-full-train DeepMzyme_Data/CARE_dataset/CARE_datasets/splits/task1/protein_train.csv \
-  --care-full-work-root /media/mechti/Data1/care_sets/task1_30 \
+  --care-full-work-root "${SECONDARY_DRIVE:?}/care_sets/task1_30" \
   --care-metadata-root CARE_prepare_training_and_test_set/provenance/clusterRes30/metadata \
-  --care-clusterres30-work-root /media/mechti/Data1/care_sets/task1_30_clusterRes30 \
+  --care-clusterres30-work-root "${SECONDARY_DRIVE:?}/care_sets/task1_30_clusterRes30" \
   --care-prepared-train-dir DeepMzyme_Data/CARE_task1_30_clusterRes30_train_test_metallo/train \
   --pmm-train-dir DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train \
-  --output-dir /media/mechti/Data1/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/inventory_<UTC>
+  --output-dir "${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/inventory_<UTC>"
 ```
 
 Outputs (about 20 s; fresh output folder outside every input root; never overwritten):

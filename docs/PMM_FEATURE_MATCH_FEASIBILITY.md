@@ -11,7 +11,7 @@ rows and found 6,791 unique matches, but failed its coverage and representation
 gates; no training dataset was created.
 
 The reproducible, lightweight check and its machine-readable output are at
-`/home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/pmm_feature_feasibility_v1/`:
+`<repo-root>/../DeepMzyme_pmm_source_audit_output/pmm_feature_feasibility_v1/`:
 `check.py`, `candidate_feature_checks.json`, `reviewed_source_rows.csv`, and
 `bounded_coverage.json`. It reads the pinned V1.0 class-model files, the
 Figshare v1 site-type and coordinate tables, and six current RCSB PDB files.

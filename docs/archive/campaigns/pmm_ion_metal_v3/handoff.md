@@ -1,8 +1,8 @@
 # PMM ion metal v3 — continuation handoff (written 2026-10-08 12:17 UTC; step E2 amendment added ~13:00 UTC, its review saved ~13:20 UTC and resolved ~17:00 UTC with the E2 specification frozen; fallback leftovers removed and step F draft corrected ~18:40 UTC; step E completed and the deferred review item added 2026-10-11 ~13:15 UTC, log v3-031; step E2 run and completed 2026-10-11/12, log v3-034–v3-037; the section 10 review completed and the E2 tooling built, checked and its manifest and ceiling recorded 2026-10-11 ~14:30 UTC, log v3-032/v3-033; the pre-step-F review, its recommendation (section 11, PENDING) and step F draft v3 added 2026-10-12 ~09:30 UTC, log v3-038; the user chose the comparison and its CPU preparation was completed 2026-10-12 ~10:30 UTC, log v3-039; it ran and was not adopted 2026-10-12 11:19 UTC, log v3-040/v3-041; the user chose to finalize with the 50-epoch selection and the step F tooling was prepared and CPU-checked 2026-10-12, log v3-042, section 12, and corrected in one CPU round the same day, log v3-043)
 
-Self-contained handoff for a new Claude Code chat. It depends on no earlier
+Self-contained handoff for a new agent session. It depends on no earlier
 conversation and on no temporary file; every path below is durable (git,
-`/media/mechti/Data1`, `~/deepmzyme-vm`). Newest state first; the
+`<secondary-drive>`, `<vm-controller>`). Newest state first; the
 [log](log.md) holds the dated history and [STATUS](../../../../EXPERIMENT_STATUS.md)
 the current authority.
 
@@ -17,9 +17,9 @@ and the test ESMC ran on the workstation CPU, and the single prediction pass (cl
 and the frozen report (report.json 240ca831…) were produced: full-test common-four BA 67.55% [62.93, 71.65], label
 both_results_secondary, all disclosures. The exact Zenodo PinMyMetal test is now evaluated once; no further test use.
 
-Work only in the worktree /media/mechti/Data1/DeepMzyme_worktrees/v3 (branch v3-step-a; commits 0e845d8 and 7bd7884
-are local and not pushed; the v3-046 to v3-048 records are staged, not committed). If /media/mechti/Data1 is missing:
-`udisksctl mount -b /dev/sda1`. Python: /home/mechti/miniconda3/envs/DeepMzyme/bin/python.
+Work only in the worktree <secondary-drive>/DeepMzyme_worktrees/v3 (branch v3-step-a; commits 0e845d8 and 7bd7884
+are local and not pushed; the v3-046 to v3-048 records are staged, not committed). If <secondary-drive> is missing:
+`udisksctl mount -b <secondary-drive-device>`. Python: <python>.
 
 Read: AGENTS.md; EXPERIMENT_STATUS.md; docs/campaigns/pmm_ion_metal_v3/README.md; log.md v3-048 back to v3-042.
 
@@ -33,12 +33,12 @@ cost-gated augmentations (never run). No GPU start, retraining or further test u
 
 | Item | Value |
 |---|---|
-| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = `origin/v3-step-a`, see `git log -1`) — not `/home/mechti/PycharmProjects/DeepMzyme` (older state) |
-| Python | `/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
-| Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `/dev/sda1`, label `Data`; after a reboot mount it with `udisksctl mount -b /dev/sda1`) |
-| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md sections 12, 11, 3, 5 and 8 → log.md v3-044 back to v3-031 → plan.md step F (and the pre-step-F comparison note) → step_f_plan_draft.md (F3, F6, F7 and the implementation notes) and step_f_spec.json → docs/DATASETS.md test-use ledger → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step F: Stage 6B refit and the one test pass" → .agents/skills/gpu-use-skill/SKILL.md → ~/deepmzyme-vm/AGENTS.md and config.env (before any GPU action) |
+| Worktree | `<secondary-drive>/DeepMzyme_worktrees/v3` (branch `v3-step-a`; HEAD = `origin/v3-step-a`, see `git log -1`) — not `<repo-root>` (older state) |
+| Python | `<python>` (verify with `-c "import sys; print(sys.executable)"`); local CPU runs capped with `systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G` |
+| Campaign | `pmm_ion_metal_v3`; docs `docs/campaigns/pmm_ion_metal_v3/` (README, plan.md, assessment_spec.md, log.md, this file); data `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` (the Data1 drive is `<secondary-drive-device>`, label `Data`; after a reboot mount it with `udisksctl mount -b <secondary-drive-device>`) |
+| Reading order | AGENTS.md → EXPERIMENT_STATUS.md → docs/campaigns/pmm_ion_metal_v3/README.md → handoff.md sections 12, 11, 3, 5 and 8 → log.md v3-044 back to v3-031 → plan.md step F (and the pre-step-F comparison note) → step_f_plan_draft.md (F3, F6, F7 and the implementation notes) and step_f_spec.json → docs/DATASETS.md test-use ledger → docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md "v3 step F: Stage 6B refit and the one test pass" → .agents/skills/gpu-use-skill/SKILL.md → `<vm-controller>/AGENTS.md` and `config.env` (before any GPU action) |
 | Launchers | `pmm_v3_step_d.py` (steps D and E: units, gates, status, launch, wait, pull, recover-lane, archive-failed, assess, record-cost-gate, record-e-gate, evidence); `pmm_v3_step_e2.py` (step E2 only: units, gates, build-manifest, record-ceiling, record-authorization, spend, status, launch, wait, pull, recover-lane, archive-failed, evidence) and `pmm_v3_e2_assessment.py` (workstation E2 assessment from Data1); `pmm_v3_step_c.py`/`pmm_v3_step_b.py` (shared lane logic); never edit `pmm_v3_campaign.py` or `run_pmm_v3_campaign.py` (hash-frozen by the extension record), and not the E2 or reused modules pinned by the E2 manifest; step F: `pmm_v3_step_f.py` (workstation: F1 record, manifest, ceiling, authorization, deploy, the lane logic, `refit-receipt`, the freeze records) and `run_pmm_v3_step_f.py` (VM refit; workstation-CPU `prepare-test`, `test-embeddings`, `predict`), with `pmm_v3_test_prep.py` and `pmm_v3_step_f_report.py` (section 12); the 10-epoch comparison's `pmm_v3_sched10*.py` (done, not adopted) |
-| VM code dir | `/home/mechti/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
+| VM code dir | `~/projects/DeepMzyme_v3_ext1` (extension bundle 43d26ff); campaign root `~/deepmzyme_runs/pmm_ion_metal_v3` (lanes/lane0..2, step_d/launch, step_e/launch, assessments) |
 
 ## 2. Approved objective, pipeline and frozen settings
 
@@ -179,7 +179,7 @@ spent at 2026-10-12 17:30 UTC). The advance step F GPU authorization of v3-014 w
 which spending now exceeds, and it is not activated (log v3-042): the refit's GPU start needs the user's explicit,
 logged authorization (step_f_plan_draft.md F7 item 4), recorded with `pmm_v3_step_f.py record-authorization`.
 Controller caps: 4 h / $6 per session, 12 h / $18 per UTC day; one active GPU, controller
-only via `~/deepmzyme-vm/bin`; every session ends with `evidence`, `vm-stop` and a verified TERMINATED. Never:
+only via `<vm-controller>/bin`; every session ends with `evidence`, `vm-stop` and a verified TERMINATED. Never:
 Round C, cost-gated augmentations (`posnoise01`, `outerdrop01`) without a recorded OK, `vm-fallback`, deleting cloud
 resources, editing the frozen runner files, editing controller caps, pushing without the user's OK
 (granted for the 2026-10-07/08 and 2026-10-11 closeouts and the v3-034 commits only), step F before its gates and plan.
@@ -196,15 +196,15 @@ only, not a pre-step-F experiment.
 
 | Item | Value (`vm-status` 2026-10-12 16:16 UTC; the controller ledger) |
 |---|---|
-| VM | `deepmzyme-l4`, project `deepmzyme-gpu-vm`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (verified 2026-10-12 20:06 UTC after the Stage 6B refit session `session-20261012T185958Z-c995e05c`, 1 h 06 min, $0.97 gross, started after five stockouts; before that verified 2026-10-12 11:18:48 UTC after the 10-epoch comparison session `session-20261012T104112Z-c41caba4`, 37 min, $0.55 gross; before that 05:39:06 UTC after E2 session 12 `session-20261012T025638Z-baee022b`, 2 h 42 min, $2.38 gross; E2 sessions 10–12 ran 8 h 51 min, $7.80 gross); 150 GB boot disk kept (`deepmzyme-l4-from-deepmzyme-paused-20261003`) |
+| VM | `<gpu-vm>`, project `<gcp-project>`, zone `us-central1-a`, g2-standard-8 + 1× L4, **TERMINATED** (verified 2026-10-12 20:06 UTC after the Stage 6B refit session `session-20261012T185958Z-c995e05c`, 1 h 06 min, $0.97 gross, started after five stockouts; before that verified 2026-10-12 11:18:48 UTC after the 10-epoch comparison session `session-20261012T104112Z-c41caba4`, 37 min, $0.55 gross; before that 05:39:06 UTC after E2 session 12 `session-20261012T025638Z-baee022b`, 2 h 42 min, $2.38 gross; E2 sessions 10–12 ran 8 h 51 min, $7.80 gross); 150 GB boot disk kept (`<campaign-disk>`) |
 | Spending | 2026-10-12 20:07 UTC (log v3-046, offline `pmm_v3_step_f.py spend`): about **$41.80** after the refit session; **$13.20** left under $55; the rest of step F runs on the workstation CPU (storage only). 2026-10-12 17:30 UTC (log v3-043, an estimate; no VM use since 11:18:47 UTC): about **$40.8**; to finish about **$42.8–48.2** (the refit $0.9–1.9, storage for 2–10 days; the test side on the workstation CPU costs no VM time). 2026-10-12 11:20 UTC (log v3-041): about **$40.65** after the comparison session (37 min, $0.55 gross by the ledger); to finish about **$42.6–48.1** (step F 50-epoch path plus storage). 10:24 UTC (log v3-039, offline `pmm_v3_sched10.py spend`): about **$40.09**; the comparison's launch control projects $46.09 with its $6 reserve against $55; the comparison adds about 0.8–1.1 VM h ($0.7–0.95, up to $1.4 with a rerun) plus 1–2 storage days. 2026-10-12 09:02 UTC (log v3-038; `vm-status` TERMINATED, today 5 h 33 min / $6.01): about **$40.06 spent**; to finish about **$42.1–47.5** straight to step F or **$42.8–49.7** with the section 11 comparison (A 0.6–1.0 VM h, $0.5–0.9, plus 1–2 storage days). After E2 (log v3-037, 2026-10-12 05:40 UTC): about **$39.98 spent**; to finish (step F 1.0–2.25 VM h, $0.9–1.9, plus storage $0.55/day) about **$42.0–47.4**, within the recorded $55. Before E2: refreshed in log v3-033 (14:10 UTC): about $32.00 spent; E2 8.3–9.4 VM h central (stress 10.1), $7.1–8.9; E → E2 → F about **$41.7–48.9**; step F alone after a dated E2 cancellation about $33.5–36.7; the **$55 ceiling is recorded in E2's launch control** (`e2_ceiling.json`, estimated charges with the running session to its hard stop plus a $6 reserve). Earlier: one dated calculation, log v3-031 (2026-10-11 13:10 UTC; estimated charges, disk counted once): running B–E $26.96 (31.40 h × $0.8586/h); campaign disk $2.76; archive snapshot $0.32; leftovers final $1.94; **$31.98 spent, $8.02 of the $40 gross ceiling left**; forecast E → E2 → F $42.4–48.8 including storage (E2 8.6–9.6 h, F 1.0–2.25 h VM wall time; storage $0.55/day for 4–12 days), above $40 and within the user's $55 E2 planning ceiling, which must be recorded in the E2 execution controls before any E2 GPU fit (not start permission); step F alone after a dated E2 cancellation $33.9–36.7 |
-| Retained storage | campaign disk `deepmzyme-l4-from-deepmzyme-paused-20261003` ($0.49/day) and archive snapshot `deepmzyme-paused-20261003` ($0.06/day): $0.55/day in estimated charges; the controller reserves $0.75/day (a guard, not a charge). The failed-fallback disks and snapshot were deleted on 2026-10-08 (log v3-030; receipt archived as `state/fallback-873d08b26968.abandoned.json`) |
-| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`~/deepmzyme-vm/config.env`; never edit without the user's instruction); 2026-10-12 used 6 h 11 min / $6.55 of running time (2026-10-11: 4 h 37 min / $5.20); a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
+| Retained storage | campaign disk `<campaign-disk>` ($0.49/day) and archive snapshot `<paused-snapshot>` ($0.06/day): $0.55/day in estimated charges; the controller reserves $0.75/day (a guard, not a charge). The failed-fallback disks and snapshot were deleted on 2026-10-08 (log v3-030; receipt archived as `state/fallback-873d08b26968.abandoned.json`) |
+| Limits | controller caps 4 h / $6 per session, 12 h / $18 per UTC day (`<vm-controller>/config.env`; never edit without the user's instruction); 2026-10-12 used 6 h 11 min / $6.55 of running time (2026-10-11: 4 h 37 min / $5.20); a new UTC day resets the daily cap; measured 2026-10-11: about 15 Only-GVP/late-fusion fits per 4 h session (about 40 min per fit at three lanes; Only-ESMC 30–35 min) |
 | Stockouts | L4 `ZONE_RESOURCE_POOL_EXHAUSTED` in us-central1-a is frequent (five on 2026-10-07, one at 00:01 and nine in a row 07:58:51–08:41:04 on 2026-10-08 by the ledger; none on 2026-10-11); the handoff rule is spaced same-VM retries only (5-minute spacing, bounded), never `vm-fallback` |
 
 ## 6. Audit of the session-5 scratch drivers (delivered 2026-10-07)
 
-Full report: `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/audits/driver_audit_20261007T193000Z/driver_audit_report.md`
+Full report: `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/audits/driver_audit_20261007T193000Z/driver_audit_report.md`
 (with `mock_drivers.py`, the CPU mock that reproduces every finding, and `scratch_tools/` holding both driver and
 watcher versions and their logs). The drivers were workstation-side refill scripts that only called the launcher's
 `status`, `pull`, `launch --no-wait` and `wait --any`; they are not repository code and were not used after 18:26 UTC
@@ -228,7 +228,7 @@ launches and add alerts. The normal-transition mock shows three initial launches
 
 ## 7. Evidence locations and recovery
 
-All under `DATA=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` unless noted (verify separately
+All under `DATA=<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3` unless noted (verify separately
 from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 checked on both ends when written):
 
 | What | Where |
@@ -246,17 +246,17 @@ from git: the Data1 drive must be mounted; each `evidence_*` copy was SHA-256 ch
 | Step F readiness (log v3-042, v3-043) | original run `$DATA/audits/f_readiness_20261012T122926Z/` (`readiness_checks.json` `561190f8…`, preserved unchanged; its stage C pass was a recorded reassessment, not as run); an aborted rerun `f_readiness_20261012T165246Z/` (`ABORTED.txt`; not evidence); the scripted rerun on the final tools `f_readiness_20261012T170111Z/` (`step_f_readiness.py` `e73c09c5…`, `readiness_checks.json` `5b1ce5f0…`: A, B, D passed, C failed by the script's scope error); the corrected stage C rerun `f_readiness_20261012T174408Z/` (`step_f_readiness.py` `b73ece28…`, `readiness_checks.json` `7e61a339…`: C passed, combined ready true) |
 | Pre-shutdown worktree backup (2026-10-12 14:32 UTC) | `$DATA/backups/v3_worktree_uncommitted_20261012T143217Z/` (staged and unstaged patches, untracked-file tarball, `SHA256SUMS`, HEAD `f5c7f89`): the v3-042 state before the v3-043 round |
 | CPU ESMC check (log v3-044) | `$DATA/audits/esmc_cpu_check_20261012T180322Z/` (attempt 1, failed on the spec defect before any result; `ATTEMPT1_FAILED.txt`) and `$DATA/audits/esmc_cpu_check_20261012T180915Z/` (attempt 2: `selection.json` `e3843acb…`, `criteria.json` `d1bd7a78…`, `cpu_esmc_check.py` `89b97cc8…`, `esmc_cpu_check.json` `e9c3c3d4…`, payloads in `tool_bf16/` and `fp32/`, `*_time.txt`); readiness stage A recheck `$DATA/audits/f_readiness_20261012T181114Z/` (`b99e9c2c…`); weights in `~/.cache/huggingface/hub/models--EvolutionaryScale--esmc-600m-2024-12` |
-| Step F records and the refit (log v3-045, v3-046) | `$DATA/step_f_evidence/` (`f1_selection.json` `e8a2e8cd…`, `f_manifest.json` `d37ba100…`, `f_ceiling.json` `bdb044f7…`, `f_authorization.json` `27956449…`, `evidence_20261012T200435Z/` 751 files); the pulled refit `$DATA/durable/lane0/runs/stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42/` (terminal checkpoint `a0007846…`, `refit_reload_check.json` `45759713…`) and its status `durable/lane0/run_status_stage6b_refit_…json` (`f48e5d24…`); VM-side originals under `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3/lanes/lane0/` and `step_f/launch/` |
+| Step F records and the refit (log v3-045, v3-046) | `$DATA/step_f_evidence/` (`f1_selection.json` `e8a2e8cd…`, `f_manifest.json` `d37ba100…`, `f_ceiling.json` `bdb044f7…`, `f_authorization.json` `27956449…`, `evidence_20261012T200435Z/` 751 files); the pulled refit `$DATA/durable/lane0/runs/stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42/` (terminal checkpoint `a0007846…`, `refit_reload_check.json` `45759713…`) and its status `durable/lane0/run_status_stage6b_refit_…json` (`f48e5d24…`); VM-side originals under `~/deepmzyme_runs/pmm_ion_metal_v3/lanes/lane0/` and `step_f/launch/` |
 | Step E2 records and readiness | `$DATA/step_e2_evidence/e2_manifest.json` (`37c2ff05…`; superseded first manifest kept as `e2_manifest.superseded_20261011T141045Z.json`), `e2_ceiling.json` (`a4c31da1…`), later `e2_authorization.json`, `evidence_<UTC>/`, `assessments/E2_<UTC>/`; readiness dry run `$DATA/audits/e2_readiness_20261011T142030Z/assessment.json` (`ea0c6dbd…`; the earlier `…T141052Z` run used the superseded manifest) |
 | Bundles (source + extension) and folds | `$DATA/bundles/20d5b06/`, `$DATA/bundles/43d26ff/`; `$DATA/folds/` |
 | Steps B and C evidence | `$DATA/step_b_evidence/`, `$DATA/step_c_evidence/` |
-| VM-side originals (kept on the stopped 150 GB disk) | `/home/mechti/deepmzyme_runs/pmm_ion_metal_v3/{lanes,step_d,step_e,assessments,campaign_extension.json}`; code `/home/mechti/projects/DeepMzyme_v3_ext1`; caches `/home/mechti/deepmzyme_cache/{parse,esm,ring}` |
-| Controller state and ledger | `~/deepmzyme-vm/state/usage_ledger.jsonl`, `current_session.json`, `fallback-873d08b26968.abandoned.json` (abandoned 2026-10-08; no active fallback receipt), `config.env` |
+| VM-side originals (kept on the stopped 150 GB disk) | `~/deepmzyme_runs/pmm_ion_metal_v3/{lanes,step_d,step_e,assessments,campaign_extension.json}`; code `~/projects/DeepMzyme_v3_ext1`; caches `~/deepmzyme_cache/{parse,esm,ring}` |
+| Controller state and ledger | `<vm-controller>/state/usage_ledger.jsonl`, `current_session.json`, `fallback-873d08b26968.abandoned.json` (abandoned 2026-10-08; no active fallback receipt), `config.env` |
 | Fallback cleanup records | `$DATA/audits/fallback_abandon_20261008T181921Z/` (evidence, dry-run, confirmed run, post-verification) |
-| Git | worktree `/media/mechti/Data1/DeepMzyme_worktrees/v3`, branch `v3-step-a`, remote `origin` (same repository as `/home/mechti/PycharmProjects/DeepMzyme`) |
+| Git | worktree `<secondary-drive>/DeepMzyme_worktrees/v3`, branch `v3-step-a`, remote `origin` (same repository as `<repo-root>`) |
 
-Recovery: if the workstation was rebooted, mount Data1 (`udisksctl mount -b /dev/sda1`), confirm the worktree with
-`git -C /media/mechti/Data1/DeepMzyme_worktrees/v3 status`, then read STATUS and this file. If a VM session was cut
+Recovery: if the workstation was rebooted, mount Data1 (`udisksctl mount -b <secondary-drive-device>`), confirm the worktree with
+`git -C <secondary-drive>/DeepMzyme_worktrees/v3 status`, then read STATUS and this file. If a VM session was cut
 (hard stop, SSH loss): start the VM under authorization, run `P pmm_v3_step_d.py --step E status`; `wait` pulls every
 lane awaiting acknowledgment; `recover-lane K` records an interrupted unit (then `archive-failed UNIT` and one unchanged
 rerun); never relaunch a unit that has a launch record without an exit code. Run `evidence` before every `vm-stop`.
@@ -269,14 +269,14 @@ session procedure of steps D–F.
 
 Items 1–5 below describe the GPU session procedure used for step E.
 
-Reconcile first (read-only): `cd /media/mechti/Data1/DeepMzyme_worktrees/v3; git status; git log -3`;
-`~/deepmzyme-vm/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
+Reconcile first (read-only): `cd <secondary-drive>/DeepMzyme_worktrees/v3; git status; git log -3`;
+`<vm-controller>/bin/vm-status` and `vm-report --no-ssh`; if the VM is RUNNING unexpectedly, do not start anything,
 run `P pmm_v3_step_d.py --step E status` (needs SSH to a running VM) and `wait` (never relaunch), then `evidence`
 and `vm-stop`. If TERMINATED, the campaign root on the VM disk and the Data1 evidence copies are the truth; the
 launcher's `status` after the next start lists completed units; completed units are never rerun (launcher refusal),
 a failed unit gets one unchanged rerun via `archive-failed UNIT` then `launch`.
 
-GPU session procedure as used for step E (P = /home/mechti/miniconda3/envs/DeepMzyme/bin/python, in the worktree):
+GPU session procedure as used for step E (P = `<python>`, in the worktree):
 1. `vm-status`; `vm-report --no-ssh`; `vm-start --confirm [--hours H]` (on a stockout: spaced same-VM retries only);
    `vm-setup --stages ssh,smoke`.
 2. `P pmm_v3_step_d.py --step E status` (gates: readiness, extension, label record, final D assessment).
@@ -575,7 +575,7 @@ the implementation choices and the explicit clean-subset rule are in the
   - `prepare-test` reads the exact Zenodo test directory's structure and site manifests (allowlisted identifier
     columns), its structures, the source CSV (allowlisted `pdbid` and `residueid_ion`; label cells parsed and
     discarded unused), and the file names of the previously opened set
-    (`/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test`,
+    (`<repo-root>/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test`,
     which must hold exactly 316 structure files);
   - `test-embeddings --device cpu` embeds the planned context chains (ESMC-600M cached; 6 GB cap; about 1.5–3 hours;
     keep about 6 GB free);
@@ -608,7 +608,7 @@ the implementation choices and the explicit clean-subset rule are in the
 
 **Executed ([log v3-052](log.md#v3-052)):**
 - the closure: the archive move with its alias, the pinned files, the contract and the verified test guard;
-- the recovery snapshot `deepmzyme-v3-final-20261013`.
+- the recovery snapshot `<v3-final-snapshot>`.
 Only the VM and disk deletion remains (below).
 
 Prepared read-only ([log v3-049](log.md#v3-049)). Approved and done since ([log v3-050](log.md#v3-050)): the NVMe backup,
@@ -621,7 +621,7 @@ The 16 key step F files on Data1 match their recorded SHA-256 values (refit chec
 check and status; the F1, manifest, ceiling, authorization, Freeze 1, Freeze 2 and claim records; predictions, report
 and F3b verification). The other copies:
 
-| Artifact | Data1 (`/dev/sda1`) | VM disk (GCP) | git | Independent copies |
+| Artifact | Data1 (secondary drive) | VM disk (GCP) | git | Independent copies |
 |---|---|---|---|---|
 | Refit run folder, 37 MB (checkpoint `a0007846…`, run config, metadata, reload check) | yes, verified | yes, the original (the host-pull manifest `cc768bdb…` matched at the pull) | hashes only | 2, until the VM disk is retired |
 | Refit status, command and launch files | yes (durable copy and `evidence_20261012T200435Z`) | yes | hashes only | 2 |
@@ -636,7 +636,7 @@ and F3b verification). The other copies:
 96% full (79 GB free). The VM disk is the only second copy of the refit and of the earlier runs.
 
 **Backup done (log v3-050):** every Data1 item in the table also has a verified copy on the workstation's NVMe disk
-(`/dev/nvme0n1p6`, ext4) at `/home/mechti/deepmzyme_backups/pmm_ion_metal_v3_closeout_20261013T023038Z/`:
+(local NVMe partition, ext4) at `<local-backup-root>/pmm_ion_metal_v3_closeout_20261013T023038Z/`:
 - the backup holds 4,836 files and 2,639,602,614 bytes;
 - the content is `step_f_evidence/`, `step_f_test/` (both test ESMC folders included), the refit run folder with its
   log, status, command file and host-pull receipt `cc768bdb…`, and the step F readiness and CPU ESMC audits;
@@ -749,18 +749,18 @@ relative to this file; written relative to `docs/` when applied)
 ### Storage retirement (controller; dry run only)
 
 **Last verified state** (`vm-status`, `vm-report --no-ssh`, 2026-10-13 about 02:00 UTC):
-- VM `deepmzyme-l4` TERMINATED;
-- disk `deepmzyme-l4-from-deepmzyme-paused-20261003`, 150 GB pd-balanced, $15.00/month (about $0.49/day);
-- snapshot `deepmzyme-paused-20261003`, 34.8 GiB stored: about $1.74/month actual, with $7.50/month reserved by the
+- VM `<gpu-vm>` TERMINATED;
+- disk `<campaign-disk>`, 150 GB pd-balanced, $15.00/month (about $0.49/day);
+- snapshot `<paused-snapshot>`, 34.8 GiB stored: about $1.74/month actual, with $7.50/month reserved by the
   controller;
 - about $0.55/day, or $16.5/month, while kept.
 
 **Options:**
 - **A, archive then retire** (recommended if a restore may ever be wanted):
-  1. `vm-archive --name deepmzyme-v3-final-20261013 --max-monthly-usd 10 --confirm`. The dry run showed a standard
+  1. `vm-archive --name <v3-final-snapshot> --max-monthly-usd 10 --confirm`. The dry run showed a standard
      snapshot at $0.05/GiB-month: $7.50/month conservatively, likely about $2–3/month compressed, plus one temporary
      restore disk for minutes. It never starts or deletes the VM.
-  2. Review its receipt, then `vm-delete --delete-disk --confirm 'DELETE deepmzyme-l4'`, a phrase the user types.
+  2. Review its receipt, then `vm-delete --delete-disk --confirm 'DELETE <gpu-vm>'`, a phrase the user types.
   3. Ongoing about $2–3/month, plus $1.74/month for the 2026-10-03 snapshot until its removal is decided; the
      controller has no command for that.
 - **B, retire without a new archive:** `vm-delete --delete-disk` keeps only the 2026-10-03 snapshot (about
@@ -786,9 +786,9 @@ The clean tree has 0 strict failures.
 ### Recovery snapshot and deletion inventory (2026-10-13)
 
 **Snapshot:**
-- `deepmzyme-v3-final-20261013` is READY: 52.68 GiB stored, estimated gross $2.63/month.
+- `<v3-final-snapshot>` is READY: 52.68 GiB stored, estimated gross $2.63/month.
 - The provider restore check passed; the temporary disk was deleted. There was no filesystem mount or boot test.
-- Receipt: `~/deepmzyme-vm/state/archive-deepmzyme-v3-final-20261013.json`, with a copy on Data1
+- Receipt: `<vm-controller>/state/archive-<v3-final-snapshot>.json`, with a copy on Data1
   `audits/closure_20261013T032640Z/`.
 - The 2026-10-03 snapshot (about $1.74/month) is kept.
 
@@ -799,13 +799,13 @@ The clean tree has 0 strict failures.
 - the controller's conservative full-disk reservation counts $7.50/month per snapshot.
 
 **Deletion inventory** (`vm-delete --delete-disk`, run without the phrase and refused):
-- would delete: VM `deepmzyme-l4` (TERMINATED, deletion protection on) and its boot disk
-  `deepmzyme-l4-from-deepmzyme-paused-20261003` (150 GB pd-balanced);
+- would delete: VM `<gpu-vm>` (TERMINATED, deletion protection on) and its boot disk
+  `<campaign-disk>` (150 GB pd-balanced);
 - kept: both snapshots, the network and the firewall;
 - the saving is $15.00/month; about $4.37/month for the two snapshots remains.
 
-**Required confirmation:** the user types `DELETE deepmzyme-l4`. The command is then
-`~/deepmzyme-vm/bin/vm-delete --delete-disk --confirm 'DELETE deepmzyme-l4'`, followed by `vm-status`, which should
+**Required confirmation:** the user types `DELETE <gpu-vm>`. The command is then
+`<vm-controller>/bin/vm-delete --delete-disk --confirm 'DELETE <gpu-vm>'`, followed by `vm-status`, which should
 show `NOT_CREATED`, and `vm-report --no-ssh`, which should show both snapshots.
 
 **Backup coverage after a deletion:**
@@ -814,7 +814,7 @@ show `NOT_CREATED`, and `vm-report --no-ssh`, which should show both snapshots.
 - no off-site copy exists.
 
 ### Decisions for the user (none inferred)
-1. **VM and disk deletion:** type `DELETE deepmzyme-l4`, or keep them (about $0.49/day).
-2. **Snapshot `deepmzyme-paused-20261003`:** keep it, or remove it later. The controller has no command for removing
+1. **VM and disk deletion:** type `DELETE <gpu-vm>`, or keep them (about $0.49/day).
+2. **Snapshot `<paused-snapshot>`:** keep it, or remove it later. The controller has no command for removing
    it.
 3. **Off-site copy** of the NVMe backup: optional.

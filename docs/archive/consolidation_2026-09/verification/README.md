@@ -51,7 +51,7 @@ present. This closeout does not claim to reconstruct that earlier activity.
 
 ## Reproduction
 
-Commands ran in `/media/mechti/Data1/DeepMzyme_worktrees/docs`, using the
+Commands ran in `<secondary-drive>/DeepMzyme_worktrees/docs`, using the
 user-specified Conda interpreter after checking its executable. PyCharm reports
 a different `.venv` SDK; no environment was changed. Both CPU commands used:
 
@@ -60,7 +60,7 @@ systemd-run --user --scope --quiet \
   -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0 \
   env GIT_OPTIONAL_LOCKS=0 CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
       OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
-  taskset -c 0,1 nice -n 19 /home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+  taskset -c 0,1 nice -n 19 "${DEEPMZYME_PYTHON:?Conda env python}" \
   -m pytest -p no:cacheprovider -q -rs
 ```
 

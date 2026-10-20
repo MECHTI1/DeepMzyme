@@ -44,7 +44,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Callable
 
 ROOT = Path(__file__).resolve().parents[4]
-DEFAULT_SSH_CONFIG = Path.home() / "deepmzyme-vm" / "state" / "ssh_config"
+# The external VM controller (a separate tool, not part of this repository) and the ssh host alias its
+# vm-setup writes into <controller>/state/ssh_config; override both from the environment.
+CONTROLLER = Path(os.environ.get("DEEPMZYME_VM_CONTROLLER") or str(Path.home() / "deepmzyme-vm")).expanduser()
+SSH_HOST = os.environ.get("DEEPMZYME_SSH_HOST") or "deepmzyme-vm"
+DEFAULT_SSH_CONFIG = CONTROLLER / "state" / "ssh_config"
 CONDA_PYTHON = os.environ.get("CLOUDSDK_PYTHON", sys.executable)  # gcloud's IAP proxy (ssh ProxyCommand)
 
 
@@ -280,7 +284,7 @@ def main(argv=None) -> int:
     parser.add_argument("--durable-root", type=Path, required=True,
                         help="workstation destination, exactly the --durable-root given to the VM runner")
     parser.add_argument("--lanes", type=int, nargs="+", default=[0])
-    parser.add_argument("--host", default="deepmzyme-vm")
+    parser.add_argument("--host", default=SSH_HOST)
     parser.add_argument("--ssh-config", type=Path, default=DEFAULT_SSH_CONFIG)
     parser.add_argument("--source-root", type=Path, default=ROOT, help="checkout holding verify_host_pull")
     args = parser.parse_args(argv)

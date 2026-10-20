@@ -7,11 +7,12 @@ GVP-trunk learning rate 1e-4 instead of 3e-4, against the five verified fits of 
 fold 0 is the reused step-B full-fp32 run). The fits run through run_pmm_trunklr.py, which this launcher copies next
 to the hash-frozen v3 runner in the extension code directory ('deploy'), and through the step C lane, wait, pull,
 recovery and evidence logic (pmm_v3_step_c) unchanged, as for the v3 10-epoch comparison (pmm_v3_sched10.py). Like
-the other launchers it never starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing.
+the other launchers it never starts, stops, restores or extends a VM: the external VM controller
+($DEEPMZYME_VM_CONTROLLER/bin) owns billing.
 
 Campaign identity: the records (manifest, ceiling, authorization), evidence copies and assessments live in their own
-Data1 folder (RECORDS). The fits execute in the v3 execution root (VM campaign root and Data1 durable pulls) under
-their own run names, which no v3 unit uses; no v3 file is changed.
+folder under DeepMzyme_Data/campaigns (RECORDS). The fits execute in the v3 execution root (VM campaign root and
+local durable pulls) under their own run names, which no v3 unit uses; no v3 file is changed.
 
 Commands:
   units                   offline: the five fits, their controls and the admission forecast
@@ -37,7 +38,7 @@ Every launch is refused before anything starts unless: the CPU readiness report 
 with this worktree; the manifest verifies; the VM copy of run_pmm_trunklr.py is the bound one; the recorded
 authorization names this manifest and this ceiling record; and the estimated compute charges, with the running
 session counted to its hard stop, plus the recorded reserve stay within the recorded ceiling. The assessment runs on
-the workstation from the verified Data1 copies (pmm_trunklr_assessment.py), after 'evidence'.
+the workstation from the verified local copies (pmm_trunklr_assessment.py), after 'evidence'.
 """
 
 from __future__ import annotations
@@ -76,7 +77,7 @@ write_json_once = e2.write_json_once
 CAMPAIGN_ID = "pmm_trunk_lr_2026-10"
 COMPARISON_ID = "pmm-trunk-lr-2026-10"
 LOG_PREFIX = "tlr-"
-CAMPAIGN = d.CAMPAIGN  # the v3 execution root on Data1 (durable pulls, A4/E2 assessments)
+CAMPAIGN = d.CAMPAIGN  # the v3 execution root under DeepMzyme_Data/ (durable pulls, A4/E2 assessments)
 RECORDS = CAMPAIGN.parent / CAMPAIGN_ID  # this campaign's own records, evidence copies and assessments
 SPEC_DIR = ROOT / "docs" / "campaigns" / CAMPAIGN_ID
 SPEC_JSON = SPEC_DIR / "trunklr_assessment_spec.json"

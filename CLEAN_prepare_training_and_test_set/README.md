@@ -70,12 +70,16 @@ bash CLEAN_prepare_training_and_test_set/16_build_shared_clean_split30_bundle.sh
 
 Shared defaults live in `00_common_split30_fold0.sh`. Override values such as
 `WORK_ROOT` or `MAHOMES_N_JOBS` by exporting them before running a step.
+`PYTHON_BIN` defaults to the repository `.venv` interpreter (the uv lock, with
+CPU-only PyTorch) or `python3`; export a GPU environment's interpreter as
+`PYTHON_BIN` before `09_generate_runtime_features_split30_fold0.sh` or before
+re-running the historical preparation.
 Each step writes a matching log under `$WORK_ROOT/logs/`.
 Use `08_monitor_mahomes_split30_fold0.sh` during long MAHOMES runs to inspect
 job progress and disk usage without modifying outputs.
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py audit-split \
   --identity 30 \
   --fold 0 \
@@ -95,7 +99,7 @@ Outputs:
 Small pilot smoke:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py fetch-alphafill \
   --identity 30 \
   --fold 0 \
@@ -107,7 +111,7 @@ Small pilot smoke:
 Full fold after the smoke succeeds:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py fetch-alphafill \
   --identity 30 \
   --fold 0 \
@@ -135,7 +139,7 @@ Default serious threshold uses AlphaFill donor alignment identity `>= 0.30` and 
 By default, candidate metals must also match a supported transition-metal annotation in the UniProt record.
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py build-mahomes-inputs \
   --identity 30 \
   --fold 0 \
@@ -192,7 +196,7 @@ Outputs:
 ## Step 4: Summarize MAHOMES Predictions
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py summarize-mahomes \
   --work-root /media/Data/clean_sets/split30/fold0 \
   --splits train test
@@ -208,7 +212,7 @@ Outputs:
 ## Step 5: Export DeepMzyme Dataset
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   CLEAN_prepare_training_and_test_set/clean_prepare.py export-dataset \
   --work-root /media/Data/clean_sets/split30/fold0 \
   --identity 30 \

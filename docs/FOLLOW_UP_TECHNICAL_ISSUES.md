@@ -31,7 +31,7 @@ Audit evidence in the serialized notebook:
 
 **Conflicting documentation/policy**
 
-`Plan.md`, `AGENTS.md`, and the metal playbook describe Stage 6B final
+`Plan.md`, the local agent instructions, and the metal playbook describe Stage 6B final
 full-train refit as the required bridge between Stage 6 selection and reportable
 Stage 7 evaluation.
 
@@ -1106,8 +1106,7 @@ strict contract; the failed GVP unit was not retried or reclassified.
 
 **Status:** Fixed in the installed controller, 2026-09-28; offline report
 regressions passed. No allocation limits or provider configuration changed.
-Controller commit
-[`1fe09d7`](https://github.com/MECHTI1/deepmzyme-vm-manager/commit/1fe09d7fbeaeda993bd36fc754c8bb88538354f5)
+Controller commit `1fe09d7` (private VM-controller repository)
 is pushed; a fresh read-only report correctly lists the retained disk.
 
 During diagnostic closeout, `vm-report --no-ssh` printed no persistent resources

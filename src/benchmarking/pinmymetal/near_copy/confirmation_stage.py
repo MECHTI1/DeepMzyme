@@ -7,7 +7,8 @@ fits and four Only-GVP ``sitenone`` geometry controls, 36 units. The fits run fr
 directory with its hash-frozen runner files, through the step C lane, launch, wait, pull, recovery and evidence
 logic (pmm_v3_step_c.Step) unchanged. The VM runner checks fold, ESMC, extension and hashes but not step
 membership, so this launcher is the admission check for E2 units; never call the runner directly. Like the other
-launchers it never starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing.
+launchers it never starts, stops, restores or extends a VM: the external VM controller
+($DEEPMZYME_VM_CONTROLLER/bin) owns billing.
 
 Commands (see the metal playbook, "v3 step E2 individual-confirmation amendment"):
   units                   offline: the 36 E2 units and the 17 declared comparisons
@@ -27,14 +28,14 @@ Commands (see the metal playbook, "v3 step E2 individual-confirmation amendment"
   session / status / launch UNIT@LANE ... [--fit-seconds S] [--no-wait] / wait [UNIT ...] [--any] /
   pull [--lanes K ...] / recover-lane K / archive-failed UNIT / evidence [--allow-running]
                           as for steps C-E, with E2's own launch folder (step_e2/launch on the VM) and evidence
-                          folder (step_e2_evidence on Data1)
+                          folder (step_e2_evidence under DeepMzyme_Data/)
 
 Every launch is refused before anything starts unless: the CPU readiness report and the VM extension record agree
 with this worktree (as for steps D and E); the manifest verifies (every bound file keeps its hash, the E2 tooling
 is unchanged, the VM extension record is the bound one); the recorded authorization names this manifest and this
 ceiling record; and the estimated campaign charges, with the running session counted to its hard stop, plus the
 recorded reserve stay within the recorded ceiling. The E2 assessment runs on the workstation from the verified
-Data1 copies (pmm_v3_e2_assessment.py), after 'evidence'.
+local copies (pmm_v3_e2_assessment.py), after 'evidence'.
 """
 
 from __future__ import annotations

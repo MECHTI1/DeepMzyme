@@ -1,10 +1,10 @@
 # PROGRESS — docs consolidation 2026-09
 
 Read this first after a context compaction or in a new session. Never redo finished steps.
-Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-plan-v2.md`.
+Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `<agent-session-dir>/plans/docs-consolidation-plan-v2.md`.
 
 ## User decisions received (2026-09-28)
-- Worktree on `/media/mechti/Data1/DeepMzyme_worktrees/docs`; verify clean after checkout.
+- Worktree on `<secondary-drive>/DeepMzyme_worktrees/docs`; verify clean after checkout.
 - Doc freeze confirmed: Codex idle with no active threads, covering Job A **and** Job B
   while the campaign is paused.
 - Ledger: record all six 2026-09-18 non-overlap test reports.
@@ -61,9 +61,9 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
 |---|---|
 | Job | B |
 | Phase | Job B verified on the workstation (2026-09-29): fresh-agent run 2 accepted by the user; checker, hashes, invariants, smoke and pytest checked against the baseline ([record](verification/job_b_workstation.md)); commit, fast-forward merge and push await the user's approval |
-| Cloud branch | `claude/happy-ritchie-99xmhd` (backup pushes only, `29e7460` through `6808084`; nothing merged into `metal-pmm-ion-campaign`) |
+| Cloud branch | `<cloud-review-branch>` (backup pushes only, `29e7460` through `6808084`; nothing merged into `metal-pmm-ion-campaign`) |
 | Branch / base | `docs-consolidation` fast-forwarded to `6808084` on the workstation; `metal-pmm-ion-campaign` still @ `3c0f80c6033a332b65e91302eea16c81add13e1d` |
-| Worktree | `/media/mechti/Data1/DeepMzyme_worktrees/docs` (clean after the fast-forward; the older staged draft was saved outside the repository before it was dropped) |
+| Worktree | `<secondary-drive>/DeepMzyme_worktrees/docs` (clean after the fast-forward; the older staged draft was saved outside the repository before it was dropped) |
 
 ## Done (Phase 0)
 1. Pre-flight on the shared checkout (read-only): status empty; HEAD = origin = `3e912a6`;
@@ -153,9 +153,9 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
 
 ## Job B cloud continuation (2026-09-28)
 
-- Environment: Claude Code cloud container, fresh clone. No workstation, shared
+- Environment: cloud agent container, fresh clone. No workstation, shared
   checkout, frozen checkout, controller or VM access; workstation paths above are
-  historical context. Branch `claude/happy-ritchie-99xmhd` at `3c0f80c`.
+  historical context. Branch `<cloud-review-branch>` at `3c0f80c`.
 - The user's staged Job B patch (31 files, SHA-256 `f8ac2f27…`) passed
   `git apply --check` and was applied to the index and worktree.
 - Independently reproduced: byte-identical rebuild of all four STATUS
@@ -166,7 +166,7 @@ Plan: [`PLAN_v2.md`](PLAN_v2.md), a copy of `~/.claude/plans/docs-consolidation-
   commit/push suggestions in final responses, and repair two relocated
   navigation lines.
 - Backup `29e7460` (patch + cloud corrections, before the approved edits) was
-  pushed to `claude/happy-ritchie-99xmhd` at the user's request.
+  pushed to `<cloud-review-branch>` at the user's request.
 - `e261680` applied the user's step-2 answers only partly; the user's review
   found remaining target wording and an inaccurate Stage 6B claim. After the
   review fixes, the active docs no longer call a training objective primary,

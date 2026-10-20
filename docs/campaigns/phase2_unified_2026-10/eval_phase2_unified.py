@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import gc
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -12,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-ROOT = Path("/home/mechti/PycharmProjects/DeepMzyme")
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
 
@@ -20,19 +21,22 @@ import pmm_v3_test_prep as prep  # noqa: E402
 import pmm_v3_step_f_report as rep  # noqa: E402
 import run_pmm_v3_step_f as step_f  # noqa: E402
 
-DATA1_CAMPAIGN = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3")
-NVME_V3_BACKUP = Path("/home/mechti/deepmzyme_backups/pmm_ion_metal_v3_closeout_20261013T023038Z/campaigns/pmm_ion_metal_v3")
-NVME_TLR_BACKUP = Path("/home/mechti/deepmzyme_backups/deepmzyme_closeout_ec_readiness_20261013T190136Z/initial")
-NVME_PHASE2_BACKUP = Path("/home/mechti/deepmzyme_backups/phase2_unified_and_180ckpt_eval_20261019T0317Z")
+DATA_ROOT = Path(os.environ.get("DEEPMZYME_DATA_ROOT", str(ROOT / "DeepMzyme_Data")))
+BACKUP_ROOT = Path(os.environ.get("DEEPMZYME_BACKUP_ROOT", str(Path.home() / "deepmzyme_backups")))
+DATA1_CAMPAIGN = DATA_ROOT / "campaigns" / "pmm_ion_metal_v3"
+NVME_V3_BACKUP = BACKUP_ROOT / "pmm_ion_metal_v3_closeout_20261013T023038Z" / "campaigns" / "pmm_ion_metal_v3"
+NVME_TLR_BACKUP = BACKUP_ROOT / "deepmzyme_closeout_ec_readiness_20261013T190136Z" / "initial"
+NVME_PHASE2_BACKUP = BACKUP_ROOT / "phase2_unified_and_180ckpt_eval_20261019T0317Z"
 
 CAMPAIGN_DIR = DATA1_CAMPAIGN if DATA1_CAMPAIGN.exists() else NVME_V3_BACKUP
 PREPARED_DIR = CAMPAIGN_DIR / "step_f_test/prepared_20261012T204640Z"
 SOURCE_CSV = ROOT / "prepare_training_and_test_set/pinmymetal_files/classmodel_test_set"
 
-BRAIN_OUT_DIR = Path("/home/mechti/.gemini/antigravity-acp/brain/b7335608-914a-409e-8e2d-7207fe2d6e18/scratch/phase1_results")
-OUT_DIR = BRAIN_OUT_DIR if BRAIN_OUT_DIR.exists() else (NVME_PHASE2_BACKUP / "evaluation")
+# OUT_DIR holds test_checkpoint_probs.npz; recomputing a missing fold also needs test_pockets_and_graphs.pt
+# and writes the npz here.
+OUT_DIR = Path(os.environ.get("PHASE2_EVAL_CACHE_DIR", str(NVME_PHASE2_BACKUP / "evaluation")))
 
-DATA1_UNIFIED = Path("/media/mechti/Data1/DeepMzyme_Data/campaigns/phase2_unified_2026-10/runs")
+DATA1_UNIFIED = DATA_ROOT / "campaigns" / "phase2_unified_2026-10" / "runs"
 UNIFIED_DIR = DATA1_UNIFIED if DATA1_UNIFIED.exists() else (NVME_PHASE2_BACKUP / "runs")
 REPO_SUMMARY_JSON = ROOT / "docs/campaigns/phase2_unified_2026-10/phase2_unified_summary.json"
 

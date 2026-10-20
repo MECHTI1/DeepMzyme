@@ -164,6 +164,27 @@ their CARE/CLEAN `HEADER` and `COMPND` provenance text differs. See
 [`STRUCTURE_STORE.md`](STRUCTURE_STORE.md) for the full audit, manifest schema,
 pairwise interpretation, and verification command.
 
+Placeholders and environment variables that stand in for local paths and private names in these docs:
+
+| Placeholder or variable | Meaning |
+|---|---|
+| `<repo-root>` | Root of a local clone of this repository. |
+| `<secondary-drive>`, `SECONDARY_DRIVE` | Mount point of the secondary data drive that holds the large datasets, local bundle archives and `DeepMzyme_Data/campaigns/` evidence; `DeepMzyme_Data/` links into it. Historical records call this drive `Data1`. |
+| `DEEPMZYME_DATA_ROOT` | The `DeepMzyme_Data/` directory a runner should use, for example `<secondary-drive>/DeepMzyme_Data`. |
+| `DEEPMZYME_PYTHON` | Project interpreter for shell examples; when it is unset they use `.venv/bin/python` (or `uv run --frozen --no-sync python`). |
+| `HOST_DURABLE_ROOT` | Host directory that receives durable copies of remote GPU runs (`--durable-root`), normally under `<secondary-drive>/DeepMzyme_Data/campaigns/`. |
+| `<python>` | The project interpreter, as written in historical command records. |
+| `DEEPGM_MEDIA_DATA_ROOT` | Overrides the `/media/Data` default that the code uses for raw PinMyMetal source sets (`src/project_paths.py`). |
+| `<local-backup-root>` | The maintainer's local backup directory on the workstation (not published). |
+| `<agent-session-dir>` | A local AI-agent session directory holding transcripts and scratch files (not published). |
+| `<cloud-review-branch>` | A temporary remote branch used by a cloud agent session during the 2026-09 documentation consolidation; it is no longer on the remote. |
+| `<paused-snapshot>`, `<v3-final-snapshot>` | Names of the GPU-VM disk snapshots made when the VM was retired on 2026-10-03 and at the 2026-10-13 v3 closeout. |
+| `<recovery-disk-…>`, `<fallback-snapshot-…>` | Names of disks and snapshots created by a VM-recovery pass; the suffix is the pass id. |
+| `<resource-id>` | A numeric GCP resource id (instance, disk or snapshot) in historical cloud records. |
+
+Cloud GPU VM placeholders (VM, project, VM-controller and SSH-host names) are defined in
+[`GCP_GPU_RUNBOOK.md`](GCP_GPU_RUNBOOK.md).
+
 ## PinMyMetal
 
 ### Original membership
@@ -234,7 +255,7 @@ Tracked generated metadata:
 ### Exact Zenodo PinMyMetal (`train_and_test_sets_structures_zenodo_pmm_exact`)
 
 Path:
-`DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact` (pointing to `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset`)
+`DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact` (a symlink to `<secondary-drive>/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset`)
 
 Purpose:
 Reconstruct the published PinMyMetal source rows (`classmodel_train_set` and `classmodel_test_set`) from Zenodo/GitHub without catalytic or EC filtering. Historical reconstruction coverage is 99.89%; the audited comparison cohort below additionally excludes unsupported ions and explicit missing protein symmetry context. Row coverage alone does not certify input or paper-result parity.
@@ -275,7 +296,7 @@ Key Technical Details:
 - **Primary Site Resolution:** Uses PinMyMetal's compiled `neighborhood` binary (`PinMyMetal_V1.0_zenodo.zip`) to deterministically resolve `residueid_ion` to physical coordinate records `(chain, resseq, resname, atomid)` directly against source PDBs.
 - **Large PDB Solvent Stripping:** 298 large complexes that previously produced `SIGSEGV` in legacy tools were 100% recovered by stripping `HOH` solvent atoms prior to neighborhood execution.
 - **DeepMzyme Input Layout:** Each coordinate file is formatted as `{pdbid}__chain_{chain}__EC_0.0.0.0.pdb`; chain-named hard links share each full-entry file's inode and contents. The layout includes `structure_manifest.csv` and `final_data_summarazing_table.csv`. Here `whether_catalytic=1` and `ecnumber=0.0.0.0` are compatibility placeholders, not biological annotations.
-- **Storage Protection:** Stored on `/media/mechti/Data1` with symlink integration in `DeepMzyme_Data/`, avoiding host root partition space constraints.
+- **Storage Protection:** Stored on a secondary drive (`<secondary-drive>`) with symlink integration in `DeepMzyme_Data/`, avoiding host root partition space constraints.
 - **Hugging Face Distribution:** Hosted on [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) as `train_and_test_sets_structures_zenodo_pmm_exact.tar.gz` (1.1 GB, SHA-256: `24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296`).
 - **Reproducibility Playbook:** See [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) for step-by-step instructions.
 - **Closed PMM core v2 runner (historical; campaign closed 2026-10-03):** The guarded `run_pmm_core_campaign.py` entry point and the [active core recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation). The separate `run_pmm_five_class_screen.py` adds the user-requested five-class fold-0 screen on the same certified cohort. Its native Co+Ni class remains distinct from common-four Fe+Co+Ni. The ordinary-readout selectors preserve the frozen campaign's cohort, profile and source identity; further binding-aware fits are paused. The underlying `scripts/run_metal_5fold_cv.py` assessment/refit actions still require the historical nine-configuration grid and are not the core completion route. The historical Zenodo wrappers do not implement this campaign's target, fold, selection and refit safeguards; their paper-number comparisons and fold ensembles are not the approved execution route.
@@ -569,7 +590,7 @@ evaluation or a claim that no test metadata has ever been viewed.
 **2026-10-13 incidental CARE test metadata access:** during the read-only
 training-source mapping for the EC7/EC6/EC5 inventory (campaign
 `ec1_independent_support_2026-10`, log ec1s-002), one agent printed the header
-and first data row of `/media/mechti/Data1/care_sets/task1_30/uniprot/uniprot_annotation_cache.csv`.
+and first data row of `<secondary-drive>/care_sets/task1_30/uniprot/uniprot_annotation_cache.csv`.
 That row is a test-split record: one accession, its status and the start of its
 cofactor text (truncated at 300 bytes). A log grep in the same work root printed
 combined train-plus-test fetch totals, which imply the test-split size. Nothing
@@ -606,7 +627,7 @@ exact Zenodo test, not an evaluation; any later use of that test must disclose i
 read-only v3 schedule/error review
 ([log v3-032](campaigns/pmm_ion_metal_v3/log.md#v3-032)), one analysis agent ran two
 recursive `grep -rl` searches (13:32:31 and 13:32:38–13:34:41 UTC; the second
-stopped after about two minutes) over `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`
+stopped after about two minutes) over `<secondary-drive>/DeepMzyme_PMM_Zenodo_Exact_Dataset/`
 for two site-resolution method names, filtering out `/test` paths. They read file
 bytes under `dataset/test/`, `dataset/site_crosswalk.csv` and the combined tarball.
 No match, test content, label, prediction or count was displayed (only the names
@@ -864,10 +885,10 @@ contain every referenced `DeepMzyme_Data/structure_store/objects/...` file;
 train/test roots. A direct `tar` assembly that includes manifest-backed shared
 CLEAN roots must include `DeepMzyme_Data/structure_store/` explicitly.
 
-Assembly command preserved from the previous README:
+Assembly command preserved from the previous README (only the output directory is generalized):
 
 ```bash
-tar --zstd -cf /media/Data/deepmzyme_colab_bundles/DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst \
+tar --zstd -cf "${SECONDARY_DRIVE:?}/deepmzyme_colab_bundles/DeepMzyme_Data_v10_exact_common70_clean30main_clean30x5_care30_esm_ring_external.tar.zst" \
   DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal \
   DeepMzyme_Data/train_and_test_sets_structures_common_pdbid_70_30_pinmymetal \
   DeepMzyme_Data/CLEAN_30_main \

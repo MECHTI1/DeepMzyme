@@ -6,8 +6,8 @@ evidence lives. It grants no further execution authority.
 
 ## Verified reusable material
 
-Local preparation root: Data1 `campaigns/metal_completion_2026-10/preparation_20261014T164111Z/` under
-`/media/mechti/Data1/DeepMzyme_Data/`. `code/` holds the verified v3 source plus the reviewed completion modules;
+Local preparation root: `campaigns/metal_completion_2026-10/preparation_20261014T164111Z/` on the secondary drive, under
+`<secondary-drive>/DeepMzyme_Data/`. `code/` holds the verified v3 source plus the reviewed completion modules;
 `parent/` holds hash-identical frozen campaign inputs, folds, weights and execution settings. The first package
 `preparation_20261014/` is superseded history ([log](log.md)); nothing in it was deleted or rewritten. `src/` and
 `scripts/` retain source SHA-256 `212db0e3865968701475e7172b2e4cad772e492b35855da293238437fd97c15c`.
@@ -82,7 +82,7 @@ support no improvement claim and no five-versus-six claim, and by themselves no 
 
 **Designated Stage 7 source:** the v3 full non-test refit `terminal_model_checkpoint.pt`, SHA-256
 `a00078466cf60c93287315883dd0e5565ce3e9e5c6c5c4654d2d5da357e59593`, run
-`stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42` (Data1 `campaigns/pmm_ion_metal_v3/durable/lane0/runs/`;
+`stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42` (secondary drive, `DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable/lane0/runs/`;
 the NVMe copy is identical). Authority: the user's 2026-10-16 instruction to reuse a compatible refit rather than
 retrain for a campaign name, and the specification's pre-registered `future_refit.baseline_retained` rule. No GPU,
 training or test-side read was used. Single model; no ensemble or calibration.

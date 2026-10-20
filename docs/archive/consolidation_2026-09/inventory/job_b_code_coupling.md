@@ -12,7 +12,7 @@ Base: `3c0f80c`; command per tracked Markdown basename: `rg --no-ignore -n -F BA
 
 ```text
 .agents/skills/gpu-use-skill/SKILL.md:15:1. Read the latest user request, root `AGENTS.md`,
-.agents/skills/gpu-use-skill/SKILL.md:41:  `~/deepmzyme-vm/AGENTS.md` and current `config.env`. All lifecycle actions go
+.agents/skills/gpu-use-skill/SKILL.md:41:  `<vm-controller>/AGENTS.md` and current `config.env`. All lifecycle actions go
 .agents/skills/gpu-use-skill/SKILL.md:179:  If accepted work exceeds its ceiling, follow root `AGENTS.md`'s budget rule;
 ```
 
@@ -518,13 +518,13 @@ tests/smoke_checks.py:2908:        raise AssertionError("bench/README.md is miss
 ## docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/initial_v2_1/screen_agreement_v2_1.md
 
 ```text
-/media/mechti/Data1/DeepMzyme_worktrees/docs/audit_pmm_screen_agreement.py:409:    (output / "screen_agreement_v2_1.md").write_text("\n".join(lines) + "\n")
+<secondary-drive>/DeepMzyme_worktrees/docs/audit_pmm_screen_agreement.py:409:    (output / "screen_agreement_v2_1.md").write_text("\n".join(lines) + "\n")
 ```
 
 ## docs/notebook_outputs/raw/pmm_replay_diagnostic_20260928/screen_agreement_v2_1.md
 
 ```text
-/media/mechti/Data1/DeepMzyme_worktrees/docs/audit_pmm_screen_agreement.py:409:    (output / "screen_agreement_v2_1.md").write_text("\n".join(lines) + "\n")
+<secondary-drive>/DeepMzyme_worktrees/docs/audit_pmm_screen_agreement.py:409:    (output / "screen_agreement_v2_1.md").write_text("\n".join(lines) + "\n")
 ```
 
 ## docs/notebook_outputs/raw/remote_homology_v1_20260917/README.md

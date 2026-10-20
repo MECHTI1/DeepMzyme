@@ -2,8 +2,13 @@
 # Shared settings for the CLEAN split30/fold0 preparation scripts.
 set -euo pipefail
 
-export PROJECT_ROOT="${PROJECT_ROOT:-/home/mechti/PycharmProjects/DeepMzyme}"
-export PYTHON_BIN="${PYTHON_BIN:-/home/mechti/miniconda3/envs/DeepMzyme/bin/python}"
+export PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Default interpreter: the repo .venv (uv lock, CPU-only torch) if present, else python3.
+# Export PYTHON_BIN to use another environment, e.g. a GPU env for the ESM C steps.
+if [ -z "${PYTHON_BIN:-}" ]; then
+    if [ -x "$PROJECT_ROOT/.venv/bin/python" ]; then PYTHON_BIN="$PROJECT_ROOT/.venv/bin/python"; else PYTHON_BIN="python3"; fi
+fi
+export PYTHON_BIN
 export CLEAN_IDENTITY="${CLEAN_IDENTITY:-30}"
 export CLEAN_FOLD="${CLEAN_FOLD:-0}"
 export WORK_ROOT="${WORK_ROOT:-/media/Data/clean_sets/split30/fold0}"

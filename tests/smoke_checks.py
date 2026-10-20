@@ -2317,16 +2317,11 @@ def check_ring_environment_overrides() -> None:
     from embed_helpers.Interaction_edge import DEFAULT_RING_EXE, create_ring_edges_batch
     from training.runtime_preparation import prepare_runtime_inputs
 
-    personal_ring_path = str(Path("/home") / "mechti" / "ring-4.0" / "out" / "bin" / "ring")
     if DEFAULT_RING_EXE.is_absolute():
         raise AssertionError(f"RING default fallback should be repo-relative, got: {DEFAULT_RING_EXE}")
     expected_default = Path("DeepMzyme_Data") / "ring-4.0" / "out" / "bin" / "ring"
     if DEFAULT_RING_EXE != expected_default:
         raise AssertionError(f"Unexpected RING default fallback: {DEFAULT_RING_EXE}")
-    if str(DEFAULT_RING_EXE) == personal_ring_path:
-        raise AssertionError(f"RING default fallback still uses a personal path: {DEFAULT_RING_EXE}")
-    if personal_ring_path in str(DEFAULT_RING_EXE):
-        raise AssertionError(f"RING default fallback unexpectedly contains a personal path: {DEFAULT_RING_EXE}")
 
     old_ring_features_dir = os.environ.get("RING_FEATURES_DIR")
     old_ring_exe_path = os.environ.get("RING_EXE_PATH")

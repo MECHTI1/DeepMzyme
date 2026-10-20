@@ -5,8 +5,8 @@ It binds the user's approval to the frozen manifest and permitted units, refresh
 gross-spending snapshots the worker requires, deploys the sealed package to the GPU host at the identical absolute
 paths, launches one unit per lane through the exit-file wrapper, pulls and acknowledges each lane's artifacts, places
 them where the collector reads, and builds the collect run map. It never starts, stops or extends the VM: the
-controller (~/deepmzyme-vm/bin) owns billing, and ``run_metal_completion.py`` on the host refuses every unit whose
-authorization, session or spending snapshot is missing, stale or outside the recorded ceilings.
+external VM controller ($DEEPMZYME_VM_CONTROLLER/bin) owns billing, and ``run_metal_completion.py`` on the host refuses
+every unit whose authorization, session or spending snapshot is missing, stale or outside the recorded ceilings.
 """
 
 from __future__ import annotations
@@ -21,11 +21,13 @@ from project_paths import RELOCATED_FILES, install_relocated_module_aliases, res
 install_relocated_module_aliases()
 import argparse
 import datetime as dt
+import getpass
 import hashlib
 import json
 import os
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -41,14 +43,15 @@ CAMPAIGN_ID = "metal_completion_2026-10"
 DEFAULT_PREP = ROOT / "DeepMzyme_Data" / "campaigns" / "metal_completion_2026-10" / "preparation_20261014T164111Z"
 TRAIN_DIR = ROOT / "DeepMzyme_Data" / "DeepMzyme_PMM_Zenodo_Exact_Dataset" / "dataset" / "train"
 ESM_DIR = ROOT / "DeepMzyme_Data" / "campaigns" / "pmm_ion_metal_v2_context" / "inputs" / "esm_embeddings_esmc600m_v1"
-CONTROLLER = Path.home() / "deepmzyme-vm"
-HOST = "deepmzyme-vm"
+CONTROLLER = host_pull.CONTROLLER  # DEEPMZYME_VM_CONTROLLER overrides the default
+HOST = host_pull.SSH_HOST  # DEEPMZYME_SSH_HOST overrides the default
 REMOTE_HOME = os.environ.get("DEEPMZYME_REMOTE_HOME", str(Path.home()))
 REMOTE_PY = f"{REMOTE_HOME}/venvs/deepmzyme/bin/python"
 # Where the restored VM disk already holds the frozen inputs (v3 campaign layout); bind-mounted onto the local paths.
 REMOTE_TRAIN_SOURCE = f"{REMOTE_HOME}/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train"
 REMOTE_ESM_SOURCE = f"{REMOTE_HOME}/deepmzyme_runs/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1"
-GCLOUD = "/snap/bin/gcloud"
+# A gcloud missing from PATH raises FileNotFoundError at the first snapshot (fails closed, before any deploy).
+GCLOUD = os.environ.get("DEEPMZYME_GCLOUD") or shutil.which("gcloud") or "gcloud"
 FIT_SECONDS = 2400.0  # one 50-epoch late-fusion fit with three lanes and warm caches (v3 step C forecast)
 LAUNCH_MARGIN_SECONDS = 300.0  # the worker re-verifies the package (minutes) before its own admission check
 SNAPSHOT_MAX_AGE = 900.0
@@ -319,11 +322,11 @@ def local_admission(prep: Prep, phase: str, unit: str, *, now: float | None = No
 
 def check_ssh_config(controller: Path = CONTROLLER) -> Path:
     path = controller / "state" / "ssh_config"
-    require(path.is_file(), f"{path} is missing; run ~/deepmzyme-vm/bin/vm-setup --stages ssh")
+    require(path.is_file(), f"{path} is missing; run the VM controller's bin/vm-setup --stages ssh")
     instance = read_config(controller).get("SELECTED_INSTANCE_ID", "")
     aliases = [line.split()[1] for line in path.read_text().splitlines() if line.strip().startswith("HostKeyAlias")]
     require(bool(instance) and aliases and all(alias.endswith("-" + instance) for alias in aliases),
-            "ssh_config names another instance; run ~/deepmzyme-vm/bin/vm-setup --stages ssh first")
+            "ssh_config names another instance; run the VM controller's bin/vm-setup --stages ssh first")
     return path
 
 
@@ -358,7 +361,7 @@ def deploy_script(prep: Prep) -> str:
     q = shlex.quote
     lines = ["set -eu",
              f"sudo mkdir -p {q(str(prep.root))} {q(str(TRAIN_DIR))} {q(str(ESM_DIR))}",
-             f"sudo chown -R mechti:mechti {q(str(prep.root.parent))} {q(str(TRAIN_DIR.parent.parent))} "
+             f"sudo chown -R \"$(id -un):$(id -gn)\" {q(str(prep.root.parent))} {q(str(TRAIN_DIR.parent.parent))} "
              f"{q(str(ESM_DIR.parent.parent.parent))}",
              f"mkdir -p {q(str(prep.code))} {q(str(prep.parent))} {q(str(prep.execution))}"]
     for source, target in ((REMOTE_TRAIN_SOURCE, str(TRAIN_DIR)), (REMOTE_ESM_SOURCE, str(ESM_DIR))):
@@ -775,7 +778,9 @@ def main(argv=None) -> int:
     approve.add_argument("--estimated-fit-seconds", type=float, default=FIT_SECONDS)
     approve.add_argument("--reserve-usd", type=float, default=0.5)
     approve.add_argument("--expires-days", type=float, default=7.0)
-    approve.add_argument("--controller-owner", default="mechti@mechti-pc")
+    approve.add_argument("--controller-owner",
+                         default=os.environ.get("DEEPMZYME_CONTROLLER_OWNER")
+                         or f"{getpass.getuser()}@{socket.gethostname()}")
     approve.add_argument("--superseded", nargs="*", default=[])
     approve.add_argument("--approval-utc", required=True, help="ISO-8601 time of the user's decision")
     approve.add_argument("--storage-usd-per-day", type=float, default=1.0)

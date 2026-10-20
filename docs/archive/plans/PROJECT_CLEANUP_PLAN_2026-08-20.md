@@ -82,7 +82,7 @@ The approved architecture remains, with these binding changes:
 | `experiment_notes.md` | Early LR/epoch diary | `EVIDENCE` | Looks active; contains unique test-access history | Yes: exact early validation/test results | Move intact to historical archive |
 | `list_train_commands.md` | Direct CLI cookbook | `MIXED / NEEDS SPLITTING` | Competes with notebook playbooks | Yes: exact historical CLI recipes | Archive intact |
 | `AGENTS.md` | Agent behavior plus copied project facts | `AUTHORITATIVE` | Some mutable facts are duplicated | Yes: extensive operational and safety instructions | Preserve conservatively; remove only proven duplication |
-| `CLAUDE.md` | Compatibility pointer | `REDUNDANT` | Broken line wrapping | No scientific content | One-line compatibility shim |
+| Agent pointer file | Compatibility pointer | `REDUNDANT` | Broken line wrapping | No scientific content | One-line compatibility shim |
 | `docs/README.md` | Documentation index plus copied policy/defaults | `MIXED / NEEDS SPLITTING` | Repeats mutable facts | Yes: ownership/navigation map | Sole detailed documentation index |
 | Metal configuration guide | Option semantics plus stages, values, budgets, policy | `MIXED / NEEDS SPLITTING` | Heavy playbook/notebook duplication | Yes: non-obvious stable semantics | Shorter semantics reference; no behavior changes |
 | Metal playbook | Exact metal execution recipes | `AUTHORITATIVE` | Dataset/final-reporting conflict | Yes: exact blocks, ranges, seeds, outputs, gates | Preserve recipes; add documentary conflict warning only |
@@ -149,7 +149,7 @@ No `.ipynb`, `.py`, executable configuration behavior, selection logic, Stage 6B
 | Shorten `Plan.md` | All normative scientific, validation, leakage, refit, and reporting policy | Remain in Plan; descriptive inventories link elsewhere | Policy-heading and sentinel comparison |
 | Rewrite status | Current anchors, challengers, evidence grades, readiness, blockers, next actions | Current facts remain; histories/findings/datasets move to owners | Verify every current fact has a destination |
 | Conservatively deduplicate `AGENTS.md` | Every operational, behavioral, safety, testing, routing, and response instruction | Remain in AGENTS | Semantic checklist; when uncertain, retain text |
-| Fix `CLAUDE.md` | Compatibility pointer | Same file | Pointer resolves |
+| Fix the agent pointer file | Compatibility pointer | Same file | Pointer resolves |
 | Simplify docs index | Ownership/navigation | Same file | Every authority reachable exactly once |
 | Shorten metal guide cautiously | Stable option semantics and precedence | Same file; exact recipes stay in playbook | Compare each removed passage with destination |
 | Annotate metal playbook | Existing exact recipes | Same file, unchanged blocks | Hash or structured diff of configuration blocks |
@@ -355,7 +355,7 @@ README.md
 EXPERIMENT_STATUS.md
 Plan.md
 AGENTS.md
-CLAUDE.md
+(one-line agent pointer file)
 
 docs/
 ├── README.md

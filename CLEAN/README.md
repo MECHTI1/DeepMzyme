@@ -69,7 +69,7 @@ notebook defaults `CLEAN_METALLO_SOURCE` to
 Rebuild it locally with:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python CLEAN_prepare_training_and_test_set/build_clean_predictor_bundle.py \
+uv run --frozen --no-sync python CLEAN_prepare_training_and_test_set/build_clean_predictor_bundle.py \
   --output-bundle /media/Data/clean_predictor_bundles/CLEAN_predictor_baselines_v2_clean30x5_single_donor_supported_metal_conservative_care30_sources.tar.zst
 ```
 

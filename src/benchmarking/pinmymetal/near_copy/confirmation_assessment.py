@@ -5,7 +5,7 @@ Rules: docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md and .json (frozen 2
 pins the JSON hash and refuses another). The A4 specification, the A4 assessor and the original step E assessment
 are unchanged and only read.
 
-Data path: the assessment reads the host-pulled copies on Data1, never the VM. From the newest evidence copy (the
+Data path: the assessment reads the local host-pulled copies, never the VM. From the newest evidence copy (the
 VM's campaign files and lane status records at that time) it builds a temporary read-only view of the campaign
 root whose lanes point at the durable lane copies; every unit it uses must match an acknowledged host-pull
 receipt file by file (SHA-256 and size), and the frozen artifact checks of pmm_v3_assessment.load_unit (recorded
@@ -123,7 +123,7 @@ def interpretation(path: Path = e2.E2_SPEC_MD) -> str:
 
 
 # ---------------------------------------------------------------------------
-# The verified read-only view of the Data1 copies
+# The verified read-only view of the local data copies
 # ---------------------------------------------------------------------------
 
 def newest_evidence(evidence_root: Path) -> Path:

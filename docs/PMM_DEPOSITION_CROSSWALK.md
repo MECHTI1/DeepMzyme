@@ -7,7 +7,7 @@ matches among nine sampled rows. The subsequent
 [complete feature audit](PMM_FULL_FEATURE_CROSSWALK.md) found 6,791 unique
 matches among all 9,408 rows; neither result changes the coordinate-only
 counts below. The versioned output at
-`/home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/pmm_deposition_crosswalk_v3/`
+`<repo-root>/../DeepMzyme_pmm_source_audit_output/pmm_deposition_crosswalk_v3/`
 contains audit records, **not training examples**. It does not populate a
 DeepMzyme dataset, and neither PMM side has been evaluated here.
 

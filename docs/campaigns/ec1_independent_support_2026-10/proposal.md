@@ -1,7 +1,7 @@
 # Stronger EC evidence: route proposal
 
-Campaign [README](README.md); evidence in [log ec1s-001](log.md#ec1s-001). The generated copy is Data1
-`campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/next_scientific_decision.md` (SHA-256 `47d9e065…`,
+Campaign [README](README.md); evidence in [log ec1s-001](log.md#ec1s-001). The generated copy is on the secondary drive at
+`DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/report_20261013T191929Z/next_scientific_decision.md` (SHA-256 `47d9e065…`,
 bound by `artifact_manifest.json` `6674d052…`). This page has the same substance with repository links.
 
 Evidence boundary: counts from the saved EC1 development membership and the recorded CARE training-side build tables.
@@ -88,8 +88,8 @@ unscoped.
 
 ## Route 1 inventory result (ec1s-002)
 
-The Route 1 inventory ran on the permitted training sources ([log ec1s-002](log.md#ec1s-002); output Data1
-`campaigns/ec1_independent_support_2026-10/inventory_20261013T211519Z/`, `recommendation.md`).
+The Route 1 inventory ran on the permitted training sources ([log ec1s-002](log.md#ec1s-002); output on the secondary drive at
+`DeepMzyme_Data/campaigns/ec1_independent_support_2026-10/inventory_20261013T211519Z/`, `recommendation.md`).
 
 **Already usable:** nothing beyond the current membership.
 - No EC5, EC6 or EC7 protein outside the development membership has documented eligibility in any source.

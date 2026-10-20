@@ -78,19 +78,23 @@ compared exactly on the saved decimals; identities, labels, predicted classes an
 confusion matrices exact; balanced-accuracy reconciliation within 1e-9), recorded
 in the manifest and in each replay receipt ([log v3-009](campaigns/pmm_ion_metal_v3/log.md#v3-009)).
 
+In the v3 commands below, `<vm-controller>` (shell: `$DEEPMZYME_VM_CONTROLLER`, the private VM-controller
+checkout) and the other environment variables stand for maintainer-specific roots; give any path bound in a
+sealed manifest or recorded as `--durable-root` exactly as recorded.
+
 VM side (paths of the restored disk; the workstation launchers below build these
 commands for steps B and C, so they are shown for reference and for steps D–E):
 
 ```bash
-PY=/home/mechti/venvs/deepmzyme/bin/python
-V3=/home/mechti/deepmzyme_runs/pmm_ion_metal_v3
-V2=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
-TRAIN=/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
+PY=$HOME/venvs/deepmzyme/bin/python
+V3=$HOME/deepmzyme_runs/pmm_ion_metal_v3
+V2=$HOME/deepmzyme_runs/pmm_ion_metal_v2_context
+TRAIN=$HOME/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
 ESM=$V2/inputs/esm_embeddings_esmc600m_v1
-FOLDS=/home/mechti/deepmzyme_runs/pmm_ion_metal_v3_folds/v3-seqid90-s42-b2
+FOLDS=$HOME/deepmzyme_runs/pmm_ion_metal_v3_folds/v3-seqid90-s42-b2
 # The workstation's host-pull destination, passed verbatim to the VM runner (no symlinks):
-DURABLE=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable
-# SESSION_ID / ALLOCATION_STARTED / DEADLINE / SESSION_SECONDS: ~/deepmzyme-vm/state/current_session.json
+DURABLE="${HOST_DURABLE_ROOT:?workstation host-pull destination, exactly as recorded}"
+# SESSION_ID / ALLOCATION_STARTED / DEADLINE / SESSION_SECONDS: $DEEPMZYME_VM_CONTROLLER/state/current_session.json
 # (session_id, session_start, termination_ts as unix seconds, max_run_duration_s); `pmm_v3_step_b.py session`
 # prints them. FIT_SECONDS is the full-unit forecast; admission needs 1.25 x FIT + 900 s before the hard stop.
 ALLOC="--session-id $SESSION_ID --allocation-started $ALLOCATION_STARTED \
@@ -120,7 +124,7 @@ when persistence failed.
 Step B order. Probes, their AMP setting, epochs (short probes 10, full runs 50),
 lanes and batches are fixed in `pmm_v3_probes.py`; the runner refuses any other
 combination before admission, and an archived batch member is never relaunched.
-Workstation commands (`P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python`, run
+Workstation commands (`P="${DEEPMZYME_PYTHON:?verified project interpreter}"`, run
 from the v3 worktree; `pmm_v3_step_b.py` and `pmm_v3_host_pull.py` use the
 standard library only, the bundle build needs the conda environment):
 
@@ -128,8 +132,9 @@ standard library only, the bundle build needs the conda environment):
    A3_REPORT` (committed code, v3 runtime files, frozen A4 specification and fold
    set; held-out paths refused; refused unless the A3 report accepted exactly the
    bundled source tree).
-2. GPU session (user-typed authorization): `~/deepmzyme-vm/bin/vm-restore --name
-   deepmzyme-paused-20261003 --authorize ...`, then `vm-setup --stages ssh,smoke`
+2. GPU session (user-typed authorization):
+   `<vm-controller>/bin/vm-restore --name <paused-snapshot> --authorize ...` (the retained
+   paused snapshot; list it with the controller), then `vm-setup --stages ssh,smoke`
    (rewrites the SSH host-key alias for the new instance; the launcher refuses a
    stale one). Then `$P pmm_v3_step_b.py session`, `verify-inputs`,
    `push-bundle --bundle-dir BUNDLE` (re-verifies every hash on the VM),
@@ -160,7 +165,7 @@ standard library only, the bundle build needs the conda environment):
 5. End of every GPU session: `$P pmm_v3_step_b.py sampler-stop`, `evidence`
    (manifest, settings, claims, `step_b/`, lane states, events, statuses,
    acknowledgments and archive receipts, checked by SHA-256 on both ends), then
-   `~/deepmzyme-vm/bin/vm-stop` and `vm-status` (TERMINATED).
+   `<vm-controller>/bin/vm-stop` and `vm-status` (TERMINATED).
 
 Gates (exact definitions in `pmm_v3_speed_report.py`): a batch attempt is valid if
 every member completed in its own lane, admissions lie within 10% of the shortest
@@ -187,7 +192,7 @@ worktree; standard library only). The tool reuses the step-B launcher's session,
 SSH, lane-readiness, host-pull and evidence helpers. It never starts or stops a VM.
 
 1. GPU session (user-typed authorization). The restored VM exists, so start it
-   with `~/deepmzyme-vm/bin/vm-start --confirm`, then run `vm-setup --stages
+   with `<vm-controller>/bin/vm-start --confirm`, then run `vm-setup --stages
    ssh,smoke`. Then run `session` and `status`. `status` is read-only and shows
    lanes, launches, claims, unit statuses, the regression gate and forecasts.
    `units` lists the units and a suggested order offline.
@@ -235,7 +240,7 @@ SSH, lane-readiness, host-pull and evidence helpers. It never starts or stops a 
    run `evidence` (SHA-256 checked on both ends, under `step_c_evidence/`).
    It always makes the copy, but fails while a unit still runs or a lane
    awaits its pull or recovery; `--allow-running` is for an emergency stop
-   only. Then run `~/deepmzyme-vm/bin/vm-stop` and `vm-status` (TERMINATED).
+   only. Then run `<vm-controller>/bin/vm-stop` and `vm-status` (TERMINATED).
 
 Costs measured in step A (A5, this PC's CPU, one process): augmented recipes
 (`posnoise01`, `outerdrop01`) rebuild every training graph each epoch,
@@ -298,8 +303,8 @@ Commands (workstation, from the v3 worktree; `pmm_v3_step_d.py` uses the standar
 library only and reuses the step-C lane, wait, pull, recovery and evidence logic):
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-DATA=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3
+P="${DEEPMZYME_PYTHON:?verified project interpreter}"
+DATA="${SECONDARY_DRIVE:?secondary-drive mount point}/DeepMzyme_Data/campaigns/pmm_ion_metal_v3"
 # CPU readiness, no GPU: the decay audit, then the gate report the launcher requires
 $P audit_v3_effective_decay.py                    # add --recipe combo-... for a combination with structlr
 $P audit_v3_step_d_readiness.py                   # writes $DATA/audits/d_readiness_<UTC>/readiness_report.json
@@ -337,7 +342,7 @@ The launcher refuses, before anything starts:
 - a step E unit before the recorded final-test label decision and a final
   step D assessment.
 
-The VM runs from `/home/mechti/projects/DeepMzyme_v3_ext1`; the first code
+The VM runs from `~/projects/DeepMzyme_v3_ext1` (`~` is the VM user's home); the first code
 directory is not touched. A failed unit is rerun once, unchanged; after a
 second failure the candidate "did not pass the one-fold screen".
 
@@ -404,7 +409,7 @@ strength, extra seed or five/six-class variant; the cost-gated augmentations sta
 tested (cost)". The site-geometry graph sets were built in step D, so every E2 unit is
 forecast warm.
 
-Tools (workstation; `P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python` from the v3
+Tools (workstation; `P="${DEEPMZYME_PYTHON:?verified project interpreter}"` from the v3
 worktree):
 
 - `pmm_v3_step_e2.py` (standard library only) is the only admission check for E2 units:
@@ -412,10 +417,10 @@ worktree):
   call `run_pmm_v3_campaign.py` directly. It reuses the step C lane, launch, wait, pull,
   recovery and evidence logic unchanged; the fits run from the step D/E extension code
   directory (`DeepMzyme_v3_ext1`, hash-frozen runner files), launch folder
-  `step_e2/launch`, evidence under `step_e2_evidence/` on Data1. `pmm_v3_step_d.py --step E`
+  `step_e2/launch`, evidence under `step_e2_evidence/` on the secondary drive. `pmm_v3_step_d.py --step E`
   refuses every E2 unit and this launcher refuses every other unit.
 - `pmm_v3_e2_assessment.py` assesses on the workstation, after `evidence`, from the
-  Data1 copies (no VM needed): a temporary read-only view of the campaign root from the
+  secondary-drive copies (no VM needed): a temporary read-only view of the campaign root from the
   newest E2 evidence copy and the durable lane copies; every unit it uses must equal an
   acknowledged host-pull receipt file by file; the frozen artifact checks of
   `pmm_v3_assessment.load_unit` apply unchanged; as a self-check the original A4 step E
@@ -441,7 +446,7 @@ until a new manifest and a new authorization are recorded (old records archived 
 with a dated log entry).
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+P="${DEEPMZYME_PYTHON:?verified project interpreter}"    # from the v3 worktree
 CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
 # CPU, once (done 2026-10-11, log v3-033; a second call is refused): the manifest and the ceiling record
 $P pmm_v3_step_e2.py build-manifest --log-entry v3-033
@@ -450,7 +455,7 @@ $P pmm_v3_step_e2.py record-ceiling --usd 55 --spent-usd 31.98 --spent-at 2026-1
 $P pmm_v3_step_e2.py units; $P pmm_v3_step_e2.py gates; $P pmm_v3_step_e2.py spend   # offline
 # Only after the user's E2 GPU-start authorization is logged (dated entry v3-NNN):
 $P pmm_v3_step_e2.py record-authorization --log-entry v3-NNN
-# Every E2 GPU session (gpu-use-skill; VM running under the controller):
+# Every E2 GPU session (GPU-use policy; VM running under the controller):
 $P pmm_v3_step_e2.py status
 $P pmm_v3_step_e2.py launch UNIT@0 UNIT@1 UNIT@2 --no-wait
 $P pmm_v3_step_e2.py wait --any UNIT_A UNIT_B UNIT_C      # name every running unit; 'status' before each refill
@@ -504,8 +509,8 @@ Tools (workstation; nothing in `src/` or the hash-frozen runner files changes):
   - Archive, replay and status use `run_pmm_v3_campaign.py` unchanged.
 - `pmm_v3_sched10.py` (standard library only) is the only admission check. It reuses the
   step C lane, launch, wait, pull, recovery and evidence logic, with launch folder
-  `step_s10/launch` and evidence under `step_s10_evidence/` on Data1.
-- `pmm_v3_sched10_assessment.py` assesses on the workstation from the Data1 copies, as for
+  `step_s10/launch` and evidence under `step_s10_evidence/` on the secondary drive.
+- `pmm_v3_sched10_assessment.py` assesses on the workstation from the secondary-drive copies, as for
   E2. Each candidate must carry the bound `schedule_extension`. The controls must reproduce the
   final E2 assessment, or no decision is written. Output:
   `step_s10_evidence/assessments/S10_<UTC>/assessment.json`, with a machine-readable
@@ -525,7 +530,7 @@ Every launch is refused before anything starts unless all of these hold:
   within the ceiling.
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+P="${DEEPMZYME_PYTHON:?verified project interpreter}"    # from the v3 worktree
 CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
 # CPU, once (done 2026-10-12, log v3-039; a second call is refused): manifest and ceiling
 $P pmm_v3_sched10.py build-manifest --log-entry v3-039
@@ -534,7 +539,7 @@ $P pmm_v3_sched10.py record-ceiling --usd 55 --spent-usd 40.06 --spent-at 2026-1
 $P pmm_v3_sched10.py units; $P pmm_v3_sched10.py gates; $P pmm_v3_sched10.py spend   # offline
 # Only after the user's GPU-start authorization for this comparison is logged (dated entry v3-NNN):
 $P pmm_v3_sched10.py record-authorization --log-entry v3-NNN
-# The GPU session (gpu-use-skill; VM running under the controller, e.g. vm-start --confirm --hours 2):
+# The GPU session (GPU-use policy; VM running under the controller, e.g. vm-start --confirm --hours 2):
 $P pmm_v3_sched10.py deploy
 $P pmm_v3_sched10.py status
 $P pmm_v3_sched10.py launch gvp_late_fusion__four_class__sched10__fold1__seed42@0 \
@@ -605,9 +610,9 @@ Tools (nothing in `src/` or the hash-frozen runner files changes):
     file is committed unchanged there.
 
 ```bash
-P=/home/mechti/miniconda3/envs/DeepMzyme/bin/python    # from the v3 worktree
+P="${DEEPMZYME_PYTHON:?verified project interpreter}"    # from the v3 worktree
 CAP="systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G"
-C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3   # the records' campaign root
+C="${SECONDARY_DRIVE:?secondary-drive mount point}/DeepMzyme_Data/campaigns/pmm_ion_metal_v3"   # the records' campaign root
 $P pmm_v3_step_f.py units; $P pmm_v3_step_f.py gates                  # offline
 $P pmm_v3_step_f.py bind-selection --dry-run; $P pmm_v3_step_f.py freeze1-template   # print only
 # After the commit of the bound files, the plan approval and the refit authorization (dated entries v3-NNN):
@@ -615,7 +620,7 @@ $P pmm_v3_step_f.py bind-selection --log-entry v3-NNN
 $P pmm_v3_step_f.py build-manifest --log-entry v3-NNN
 $P pmm_v3_step_f.py record-ceiling --usd 55 --spent-usd S --spent-at UTC --spent-source "log v3-NNN" --log-entry v3-NNN
 $P pmm_v3_step_f.py record-authorization --log-entry v3-NNN
-# The refit session (gpu-use-skill; vm-start --confirm --hours 2):
+# The refit session (GPU-use policy; vm-start --confirm --hours 2):
 $P pmm_v3_step_f.py deploy
 $P pmm_v3_step_f.py status
 $P pmm_v3_step_f.py launch stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42@0   # waits, pulls
@@ -626,7 +631,7 @@ $P pmm_v3_step_f.py record-freeze1 --log-entry v3-NNN
 # F3b on the workstation CPU, label-blind:
 $CAP $P run_pmm_v3_step_f.py --action prepare-test --campaign-dir $C --test-dir TEST \
   --source-csv prepare_training_and_test_set/pinmymetal_files/classmodel_test_set \
-  --previously-opened-dir /home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test \
+  --previously-opened-dir "${REPO_ROOT:?main checkout}/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test" \
   --v2-root V2 --train-dir TRAIN --out-dir PREPARED
 # ESMC-600M on CPU (weights cached; checked in log v3-044): a 6 GB cap (peak 5.3 GB measured), about 1.5–3 h:
 systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=6G -p MemorySwapMax=0 $P run_pmm_v3_step_f.py \
@@ -738,16 +743,19 @@ requires the diagnostic/readiness gates below; current completion and evidence
 are recorded in `EXPERIMENT_STATUS.md`.
 The three trained awareness units stay outside core completion counts.
 
+In the `pmm_ion_metal_v2_context` commands below, the environment variables stand for maintainer-specific
+roots; give any path bound in a sealed manifest or recorded as `--durable-root` exactly as recorded.
+
 CPU-only preview from the repository root of a checkout matching the scope's
 frozen source hash. If concurrent source changes exist, use an isolated frozen
 checkout carrying this root-level entry point and scope file; preserve the
 other work rather than bypassing the source/configuration identity guards.
 
 ```bash
-PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-T=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
-C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context
-FROZEN_CODE=/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2
+PY="${DEEPMZYME_PYTHON:?verified project interpreter}"
+T="${SECONDARY_DRIVE:?secondary-drive mount point}/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train"
+C="${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context"
+FROZEN_CODE="${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2"
 cd "$FROZEN_CODE"
 $PY -c 'import sys; print(sys.executable)'
 $PY run_pmm_core_campaign.py --campaign-dir "$C" --train-dir "$T" \
@@ -798,7 +806,7 @@ Expected output: `core_readiness.json`, binding the scope/source/replay policy,
 operational implementation, diagnostic integration and all nine historical
 units with their original qualification labels. It sets `compute_authorized`
 and `held_out_access` to false. A certificate does not allocate a GPU or enlarge
-the budget. The [GPU skill](../.agents/skills/gpu-use-skill/SKILL.md), current
+the budget. The maintainer's local GPU-use policy (not published), current
 session/day caps, remaining authorized budget and independent persistence
 remain required. The old 30-hour/$34 proposal is not activated by this recipe.
 
@@ -812,15 +820,15 @@ The existing admission margin is `1.25 * FIT_SECONDS + 900` seconds, and the
 runner refuses an execution envelope above the existing four-hour ceiling.
 
 ```bash
-/home/mechti/venvs/deepmzyme/bin/python run_pmm_core_campaign.py \
+$HOME/venvs/deepmzyme/bin/python run_pmm_core_campaign.py \
   --action run --family "$FAMILY" --target "$TARGET" --fold "$FOLD" \
-  --campaign-dir /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context \
-  --train-dir /home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --campaign-dir $HOME/deepmzyme_runs/pmm_ion_metal_v2_context \
+  --train-dir $HOME/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
   --readiness-file "$READINESS_FILE" \
   --session-id "$SESSION_ID" --allocation-started "$ALLOCATION_STARTED" \
   --execution-deadline "$DEADLINE" --execution-max-seconds "$SESSION_SECONDS" \
   --estimated-fit-seconds "$FIT_SECONDS" \
-  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --durable-root "${HOST_DURABLE_ROOT:?workstation host-pull destination, exactly as recorded}" \
   --persistence-mode host_pull
 ```
 
@@ -908,22 +916,22 @@ requires `1.25 * FIT_SECONDS + 900` seconds remaining. No session/day cap change
 are part of this recipe.
 
 ```bash
-/home/mechti/venvs/deepmzyme/bin/python run_pmm_five_class_screen.py \
+$HOME/venvs/deepmzyme/bin/python run_pmm_five_class_screen.py \
   --action run --family "$FAMILY" \
-  --campaign-dir /home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context \
-  --train-dir /home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
+  --campaign-dir $HOME/deepmzyme_runs/pmm_ion_metal_v2_context \
+  --train-dir $HOME/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train \
   --session-id "$SESSION_ID" --allocation-started "$ALLOCATION_STARTED" \
   --execution-deadline "$DEADLINE" --execution-max-seconds "$SESSION_SECONDS" \
   --estimated-fit-seconds "$FIT_SECONDS" --load-workers 4 \
-  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --durable-root "${HOST_DURABLE_ROOT:?workstation host-pull destination, exactly as recorded}" \
   --persistence-mode host_pull
 ```
 
 Set `FAMILY` to `only_esm`, then `only_gvp`, then `gvp_late_fusion`; acknowledge
 each terminal host backup before another fit. Existing run directories, logs
 or command records are refused, even if uncertified. Failure is preserved for
-explicit diagnosis, never retried until a chance pass. Use the GPU skill for
-allocation, readiness, timing and verified shutdown.
+explicit diagnosis, never retried until a chance pass. Follow the maintainer's
+GPU-use policy for allocation, readiness, timing and verified shutdown.
 
 Expected evidence: a distinct
 `runs/{family}__five_class__none__fold0__seed42/` with `run_config.json`,
@@ -962,13 +970,13 @@ timestamps; expired allocation values must not be reused.
 This initial envelope leaves at most 270 seconds for boot, connection and input
 verification before the 3,150-second admission requirement. It is not a guarantee
 of admission. If that allowance is exhausted, keep the forecast and safeguards;
-use the budget-decision rule in `AGENTS.md` before any larger allocation.
+use the budget-decision rule in the local agent instructions (`AGENTS.md`, not published) before any larger allocation.
 `EXPERIMENT_STATUS.md` records the current authorization and actual outcome.
 
 ```bash
-PY=/home/mechti/venvs/deepmzyme/bin/python
-T=/home/mechti/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
-C=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
+PY=$HOME/venvs/deepmzyme/bin/python
+T=$HOME/deepmzyme_data/pmm/train_and_test_sets_structures_zenodo_pmm_exact/train
+C=$HOME/deepmzyme_runs/pmm_ion_metal_v2_context
 $PY scripts/run_metal_5fold_cv.py --campaign-dir "$C" --train-dir "$T" \
   --campaign-action run --device cuda --load-workers 4 \
   --families only_esm --targets four_class --readouts first_shell_bias --folds 0 \
@@ -977,7 +985,7 @@ $PY scripts/run_metal_5fold_cv.py --campaign-dir "$C" --train-dir "$T" \
   --execution-deadline "${PMM_HARD_STOP:?}" \
   --execution-max-seconds "${PMM_ALLOWED_SECONDS:?}" \
   --estimated-fit-seconds 1800 \
-  --durable-root /media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context \
+  --durable-root "${HOST_DURABLE_ROOT:?workstation host-pull destination, exactly as recorded}" \
   --persistence-mode host_pull
 ```
 
@@ -1081,9 +1089,9 @@ directory, `C` the campaign root; outputs never go under `DeepMzyme_Data/`
 runs of other campaigns):
 
 ```bash
-PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-T=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
-C=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context
+PY="${DEEPMZYME_PYTHON:?verified project interpreter}"
+T="${SECONDARY_DRIVE:?secondary-drive mount point}/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train"
+C="${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context"
 # Step 1 (CPU, training-only): freeze cohort, dispositions, audit, campaign manifest
 $PY src/benchmarking/pmm_ion_cohort.py --train-dir $T --out-dir $C --workers 2
 $PY src/benchmarking/pmm_ion_cohort.py --train-dir $T --out-dir $C --verify-only
@@ -1107,7 +1115,7 @@ RUNTIME=(--session-id "${PMM_ALLOCATION_ID:?}" \
 # For the new scope, use run_pmm_core_campaign.py --action plan above.
 # The existing comparator action verifies saved outputs when its manifest exists.
 $PY scripts/run_metal_5fold_cv.py --campaign-dir $C --train-dir $T --campaign-action pmm \
-  --pmm-python /media/mechti/Data1/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/bin/python
+  --pmm-python "${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/_envs/pmm_released_py311/bin/python"
 ```
 
 `--families`, `--targets`, `--readouts` and `--folds` restrict `run`/`plan` to
@@ -1393,10 +1401,11 @@ come from the original frozen study. Optional refinement and a third
 confirmation candidate remain omitted. This is bounded Stage 2B and
 exploratory Stage 6; held-out evaluation, Stage 6B and Stage 7 stay disabled.
 
-From the repository root:
+`DEEPMZYME_PYTHON` stands for a maintainer-specific interpreter; give any path bound in the study's
+sealed manifest exactly as recorded. From the repository root:
 
 ```bash
-CAPACITY_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+CAPACITY_PY="${DEEPMZYME_PYTHON:?verified project interpreter}"
 "$CAPACITY_PY" scripts/resume_gvp_capacity_colab.py status
 "$CAPACITY_PY" scripts/resume_gvp_capacity_colab.py resume
 ```
@@ -1441,10 +1450,11 @@ the reviewed twelve-run ledger (eight metal, four EC), frozen source snapshots,
 and task-specific sequence provenance. The ledger and protocol must exist and
 pass review before these commands; a fresh directory needs its own identities.
 
-The local diagnostic recipe is:
+`DEEPMZYME_PYTHON` stands for a maintainer-specific interpreter; give any path bound in a sealed
+manifest exactly as recorded. The local diagnostic recipe is:
 
 ```bash
-RH_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+RH_PY="${DEEPMZYME_PYTHON:?verified project interpreter}"
 RH_ROOT=DeepMzyme_Data/notebook_outputs/remote_homology_v1
 RH_PLAN=DeepMzyme_Data/notebook_outputs/plans/metal_single_gpu_33h_v2_authorized_runtime_g4
 RH_MMSEQS=DeepMzyme_Data/tools/mmseqs2-18-8cc5c/mmseqs/bin/mmseqs
@@ -1847,9 +1857,9 @@ notebook's training, HPO, Stage 6B and final-test launch switches false.
 
 Set `CAMPAIGN_PYTHON` to the verified interpreter, `CAMPAIGN_DATA_ROOT` to the
 verified inputs, and the overlay variables to the certified repaired features.
-Initially `CAMPAIGN_OUTPUT_DIR` is a fresh local planning directory. The
-repository's prescribed local interpreter is
-`/home/mechti/miniconda3/envs/DeepMzyme/bin/python`.
+Initially `CAMPAIGN_OUTPUT_DIR` is a fresh local planning directory. For local
+runs, set `CAMPAIGN_PYTHON` to the locked environment's `.venv/bin/python` (see
+[GETTING_STARTED](GETTING_STARTED.md)) or to a verified local Conda interpreter.
 
 ```bash
 "${CAMPAIGN_PYTHON:?verified interpreter required}" -c 'import sys; print(sys.executable)'
@@ -6193,10 +6203,10 @@ planning the next Optuna sweep:
 
 Operational assumptions for this project:
 
-- Hardware: the primary route is the CLI runners on the GCP L4 VM under `gpu-use-skill`; Colab is the authorized fallback, with the notebook as secondary interface. Serious Optuna runs use the budgets in the playbook's "G4-Class Optuna Policy" subsection (historical).
+- Hardware: the primary route is the CLI runners on the GCP L4 VM under the maintainer's local GPU-use policy (not published); Colab is the authorized fallback, with the notebook as secondary interface. Serious Optuna runs use the budgets in the playbook's "G4-Class Optuna Policy" subsection (historical).
 - Persistent Optuna storage is mandatory for Stage 4 and Stage 5 on both routes.
   Colab uses persistent Drive SQLite storage. The VM route follows the general
-  artifact-persistence safeguards in `gpu-use-skill` and
+  artifact-persistence safeguards in the maintainer's GPU-use policy and
   `docs/GCP_GPU_RUNBOOK.md`; a VM-specific Optuna storage recipe is not yet
   documented (see the consolidation B0.4 precheck).
 - Persistent Optuna studies must not silently mix incompatible `MODEL_PRESET`
@@ -6379,11 +6389,14 @@ must be identical on the execution host and evidence mirror; relocation is not i
 output root rather than overwriting an existing manifest. Always run the package with `-B`, so the host and worker
 processes do not write bytecode into the sealed package.
 
+`DEEPMZYME_PYTHON` and `SECONDARY_DRIVE` stand for maintainer-specific roots; the sealed manifest binds the
+absolute data paths built from `SECONDARY_DRIVE`, so give it exactly as recorded in `execution/manifest_discovery.json`.
+
 ```bash
-MC_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
-MC_PREP=/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z
-MC_TRAIN=/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train
-MC_ESM=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1
+MC_PY="${DEEPMZYME_PYTHON:?verified project interpreter}"
+MC_PREP="${SECONDARY_DRIVE:?secondary-drive mount point}/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z"
+MC_TRAIN="${SECONDARY_DRIVE:?}/DeepMzyme_PMM_Zenodo_Exact_Dataset/dataset/train"
+MC_ESM="${SECONDARY_DRIVE:?}/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/inputs/esm_embeddings_esmc600m_v1"
 "$MC_PY" -c 'import sys; print(sys.executable)'
 "$MC_PY" -B "$MC_PREP/code/metal_completion.py" prepare \
   --parent-dir "$MC_PREP/parent" --successor-root "$MC_PREP/execution" \
@@ -6405,7 +6418,8 @@ the exact manifest hash:
   --train-dir "$MC_TRAIN" --esm-dir "$MC_ESM"
 ```
 
-**Deployment prerequisite (performed for the 2026-10-15/16 sessions).** The manifest binds the five absolute Data1 paths above, and the
+**Deployment prerequisite (performed for the 2026-10-15/16 sessions).** The manifest binds the five absolute `<secondary-drive>` paths above (recorded in
+`execution/manifest_discovery.json`), and the
 training-input receipt records the resolved train directory, so the GPU host must hold real directories (or a bind
 mount recorded in `/etc/fstab` so it survives the controller's STOP/START) at exactly these paths: `code/`,
 `parent/`, the train dataset and the ESM directory. A symlinked train directory resolves to another path and fails
@@ -6419,10 +6433,11 @@ sessions of at most four hours on the existing GCP L4 with three FP32 lanes was 
 confirmation; see the campaign evidence). The gates below remain the contract for any newly authorized session. The
 [execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516)
 records measured timing, dated prices and forecast uncertainty. Provider caps may be tighter. No migration,
-hardware upgrade, extra recipe, final refit or independent-cohort construction is included. Preserve AGENTS'
-accepted-work escalation rule at the first safe boundary if a ceiling becomes insufficient.
+hardware upgrade, extra recipe, final refit or independent-cohort construction is included. Preserve the
+accepted-work escalation rule of the local agent instructions (`AGENTS.md`, not published) at the first safe
+boundary if a ceiling becomes insufficient.
 
-The sole coordinator uses the [GPU skill](../.agents/skills/gpu-use-skill/SKILL.md) and installed VM controller.
+The sole coordinator uses the maintainer's local GPU-use policy (not published) and the installed VM controller.
 Before submitting, bind the explicit user decision text/file/hash, manifest hash, exact permitted units, price,
 aggregate hours/gross ceiling/reserve, session count/duration, expiry, lanes and persistence destination in the
 authorization policy. Fresh controller and spending snapshots must agree on session identity, allocation start,
@@ -6497,7 +6512,7 @@ and refuses to launch while the host venv reports no CUDA device; `collect-map` 
 `collect`. Each unit's launch refreshes the snapshots and runs the worker's own authorization check locally first.
 
 ```bash
-MC_SESS="$MC_PY -B /home/mechti/PycharmProjects/DeepMzyme/metal_completion_session.py --prep $MC_PREP"
+MC_SESS="$MC_PY -B src/benchmarking/pinmymetal/model_comparison/session.py --prep $MC_PREP"   # run from the repository root (formerly metal_completion_session.py)
 $MC_SESS --phase discovery units                      # the permitted units (no verified control)
 $MC_SESS --phase discovery deploy --plan-unit metal_completion__discovery__P__four_class__fold0__seed42
 $MC_SESS --phase discovery run-session                # one coordinator; detach it from the shell
@@ -6509,11 +6524,13 @@ $3.47 gross), kernel selection if needed (below), `deploy`, `run-session`, final
 (TERMINATED). Host incident 2026-10-15: unattended upgrades had installed kernel 7.0.0-1014-gcp on 2026-10-13, for
 which NVIDIA driver 615.71.09 does not build (`dma_buf_move_notify` API change), so the VM booted without a GPU.
 The working kernel 7.0.0-1013-gcp still has the module; kernel packages are now held. Until a persistent GRUB
-default is applied on the host, select it once per boot before launching:
+default is applied on the host, select it once per boot before launching. `DEEPMZYME_VM_CONTROLLER` (the
+private VM-controller checkout) and `ROOT_FS_UUID` (the root-filesystem UUID in the host's GRUB menu IDs) are
+maintainer-specific values:
 
 ```bash
-~/deepmzyme-vm/bin/vm-connect -- "sudo grub-reboot 'gnulinux-advanced-c2b7f3c6-0400-442a-8a70-a6e478f0f437>gnulinux-7.0.0-1013-gcp-advanced-c2b7f3c6-0400-442a-8a70-a6e478f0f437' && sudo systemctl reboot"
-~/deepmzyme-vm/bin/vm-connect -- "uname -r; /home/mechti/venvs/deepmzyme/bin/python -c 'import torch; print(torch.cuda.is_available())'"
+"${DEEPMZYME_VM_CONTROLLER:?private VM-controller checkout}"/bin/vm-connect -- "sudo grub-reboot 'gnulinux-advanced-${ROOT_FS_UUID:?read from /boot/grub/grub.cfg on the VM}>gnulinux-7.0.0-1013-gcp-advanced-${ROOT_FS_UUID}' && sudo systemctl reboot"
+"${DEEPMZYME_VM_CONTROLLER:?private VM-controller checkout}"/bin/vm-connect -- "uname -r; ~/venvs/deepmzyme/bin/python -c 'import torch; print(torch.cuda.is_available())'"
 ```
 
 For confirmation, the preparation command additionally takes `--phase confirmation`,

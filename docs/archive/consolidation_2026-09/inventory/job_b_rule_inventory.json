@@ -137,7 +137,7 @@
     "first_line": 57,
     "last_line": 57,
     "heading": "Python interpreter",
-    "text": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python",
+    "text": "<python>",
     "status": "merged",
     "destination": "AGENTS.md#compute-and-python",
     "approval": "not individually reviewed at the step-2 review"
@@ -159,7 +159,7 @@
     "first_line": 61,
     "last_line": 61,
     "heading": "Python interpreter",
-    "text": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python -c \"import sys; print(sys.executable)\"",
+    "text": "<python> -c \"import sys; print(sys.executable)\"",
     "status": "merged",
     "destination": "AGENTS.md#compute-and-python",
     "approval": "not individually reviewed at the step-2 review"
@@ -2414,7 +2414,7 @@
     "first_line": 711,
     "last_line": 716,
     "heading": "Testing and validation",
-    "text": "```\n/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/model.py\n/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/train.py\n/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/training/config.py\n/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/training/run.py\n```",
+    "text": "```\n<python> -m py_compile src/model.py\n<python> -m py_compile src/train.py\n<python> -m py_compile src/training/config.py\n<python> -m py_compile src/training/run.py\n```",
     "status": "modified",
     "destination": "AGENTS.md#development-and-verification (B-M06: smallest relevant syntax/smoke checks, no fixed file list)",
     "approval": "approved by the user, 2026-09-28 (B-M06)"
@@ -2436,7 +2436,7 @@
     "first_line": 720,
     "last_line": 722,
     "heading": "Testing and validation",
-    "text": "```\n/home/mechti/miniconda3/envs/DeepMzyme/bin/python tests/smoke_checks.py\n```",
+    "text": "```\n<python> tests/smoke_checks.py\n```",
     "status": "merged",
     "destination": "AGENTS.md#development-and-verification",
     "approval": "not individually reviewed at the step-2 review"
@@ -3250,7 +3250,7 @@
     "first_line": 125,
     "last_line": 129,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- The full-grid preview now lists 39 fixed candidate units, without treating\n  them as a verified missing-work queue. Five-class folds 1\u20134 intentionally have\n  no execution command yet. Use isolated frozen checkout\n  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;\n  unrelated shared-checkout model/configuration edits are preserved.",
+    "text": "- The full-grid preview now lists 39 fixed candidate units, without treating\n  them as a verified missing-work queue. Five-class folds 1\u20134 intentionally have\n  no execution command yet. Use isolated frozen checkout\n  `<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;\n  unrelated shared-checkout model/configuration edits are preserved.",
     "status": "kept",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-004",
     "approval": "not individually reviewed at the step-2 review"
@@ -3305,7 +3305,7 @@
     "first_line": 150,
     "last_line": 163,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- [Scope manifest](docs/plans/pmm_core_scope_v1.json),\n  [amended plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness),\n  and [core recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)\n  now govern continuation. The root entry point previews exactly 24 core\n  candidates and refuses training/assessment/refit/test pending TECH-023 and\n  [TECH-025](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge).\n  Its 32 targeted tests passed. This amendment edits no scientific source.\n  Concurrent model/configuration edits in the shared working tree subsequently\n  changed its source identity; the guard correctly refused that checkout.\n  The isolated checkout at\n  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v1`\n  passed the same 32 tests and actual CPU preview. It preserves frozen source\n  without reverting unrelated edits or bypassing source/configuration checks.\n  Canonical `runtime/core_scope_verification.json` binds the successful preview.",
+    "text": "- [Scope manifest](docs/plans/pmm_core_scope_v1.json),\n  [amended plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md#active-amendment--prioritize-core-models-pause-binding-awareness),\n  and [core recipe](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#active-core-only-continuation)\n  now govern continuation. The root entry point previews exactly 24 core\n  candidates and refuses training/assessment/refit/test pending TECH-023 and\n  [TECH-025](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-025--core-scope-needs-a-separate-assessment-and-promotion-bridge).\n  Its 32 targeted tests passed. This amendment edits no scientific source.\n  Concurrent model/configuration edits in the shared working tree subsequently\n  changed its source identity; the guard correctly refused that checkout.\n  The isolated checkout at\n  `<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v1`\n  passed the same 32 tests and actual CPU preview. It preserves frozen source\n  without reverting unrelated edits or bypassing source/configuration checks.\n  Canonical `runtime/core_scope_verification.json` binds the successful preview.",
     "status": "modified",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-005; EXPERIMENT_STATUS.md#blockers-and-immediate-next-action (B-M03: superseded operational instructions)",
     "approval": "approved by the user, 2026-09-28 (B-M03)"
@@ -3448,7 +3448,7 @@
     "first_line": 238,
     "last_line": 245,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- **VM confirmed TERMINATED at 19:41:10 UTC / 22:41:10 Israel.**\n  `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`,\n  stopped at **19:40:52 UTC**, before its 20:38:52 deadline. Session\n  `session-20260927T181200Z-259157df` used **5,333 seconds / $1.3023 estimated\n  running gross**. No GPU worker remains. One 150-GB disk is retained at\n  approximately **$15/month**; ordinary closeout deleted nothing. Cumulative\n  campaign running use is **8.9253 hours / $7.8468 estimated gross**, excluding\n  additional retained-storage charges.",
+    "text": "- **VM confirmed TERMINATED at 19:41:10 UTC / 22:41:10 Israel.**\n  `<gpu-vm>@us-central1-c`, immutable instance `<resource-id>`,\n  stopped at **19:40:52 UTC**, before its 20:38:52 deadline. Session\n  `session-20260927T181200Z-259157df` used **5,333 seconds / $1.3023 estimated\n  running gross**. No GPU worker remains. One 150-GB disk is retained at\n  approximately **$15/month**; ordinary closeout deleted nothing. Cumulative\n  campaign running use is **8.9253 hours / $7.8468 estimated gross**, excluding\n  additional retained-storage charges.",
     "status": "kept",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-007",
     "approval": "not individually reviewed at the step-2 review"
@@ -3536,7 +3536,7 @@
     "first_line": 282,
     "last_line": 287,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- **VM confirmed TERMINATED at 17:41:59 UTC / 20:41:59 Israel.**\n  Session `session-20260927T143239Z-d9c4d944` ran from **14:32:39 to 17:41:40 UTC**\n  on `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`:\n  **3h 09m 01s**, estimated running gross **$2.7697**. No compute is running.\n  One 150-GB persistent disk remains at approximately **$15/month**. Normal\n  closeout deleted nothing. The provider deadline had been 18:29:32 UTC.",
+    "text": "- **VM confirmed TERMINATED at 17:41:59 UTC / 20:41:59 Israel.**\n  Session `session-20260927T143239Z-d9c4d944` ran from **14:32:39 to 17:41:40 UTC**\n  on `<gpu-vm>@us-central1-c`, immutable instance `<resource-id>`:\n  **3h 09m 01s**, estimated running gross **$2.7697**. No compute is running.\n  One 150-GB persistent disk remains at approximately **$15/month**. Normal\n  closeout deleted nothing. The provider deadline had been 18:29:32 UTC.",
     "status": "kept",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-008",
     "approval": "not individually reviewed at the step-2 review"
@@ -3569,7 +3569,7 @@
     "first_line": 302,
     "last_line": 308,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- One coordinator owned lifecycle/submission/shutdown; a focused read-only\n  reviewer audited the reporting contracts. Exact unit selectors and unique\n  status tags preserve old results and mitigate TECH-022. The\n  [GPU review](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/gpu_execution_review.md)\n  records cold versus warm preparation costs. Canonical artifacts remain at\n  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`;\n  current resume notes are in its `runtime/RESUME_STATE.md`.",
+    "text": "- One coordinator owned lifecycle/submission/shutdown; a focused read-only\n  reviewer audited the reporting contracts. Exact unit selectors and unique\n  status tags preserve old results and mitigate TECH-022. The\n  [GPU review](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/gpu_execution_review.md)\n  records cold versus warm preparation costs. Canonical artifacts remain at\n  `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`;\n  current resume notes are in its `runtime/RESUME_STATE.md`.",
     "status": "kept",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-008",
     "approval": "not individually reviewed at the step-2 review"
@@ -3602,7 +3602,7 @@
     "first_line": 314,
     "last_line": 318,
     "heading": "DeepMzyme Current Experiment Status",
-    "text": "- Frozen training-only cohort: **7,398 ions / 3,992 PDB groups**, five class-complete\n  PDB-grouped folds. Excluded source rows: 9 missing, 10 non-single-metal residues,\n  503 missing explicit protein-symmetry context. Canonical artifacts:\n  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.\n  Historical v1 evidence is preserved separately.",
+    "text": "- Frozen training-only cohort: **7,398 ions / 3,992 PDB groups**, five class-complete\n  PDB-grouped folds. Excluded source rows: 9 missing, 10 non-single-metal residues,\n  503 missing explicit protein-symmetry context. Canonical artifacts:\n  `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.\n  Historical v1 evidence is preserved separately.",
     "status": "kept",
     "destination": "docs/campaigns/pmm_ion_metal/log.md#pmm-009",
     "approval": "not individually reviewed at the step-2 review"

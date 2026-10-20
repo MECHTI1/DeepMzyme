@@ -187,7 +187,7 @@ On an active Colab session with GPU (e.g. NVIDIA L4):
    ```
 
 ### Local Execution (on Host)
-To run locally on `/media/mechti/Data1`:
+To run locally with data on a secondary drive (`<secondary-drive>`):
 ```bash
 bash scripts/run_zenodo_pmm_exact.sh
 ```
@@ -197,8 +197,8 @@ python scripts/run_zenodo_pmm_exact_5fold_cv.py \
   --models benchmark_enhanced_only_gvp benchmark_only_esm benchmark_enhanced_gvp_esmc \
   --folds 0 1 2 3 4 \
   --n-folds 5 \
-  --data-root /media/mechti/Data1/DeepMzyme_Data \
-  --runs-dir /media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact \
+  --data-root "${DEEPMZYME_DATA_ROOT:?secondary-drive DeepMzyme_Data}" \
+  --runs-dir "${DEEPMZYME_DATA_ROOT:?}/runs_zenodo_pmm_exact" \
   --epochs 50 \
   --batch-size 16 \
   --device cuda
@@ -238,7 +238,7 @@ The runner automatically compiles fold-by-fold results, calculates OOF validatio
 As strictly mandated, all additions are 100% additive:
 - **Legacy Datasets:** `train_and_test_sets_structures_exact_pinmymetal` and all existing datasets remain completely intact and untouched.
 - **Legacy Scripts:** `scripts/run_exact_pinmymetal_5fold_cv.py` and all earlier training workflows remain unchanged.
-- **Disk Safety:** Checkpoints and heavy assets are redirected to `/media/mechti/Data1` locally or `/content` on Colab, strictly protecting the host `/home` partition.
+- **Disk Safety:** Checkpoints and heavy assets are redirected to a secondary drive (`<secondary-drive>`) locally or `/content` on Colab, strictly protecting the host `/home` partition.
 
 ---
 

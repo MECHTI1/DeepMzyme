@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Workstation launcher for v3 plan step B (standard library only).
 
-It never starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing, and a
-GPU start needs the user's typed authorization. Every command below talks to an already RUNNING VM over
-the controller's IAP SSH configuration (BatchMode, no automatic retries of a launch).
+It never starts, stops, restores or extends a VM: the external VM controller ($DEEPMZYME_VM_CONTROLLER/bin)
+owns billing, and a GPU start needs the user's typed authorization. Every command below talks to an already
+RUNNING VM over the controller's IAP SSH configuration (BatchMode, no automatic retries of a launch).
 
 Commands (in step-B order; see the metal playbook, "PMM ion metal v3 campaign"):
   session                 print the controller session (refuses if inactive, expired or mismatched)
@@ -51,8 +51,8 @@ sys.path.insert(0, str(ROOT))
 import pmm_v3_host_pull as host_pull  # noqa: E402
 import pmm_v3_probes as probes  # noqa: E402
 
-CONTROLLER = Path.home() / "deepmzyme-vm"
-HOST = "deepmzyme-vm"
+CONTROLLER = host_pull.CONTROLLER  # DEEPMZYME_VM_CONTROLLER overrides the default
+HOST = host_pull.SSH_HOST  # DEEPMZYME_SSH_HOST overrides the default
 REMOTE_HOME = os.environ.get("DEEPMZYME_REMOTE_HOME", str(Path.home()))
 REMOTE_CODE = f"{REMOTE_HOME}/projects/DeepMzyme_v3"
 REMOTE_PY = f"{REMOTE_HOME}/venvs/deepmzyme/bin/python"
@@ -134,11 +134,11 @@ def read_session(controller: Path = CONTROLLER, *, now: float | None = None) -> 
 def check_ssh_config(controller: Path = CONTROLLER) -> Path:
     """The IAP SSH config must name the current instance (vm-setup --stages ssh rewrites it after a restore)."""
     path = controller / "state" / "ssh_config"
-    require(path.is_file(), f"{path} is missing; run ~/deepmzyme-vm/bin/vm-setup --stages ssh")
+    require(path.is_file(), f"{path} is missing; run the VM controller's bin/vm-setup --stages ssh")
     instance = read_config(controller).get("SELECTED_INSTANCE_ID", "")
     aliases = [line.split()[1] for line in path.read_text().splitlines() if line.strip().startswith("HostKeyAlias")]
     require(bool(instance) and aliases and all(alias.endswith("-" + instance) for alias in aliases),
-            "ssh_config names another instance; run ~/deepmzyme-vm/bin/vm-setup --stages ssh first")
+            "ssh_config names another instance; run the VM controller's bin/vm-setup --stages ssh first")
     return path
 
 

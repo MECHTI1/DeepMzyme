@@ -56,7 +56,7 @@ and `:60-61` (revised element 4).
 
 **Required elements**
 1. Primary route: the CLI runners on the GCP L4 VM, operated only through
-   `~/deepmzyme-vm/bin/*` under `gpu-use-skill` (user decision D1, 2026-09-28).
+   `<vm-controller>/bin/*` under `gpu-use-skill` (user decision D1, 2026-09-28).
 2. Colab is the authorized fallback; the Colab notebook is a secondary interface.
 3. Read `gpu-use-skill` before any GPU action. One coordinator owns allocation, submission
    and shutdown; an optional monitor is read-only. At most one **active** GPU.

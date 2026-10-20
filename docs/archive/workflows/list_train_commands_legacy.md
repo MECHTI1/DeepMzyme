@@ -25,29 +25,29 @@ The main policy is:
 Run commands from the repository root:
 
 ```bash
-cd /home/mechti/PycharmProjects/DeepMzyme
+cd DeepMzyme
 ```
 
 
 Use the project Python interpreter explicitly:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -c "import sys; print(sys.executable)"
+"${DEEPMZYME_PYTHON:-.venv/bin/python}" -c "import sys; print(sys.executable)"
 ```
 
 
 Expected output:
 
 ```text
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+<python>
 ```
 
 Recommended syntax checks before training:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/model.py
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/training/run.py
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -m py_compile src/report_runs.py
+"${DEEPMZYME_PYTHON:-.venv/bin/python}" -m py_compile src/model.py
+"${DEEPMZYME_PYTHON:-.venv/bin/python}" -m py_compile src/training/run.py
+"${DEEPMZYME_PYTHON:-.venv/bin/python}" -m py_compile src/report_runs.py
 ```
 
 ---
@@ -65,7 +65,7 @@ RUNS_DIR="DeepMzyme_Data/runs_baseline_first"
 ESM_EMBEDDINGS_DIR="/media/Data/DeepMzyme_Data/esm_embeddings"
 RING_FEATURES_DIR="DeepMzyme_Data/RING_features"
 METAL_LABEL_SCHEME="six_class"
-PYTHON="/home/mechti/miniconda3/envs/DeepMzyme/bin/python"
+PYTHON="${DEEPMZYME_PYTHON:-.venv/bin/python}"
 ```
 
 If your summary CSV has a different name, update `TRAIN_CSV` and `TEST_CSV` before running.

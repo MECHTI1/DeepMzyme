@@ -24,8 +24,8 @@ Order (spec "freeze_order"; every step needs the user's logged go-ahead, recorde
 
 The records that name a git commit (F1, the manifest and Freeze 1) are written only when every bound step F file is
 committed unchanged at that commit. Offline: units, gates, spend, the templates and the dry runs (--dry-run prints a
-record without writing it). Like the
-other launchers this never starts, stops, restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing.
+record without writing it). Like the other launchers this never starts, stops, restores or extends a VM: the external
+VM controller ($DEEPMZYME_VM_CONTROLLER/bin) owns billing.
 Every refit launch is refused unless the CPU readiness report and the VM extension record agree with this worktree; the
 selection record and the manifest verify; the three VM files are the bound ones; the recorded authorization names this
 manifest and ceiling; and the estimated campaign charges with the running session to its hard stop, plus the reserve,

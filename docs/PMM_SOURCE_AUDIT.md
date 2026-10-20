@@ -3,9 +3,9 @@
 Status on 2026-09-23: **source audit implemented; structural dataset not yet certified**.
 The isolated outputs are source-row audit records, **not training examples**
 or a reproduction of PMM's reported score. The initial audit is at
-`/home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/very_exact_pmm_sets_source_audit_v1/`.
+`<repo-root>/../DeepMzyme_pmm_source_audit_output/very_exact_pmm_sets_source_audit_v1/`.
 The follow-up [deposited-data crosswalk](PMM_DEPOSITION_CROSSWALK.md) is at
-`/home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/pmm_deposition_crosswalk_v3/`.
+`<repo-root>/../DeepMzyme_pmm_source_audit_output/pmm_deposition_crosswalk_v3/`.
 A separate [bounded feature check](PMM_FEATURE_MATCH_FEASIBILITY.md) later
 identified seven unique ion matches among nine reviewed source rows; the full
 cohort was subsequently reviewed in the
@@ -97,12 +97,12 @@ or EC filter; a non-EC/MAHOMES-negative fixture is retained by its PMM record.
 
 ## Reproduce the lightweight audit
 
-From the isolated worktree, after the interpreter check required by `AGENTS.md`:
+From the isolated worktree (a sibling of the main checkout), after checking the interpreter:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python -c "import sys; print(sys.executable)"
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python src/build_pmm_site_dataset.py \
-  --output-root /home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/new_audit_version
+uv run --frozen --no-sync python -c "import sys; print(sys.executable)"
+uv run --frozen --no-sync python src/build_pmm_site_dataset.py \
+  --output-root ../DeepMzyme_pmm_source_audit_output/new_audit_version
 ```
 
 The output root must not exist. The command reads the pinned local PMM tables

@@ -26,27 +26,27 @@ This document provides exact, turn-key instructions for any subsequent autonomou
 
 ## 2. Monitoring & Diagnostic Commands
 
-Run these commands from the local repository root (`/home/mechti/PycharmProjects/DeepMzyme`):
+Run these commands from the local repository root (`<repo-root>`):
 
 ### A. Check Session Status
 ```bash
-/home/mechti/.local/bin/colab status -s pmm-zenodo
+colab status -s pmm-zenodo
 ```
 
 ### B. Inspect Running Processes & GPU Utilization
 ```bash
-echo "import subprocess; print(subprocess.check_output('ps aux | grep train.py || true; nvidia-smi || true', shell=True, text=True))" | /home/mechti/.local/bin/colab exec -s pmm-zenodo
+echo "import subprocess; print(subprocess.check_output('ps aux | grep train.py || true; nvidia-smi || true', shell=True, text=True))" | colab exec -s pmm-zenodo
 ```
 
 ### C. Download and View the Latest Execution Log
 ```bash
-/home/mechti/.local/bin/colab download -s pmm-zenodo /content/zenodo_single_fold_execution.log /tmp/zenodo_single_fold_execution.log
+colab download -s pmm-zenodo /content/zenodo_single_fold_execution.log /tmp/zenodo_single_fold_execution.log
 tail -n 50 /tmp/zenodo_single_fold_execution.log
 ```
 
 ### D. Check if Fold 0 Checkpoints and Test Report are Generated
 ```bash
-echo "import os; print(os.listdir('/content/runs/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0') if os.path.exists('/content/runs/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0') else 'NOT CREATED')" | /home/mechti/.local/bin/colab exec -s pmm-zenodo
+echo "import os; print(os.listdir('/content/runs/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0') if os.path.exists('/content/runs/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0') else 'NOT CREATED')" | colab exec -s pmm-zenodo
 ```
 
 ---
@@ -55,19 +55,19 @@ echo "import os; print(os.listdir('/content/runs/runs_zenodo_pmm_exact/benchmark
 
 When Fold 0 completes:
 1. **Download the Run Artifacts to Local Storage:**
-   *(Always target `/media/mechti/Data1` to preserve `/home` partition space)*
+   *(Always target the secondary drive (`<secondary-drive>`) to preserve `/home` partition space)*
    ```bash
-   mkdir -p /media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact
-   /home/mechti/.local/bin/colab download -s pmm-zenodo \
+   mkdir -p "${SECONDARY_DRIVE:?}/DeepMzyme_Data/runs_zenodo_pmm_exact"
+   colab download -s pmm-zenodo \
      /content/runs/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0 \
-     /media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0
+     "${SECONDARY_DRIVE:?}/DeepMzyme_Data/runs_zenodo_pmm_exact/benchmark_enhanced_only_gvp_fold0"
    ```
 2. **Download the Comparative Markdown Summary Table:**
    ```bash
-   /home/mechti/.local/bin/colab download -s pmm-zenodo \
+   colab download -s pmm-zenodo \
      /content/runs/runs_zenodo_pmm_exact/zenodo_pmm_exact_5fold_comparison_table.md \
-     /media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact/zenodo_pmm_exact_5fold_comparison_table.md
-   cat /media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact/zenodo_pmm_exact_5fold_comparison_table.md
+     "${SECONDARY_DRIVE:?}/DeepMzyme_Data/runs_zenodo_pmm_exact/zenodo_pmm_exact_5fold_comparison_table.md"
+   cat "${SECONDARY_DRIVE:?}/DeepMzyme_Data/runs_zenodo_pmm_exact/zenodo_pmm_exact_5fold_comparison_table.md"
    ```
 3. **Verify Expected Output Files:**
    - `best_checkpoint.pt`: Best model weights based on `val_metal_balanced_acc`
@@ -82,7 +82,7 @@ When Fold 0 completes:
 To continue training remaining folds (Folds 1, 2, 3, 4) or models on Colab:
 
 ```bash
-cat << 'EOF' | /home/mechti/.local/bin/colab exec -s pmm-zenodo
+cat << 'EOF' | colab exec -s pmm-zenodo
 import subprocess
 cmd = (
     "nohup python3 -u /content/DeepMzyme/scripts/run_zenodo_pmm_exact_5fold_cv.py "
@@ -130,12 +130,12 @@ FOLDS="0" EPOCHS=50 bash scripts/reproduce_zenodo_pmm_benchmark.sh
 If the Colab VM disconnects:
 1. Re-provision an NVIDIA L4 GPU instance:
    ```bash
-   /home/mechti/.local/bin/colab new -s pmm-zenodo --gpu L4
+   colab new -s pmm-zenodo --gpu L4
    ```
 2. Upload the latest code archive:
    ```bash
    git archive -o /tmp/deepmzyme_code_latest.tar.gz HEAD
-   /home/mechti/.local/bin/colab upload -s pmm-zenodo /tmp/deepmzyme_code_latest.tar.gz /content/deepmzyme_code_latest.tar.gz
+   colab upload -s pmm-zenodo /tmp/deepmzyme_code_latest.tar.gz /content/deepmzyme_code_latest.tar.gz
    ```
 3. Run the 1-command bootstrap script:
    ```bash
@@ -186,9 +186,9 @@ produced lived only on that VM's ephemeral disk.
    scratch for every fold and every model. A full 3-model x 5-fold campaign repeats
    this 15 times (~2.75 h of pure re-parsing). *Fix: cache built graphs to disk keyed
    by structure set + feature config.*
-5. **`/media/mechti/Data1` does not exist on this workstation.** Both this document and
+5. **The secondary drive (`<secondary-drive>`) was not mounted on this workstation.** Both this document and
    the local-path fallback in `scripts/reproduce_zenodo_pmm_benchmark.sh` reference it;
-   the actual 1.8 TB disk is `/dev/sda1` (NTFS, label `Data`) and is currently
+   the actual 1.8 TB secondary disk (NTFS, label `Data`) is currently
    **unmounted**. The root filesystem has only ~7.4 GB free (97% full), so a download
    target must be chosen and mounted before retrieving run artifacts.
 
@@ -217,5 +217,5 @@ produced lived only on that VM's ephemeral disk.
 - [ ] Enable per-epoch checkpointing for any run longer than a few minutes.
 - [ ] Confirm the workstation will stay powered on, or accept that the VM dies with it.
 - [ ] Verify training actually started by checking GPU utilisation is non-zero, not CPU time.
-- [ ] Mount `/dev/sda1` (or pick another target) before downloading artifacts; `/` is 97% full.
+- [ ] Mount the secondary disk (or pick another target) before downloading artifacts; `/` is 97% full.
 - [ ] `colab stop -s <name>` when finished - idle VMs keep burning compute units.

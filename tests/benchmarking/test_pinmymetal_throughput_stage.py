@@ -159,7 +159,7 @@ def controller(tmp_path, *, active=True, instance="111", start="2026-10-06T08:00
     session = {"active": active, "project": "p", "zone": "z", "vm_name": "v", "instance_id": instance,
                "session_id": "s-1", "session_start": start, "termination_ts": stop, "max_run_duration_s": 14220}
     (root / "state" / "current_session.json").write_text(json.dumps(session))
-    (root / "state" / "ssh_config").write_text(f"Host deepmzyme-vm\n    HostKeyAlias deepmzyme-vm-p-z-{alias_instance}\n")
+    (root / "state" / "ssh_config").write_text(f"Host gpu-vm\n    HostKeyAlias gpu-vm-p-z-{alias_instance}\n")
     return root
 
 
@@ -183,7 +183,7 @@ def test_session_refusals(tmp_path, kwargs, message):
 def test_stale_ssh_config_is_refused(tmp_path):
     assert launcher.check_ssh_config(controller(tmp_path)).name == "ssh_config"
     with pytest.raises(launcher.LauncherError, match="vm-setup --stages ssh"):
-        launcher.check_ssh_config(controller(tmp_path / "x", alias_instance="6465074116022266445"))
+        launcher.check_ssh_config(controller(tmp_path / "x", alias_instance="999"))
 
 
 def session_fields():

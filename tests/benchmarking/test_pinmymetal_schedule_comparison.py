@@ -95,7 +95,7 @@ def test_no_frozen_runner_file_is_touched():
     extension = json.loads((s10.CAMPAIGN / e2.EXTENSION_COPY).read_text()) if (s10.CAMPAIGN / e2.EXTENSION_COPY).is_file() \
         else None
     if extension is None:
-        pytest.skip("the Data1 extension record copy is not mounted")
+        pytest.skip("the local DeepMzyme_Data extension record copy is not present")
     assert subprocess.run(["git", "-C", str(ROOT), "diff", "--quiet", "--", *(str(resolve_existing_path(ROOT / f)) for f in v3.RUNNER_FILES)]).returncode == 0
     assert s10.VM_RUNNER not in v3.RUNNER_FILES
 

@@ -2,8 +2,13 @@
 # Shared settings for the CARE Task 1 <30% identity preparation scripts.
 set -euo pipefail
 
-export PROJECT_ROOT="${PROJECT_ROOT:-/home/mechti/PycharmProjects/DeepMzyme}"
-export PYTHON_BIN="${PYTHON_BIN:-/home/mechti/miniconda3/envs/DeepMzyme/bin/python}"
+export PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Default interpreter: the repo .venv (uv lock, CPU-only torch) if present, else python3.
+# Export PYTHON_BIN to use another environment, e.g. the one used for the historical preparation.
+if [ -z "${PYTHON_BIN:-}" ]; then
+    if [ -x "$PROJECT_ROOT/.venv/bin/python" ]; then PYTHON_BIN="$PROJECT_ROOT/.venv/bin/python"; else PYTHON_BIN="python3"; fi
+fi
+export PYTHON_BIN
 
 export CARE_ROOT="${CARE_ROOT:-$PROJECT_ROOT/DeepMzyme_Data/CARE_dataset}"
 

@@ -4,7 +4,7 @@
 Rules: docs/campaigns/pmm_ion_metal_v3/sched10_assessment_spec.json (handoff section 11, log v3-039; pinned by
 pmm_v3_sched10.FROZEN_SPEC_SHA256). The A4 and E2 specifications, assessors and assessments are only read.
 
-Data path as for step E2 (pmm_v3_e2_assessment): the host-pulled copies on Data1, never the VM. A temporary read-only
+Data path as for step E2 (pmm_v3_e2_assessment): the local host-pulled copies, never the VM. A temporary read-only
 view of the campaign root links the newest evidence copy's root files and status records to the durable lane copies;
 every unit used must match an acknowledged host-pull receipt file by file. The four 50-epoch controls are loaded by the
 frozen A4 loader and must equal the evidence the launch manifest binds; the four 10-epoch fits are loaded with the same

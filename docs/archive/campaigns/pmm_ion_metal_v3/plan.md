@@ -50,7 +50,7 @@ run of the step it affects.
   with folds 1–4 also shown; the full-test comparison states how many of PMM's
   1,488 test rows were scored; the clean subset is never compared with PMM.
 - v3 is fully separate from v2: its own fold-set identity, data root
-  (`/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3`), run names
+  (`<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3`), run names
   carrying fold-set, step, family, target, fold and seed, and its own commits.
   v2 folds, runs, tools and the frozen `_code/pmm_core_scope_v2` checkout stay
   untouched.

@@ -9,7 +9,7 @@ training dataset, bundle, notebook option, or run was created; Part 1 is **not
 ready for Part 2**.
 
 The versioned isolated output is
-`/home/mechti/PycharmProjects/DeepMzyme_pmm_source_audit_output/pmm_feature_crosswalk_full_v1/`.
+`<repo-root>/../DeepMzyme_pmm_source_audit_output/pmm_feature_crosswalk_full_v1/`.
 `row_crosswalk.csv` has exactly one record per source UID with the original
 train/test side and numeric row ID. `exclusion_ledger.csv` contains every
 ambiguous or unavailable row. All eligible structural ions, their identities,

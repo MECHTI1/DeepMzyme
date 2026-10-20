@@ -7,7 +7,7 @@ folds 1-4, seed 42, with a complete 10-epoch cosine schedule and its terminal ch
 50-epoch fits of the same cell (reused, never rerun). The fits run through run_pmm_v3_sched10.py, which this launcher
 copies next to the hash-frozen runner in the extension code directory ('deploy'), and through the step C lane,
 wait, pull, recovery and evidence logic (pmm_v3_step_c) unchanged. Like the other launchers it never starts, stops,
-restores or extends a VM: the controller (~/deepmzyme-vm/bin) owns billing.
+restores or extends a VM: the external VM controller ($DEEPMZYME_VM_CONTROLLER/bin) owns billing.
 
 Commands:
   units                   offline: the four fits, their controls and the development-fold reference
@@ -26,13 +26,13 @@ Commands:
   session / status / launch UNIT@LANE ... [--fit-seconds S] [--no-wait] / wait [UNIT ...] [--any] /
   pull [--lanes K ...] / recover-lane K / archive-failed UNIT / evidence [--allow-running]
                           as for step E2, with this comparison's launch folder (step_s10/launch on the VM) and
-                          evidence folder (step_s10_evidence on Data1)
+                          evidence folder (step_s10_evidence under DeepMzyme_Data/)
 
 Every launch is refused before anything starts unless: the CPU readiness report and the VM extension record agree
 with this worktree; the manifest verifies; the VM copy of run_pmm_v3_sched10.py is the bound one; the recorded
 authorization names this manifest and this ceiling record; and the estimated campaign charges, with the running
 session counted to its hard stop, plus the recorded reserve stay within the recorded ceiling. The assessment runs
-on the workstation from the verified Data1 copies (pmm_v3_sched10_assessment.py), after 'evidence'.
+on the workstation from the verified local copies (pmm_v3_sched10_assessment.py), after 'evidence'.
 """
 
 from __future__ import annotations

@@ -1,4 +1,5 @@
 # Phase 2 Unified & 180-Checkpoint OOF-CV / Held-Out Evaluation Log
+Public-release note (2026-10-20): host paths, device names and cloud resource names below are generalized; facts, hashes and timings are unchanged.
 
 Dated entries, newest first. `EXPERIMENT_STATUS.md` is overwritten only after preserving its previous text here.
 
@@ -91,7 +92,7 @@ Previous STATUS is preserved in [`docs/campaigns/phase2_unified_2026-10/log.md`]
     - `Top-4 LF Group (trunklr1e4 + P5_3s + S5 + 6c)`: **`76.81%` OOF** *(Highest Late-Fusion OOF CV)* $\rightarrow$ **`72.20%` Full / `73.58%` LINK-Free / `73.94%` Eligible / `59.18%` Clean**
     - `CV-Locked Tri-Modal + Unified (1.00 Top-5 LF + 0.25 ESMC + 0.95 GVP)`: **`77.17%` OOF** *(Highest Overall OOF CV)* $\rightarrow$ `71.00%` Full / `72.76%` Eligible / **`61.33%` Clean Subset** (`60.18%` on the 563-row training-disjoint `C1+C2` subset).
   - Repaired subset denominators across all tables to match `preparation_summary.json`: `Full Test (1,488)`, `LINK-Free (1,349)`, `Training-Eligible (1,346)`, `PDB-Dedup (1,098 pairs across 864 PDB IDs)`, and `Clean Subset (423)` (plus `563` training-disjoint `C1+C2` rows).
-  - Updated [`eval_phase2_unified.py`](eval_phase2_unified.py) and [`phase2_unified_summary.json`](phase2_unified_summary.json) so that all 12 primary benchmark rows and bootstrap CIs are reproduced by one command using either `Data1` or the local NVMe backups.
+  - Updated [`eval_phase2_unified.py`](eval_phase2_unified.py) and [`phase2_unified_summary.json`](phase2_unified_summary.json) so that all 12 primary benchmark rows and bootstrap CIs are reproduced by one command using either the secondary drive or the private local backups.
 
 Preserved `EXPERIMENT_STATUS.md` text before update:
 
@@ -126,7 +127,7 @@ The primary independent final-test route remains unresolved; the reused refit is
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run; the 2026-10-15 GPU authorization is consumed. No GPU start, refit, test access, download, commit or push.
-- GPU/VM: `deepmzyme-l4` TERMINATED (confirmed 2026-10-16T11:59Z) after seven sessions: 18 h 37 min, $16.37 gross running; $0.87917/h; storage ~$1/day. [Backup inventory](docs/BACKUP_AND_DATA_INVENTORY.md#5a-local-independent-backups-and-gcp-state-verified-2026-10-13).
+- GPU/VM: `<gpu-vm>` TERMINATED (confirmed 2026-10-16T11:59Z) after seven sessions: 18 h 37 min, $16.37 gross running; $0.87917/h; storage ~$1/day. Backups: the private backup record.
 - Next: the user's route and one-shot decisions, then approval of the label-free prior-use read ([blockers](docs/campaigns/metal_completion_2026-10/evaluation.md#remaining-blockers); [handoff](docs/campaigns/metal_completion_2026-10/handoff.md)).
 
 ## History and update rule
@@ -185,7 +186,7 @@ The exact previous STATUS is preserved in the [campaign log](docs/campaigns/meta
   - Fold 2: `44d5cec3ae15b5aa0f1f3722fd6c023519c759545b0a810d1f96c291dfc4a43e` (`val_predictions.csv` `c7f9ab65fcaa5a26…`)
   - Fold 3: `c2bc733a1fed04eaaadae6051ba81e7d98d13c5d2567f8998d4c3bff7eece561` (`val_predictions.csv` `087703b57ef7934c…`)
   - Fold 4: `0b0b818e8d1af0b8183f273d19f80c30b7cb7a30855f85f797cfe47063ec7df1` (`val_predictions.csv` `023449572e4bfd6a…`)
-- **GCP Session Closeout:** Session `session-20261019T001352Z-c22f6086` on `deepmzyme-l4` (`us-central1-a`) ran `1h 09m` (`\$1.02` gross cost) and is verified `TERMINATED`.
+- **GCP Session Closeout:** Session `session-20261019T001352Z-c22f6086` on `<gpu-vm>` (`us-central1-a`) ran `1h 09m` (`\$1.02` gross cost) and is verified `TERMINATED`.
 
 ### 3. Five-Tier Backup Inventory
 
@@ -193,6 +194,6 @@ The exact previous STATUS is preserved in the [campaign log](docs/campaigns/meta
 |:---|:---|:---|
 | **1. GitHub (`MECHTI1/DeepMzyme`)** | [`docs/campaigns/phase2_unified_2026-10/`](README.md) | Branch `main` |
 | **2. Hugging Face (`GMBioinformatics/DeepMzyme`)** | [`benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz) (`99 MB`) | `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe` |
-| **3. Local NVMe Disk (`/dev/nvme0n1p6`)** | `/home/mechti/deepmzyme_backups/phase2_unified_and_180ckpt_eval_20261019T0317Z/` | Verified via `SHA256SUMS` |
-| **4. Local Data1 HDD (`/dev/sda1`)** | `/media/mechti/Data1/DeepMzyme_Data/campaigns/phase2_unified_2026-10/` | 5 fold dirs + cached graphs |
-| **5. GCP Persistent Disk (`deepmzyme-l4`, `TERMINATED`)** | `/media/mechti/Data1/DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/execution/phase2_unified_runs/` | Stopped L4 instance |
+| **3–5. Maintainer local disks and the stopped GPU VM disk** | Recorded in the maintainer's private backup record (outside the repository) | Tier 3 verified via `SHA256SUMS`; tier 4 holds the five fold folders and cached graphs; tier 5 is the stopped L4 VM disk |
+
+_Rows 3–5 condensed 2026-10-20: device names, local paths and VM details are kept out of the public repository._

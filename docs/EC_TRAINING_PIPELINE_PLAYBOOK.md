@@ -259,7 +259,7 @@ for the reviewed twelve-run reuse ledger; that shared command exports four EC
 and eight metal checkpoints independently. Then produce the EC report:
 
 ```bash
-RH_PY=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+RH_PY="${DEEPMZYME_PYTHON:-.venv/bin/python}"
 RH_ROOT=DeepMzyme_Data/notebook_outputs/remote_homology_v1
 "$RH_PY" src/report_remote_homology.py --task ec \
   --protocol "$RH_ROOT/protocol.json" \
@@ -410,7 +410,7 @@ unselected sample of all metalloenzymes.
 
 ```bash
 # Run from the repository root, using the configured project interpreter.
-PYTHON=/home/mechti/miniconda3/envs/DeepMzyme/bin/python
+PYTHON="${DEEPMZYME_PYTHON:-.venv/bin/python}"
 DATA_ROOT=DeepMzyme_Data
 ASSOCIATION_OUTPUT=DeepMzyme_Data/notebook_outputs/analyses/metal_ec1_development_association_v1_20260915
 "$PYTHON" src/analyze_metal_ec_association.py prepare \

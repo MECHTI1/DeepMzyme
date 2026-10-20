@@ -16,7 +16,7 @@
 ==================================== ERRORS ====================================
 _ ERROR at setup of test_full_grid_has_six_target_contrasts_and_nine_denominator _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -52,7 +52,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -66,7 +66,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ______ ERROR at setup of test_bootstrap_uses_paired_folds_and_fixed_seed _______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -102,7 +102,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -116,7 +116,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls0] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -152,7 +152,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -166,7 +166,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls1] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -202,7 +202,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -216,7 +216,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_rare_missing_and_zero_class_recall_block_promotion[recalls2] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -252,7 +252,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -266,7 +266,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[missing_fold] __
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -302,7 +302,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -316,7 +316,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[missing_config] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -352,7 +352,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -366,7 +366,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_incomplete_or_wrong_grid_cannot_select[awareness_config] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -402,7 +402,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -416,7 +416,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_native_ranking_never_overrides_common_four_and_matched_gate _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -452,7 +452,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -466,7 +466,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_direct_four_can_replace_control_and_frozen_tie_rule_is_explicit _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -502,7 +502,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -516,7 +516,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ______ ERROR at setup of test_oof_and_pmm_coverage_required[missing_pmm] _______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -552,7 +552,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -566,7 +566,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _____ ERROR at setup of test_oof_and_pmm_coverage_required[duplicate_uid] ______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -602,7 +602,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -616,7 +616,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _______ ERROR at setup of test_oof_and_pmm_coverage_required[wrong_fold] _______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -652,7 +652,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -666,7 +666,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ______ ERROR at setup of test_oof_and_pmm_coverage_required[missing_uid] _______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -702,7 +702,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -716,7 +716,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_report_preserves_native_five_meaning_and_replay_provenance _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -752,7 +752,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -766,7 +766,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _____ ERROR at setup of test_collection_accepts_exact_45_normalized_units ______
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -802,7 +802,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -816,7 +816,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 __ ERROR at setup of test_collection_refuses_wrong_normalized_unit[identity] ___
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -852,7 +852,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -866,7 +866,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ___ ERROR at setup of test_collection_refuses_wrong_normalized_unit[source] ____
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -902,7 +902,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -916,7 +916,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ___ ERROR at setup of test_collection_refuses_wrong_normalized_unit[metrics] ___
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -952,7 +952,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -966,7 +966,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_collection_refuses_wrong_normalized_unit[repeated_uid] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1002,7 +1002,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1016,7 +1016,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_collection_refuses_wrong_normalized_unit[qualification] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1052,7 +1052,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1066,7 +1066,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[four_class] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1102,7 +1102,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1116,7 +1116,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[five_class] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1152,7 +1152,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1166,7 +1166,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_full_refit_preview_weights_and_no_fold_no_test[six_class] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1202,7 +1202,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1216,7 +1216,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_completed_refit_verification_does_not_authorize_test_or_pmm _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1252,7 +1252,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1266,7 +1266,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[partial] ____
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1302,7 +1302,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1316,7 +1316,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 __ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[test_report] __
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1352,7 +1352,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1366,7 +1366,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[normalization] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1402,7 +1402,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1416,7 +1416,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 _ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[configuration] _
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1452,7 +1452,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1466,7 +1466,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ___ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[decision] ____
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1502,7 +1502,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1516,7 +1516,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[cohort] _____
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1552,7 +1552,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1566,7 +1566,7 @@ E           pmm_core_assessment.CoreAssessmentError: Scientific module already l
 pmm_core_assessment.py:63: CoreAssessmentError
 ____ ERROR at setup of test_refit_drift_and_wrong_checkpoint_block[target] _____
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1602,7 +1602,7 @@ The above exception was the direct cause of the following exception:
 tests/test_pmm_core_assessment.py:24: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-source_root = PosixPath('/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
+source_root = PosixPath('<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2')
 
     def bind_source(source_root):
         """Use the shared replay consumer's source guard before scientific imports."""
@@ -1618,7 +1618,7 @@ pmm_core_assessment.py:63: CoreAssessmentError
 ______________________ test_outer_loader_not_deserialized ______________________
 
 monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x79c0872acf80>
-tmp_path = PosixPath('/tmp/pytest-of-mechti/pytest-2/test_outer_loader_not_deserial0')
+tmp_path = PosixPath('/tmp/pytest-of-<user>/pytest-2/test_outer_loader_not_deserial0')
 
     def test_outer_loader_not_deserialized(monkeypatch, tmp_path):
         import training.data as data
@@ -1633,7 +1633,7 @@ tmp_path = PosixPath('/tmp/pytest-of-mechti/pytest-2/test_outer_loader_not_deser
             seen.append(name)
             return [], [], []
 >       monkeypatch.setattr(data, "load_structure_pockets", load)
-E       AttributeError: <module 'training.data' from '/media/mechti/Data1/DeepMzyme_worktrees/docs/src/training/data.py'> has no attribute 'load_structure_pockets'
+E       AttributeError: <module 'training.data' from '<secondary-drive>/DeepMzyme_worktrees/docs/src/training/data.py'> has no attribute 'load_structure_pockets'
 
 tests/test_explicit_membership.py:300: AttributeError
 ______________________________ test_dry_run_flag _______________________________
@@ -1663,7 +1663,7 @@ scripts/run_metal_5fold_cv.py:1237: in main
     dataset_id, train_dir, train_csv, test_dir, test_csv = resolve_dataset_layout(
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-data_root = PosixPath('/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data')
+data_root = PosixPath('<secondary-drive>/DeepMzyme_worktrees/docs/DeepMzyme_Data')
 dataset_name_or_path = 'train_and_test_sets_structures_exact_pinmymetal'
 train_summary_csv = None, test_summary_csv = None
 
@@ -1682,7 +1682,7 @@ train_summary_csv = None, test_summary_csv = None
             Path(dataset_name_or_path),
             data_root / dataset_name_or_path,
             REPO_ROOT / "DeepMzyme_Data" / dataset_name_or_path,
-            Path("/media/mechti/Data1/DeepMzyme_Data") / dataset_name_or_path,
+            Path("<secondary-drive>/DeepMzyme_Data") / dataset_name_or_path,
         ]
         dataset_root = None
         for cand in candidates:
@@ -1695,22 +1695,22 @@ train_summary_csv = None, test_summary_csv = None
 >           raise FileNotFoundError(
                 f"Dataset '{dataset_name_or_path}' not found across candidates: {[str(c) for c in candidates]}"
             )
-E           FileNotFoundError: Dataset 'train_and_test_sets_structures_exact_pinmymetal' not found across candidates: ['train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '/media/mechti/Data1/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal']
+E           FileNotFoundError: Dataset 'train_and_test_sets_structures_exact_pinmymetal' not found across candidates: ['train_and_test_sets_structures_exact_pinmymetal', '<secondary-drive>/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '<secondary-drive>/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal', '<secondary-drive>/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal']
 
 scripts/run_metal_5fold_cv.py:221: FileNotFoundError
 =============================== warnings summary ===============================
-../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26
-  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26: DeprecationWarning: `torch_geometric.distributed` has been deprecated since 2.7.0 and will no longer be maintained. For distributed training, refer to our tutorials on distributed training at https://pytorch-geometric.readthedocs.io/en/latest/tutorial/distributed.html or cuGraph examples at https://github.com/rapidsai/cugraph-gnn/tree/main/python/cugraph-pyg/cugraph_pyg/examples
+<python-env>/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26
+  <python-env>/lib/python3.12/site-packages/torch_geometric/llm/utils/backend_utils.py:26: DeprecationWarning: `torch_geometric.distributed` has been deprecated since 2.7.0 and will no longer be maintained. For distributed training, refer to our tutorials on distributed training at https://pytorch-geometric.readthedocs.io/en/latest/tutorial/distributed.html or cuGraph examples at https://github.com/rapidsai/cugraph-gnn/tree/main/python/cugraph-pyg/cugraph_pyg/examples
     from torch_geometric.distributed import (
 
-../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
-../../../../../home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488
-  /home/mechti/miniconda3/envs/DeepMzyme/lib/python3.12/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+<python-env>/lib/python3.12/site-packages/torch/jit/_script.py:1488
+<python-env>/lib/python3.12/site-packages/torch/jit/_script.py:1488
+  <python-env>/lib/python3.12/site-packages/torch/jit/_script.py:1488: DeprecationWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
     warnings.warn(
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
-SKIPPED [1] tests/smoke_checks.py:2979: local multi-metal fixture directory is absent: /media/mechti/Data1/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train
+SKIPPED [1] tests/smoke_checks.py:2979: local multi-metal fixture directory is absent: <secondary-drive>/DeepMzyme_worktrees/docs/DeepMzyme_Data/train_and_test_sets_structures_non_overlapped_pinmymetal/train
 SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_exact_pinmymetal not available locally
 SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_zenodo_pmm_exact not available locally
 SKIPPED [1] tests/test_generalized_metal_5fold_cv.py:30: Dataset train_and_test_sets_structures_non_overlapped_pinmymetal not available locally

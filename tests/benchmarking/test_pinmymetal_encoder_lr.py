@@ -101,7 +101,7 @@ def test_the_launcher_never_imports_torch():
 def test_no_frozen_runner_file_is_touched():
     copy = tl.CAMPAIGN / e2.EXTENSION_COPY
     if not copy.is_file():
-        pytest.skip("the Data1 extension record copy is not mounted")
+        pytest.skip("the local DeepMzyme_Data extension record copy is not present")
     assert subprocess.run(["git", "-C", str(ROOT), "diff", "--quiet", "--", *(str(resolve_existing_path(ROOT / f)) for f in v3.RUNNER_FILES)]).returncode == 0
     assert tl.VM_RUNNER not in v3.RUNNER_FILES
 

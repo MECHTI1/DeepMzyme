@@ -40,8 +40,8 @@ No target/model promotion, final refit or held-out evaluation occurred.
 | Core v2 | Closed at fold 0; [execution contract](../../../plans/pmm_core_execution_v1.md), [core evidence](../../../notebook_outputs/raw/pmm_core_continuation_20260928/README.md) |
 | Binding-aware arms | Closed; three trained arms remain separate exploratory evidence ([screen](../../../notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)) |
 
-Compute: GCP L4 via `~/deepmzyme-vm/bin/*` under
-[gpu-use-skill](../../../../.agents/skills/gpu-use-skill/SKILL.md); the VM and disk
+Compute: GCP L4 via `<vm-controller>/bin/*` under
+the maintainer's local `gpu-use-skill` policy (not published); the VM and disk
 were retired to a snapshot on 2026-10-03 ([pmm-011](log.md#pmm-011)).
 
 Files here: this overview, [verbatim STATUS history and closure record](log.md)

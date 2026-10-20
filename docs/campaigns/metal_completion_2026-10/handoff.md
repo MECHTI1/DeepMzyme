@@ -1,4 +1,4 @@
-# Next Claude Code session prompt
+# Next agent session prompt
 
 Paste the following prompt into a new session. It authorizes reading and CPU work only. It does not authorize a
 GPU session, spending, training, candidate-test collection, a test-side read or held-out evaluation. Optimization is
@@ -7,17 +7,17 @@ complete ([log](log.md)) and the Stage 6B source is designated
 
 ---
 
-Work in `/home/mechti/PycharmProjects/DeepMzyme`. My priority is the independent evaluation of the selected metal
+Work in `<repo-root>`. My priority is the independent evaluation of the selected metal
 model. The completion campaign retained the unchanged B four-class configuration (the v3 late-fusion direct-four
 recipe), and the v3 full non-test refit `a0007846…` is its verified, designated Stage 7 source. Keep its features
 and architecture unchanged: no atom-level encoder and no extra surrounding-atom inputs. EC stays deferred.
 
-First read `AGENTS.md`, `EXPERIMENT_STATUS.md`, the campaign README, `evaluation.md`, the relevant `Plan.md`
-sections, `docs/DATASETS.md` and the documentation owner table. Verify the prescribed conda interpreter before
-Python commands. Read the GPU skill before any compute planning; reading it grants no spending authority. Inspect
-the worktree and index.
+First read the local agent instructions (`AGENTS.md`, not published), `EXPERIMENT_STATUS.md`, the campaign README,
+`evaluation.md`, the relevant `Plan.md` sections, `docs/DATASETS.md` and the documentation owner table. Verify the
+prescribed project interpreter before Python commands. Read the maintainer's local GPU-use policy (not published)
+before any compute planning; reading it grants no spending authority. Inspect the worktree and index.
 
-Evidence lives in Data1 `campaigns/metal_completion_2026-10/preparation_20261014T164111Z/evidence/`:
+Evidence lives on the secondary drive in `DeepMzyme_Data/campaigns/metal_completion_2026-10/preparation_20261014T164111Z/evidence/`:
 - `execution_closeout.json`: the campaign fits;
 - `stage6b_source_20261016/`: the compatibility record, 25 of 25 checks passed;
 - `evaluation_prep_20261016/`: training-side prior-use release dates, obsolete entries and the blocked template.

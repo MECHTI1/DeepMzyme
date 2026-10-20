@@ -33,7 +33,7 @@ remaining fits will not run here.
 No promotion, Stage 6 confirmation, Stage 6B refit or held-out evaluation
 occurred. Fold-0 results of this campaign are never confirmatory evidence for a
 later study. All run artifacts, caches, embeddings and the frozen code checkout
-`/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2` are
+`<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2` are
 preserved. `docs/plans/pmm_core_scope_v2.json` stays unchanged: its
 `deferred_by_user` status keeps the runner refusing execution. Successor planning:
 [pmm_ion_metal_v3](../../../campaigns/pmm_ion_metal_v3/README.md).
@@ -319,7 +319,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:107-139`.
 - The full-grid preview now lists 39 fixed candidate units, without treating
   them as a verified missing-work queue. Five-class folds 1–4 intentionally have
   no execution command yet. Use isolated frozen checkout
-  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;
+  `<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v2`;
   unrelated shared-checkout model/configuration edits are preserved.
 - Binding-aware work remains paused. The previous 30-hour/$34 proposal remains
   unapproved; session/day caps are unchanged. The requested four-hour same-VM
@@ -358,7 +358,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:140-176`.
   Concurrent model/configuration edits in the shared working tree subsequently
   changed its source identity; the guard correctly refused that checkout.
   The isolated checkout at
-  `/media/mechti/Data1/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v1`
+  `<secondary-drive>/DeepMzyme_Data/campaigns/_code/pmm_core_scope_v1`
   passed the same 32 tests and actual CPU preview. It preserves frozen source
   without reverting unrelated edits or bypassing source/configuration checks.
   Canonical `runtime/core_scope_verification.json` binds the successful preview.
@@ -451,7 +451,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:215-258`.
   **trained but uncertified**, excluded from comparisons; see
   [TECH-023](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-023--full-fit-gvp-independent-replay-exceeds-the-frozen-probability-tolerance).
 - **VM confirmed TERMINATED at 19:41:10 UTC / 22:41:10 Israel.**
-  `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`,
+  `<gpu-vm>@us-central1-c`, immutable instance `<resource-id>`,
   stopped at **19:40:52 UTC**, before its 20:38:52 deadline. Session
   `session-20260927T181200Z-259157df` used **5,333 seconds / $1.3023 estimated
   running gross**. No GPU worker remains. One 150-GB disk is retained at
@@ -503,7 +503,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:259-309`.
   its 71-file backup verified at **17:39:59 UTC**.
 - **VM confirmed TERMINATED at 17:41:59 UTC / 20:41:59 Israel.**
   Session `session-20260927T143239Z-d9c4d944` ran from **14:32:39 to 17:41:40 UTC**
-  on `deepmzyme-l4@us-central1-c`, immutable instance `3144565200755786222`:
+  on `<gpu-vm>@us-central1-c`, immutable instance `<resource-id>`:
   **3h 09m 01s**, estimated running gross **$2.7697**. No compute is running.
   One 150-GB persistent disk remains at approximately **$15/month**. Normal
   closeout deleted nothing. The provider deadline had been 18:29:32 UTC.
@@ -526,7 +526,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:259-309`.
   status tags preserve old results and mitigate TECH-022. The
   [GPU review](docs/notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/gpu_execution_review.md)
   records cold versus warm preparation costs. Canonical artifacts remain at
-  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`;
+  `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`;
   current resume notes are in its `runtime/RESUME_STATE.md`.
 
 ```
@@ -543,7 +543,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:310-352`.
 - Frozen training-only cohort: **7,398 ions / 3,992 PDB groups**, five class-complete
   PDB-grouped folds. Excluded source rows: 9 missing, 10 non-single-metal residues,
   503 missing explicit protein-symmetry context. Canonical artifacts:
-  `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
+  `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context`.
   Historical v1 evidence is preserved separately.
 - Completed preparation is reusable: five PMM CPU folds (mean common-four BA
   **70.2885%**, pooled OOF **70.0766%**), all **7,664 ESMC-600M payloads**,

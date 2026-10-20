@@ -32,7 +32,7 @@ CAMPAIGN_README_MAX_LINES = 60
 
 # Top-level documents. A new one requires merging or archiving an existing one.
 ALLOWED_ROOT_DOCS = frozenset({
-    "AGENTS.md", "CLAUDE.md", "EXPERIMENT_STATUS.md", "GEMINI.md", "Plan.md", "README.md",
+    "AGENTS.md", "EXPERIMENT_STATUS.md", "GEMINI.md", "Plan.md", "README.md",
 })
 ALLOWED_DOCS_TOP_LEVEL = frozenset({
     "COLAB_GPU_RUNBOOK.md", "DATASETS.md",

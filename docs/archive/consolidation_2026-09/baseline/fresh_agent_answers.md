@@ -1,6 +1,6 @@
 # Fresh-agent baseline answers (default reading path only)
 
-Worktree: `/media/mechti/Data1/DeepMzyme_worktrees/docs` (W). Date: 2026-09-28.
+Worktree: `<secondary-drive>/DeepMzyme_worktrees/docs` (W). Date: 2026-09-28.
 
 ## Files read (in full) and byte counts
 
@@ -39,7 +39,7 @@ Reading-path observations:
 
 ## 3. Where GPU runs execute; who owns the GPU lifecycle
 
-**Answer:** Recent runs used a GCP L4 VM (`deepmzyme-l4`, us-central1-c, with a recovery in us-central1-a). The rules are one active GPU, one training worker per GPU, and caps of 4h/$6 per session and 6h/$10 per UTC day. Earlier runs used Colab. `gpu-use-skill` is the mandatory entry point. One coordinator owns allocation, submission and shutdown; an optional monitor is read-only; the runbook and controller own the commands. The default path does not say who the coordinator is or give the controller commands. AGENTS' "G4-class GPU" and Drive-storage assumptions are Colab-era and stale.
+**Answer:** Recent runs used a GCP L4 VM (`<gpu-vm>`, us-central1-c, with a recovery in us-central1-a). The rules are one active GPU, one training worker per GPU, and caps of 4h/$6 per session and 6h/$10 per UTC day. Earlier runs used Colab. `gpu-use-skill` is the mandatory entry point. One coordinator owns allocation, submission and shutdown; an optional monitor is read-only; the runbook and controller own the commands. The default path does not say who the coordinator is or give the controller commands. AGENTS' "G4-class GPU" and Drive-storage assumptions are Colab-era and stale.
 
 **Sources:** AGENTS.md:29-51, 467-469; EXPERIMENT_STATUS.md:26-27, 55-69, 91-99, 238-245, 256-257, 302-303; Plan.md:268-271, 394-395; docs/README.md:65-67, 84-94.
 

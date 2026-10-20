@@ -1,10 +1,10 @@
 # Job B workstation verification (2026-09-29)
 
-Worktree `/media/mechti/Data1/DeepMzyme_worktrees/docs`, branch `docs-consolidation`
+Worktree `<secondary-drive>/DeepMzyme_worktrees/docs`, branch `docs-consolidation`
 fast-forwarded from `3c0f80c` to the cloud tip `6808084` after the older 31-file staged
 draft was saved outside the repository (its patch SHA-256 starts `f8ac2f27`, the same
 patch the cloud session received) and dropped. Interpreter:
-`/home/mechti/miniconda3/envs/DeepMzyme/bin/python` (checked with `sys.executable`).
+`<python>` (the Conda env interpreter, checked with `sys.executable`).
 Commands ran under the Job A cap (`systemd-run` 2 cores / 3 GB, `nice -n 19`).
 
 | Check (PLAN_v2 §12.6) | Result |

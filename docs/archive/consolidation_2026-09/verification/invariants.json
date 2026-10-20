@@ -1,7 +1,7 @@
 {
   "source_hash": {
-    "/home/mechti/PycharmProjects/DeepMzyme": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
-    "/media/mechti/Data1/DeepMzyme_worktrees/docs": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23"
+    "<repo-root>": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23",
+    "<secondary-drive>/DeepMzyme_worktrees/docs": "adc95c42261448dc9d35572a138a3b8349de79124d9708618f511c27a848dd23"
   },
   "playbooks": {
     "METAL": {

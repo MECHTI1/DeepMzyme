@@ -4,7 +4,7 @@
 Rules: docs/campaigns/pmm_trunk_lr_2026-10/trunklr_assessment_spec.json (pinned by pmm_trunklr.FROZEN_SPEC_SHA256).
 The A4 and E2 specifications, assessors and assessments are only read.
 
-Data path as for the v3 10-epoch comparison (pmm_v3_sched10_assessment): the host-pulled copies on Data1, never the
+Data path as for the v3 10-epoch comparison (pmm_v3_sched10_assessment): the local host-pulled copies, never the
 VM. A temporary read-only view of the v3 execution root links the evidence copy's root files and status records to the
 durable lane copies; every unit used must match an acknowledged host-pull receipt file by file. The five controls are
 loaded by the frozen A4 loader (fold 0 resolves to the reused step-B run) and must equal the evidence the launch
@@ -310,7 +310,8 @@ def run(*, data: Path, manifest: dict[str, Any], manifest_path: Path | None, evi
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--data-root", type=Path, default=tl.CAMPAIGN, help="the v3 execution root on Data1")
+    parser.add_argument("--data-root", type=Path, default=tl.CAMPAIGN,
+                        help="the v3 execution root (DeepMzyme_Data/campaigns/pmm_ion_metal_v3)")
     parser.add_argument("--records", type=Path, default=tl.RECORDS, help="this campaign's records folder")
     parser.add_argument("--manifest", type=Path, help="default: the recorded launch manifest")
     parser.add_argument("--evidence", type=Path, help="evidence copy (default: the newest comparison copy)")

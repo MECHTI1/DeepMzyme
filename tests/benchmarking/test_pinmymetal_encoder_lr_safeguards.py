@@ -2,8 +2,8 @@
 pmm_trunklr_assessment_v2.py): session authorization at submission and the final-worker completion gate.
 
 CPU only, synthetic fixtures in tmp_path; nothing contacts a VM. The comparison's intended limits are used: one
-session of at most 9,000 s. The only real files read (when Data1 is mounted) are the historical authorization and
-assessment, which are never written.
+session of at most 9,000 s. The only real files read (when the local DeepMzyme_Data records are present) are the
+historical authorization and assessment, which are never written.
 """
 
 from __future__ import annotations
@@ -140,7 +140,8 @@ def test_the_historical_v1_authorization_is_never_a_v2_launch_policy(tmp_path):
     assert binding is None and any("lacks the required v2 bindings" in p for p in problems)
 
 
-@pytest.mark.skipif(not (tl.RECORDS / "tlr_authorization.json").is_file(), reason="Data1 records not mounted")
+@pytest.mark.skipif(not (tl.RECORDS / "tlr_authorization.json").is_file(),
+                    reason="local DeepMzyme_Data records not present")
 def test_the_real_historical_authorization_lacks_the_v2_bindings():
     authorization = sg.e2.read_json(tl.RECORDS / "tlr_authorization.json")
     problems = sg.policy_problems(authorization, manifest_sha256=None, ceiling_sha256=None, authorization_sha256=None,
@@ -559,7 +560,7 @@ def test_valid_evidence_preserves_the_original_scientific_result():
     assert changed == ["/mean_difference: 0.0116 != 0.02"]
 
 
-@pytest.mark.skipif(not HISTORICAL.is_file(), reason="Data1 records not mounted")
+@pytest.mark.skipif(not HISTORICAL.is_file(), reason="local DeepMzyme_Data records not present")
 def test_the_historical_assessment_is_unchanged_and_retains_the_reference():
     assert sha(HISTORICAL) == HISTORICAL_SHA256
     history = json.loads(HISTORICAL.read_text())

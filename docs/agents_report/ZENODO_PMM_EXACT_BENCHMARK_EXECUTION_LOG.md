@@ -33,7 +33,7 @@ Every detail in this document is recorded so that any autonomous agent, engineer
 | **Reconstructed Sites** | 9,398 sites (**99.89% exact fidelity**: 7,911 train sites in 6,443 PDBs, 1,487 test sites in 1,281 PDBs) |
 | **Execution Target (NOT COMPLETED)** | Fold 0 of `benchmark_enhanced_only_gvp` (50 epochs) + Held-Out Test Evaluation |
 | **Colab Session (REAPED, GONE)** | `pmm-zenodo` (`gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb`, NVIDIA L4, 24 GB VRAM) |
-| **Colab Web Interface** | [Colab Notebook](https://colab.research.google.com/notebooks/empty.ipynb?dbu=%2Ftun%2Fm%2Fgpu-l4-s-kkb-ass1b1-c4x86vhbzxfb#datalabBackendUrl=https://colab.research.google.com/tun/m/gpu-l4-s-kkb-ass1b1-c4x86vhbzxfb) |
+| **Colab Web Interface** | `<colab-runtime-url>` (ephemeral runtime endpoint, gone with the VM) |
 | **Process PIDs (dead with the VM)** | Runner PID `5303`, Training PID `5353` |
 | **Execution Start Time** | 2026-09-24 10:40:27 UTC (13:40:27 local time) |
 | **Estimated Completion** | ~~2026-09-24 11:24 UTC~~ **never reached - VM reclaimed 11:48 UTC, no artifacts** |
@@ -84,7 +84,7 @@ Empirically observed on an NVIDIA L4 GPU instance (2 vCPU, 13 GB RAM, 24 GB VRAM
 
 Under the project's strict non-destructive policy:
 1. **Zero Clobbering:** Existing datasets (`train_and_test_sets_structures_exact_pinmymetal`) and previous runners (`scripts/run_exact_pinmymetal_5fold_cv.py`) are strictly preserved and untouched.
-2. **Dedicated Output Directories:** All runs write exclusively to `/content/runs/runs_zenodo_pmm_exact` (on Colab) or `/media/mechti/Data1/DeepMzyme_Data/runs_zenodo_pmm_exact` (on host).
+2. **Dedicated Output Directories:** All runs write exclusively to `/content/runs/runs_zenodo_pmm_exact` (on Colab) or `<secondary-drive>/DeepMzyme_Data/runs_zenodo_pmm_exact` (on host).
 3. **Partition Safety:** The host `/home` partition is strictly protected from large checkpoints.
 
 ---

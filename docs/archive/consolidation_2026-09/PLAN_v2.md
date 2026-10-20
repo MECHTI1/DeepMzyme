@@ -2,7 +2,7 @@
 
 - **Version:** v2, 2026-09-28 (~14:00 IDT). It replaces v1, the plan pasted into the
   05:22 UTC review session, and merges in all 33 review amendments
-  (`~/.claude/plans/system-reminder-the-user-started-pure-avalanche.md`, section
+  (`<agent-session-dir>/plans/system-reminder-the-user-started-pure-avalanche.md`, section
   "For later"). Appendix A maps each amendment to its place here.
 - **Re-verified:** the facts below were re-measured read-only at 13:50 IDT on `3e912a6`.
   Where a re-check changed an amendment, the text says **re-verified**.
@@ -37,7 +37,7 @@
 
 ## 1. State at 13:50 IDT (re-verified)
 
-- **Shared checkout** (`/home/mechti/PycharmProjects/DeepMzyme`):
+- **Shared checkout** (`<repo-root>`):
   - branch `metal-pmm-ion-campaign` at `3e912a6`, equal to its origin;
   - `git status --porcelain` is empty, so v1's precondition (amendment 2) holds now;
   - 29 commits ahead of `main` (`34633fa` = `origin/main`), 0 behind. The review said 25.
@@ -55,7 +55,7 @@
   `docs/plans/gvp_and_esmc_evidence_ranked_improvement_plan.md` (`6d4e674`).
 - **Disk:**
   - `/` has 2.7 GB free (99% used). `.git` (490 MB) is on `/`.
-  - `/media/mechti/Data1` (ntfs3) is mounted with 66 GB free.
+  - `<secondary-drive>` (ntfs3) is mounted with 66 GB free.
   - A worktree holds about 322 MB of tracked files (2,042 files).
 - **Worktrees:**
   - the shared checkout;
@@ -95,7 +95,7 @@ Do not add an "AI index" document on top of the existing ones.
 - `main` gets the work when the campaign branch merges.
 
 ### 3.2 Worktree location (amendment 5)
-- `<wt>` = `/media/mechti/Data1/DeepMzyme_worktrees/docs`. It is outside `campaigns/`.
+- `<wt>` = `<secondary-drive>/DeepMzyme_worktrees/docs`. It is outside `campaigns/`.
 - **Right after checkout,** `git -C <wt> status --porcelain` must be empty.
   - If only file modes differ (NTFS), use `git -c core.fileMode=false` on every
     command in `<wt>`. Never change the repo config.
@@ -265,8 +265,8 @@ STATUS only "if present at the repository root". After each fast-forward:
 9. **Keep your context small.** Work from inventory tables and open single sections.
 10. **Search with `rg --no-ignore`** for every safety or verification search.
 11. **Never do any of these:**
-    - run `~/deepmzyme-vm/bin/*`, `colab`, training, HPO or any GPU command;
-    - touch `/media/mechti/Data1/DeepMzyme_Data/campaigns/`;
+    - run `<vm-controller>/bin/*`, `colab`, training, HPO or any GPU command;
+    - touch `<secondary-drive>/DeepMzyme_Data/campaigns/`;
     - touch the `DeepMzyme_pmm_source_audit` worktree;
     - run a blanket `git worktree prune` (amendment 31);
     - make a repo-wide `git config` change while the campaign is open.
@@ -288,7 +288,7 @@ STATUS only "if present at the repository root". After each fast-forward:
 ## 6. User decisions
 
 - **D1: the primary route is the CLI runners on the GCP L4 VM**, run through
-  `~/deepmzyme-vm/bin/*` under `gpu-use-skill`.
+  `<vm-controller>/bin/*` under `gpu-use-skill`.
   - Colab is the authorized fallback, and the notebook is a secondary interface.
   - Rewrite the Colab-first and Drive-mandatory phrases.
   - Keep the G4 budgets, labeled as historical.
@@ -360,7 +360,7 @@ STATUS only "if present at the repository root". After each fast-forward:
 
 ```
 AGENTS.md              ≤12 KB  rules only
-CLAUDE.md              1 line → AGENTS.md (unchanged)
+agent pointer file     1 line → AGENTS.md (unchanged)
 GEMINI.md              1 line → AGENTS.md (new)
 README.md              public overview + ≤30-line quick start
 Plan.md                ≤35 KB  science/design policy (stays at root: repo-root marker)
@@ -422,7 +422,7 @@ Closed campaigns go to `docs/archive/campaigns/<id>/`; the rest go to
 | `docs/REMOTE_HOMOLOGY_ADDENDUM.md` + sequence-remoteness sections | → `remote_homology_v1/` (closed). Plan keeps its policy paragraph. `raw/remote_homology_v1_20260917/` stays in place | C |
 | `docs/plans/pocket_level_EC_task_compare_clean30_final_plan.md` | **Stays** (invariant 2). Create `campaigns/ec1_clean30/README.md` (planned) linking to it | C |
 | `docs/VERY_EXACT_PMM_SETS_PLAN.md` | "Planned; partly realized via `--source-cohort-csv` (train side only)". Ask before calling it superseded (amendment 26) | C |
-| `docs/GCP_GPU_RUNBOOK.md` + `docs/COLAB_GPU_RUNBOOK.md` | → `docs/COMPUTE.md`. Update the skill links and `GETTING_STARTED.md:19`'s anchor link. `~/deepmzyme-vm/AGENTS.md:147` links to `docs/GCP_GPU_RUNBOOK.md`: leave a one-line stub there, or you update the controller (amendment 28) | C |
+| `docs/GCP_GPU_RUNBOOK.md` + `docs/COLAB_GPU_RUNBOOK.md` | → `docs/COMPUTE.md`. Update the skill links and `GETTING_STARTED.md:19`'s anchor link. `<vm-controller>/AGENTS.md:147` links to `docs/GCP_GPU_RUNBOOK.md`: leave a one-line stub there, or you update the controller (amendment 28) | C |
 | `docs/GETTING_STARTED.md` | Essentials → README + `COMPUTE.md`; file → archive | C |
 | `docs/BACKUP_AND_DATA_INVENTORY.md` | → DATASETS "Storage and backups" (freeze); file → archive | C |
 | `docs/REPRODUCIBILITY_REMEDIATION_PLAN.md` | → archive | C |
@@ -523,7 +523,7 @@ What moves out is as in v1:
 5. Resolved issues move to `docs/archive/issues_resolved.md`. If anything links to the
    issue's anchor, keep a one-line stub under its `TECH-###` heading.
 6. After editing any `.md` file, run
-   `/home/mechti/miniconda3/envs/DeepMzyme/bin/python tools/check_docs_contract.py`.
+   `<python> tools/check_docs_contract.py`.
    Fix the text, not the checker.
 
 ---
@@ -580,7 +580,7 @@ Every stop is a real wait.
   - HEAD equals `origin/metal-pmm-ion-campaign`;
   - `source_tree_sha256` = `adc95c42…` (read-only inline Python);
   - record `sha256sum docs/plans/*`;
-  - check `df -h / /media/mechti/Data1`.
+  - check `df -h / <secondary-drive>`.
 - **Worktree:** create it (3.1/3.2), confirm it is clean, copy this plan to
   `PLAN_v2.md`, and start `PROGRESS.md`.
 - **`before_hashes.txt`:**
@@ -592,7 +592,7 @@ Every stop is a real wait.
   systemd-run --user --scope --quiet -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0 \
     env GIT_OPTIONAL_LOCKS=0 CUDA_VISIBLE_DEVICES= PYTHONDONTWRITEBYTECODE=1 \
         OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
-    taskset -c 0,1 nice -n 19 /home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+    taskset -c 0,1 nice -n 19 "${DEEPMZYME_PYTHON:?project python}" \
     -m pytest -p no:cacheprovider -q -rs
   ```
   Then run `tests/smoke_checks.py` the same way. Save both outputs. Compare worktree runs
@@ -675,7 +675,7 @@ When the campaign closes, replan Job D with these points (amendments 17 and 33):
   stays visible.
 - **`.aiignore`:** see contradiction 11.
 - **`GEMINI.md`:** one line → AGENTS.md.
-- **Optional, ask first:** a symlink `.claude/skills/gpu-use-skill` → `.agents/skills/gpu-use-skill`.
+- **Optional, ask first:** a `gpu-use-skill` symlink in the local agent skills directory → `.agents/skills/gpu-use-skill`.
 
 ### 12.6 Phase 6 — Verify (every job, the parts that apply)
 - `git -C <wt> diff --name-only` touches only allowed paths, and
@@ -724,7 +724,7 @@ v1's items 1–8 apply, with these additions:
 
 ## 15. Open decisions for you
 
-1. **Worktree location.** `/media/mechti/Data1/DeepMzyme_worktrees/docs` (NTFS; clean
+1. **Worktree location.** `<secondary-drive>/DeepMzyme_worktrees/docs` (NTFS; clean
    check first), or `/` (322 MB, leaving ~2.4 GB)?
 2. **Freeze window 1.** Can I treat "Codex idle, no new thread until you fast-forward
    Job A" as confirmed? Should the freeze extend through Job B while the campaign is paused?
@@ -861,7 +861,7 @@ with its line). `PROGRESS.md` is updated. No `MOVED.md` entries: Job A moves not
    - Fold 0 is trained; folds 1–4 are deferred.
    - Phase 0 verifies the grouping key.
 3. **Where do runs execute, and who owns the GPU lifecycle?**
-   - CLI runners on the GCP L4 VM via `~/deepmzyme-vm/bin/*` under `gpu-use-skill` (D1).
+   - CLI runners on the GCP L4 VM via `<vm-controller>/bin/*` under `gpu-use-skill` (D1).
      Colab is the fallback.
    - One coordinator owns allocation, submission and shutdown. A monitor is read-only.
      There is one active GPU (`AGENTS.md:38-51`).

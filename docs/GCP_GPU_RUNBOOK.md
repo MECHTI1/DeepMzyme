@@ -1,19 +1,29 @@
 # GCP GPU VM runbook
 
-Agents first read the project
-[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md), which owns runtime
-routing and the bounded capacity pass. Use `~/deepmzyme-vm/bin/*` for all VM
-lifecycle actions. Read that controller's
-`AGENTS.md` and current `config.env` before operating it. The controller owns
+Agents first read the maintainer's local `gpu-use-skill` policy (not
+published), which owns runtime routing and the bounded capacity pass. Use
+`<vm-controller>/bin/*` for all VM lifecycle actions. Read that controller's
+own documentation and current `config.env` before operating it. The controller owns
 authorization, prices, quotas, daily/session accounting, locking and Google's
 automatic STOP. The [PMM runtime guide](GPU_EXECUTION_CASCADE_PLAYBOOK.md) covers
 measured admission and persistence on this route or [Colab](COLAB_GPU_RUNBOOK.md);
 the [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md) owns scientific commands.
 Current progress belongs in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
+Placeholders for private values (defined here once; other docs reuse them):
+
+- `<vm-controller>`: the directory of the maintainer's separate, private GCP VM
+  controller (not part of this repository). Shell blocks read it from
+  `DEEPMZYME_VM_CONTROLLER`.
+- `<vm-host>`: the SSH host alias the controller writes to
+  `<vm-controller>/state/ssh_config`. Shell blocks read it from
+  `DEEPMZYME_SSH_HOST`.
+- `<gpu-vm>` and `<gcp-project>`: the VM instance name and GCP project id. The
+  controller's `config.env` records the current values.
+
 ## Controller and resource contract
 
-The initial machine is `deepmzyme-l4` in project `deepmzyme-gpu-vm`, using
+The initial machine is `<gpu-vm>` in project `<gcp-project>`, using
 `g2-standard-8`: 8 vCPU, 32 GiB RAM and one NVIDIA L4 with 24 GB GPU memory.
 Read `config.env` for the currently selected name and zone after recovery.
 Connection uses IAP SSH. Confirm actual hardware after creation.
@@ -27,10 +37,10 @@ overlapping source/replacement disks and temporary snapshots during recovery;
 credits never widen caps. A stopped VM still incurs storage charges.
 
 ```bash
-~/deepmzyme-vm/bin/vm-status
-~/deepmzyme-vm/bin/vm-report --no-ssh
-~/deepmzyme-vm/bin/vm-preflight
-~/deepmzyme-vm/bin/vm-price
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-status
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-report --no-ssh
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-preflight
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-price
 ```
 
 Present the planned hard stop and maximum estimated gross charge before using
@@ -67,9 +77,9 @@ quota, pricing refusal or authentication failure. Capacity changes; neither a
 past failure nor positive quota establishes current availability
 ([Google documentation](https://docs.cloud.google.com/compute/docs/troubleshooting/troubleshooting-vm-creation)).
 
-The GPU skill owns route selection; the controller enforces recovery limits.
+The GPU-use policy owns route selection; the controller enforces recovery limits.
 An existing stopped VM uses the same-region recovery below. A fresh allocation
-without a managed VM may use the skill's separately authorized cross-region
+without a managed VM may use the policy's separately authorized cross-region
 creation pass. These are distinct procedures. Never delete, rename or unlabel
 a source to evade a guard. Reconcile uncertain requests against actual cloud
 state before another attempt.
@@ -87,8 +97,8 @@ one requested hour and a provider-suggested zone; substitute the actual approved
 duration and same-region hint. `--preferred-zone` is optional.
 
 ```bash
-~/deepmzyme-vm/bin/vm-fallback --dry-run --hours 1 --preferred-zone us-central1-c
-~/deepmzyme-vm/bin/vm-fallback --confirm --hours 1 --preferred-zone us-central1-c
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-fallback --dry-run --hours 1 --preferred-zone us-central1-c
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-fallback --confirm --hours 1 --preferred-zone us-central1-c
 ```
 
 Preview must not create cloud resources or change the selected configuration,
@@ -136,12 +146,12 @@ and host-side backup verification tied to that replacement session. Under
 existing cleanup authorization, finalize with its evidence file:
 
 ```bash
-~/deepmzyme-vm/bin/vm-fallback --finalize --dry-run --evidence /absolute/path/recovery_evidence.json
-~/deepmzyme-vm/bin/vm-fallback --finalize --evidence /absolute/path/recovery_evidence.json --confirm
-~/deepmzyme-vm/bin/vm-status
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-fallback --finalize --dry-run --evidence /absolute/path/recovery_evidence.json
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-fallback --finalize --evidence /absolute/path/recovery_evidence.json --confirm
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-status
 ```
 
-Use `~/deepmzyme-vm/README.md`'s "Verify and finalize recovery" evidence contract.
+Use the controller README's "Verify and finalize recovery" evidence contract.
 It binds the pass and immutable replacement/session IDs, UTC completion time,
 completed fit and passed replay artifacts, and the independently verified local
 backup's complete file/hash manifest. Fit/replay artifacts must be inside that
@@ -198,7 +208,7 @@ data bundle. The PMM campaign uses its reviewed working-tree source archive
 and train-only archive instead. Use:
 
 ```bash
-~/deepmzyme-vm/bin/vm-setup --stages driver,ssh
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-setup --stages driver,ssh
 ```
 
 Transfer `code_snapshot.tar.gz`, `train_side.tar.gz`, `campaign_frozen.tar.gz`
@@ -305,22 +315,26 @@ SHA-256 by reading the downloaded bytes, and uploads the resulting small
 acknowledgment. Reuse the original campaign command after acknowledgment; its
 completed-fit checks decide which scientific work can be reused.
 
-Run the following on the workstation for each pending transfer. Set both roots
-to the exact campaign and destination passed to the runner. The existing
-controller supplies the IAP SSH configuration; these commands do not start a VM.
+Run the following on the workstation, from the repository root, for each
+pending transfer. Set both roots to the exact campaign and destination passed
+to the runner: `PMM_HOST_ROOT` must equal the recorded `--durable-root` string,
+and `PMM_VM_ROOT` must be absolute because the remote `jq` path is single-quoted.
+The existing controller supplies the IAP SSH configuration; these commands do
+not start a VM.
 
 ```bash
-PMM_SSH_CONFIG="$HOME/deepmzyme-vm/state/ssh_config"
-PMM_VM_ROOT=/home/mechti/deepmzyme_runs/pmm_ion_metal_v2_context
-PMM_HOST_ROOT=/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/artifacts
-PMM_TRANSFER=$(ssh -F "$PMM_SSH_CONFIG" deepmzyme-vm "jq -er '.pending_transfer.manifest_path' '$PMM_VM_ROOT/execution_state.json'")
+PMM_SSH_CONFIG="${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}/state/ssh_config"
+PMM_VM_HOST="${DEEPMZYME_SSH_HOST:?SSH host alias from the controller ssh_config}"
+PMM_VM_ROOT="${DEEPMZYME_REMOTE_HOME:?absolute VM user home}/deepmzyme_runs/pmm_ion_metal_v2_context"
+PMM_HOST_ROOT="${SECONDARY_DRIVE:?secondary drive mount point}/DeepMzyme_Data/campaigns/pmm_ion_metal_v2_context/artifacts"  # must equal the runner's recorded --durable-root
+PMM_TRANSFER=$(ssh -F "$PMM_SSH_CONFIG" "$PMM_VM_HOST" "jq -er '.pending_transfer.manifest_path' '$PMM_VM_ROOT/execution_state.json'")
 mkdir -p "$PMM_HOST_ROOT/persistence_receipts"
-scp -F "$PMM_SSH_CONFIG" "deepmzyme-vm:$PMM_VM_ROOT/$PMM_TRANSFER" "$PMM_HOST_ROOT/$PMM_TRANSFER"
+scp -F "$PMM_SSH_CONFIG" "$PMM_VM_HOST:$PMM_VM_ROOT/$PMM_TRANSFER" "$PMM_HOST_ROOT/$PMM_TRANSFER"
 jq -r '.files[].path' "$PMM_HOST_ROOT/$PMM_TRANSFER" > "$PMM_HOST_ROOT/.host_pull_files"
-rsync -a --files-from="$PMM_HOST_ROOT/.host_pull_files" -e "ssh -F $PMM_SSH_CONFIG" "deepmzyme-vm:$PMM_VM_ROOT/" "$PMM_HOST_ROOT/"
+rsync -a --files-from="$PMM_HOST_ROOT/.host_pull_files" -e "ssh -F $PMM_SSH_CONFIG" "$PMM_VM_HOST:$PMM_VM_ROOT/" "$PMM_HOST_ROOT/"
 PMM_ACK_REL=$(jq -er '.ack_path' "$PMM_HOST_ROOT/$PMM_TRANSFER")
-PYTHONPATH=/home/mechti/PycharmProjects/DeepMzyme/src /home/mechti/miniconda3/envs/DeepMzyme/bin/python -c 'import sys; from pathlib import Path; from benchmarking.pmm_execution import verify_host_pull; verify_host_pull(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))' "$PMM_HOST_ROOT/$PMM_TRANSFER" "$PMM_HOST_ROOT" "$PMM_HOST_ROOT/$PMM_ACK_REL"
-scp -F "$PMM_SSH_CONFIG" "$PMM_HOST_ROOT/$PMM_ACK_REL" "deepmzyme-vm:$PMM_VM_ROOT/$PMM_ACK_REL"
+PYTHONPATH=src uv run --frozen --no-sync python -c 'import sys; from pathlib import Path; from benchmarking.pmm_execution import verify_host_pull; verify_host_pull(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))' "$PMM_HOST_ROOT/$PMM_TRANSFER" "$PMM_HOST_ROOT" "$PMM_HOST_ROOT/$PMM_ACK_REL"
+scp -F "$PMM_SSH_CONFIG" "$PMM_HOST_ROOT/$PMM_ACK_REL" "$PMM_VM_HOST:$PMM_VM_ROOT/$PMM_ACK_REL"
 ```
 
 Stop immediately if any command fails; do not upload an old acknowledgment or
@@ -336,8 +350,8 @@ destination, `--persistence-mode mounted` performs copy/readback directly.
 On normal completion and exceptions, copy/read back artifacts and run:
 
 ```bash
-~/deepmzyme-vm/bin/vm-stop
-~/deepmzyme-vm/bin/vm-status
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-stop
+"${DEEPMZYME_VM_CONTROLLER:?private VM controller directory}"/bin/vm-status
 ```
 
 Confirm `TERMINATED` and record provider evidence. Keep Google's hard stop

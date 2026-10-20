@@ -14,7 +14,7 @@ set -euo pipefail
 job_root="${JOB_ROOT:-/media/Data/pinmymetal_sets/mahomes/test_set}"
 pdb_dir="${PDB_DIR:-/media/Data/pinmymetal_sets/test/pdb_updatedv2}"
 N_JOBS="${N_JOBS:-4}"
-MAHOMES_DIR="${MAHOMES_DIR:-/home/mechti/MAHOMES-II}"
+MAHOMES_DIR="${MAHOMES_DIR:-$HOME/MAHOMES-II}"
 VENV="${VENV:-$MAHOMES_DIR/venv/bin/activate}"
 CLEAN_JOB_DIRS="${CLEAN_JOB_DIRS:-1}"
 SKIP_COMPLETED_JOBS="${SKIP_COMPLETED_JOBS:-0}"

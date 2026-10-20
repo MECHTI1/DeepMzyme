@@ -71,20 +71,20 @@ verified. The VM and its disk are kept until the user types the deletion phrase.
     `949bc899…`, `d097add2…`); the four step F tools and four runners match Freeze 1; the six pinned files match
     through the alias and the archive path; the F1 specification path resolves with its hash;
   - nine negative checks on a throwaway copy of the final tree, listed in handoff section 13.
-- **Recovery snapshot** (`vm-archive --name deepmzyme-v3-final-20261013 --max-monthly-usd 7.50 --confirm`,
+- **Recovery snapshot** (`vm-archive --name <v3-final-snapshot> --max-monthly-usd 7.50 --confirm`,
   03:24–03:31 UTC):
-  - standard snapshot `deepmzyme-v3-final-20261013` (id `1682974889195084387`), READY in `us-central1`;
-  - source disk `deepmzyme-l4-from-deepmzyme-paused-20261003` (id `8244066857274414107`, matching the recorded disk);
+  - standard snapshot `<v3-final-snapshot>` (id `<resource-id>`), READY in `us-central1`;
+  - source disk `<campaign-disk>` (id `<resource-id>`, matching the recorded disk);
   - 52.68 GiB stored, estimated gross $2.63/month against the $7.50 ceiling;
-  - restore check: the temporary disk `deepmzyme-v3-final-20261013-restore-check` was created from this snapshot,
+  - restore check: the temporary disk `<v3-final-snapshot>-restore-check` was created from this snapshot,
     reached READY and was deleted; its scope is provider snapshot and disk restoration, with no filesystem mount or
     boot test;
-  - receipt `state/archive-deepmzyme-v3-final-20261013.json` (`751d6c2e…`) and the controller config (`f2950360…`,
+  - receipt `state/archive-<v3-final-snapshot>.json` (`751d6c2e…`) and the controller config (`f2950360…`,
     matching the receipt) copied to Data1 `audits/closure_20261013T032640Z/`;
   - the 2026-10-03 snapshot is kept.
 - **Deletion inventory** (`vm-delete --delete-disk` without the phrase; refused, exit 4):
-  - would delete: VM `deepmzyme-l4` (TERMINATED, deletion protection on) and its boot disk
-    `deepmzyme-l4-from-deepmzyme-paused-20261003` (150 GB pd-balanced, autoDelete false);
+  - would delete: VM `<gpu-vm>` (TERMINATED, deletion protection on) and its boot disk
+    `<campaign-disk>` (150 GB pd-balanced, autoDelete false);
   - kept: both snapshots, the network and the firewall.
 
 **Not done:** no VM or disk deletion, GPU start, training, embeddings or test predictions.
@@ -130,7 +130,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run (step F complete); the $55 gross ceiling (about $41.8 spent); no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-13 02:15 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 02:15 UTC); disk and archive snapshot kept (about $0.55/day).
 
 Next: the user's closure decision (the byte-preserving archive move) and storage retirement A/B/C ([handoff section 13](docs/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)); open: fairness arm, cost-gated augmentations.
 Final-test label `both_results_secondary` is recorded ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
@@ -204,7 +204,7 @@ pending.**
 
 **Done:**
 - **NVMe backup, verified:**
-  - location: `/home/mechti/deepmzyme_backups/pmm_ion_metal_v3_closeout_20261013T023038Z/` (`/dev/nvme0n1p6`, ext4);
+  - location: `<local-backup-root>/pmm_ion_metal_v3_closeout_20261013T023038Z/` (local NVMe partition, ext4);
   - copied 02:30–02:33 UTC under the 2-core, 3 GB cap;
   - 4,836 files, 2,639,602,614 bytes;
   - each source file was hashed before the copy into `SHA256SUMS` (`b9b6d44f3056…`); after `rsync -a`, all 4,836
@@ -280,7 +280,7 @@ or deleted.**
 - **Closure dependencies:** six code modules and two test files read specifications from the campaign folder by
   path; 39 link mentions in six outside files point into the folder; there are no git tags.
 - **Resource state** (`vm-status` at 02:15 UTC; `vm-report --no-ssh` and
-  `vm-archive --name deepmzyme-v3-final-20261013 --max-monthly-usd 10 --dry-run` at about 02:00 UTC):
+  `vm-archive --name <v3-final-snapshot> --max-monthly-usd 10 --dry-run` at about 02:00 UTC):
   - VM TERMINATED;
   - the 150 GB disk bills $15.00/month;
   - the 2026-10-03 snapshot (34.8 GiB) bills about $1.74/month;
@@ -299,7 +299,7 @@ STATUS text replaced by this update, preserved verbatim:
 ```text
 - Status: active (2026-10-13 v3: step F complete; one-shot test report done, secondary; closure is the user's decision)
 - Current campaign: pmm_ion_metal_v3, steps A–E2 complete
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 20:06 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 20:06 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the user's decision on closing v3 (closure procedure; PARAMETER_FINDINGS line) and on the commit/push of the v3-046 to v3-048 records; open: fairness arm, cost-gated augmentations.
 ```
 
@@ -465,7 +465,7 @@ ceiling. Today's controller use is 7 h 17 min / $7.50 of 12 h / $18.
   disclosures, `test_side_read_before_this_record` false.
 - `record-freeze1` will refuse until the user's logged go-ahead names a `v3-NNN` entry.
 - The F3b previously-opened-PDB-ID folder is in the main checkout:
-  `/home/mechti/PycharmProjects/DeepMzyme/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test`. The
+  `<repo-root>/DeepMzyme_Data/train_and_test_sets_structures_exact_pinmymetal/test`. The
   worktree's `DeepMzyme_Data` lacks it, so the playbook command now uses that absolute path. Only the folder's
   existence was checked: nothing under it was listed or read. The tool requires exactly 316 structure files and reads
   names only.
@@ -476,7 +476,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Status: active (2026-10-12 v3: step F plan approved; the Stage 6B refit authorized, one GPU session)
 - Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted); step F plan approved ([log v3-045](docs/campaigns/pmm_ion_metal_v3/log.md#v3-045)), refit in progress; no Stage 7.
 - Authorized now: step F F1–F2 only (binding records and one refit GPU session, `--hours 2`, one unchanged rerun if it fits; [log v3-045](docs/campaigns/pmm_ion_metal_v3/log.md#v3-045)); the $55 gross ceiling (about $40.81 spent at 2026-10-12 18:31 UTC); no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 16:16 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 16:16 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the refit, its receipt and the Freeze 1 approval package; Freeze 1, Freeze 2 and the single test pass stay separately gated ([step F plan F7](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md#f7-decisions-for-the-user-none-inferred)); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -761,7 +761,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Current campaign: pmm_ion_metal_v3, step E complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted), to be finalized; step F not started, tooling CPU-checked ([log v3-042](docs/campaigns/pmm_ion_metal_v3/log.md#v3-042)), plan not approved; no Stage 7.
 - Authorized now: nothing to run; the $55 gross ceiling (about $40.68 spent at 2026-10-12 12:35 UTC; to finish $42.6–48.1); [v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) covers approved step F work only (not activated); no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 11:18 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 11:18 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the user's approval of the [step F plan](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) and the refit's GPU start (one session, $0.9–1.3; [handoff section 12](docs/campaigns/pmm_ion_metal_v3/handoff.md#12-step-f-tooling-prepared-2026-10-12-log-v3-042)); then the two freezes and the one test pass; commit/push pending; open: fairness arm, cost-gated augmentations.
 ```
 
@@ -876,7 +876,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-12 (v3 10-epoch comparison, 1 session, 37 min, $0.55 gross; [log v3-041](docs/campaigns/pmm_ion_metal_v3/log.md#v3-041)).
 - Stage: v3 steps A–E2 and the pre-step-F comparison done: Stage 6 selection `gvp_late_fusion__four_class__baseline`, 50 epochs (A4, retained by E2; 10 epochs not adopted, S1 +1.99 not interval-supported); step F not started, tooling absent, draft v3 not approved; no Stage 7.
 - Authorized now: nothing pending to run; the $55 gross ceiling (about $40.65 spent at 2026-10-12 11:20 UTC; to finish $42.6–48.1); [v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) covers approved step F work only; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 11:18 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 11:18 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the user's approval of [step F draft v3](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) (E_sel = 50), then step F CPU tooling; commit/push pending; open: fairness arm, cost-gated augmentations.
 ```
 
@@ -982,7 +982,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-12 (v3 E2 sessions 1–3, 8 h 51 min, $7.80 gross).
 - Stage: v3 steps A–E2 done ([log v3-037](docs/campaigns/pmm_ion_metal_v3/log.md#v3-037)): Stage 6 selection `gvp_late_fusion__four_class__baseline` (A4, retained by E2; development-validation); step F (6B refit + one test pass) not started, tooling absent, plan draft v3 not approved; no Stage 7.
 - Authorized now: CPU preparation only ([log v3-039](docs/campaigns/pmm_ion_metal_v3/log.md#v3-039)); the $55 gross ceiling (about $40.09 spent at 2026-10-12 10:24 UTC; to finish $42.8–49.7); [v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) covers approved step F work only; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 09:02 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 09:02 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the user's GPU-start authorization for the prepared 4-fit 10-epoch comparison (handoff section 11; one session), then its assessment; approval of [step F draft v3](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1259,7 +1259,7 @@ STATUS text replaced by this update, preserved verbatim:
 ```text
 - Status: active (2026-10-12 v3 E2 complete; selection unchanged; pre-step-F review done, one experiment recommended, awaiting the user)
 - Authorized now: the $55 gross ceiling (about $40.06 spent at 2026-10-12 09:02 UTC; to finish $42.1–47.5, or $42.8–49.7 with the recommended experiment); the advance GPU authorization of [log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014) covers approved step F work only; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 09:02 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 09:02 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: the user's choice ([log v3-038](docs/campaigns/pmm_ion_metal_v3/log.md#v3-038), handoff section 11): a 4-fit 10-epoch schedule comparison (recommended; no GPU without authorization) or step F directly; approval of [step F draft v3](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1473,7 +1473,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Status: active (2026-10-12 v3 step E2 complete, 36 of 36 fits; selection unchanged: late fusion four-class; step F next)
 - Stage: v3 steps A–E2 done ([log v3-037](docs/campaigns/pmm_ion_metal_v3/log.md#v3-037)): Stage 6 selection `gvp_late_fusion__four_class__baseline` (A4, retained by E2; development-validation); step F (6B refit + one test pass) not started, tooling absent, plan draft not approved; no Stage 7.
 - Authorized now: the $55 gross campaign ceiling recorded for E2 (about $39.98 spent at 2026-10-12 05:40 UTC; to finish about $42.0–47.4, log v3-037); the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) applies only after the step F plan is approved; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-12 05:39 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-12 05:39 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: step F planning: the user's approval of the [step F draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) (input: the E2 final selection), then step F CPU tooling and checks, then the refit and one test pass; open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1581,7 +1581,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Stage: v3 steps A–E done ([log v3-031](docs/campaigns/pmm_ion_metal_v3/log.md#v3-031)): A4 Stage 6 selection `gvp_late_fusion__four_class__baseline` (five folds, development-validation); step E2 (36 fits; [E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)) built and CPU-checked ([log v3-033](docs/campaigns/pmm_ion_metal_v3/log.md#v3-033)), not run, required before F unless cancelled; no 6B refit or Stage 7.
 - v3 step E (A4 assessment `E_20261011T130128Z`): no family gains from five/six-class training (tie keeps `four_class`); `headdrop03`, `meanagg` not improvements; late fusion four-class 74.28 mean common-four BA, "better" than Only-ESMC (72.33) on all five folds.
 - Authorized now: E2 GPU sessions ([log v3-034](docs/campaigns/pmm_ion_metal_v3/log.md#v3-034), user 2026-10-11 20:10 UTC) within the $55 ceiling recorded in E2's launch control (about $32.15 spent at 20:10 UTC; E→E2→F forecast $41.7–48.9, log v3-033) and the controller caps; the advance authorization through step F stands ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); step F after E2 with its own plan approval; no Round C.
-- GPU/VM: `deepmzyme-l4` RUNNING for E2 session 3 (`session-20261012T025638Z-baee022b`, hard stop 06:53 UTC); disk and archive snapshot kept; about $37.59 spent at 02:56 UTC ([log v3-036](docs/campaigns/pmm_ion_metal_v3/log.md#v3-036)).
+- GPU/VM: `<gpu-vm>` RUNNING for E2 session 3 (`session-20261012T025638Z-baee022b`, hard stop 06:53 UTC); disk and archive snapshot kept; about $37.59 spent at 02:56 UTC ([log v3-036](docs/campaigns/pmm_ion_metal_v3/log.md#v3-036)).
 Next: finish E2 session 3 (11 fits; evidence, vm-stop, verified TERMINATED), then the workstation E2 assessment and its log entry; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1619,7 +1619,7 @@ STATUS text replaced by this update, preserved verbatim:
 ```text
 - Status: active (2026-10-11 v3 step E2 running: 13 of 36 fits after session 1)
 - Last execution evidence: 2026-10-11 (v3 E2 session 1, 3 h 18 min, $2.91 gross).
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 23:34 UTC); disk and archive snapshot kept (about $0.55/day); about $35.06 spent ([log v3-035](docs/campaigns/pmm_ion_metal_v3/log.md#v3-035)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-11 23:34 UTC); disk and archive snapshot kept (about $0.55/day); about $35.06 spent ([log v3-035](docs/campaigns/pmm_ion_metal_v3/log.md#v3-035)).
 Next: E2 sessions 2 and 3 with `pmm_v3_step_e2.py` after 00:00 UTC (23 fits left, [log v3-035](docs/campaigns/pmm_ion_metal_v3/log.md#v3-035)), then the workstation E2 assessment and log; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1698,7 +1698,7 @@ STATUS text replaced by this update, preserved verbatim:
 ```text
 - Status: active (2026-10-11 v3 step E complete; review done; E2 built and checked; E2 authorized, running)
 - Last execution evidence: 2026-10-11 (v3 step E sessions 8 and 9, 4 h 37 min, $4.06 gross).
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-11 13:03 UTC); disk and archive snapshot kept (about $0.55/day).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-11 13:03 UTC); disk and archive snapshot kept (about $0.55/day).
 Next: E2 sessions with `pmm_v3_step_e2.py` (session 1 from 20:15 UTC, then after 00:00 UTC), then the workstation E2 assessment and log; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -1919,7 +1919,7 @@ critic's corrections applied.
 **Boundary incident (disclosed; recorded in the
 [DATASETS test-use ledger](../../../DATASETS.md#test-use-ledger)).** At 13:32:31 and
 13:32:38–13:34:41 UTC one analysis agent ran two recursive `grep -rl` searches
-over `/media/mechti/Data1/DeepMzyme_PMM_Zenodo_Exact_Dataset/`. They looked for
+over `<secondary-drive>/DeepMzyme_PMM_Zenodo_Exact_Dataset/`. They looked for
 the strings `audit_internal_residue_id_recovery` and `internal_residue_id`, and
 their output was filtered through `grep -v '/test'`. The searches read file
 bytes under `dataset/test/`, `dataset/site_crosswalk.csv` and the combined
@@ -2164,7 +2164,7 @@ earlier assessments unchanged).
   review conclusions, refreshed cost and remaining effort are presented at the
   existing E2 GPU-start gate.
 
-**Sessions** (`deepmzyme-l4`, `us-central1-a`, both at the first attempt, no
+**Sessions** (`<gpu-vm>`, `us-central1-a`, both at the first attempt, no
 stockout; smoke checks passed, L4, torch 2.11.0+cu128):
 
 | Session | UTC | Running | Gross | Fits |
@@ -2271,7 +2271,7 @@ $7.4–8.2; step F 1.0–2.25 h, $0.9–1.9; storage $0.55 per calendar day for
 operative $40 ceiling and within the user's $55 planning ceiling, which must
 be written into the E2 execution controls before any E2 GPU fit; step F alone
 (after a dated E2 cancellation) about $33.9–36.7. Daily use 2026-10-11:
-4 h 37 min / $5.20 of 12 h / $18. VM `deepmzyme-l4` TERMINATED (verified
+4 h 37 min / $5.20 of 12 h / $18. VM `<gpu-vm>` TERMINATED (verified
 13:03 UTC); disk and archive snapshot kept.
 
 **Next:** the deferred read-only review (handoff section 10; PENDING; one
@@ -2291,7 +2291,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Stage: v3 steps A–D done; step E 24 of 44 fits ([log v3-024](docs/campaigns/pmm_ion_metal_v3/log.md#v3-024)); step E2 (eight remaining step D passes on folds 1–4, 36 fits) planned, rules frozen ([E2 spec](docs/campaigns/pmm_ion_metal_v3/e2_assessment_spec.md), [log v3-028](docs/campaigns/pmm_ion_metal_v3/log.md#v3-028)), not implemented, required before F unless cancelled; no Stage 6 confirmation, 6B refit or Stage 7.
 - v3 step E (descriptive): no clear gain for the two selected recipes on folds 1–4; late fusion above Only-ESMC on every fold so far (log v3-024).
 - Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $26.49 spent, $13.51 left at 18:40 UTC; E→E2→F forecast $40.5–48.0, log v3-030); confirm the next GPU start with the user. E2 GPU fits only after its CPU tooling and checks, its ceiling recorded in execution controls and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 18:24 UTC); disk and archive snapshot kept (about $0.55/day); failed-fallback leftovers deleted 2026-10-08 under the user's authorization ([v3-030](docs/campaigns/pmm_ion_metal_v3/log.md#v3-030)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-08 18:24 UTC); disk and archive snapshot kept (about $0.55/day); failed-fallback leftovers deleted 2026-10-08 under the user's authorization ([v3-030](docs/campaigns/pmm_ion_metal_v3/log.md#v3-030)).
 Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized); then the original E assessment, the read-only schedule/error review, the E2 CPU tooling and checks, the E2 GPU request; step F after E2 ([draft](docs/campaigns/pmm_ion_metal_v3/step_f_plan_draft.md)); open: fairness arm, cost-gated augmentations.
 ```
 
@@ -2327,7 +2327,7 @@ ledger events recorded before the receipt is archived; never `--finalize`,
 ambiguity). Also requested: the refreshed forecast with the $52.90
 reconciliation, the corrected step F draft and the handoff fixes.
 
-**Controller addition** (`~/deepmzyme-vm`, commit `a349294`, pushed to its
+**Controller addition** (`<vm-controller>`, commit `a349294`, pushed to its
 `origin/main`): `vm-fallback --abandon --evidence PATH [--dry-run|--confirm]`
 for a pass with no selected replacement and an expired window. Under one
 controller lock it requires: no open session; the selected endpoint equal to
@@ -2362,17 +2362,17 @@ again under the lock in the confirmed run. Creation attempts reconciled:
 us-central1-b `operation-1791326109448-…` and us-central1-c
 `operation-1791326275542-…`, both `DONE` with
 `ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS`. Deleted at 18:23 UTC: disk
-`deepmzyme-l4-recovery-873d08b26968` us-central1-b (ID 5611272327395854787),
-the same name in us-central1-c (ID 8920682037852555612), snapshot
-`deepmzyme-fallback-873d08b26968` (ID 6673686273936902278). The snapshot
+`<recovery-disk-873d08b26968>` us-central1-b (ID `<resource-id>`),
+the same name in us-central1-c (ID `<resource-id>`), snapshot
+`<fallback-snapshot-873d08b26968>` (ID `<resource-id>`). The snapshot
 deletion produced a recycle-bin copy although the bin was empty before; the
 guarded purge removed exactly that copy (one-hour minimum charge, under $0.01).
 `STORAGE_CLOSED` events for all four keys precede `FALLBACK_ABANDONED`
 (18:23:45 UTC); the receipt is archived as
 `state/fallback-873d08b26968.abandoned.json`. Independent post-verification:
-only VM `deepmzyme-l4` (TERMINATED, ID 8553555212712383956), its boot disk (ID
-8244066857274414107, attached) and the archive snapshot
-`deepmzyme-paused-20261003` remain; the recycle bin is empty.
+only VM `<gpu-vm>` (TERMINATED, ID `<resource-id>`), its boot disk (ID
+`<resource-id>`, attached) and the archive snapshot
+`<paused-snapshot>` remain; the recycle bin is empty.
 
 **Spending, one dated calculation (2026-10-08 18:40 UTC; estimated charges at
 gross list prices; disk counted once):** running B–E $23.00 (26.78 h ×
@@ -2434,7 +2434,7 @@ STATUS text replaced by this update, preserved verbatim:
 
 ```text
 - Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (estimated $26.4 spent, $13.6 left at 17:30 UTC; E+F forecast $34.0–39.9, log v3-029); confirm the next GPU start with the user. The $55 E2 planning ceiling authorizes no start. E2 GPU fits only after its CPU tooling and checks, a refreshed forecast and the user's separate start authorization; step F after E2 (unless cancelled); no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: the user confirms the next GPU start for the 20 remaining E fits (none authorized); then the original E assessment, the deferred read-only schedule/error review (log v3-029), the E2 CPU tooling and checks; open: E2 GPU authorization, step F plan, fairness arm, leftover cleanup (proposal v3-029), cost-gated augmentations.
 ```
 
@@ -2543,8 +2543,8 @@ running costs that already contained the disk share):**
 | Item | Basis | Estimated charge |
 |---|---|---:|
 | Running, steps B–E | 10 sessions, 26.78 h × $0.858624/h (compute + IP, without the disk share; ledger gross $23.55 contains $0.55 of disk) | $23.00 |
-| Campaign boot disk `deepmzyme-l4-from-deepmzyme-paused-20261003` | 150 GB pd-balanced, $0.493/day since 2026-10-05 22:56 UTC (2.77 days) | $1.37 |
-| Archive snapshot `deepmzyme-paused-20261003` | 34.8 GiB × $0.05/GiB-month = $0.057/day since the restore | $0.16 |
+| Campaign boot disk `<campaign-disk>` | 150 GB pd-balanced, $0.493/day since 2026-10-05 22:56 UTC (2.77 days) | $1.37 |
+| Archive snapshot `<paused-snapshot>` | 34.8 GiB × $0.05/GiB-month = $0.057/day since the restore | $0.16 |
 | Failed-fallback leftovers (two disks, one snapshot) | $1.060/day since 2026-10-06 22:30 UTC (1.79 days) | $1.90 |
 | **Spent** | | **$26.42** |
 | **Left of the $40 gross ceiling** | | **$13.58** |
@@ -2583,15 +2583,15 @@ change):
 
 | Resource | Zone | ID | State |
 |---|---|---|---|
-| disk `deepmzyme-l4-recovery-873d08b26968` | us-central1-b | 5611272327395854787 | 150 GB, READY, no users; created 22:33 UTC 2026-10-06 from snapshot 6673686273936902278; attached only during its failed create (22:35 UTC) |
-| disk `deepmzyme-l4-recovery-873d08b26968` | us-central1-c | 8920682037852555612 | 150 GB, READY, no users; created 22:35 UTC; attached only during its failed create (22:37 UTC) |
-| snapshot `deepmzyme-fallback-873d08b26968` | global | 6673686273936902278 | STANDARD, 44.65 GiB, source disk 8244066857274414107 (the campaign disk), created 22:30 UTC |
+| disk `<recovery-disk-873d08b26968>` | us-central1-b | `<resource-id>` | 150 GB, READY, no users; created 22:33 UTC 2026-10-06 from snapshot `<resource-id>`; attached only during its failed create (22:35 UTC) |
+| disk `<recovery-disk-873d08b26968>` | us-central1-c | `<resource-id>` | 150 GB, READY, no users; created 22:35 UTC; attached only during its failed create (22:37 UTC) |
+| snapshot `<fallback-snapshot-873d08b26968>` | global | `<resource-id>` | STANDARD, 44.65 GiB, source disk `<resource-id>` (the campaign disk), created 22:30 UTC |
 
-Kept and never touched: VM `deepmzyme-l4` (us-central1-a, ID
-8553555212712383956, TERMINATED), its boot disk (ID 8244066857274414107; the
+Kept and never touched: VM `<gpu-vm>` (us-central1-a, ID
+`<resource-id>`, TERMINATED), its boot disk (ID `<resource-id>`; the
 VM-side campaign root and caches), the archive snapshot
-`deepmzyme-paused-20261003`, the Data1 evidence. The complete instance listing
-shows only `deepmzyme-l4`; no instance exists in us-central1-b or -c.
+`<paused-snapshot>`, the Data1 evidence. The complete instance listing
+shows only `<gpu-vm>`; no instance exists in us-central1-b or -c.
 
 Preservation checks immediately before any deletion: (1) `vm-status`
 TERMINATED, no active session, controller lock free; (2) a complete instance
@@ -2611,7 +2611,7 @@ Supported path: **the controller has none for this case.** `vm-fallback
 superseded source after a successful replacement, so it must not be used;
 `vm-delete` acts on the selected VM; rerunning `vm-fallback --confirm` only
 reconciles and refuses ("window expired"), deleting nothing. Recommended route:
-a small, tested addition to the controller in `~/deepmzyme-vm` (for example
+a small, tested addition to the controller in `<vm-controller>` (for example
 `vm-fallback --abandon`, with `--dry-run` preview and `--confirm`) that applies
 only to a pass with no selected replacement and an expired window, reconciles
 every attempt, runs checks 1–7, deletes exactly the recorded disks and
@@ -2642,7 +2642,7 @@ the E2 assessment specification frozen; dated corrections to v3-024 and
 v3-027; spending refreshed** (documentation only; CPU; no code change, fit,
 GPU action, fallback, resource deletion, refit, inference or test access;
 nothing here authorizes a GPU start). State reconciled before editing:
-worktree clean at 07bf8f9 = `origin/v3-step-a`; `deepmzyme-l4` TERMINATED
+worktree clean at 07bf8f9 = `origin/v3-step-a`; `<gpu-vm>` TERMINATED
 (verified 16:11 UTC); nothing running. The frozen A4 specification
 (`assessment_spec.md` SHA-256 `899005aa…`, `assessment_spec.json`
 `29694070…`), the original assessor, the original E results and the raw
@@ -2793,7 +2793,7 @@ clarifications (v3-028).
 user's decision** (documentation only; CPU; no code change, fit, GPU action,
 inference or test access; nothing here freezes the E2 specification, changes
 the plan's drafted rules or authorizes a GPU start). Context recovered from
-[v3-026](#v3-026); `deepmzyme-l4` verified TERMINATED at 16:11 UTC (today
+[v3-026](#v3-026); `<gpu-vm>` verified TERMINATED at 16:11 UTC (today
 5 h 44 min / $7.40 of the 12 h / $18 daily caps; nothing running; worktree
 clean at df054b4 = `origin/v3-step-a`). The user asked to continue from the
 recorded stopping point; the recorded next task is this review, so the
@@ -2974,7 +2974,7 @@ STATUS text replaced by this update, preserved verbatim:
 - EC: the [EC1 reference](docs/archive/campaigns/ec1_standalone_v12_2026-09-14/README.md) has twelve fixed-split runs (Grade 3), not promotion; reconciliation and cross-task holdout certification precede auxiliary learning ([issues](docs/FOLLOW_UP_TECHNICAL_ISSUES.md)).
 - Exact Zenodo PMM test: unknown, possibly evaluated; its source test file's label/feature metadata was read in aggregate on 2026-10-03 (no evaluation).
 - Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) within the recorded [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; E+F forecast $33.5–36.4); confirm the next GPU start with the user. The $55 planning ceiling selected for E2 (log v3-025) is in no execution control and authorizes no start. E2 only after its tooling, frozen specification and manifest, a refreshed forecast and the user's go-ahead; step F after E2 (unless cancelled) and its gates; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-08 12:17 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: continue from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the 20 remaining five/six-class fits, the original E assessment, then the E2 CPU implementation and the deferred 10-epoch review; open decisions: E2 go-ahead, step F plan, fairness arm, fallback leftovers, cost-gated augmentations, v3-024 corrections.
 Overwrite this file after preserving dated changes in the campaign's `log.md`; keep the objective/stage and campaign lines, anchor, best result and grade, caveats, dataset/test readiness, authorization and GPU/VM state, blockers, next action and evidence links. Budgets stay in the playbooks, findings in [PARAMETER_FINDINGS](docs/PARAMETER_FINDINGS.md), policy in [Plan](Plan.md), batch evidence in the [index](docs/notebook_outputs/README.md); the [history map](docs/archive/consolidation_2026-09/MAP.md) holds the recovered 09-16/17 pause and removed policy; historical next actions do not resume work.
 ```
@@ -3167,7 +3167,7 @@ owns the ledger; this reminder preserves the default-read safety boundary:
   incidental test-metadata exposure on 2026-09-15. Absence of found artifacts is
   not proof of no outside run.
 - Authorized now: today's single-session arrangement has ended; the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) stands within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $12.9 left; forecast $33.5–36.4), but confirm the next GPU start with the user. Step F only after its plan and gates; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 12:16:58 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-08 12:16:58 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: a new chat continues from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the remaining 20 five/six-class fits (about 4.3 h), then the E assessment and the deferred 10-epoch-schedule review; user decisions open: step F plan (draft in the campaign audits folder), fairness arm, fallback leftovers, cost-gated augmentations, log v3-024 corrections.
 Overwrite this file after preserving dated changes in the campaign's `log.md`.
 Keep the objective/stage and campaign lines, anchor, best validation
@@ -3297,7 +3297,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Current campaign: pmm_ion_metal_v3, step D running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A–D done; step E 10 of 44 fits ([log v3-023](docs/campaigns/pmm_ion_metal_v3/log.md#v3-023)); no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: the user's 2026-10-07/08 working window has ended; the advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) stands within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $16.8 left; forecast $33.3–37.1), but confirm the next GPU start with the user. Step F only after its plan and gates; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-08 02:23 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-08 02:23 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: a new chat continues from the [handoff](docs/campaigns/pmm_ion_metal_v3/handoff.md): the remaining step E fits ($16.8_E: four-class baselines first, then the 8 improvement fits, then five/six-class, cache sets cold once), then the step E assessment; open user decisions: Only-ESMC fairness arm, fallback leftovers, cost-gated augmentations, step F plan.
 Still open before step E: the final metal test label, after the user's check of
 the 2026-09-24 Zenodo run. Stage 6 grouped-fold selection (or a labeled
@@ -3390,7 +3390,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-07 (v3 step D session 5, 3 h 15 min, $2.86 gross). Docs reconciliation: 2026-10-07.
 - Stage: v3 steps A–D done ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)): one-fold screen closed, final recipes named by the final D-B assessment; step E not started; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)); no new start request. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $19.3 left; forecast $32.6–36.4). Step E only after the user's final-test label is recorded (`record-e-gate`); step F only after its gates; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 20:16 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-07 20:16 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: the user records the final-test label (then `pmm_v3_step_d.py record-e-gate --label … --log-entry v3-022`) and decides the Only-ESMC fairness arm ([log v3-022](docs/campaigns/pmm_ion_metal_v3/log.md#v3-022)); then step E (36 neutral-test + 8 improvement fits, final recipes; five/six-class cache sets build cold once); cost-gated augmentations stay "not tested (cost)".
 ```
 
@@ -3409,7 +3409,7 @@ unchanged, `git status` clean at `dca385e` = `origin/v3-step-a`). The start at
 loop (five-minute spacing, at most twelve attempts, no fallback) succeeded at
 the first retry.
 
-**Session 5** `session-20261007T170135Z-a208a882`, `deepmzyme-l4` in
+**Session 5** `session-20261007T170135Z-a208a882`, `<gpu-vm>` in
 `us-central1-a`, started 17:01:35 UTC, hard stop 20:57:46 UTC; smoke check
 passed (L4, torch 2.11.0+cu128). Units were launched by refilling each lane as
 soon as its unit ended (`wait --any`), seed-43 units only after the seed-42
@@ -3600,7 +3600,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-07 (v3 step D session 4, 3 h 24 min, $2.99 gross). Docs reconciliation: 2026-10-07.
 - Stage: v3 steps A–C done; step D Rounds A and R complete, Round B 6 of 18 ([log v3-021](docs/campaigns/pmm_ion_metal_v3/log.md#v3-021)); no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: advance GPU authorization through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $22.7 left; forecast $35.3–39.5, the upper value with the fallback leftovers). Step F only after its gates and the final-test label decision; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 12:39 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-07 12:39 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: the 8 site-geometry Round B fits, then one combination per family from the complete D-B assessment ([playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment)); cost-gated augmentations stay "not tested (cost)" without the user's OK; the proposed Only-ESMC fairness arm ([log v3-021](docs/campaigns/pmm_ion_metal_v3/log.md#v3-021)) awaits the user's decision, recorded before any fold 1–4 result.
 ```
 
@@ -3611,7 +3611,7 @@ started** (validation data only; fold 0; exploratory development evidence).
 Continuation of the authorized step D work ([v3-014](#v3-014), [v3-018](#v3-018));
 no new authority was used.
 
-**Session 4** `session-20261007T091548Z-fab4dad3`, `deepmzyme-l4` in
+**Session 4** `session-20261007T091548Z-fab4dad3`, `<gpu-vm>` in
 `us-central1-a`, started 09:15:48 UTC at the first attempt (no stockout),
 stopped 12:39:54 UTC and verified TERMINATED: **3 h 24 min, $2.99 gross**.
 Five batches of three, all first attempts, every fit completed, replayed under
@@ -3727,7 +3727,7 @@ cap without changing any fact, date or number):
 - Last execution evidence: 2026-10-07 (v3 step D sessions 1–3, 8 h 06 min, $7.13 gross). Documentation reconciliation: 2026-10-07.
 - Stage: v3 steps A–C done; step D Round A complete, Round R 17 of 26 ([log v3-020](docs/campaigns/pmm_ion_metal_v3/log.md#v3-020)); Round B follows; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $26.3 left; forecast $34.6–37.7). Step F only after its gates and the final-test label decision; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-07 03:37 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-07 03:37 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot, about $1.06/day) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: the 9 remaining Round R fits, then Round B (14) and the combinations, per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment); the user's work window ended 2026-10-07 04:10 UTC. Reforecast before Round B; cost-gated augmentations need the user's OK.
 ```
 
@@ -3738,7 +3738,7 @@ Next: the 9 remaining Round R fits, then Round B (14) and the combinations, per 
 recorded in [v3-019](#v3-019) ended at 04:10 UTC; the VM was stopped and
 verified TERMINATED at 03:37 UTC.
 
-Sessions, all on `deepmzyme-l4` in `us-central1-a` after same-VM retries
+Sessions, all on `<gpu-vm>` in `us-central1-a` after same-VM retries
 (each failed start is free; the fallback pass of v3-019 stays spent):
 
 | Session | UTC | Running | Gross | Fits |
@@ -3788,7 +3788,7 @@ to 8 fits, step F.
 **Spending.** Compute to date $12.65 gross (B $1.88, C $3.64, D $7.13).
 Storage: the campaign disk and the paused snapshot about $0.8 to date; the
 failed-fallback leftovers (two 150 GB recovery disks and snapshot
-`deepmzyme-fallback-873d08b26968`, 44.7 GiB) add about $1.06 per day while
+`<fallback-snapshot-873d08b26968>`, 44.7 GiB) add about $1.06 per day while
 they exist. **About $13.7 spent; about $26.3 remains.** Reforecast of the
 remaining work: about 18 fit hours plus session overhead, slack and one
 rerun allowance, about 22 h, $19.2; storage for about three more days $1.7,
@@ -3811,7 +3811,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Current campaign: pmm_ion_metal_v3, step D running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A–C done; step D Round A 12 of 16 fits ([log v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)): `meanagg` passed in both families; Round R next; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $30.9 left before session 2; forecast about $36.5). Step F only after its gates and the final-test label decision; no Round C.
-- GPU/VM: `deepmzyme-l4` RUNNING (session 2 from 2026-10-06 22:41 UTC, hard stop 02:11 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
+- GPU/VM: `<gpu-vm>` RUNNING (session 2 from 2026-10-06 22:41 UTC, hard stop 02:11 UTC); disk and snapshot kept; failed-fallback leftovers (two disks, one snapshot) await the user's cleanup decision ([v3-019](docs/campaigns/pmm_ion_metal_v3/log.md#v3-019)).
 Next: finish Round A (4 fits), then Round R (26) per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment), in sessions of at most 4 h until 2026-10-07 04:10 UTC. Reforecast before Round B; cost-gated augmentations need the user's OK.
 ```
 
@@ -3824,7 +3824,7 @@ User decisions, each confirmed in the session after a pasted message:
 
 - About 19:05 UTC: the controller's daily caps were raised to 12 h and $18 per
   UTC day (`MAX_DAILY_RUNNING_HOURS`, `MAX_DAILY_ESTIMATED_COST_USD`; backup
-  `~/deepmzyme-vm/state/config.env.before_daily_caps_20261006`). The 4 h / $6
+  `<vm-controller>/state/config.env.before_daily_caps_20261006`). The 4 h / $6
   session cap and the campaign's $40 gross ceiling are unchanged. A bounded
   same-region `vm-fallback` pass (4 h) was authorized for the `us-central1-a`
   stockout, including archiving the completed 2026-09-28 receipt. Commits
@@ -3842,7 +3842,7 @@ succeeded.
 
 **Session 1** `session-20261006T191031Z-2d26fe96`, 19:10:31–22:23 UTC:
 **3 h 13 min, $2.83 gross**; stopped and verified TERMINATED at 22:24 UTC.
-Bundle `43d26ff` was applied into `/home/mechti/projects/DeepMzyme_v3_ext1`
+Bundle `43d26ff` was applied into `~/projects/DeepMzyme_v3_ext1`
 (fold set reused after a byte-level check), and the extension was recorded at
 19:13:33 UTC (SHA-256 `ade3f022…`, the worktree's runner hashes; all 12
 completed units resolve unchanged; copy under `step_d_evidence/extension/`).
@@ -3877,7 +3877,7 @@ Every gain is a one-fold screen; an improvement is claimed only after folds
 
 **Second start.** 22:24 and 22:26 UTC: stockout. 22:28–22:38 UTC: fallback
 pass `873d08b26968` (authorized above): snapshot
-`deepmzyme-fallback-873d08b26968` created; `us-central1-b` stocked out; the
+`<fallback-snapshot-873d08b26968>` created; `us-central1-b` stocked out; the
 `us-central1-c` create also failed with `ZONE_RESOURCE_POOL_EXHAUSTED`
 (operation record; no instance exists), but the operator's 10-minute command
 limit cut the controller before it recorded that, so the receipt
@@ -3885,7 +3885,7 @@ limit cut the controller before it recorded that, so the receipt
 further allocation; the attempt window has expired, and the controller state
 was not edited by hand. **Leftovers, kept pending the user's cleanup
 decision and counted toward the ceiling:** recovery disks
-`deepmzyme-l4-recovery-873d08b26968` in `us-central1-b` and `us-central1-c`
+`<recovery-disk-873d08b26968>` in `us-central1-b` and `us-central1-c`
 (150 GB each, about $0.49 per day each) and the snapshot (47.9 GB, about
 $0.08 per day). At 22:41 UTC the same VM started in `us-central1-a`:
 `session-20261006T224120Z-22b521f0`, hard stop 02:11:13 UTC; the smoke check
@@ -3902,7 +3902,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Current campaign: pmm_ion_metal_v3, step D prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A–C done; amended step D (A → R → conditional B) is CPU-verified ([log v3-018](docs/campaigns/pmm_ion_metal_v3/log.md#v3-018)), no D fit yet; no Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: advance GPU authorization for the remaining approved v3 plan through step F ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)), amended step D included; no new start request needed. Within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage (about $33.8 left; forecast $29–37). Step F only after its gates and the final-test label decision; no Round C.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 10:08 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-06 10:08 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `<paused-snapshot>` kept (about $1.74/month).
 Next: step D Round A (16 fits), then Round R (26), per the [playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#v3-step-d-regularization-amendment); the first session records the extension on the VM. Reforecast before Round B; cost-gated augmentations need the user's OK.
 ```
 
@@ -4274,7 +4274,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-06 (v3 step C session 1, 3 h 09 min, $2.78 gross). Documentation reconciliation: 2026-10-06.
 - Current campaign: pmm_ion_metal_v3, step C running (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A and B done; step C session 1 done ([log v3-015](docs/campaigns/pmm_ion_metal_v3/log.md#v3-015)): regression gate passed, 7 new fold-0 cells plus the reused one; no Stage 6 confirmation, Stage 6B refit or Stage 7.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 08:13 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-06 08:13 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `<paused-snapshot>` kept (about $1.74/month).
 Next: step C session 2 (the three v2-recipe runs and Only-ESMC six-class) with `pmm_v3_step_c.py`, then `assess`, the step C diagnostic closeout ([log v3-014](docs/campaigns/pmm_ion_metal_v3/log.md#v3-014)) and step D Round A.
 ```
 
@@ -4348,7 +4348,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Last execution evidence: 2026-10-06 (v3 step B GPU session, 2 h 08 min, $1.88 gross). Documentation reconciliation: 2026-10-06.
 - Current campaign: pmm_ion_metal_v3, step C prepared (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A and B done ([log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)); step C prepared on CPU (launcher, PMM paper recheck, test-row rule; [log v3-013](docs/campaigns/pmm_ion_metal_v3/log.md#v3-013)); no step C runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-06 03:09 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-06 03:09 UTC; 150 GB disk kept, about $0.49/day gross); snapshot `<paused-snapshot>` kept (about $1.74/month).
 Next: v3 step C per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) after the user's typed authorization: `vm-start --confirm`, the regression fit alone, then the other 11 fits three at a time (about two sessions, [log v3-013](docs/campaigns/pmm_ion_metal_v3/log.md#v3-013)).
 ```
 
@@ -4526,7 +4526,7 @@ STATUS text replaced by this update, preserved verbatim:
 - Current campaign: pmm_ion_metal_v3, step B complete (objectives four/five/six for Only-ESMC, Only-GVP and late fusion) — [README](docs/campaigns/pmm_ion_metal_v3/README.md)
 - Stage: v3 steps A and B done ([log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)); execution setting recorded (FP32, three lanes); no step C runs, Stage 6 confirmation, Stage 6B refit or Stage 7.
 - Authorized now: CPU work only; step C needs the user's spending authorization within the [$40 gross ceiling](docs/campaigns/pmm_ion_metal_v3/log.md#v3-003) including storage; no refit or held-out evaluation.
-- GPU/VM: `deepmzyme-l4` restored from the snapshot 2026-10-05, TERMINATED after step B (150 GB disk kept, about $0.49/day gross); snapshot `deepmzyme-paused-20261003` kept (about $1.74/month).
+- GPU/VM: `<gpu-vm>` restored from the snapshot 2026-10-05, TERMINATED after step B (150 GB disk kept, about $0.49/day gross); snapshot `<paused-snapshot>` kept (about $1.74/month).
 Next: v3 step C per the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#pmm-ion-metal-v3-campaign-pmm_ion_metal_v3) after the user authorizes its spending (about two sessions, [log v3-010](docs/campaigns/pmm_ion_metal_v3/log.md#v3-010)).
 ```
 
@@ -4590,16 +4590,16 @@ Supplementary Table 10 counts". The frozen A4 specification is unchanged; its
 `pmm_published` numbers appear in the step C assessment as context only.
 
 Evidence: renders, transcriptions, solver and reconciled verdicts in
-`/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/pmm_paper_recheck_20261006/`
+`<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/pmm_paper_recheck_20261006/`
 (`SHA256SUMS`). The 2026-10-06 outlook review reached the same reading
 independently.
 
 ## v3-010
 
 2026-10-06 — **plan step B complete** (one GPU session, authorized by the user
-with AUTHORIZE VM START for step B only). `vm-restore` recreated `deepmzyme-l4`
-from snapshot `deepmzyme-paused-20261003` (new instance `8553555212712383956`,
-restore receipt in `~/deepmzyme-vm/state/`); session
+with AUTHORIZE VM START for step B only). `vm-restore` recreated `<gpu-vm>`
+from snapshot `<paused-snapshot>` (new instance `<resource-id>`,
+restore receipt in `<vm-controller>/state/`); session
 `session-20261005T225707Z-26ada0e5` ran 2 h 08 min, **$1.88 gross**, and the VM
 was stopped and verified TERMINATED. The 150 GB disk and the snapshot are kept.
 
@@ -4650,7 +4650,7 @@ comparable with the v2 fold 0 (near-copy-disjoint, size-balanced); step C
 reports fold-0 values as exploratory context.
 
 Evidence: workstation copies of every attempt under
-`/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable/lane0..2`
+`<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable/lane0..2`
 (10 acknowledged transfers); 75 evidence files (manifest, settings, claims,
 `step_b/` with host samples and reports, lane states and events, statuses,
 acknowledgments, archived attempt) in `step_b_evidence/evidence_20261006T010332Z`,
@@ -4732,7 +4732,7 @@ step-B run, as plan.md allows):
    from the controller's conservative daily reservation (snapshot $7.50/month,
    $0.25/day). Running hours are costed at $0.859/h (the gross $0.879/h minus its
    disk share), so the disk is counted once. The snapshot is kept.
-6. Disk: the two archives were moved to `/media/mechti/Data1/archive_from_home/`
+6. Disk: the two archives were moved to `<secondary-drive>/archive_from_home/`
    (SHA-256 equal on both sides, copies re-read with direct I/O, originals then
    removed; `SHA256SUMS` beside them). `/` has 16 GB free. Nothing else was
    deleted.
@@ -4950,7 +4950,7 @@ this entry's commit.
 ## v3-005
 
 2026-10-04 — plan step A1 complete: the v3 fold set `v3-seqid90-s42-b2` is
-frozen under `/media/mechti/Data1/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/folds/`
+frozen under `<secondary-drive>/DeepMzyme_Data/campaigns/pmm_ion_metal_v3/folds/`
 (`fold_membership.csv` SHA-256 `e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a`;
 receipt `fold_receipt.json` with input, output and code identities; builder
 `v3-near-copy-folds-2` at commit `3102c2a`, seed 42, 200 starts). Only training
@@ -5009,7 +5009,7 @@ User decisions:
 - The final-test label is decided before step E, after the user checks the
   2026-09-24 Zenodo run.
 
-Defaults set by Claude under the user's instruction to accept or reject the
+Defaults set by the agent under the user's instruction to accept or reject the
 review's points (changeable by a dated entry before the affected step): seed 42
 only in step E; step-D values (modality dropout 0.2, outer-residue dropout 0.1,
 coordinate noise 0.1 Å, label smoothing 0.1, `counts_angles` against `none`);
@@ -5034,8 +5034,8 @@ choice; see [Plan](Plan.md#canonical-staged-metal-training-pipeline).
 ## v3-003
 
 2026-10-04 — the user confirmed active Google Cloud free-trial credits on the
-billing account (upgraded free trial; about ₪848 remaining, expiring
-2026-12-24; Google reports they cover all eligible usage). Under the user's
+billing account (upgraded free trial with remaining free-trial credits;
+Google reports they cover all eligible usage). Under the user's
 rule from [v3-002](#v3-002), the v3 GPU budget ceiling is **$40 gross** for
 steps B–F. Costs stay tracked at gross list price; credits never widen the
 controller's session and daily caps or any limit, and usage is not described

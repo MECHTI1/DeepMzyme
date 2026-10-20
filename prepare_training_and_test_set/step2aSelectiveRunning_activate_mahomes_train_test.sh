@@ -13,9 +13,9 @@ SOURCE_JOB_ROOT="${SOURCE_JOB_ROOT:-/media/Data/pinmymetal_sets/mahomes/train_se
 JOB_ROOT="${JOB_ROOT:-/media/Data/pinmymetal_sets/mahomes/train_set_selective}"
 PDB_DIR="${PDB_DIR:-/media/Data/pinmymetal_sets/train/pdb_updatedv2}"
 N_JOBS="${N_JOBS:-4}"
-MAHOMES_DIR="${MAHOMES_DIR:-/home/mechti/MAHOMES-II}"
+MAHOMES_DIR="${MAHOMES_DIR:-$HOME/MAHOMES-II}"
 VENV="${VENV:-$MAHOMES_DIR/venv/bin/activate}"
-PYTHON_BIN="${PYTHON_BIN:-/home/mechti/miniconda3/envs/deepgm-py312/bin/python}"
+PYTHON_BIN="${PYTHON_BIN:-$(command -v python3 || true)}"
 CLEAN_JOB_DIRS="${CLEAN_JOB_DIRS:-1}"
 FAILED_IDS_FILE="$JOB_ROOT/pdbids_query_failed_only.txt"
 ################

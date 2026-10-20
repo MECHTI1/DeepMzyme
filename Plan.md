@@ -19,7 +19,7 @@ clearly contains newer working logic that should be preserved.
 | Need | Go to |
 | --- | --- |
 | Executable orientation, local setup limits, and project navigation | `docs/GETTING_STARTED.md` |
-| Required agent GPU routing, connection and optional monitoring | `.agents/skills/gpu-use-skill/SKILL.md` |
+| Required agent GPU routing, connection and optional monitoring | maintainer's local GPU-use policy (not published); public procedure: `docs/GCP_GPU_RUNBOOK.md` |
 | Colab browser/CLI runtime and environment procedure | `docs/COLAB_GPU_RUNBOOK.md` |
 | Locked environment contracts | `requirements/README.md` |
 | Benchmark schemas, commands, and artifact inventory | `bench/README.md` |
@@ -307,7 +307,7 @@ The project uses distinct split and fold regimes depending on the campaign and s
 
 The canonical metal-training workflow is driven by the staged blocks in
 `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`. The primary execution route runs
-them as CLI runners on the GCP L4 VM (`gpu-use-skill`); the interactive
+them as CLI runners on the GCP L4 VM (`docs/GCP_GPU_RUNBOOK.md`); the interactive
 notebook (`notebooks/DeepMzyme_training_colab.ipynb`) is a secondary interface
 and Colab is the authorized cloud fallback. The pipeline has eight stages with
 explicit decision gates: Stage 0 (environment/data readiness), Stage 1
@@ -570,8 +570,8 @@ final-test configuration changes, update the files in this order:
    and behavior when the live UI/defaults need to match the canonical workflow.
 3. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
    crosswalk, only if the meaning or stage mapping changed.
-4. `AGENTS.md` - agent instructions, only if the expected agent behavior
-   changed.
+4. The local agent instructions (not published), only if the expected agent
+   behavior changed.
 5. `Plan.md` - only if the research policy, ownership policy, or stage ordering
    changed.
 

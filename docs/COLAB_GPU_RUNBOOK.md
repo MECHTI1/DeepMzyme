@@ -1,9 +1,9 @@
 # Google Colab GPU Runbook: Browser and CLI
 
-Agents first read the project
-[`gpu-use-skill`](../.agents/skills/gpu-use-skill/SKILL.md) for authorization,
-owned-runtime reuse, bounded fallback and optional monitoring. This runbook owns
-the Colab-specific procedure; its use does not itself allocate a runtime.
+Agents first read the maintainer's local `gpu-use-skill` policy (not
+published) for authorization, owned-runtime reuse, bounded fallback and
+optional monitoring. This runbook owns the Colab-specific procedure; its use
+does not itself allocate a runtime.
 
 GCP stockout recovery uses the controller's
 [same-region procedure](GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region).
@@ -83,7 +83,7 @@ After source/state have been frozen as a separate operational continuation and
 one owned endpoint has been prepared, the maintained command is:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python \
+uv run --frozen --no-sync python \
   scripts/colab_serial_metal_supervisor.py \
   --output "$CAMPAIGN_DIR" --session-id "$OWNED_SESSION" \
   --persistence-seconds "$MEASURED_PER_FIT_PERSISTENCE_SECONDS"
@@ -174,7 +174,7 @@ A GitHub clone omits uncommitted changes. Build a current snapshot without
 resetting, committing, pulling, pushing, or modifying the Git index:
 
 ```bash
-/home/mechti/miniconda3/envs/DeepMzyme/bin/python scripts/prepare_colab_smoke_snapshot.py
+uv run --frozen --no-sync python scripts/prepare_colab_smoke_snapshot.py
 ```
 
 The archive, SHA256 sidecar and file/commit/dirty-state manifest are written to

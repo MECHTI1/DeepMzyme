@@ -1,6 +1,6 @@
 # Phase 0 baseline (worktree @ 3e912a6, 2026-09-28)
 
-Worktree: `/media/mechti/Data1/DeepMzyme_worktrees/docs`, branch `docs-consolidation`
+Worktree: `<secondary-drive>/DeepMzyme_worktrees/docs`, branch `docs-consolidation`
 from `metal-pmm-ion-campaign` @ `3e912a6`. `git status --porcelain` was empty right
 after checkout (NTFS, ntfs3). The shared checkout was not modified.
 

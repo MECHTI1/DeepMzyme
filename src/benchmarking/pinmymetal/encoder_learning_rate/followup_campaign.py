@@ -9,7 +9,7 @@ Commands (everything else is passed to pmm_trunklr.py unchanged):
   launch UNIT@LANE ... [--fit-seconds S] [--no-wait]
                           every frozen check (readiness, manifest, ceiling, authorization, spending, unit/lane/pull
                           state, admission) in planning; then, immediately before submission and under a shared hold
-                          of the controller lock (~/deepmzyme-vm/state/controller.lock), the controller session is read
+                          of the controller lock (<controller>/state/controller.lock), the controller session is read
                           again, checked against the v2 launch policy and its bound sessions, bound once if it is new,
                           and admitted; only then is the launch script sent
   policy                  offline: the recorded policy, the bound sessions and the verdict for the current session

@@ -35,7 +35,7 @@ Tooling (additive; no v3 file changed):
 
 Readiness evidence (CPU only; no held-out access):
 - **Data1 and the VM.** Data1 is remounted read-write after the reboot (not in `/etc/fstab`). Live `vm-status` works
-  again: `deepmzyme-l4` was TERMINATED at 15:53 UTC.
+  again: `<gpu-vm>` was TERMINATED at 15:53 UTC.
 - **Records.** The v3 readiness report (`d_readiness_20261006T180939Z`, ready) and the extension record match this
   worktree's runner files. The in-memory manifest verifies. It binds the five controls by checkpoint and prediction
   hash; A4, E2 and the E2 manifest agree. Fold values: 71.62, 73.34, 72.96, 75.17 and 78.32 (mean 74.28).
@@ -100,7 +100,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run (no active campaign); no GPU start, training, embeddings or test predictions.
-- GPU/VM: `deepmzyme-l4` TERMINATED; disk kept (about $0.49/day); snapshots `deepmzyme-paused-20261003` and `deepmzyme-v3-final-20261013` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
+- GPU/VM: `<gpu-vm>` TERMINATED; disk kept (about $0.49/day); snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
 
 Next: the user's decision on deleting the VM and its disk (inventory and typed confirmation in handoff section 13); any new campaign needs the user's decision.
 Final-test label `both_results_secondary` was recorded before the test pass ([log v3-022](docs/archive/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
@@ -193,8 +193,8 @@ start. Closed CPU-side, after a verified backup.
   - the top group's net points are then subtracted;
   - it is not a balanced accuracy recomputed on the fold without that group.
   The numbers and the assessment stay unchanged.
-- **Backup first** (NVMe `/dev/nvme0n1p6`, independent of Data1 `/dev/sda1`):
-  `~/deepmzyme_backups/deepmzyme_closeout_ec_readiness_20261013T190136Z/initial/`, 2,102 files, 0.93 GB.
+- **Backup first** (local NVMe partition, independent of the Data1 secondary drive):
+  `<local-backup-root>/deepmzyme_closeout_ec_readiness_20261013T190136Z/initial/`, 2,102 files, 0.93 GB.
   - Contents: the whole records folder, the five candidate and five control runs, the lane receipts, the v3
     dependencies, the frozen source and a Git bundle of `main` `ad99c5f` plus the v3 tag.
   - Checks: every copy was re-hashed; the ten checkpoint/prediction identities and the five final `.rc` (0) match.
@@ -243,7 +243,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run; the authorized session is used; any further session or budget needs the user's decision; no test predictions.
-- GPU/VM: `deepmzyme-l4` TERMINATED (verified 2026-10-13 17:46 UTC); disk and caches kept; snapshots `deepmzyme-paused-20261003` and `deepmzyme-v3-final-20261013` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 17:46 UTC); disk and caches kept; snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
 
 Next: the user's decision to close this campaign (archive and a findings line) and to commit its records. Later: stronger EC standalone validation, then cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 

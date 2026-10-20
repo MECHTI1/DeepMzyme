@@ -13,8 +13,8 @@ handover: the first task of the new Codex thread is to answer the six questions.
 
 ## Setup and limits (both runs)
 
-- Each run used a new cold-start subagent (Claude Code `Explore` type) in the
-  cloud container on branch `claude/happy-ritchie-99xmhd`, with the same prompt.
+- Each run used a new cold-start subagent (read-only `Explore` subagent type) in the
+  cloud container on branch `<cloud-review-branch>`, with the same prompt.
 - It was told to use only Read, open only `AGENTS.md`, `EXPERIMENT_STATUS.md`
   and the campaign README named on STATUS's `Current campaign:` line, and to
   answer the six ANSWER_KEY questions. The questions were given without the key.
@@ -86,7 +86,7 @@ The active campaign is **pmm_ion_metal**, PMM core scope v2 (paused). Its README
 - The released PMM comparator did complete all five folds (Grade 2).
 
 **Q3. Where runs execute and who owns the GPU lifecycle**
-- **Main route:** CLI runners on a GCP L4 VM, run only through `~/deepmzyme-vm/bin/*` under the gpu-use-skill. Colab is the authorized fallback, and its notebook is the secondary interface.
+- **Main route:** CLI runners on a GCP L4 VM, run only through `<vm-controller>/bin/*` under the gpu-use-skill. Colab is the authorized fallback, and its notebook is the secondary interface.
 - **Ownership:** one coordinator owns allocation, submission and shutdown. An optional monitor is read-only and never replaces the stop controls.
 - **Limits:** at most one active GCP GPU, and one training worker per GPU in production. Invoking the skill gives no authority to spend money or change providers.
 - **VM state:** TERMINATED as of 2026-09-28 06:00:18 UTC. That is historical evidence, not a live check. The kept 150-GB disk costs about $15/month.
@@ -179,7 +179,7 @@ Line references: A = AGENTS.md, S = EXPERIMENT_STATUS.md, R = the campaign READM
 - 9 x 5 = 45, so 36 deferred fits would fit folds 1-4. That is my arithmetic; the files do not list the deferred fits.
 
 **Q3. Where runs execute and who owns the GPU lifecycle**
-- **Primary route:** CLI runners on the GCP L4 VM, operated only through `~/deepmzyme-vm/bin/*` under gpu-use-skill (`.agents/skills/gpu-use-skill/SKILL.md`) (A:42, R:41-42).
+- **Primary route:** CLI runners on the GCP L4 VM, operated only through `<vm-controller>/bin/*` under gpu-use-skill (`.agents/skills/gpu-use-skill/SKILL.md`) (A:42, R:41-42).
 - **Fallback:** Colab is the authorized fallback, and the notebook is a secondary interface. Historical G4 budgets stay labeled historical (A:42, R:42-43).
 - **Limits:** at most one active GCP GPU (A:43), and one training worker per GPU in production (R:44). The skill must be read before any GPU planning, connection, monitoring or training (A:41).
 - **Ownership:** "One coordinator owns allocation/submission/shutdown". An optional monitor is read-only and never replaces stop controls (A:43). This is a role only; the files do not say which person or agent is the coordinator.

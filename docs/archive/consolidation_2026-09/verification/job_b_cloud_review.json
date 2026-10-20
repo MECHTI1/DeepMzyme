@@ -2,7 +2,7 @@
   "checkpoint": "Job B step 2, independent cloud review before user rule review",
   "date": "2026-09-28",
   "environment": {
-    "kind": "Claude Code cloud container with a fresh clone; no workstation, shared checkout, frozen checkout, controller or VM access",
+    "kind": "cloud agent container with a fresh clone; no workstation, shared checkout, frozen checkout, controller or VM access",
     "base": "3c0f80c6033a332b65e91302eea16c81add13e1d",
     "input_patch_sha256": "f8ac2f27d5611796f04cfd0ccc478f18d35722080d99edc1c614a70b075f4ab6",
     "input_patch_files": 31,
@@ -106,7 +106,7 @@
     "ignore_files": {
       ".ignore": "docs/archive/, docs/notebook_outputs/raw/, uv.lock; docs/MOVED.md stays visible",
       ".aiignore": "replaced by the .ignore list (PLAN_v2 contradiction 11): the bare README.md entry hid every README and .data, .md_files and Documenation matched nothing; prepare_training_and_test_set stays visible because the user did not ask to hide it",
-      "GEMINI.md": "one line pointing to AGENTS.md, like CLAUDE.md"
+      "GEMINI.md": "one line pointing to AGENTS.md, like the existing agent pointer file"
     },
     "skill_handoff": "gpu-use-skill Handoff: update the runtime receipt, copy dated STATUS text into the campaign log.md first, then overwrite STATUS in its layout including the Authorized now: and GPU/VM: lines",
     "fresh_agent_test": {

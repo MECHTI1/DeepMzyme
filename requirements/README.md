@@ -29,7 +29,7 @@ locked CPU PyTorch wheel.
 
 ## Existing workstation and optional local CUDA
 
-The existing `/home/mechti/miniconda3/envs/DeepMzyme` prefix is a real execution
+An existing local Conda prefix (for example `<conda-prefix>/envs/DeepMzyme`) is a real execution
 path, but it is not the canonical lock and must not be described as a fresh
 reconstruction of it. Record its actual runtime metadata in every run.
 

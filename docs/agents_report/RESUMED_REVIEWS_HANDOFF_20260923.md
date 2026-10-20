@@ -8,7 +8,7 @@ training run was launched. `Plan.md`, `EXPERIMENT_STATUS.md` and
 
 ## 1. What the user asked for (the "unfinished 2 works")
 
-Two Claude Code sessions from 2026-09-23 were interrupted before delivering an answer.
+Two agent sessions from 2026-09-23 were interrupted before delivering an answer.
 
 ### Work 1 — session `182d0760-c196-46f2-b952-6c6fa3f10d4d` (17:31 UTC)
 
@@ -30,7 +30,7 @@ Two requests:
 1. (18:12) Read the Antigravity (Gemini ACP) chat stored in the PyCharm IDE, which
    proposed issues whose fixes "might have high potential improving the model".
    The user asked for an opinion on each, a ranking by estimated likelihood of
-   substantial improvement, and any additional suggestions of Claude's own.
+   substantial improvement, and any additional suggestions of the review agent's own.
 2. (18:22) *"Please, do independent new from scratch review for the gvp and gvp+esmc
    (with focus on the fusion) for find what are the issues that fix/change them in
    the code might bring substantial improvements to the performance."*
@@ -44,24 +44,24 @@ ended.** The user received only two preliminary findings in chat and no final an
 | Item | Path |
 | --- | --- |
 | Antigravity chat, decoded (13 claims C1–C13) | `<scratch-a01b9fd7>/antigravity_chat.txt` |
-| Antigravity raw event log | PyCharm `aia-task-history/8778fdeb-4b17-48a5-8952-e01916092eb1.events` (base64 JSON lines) |
-| Antigravity SQLite conversation | `~/.gemini/antigravity-acp/conversations/2e750abe-5179-4652-b4a3-af901b0c5b19.db` |
+| Antigravity raw event log | PyCharm `aia-task-history/<event-log-id>.events` (base64 JSON lines; local, not published) |
+| Antigravity SQLite conversation | `<antigravity-conversation-db>` (local agent store, not published) |
 | Benchmark run outputs | `runs/benchmark_exact_pinmymetal_5fold/{benchmark_only_esm,benchmark_enhanced_only_gvp,benchmark_enhanced_gvp_esmc}_fold{0..4}/` |
 
 `<scratch-a01b9fd7>` =
-`/tmp/claude-1000/-home-mechti-PycharmProjects-DeepMzyme/a01b9fd7-e079-4567-9ac2-56dd187bb871/scratchpad`
+the original session's local scratchpad under `<agent-session-dir>` (not published)
 (session-scoped tmp; a copy of `antigravity_chat.txt` was placed in this session's
 scratchpad as well).
 
 ## 3. State of the two interrupted workflows
 
-| Workflow | Run ID | Transcript dir (under `~/.claude/projects/-home-mechti-PycharmProjects-DeepMzyme/a01b9fd7-.../subagents/workflows/`) | Completed before the cut |
+| Workflow | Run ID | Transcript dir (under `<agent-session-dir>/a01b9fd7-.../subagents/workflows/`) | Completed before the cut |
 | --- | --- | --- | --- |
 | `deepmzyme-improvement-audit` | `wf_2cb72b1d-af6` | `wf_2cb72b1d-af6/` | 13/13 `verify:C*`, 1/13 `challenge:C*` (C2). Discovery lenses started, none returned. |
 | `gvp-fusion-fresh-review` | `wf_64387913-254` | `wf_64387913-254/` | 4/7 finders: `gvp-core-math`, `readout-pooling`, `fusion-design`, `optimizer-training-loop`. |
 
 Original scripts are preserved at
-`~/.claude/projects/-home-mechti-PycharmProjects-DeepMzyme/a01b9fd7-e079-4567-9ac2-56dd187bb871/workflows/scripts/`.
+`<agent-session-dir>/a01b9fd7-e079-4567-9ac2-56dd187bb871/workflows/scripts/` (local, not published).
 
 `resumeFromRunId` is **same-session only**, so those runs cannot be resumed directly
 from a new session. The recovery method used instead is in section 4.
@@ -87,7 +87,7 @@ from a new session. The recovery method used instead is in section 4.
 
 Artifacts of this session:
 
-| Item | Path (under `/tmp/claude-1000/-home-mechti-PycharmProjects-DeepMzyme/756401be-6fa4-40e3-87b1-c5609796e660/scratchpad/`) |
+| Item | Path (under this session's local scratchpad, `<agent-session-dir>/756401be-6fa4-40e3-87b1-c5609796e660/scratchpad/`) |
 | --- | --- |
 | Combined continuation script | `resume/resume_reviews.js` |
 | Cached results replayed by it | `resume/cache_audit.json`, `resume/cache_fresh.json` |
@@ -95,7 +95,7 @@ Artifacts of this session:
 | New agents' scratch space | `agents/`, `fresh_review/` |
 
 Run `wf_4c859baa-61b` journal:
-`~/.claude/projects/-home-mechti-PycharmProjects-DeepMzyme/756401be-6fa4-40e3-87b1-c5609796e660/subagents/workflows/wf_4c859baa-61b/journal.jsonl`.
+`<agent-session-dir>/756401be-6fa4-40e3-87b1-c5609796e660/subagents/workflows/wf_4c859baa-61b/journal.jsonl` (local).
 
 ### How to resume again if this run is also interrupted
 
@@ -130,7 +130,7 @@ is the simpler path.
      harmed GVP+ESMC?);
    - the ranked list with reconciled probabilities, cost, and the cheapest decisive
      experiment per item;
-   - the per-claim table for C1–C13 with Claude's opinion vs Antigravity's ranking,
+   - the per-claim table for C1–C13 with the review agent's opinion vs Antigravity's ranking,
      which is what request 2a asked for;
    - which items the independent review found that Antigravity missed, and where the
      two disagree.
@@ -194,9 +194,9 @@ experiment per claim) are in `resume/cache_audit.json` and `resume/cache_fresh.j
    session scratchpad.
 3. **No training runs, no dataset builds, no forward passes over data.** The local
    machine has no GPU. Every proposal is delivered as an experiment to run later.
-4. Use `/home/mechti/miniconda3/envs/DeepMzyme/bin/python`, never bare `python`.
-5. **Memory is the real constraint.** ~15.7 GB total, with PyCharm, Chrome and Claude
-   Desktop resident; free memory was ~1.6 GB when this work started. Importing torch
+4. Use the project's prescribed interpreter (`<python>`), never bare `python`.
+5. **Memory is the real constraint.** ~15.7 GB total, with PyCharm, Chrome and the agent
+   desktop app resident; free memory was ~1.6 GB when this work started. Importing torch
    costs ~400 MB per process. The earlier run's agent prompts advertised "~1–2 GB free"
    and probably contributed to a desktop crash; the resumed script tells agents to
    keep **one** torch process alive at a time and exit promptly. Keep the concurrency

@@ -57,8 +57,8 @@ was not regenerated. Full inventory and interpretation are in
 
 Final local results:
 
-- configured workstation interpreter verified as
-  `/home/mechti/miniconda3/envs/DeepMzyme/bin/python`; the canonical lock was
+- configured workstation Conda interpreter verified as
+  `<conda-prefix>/envs/DeepMzyme/bin/python`; the canonical lock was
   also created independently at `.venv/bin/python` by PyCharm/uv;
 - locked environment: Python `3.12.3`, PyTorch `2.5.1+cpu`,
   torch-geometric `2.7.0`, NumPy `2.4.4`, scikit-learn `1.8.0`, Optuna `4.8.0`,

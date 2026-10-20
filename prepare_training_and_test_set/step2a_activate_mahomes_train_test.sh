@@ -15,7 +15,7 @@ job_root="/media/Data/pinmymetal_sets/mahomes/train_set"
 pdb_dir="/media/Data/pinmymetal_sets/train/pdb_updatedv2"
 
 N_JOBS=4
-MAHOMES_DIR="/home/mechti/MAHOMES-II"
+MAHOMES_DIR="${MAHOMES_DIR:-$HOME/MAHOMES-II}"
 VENV="$MAHOMES_DIR/venv/bin/activate"
 CLEAN_JOB_DIRS="${CLEAN_JOB_DIRS:-1}"
 pdbids_query_txt="$job_root/pdbids_query.txt"
