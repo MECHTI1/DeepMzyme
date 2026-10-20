@@ -191,5 +191,5 @@ established 6,791 unique matches under an inferential rule, but only 72.18%
 coverage with severe site-type bias; it did not create a training dataset.
 The coordinate-only crosswalk and its per-side/class counts above remain
 unchanged. `very_exact-pmm_sets` has not been built or passed to Parts 2–3.
-A short [request for the missing provenance](PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md)
-remains unsent.
+A short request to the PinMyMetal authors for the missing provenance was
+drafted but remains unsent; the draft is not published.

@@ -15,6 +15,8 @@ Source revision: `3c0f80c`. Exact STATUS ranges and hashes are in the
 | `docs/campaigns/pmm_ion_metal_v3/` (closed 2026-10-13, `git mv`; the old path stays as a registered alias for frozen tools and records; pinned files and the alias in [frozen_moves.json](archive/frozen_moves.json); original bytes at tag `pmm-ion-metal-v3-final`) | [Archived v3 campaign](archive/campaigns/pmm_ion_metal_v3/README.md) |
 | `docs/campaigns/pmm_trunk_lr_2026-10/` (closed 2026-10-13, `git mv`; the old path stays as a registered alias for the frozen trunk-LR tools; the pinned specification and the alias in [frozen_moves.json](archive/frozen_moves.json); original bytes at commit `ad99c5f`, no tag) | [Archived trunk-LR campaign](archive/campaigns/pmm_trunk_lr_2026-10/README.md) |
 | Other current/historically removed STATUS sections | [Complete history map](archive/consolidation_2026-09/MAP.md) |
+| `docs/BACKUP_AND_DATA_INVENTORY.md` (removed 2026-10-20; maintainer backup details are kept privately) | [Benchmark runs and checkpoint releases](DATASETS.md#benchmark-runs-and-checkpoint-releases) |
+| `docs/PMM_AUTHOR_PROVENANCE_REQUEST_DRAFT.md` (unsent email draft; removed 2026-10-20 and kept privately) | [PMM deposition crosswalk](PMM_DEPOSITION_CROSSWALK.md) |
 
 Existing playbook paths, executable blocks, `docs/plans/`, raw evidence and
 existing experiment summaries retain their paths and contents. Job C moves

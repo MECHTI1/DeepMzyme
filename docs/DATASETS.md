@@ -686,6 +686,42 @@ cannot be reconstructed from the manifest. It does not authorize held-out
 evaluation or stand in for a model-quality dataset. Audited legacy G4/A100
 results are summarized in [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
 
+### Benchmark runs and checkpoint releases
+
+Benchmark runs and checkpoints are published in the same Hugging Face
+repository under `benchmarks/`. The first three files below were published in
+commit
+[`d8372220`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/commit/d8372220f2a3d0ce2d098a19f4728fa2d9882f90)
+(2026-09-24); the two Phase 2 files were added on 2026-10-19 and are linked at
+`main`.
+
+| Hugging Face path | Size | SHA256 | Contents |
+|---|---:|---|---|
+| [`benchmarks/DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz) | 511 MB | `374c888132f99345ee5ca97a7a515b1a468ec4bdace69c77f72ecde4e5b23dfc` | Exact PinMyMetal 5-fold runs (Enhanced GVP+ESMC, Enhanced Only GVP, Only ESM; folds 0-4) with `best_checkpoint.pt`, `test_predictions.pt`, per-fold logs and comparison tables, plus recovery and pilot runs |
+| [`benchmarks/DeepMzyme_pmm_source_audit_output_20260924.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_pmm_source_audit_output_20260924.tar.gz) | 144 MB | `8ca96f245e4ae015080f0b18b156e04c87155e4b024101137752bb2bc653f6ac` | PinMyMetal source audit: deposition crosswalks v1-v3, full feature crosswalks and audit summaries |
+| [`benchmarks/benchmark_5fold_comparison_table.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/benchmark_5fold_comparison_table.md) | 2.4 KB | — | 5-fold balanced accuracy and per-metal recall table |
+| [`benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_phase2_unified_and_180ckpt_eval_20261019.tar.gz) | 99 MB | `d4d045b5dd9de56a11504639961c3e30e6a4fda5e7e6e60f5c63a563af8951fe` | The five public `unified__P_five_class_trunklr1e4__fold{0..4}__seed42` terminal checkpoints with `val_predictions.csv`, the 180-checkpoint test probability archive `test_checkpoint_probs.npz`, bootstrap summaries and reproduction scripts |
+| [`benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/raw/main/benchmarks/phase2_unified_and_180ckpt_evaluation_report_20261019.md) | 16 KB | — | Phase 1/2 evaluation report; current results: [Phase 2 README](campaigns/phase2_unified_2026-10/README.md) |
+
+Download, verify and unpack the 5-fold runs:
+
+```bash
+wget https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/benchmarks/DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz
+echo "374c888132f99345ee5ca97a7a515b1a468ec4bdace69c77f72ecde4e5b23dfc  DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz" | sha256sum -c
+tar -xzvf DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.tar.gz -C .
+```
+
+The exact Zenodo PinMyMetal archive has its own download and checksum steps in
+[the reproducibility guide](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md#hugging-face-distribution--verification).
+
+### Storage and backups
+
+Data, runs and caches live under the git-ignored `DeepMzyme_Data/` folder; the
+Hugging Face files above are the public archives. Maintainer-only backups (full
+development history, local tool configuration and copies of unpublished runs)
+are kept outside this repository and are not needed to reproduce the published
+results.
+
 ### Main Colab bundle v11 (historical hosted release)
 
 - Filename: `DeepMzyme_Data_v11_manifest_exact_common70_nonoverlap_clean30_care30_esm_ring_external.tar.gz`

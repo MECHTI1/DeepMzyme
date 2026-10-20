@@ -16,16 +16,14 @@ test-set decisions and [`DATASETS.md`](DATASETS.md) before any test-set use.
 
 1. [`GETTING_STARTED.md`](GETTING_STARTED.md) — execution paths, environment
    limits, first checks, and repository navigation.
-2. [`BACKUP_AND_DATA_INVENTORY.md`](BACKUP_AND_DATA_INVENTORY.md) — authoritative
-   cloud backup locations, Hugging Face bundles, model checkpoints, and disk inventory.
-3. [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) — current objective,
+2. [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md) — current objective,
    anchors, blockers, and next actions.
-4. [`DATASETS.md`](DATASETS.md) — datasets, splits, Hugging Face files,
-   bundles, provenance, and
+3. [`DATASETS.md`](DATASETS.md) — datasets, splits, Hugging Face files,
+   bundles, model checkpoint releases, provenance, and
    historical test-use record.
-5. [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) — validation/HPO findings
+4. [`PARAMETER_FINDINGS.md`](PARAMETER_FINDINGS.md) — validation/HPO findings
    with evidence grades.
-6. [`notebook_outputs/README.md`](notebook_outputs/README.md) — experiment-batch
+5. [`notebook_outputs/README.md`](notebook_outputs/README.md) — experiment-batch
    index and links to summaries/configs/raw evidence.
 
 Scientific policy is in [`Plan.md`](../Plan.md).
@@ -60,7 +58,7 @@ scientific authority or establish implemented or evaluated behavior.
 | Information | Authority | Not its role |
 |---|---|---|
 | Public overview and minimal quick start | [`README.md`](../README.md) | Live defaults, status, or experiment history |
-| Cloud backup locations, Hugging Face bundles, checkpoint releases, and disk inventory | [`BACKUP_AND_DATA_INVENTORY.md`](BACKUP_AND_DATA_INVENTORY.md) | Mutable experiment progress |
+| Hugging Face benchmark runs and checkpoint releases | [`DATASETS.md`](DATASETS.md#benchmark-runs-and-checkpoint-releases) | Maintainer-only backups (kept outside the repository) |
 | Executable orientation and local setup limits | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Exact experiment budgets or mutable results |
 | Locked Linux environment and Colab overlay boundary | [`../requirements/README.md`](../requirements/README.md) | Scientific stage policy |
 | Benchmark files, schemas, commands, and interpretation | [`../bench/README.md`](../bench/README.md) | Model-quality evidence |

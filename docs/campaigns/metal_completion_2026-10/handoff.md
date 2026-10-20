@@ -23,7 +23,7 @@ Evidence lives in Data1 `campaigns/metal_completion_2026-10/preparation_20261014
 - `evaluation_prep_20261016/`: training-side prior-use release dates, obsolete entries and the blocked template.
 
 Reuse this evidence. Repeat a check only when source, inputs or environment changed. The completion package has no
-NVMe or off-site copy yet (see the backup inventory, section 5A).
+NVMe or off-site copy yet (backup state is recorded privately, outside this repository).
 
 Work through the [remaining blockers](evaluation.md#remaining-blockers) in order. Act only on what I explicitly
 approve in this conversation:
