@@ -7,9 +7,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from metal_release.catalog import REFERENCE, release_catalog
+from metal_release.catalog import PUBLIC_UNIFIED, REFERENCE, release_catalog
 from metal_release.inventory import BASELINE_PROBE, REFIT_DIRECTORY, bind_catalog
-from metal_release.manifest import ReleaseError, load_manifest, sha256_file, verify_artifact
+from metal_release.manifest import (ReleaseError, candidate_member_ids, load_manifest, prediction_member_ids,
+                                    sha256_file, validate_manifest, verify_artifact)
 
 
 class InventoryTests(unittest.TestCase):
@@ -50,8 +51,66 @@ class InventoryTests(unittest.TestCase):
         (run / "run_config.json").write_text(json.dumps(config))
         return run
 
-    def bind(self, roots=None):
-        return bind_catalog(roots or [self.runs], self.folds, self.output)
+    def bind(self, roots=None, candidate=None):
+        return bind_catalog(roots or [self.runs], self.folds, self.output, candidate=candidate)
+
+    def public_family(self):
+        return [self.run_fixture(mid) for mid in candidate_member_ids(release_catalog(), PUBLIC_UNIFIED)]
+
+    def test_public_scope_binds_only_required_members_and_rejects_unbound_candidates(self):
+        self.public_family()
+        unrelated = self.run_fixture()
+        (unrelated / "selected_checkpoint.json").write_text("invalid unrelated receipt")
+        result = self.bind(candidate=PUBLIC_UNIFIED)
+        self.assertEqual(result["release_status"], "provisional")
+        self.assertEqual(result["reference"], REFERENCE)
+        self.assertEqual(result["binding_scope"], {"candidates": [PUBLIC_UNIFIED]})
+        self.assertEqual(result["inventory_blockers"], [])
+        self.assertIsNone(result["members"][self.member]["checkpoint"])
+        loaded = load_manifest(self.output)
+        ids = prediction_member_ids(loaded, PUBLIC_UNIFIED)
+        self.assertEqual(len(ids), 5)
+        for mid in ids:
+            self.assertTrue(verify_artifact(loaded["members"][mid]["checkpoint"]).is_file())
+        with self.assertRaisesRegex(ReleaseError, "outside.*binding scope"):
+            prediction_member_ids(loaded, "trunklr1e4_5fold_s42")
+        report = json.loads(self.output.with_suffix(".inventory.json").read_text())
+        self.assertEqual(set(report["members"]), set(ids))
+        self.assertEqual(set(report["candidates"]), {PUBLIC_UNIFIED})
+
+    def test_public_family_alone_does_not_satisfy_default_catalog_bind(self):
+        self.public_family()
+        result = self.bind()
+        self.assertEqual(result["release_status"], "blocked")
+        self.assertNotIn("binding_scope", result)
+
+    def test_missing_scoped_artifact_blocks_prediction(self):
+        runs = self.public_family()
+        (runs[-1] / "terminal_model_checkpoint.pt").unlink()
+        result = self.bind(candidate=PUBLIC_UNIFIED)
+        self.assertEqual(result["release_status"], "blocked")
+        self.assertTrue(any("Missing development artifact" in b["reason"] for b in result["inventory_blockers"]))
+        with self.assertRaisesRegex(ReleaseError, "blocked"):
+            prediction_member_ids(load_manifest(self.output), PUBLIC_UNIFIED)
+        result["release_status"] = "provisional"
+        with self.assertRaisesRegex(ReleaseError, "Incomplete binding"):
+            validate_manifest(result)
+
+    def test_missing_scoped_fold_and_changed_receipt_are_not_silently_dropped(self):
+        runs = self.public_family()
+        shutil.rmtree(runs[-1])
+        (runs[0] / "terminal_model_checkpoint.pt").write_bytes(b"changed")
+        result = self.bind(candidate=PUBLIC_UNIFIED)
+        self.assertEqual(result["release_status"], "blocked")
+        reasons = [blocker["reason"] for blocker in result["inventory_blockers"]]
+        self.assertIn("Missing exact run directory", reasons)
+        self.assertTrue(any("Recorded checkpoint SHA-256 mismatch" in reason for reason in reasons))
+
+    def test_unknown_scope_creates_no_outputs(self):
+        with self.assertRaisesRegex(ReleaseError, "Unknown candidate"):
+            self.bind(candidate="unknown")
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.output.with_suffix(".inventory.json").exists())
 
     def test_missing_members_are_retained_and_reference_never_changes(self):
         self.run_fixture()

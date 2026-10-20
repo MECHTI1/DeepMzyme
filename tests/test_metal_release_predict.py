@@ -303,6 +303,26 @@ def test_blocked_manifest_invalid_sites_and_unsupported_features(release):
         predict.build_site_pocket(structure, center=[1000, 0, 0])
 
 
+def test_prediction_accepts_bound_scope_and_rejects_unbound_candidate(release, monkeypatch):
+    path, structure, cache, manifest = release
+    manifest["binding_scope"] = {"candidates": ["mixed"]}
+    manifest["candidates"]["unbound"] = copy.deepcopy(manifest["candidates"]["mixed"])
+    for member in manifest["members"].values():
+        member["receipt_binding_verified"] = True
+    path.write_text(json.dumps(manifest))
+    report = predict.predict_structure(path, structure, center=[0, 0, 0],
+                                       embedding_cache=cache, candidate="mixed")
+    assert report["candidate"] == "mixed" and report["member_count"] == 4
+
+    def unexpected_member_load(*args):
+        pytest.fail("An unbound candidate must fail before loading any member")
+
+    monkeypatch.setattr(predict, "_validated_member", unexpected_member_load)
+    with pytest.raises(ReleaseError, match="outside.*binding scope"):
+        predict.predict_structure(path, structure, center=[0, 0, 0],
+                                  embedding_cache=cache, candidate="unbound")
+
+
 def test_parity_gate_requires_every_eligible_member_and_bound_fixture_identity(release, tmp_path):
     from metal_release.manifest import COMMON4, NATIVE
     from metal_release.parity import compare_development_parity

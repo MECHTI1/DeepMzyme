@@ -55,8 +55,11 @@ def _ref(path: Path, output_parent: Path, digest: str | None = None) -> dict:
 
 def _discover(run_roots: list[Path], members: dict) -> dict[str, list[Path]]:
     names = {name: name for name in members if name != "stage6b_refit"}
-    names[REFIT_DIRECTORY] = "stage6b_refit"
-    names[BASELINE_PROBE] = "gvp_late_fusion__four_class__baseline__fold0__seed42"
+    if "stage6b_refit" in members:
+        names[REFIT_DIRECTORY] = "stage6b_refit"
+    baseline = "gvp_late_fusion__four_class__baseline__fold0__seed42"
+    if baseline in members:
+        names[BASELINE_PROBE] = baseline
     for name, member in members.items():
         if name.startswith(("mc_P_", "mc_S_")):
             recipe = name.split("_")[1]
@@ -155,7 +158,7 @@ def _inspect_run(run: Path, member: dict, output_parent: Path, fold_sha: str) ->
 
 
 def bind_catalog(run_roots: list[Path], fold_membership: Path, output_path: Path, *,
-                 source_inventory: Path | None = None) -> dict:
+                 source_inventory: Path | None = None, candidate: str | None = None) -> dict:
     """Write a new catalog and inventory report, retaining every missing member.
 
     Receipt comparisons verify historical byte bindings, not the scientific
@@ -167,15 +170,24 @@ def bind_catalog(run_roots: list[Path], fold_membership: Path, output_path: Path
     if output_path.exists() or report_path.exists():
         raise ReleaseError("Inventory outputs already exist; choose a new output path")
     manifest = release_catalog()
+    selected = [candidate] if candidate is not None else list(manifest["candidates"])
+    required_ids = {mid for name in selected for mid in candidate_member_ids(manifest, name)}
+    # Keep the frozen catalog intact; only the explicitly requested scope can run.
+    if candidate is not None:
+        manifest["binding_scope"] = {"candidates": selected}
+    required_members = {mid: member for mid, member in manifest["members"].items()
+                        if mid in required_ids}
     manifest["fold_membership"] = _ref(Path(fold_membership), output_path.parent)
     manifest["embedding_model"] = "esmc_600m"
     if source_inventory is not None:
         manifest["source_inventory"] = _ref(Path(source_inventory), output_path.parent)
-    locations = _discover(run_roots, manifest["members"])
+    locations = _discover(run_roots, required_members)
     report = {"schema": "deepmzyme-metal-inventory-v1", "run_roots": [str(Path(p).resolve()) for p in run_roots],
               "members": {}, "blockers": [], "claim_boundary":
               "Metadata and historical receipt bindings only; source, environment, OOF eligibility and replay are not certified."}
-    for name, member in manifest["members"].items():
+    if candidate is not None:
+        report["binding_scope"] = manifest["binding_scope"]
+    for name, member in required_members.items():
         copies = [_inspect_run(path, member, output_path.parent, manifest["fold_membership"]["sha256"])
                   for path in locations[name]]
         problems = []
@@ -208,7 +220,7 @@ def bind_catalog(run_roots: list[Path], fold_membership: Path, output_path: Path
         name: {"bound": all(report["members"][mid]["bound"] for mid in candidate_member_ids(manifest, name)),
                "missing_or_invalid_members": [mid for mid in candidate_member_ids(manifest, name)
                                               if not report["members"][mid]["bound"]]}
-        for name in manifest["candidates"]
+        for name in selected
     }
     manifest["release_status"] = "blocked" if report["blockers"] else "provisional"
     manifest["inventory_blockers"] = report["blockers"]

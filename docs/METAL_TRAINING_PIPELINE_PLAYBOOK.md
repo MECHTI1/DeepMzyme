@@ -30,6 +30,170 @@ historical context only. Do not compare their scores as paired controls or use
 held-out test data to choose the unit. The ion option is currently
 implemented and unit-tested, not experimentally evaluated.
 
+## Reproduce the frozen v3 sequence-clustered folds
+
+This is a fresh validation-only reproduction of the public Phase 2
+`unified__P_five_class_trunklr1e4` recipe: five-class training, collapsed-four
+reporting, seed 42, 50 epochs and the terminal checkpoint. It uses the exact
+7,398-ion cohort and `v3-seqid90-s42-b2` membership shared with v3. PDB entries
+linked by the frozen ≥90%-identity near-copy rule stay together; this is not
+general homology separation. The older `run_zenodo_pmm_exact_5fold_cv.py` uses
+parent-pocket folds and cannot reproduce these memberships.
+
+The [public input inventory](DATASETS.md#frozen-v3-cohort-and-fold-files) links
+the two CSVs included in this checkout. The commands below run from the repository
+root after [environment setup](GETTING_STARTED.md). They extract only the
+cohort's training structures and training metadata from the public archive. Its
+deduplicated storage sometimes hard-links a training member to identical bytes
+stored under `dataset/test/structures`; the extractor resolves those links into
+ordinary training files without extracting test metadata. Existing historical
+campaign outputs remain separate.
+
+```bash
+set -euo pipefail
+REPRO_PY="${DEEPMZYME_PYTHON:-.venv/bin/python}"
+REPRO="${DEEPMZYME_REPRO_ROOT:-DeepMzyme_Data/frozen_v3_reproduction}"
+FROZEN=docs/campaigns/phase2_unified_2026-10/reproduction
+mkdir -p "$REPRO"
+"$REPRO_PY" -c 'import sys; print(sys.executable)'
+sha256sum -c <<EOF
+745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd  $FROZEN/train_cohort.csv
+e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a  $FROZEN/fold_membership.csv
+EOF
+curl -fL --retry 3 \
+  https://huggingface.co/datasets/GMBioinformatics/DeepMzyme/resolve/main/train_and_test_sets_structures_zenodo_pmm_exact.tar.gz \
+  -o "$REPRO/structures.tar.gz"
+sha256sum -c <<EOF
+24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296  $REPRO/structures.tar.gz
+EOF
+"$REPRO_PY" - "$REPRO/structures.tar.gz" "$REPRO" "$FROZEN/train_cohort.csv" <<'PY'
+from pathlib import Path
+import csv, hashlib, sys, tarfile
+
+root = Path(sys.argv[2]).resolve()
+with Path(sys.argv[3]).open(newline="") as handle:
+    cohort = list(csv.DictReader(handle))
+targets = {"dataset/train/final_data_summarazing_table.csv": None,
+           "dataset/train/structure_manifest.csv": None}
+for row in cohort:
+    name = row["structure_name"]
+    if Path(name).name != name or name in {".", ".."}:
+        raise ValueError(f"Unsafe structure name: {name}")
+    targets[f"dataset/train/structures/{name}"] = row["structure_sha256"]
+with tarfile.open(sys.argv[1], "r:gz") as archive:
+    members = {member.name: member for member in archive.getmembers()}
+    jobs = {}
+    for name in targets:
+        member, seen = members[name], set()
+        while member.islnk():
+            if member.name in seen:
+                raise ValueError(f"Cyclic archive hard link: {name}")
+            seen.add(member.name)
+            member = members[member.linkname]
+        if not member.isfile():
+            raise ValueError(f"Expected a regular file or hard link: {name}")
+        jobs.setdefault(member.name, []).append(name)
+    # Read unique byte objects in archive order, avoiding repeated gzip seeks.
+    for source in sorted(jobs, key=lambda name: members[name].offset_data):
+        payload = archive.extractfile(members[source]).read()
+        digest = hashlib.sha256(payload).hexdigest()
+        for name in jobs[source]:
+            if targets[name] is not None and digest != targets[name]:
+                raise ValueError(f"Frozen training structure checksum mismatch: {name}")
+            destination = root / name
+            if not destination.resolve().is_relative_to(root):
+                raise ValueError(f"Destination escapes reproduction directory: {name}")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(payload)
+print(f"Extracted {len(targets) - 2} verified training structures and two training tables")
+PY
+REPRO_TRAIN="$REPRO/dataset/train"
+REPRO_ESM="$REPRO/esm_embeddings_esmc600m"
+mkdir -p "$REPRO_ESM" "$REPRO/external_features_intentionally_empty"
+```
+
+For the standard locked `.venv` setup, install the optional embedding dependency
+with `uv sync --frozen --group esm` (the basic sync excludes it). Prepare
+ESMC-600M embeddings once, using the canonical training cache format
+(`*_esmc.pt`). This requires access to EvolutionaryScale's model weights and
+can be expensive on CPU. The command uses only training structures. The
+historical frozen embedding inventory is not included in the public checkpoint
+archive: regenerated embeddings and current code support a new reproduction,
+not a promise of byte-identical historical predictions. Preserve the generated
+cache and record its hashes and environment before fitting.
+
+```bash
+PYTHONPATH=src "$REPRO_PY" src/embed_helpers/esmc.py \
+  --structure-dir "$REPRO_TRAIN/structures" --out-dir "$REPRO_ESM" \
+  --model-name esmc_600m --device cpu
+```
+
+Run one fold below; `FOLD=0` is the default. Repeat with `FOLD=1`, `2`, `3`,
+and `4` for the complete OOF set. The weights are the archived per-fold
+common-four `N_train / (4 n_class)` weights; Fe and Co+Ni share the Class VIII
+weight. Recipe P implements population-normalized weighted cross-entropy
+through `focal` with gamma zero. Keep the external-feature directory empty.
+The CPU device makes the command portable; accelerator execution follows the
+[GPU runbook](GCP_GPU_RUNBOOK.md) and needs its own authorized allocation.
+
+```bash
+FOLD="${FOLD:-0}"
+case "$FOLD" in
+  0) MN=0.7302858551010349; CU=5.487962962962963; ZN=0.907379056950398; VIII=0.7427318295739348 ;;
+  1) MN=0.7321251241310824; CU=5.342391304347826; ZN=0.9192643391521197; VIII=0.7357784431137725 ;;
+  2) MN=0.7309782608695652; CU=5.38; ZN=0.9076687116564417; VIII=0.7438411261940674 ;;
+  3) MN=0.7342509920634921; CU=5.382727272727273; ZN=0.9086863106200123; VIII=0.7397551224387806 ;;
+  4) MN=0.7304090685066535; CU=5.369565217391305; ZN=0.9080882352941176; VIII=0.7443495730788549 ;;
+  *) echo 'FOLD must be 0, 1, 2, 3 or 4' >&2; exit 1 ;;
+esac
+"$REPRO_PY" src/train.py \
+  --task metal --metal-example-unit ion \
+  --metal-label-scheme five_class --metal-eligibility-scheme six_class \
+  --structure-dir "$REPRO_TRAIN" \
+  --summary-csv "$REPRO_TRAIN/final_data_summarazing_table.csv" \
+  --source-cohort-csv "$FROZEN/train_cohort.csv" \
+  --source-cohort-sha256 745b19c1644ee17ec24e760b81916ff97d11d3c6017e791d610bca0b6bedc3bd \
+  --fold-membership-csv "$FROZEN/fold_membership.csv" \
+  --fold-membership-sha256 e6b21364159da479dc3fb325a01ede36c62489184a77d858f71fefe6c401da7a \
+  --fold-split-source membership --train-val-split-by pdbid \
+  --n-folds 5 --fold-index "$FOLD" --seed 42 \
+  --model-architecture gvp --fusion-mode late_fusion \
+  --hidden-s 128 --hidden-v 16 --edge-hidden 64 --gvp-layers 4 \
+  --esm-dim 1152 --esm-fusion-dim 128 \
+  --head-mlp-layers 2 --head-mlp-dropout 0.2 --esm-graph-encoder-dropout 0.1 \
+  --edge-radius 8.0 --metal-node-mode none --site-geometry-features legacy \
+  --structural-readout-scope residue_only --shell-role-source geometry \
+  --binding-residue-pooling none --node-feature-set conservative \
+  --omit-node-features biotite_residue_sasa,custom_charge_distance_proxy,dpka_titr \
+  --node-rbf-sigma 0.75 --edge-rbf-sigma 0.75 --rbf-use-raw-distances \
+  --external-feature-source updated \
+  --external-features-root-dir "$REPRO/external_features_intentionally_empty" \
+  --allow-missing-external-features --no-prepare-missing-ring-edges \
+  --esm-embeddings-dir "$REPRO_ESM" --no-prepare-missing-esm-embeddings \
+  --epochs 50 --batch-size 16 --learning-rate 3e-5 --gvp-learning-rate 1e-4 \
+  --gvp-lr-scope trunk --weight-decay 1e-4 --lr-schedule cosine \
+  --checkpoint-rule terminal --selection-metric val_metal_balanced_acc \
+  --metal-class-weight-mode manual --metal-loss-function focal --metal-focal-gamma 0 \
+  --metal-label-smoothing 0 --metal-collapsed-loss-weight 0 \
+  --mn-loss-multiplier "$MN" --cu-loss-multiplier "$CU" --zn-loss-multiplier "$ZN" \
+  --fe-loss-multiplier "$VIII" --class-viii-loss-multiplier "$VIII" \
+  --require-all-task-classes --unsupported-metal-policy error --invalid-structure-policy error \
+  --export-validation-predictions --train-metrics-every-n-epochs 10 --device cpu \
+  --dataset-bundle-id train_and_test_sets_structures_zenodo_pmm_exact.tar.gz \
+  --dataset-bundle-sha256 24903f120462aacb90b43c4af97f4f08d61f1847d12636606fcc66e6351db296 \
+  --runs-dir "$REPRO/runs" --run-name "reproduction__P_five_class_trunklr1e4__fold${FOLD}__seed42"
+```
+
+Safety and decision gate: source-cohort loading verifies every bound structure
+and requires complete frozen membership. Missing embeddings must fail; do not
+substitute a different cohort or automatic split. No test path or test-evaluation
+flag belongs in this command. The recipe uses FP32 (no AMP flag). Each run emits
+`run_config.json`, `run_metadata.json`, `selected_checkpoint.json`,
+`terminal_model_checkpoint.pt` and `val_predictions.csv`. Check all five membership
+partitions before pooling OOF predictions; report native five-class metrics and
+sum Fe plus Co+Ni probabilities before collapsed-four scoring. These reproduced
+runs do not select a deployment default or authorize a final-test report.
+
 ## PMM ion metal v3 campaign (`pmm_ion_metal_v3`)
 
 **Closed on 2026-10-13** ([archived README](archive/campaigns/pmm_ion_metal_v3/README.md)). The sections below

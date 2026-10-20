@@ -78,9 +78,10 @@ Limits:
 
 ## Prediction parity and cost
 
-Parity and timing were recorded with the first catalog, before the 15- and 25-model entries were added. Of the source
-files they hash, only `catalog.py` and `manifest.py` have changed since; `predict.py` has not. The manifest, fixtures
-and raw outputs they cite stay private, and the summaries keep their SHA-256 hashes.
+Parity and timing were recorded with the first catalog, before the 15- and 25-model entries and standalone public
+candidate were added. The measurements apply to the recorded source hashes; later candidate-scoped binding and
+prediction validation are not a new parity measurement. The manifest, fixtures and raw outputs they cite stay
+private, and the summaries keep their SHA-256 hashes.
 
 [`parity_summary.json`](parity_summary.json): six sites in five development structures reproduced the saved
 validation predictions of all 55 reference checkpoints (66 comparisons) with identical classes and a maximum
@@ -100,6 +101,9 @@ CPU processes (4 threads, Intel Core i7-1165G7), including checkpoint verificati
 With ESM-C embeddings computed in the same call, the 55-model took 43 s and 5.2 GiB.
 
 ## Reproducing
+
+For the public five-checkpoint family alone, use the current [standalone inference instructions](../../../../src/metal_release/README.md#public-checkpoint-inference).
+The historical full-catalog audit below requires the wider local artifact collection.
 
 `bind` writes a manifest of local checkpoint paths and SHA-256 hashes; the other commands read it. Only 5 of the 55
 checkpoints are public, so these commands need your own training runs (`python src/metal_release_cli.py --help`):

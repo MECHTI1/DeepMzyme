@@ -58,6 +58,7 @@ scientific authority or establish implemented or evaluated behavior.
 | Information | Authority | Not its role |
 |---|---|---|
 | Public overview and minimal quick start | [`README.md`](../README.md) | Live defaults, status, or experiment history |
+| Public metal inference, candidate binding and input features | [`src/metal_release/README.md`](../src/metal_release/README.md) | Model promotion or new parity evidence |
 | Hugging Face benchmark runs and checkpoint releases | [`DATASETS.md`](DATASETS.md#benchmark-runs-and-checkpoint-releases) | Maintainer-only backups (kept outside the repository) |
 | Executable orientation and local setup limits | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Exact experiment budgets or mutable results |
 | Locked Linux environment and Colab overlay boundary | [`../requirements/README.md`](../requirements/README.md) | Scientific stage policy |

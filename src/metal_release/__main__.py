@@ -24,6 +24,8 @@ def parser() -> argparse.ArgumentParser:
     bind = commands.add_parser("bind", help="Locate and hash existing development artifacts; never retrain missing members")
     bind.add_argument("--run-root", required=True, action="append", type=Path)
     bind.add_argument("--fold-membership", required=True, type=Path)
+    bind.add_argument("--candidate", help="Bind only this candidate's required artifacts; "
+                                          "omitting this requires the complete catalog")
     bind.add_argument("--output", required=True, type=Path)
     audit = commands.add_parser("audit", help="Reconstruct OOF predictions and descriptive comparisons from development artifacts")
     audit.add_argument("--manifest", required=True, type=Path)
@@ -83,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
             result = {"status": "complete", "manifest": str(args.output), "note": "Bind existing artifacts before use."}
         elif args.command == "bind":
             from .inventory import bind_catalog
-            result = bind_catalog(args.run_root, args.fold_membership, args.output)
+            result = bind_catalog(args.run_root, args.fold_membership, args.output, candidate=args.candidate)
         elif args.command == "audit":
             from .audit import audit
             result = audit(load_manifest(args.manifest), args.output_dir,

@@ -6,7 +6,8 @@ import json
 import numpy as np
 import pytest
 
-from metal_release.catalog import ADDED_IN_V2, CATALOG_V1, CATALOG_V2, CATALOG_VERSIONS, REFERENCE, release_catalog
+from metal_release.catalog import (ADDED_IN_V2, ADDED_IN_V3, CATALOG_V1, CATALOG_V2, CATALOG_V3,
+                                   CATALOG_VERSIONS, PUBLIC_UNIFIED, REFERENCE, release_catalog)
 from metal_release.manifest import (ReleaseError, aggregate_probabilities, candidate_member_ids,
                                     load_manifest, native_to_common, sha256_file, validate_manifest,
                                     verify_artifact)
@@ -25,8 +26,36 @@ def test_catalog_preserves_shortlist_and_55_member_identity():
 def test_each_catalog_version_validates_with_its_own_shortlist(catalog_id):
     manifest = release_catalog(catalog_id)
     validate_manifest(manifest)
-    newest = set(release_catalog(CATALOG_V2)["candidates"])
-    assert set(manifest["candidates"]) == (newest - set(ADDED_IN_V2) if catalog_id == CATALOG_V1 else newest)
+    expected = set(release_catalog(CATALOG_V3)["candidates"])
+    if catalog_id in {CATALOG_V1, CATALOG_V2}:
+        expected -= set(ADDED_IN_V3)
+    if catalog_id == CATALOG_V1:
+        expected -= set(ADDED_IN_V2)
+    assert set(manifest["candidates"]) == expected
+
+
+def test_public_candidate_is_exact_archived_five_class_family():
+    manifest = release_catalog()
+    ids = candidate_member_ids(manifest, PUBLIC_UNIFIED)
+    assert ids == [f"unified__P_five_class_trunklr1e4__fold{fold}__seed42" for fold in range(5)]
+    assert all(manifest["members"][mid]["target"] == "five_class" for mid in ids)
+    assert manifest["candidates"][PUBLIC_UNIFIED]["groups"][0]["weight"] == 1.0
+
+
+def test_v2_manifest_cannot_carry_v3_candidates():
+    manifest = release_catalog(CATALOG_V2)
+    manifest["candidates"][PUBLIC_UNIFIED] = release_catalog()["candidates"][PUBLIC_UNIFIED]
+    with pytest.raises(ReleaseError, match="shortlist changed"):
+        validate_manifest(manifest)
+
+
+@pytest.mark.parametrize("scope", [None, {}, {"candidates": []}, {"candidates": ["unknown"]},
+                                    {"candidates": [PUBLIC_UNIFIED, PUBLIC_UNIFIED]}])
+def test_invalid_binding_scopes_fail(scope):
+    manifest = release_catalog()
+    manifest["binding_scope"] = scope
+    with pytest.raises(ReleaseError, match="Binding scope"):
+        validate_manifest(manifest)
 
 
 def test_v1_manifest_cannot_carry_v2_candidates():

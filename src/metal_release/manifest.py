@@ -84,6 +84,13 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         raise ReleaseError("Reporting class order must be Mn, Cu, Zn, Class VIII")
     if manifest.get("release_status", "provisional") not in {"blocked", "provisional", "verified"}:
         raise ReleaseError("Unknown release status")
+    if "binding_scope" in manifest:
+        scope = manifest["binding_scope"]
+        selected = scope.get("candidates") if isinstance(scope, dict) else None
+        if (not isinstance(selected, list) or not selected
+                or any(not isinstance(name, str) or name not in candidates for name in selected)
+                or len(selected) != len(set(selected))):
+            raise ReleaseError("Binding scope requires distinct known candidates")
     n_folds = manifest.get("n_folds", 5)
     if isinstance(n_folds, bool) or not isinstance(n_folds, int) or n_folds < 2:
         raise ReleaseError("n_folds must be an integer of at least two")
@@ -165,6 +172,14 @@ def validate_manifest(manifest: dict[str, Any]) -> None:
         for member_id, member in expected["members"].items():
             if any(members[member_id].get(key) != member[key] for key in ("fold", "seed", "target")):
                 raise ReleaseError(f"Frozen Phase 2 member identity changed: {member_id}")
+    if "binding_scope" in manifest and manifest.get("release_status") != "blocked":
+        for name in manifest["binding_scope"]["candidates"]:
+            for member_id in candidate_member_ids(manifest, name):
+                member = members[member_id]
+                required = ARTIFACT_KEYS if member["fold"] is not None else ARTIFACT_KEYS[:-1]
+                if (member.get("receipt_binding_verified") is not True
+                        or any(not isinstance(member.get(key), dict) for key in required)):
+                    raise ReleaseError(f"Incomplete binding for scoped candidate {name}: {member_id}")
 
 
 def load_manifest(path: Path | str) -> dict[str, Any]:
@@ -200,6 +215,17 @@ def candidate_member_ids(manifest: dict, candidate: str) -> list[str]:
     if candidate not in manifest["candidates"]:
         raise ReleaseError(f"Unknown candidate: {candidate}")
     return [member for group in manifest["candidates"][candidate]["groups"] for member in group["members"]]
+
+
+def prediction_member_ids(manifest: dict, candidate: str) -> list[str]:
+    """Require a usable inventory and honor its explicit candidate binding scope."""
+    if manifest.get("release_status") == "blocked":
+        raise ReleaseError("Release manifest is blocked; audit issues must be resolved before prediction")
+    member_ids = candidate_member_ids(manifest, candidate)
+    scope = manifest.get("binding_scope")
+    if scope is not None and candidate not in scope["candidates"]:
+        raise ReleaseError(f"Candidate is outside this manifest's binding scope: {candidate}; bind it separately")
+    return member_ids
 
 
 def native_to_common(probabilities: np.ndarray, target: str) -> np.ndarray:

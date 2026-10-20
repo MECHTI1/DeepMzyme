@@ -737,6 +737,28 @@ tar -xzvf DeepMzyme_runs_benchmark_exact_pinmymetal_5fold_and_pilots_20260924.ta
 The exact Zenodo PinMyMetal archive has its own download and checksum steps in
 [the reproducibility guide](ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md#hugging-face-distribution--verification).
 
+### Frozen v3 cohort and fold files
+
+The Phase 2 checkpoint archive does not contain the cohort or fold CSVs.
+Byte-identical training-only copies are included in this repository:
+[`train_cohort.csv`](campaigns/phase2_unified_2026-10/reproduction/train_cohort.csv)
+and [`fold_membership.csv`](campaigns/phase2_unified_2026-10/reproduction/fold_membership.csv).
+Both identify the same 7,398 source-row ion examples, all from the original
+PinMyMetal training table. The `v3-seqid90-s42-b2` fold file groups PDB entries
+linked by the frozen ≥90%-identity near-copy rule into five partitions.
+
+The [frozen-fold reproduction recipe](METAL_TRAINING_PIPELINE_PLAYBOOK.md#reproduce-the-frozen-v3-sequence-clustered-folds)
+owns complete SHA-256 values, training-only archive extraction, feature-cache
+preparation and the current CLI command. The public structure archive contains
+the actual member `dataset/train`; each cohort structure hash matches its
+training manifest. Some training files are archive hard links to identical
+structure bytes stored under `dataset/test/structures`; the recipe resolves
+only the cohort's files into the training directory and excludes test metadata.
+Historical ESMC cache bytes are not included in the public
+checkpoint archive, so regenerating them is a new reproduction rather than
+byte-for-byte replay. The [standalone public inference guide](../src/metal_release/README.md)
+uses the same published fold file when binding the five public checkpoints.
+
 ### Storage and backups
 
 Data, runs and caches live under the git-ignored `DeepMzyme_Data/` folder; the

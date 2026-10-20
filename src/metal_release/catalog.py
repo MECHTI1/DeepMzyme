@@ -9,12 +9,17 @@ from .manifest import ARTIFACT_KEYS, SCHEMA
 REFERENCE = "unified_trimodal_cv_locked"
 CATALOG_V1 = "phase2-unified-20261019"
 CATALOG_V2 = "phase2-unified-20261019-v2"
-CATALOG_VERSIONS = {CATALOG_V1: "phase2-preserved-v1", CATALOG_V2: "phase2-preserved-v2"}
+CATALOG_V3 = "phase2-unified-20261019-v3"
+CATALOG_VERSIONS = {CATALOG_V1: "phase2-preserved-v1", CATALOG_V2: "phase2-preserved-v2",
+                    CATALOG_V3: "phase2-preserved-v3"}
 # v2 adds two compact comparisons built only from v1 members; the v1 binding stays valid.
 ADDED_IN_V2 = ("top3_lf", "recipe_p_5class_3seed")
+# v3 exposes the archived family without changing existing ensembles or bindings.
+PUBLIC_UNIFIED = "unified_p5_trunklr1e4_5fold_s42"
+ADDED_IN_V3 = (PUBLIC_UNIFIED,)
 
 
-def release_catalog(catalog_id: str = CATALOG_V2) -> dict:
+def release_catalog(catalog_id: str = CATALOG_V3) -> dict:
     if catalog_id not in CATALOG_VERSIONS:
         raise ValueError(f"Unknown release catalog: {catalog_id}")
     members = {}
@@ -51,6 +56,7 @@ def release_catalog(catalog_id: str = CATALOG_V2) -> dict:
         "baseline_5fold_s42": {"groups": [group("baseline", baseline)], "proxy_only": True,
                                "reported_oof_ba_percent": 74.34},
         "trunklr1e4_5fold_s42": {"groups": [group("trunk", trunk)], "reported_oof_ba_percent": 75.51},
+        PUBLIC_UNIFIED: {"groups": [group("unified", unified)], "reported_oof_ba_percent": 74.91},
         "recipe_p_5class_3seed": {"groups": [group("p5", p5)], "reported_oof_ba_percent": 75.82},
         "top4_lf_seed42": {"groups": [group("trunk", trunk), group("p5", p5[:5]),
                                        group("s5", s5), group("six", six)], "reported_oof_ba_percent": 76.34},
@@ -69,6 +75,9 @@ def release_catalog(catalog_id: str = CATALOG_V2) -> dict:
     }
     if catalog_id == CATALOG_V1:
         for name in ADDED_IN_V2:
+            del candidates[name]
+    if catalog_id in {CATALOG_V1, CATALOG_V2}:
+        for name in ADDED_IN_V3:
             del candidates[name]
     return {
         "schema": SCHEMA, "catalog_id": catalog_id, "version": CATALOG_VERSIONS[catalog_id],

@@ -23,7 +23,7 @@ from typing import Any
 import numpy as np
 
 from .manifest import (
-    ReleaseError, aggregate_probabilities, candidate_member_ids, load_manifest,
+    ReleaseError, aggregate_probabilities, load_manifest, prediction_member_ids,
     native_to_common, verify_artifact,
 )
 
@@ -364,10 +364,8 @@ def predict_sites(manifest_path: Path, structure_path: Path, sites: list[dict], 
         torch.cuda.reset_peak_memory_stats(resolved_device)
     manifest_path, structure_path = Path(manifest_path).resolve(), Path(structure_path).resolve()
     manifest = load_manifest(manifest_path)
-    if manifest.get("release_status") == "blocked":
-        raise ReleaseError("Release manifest is blocked; audit issues must be resolved before prediction")
     candidate = candidate or manifest["reference"]
-    member_ids = candidate_member_ids(manifest, candidate)
+    member_ids = prediction_member_ids(manifest, candidate)
     prepared = {member_id: _validated_member(manifest, member_id) for member_id in member_ids}
     if structure_path.suffix.lower() not in {".pdb", ".cif", ".mmcif"}:
         raise ReleaseError("Structure must be a PDB or mmCIF file")
