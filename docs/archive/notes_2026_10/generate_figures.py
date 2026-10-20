@@ -208,46 +208,58 @@ def make_fig2_per_metal_recall_audit() -> None:
 
 
 def make_fig3_modality_optimization_ablations() -> None:
-    """Two-panel strict ablation figure: (A) Single-seed s42 modality/regularization, (B) 3-seed recipe x granularity."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14.2, 5.1), gridspec_kw={"wspace": 0.34, "width_ratios": [1.18, 1.0]})
+    """Two-panel strict ablation figure: (A) Strictly matched s42 modality/ensemble/regularization (CV + Test), (B) 3-seed Late Fusion funnel."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14.6, 5.5), gridspec_kw={"wspace": 0.34, "width_ratios": [1.26, 1.0]})
 
-    # Panel A: Strictly Single-Seed (s42, 5 folds) Modality & Optimization Ablations
+    # Panel A: Strictly Matched (s42, Recipe B) Modality, Multi-Target Ensemble & Regularization Audit
     variants_a = [
-        "Only-GVP\n(3D Only, wd=1e-4)",
-        "Only-ESM-C 600M\n(Seq Only, wd=1e-4)",
-        "Only-GVP\n(Heavy L2 wd=1.0)",
-        "Late Fusion\n(Global wd=1.0)",
-        "Late Fusion Baseline B4\n(lr=3e-4, wd=1e-4)",
-        "Late Fusion Unified\n(P 5-Class + lr=1e-4)",
-        "Late Fusion Trunk-LR\n(GVP lr=1e-4, wd=1e-4)",
+        "Only-GVP 4c\n(wd=1e-4, 5 ckpts)",
+        "Only-GVP 4c\n(Heavy L2 wd=1.0, 5 ckpts)",
+        "Only-GVP 15-Ckpt\n(4c+5c+6c Ens, 15 ckpts)",
+        "Only-ESM-C 4c\n(wd=1e-4, 5 ckpts)",
+        "Only-ESM-C 6c\n(wd=1e-4, 5 ckpts)",
+        "Only-ESM-C 15-Ckpt\n(4c+5c+6c Ens, 15 ckpts)",
+        "Post-Hoc 0.5 ESM+0.5 GVP\n(Unimodal Avg 4c, 10 ckpts)",
+        "Late Fusion 4c (B4)\n(Matched Baseline, 5 ckpts)",
+        "Late Fusion 6c (B6)\n(Matched Baseline, 5 ckpts)",
+        "Late Fusion 15-Ckpt\n(4c+5c+6c Ens, 15 ckpts)",
+        "Late Fusion Trunk-LR*\n(GVP lr=1e-4, 5 ckpts)",
     ]
-    cv_a = [69.66, 72.33, 73.25, 74.08, 74.28, 74.84, 75.45]
-    colors_a = ["#66a61e", "#1b9e77", "#80b1d3", "#fb8072", "#2b8cbe", "#225ea8", "#08589e"]
+    cv_a = [69.71, 72.94, np.nan, 72.38, 72.32, np.nan, 73.79, 74.34, 74.98, 75.95, 75.51]
+    test_a = [66.37, 65.02, 66.82, 69.56, 70.15, 69.99, 70.68, 70.75, 72.07, 71.37, 72.25]
     notes_a = [
-        "69.66% (3D overfits)",
-        "72.33% (PLM prior)",
-        "73.25% (+3.59 pp vs wd=1e-4)",
-        "74.08% (Global wd=1.0 hurts head)",
-        "74.28% (+1.95 pp vs ESM, 5/5 folds)",
-        "74.84% (73.08% In-Scope Test)",
-        "75.45% (+1.16 pp vs B4, 72.25% Test)",
+        "CV 69.71% | Test 66.37%",
+        "CV 72.94% | Test 65.02% (-1.35 pp!)",
+        "Test 66.82% (64.70% Full)",
+        "CV 72.38% | Test 69.56%",
+        "CV 72.32% | Test 70.15%",
+        "Test 69.99% (68.34% Full)",
+        "CV 73.79% | Test 70.68% (10 ckpts)",
+        "CV 74.34% | Test 70.75% (+1.19 vs ESM)",
+        "CV 74.98% | Test 72.07% (+1.92 vs ESM)",
+        "CV 75.95% | Test 71.37% (+1.38 vs ESM)",
+        "CV 75.51% | Test 72.25% (LF-only opt*)",
     ]
 
     y_a = np.arange(len(variants_a))
-    bars_a = ax1.barh(y_a, cv_a, height=0.58, color=colors_a, edgecolor="white")
+    h_a = 0.36
+    b_cv = ax1.barh(y_a - h_a / 2, [0 if np.isnan(v) else v for v in cv_a], height=h_a * 0.92, color="#2b8cbe", edgecolor="white", label="5-Fold Pooled OOF CV BA (%)")
+    b_ts = ax1.barh(y_a + h_a / 2, test_a, height=h_a * 0.92, color="#41b6c4", edgecolor="white", label="In-Scope Test BA (1,346 sites, %)")
     ax1.set_yticks(y_a)
-    ax1.set_yticklabels(variants_a, fontsize=8.4, fontweight="bold")
+    ax1.set_yticklabels(variants_a, fontsize=7.7, fontweight="bold")
     ax1.invert_yaxis()
-    ax1.set_xlim(65, 86.8)
-    ax1.set_xlabel("5-Fold Grouped CV Balanced Accuracy (%) — Single Seed (s42)")
-    ax1.set_title("A. Single-Seed (s42) Modality & Regularization Ablation", pad=10)
+    ax1.set_xlim(60, 91.5)
+    ax1.set_xlabel("Balanced Accuracy (%) — Strictly Matched Seed 42 (except *LF-only Trunk-LR)")
+    ax1.set_title("A. Strictly Matched Modality, Target & Ensemble Audit (s42)", pad=10)
     ax1.grid(axis="x", linestyle=":", alpha=0.5)
+    ax1.legend(loc="upper right", frameon=True, fontsize=7.6)
 
-    for bar, note in zip(bars_a, notes_a):
-        w = bar.get_width()
-        ax1.text(w + 0.25, bar.get_y() + bar.get_height() / 2, note, va="center", ha="left", fontsize=8.0, fontweight="bold", color="#1a1a1a")
+    for idx, note in enumerate(notes_a):
+        w = max(0 if np.isnan(cv_a[idx]) else cv_a[idx], test_a[idx])
+        col = "#b30000" if idx == 1 else "#1a1a1a"
+        ax1.text(w + 0.25, y_a[idx], note, va="center", ha="left", fontsize=7.3, fontweight="bold", color=col)
 
-    # Panel B: Controlled 3-Seed (s42, 43, 44; 15 Checkpoints) Loss Recipe x Target Granularity
+    # Panel B: Controlled 3-Seed (s42, 43, 44; 15 Checkpoints) Loss Recipe x Target Granularity (Within Late Fusion)
     families_b = [
         "Recipe P\n6-Class (P6)",
         "Recipe B\n4-Class (B4)",
@@ -276,7 +288,7 @@ def make_fig3_modality_optimization_ablations() -> None:
     ax2.set_xticklabels(families_b, fontsize=8.4, fontweight="bold")
     ax2.set_ylim(62, 81.5)
     ax2.set_ylabel("Balanced Accuracy (%)")
-    ax2.set_title("B. 3-Seed (s42/43/44) Recipe × Granularity Confirmation", pad=10)
+    ax2.set_title("B. Within-Late-Fusion 3-Seed (s42/43/44) Recipe × Granularity", pad=10)
     ax2.grid(axis="y", linestyle=":", alpha=0.5)
     ax2.legend(loc="lower right", frameon=True, fontsize=7.9)
 
@@ -290,7 +302,7 @@ def make_fig3_modality_optimization_ablations() -> None:
         v = b.get_height()
         ax2.text(b.get_x() + b.get_width() / 2 + 0.03, test_hi[idx] + 0.35, f"{v:.2f}", ha="center", va="bottom", fontsize=7.4, fontweight="bold", color="#0c7c8a")
 
-    fig.suptitle("Controlled Architectural, Regularization, and Multi-Seed Objective Ablations", y=0.99)
+    fig.suptitle("Strictly Matched Unimodal vs. Bimodal Audit & Downstream Late-Fusion Optimization", y=0.99)
     save_both(fig, "fig3_modality_optimization_ablations")
 
 

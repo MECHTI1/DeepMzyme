@@ -50,7 +50,7 @@ flowchart LR
 
 ### 1. Comparison Against PinMyMetal (*Nature Communications*, 2025)
 
-![DeepMzyme vs. PinMyMetal Benchmark Overview](docs/paper/figures/fig1_benchmark_overview.svg)
+![DeepMzyme vs. PinMyMetal Benchmark Overview](docs/assets/benchmark_overview.svg)
 
 All models are evaluated on **5-fold cross-validation** (`7,398` ion sites grouped into `2,208` clusters at $\ge 90\%$ sequence identity) and **PinMyMetal's `1,488`-site reference test set** (`Full 1,488` sites and `In-Scope 1,346` protein-coordinated sites) using unweighted 4-class balanced accuracy (mean recall across $\text{Mn}$, $\text{Cu}$, $\text{Zn}$, and $\text{Class VIII} = \text{Fe/Co/Ni}$) and macro-precision:
 
@@ -73,14 +73,22 @@ All models are evaluated on **5-fold cross-validation** (`7,398` ion sites group
 
 ### 2. Controlled Modality & Optimization Ablations
 
-| Ablation Variant (5-Fold Grouped CV, Seed 42) | Input Modalities | Mean-Fold / Pooled CV BA | Contrast vs. Matched Control | Key Optimization & Modeling Insight |
-| :--- | :--- | :---: | :---: | :--- |
-| **`Only-GVP` (Baseline `wd=1e-4`)** | 3D Pocket Graph only | 69.66% | *Structure-only baseline* | Randomly initialized 3D GNN overfits pocket geometry at `lr=3e-4` |
-| **`Only-GVP` ($L_2$-Regularized `wd=1.0`)** | 3D Pocket Graph only | 73.25% / 73.26% | **`+3.59 pp`** vs. `Only-GVP (wd=1e-4)` | Heavy $L_2$ decay shrinks GVP `LayerNorm` gains and stabilizes 3D-only training |
-| **`Only-ESM-C 600M`** | Protein Sequence only | 72.33% | *Sequence-only baseline* | Frozen 600M PLM embeddings provide a strong evolutionary prior |
-| **`DeepMzyme Late Fusion` (Baseline `lr=3e-4`)** | **3D Pocket + Sequence** | **74.28% / 74.34%** | **`+1.95 pp`** vs. `Only-ESM-C` / **`+4.62 pp`** vs. `Only-GVP` | Wins on **5 / 5 folds** over matched unimodal baselines (`95% CI [+1.09, +2.92]`) |
-| **`DeepMzyme Late Fusion` (Global `wd=1.0` Negative Control)** | **3D Pocket + Sequence** | 74.02% / 74.08% | `-0.26 pp` vs. `Baseline` | Applying heavy $L_2$ decay globally over-regularizes the `ESM-C` projection head (`68.18%` Full / `69.57%` In-Scope Test) |
-| **`DeepMzyme Late Fusion` (Differential Trunk `lr=1e-4`)** | **3D Pocket + Sequence** | **75.45% / 75.51%** | **`+3.12 pp`** vs. `Only-ESM-C` / **`+2.25 pp`** vs. `Only-GVP (wd=1.0)` | Lowering the 3D GVP trunk LR (`1e-4` vs. `3e-4`) prevents 3D overfitting without over-decaying the `ESM-C` fusion head (`70.75%` Full / `72.25%` In-Scope Test) |
+| Ablation Variant (Seed 42, 5-Fold Grouped CV & Held-Out Test) | Ckpts | Pooled OOF CV BA (`7,398`) | Reference Test (`1,488`) | In-Scope Test (`1,346`) | Key Optimization & Modeling Insight |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **`Only-GVP` 4-Class (`baseline`, `wd=1e-4`)** | 5 | 69.71% (69.66% mean) | 64.35% | 66.37% | 3D-only baseline; randomly initialized GVP overfits pockets at `lr=3e-4` |
+| **`Only-GVP` 4-Class (Heavy $L_2$ `wd=1.0`)** | 5 | 72.94% (73.25% mean) | 63.35% | 65.02% | `+3.23 pp` pooled CV, but **regresses on Test (`-1.00 pp` Full / `-1.35 pp` In-Scope)** |
+| **`Only-GVP` Multi-Target Ensemble (`4c + 5c + 6c`)** | 15 | — | 64.70% | 66.82% | Matched 15-ckpt (`4c+5c+6c`) structure-only ensemble (`+0.35 pp` Full Test) |
+| **`Only-ESM-C 600M` 4-Class (`baseline`, `wd=1e-4`)** | 5 | 72.38% (72.33% mean) | 67.72% | 69.56% | Sequence-only 4-class baseline (frozen 600M PLM evolutionary prior) |
+| **`Only-ESM-C 600M` 6-Class (`6c` $\to$ `4c`)** | 5 | 72.32% | 68.54% | 70.15% | Sequence-only 6-class baseline (`57.00%` Clean Test) |
+| **`Only-ESM-C 600M` Multi-Target Ensemble (`4c + 5c + 6c`)** | 15 | — | 68.34% | 69.99% | Matched 15-ckpt (`4c+5c+6c`) sequence-only ensemble (`+0.62 pp` Full Test) |
+| **`Post-Hoc 0.5 Only-ESM + 0.5 Only-GVP` (`4c`)** | 10 | 73.79%\* | 68.93% | 70.68% | Unimodal probability average (10 ckpts) trails 5-ckpt learned `Late Fusion` |
+| **`DeepMzyme Late Fusion` 4-Class (`Baseline B4`)** | 5 | **74.34%** (74.28% mean) | **69.02%** | **70.75%** | **+1.96 pp CV** (`5/5` folds) & **+1.30 pp Full / +1.19 pp In-Scope** vs. `Only-ESM-C 4c` |
+| **`DeepMzyme Late Fusion` 6-Class (`Baseline B6`)** | 5 | **74.98%** | **70.65%** | **72.07%** | **+2.66 pp CV** & **+2.11 pp Full / +1.92 pp In-Scope** vs. `Only-ESM-C 6c` |
+| **`DeepMzyme Late Fusion` Multi-Target (`4c + 5c + 6c`)** | 15 | **75.95%** | **69.77%** | **71.37%** | **+1.43 pp Full / +1.38 pp In-Scope** vs. matched 15-ckpt `Only-ESM-C` |
+| **`DeepMzyme Late Fusion` (Global `wd=1.0`)** | 5 | 74.08% | 67.98% | 69.57% | *Negative control:* global `wd=1.0` over-penalizes the `ESM-C` fusion head |
+| **`DeepMzyme Late Fusion` (Differential Trunk `lr=1e-4`)†** | 5 | **75.51%** (75.45% mean) | **70.75%** | **72.25%** | **+1.17 pp CV** & **+1.73 pp Full / +1.50 pp In-Scope** vs. `Baseline B4` |
+
+*\*Mean-fold CV on confirmation folds 1–4 (`v3-032`). †Downstream optimization campaigns (`trunklr1e4`, Loss Recipes `P`/`S`, and 3-seed `s42/43/44` confirmation) were executed within `Late Fusion` after it won the matched Stage 6 comparison (`4c`, `5c`, `6c`, and `15-ckpt 4c+5c+6c`).*
 
 **Key Scientific Takeaways:**
 - **End-to-End Learning Without Handcrafted Tables:** Unlike PinMyMetal, which relies on 93 precomputed `NEIGHBORHOOD` and bond-valence table features, DeepMzyme learns directly from 3D coordinates and protein sequence while outperforming PinMyMetal's released classifier across all matched CV and test splits (`p < 0.01`, paired bootstrap).

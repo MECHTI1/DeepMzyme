@@ -3,13 +3,13 @@
 **Document Purpose:** This document provides a complete, self-contained scientific synthesis of the **DeepMzyme** project, organized directly in the structure of a peer-reviewed journal manuscript (*Nature Communications*, *Bioinformatics*, *Journal of Chemical Information and Modeling*, or *Briefings in Bioinformatics*). Every number, table, architectural specification, dataset audit, and statistical interval in this blueprint is verified against the repository's frozen artifacts and independent recomputations.
 
 **Primary Evidence Sources:**
-- **Full Publication Manuscripts:** [`docs/paper/MANUSCRIPT.md`](MANUSCRIPT.md) (Markdown) and [`docs/paper/manuscript.tex`](manuscript.tex) + [`docs/paper/references.bib`](references.bib) (LaTeX + BibTeX)
-- Project overview & CLI usage: [`README.md`](../../README.md) and [`Plan.md`](../../Plan.md)
-- Matched PinMyMetal comparison report (`2,534/2,534` values independently verified): [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../campaigns/phase2_unified_2026-10/pmm_matched/README.md)
-- Phase 2 180-checkpoint evaluation & release audit: [`docs/campaigns/phase2_unified_2026-10/README.md`](../campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/release_audit/README.md`](../campaigns/phase2_unified_2026-10/release_audit/README.md)
-- Datasets, splits, and test-use ledger: [`docs/DATASETS.md`](../DATASETS.md)
-- Forensic PinMyMetal audits & `TECH-028` (`valence_3a` leak): [`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`](../FOLLOW_UP_TECHNICAL_ISSUES.md), [`docs/PMM_SOURCE_AUDIT.md`](../PMM_SOURCE_AUDIT.md), and [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)
-- Parameter & ablation findings: [`docs/PARAMETER_FINDINGS.md`](../PARAMETER_FINDINGS.md)
+- **Full Publication Manuscripts:** [`study_summary.md`](study_summary.md) (Markdown) and [`study_summary.tex`](study_summary.tex) + [`references.bib`](references.bib) (LaTeX + BibTeX)
+- Project overview & CLI usage: [`README.md`](../../../README.md) and [`Plan.md`](../../../Plan.md)
+- Matched PinMyMetal comparison report (`2,534/2,534` values independently verified): [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../../campaigns/phase2_unified_2026-10/pmm_matched/README.md)
+- Phase 2 180-checkpoint evaluation & release audit: [`docs/campaigns/phase2_unified_2026-10/README.md`](../../campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/release_audit/README.md`](../../campaigns/phase2_unified_2026-10/release_audit/README.md)
+- Datasets, splits, and test-use ledger: [`docs/DATASETS.md`](../../DATASETS.md)
+- Forensic PinMyMetal audits & `TECH-028` (`valence_3a` leak): [`docs/FOLLOW_UP_TECHNICAL_ISSUES.md`](../../FOLLOW_UP_TECHNICAL_ISSUES.md), [`docs/PMM_SOURCE_AUDIT.md`](../../PMM_SOURCE_AUDIT.md), and [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)
+- Parameter & ablation findings: [`docs/PARAMETER_FINDINGS.md`](../../PARAMETER_FINDINGS.md)
 
 ---
 
@@ -59,13 +59,13 @@ Metalloproteins bind transition metal cations ($\text{Mn}^{2+}$, $\text{Fe}^{2+/
 ### 3.1 Ion-Level 3D Reconstruction of the PinMyMetal Benchmark (`99.89%` Fidelity)
 PinMyMetal's released files (`classmodel_train_set` with `7,920` rows and `classmodel_test_set` with `1,488` rows) contain only precomputed tabular numbers indexed by `(pdbid, residueid_ion, metalid)`, where `residueid_ion` is an internal database key produced by the `NEIGHBORHOOD` SQL program rather than a PDB chain/residue coordinate.
 
-To enable 3D geometric deep learning and fair benchmarking ([`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)):
+To enable 3D geometric deep learning and fair benchmarking ([`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md)):
 1. We executed PinMyMetal's compiled `neighborhood` binary (`PinMyMetal_V1.0_zenodo.zip`) against source PDB structures to deterministically resolve internal `residueid_ion` keys to physical PDB coordinates `(chain, resseq, resname, atomid)`.
 2. For `298` large macromolecular complexes that caused segmentation faults (`SIGSEGV`) in `neighborhood`, stripping `HOH` solvent records prior to execution achieved 100% coordinate recovery.
 3. In total, **9,398 of 9,408 ions (`99.89%`)** across `7,724` structure files were reconstructed (**7,911 / 7,920** training rows = `99.89%`; **1,487 / 1,488** test rows = `99.93%`) and released publicly on Hugging Face ([`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme), `1.1 GB`).
 
 ### 3.2 Curating the Clean `7,398`-Ion Training Cohort and `v3` Sequence-Identity Folds
-Auditing all `7,920` raw training rows ([`docs/DATASETS.md`](../DATASETS.md#exact-zenodo-pinmymetal-train_and_test_sets_structures_zenodo_pmm_exact)) identified `522` rows requiring exclusion before 3D graph training:
+Auditing all `7,920` raw training rows ([`docs/DATASETS.md`](../../DATASETS.md#exact-zenodo-pinmymetal-train_and_test_sets_structures_zenodo_pmm_exact)) identified `522` rows requiring exclusion before 3D graph training:
 - **`9` rows:** Absent from source PDB reconstruction.
 - **`10` rows:** Mapped to polynuclear/non-single-metal species ($\text{Fe–S}$ clusters, cofactors, or `UNX` records).
 - **`503` rows:** Possessed explicit target-to-protein crystallographic symmetry `LINK` records across unit-cell boundaries (where standard asymmetric-unit PDB coordinates omit part of the coordinating protein environment or duplicate symmetry-equivalent sites).
@@ -123,7 +123,7 @@ Three class-imbalance loss recipes were systematically evaluated across the 5 gr
 - **Variant `trunklr1e4`:** Lowers the GVP trunk learning rate to $10^{-4}$ while keeping head/fusion LR at $3 \times 10^{-4}$.
 
 ### 4.3 Pre-Registered PinMyMetal Comparator Arms (`PMM-D`, `PMM-R`, `PMM-D2`, `PMM-H`)
-To compare DeepMzyme and PinMyMetal on identical data without cohort or split confounding ([`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../campaigns/phase2_unified_2026-10/pmm_matched/README.md)), PinMyMetal's exact released 5-estimator soft-voting classifier (`LogisticRegression + BalancedRandomForestClassifier + MLPClassifier + SVC + EasyEnsembleClassifier` with released hyperparameters) was refit in its pinned software environment (`Python 3.11.5`, `scikit-learn 1.3.0`, `imbalanced-learn 0.11.0`) on the exact same `7,398` training sites and `5` folds (`v3-seqid90-s42-b2`), and refit once on all `7,398` sites to score the `1,488` test rows:
+To compare DeepMzyme and PinMyMetal on identical data without cohort or split confounding ([`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../../campaigns/phase2_unified_2026-10/pmm_matched/README.md)), PinMyMetal's exact released 5-estimator soft-voting classifier (`LogisticRegression + BalancedRandomForestClassifier + MLPClassifier + SVC + EasyEnsembleClassifier` with released hyperparameters) was refit in its pinned software environment (`Python 3.11.5`, `scikit-learn 1.3.0`, `imbalanced-learn 0.11.0`) on the exact same `7,398` training sites and `5` folds (`v3-seqid90-s42-b2`), and refit once on all `7,398` sites to score the `1,488` test rows:
 - **`PMM-D` (Primary Deployment-Faithful Comparator, 89 features):** Drops the 4 columns (`valence_3a`, `valence_4a`, `vecsum_3a`, `vecsum_4a`) that at real-world deployment are computed by writing candidate sites as $\text{Zn}$, but in PinMyMetal's released tables were populated with the true metal's bond-valence sum (`TECH-028`).
 - **`PMM-R` (Full Released-Feature Reference, 93 features):** Retains all 93 published columns, including the true-metal `valence_3a` column.
 - **`PMM-D2` (Sensitivity Arm, 79 features):** Also removes the 10 elemental bond-valence sum columns (`bvs_*`).
@@ -246,24 +246,39 @@ To ensure that ensemble performance claims are completely immune to test-set sel
 
 ### 5.4 Modality, Hyperparameter, and Objective Ablations
 
-**Table 4** synthesizes the controlled ablation studies conducted on the `v3-seqid90-s42-b2` grouped 5-fold cross-validation benchmark ([`docs/PARAMETER_FINDINGS.md`](../PARAMETER_FINDINGS.md)).
+**Table 4** synthesizes the controlled ablation studies conducted on the `v3-seqid90-s42-b2` grouped 5-fold cross-validation benchmark and held-out test set ([`docs/PARAMETER_FINDINGS.md`](../../PARAMETER_FINDINGS.md)), explicitly separating the **strictly matched 3-modality $\times$ 3-target (`4c`, `5c`, `6c`) and 15-checkpoint (`4c + 5c + 6c`) ensemble comparisons (`s42`, Recipe `B`)** from the **within-`Late Fusion` optimization funnel (`trunklr1e4`, Recipes `P`/`S`, and 3-seed confirmation)**.
 
-#### Table 4: Controlled Architectural and Training Ablations (5-Fold Grouped CV)
+#### Table 4: Strictly Matched Unimodal vs. Bimodal Comparisons and Downstream Optimization Ablations (5-Fold Grouped CV & Held-Out Test)
 
-| Ablation Study / Model Variant | Seed(s) | Mean-Fold / Pooled Common-4 CV BA (%) | Paired Contrast & Statistical Interval | Key Takeaway |
-| :--- | :---: | :---: | :---: | :--- |
-| **1. Modality Ablation (`v3` Stage 6)** | | | | |
-| **Bimodal Late Fusion (`GVP-GNN + ESM-C 600M`)** | 42 | **74.28% / 74.34%** | *Reference* | Wins on **5 out of 5 folds** over unimodal branches |
-| **Sequence-Only (`Only-ESMC 600M`)** | 42 | 72.33% / — | Late Fusion − Only-ESMC: **+1.95 pp** `[+1.09, +2.92]` | 3D pocket geometry provides a significant +1.95 pp boost |
-| **Structure-Only (`Only-GVP`, baseline `wd=1e-4`)** | 42 | 69.66% / — | Late Fusion − Only-GVP: **+4.62 pp** | Evolutionary sequence context adds +4.62 pp over 3D graph alone |
-| **Structure-Only (`Only-GVP`, high weight decay `wd=1.0`)** | 42 | 73.25% / 73.26% | `wd=1.0` − `wd=1e-4`: **+3.59 pp** *(interval-supported)* | Strong $L_2$ regularization (`wd10`) substantially improves unimodal GVP |
-| **2. GVP Trunk Learning Rate (`pmm_trunk_lr_2026-10`)** | | | | |
-| **Lower GVP Trunk LR (`1e-4` vs. `3e-4` baseline)** | 42 | **75.45% / 75.51%** | **+1.16 pp** `[-0.65, +3.11]` *(folds 1–4: +0.24 pp)* | Single best seed-42 5-fold CV recipe (`70.75%` Full Test / `72.25%` Eligible) |
-| **3. Loss Recipe × Target Objective (`metal_completion_2026-10`)** | | | | |
-| **Recipe `B` Four-Class (`baseline`)** | 42, 43, 44 | 73.87% *(seed-avg)* / 75.58% *(ens)* | *Retained single-recipe baseline* | Multi-seed averaging (`3 seeds`) boosts pooled OOF BA from 74.34% to 75.58% |
-| **Recipe `P` Four-Class (Population-Normalized CE)** | 42, 43, 44 | 74.24% *(seed-avg)* / 75.60% *(ens)* | `P4 − B4`: **+0.36 pp** `[-0.39, +1.42]` *(adj.)* | #2 multi-seed family by pooled OOF CV (`75.60%`) |
-| **Recipe `P` Five-Class (`Mn, Cu, Zn, Fe, Co+Ni`)** | 42, 43, 44 | 73.97% *(seed-avg)* / **75.82%** *(ens)* | `P5 − B4`: **+0.10 pp** *(seed-avg)* | **#1 multi-seed family by pooled OOF CV (`75.82%` CV, `71.10%` Full Test)** |
-| **Recipe `P` Six-Class (`Mn, Fe, Co, Ni, Cu, Zn`)** | 42, 43, 44 | 73.31% *(seed-avg)* / 75.23% *(ens)* | `P6 − P4`: **-0.93 pp** `[-1.41, -0.56]` | 6-class split slightly reduces collapsed Class VIII recall when used alone |
+| Ablation Tier / Model Variant | Seed(s) & Ckpts | Mean / Pooled CV BA (%) | Full Test BA (`1,488`) `[95% CI]` | In-Scope Test BA (`1,346`) `[95% CI]` | Clean Test (`423`) | Key Takeaway |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1. Strictly Matched Modality $\times$ Target Grid (`s42`, Recipe `B`)** | | | | | | |
+| **`Only-GVP` 4-Class (`baseline`, `wd=1e-4`)** | `s42` (5) | 69.66% / 69.71% | 64.35% `[59.74, 68.57]` | 66.37% `[61.66, 70.72]` | 53.37% | 3D-only 4c baseline (`lr=3e-4`) |
+| **`Only-ESM-C` 4-Class (`baseline`, `wd=1e-4`)** | `s42` (5) | 72.33% / 72.38% | 67.72% `[63.13, 71.93]` | 69.56% `[65.03, 73.65]` | 52.74% | Seq-only 4c baseline (frozen 600M PLM) |
+| **`Late Fusion` 4-Class (`Baseline B4`, `wd=1e-4`)** | `s42` (5) | **74.28% / 74.34%** | **69.02%** `[64.47, 73.05]` | **70.75%** `[66.19, 74.78]` | 52.32% | **+1.96 pp CV** (`5/5` folds) & **+1.30 Full / +1.19 Elig** vs. `Only-ESM-C 4c` |
+| **`Only-GVP` 5-Class (`5c` $\to$ `4c`)** | `s42` (5) | — / 68.51% | 63.84% `[58.99, 68.21]` | 65.97% `[61.32, 70.38]` | 53.51% | 3D-only 5c baseline |
+| **`Only-ESM-C` 5-Class (`5c` $\to$ `4c`)** | `s42` (5) | — / 72.80% | 68.19% `[63.63, 72.42]` | 69.86% `[65.35, 73.96]` | 54.62% | Seq-only 5c baseline |
+| **`Late Fusion` 5-Class (`Baseline B5`, `5c` $\to$ `4c`)** | `s42` (5) | — / **74.03%** | **69.48%** `[64.84, 73.62]` | **70.97%** `[66.45, 75.13]` | 53.85% | **+1.23 pp CV** & **+1.29 Full / +1.11 Elig** vs. `Only-ESM-C 5c` |
+| **`Only-GVP` 6-Class (`6c` $\to$ `4c`)** | `s42` (5) | — / 67.67% | 64.97% `[60.30, 69.14]` | 66.95% `[62.26, 71.24]` | 53.16% | 3D-only 6c baseline |
+| **`Only-ESM-C` 6-Class (`6c` $\to$ `4c`)** | `s42` (5) | — / 72.32% | 68.54% `[64.01, 72.77]` | 70.15% `[65.66, 74.27]` | 57.00% | Seq-only 6c baseline |
+| **`Late Fusion` 6-Class (`Baseline B6`, `6c` $\to$ `4c`)** | `s42` (5) | — / **74.98%** | **70.65%** `[66.02, 74.85]` | **72.07%** `[67.46, 76.24]` | **57.99%** | **+2.66 pp CV**, **+2.11 Full / +1.92 Elig / +0.99 Clean** vs. `Only-ESM-C 6c` |
+| **2. Strictly Matched 15-Ckpt Ensembles & Post-Hoc Unimodal Averaging (`s42`)** | | | | | | |
+| **`Only-GVP` Multi-Target Ensemble (`4c + 5c + 6c`)** | `s42` (15) | — | 64.70% `[60.11, 68.93]` | 66.82% `[62.21, 71.19]` | 54.37% | `+0.35 pp` Full / `+0.45 pp` Elig over `Only-GVP 4c` |
+| **`Only-ESM-C` Multi-Target Ensemble (`4c + 5c + 6c`)** | `s42` (15) | — | 68.34% `[63.81, 72.55]` | 69.99% `[65.45, 74.07]` | 55.18% | `+0.62 pp` Full / `+0.43 pp` Elig over `Only-ESM-C 4c` |
+| **`Late Fusion` Multi-Target Ensemble (`4c + 5c + 6c`)** | `s42` (15) | — / **75.95%** | **69.77%** `[65.17, 73.91]` | **71.37%** `[66.84, 75.50]` | 54.30% | **+1.43 Full / +1.38 Elig** vs. 15-ckpt `Only-ESM-C`; **+5.07 Full** vs. `Only-GVP` |
+| **`Post-Hoc 0.5 Only-ESM + 0.5 Only-GVP` (`4c`)** | `s42` (10) | 73.79%\* | 68.93% `[64.33, 73.15]` | 70.68% `[66.05, 74.78]` | 56.75% | Trails 5-ckpt learned `Late Fusion 4c` (`-0.69 pp` CV folds 1–4) |
+| **`Post-Hoc 0.5 Only-ESM + 0.5 Only-GVP` (`4c + 5c + 6c`)** | `s42` (30) | — | 69.33% `[64.67, 73.58]` | 70.87% `[66.24, 75.08]` | 55.42% | 30-ckpt unimodal avg trails 15-ckpt learned `Late Fusion` (`-0.50 pp` Elig) |
+| **3. Matched Regularization Screen (`Only-GVP` & `Late Fusion`, `s42`)** | | | | | | |
+| **`Only-GVP` Mean Aggregation (`meanagg`, `4c`)** | `s42` (5) | 71.10%\* / 70.56% | 64.86% `[60.18, 69.19]` | 66.86% `[62.12, 71.23]` | 51.05% | Improves both CV (`+0.85 pp`) and Test (`+0.51 pp` Full) |
+| **`Only-GVP` Heavy $L_2$ Decay (`wd=1.0`, `4c`)** | `s42` (5) | 73.25% / 72.94% | 63.35% `[58.52, 67.74]` | 65.02% `[60.22, 69.48]` | 51.58% | **+3.23 pp pooled CV**, but **-1.00 pp Full / -1.35 pp Elig Test regression** |
+| **`Late Fusion` Heavy $L_2$ Decay (`Global wd=1.0`, `4c`)** | `s42` (5) | — / 74.08% | 67.98% `[63.30, 72.22]` | 69.57% `[64.90, 73.80]` | 52.04% | Global `wd=1.0` hurts both CV (`-0.26 pp`) and Test (`-1.04 pp` Full) |
+| **4. Within-`Late Fusion` Downstream Optimization Funnel *(Not Run on Unimodal Arms)*** | | | | | | |
+| **`Late Fusion` Differential Trunk LR (`trunklr1e4`)** | `s42` (5) | **75.45% / 75.51%** | **70.75%** `[66.29, 74.77]` | **72.25%** `[67.87, 76.30]` | 55.87% | **+1.17 pp CV**, **+1.73 Full / +1.50 Elig Test** vs. `Baseline B4` |
+| **`Late Fusion` Unified (`Recipe P` 5-Class + `trunklr1e4`)** | `s42` (5) | 74.84% / 74.91% | **71.72%** `[67.35, 75.70]` | **73.08%** `[68.87, 76.96]` | 56.34% | Combines population-normalized 5-class objective + `trunklr1e4` |
+| **`Late Fusion` Recipe `P` Six-Class (`mc_P_six_class`)** | `s42–44` (15) | 73.31% / 75.22% | 69.25% `[64.61, 73.36]` | 71.02% `[66.44, 75.02]` | 53.50% | `P6 − P4`: **-0.93 pp** `[-1.41, -0.56]` mean-seed CV |
+| **`Late Fusion` Recipe `B` Four-Class (`B4 x3 seeds`, `R4`)** | `s42–44` (15) | 73.87% / 75.58% | 69.94% `[65.46, 74.03]` | 71.83% `[67.45, 75.81]` | 53.49% | 3-seed averaging raises `B4` by `+1.24 pp` CV and `+0.92 pp` Full Test |
+| **`Late Fusion` Recipe `P` Four-Class (`mc_P_four_class`)** | `s42–44` (15) | 74.24% / 75.62% | 70.39% `[65.87, 74.47]` | 72.13% `[67.68, 76.06]` | 55.66% | `P4 − B4`: **+0.36 pp** `[-0.39, +1.42]` mean-seed CV |
+| **`Late Fusion` Recipe `P` Five-Class (`mc_P_five_class`, `R1`)** | `s42–44` (15) | 73.97% / **75.82%** | **71.10%** `[66.65, 75.14]` | **72.68%** `[68.37, 76.56]` | **58.21%** | **#1 multi-seed family (`75.82%` CV, `71.10%` Full / `72.68%` Elig Test)** |
 
 ---
 
@@ -300,22 +315,23 @@ Unlike PinMyMetal—which is architecturally restricted to 4 classes and cannot 
    - In PinMyMetal's released tables, `valence_3a` resolved `58 of 73` such $\text{Mn} \rightarrow \text{Class VIII}$ errors on fold 0 solely because the ground-truth $\text{Mn}$ oxidation state was encoded in the feature; when `valence_3a` is removed (`PMM-D`), PinMyMetal's test $\text{Mn}$ recall drops from `79.0%` to `61.7%` (below DeepMzyme's CV-selected ensembles at `62.3%–66.5%`).
 
 ### 6.3 Mandatory Transparency & Reproducibility Disclosures for the Manuscript
-To adhere strictly to the project's pre-registration and data-hygiene ledger ([`docs/DATASETS.md`](../DATASETS.md#test-use-ledger) and [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../campaigns/phase2_unified_2026-10/pmm_matched/README.md)), the manuscript Methods/Discussion should explicitly state:
+To adhere strictly to the project's pre-registration and data-hygiene ledger ([`docs/DATASETS.md`](../../DATASETS.md#test-use-ledger) and [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../../campaigns/phase2_unified_2026-10/pmm_matched/README.md)), the manuscript Methods/Discussion should explicitly state:
 1. **Scope:** Both systems classify the transition metal identity at known metal-bound coordinates in experimental holo structures; de novo spatial site localization is not evaluated.
 2. **Non-Pristine Reference Test (`both_results_secondary`):** PinMyMetal's `1,488`-row test set shares `668` PDB IDs (`809` rows) with its training set and was accessed during earlier exploratory evaluations (`2026-09-22/23`, `2026-10-13` Step F single-model evaluation, and `2026-10-19` 180-checkpoint rescore). Only the single full-data refit (`a0007846`, `67.55%`) was a pre-declared one-shot test evaluation; on the `423`-row homology-filtered clean subset, single-model performance is `48.85%` (vs. `47.09%` for `PMM-D` and `59.46%` for `PMM-R`), while the 15 CV-only ensembles score `52.32%–59.20%` (`60.07%` for `R2b Top-4` and `61.33%` for the 55-model trimodal ensemble).
-3. **Pre-Registration & Amendments (`A1` and `A2`):** The matched comparator campaign (`SHA-256: f3a16ff5...`) originally specified a composite decision rule requiring `a0007846` to beat both `PMM-D` and the synthetic `PMM-H` gradient-boosting model at $97.5\%$ confidence. `a0007846` met the `PMM-D` criterion in both test (`+9.28 pp`) and CV (`+11.25 pp`) but tied `PMM-H` (`-1.28 pp` test, `+3.06 pp` CV). Amendment `A1` reclassified `PMM-H` as an internal feature ablation (since it is not part of PinMyMetal) and added the 15 CV-only ensembles (`R1–R4`) and published-benchmark context; Amendment `A2` added the 6 `R2b` seed-42-ranked ensembles.
+3. **Pre-Registration & Amendments (`A1` and `A2`):** The matched comparator campaign (`SHA-256: f3a16ff5...`) originally specified a composite decision rule requiring `a0007846` to beat both `PMM-D` and the synthetic `PMM-H` gradient-boosting model at $97.5\%$ confidence. `a0007846` met the `PMM-D` criterion in both test (`+9.28 pp`) and CV (`+3.06 pp` vs. `PMM-H`, `+11.25 pp` vs. `PMM-D`) while tying `PMM-H`. Amendment `A1` reclassified `PMM-H` as an internal feature ablation (since it is not part of PinMyMetal) and added the 15 CV-only ensembles (`R1–R4`) and published-benchmark context; Amendment `A2` added the 6 `R2b` seed-42-ranked ensembles.
+4. **Experimental Funnel Scope & Modality Fairness:** The 45-checkpoint Seed-42 Recipe `B` baseline grid (`Only-GVP`, `Only-ESM-C`, `Late Fusion` $\times$ `4c`, `5c`, `6c` $\times$ 5 folds) and its 15-checkpoint (`4c + 5c + 6c`) multi-target ensembles are strictly matched across all three modalities, whereas downstream optimizations (`trunklr1e4`, Loss Recipes `P`/`S`, and 3-seed confirmation) were run exclusively within `Late Fusion` after it won Stage 6.
 
 ---
 
 ## 7. Quick-Reference Checklist for Paper Figures & Tables
 
-All publication figures are generated reproducibly by [`docs/paper/generate_figures.py`](generate_figures.py) into [`docs/paper/figures/`](figures/):
+All publication figures are generated reproducibly by [`generate_figures.py`](generate_figures.py) into [`figures/`](figures/):
 
 | Manuscript Element | Recommended Content | Source File in Repository |
 | :--- | :--- | :--- |
-| **Figure 1** | **DeepMzyme Architecture Diagram:** 3D Pocket Graph (`GVP-GNN` scalar + equivariant vector channels) + `ESM-C 600M` Sequence Branch $\rightarrow$ Late Fusion $\rightarrow$ 4/5/6-Class Metal Prediction | [`README.md`](../../README.md#approach) (Mermaid diagram) |
-| **Figure 2 / Table 1** | **Main Comparison vs. PinMyMetal:** 5-Fold CV (`BA` & `Macro-Precision`) and Reference Test (`Full 1,488` & `In-Scope 1,346`) across Single Model, CV-Selected Ensembles, `PMM-D`, `PMM-R`, and Published PMM | [`figures/fig1_benchmark_overview.svg`](figures/fig1_benchmark_overview.svg) / [`.png`](figures/fig1_benchmark_overview.png); [`pmm_matched/README.md`](../campaigns/phase2_unified_2026-10/pmm_matched/README.md) |
-| **Figure 3 / Table 3** | **Per-Metal Recall & `TECH-028` Forensic Audit:** Per-metal recalls (`Mn, Cu, Zn, Class VIII`), highlighting the `79.0% -> 61.7%` Mn drop when removing `valence_3a` from PinMyMetal | [`figures/fig2_per_metal_recall_audit.svg`](figures/fig2_per_metal_recall_audit.svg) / [`.png`](figures/fig2_per_metal_recall_audit.png); [`FOLLOW_UP_TECHNICAL_ISSUES.md`](../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak) |
-| **Figure 4 / Table 4** | **Modality & Optimization Ablations:** `Late Fusion` (`74.28%` baseline, `75.45%` differential trunk LR) vs. `Only-ESMC` (`72.33%`) vs. `Only-GVP` (`69.66%` baseline, `73.25%` `wd=1.0`), plus CV-selected ensembles | [`figures/fig3_modality_optimization_ablations.svg`](figures/fig3_modality_optimization_ablations.svg) / [`.png`](figures/fig3_modality_optimization_ablations.png); [`PARAMETER_FINDINGS.md`](../PARAMETER_FINDINGS.md) |
+| **Figure 1** | **DeepMzyme Architecture Diagram:** 3D Pocket Graph (`GVP-GNN` scalar + equivariant vector channels) + `ESM-C 600M` Sequence Branch $\rightarrow$ Late Fusion $\rightarrow$ 4/5/6-Class Metal Prediction | [`README.md`](../../../README.md#approach) (Mermaid diagram) |
+| **Figure 2 / Table 1** | **Main Comparison vs. PinMyMetal:** 5-Fold CV (`BA` & `Macro-Precision`) and Reference Test (`Full 1,488` & `In-Scope 1,346`) across Single Model, CV-Selected Ensembles, `PMM-D`, `PMM-R`, and Published PMM | [`figures/fig1_benchmark_overview.svg`](figures/fig1_benchmark_overview.svg) / [`.png`](figures/fig1_benchmark_overview.png); [`pmm_matched/README.md`](../../campaigns/phase2_unified_2026-10/pmm_matched/README.md) |
+| **Figure 3 / Table 3** | **Per-Metal Recall & `TECH-028` Forensic Audit:** Per-metal recalls (`Mn, Cu, Zn, Class VIII`), highlighting the `79.0% -> 61.7%` Mn drop when removing `valence_3a` from PinMyMetal | [`figures/fig2_per_metal_recall_audit.svg`](figures/fig2_per_metal_recall_audit.svg) / [`.png`](figures/fig2_per_metal_recall_audit.png); [`FOLLOW_UP_TECHNICAL_ISSUES.md`](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak) |
+| **Figure 4 / Table 4** | **Modality & Optimization Ablations:** Strictly matched `Late Fusion` vs. `Only-ESM-C` vs. `Only-GVP` across `4c`, `5c`, `6c`, and `15-ckpt (4c+5c+6c)` ensembles, plus `Only-GVP wd=1.0` test regression and `Late Fusion` `trunklr1e4`/3-seed funnel | [`figures/fig3_modality_optimization_ablations.svg`](figures/fig3_modality_optimization_ablations.svg) / [`.png`](figures/fig3_modality_optimization_ablations.png); [`PARAMETER_FINDINGS.md`](../../PARAMETER_FINDINGS.md) |
 | **Figure 5 / Table 5** | **Resolution Within Class VIII:** Native 5-class (`Fe` vs. `Co+Ni`) and 6-class (`Fe`, `Co`, `Ni`) recalls and pairwise `Co–Ni` `AUROC = 0.680` | [`figures/fig4_class_viii_resolution.svg`](figures/fig4_class_viii_resolution.svg) / [`.png`](figures/fig4_class_viii_resolution.png); Section 5.5 above |
-| **Data & Code Availability** | Public `9,398`-ion 3D structure dataset (`1.1 GB`, `99.89%` fidelity) on Hugging Face (`GMBioinformatics/DeepMzyme`) and reproducible CPU/GPU codebase on GitHub (`MECHTI1/DeepMzyme`) | [`ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) |
+| **Data & Code Availability** | Public `9,398`-ion 3D structure dataset (`1.1 GB`, `99.89%` fidelity) on Hugging Face (`GMBioinformatics/DeepMzyme`) and reproducible CPU/GPU codebase on GitHub (`MECHTI1/DeepMzyme`) | [`ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](../../ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md) |
