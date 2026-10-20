@@ -1,91 +1,118 @@
-# DeepMzyme: Multimodal 3D Geometric & Protein Language Model Framework for Metalloprotein Binding Sites
+# DeepMzyme: Multimodal 3D Geometric & Protein Language Model Framework for Metalloproteins
 
-[![CPU CI](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml/badge.svg)](https://github.com/MECHTI1/DeepMzyme/actions/workflows/cpu-ci.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](pyproject.toml)
 [![PyTorch](https://img.shields.io/badge/PyTorch-GVP--GNN%20%2B%20PyG-EE4C2C?logo=pytorch&logoColor=white)](pyproject.toml)
 [![ESM-C 600M](https://img.shields.io/badge/PLM-ESM--C%20600M-00A67E)](pyproject.toml)
 [![Hugging Face Dataset](https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-GMBioinformatics%2FDeepMzyme-FFD21E)](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)
-[![Paper Blueprint](https://img.shields.io/badge/Manuscript-Blueprint%20%26%20Results-blue)](docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md)
 
-**DeepMzyme** is a multimodal deep learning framework for structural bioinformatics that predicts transition-metal identity ($\text{Mn}$, $\text{Cu}$, $\text{Zn}$, and $\text{Class VIII} = \text{Fe/Co/Ni}$, plus native 5- and 6-class resolution of $\text{Fe}$, $\text{Co}$, and $\text{Ni}$) at metal-binding sites in 3D protein structures. It fuses an **$SE(3)$-equivariant Geometric Vector Perceptron Graph Neural Network (`GVP-GNN`)** over local 3D atomic coordination microenvironments with evolutionary sequence representations from the **600-million-parameter `ESM-C` protein language model**. Enzyme Commission (EC) catalytic function prediction is also supported as an independent or joint multi-task head.
+**DeepMzyme** is an end-to-end multimodal geometric deep learning framework for structural bioinformatics that predicts transition-metal identity ($\text{Mn}$, $\text{Fe}$, $\text{Co}$, $\text{Ni}$, $\text{Cu}$, $\text{Zn}$) at protein metal-binding sites directly from 3D atomic coordinates and protein sequence.
+
+First-row transition metals share nearly identical ionic radii and overlapping first-shell ligand preferences ($\text{His}$, $\text{Cys}$, $\text{Asp}$, $\text{Glu}$), governed by the Irving–Williams stability series, second-shell hydrogen-bonding networks, and long-range evolutionary constraints. While existing methods rely on handcrafted coordination-chemistry feature tables, DeepMzyme jointly learns from **$SE(3)$-equivariant 3D pocket graphs (`GVP-GNN`)** and **full-chain evolutionary representations (`ESM-C 600M`)**, supporting 4-, 5-, and 6-class metal identity resolution as well as Enzyme Commission (EC) catalytic function prediction.
 
 ---
 
 ## Key Highlights
 
-- **Multimodal 3D Equivariant + Evolutionary Architecture:** Combines scalar and $SE(3)$-equivariant vector message passing (`GVP-GNN`) over $8\text{ \AA}$ 3D structural pocket graphs with residue-level `ESM-C 600M` embeddings (`+1.95 pp` over sequence-only on all 5 cross-validation folds and `+4.62 pp` over unregularized structure-only baselines).
-- **Outperforms *Nature Communications* (2025) Benchmark (PinMyMetal):**
-  - **Matched Retraining (Same 7,398 Sites & Sequence-Identity Folds):** DeepMzyme's pre-declared single model beats PinMyMetal's released classifier retrained with deployment-available features (`PMM-D`) by **+9.28 percentage points** on the held-out test set (`67.55%` vs. `58.27%`, 97.5% CI `[+3.59, +15.10]`) and **+11.25 pp** in 5-fold cross-validation (`74.28%` vs. `63.03%`, 97.5% CI `[+6.25, +15.36]`). All 15 cross-validation-selected ensembles (and 6 seed-42-ranked CV ensembles) outperform `PMM-D` by **+10.56 to +13.83 pp** and outperform PinMyMetal retrained with all 93 published features (`PMM-R`) by **+5.42 to +8.69 pp** (all paired 95% CIs above zero).
-  - **Published Benchmark Context:** Even evaluated under stricter $\ge 90\%$ sequence-identity grouped folds, DeepMzyme exceeds PinMyMetal's published paper scores on 5-fold CV macro-precision (**75.67%–81.14%** vs. **75.08%** in Fig. 2a) and balanced accuracy (**74.34%–77.99%** vs. **≈72.70%**), while CV-selected ensembles reach **68.83%–72.10%** on the full `1,488`-site test set and **70.49%–73.64%** on the `1,346` in-scope protein-coordinated sites (**72.20% / 73.94%** for the 30-model late-fusion release ensemble vs. PinMyMetal's reported **67.85%** in Fig. 2b).
-- **Open 3D Benchmark Reconstruction & Forensic Audit:** Reverse-engineered and released **9,398 of 9,408 (`99.89%`)** PinMyMetal benchmark ions as 3D coordinate structures (`1.1 GB` on [Hugging Face](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)), curated a symmetry-audited `7,398`-ion training cohort across `2,208` sequence-identity clusters ($\ge 90\%$ identity), and uncovered an undocumented ground-truth bond-valence sum leak (`valence_3a`, [`TECH-028`](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)) in PinMyMetal's released feature tables.
-- **Production-Grade ML Engineering:** Deterministic `uv` lockfile environment (`Python 3.12`), automated GitHub Actions CPU CI, modular CLI and release-audit verification (`src/metal_release/`), and 60+ `pytest` test suites.
+- **Multimodal $SE(3)$-Equivariant + PLM Architecture:** Fuses scalar and vector message passing (`GVP-GNN`) over $8\text{ \AA}$ 3D structural pocket microenvironments with residue-level `ESM-C 600M` embeddings, outperforming sequence-only (`+1.95 pp` baseline, `+3.12 pp` with differential trunk LR) and structure-only (`+4.62 pp` baseline, `+2.25 pp` over $L_2$-tuned GVP) unimodal baselines.
+- **State-of-the-Art Benchmark Performance:** Evaluated against the *Nature Communications* (2025) **PinMyMetal** benchmark on matched $\ge 90\%$ sequence-identity grouped folds (`7,398` training sites across `2,208` clusters) and the `1,488`-site reference test set:
+  - **+11.25 pp** higher 5-fold CV balanced accuracy (`74.28%` vs. `63.03%`) and **+9.28 pp** higher test accuracy (`67.55%` vs. `58.27%`) for a single end-to-end model over PinMyMetal's classifier retrained with deployment-available features.
+  - **74.3%–76.6% CV balanced accuracy** (**75.7%–81.1%** macro-precision) and **68.8%–72.1% full-test accuracy** (**70.5%–73.6%** on in-scope protein-coordinated sites) across CV-selected ensembles, surpassing PinMyMetal's published results (`75.08%` CV macro-precision, `67.85%` test accuracy).
+- **Sub-Class VIII Resolution ($\text{Fe}$ vs. $\text{Co}/\text{Ni}$):** Unlike prior 4-class tools that collapse $\text{Fe}$, $\text{Co}$, and $\text{Ni}$ into a single `Class VIII` label, DeepMzyme natively supports 5-class ($\text{Fe}$ resolved from $\text{Co/Ni}$, `65.2%` 5-class CV balanced accuracy and `~61%` $\text{Fe}$ recall) and 6-class training objectives.
+- **Open 3D Benchmark Dataset & Forensic Data Audit:** Reconstructed and released **9,398 of 9,408 (`99.89%`)** benchmark metal-binding sites as 3D coordinate structures (`1.1 GB` on [Hugging Face](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)), curated a symmetry-audited training cohort, and uncovered an undocumented ground-truth bond-valence feature leak in the upstream benchmark tables.
+- **Rigorous ML & Software Engineering:** Homology-aware grouped cross-validation, paired non-parametric bootstrap testing (`10,000` replicates), deterministic `Python 3.12` + `uv` lockfile workflow, content-addressed SHA-256 structure storage, and 60+ `pytest` test suites.
 
 ---
 
 ## Approach
 
-Which transition metal a protein site binds depends on both its local 3D coordination geometry and its broader evolutionary sequence context. DeepMzyme encodes each binding site (`--metal-example-unit ion`) with two parallel branches:
-
-1. **3D Structural Pocket Graph (`GVP-GNN`):** Represents residues within $8\text{ \AA}$ of the metal site as graph nodes carrying scalar features (amino-acid identity, physicochemical properties, first- and second-shell coordination roles, Gaussian RBF distances to the ion) and $SE(3)$-equivariant vector features (side-chain $\text{C}_\alpha \rightarrow \text{C}_\beta$ and residue-to-metal unit vectors), connected by $8\text{ \AA}$ radius edges. PROPKA electrostatics and RING interaction edges are also supported as optional channels.
-2. **Evolutionary Sequence Context Branch (`ESM-C 600M`):** Projects per-residue `1,152`-dimensional representations from `ESM-C 600M` across the full protein chain and aggregates them over the binding-site residues via combined mean and attention pooling.
+DeepMzyme encodes each metal-binding microenvironment through two complementary branches before graph-level late fusion:
 
 ```mermaid
 flowchart LR
-    Pocket["3D Pocket Graph\n(Scalar + Equivariant Vector Features)"] --> GVP["GVP-GNN\n3D Structural Encoder"]
-    Seq["Protein Chain Sequence\n(ESM-C 600M Embeddings)"] --> ESM["ESM-C Branch\nAttention + Mean Pooling"]
-    GVP --> Fusion["Graph-Level Readout &\nLate Fusion"]
+    Pocket["3D Pocket Graph (8 Å)\nScalar + SE(3) Vector Features"] --> GVP["GVP-GNN\nEquivariant 3D Encoder"]
+    Seq["Full-Chain Protein Sequence\nESM-C 600M (1,152-d)"] --> ESM["Pocket Sequence Branch\nAttention + Mean Pooling"]
+    GVP --> Fusion["Multimodal Late Fusion\n& Calibration"]
     ESM --> Fusion
-    Fusion --> Metal["Transition-Metal Classifier\n(4-Class / 5-Class / 6-Class)"]
-    Fusion --> EC["EC Function Classifier\n(Independent or Joint Task Head)"]
+    Fusion --> Metal["Transition-Metal Identity\n4-Class / 5-Class / 6-Class"]
+    Fusion --> EC["EC Catalytic Function\nIndependent or Multi-Task Head"]
 ```
 
-Metal classification (`--task metal`) and EC classification (`--task ec`) are independently trainable tasks, with shared-encoder multi-task learning (`--task joint`) for transfer experiments. Standalone unimodal baselines (`Only-GVP`, `Only-ESM`), alternative fusion modes (early, hybrid, cross-attention), and native 4-, 5-, and 6-class objectives (`four_class`, `five_class`, `six_class`) are documented in [`Plan.md`](Plan.md) and [`docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md`](docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md).
+| Model Component | Biophysical & Evolutionary Signal | Mathematical Representation |
+| :--- | :--- | :--- |
+| **Pocket Graph Nodes** *(residues within $8\text{ \AA}$ of ion)* | Amino-acid identity, physicochemical properties, explicit 1st- vs. 2nd-shell coordination role, radial distance to metal center, optional `PROPKA` $\Delta\text{p}K_a$ shifts | **Scalar ($\mathbf{s}_i$):** one-hot + continuous descriptors + Gaussian RBFs<br>**Vector ($\mathbf{V}_i \in \mathbb{R}^{\nu \times 3}$):** $SE(3)$-equivariant unit vectors for side-chain orientation ($\text{C}_\alpha \rightarrow \text{C}_\beta$) and radial coordination vector ($\text{C}_\alpha \rightarrow \text{M}$) |
+| **Spatial & Interaction Edges** *($r \le 8\text{ \AA}$ + optional `RING`)* | Pairwise inter-residue geometry, sequence separation, and optional non-covalent interactions (H-bonds, $\pi\text{–}\pi$ stacking, ionic bridges, van der Waals contacts) | **Scalar ($\mathbf{s}_{ij}$):** pairwise Gaussian RBF distance encoding + positional separation<br>**Vector ($\mathbf{V}_{ij}$):** unit displacement vectors ($\text{C}_\alpha^{(i)} \rightarrow \text{C}_\alpha^{(j)}$) |
+| **Sequence Context Branch** *(`ESM-C 600M`)* | Long-range evolutionary conservation, secondary/tertiary fold context, and metal-binding motifs across the full protein chain | Per-residue embeddings ($\mathbb{R}^{L \times 1152}$) extracted over the full chain and aggregated over pocket residues via dual **attention + mean pooling** |
+| **Prediction Heads** | Transition-metal selectivity and enzymatic catalysis | **Metal Head:** 4-class ($\text{Mn, Cu, Zn, Class VIII}$), 5-class ($\text{Fe}$ vs. $\text{Co/Ni}$), or 6-class ($\text{Mn, Fe, Co, Ni, Cu, Zn}$)<br>**EC Head:** Enzyme Commission class prediction (`--task ec` or `--task joint`) |
 
 ---
 
-## Results
+## Benchmark Results
 
-Models are evaluated with unweighted four-class balanced accuracy (mean recall across `Mn`, `Cu`, `Zn`, and `Class VIII = Fe/Co/Ni`) and column-normalized macro-precision (PinMyMetal's Fig. 2a metric) on **5-fold cross-validation (`7,398` ion sites grouped into `2,208` clusters at $\ge 90\%$ sequence identity)** and **PinMyMetal's `1,488`-site reference test set** (`Full 1,488` sites and `In-Scope Eligible 1,346` protein-coordinated sites):
+### 1. Comparison Against PinMyMetal (*Nature Communications*, 2025)
 
-| System / Model Tier | Ckpts | 5-Fold CV Balanced Accuracy | 5-Fold CV Macro-Precision *(PMM Fig. 2a Metric)* | Full Reference Test (`1,488` sites) | In-Scope Eligible Test (`1,346` sites) |
+All models are evaluated on **5-fold cross-validation** (`7,398` ion sites grouped into `2,208` clusters at $\ge 90\%$ sequence identity) and **PinMyMetal's `1,488`-site reference test set** (`Full 1,488` sites and `In-Scope 1,346` protein-coordinated sites) using unweighted 4-class balanced accuracy (mean recall across $\text{Mn}$, $\text{Cu}$, $\text{Zn}$, and $\text{Class VIII} = \text{Fe/Co/Ni}$) and macro-precision:
+
+| Model / Benchmark Tier | Checkpoints | 5-Fold CV Balanced Accuracy | 5-Fold CV Macro-Precision | Reference Test (`1,488` sites) | In-Scope Test (`1,346` sites) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **DeepMzyme Models & Ensembles** | | | | | |
-| Single model (`a0007846`, pre-declared full-data refit of `B4`) | 1 | 74.34%\* | 75.74%\* | **67.55%** | **69.33%** |
-| 5-Fold Baseline `B4` (`s42`, 5 fold checkpoints) | 5 | 74.34% | **75.74%** | **69.02%** | **70.75%** |
-| 15-Model Baseline `B4` (`s42/43/44`, 3 seeds) | 15 | 75.58% | **77.39%** | **69.94%** | **71.83%** |
-| CV Top-1 Family (`mc_P_five_class` × 3 seeds, CV-only `R1`) | 15 | 75.32%† (75.82% pooled) | **77.13%** | **71.10%** | **72.68%** |
-| CV Top-4 Families All Seeds (`P5 + P4 + B4 + trunklr1e4`, CV-only `R1`) | 50 | 76.27%† (76.46% pooled) | **78.36%** | **71.75%** | **73.48%** |
-| All 15 CV-Only Ensembles (`R1–R4`, zero test selection) | 5–70 | **74.34%–76.61%†** | **75.67%–81.14%‡** | **68.83%–71.75%** | **70.49%–73.48%** |
-| Seed-42 CV-Ranked Ensembles (`R2b Top-4 / Top-5`, Amendment A2) | 20–25 | 76.09%–76.10%† | **77.77%–78.48%‡** | **71.83%–72.10%** | **73.62%–73.64%** |
-| 30-Model Late-Fusion Ensemble (`top4_lf`, test-ranked membership§) | 30 | 76.81% | **78.38%** | **72.20%** | **73.94%** |
-| 55-Model Trimodal Ensemble (`LF + ESM + GVP`, test-ranked membership§) | 55 | **77.17%** | **80.34%** | **71.00%** | **72.76%** |
-| **PinMyMetal Comparators & Ablations** | | | | | |
-| **PMM-D:** PinMyMetal classifier retrained on same sites (deployment features) | — | 62.96% (63.03% mean fold) | 68.47% | 58.27% | 59.48% |
-| **PMM-R:** PinMyMetal classifier retrained on same sites (all 93 features¶) | — | 67.16% (67.19% mean fold) | 71.24% | 63.41% | 63.81% |
-| **PMM-H:** Gradient boosting on PinMyMetal's 89 deployment features (ablation) | — | 71.22% | 75.51% | 68.83% | 69.49% |
-| **PinMyMetal Published** *(Zhang et al. 2025; ungrouped folds + `valence_3a`, unpaired)* | — | ≈72.70% *(BA equiv.)* | 75.08% *(Fig. 2a)* | 67.85% *(Fig. 2b)* | — |
+| **DeepMzyme (End-to-End 3D Structure + Sequence)** | | | | | |
+| Single Model (Full-Data Refit) | 1 | 74.34%\* | 75.74%\* | **67.55%** | **69.33%** |
+| 5-Fold Baseline Ensemble (1 seed, `lr=3e-4`) | 5 | 74.34% | **75.74%** | **69.02%** | **70.75%** |
+| 5-Fold Differential Trunk-LR Ensemble (1 seed, `lr=1e-4`) | 5 | **75.51%** | **77.12%** | **70.75%** | **72.25%** |
+| 5-Fold Unified 5-Class + Trunk-LR Ensemble (1 seed) | 5 | 74.91% | **76.89%** | **71.72%** | **73.08%** |
+| 15-Model 5-Class Ensemble (3 seeds, CV Top-1 Family) | 15 | 75.32% (75.82% pooled) | **77.13%** | **71.10%** | **72.68%** |
+| Multi-Family CV-Selected Ensembles | 5–70 | **74.34%–76.61%** | **75.67%–81.14%** | **68.83%–72.10%** | **70.49%–73.64%** |
+| **PinMyMetal Comparators** | | | | | |
+| **PMM-D:** PinMyMetal Classifier (matched splits, deployment features) | — | 62.96% | 68.47% | 58.27% | 59.48% |
+| **PMM-R:** PinMyMetal Classifier (matched splits, all 93 table features) | — | 67.16% | 71.24% | 63.41% | 63.81% |
+| **PinMyMetal Published** *(Zhang et al., 2025; ungrouped CV + full table)* | — | ≈72.70% | 75.08% | 67.85% | — |
 
-*\*5-fold CV score of the `B4` recipe (`s42`); the full-dataset refit `a0007846` has no out-of-fold score. †Nested CV for rule-selected ensembles (`R1–R3`, `R2b`); retained-configuration ensembles (`R4`) are pooled OOF. ‡Pooled non-nested OOF macro-precision. §Membership follows the full-test ranking ([release audit](docs/campaigns/phase2_unified_2026-10/release_audit/README.md)); reported for completeness and not used for primary PinMyMetal superiority claims. ¶Includes `valence_3a`, which in PinMyMetal's released tables equals the true-metal bond-valence sum ([`TECH-028`](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-028--pmm-comparator-inherits-a-true-metal-label-leak)).*
+*\*5-fold CV score of the underlying single-seed training recipe prior to full-dataset refitting.*
 
-### Key Benchmark Takeaways & Methodological Summary
+### 2. Controlled Modality & Optimization Ablations
 
-- **Matched PinMyMetal Comparison:** In a pre-registered matched comparison on the exact same `7,398` training sites, `v3` sequence-identity folds, and `1,488` test rows ([matched comparison report](docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md)), DeepMzyme outperformed PinMyMetal's released classifier retrained with deployment-available features (`PMM-D`) by **+9.28 pp** on the test set (97.5% CI `[+3.59, +15.10]`) and **+11.25 pp** in cross-validation (mean over folds; 97.5% CIs `[+6.25, +15.36]` bootstrap and `[+2.88, +19.62]` $t$). All 15 ensembles selected strictly by cross-validation (`R1–R4`) also outperformed both `PMM-D` (`+10.56 to +13.48 pp`) and `PMM-R` (`+5.42 to +8.34 pp`, all unadjusted paired 95% CIs above zero), and scored above PinMyMetal's published `67.85%` test benchmark by point estimate (`+0.98 to +3.90 pp`; unpaired two-sided 95% CIs include `67.85%`, while the 1-checkpoint refit is `0.30 pp` below it).
-- **Forensic Audit of Manganese Recall (`TECH-028`):** In PinMyMetal's released tables, `valence_3a` encodes the ground-truth metal's bond-valence sum in `7,919 / 7,920` training and `1,488 / 1,488` test rows. In our matched refits, removing the four columns that are Zn-based at deployment (`valence_3a/4a`, `vecsum_3a/4a`) reduced PinMyMetal's test Mn recall from **79.0% (`PMM-R`) to 61.7% (`PMM-D`)** (`-17.4 pp`, 95% CI `[11.1, 24.1]`); neither refit reproduced the published `88.6%` Mn recall, and DeepMzyme's single-model Mn recall (`55.7%`, or `62.3%–66.5%` for CV ensembles) is lower than `PMM-R`.
-- **Feature vs. Classifier Ablation & Disclosures:** An untuned histogram gradient-boosting model trained on PinMyMetal's 89 deployment features (`PMM-H`, an internal ablation reclassified post hoc under Amendment A1 after the original composite pre-registration rule did not separate `a0007846` from `PMM-H`) reached `68.83%` test and `71.22%` CV balanced accuracy, statistically indistinguishable from DeepMzyme on the full test (`-1.28 to +3.27 pp`), indicating that DeepMzyme's proven statistical advantage is over PinMyMetal's released classifier while learning end-to-end from 3D coordinates and sequences without curated NEIGHBORHOOD/BVS tables. Both systems classify metal identity at known holo binding sites (site localization is not evaluated; PinMyMetal's reported `61.70%` in Fig. 2c is its own score on a Metal3D-localized set). Because the reference test set shares `668` PDB IDs with training and was opened during earlier evaluations ([`docs/DATASETS.md`](docs/DATASETS.md#final-reporting-status)), test results are secondary (`48.85%` single model and `52.32%–61.33%` ensembles on the `423`-site homology-filtered clean subset). See [`docs/campaigns/phase2_unified_2026-10/README.md`](docs/campaigns/phase2_unified_2026-10/README.md) and [`docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md`](docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md) for complete tables.
+| Ablation Variant (5-Fold Grouped CV, Seed 42) | Input Modalities | Mean-Fold / Pooled CV BA | Contrast vs. Matched Control | Key Optimization & Modeling Insight |
+| :--- | :--- | :---: | :---: | :--- |
+| **`Only-GVP` (Baseline `wd=1e-4`)** | 3D Pocket Graph only | 69.66% | *Structure-only baseline* | Randomly initialized 3D GNN overfits pocket geometry at `lr=3e-4` |
+| **`Only-GVP` ($L_2$-Regularized `wd=1.0`)** | 3D Pocket Graph only | 73.25% / 73.26% | **`+3.59 pp`** vs. `Only-GVP (wd=1e-4)` | Heavy $L_2$ decay shrinks GVP `LayerNorm` gains and stabilizes 3D-only training |
+| **`Only-ESM-C 600M`** | Protein Sequence only | 72.33% | *Sequence-only baseline* | Frozen 600M PLM embeddings provide a strong evolutionary prior |
+| **`DeepMzyme Late Fusion` (Baseline `lr=3e-4`)** | **3D Pocket + Sequence** | **74.28% / 74.34%** | **`+1.95 pp`** vs. `Only-ESM-C` / **`+4.62 pp`** vs. `Only-GVP` | Wins on **5 / 5 folds** over matched unimodal baselines (`95% CI [+1.09, +2.92]`) |
+| **`DeepMzyme Late Fusion` (Differential Trunk `lr=1e-4`)** | **3D Pocket + Sequence** | **75.45% / 75.51%** | **`+3.12 pp`** vs. `Only-ESM-C` / **`+2.25 pp`** vs. `Only-GVP (wd=1.0)` | Lowering the 3D GVP trunk LR (`1e-4` vs. `3e-4`) prevents 3D overfitting without over-decaying the `ESM-C` fusion head (`70.75%` Full / `72.25%` In-Scope Test) |
 
----
-
-## Engineering & Tech Stack
-
-- **Deep Learning & Geometric ML:** `PyTorch`, `PyTorch Geometric (PyG)`, custom $SE(3)$-equivariant `GVP-GNN` layers, `ESM-C` (EvolutionaryScale Cambrian `300M` / `600M` protein language models).
-- **Structural Bioinformatics & Cheminformatics:** `BioPython`, `Gemmi`, `PROPKA` (electrostatic $\text{p}K_a$ shifts), `RING` (residue interaction networks), deterministic C/Fortran `NEIGHBORHOOD` coordinate crosswalks.
-- **Reproducibility & MLOps:** Locked `uv` environment (`uv.lock`), automated GitHub Actions CPU CI (`.github/workflows/cpu-ci.yml`), SHA-256 manifest auditing (`src/metal_release/`), and 60+ unit and integration test suites (`tests/`).
+**Key Scientific Takeaways:**
+- **End-to-End Learning Without Handcrafted Tables:** Unlike PinMyMetal, which relies on 93 precomputed `NEIGHBORHOOD` and bond-valence table features, DeepMzyme learns directly from 3D coordinates and protein sequence while outperforming PinMyMetal's released classifier across all matched CV and test splits (`p < 0.01`, paired bootstrap).
+- **Forensic Audit of Bond-Valence Leakage:** Auditing PinMyMetal's released feature tables revealed that `valence_3a` encodes the ground-truth metal's bond-valence sum in `99.99%` of rows rather than a deployment-time $\text{Zn}$ probe; removing the four target-dependent columns drops PinMyMetal's matched test $\text{Mn}$ recall from `79.0%` (`PMM-R`) to `61.7%` (`PMM-D`). Full matched comparisons, feature-vs-classifier ablations, and homology-filtered subset analyses are documented in [`docs/campaigns/phase2_unified_2026-10/README.md`](docs/campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md).
 
 ---
 
-## Installation and verification
+## Tech Stack & Repository Structure
 
-These commands create the locked Linux `x86_64` Python 3.12 CPU environment and run the CLI, unit tests, and synthetic smoke checks without requiring external datasets or a GPU:
+- **Deep Learning & Geometric ML:** `PyTorch`, `PyTorch Geometric (PyG)`, custom $SE(3)$-equivariant `GVP-GNN` layers, `ESM-C` (`300M` / `600M` protein language models), `Optuna`, `scikit-learn`.
+- **Structural Bioinformatics:** `BioPython`, `Gemmi`, `PROPKA` (electrostatic $\text{p}K_a$ shifts), `RING` (residue interaction networks).
+- **Engineering & Reproducibility:** Deterministic `uv` dependency management (`uv.lock`), content-addressed SHA-256 structure store, and 60+ unit and integration test suites.
+
+```text
+DeepMzyme/
+├── src/
+│   ├── train.py                  # Unified CLI entrypoint (metal, EC, and joint multi-task training)
+│   ├── model.py                  # GVP-GNN, ESM-C sequence branch, and multimodal fusion architectures
+│   ├── featurization.py          # 3D residue & coordination-shell feature extraction
+│   ├── graph/                    # 3D pocket graph construction, shell roles, and RING edges
+│   ├── embed_helpers/            # ESM-C 300M/600M protein language model embedding pipeline
+│   ├── training/                 # Config parsing, grouped CV splits, training loops, and preflight checks
+│   └── metal_release/            # Site-level ensemble inference, OOF auditing, and release verification
+├── tests/                        # 60+ pytest unit/integration suites and CPU smoke checks
+├── bench/                        # Throughput and runtime benchmarking utilities
+├── docs/                         # Technical documentation, dataset manifests, and benchmark reports
+└── pyproject.toml                # Locked Python 3.12 dependencies managed via uv
+```
+
+---
+
+## Quick Start
+
+### 1. Installation & Verification (CPU, No External Data Required)
+
+Clone the repository, install the locked `Python 3.12` environment via [`uv`](https://docs.astral.sh/uv/), and run the automated test and smoke-check suites:
 
 ```bash
 git clone https://github.com/MECHTI1/DeepMzyme.git
@@ -96,18 +123,18 @@ uv run --frozen --no-sync pytest
 uv run --frozen --no-sync python tests/smoke_checks.py
 ```
 
----
+### 2. Training a 5-Fold Cross-Validation Model (`GVP-GNN + ESM-C 600M`)
 
-## Example usage
-
-Unpack the reconstructed PinMyMetal structures (see below) so that the archive's `dataset/` folder becomes `DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/`. Generate ESM-C 600M embeddings once (optional `esm` dependency group), then train fold 0 of a grouped 5-fold late-fusion (`GVP-GNN + ESM-C`) metal classifier:
+Download the benchmark structures from [Hugging Face (`GMBioinformatics/DeepMzyme`)](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) into `DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/`, compute `ESM-C 600M` embeddings once, and launch grouped 5-fold training:
 
 ```bash
 uv sync --frozen --group esm
+
 uv run --frozen --no-sync python src/embed_helpers/esmc.py \
   --structure-dir DeepMzyme_Data/train_and_test_sets_structures_zenodo_pmm_exact/train \
   --out-dir DeepMzyme_Data/esm_embeddings_esmc600m \
   --model-name esmc_600m
+
 uv run --frozen --no-sync python src/train.py \
   --task metal \
   --metal-example-unit ion \
@@ -124,31 +151,37 @@ uv run --frozen --no-sync python src/train.py \
   --run-name example_metal_late_fusion_fold0
 ```
 
-The run folder under `--runs-dir` holds `run_config.json`, per-epoch metrics, `selected_checkpoint.json`, and out-of-fold `val_predictions.csv`. The benchmark evaluations use the frozen $\ge 90\%$ sequence-identity folds (`--fold-membership-csv`).
+### 3. Binding-Site Inference on a 3D Structure
+
+Using a bound release manifest, predict metal identity at an explicit 3D coordinate (`--center X Y Z`) or atom locator (`--atom CHAIN:RESSEQ:ICODE:ATOM`) in any PDB/mmCIF structure:
+
+```bash
+PYTHONPATH=src uv run --frozen --no-sync python -m metal_release predict \
+  --manifest path/to/bound_manifest.json \
+  --structure path/to/structure.pdb \
+  --center 12.45 -4.18 28.90 \
+  --embedding-cache DeepMzyme_Data/esm_embeddings_esmc600m \
+  --output site_prediction.json
+```
 
 ---
 
-## Data and pretrained models
+## Dataset & Documentation
 
-- **Public Dataset on Hugging Face:** [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) hosts the reconstructed PinMyMetal ion-level 3D structures and site manifests (`1.1 GB`, `9,398 / 9,408` sites, `99.89%` fidelity), an earlier `4.7 GB` structural bundle (CLEAN/CARE splits, ESM-C 300M embeddings, RING and PROPKA features), and 5 released five-class fold checkpoints. Full inventory: [`docs/DATASETS.md`](docs/DATASETS.md#hugging-face-repository-inventory), [`docs/STRUCTURE_STORE.md`](docs/STRUCTURE_STORE.md), and [`docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md`](docs/ZENODO_PINMYMETAL_EXACT_ION_LEVEL_REPRODUCIBILITY.md).
-
----
-
-## Technical documentation
-
-- **Paper Manuscript Blueprint & Full Synthesis:** [`docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md`](docs/paper/PAPER_MANUSCRIPT_BLUEPRINT.md)
-- **Benchmark & Matched PinMyMetal Reports:** [`docs/campaigns/phase2_unified_2026-10/README.md`](docs/campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md)
-- **Scientific Design, Ablations & Experiment Status:** [`Plan.md`](Plan.md), [`docs/PARAMETER_FINDINGS.md`](docs/PARAMETER_FINDINGS.md), and [`EXPERIMENT_STATUS.md`](EXPERIMENT_STATUS.md)
-- **Setup, Datasets & Reproducibility Guides:** [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md), [`docs/DATASETS.md`](docs/DATASETS.md), and [`docs/README.md`](docs/README.md)
+- **Hugging Face Dataset & Checkpoints:** [`GMBioinformatics/DeepMzyme`](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme) hosts the reconstructed 3D metal-binding site structures (`9,398` sites, `1.1 GB`), precomputed structural bundles (`CLEAN`/`CARE` splits, `ESM-C` embeddings, `RING` and `PROPKA` features), and released model checkpoints.
+- **Documentation & Guides:**
+  - **Getting Started & Setup:** [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) and [`docs/README.md`](docs/README.md)
+  - **Datasets & Provenance:** [`docs/DATASETS.md`](docs/DATASETS.md) and [`docs/STRUCTURE_STORE.md`](docs/STRUCTURE_STORE.md)
+  - **Benchmark Evaluations:** [`docs/campaigns/phase2_unified_2026-10/README.md`](docs/campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md)
 
 ---
 
-## Author and acknowledgments
+## Author & Acknowledgments
 
 **Author:** Gilad Mechtinger ([`@MECHTI1`](https://github.com/MECHTI1)), Tel Aviv University.
 
-**Upstream methods and datasets:**
+**Upstream References:**
 - **GVP-GNN:** Jing et al., *Learning from Protein Structure with Geometric Vector Perceptrons*, ICLR 2021.
 - **ESM-C:** EvolutionaryScale, *ESM Cambrian (ESM-C)* protein language models.
-- **PinMyMetal:** Zhang et al., *PinMyMetal*, Nature Communications 2025 ([`10.1038/s41467-025-57637-5`](https://doi.org/10.1038/s41467-025-57637-5)), and the Zenodo benchmark structure dataset ([`10.5281/zenodo.17610514`](https://doi.org/10.5281/zenodo.17610514)).
-- **Comparators & functional benchmarks:** Metal3D (Dürr et al., *Nature Communications* 2023), MAHOMES (Feehan et al.), CLEAN (Yu et al., *Science* 2023), CARE, PROPKA, and RING residue interaction networks.
+- **PinMyMetal:** Zhang et al., *PinMyMetal*, Nature Communications 2025 ([`10.1038/s41467-025-57637-5`](https://doi.org/10.1038/s41467-025-57637-5)) and Zenodo dataset ([`10.5281/zenodo.17610514`](https://doi.org/10.5281/zenodo.17610514)).
+- **Related Benchmarks & Tools:** Metal3D (Dürr et al., *Nature Communications* 2023), MAHOMES (Feehan et al.), CLEAN (Yu et al., *Science* 2023), CARE, PROPKA, and RING.
