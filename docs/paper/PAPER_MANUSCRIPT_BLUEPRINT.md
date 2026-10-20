@@ -31,7 +31,7 @@
 >
 > **Results:** Here we present **DeepMzyme**, a bimodal deep learning framework that integrates $SE(3)$-equivariant Geometric Vector Perceptron Graph Neural Networks (`GVP-GNN`) over 3D binding-site microenvironments with residue-level evolutionary representations from the 600-million-parameter `ESM-C` protein language model. To enable rigorous benchmarking, we reconstructed 99.89% (`9,398 / 9,408`) of PinMyMetal's ion-level benchmark sites directly from atomic coordinates, curated a symmetry-audited cohort of `7,398` mononuclear sites across `2,208` sequence-identity clusters ($\ge 90\%$ identity grouped into the same fold), and uncovered an undocumented ground-truth bond-valence sum leak (`valence_3a`) in PinMyMetal's released feature tables (`7,919 / 7,920` training rows and `1,488 / 1,488` test rows).
 >
-> In a pre-registered matched comparison on the exact same `7,398` training sites, sequence-identity-grouped 5-fold cross-validation splits, and `1,488` held-out test sites, PinMyMetal's released classifier retrained with deployment-available features (`PMM-D`) achieved **63.03%** mean-fold (62.96% pooled) balanced accuracy in cross-validation and **58.27%** on the test set (or **67.19%** CV and **63.41%** test when retaining the leaked `valence_3a` feature in `PMM-R`). DeepMzyme's pre-declared single model reached **74.28%** mean-fold (**74.34%** pooled) balanced accuracy in cross-validation (**+11.25 percentage points** over `PMM-D`, 97.5% CI `[+6.25, +15.36]`; **+7.09 pp** over `PMM-R`, 95% CI `[+2.42, +11.50]`) and **67.55%** on the full test set (**+9.28 pp** over `PMM-D`, 97.5% CI `[+3.59, +15.10]`; **69.33%** on the 1,346 protein-coordinated in-scope test sites). Across all 15 DeepMzyme late-fusion ensembles selected strictly by cross-validation (and 6 seed-42-ranked CV ensembles), test balanced accuracy reached **68.83% to 72.10%** on the full test (**70.49% to 73.64%** on in-scope sites; **72.20% / 73.94%** for the 30-model late-fusion release ensemble), outperforming matched `PMM-D` by **+10.56 to +13.83 pp**, matched `PMM-R` by **+5.42 to +8.69 pp** (all paired 95% CIs above zero), and exceeding PinMyMetal's originally reported paper benchmarks on both 5-fold cross-validation (**75.67%–81.14%** vs. **75.08%** macro-precision; **74.34%–77.99%** vs. **≈72.7%** balanced accuracy) and the held-out test set (**68.83%–72.20%** vs. **67.85%**). Finally, DeepMzyme provides the first grouped cross-validation resolution within Class VIII (`Fe` vs. `Co+Ni` 5-class and `Fe`/`Co`/`Ni` 6-class), achieving ~61% native $\text{Fe}$ recall and `0.680` pairwise $\text{Co}$–$\text{Ni}$ AUROC.
+> In a pre-registered matched comparison on the exact same `7,398` training sites, sequence-identity-grouped 5-fold cross-validation splits, and `1,488` held-out test sites, PinMyMetal's released classifier retrained with deployment-available features (`PMM-D`) achieved **63.03%** mean-fold (62.96% pooled) balanced accuracy in cross-validation and **58.27%** on the test set (or **67.19%** CV and **63.41%** test when retaining the leaked `valence_3a` feature in `PMM-R`). DeepMzyme's pre-declared single model reached **74.28%** mean-fold (**74.34%** pooled) balanced accuracy in cross-validation (**+11.25 percentage points** over `PMM-D`, 97.5% CI `[+6.25, +15.36]`; **+7.09 pp** over `PMM-R`, 95% CI `[+2.42, +11.50]`) and **67.55%** on the full test set (**+9.28 pp** over `PMM-D`, 97.5% CI `[+3.59, +15.10]`; **69.33%** on the 1,346 protein-coordinated in-scope test sites). Across all 15 primary DeepMzyme late-fusion ensembles selected strictly by cross-validation (`R1–R4`), test balanced accuracy reached **68.83% to 71.75%** on the full test (**70.49% to 73.48%** on in-scope sites), outperforming matched `PMM-D` by **+10.56 to +13.48 pp**, matched `PMM-R` by **+5.42 to +8.34 pp** (all paired 95% CIs above zero), and exceeding PinMyMetal's originally reported paper benchmarks on both 5-fold cross-validation (**75.67%–81.14%** vs. **75.08%** macro-precision; **74.34%–77.99%** vs. **≈72.7%** balanced accuracy) and the held-out test set (**68.83%–71.75%** vs. **67.85%**). Finally, DeepMzyme provides the first grouped cross-validation resolution within Class VIII (`Fe` vs. `Co+Ni` 5-class and `Fe`/`Co`/`Ni` 6-class), achieving ~61% native $\text{Fe}$ recall and `0.680` pairwise $\text{Co}$–$\text{Ni}$ AUROC.
 
 ---
 
@@ -151,14 +151,15 @@ To compare DeepMzyme and PinMyMetal on identical data without cohort or split co
 | **Single Model Refit (`a0007846`, pre-declared 1-ckpt full refit of `B4`)** | 1 | 74.28% / 74.34%\* | 75.74%\* | **67.55%** `[62.93, 71.65]` | **68.99%** | **69.33%** | 48.85% |
 | **5-Fold Baseline `B4` (`s42`, 5 fold checkpoints averaged)** | 5 | 74.28% / 74.34% | **75.74%** | **69.02%** `[64.47, 73.05]` | **70.40%** | **70.75%** | 52.32% |
 | **15-Model Baseline `B4` (`s42/43/44`, 3 seeds × 5 folds)** | 15 | — / 75.58% | **77.39%** | **69.94%** `[65.46, 74.03]` | **71.48%** | **71.83%** | 53.49% |
-| **DeepMzyme: Representative CV-Selected Ensembles (Zero Test Selection)** | | | | | | | |
+| **DeepMzyme: Primary CV-Selected Ensembles (`R1–R4`, Zero Test Selection)** | | | | | | | |
+| **5-Fold Differential Trunk-LR (`trunklr1e4`, `s42`, 5 fold ckpts)** | 5 | 75.45% / 75.51% | **76.81%** | **70.75%** `[66.29, 74.77]` | **71.89%** | **72.25%** | 55.87% |
 | **`R1` Top-1 Family (`mc_P_five_class` × 3 seeds)** | 15 | 75.32%† / 75.82% | **77.13%** | **71.10%** `[66.65, 75.14]` | **72.33%** | **72.68%** | 58.21% |
-| **`R1` Top-4 Families All Seeds (`P5 + P4 + B4 + trunklr1e4`)** | 50 | 76.27%† / 76.46% | **78.36%** | **71.75%** `[67.22, 75.80]` | — | **73.48%** | 57.47% |
+| **`R1` Top-4 Families All Seeds (`P5 + P4 + B4 + trunklr1e4`)** | 50 | 76.27%† / 76.46% | **78.36%** | **71.75%** `[67.22, 75.80]` | **73.12%** | **73.48%** | 57.47% |
 | **`R3` Pre-Declared Greedy CV Ensemble (`P5 + wd10 + trunklr1e4 + sca`)** | 30 | 76.54%† / 77.99% | **81.14%** | **70.57%** `[65.90, 74.75]` | — | **73.00%** | 59.20% |
-| **`R2b` Top-1 Seed-42 by Seed-42 OOF (`trunklr1e4`, `s42`)** | 5 | 74.47%† / 75.51% | **76.81%** | **70.75%** `[66.29, 74.77]` | **71.89%** | **72.25%** | 55.87% |
+| **Range Across All 15 Primary CV-Selected Ensembles (`R1–R4`)** | 5–70 | **74.54%–76.61%† / 74.34%–77.99%** | **75.67%–81.14%** | **68.83%–71.75%** | — | **70.49%–73.48%** | 52.32%–59.20% |
+| **DeepMzyme: Exploratory / Post-Hoc Amendments & Release-Audit Catalog (Disclosed Separately in Manuscript Sec. 4.3)** | | | | | | | |
 | **`R2b` Top-4 Seed-42 by Seed-42 OOF (`trunklr1e4 + esmdrop02 + B6 + S6`)** | 20 | 76.10%† / 76.35% | **78.48%** | **71.83%** `[67.20, 75.95]` | — | **73.62%** | **60.07%** |
 | **`R2b` Top-5 Seed-42 by Seed-42 OOF (`Top-4 + Unified_P5_trunklr1e4`)** | 25 | 76.09%† / 76.16% | **77.77%** | **72.10%** `[67.63, 76.02]` | — | **73.64%** | 59.37% |
-| **DeepMzyme: Release-Audit Ensembles (Post-Hoc / Test-Ranked Membership)** | | | | | | | |
 | **20-Model Late Fusion (`top4_lf_seed42`)** | 20 | — / 76.34% | **77.88%** | **71.80%** `[67.34, 75.79]` | — | **73.54%** | 58.48% |
 | **25-Model Late Fusion (`top3_lf`)** | 25 | — / 76.62% | **78.60%** | **71.70%** `[67.19, 75.67]` | **73.10%** | **73.46%** | 58.39% |
 | **30-Model Late Fusion (`top4_lf`)** | 30 | — / 76.81% | **78.38%** | **72.20%** `[67.73, 76.17]` | **73.58%** | **73.94%** | 59.18% |
@@ -217,27 +218,29 @@ To ensure that ensemble performance claims are completely immune to test-set sel
 | PinMyMetal *(Published Fig. 2a / Supp. Table 10, ungrouped)* | 7,920 raw rows | 72.70% *(75.08% Prec)* | 84.2% *(90.3% Prec)* | 52.0% *(62.9% Prec)* | 79.3% *(73.8% Prec)* | 75.3% *(73.3% Prec)* |
 | **PMM-R** *(Matched v3 folds, with `valence_3a` leak)* | 7,398 sites | 67.16% | 81.6% | 42.6% | 82.0% | 62.5% |
 | **PMM-D** *(Matched v3 folds, deployment features)* | 7,398 sites | 62.96% | 77.2% | 42.3% | 66.2% | 66.1% |
-| **DeepMzyme `B4` (`s42` 5-fold OOF)** | 7,398 sites | **74.34%** | **75.6%** | **70.6%** | **78.6%** | **72.5%** |
+| **DeepMzyme `B4` (`s42` 5-fold OOF)** | 7,398 sites | **74.34%** | **75.6%** | **73.5%** | **81.4%** | **66.9%** |
+| **DeepMzyme `Trunk-LR 1e-4` (`s42` 5-fold OOF)** | 7,398 sites | **75.51%** | **77.8%** | **73.8%** | **82.3%** | **68.2%** |
+| **DeepMzyme `R1 Top-1` (`mc_P_five_class`, 15 ckpts OOF)** | 7,398 sites | **75.82%** | **78.6%** | **74.6%** | **84.4%** | **65.7%** |
 | **Held-Out Test Set — Full Line (`1,488` rows)** | | | | | | |
 | PinMyMetal *(Published Fig. 2b, with `valence_3a` leak)* | Full (`1,488`) | 67.85% | **88.6%** | 59.4% | 65.9% | 57.5% |
 | **PMM-R** *(Retrained, with `valence_3a` leak)* | Full (`1,488`) | 63.41% | **79.0%** | 40.6% | 85.2% | 48.8% |
 | **PMM-D** *(Retrained, deployment features — no leak)* | Full (`1,488`) | 58.27% | **61.7%** | 50.0% | 60.7% | 60.7% |
 | **PMM-D2** *(Retrained, drops `valence_*`, `vecsum_*`, `bvs_*`)* | Full (`1,488`) | 58.13% | 46.7% | 46.9% | 78.6% | 60.3% |
 | **DeepMzyme Single Refit (`a0007846`)** | Full (`1,488`) | **67.55%** | 55.7% | **70.3%** | **85.1%** | **59.1%** |
+| **DeepMzyme `Baseline B4` (`s42`, 5 ckpts)** | Full (`1,488`) | **69.02%** | 59.3% | **70.3%** | **85.9%** | **60.7%** |
+| **DeepMzyme `Trunk-LR 1e-4` (`s42`, 5 ckpts)** | Full (`1,488`) | **70.75%** | **62.9%** | **71.9%** | **87.2%** | **61.1%** |
 | **DeepMzyme `Greedy` CV Ensemble (`R3`, 30 ckpts)** | Full (`1,488`) | **70.57%** | **66.5%** | **64.1%** | **89.1%** | **62.7%** |
 | **DeepMzyme `R1 Top-1` (`mc_P_five_class`, 15 ckpts)** | Full (`1,488`) | **71.10%** | 62.3% | **71.9%** | **89.2%** | **61.1%** |
 | **DeepMzyme `R1 Top-4 All Seeds` (50 ckpts)** | Full (`1,488`) | **71.75%** | 64.1% | **73.4%** | **89.3%** | **60.3%** |
-| **DeepMzyme `R2b Top-5 Seed-42` (25 ckpts)** | Full (`1,488`) | **72.10%** | 65.3% | **73.4%** | **89.0%** | **60.7%** |
 | **Held-Out Test Set — In-Scope Training-Eligible Line (`1,346` rows)** | | | | | | |
 | **PMM-D** *(Retrained, deployment features)* | Eligible (`1,346`) | 59.48% | 61.9% | 51.7% | 63.1% | 61.3% |
 | **PMM-R** *(Retrained, with `valence_3a` leak)* | Eligible (`1,346`) | 63.81% | 78.8% | 43.3% | 84.0% | 49.1% |
 | **DeepMzyme Single Refit (`a0007846`)** | Eligible (`1,346`) | **69.33%** | 56.9% | **73.3%** | **85.8%** | **61.3%** |
 | **DeepMzyme `R1 Top-1` (`mc_P_five_class`, 15 ckpts)** | Eligible (`1,346`) | **72.68%** | 64.4% | **75.0%** | **89.6%** | **61.7%** |
-| **DeepMzyme `30-Model Late Fusion` (`top4_lf`, 30 ckpts)** | Eligible (`1,346`) | **73.94%** | **66.2%** | **75.0%** | **89.7%** | **64.8%** |
-| **DeepMzyme `55-Model Trimodal` (55 ckpts)** | Eligible (`1,346`) | **72.76%** | **68.1%** | **70.0%** | **90.3%** | **62.6%** |
+| **DeepMzyme `R1 Top-4 All Seeds` (50 ckpts)** | Eligible (`1,346`) | **73.48%** | **66.2%** | **76.7%** | **89.7%** | **61.3%** |
 
 > **Key Scientific Insight on Manganese (`TECH-028`):**
-> On the matched 5-fold cross-validation splits (`7,398` sites), DeepMzyme `B4` outperforms `PMM-D` by **+28.3 pp on Cu** (`95% CI [+18.2, +38.9]`), **+12.4 pp on Zn** (`[+10.1, +14.8]`), and **+6.4 pp on Class VIII** (`[-5.9, +16.8]`), with no statistically significant difference on **Mn** (`-1.6 pp [-7.9, +3.7]`). On the test set, removing the four `TECH-028` columns (`valence_3a/4a`, `vecsum_3a/4a`) from PinMyMetal causes PinMyMetal's own test Mn recall to drop by **-17.4 percentage points** (`95% CI [11.1, 24.1]`), from **79.0% (`PMM-R`) to 61.7% (`PMM-D`)** (and down to **46.7%** in `PMM-D2`).
+> On the matched 5-fold cross-validation splits (`7,398` sites), DeepMzyme `B4` outperforms `PMM-D` by **+31.2 pp on Cu**, **+15.2 pp on Zn**, and **+0.8 pp on Class VIII**, with a small non-significant difference on **Mn** (`-1.6 pp [-7.9, +3.7]`), while `Trunk-LR 1e-4` (`77.8% / 73.8% / 82.3% / 68.2%`) beats `PMM-D` on all four classes simultaneously. On the test set, removing the four `TECH-028` columns (`valence_3a/4a`, `vecsum_3a/4a`) from PinMyMetal causes PinMyMetal's own test Mn recall to drop by **-17.4 percentage points** (`95% CI [11.1, 24.1]`), from **79.0% (`PMM-R`) to 61.7% (`PMM-D`)** (and down to **46.7%** in `PMM-D2`).
 
 ---
 

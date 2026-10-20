@@ -16,7 +16,7 @@ First-row transition metals share nearly identical ionic radii and overlapping f
 - **Multimodal $SE(3)$-Equivariant + PLM Architecture:** Fuses scalar and vector message passing (`GVP-GNN`) over $8\text{ \AA}$ 3D structural pocket microenvironments with residue-level `ESM-C 600M` embeddings, outperforming sequence-only (`+1.95 pp` baseline, `+3.12 pp` with differential trunk LR) and structure-only (`+4.62 pp` baseline, `+2.25 pp` over $L_2$-tuned GVP) unimodal baselines.
 - **State-of-the-Art Benchmark Performance:** Evaluated against the *Nature Communications* (2025) **PinMyMetal** benchmark on matched $\ge 90\%$ sequence-identity grouped folds (`7,398` training sites across `2,208` clusters) and the `1,488`-site reference test set:
   - **+11.25 pp** higher 5-fold CV balanced accuracy (`74.28%` vs. `63.03%`) and **+9.28 pp** higher test accuracy (`67.55%` vs. `58.27%`) for a single end-to-end model over PinMyMetal's classifier retrained with deployment-available features.
-  - **74.3%–76.6% CV balanced accuracy** (**75.7%–81.1%** macro-precision) and **68.8%–72.1% full-test accuracy** (**70.5%–73.6%** on in-scope protein-coordinated sites) across CV-selected ensembles, surpassing PinMyMetal's published results (`75.08%` CV macro-precision, `67.85%` test accuracy).
+  - **74.3%–78.0% CV balanced accuracy** (**75.7%–81.1%** macro-precision) and **68.8%–71.8% full-test accuracy** (**70.5%–73.5%** on in-scope protein-coordinated sites) across all 15 primary CV-selected ensembles (`R1–R4`), surpassing PinMyMetal's published results (`75.08%` CV macro-precision, `67.85%` test accuracy).
 - **Sub-Class VIII Resolution ($\text{Fe}$ vs. $\text{Co}/\text{Ni}$):** Unlike prior 4-class tools that collapse $\text{Fe}$, $\text{Co}$, and $\text{Ni}$ into a single `Class VIII` label, DeepMzyme natively supports 5-class ($\text{Fe}$ resolved from $\text{Co/Ni}$, `65.2%` 5-class CV balanced accuracy and `~61%` $\text{Fe}$ recall) and 6-class training objectives.
 - **Open 3D Benchmark Dataset & Forensic Data Audit:** Reconstructed and released **9,398 of 9,408 (`99.89%`)** benchmark metal-binding sites as 3D coordinate structures (`1.1 GB` on [Hugging Face](https://huggingface.co/datasets/GMBioinformatics/DeepMzyme)), curated a symmetry-audited training cohort, and uncovered an undocumented ground-truth bond-valence feature leak in the upstream benchmark tables.
 - **Rigorous ML & Software Engineering:** Homology-aware grouped cross-validation, paired non-parametric bootstrap testing (`10,000` replicates), deterministic `Python 3.12` + `uv` lockfile workflow, content-addressed SHA-256 structure storage, and 60+ `pytest` test suites.
@@ -56,16 +56,17 @@ All models are evaluated on **5-fold cross-validation** (`7,398` ion sites group
 
 | Model / Benchmark Tier | Checkpoints | 5-Fold CV Balanced Accuracy | 5-Fold CV Macro-Precision | Reference Test (`1,488` sites) | In-Scope Test (`1,346` sites) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **DeepMzyme (End-to-End 3D Structure + Sequence)** | | | | | |
-| Single Model (Full-Data Refit) | 1 | 74.34%\* | 75.74%\* | **67.55%** | **69.33%** |
-| 5-Fold Baseline Ensemble (1 seed, `lr=3e-4`) | 5 | 74.34% | **75.74%** | **69.02%** | **70.75%** |
-| 5-Fold Differential Trunk-LR Ensemble (1 seed, `lr=1e-4`) | 5 | **75.51%** | **77.12%** | **70.75%** | **72.25%** |
-| 5-Fold Unified 5-Class + Trunk-LR Ensemble (1 seed) | 5 | 74.91% | **76.89%** | **71.72%** | **73.08%** |
-| 15-Model 5-Class Ensemble (3 seeds, CV Top-1 Family) | 15 | 75.32% (75.82% pooled) | **77.13%** | **71.10%** | **72.68%** |
-| Multi-Family CV-Selected Ensembles | 5–70 | **74.34%–76.61%** | **75.67%–81.14%** | **68.83%–72.10%** | **70.49%–73.64%** |
+| **DeepMzyme (End-to-End 3D Structure + Sequence, Strictly CV-Selected)** | | | | | |
+| Single Model (Full-Data Refit `a0007846`) | 1 | 74.34%\* | 75.74%\* | **67.55%** | **69.33%** |
+| 5-Fold Baseline Ensemble (`B4`, 1 seed, `lr=3e-4`) | 5 | 74.34% | **75.74%** | **69.02%** | **70.75%** |
+| 5-Fold Differential Trunk-LR Ensemble (`trunklr1e4`, 1 seed, `lr=1e-4`) | 5 | **75.51%** | **76.81%** | **70.75%** | **72.25%** |
+| 15-Model 5-Class Ensemble (`R1 Top-1`, 3 seeds) | 15 | 75.32% (75.82% pooled) | **77.13%** | **71.10%** | **72.68%** |
+| 50-Model Multi-Family Ensemble (`R1 Top-4 All Seeds`) | 50 | 76.27% (76.46% pooled) | **78.36%** | **71.75%** | **73.48%** |
+| All 15 Primary CV-Selected Ensembles (`R1–R4`) | 5–70 | **74.34%–77.99%** | **75.67%–81.14%** | **68.83%–71.75%** | **70.49%–73.48%** |
 | **PinMyMetal Comparators** | | | | | |
 | **PMM-D:** PinMyMetal Classifier (matched splits, deployment features) | — | 62.96% | 68.47% | 58.27% | 59.48% |
 | **PMM-R:** PinMyMetal Classifier (matched splits, all 93 table features) | — | 67.16% | 71.24% | 63.41% | 63.81% |
+| **PMM-H:** Internal Tabular Ablation (`HistGB` on 89 PMM deployment features) | — | 71.22% | 75.51% | 68.83% | 69.49% |
 | **PinMyMetal Published** *(Zhang et al., 2025; ungrouped CV + full table)* | — | ≈72.70% | 75.08% | 67.85% | — |
 
 *\*5-fold CV score of the underlying single-seed training recipe prior to full-dataset refitting.*
@@ -78,6 +79,7 @@ All models are evaluated on **5-fold cross-validation** (`7,398` ion sites group
 | **`Only-GVP` ($L_2$-Regularized `wd=1.0`)** | 3D Pocket Graph only | 73.25% / 73.26% | **`+3.59 pp`** vs. `Only-GVP (wd=1e-4)` | Heavy $L_2$ decay shrinks GVP `LayerNorm` gains and stabilizes 3D-only training |
 | **`Only-ESM-C 600M`** | Protein Sequence only | 72.33% | *Sequence-only baseline* | Frozen 600M PLM embeddings provide a strong evolutionary prior |
 | **`DeepMzyme Late Fusion` (Baseline `lr=3e-4`)** | **3D Pocket + Sequence** | **74.28% / 74.34%** | **`+1.95 pp`** vs. `Only-ESM-C` / **`+4.62 pp`** vs. `Only-GVP` | Wins on **5 / 5 folds** over matched unimodal baselines (`95% CI [+1.09, +2.92]`) |
+| **`DeepMzyme Late Fusion` (Global `wd=1.0` Negative Control)** | **3D Pocket + Sequence** | 74.02% / 74.08% | `-0.26 pp` vs. `Baseline` | Applying heavy $L_2$ decay globally over-regularizes the `ESM-C` projection head (`68.18%` Full / `69.57%` In-Scope Test) |
 | **`DeepMzyme Late Fusion` (Differential Trunk `lr=1e-4`)** | **3D Pocket + Sequence** | **75.45% / 75.51%** | **`+3.12 pp`** vs. `Only-ESM-C` / **`+2.25 pp`** vs. `Only-GVP (wd=1.0)` | Lowering the 3D GVP trunk LR (`1e-4` vs. `3e-4`) prevents 3D overfitting without over-decaying the `ESM-C` fusion head (`70.75%` Full / `72.25%` In-Scope Test) |
 
 **Key Scientific Takeaways:**
