@@ -77,19 +77,23 @@ Do not infer auxiliary-learning benefit or promotion from their raw maxima.
 
 **Grade 2, validation only** (five grouped folds `v3-seqid90-s42-b2`, seed 42;
 [archived README](archive/campaigns/pmm_ion_metal_v3/README.md)):
-- **Objective test:** five- or six-class training gave no supported common-four gain over `four_class` for any
-  family.
-- **Selection:** four-class graph-level late fusion (mean common-four BA 74.28%) beat Only-ESMC (72.33%) on all
-  five folds (mean +1.95, bootstrap [+1.09, +2.92]).
+- **Matched 3-Modality × 3-Target Baseline Grid (45 checkpoints, Seed 42, Recipe `B`):**
+  Every modality (`Only-GVP`, `Only-ESMC`, `Late Fusion`) was trained under identical baseline optimization (`50` epochs cosine, `head_dropout=0.2`, `wd=1e-4`, manual inverse-frequency class weights) across `four_class`, `five_class`, and `six_class` (`nested_selection.json` pooled OOF common-four BA on `7,398` sites):
+  - `four_class`: `Only-GVP` `69.66%` mean (`69.71%` pooled) | `Only-ESMC` `72.33%` mean (`72.38%` pooled) | `Late Fusion` **`74.28%` mean (`74.34%` pooled)** (`+1.95 pp` mean / `+1.96 pp` pooled vs. `Only-ESMC`, 95% CI `[+1.09, +2.92]`, winning **5/5 folds**; `+4.62 pp` mean vs. `Only-GVP`).
+  - `five_class` ($\to$ common-four): `Only-GVP` `68.51%` pooled | `Only-ESMC` `72.80%` pooled | `Late Fusion` **`74.03%` pooled** (`+1.23 pp` vs. `Only-ESMC`; `+5.52 pp` vs. `Only-GVP`).
+  - `six_class` ($\to$ common-four): `Only-GVP` `67.67%` pooled | `Only-ESMC` `72.32%` pooled | `Late Fusion` **`74.98%` pooled** (`+2.66 pp` vs. `Only-ESMC`; `+7.31 pp` vs. `Only-GVP`).
+  - **Objective test:** five- or six-class training gave no statistically supported single-family common-four gain over `four_class` under the pre-declared Stage 3 gate for any family, though pooling `4c + 5c + 6c` (`15` baseline checkpoints, Seed 42) reaches `75.95%` pooled OOF BA for `Late Fusion`.
+  - **Learned `Late Fusion` vs. Post-Hoc Unimodal Averaging:** Equal-weight probability averaging of `0.5 Only-ESMC + 0.5 Only-GVP` (`10` checkpoints) scored `73.79%` mean common-four BA on confirmation folds 1–4 (`-0.69 pp` below 5-checkpoint `Late Fusion` `74.48%`, [log v3-032](archive/campaigns/pmm_ion_metal_v3/log.md#v3-032)), and adding nested `Only-ESMC` + `Only-GVP` blocks on top of nested `Late Fusion` in the release audit yielded `-0.02 pp` (`[-1.16, +1.08]`, `76.54%` vs. `76.56%`; [`nested_selection.json`](campaigns/phase2_unified_2026-10/release_audit/nested_selection.json)).
 - **Not adopted:** the step D recipes, the E2 candidates and a 10-epoch schedule.
   Separately qualified and kept as hypotheses: the 10-epoch schedule (folds 1–4 mean +1.99, not
-  interval-supported) and Only-GVP weight decay 1.0 (`wd10`, +3.59 within Only-GVP, interval-supported; exploratory).
-- **Fairness arm (never run):** the Only-ESMC head-dropout arm was designed to match the step D fusion recipe
-  `headdrop03`. Step E did not confirm it, and the selected `baseline` fusion shares the Only-ESMC baseline's generic
-  settings (weight decay 1e-4, head dropout 0.2, class weighting), so that arm no longer repairs a mismatch. Whether
-  Only-ESMC gains from its own tuning stays untested.
-- **Test result:** the secondary test result and its caveats stay in the
-  [completion summary](notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md).
+  interval-supported) and Only-GVP weight decay 1.0 (`wd10`, `73.25%` mean / `72.94%` pooled, +3.59 mean within Only-GVP, interval-supported on CV; exploratory, whereas `Only-GVP meanagg` reached `71.10%` folds 1–4 / `70.56%` pooled).
+- **Experimental symmetry and funnel boundary:**
+  1. *Only-ESMC fairness arm (never run):* the `Only-ESMC` head-dropout arm (`v3-022`) was designed to match the step D fusion recipe `headdrop03`. Step E did not confirm `headdrop03`, and the selected `baseline` fusion shares the `Only-ESMC` baseline's generic head settings (`wd=1e-4`, `head_dropout=0.2`, class weighting). However, `Only-ESMC` received no dedicated Step D/E2 regularization screen, so whether `Only-ESMC` gains from its own hyperparameter tuning remains untested.
+  2. *GVP trunk learning rate (`1e-4` vs. `3e-4`):* lowering the GVP trunk LR to `1e-4` (`trunklr1e4`) was evaluated across 5 folds only in `Late Fusion` (`75.45%` mean / `75.51%` pooled) and was not run as a 5-fold campaign on standalone `Only-GVP`.
+  3. *Downstream loss/seed campaigns:* `metal_completion_2026-10` (Recipes `B/P/S` and confirmation seeds `43/44`) was executed exclusively on `Late Fusion` after Stage 6 selection. Consequently, all strictly matched architectural comparisons between `Late Fusion`, `Only-ESMC`, and `Only-GVP` rest on the 45-checkpoint Seed-42 Recipe `B` grid above.
+- **Test result:** the secondary test results—including the matched 45-checkpoint Seed-42 grid, matched 15-checkpoint (`4c+5c+6c`) unimodal vs. bimodal ensembles, and the `Only-GVP wd10` test-set check—remain in the
+  [completion summary](notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md) and
+  [Phase 2 evaluation log (`p2u-005`)](campaigns/phase2_unified_2026-10/log.md#p2u-005-2026-10-20--matched-modality--target--ensemble-fairness-audit).
 
 ### Metal completion: B/P/S loss recipes on four/five/six objectives (executed 2026-10-15/16)
 

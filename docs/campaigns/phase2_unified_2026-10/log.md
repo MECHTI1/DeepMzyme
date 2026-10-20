@@ -3,6 +3,47 @@ Public-release note (2026-10-20): host paths, device names and cloud resource na
 
 Dated entries, newest first. `EXPERIMENT_STATUS.md` is overwritten only after preserving its previous text here.
 
+## p2u-005 (2026-10-20 — Matched Modality × Target × Ensemble Fairness Audit)
+
+CPU-only fairness audit of the existing saved OOF (`nested_selection.json`) and 180-checkpoint held-out test probability archive (`test_checkpoint_probs.npz`) to separate **strictly matched apples-to-apples comparisons** across `Only-GVP`, `Only-ESM-C 600M`, post-hoc unimodal probability averaging (`0.5 Only-ESM + 0.5 Only-GVP`), and learned `Late Fusion` (all trained with identical Seed 42 Recipe `B` hyperparameters across `four_class`, `five_class`, and `six_class`; 45 checkpoints total) from **downstream within-`Late Fusion` optimizations** (`trunklr1e4`, Loss Recipes `P`/`S`, and 3-seed `s42/43/44` confirmation). No new training or test pass was run; all held-out test metrics below carry the `both_results_secondary` disclosure in [`DATASETS.md`](../../DATASETS.md#test-use-ledger).
+
+### 1. Strictly Matched Modality, Target & 15-Checkpoint Ensemble Table (`Seed 42`, Recipe `B`)
+
+| Tier / Model Variant | Ckpts | Mean / Pooled OOF CV (`7,398`) | Full Test (`1,488`) `[95% CI]` | In-Scope Eligible (`1,346`) `[95% CI]` | Clean (`423`) `[95% CI]` | Paired Test Contrast (`Late Fusion − Control` or `Variant − Baseline`) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Matched 4-Class Baseline (`s42`)** | | | | | | |
+| `Only-GVP` 4-Class (`wd=1e-4`) | 5 | 69.66% / 69.71% | 64.35% `[59.74, 68.57]` | 66.37% `[61.66, 70.72]` | 53.37% `[45.22, 61.20]` | *3D-only 4c control* |
+| `Only-ESM-C` 4-Class (`wd=1e-4`) | 5 | 72.33% / 72.38% | 67.72% `[63.13, 71.93]` | 69.56% `[65.03, 73.65]` | 52.74% `[43.13, 61.36]` | *Seq-only 4c control* |
+| **`Late Fusion` 4-Class (`Baseline B4`)** | **5** | **74.28% / 74.34%** | **69.02%** `[64.47, 73.05]` | **70.75%** `[66.19, 74.78]` | 52.32% `[42.79, 60.87]` | vs. `ESM 4c`: **+1.30** `[-1.17, +3.76]` Full / **+1.18** `[-1.35, +3.82]` Elig; vs. `GVP 4c`: **+4.67** `[+0.93, +8.39]` Full / **+4.38** `[+0.57, +8.36]` Elig |
+| **Matched 5-Class Baseline (`s42`)** | | | | | | |
+| `Only-GVP` 5-Class (`5c` $\to$ `4c`) | 5 | — / 68.51% | 63.84% `[58.99, 68.21]` | 65.97% `[61.32, 70.38]` | 53.51% `[44.42, 62.37]` | *3D-only 5c control* |
+| `Only-ESM-C` 5-Class (`5c` $\to$ `4c`) | 5 | — / 72.80% | 68.19% `[63.63, 72.42]` | 69.86% `[65.35, 73.96]` | 54.62% `[44.95, 63.06]` | *Seq-only 5c control* |
+| **`Late Fusion` 5-Class (`Baseline B5`)** | **5** | — / **74.03%** | **69.48%** `[64.84, 73.62]` | **70.97%** `[66.45, 75.13]` | 53.85% `[44.35, 62.45]` | vs. `ESM 5c`: **+1.29** `[-1.26, +3.70]` Full / **+1.11** `[-1.55, +3.67]` Elig; vs. `GVP 5c`: **+5.63** `[+2.34, +9.06]` Full / **+5.01** `[+1.71, +8.40]` Elig |
+| **Matched 6-Class Baseline (`s42`)** | | | | | | |
+| `Only-GVP` 6-Class (`6c` $\to$ `4c`) | 5 | — / 67.67% | 64.97% `[60.30, 69.14]` | 66.95% `[62.26, 71.24]` | 53.16% `[45.02, 60.58]` | *3D-only 6c control* |
+| `Only-ESM-C` 6-Class (`6c` $\to$ `4c`) | 5 | — / 72.32% | 68.54% `[64.01, 72.77]` | 70.15% `[65.66, 74.27]` | 57.00% `[47.39, 65.52]` | *Seq-only 6c control* |
+| **`Late Fusion` 6-Class (`Baseline B6`)** | **5** | — / **74.98%** | **70.65%** `[66.02, 74.85]` | **72.07%** `[67.46, 76.24]` | **57.99%** `[48.37, 66.56]` | vs. `ESM 6c`: **+2.11** `[-0.51, +4.60]` Full / **+1.92** `[-0.73, +4.52]` Elig; vs. `GVP 6c`: **+5.68** `[+2.27, +9.18]` Full / **+5.12** `[+1.55, +8.74]` Elig |
+| **Matched 15-Ckpt Multi-Target Ensembles (`4c + 5c + 6c`, `s42`)** | | | | | | |
+| `Only-GVP` (`4c + 5c + 6c` Ens) | 15 | — | 64.70% `[60.11, 68.93]` | 66.82% `[62.21, 71.19]` | 54.37% `[46.35, 61.83]` | *3D-only 15-ckpt control* (`+0.35 pp` Full over `GVP 4c`) |
+| `Only-ESM-C` (`4c + 5c + 6c` Ens) | 15 | — | 68.34% `[63.81, 72.55]` | 69.99% `[65.45, 74.07]` | 55.18% `[45.63, 63.65]` | *Seq-only 15-ckpt control* (`+0.62 pp` Full over `ESM 4c`) |
+| **`Late Fusion` (`4c + 5c + 6c` Ens)** | **15** | — / **75.95%** | **69.77%** `[65.17, 73.91]` | **71.37%** `[66.84, 75.50]` | 54.30% `[44.87, 62.88]` | vs. `ESM 15-ckpt`: **+1.43** `[-1.03, +3.82]` Full / **+1.38** `[-1.16, +3.88]` Elig; vs. `GVP 15-ckpt`: **+5.07** `[+1.73, +8.46]` Full / **+4.55** `[+1.12, +8.12]` Elig |
+| **Post-Hoc Unimodal Averaging vs. Learned `Late Fusion` (`s42`)** | | | | | | |
+| `Post-Hoc 0.5 Only-ESM + 0.5 Only-GVP` (`4c`) | 10 | 73.79%\* | 68.93% `[64.33, 73.15]` | 70.68% `[66.05, 74.78]` | 56.75% `[47.05, 65.46]` | `LF 4c (5 ckpts) − Post-Hoc (10 ckpts)`: **+0.69 pp** CV f1–4; **+0.09** `[-2.67, +2.85]` Full / **+0.07** `[-2.83, +3.07]` Elig |
+| `Post-Hoc 0.5 Only-ESM + 0.5 Only-GVP` (`4c+5c+6c`) | 30 | — | 69.33% `[64.67, 73.58]` | 70.87% `[66.24, 75.08]` | 55.42% `[45.69, 64.15]` | `LF 15-ckpt − Post-Hoc (30 ckpts)`: **+0.45** `[-1.96, +2.90]` Full / **+0.50** `[-2.04, +3.08]` Elig |
+| **Matched Regularization Screen (`Only-GVP` & `Late Fusion`, `s42`)** | | | | | | |
+| `Only-GVP` Mean Aggregation (`meanagg`, `4c`) | 5 | 71.10%\* / 70.56% | 64.86% `[60.18, 69.19]` | 66.86% `[62.12, 71.23]` | 51.05% `[41.95, 59.81]` | vs. `GVP 4c`: **+0.85 pp** pooled CV; **+0.51** `[-2.77, +3.68]` Full / **+0.49** `[-2.85, +3.89]` Elig |
+| `Only-GVP` Heavy $L_2$ Decay (`wd=1.0`, `4c`) | 5 | 73.25% / 72.94% | 63.35% `[58.52, 67.74]` | 65.02% `[60.22, 69.48]` | 51.58% `[42.06, 60.32]` | vs. `GVP 4c`: **+3.23 pp** pooled CV, but **-1.00** `[-4.04, +1.94]` Full / **-1.35** `[-4.53, +1.84]` Elig Test regression |
+| `Late Fusion` Heavy $L_2$ Decay (`Global wd=1.0`, `4c`) | 5 | — / 74.08% | 67.98% `[63.30, 72.22]` | 69.57% `[64.90, 73.80]` | 52.04% `[42.48, 60.71]` | vs. `LF 4c`: **-0.26 pp** pooled CV; **-1.04** `[-2.92, +0.80]` Full / **-1.18** `[-3.07, +0.62]` Elig |
+| **Within-`Late Fusion` Trunk-LR Optimization *(Not Run on Unimodal Arms)*** | | | | | | |
+| **`Late Fusion` Differential Trunk LR (`trunklr1e4`, `4c`)** | **5** | **75.45% / 75.51%** | **70.75%** `[66.29, 74.77]` | **72.25%** `[67.87, 76.30]` | 55.87% `[46.26, 64.42]` | vs. `LF 4c`: **+1.17 pp** pooled CV; **+1.73** `[+0.01, +3.58]` Full / **+1.50** `[-0.30, +3.43]` Elig / **+3.56** `[+0.46, +7.93]` Clean |
+
+*\*Mean-fold CV on confirmation folds 1–4 (`v3-028` / `v3-032`).*
+
+### 2. Key Fairness & Generalization Conclusions
+1. **Strictly Matched Advantage of `Late Fusion`:** Across all three target schemes (`4c`, `5c`, `6c`) and in the matched 15-checkpoint (`4c + 5c + 6c`) ensemble at Seed 42 (Recipe `B`), `Late Fusion` consistently exceeds both `Only-ESM-C` (`+1.23 to +2.66 pp` CV; `+1.29 to +2.11 pp` Full Test; `+1.11 to +1.92 pp` Eligible Test) and `Only-GVP` (`+4.63 to +7.31 pp` CV; `+4.67 to +5.68 pp` Full Test, with all paired 95% CIs vs. `Only-GVP` strictly above zero).
+2. **`Only-GVP wd=1.0` Did Not Generalize to Held-Out Test:** Although heavy $L_2$ weight decay (`wd = 1.0`) increased `Only-GVP` 5-fold CV BA by `+3.59 pp` mean-fold (`+3.23 pp` pooled), it regressed on the held-out test set by `-1.00 pp` Full / `-1.35 pp` Eligible relative to `Only-GVP baseline (wd=1e-4)`. Even pooling all 30 `Only-GVP` checkpoints across all 6 `Only-GVP` families reaches `65.36%` Full / `67.39%` Eligible—still `> 3.3 pp` below 5-checkpoint `Late Fusion B4`.
+3. **Asymmetric Downstream Funnel Disclosure:** `Only-ESM-C` received no Step D/E2 regularization screen (`v3-022`), `Only-GVP` was not evaluated in a 5-fold `lr=1e-4` campaign, and `metal_completion_2026-10` (Recipes `B/P/S` and seeds `43/44`) was executed only on `Late Fusion`. Accordingly, unimodal-vs-bimodal claims are anchored strictly to the matched Seed-42 Recipe `B` comparisons above.
+
 ## p2u-004 (2026-10-20 — Matched PinMyMetal comparison)
 
 User-authorized, pre-registered matched comparison on the opened exact Zenodo PinMyMetal test: PinMyMetal's released
