@@ -50,6 +50,8 @@ flowchart LR
 
 ### 1. Comparison Against PinMyMetal (*Nature Communications*, 2025)
 
+![DeepMzyme vs. PinMyMetal Benchmark Overview](docs/paper/figures/fig1_benchmark_overview.svg)
+
 All models are evaluated on **5-fold cross-validation** (`7,398` ion sites grouped into `2,208` clusters at $\ge 90\%$ sequence identity) and **PinMyMetal's `1,488`-site reference test set** (`Full 1,488` sites and `In-Scope 1,346` protein-coordinated sites) using unweighted 4-class balanced accuracy (mean recall across $\text{Mn}$, $\text{Cu}$, $\text{Zn}$, and $\text{Class VIII} = \text{Fe/Co/Ni}$) and macro-precision:
 
 | Model / Benchmark Tier | Checkpoints | 5-Fold CV Balanced Accuracy | 5-Fold CV Macro-Precision | Reference Test (`1,488` sites) | In-Scope Test (`1,346` sites) |
@@ -156,7 +158,7 @@ uv run --frozen --no-sync python src/train.py \
 Using a bound release manifest, predict metal identity at an explicit 3D coordinate (`--center X Y Z`) or atom locator (`--atom CHAIN:RESSEQ:ICODE:ATOM`) in any PDB/mmCIF structure:
 
 ```bash
-PYTHONPATH=src uv run --frozen --no-sync python -m metal_release predict \
+uv run --frozen --no-sync python src/metal_release_cli.py predict \
   --manifest path/to/bound_manifest.json \
   --structure path/to/structure.pdb \
   --center 12.45 -4.18 28.90 \
