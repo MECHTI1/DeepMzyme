@@ -62,12 +62,16 @@ uv run --frozen --no-sync python src/metal_release_cli.py predict \
   --output DeepMzyme_Data/public_metal/site_prediction.json
 ```
 
-The first prediction downloads ESM-C weights if absent and computes full-chain
+The first prediction downloads ESM-C weights if absent and computes coordinate-chain
 embeddings; later calls reuse matching cached embeddings. The inference cache
 requires `bfloat16` model-dtype metadata that the training helper's cache does
-not supply. Keep these caches separate. Per-site outputs under `sites` include `predicted_class`,
-`class_order: ["Mn", "Cu", "Zn", "Class VIII"]`, `class_scores`,
-`calibration: "none"`, and `quality_flags`.
+not supply. Keep these caches separate.
+
+The output JSON records `class_order: ["Mn", "Cu", "Zn", "Class VIII"]`
+and `calibration: "none"` at the top level. Each entry in `sites` contains
+`predicted_class`, `class_scores` in that class order, and `quality_flags`.
+The sequence is reconstructed from the coordinate file's observed residues;
+it need not include unresolved residues from the full biological sequence.
 
 Binding checks artifact identity; it does not establish prediction parity or
 scientific validity on a new environment or structure. The historical audit's
@@ -76,10 +80,14 @@ assume a metal-binding site and are not calibrated binding probabilities.
 
 ## Input features
 
-The benchmark and public candidate use an 8 Å ion-centered residue neighborhood.
-This is a saved recipe choice; the general training parser's default radius is
-separate. Feature dimensions below describe constructed inputs before learned
-projection and distance RBF expansion. Configured omissions zero their channels.
+The benchmark and public inference path include a residue when any of its atoms
+is within **10 Å of the target ion** (`DEFAULT_POCKET_RADIUS`). The public
+candidate's saved **8 Å edge radius** is a separate inter-residue contact cutoff;
+it does not set the pocket-extraction radius. See
+[`data_structures.py`](../data_structures.py),
+[`source_cohort.py`](../training/source_cohort.py) and [`predict.py`](predict.py).
+Feature dimensions below describe constructed inputs before learned projection
+and distance RBF expansion. Configured omissions zero their channels.
 
 | Input | Constructed representation | Implementation |
 |---|---|---|
@@ -94,5 +102,7 @@ projection and distance RBF expansion. Configured omissions zero their channels.
 
 The public candidate uses radius-based edges and geometry-derived shell roles;
 other training configurations can enable RING features. Each example here is
-centered on one target ion. Site-summary fields do not establish that a model
-was trained to predict an entire multinuclear pocket.
+centered on one target ion, and its base site-summary vector is constant in this
+ion-mode workflow. These fields do not supply a varying count of neighboring
+metals or turn the prediction into classification of an entire multinuclear pocket.
+
