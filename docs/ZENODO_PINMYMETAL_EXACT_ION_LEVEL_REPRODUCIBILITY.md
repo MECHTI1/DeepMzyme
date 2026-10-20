@@ -224,9 +224,9 @@ The runner automatically compiles fold-by-fold results, calculates OOF validatio
 
 | Model / Benchmark | Source | Evaluation Type | Collapsed-4 Balanced Accuracy | Mn Recall | Zn Recall | Class VIII Recall | Cu Recall |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **PinMyMetal (Published)** | PinMyMetal Fig 2a | 5-Fold CV (OOF) | **75.08%** | 90.3% | 73.8% | 73.3% | 62.9% |
+| **PinMyMetal (Published)** | PinMyMetal Fig 2a | 5-Fold CV (OOF) | **75.08%** (macro-precision; ≈72.7% BA; per-class values are precisions) | 90.3% | 73.8% | 73.3% | 62.9% |
 | **PinMyMetal (Published)** | PinMyMetal Fig 2b | Held-Out Test Set | **67.85%** | 88.6% | 65.9% | 57.5% | 59.4% |
-| **Metal3D (Published)** | External Benchmark (Fig 2c) | Held-Out Test Set | **61.70%** | 63.8% | 64.4% | 61.6% | 57.0% |
+| **PinMyMetal on a Metal3D-derived set (Published)** | PinMyMetal Fig 2c | Held-Out Test Set | **61.70%** | 63.8% | 64.4% | 61.6% | 57.0% |
 | **DeepMzyme Enhanced GVP** | This Benchmark | 5-Fold CV & Test Ensemble | *Computed upon completion* | - | - | - | - |
 | **DeepMzyme Only ESM** | This Benchmark | 5-Fold CV & Test Ensemble | *Computed upon completion* | - | - | - | - |
 | **DeepMzyme GVP + ESM-C** | This Benchmark | 5-Fold CV & Test Ensemble | *Computed upon completion* | - | - | - | - |

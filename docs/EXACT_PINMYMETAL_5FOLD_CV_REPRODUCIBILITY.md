@@ -21,9 +21,9 @@ Any researcher or AI agent reading this repository can replicate the exact runs,
 ### Key Empirical Findings
 1. **Evaluation Regimes (PinMyMetal Fig. 2a vs Fig. 2b)**:
    - In *PinMyMetal* (Nature Communications 2025, Fig. 2), the authors report two separate evaluation figures:
-     - **Figure 2a**: 5-Fold Cross-Validation validation performance on the training dataset (**75.08%** Balanced Accuracy across 4 collapsed metal classes: Mn: 90.3%, Zn: 73.8%, Class VIII: 73.3%, Cu: 62.9%).
+     - **Figure 2a**: 5-Fold Cross-Validation validation performance on the training dataset (**75.08%** macro-precision, about 72.7% as balanced accuracy, across 4 collapsed metal classes; per-class precisions: Mn: 90.3%, Zn: 73.8%, Class VIII: 73.3%, Cu: 62.9%).
      - **Figure 2b**: Held-Out Test Set performance on PinMyMetal's 1,488 test rows (**67.85%** Balanced Accuracy: Mn: 88.6%, Zn: 65.9%, Class VIII: 57.5%, Cu: 59.4%; evaluated in DeepMzyme on 352 catalytic pockets).
-     - **Figure 2c**: Generalization performance on external Metal3D structures (**61.70%** Balanced Accuracy).
+     - **Figure 2c**: PinMyMetal's own score on a Metal3D-derived set (**61.70%**), not a Metal3D result.
    - In DeepMzyme's exploratory benchmark, maximum validation Balanced Accuracy across epochs reached **80.22% ± 3.31%** (selected-checkpoint out-of-fold values: **79.84%** for late fusion, **78.98%** for ESM-C, and **73.87%** for Enhanced GVP; see [reporting and split audit](agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)), and **79.92% 5-Fold Ensemble Held-Out Test Balanced Accuracy** (test set opened 2026-09-23; see [test-use ledger](DATASETS.md#test-use-ledger)).
 2. **Multimodal Evaluation (Test set opened 2026-09-23; see [test-use ledger](DATASETS.md#test-use-ledger))**:
    - Sequence-only ESM-C: **77.37%** test balanced accuracy.
@@ -86,7 +86,7 @@ Any researcher or AI agent reading this repository can replicate the exact runs,
 | Architecture / Mode | Test Mode | Test Raw Acc | Test Bal Acc (5-Class) | Test Bal Acc (Collapsed-4) | Mn Recall | Zn Recall | Group VIII Recall | Cu Recall | Delta vs PMM Fig 2b (67.85%) | Delta vs Metal3D Fig 2c (61.70%) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **PinMyMetal Fig 2b Baseline** | Held-Out Test | — | — | **67.85%** | **88.6%** | 65.9% | 57.5% | 59.4% | *Baseline* | +6.15 pp |
-| **Metal3D Fig 2c Baseline** | External Test | — | — | **61.70%** | 63.8% | 64.4% | 61.6% | 57.0% | -6.15 pp | *Baseline* |
+| **PinMyMetal on Metal3D-derived set (Fig 2c)** | External Test | — | — | **61.70%** | 63.8% | 64.4% | 61.6% | 57.0% | -6.15 pp | *Baseline* |
 | **Sequence-Only (ESM-C)** | 5-Fold Mean | 71.02% ± 2.50% | 67.57% ± 0.89% | **74.17% ± 1.90%** | — | — | — | — | +6.32 pp | +12.47 pp |
 | **Sequence-Only (ESM-C)** | 5-Fold Ensemble | 75.57% | 71.48% | **77.37%** | 61.6% | 84.9% | 73.2% | 89.7% | **+9.52 pp** | **+15.67 pp** |
 | **Structure-Only (Enhanced GVP)** | 5-Fold Mean | 65.74% ± 4.30% | 61.92% ± 3.75% | **69.89% ± 2.66%** | — | — | — | — | +2.04 pp | +8.19 pp |

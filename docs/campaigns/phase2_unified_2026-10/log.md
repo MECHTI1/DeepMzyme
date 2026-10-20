@@ -3,6 +3,18 @@ Public-release note (2026-10-20): host paths, device names and cloud resource na
 
 Dated entries, newest first. `EXPERIMENT_STATUS.md` is overwritten only after preserving its previous text here.
 
+## p2u-004 (2026-10-20 — Matched PinMyMetal comparison)
+
+User-authorized, pre-registered matched comparison on the opened exact Zenodo PinMyMetal test: PinMyMetal's released
+classifier refit on the same 7,398 training sites and folds (CPU, pinned environment), scored with DeepMzyme's frozen
+single model and CV-selected ensembles on the same 1,488 test rows. Results, amendments A1/A2 and disclosures:
+[matched comparison report](pmm_matched/README.md); test access: [ledger](../../DATASETS.md#test-use-ledger).
+Documentation repaired with it: README and DATASETS comparison claims; PinMyMetal's published CV value relabelled as
+macro-precision and its 61.70% as its own score on a Metal3D-derived set (also in the two PinMyMetal reproducibility
+docs). Previous `EXPERIMENT_STATUS.md` line, replaced: "- Last execution evidence: 2026-10-19 CPU-only [release
+audit](docs/campaigns/phase2_unified_2026-10/release_audit/README.md): OOF scores, nested selection, parity, timing; no
+training or test access."
+
 ## p2u-003 (2026-10-19 — Release audit and ensemble comparison)
 
 CPU-only audit of the existing checkpoints from saved development artifacts: no training, refit, calibration, GPU use

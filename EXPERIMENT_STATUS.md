@@ -1,7 +1,7 @@
 # DeepMzyme Current Experiment Status
 
 - Status: active (2026-10-19 metal ensembles compared on OOF; deployment default not yet chosen)
-- Last execution evidence: 2026-10-19 CPU-only [release audit](docs/campaigns/phase2_unified_2026-10/release_audit/README.md): OOF scores, nested selection, parity, timing; no training or test access.
+- Last execution evidence: 2026-10-20 CPU-only [matched PinMyMetal comparison](docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md): pre-registered; opened test scored.
 
 ## Current objective and stage
 
