@@ -3,6 +3,7 @@
 **Document Purpose:** This document provides a complete, self-contained scientific synthesis of the **DeepMzyme** project, organized directly in the structure of a peer-reviewed journal manuscript (*Nature Communications*, *Bioinformatics*, *Journal of Chemical Information and Modeling*, or *Briefings in Bioinformatics*). Every number, table, architectural specification, dataset audit, and statistical interval in this blueprint is verified against the repository's frozen artifacts and independent recomputations.
 
 **Primary Evidence Sources:**
+- **Full Publication Manuscripts:** [`docs/paper/MANUSCRIPT.md`](MANUSCRIPT.md) (Markdown) and [`docs/paper/manuscript.tex`](manuscript.tex) + [`docs/paper/references.bib`](references.bib) (LaTeX + BibTeX)
 - Project overview & CLI usage: [`README.md`](../../README.md) and [`Plan.md`](../../Plan.md)
 - Matched PinMyMetal comparison report (`2,534/2,534` values independently verified): [`docs/campaigns/phase2_unified_2026-10/pmm_matched/README.md`](../campaigns/phase2_unified_2026-10/pmm_matched/README.md)
 - Phase 2 180-checkpoint evaluation & release audit: [`docs/campaigns/phase2_unified_2026-10/README.md`](../campaigns/phase2_unified_2026-10/README.md) and [`docs/campaigns/phase2_unified_2026-10/release_audit/README.md`](../campaigns/phase2_unified_2026-10/release_audit/README.md)
