@@ -54,10 +54,10 @@ def make_fig1_benchmark_overview() -> None:
     )
 
     models = [
-        "PinMyMetal (Clean Deployment, 89 Features)",
-        "PinMyMetal (With Bond-Valence Leak, 93 Features)",
-        "Tabular HistGB Baseline (89 Deployment Features)",
-        "PinMyMetal Published* (Ungrouped CV + Leak)",
+        "PinMyMetal (89 Features, PMM-D)",
+        "PinMyMetal (93 Features, PMM-R)",
+        "HistGB on PinMyMetal Features (89 Features)",
+        "PinMyMetal Reported* (Zhang et al., 2025)",
         "DeepMzyme Single Model (Full-Data Refit, 1 Model)",
         "DeepMzyme 4-Class Baseline (5-Fold, 5 Models)",
         "DeepMzyme + Differential GVP LR (5-Fold, 5 Models)",
@@ -66,7 +66,7 @@ def make_fig1_benchmark_overview() -> None:
     ]
     # Panel A: 5-Fold CV Pooled BA (%) and Macro-Precision (%)
     cv_ba = [62.96, 67.16, 71.22, 72.70, 74.34, 74.34, 75.51, 75.82, 76.46]
-    cv_mp = [68.47, 71.24, 75.51, 75.08, 75.74, 75.74, 77.12, 77.13, 78.36]
+    cv_mp = [68.47, 71.24, 75.51, 75.08, 75.74, 75.74, 76.81, 77.13, 78.36]
 
     # Panel B: Full Test (1,488) BA + 95% CI, and In-Scope Eligible (1,346) BA
     test_full = [58.27, 63.41, 68.83, 67.85, 67.55, 69.02, 70.75, 71.10, 71.75]
@@ -80,8 +80,8 @@ def make_fig1_benchmark_overview() -> None:
     # Panel A bars
     b1_ba = ax1.barh(y - h / 2, cv_ba, height=h, color="#084594", label="5-Fold CV Balanced Accuracy (%)")
     b1_mp = ax1.barh(y + h / 2, cv_mp, height=h, color="#4292c6", label="5-Fold CV Macro-Precision (%)")
-    ax1.axvline(62.96, color="#d95f02", linestyle=":", linewidth=1.3, alpha=0.95, label="PinMyMetal Clean Deployment CV BA (62.96%)")
-    ax1.axvline(75.08, color="#6a51a3", linestyle="--", linewidth=1.2, alpha=0.9, label="PinMyMetal Published CV Macro-Precision (75.08%)")
+    ax1.axvline(62.96, color="#d95f02", linestyle=":", linewidth=1.3, alpha=0.95, label="PinMyMetal 89-Feature (PMM-D) CV BA (62.96%)")
+    ax1.axvline(75.08, color="#6a51a3", linestyle="--", linewidth=1.2, alpha=0.9, label="PinMyMetal Reported CV Macro-Precision (75.08%)")
     ax1.axhline(3.5, color="#666666", linestyle="-", linewidth=0.9, alpha=0.6)
 
     ax1.set_yticks(y)
@@ -89,7 +89,7 @@ def make_fig1_benchmark_overview() -> None:
     ax1.invert_yaxis()
     ax1.set_xlim(50, 85.5)
     ax1.set_xlabel("5-Fold Cross-Validation Score (%)")
-    ax1.set_title("A. 5-Fold Homology-Grouped CV (7,398 Sites, ≥90% Seq-ID)", pad=10)
+    ax1.set_title("A. 5-Fold Cross-Validation (7,398 Sites, ≥90% Seq-ID Clusters)", pad=10)
     ax1.grid(axis="x", linestyle=":", alpha=0.5)
 
     for idx, bar in enumerate(b1_ba):
@@ -110,13 +110,13 @@ def make_fig1_benchmark_overview() -> None:
     )
     elig_vals = [v if not np.isnan(v) else 0.0 for v in test_elig]
     b2_elig = ax2.barh(y + h / 2, elig_vals, height=h, color="#1d91c0", label="In-Scope Protein-Coordinated Test (1,346 Sites)")
-    ax2.axvline(58.27, color="#d95f02", linestyle=":", linewidth=1.3, alpha=0.95, label="PinMyMetal Clean Deployment Test BA (58.27%)")
-    ax2.axvline(67.85, color="#6a51a3", linestyle="--", linewidth=1.2, alpha=0.9, label="PinMyMetal Published Test BA (67.85%)")
+    ax2.axvline(58.27, color="#d95f02", linestyle=":", linewidth=1.3, alpha=0.95, label="PinMyMetal 89-Feature (PMM-D) Test BA (58.27%)")
+    ax2.axvline(67.85, color="#6a51a3", linestyle="--", linewidth=1.2, alpha=0.9, label="PinMyMetal Reported Test BA (67.85%)")
     ax2.axhline(3.5, color="#666666", linestyle="-", linewidth=0.9, alpha=0.6)
 
     ax2.set_xlim(48, 83.0)
-    ax2.set_xlabel("Held-Out Test Balanced Accuracy (%)")
-    ax2.set_title("B. Held-Out Reference Test Set (Full 1,488 & In-Scope 1,346 Sites)", pad=10)
+    ax2.set_xlabel("Reference Test Balanced Accuracy (%)")
+    ax2.set_title("B. Reference Test Set (Full 1,488 & In-Scope 1,346 Sites)", pad=10)
     ax2.grid(axis="x", linestyle=":", alpha=0.5)
 
     for idx, bar in enumerate(b2_full):
@@ -158,14 +158,14 @@ def make_fig2_per_metal_recall_audit() -> None:
 
     colors = ["#e6ab02", "#d95f02", "#2b8cbe", "#084594"]
     labels_cv = [
-        "PinMyMetal (With Bond-Valence Leak, 93 Features — 67.2% CV BA)",
-        "PinMyMetal (Clean Deployment, 89 Features — 63.0% CV BA)",
+        "PinMyMetal (93 Published Features, PMM-R — 67.2% CV BA)",
+        "PinMyMetal (89 Target-Free Features, PMM-D — 63.0% CV BA)",
         "DeepMzyme 4-Class Baseline (5-Fold, 5 Models — 74.3% CV BA)",
         "DeepMzyme 5-Class Ensemble (3 Seeds, 15 Models — 75.8% CV BA)",
     ]
     labels_test = [
-        "PinMyMetal (With Bond-Valence Leak, 93 Features — 63.4% Test BA)",
-        "PinMyMetal (Clean Deployment, 89 Features — 58.3% Test BA)",
+        "PinMyMetal (93 Published Features, PMM-R — 63.4% Test BA)",
+        "PinMyMetal (89 Target-Free Features, PMM-D — 58.3% Test BA)",
         "DeepMzyme 4-Class Baseline (5-Fold, 5 Models — 69.0% Test BA)",
         "DeepMzyme 5-Class Ensemble (3 Seeds, 15 Models — 71.1% Test BA)",
     ]
@@ -221,26 +221,26 @@ def make_fig3_modality_optimization_ablations() -> None:
 
     # Panel A: Strictly Matched (Seed 42) Modality, Multi-Target Ensemble & Regularization Audit
     variants_a = [
-        "3D Structure Only: GVP-GNN (4-Class, 5 Models)",
-        "3D Structure Only: GVP-GNN + Heavy L₂ (wd=1.0, 5 Models)",
-        "3D Structure Only: GVP-GNN Multi-Target (4c+5c+6c, 15 Models)",
-        "Sequence Only: ESM-C 600M (4-Class, 5 Models)",
-        "Sequence Only: ESM-C 600M (6-Class, 5 Models)",
-        "Sequence Only: ESM-C 600M Multi-Target (4c+5c+6c, 15 Models)",
-        "Unimodal Post-Hoc Average: 0.5 ESM-C + 0.5 GVP (10 Models)",
-        "DeepMzyme Late Fusion: 4-Class Baseline (5 Models)",
-        "DeepMzyme Late Fusion: 6-Class Baseline (5 Models)",
-        "DeepMzyme Late Fusion: Multi-Target (4c+5c+6c, 15 Models)",
-        "DeepMzyme Late Fusion: + Differential GVP LR* (5 Models)",
+        "GVP-GNN Only (4-Class, 5 Models)",
+        "GVP-GNN Only + L₂ wd=1.0 (4-Class, 5 Models)",
+        "GVP-GNN Only Multi-Target (4c+5c+6c, 15 Models)",
+        "ESM-C 600M Only (Pocket Pooled, 4-Class, 5 Models)",
+        "ESM-C 600M Only (Pocket Pooled, 6-Class, 5 Models)",
+        "ESM-C 600M Only Multi-Target (4c+5c+6c, 15 Models)",
+        "Unimodal Probability Average (0.5 ESM-C + 0.5 GVP, 10 Models)",
+        "Late Fusion (GVP-GNN + ESM-C): 4-Class Baseline (5 Models)",
+        "Late Fusion (GVP-GNN + ESM-C): 6-Class Baseline (5 Models)",
+        "Late Fusion (GVP-GNN + ESM-C): Multi-Target (15 Models)",
+        "Late Fusion (GVP-GNN + ESM-C): + Differential GVP LR* (5 Models)",
     ]
-    # Exact 5-fold pooled OOF CV BA (7,398 sites) and In-Scope Held-Out Test BA (1,346 sites)
+    # Exact 5-fold pooled OOF CV BA (7,398 sites) and In-Scope Reference Test BA (1,346 sites)
     cv_a = [69.71, 72.94, 71.52, 72.38, 72.32, 72.74, 73.37, 74.34, 74.98, 75.73, 75.51]
     test_a = [66.37, 65.02, 66.82, 69.56, 70.15, 69.99, 70.68, 70.75, 72.07, 71.37, 72.25]
 
     y_a = np.arange(len(variants_a))
     h_a = 0.37
     b_cv = ax1.barh(y_a - h_a / 2, cv_a, height=h_a * 0.92, color="#084594", edgecolor="white", label="5-Fold Pooled OOF CV Balanced Accuracy (%)")
-    b_ts = ax1.barh(y_a + h_a / 2, test_a, height=h_a * 0.92, color="#1d91c0", edgecolor="white", label="In-Scope Held-Out Test Balanced Accuracy (1,346 Sites, %)")
+    b_ts = ax1.barh(y_a + h_a / 2, test_a, height=h_a * 0.92, color="#1d91c0", edgecolor="white", label="In-Scope Reference Test Balanced Accuracy (1,346 Sites, %)")
 
     # Clean horizontal group dividers between modality families
     for sep in [2.5, 5.5, 6.5]:
@@ -250,8 +250,8 @@ def make_fig3_modality_optimization_ablations() -> None:
     ax1.set_yticklabels(variants_a, fontsize=8.6, fontweight="bold")
     ax1.invert_yaxis()
     ax1.set_xlim(60, 81.0)
-    ax1.set_xlabel("4-Class Balanced Accuracy (%) — Matched Seed 42 (*Downstream GVP-LR)")
-    ax1.set_title("A. Strictly Matched Modality, Target & Ensemble Audit (Seed 42)", pad=10)
+    ax1.set_xlabel("4-Class Balanced Accuracy (%) — Seed 42 (*Tuned GVP LR)")
+    ax1.set_title("A. Modality & Target Ablations (Seed 42)", pad=10)
     ax1.grid(axis="x", linestyle=":", alpha=0.5)
     ax1.legend(loc="upper center", bbox_to_anchor=(0.48, -0.17), ncol=2, frameon=True, fontsize=8.1)
 
@@ -330,8 +330,8 @@ def make_fig4_class_viii_resolution() -> None:
     c5 = ["#377eb8", "#4daf4a", "#984ea3", "#e41a1c", "#ff7f00"]
     x5 = np.arange(len(classes_5))
     b5 = ax1.bar(x5, recalls_5, width=0.54, color=c5, edgecolor="white")
-    ax1.axhline(65.2, color="#111111", linestyle="--", linewidth=1.15, label="Discovery Seed (65.2% Macro BA)")
-    ax1.axhline(63.8, color="#555555", linestyle="-.", linewidth=1.15, label="Confirmation Seeds (63.8% Macro BA)")
+    ax1.axhline(65.2, color="#111111", linestyle="--", linewidth=1.15, label="Seed 42 (65.2% Macro BA)")
+    ax1.axhline(63.8, color="#555555", linestyle="-.", linewidth=1.15, label="Seeds 43–44 Mean (63.8% Macro BA)")
     ax1.axhline(20.0, color="#888888", linestyle=":", linewidth=1.05, label="5-Class Random Chance (20.0%)")
     ax1.set_ylim(0, 96)
     ax1.set_ylabel("5-Fold Grouped CV Recall (%)")
@@ -357,8 +357,8 @@ def make_fig4_class_viii_resolution() -> None:
     c6 = ["#e41a1c", "#ff7f00", "#fdb462"]
     x6 = np.arange(len(classes_6))
     b6 = ax2.bar(x6, recalls_6, width=0.50, color=c6, edgecolor="white")
-    ax2.axhline(55.8, color="#111111", linestyle="--", linewidth=1.15, label="Discovery Seed (55.8% 6-Class BA)")
-    ax2.axhline(54.5, color="#555555", linestyle="-.", linewidth=1.15, label="Confirmation Seeds (54.5% 6-Class BA)")
+    ax2.axhline(55.8, color="#111111", linestyle="--", linewidth=1.15, label="Seed 42 (55.8% 6-Class BA)")
+    ax2.axhline(54.5, color="#555555", linestyle="-.", linewidth=1.15, label="Seeds 43–44 Mean (54.5% 6-Class BA)")
     ax2.axhline(16.7, color="#888888", linestyle=":", linewidth=1.05, label="6-Class Random Chance (16.7%)")
     ax2.set_ylim(0, 96)
     ax2.set_ylabel("5-Fold Grouped CV Recall (%)")
