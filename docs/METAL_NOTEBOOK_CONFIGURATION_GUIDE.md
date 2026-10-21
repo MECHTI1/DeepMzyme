@@ -282,7 +282,7 @@ Before launching a run, verify these resolved notebook values:
 | Device on G4 | `DEVICE = "cuda"` |
 | RING default | `RING_EDGE_MODE = "with_ring"` |
 | Serious Optuna intensity | `OPTUNA_INTENSITY = "custom"` |
-| Serious Optuna storage | persistent Drive SQLite `OPTUNA_STORAGE` |
+| Serious Optuna storage | `USE_PERSISTENT_OPTUNA_STORAGE = True` (default); with default roots and a blank override, derives persistent Drive SQLite storage |
 | Serious Optuna sampler | `OPTUNA_TPE_MULTIVARIATE = True`, `OPTUNA_TPE_GROUP = True`, `OPTUNA_TPE_CONSTANT_LIAR = True` |
 | Parallel Optuna workers | canonical default `OPTUNA_PARALLEL_WORKERS = 1`; a separately scoped override requires measured CUDA memory headroom; the bounded single-GPU profile always uses one process |
 | Serious Optuna pruning | canonical reportable metal Stage 4/5A/5C/5D/5E/5F blocks enable MedianPruner with `OPTUNA_PRUNING_MIN_EPOCH = 25` |
@@ -718,14 +718,20 @@ metrics and separate Fe/Co/Ni recalls remain mandatory.
 For debug only:
 
 - `OPTUNA_INTENSITY = "debug"`
-- Blank `OPTUNA_STORAGE` is acceptable.
+- `USE_PERSISTENT_OPTUNA_STORAGE = False` with `OPTUNA_STORAGE_OVERRIDE = ""`
+  gives in-memory, non-resumable storage and is acceptable for debug runs.
 
 For useful Colab HPO:
 
 - Use `OPTUNA_INTENSITY = "custom"` when you want exact control over the
   budget. The playbook uses this for G4-oriented serious searches.
-- Use persistent SQLite storage in Drive. The playbook gives the exact storage
-  path for each serious stage.
+- Use persistent SQLite storage in Drive: keep the
+  `USE_PERSISTENT_OPTUNA_STORAGE = True` widget. With a blank override, the
+  default `staged_workflow` layout derives storage at
+  `<resolved_runs_dir>/optuna/<study>/optuna_study.db`. To use an exact storage
+  URL from the playbook, put it in the code-only `OPTUNA_STORAGE_OVERRIDE`.
+  This accepts a URL or file path and takes precedence even when the widget is
+  `False`. Keep any override on persistent storage for serious HPO.
 - Keep `OPTUNA_SELECTION_METRIC` as `task_default`/blank for `TASK = "metal"`,
   or set it explicitly to `val_metal_balanced_acc`.
 - Keep `OPTUNA_DIRECTION = "maximize"`.

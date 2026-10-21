@@ -67,6 +67,57 @@ cell on this page matches it.
   1.6e-6, identical predicted classes). PMM-R was trained on the 7,398-site cohort, not on PinMyMetal's full
   7,920-row released table.
 
+## Interpreting the HistGB comparison
+
+The unresolved reference-test contrasts do not imply that all CV contrasts are unresolved.
+The existing `matched_report.json` entry `cv.contrasts["DeepMzyme-greedy-nested - PMM-H"]`
+reports **+5.32 pp** pooled BA (76.54% versus 71.22%), with a paired near-copy-group
+95% interval **[2.41, 8.22]**. This is a secondary, descriptive comparison conditional
+on the fitted models, as specified in the pre-registration. The mean-fold difference
+is **+5.26 pp**, with a fold-bootstrap 95% interval **[−0.37, 9.46]** and a t interval
+**[−2.73, 13.25]**. The fold-based uncertainty therefore remains unresolved.
+These estimates concern the greedy selection procedure, not every ensemble or the
+public candidate. Saved-OOF selection also reuses underlying fits that trained on the
+outer scored fold; it is not fully retrained nested CV ([release-audit limits](../release_audit/README.md#decision)).
+
+### Coordination environment and transfer to predicted structures
+
+PMM-D and HistGB share 89 tabular features: 42 hydrophobicity/solvation,
+24 chemical-class counts and 23 NEIGHBORHOOD coordination/geometry and elemental bond-valence
+features. These include `coordnum_inner`, `geometry_type`, `distance_min/avg/max`,
+`num_metal_4a` and ten `bvs_*` columns. Coordinating waters and other non-protein ligands
+can complete the first coordination sphere: their donor atoms affect coordination number,
+angular geometry and bond-valence sums. This supplies explicit coordination information
+that is absent from DeepMzyme's standard-residue graph. The existing
+[input audit](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect)
+records water-inclusive coordination numbers of at least six for 63% of Mn sites and
+48% of Class VIII sites, versus 6% of Zn and 2% of Cu sites in the training folds.
+These are descriptive class associations, not a measurement of the benefit of adding waters.
+
+[FindGeo](https://doi.org/10.1093/bioinformatics/bts246) characterizes the arrangement of
+coordinating atoms by comparison with ideal geometries, including tetrahedral and octahedral
+templates. It also supports geometries with a vacant coordination position; an incomplete
+sphere can retain useful geometric information, and a vacant position does not prove a
+missing ligand. FindGeo illustrates the importance of ligand completeness here; the
+PinMyMetal feature generator is NEIGHBORHOOD, not FindGeo.
+
+Standard AlphaFold2 predictions lack explicit waters, metal ions and other non-protein
+ligands ([AlphaFill](https://doi.org/10.1038/s41592-022-01685-y)). Consequently, descriptors
+recomputed from protein atoms around a proposed site need not represent the same coordination
+environment as those from an experimental holo structure. Recovering missing partners
+requires additional modeling or transfer, with its own uncertainty. This is an important
+difference in available structural information; the matched benchmark does not isolate
+its contribution to classification accuracy. Removing all 23 NEIGHBORHOOD columns would
+also remove protein-derived geometry and would not constitute a water-only ablation.
+
+DeepMzyme uses protein residues, pretrained ESM-C representations and a supplied site
+coordinate, avoiding a requirement for experimentally resolved non-protein partners.
+Its training structures nevertheless retain protein conformations shaped by metal binding;
+omitting the partners does not turn a holo structure into an apo or predicted structure.
+Performance on AlphaFold2-derived sites remains unvalidated.
+Candidate-element `bvs_*` columns are distinct from the verified true-label-bearing
+`valence_3a` column; ligand-inclusive geometry is not itself label leakage.
+
 ## Ensembles chosen by cross-validation only (amendment A1)
 
 All 15 members of four rule families are listed: R1 Top-N families by out-of-fold rank with all seeds, R2 the same with
