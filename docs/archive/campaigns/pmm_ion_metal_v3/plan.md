@@ -1,6 +1,6 @@
 # PMM ion metal v3 — approved plan
 
-Approved by the user on 2026-10-04 and revised the same day after a verified
+Approved by the maintainer on 2026-10-04 and revised the same day after a verified
 external review ([log v3-004](log.md#v3-004)). Decisions and their dates are in
 the [campaign log](log.md); scientific policy stays in [Plan](../../../../Plan.md).
 Each step ends with a results table, a dated log entry and a commit. GPU work
@@ -8,7 +8,7 @@ uses the recorded authorization in [STATUS](../../../../EXPERIMENT_STATUS.md);
 this plan does not increase its budget ceiling (the 2026-10-08 step E2 amendment
 records a revised *planning* ceiling in the [Budget](#budget) section; it
 authorizes no GPU start). Values marked "(default)" were set under the
-user's delegation; each may change only by a dated log entry before the first
+maintainer's delegation; each may change only by a dated log entry before the first
 run of the step it affects.
 
 ## Fixed decisions
@@ -21,14 +21,14 @@ run of the step it affects.
   values are descriptive only. Its reason is the CV/refit mismatch of
   [TECH-027](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules);
   every report states that it was chosen after the v2 fold-0 post-hoc epoch
-  analysis. The one exception is the user-approved pre-step-F comparison of a complete
+  analysis. The one exception is the maintainer-approved pre-step-F comparison of a complete
   10-epoch cosine schedule ([log v3-039](log.md#v3-039); see before step F), which keeps
   the cosine schedule and the terminal checkpoint.
 - Neutral four-versus-five/six test: the baseline recipe, frozen in the A4
   specification before any GPU run, on all five folds (step E). A comparison
   that uses a recipe developed on `four_class` in step D is only "conditional on
   four-class development" and is never reported as the neutral test.
-- Decision statistics (user-approved): per comparison, 95% intervals from a
+- Decision statistics (maintainer-approved): per comparison, 95% intervals from a
   paired fold-level bootstrap and from a t interval (4 degrees of freedom) on the
   five fold differences. "Better" needs both lower bounds above zero, "worse"
   both upper bounds below zero; otherwise "no clear difference". A target tie
@@ -82,7 +82,7 @@ run of the step it affects.
      15 groups each; fold ion counts within ±5% of one fifth; each element within
      ±15% of its fifth; Cu group counts within ±20% of their mean. The report
      lists group sizes and each element's largest single-group share per fold.
-     If no start passes, stop and report to the user; never split a group.
+     If no start passes, stop and report to the maintainer; never split a group.
    - Outputs: near-copy pair list, PDB-to-group table, `fold_membership.csv`
      (existing columns, group ID in `group_id`, plus `pdbid`), balance report and
      a receipt with builder version, seed, best start and SHA-256 values; a rerun
@@ -123,7 +123,7 @@ run of the step it affects.
    checkpoints against the epoch-50 history), and a short deterministic CPU
    training check matches the frozen v2 checkout (losses and weights within 1e-6).
 4. v3 assessment specification, frozen with its SHA-256 in the log before any
-   GPU run and shown to the user first. It fixes:
+   GPU run and shown to the maintainer first. It fixes:
    - identities: fold-set ID and SHA-256, cohort SHA-256, the baseline recipe
      (with AMP and worker count chosen by the step-B gate as declared below);
    - units: one paired difference per fold; seed 42 for all step-E contrasts
@@ -161,7 +161,7 @@ run of the step it affects.
 - Speed means completed, replay-verified fits per hour end to end: pre-admission
   checks, preparation, training, replay and measured host persistence; batch
   members are charged their own (contended) preparation.
-- Concurrency (revised by the user on 2026-10-05, [log v3-009](log.md#v3-009))
+- Concurrency (revised by the maintainer on 2026-10-05, [log v3-009](log.md#v3-009))
   is adopted if a valid batch raises that rate at least 1.2× (default), every
   member agrees with the first serial run within fixed limits of 1.0 common-four
   BA point and 3 points per common-four class recall, and the host shows no
@@ -172,7 +172,7 @@ run of the step it affects.
   50-epoch fit); median, peak and overload durations are reported. The two
   serial runs must agree within the same limits; if they do not, nothing is
   decided until the cause is diagnosed, and the limits are never widened. The
-  only pre-declared closure of a diagnosis, recorded after a dated user
+  only pre-declared closure of a diagnosis, recorded after a dated maintainer
   decision, is serial FP32 without concurrency or AMP.
   Probability and history differences are diagnostics only. Short probes are
   early, coarse models (one fold-0 Cu ion moves Cu recall by 1.4 points), so
@@ -229,7 +229,7 @@ run of the step it affects.
 setting from its control; fold file, code commit, cache identity and the step-B
 configuration stay fixed.
 
-The 2026-10-06 user-requested regularization amendment ([log v3-017](log.md#v3-017))
+The 2026-10-06 maintainer-requested regularization amendment ([log v3-017](log.md#v3-017))
 adds Round R between A and B. Its CPU integration and readiness checks were
 completed on 2026-10-06 ([log v3-018](log.md#v3-018)). It was motivated by the
 completed step C curves, so its fold-0 results are exploratory development
@@ -278,17 +278,17 @@ Round A is 16 runs including the two seed-43 controls; Round B is 18.
 - Round C (gate concatenation, RING edges, linear head and width 256,
   final-vector readout, sequence-separation encoding, label smoothing 0.1;
   [TECH-029](../../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-029--verified-input-and-training-behaviours-with-small-measured-effect))
-  is outside this plan's code and budget. Running it needs a separate user
+  is outside this plan's code and budget. Running it needs a separate maintainer
   decision after Round B, a new code drop, new cache sets and new seed-matched
   controls.
 - Cost gate (default): a candidate whose measured per-fit forecast exceeds three
-  normal fits needs the user's explicit OK; otherwise it is recorded "not tested
+  normal fits needs the maintainer's explicit OK; otherwise it is recorded "not tested
   (cost)". Augmentation (9a, 9b) falls under this gate.
 - Stopping (amended before D): complete A, then R even if A has no passes.
   Proceed to B if any candidate in A or R passes in either family; otherwise
   end D after R and retain the baselines. Complete B when entered, then resolve
   the combination from all completed rounds. If a reforecast shows
-  that B–F would exceed the ceiling, the user chooses between stopping and
+  that B–F would exceed the ceiling, the maintainer chooses between stopping and
   closing out at the current evidence or recording a larger ceiling. Untested
   candidates are "not tested"; failed ones "did not pass the one-fold screen",
   never "ineffective".
@@ -339,7 +339,7 @@ alone is not a GPU launch request or wider spending authority.
 **E2. Individual confirmation of the eight remaining step D passes (amendment
 of 2026-10-08, [log v3-025](log.md#v3-025); implemented and CPU-checked on
 2026-10-11, [log v3-033](log.md#v3-033); completed 2026-10-12, [log v3-037](log.md#v3-037):
-no candidate replaced the original selection).** Requested by the user after the fold 1–4
+no candidate replaced the original selection).** Requested by the maintainer after the fold 1–4
 results of step E's two selected recipes and of the four-class baselines had
 been examined ([log v3-024](log.md#v3-024)). Everything E2 produces is
 therefore development-validation evidence, proposed after earlier validation
@@ -362,7 +362,7 @@ selection") as the reference; only then the 36 E2 fits (32 candidate fits
 and four geometry controls). The original results and assessment stay
 available next to the extension; an E2 candidate may replace the original
 selection only under rule 3 below. Step F follows E2: it does not start
-until E2 is complete, unless the user cancels E2 by a dated log entry.
+until E2 is complete, unless the maintainer cancels E2 by a dated log entry.
 
 1. Fits (all 36 run 2026-10-11/12, [log v3-037](log.md#v3-037)). Every row on folds 1–4, seed 42, direct `four_class`,
    the existing prepared recipe (recipe IDs and trainer flags already exist;
@@ -414,7 +414,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    selection, with the exact reason when it does not; failure to replace is
    not evidence of no effect.
 3. Replacement (frozen 2026-10-08, Option B of [log v3-027](log.md#v3-027)
-   with the user's clarifications; [E2 specification](e2_assessment_spec.md)
+   with the maintainer's clarifications; [E2 specification](e2_assessment_spec.md)
    section 6). A candidate may replace the original step E selection only
    when (a) its fits, its comparators' fits, replay checks and evidence checks
    are complete; (b) both unadjusted 95% lower bounds (bootstrap and t) are
@@ -442,7 +442,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    (the 36 allowed fits, reused controls, the original selection, the
    assessment rules, and hashes binding source, configuration and evidence);
    refusal when provenance differs, the original E assessment is incomplete,
-   the user's E2 GPU-start authorization is missing or a persistence check fails; every listed
+   the maintainer's E2 GPU-start authorization is missing or a persistence check fails; every listed
    comparison completed regardless of intermediate scores; the existing single
    unchanged retry after a failed fit, a second failure blocking the final
    assessment for diagnosis; an assessment report and a machine-readable final
@@ -452,7 +452,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
 5. Completion and budget. E2 is complete when all 36 fits have verified
    evidence, all 17 declared comparisons are reported and one final
    configuration is selected (the original selection unless replaced under
-   rule 3). **Step F does not start until E2 is complete, unless the user
+   rule 3). **Step F does not start until E2 is complete, unless the maintainer
    cancels E2 by a dated log entry; step F then takes the A4 selection.**
    That configuration is step F's input: full non-test refit, seed
    42, terminal checkpoint, no ensemble, no calibration; the refit and
@@ -463,7 +463,7 @@ until E2 is complete, unless the user cancels E2 by a dated log entry.
    refreshed before execution and at every session. This amendment authorizes
    no GPU start.
 
-**Pre-step-F 10-epoch schedule comparison (user decision 2026-10-12,
+**Pre-step-F 10-epoch schedule comparison (maintainer decision 2026-10-12,
 [log v3-039](log.md#v3-039)).** One exploratory, post-hoc comparison precedes step F. The
 selected cell runs on folds 1–4, seed 42, with a complete 10-epoch cosine schedule and its
 terminal checkpoint, against its four existing 50-epoch fits (4 new fits). Its gates, stopping
@@ -475,7 +475,7 @@ rule and labels are frozen in
   decision for that refit only; the cosine schedule and the terminal rule stay, and CV and
   refit use the same epoch count.
 - Otherwise the 50-epoch selection stands.
-- The comparison authorizes no GPU start: its fits need the user's separate GPU-start
+- The comparison authorizes no GPU start: its fits need the maintainer's separate GPU-start
   authorization.
 - **Result (2026-10-12, [log v3-041](log.md#v3-041)): not adopted.** Mean +1.99 points on folds
   1–4, but the bootstrap and t lower bounds are below zero. The 50-epoch selection stands, so step
@@ -483,7 +483,7 @@ rule and labels are frozen in
 
 **F. Final model and the one test.**
 
-- Step E2 must be complete first, unless the user cancels it by a dated log
+- Step E2 must be complete first, unless the maintainer cancels it by a dated log
   entry. Execution draft for approval: [step_f_plan_draft.md](step_f_plan_draft.md). Stage 6 selection: the E2 final selection (the A4 selection unless
   replaced under E2 rule 3; the A4 selection alone if E2 was cancelled),
   Stage 6B full refit with the same checkpoint
@@ -498,7 +498,7 @@ rule and labels are frozen in
   and previously opened PDB IDs are removed; chains under 30 residues are never compared, a disclosed limitation.
   Secondary by default, because the
   2026-09-24 Zenodo run may have scored the whole test set and test label counts
-  were seen on 2026-10-03. It becomes the primary route only if the user records
+  were seen on 2026-10-03. It becomes the primary route only if the maintainer records
   it so in Plan before step E, and it is then still labelled "not pristine".
 - Before any test-side read, freeze the primary report, the test-row and
   clean-subset rules, the preparation code, the refit checkpoint, seed and epoch
@@ -526,7 +526,7 @@ rule and labels are frozen in
 
 Ceiling **$40 gross** for steps B–F ([log](log.md#v3-003)); controller session
 and daily caps and gross-cost accounting are unchanged. Campaign storage counts
-toward the ceiling (user decision 2026-10-05, [log v3-009](log.md#v3-009)): the
+toward the ceiling (maintainer decision 2026-10-05, [log v3-009](log.md#v3-009)): the
 restored 150 GB disk at about $0.49 per calendar day while it exists, and the
 kept snapshot at its estimated actual charge (about $1.74 per month, $0.06 per
 day; the controller reserves a conservative $0.25 per day for its daily cap,
@@ -536,12 +536,12 @@ are retained in [log v3-009](log.md#v3-009); the measured step C forecast is in
 [log v3-016](log.md#v3-016), and the regularization amendment's incremental
 forecast is in [log v3-017](log.md#v3-017). Re-forecast from measured fits per
 hour after B, after C, and before each D round or cost-gated candidate. Before
-any step would exceed the ceiling, ask the user to stop and close out at the
+any step would exceed the ceiling, ask the maintainer to stop and close out at the
 current evidence or to record a larger ceiling. The snapshot is kept; recovery
-resources are never deleted without the user's decision.
+resources are never deleted without the maintainer's decision.
 
-**Step E2 planning ceiling (user decision 2026-10-08, [log v3-025](log.md#v3-025)).**
-For the campaign expanded by step E2 the user selected a planning ceiling of
+**Step E2 planning ceiling (maintainer decision 2026-10-08, [log v3-025](log.md#v3-025)).**
+For the campaign expanded by step E2 the maintainer selected a planning ceiling of
 **$55 gross in total**, storage included, in place of the $40 figure above;
 the E+F forecast of about $33.5–36.4 still fits $40, so the increase funds E2
 only. Planning figures of the amendment, from the saved three-lane fit times
@@ -558,4 +558,4 @@ control: the write-once ceiling record checked before every E2 launch
 ([log v3-033](log.md#v3-033); estimated charges with the running session to
 its hard stop plus a $6 reserve for step F; the controller's session and daily
 caps are unchanged). The decision authorizes no GPU start: E2 fits need the
-user's recorded E2 GPU-start authorization ([STATUS](../../../../EXPERIMENT_STATUS.md)).
+maintainer's recorded E2 GPU-start authorization ([STATUS](../../../../EXPERIMENT_STATUS.md)).

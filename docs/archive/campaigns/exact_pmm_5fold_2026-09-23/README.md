@@ -12,7 +12,7 @@ Sources and evidence:
 
 Files here: this README and [verbatim historical STATUS entries](log.md).
 No existing report, summary or raw artifact moved. This is the history-preservation
-step of [Job B](../../../../docs/archive/consolidation_2026-09/PLAN_v2.md#11-jobs-and-sequencing-amended).
+step of [Job B](../../../../docs/archive/consolidation_2026-09/MAP.md).
 
 How to continue: consult [current status](../../../../EXPERIMENT_STATUS.md) and the
 linked owner before proposing separately authorized work. Historical next actions

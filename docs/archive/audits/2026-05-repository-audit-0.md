@@ -1,4 +1,4 @@
-# Prompt 0 Audit Report
+# May 2026 Repository Audit (audit 0)
 
 > Historical note: this report records the repository state at the time of the
 > audit. Several recommendations may have been implemented or superseded later.
@@ -25,7 +25,7 @@ Main risks found:
 | File / area | Current state | Risk / gap |
 |---|---|---|
 | `Plan.md` | Correctly declares Playbook as exact-value owner and forbids full Stage 0-7 blocks in Plan. Contains policy-level numeric references like 5-seed, 200-trial, and `0.01` advanced-fusion gate. | No full stage blocks, but some numeric policy values remain. Keep only if treated as governance, not executable config. |
-| `AGENTS.md` | Contains behavioral instructions and required answer format. No full stage blocks. Includes exact safety values like `VAL_FRACTION = 0.15`, `SPLIT_BY = "pdbid"`. | Acceptable as agent guardrails, but not an executable config source. |
+| Development guidelines (then a root file; now the maintainer's local development guidelines, not published) | Contains behavioral instructions and a required reporting format. No full stage blocks. Includes exact safety values like `VAL_FRACTION = 0.15`, `SPLIT_BY = "pdbid"`. | Acceptable as development guardrails, but not an executable config source. |
 | `EXPERIMENT_STATUS.md` | Mutable status note. Current selected metal anchor is GVP + late fusion trial `49`; held-out test still unused. | Contains many run numbers and evidence references by design. Do not move into stable docs. |
 | `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md` | Main exact-value source. Contains Common Defaults, G4 policy, and blocks for Stage 0, 1, 2A, 2B, 3, 4, 5A-G, 6, 7. | Missing explicit expected outputs for Stage 0 and Stage 2A; Stage 5A-F lack per-substage output lists; 5G is override-only, not a full notebook block. |
 | `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` | Correctly says Playbook wins for exact values. Explains workflow, options, outputs. | Duplicates numeric starting values in training hyperparameter and Optuna guidance sections. |
@@ -59,7 +59,7 @@ Main risks found:
 
 ## C. ML Issue Table
 
-| Issue | Current status | Risk | Recommended prompt |
+| Issue | Current status | Risk | Recommended work package |
 |---|---|---|---|
 | Optuna intermediate-value pruning | Missing | Wasted trials; pruning controls are misleading because no intermediate values are reported. | P3 |
 | Stage 6 split/fold variance | Partial/confounded | Seed changes split and initialization together, so true split variance is not isolated. | P5 |

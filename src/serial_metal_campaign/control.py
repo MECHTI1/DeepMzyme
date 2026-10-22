@@ -1,4 +1,4 @@
-"""Durable user pause and exclusive host ownership; no provider operations."""
+"""Durable maintainer pause and exclusive host ownership; no provider operations."""
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -17,7 +17,7 @@ def _legacy_pauses(output):
     for path in sorted(Path(output).glob("USER_REQUESTED_PAUSE*.json")):
         value = runtime.read_json(path)
         if not isinstance(value, dict) or not value:
-            raise ValueError("Malformed existing user pause: " + str(path))
+            raise ValueError("Malformed existing maintainer pause: " + str(path))
         records[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
     return records
 
@@ -36,7 +36,7 @@ def _events(output):
                 or not isinstance(event.get("acknowledged_legacy_pauses"), dict)):
             raise ValueError("Invalid campaign control event or request identity.")
         if event["action"] == "resume" and not str(event.get("authorization", "")).strip():
-            raise ValueError("Resume requires an explicit user authorization record.")
+            raise ValueError("Resume requires an explicit maintainer authorization record.")
         runtime._number(event.get("epoch"), "control event epoch")
         seen.add(event["request_id"])
     return events
@@ -58,18 +58,18 @@ def status(output):
 def require_running(output):
     value = status(output)
     if value["paused"]:
-        raise RuntimeError("Campaign is user-paused; record an explicit user resume authorization before new work.")
+        raise RuntimeError("Campaign is user-paused; record an explicit maintainer resume authorization before new work.")
     return value
 
 
 def record(output, action, *, request_id, reason, authorization=""):
-    """Append an idempotent user decision without modifying old pause receipts."""
+    """Append an idempotent maintainer decision without modifying old pause receipts."""
     if action not in {"pause", "resume"} or not str(request_id).strip() or not str(reason).strip():
         raise ValueError("Provide pause/resume, a unique request ID and a reason.")
     if action == "resume" and not str(authorization).strip():
-        raise ValueError("Resume requires an explicit user authorization record.")
+        raise ValueError("Resume requires an explicit maintainer authorization record.")
     output = Path(output)
-    # A training attempt holds the runtime lock for its lifetime. User STOP
+    # A training attempt holds the runtime lock for its lifetime. A maintainer STOP
     # must remain writable immediately while that attempt is still active.
     with runtime._lock(output / "control_lock"):
         events = _events(output)

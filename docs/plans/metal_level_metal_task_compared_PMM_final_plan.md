@@ -1,22 +1,22 @@
 # Final execution plan: metal-level prediction and PMM comparison
 
 **Status:** original design reviewed 2026-09-25; exploratory execution amended 2026-09-26–27; core-only scope, five-class arm and additive continuation contract adopted 2026-09-28. The continuation, replay and assessment/refit-preview implementation is CPU-tested; this does not complete the scientific campaign. Current completion and allocation records belong in `EXPERIMENT_STATUS.md`.
-**Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb`.
+**Repository originally reviewed:** `63d4cd52bf98b2448d42f4498364828431c962eb` (same tree as public commit `ff44f28`).
 
 ## Current execution decision — retain fold 0; defer further fits
 
-On 2026-09-28 the user chose to remain with the existing fold-0 comparison.
+On 2026-09-28 the maintainer chose to remain with the existing fold-0 comparison.
 Preserve all nine core fits, their qualifications and all supporting artifacts.
 The remaining 36 fold-1–4 fits and complete 45-fit research design below are
 retained for future work. They are not authorized for immediate execution.
 The proposed larger budget remains unapproved; it is no longer a pending
-request to continue now. Resume requires an explicit user instruction,
+request to continue now. Resume requires an explicit maintainer instruction,
 refreshed budget authority and new readiness verification. No model is promoted
 from this exploratory fold, and no extra fold-0 experiments are implied.
 
 ## Active amendment — prioritize core models; pause binding awareness
 
-The user approved pausing further `first_shell_bias` work, then explicitly
+The maintainer approved pausing further `first_shell_bias` work, then explicitly
 requested five-class training as well. The active neural comparison is
 **three families × three target formulations × five folds = 45 ordinary-readout
 fits**: required direct four and six, plus the five-class alternative. This is
@@ -82,7 +82,7 @@ matched validation-only protocol.
 
 **Historical completed screen; superseded for future execution by the active amendment.**
 
-The user approved a small exploratory screen before further grouped-fold work.
+The maintainer approved a small exploratory screen before further grouped-fold work.
 This amendment supersedes the immediate execution order and scope of Step 6;
 it does not claim the full comparison matrix is complete.
 
@@ -105,7 +105,7 @@ it does not claim the full comparison matrix is complete.
   folds with PMM. Disclose that fold 0 informed screening; do not equate this
   controlled comparison with exact reproduction of PMM's published protocol.
 - Keep reference/test inputs closed. The final-refit and reporting gates remain
-  intact. One coordinator executes this single-fit stage; additional agents are
+  intact. One coordinating process executes this single-fit stage; additional parallel processes are
   unnecessary. Exact commands and outputs belong in the metal playbook.
 
 ### Continuation — complete the nine-configuration fold-0 screen
@@ -113,7 +113,7 @@ it does not claim the full comparison matrix is complete.
 **Historical completed screen; do not resubmit its fits.** The original
 45-fit requirement in this subsection records the earlier scope only.
 
-The user's 2026-09-27 instruction to continue this plan advances to the later
+The maintainer's 2026-09-27 instruction to continue this plan advances to the later
 screen described above. Reuse the completed ESMC pair and run the seven missing
 configurations on the same frozen fold and seed. Keep the binding-residue
 mechanism, feature contract and training recipe fixed. Include all three
@@ -141,46 +141,46 @@ completion gate.
 
 The source proposals were read completely during the review and are preserved
 in Git at the reviewed revision:
-[Antigravity proposal](https://github.com/MECHTI1/DeepMzyme/blob/63d4cd52bf98b2448d42f4498364828431c962eb/docs/plans/metal_level_metal_task_compared_PMM_antigravity_plan.md)
+Proposal A (Git blob `58571ef7b7a847118fda1b2d00d9447300f73b74`, 251 lines)
 and
-[Opus proposal](https://github.com/MECHTI1/DeepMzyme/blob/63d4cd52bf98b2448d42f4498364828431c962eb/docs/plans/metal_level_metal_task_compared_PMM_opus_generated_plan.md).
+Proposal B (Git blob `e7eac20025a5dc0c26af79887c99c5ca19de9ec3`, 532 lines); view each with `git cat-file -p <blob>`.
 This final plan supersedes both proposals; their working-tree copies were removed
-after consolidation. The historical links retain their original content.
+after consolidation. The cited Git blobs retain their original content.
 Their assertions about held-out results and held-out subgroups were not independently investigated or used to choose this plan. No held-out dataset files, historical run-output artifacts, model checkpoints, or mixed train/test crosswalk were opened for this review. Checks used source code, policy documentation, the training-side manifest, and PMM's released training code; quoted benchmark figures in these texts were not selection evidence.
 
 ## 1. Objective, authority, and scope
 
 Produce a reproducible comparison of **metal identity at a known individual ion coordinate** on the reconstructed Zenodo PMM cohort. Establish matched Only-ESM, Only-GVP, and GVP plus graph-level late-fusion baselines; compare direct four-class training with six-class training collapsed to the same four-class endpoint. Preserve the completed binding-residue readout screen as an exploratory ablation; further work on it is paused.
 
-The latest user instructions and applicable repository instructions govern this work. [`Plan.md`, sections 2, 7, and 8](../../Plan.md) explicitly require the paired target-formulation comparison, validation-only selection, and a final full-train refit before held-out reporting. Existing five-class runner defaults do not supersede that policy.
+The latest maintainer instructions and applicable repository policies govern this work. [`Plan.md`, sections 2, 7, and 8](../../Plan.md) explicitly require the paired target-formulation comparison, validation-only selection, and a final full-train refit before held-out reporting. Existing five-class runner defaults do not supersede that policy.
 
-At the original review, the original experiment request and an independently attributable record of the alleged earlier five-class clarification were **not available in the inspected repository material**. The explicit 2026-09-28 user request now authorizes the additional five-class arm above; the following records that earlier review:
+At the original review, the original experiment request and an independently attributable record of the alleged earlier five-class clarification were **not available in the inspected repository material**. The maintainer's explicit 2026-09-28 request now authorizes the additional five-class arm above; the following records that earlier review:
 
 - **Confirmed requirements:** metal-only scope, correct ion/example identity, PMM mapping, matched comparisons, leakage protection, and the repository's direct-four versus collapsed-six comparison.
 - **Original inferred objective, now screened and paused:** test binding-residue awareness on the Zenodo source-row cohort. Improvement was a hypothesis, not a required outcome; a single-fold null/tradeoff does not establish general lack of benefit.
-- **Chosen execution proposals, not recovered user requirements:** the single readout mechanism below, explicit ESMC-600M embeddings, fixed recipes, and a bounded fivefold campaign. Neither source plan establishes authorization to run every arm on test, use a particular VM, or override scientific policy.
+- **Chosen execution proposals, not recovered maintainer requirements:** the single readout mechanism below, explicit ESMC-600M embeddings, fixed recipes, and a bounded fivefold campaign. Neither source plan establishes authorization to run every arm on test, use a particular VM, or override scientific policy.
 
 **Exclusions:** pocket-level EC prediction, joint learning, EC filtering or supervision, metal-site discovery/localization, new datasets, a homology-search campaign, early/hybrid/cross-attention architecture searches, RING ablations, nuclearity/site-descriptor models, calibration, ensembles, and broad HPO. The wider metal architecture matrix remains a separate research obligation; this task cannot establish its fusion-position or RING conclusions. Historical pocket-unit runs are not matched controls.
 
 ## 2. Independent verdicts
 
-**Antigravity:** useful emphasis on ion anchoring, a small family comparison, and durable execution. Its scientific argument is overstated: multiple ions anywhere in one structure do not establish a multinuclear center, identical inputs, conflicting labels, or a performance ceiling. It substitutes five-class supervision, treats reconstructed membership as sufficient for paper-score parity, proposes test evaluation during model development, and omits the final-refit bridge. Its proposed `first_shell` structural-readout value is unsupported, its ESMC-600M dimension is wrong, and a parse cache already exists. Its approval label is not execution authority.
+**Proposal A:** useful emphasis on ion anchoring, a small family comparison, and durable execution. Its scientific argument is overstated: multiple ions anywhere in one structure do not establish a multinuclear center, identical inputs, conflicting labels, or a performance ceiling. It substitutes five-class supervision, treats reconstructed membership as sufficient for paper-score parity, proposes test evaluation during model development, and omits the final-refit bridge. Its proposed `first_shell` structural-readout value is unsupported, its ESMC-600M dimension is wrong, and a parse cache already exists. Its approval label is not execution authority.
 
-**Opus:** stronger treatment of provenance, input coverage, label-free conditioning, checkpoint replay, and correlated examples. However, its measured coverage/subgroup claims remain assertions unless reproduced under the permitted data boundary. It also retains five-class training, makes PDB grouping optional, substitutes true early-plus-late hybrid for the required late-fusion baseline, and omits the full-train refit. Its mechanism screen, descriptors, combined arms, calibration, and infrastructure experiments add substantial work without resolving those prerequisites. The ESMC-600M dimension is correct, but the repository actually defaults to ESMC-300M. Neither plan is executable unchanged.
+**Proposal B:** stronger treatment of provenance, input coverage, label-free conditioning, checkpoint replay, and correlated examples. However, its measured coverage/subgroup claims remain assertions unless reproduced under the permitted data boundary. It also retains five-class training, makes PDB grouping optional, substitutes true early-plus-late hybrid for the required late-fusion baseline, and omits the full-train refit. Its mechanism screen, descriptors, combined arms, calibration, and infrastructure experiments add substantial work without resolving those prerequisites. The ESMC-600M dimension is correct, but the repository actually defaults to ESMC-300M. Neither plan is executable unchanged.
 
 ## 3. Material decisions and evidence
 
 | Issue/source positions | Final decision and reason | Verified evidence |
 |---|---|---|
-| Unit/ambiguity: Antigravity treats structure-wide multiplicity as interference; Opus distinguishes nearby ions. | One resolved physical target ion, normally corresponding to one PMM source row. Shared residues do not merge examples; a pocket is context and a PDB is a split group. | `metal_ion_examples()` in [`src/training/metal_examples.py`](../../src/training/metal_examples.py) constructs `metal_coords=[coord]` and retains `parent_pocket_id`. |
+| Unit/ambiguity: Proposal A treats structure-wide multiplicity as interference; Proposal B distinguishes nearby ions. | One resolved physical target ion, normally corresponding to one PMM source row. Shared residues do not merge examples; a pocket is context and a PDB is a split group. | `metal_ion_examples()` in [`src/training/metal_examples.py`](../../src/training/metal_examples.py) constructs `metal_coords=[coord]` and retains `parent_pocket_id`. |
 | Source identity: both assume reconstructed counts certify the usable cohort. | Add a narrow, opt-in manifest binding; preserve source UIDs through loading, splits, and predictions. Audit duplicates and ambiguous coordinates before fitting. | [`training/site_filter.py`](../../src/training/site_filter.py), `load_allowed_site_metal_labels()` overwrites duplicate dictionary keys; `matched_site_keys_for_pocket()` ignores insertion codes. The ordinary loader consumes the summary CSV, not the source manifest. |
-| Target: both propose five-class; Opus records the policy conflict. | Required direct `four_class` and separate `six_class` arms. Select each checkpoint on native validation BA, then compare the common-four view from that checkpoint. | [`Plan.md`, section 2](../../Plan.md); [`src/label_schemes.py`](../../src/label_schemes.py). |
-| Combined model: Antigravity means late fusion; Opus means true hybrid. | Use `gvp` with `fusion_mode=late_fusion`, early ESM disabled. Do not call it the implemented `hybrid` mode. | [`model_variants/factory.py`](../../src/model_variants/factory.py), `_apply_fusion_defaults()`; [`scripts/run_metal_5fold_cv.py`](../../scripts/run_metal_5fold_cv.py), `MODEL_CONFIGS`. |
-| Folds: Antigravity claims paper parity; Opus makes PDB grouping optional. | PDB-grouped fivefold validation is mandatory. Freeze splits independently of target scheme and model seed. Parent-pocket grouping alone permits other chains/sites of the same PDB to cross folds. | [`training/splits.py`](../../src/training/splits.py), `pocket_split_key()`, `task_label_keys_for_pocket()`; existing `--split-seed` and `--split-stratify-by metal_site`. |
-| Awareness: Antigravity favors proximity weighting; Opus screens several mechanisms. | One optional first-shell logit bias in readout, with a neutral initialization. No new descriptors, message-passing topology, or cutoff search. | [`model.py`](../../src/model.py), `AttentionPool`, `ESMGraphEncoder`, `pool_graph_states`; [`graph/shell_roles.py`](../../src/graph/shell_roles.py). |
-| Preparation: Antigravity proposes a new cache; Opus highlights missing inputs. | Verify actual residue-aligned ESM coverage; intentionally omit external feature channels. Reuse the existing parse cache with immutable feature inputs. | [`esm_feature_loading.py`](../../src/training/esm_feature_loading.py); [`parallel_loading.py`](../../src/training/parallel_loading.py), `resolve_parse_cache_dir()`. Feature contents are currently keyed by path, not their own checksum. |
-| Reporting: Opus identifies replay/bootstrap gaps; neither fixes independently maximized metrics. | Fix checkpoint-bound reporting and export real out-of-fold predictions. Do not compare independent metric maxima or assume prediction order identifies examples. | Runner `summarize_single_fold()` selects native and collapsed maxima independently; `compute_oof_cv_metrics()` averages scalar summaries. [`export_validation_predictions.py`](../../src/export_validation_predictions.py) omits `metal_example_unit` when reloading. |
-| Test: Antigravity opens it during development; Opus postpones it but uses fold models without refitting. | Rerun PMM on matched development examples. Paper numbers remain contextual absent parity. Any later test comparison follows selection and a full-train refit. | [`docs/VERY_EXACT_PMM_SETS_PLAN.md`](../VERY_EXACT_PMM_SETS_PLAN.md), comparison protocol; [`Plan.md`, section 8](../../Plan.md). |
+| Target: both propose five-class; Proposal B records the policy conflict. | Required direct `four_class` and separate `six_class` arms. Select each checkpoint on native validation BA, then compare the common-four view from that checkpoint. | [`Plan.md`, section 2](../../Plan.md); [`src/label_schemes.py`](../../src/label_schemes.py). |
+| Combined model: Proposal A means late fusion; Proposal B means true hybrid. | Use `gvp` with `fusion_mode=late_fusion`, early ESM disabled. Do not call it the implemented `hybrid` mode. | [`model_variants/factory.py`](../../src/model_variants/factory.py), `_apply_fusion_defaults()`; [`scripts/run_metal_5fold_cv.py`](../../scripts/run_metal_5fold_cv.py), `MODEL_CONFIGS`. |
+| Folds: Proposal A claims paper parity; Proposal B makes PDB grouping optional. | PDB-grouped fivefold validation is mandatory. Freeze splits independently of target scheme and model seed. Parent-pocket grouping alone permits other chains/sites of the same PDB to cross folds. | [`training/splits.py`](../../src/training/splits.py), `pocket_split_key()`, `task_label_keys_for_pocket()`; existing `--split-seed` and `--split-stratify-by metal_site`. |
+| Awareness: Proposal A favors proximity weighting; Proposal B screens several mechanisms. | One optional first-shell logit bias in readout, with a neutral initialization. No new descriptors, message-passing topology, or cutoff search. | [`model.py`](../../src/model.py), `AttentionPool`, `ESMGraphEncoder`, `pool_graph_states`; [`graph/shell_roles.py`](../../src/graph/shell_roles.py). |
+| Preparation: Proposal A proposes a new cache; Proposal B highlights missing inputs. | Verify actual residue-aligned ESM coverage; intentionally omit external feature channels. Reuse the existing parse cache with immutable feature inputs. | [`esm_feature_loading.py`](../../src/training/esm_feature_loading.py); [`parallel_loading.py`](../../src/training/parallel_loading.py), `resolve_parse_cache_dir()`. Feature contents are currently keyed by path, not their own checksum. |
+| Reporting: Proposal B identifies replay/bootstrap gaps; neither fixes independently maximized metrics. | Fix checkpoint-bound reporting and export real out-of-fold predictions. Do not compare independent metric maxima or assume prediction order identifies examples. | Runner `summarize_single_fold()` selects native and collapsed maxima independently; `compute_oof_cv_metrics()` averages scalar summaries. [`export_validation_predictions.py`](../../src/export_validation_predictions.py) omits `metal_example_unit` when reloading. |
+| Test: Proposal A opens it during development; Proposal B postpones it but uses fold models without refitting. | Rerun PMM on matched development examples. Paper numbers remain contextual absent parity. Any later test comparison follows selection and a full-train refit. | [`docs/VERY_EXACT_PMM_SETS_PLAN.md`](../VERY_EXACT_PMM_SETS_PLAN.md), comparison protocol; [`Plan.md`, section 8](../../Plan.md). |
 
 The endpoint is **Mn, Cu, Zn, Class VIII = Fe + Co + Ni**. Use `four_class` / `merge_fe_class_viii` with indices `[Mn=0, Cu=1, Zn=2, Class VIII=3]`; use `six_class` / `split_all_metals` with `[Mn=0, Cu=1, Zn=2, Fe=3, Co=4, Ni=5]`. Historical five-class “Class VIII” means Co+Ni in this implementation and must not be confused with the four-class endpoint.
 
@@ -191,7 +191,7 @@ The endpoint is **Mn, Cu, Zn, Class VIII = Fe + Co + Ni**. Use `four_class` / `m
 - The manifest header lacks explicit model, insertion-code, atom/altloc, and coordinate fields. [`graph/structure_parsing.py`](../../src/graph/structure_parsing.py), `collect_structure_residues_and_metals()`, traverses all models, while ESM residue alignment uses the first model. Multi-model and insertion-code cases therefore need explicit resolution, not an assumption of uniqueness.
 - Ion graphs already use a 10 Å target-centered residue neighborhood. Shell roles are two flags, with first shell defined by the existing donor-distance proxy at 2.7 Å. That proxy is not an experimentally complete ligand annotation. `structural_readout_scope` accepts residue/metal-node scopes, not `first_shell`.
 - Only-ESM pools `x_esm` and a site-statistics branch; the ion-mode base site statistics are constant. Its pocket membership already uses structure. The awareness variant adds geometric conditioning and must be labeled accordingly, rather than advertised as purely sequence-only.
-- [`embed_helpers/esmc.py`](../../src/embed_helpers/esmc.py) defaults to `esmc_300m`; [`esm_feature_loading.py`](../../src/training/esm_feature_loading.py) defaults to 960 dimensions. Inspection of the installed SDK's `esm.pretrained.ESMC_600M_202412` confirms 1,152 dimensions for 600M. Specify both model and dimension explicitly; Opus's example embedding command omits the model override.
+- [`embed_helpers/esmc.py`](../../src/embed_helpers/esmc.py) defaults to `esmc_300m`; [`esm_feature_loading.py`](../../src/training/esm_feature_loading.py) defaults to 960 dimensions. Inspection of the installed SDK's `esm.pretrained.ESMC_600M_202412` confirms 1,152 dimensions for 600M. Specify both model and dimension explicitly; Proposal B's example embedding command omits the model override.
 - [`scripts/verify_zenodo_pmm_ion_dataset.py`](../../scripts/verify_zenodo_pmm_ion_dataset.py) inspects both data sides, checks a single example, and asserts unequal ion sets rather than disjoint sets. Do not execute it as a development-only or exhaustive certification gate.
 
 ## 4. Ordered implementation and execution
@@ -326,9 +326,9 @@ This step is a **later reporting gate**, not permission to access test during im
 
 ### Step 8 — Admit compute only after correctness and timing evidence
 
-The original review authorized only this plan document; subsequent user instructions authorized the screen and the fixed core continuation. Each allocation still requires concrete compute authorization and storage/runtime admission within the existing budget. Use the existing VM controller and [`docs/GCP_GPU_RUNBOOK.md`](../GCP_GPU_RUNBOOK.md) if GCP is chosen; its start authorization and actual caps apply. Neither source proposal's VM status, hourly price, free-space measurement, or elapsed-time forecast establishes current readiness.
+The original review authorized only this plan document; subsequent maintainer instructions authorized the screen and the fixed core continuation. Each allocation still requires concrete compute authorization and storage/runtime admission within the existing budget. Use the existing VM controller and [`docs/GCP_GPU_RUNBOOK.md`](../GCP_GPU_RUNBOOK.md) if GCP is chosen; its start authorization and actual caps apply. Neither source proposal's VM status, hourly price, free-space measurement, or elapsed-time forecast establishes current readiness.
 
-Reuse measured preparation, fit and replay timings. Forecast the 36-fit continuation by summing the remaining family/target unit estimates, plus measured per-unit admission/transfer and cold-session allowances. Count all historical allocations and retained storage; do not charge completed embedding preparation or PMM fits again. Final refits/reporting remain separately gated. This user-approved scientific scope change is not a budget-driven silent deletion; future budget shortfalls still require a recorded budget decision without shrinking the accepted core grid or epochs.
+Reuse measured preparation, fit and replay timings. Forecast the 36-fit continuation by summing the remaining family/target unit estimates, plus measured per-unit admission/transfer and cold-session allowances. Count all historical allocations and retained storage; do not charge completed embedding preparation or PMM fits again. Final refits/reporting remain separately gated. This maintainer-approved scientific scope change is not a budget-driven silent deletion; future budget shortfalls still require a recorded budget decision without shrinking the accepted core grid or epochs.
 
 Use persistent run storage, epoch checkpoints, and artifact synchronization with verified receipts. Distinguish restart from genuine optimizer-state resume; do not count an incomplete fit as complete. Keep one training worker per GPU allocation. A separate bounded concurrency timing probe does not enable simultaneous production fits; any adoption needs representative end-to-end evidence and compatible admission, memory and persistence controls. Stop owned compute at the completion boundary under the runbook.
 

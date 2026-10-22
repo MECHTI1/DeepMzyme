@@ -9,7 +9,7 @@ from serial_metal_campaign import control, runtime
 
 def run(output, adapter, *, max_completed=None, poll_seconds=2.0, max_poll_seconds=10.0,
         transport_retries=2, sleep=time.sleep):
-    """Run without conversational transitions; never provision or replace a VM.
+    """Run without interactive steps between launches; never provision or replace a VM.
 
     The adapter owns provider I/O. Every launch follows terminal persistence,
     admission, durable state and a newly refreshed host receipt. Retryable

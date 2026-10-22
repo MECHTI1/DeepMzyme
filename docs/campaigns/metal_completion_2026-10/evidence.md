@@ -1,6 +1,6 @@
 # CPU preparation evidence, execution record and spending
 
-Prepared 2026-10-14; independently reviewed and re-sealed the same day; executed under the user's 2026-10-15
+Prepared 2026-10-14; independently reviewed and re-sealed the same day; executed under the maintainer's 2026-10-15
 authorization on 2026-10-15/16. This page records what was verified, what ran, what it cost and where the durable
 evidence lives. It grants no further execution authority.
 
@@ -31,7 +31,7 @@ selection receipt and the 40 confirmation cells.
 
 ## Execution record (2026-10-15/16)
 
-Authorization: the user's decision text is recorded verbatim in `execution/authorization/user_decision_2026-10-15.txt`
+Authorization: the maintainer's decision text is recorded verbatim in `execution/authorization/user_decision_2026-10-15.txt`
 and bound by `policy_discovery.json` (SHA-256 `319890bc…`, 30 permitted units) and the superseding
 `policy_confirmation.json` (SHA-256 `8aae188a…`, 39 permitted units); every worker start checked a fresh controller
 session snapshot and gross-spending snapshot against these policies, and the host bound each session in
@@ -83,7 +83,7 @@ support no improvement claim and no five-versus-six claim, and by themselves no 
 **Designated Stage 7 source:** the v3 full non-test refit `terminal_model_checkpoint.pt`, SHA-256
 `a00078466cf60c93287315883dd0e5565ce3e9e5c6c5c4654d2d5da357e59593`, run
 `stage6b_refit__gvp_late_fusion__four_class__baseline__e50__seed42` (secondary drive, `DeepMzyme_Data/campaigns/pmm_ion_metal_v3/durable/lane0/runs/`;
-the NVMe copy is identical). Authority: the user's 2026-10-16 instruction to reuse a compatible refit rather than
+the NVMe copy is identical). Authority: the maintainer's 2026-10-16 instruction to reuse a compatible refit rather than
 retrain for a campaign name, and the specification's pre-registered `future_refit.baseline_retained` rule. No GPU,
 training or test-side read was used. Single model; no ensemble or calibration.
 
@@ -114,7 +114,7 @@ Conditions and disclosures (also in the record):
   secondary pass on the opened exact Zenodo PMM test (2026-10-13). Plan calls Stage 7 "a one-shot held-out test event
   for the fixed final-training run" (section 2; section 6: "only then run the held-out test once"), and the playbook
   calls it "one-shot per final training/refit run". A primary Stage 7 report from this refit therefore conflicts with
-  Plan until the user approves an explicit exception or amends Plan, before any scoring. A new refit would be a second,
+  Plan until the maintainer approves an explicit exception or amends Plan, before any scoring. A new refit would be a second,
   non-bit-identical realization of the same recipe trained after that read, not an unexposed model. PMM tests are
   never rerun for this source.
 - **Scope of reuse:** reuse holds only for an external cohort disjoint from the training cohort, every opened test and
@@ -136,7 +136,7 @@ Conditions and disclosures (also in the record):
 The combined focused suite passes **141 synthetic tests** for the bound modules plus 13 for the workstation
 coordinator (`tests/test_metal_completion_session.py`); CPU smoke 42 passed with one absent-local-fixture skip;
 docs contract zero strict failures. `evidence/cpu_verification.json` binds code/tests/logs and library versions;
-`evidence/independent_review_findings.json` records the 2026-10-14 review and the coordinator-completed checks.
+`evidence/independent_review_findings.json` records the 2026-10-14 review and the checks completed by the coordinating process.
 Synthetic success and the executed fits are validation evidence only.
 
 Not done and not authorized: candidate-test retrieval, held-out evaluation and any further GPU session (the

@@ -10,12 +10,12 @@ from serial_metal_campaign import control, runtime, workflow
 
 
 def pause(output, request="stop-1"):
-    return control.record(output, "pause", request_id=request, reason="User requested a stop.")
+    return control.record(output, "pause", request_id=request, reason="Maintainer requested a stop.")
 
 
 def resume(output, request="resume-1"):
     return control.record(output, "resume", request_id=request, reason="Continue the existing campaign.",
-                          authorization="User explicitly authorized resuming the paused GPU campaign.")
+                          authorization="Maintainer explicitly authorized resuming the paused GPU campaign.")
 
 
 def test_legacy_pause_remains_effective_until_explicit_resume(tmp_path):
@@ -25,7 +25,7 @@ def test_legacy_pause_remains_effective_until_explicit_resume(tmp_path):
     assert control.status(tmp_path)["paused"]
     with pytest.raises(RuntimeError, match="user-paused"):
         control.require_running(tmp_path)
-    with pytest.raises(ValueError, match="explicit user"):
+    with pytest.raises(ValueError, match="explicit maintainer"):
         control.record(tmp_path, "resume", request_id="empty", reason="Resume")
     assert resume(tmp_path)["paused"] is False
     assert path.read_bytes() == original

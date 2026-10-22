@@ -1,11 +1,11 @@
 # Metal completion campaign log
-Public-release note (2026-10-20): host paths, device names and cloud resource names below are generalized; facts, hashes and timings are unchanged.
+Public-release note (2026-10-20, extended 2026-10-22): host paths, device names and cloud resource names below are generalized; inside the copied STATUS snapshots, role names and internal tool and session wording are also neutralized. Facts, numbers, dates, IDs, decisions, hashes and timings are unchanged; the exact earlier wording of the snapshots remains in this file's Git history.
 
 ## 2026-10-14 — approved CPU implementation
 
-The user selected metal first, all three training objectives, a bounded worthwhile optimization pass, and an independent final evaluation. “Implement the approved plan” authorized the CPU preparation described in the campaign README. Subsequent questions about the independent review agent clarified ownership: Codex completes this implementation; the review agent receives a current independent-review handoff. No new execution or test access was authorized.
+The maintainer selected metal first, all three training objectives, a bounded worthwhile optimization pass, and an independent final evaluation. “Implement the approved plan” authorized the CPU preparation described in the campaign README. Subsequent questions about the independent reviewer clarified ownership: the implementing session completes this implementation; the independent reviewer receives a current independent-review handoff. No new execution or test access was authorized.
 
-The original review covered the named agent transcript and more recent Codex evidence. The old agent handoff predates the completed v3/trunk-LR closeout and EC inventory. Completed evidence remains intact; no blanket rerun is indicated.
+The original review covered the named earlier session transcript and more recent development-session evidence. The earlier handoff predates the completed v3/trunk-LR closeout and EC inventory. Completed evidence remains intact; no blanket rerun is indicated.
 
 ## Superseded STATUS snapshot
 
@@ -15,7 +15,7 @@ The following is the exact previous root STATUS, preserved before replacement. I
 
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-13 EC1 Route 1 training-source inventory complete; next-step decision pending the user)
+- Status: active (2026-10-13 EC1 Route 1 training-source inventory complete; next-step decision pending the maintainer)
 - Last execution evidence: 2026-10-13 (EC7/EC6/EC5 training-source inventory on the workstation CPU, [log ec1s-002](docs/campaigns/ec1_independent_support_2026-10/log.md#ec1s-002)).
 
 ## Current objective and stage
@@ -50,7 +50,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 - Authorized now: nothing to run; no GPU start, training, inference, download, alignment search, new held-out access or eligibility change.
 - GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13); disk and snapshots `<paused-snapshot>`, `<v3-final-snapshot>` kept. Backups: the private backup record.
 
-Next: the user's decision on step 1 of the [proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md#route-1-inventory-result-ec1s-002) (a training-side MMseqs2 relationship search) and the commit/push of the staged records. Later: held-out check, builds, downloads, cohort decision. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
+Next: the maintainer's decision on step 1 of the [proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md#route-1-inventory-result-ec1s-002) (a training-side MMseqs2 relationship search) and the commit/push of the staged records. Later: held-out check, builds, downloads, cohort decision. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
 
@@ -78,15 +78,15 @@ gaps before packaging. Library versions and code/test/log hashes are recorded in
 The original 26 staged entries were preserved; task changes are a staged review draft. No commit/push, cloud
 lifecycle command, model training/inference, download or new held-out evaluation occurred. The existing proposal
 requires scoped execution/budget approval; future deployment/persistence checks and independent-cohort provenance
-remain explicit gates. The [agent handoff](handoff.md) now requests independent review and concrete fixes instead
+remain explicit gates. The [handoff](handoff.md) now requests independent review and concrete fixes instead
 of duplicating completed implementation.
 
 ## 2026-10-14 — independent review, focused repairs and re-sealed preparation
 
-A review agent reviewed the completed CPU preparation as the handoff requested: six read-only reviewer agents on distinct
+An independent reviewer examined the completed CPU preparation as the handoff requested: six read-only review passes on distinct
 questions (recipes/loss mathematics, control reuse, assessor rules, worker/authorization/persistence, offline evaluation
-plus documentation, provenance/path binding), every finding adversarially checked by two further agents, one
-coordinator applying changes. Thirty-five findings, no blocker. Confirmed majors: the executing `pmm_v3_assessment.py`
+plus documentation, provenance/path binding), every finding adversarially checked by two further passes, one
+coordinating process applying changes. Thirty-five findings, no blocker. Confirmed majors: the executing `pmm_v3_assessment.py`
 was bound by no manifest hash; the worker's durable copy and the required `<unit>.rc` exit file had no documented
 path that the collector accepts; the identical-absolute-path deployment prerequisite was unstated. The remaining
 findings were minor or informational; the packet-path trust concern was refuted (paths are hash-bound). The discovery
@@ -125,7 +125,7 @@ No GPU start, training, inference, download, new held-out read, commit or push o
 ## Current objective and stage
 
 - Current campaign: [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md)
-- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the user's metal-first choice.
+- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the maintainer's metal-first choice.
 - Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
 - Stage: successor CPU preparation verified; discovery manifest frozen. Next is validation-only discovery followed by Stage 6 grouped-fold/seed confirmation; neither has run. [Campaign evidence](docs/campaigns/metal_completion_2026-10/evidence.md) records checks and control reuse.
 
@@ -149,7 +149,7 @@ The primary independent final-test route remains unresolved. [DATASETS](docs/DAT
 
 - Authorized now: CPU implementation, synthetic checks, allowlisted historical development-evidence verification and preparation of a concrete costed proposal. No GPU start, real-data training/inference, download, new held-out access, commit or push.
 - GPU/VM: last verified `<gpu-vm>` TERMINATED on 2026-10-13; no fresh provider check in this task. Retained disks/snapshots continue to cost money. Backups: the private backup record.
-- Next: review the staged draft and costed proposal; obtain scoped execution/budget authority before launch. Independent evaluation has separate provenance and data-access prerequisites. The [updated agent handoff](docs/campaigns/metal_completion_2026-10/handoff.md) requests independent review of completed work.
+- Next: review the staged draft and costed proposal; obtain scoped execution/budget authority before launch. Independent evaluation has separate provenance and data-access prerequisites. The [updated handoff](docs/campaigns/metal_completion_2026-10/handoff.md) requests independent review of completed work.
 
 ## History and update rule
 
@@ -158,12 +158,12 @@ The exact previous STATUS is preserved in the [campaign log](docs/campaigns/meta
 
 ## 2026-10-15 — execution authorized; session 1 (discovery) in progress
 
-The user authorized completing the frozen validation-only discovery and confirmation campaign on the existing GCP
+The maintainer authorized completing the frozen validation-only discovery and confirmation campaign on the existing GCP
 L4 (ceilings: 24 aggregate GPU hours, $32 gross including storage, at most eight sessions of at most four hours;
 no migration, larger hardware, extra experiments, refit or held-out access). The decision text is recorded
 verbatim in the package (`execution/authorization/user_decision_2026-10-15.txt`) and bound by the discovery
 policy (SHA-256 `319890bc…`) to manifest `d405974e…` and the 30 permitted units. The six interrupted Q6
-verifier agents left no verdicts; the coordinator completed those three narrow checks (recorded in
+verification passes left no verdicts; the coordinating process completed those three narrow checks (recorded in
 `evidence/independent_review_findings.json`). Price re-verified 2026-10-15T12:24Z ($0.879172/h gross).
 
 New coordinator tool `metal_completion_session.py` (tested, 13 CPU tests) binds approvals, refreshes
@@ -261,8 +261,8 @@ for Stage 7 remains a separate compatibility decision that this run does not mak
 
 ## 2026-10-16 — Stage 6B source verified; evaluation preparation reconciled
 
-The user asked to finish the selected B-four model, reusing a compatible full non-test refit rather than retraining
-for a campaign name, and to prepare credible independent evaluation. The user authorized CPU verification and
+The maintainer asked to finish the selected B-four model, reusing a compatible full non-test refit rather than retraining
+for a campaign name, and to prepare credible independent evaluation. The maintainer authorized CPU verification and
 documentation/evidence updates only: no GPU, training, candidate-test collection, test predictions, held-out
 evaluation, commit or push; no atom-level encoder or extra inputs; architecture and features unchanged; EC deferred.
 
@@ -271,19 +271,19 @@ evaluation, commit or push; no atom-level encoder or extra inputs; architecture 
   `evidence/stage6b_source_20261016/session_reviews_20261016.json`, `a359a969…`). The record
   `stage6b_source_compatibility.json` (SHA-256 `bd8154cf…`, generator `be3af887…`) passes 25 of 25 checks; it was
   regenerated after a documentation review corrected its condition and disclosure wording (first version
-  `ae7d678f…`, same checks). Under the user's instruction and the specification's
+  `ae7d678f…`, same checks). Under the maintainer's instruction and the specification's
   `future_refit.baseline_retained` rule, refit `a00078466cf6…` is designated the Stage 7 source without retraining
   ([evidence](evidence.md#stage-6b-source-and-compatibility-2026-10-16)). One policy conflict stays open for
-  the user: Plan (sections 2 and 6) and the playbook make Stage 7 one-shot per final training/refit run, and this
+  the maintainer: Plan (sections 2 and 6) and the playbook make Stage 7 one-shot per final training/refit run, and this
   refit already had its pre-declared secondary exact-Zenodo pass, so a primary Stage 7 report from it needs the
-  user's explicit exception or a Plan amendment before any scoring.
+  maintainer's explicit exception or a Plan amendment before any scoring.
 - **Evaluation preparation.** Training-side prior-use IDs and release dates, obsolete entries and the current blocked
   template are in `evidence/evaluation_prep_20261016/` (CSV `788a7f0a…`, summary `3b992424…`, template `c896d9d3…`);
   the inventory and ordered blockers are in [evaluation.md](evaluation.md#preparation-inventory-2026-10-16). Editing
   evaluation.md supersedes the reviewed protocol copy `4e11014d…`, which stays unchanged in the sealed package; a
   future authorized `prepare` records the copy beside the tool it runs and must name it.
 - **Access.** No test data file was deliberately opened. A verifier's repository-wide text search read a CLEAN
-  provenance audit file and printed one CLEAN fold-0 test row, and agents read the private local backup's `SHA256SUMS` (names
+  provenance audit file and printed one CLEAN fold-0 test row, and read-only verification passes read the private local backup's `SHA256SUMS` (names
   and hashes of the evaluated step F test outputs) without opening those files
   ([DATASETS](../../DATASETS.md#test-use-ledger)); nothing was used.
 - **Documentation.** STATUS, README, handoff, evidence, PARAMETER_FINDINGS, the metal playbook prose, DATASETS,
@@ -301,7 +301,7 @@ evaluation, commit or push; no atom-level encoder or extra inputs; architecture 
 ## Current objective and stage
 
 - Current campaign: [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md)
-- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the user's metal-first choice.
+- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the maintainer's metal-first choice.
 - Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
 - Stage: successor CPU preparation independently reviewed (no blocker; majors repaired or pinned) and re-sealed; the discovery manifest is frozen. Next is validation-only discovery, then Stage 6 grouped-fold/seed confirmation; neither has run. [Evidence](docs/campaigns/metal_completion_2026-10/evidence.md) owns hashes, checks and control reuse; the [log](docs/campaigns/metal_completion_2026-10/log.md) records the review.
 
@@ -325,7 +325,7 @@ The primary independent final-test route remains unresolved. [DATASETS](docs/DAT
 
 - Authorized now: nothing to run. No GPU start, real-data training/inference, download, new held-out access, commit or push.
 - GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-14T15:51Z); gross rate $0.87917/h; retained disk and two snapshots about $1.00/day. Backups: the private backup record.
-- Next: the user's scoped decision on the [costed proposal](docs/campaigns/metal_completion_2026-10/evidence.md#proposed-execution-ceiling--approval-pending); then the GPU-host [deployment prerequisite](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#cpu-preparation-block) (identical absolute paths) and the authorization/session/spending receipts before the first discovery unit. The [handoff](docs/campaigns/metal_completion_2026-10/handoff.md) is the next-session prompt.
+- Next: the maintainer's scoped decision on the [costed proposal](docs/campaigns/metal_completion_2026-10/evidence.md#proposed-execution-ceiling--approval-pending); then the GPU-host [deployment prerequisite](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#cpu-preparation-block) (identical absolute paths) and the authorization/session/spending receipts before the first discovery unit. The [handoff](docs/campaigns/metal_completion_2026-10/handoff.md) is the next-session brief.
 
 ## History and update rule
 
@@ -343,7 +343,7 @@ The exact previous STATUS is preserved in the [campaign log](docs/campaigns/meta
 ## Current objective and stage
 
 - Current campaign: [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md)
-- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the user's metal-first choice.
+- Objective: finish a bounded metal optimization comparison across four/five/six objectives, then independently evaluate the frozen final model; EC work is deferred by the maintainer's metal-first choice.
 - Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
 - Stage: discovery (45 cells) and Stage 6 confirmation (40 cells) complete and assessed by the frozen rules: shared recipe P, then no challenger passed the adjusted paired gates, so the unchanged B four-class configuration (the v3 recipe) is retained. Stage 6B/7 decisions are pending. [Evidence](docs/campaigns/metal_completion_2026-10/evidence.md) owns hashes, checks and control reuse; the [log](docs/campaigns/metal_completion_2026-10/log.md) records the review.
 
@@ -367,7 +367,7 @@ The primary independent final-test route remains unresolved. [DATASETS](docs/DAT
 
 - Authorized now: nothing to run; the 2026-10-15 authorization is consumed (86,040 of 86,400 GPU-seconds). No GPU start, refit, test access, download, commit or push.
 - GPU/VM: `<gpu-vm>` TERMINATED (confirmed 2026-10-16T11:59Z) after seven sessions: 18 h 37 min, $16.37 gross running; $0.87917/h; storage ~$1/day. Backups: the private backup record.
-- Next: the user's decisions on the Stage 6B source (reuse of refit `a0007846…` after compatibility verification, or a newly authorized refit) and the independent evaluation route; see the [handoff](docs/campaigns/metal_completion_2026-10/handoff.md) and [findings](docs/PARAMETER_FINDINGS.md#metal-completion-bps-loss-recipes-on-fourfivesix-objectives-executed-2026-10-1516).
+- Next: the maintainer's decisions on the Stage 6B source (reuse of refit `a0007846…` after compatibility verification, or a newly authorized refit) and the independent evaluation route; see the [handoff](docs/campaigns/metal_completion_2026-10/handoff.md) and [findings](docs/PARAMETER_FINDINGS.md#metal-completion-bps-loss-recipes-on-fourfivesix-objectives-executed-2026-10-1516).
 
 ## History and update rule
 

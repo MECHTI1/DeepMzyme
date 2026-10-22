@@ -17,7 +17,7 @@ The approved architecture remains, with these binding changes:
 - `docs/PARAMETER_FINDINGS.md` is a new structured synthesis that excludes historical test metrics from parameter conclusions.
 - No new final-test policy is chosen. Active docs use the exact status:  
   **“Primary final-test route: unresolved scientific decision required before final reporting.”**
-- `AGENTS.md` receives only conservative deduplication.
+- The development guidelines (then a root file; now the maintainer's local development guidelines, not published) receive only conservative deduplication.
 - Existing uncommitted changes are protected, inventoried, and never overwritten speculatively.
 
 ## 1. Current problems
@@ -70,7 +70,7 @@ The approved architecture remains, with these binding changes:
 
 11. Measured findings, future search spaces, notebook values, and historical defaults are mixed together.
 
-12. `AGENTS.md`, README, Plan, docs index, guide, playbooks, and command cookbook duplicate mutable facts.
+12. The development guidelines, README, Plan, docs index, guide, playbooks, and command cookbook duplicate mutable facts.
 
 ## 2. Current documentation map
 
@@ -81,14 +81,14 @@ The approved architecture remains, with these binding changes:
 | `EXPERIMENT_STATUS.md` | Status, anchors, history, parameters, bundles, next actions | `MIXED / NEEDS SPLITTING` | Too long; false test wording; stage inconsistency | Yes: current campaign and blockers | Sole concise “where am I and what next?” document |
 | `experiment_notes.md` | Early LR/epoch diary | `EVIDENCE` | Looks active; contains unique test-access history | Yes: exact early validation/test results | Move intact to historical archive |
 | `list_train_commands.md` | Direct CLI cookbook | `MIXED / NEEDS SPLITTING` | Competes with notebook playbooks | Yes: exact historical CLI recipes | Archive intact |
-| `AGENTS.md` | Agent behavior plus copied project facts | `AUTHORITATIVE` | Some mutable facts are duplicated | Yes: extensive operational and safety instructions | Preserve conservatively; remove only proven duplication |
-| Agent pointer file | Compatibility pointer | `REDUNDANT` | Broken line wrapping | No scientific content | One-line compatibility shim |
+| Development guidelines | Development-process rules plus copied project facts | `AUTHORITATIVE` | Some mutable facts are duplicated | Yes: extensive operational and safety instructions | Preserve conservatively; remove only proven duplication |
+| Guidelines pointer file | Compatibility pointer | `REDUNDANT` | Broken line wrapping | No scientific content | One-line compatibility shim |
 | `docs/README.md` | Documentation index plus copied policy/defaults | `MIXED / NEEDS SPLITTING` | Repeats mutable facts | Yes: ownership/navigation map | Sole detailed documentation index |
 | Metal configuration guide | Option semantics plus stages, values, budgets, policy | `MIXED / NEEDS SPLITTING` | Heavy playbook/notebook duplication | Yes: non-obvious stable semantics | Shorter semantics reference; no behavior changes |
 | Metal playbook | Exact metal execution recipes | `AUTHORITATIVE` | Dataset/final-reporting conflict | Yes: exact blocks, ranges, seeds, outputs, gates | Preserve recipes; add documentary conflict warning only |
 | EC playbook | Intended EC execution recipes | `MIXED / NEEDS SPLITTING` | Unsupported names, obsolete workflow values, old stage model | Yes: all EC budgets, ranges, and scientific intent | Preserve with compatibility warning; defer redesign |
-| Manual note | Session scratch note | `ARCHIVE` | Active-looking location | Yes: small historical context | Dated archive note |
-| Agent audit report | Historical audit | `ARCHIVE` | Superseded findings appear current | Yes: review chronology | Dated archive audit |
+| Manual note | Working-session scratch note | `ARCHIVE` | Active-looking location | Yes: small historical context | Dated archive note |
+| May 2026 audit report | Historical audit | `ARCHIVE` | Superseded findings appear current | Yes: review chronology | Dated archive audit |
 | Notebook-output README | Evidence guide plus mutable claims | `MIXED / NEEDS SPLITTING` | No complete experiment index; incorrect test wording | Yes: evidence-storage rules | Experiment index and evidence contract |
 | `LEADERBOARD.md` | Cross-family leaderboard | `MIXED / NEEDS SPLITTING` | Stale, incomplete, and misleading reliability hierarchy | Yes: dated comparison snapshot | Archive intact after indexing |
 | Only-GVP history | Historical configs and decisions | `MIXED / NEEDS SPLITTING` | Stale recommendations and config identity conflicts | Yes: six exact configurations and aggregates | Extract findings, then archive intact |
@@ -148,8 +148,8 @@ No `.ipynb`, `.py`, executable configuration behavior, selection logic, Stage 6B
 | Shorten `README.md` | Overview, minimal quick start, bundle/build facts | Overview stays; data facts to `DATASETS.md`; recipes remain in playbooks | Compare quick start, bundle hashes/commits, and build command |
 | Shorten `Plan.md` | All normative scientific, validation, leakage, refit, and reporting policy | Remain in Plan; descriptive inventories link elsewhere | Policy-heading and sentinel comparison |
 | Rewrite status | Current anchors, challengers, evidence grades, readiness, blockers, next actions | Current facts remain; histories/findings/datasets move to owners | Verify every current fact has a destination |
-| Conservatively deduplicate `AGENTS.md` | Every operational, behavioral, safety, testing, routing, and response instruction | Remain in AGENTS | Semantic checklist; when uncertain, retain text |
-| Fix the agent pointer file | Compatibility pointer | Same file | Pointer resolves |
+| Conservatively deduplicate the development guidelines | Every operational, behavioral, safety, testing, routing, and reporting instruction | Remain in the development guidelines | Semantic checklist; when uncertain, retain text |
+| Fix the guidelines pointer file | Compatibility pointer | Same file | Pointer resolves |
 | Simplify docs index | Ownership/navigation | Same file | Every authority reachable exactly once |
 | Shorten metal guide cautiously | Stable option semantics and precedence | Same file; exact recipes stay in playbook | Compare each removed passage with destination |
 | Annotate metal playbook | Existing exact recipes | Same file, unchanged blocks | Hash or structured diff of configuration blocks |
@@ -191,8 +191,8 @@ All archival operations use `git mv`.
 |---|---|---|---|---|
 | `experiment_notes.md` | Historical diary, not active parameter authority | Exact early validation and historical test metrics | `docs/archive/experiments/experiment_notes_legacy.md` | Whole-file hash and rename detection |
 | `list_train_commands.md` | Historical second command surface | Every exact CLI recipe | `docs/archive/workflows/list_train_commands_legacy.md` | Whole-file hash |
-| Manual 20 Aug note | Session scratch material | G4 preference and CLEAN question | `docs/archive/session_notes/2026-08-20.md` | Whole-file hash |
-| Agent audit report | Superseded audit | Historical findings and chronology | `docs/archive/audits/2026-05-prompt-0-audit.md` | Whole-file hash |
+| Manual 20 Aug note | Working-session scratch material | G4 preference and CLEAN question | `docs/archive/session_notes/2026-08-20.md` | Whole-file hash |
+| May 2026 audit report | Superseded audit | Historical findings and chronology | `docs/archive/audits/2026-05-repository-audit-0.md` | Whole-file hash |
 | `LEADERBOARD.md` | Stale current ranking | Dated cross-family comparison | `docs/archive/experiments/leaderboard_snapshot_2026-05-16.md` | Index every row, then verify hash |
 | Only-GVP history | Stale historical narrative | Exact configs, aggregates, decisions | `docs/archive/experiments/metal_only_gvp_round3_history.md` | Findings/index comparison and hash |
 | Notebook-output changelog | Historical chronology | Dates and rationale | `docs/archive/changelogs/notebook_outputs_changelog.md` | Whole-file hash |
@@ -210,7 +210,7 @@ No scientific record, raw output, batch summary, notebook, source membership fil
 
 ### `docs/DATASETS.md`
 
-Needed because there is no tracked authority for dataset identity, preparation status, split relationships, bundles, provenance, and test-use history. It replaces that responsibility across README, Plan, status, AGENTS, playbooks, preparation READMEs, and ignored metadata.
+Needed because there is no tracked authority for dataset identity, preparation status, split relationships, bundles, provenance, and test-use history. It replaces that responsibility across README, Plan, status, the development guidelines, playbooks, preparation READMEs, and ignored metadata.
 
 ### `docs/PARAMETER_FINDINGS.md`
 
@@ -354,8 +354,8 @@ Bundle names, SHA256 hashes, Hub commits, source scripts, thresholds, fold count
 README.md
 EXPERIMENT_STATUS.md
 Plan.md
-AGENTS.md
-(one-line agent pointer file)
+(development guidelines file)
+(one-line guidelines pointer file)
 
 docs/
 ├── README.md
@@ -521,7 +521,7 @@ Missing artifacts are labeled explicitly, never replaced by unsupported reconstr
    - Metal: add final-route conflict link/warning without altering blocks.
    - EC: add compatibility warning and exact inconsistency inventory without repairing blocks.
 
-16. Deduplicate AGENTS conservatively:
+16. Deduplicate the development guidelines conservatively:
 
    - Only after destination authorities exist.
    - Preserve every operational/safety/behavioral instruction.
@@ -543,7 +543,7 @@ Missing artifacts are labeled explicitly, never replaced by unsupported reconstr
 ### Protected worktree
 
 - Pre-edit status, stat, full diffs, and hashes exist.
-- Every pre-existing user change remains present.
+- Every pre-existing maintainer change remains present.
 - No unrelated hunk changed.
 - Any ambiguous overlap caused a halt rather than a guess.
 
@@ -650,4 +650,4 @@ Conceptual simplification remains material:
 - No test-derived parameter advice.
 - No silent final-test policy decision.
 - No executable behavior changed.
-- No useful AGENTS behavior sacrificed for line-count reduction.
+- No useful development-guideline rule sacrificed for line-count reduction.

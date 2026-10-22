@@ -9,7 +9,7 @@
 > **Read section 7 (Post-mortem) before relaunching anything.**
 
 ## Purpose
-This document provides exact, turn-key instructions for any subsequent autonomous agent or developer to inspect, monitor, retrieve results from, or resume/continue the **Exact Zenodo PinMyMetal Benchmark** from the exact point of interruption.
+This document provides exact, turn-key instructions for any subsequent developer to inspect, monitor, retrieve results from, or resume/continue the **Exact Zenodo PinMyMetal Benchmark** from the exact point of interruption.
 
 ---
 
@@ -177,7 +177,7 @@ produced lived only on that VM's ephemeral disk.
 3. **The ~11-minute graph-construction phase is silent.** Neither
    `src/training/data.py` nor the loaders print progress, so the log shows only the
    runner banner for the first ten-plus minutes. This is what made a stalled/never-started
-   job look identical to a healthy one, and led the previous session to report "50 epochs
+   job look identical to a healthy one, and led the previous working session to report "50 epochs
    training, finishing ~11:24 UTC" while the GPU was in fact idle at 0%.
    *Fix: emit a structure-parsing progress line, and always check `nvidia-smi`
    utilisation - not just CPU time - before claiming training is underway.*

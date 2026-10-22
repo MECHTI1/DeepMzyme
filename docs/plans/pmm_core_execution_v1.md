@@ -1,11 +1,11 @@
 # PMM core execution and replay contract v1
 
-**Current execution status: deferred by user.** The existing fold-0 comparison
+**Current execution status: deferred by the maintainer.** The existing fold-0 comparison
 is the current evidence boundary. Preserve this contract and the missing-fit
 recipe for a future explicit resume; no additional training is authorized now.
 The scope's `execution_status=deferred_by_user` blocks the root training action.
 
-This additive implementation carries out the user-approved
+This additive implementation carries out the maintainer-approved
 [core v2 scope](pmm_core_scope_v2.json): three families, native four/five/six
 targets, ordinary readout, five frozen PDB-grouped folds, model seed 42 and
 50 epochs. The nine trained core fold-0 units are preserved; continuation

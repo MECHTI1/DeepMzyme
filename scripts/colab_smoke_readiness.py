@@ -45,7 +45,7 @@ with tempfile.NamedTemporaryFile(dir=persist, mode="w+") as handle:
     handle.seek(0)
     assert handle.read() == "DeepMzyme persistence check"
 
-expected = json.loads((CHAT4_SNAPSHOT_ROOT / "colab_expected_metal_inputs.json").read_text())
+expected = json.loads((SMOKE_SNAPSHOT_ROOT / "colab_expected_metal_inputs.json").read_text())
 assert DATASET_ROOT.name == expected["dataset"]
 csv_digest = hashlib.sha256(TRAIN_SITE_SUMMARY_CSV.read_bytes()).hexdigest()
 assert csv_digest == expected["summary_sha256"], "Colab train CSV differs from prepared local inputs."
@@ -62,7 +62,7 @@ missing_external = discover_missing_updated_external_features(
 metadata = summarize_esm_embedding_metadata(TRAIN_STRUCTURES, esm_root)
 report = {
     "kind": "Colab_input_and_CUDA_preflight_no_training_or_test_inference",
-    "runtime": runtime, "snapshot_sha256": CHAT4_SNAPSHOT_DIGEST,
+    "runtime": runtime, "snapshot_sha256": SMOKE_SNAPSHOT_DIGEST,
     "bundle_filename": BUNDLE_FILENAME, "bundle_url": BUNDLE_URL,
     "bundle_sha256": BUNDLE_SHA256,
     "train_csv_sha256": csv_digest, "train_structures": len(TRAIN_STRUCTURES),
@@ -97,7 +97,7 @@ if care.is_dir():
 print("EC training remains OFF. Existing storage counts (root, missing ESM, missing external):", [
     (r["root"], len(r["missing_esm"]), len(r["missing_external"]))
     for r in ec_report["storage_candidates"]])
-for filename in ("code_snapshot_manifest.json", "deepmzyme-chat4-code.tar.gz"):
-    shutil.copy2(CHAT4_SNAPSHOT_ROOT / filename, persist / filename)
-shutil.copy2(CHAT4_SNAPSHOT_ROOT / "notebooks/DeepMzyme_training_colab.ipynb", persist / "prepared_notebook.ipynb")
+for filename in ("code_snapshot_manifest.json", "deepmzyme-smoke-code.tar.gz"):
+    shutil.copy2(SMOKE_SNAPSHOT_ROOT / filename, persist / filename)
+shutil.copy2(SMOKE_SNAPSHOT_ROOT / "notebooks/DeepMzyme_training_colab.ipynb", persist / "prepared_notebook.ipynb")
 print("Verified metal inputs, CUDA and persistent output:", persist)

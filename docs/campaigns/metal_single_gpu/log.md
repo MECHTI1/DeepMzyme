@@ -7,6 +7,8 @@ Source ranges and hashes: [preservation manifest](../../../docs/archive/consolid
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+Redaction note (2026-10-22): inside the copied blocks below, some wording was neutralized (internal tool and session names and role names). Numbers, dates, IDs and decisions are unchanged; the exact source text remains at each block's cited source commit.
+
 ## single-001
 
 Source: `3c0f80c:EXPERIMENT_STATUS.md:412-427`.
@@ -59,10 +61,10 @@ preview directory contains a training attempt.
 Source: `9a069d2^:EXPERIMENT_STATUS.md:28-51`.
 
 ```text
-**Paused by the user after a Colab efficiency audit (2026-09-17):** the owned
+**Paused by the maintainer after a Colab efficiency audit (2026-09-17):** the owned
 G4 session 9 stopped with provider verification at **00:51:07 Asia/Jerusalem**
 (21:51:07 UTC on 2026-09-16); the final server listing showed no active sessions.
-The other Codex execution is suspended to prevent further allocations. Its
+The other campaign execution session is suspended to prevent further allocations. Its
 completed first full discovery fit and earlier artifacts remain saved locally;
 all thirteen persisted files of that full fit were rechecked against their
 recorded SHA256 values. No fit ran in session 9.
@@ -74,8 +76,8 @@ no intervals. The before-state and both receipts are preserved under
 `DeepMzyme_Data/notebook_outputs/remote_homology_v1/runtime_reconciliation/`.
 The runtime directory named below contains `PAUSED_HANDOFF.md`,
 `USER_REQUESTED_PAUSE_20260917.json`, and the provider-verified session 9 stop
-receipt. Reconcile that handoff before resuming the suspended agent, whose
-unfinished turn still contains an earlier continuation instruction.
+receipt. Reconcile that handoff before resuming the suspended execution session, whose
+unfinished interactive step still contains an earlier continuation instruction.
 
 The requested [GPU runtime efficiency implementation
 plan](docs/GPU_RUNTIME_EFFICIENCY_PLAN.md) is partially implemented. Durable
@@ -90,7 +92,7 @@ The durable pause remains in force.
 Source: `9a069d2^:EXPERIMENT_STATUS.md:52-79`.
 
 ```text
-**Continuation evidence before the pause (2026-09-17):** the user authorized additional
+**Continuation evidence before the pause (2026-09-17):** the maintainer authorized additional
 Colab time to finish the accepted metal campaign. A separately frozen worker
 source/state snapshot carries the original scientific grid and every prior
 allocation interval forward. Its budget authorization ledger initially records

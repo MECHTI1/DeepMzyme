@@ -92,7 +92,7 @@ def policy_record(*, records: Path, log_entry: str, decision: str, units: list[s
     paths = policy_paths(records)
     manifest, authorization = tl.d.read_record(paths["manifest"]), tl.d.read_record(paths["authorization"])
     require(manifest is not None and paths["ceiling"].is_file() and authorization is not None,
-            "Record the manifest, the ceiling and the user's authorization first")
+            "Record the manifest, the ceiling and the maintainer's authorization first")
     require(authorization.get("manifest_sha256") == sha256_file(paths["manifest"])
             and authorization.get("ceiling_sha256") == sha256_file(paths["ceiling"]),
             "The recorded authorization does not name this manifest and ceiling")
@@ -100,7 +100,7 @@ def policy_record(*, records: Path, log_entry: str, decision: str, units: list[s
     require(isinstance(max_sessions, int) and max_sessions >= 1 and float(max_session_seconds) > 0,
             "Implausible session limits")
     e2.stamp_seconds(expires_at)
-    require(bool(decision.strip()), "Name the user's decision this policy records")
+    require(bool(decision.strip()), "Name the maintainer's decision this policy records")
     return {"schema_version": SCHEMA_VERSION, "kind": POLICY_KIND, "campaign_id": tl.CAMPAIGN_ID,
             "comparison_id": tl.COMPARISON_ID, "authorization_ref": {"log_entry": log_entry, "decision": decision},
             "manifest_sha256": sha256_file(paths["manifest"]), "ceiling_sha256": sha256_file(paths["ceiling"]),
@@ -248,8 +248,8 @@ def launch_gate(records: Path, *, units: list[str], session: Any, now: float,
     """The policy and the bound sessions read from the records folder, checked for one launch request."""
     paths = policy_paths(records)
     if not paths["policy"].is_file():
-        return ["no v2 launch policy is recorded ('record-policy' after the user's decision); the v1 authorization "
-                "alone never authorizes a v2 launch"], None
+        return ["no v2 launch policy is recorded ('record-policy' after the maintainer's decision); the v1 "
+                "authorization alone never authorizes a v2 launch"], None
     try:
         policy = e2.read_json(paths["policy"])
     except (OSError, ValueError):

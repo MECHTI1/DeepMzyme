@@ -19,7 +19,7 @@ clearly contains newer working logic that should be preserved.
 | Need | Go to |
 | --- | --- |
 | Executable orientation, local setup limits, and project navigation | `docs/GETTING_STARTED.md` |
-| Required agent GPU routing, connection and optional monitoring | maintainer's local GPU-use policy (not published); public procedure: `docs/GCP_GPU_RUNBOOK.md` |
+| Required GPU routing, connection and optional monitoring | the maintainer's private GPU-use policy (not published); public procedure: `docs/GCP_GPU_RUNBOOK.md` |
 | Colab browser/CLI runtime and environment procedure | `docs/COLAB_GPU_RUNBOOK.md` |
 | Locked environment contracts | `requirements/README.md` |
 | Benchmark schemas, commands, and artifact inventory | `bench/README.md` |
@@ -116,7 +116,7 @@ schedule to zero over a fixed epoch count, using the terminal checkpoint for
 every arm, every grouped fold and the Stage 6B refit alike, so validation and
 the deployed model share one rule
 ([TECH-027](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-027--cross-validation-and-final-refit-use-different-checkpoint-rules)).
-Best-epoch metrics are then descriptive only. The user approved this rule for
+Best-epoch metrics are then descriptive only. The maintainer approved this rule for
 `pmm_ion_metal_v3` on 2026-10-04.
 
 Three training objectives can serve this four-class endpoint:
@@ -177,7 +177,7 @@ before any held-out data are opened.
 
 The implemented five-class scheme (`five_class`) keeps Mn, Cu, Zn, and Fe
 separate while grouping Co and Ni. Historical five-class evidence keeps its
-label; a new campaign trains it when the user selects it under
+label; a new campaign trains it when the maintainer selects it under
 [per-campaign target selection](#per-campaign-target-selection).
 Use a separate run name and Optuna study whenever the target scheme changes.
 
@@ -227,7 +227,7 @@ confirmation, final test) with copy-paste notebook configuration blocks, use
 
 ### Per-campaign target selection
 
-User decision, 2026-09-28. Before planning a new metal campaign, ask the user
+Maintainer decision, 2026-09-28. Before planning a new metal campaign, ask the maintainer
 which training objectives to train: any mix of `four_class`, `five_class` and
 `six_class`. Record the answer in the campaign README or scope before any run.
 Each chosen objective keeps a separate run name and Optuna study. Every trained
@@ -270,7 +270,7 @@ nodes; check its architecture and feature configuration.
 The [PMM comparison plan](docs/plans/metal_level_metal_task_compared_PMM_final_plan.md)
 owns whether its optional binding-aware readout is active. Its approved core
 scope trains ordinary Only-ESM, Only-GVP and graph-level late fusion separately
-with `four_class`, `six_class` and the user-requested `five_class`
+with `four_class`, `six_class` and the maintainer-requested `five_class`
 (Mn/Cu/Zn/Fe/Co+Ni). Compare all three on the common-four endpoint from their
 native-BA-selected checkpoints; that plan's pre-declared contrasts and tie rule
 govern this campaign. Preserve binding-aware code and exploratory
@@ -298,7 +298,7 @@ The project uses distinct split and fold regimes depending on the campaign and s
 
 | Regime | Grouping Key | Description & Behavior | Campaigns |
 |---|---|---|---|
-| `pocket_id`-stratified 5-fold | `pocket_id` (resolves to `parent_pocket_id`) | One PDB ID can appear across multiple folds. Fold 0 has 58 val pockets whose PDB ID is also in train ([reporting and split audit](docs/agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)). | Exact-PMM benchmark; exact-pocket L4 v2; Zenodo runner (parent pocket) |
+| `pocket_id`-stratified 5-fold | `pocket_id` (resolves to `parent_pocket_id`) | One PDB ID can appear across multiple folds. Fold 0 has 58 val pockets whose PDB ID is also in train ([reporting and split audit](docs/execution_reports/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)). | Exact-PMM benchmark; exact-pocket L4 v2; Zenodo runner (parent pocket) |
 | Frozen PDB-grouped 5-fold | `pdbid` groups | All sites/ions from the same PDB structure are assigned to the same fold. Fold membership files are frozen once. | PMM ion campaign (`pmm-core-v2`) |
 | Single train/val split | `pdbid` groups | Custom greedy label-balanced split (`src/training/splits.py`). Recipe documents `VAL_FRACTION = 0.15`; live notebook uses **0.18** (TECH-003). | Notebook stages 0–5 |
 | Stage 6 grouped k-fold × seeds | `pdbid` groups | Confirmation of top candidates across seeds and grouped folds (`group_kfold_seed_repeat`). | Notebook Stage 6 |
@@ -442,9 +442,9 @@ belong to the [metal playbook](docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-g
 It does not replace the historical pilot or rewrite serious Optuna studies.
 
 Compute ceilings are operational controls around the accepted scientific plan.
-If a measured plan exceeds its recorded ceiling, ask the user to choose between
+If a measured plan exceeds its recorded ceiling, ask the maintainer to choose between
 stopping at the current evidence boundary and continuing under a quantified,
-durably recorded higher ceiling. When the user has already authorized the
+durably recorded higher ceiling. When the maintainer has already authorized the
 increase, continue without asking again. A compute increase does not authorize
 changes to model arms, folds, seeds, epochs, validation selection, promotion
 gates, or held-out-test policy.
@@ -570,8 +570,8 @@ final-test configuration changes, update the files in this order:
    and behavior when the live UI/defaults need to match the canonical workflow.
 3. `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` - option explanation or
    crosswalk, only if the meaning or stage mapping changed.
-4. The local agent instructions (not published), only if the expected agent
-   behavior changed.
+4. The maintainer's local development guidelines (not published), only if the
+   expected working procedure changed.
 5. `Plan.md` - only if the research policy, ownership policy, or stage ordering
    changed.
 
@@ -1233,7 +1233,7 @@ over every architecture at every stage:
    settings include the split policy, epoch budget, Stage 6 fold plan, graph
    radius, GVP capacity, class-weighting policy, and validation selection
    metric.
-4. When the user instead asks for a new check or fresh Optuna sweep, do not
+4. When the maintainer instead asks for a new check or fresh Optuna sweep, do not
    over-constrain the search to prior raw outputs. Search broadly within the
    selected model family/fusion mode, while keeping the validation/test and
    runtime safeguards above.

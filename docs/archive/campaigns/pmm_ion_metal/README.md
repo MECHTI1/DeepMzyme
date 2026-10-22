@@ -1,6 +1,6 @@
 # PMM ion-level metal comparison
 
-Status: closed (2026-10-03 user decision; closed at fold 0)
+Status: closed (2026-10-03 maintainer decision; closed at fold 0)
 
 Scope: `pmm-core-v2`, campaign `pmm_ion_metal_v2_context`. The
 [v2 manifest](../../../plans/pmm_core_scope_v2.json) retains nine ordinary-readout
@@ -41,7 +41,7 @@ No target/model promotion, final refit or held-out evaluation occurred.
 | Binding-aware arms | Closed; three trained arms remain separate exploratory evidence ([screen](../../../notebook_outputs/raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md)) |
 
 Compute: GCP L4 via `<vm-controller>/bin/*` under
-the maintainer's local `gpu-use-skill` policy (not published); the VM and disk
+the maintainer's private GPU-use policy (not published); the VM and disk
 were retired to a snapshot on 2026-10-03 ([pmm-011](log.md#pmm-011)).
 
 Files here: this overview, [verbatim STATUS history and closure record](log.md)

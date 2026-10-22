@@ -1,12 +1,12 @@
 # EC1 independent-support preparation: log
-Public-release note (2026-10-20): host paths, device names and cloud resource names below are generalized; facts, hashes and timings are unchanged.
+Public-release note (2026-10-20, extended 2026-10-22): host paths, device names and cloud resource names below are generalized; inside the preserved STATUS block, role names are also neutralized. Facts, numbers, dates, IDs, decisions, hashes and timings are unchanged; the exact earlier wording of that block remains in this file's Git history.
 
 Dated entries, newest last. Campaign [README](README.md).
 
 ## ec1s-001
 
 2026-10-13 — **campaign opened as CPU evidence/data preparation; component-support and EC7 attrition report run
-once** (user handoff 2026-10-13: stronger EC evidence as the next scientific priority). No training, inference,
+once** (maintainer handoff 2026-10-13: stronger EC evidence as the next scientific priority). No training, inference,
 download, GPU use, split writing, eligibility change, promotion or held-out access.
 
 Tooling (new, additive): `scripts/report_ec1_component_support.py` (SHA-256 `ca708a04…`),
@@ -49,12 +49,12 @@ Tests: `tests/test_ec1_component_support.py` 13 passed; with `tests/test_sequenc
 
 Proposal: [proposal](proposal.md). Recommended: Route 1 (preserve eligibility) with a CPU-only inventory of
 already-local permitted training-side sources; Route 2 (cofactor-inclusive cohort) only as a separately versioned
-exploratory cohort after a scientific decision. Next (the user's decision): which sources are permitted for that
+exploratory cohort after a scientific decision. Next (the maintainer's decision): which sources are permitted for that
 inventory, and whether Route 2 is scoped at all.
 
 ## ec1s-002
 
-2026-10-13/14 — **EC7/EC6/EC5 training-source inventory under the current eligibility** (the user's bounded CPU task,
+2026-10-13/14 — **EC7/EC6/EC5 training-source inventory under the current eligibility** (the maintainer's bounded CPU task,
 2026-10-13: Route 1 inventory). No GPU/VM start, training, inference, download, new held-out access, alignment search,
 cohort merging, eligibility change or cofactor expansion. The VM stayed TERMINATED; the metal reference is unchanged.
 
@@ -116,7 +116,7 @@ evidence, no held-out path opened or listed, symlink guard, determinism of all o
 inputs, real cohort mapping on the reporter's synthetic world).
 
 Incidental test-metadata exposure during the source mapping (recorded in the
-[DATASETS ledger](../../DATASETS.md#local-test-access-artifacts-git-ignored)): one agent printed the header and first
+[DATASETS ledger](../../DATASETS.md#local-test-access-artifacts-git-ignored)): one read-only source-mapping pass printed the header and first
 (test-split) row of the unclustered annotation cache and two log lines with combined train-plus-test totals. Nothing was
 retained or used; the tool never prints rows.
 
@@ -125,7 +125,7 @@ STATUS text replaced by this entry, preserved verbatim:
 ```text
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-13 EC1 independent-support CPU evidence package complete; route decision pending the user)
+- Status: active (2026-10-13 EC1 independent-support CPU evidence package complete; route decision pending the maintainer)
 - Last execution evidence: 2026-10-13 (EC1 component-support report on the workstation CPU, [log ec1s-001](docs/campaigns/ec1_independent_support_2026-10/log.md#ec1s-001); trunk-LR retrospective verification, [log tlr-005](docs/archive/campaigns/pmm_trunk_lr_2026-10/log.md#tlr-005)).
 
 ## Current objective and stage
@@ -160,7 +160,7 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 - Authorized now: nothing to run; no GPU start, training, inference, download, new held-out evaluation or eligibility change.
 - GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 18:50 UTC); disk kept; snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept. Local backups and the off-site gap: the private backup record.
 
-Next: the user's route decision ([proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md#recommendation-and-remaining-decision): which training-side sources the Route 1 inventory may use; whether Route 2 is scoped) and the commit/push of the staged records. Later: cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
+Next: the maintainer's route decision ([proposal](docs/campaigns/ec1_independent_support_2026-10/proposal.md#recommendation-and-remaining-decision): which training-side sources the Route 1 inventory may use; whether Route 2 is scoped) and the commit/push of the staged records. Later: cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
 
@@ -169,4 +169,4 @@ Overwrite this file after preserving dated changes in the campaign's `log.md`; k
 
 ## ec1s-003
 
-2026-10-14 — deferred by the user’s metal-first choice. The inventory remains complete and its pending relationship/exclusion work remains unexecuted. A synthetic audit found a discovered-child symlink gap in the cache readers; [TECH-030](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard) must be addressed before reuse. This is not evidence that historical input files exploited the gap.
+2026-10-14 — deferred by the maintainer’s metal-first choice. The inventory remains complete and its pending relationship/exclusion work remains unexecuted. A synthetic audit found a discovered-child symlink gap in the cache readers; [TECH-030](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard) must be addressed before reuse. This is not evidence that historical input files exploited the gap.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Workstation coordinator for the metal-completion successor (standard library plus the frozen host-pull tool).
 
-It binds the user's approval to the frozen manifest and permitted units, refreshes the controller session and
+It binds the maintainer's approval to the frozen manifest and permitted units, refreshes the controller session and
 gross-spending snapshots the worker requires, deploys the sealed package to the GPU host at the identical absolute
 paths, launches one unit per lane through the exit-file wrapper, pulls and acknowledges each lane's artifacts, places
 them where the collector reads, and builds the collect run map. It never starts, stops or extends the VM: the
@@ -164,7 +164,7 @@ def record_approval(prep: Prep, *, phase: str, decision_file: Path, decision_sen
                     max_total_gpu_seconds: float, lanes: int, estimated_fit_seconds: float, reserve_usd: float,
                     expires_unix: float, controller_owner: str, superseded: list[str], approval_unix: float,
                     storage_usd_per_day: float) -> Path:
-    """Write the immutable authorization policy the worker binds; the decision text is the user's own words."""
+    """Write the immutable authorization policy the worker binds; the decision text is the maintainer's own words."""
     manifest, manifest_sha, grid = manifest_units(prep, phase)
     require(units and set(units) <= set(grid) and len(set(units)) == len(units), "Units must be a subset of the grid")
     text = Path(decision_file).read_text()
@@ -782,7 +782,7 @@ def main(argv=None) -> int:
                          default=os.environ.get("DEEPMZYME_CONTROLLER_OWNER")
                          or f"{getpass.getuser()}@{socket.gethostname()}")
     approve.add_argument("--superseded", nargs="*", default=[])
-    approve.add_argument("--approval-utc", required=True, help="ISO-8601 time of the user's decision")
+    approve.add_argument("--approval-utc", required=True, help="ISO-8601 time of the maintainer's decision")
     approve.add_argument("--storage-usd-per-day", type=float, default=1.0)
     approve.add_argument("--units", nargs="*", help="default: every grid unit without a verified control")
     sub.add_parser("units")

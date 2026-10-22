@@ -46,7 +46,7 @@ end-to-end Colab readiness or a measured speedup.
   [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#single-gpu-metal-campaign)
   owns the executable campaign recipe, budgets and admission rules.
 - [Current status](../EXPERIMENT_STATUS.md) owns the pause, allocation accounting
-  and next action. This planning request does not cancel the user's STOP.
+  and next action. The request for this plan does not cancel the maintainer's STOP.
 - [The Colab runbook](COLAB_GPU_RUNBOOK.md) owns operating procedures;
   [TECH-014](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-014--serial-campaign-orchestration-and-preparation-overhead)
   tracks the verified efficiency problems. This plan owns proposed work and
@@ -93,9 +93,9 @@ continuation and remaining rollout boundaries are distinguished above:
 
 Reconcile the last host-only allocation into worker accounting exactly once,
 using its actual stop receipt. Preserve verified attempts and the latest state
-snapshot. Check the existing user pause before any launch, recovery or
+snapshot. Check the existing maintainer pause before any launch, recovery or
 allocation; a fresh explicit resume instruction is required to clear it.
-Replace dependence on suspending a particular agent process with a persistent
+Replace dependence on suspending a particular controlling process with a persistent
 stop/continue state that every campaign controller obeys.
 
 Before provisioning, freeze the authorized ceilings and source package, prepare
@@ -110,21 +110,21 @@ checks. Reuse the same staged inputs for subsequent fits. Setup must be
 idempotent: reconnecting to a healthy endpoint does not repeat cloning,
 installation, extraction or restoration when the recorded identities match.
 Verify the durable destination before the queue starts; avoid interactive
-authorization prompts after a fit is ready to run.
+authorization requests after a fit is ready to run.
 
 **Acceptance:** a repeated setup invocation on the same verified VM performs
 checks without downloading or rebuilding unchanged inputs. No allocation
-occurs while local preparation or the user's pause is unresolved.
+occurs while local preparation or the maintainer's pause is unresolved.
 
-### 2. Run a maintained queue controller without conversational delays
+### 2. Run a maintained queue controller without interactive delays
 
 **Deliverable:** a detached host supervisor using the existing runtime and
 workflow functions. Move the useful temporary operator logic into reviewed
-project code; do not require another Codex turn between fits.
+project code; do not require another interactive step between fits.
 
 The host remains the allocation/authorization owner. Training subprocesses run
 detached on the same VM. Keep the existing controller lock and one-worker lock;
-add a campaign-wide host-controller lease so two chats cannot operate the same
+add a campaign-wide host-controller lease so two working sessions cannot operate the same
 queue. Lease recovery requires owner/process/boot evidence, not PID alone.
 
 The automatic loop is explicit and bounded:
@@ -158,8 +158,8 @@ provider-supported VM-side deadline/release path; otherwise retain reliable
 host supervision and state that limitation explicitly. A training-process exit
 alone does not release a billable VM.
 
-**Acceptance:** multiple planned fits execute on one endpoint without agent
-intervention; stale receipts, duplicate controllers, a user pause and unverified
+**Acceptance:** multiple planned fits execute on one endpoint without operator
+intervention; stale receipts, duplicate controllers, a maintainer pause and unverified
 artifacts all prevent a new launch. The first release keeps a fresh training
 process per fit, avoiding accidental model/optimizer/RNG carryover.
 
@@ -211,7 +211,7 @@ fits when the next unit cannot finish safely, drain persistence, and stop once.
 | Ownership/liveness is unresolved | Block new work and reconcile; lack of a response is not proof of VM death |
 | Provider proves the old endpoint is gone | Persist the loss record, charge the interval, reconcile the linked attempt, then consider one controlled replacement |
 | Authentication/entitlement failure | Follow the Colab runbook; no blind provisioning retries or automatic GPU substitution |
-| No runnable work, user pause, or persistent fault | Save state and stop the owned allocation promptly |
+| No runnable work, maintainer pause, or persistent fault | Save state and stop the owned allocation promptly |
 
 Use a configurable no-progress deadline for setup, transfers and recovery, based
 on their observed durations. An unchanged log alone is insufficient evidence of
@@ -342,7 +342,7 @@ Keep prior successful fits and all allocation charges recoverable throughout.
 
 Before Release 1 is enabled, exercise lost replies, controller restart, duplicate
 launch requests, corrupt/stale persistence receipts, provider death, exhausted
-training retry, deadline approach, authentication failure and user pause. Prove
+training retry, deadline approach, authentication failure and maintainer pause. Prove
 that an ambiguous launch is reconciled rather than submitted twice, and that
 the watchdog still closes the owned VM if the host supervisor exits.
 

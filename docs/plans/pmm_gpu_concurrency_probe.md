@@ -4,7 +4,7 @@ This operational diagnostic examines whether two independent GVP processes can
 complete disposable optimizer steps faster together on one GPU. It does not
 enable concurrent campaign fits. The normal one-worker campaign lock stays in
 force, and only the coordinator may start/stop the provider resource through
-the maintainer's local GPU-use policy (not published).
+the maintainer's private GPU-use policy (not published).
 
 Run the root `benchmark_pmm_gpu_concurrency.py` from the frozen scientific
 checkout, using the existing audited GVP6 `prepared_recovered` input snapshot

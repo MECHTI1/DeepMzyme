@@ -15,7 +15,7 @@ A positive lower bound on the paired confidence interval.
 •
 No common-four class losing more than 3 percentage points of mean recall.
 Use direct four_class training for architecture experiments. Keep five/six-class target comparisons separate.
-The ranking consolidates Antigravity’s original 13 claims, the recovered review-agent reviews, Codex follow-ups, and subsequent experiment evidence. The earlier 45–95% success estimates are unsupported. The ranges below are subjective planning estimates for a reproducible ≥2-point gain; overlapping ranges indicate uncertain ordering.
+The ranking consolidates the 13 original improvement claims (C1–C13 in the [2026-09-23 review handoff](../execution_reports/RESUMED_REVIEWS_HANDOFF_20260923.md)), the recovered independent reviews, the implementation follow-ups, and subsequent experiment evidence. The earlier 45–95% success estimates are unsupported. The ranges below are subjective planning estimates for a reproducible ≥2-point gain; overlapping ranges indicate uncertain ordering.
 Current evidence changes the priorities:
 Current direct-four model
 Selected fold-0 BA

@@ -161,8 +161,8 @@ def test_user_authorization_can_raise_cumulative_but_not_session_safety_limits(t
 
 def test_budget_change_requires_user_record_and_inactive_allocation(tmp_path):
     invalid = budget_authorization()
-    invalid["authorized_by"] = "agent"
-    with pytest.raises(ValueError, match="required user decision"):
+    invalid["authorized_by"] = "automation"
+    with pytest.raises(ValueError, match="required maintainer decision"):
         runtime.authorize_budget(tmp_path, invalid)
     runtime.open_session(tmp_path, "one", 0, {"gpu": "fixture"}, now=0)
     with pytest.raises(RuntimeError, match="Close the active allocation"):

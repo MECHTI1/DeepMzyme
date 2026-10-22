@@ -127,11 +127,11 @@ def frozen_archive(tmp_path):
 
 def test_archive_restores_frozen_source_without_reverting_live_edits(frozen_archive):
     root, output, inventory = frozen_archive
-    (root / "src/example.py").write_text("user's newer source\n")
+    (root / "src/example.py").write_text("maintainer's newer source\n")
     recovery.verify_archive(output)
     staged = recovery.stage_source(output, inventory)
     assert (staged / "src/example.py").read_text() == "original source\n"
-    assert (root / "src/example.py").read_text() == "user's newer source\n"
+    assert (root / "src/example.py").read_text() == "maintainer's newer source\n"
     (staged / "src/example.py").write_text("tampered\n")
     with pytest.raises(ValueError, match="Staged input changed"):
         recovery.stage_source(output, inventory)

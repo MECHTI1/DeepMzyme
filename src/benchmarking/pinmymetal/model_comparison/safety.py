@@ -1,6 +1,6 @@
 """Fail-closed authorization for the additive completion worker; no cloud operations.
 
-The coordinator records an explicit user decision and refreshes controller/session
+The coordinator records an explicit maintainer decision and refreshes controller/session
 and gross-spending snapshots. A scientific manifest never authorizes execution.
 """
 
@@ -44,7 +44,7 @@ def check_authorization(*, manifest: dict, manifest_sha256: str, policy: dict,
     require(policy.get("execution_authorized") is True, "Execution has not been approved")
     require(policy.get("manifest_sha256") == manifest_sha256, "Authorization binds a different manifest")
     require(isinstance(policy.get("user_decision"), str) and policy["user_decision"].strip(),
-            "Missing explicit user decision")
+            "Missing explicit maintainer decision")
     units = policy.get("units")
     require(isinstance(units, list) and units and len(units) == len(set(units))
             and set(units) <= set(manifest["authorized_grid_units"]), "Invalid authorized unit subset")
@@ -110,8 +110,8 @@ def validate_worker_authorization(*, manifest_path: Path, policy_path: Path, ses
                                   policy=policy, session=session, spending=spending,
                                   unit_name=unit_name, now=time.time() if now is None else now)
     log_path = Path(policy["user_decision_path"])
-    require(sha256_file(log_path) == policy["user_decision_sha256"], "User decision record changed")
-    require(policy["user_decision"] in log_path.read_text(), "Decision absent from bound user record")
+    require(sha256_file(log_path) == policy["user_decision_sha256"], "Maintainer decision record changed")
+    require(policy["user_decision"] in log_path.read_text(), "Decision absent from bound maintainer record")
     require(spending.get("session_sha256") == sha256_file(session_path), "Session/spending binding changed")
     require(Path(records_dir).resolve() == Path(manifest["successor_root"]).resolve(),
             "Session records must live in the campaign output root")

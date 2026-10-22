@@ -54,7 +54,7 @@ for _path in (str(ROOT / "src"), str(ROOT)):
 
 SPEC_PATH = ROOT / "docs" / "campaigns" / "pmm_ion_metal_v3" / "step_f_spec.json"
 # The step F rules as corrected on 2026-10-12 (log v3-043; first prepared in v3-042); a different file is refused (a
-# change needs a new dated log entry, the user's decision and new pins here and in pmm_v3_step_f.py).
+# change needs a new dated log entry, the maintainer's decision and new pins here and in pmm_v3_step_f.py).
 SPEC_SHA256 = "04d22cc432de6aaece0ea5a140cbaac0799d1194f79eb37f50aa1bec24d9b77c"
 if hashlib.sha256(SPEC_PATH.read_bytes()).hexdigest() != SPEC_SHA256:
     raise ValueError(f"{SPEC_PATH} differs from the pinned step F specification")
@@ -636,12 +636,12 @@ def has_placeholder(value: Any) -> bool:
 
 
 def _recorded(path: Path, kind: str, what: str) -> tuple[dict[str, Any], str]:
-    """A recorded freeze at its canonical path: the user's logged go-ahead (v3-NNN), no template placeholder, and this
-    specification."""
+    """A recorded freeze at its canonical path: the maintainer's logged go-ahead (v3-NNN), no template placeholder,
+    and this specification."""
     require(path.is_file(), f"{what} is not recorded ({path})")
     record = json.loads(path.read_text(encoding="utf-8"))
     require(record.get("kind") == kind and LOG_ENTRY.fullmatch(str(record.get("user_go_ahead_log_entry"))) is not None,
-            f"{path} is not a {what} record with the user's logged go-ahead (v3-NNN)")
+            f"{path} is not a {what} record with the maintainer's logged go-ahead (v3-NNN)")
     require(not has_placeholder(record), f"{path} has a '{PLACEHOLDER}' field: a template is not a record")
     require(record.get("step_f_spec_sha256") == sha256_file(SPEC_PATH), f"{what} binds another specification")
     return record, sha256_file(path)

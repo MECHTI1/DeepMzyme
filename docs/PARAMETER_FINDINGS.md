@@ -1,6 +1,6 @@
 # DeepMzyme Parameter and HPO Findings
 
-The user-requested PMM five-class addition is tracked in the
+The maintainer-requested PMM five-class addition is tracked in the
 [v2 scope](plans/pmm_core_scope_v2.json) and
 [current status](../EXPERIMENT_STATUS.md). Its completed single-fold results
 are recorded below; native five-class and common-four results remain separate.
@@ -118,7 +118,7 @@ unpromoted and not disproven configuration ([archived log tlr-003](archive/campa
 
 ### PMM ion campaign: single-fold target and readout comparisons
 
-**Closed 2026-10-03 at fold 0 (user decision):** the nine fold-0 fits below are
+**Closed 2026-10-03 at fold 0 (maintainer decision):** the nine fold-0 fits below are
 this campaign's final validation-only evidence (Grade 5; incomplete grid Grade 6);
 no fivefold confirmation, promotion, refit or held-out evaluation
 ([archived README](archive/campaigns/pmm_ion_metal/README.md)).
@@ -917,10 +917,10 @@ rare-class-recall policy in `Plan.md` and the metal playbook.
 ### Benchmark and diagnostic validation findings (2026-09-23 / 2026-09-24)
 
 - **Exact-PinMyMetal 5-Fold Benchmark (Grade 6, exploratory; validation-only)**:
-  - Validation out-of-fold balanced accuracy (selected checkpoints): Multimodal late fusion reached **79.84%**, ESM-C reached **78.98%**, and Enhanced GVP reached **73.87%** (unadjusted epoch maxima: 80.22% ± 3.31% for late fusion, 80.29% ± 3.26% for ESM-C, 74.42% ± 2.39% for Enhanced GVP; see [reporting and split audit](agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)).
+  - Validation out-of-fold balanced accuracy (selected checkpoints): Multimodal late fusion reached **79.84%**, ESM-C reached **78.98%**, and Enhanced GVP reached **73.87%** (unadjusted epoch maxima: 80.22% ± 3.31% for late fusion, 80.29% ± 3.26% for ESM-C, 74.42% ± 2.39% for Enhanced GVP; see [reporting and split audit](execution_reports/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable)).
   - Evidence grade: Grade 6 (exploratory). Does not qualify for Grade 2 because fold assignments were `pocket_id`-stratified rather than PDB-grouped (Fold 0 has 58 validation pockets sharing PDB IDs with training). Test set metrics are excluded from parameter selection.
 - **Exact-Pocket L4 Continuation (`gvp_fusion_exact_pocket_l4_v2`, Grade 6)**:
-  - Exploratory diagnostic runs stopped at 3/20 verified full fits on the L4 VM; no promotion or test evaluation. See the [execution record](agents_report/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
+  - Exploratory diagnostic runs stopped at 3/20 verified full fits on the L4 VM; no promotion or test evaluation. See the [execution record](execution_reports/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
 
 ## Settings and conclusions not to repeat incorrectly
 

@@ -25,8 +25,9 @@ The final row is an archival documentation record, not a new scientific campaign
 Closing that record does not close any paused experiment. The pilot folder above
 preserves STATUS text only; Job C's full pilot move has not happened.
 
-AGENTS section relocations are in [MOVED](../../MOVED.md); every inventoried
-content block has a reviewed disposition in [RULES](RULES.md).
+Section relocations from the former root contributor guide are in [MOVED](../../MOVED.md);
+every inventoried content block has a reviewed disposition in the maintainer's
+rule-review register (not published).
 Nothing under `docs/plans/`, raw evidence or existing summaries moves or changes.
 No campaign recipe or frozen source identity changes. History retention does
 not reinstate old authorizations or erase later qualifications.

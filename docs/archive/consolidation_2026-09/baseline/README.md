@@ -12,7 +12,7 @@ after checkout (NTFS, ntfs3). The shared checkout was not modified.
 | [`pytest_isolation_pmm_core.txt`](pytest_isolation_pmm_core.txt) | `tests/test_pmm_core_assessment.py` alone: 40 passed |
 | [`smoke_checks.txt`](smoke_checks.txt) | 43 passed, 1 skipped (local multi-metal fixture absent); exit 0 |
 | [`secret_scan.txt`](secret_scan.txt) | Credential-format scan (gitleaks not installed): 0 hits in 347 commits (`git log --all -p`) and 2,042 tracked files |
-| [`fresh_agent_answers.md`](fresh_agent_answers.md) | Baseline fresh-agent answers from today's default read path |
+| Reading-check answers (kept in the maintainer's records, not published) | Baseline reading-check answers from that day's default read path |
 
 ## Pytest baseline: failures and errors
 

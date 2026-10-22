@@ -182,7 +182,7 @@ def test_playbook_expands_through_current_notebook(tmp_path, task, scheme, famil
     assert not ns["LAUNCH_FINAL_HELD_OUT_TEST_EVAL"]
 
 
-def test_chat4_snapshot_setup_preserves_main_bundle_selection(tmp_path, monkeypatch):
+def test_snapshot_smoke_setup_preserves_main_bundle_selection(tmp_path, monkeypatch):
     """Exercise the upload override without a GPU, network, Drive or training."""
     import hashlib
     import io
@@ -216,9 +216,9 @@ def test_chat4_snapshot_setup_preserves_main_bundle_selection(tmp_path, monkeypa
     selected = {key: ns[key] for key in ("BUNDLE_FILENAME", "BUNDLE_URL", "BUNDLE_SHA256")}
     assert "_v12_" in selected["BUNDLE_FILENAME"]
     setup = cells["b16d9206c7e17d9e"].replace(
-        "PREPARE_CHAT4_METAL_SMOKE = False", "PREPARE_CHAT4_METAL_SMOKE = True"
-    ).replace('CHAT4_SNAPSHOT_SHA256 = ""',
-              f'CHAT4_SNAPSHOT_SHA256 = "{hashlib.sha256(snapshot).hexdigest()}"')
+        "PREPARE_SNAPSHOT_METAL_SMOKE = False", "PREPARE_SNAPSHOT_METAL_SMOKE = True"
+    ).replace('SMOKE_SNAPSHOT_SHA256 = ""',
+              f'SMOKE_SNAPSHOT_SHA256 = "{hashlib.sha256(snapshot).hexdigest()}"')
     exec(setup, ns)
     assert {key: ns[key] for key in selected} == selected
     exec(cells["ba89d9f5"], ns)

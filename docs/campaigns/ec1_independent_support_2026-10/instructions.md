@@ -121,7 +121,7 @@ Outputs (about 20 s; fresh output folder outside every input root; never overwri
   evidence, homology and held-out status;
 - `attrition.csv`: funnels by source and class, with units, clusters and those without a known relation;
 - `download_candidates.csv` and `build_donor_entries.csv`: the exact later-step lists;
-- `inventory.json`: counts, user categories, cohort and PinMyMetal summaries, and the expectation check;
+- `inventory.json`: counts, the requested category counts (`user_categories`), cohort and PinMyMetal summaries, and the expectation check;
 - `alphafill_json_inputs.csv` and `reused_asset_inputs.csv`: per-file hashes;
 - `report.md`, `recommendation.md` and `artifact_manifest.json` (command, working directory, git HEAD, inputs,
   listing digests and sources).

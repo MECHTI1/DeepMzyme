@@ -40,7 +40,7 @@ neither merges new examples into the existing cohort.
 - **Validation and rare classes:** accession-grouped; EC7 recall with intervals and disclosed related training
   sequences; component-grouped EC7 assessment needs at least two independent EC7 components.
 - **Reuse:** `care_prepare`, the remoteness tooling, this reporter and the v12 membership.
-- **Authorization/choice:** which sources are permitted; any AlphaFill/UniProt/PDB download needs the user's
+- **Authorization/choice:** which sources are permitted; any AlphaFill/UniProt/PDB download needs the maintainer's
   authorization.
 
 ## Route 2: separately versioned cofactor-inclusive EC cohort
@@ -78,12 +78,12 @@ run a CPU-only inventory of already-local permitted training-side sources for in
 Route 2 as a separately versioned exploratory cohort, opened only after an explicit scientific decision on cofactor
 pockets.
 
-**Remaining decision (the user's):** which training-side sources are permitted for the Route 1 inventory, and whether
+**Remaining decision (the maintainer's):** which training-side sources are permitted for the Route 1 inventory, and whether
 Route 2 should be scoped at all. No download, training or GPU use follows from this proposal. Related policy:
 [Plan, EC classification](../../../Plan.md#3-train-the-ec-number-classification-model); the
 [EC/CLEAN30 plan](../../plans/pocket_level_EC_task_compare_clean30_final_plan.md).
 
-Decided 2026-10-13: the user chose the Route 1 inventory and its permitted sources (result below); Route 2 stays
+Decided 2026-10-13: the maintainer chose the Route 1 inventory and its permitted sources (result below); Route 2 stays
 unscoped.
 
 ## Route 1 inventory result (ec1s-002)
@@ -111,7 +111,7 @@ development EC7 proteins lie in six clusterRes30 clusters but form one dependenc
 
 None of these candidates is certified for held-out exclusion, and none is built or has a catalytic prediction.
 
-**Worthwhile next steps, in order** (each needs the user's authorization; none is implied):
+**Worthwhile next steps, in order** (each needs the maintainer's authorization; none is implied):
 1. **Training-side relationship search (CPU, no download).** The frozen MMseqs2 protocol over the EC development set
    plus the candidates, all-vs-all, so that candidate–candidate dependence is counted; EC7 first. It prunes the most
    before anything else is spent.
@@ -132,4 +132,4 @@ them independent of the one development EC7 component and MAHOMES predicts catal
 14 built EC7 proteins had a predicted catalytic site, all of them development members. Most of the potential EC7 gain
 (26 clusters) needs downloads.
 
-**Remaining decision (the user's):** whether to authorize step 1, the training-side relationship search.
+**Remaining decision (the maintainer's):** whether to authorize step 1, the training-side relationship search.

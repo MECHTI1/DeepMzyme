@@ -25,8 +25,10 @@
 ## 2026-05-18
 
 - Documentation source-of-truth cleanup: `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`
-  is the owner of exact metal notebook stage values; `Plan.md`,
-  `AGENTS.md`, and `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` now describe
+  is the owner of exact metal notebook stage values; `Plan.md`, the
+  development guidelines (then a root file; now the maintainer's local
+  development guidelines, not published), and
+  `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md` now describe
   policy, behavior, and option meanings without owning full executable blocks.
 - Stage 6 statistical update: grouped 5-fold confirmation by `pdbid` is the
   reportable default, with shared fold definitions, fixed split seed,

@@ -2,11 +2,15 @@
 
 Dated entries, newest last. STATUS is overwritten; its previous text is preserved here first.
 
+Redaction note (2026-10-22): inside the copied STATUS blocks below, some wording was neutralized (cloud resource
+names, role names and the link anchor of one renamed heading). Numbers, dates, IDs and decisions are unchanged;
+the exact earlier wording remains in this file's Git history.
+
 ## tlr-001
 
-2026-10-13 — **campaign opened by the user's decision; CPU preparation complete; no GPU start authorized.**
+2026-10-13 — **campaign opened by the maintainer's decision; CPU preparation complete; no GPU start authorized.**
 
-User decisions (2026-10-13):
+Maintainer decisions (2026-10-13):
 - Training target: `four_class` only (collapsed-four reporting), the v3-selected late-fusion architecture.
 - Single change: GVP-trunk learning rate 3e-4 → 1e-4. Base learning rate 3e-5, optimizer groups, 50-epoch cosine
   schedule, terminal checkpoint, data, features and seed 42 unchanged. Five candidate fits, one per v3 grouped fold,
@@ -64,16 +68,16 @@ STATUS text replaced by this entry, preserved verbatim:
 ```text
 # DeepMzyme Current Experiment Status
 
-- Status: closed (2026-10-13 v3 closed by the user, log v3-052; no active campaign)
+- Status: closed (2026-10-13 v3 closed by the maintainer, log v3-052; no active campaign)
 - Last execution evidence: 2026-10-13 (v3 step F test pass and report on the workstation CPU; [log v3-048](docs/archive/campaigns/pmm_ion_metal_v3/log.md#v3-048)).
 
 ## Current objective and stage
 
-- Current campaign: none active (v3 closed on 2026-10-13: [archived README](docs/archive/campaigns/pmm_ion_metal_v3/README.md)); a new campaign starts only by the user's decision.
+- Current campaign: none active (v3 closed on 2026-10-13: [archived README](docs/archive/campaigns/pmm_ion_metal_v3/README.md)); a new campaign starts only by the maintainer's decision.
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
 - Stage: v3 complete. Stage 6 selection `gvp_late_fusion__four_class__baseline` (50 epochs), Stage 6B refit `a0007846…`, one-shot test: full-test common-four BA 67.55% [62.93, 71.65], label both_results_secondary ([completion summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)).
 
-**PMM core v2 was closed at fold 0 on 2026-10-03 (user decision):** nine fold-0 fits
+**PMM core v2 was closed at fold 0 on 2026-10-03 (maintainer decision):** nine fold-0 fits
 are final validation-only evidence; 36 fits were not run; its neutral four-versus-five/six
 test is unanswered; nothing is confirmed, promoted, refit or test-evaluated
 ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
@@ -100,9 +104,9 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 ## Blockers and immediate next action
 
 - Authorized now: nothing to run (no active campaign); no GPU start, training, embeddings or test predictions.
-- GPU/VM: `<gpu-vm>` TERMINATED; disk kept (about $0.49/day); snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
+- GPU/VM: `<gpu-vm>` TERMINATED; disk kept (about $0.49/day); snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-maintainers-approval)).
 
-Next: the user's decision on deleting the VM and its disk (inventory and typed confirmation in handoff section 13); any new campaign needs the user's decision.
+Next: the maintainer's decision on deleting the VM and its disk (inventory and typed confirmation in handoff section 13); any new campaign needs the maintainer's decision.
 Final-test label `both_results_secondary` was recorded before the test pass ([log v3-022](docs/archive/campaigns/pmm_ion_metal_v3/log.md#v3-022)). Stage 6 selection, a completed Stage 6B refit and frozen report/checkpoint rules precede one-shot Stage 7; no test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
@@ -112,7 +116,7 @@ Overwrite this file after preserving dated changes in the campaign's `log.md`; k
 
 ## tlr-002
 
-2026-10-13 — **the user's authorization**, verbatim scope:
+2026-10-13 — **the maintainer's authorization**, verbatim scope:
 - Commit the eight staged task files (done: `ad99c5f`, not pushed).
 - One L4 session for the five planned candidate fits, with a $2.50 compute ceiling and a session of at most 2.5 hours.
 - The frozen comparison and decision rules stay unchanged.
@@ -175,12 +179,12 @@ Descriptive only, not gating; one seed:
 - **Confidence barely moves.** Mean maximum probability is about unchanged (0.94–0.95), and true-class NLL changes in
   both directions.
 
-Next (user decisions): close the campaign (archive and a findings line), and commit the tlr-002/tlr-003 records. No
+Next (maintainer decisions): close the campaign (archive and a findings line), and commit the tlr-002/tlr-003 records. No
 further fit, refit, test evaluation or sweep follows from this comparison.
 
 ## tlr-004
 
-2026-10-13 — **campaign closed** (the user's closeout / EC-readiness handoff); no fit, refit, sweep, test access or GPU
+2026-10-13 — **campaign closed** (the maintainer's closeout / EC-readiness handoff); no fit, refit, sweep, test access or GPU
 start. Closed CPU-side, after a verified backup.
 
 - **Disposition.**
@@ -210,16 +214,16 @@ STATUS text replaced by this entry, preserved verbatim:
 ```text
 # DeepMzyme Current Experiment Status
 
-- Status: active (2026-10-13 trunk-LR comparison complete: reference retained; closure pending the user's decision)
+- Status: active (2026-10-13 trunk-LR comparison complete: reference retained; closure pending the maintainer's decision)
 - Last execution evidence: 2026-10-13 (trunk-LR comparison: one L4 session, five fits, $1.22 compute; workstation assessment; [log tlr-003](docs/campaigns/pmm_trunk_lr_2026-10/log.md#tlr-003)).
 
 ## Current objective and stage
 
-- Current campaign: [pmm_trunk_lr_2026-10](docs/campaigns/pmm_trunk_lr_2026-10/README.md): v3-selected four-class late fusion with GVP-trunk learning rate 1e-4 instead of 3e-4, five fits against the five v3 controls; objective `four_class` (user, 2026-10-13).
+- Current campaign: [pmm_trunk_lr_2026-10](docs/campaigns/pmm_trunk_lr_2026-10/README.md): v3-selected four-class late fusion with GVP-trunk learning rate 1e-4 instead of 3e-4, five fits against the five v3 controls; objective `four_class` (maintainer, 2026-10-13).
 - Other open campaigns: [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused; test possibly opened)
 - Stage: comparison complete under the frozen [specification](docs/campaigns/pmm_trunk_lr_2026-10/trunklr_assessment_spec.json): mean +1.16 points (75.45 vs 74.28), bootstrap [−0.65, +3.11], rule (b) not met, reference retained. Unchanged v3 result: selection `gvp_late_fusion__four_class__baseline`, refit `a0007846…`, one-shot test common-four BA 67.55% [62.93, 71.65], `both_results_secondary` ([summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)).
 
-PMM core v2 closed at fold 0 on 2026-10-03 (user decision): nine fold-0 fits only; nothing confirmed, promoted, refit or test-evaluated ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
+PMM core v2 closed at fold 0 on 2026-10-03 (maintainer decision): nine fold-0 fits only; nothing confirmed, promoted, refit or test-evaluated ([archived README](docs/archive/campaigns/pmm_ion_metal/README.md)).
 
 ## Anchor and evidence state
 
@@ -242,10 +246,10 @@ The primary final-test route is unresolved; [DATASETS](docs/DATASETS.md#test-use
 
 ## Blockers and immediate next action
 
-- Authorized now: nothing to run; the authorized session is used; any further session or budget needs the user's decision; no test predictions.
-- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 17:46 UTC); disk and caches kept; snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-users-approval)).
+- Authorized now: nothing to run; the authorized session is used; any further session or budget needs the maintainer's decision; no test predictions.
+- GPU/VM: `<gpu-vm>` TERMINATED (verified 2026-10-13 17:46 UTC); disk and caches kept; snapshots `<paused-snapshot>` and `<v3-final-snapshot>` kept ([handoff section 13](docs/archive/campaigns/pmm_ion_metal_v3/handoff.md#13-closeout-proposal-2026-10-13-pending-the-maintainers-approval)).
 
-Next: the user's decision to close this campaign (archive and a findings line) and to commit its records. Later: stronger EC standalone validation, then cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
+Next: the maintainer's decision to close this campaign (archive and a findings line) and to commit its records. Later: stronger EC standalone validation, then cross-task exclusion certification. No test-based selection ([Plan](Plan.md#canonical-staged-metal-training-pipeline)).
 
 ## History and update rule
 

@@ -1,6 +1,6 @@
 # GCP GPU VM runbook
 
-Agents first read the maintainer's local `gpu-use-skill` policy (not
+First read the maintainer's private GPU-use policy (not
 published), which owns runtime routing and the bounded capacity pass. Use
 `<vm-controller>/bin/*` for all VM lifecycle actions. Read that controller's
 own documentation and current `config.env` before operating it. The controller owns
@@ -46,14 +46,14 @@ credits never widen caps. A stopped VM still incurs storage charges.
 Present the planned hard stop and maximum estimated gross charge before using
 existing start authorization. First creation uses
 `vm-create --hours H --authorize 'AUTHORIZE VM START'`; authorization must come
-from the user, including an applicable earlier explicit instruction. Do not
+from the maintainer, including an applicable earlier explicit instruction. Do not
 manufacture authorization or request it again when already provided. An
 existing VM starts through `vm-start --confirm` only when authorized. Never
 bypass controller refusals, price checks or Google-side STOP.
 
 ## Archive a paused environment
 
-For a user-authorized retirement, the controller's `vm-archive` prepares a
+For a maintainer-authorized retirement, the controller's `vm-archive` prepares a
 standard snapshot in the source region and verifies restoration to a temporary
 disk without starting compute. Read its `--help` and the controller README's
 "Preserve a paused environment at lower storage cost" procedure. Review the
@@ -64,7 +64,7 @@ retained. Snapshot storage remains billable and requires billing to stay enabled
 This is different from ordinary stop-only closeout and from stockout recovery.
 To resume from the archive, preview `vm-restore --name SNAPSHOT --dry-run`,
 then run `vm-restore --name SNAPSHOT --authorize 'AUTHORIZE VM START'` only after
-the user types that phrase (billable; the snapshot is kept), followed by
+the maintainer types that phrase (billable; the snapshot is kept), followed by
 `vm-setup --stages ssh,smoke` and `vm-pycharm-info --write-ssh-config`. The
 controller README ("Preserve a paused environment") owns its safeguards. A
 default `vm-create` creates a fresh OS rather than restoring the archive. Current snapshot identity,
@@ -114,7 +114,7 @@ same-region L4 machine offerings, excluding the source. A durable receipt binds
 the source, snapshot, replacement, original configuration, phase and attempt
 history in `state/fallback.json`; the exact original config is saved as
 `state/fallback-<pass_id>.config.env`. At most three destination creation attempts
-may begin within ten minutes after snapshot preparation. Reconnects and agent changes retain those
+may begin within ten minutes after snapshot preparation. Reconnects and changes of working session retain those
 limits. Advance only on confirmed capacity exhaustion; diagnose quota, price,
 authentication, ownership or configuration failures. A timeout requires
 reconciliation of the recorded candidate before retrying.

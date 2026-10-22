@@ -1,6 +1,6 @@
 # Job A final verification — 2026-09-28
 
-Job A is ready for the user-controlled commit/integration checkpoint. The
+Job A is ready for the maintainer-controlled commit/integration checkpoint. The
 post-edit checks reproduce the Phase 0 baseline; this is not an all-green test
 suite. No source, training, notebook, protected plan, or experiment-evidence
 file was changed. Job B has not started.
@@ -34,25 +34,30 @@ Job A does not fix these pre-existing code/environment issues.
 
 ## Final corrections
 
-- AGENTS retains mandatory persistent Optuna storage on both routes, with
-  Drive SQLite specific to Colab and the missing VM-specific recipe explicit.
+- The former root contributor guide (now the maintainer's local development
+  guidelines, not published) retains mandatory persistent Optuna storage on
+  both routes, with Drive SQLite specific to Colab and the missing VM-specific
+  recipe explicit.
 - The historical pocket-stratified benchmark is Grade 6 in both evidence owners.
 - The selected-checkpoint results are not described as a statistical correction
   for selection bias. The collapsed-four epoch-max column and publication
   reconciliation caveat are distinguished from native metrics and recalls.
 - The L4 continuation links to its own execution report. Ledger and audit links
   resolve. The fold table follows the metal-example definitions.
-- The existing six-question answer key is marked approved according to the
-  prior progress record; its required scientific answers are unchanged.
+- The existing six-question reading-check answer key (kept in the maintainer's
+  records) is marked approved according to the prior progress record; its
+  required scientific answers are unchanged.
 
-The baseline contains code-coupling and precheck inventories; separate
-per-group subagent inventory files claimed in the old progress entry are not
-present. This closeout does not claim to reconstruct that earlier activity.
+The baseline contains code-coupling and precheck inventories (the code-coupling
+inventory is now kept in the maintainer's records); separate per-group
+inventory files from parallel inventory passes, claimed in the old progress
+entry, are not present. This closeout does not claim to reconstruct that
+earlier activity.
 
 ## Reproduction
 
 Commands ran in `<secondary-drive>/DeepMzyme_worktrees/docs`, using the
-user-specified Conda interpreter after checking its executable. PyCharm reports
+maintainer-specified Conda interpreter after checking its executable. PyCharm reports
 a different `.venv` SDK; no environment was changed. Both CPU commands used:
 
 ```bash
@@ -76,11 +81,12 @@ algorithm, compare both first Python fences against HEAD, and run
 2. If the campaign branch moved, reassess/rebase; stop on conflicting owned docs.
 3. Obtain explicit approval before fast-forwarding the shared checkout. Push
    only with authorization. Neither operation has been performed here.
-4. Start a fresh agent session after integration. Read PROGRESS and PLAN_v2.
+4. Start a fresh working session after integration. Read the consolidation
+   progress record and plan (both now kept in the maintainer's records).
 5. Begin Job B with campaign history preservation and the normative-rule
    inventory; review modified/dropped rules before accepting the rewrites.
 
-Job A moves no files, so MAP/MOVED entries are not applicable. The fresh-agent
+Job A moves no files, so MAP/MOVED entries are not applicable. The reading-check
 acceptance test begins in Job B. The PMM campaign stays paused at nine fold-0
 fits, with 36 further fits deferred; this documentation change authorizes no
 compute. Frozen execution checkouts retain their existing documentation.

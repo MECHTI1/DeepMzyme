@@ -513,14 +513,14 @@ def prediction_denied_paths(test_dir: Path, source_csv: Path | None) -> list[Pat
 def predict(*, campaign_dir: Path, prepared_dir: Path, checkpoint_path: Path, test_dir: Path, esm_dir: Path,
             external_root: Path | None, out_dir: Path, device: str, source_csv: Path | None,
             log_entry: str) -> dict[str, Any]:
-    """F4, once per campaign, after the user's logged go-ahead (``log_entry``, recorded in the claim): under the
+    """F4, once per campaign, after the maintainer's logged go-ahead (``log_entry``, recorded in the claim): under the
     recorded Freeze 1 (this code) and Freeze 2 (these memberships and embeddings, verified by SHA-256) with the bound
     checkpoint; the write-once claim is made before any test structure is opened or any prediction is made, so a
     second pass is refused whatever its output directory."""
     from training.access_guard import install_forbidden_read_guard
 
     require(prep.LOG_ENTRY.fullmatch(str(log_entry)) is not None,
-            "Name the log entry of the user's go-ahead for the single test pass (--log-entry v3-NNN)")
+            "Name the log entry of the maintainer's go-ahead for the single test pass (--log-entry v3-NNN)")
     out_dir = Path(out_dir)
     freeze1, freeze1_sha = prep.check_freeze1(campaign_dir, tools=test_side_tools())
     freeze2, freeze2_sha = prep.check_freeze2(campaign_dir, freeze1_sha256=freeze1_sha, prepared_dir=prepared_dir,
@@ -583,7 +583,7 @@ def parse_args(argv=None):
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--load-workers", type=int)
     parser.add_argument("--run-dir", type=Path, help="reload-check: the completed refit directory")
-    parser.add_argument("--log-entry", help="predict: the log entry of the user's go-ahead for the single test pass")
+    parser.add_argument("--log-entry", help="predict: the log entry of the maintainer's go-ahead for the single test pass")
     parser.add_argument("--test-dir", type=Path)
     parser.add_argument("--source-csv", type=Path)
     parser.add_argument("--prepared-dir", type=Path)

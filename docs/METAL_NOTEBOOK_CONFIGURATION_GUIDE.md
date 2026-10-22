@@ -21,7 +21,7 @@ preservation, CUDA architecture checks, same-VM attachment, and teardown, read
 
 > Target-policy boundary: the collapsed-four reporting endpoint is Mn, Cu, Zn,
 > and Class VIII = Fe+Co+Ni. No training objective is primary: each campaign
-> trains the user-chosen mix of `four_class`, `five_class` and `six_class`, and
+> trains the maintainer-chosen mix of `four_class`, `five_class` and `six_class`, and
 > every model is evaluated through its deterministic collapsed-four view; a
 > five/six versus direct-four comparison follows Plan's neutral test. Current notebook and playbook defaults
 > have an explicit paired standalone recipe at the start of the metal playbook.
@@ -236,7 +236,7 @@ This guide is not the source of truth for the latest best run or next experiment
 Do not rerun old "first baseline" or Optuna examples just because they appear below. Those sections are stable workflow examples; the current metal-task recommendation may already be later in the sequence.
 
 When planning a new check or fresh Optuna sweep, use previous raw outputs only
-as context unless the user explicitly asks to rely on prior runs/results/raws.
+as context unless the maintainer explicitly asks to rely on prior runs/results/raws.
 For a fresh Optuna request without a bounded campaign profile, prefer the broadest sensible
 validation-only search within one selected `MODEL_PRESET`; the current
 copy-paste blocks for that are in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`.
@@ -273,7 +273,7 @@ Before launching a run, verify these resolved notebook values:
 | Check | Required value for reportable metal runs |
 | --- | --- |
 | Task | `TASK = "metal"` |
-| Metal label scheme | A new metal campaign trains the user-chosen objectives, any mix of `four_class`, `five_class` and `six_class` ([Plan](../Plan.md#per-campaign-target-selection)); keep separate reconciled run/study identities and evaluate every model on collapsed four. No objective is primary; historical five/six-class runs keep their labels |
+| Metal label scheme | A new metal campaign trains the maintainer-chosen objectives, any mix of `four_class`, `five_class` and `six_class` ([Plan](../Plan.md#per-campaign-target-selection)); keep separate reconciled run/study identities and evaluate every model on collapsed four. No objective is primary; historical five/six-class runs keep their labels |
 | External split | Use the stage block to select the intended named dataset; verify materialization, provenance, and test-access history in `docs/DATASETS.md`. No dataset is designated here as the primary final test. |
 | Validation split | `VAL_FRACTION = 0.15` |
 | Internal train/validation grouping | `SPLIT_BY = "pdbid"` in the notebook, emitted to the CLI as `--train-val-split-by pdbid`; this also prevents `pdbid_chain` overlap, guarding repeated or binuclear same-chain metal sites from leaking into validation |
@@ -928,7 +928,7 @@ the notebook disables pruning and warns before launch. Inspect Pareto
 candidates as review inputs, then run Stage 6 grouped-fold confirmation before
 promoting any candidate.
 
-`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a user-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
+`OPTUNA_SEARCH_PRESET = "first_useful_only_gvp_narrow"` keeps architecture/capacity fixed and varies mainly learning rate, LR schedule when enabled, weight decay, batch size, and metal class-weight mode. Use it for the first controlled HPO path or for explicit anchor continuation. For a maintainer-requested fresh broad Optuna check, use the playbook's large-search blocks and expand capacity/search axes within one selected model family instead of over-narrowing to old raw outputs. Short HPO trials mostly rank early-training behavior.
 
 The notebook default is `OPTUNA_SEARCH_PRESET = "custom"`, which is the
 manual/CSV-driven Optuna mode. Use the narrower preset only when a playbook

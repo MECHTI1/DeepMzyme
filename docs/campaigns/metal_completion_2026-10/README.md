@@ -4,7 +4,7 @@ Status: active (2026-10-16 optimization complete; B four-class retained; Stage 6
 
 ## Scope and authority
 
-The user chose all three metal targets and independent final evaluation before EC.
+The maintainer chose all three metal targets and independent final evaluation before EC.
 Preserve the frozen v3 `gvp_late_fusion` trainer, ion cohort, five grouped folds and terminal epoch-50
 checkpoint rule. Structural-context and trunk-LR investigations stay closed.
 
@@ -33,6 +33,6 @@ bound policy/session/spending receipts; preparation grants no compute authority.
 [evaluation.md](evaluation.md) owns the test proposal, inventory and blockers; the Stage 6B source is in
 [evidence.md](evidence.md#stage-6b-source-and-compatibility-2026-10-16). No certified test cohort exists.
 
-[handoff.md](handoff.md) is the next-session prompt. [Plan](../../../Plan.md) owns science;
+[handoff.md](handoff.md) is the continuation checklist. [Plan](../../../Plan.md) owns science;
 [DATASETS](../../DATASETS.md#final-reporting-status) owns test history. EC remains deferred; repair
 [TECH-030](../../FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard).

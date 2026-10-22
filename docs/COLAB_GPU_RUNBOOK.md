@@ -1,8 +1,8 @@
 # Google Colab GPU Runbook: Browser and CLI
 
-Agents first read the maintainer's local `gpu-use-skill` policy (not
-published) for authorization, owned-runtime reuse, bounded fallback and
-optional monitoring. This runbook owns the Colab-specific procedure; its use
+First follow the maintainer's private GPU-use policy (not published) for
+authorization, owned-runtime reuse, bounded fallback and optional
+monitoring. This runbook owns the Colab-specific procedure; its use
 does not itself allocate a runtime.
 
 GCP stockout recovery uses the controller's
@@ -28,14 +28,14 @@ Exact metal experiment values remain in the
 runtime connection and environment procedure, not scientific stage budgets.
 
 When measured execution no longer fits a planned GPU ceiling, keep the owned
-session safe and persist the current state. If the user has not already decided,
-ask whether to stop and close out or continue with a specifically quantified
-higher ceiling. An existing explicit continuation authorization is sufficient;
-do not ask for it again. Record an approved increase in the campaign's durable
-authorization ledger before the next affected launch. The increase changes
-only cumulative compute permission: per-session shutdown reserves, one-process
-ownership, scientific recipes, validation selection, and held-out protections
-remain in force.
+session safe and persist the current state. If the maintainer has not already
+decided, ask the maintainer whether to stop and close out or continue with a
+specifically quantified higher ceiling. An existing explicit continuation
+authorization is sufficient; do not ask for it again. Record an approved
+increase in the campaign's durable authorization ledger before the next
+affected launch. The increase changes only cumulative compute permission:
+per-session shutdown reserves, one-process ownership, scientific recipes,
+validation selection, and held-out protections remain in force.
 
 ## Non-negotiable runtime rules
 
@@ -71,7 +71,7 @@ reports both the append-only control history and existing
 `USER_REQUESTED_PAUSE*.json` receipts. A pause blocks allocation, fresh worker
 receipts and new launches. The queue drains terminal artifacts within the
 bounded closeout path and the independent watchdog still enforces shutdown.
-An explicit user resume must be recorded with its request identity and
+An explicit maintainer resume must be recorded with its request identity and
 authorization; deleting an old pause file is not the resume procedure.
 
 `reconcile-accounting --output CAMPAIGN_DIR` previews closed host-only intervals;
@@ -162,13 +162,14 @@ Then:
 Browser Colab is interactive. `google.colab.drive.mount(...)` may request user
 authorization; that is expected in this route.
 
-## Chat 4 standalone smoke with a working-code snapshot
+## Snapshot smoke with a working-code snapshot
 
-This is the browser handoff for **Stage 0: environment/data readiness** and
+This is the browser procedure for **Stage 0: environment/data readiness** and
 the gated **Stage 1: 1-epoch smoke**. The first standalone block in the
 [metal playbook](METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-standalone-notebook-block)
 owns the scientific configuration. Only the first Only-GVP/direct-four smoke
-is prepared by the optional Chat 4 cells; the full baseline campaign stays off.
+is prepared by the optional snapshot-smoke cells; the full baseline campaign
+stays off.
 
 A GitHub clone omits uncommitted changes. Build a current snapshot without
 resetting, committing, pulling, pushing, or modifying the Git index:
@@ -179,9 +180,11 @@ uv run --frozen --no-sync python scripts/prepare_colab_smoke_snapshot.py
 
 The archive, SHA256 sidecar and file/commit/dirty-state manifest are written to
 `DeepMzyme_Data/notebook_outputs/plans/standalone_v1/colab/`. Regenerate after
-further edits. Data and Git internals are excluded; the data bundle is fetched
-separately. **Main configuration is the single bundle selector**, including
-its immutable URL and checksum; the Chat 4 cell preserves that selection.
+further edits. Snapshot archives built before 2026-10-22 use the old global
+names and must be rebuilt with `scripts/prepare_colab_smoke_snapshot.py`.
+Data and Git internals are excluded; the data bundle is fetched separately.
+**Main configuration is the single bundle selector**, including its immutable
+URL and checksum; the snapshot-smoke cell preserves that selection.
 See [DATASETS](DATASETS.md#main-colab-bundle-v12-current-hosted-release-care-complete)
 for the current v12 release.
 
@@ -194,11 +197,11 @@ individually in this order; do not use Run all:
 2. **Main planned training launch switch**: leave it `False`.
 3. **Main configuration**: run once; the next cell applies the complete
    standalone playbook override to its task/model defaults.
-4. **Chat 4: load prepared code and configure one metal smoke (optional)**:
-   set `PREPARE_CHAT4_METAL_SMOKE = True`, paste the archive's SHA256 into
-   `CHAT4_SNAPSHOT_SHA256`, then run and upload `deepmzyme-chat4-code.tar.gz`.
+4. **Snapshot smoke: load prepared code and configure one metal smoke (optional)**:
+   set `PREPARE_SNAPSHOT_METAL_SMOKE = True`, paste the archive's SHA256 into
+   `SMOKE_SNAPSHOT_SHA256`, then run and upload `deepmzyme-smoke-code.tar.gz`.
    It verifies the archive and every file, creates a fresh
-   `/content/DeepMzyme_chat4_*` directory and sets `REPO_ROOT` to it.
+   `/content/DeepMzyme_smoke_*` directory and sets `REPO_ROOT` to it.
 5. **Build central CONFIG dictionary**.
 6. **Clone or locate DeepMzyme repository and install dependencies**: verify
    it uses the snapshot directory. Git diagnostics will say it is not a Git
@@ -208,7 +211,7 @@ individually in this order; do not use Run all:
    Drive interactively. The cell verifies the data archive checksum and
    extracts it to `/content/deepmzyme_bundle`.
 8. **Detect dataset paths and validate inputs**.
-9. **Chat 4: verify remote inputs, CUDA and persistent outputs**: must pass
+9. **Snapshot smoke: verify remote inputs, CUDA and persistent outputs**: must pass
    the actual-GPU forward/backward check, prepared metal CSV/structure hash
    checks, complete ESM/external coverage, ESMC-300m/960 metadata checks,
    train/test group-membership separation, and Drive write/read check.
@@ -233,7 +236,7 @@ The readiness cell also saves `colab_smoke_readiness.json`,
 The playbook lists the standard command/config, checkpoint, metrics and summary
 artifacts. Confirm they are visible in Drive before disconnecting/deleting the
 runtime. Smoke accuracy is not model-selection evidence. EC training and the
-24-run metal campaign remain off during this handoff.
+24-run metal campaign remain off during this procedure.
 
 ## Install the host CLI
 
@@ -251,7 +254,7 @@ colab whoami
 ```
 
 On the audited workstation OAuth2 is already configured. If `whoami` returns
-401 or 403, stop and repair host authentication with the user; do not use
+401 or 403, stop and repair host authentication with the maintainer; do not use
 `colab auth`, because that command injects credentials into a VM and is not
 host CLI login.
 

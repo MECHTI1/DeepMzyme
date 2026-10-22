@@ -7,6 +7,11 @@ Source ranges and hashes: [preservation manifest](../../../../docs/archive/conso
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+Redaction note (2026-10-22): inside block exact-001 below, one repository link
+was updated to its folder's current name (`docs/execution_reports/`). Numbers,
+dates, IDs and decisions are unchanged; the exact source text remains at the
+block's cited source commit.
+
 ## exact-001
 
 Source: `3c0f80c:EXPERIMENT_STATUS.md:399-411`.
@@ -14,7 +19,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:399-411`.
 ```text
 **Exact PinMyMetal 5-Fold Cross-Validation Benchmark (2026-09-23, Exploratory):** Exploratory benchmark under `--train-val-split-by pocket_id --n-folds 5` across three comparative architectures: Sequence-Only ESM-C (`benchmark_only_esm`), Structure-Only Enhanced GVP (`benchmark_enhanced_only_gvp`), and Multimodal Late Fusion (`benchmark_enhanced_gvp_esmc`). *(Caveat: Not a like-for-like comparison with PinMyMetal; test set opened 2026-09-22/23; see [EXACT doc qualification](docs/EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) and [test-use ledger](docs/DATASETS.md#test-use-ledger)).*
 - **Table 1 (5-Fold CV Val Bal Acc — Unadjusted Epoch Maxima vs PinMyMetal Fig 2a: 75.08%)**:
-  *(Selected-checkpoint out-of-fold values: Late Fusion **79.84%**, ESM-C **78.98%**, Enhanced GVP **73.87%**; see [reporting and split audit](docs/agents_report/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable))*
+  *(Selected-checkpoint out-of-fold values: Late Fusion **79.84%**, ESM-C **78.98%**, Enhanced GVP **73.87%**; see [reporting and split audit](docs/execution_reports/RESUMED_REVIEWS_HANDOFF_20260923.md#6-substantive-findings-already-established-cached-re-checkable))*
   - `benchmark_only_esm`: **80.29% ± 3.26%** (epoch max; OOF: 78.98%; historical arithmetic delta +5.21 pp)
   - `benchmark_enhanced_only_gvp`: **74.42% ± 2.39%** (epoch max; OOF: 73.87%; historical arithmetic delta -0.66 pp)
   - `benchmark_enhanced_gvp_esmc`: **80.22% ± 3.31%** (epoch max; OOF: 79.84%; historical arithmetic delta +5.14 pp)

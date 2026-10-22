@@ -15,7 +15,7 @@
 
 This report provides the authoritative record of the reconstruction, verification, and execution of the **Exact Zenodo PinMyMetal Benchmark** within the DeepMzyme project.
 
-Every detail in this document is recorded so that any autonomous agent, engineer, or external researcher can replicate the exact findings, run configurations, data splits, and model evaluations deterministically.
+Every detail in this document is recorded so that any engineer or external researcher can replicate the exact findings, run configurations, data splits, and model evaluations deterministically.
 
 ---
 

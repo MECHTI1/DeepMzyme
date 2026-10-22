@@ -1,6 +1,6 @@
 # GPU execution routing for the PMM ion campaign
 
-First read the maintainer's local `gpu-use-skill` policy (not published),
+First read the maintainer's private GPU-use policy (not published),
 which owns resource reuse, bounded capacity routing, connection and optional
 monitoring. This guide applies that workflow to PMM runtime measurement,
 admission and persistence.
@@ -12,7 +12,7 @@ and [Colab runbook](COLAB_GPU_RUNBOOK.md) own provider procedures;
 ## Recover the authorized work before allocation
 
 Only the coordinating operator allocates, starts, submits work to, or stops a GPU.
-Other agents can prepare inputs, review code and analyze completed development
+Other working sessions can prepare inputs, review code and analyze completed development
 artifacts independently. Begin with one active GPU and one training process.
 
 Finish local contract checks and freeze the source snapshot, training-only

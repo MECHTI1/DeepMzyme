@@ -90,7 +90,7 @@ def _limit_values(value, name):
 
 
 def budget_limits(output):
-    """Return default or explicitly user-authorized cumulative GPU ceilings.
+    """Return default or explicitly maintainer-authorized cumulative GPU ceilings.
 
     Authorization records may only raise cumulative phase/total ceilings. The
     four-hour per-session limit and fifteen-minute closeout reserve stay fixed.
@@ -108,7 +108,7 @@ def budget_limits(output):
                 or record.get("held_out_evaluation") is not False
                 or not str(record.get("authorized_at", "")).strip()
                 or not str(record.get("reason", "")).strip()):
-            raise ValueError("Budget authorization lacks the required user decision and audit fields.")
+            raise ValueError("Budget authorization lacks the required maintainer decision and audit fields.")
         previous = _limit_values(record.get("previous_limits_seconds"), "previous_limits_seconds")
         if previous != limits:
             raise ValueError("Budget authorization chain does not match the preceding ceilings.")
@@ -129,7 +129,7 @@ def budget_limits(output):
 
 
 def authorize_budget(output, authorization):
-    """Append one audited user decision while no allocation or fit is active."""
+    """Append one audited maintainer decision while no allocation or fit is active."""
     with _lock(output) as output:
         if any(row.get("stopped_epoch") is None for row in _sessions(output)):
             raise RuntimeError("Close the active allocation before changing cumulative ceilings.")

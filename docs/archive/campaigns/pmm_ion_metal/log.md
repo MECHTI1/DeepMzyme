@@ -7,9 +7,14 @@ Source ranges and hashes: [preservation manifest](../../../../docs/archive/conso
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+Redaction note (2026-10-22): inside the copied blocks below, some wording was
+neutralized (internal tool and session names, local paths and role names).
+Numbers, dates, IDs and decisions are unchanged; the exact source text remains
+at each block's cited source commit.
+
 ## pmm-013
 
-2026-10-03 — the user closed this campaign at fold 0 (explicit decision after a
+2026-10-03 — the maintainer closed this campaign at fold 0 (explicit decision after a
 read-only re-audit). Nine of 45 fits are its final, validation-only evidence
 (Grade 5 per fit; incomplete grid Grade 6). The 36 fold 1–4 fits were not run;
 they did not fail. Timeline: fold-0 fits 2026-09-27/28; deferral 2026-09-28 for
@@ -46,7 +51,7 @@ Source: `7221189:EXPERIMENT_STATUS.md:1-87`.
 ```text
 # DeepMzyme Current Experiment Status
 
-- Status: paused (2026-09-28 user decision)
+- Status: paused (2026-09-28 maintainer decision)
 - Last execution evidence: 2026-09-28. Documentation reconciliation: 2026-10-03 (storage retirement only).
 
 ## Current objective and stage
@@ -108,7 +113,7 @@ owns the ledger; this short access reminder preserves the default-read safety bo
 - Authorized now: nothing (no experiment, GPU work, final refit or held-out evaluation).
 - GPU/VM: retired; provider inventory verified no VMs/disks at 2026-10-03 13:48:51 UTC. One restore-checked standard snapshot remains (34.77 GiB, approximately $1.74/month gross). [Receipt and recovery boundary](docs/campaigns/pmm_ion_metal/storage_retirement_20261003.json); [storage decision](docs/campaigns/pmm_ion_metal/log.md#pmm-011).
 
-Resume requires an explicit user request, refreshed remaining-budget authority
+Resume requires an explicit maintainer request, refreshed remaining-budget authority
 and new readiness verification against the execution environment. The proposed
 additional 34 hours/$34 is unapproved and no longer awaiting an immediate
 execution decision. No extra fold-0 fits or final refits are authorized
@@ -135,7 +140,7 @@ policy in [Plan](Plan.md), and batch evidence in the [index](docs/notebook_outpu
 
 ## pmm-010
 
-Preserved verbatim from STATUS before the user-authorized 2026-10-03 storage
+Preserved verbatim from STATUS before the maintainer-authorized 2026-10-03 storage
 retirement update. Scientific execution remains paused.
 
 ```text
@@ -145,7 +150,7 @@ retirement update. Scientific execution remains paused.
 
 ## pmm-011
 
-2026-10-03 — user approved the recommendation to preserve a standard snapshot
+2026-10-03 — the maintainer approved the recommendation to preserve a standard snapshot
 and local backups, then retire the stopped VM and its disk to reduce recurring
 storage cost. This does not resume scientific work or authorize compute starts.
 
@@ -180,7 +185,7 @@ create a fresh OS. See the [archive procedure](../../../GCP_GPU_RUNBOOK.md#archi
 Source: `3c0f80c:EXPERIMENT_STATUS.md:10-38`.
 
 ```text
-**2026-09-28 — user decision: retain fold 0; defer further fits:**
+**2026-09-28 — maintainer decision: retain fold 0; defer further fits:**
 - Keep the nine existing ordinary-readout fold-0 results as the current
   exploratory comparison of four/five/six-class training. Their original
   strict outcomes and separate retrospective qualifications remain attached.
@@ -188,7 +193,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:10-38`.
   code, caches, checkpoints, PMM folds and resume instructions preserved for
   future work. This is not completed fivefold confirmation or final selection.
 - The additional 34-hour/$34 proposal is **not approved and no longer awaiting
-  a decision for immediate execution**. Resume only after an explicit user
+  a decision for immediate execution**. Resume only after an explicit maintainer
   request, refreshed remaining-budget authority and new readiness verification.
   No further fits, extra fold-0 experiments or final refits are authorized by
   this decision. The core scope and runner record/refuse the active deferral.
@@ -200,8 +205,8 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:10-38`.
   retained disk storage continues. The historical readiness/forecast evidence
   below is preserved; its old scope/implementation hash cannot authorize a
   future run after this update.
-- Subsequent user-requested cleanup removed the incomplete Antigravity
-  GVP-improvement draft after review confirmed checkpoint/default regressions,
+- Subsequent maintainer-requested cleanup removed the incomplete
+  GVP-improvement draft from a separate IDE session after review confirmed checkpoint/default regressions,
   incompatible experiment commands and unreliable result handling. Five source
   files were restored to their committed versions; three untracked scripts and
   one untracked test file were deleted. The
@@ -243,7 +248,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:39-73`.
   running use: approximately **11.8358 hours / $10.4057**, plus additional
   storage. One 150-GB disk remains, approximately **$15/month**.
 - Next boundary: the serial forecast is **21–33 additional VM hours** for the
-  36 absent fits. User decision is pending on **34 additional hours / $34
+  36 absent fits. Maintainer decision is pending on **34 additional hours / $34
   additional gross**, retaining four-hour/$6 session and six-hour/$10 UTC-day
   limits. The earlier 30-hour/$34 total proposal remains unapproved. Neither
   forecast nor readiness grants compute authority. No allocation remains active.
@@ -327,7 +332,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:107-139`.
   no alternative zone was suggested. Provider verified **TERMINATED at 01:59:48
   UTC**. No new fit or GPU compute use occurred. The controller refused recovery
   preview because the previous pass is complete; its receipt is preserved.
-  **Next:** user decision on a new bounded same-region recovery pass with
+  **Next:** maintainer decision on a new bounded same-region recovery pass with
   evidence-gated cleanup, or keep stopped and retry later. Latest running use remains
   **9.3061 hours / $8.1815 estimated gross**, plus retained storage.
 

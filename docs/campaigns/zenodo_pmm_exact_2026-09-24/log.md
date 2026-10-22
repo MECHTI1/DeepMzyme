@@ -7,6 +7,8 @@ Source ranges and hashes: [preservation manifest](../../../docs/archive/consolid
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+Redaction note (2026-10-22): inside the copied block below, one repository link was updated to its folder's current name (`docs/execution_reports/`). Numbers, dates, IDs and decisions are unchanged; the exact source text remains at the block's cited source commit.
+
 ## zenodo-001
 
 Source: `3c0f80c:EXPERIMENT_STATUS.md:353-396`.
@@ -37,7 +39,7 @@ Source: `3c0f80c:EXPERIMENT_STATUS.md:353-396`.
   - **No published benchmark numbers exist for this dataset yet.** Any earlier note
     giving an expected completion time (~11:24 UTC / 14:24 local) is superseded.
   - **Before relaunching**, see the durability gaps recorded in
-    [`docs/agents_report/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`](docs/agents_report/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md)
+    [`docs/execution_reports/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`](docs/execution_reports/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md)
     (section "Post-mortem"): artifacts are written only to ephemeral VM disk, the best
     checkpoint is held in memory until the run ends, and the ~11-minute graph
     construction phase emits no progress output and is repeated for every fold.

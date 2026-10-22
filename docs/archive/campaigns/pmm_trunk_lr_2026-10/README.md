@@ -6,7 +6,7 @@ One bounded, validation-only comparison:
 - **Candidate:** the v3-selected four-class late fusion with GVP-trunk learning rate 1e-4 instead of 3e-4.
 - **Unchanged:** base rate 3e-5, groups, 50-epoch cosine schedule, terminal checkpoint, data and seed 42.
 - **Fits:** five candidate fits against the five verified v3 controls (reference mean common-four BA 74.28%).
-- **Objective:** `four_class` only (user, 2026-10-13).
+- **Objective:** `four_class` only (maintainer decision, 2026-10-13).
 
 **Rule** (frozen before any fit in the [specification](trunklr_assessment_spec.json)):
 - **Primary, folds 0–4:** mean gain above 0.2 points.

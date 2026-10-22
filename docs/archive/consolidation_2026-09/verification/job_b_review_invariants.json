@@ -1,5 +1,5 @@
 {
-  "checkpoint": "Job B step 2 before user rule review",
+  "checkpoint": "Job B step 2 before maintainer rule review",
   "base": "3c0f80c6033a332b65e91302eea16c81add13e1d",
   "preservation": {
     "source_snapshots": 4,
@@ -28,7 +28,7 @@
   "link_issues": [],
   "default_read_bytes": 23225,
   "main_status": "",
-  "later_checks": "Full CPU suite, checker/hook, ignore corrections and fresh-agent acceptance pending rule review; no success claimed.",
+  "later_checks": "Full CPU suite, checker/hook, ignore corrections and reading-check acceptance pending rule review; no success claimed.",
   "rule_dispositions": {
     "merged": 140,
     "kept": 248,

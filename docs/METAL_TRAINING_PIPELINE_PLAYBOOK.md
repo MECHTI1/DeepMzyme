@@ -5,8 +5,9 @@ For the new bounded, one-GPU discovery and confirmation campaign use
 The [earlier architecture pilot](#bounded-metal-architecture-pilot--stage-0-through-stage-2b)
 and Common70 standalone block remain separate historical recipes. Current
 execution and evidence state belongs to [`EXPERIMENT_STATUS.md`](../EXPERIMENT_STATUS.md).
-The user-requested exact-pocket continuation of the recent Antigravity
-benchmark is [below](#exact-pocket-antigravity-matched-l4-diagnostic). The
+The maintainer-requested exact-pocket continuation of the 2026-09-23
+exact-PinMyMetal five-fold benchmark (`benchmark_exact_pinmymetal_5fold`) is
+[below](#exact-pocket-l4-diagnostic-matched-to-the-2026-09-23-benchmark). The
 earlier PDB-grouped L4 draft is [stopped](#stopped-pdb-grouped-l4-draft) and
 cannot supply comparison runs.
 
@@ -296,7 +297,7 @@ standard library only, the bundle build needs the conda environment):
    A3_REPORT` (committed code, v3 runtime files, frozen A4 specification and fold
    set; held-out paths refused; refused unless the A3 report accepted exactly the
    bundled source tree).
-2. GPU session (user-typed authorization):
+2. GPU session (maintainer-typed authorization):
    `<vm-controller>/bin/vm-restore --name <paused-snapshot> --authorize ...` (the retained
    paused snapshot; list it with the controller), then `vm-setup --stages ssh,smoke`
    (rewrites the SSH host-key alias for the new instance; the launcher refuses a
@@ -322,7 +323,7 @@ standard library only, the bundle build needs the conda environment):
    (`archive-failed`, then the same step). A batch listed in `retry_required` (its
    first attempt was invalid) is run once more as `step wK-PREC-retry`; the retry
    decides. A diagnosis can only be closed by `step_b/diagnosis.json` with
-   outcome `serial_fp32`, a cause and the dated user decision; it then records
+   outcome `serial_fp32`, a cause and the dated maintainer decision; it then records
    serial FP32 without concurrency or AMP. Repeat until `decision_ready`; it prints the `set-execution`
    command, which recomputes the report and refuses any other setting, reuse or
    evidence file.
@@ -348,14 +349,14 @@ diagnosis and decides nothing.
 Failures: a failed or interrupted unit is rerun once, unchanged, after
 `--action archive-failed --unit NAME` moves its first attempt to
 `failed_attempts/`; a completed unit is never rerun. A second failure: step D
-"did not pass"; steps C and E stop for the user's decision. The only exception
+"did not pass"; steps C and E stop for the maintainer's decision. The only exception
 is the whole-batch retry of a step-B timing batch described above.
 
 Step C order. Workstation commands (`$P pmm_v3_step_c.py ...` from the v3
 worktree; standard library only). The tool reuses the step-B launcher's session,
 SSH, lane-readiness, host-pull and evidence helpers. It never starts or stops a VM.
 
-1. GPU session (user-typed authorization). The restored VM exists, so start it
+1. GPU session (maintainer-typed authorization). The restored VM exists, so start it
    with `<vm-controller>/bin/vm-start --confirm`, then run `vm-setup --stages
    ssh,smoke`. Then run `session` and `status`. `status` is read-only and shows
    lanes, launches, claims, unit statuses, the regression gate and forecasts.
@@ -397,7 +398,7 @@ SSH, lane-readiness, host-pull and evidence helpers. It never starts or stops a 
    A lane whose runner died mid-unit (VM stop, reboot, killed runner) is
    refused until `recover-lane K`. That command runs the lane's own recovery
    (the unit is recorded as interrupted) and a verified pull; then archive and
-   rerun as above. A second failure stops step C for the user's decision. A
+   rerun as above. A second failure stops step C for the maintainer's decision. A
    regression failure always stops for diagnosis.
 5. `assess` runs `pmm_v3_assessment.py --step C` on the VM and keeps a checked
    copy under `step_c_evidence/assessments/`. At the end of every GPU session,
@@ -498,7 +499,7 @@ The launcher refuses, before anything starts:
 - a Round R unit while a Round A unit has not started (R then runs whatever A shows);
 - a Round B unit without a checked assessment of A and R that shows a pass in
   either family; without one, step D ends after R and the baselines are kept;
-- a cost-gated augmentation (`posnoise01`, `outerdrop01`) without the user's
+- a cost-gated augmentation (`posnoise01`, `outerdrop01`) without the maintainer's
   recorded OK (`record-cost-gate`) and a measured `--fit-seconds`; the assessor
   records it as "not tested (cost)" with `--not-tested-cost`;
 - any combination other than the one recipe per family that the assessment of
@@ -546,7 +547,7 @@ The $40 gross ceiling and one-shot held-out policy are unchanged.
 rules frozen the same day in the [E2 assessment specification](campaigns/pmm_ion_metal_v3/e2_assessment_spec.md)
 ([log v3-028](campaigns/pmm_ion_metal_v3/log.md#v3-028)); tooling implemented and
 CPU-checked on 2026-10-11 ([log v3-033](campaigns/pmm_ion_metal_v3/log.md#v3-033)); run on
-2026-10-11/12 under the user's authorization and completed, with the original selection
+2026-10-11/12 under the maintainer's authorization and completed, with the original selection
 retained ([log v3-037](campaigns/pmm_ion_metal_v3/log.md#v3-037)).** The rules (fits, comparisons, replacement,
 completion) are owned by the [campaign plan, step E2](campaigns/pmm_ion_metal_v3/plan.md#steps)
 and the specification; the budget by the plan's [Budget section](campaigns/pmm_ion_metal_v3/plan.md#budget).
@@ -634,7 +635,7 @@ moves its first attempt aside and it is rerun once, unchanged (`recover-lane K` 
 an interrupted lane); a second failure blocks the final E2 assessment for diagnosis (E2
 specification section 8). E2 is complete when all 36 fits have verified evidence, all 17
 comparisons are reported and the assessment names one final selection; step F takes that
-selection, or the unchanged A4 selection if the user cancels E2 by a dated log entry.
+selection, or the unchanged A4 selection if the maintainer cancels E2 by a dated log entry.
 
 Outputs: per-unit configuration, histories, terminal validation predictions, independent
 replay and persistence receipts as for every v3 unit; the E2 assessment with every fold's
@@ -646,7 +647,7 @@ unchanged by E2.
 
 ### v3 pre-step-F 10-epoch schedule comparison (completed 2026-10-12, not adopted)
 
-**Chosen by the user on 2026-10-12 ([log v3-039](campaigns/pmm_ion_metal_v3/log.md#v3-039)),
+**Chosen by the maintainer on 2026-10-12 ([log v3-039](campaigns/pmm_ion_metal_v3/log.md#v3-039)),
 authorized after the readiness checks ([log v3-040](campaigns/pmm_ion_metal_v3/log.md#v3-040)), run in one
 session and not adopted ([log v3-041](campaigns/pmm_ion_metal_v3/log.md#v3-041)): gate (b) failed, so the
 50-epoch selection stands.** The proposal is in
@@ -729,7 +730,7 @@ the decision. Step F takes `E_sel` from the decision: 10 only if adopted, otherw
 campaign's single test pass is used, so `predict` refuses any second pass. The execution plan is
 [step F draft v3](campaigns/pmm_ion_metal_v3/step_f_plan_draft.md) with its implementation notes.
 The rules are frozen in [`step_f_spec.json`](campaigns/pmm_ion_metal_v3/step_f_spec.json), whose
-SHA-256 the tools pin. Each step below needs the user's logged go-ahead (`v3-NNN`), and the command
+SHA-256 the tools pin. Each step below needs the maintainer's logged go-ahead (`v3-NNN`), and the command
 that acts on it records that go-ahead.
 
 Fixed settings:
@@ -754,7 +755,7 @@ Tools (nothing in `src/` or the hash-frozen runner files changes):
     specification, and refused after Freeze 2 or the prediction claim;
   - `predict`: refused unless the recorded Freeze 1 and Freeze 2 verify (every membership file, the
     recomputed embedding inventory, the bound checkpoint); it first writes the campaign-wide
-    write-once claim `step_f_evidence/f4_prediction_claim.json` with the user's F4 go-ahead
+    write-once claim `step_f_evidence/f4_prediction_claim.json` with the maintainer's F4 go-ahead
     (`--log-entry`), so a second pass is refused into any directory.
 - `pmm_v3_test_prep.py`: label-blind dispositions, the label-independent `ion_key`, row accounting,
   aliases, LINK flags, the C1–C3 clean subset (an identical eligible chain always matches), the test
@@ -812,14 +813,14 @@ $P pmm_v3_step_f_report.py --campaign-dir $C --predictions-dir PREDICTIONS --pre
 A failed or interrupted refit is pulled, and `archive-failed` moves it aside. It is then rerun
 once, unchanged; a second failure stops step F for diagnosis. A code fix needed after Freeze 1
 and before Freeze 2 follows the specification's `freeze1_amendment` procedure: a dated log entry with
-the user's go-ahead; the old `freeze1.json` archived by hand as `freeze1.superseded_<UTC>.json`
+the maintainer's go-ahead; the old `freeze1.json` archived by hand as `freeze1.superseded_<UTC>.json`
 (never deleted); the fix committed and its checks rerun; `record-freeze1 --amends <old SHA-256>
 --prior-test-side-read none|yes --log-entry v3-NNN`; a DATASETS ledger entry; and the preparation
 and embeddings repeated into new directories. After Freeze 2 or the prediction claim there is no
-amendment: step F stops for the user's decision. The specification is bound into the refit from
+amendment: step F stops for the maintainer's decision. The specification is bound into the refit from
 `bind-selection` on, so changing it later is not an amendment (a refit rerun or a tooling change,
-by the user's decision). A prediction pass that fails after its claim is
-not rerun without the user's dated decision (the claim is archived by hand and the failure
+by the maintainer's decision). A prediction pass that fails after its claim is
+not rerun without the maintainer's dated decision (the claim is archived by hand and the failure
 disclosed).
 
 ## PMM ion-level metal comparison campaign (`pmm_ion_metal_v2_context`)
@@ -872,20 +873,20 @@ Active core grid: **3 families × 3 targets × 5 folds = 45 ordinary-readout fit
 readout, plus the PinMyMetal released-recipe comparator on the same five
 training partitions (CPU). Preserve the completed awareness screen; its
 remaining twelve fits and further mechanism/HPO development are paused by the
-user-approved scope amendment. Do not claim completion of the original 45-fit
+maintainer-approved scope amendment. Do not claim completion of the original 45-fit
 grid. The v2 scope trains `four_class`, `five_class` and `six_class` as recorded;
 none is a primary training objective. The old and new 45-fit grids contain different arms.
 
 ### Active core-only continuation
 
-**Campaign closed at fold 0 on 2026-10-03 (user decision); this recipe is
+**Campaign closed at fold 0 on 2026-10-03 (maintainer decision); this recipe is
 preserved history and must not be executed**
 ([archived README](archive/campaigns/pmm_ion_metal/README.md)).
-**Execution deferred by user on 2026-09-28.** Retain the nine existing fold-0
+**Execution deferred by the maintainer on 2026-09-28.** Retain the nine existing fold-0
 results. The following recipe preserves the 36 missing fits for a future
 explicitly resumed campaign; do not execute its training block now. The runner
 refuses `--action run` while the scope says `execution_status=deferred_by_user`.
-After a user-authorized resume, update that status, verify the remaining budget
+After a maintainer-authorized resume, update that status, verify the remaining budget
 and regenerate readiness for the exact scope/implementation. Historical
 readiness files remain evidence and must not be rewritten to bypass the pause.
 
@@ -1059,7 +1060,7 @@ or final-report shortcut for this core decision.
 resubmit them.** Its strict outcomes remain unchanged by core integration.
 
 Scope: [`pmm_five_class_screen_v1.json`](plans/pmm_five_class_screen_v1.json).
-This user-requested Stage 2B-style screen adds exactly one 50-epoch fit per
+This maintainer-requested Stage 2B-style screen adds exactly one 50-epoch fit per
 family, native `five_class`, ordinary readout, fold 0 and model seed 42.
 It uses the same ion cohort, PDB groups, features, fixed family learning rates,
 manual common-four weights and cached ESMC-600M inputs as the four/six controls.
@@ -1119,7 +1120,7 @@ also equals 45.
 **Historical completed recipe. Do not launch further awareness fits.** Use
 the [active core-only continuation](#active-core-only-continuation) for new work.
 
-The user-approved next execution reuses the completed ordinary direct-four
+The maintainer-approved next execution reuses the completed ordinary direct-four
 Only-ESM fold-0 baseline and adds only its `first_shell_bias` counterpart.
 This is one-seed, single-fold exploration, not grouped-fold confirmation.
 All frozen profile values above remain unchanged. Do not rerun preparation,
@@ -1134,7 +1135,7 @@ timestamps; expired allocation values must not be reused.
 This initial envelope leaves at most 270 seconds for boot, connection and input
 verification before the 3,150-second admission requirement. It is not a guarantee
 of admission. If that allowance is exhausted, keep the forecast and safeguards;
-use the budget-decision rule in the local agent instructions (`AGENTS.md`, not published) before any larger allocation.
+use the budget-decision rule in the maintainer's local development guidelines (not published) before any larger allocation.
 `EXPERIMENT_STATUS.md` records the current authorization and actual outcome.
 
 ```bash
@@ -1368,14 +1369,15 @@ and train/reference overlap and is labeled a secondary matched known-ion
 comparison. A failed reference attempt requires artifact reconciliation before
 recovery; it does not authorize a new selection or a second exploratory test.
 
-## Exact-pocket Antigravity-matched L4 diagnostic
+## Exact-pocket L4 diagnostic matched to the 2026-09-23 benchmark
 
-**Pocket-unit historical protocol stopped after the user's ion-unit correction.**
+**Pocket-unit historical protocol stopped after the maintainer's ion-unit correction.**
 Its frozen commands and verified partial outputs remain in the
-[v2 execution ledger](agents_report/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
+[v2 execution ledger](execution_reports/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md).
 Use the identity `gvp_fusion_exact_pocket_l4_v2`. This is a *secondary exact
 PinMyMetal benchmark continuation* requested to compare focused GVP and
-late-fusion changes with the 2026-09-23 Antigravity run. It does not replace
+late-fusion changes with the 2026-09-23 exact-PinMyMetal five-fold benchmark
+(`benchmark_exact_pinmymetal_5fold`). It does not replace
 the primary `pdbid`-grouped development/Stage 6 policy in `Plan.md`, and it
 does not promote an exact-split held-out test to the primary final test. The
 exact cohort has 177 train/test PDB-ID overlaps; its internal pocket folds
@@ -1400,7 +1402,7 @@ mapping to different target classes has no single metal target and is excluded
 from this metal-supervised cohort: Co+Ni both map to Class VIII in the
 historical five-class scheme, whereas Fe+Mn does not map to one class. This is
 a single-label experiment, not mixed-metal multi-label prediction. This split
-intentionally matches Antigravity for a paired comparison, but its PDB overlap
+intentionally matches the 2026-09-23 benchmark for a paired comparison, but its PDB overlap
 limits generalization claims.
 
 | Field | Frozen value for the corrected study |
@@ -1492,7 +1494,7 @@ reproduction references, not substitutes for matched controls.
 ### Execution gates and interpretation
 
 1. CPU: confirm the shared source matches the pre-study Git state and the
-   staged patch fingerprint in the [stop ledger](agents_report/GVP_FUSION_L4_EXECUTION_20260924.md).
+   staged patch fingerprint in the [stop ledger](execution_reports/GVP_FUSION_L4_EXECUTION_20260924.md).
    Test unchanged trunk defaults, exact optimizer-group movement, command
    exclusion of all test options, and refusal of wrong cohort/fold hashes.
    Freeze source, manifest, 20 commands, and an artifact inventory.
@@ -1523,7 +1525,7 @@ reproduction references, not substitutes for matched controls.
    Co+Ni/Class VIII); this conservative definition of rare-class protection
    is fixed before seeing full-fit results. No winner from incomplete
    pairs. Reconcile F0/G0 baseline metrics with the historical *selected*
-   checkpoints before claiming a gain relative to Antigravity; do not use
+   checkpoints before claiming a gain relative to the 2026-09-23 benchmark; do not use
    max-over-epoch collapsed-four summary numbers as selected-checkpoint
    results.
 6. Close out: verify the named session is stopped. Save `comparison.csv`,
@@ -1538,10 +1540,11 @@ reproduction references, not substitutes for matched controls.
 
 `gvp_fusion_diagnostic_l4_v1` was stopped on 2026-09-24 because its
 non-overlap cohort, direct four-class target, and PDB-ID-grouped folds do not
-match the user's intended Antigravity comparison. Its two completed
+match the maintainer's intended comparison with the 2026-09-23
+exact-PinMyMetal five-fold benchmark (`benchmark_exact_pinmymetal_5fold`). Its two completed
 one-epoch smokes are preparation evidence only; no 50-epoch fit ran. The
 [full stopped plan](archive/experiments/gvp_fusion_l4_v1_stopped_plan.md)
-and [execution ledger](agents_report/GVP_FUSION_L4_EXECUTION_20260924.md)
+and [execution ledger](execution_reports/GVP_FUSION_L4_EXECUTION_20260924.md)
 remain available for audit. Do not run its commands or mix its artifacts with
 `gvp_fusion_exact_pocket_l4_v2`.
 
@@ -1694,7 +1697,7 @@ experimental evaluation are separate states.
 | Confirmation | 10 GPU-allocation hours | Frozen shared-fold/seed comparisons; protected from further tuning |
 | Total | **20 GPU-allocation hours** | Cumulative across every session; no reconnect resets |
 
-The table is the original planned ceiling. The user explicitly authorized the
+The table is the original planned ceiling. The maintainer explicitly authorized the
 already accepted campaign to continue beyond it. The 2026-09-17 continuation
 records initially allowed 33 cumulative hours, then increased the operations
 allowance to account for measured artifact-transfer/readback overhead. The
@@ -1730,8 +1733,8 @@ measurements for the active hardware and update them after each allocation.
 Forecast complete comparison blocks with a **1.25 cost multiplier**. Protect
 the forecast confirmation grid before admitting discretionary refinement.
 Never reduce an individual arm's epochs, seeds or cohort to make it fit. If
-costs exceed the currently authorized allowance, persist and present the user
-with the measured stop-versus-increase choice unless the user already approved
+costs exceed the currently authorized allowance, persist and present the maintainer
+with the measured stop-versus-increase choice unless the maintainer already approved
 the increase. Apply an approved larger ceiling without changing the scientific
 plan. If no increase is authorized, stop with an explicit incomplete outcome;
 spending the cap is not a success criterion.
@@ -2007,7 +2010,7 @@ runner must refuse full-fit admission and report the deficit. Preserve the
 prepared plan and evidence; do not silently change the allocation split,
 drop a required initial arm, shorten training, or borrow confirmation time.
 Use the accepted-work escalation policy to record an authorized increase;
-the failed original forecast does not revoke a later user authorization.
+the failed original forecast does not revoke a later maintainer authorization.
 Optional blocks consume only measured remaining capacity and follow the
 frozen fallback order before confirmation results are opened.
 
@@ -2169,10 +2172,10 @@ owned name, a verified previous stop and hardware readiness. The cumulative
 allocation history and currently authorized ceiling persist. Do not use a blind unbounded shell loop: follow each
 reported admission, persistence, recovery and closeout result.
 
-For a user-authorized budget increase, first finish/persist any safe active fit
+For a maintainer-authorized budget increase, first finish/persist any safe active fit
 and verify the owned allocation stopped. Save a JSON authorization object with
 `sequence`, `status="authorized"`, `authorized_by="user"`, `authorized_at`,
-`decision="continue_beyond_planned_ceiling"`, the user's authorization basis
+`decision="continue_beyond_planned_ceiling"`, the maintainer's authorization basis
 in `reason`, and `held_out_evaluation=false`. Include
 `previous_limits_seconds` and `authorized_limits_seconds`, each containing
 exactly `total_seconds`, `discovery_seconds`, `confirmation_seconds`,
@@ -2205,7 +2208,7 @@ All campaign-level artifacts live below the explicit `--output-dir`:
   campaign manifest or count as attempted training.
 - `budget_forecast.json`, `budget_forecast.md`: historical preview or current
   measured admission forecast, including unmeasured costs and phase deficits.
-- `budget_authorizations.json`, when present: ordered user-authorized ceiling
+- `budget_authorizations.json`, when present: ordered maintainer-authorized ceiling
   increases, their reason and unchanged session/closeout safeguards. Host
   configurations and launch receipts bind its digest.
 - `queue.json`, `input_identity.json`, `preparation.json`, `fold_plan.json`,
@@ -2426,7 +2429,7 @@ RUN_NAME_PREFIX = RUN_BATCH_ID
 ### Readiness, outputs, and explicit launch gate
 
 For the current-code snapshot upload and exact browser cell order, follow the
-[Chat 4 Colab handoff](COLAB_GPU_RUNBOOK.md#chat-4-standalone-smoke-with-a-working-code-snapshot).
+[Colab snapshot-smoke procedure](COLAB_GPU_RUNBOOK.md#snapshot-smoke-with-a-working-code-snapshot).
 Its optional notebook cell applies the standalone block above and preserves
 the data-bundle selection from Main configuration.
 
@@ -3222,7 +3225,7 @@ promotion gates to Stage 6 evidence and trains/refits one final model on the
 full non-test training set. Stage 7 is the only stage that touches the held-out
 test set, and it is run exactly once for that frozen Stage 6B final-refit run.
 
-Use these stage names exactly when planning, documenting, or asking an agent
+Use these stage names exactly when planning, documenting, or requesting
 what to run next:
 
 - Stage 0: environment/data readiness
@@ -3323,12 +3326,12 @@ For all comparison, HPO, and Stage 6 confirmation stages:
 - Do not run the optional final held-out test cell until the final
   validation-selected configuration is fixed and its Stage 6B final-refit run
   has been completed and frozen.
-- If the user asks for a new check, new run, or fresh Optuna sweep without
-  explicitly asking to rely on previous raws/results, use previous notebook
+- When a new check, new run, or fresh Optuna sweep is requested without an
+  explicit request to rely on previous raws/results, use previous notebook
   outputs only as context and safety checks. Prefer the broadest sensible
   validation-only Optuna search within the selected `MODEL_PRESET`, with
   common-sense runtime and feature-availability limits.
-- If the user explicitly asks to rely on previous running/results/raws, inspect
+- When reliance on previous running/results/raws is explicitly requested, inspect
   the relevant copied evidence and use it to narrow, continue, or repeat that
   prior configuration.
 
@@ -4765,8 +4768,8 @@ Purpose: perform a longer, controlled search after the simpler baseline and
 medium HPO justify the model family and search axes.
 
 When to use it: after at least one medium HPO or Stage 6 confirmation batch
-identifies the model family and search axes worth expanding, or when the user
-asks for a fresh broad Optuna check and does not explicitly ask to rely on
+identifies the model family and search axes worth expanding, or when a fresh
+broad Optuna check is requested without an explicit request to rely on
 previous raw outputs.
 
 Expected scale/runtime: large Optuna search, potentially very long or
@@ -6288,10 +6291,10 @@ Raw structure overlap is checked before preparation/inference and loaded-pocket
 overlap is checked before graph construction. The separate explicit debug flag
 is non-reportable and must never be pointed at the primary held-out set.
 
-## Agent stage-request protocol
+## Stage-request protocol
 
-Relocated from `3c0f80c:AGENTS.md`; the executable stage blocks above are unchanged.
-The target-objective wording follows the user's 2026-09-28 decisions at the
+Relocated from the former root contributor guide (commit `3c0f80c`); the executable stage blocks above are unchanged.
+The target-objective wording follows the maintainer's 2026-09-28 decisions at the
 Job B step-2 review: any mix of four, five and six per campaign, no primary
 objective, and Plan's neutral test.
 
@@ -6299,7 +6302,7 @@ For experiment-status questions, first read `EXPERIMENT_STATUS.md`, then inspect
 the specific evidence files it names. For notebook behavior questions, inspect
 the notebook itself rather than relying only on the workflow guide.
 
-To answer "what is the next metal-training step", the agent must:
+To answer "what is the next metal-training step":
 
 1. Read `EXPERIMENT_STATUS.md` to find the current stage anchor.
 2. Read the corresponding stage block in
@@ -6376,7 +6379,7 @@ Operational assumptions for this project:
 - Persistent Optuna studies must not silently mix incompatible `MODEL_PRESET`
   values or incompatible search spaces. Keep
   `OPTUNA_ALLOW_INCOMPATIBLE_STUDY_REUSE = False` for reportable HPO unless the
-  user explicitly asks for a labeled recovery/debug override.
+  maintainer explicitly asks for a labeled recovery/debug override.
 - Stage 7 (held-out test) is one-shot per final training/refit run derived from
   a final validation-selected configuration.
 - After Stage 6/cross-validation, the selected configuration must be promoted
@@ -6414,7 +6417,7 @@ Operational assumptions for this project:
 
 ## Required answer format for metal notebook stage requests
 
-When the user asks what to run next, how to configure the metal Colab notebook,
+When asked what to run next, how to configure the metal Colab notebook,
 or how to update the metal training pipeline documentation, answer using this
 format:
 
@@ -6433,10 +6436,10 @@ format:
 3. Safety checks:
    - Confirm `INCLUDE_HELD_OUT_TEST_DURING_TRAINING = False` for all non-final
      stages.
-   - Confirm the user-chosen training objectives for a new metal campaign
+   - Confirm the maintainer-chosen training objectives for a new metal campaign
      (any mix of `four_class`, `five_class` and `six_class`;
-     [Plan](../Plan.md#per-campaign-target-selection)); ask if they are not
-     recorded. Each chosen scheme uses a separately named run/study:
+     [Plan](../Plan.md#per-campaign-target-selection)); ask the maintainer if
+     they are not recorded. Each chosen scheme uses a separately named run/study:
      `METAL_LABEL_SCHEME = "four_class"` for the direct arm; `five_class` and
      `six_class` report `val_metal_collapsed4_balanced_acc` on the common
      endpoint while retaining native metrics. No training objective is primary;
@@ -6491,7 +6494,7 @@ If the requested stage block is missing or incomplete, update
 with undocumented values.
 
 When editing the metal-pipeline documents together, never copy full
-configuration blocks into `Plan.md`, `AGENTS.md`, or
+configuration blocks into `Plan.md`, the local development guidelines, or
 `docs/METAL_NOTEBOOK_CONFIGURATION_GUIDE.md`. Full executable stage blocks
 belong in `docs/METAL_TRAINING_PIPELINE_PLAYBOOK.md`; notebook defaults may be
 updated separately to match the canonical workflow.
@@ -6500,7 +6503,7 @@ updated separately to match the canonical workflow.
 
 This additive CLI route belongs to [metal_completion_2026-10](campaigns/metal_completion_2026-10/README.md).
 Discovery and **Stage 6 grouped-fold confirmation** ran on 2026-10-15/16 ([execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516)). It does not reopen
-the closed v3 campaign. The user selected four, five and six training objectives. All targets use the same frozen
+the closed v3 campaign. The maintainer selected four, five and six training objectives. All targets use the same frozen
 v3 ion cohort, five near-copy/PDB grouped folds, late-fusion architecture, feature set, FP32, optimizer and rates,
 50-epoch cosine schedule and terminal checkpoint. No HPO or Optuna study is introduced.
 
@@ -6598,11 +6601,11 @@ confirmation; see the campaign evidence). The gates below remain the contract fo
 [execution record](campaigns/metal_completion_2026-10/evidence.md#execution-record-2026-10-1516)
 records measured timing, dated prices and forecast uncertainty. Provider caps may be tighter. No migration,
 hardware upgrade, extra recipe, final refit or independent-cohort construction is included. Preserve the
-accepted-work escalation rule of the local agent instructions (`AGENTS.md`, not published) at the first safe
+accepted-work escalation rule of the local development guidelines (not published) at the first safe
 boundary if a ceiling becomes insufficient.
 
 The sole coordinator uses the maintainer's local GPU-use policy (not published) and the installed VM controller.
-Before submitting, bind the explicit user decision text/file/hash, manifest hash, exact permitted units, price,
+Before submitting, bind the explicit maintainer decision text/file/hash, manifest hash, exact permitted units, price,
 aggregate hours/gross ceiling/reserve, session count/duration, expiry, lanes and persistence destination in the
 authorization policy. Fresh controller and spending snapshots must agree on session identity, allocation start,
 original deadline, owner, provider automatic STOP and costs including the entire active session, and neither may
@@ -6665,7 +6668,7 @@ cell and verifies actual bytes and predictions; `assess` reproduces the collecti
 
 `metal_completion_session.py` (workstation only; standard library plus the frozen host-pull tool) performs the
 coordinator steps above without touching the bound modules: `record-approval` writes the immutable policy from the
-user's own decision text; `snapshot` refreshes `session.json`/`spending.json` from the controller's session record,
+maintainer's own decision text; `snapshot` refreshes `session.json`/`spending.json` from the controller's session record,
 ledger and price cache plus the provider's scheduling fields (provider STOP verified, snapshots never predate the
 allocation start); `deploy --plan-unit U` creates the identical absolute paths on the host (real directories for
 the package, `/etc/fstab` bind mounts for the train and ESM trees), uploads code/parent/manifest, re-hashes the bound

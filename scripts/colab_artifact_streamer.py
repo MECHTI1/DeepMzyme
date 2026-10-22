@@ -5,7 +5,7 @@ Colab VMs are reclaimed without warning, and the Colab CLI keep-alive daemon run
 the *local* workstation -- so a local reboot reaps the VM too. Anything that exists
 only under ``/content`` is lost at that moment. On 2026-09-24 that cost a full
 Zenodo PinMyMetal fold-0 run (see
-``docs/agents_report/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`` section 7).
+``docs/execution_reports/HANDOFF_ZENODO_PMM_EXACT_BENCHMARK.md`` section 7).
 
 This streamer polls the remote run directory and copies new or changed files down as
 they appear, so an interrupted campaign loses at most one poll interval of work.

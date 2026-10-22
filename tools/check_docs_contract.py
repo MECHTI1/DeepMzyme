@@ -5,7 +5,7 @@ Usage: <python> tools/check_docs_contract.py
 Exit status 1 when any STRICT check fails; WARN lines are informational.
 
 Raising a cap, relaxing or promoting a check, or allowing a new top-level
-document needs the user's approval. Fix the text, not the checker.
+document needs the maintainer's approval. Fix the text, not the checker.
 Standard library only; nothing is read at import time. Checks the working tree.
 """
 from __future__ import annotations
@@ -22,17 +22,18 @@ from urllib.parse import unquote
 KB = 1000
 # Size targets. They stay warnings until Job C sets final caps and strictness.
 BYTE_CAPS = {
-    "AGENTS.md": 12 * KB,
     "Plan.md": 35 * KB,
     "EXPERIMENT_STATUS.md": 6 * KB,
     "docs/README.md": 5 * KB,
 }
 DEFAULT_READ_CAP = 25 * KB
+# The maintainer's root guide is untracked; its file name is read from .git/info/local-guide.
+LOCAL_GUIDE_CAP = 12 * KB
 CAMPAIGN_README_MAX_LINES = 60
 
 # Top-level documents. A new one requires merging or archiving an existing one.
 ALLOWED_ROOT_DOCS = frozenset({
-    "AGENTS.md", "EXPERIMENT_STATUS.md", "GEMINI.md", "Plan.md", "README.md",
+    "EXPERIMENT_STATUS.md", "Plan.md", "README.md",
 })
 ALLOWED_DOCS_TOP_LEVEL = frozenset({
     "COLAB_GPU_RUNBOOK.md", "DATASETS.md",
@@ -80,7 +81,7 @@ PLAYBOOK_FIRST_BLOCK_SHA256 = {
 
 FOLLOW_UP_PATH = "docs/FOLLOW_UP_TECHNICAL_ISSUES.md"
 CORE_DOCS = (
-    "AGENTS.md", "Plan.md", "EXPERIMENT_STATUS.md", "README.md", "docs/README.md",
+    "Plan.md", "EXPERIMENT_STATUS.md", "README.md", "docs/README.md",
     "docs/DATASETS.md", "docs/PARAMETER_FINDINGS.md", FOLLOW_UP_PATH, "docs/notebook_outputs/README.md",
 )
 DUPLICATE_MIN_CHARS = 200
@@ -105,6 +106,23 @@ class Findings:
 
 def repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
+
+
+def local_guide(root: Path) -> str | None:
+    """Name of the untracked root guide listed in .git/info/local-guide, or None (as in a public clone)."""
+    try:
+        common = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, check=True,
+        ).stdout.decode("utf-8").strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    config = Path(common) / "info" / "local-guide"
+    if not config.is_file():
+        return None
+    names = [line.strip() for line in config.read_text(encoding="utf-8").splitlines()]
+    name = next((line for line in names if line and not line.startswith("#")), None)
+    return name if name and (root / name).is_file() else None
 
 
 def list_markdown(root: Path) -> list[str]:
@@ -256,10 +274,10 @@ def check_links(root: Path, names: list[str], findings: Findings, origins: dict[
     return checked
 
 
-def check_allowed_files(names: list[str], findings: Findings) -> None:
+def check_allowed_files(names: list[str], findings: Findings, guide: str | None) -> None:
     for name in names:
         parts = name.split("/")
-        if len(parts) == 1 and name not in ALLOWED_ROOT_DOCS:
+        if len(parts) == 1 and name not in ALLOWED_ROOT_DOCS and name != guide:
             findings.add("STRICT", name, "allowed-files", "new root Markdown document",
                          "merge it into an owner document or archive another in the same change, with approval")
         if len(parts) == 2 and parts[0] == "docs" and parts[1] not in ALLOWED_DOCS_TOP_LEVEL:
@@ -449,8 +467,9 @@ def check_playbooks(root: Path, findings: Findings) -> None:
                          "restore the block byte-for-byte; tests and the notebook execute it")
 
 
-def check_caps(root: Path, findings: Findings) -> None:
-    for name, cap in BYTE_CAPS.items():
+def check_caps(root: Path, findings: Findings, guide: str | None) -> None:
+    caps = {guide: LOCAL_GUIDE_CAP, **BYTE_CAPS} if guide else BYTE_CAPS
+    for name, cap in caps.items():
         path = root / name
         if path.is_file() and path.stat().st_size > cap:
             findings.add("WARN", name, "caps", f"{path.stat().st_size:,} bytes (target {cap:,})",
@@ -469,8 +488,8 @@ def paragraphs(text: str) -> list[str]:
             if not block.startswith(("|", "#")) and len(" ".join(block.split())) >= DUPLICATE_MIN_CHARS]
 
 
-def check_duplicates(root: Path, names: list[str], findings: Findings) -> None:
-    core = [name for name in CORE_DOCS if (root / name).is_file()]
+def check_duplicates(root: Path, names: list[str], findings: Findings, guide: str | None) -> None:
+    core = ([guide] if guide else []) + [name for name in CORE_DOCS if (root / name).is_file()]
     core += [name for name in names if re.match(r"^docs/campaigns/[^/]+/README\.md$", name)]
     owners: dict[str, str] = {}
     for name in core:
@@ -481,13 +500,13 @@ def check_duplicates(root: Path, names: list[str], findings: Findings) -> None:
                              "keep it in the owner document and link to it")
 
 
-def default_read(root: Path, campaign_readme: str | None, findings: Findings) -> str:
-    parts = ["AGENTS.md", STATUS_PATH] + ([campaign_readme] if campaign_readme else [])
+def default_read(root: Path, campaign_readme: str | None, findings: Findings, guide: str | None) -> str:
+    parts = ([guide] if guide else []) + [STATUS_PATH] + ([campaign_readme] if campaign_readme else [])
     sizes = [(name, (root / name).stat().st_size) for name in parts if (root / name).is_file()]
     total = sum(size for _, size in sizes)
     if total > DEFAULT_READ_CAP:
         findings.add("WARN", "default read path", "caps", f"{total:,} bytes (target {DEFAULT_READ_CAP:,})",
-                     "shorten AGENTS, STATUS or the campaign README; raising the target needs approval")
+                     "shorten the local guide, STATUS or the campaign README; raising the target needs approval")
     listed = " + ".join(f"{name} ({size:,})" for name, size in sizes)
     return f"Default read path: {listed} = {total:,} bytes (target {DEFAULT_READ_CAP:,})"
 
@@ -495,17 +514,18 @@ def default_read(root: Path, campaign_readme: str | None, findings: Findings) ->
 def main(root: Path | None = None) -> int:
     root = (root or repo_root()).resolve()
     findings = Findings()
+    guide = local_guide(root)
     names = list_markdown(root)
     origins = check_frozen_moves(root, findings)
     checked = check_links(root, names, findings, origins)
-    check_allowed_files(names, findings)
+    check_allowed_files(names, findings, guide)
     campaign_readme = check_status(root, findings)
     check_campaigns(root, names, findings)
     check_follow_up(root, findings)
     check_playbooks(root, findings)
-    check_caps(root, findings)
-    check_duplicates(root, names, findings)
-    read_path = default_read(root, campaign_readme, findings)
+    check_caps(root, findings, guide)
+    check_duplicates(root, names, findings, guide)
+    read_path = default_read(root, campaign_readme, findings, guide)
     for level, where, message in findings.items:
         print(f"{level} {where}: {message}")
     print(read_path)

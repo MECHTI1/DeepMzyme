@@ -15,7 +15,7 @@ Commands (everything else is passed to pmm_trunklr.py unchanged):
   policy                  offline: the recorded policy, the bound sessions and the verdict for the current session
   record-policy --log-entry tlr-NNN --decision TEXT --max-sessions N --max-session-seconds S --expires-at UTC
                 [--units UNIT ...]
-                          once, only after the user's decision: the v2 launch policy (write-once)
+                          once, only after the maintainer's decision: the v2 launch policy (write-once)
 
 Status, wait, pull, recover-lane, archive-failed, evidence, deploy, session, units, gates and spend go to the frozen
 launcher and never need the policy, so evidence collection and recovery stay possible after launch authorization is

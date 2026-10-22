@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Workstation launcher and freeze records of v3 step F (standard library only; rules: step_f_spec.json, draft v3).
 
-Order (spec "freeze_order"; every step needs the user's logged go-ahead, recorded by the command that names it):
+Order (spec "freeze_order"; every step needs the maintainer's logged go-ahead, recorded by the command that names it):
   F1  bind-selection --log-entry v3-NNN     CPU, once: the selection record (E2 selection, the 10-epoch schedule
                                             decision "not adopted", E_sel = 50, terminal checkpoint, seed 42)
   F2  build-manifest / record-ceiling / record-authorization / deploy / launch / wait / pull / evidence
@@ -100,7 +100,7 @@ REMOTE_FILES = {name: f"{d.REMOTE_CODE}/{name}" for name in VM_FILES}
 FIT_SECONDS = 3300.0
 # Kept free after the refit launch: storage until the report and the disk's retirement, about five calendar days at
 # $0.55 ($2.75), rounded up. The test-side ESMC, preparation, prediction and report run on the workstation CPU ($0).
-# The user may record another reserve.
+# The maintainer may record another reserve.
 DEFAULT_RESERVE_USD = 3.0
 DEFAULT_RESERVE_BASIS = ("storage until the report and the disk's retirement, about 5 calendar days at $0.55/day "
                          "($2.75), rounded up; the test side runs on the workstation CPU")
@@ -139,7 +139,7 @@ def record_paths(campaign: Path) -> dict[str, Path]:
 
 def require_log_entry(log_entry: str | None, what: str, *, dry_run_allowed: bool = False) -> None:
     allowed = LOG_ENTRY.fullmatch(str(log_entry)) is not None or (dry_run_allowed and log_entry == DRY_RUN_ENTRY)
-    require(allowed, f"Name the campaign log entry of the user's {what} go-ahead (--log-entry v3-NNN)")
+    require(allowed, f"Name the campaign log entry of the maintainer's {what} go-ahead (--log-entry v3-NNN)")
 
 
 def git_binding(root: Path = ROOT, files: tuple[str, ...] = BOUND_FILES) -> dict[str, Any]:
@@ -282,13 +282,13 @@ def ceiling_record(*, usd: float, spent_usd: float, spent_at: str, spent_source:
     record = e2.ceiling_record(usd=usd, spent_usd=spent_usd, spent_at=spent_at, spent_source=spent_source,
                                log_entry=log_entry, reserve_usd=reserve_usd, reserve_basis=reserve_basis)
     record["scope"] = "campaign total, gross, storage included; step F refit launches are refused above it"
-    record["grants"] = "nothing: a GPU start needs the user's recorded step F refit authorization"
+    record["grants"] = "nothing: a GPU start needs the maintainer's recorded step F refit authorization"
     return record
 
 
 def authorization_record(*, manifest_path: Path, ceiling_path: Path, log_entry: str) -> dict[str, Any]:
     record = e2.authorization_record(manifest_path=manifest_path, ceiling_path=ceiling_path, log_entry=log_entry)
-    record["decision"] = "the user's GPU-start authorization for the step F refit (training data only)"
+    record["decision"] = "the maintainer's GPU-start authorization for the step F refit (training data only)"
     record["covers"] = "F2 only: no test-side read, test embedding, prediction or report"
     return record
 
@@ -319,7 +319,7 @@ def f_blockers(names: list[str], state: dict[str, Any], *, campaign: Path, readi
     authorization = d.read_record(paths["authorization"])
     if authorization is None:
         problems.append("no recorded GPU-start authorization for the step F refit ('record-authorization' after the "
-                        "user's decision is logged)")
+                        "maintainer's decision is logged)")
     elif manifest is not None and ceiling is not None:
         if authorization.get("manifest_sha256") != sha256_file(paths["manifest"]):
             problems.append("the recorded authorization names another manifest")
@@ -343,7 +343,7 @@ def build_step(campaign: Path = CAMPAIGN, *, vm_files: Callable[[], dict[str, st
     return c.Step(
         key=STEP_KEY, label="step F refit",
         outside="step F admits only its refit ('units'); the test-side actions never run through the lanes",
-        second_failure="step F stops for diagnosis and the user's decision (a second refit failure)",
+        second_failure="step F stops for diagnosis and the maintainer's decision (a second refit failure)",
         done_hint="the refit has run: 'pull', 'evidence', vm-stop, then 'refit-receipt' on the workstation",
         units=lambda state: units,
         batch_blockers=lambda names, state: f_blockers(names, state, campaign=campaign, readiness=readiness,
@@ -578,7 +578,7 @@ def freeze2_record(campaign: Path = CAMPAIGN, *, log_entry: str | None, prepared
         require(freeze1 is not None, "Freeze 1 is not recorded")
         require(freeze1.get("kind") == "step_f_freeze_1" and not placeholders(freeze1)
                 and LOG_ENTRY.fullmatch(str(freeze1.get("user_go_ahead_log_entry"))) is not None,
-                "The recorded Freeze 1 is not a complete record with the user's logged go-ahead")
+                "The recorded Freeze 1 is not a complete record with the maintainer's logged go-ahead")
         require_log_entry(log_entry, "Freeze 2")
         require(prepared_dir is not None and test_esm_dir is not None, "Freeze 2 needs --prepared-dir and --test-esm-dir")
         require(not paths["prediction"].exists(), "The prediction claim exists; Freeze 2 precedes it")
@@ -629,8 +629,8 @@ def freeze2_record(campaign: Path = CAMPAIGN, *, log_entry: str | None, prepared
                         ("dispositions", "unscorable_reasons", "physical_ions", "clean_subset", "esm_plan_chains",
                          "previously_opened_pdb_ids", "training_pdb_ids")},
         "labels_read": False, "predictions_made": False,
-        "next": "F4 after the user's go-ahead: run_pmm_v3_step_f.py --action predict --campaign-dir C --log-entry "
-                "v3-NNN (one campaign-wide claim), then pmm_v3_step_f_report.py --campaign-dir C",
+        "next": "F4 after the maintainer's go-ahead: run_pmm_v3_step_f.py --action predict --campaign-dir C "
+                "--log-entry v3-NNN (one campaign-wide claim), then pmm_v3_step_f_report.py --campaign-dir C",
     }
     if not template:
         require(not paths["freeze2"].exists(), "Freeze 2 is recorded once")
@@ -652,7 +652,7 @@ def ledger_text(record: dict[str, Any]) -> str:
                 f"`{record['selection']['cell']}` ({record['selection']['epochs']} epochs, terminal checkpoint, seed "
                 f"{record['selection']['seed']}; refit checkpoint `{str(record['checkpoint_sha256'])[:12]}`); tools "
                 f"{tools}; report specification, clean-subset rules and disclosures as in the specification (label "
-                f"{record['label']}). User go-ahead: log {record['user_go_ahead_log_entry']}. Next: label-blind "
+                f"{record['label']}). Maintainer go-ahead: log {record['user_go_ahead_log_entry']}. Next: label-blind "
                 "preparation and test-side ESMC generation on the workstation CPU (no label value used).")
     prep_info = record["preparation"]
     dispositions = prep_info.get("dispositions")
@@ -664,7 +664,7 @@ def ledger_text(record: dict[str, Any]) -> str:
             f"({(clean or {}).get('exclusion_counts') if isinstance(clean, dict) else LEDGER_PLACEHOLDER}); "
             f"memberships and the test ESMC inventory frozen by SHA-256 (inventory "
             f"`{str(record['test_esm_inventory_sha256'])[:12]}`; Freeze 1 `{str(record['freeze1_sha256'])[:12]}`). "
-            f"No label value was used (the preparation parses and discards label-bearing cells unused). User go-ahead: "
+            f"No label value was used (the preparation parses and discards label-bearing cells unused). Maintainer go-ahead: "
             f"log {record['user_go_ahead_log_entry']}. Next, after its own go-ahead: the single prediction pass (one "
             "campaign-wide claim), "
             "then the report (the only component that uses a label value).")

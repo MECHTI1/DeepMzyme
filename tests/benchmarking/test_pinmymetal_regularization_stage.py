@@ -187,7 +187,7 @@ def test_round_b_needs_an_assessment_of_a_and_r_with_a_pass(tmp_path):
                      stamp="20261007T040000Z")
     planned = plan(tmp_path, [(VECNORM, 0), ("only_gvp__four_class__sitenone__fold0__seed42", 1)], state)
     assert planned[1]["fit_seconds"] == c.FIT_SECONDS["only_gvp"] + c.COLD_CACHE_SECONDS
-    # Cost-gated augmentations: the user's recorded OK and a measured forecast, or they stay "not tested (cost)".
+    # Cost-gated augmentations: the maintainer's recorded OK and a measured forecast, or they stay "not tested (cost)".
     with pytest.raises(d.LauncherError, match="cost-gated candidate.*\\n.*measured --fit-seconds"):
         plan(tmp_path, [(POSNOISE, 0)], state)
     d.write_record_once(tmp_path / "step_d_evidence" / "cost_gate_approval.json",

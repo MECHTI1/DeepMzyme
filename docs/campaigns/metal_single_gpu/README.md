@@ -2,7 +2,7 @@
 
 Status: paused (2026-09-28 documentation reconciliation)
 
-Two distinct items: `metal_single_gpu_20h_v2` admission is closed (full training rejected); the separately authorized continuation remains paused by the user since 2026-09-17. Preserve both budget identities. The non-overlap training-pocket campaign compares four/five/six targets on the common-four endpoint with native checkpoint selection; one fixed grouped split for discovery and prepared grouped-fold/seed confirmation. Historical G4 execution produced timing probes (Grade 6) and one discovery fit (Grade 5); no held-out access or promotion. No further execution is authorized by this history.
+Two distinct items: `metal_single_gpu_20h_v2` admission is closed (full training rejected); the separately authorized continuation remains paused by the maintainer since 2026-09-17. Preserve both budget identities. The non-overlap training-pocket campaign compares four/five/six targets on the common-four endpoint with native checkpoint selection; one fixed grouped split for discovery and prepared grouped-fold/seed confirmation. Historical G4 execution produced timing probes (Grade 6) and one discovery fit (Grade 5); no held-out access or promotion. No further execution is authorized by this history.
 
 Sources and evidence:
 
@@ -12,7 +12,7 @@ Sources and evidence:
 
 Files here: this README and [verbatim historical STATUS entries](log.md).
 No existing report, summary or raw artifact moved. This is the history-preservation
-step of [Job B](../../../docs/archive/consolidation_2026-09/PLAN_v2.md#11-jobs-and-sequencing-amended).
+step of [Job B](../../../docs/archive/consolidation_2026-09/MAP.md).
 
 How to continue: consult [current status](../../../EXPERIMENT_STATUS.md) and the
 linked owner before proposing separately authorized work. Historical next actions

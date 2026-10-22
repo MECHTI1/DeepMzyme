@@ -1,12 +1,12 @@
 # PMM ion metal v3 — step F execution plan (draft v3, approved 2026-10-12)
 
-Status: **approved by the user on 2026-10-12 ([log v3-045](log.md#v3-045)) and executed: the refit, both freezes, the label-blind preparation, the single test pass and the report are complete ([log v3-046 to v3-048](log.md#v3-048)); step F is complete**
-(2026-10-12: the user chose to finalize with the 50-epoch selection, [log v3-042](log.md#v3-042); one CPU
+Status: **approved by the maintainer on 2026-10-12 ([log v3-045](log.md#v3-045)) and executed: the refit, both freezes, the label-blind preparation, the single test pass and the report are complete ([log v3-046 to v3-048](log.md#v3-048)); step F is complete**
+(2026-10-12: the maintainer chose to finalize with the 50-epoch selection, [log v3-042](log.md#v3-042); one CPU
 correction round, [log v3-043](log.md#v3-043); the CPU ESMC compatibility check passed, [log v3-044](log.md#v3-044);
 see [Implementation notes](#implementation-notes-2026-10-12-log-v3-042) and the [specification](step_f_spec.json)).
 Draft v3 of
 2026-10-12 ([log v3-038](log.md#v3-038)) supersedes draft v2 of 2026-10-08
-([log v3-030](log.md#v3-030)), which corrected the session draft of 2026-10-08
+([log v3-030](log.md#v3-030)), which corrected the working draft of 2026-10-08
 08:45 UTC (`audits/session_notes_20261008/step_f_plan_DRAFT.md` on the campaign
 data root, kept unchanged). The rules stay owned by [plan step F](plan.md#steps),
 the [A4](assessment_spec.md) and [E2](e2_assessment_spec.md) specifications and
@@ -15,7 +15,7 @@ execution. No refit, test-data access or GPU start is authorized by it.
 
 **Changes in v3:**
 - **Schedule binding.** The refit's epoch count is no longer hard-coded at 50. It is resolved from a bound schedule
-  decision: 50 by default, and 10 only if the user approves the pre-step-F 10-epoch comparison
+  decision: 50 by default, and 10 only if the maintainer approves the pre-step-F 10-epoch comparison
   ([handoff section 11](handoff.md#11-pre-step-f-review)) and it is completed and adopted under its frozen gates. The
   refit command, receipt, identity and every later binding carry the resolved count, so the configuration, refit
   duration and checkpoint provenance stay consistent with the cross-validation evidence (TECH-027: the same epoch
@@ -26,7 +26,7 @@ execution. No refit, test-data access or GPU start is authorized by it.
 - **The prior test-exposure disclosures are listed in full** (F4) as report requirements.
 - **Costs refreshed.**
 
-Corrections carried over from v2 against the session draft: the selection input is the E2 final selection; the refit
+Corrections carried over from v2 against the 2026-10-08 working draft: the selection input is the E2 final selection; the refit
 command is genuinely validation-free; four-, five- and six-class winners are handled explicitly; the refit checkpoint
 is bound by hash through test reporting; label blindness, source-row accounting, unscorable-row denominators and
 report recovery from immutable predictions are tested requirements.
@@ -38,30 +38,30 @@ report recovery from immutable predictions are tested requirements.
    `held_out_test_accessed` false; evidence copied; log entry. **Met** (log v3-031).
 2. Step E2 complete under the frozen E2 specification (36 fits verified, all 17
    declared comparisons reported, a machine-readable final selection), or a
-   dated log entry by which the user cancels E2. **Met** (log v3-037).
+   dated log entry by which the maintainer cancels E2. **Met** (log v3-037).
 3. Label `both_results_secondary` recorded. **Met** (log v3-022).
 4. Schedule decision recorded, by exactly one of the paths below. **Met by (b)** on 2026-10-12 (log v3-041):
    `S10_20261012T111859Z` (SHA-256 `8fbce69b…`), not adopted, so `E_sel` = 50.
-   - (a) a dated log entry in which the user declines the pre-step-F comparison or goes straight to step F
+   - (a) a dated log entry in which the maintainer declines the pre-step-F comparison or goes straight to step F
      (epochs = 50);
    - (b) the comparison's machine-readable schedule decision after its completed assessment (epochs = 10 if
      adopted, otherwise 50): `result.schedule_decision` of
      `step_s10_evidence/assessments/S10_<UTC>/assessment.json`, bound by SHA-256 (chosen and prepared, log v3-039);
-   - (c) a dated entry recording that the comparison stopped without a decision (epochs = 50 unless the user
+   - (c) a dated entry recording that the comparison stopped without a decision (epochs = 50 unless the maintainer
      decides otherwise).
 5. The operative ceiling, recorded in execution controls, covers the refreshed
-   F forecast including storage; otherwise the AGENTS budget question. **Pending:** `record-ceiling` before the
+   F forecast including storage; otherwise the budget question under the maintainer's local development guidelines (not published). **Pending:** `record-ceiling` before the
    refit launch ($55 recorded for E2 and S10; forecast in F6).
 6. The CPU readiness checks of F8 pass on synthetic or training-side data. **Met** (log v3-043: the corrected tools,
    38 tests including the two synthetic fits, and a scripted rerun of readiness stages A–D).
-7. The user approves this plan. **Met** (log v3-045). Later, separately, the user gives three go-aheads: Freeze 1
+7. The maintainer approves this plan. **Met** (log v3-045). Later, separately, the maintainer gives three go-aheads: Freeze 1
    before F3b, Freeze 2 after F3b, and the single test pass (F4) after Freeze 2 (see F7).
 
 ## F1. Selection input (CPU; no fit; no judgment)
 
 - Inputs: the E2 final-selection artifact (selected cell, whether it replaced the original selection, the original A4
   selection, the E2 specification and manifest SHA-256 values, evidence references), and the schedule decision of F0
-  gate 4 (log entry, or the comparison's decision artifact and its SHA-256). Only if the user cancelled E2 by a dated
+  gate 4 (log entry, or the comparison's decision artifact and its SHA-256). Only if the maintainer cancelled E2 by a dated
   log entry: the A4 `stage6_selection.selected` alone.
 - The step F record binds:
   - the selection artifact path and SHA-256, and the original E assessment SHA-256;
@@ -116,7 +116,7 @@ report recovery from immutable predictions are tested requirements.
 ## F3. Test access in two dated freezes
 
 Both freezes are dated entries in the [DATASETS test-use ledger](../../../DATASETS.md#test-use-ledger), each with a log
-entry, and each needs the user's go-ahead. The tools enforce the order from the records (F8 item 10): the test-side
+entry, and each needs the maintainer's go-ahead. The tools enforce the order from the records (F8 item 10): the test-side
 actions read the freezes only at their canonical paths under the campaign root, need a `v3-NNN` go-ahead and no
 template placeholder, run only with the exact code and specification Freeze 1 binds, and are refused after Freeze 2
 (preparation) or after the prediction claim (prediction). The records cannot prove that a go-ahead was given; the
@@ -173,7 +173,7 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
 - A defect that needs no code or specification change (an interrupted run, a wrong path) is re-prepared into a new
   directory under the same Freeze 1.
 - A code fix needs an amended Freeze 1:
-  1. a dated log entry describing the defect and the fix, with the user's go-ahead for the amendment;
+  1. a dated log entry describing the defect and the fix, with the maintainer's go-ahead for the amendment;
   2. the old `step_f_evidence/freeze1.json` archived by hand as `freeze1.superseded_<UTC>.json`, never deleted;
   3. the fix committed, with its tests and the affected readiness checks rerun on synthetic or training-side data;
   4. `record-freeze1 --amends <old SHA-256> --prior-test-side-read none|yes --log-entry v3-NNN`, which names the
@@ -183,19 +183,19 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
      under the old record name it and are refused);
   6. the amendment disclosed in the report.
 - A specification change after `bind-selection` also changes the refit's bound specification, which `refit-receipt`
-  and Freeze 1 then refuse; it is not an amendment and needs the user's decision (a refit rerun or a tooling change).
-- After Freeze 2 or the prediction claim, there is no amendment: step F stops for the user's decision.
+  and Freeze 1 then refuse; it is not an amendment and needs the maintainer's decision (a refit rerun or a tooling change).
+- After Freeze 2 or the prediction claim, there is no amendment: step F stops for the maintainer's decision.
 
 ## F4. The one test pass and its report
 
 - **Inference** uses the bound checkpoint and the saved normalization: softmax, with five- or six-class probabilities
   summed into Class VIII before the argmax. No calibration, ensemble or threshold change.
-- **The go-ahead and the claim.** The pass runs after the user's own logged go-ahead for the single test pass. Before
+- **The go-ahead and the claim.** The pass runs after the maintainer's own logged go-ahead for the single test pass. Before
   any test structure is opened or any prediction is made, the prediction tool verifies Freeze 1 (its own code) and
   Freeze 2 (every membership file, the recomputed embedding inventory and the bound checkpoint), then writes the
   campaign-wide write-once claim `step_f_evidence/f4_prediction_claim.json` with that go-ahead, the freezes, the
   checkpoint and the output directory. A second pass is refused into any directory. A pass that fails after its claim
-  is not rerun without the user's dated decision; the claim is archived by hand, never deleted, and the failure is
+  is not rerun without the maintainer's dated decision; the claim is archived by hand, never deleted, and the failure is
   disclosed.
 - **Immutable predictions first.** `test_predictions.csv` has one row per source row, with the disposition, flags,
   common-four probabilities (native probabilities equal them for the four-class selection), and the checkpoint
@@ -246,7 +246,7 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
 - Before F3a: a dated log entry with the selection and `E_sel`.
 - Freeze 1 and Freeze 2: ledger entries and log entries.
 - After F4: ledger results, a log entry, STATUS, README and handoff.
-- Campaign closure only by the user's decision, through the closure procedure.
+- Campaign closure only by the maintainer's decision, through the closure procedure.
 
 ## F6. Cost and time (refreshed 2026-10-12, log v3-043)
 
@@ -271,7 +271,7 @@ embeddings must record the same Freeze 1. After Freeze 2, the memberships are fi
   11:18:47 UTC), the refit $0.9–1.9 and storage for 2–10 days $1.1–5.5; within the recorded $55. The 10-epoch path
   no longer applies (not adopted).
 
-## F7. Decisions for the user (none inferred)
+## F7. Decisions for the maintainer (none inferred)
 
 One list, in order; the handoff, the log and STATUS use the same one.
 
@@ -345,7 +345,7 @@ test pass and the report followed ([log v3-047](log.md#v3-047), [log v3-048](log
 
 ## Implementation notes (2026-10-12, log v3-042)
 
-Prepared on CPU under the user's preparation-only authorization (log v3-042) and corrected in one CPU round
+Prepared on CPU under the maintainer's preparation-only authorization (log v3-042) and corrected in one CPU round
 ([log v3-043](log.md#v3-043)); the rules above include that round's corrections.
 As of log v3-043 (all executed later, log v3-045 to v3-048): **Not run:** no GPU start, refit, test-side read, test
 embedding or prediction. **Not recorded:** no
@@ -418,7 +418,7 @@ lists the tools and commands.
   content. The training cohort binds each entry to one canonical name (`pmm_ion_cohort.canonical_structure_names`).
   The test side keeps the site manifest's name throughout: in preparation, test ESMC file names and prediction.
   Physical ions and aliases are keyed by content SHA-256, so identical files give identical inputs and the same ion.
-- **Where F3b and F4 run: the workstation CPU** (the user's choice, log v3-043). The preparation,
+- **Where F3b and F4 run: the workstation CPU** (the maintainer's choice, log v3-043). The preparation,
   test ESMC generation, prediction and report run there; no test file goes to the VM, which only
   refits. `test-embeddings` refuses any device but the CPU. The requirements and times are in F6.
 - **Test ESMC precision.** The training embeddings were generated on the L4 GPU, where the ESMC
@@ -460,7 +460,7 @@ that applies, and it belongs to the clean subset only if it has no code:
     sequences.
   - Reference chains are every context chain of the frozen training ESMC plan, checked against
     the cohort SHA-256.
-  - Limitation, kept and disclosed (the user's decision, log v3-043): a chain under 30 residues is
+  - Limitation, kept and disclosed (the maintainer's decision, log v3-043): a chain under 30 residues is
     never compared under A1, so it cannot exclude a row, even when the same peptide is in training.
     On the training side, 2 of the 1,500 fold-1 rows have only such chains. No short-chain
     exclusion is added; the preparation summary counts such rows, and the report discloses the

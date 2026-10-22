@@ -1,6 +1,6 @@
 # EC1 independent-support preparation
 
-Status: paused (2026-10-14 deferred by the user's metal-first choice; Route 1 inventory remains complete)
+Status: paused (2026-10-14 deferred by the maintainer's metal-first choice; Route 1 inventory remains complete)
 
 CPU evidence and data preparation toward stronger EC1 evidence: reproduce development support under the frozen
 dependence components, explain the EC7 data attrition, and inventory local training sources for EC7, EC6 and EC5. No

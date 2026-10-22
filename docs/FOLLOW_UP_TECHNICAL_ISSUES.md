@@ -31,7 +31,7 @@ Audit evidence in the serialized notebook:
 
 **Conflicting documentation/policy**
 
-`Plan.md`, the local agent instructions, and the metal playbook describe Stage 6B final
+`Plan.md`, the maintainer's local development guidelines (not published), and the metal playbook describe Stage 6B final
 full-train refit as the required bridge between Stage 6 selection and reportable
 Stage 7 evaluation.
 
@@ -454,7 +454,7 @@ non-training remediation.
 
 **Policy update and latent Stage 6B gap (2026-09-28):** `Plan.md` changed at
 the Job B documentation review: no training objective is primary; each campaign
-trains the user-chosen mix of `four_class`, `five_class` and `six_class`; and
+trains the maintainer-chosen mix of `four_class`, `five_class` and `six_class`; and
 comparing five- or six-class training with direct four-class training on
 collapsed four is a neutral test ([target policy](../Plan.md#2-train-the-metal-classification-model)).
 The lines below that call the four-class endpoint “primary” or six-class
@@ -554,7 +554,7 @@ establish model evidence or certify later HPO/Stage 6/6B/7 paired recipes.
 **Risk**
 
 A future run may be launched under a stale six-class or five-class value and
-then described as direct four-class training. Conversely, an agent may run only
+then described as direct four-class training. Conversely, an operator may run only
 the direct-four arm and omit the now-required six-class-trained/collapsed-four
 challenger, or treat unmatched historical six-class evidence as that challenger.
 
@@ -809,7 +809,7 @@ Constraints recorded before the Release 1 implementation:
 
 - `workflow.execute()` owns one fit per call. A maintained automatic host
   supervisor is needed to replace the temporary transport operator and remove
-  conversation turns from the routine next-fit path.
+  interactive steps from the routine next-fit path.
 - `runtime.authorize_budget()` requires all allocations closed, and the host's
   worker receipts bind the authorization digest frozen during preparation.
   Increasing that ceiling currently requires a fresh session; silently editing
@@ -824,7 +824,7 @@ Constraints recorded before the Release 1 implementation:
 
 The [GPU runtime efficiency plan](GPU_RUNTIME_EFFICIENCY_PLAN.md) owns the
 prioritized work, performance targets, provenance boundary and failure tests.
-The [current status](../EXPERIMENT_STATUS.md) owns the user-requested pause and
+The [current status](../EXPERIMENT_STATUS.md) owns the maintainer-requested pause and
 allocation accounting. Durable pause/lease controls and exactly-once accounting
 have local failure tests; session 9's verified host-only interval was reconciled
 without clearing the pause. The maintained queue passed CPU failure tests.

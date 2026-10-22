@@ -21,7 +21,7 @@ from benchmarking.pmm_execution import ExecutionBlocked
 from test_pmm_ion_campaign import _campaign_with_folds, _full_inventory
 
 # The closed v2 five-class screen refuses any source tree other than its frozen one.
-# Since v3 work changes src/ (user decision 2026-10-04), these runner tests apply only
+# Since v3 work changes src/ (maintainer decision 2026-10-04), these runner tests apply only
 # to the frozen checkout _code/pmm_core_scope_v2, where they still run.
 requires_frozen_v2_source = pytest.mark.skipif(
     campaign.source_tree_sha256() != screen.EXPECTED["source_tree_sha256"],

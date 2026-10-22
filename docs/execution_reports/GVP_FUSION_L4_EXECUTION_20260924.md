@@ -3,13 +3,13 @@
 Study: `gvp_fusion_diagnostic_l4_v1`, **stopped; do not resume**. Its obsolete
 design is preserved in
 [`gvp_fusion_l4_v1_stopped_plan.md`](../archive/experiments/gvp_fusion_l4_v1_stopped_plan.md).
-The user-requested corrected pocket-level protocol has a distinct plan in
-[`METAL_TRAINING_PIPELINE_PLAYBOOK.md`](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-pocket-antigravity-matched-l4-diagnostic).
+The maintainer-requested corrected pocket-level protocol has a distinct plan in
+[`METAL_TRAINING_PIPELINE_PLAYBOOK.md`](../METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-pocket-l4-diagnostic-matched-to-the-2026-09-23-benchmark).
 This file is the factual stop and artifact ledger for v1 only.
 
 ## 2026-09-23 21:43 UTC — authorized start
 
-- User authorized execution on Colab and required non-interference with all
+- The maintainer authorized execution on Colab and required non-interference with all
   background processes on the PC. No existing PC process will be stopped,
   signalled, or reprioritized.
 - `colab sessions` returned `No active sessions found on server.` No Colab
@@ -45,7 +45,7 @@ validation-only comparison forbids.
   `scripts/run_gvp_fusion_l4_diagnostic.py` with frozen command generation,
   one-epoch smoke mode, serial fit execution, completion verification, status,
   and summary. It never allocates, stops, or changes a Colab session.
-- Added four focused CPU unit tests. They passed with the user-specified
+- Added four focused CPU unit tests. They passed with the maintainer-specified
   `DeepMzyme` conda interpreter. Syntax checks and `git diff --check` passed.
 - Next: freeze source snapshot and command manifest, then verify the requested
   L4 assignment and prepare the v12 bundle on that VM.
@@ -76,8 +76,8 @@ validation-only comparison forbids.
 
 ## 2026-09-23 21:55 UTC — shared-checkout isolation correction
 
-- User clarified that the previously good project version must remain intact,
-  including if this session stops mid-work. The experiment source has been
+- The maintainer clarified that the previously good project version must remain intact,
+  including if this working session stops mid-work. The experiment source has been
   unpacked into the isolated local
   `DeepMzyme_Data/notebook_outputs/plans/gvp_fusion_diagnostic_l4_v1/source_checkout/`.
   Byte comparisons confirmed that its two modified trainer files, new runner,
@@ -85,7 +85,7 @@ validation-only comparison forbids.
 - Restored **only** `src/training/config.py` and `src/training/run.py` in the
   shared checkout to their pre-study Git state, and removed this study's two
   newly added root `scripts/` and `tests/` files. `git diff --exit-code` for
-  those trainer files is clean. All other pre-existing staged/untracked user
+  those trainer files is clean. All other pre-existing staged/untracked maintainer
   work remains as it was; no pre-existing process was touched.
 - The experiment runs from the isolated snapshot already uploaded to Colab.
   Its source archive SHA256 still matches the frozen manifest. Code changes
@@ -111,7 +111,7 @@ validation-only comparison forbids.
   (`git diff --cached --binary | sha256sum`):
   `accc647da5d687f088591407ec734981b61b0948542bfb4173a268c0abb3f8b0`.
   Recheck this fingerprint before any future cleanup to avoid touching the
-  user's staged work.
+  maintainer's staged work.
 
 ## 2026-09-23 21:57 UTC — remote data gate
 
@@ -151,7 +151,7 @@ validation-only comparison forbids.
   (04:36 IDT). It runs only
   `DeepMzyme_Data/notebook_outputs/plans/gvp_fusion_diagnostic_l4_v1/stop_own_colab_session.sh`,
   which targets only `gvp-l4-v1-20260924a`. This protects against an
-  interrupted assistant turn leaving a billable VM running past the
+  interrupted controlling process leaving a billable VM running past the
   session's closeout reserve. It does not touch other sessions or processes.
 - `systemctl --user list-timers` verified the timer was scheduled. The guard
   writes `session_stop_guard.log` when it fires. If this session is stopped
@@ -209,7 +209,8 @@ validation-only comparison forbids.
   shared PDB IDs (computed directly from `structure_name` prefixes). The
   Colab VM extracted the train side only; its `test` directory is absent.
   This is PDB-ID isolation, not a claim of sequence-homology independence.
-- The recent 2026-09-23 Antigravity exact-PinMyMetal benchmark is a
+- The recent 2026-09-23 exact-PinMyMetal five-fold benchmark
+  (`benchmark_exact_pinmymetal_5fold`) is a
   **different protocol**: `--train-val-split-by pocket_id`, five-class native
   training, exact-PinMyMetal train membership, and held-out test evaluation.
   Its saved multimodal split diagnostics show **58, 56, 43, 49, 45** shared
@@ -233,10 +234,10 @@ validation-only comparison forbids.
 
 ## 2026-09-23 22:21:43 UTC — user-directed stop and closeout
 
-- User explicitly stopped the study after clarifying that the intended
-  comparison should reproduce the recent Antigravity **pocket-level** split
+- The maintainer explicitly stopped the study after clarifying that the intended
+  comparison should reproduce the recent 2026-09-23 benchmark's **pocket-level** split
   and method. The new study's PDB-ID-grouped design therefore does **not**
-  match the user's intended benchmark. It must not be resumed or presented
+  match the maintainer's intended benchmark. It must not be resumed or presented
   as a matched comparison to the recent run.
 - G0 fold-0 seed-42 one-epoch smoke had been started, but was interrupted
   during preparation. It is incomplete and was not copied or used. G1 was

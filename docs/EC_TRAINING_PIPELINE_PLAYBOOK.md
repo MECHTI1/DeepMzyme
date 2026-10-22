@@ -359,12 +359,12 @@ Use only validation metrics for all selection decisions. After Stage 6 selects
 one EC configuration, train/refit the final EC model with that frozen
 configuration, then use the held-out test once for final reporting.
 
-**Fresh-check default.** If the user asks for a new check, new run, or fresh
+**Fresh-check default.** If the maintainer asks for a new check, new run, or fresh
 Optuna sweep without explicitly asking to rely on previous raws/results, use
 previous notebook outputs only as context and safety checks. Prefer the broadest
 sensible validation-only Optuna search within the selected `MODEL_PRESET`, with
 fixed EC depth, fixed selection metric, and common-sense runtime and
-feature-availability limits. If the user explicitly asks to rely on previous
+feature-availability limits. If the maintainer explicitly asks to rely on previous
 running/results/raws, inspect that evidence and use it to narrow, continue, or
 repeat the prior configuration.
 
@@ -984,7 +984,7 @@ Purpose: perform a longer, controlled EC search after the simpler baseline and
 medium HPO justify the model family and search axes.
 
 When to use it: after at least one medium HPO or seed-repeat batch identifies
-the model family and axes worth expanding, or when the user asks for a fresh
+the model family and axes worth expanding, or when the maintainer asks for a fresh
 broad Optuna check and does not explicitly ask to rely on previous raw outputs.
 
 Expected scale/runtime: large Optuna search, potentially very long or

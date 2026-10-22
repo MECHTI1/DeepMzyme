@@ -51,7 +51,7 @@ Do not present fixed-split seed evidence as grouped-fold confirmation.
 
 ## PMM ion-level comparison with corrected protein context
 
-The campaign was closed at fold 0 on 2026-10-03 (user decision); the remaining
+The campaign was closed at fold 0 on 2026-10-03 (maintainer decision); the remaining
 36 core fits were not run
 ([archived README](../archive/campaigns/pmm_ion_metal/README.md)). Historical rows
 below preserve the decisions at the time.
@@ -59,7 +59,7 @@ below preserve the decisions at the time.
 | Experiment ID | Design | Result role | Grade | Held-out access | Evidence |
 |---|---|---|---:|---|---|
 | `metal/benchmark_exact_pinmymetal_5fold/2026-09-23` | Three comparative architectures (ESM-C, Enhanced GVP, Late Fusion) on 5-fold cross-validation (`--train-val-split-by pocket_id`) | Selected-checkpoint OOF validation: late fusion 79.84%, ESM-C 78.98%, GVP 73.87% (epoch maxima: late fusion 80.22% ± 3.31%, ESM-C 80.29% ± 3.26%, GVP 74.42% ± 2.39%). Test ensemble 79.92% (late fusion), 78.03% (GVP), 77.37% (ESM-C). Caveat: not like-for-like with PinMyMetal; pocket-stratified fold leakage; test set opened 2026-09-22/23 (see ledger) | 6 (exploratory; pocket-stratified fold leakage precludes Grade 2) | Held-out test evaluated (opened 2026-09-22/23; exploratory ranking only) | [summary](summaries/summary_pinmymetal_5fold_three_models_20260923.md); [reproducibility guide](../EXACT_PINMYMETAL_5FOLD_CV_REPRODUCIBILITY.md) |
-| `metal/gvp_fusion_exact_pocket_l4_v2/2026-09-24` | Validation-only continuation on exact-pocket split; 3 of 20 scheduled runs executed on L4 VM | Validation-only exploratory diagnostics; execution stopped at 3/20 runs. No test evaluation. | 6 (incomplete run/exploratory) | None; validation-only | [execution report](../agents_report/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md) |
+| `metal/gvp_fusion_exact_pocket_l4_v2/2026-09-24` | Validation-only continuation on exact-pocket split; 3 of 20 scheduled runs executed on L4 VM | Validation-only exploratory diagnostics; execution stopped at 3/20 runs. No test evaluation. | 6 (incomplete run/exploratory) | None; validation-only | [execution report](../execution_reports/GVP_FUSION_EXACT_POCKET_L4_V2_EXECUTION.md) |
 | `metal/pmm-ion-v2-context/core-readiness/2026-09-28` | Preserved nine core fold-0 fits; GVP5 fixed-input/20-pass diagnosis; separate historical core qualification; disposable two-process L4 probe | 9/45 trained and separately qualified, 36 absent fits; seven strict passes/two preserved strict failures. Probe step throughput 1.518×, numerical state differences; production remains serial. GPU stopped; larger remaining budget pending | 5 for individual qualified fits; 6 for diagnostics and incomplete fivefold grid | None; no new fit, promotion or refit | [summary](summaries/summary_pmm_core_continuation_20260928.md); [portable evidence](raw/pmm_core_continuation_20260928/README.md) |
 | `metal/pmm-ion-v2-context/2026-09-26` | 7,398 ions/3,992 PDB groups after 503 explicit protein-symmetry-context exclusions; released PMM recipe on five frozen grouped folds; common-four endpoint | PMM mean-fold BA 70.2885%, pooled OOF BA 70.0766%; nine smokes and the matched ESMC ordinary/first-shell fold-0 pair verified. Both BA 88.3945%, identical class predictions; distinct probabilities. GPU recovery finalized 2026-09-27. Full grid deferred; no superiority or promotion | 2 for completed PMM fivefold; 5 for neural pair; 6 for incomplete neural grid and smoke | None; no final refit or primary final-test claim | [summary](summaries/summary_pmm_ion_v2_context_20260926.md); [paired report](raw/pmm_ion_v2_context_20260926/runtime/esm_binding_screen.md); [portable evidence](raw/pmm_ion_v2_context_20260926/README.md) |
 | `metal/pmm-ion-v2-context/fold0-continuation/2026-09-27` | Same frozen cohort/source, fold 0, seed 42 and 50 epochs; ESMC pair and preparation reused | 9/9 trained, 8/9 certified; six-class GVP replay blocked by TECH-023. Six-class late fusion: common-four BA 88.8124%, macro-F1 85.3215%; native BA 72.0131%. VM TERMINATED; latest session $1.3023 estimated running gross. Full grid: 9/45 trained, 8/45 certified | 6 for incomplete certification and GVP fit; 5 for each verified fit | None; no promotion or refit | [portable evidence](raw/pmm_ion_v2_context_fold0_20260927/README.md); [screen report](raw/pmm_ion_v2_context_fold0_20260927/runtime/screen_report.md); [current status](../../EXPERIMENT_STATUS.md) |
@@ -119,7 +119,7 @@ The [efficiency plan](../GPU_RUNTIME_EFFICIENCY_PLAN.md) uses the authorized
 continuation's allocation and per-attempt timing evidence to prioritize queue,
 transfer and preparation improvements. It is a proposed implementation plan,
 not a new experiment or measured speedup. The partial campaign below was paused
-by the user after the connection audit; [current status](../../EXPERIMENT_STATUS.md)
+by the maintainer after the connection audit; [current status](../../EXPERIMENT_STATUS.md)
 owns its shutdown/accounting state and resume boundary.
 
 ## Authorized single-GPU metal continuation
@@ -135,7 +135,7 @@ owns its shutdown/accounting state and resume boundary.
 | `metal/nonoverlap/single-gpu-20h-v2-profile/2026-09-16` | Thirteen planned architecture/capacity/RING one-epoch timing probes plus a fresh cross-session GVP anchor on owned G4 workers; measured cost admission before any full fit | Twelve initial probes and the fresh anchor completed; RING-on failed preflight and its single retry was provider-interrupted. Discovery forecasts to 7.449 h with margin against 6 h, and host-corrected future operations to 3.194 h against 2.421 h remaining. Full training rejected; no ranking or promotion | 6 (operations profiling and incomplete timing matrix) | No held-out inference, metrics, Stage 6B or Stage 7 | [summary](summaries/summary_metal_single_gpu_20h_v2_profile_20260916.md); [portable evidence](raw/metal_single_gpu_20h_v2_profile_20260916/README.md); [blocked forecast](raw/metal_single_gpu_20h_v2_profile_20260916/budget_forecast_blocked.json); [host reconciliation](raw/metal_single_gpu_20h_v2_profile_20260916/host_budget_reconciliation.json) |
 
 This is the original 20-hour campaign's closed admission decision. A later
-user-authorized continuation preserves this evidence and every allocation
+maintainer-authorized continuation preserves this evidence and every allocation
 charge while recording additional compute permission in its authorization
 ledger. See [current status](../../EXPERIMENT_STATUS.md) for that continuation;
 this historical profile is not its active budget or a completed scientific

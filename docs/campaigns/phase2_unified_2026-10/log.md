@@ -1,5 +1,5 @@
 # Phase 2 Unified & 180-Checkpoint OOF-CV / Held-Out Evaluation Log
-Public-release note (2026-10-20): host paths, device names and cloud resource names below are generalized; facts, hashes and timings are unchanged.
+Public-release note (2026-10-20, extended 2026-10-22): host paths, device names and cloud resource names below are generalized; inside the preserved STATUS blocks, role names are also neutralized. Facts, numbers, dates, IDs, decisions, hashes and timings are unchanged; the exact earlier wording of those blocks remains in this file's Git history.
 
 Dated entries, newest first. `EXPERIMENT_STATUS.md` is overwritten only after preserving its previous text here.
 
@@ -46,7 +46,7 @@ CPU-only fairness audit of the existing saved OOF (`nested_selection.json`) and 
 
 ## p2u-004 (2026-10-20 — Matched PinMyMetal comparison)
 
-User-authorized, pre-registered matched comparison on the opened exact Zenodo PinMyMetal test: PinMyMetal's released
+Maintainer-authorized, pre-registered matched comparison on the opened exact Zenodo PinMyMetal test: PinMyMetal's released
 classifier refit on the same 7,398 training sites and folds (CPU, pinned environment), scored with DeepMzyme's frozen
 single model and CV-selected ensembles on the same 1,488 test rows. Results, amendments A1/A2 and disclosures:
 [matched comparison report](pmm_matched/README.md); test access: [ledger](../../DATASETS.md#test-use-ledger).
@@ -158,7 +158,7 @@ Preserved `EXPERIMENT_STATUS.md` text before update:
 ## Current objective and stage
 
 - Current campaign: [metal_completion_2026-10](docs/campaigns/metal_completion_2026-10/README.md)
-- Objective: independently evaluate the selected metal model; EC is deferred (the user's metal-first choice).
+- Objective: independently evaluate the selected metal model; EC is deferred (the maintainer's metal-first choice).
 - Other open campaigns: [EC independent support](docs/campaigns/ec1_independent_support_2026-10/README.md) (deferred); [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) (paused); [zenodo_pmm_exact_2026-09-24](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) (paused).
 - Stage: optimization complete (validation only): discovery (45 cells) froze recipe P; Stage 6 confirmation (40 cells) passed no challenger, so the unchanged B four-class v3 recipe is retained. Stage 6B source: v3 full non-test refit `a0007846…`, compatible (25/25 CPU checks), designated without retraining under the [evidence](docs/campaigns/metal_completion_2026-10/evidence.md#stage-6b-source-and-compatibility-2026-10-16) conditions. Stage 7 has not started; the [log](docs/campaigns/metal_completion_2026-10/log.md) records decisions.
 
@@ -170,7 +170,7 @@ Preserved `EXPERIMENT_STATUS.md` text before update:
 
 ### Known caveats and open mismatches
 
-- Seeds 43/44 reuse development folds; cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)). The refit already had one secondary held-out pass ([summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)); a primary Stage 7 report from it conflicts with Plan's one-shot rule until the user approves an exception or amends Plan.
+- Seeds 43/44 reuse development folds; cross-target ranking used the campaign assessor ([TECH-010](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-010--four-class-endpoint-and-paired-metal-target-recipes-are-not-reconciled)). The refit already had one secondary held-out pass ([summary](docs/notebook_outputs/summaries/summary_pmm_ion_metal_v3_20261013.md)); a primary Stage 7 report from it conflicts with Plan's one-shot rule until the maintainer approves an exception or amends Plan.
 - EC child-file guard repair remains open ([TECH-030](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-030--discovered-ec-cache-files-can-bypass-the-training-path-guard)); the trainer's focal branch ignores label smoothing, unreachable here ([TECH-031](docs/FOLLOW_UP_TECHNICAL_ISSUES.md#tech-031--the-focal-metal-loss-silently-ignores-label-smoothing-and-uses-weighted-ce-confidence)).
 
 ## Dataset and test readiness
@@ -181,7 +181,7 @@ The primary independent final-test route remains unresolved; the reused refit is
 
 - Authorized now: nothing to run; the 2026-10-15 GPU authorization is consumed. No GPU start, refit, test access, download, commit or push.
 - GPU/VM: `<gpu-vm>` TERMINATED (confirmed 2026-10-16T11:59Z) after seven sessions: 18 h 37 min, $16.37 gross running; $0.87917/h; storage ~$1/day. Backups: the private backup record.
-- Next: the user's route and one-shot decisions, then approval of the label-free prior-use read ([blockers](docs/campaigns/metal_completion_2026-10/evaluation.md#remaining-blockers); [handoff](docs/campaigns/metal_completion_2026-10/handoff.md)).
+- Next: the maintainer's route and one-shot decisions, then approval of the label-free prior-use read ([blockers](docs/campaigns/metal_completion_2026-10/evaluation.md#remaining-blockers); [handoff](docs/campaigns/metal_completion_2026-10/handoff.md)).
 
 ## History and update rule
 

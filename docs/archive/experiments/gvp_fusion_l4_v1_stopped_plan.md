@@ -2,14 +2,14 @@
 
 Archived executable plan, preserved to explain the stopped allocation.
 **Do not run these commands.** The corrected protocol is in the
-[metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-pocket-antigravity-matched-l4-diagnostic).
+[metal playbook](../../METAL_TRAINING_PIPELINE_PLAYBOOK.md#exact-pocket-l4-diagnostic-matched-to-the-2026-09-23-benchmark).
 
-**Status: stopped at user request; do not resume this frozen study.** It used
+**Status: stopped at the maintainer's request; do not resume this frozen study.** It used
 PDB-ID-grouped folds, whereas the requested comparison must match the recent
-Antigravity pocket-level protocol. Only two one-epoch smokes completed; no
+2026-09-23 exact-PinMyMetal benchmark's pocket-level protocol. Only two one-epoch smokes completed; no
 full fit or result comparison exists. The main training files remain
 unchanged. L4 readiness/fit and stop evidence is tracked in
-[`GVP_FUSION_L4_EXECUTION_20260924.md`](../../agents_report/GVP_FUSION_L4_EXECUTION_20260924.md). This
+[`GVP_FUSION_L4_EXECUTION_20260924.md`](../../execution_reports/GVP_FUSION_L4_EXECUTION_20260924.md). This
 separately named `gvp_fusion_diagnostic_l4_v1` is a focused test of two
 findings from the 2026-09-23 GVP/fusion review. It does not reset the budget
 or reuse the results of `metal_single_gpu_20h_v2`, the frozen GVP capacity
@@ -18,7 +18,8 @@ four-versus-six target matrix or a Stage 6/6B/7 promotion route.
 
 Use the local CPU for source and dataset checks, command generation, tests,
 artifact verification, and analysis. Use one **verified Colab L4** for model
-training. The recent Antigravity/PyCharm benchmark recorded completed L4
+training. The recent 2026-09-23 exact-PinMyMetal five-fold benchmark
+(`benchmark_exact_pinmymetal_5fold`, run from PyCharm) recorded completed L4
 50-epoch folds of about **719–918 seconds**, including held-out evaluation;
 those timings are only an admission estimate. Colab hardware, compute-unit
 cost, and runtime length can vary. Follow
@@ -43,7 +44,7 @@ current joint optimizer grouping; `F1` = F0 with only `init_vec_proj`,
 `gvp_attn_pool`, and `gvp_fusion_proj` moved to the `3e-4` GVP group.
 `head_metal`, `fusion_gate`, and ESM modules remain at `3e-5` in F1. This
 isolates the readout-rate question. Do not combine G1 and F1 in this grid.
-The exact five-class/pocket-level Antigravity benchmark is context, **not** a
+The exact five-class/pocket-level 2026-09-23 benchmark is context, **not** a
 control for this new dataset, target, and grouping policy. Its saved
 multimodal folds had 58, 56, 43, 49, and 45 train/validation PDB-ID overlaps
 under `pocket_id` grouping; the exact train/test membership also shares 177
@@ -51,7 +52,7 @@ PDB IDs. Within that historical benchmark, the three model arms did share
 the same pocket folds. The new study uses PDB-ID-disjoint folds and a
 PDB-ID-disjoint non-overlap train/test source; compare only its own arms on
 their shared validation identities. The measured split audit is in the
-[execution ledger](../../agents_report/GVP_FUSION_L4_EXECUTION_20260924.md).
+[execution ledger](../../execution_reports/GVP_FUSION_L4_EXECUTION_20260924.md).
 
 ### Required updated scripts before any allocation
 

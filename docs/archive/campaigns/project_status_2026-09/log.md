@@ -7,6 +7,10 @@ Source ranges and hashes: [preservation manifest](../../../../docs/archive/conso
 Literal blocks preserve original relative link spelling; use this folder’s
 README for navigable evidence links. No historical error has been silently fixed.
 
+Redaction note (2026-10-22): inside the copied blocks below, some wording was
+neutralized (role names). Numbers, dates, IDs and decisions are unchanged; the
+exact source text remains at each block's cited source commit.
+
 ## project-001
 
 Source: `3c0f80c:EXPERIMENT_STATUS.md:1-9`.
@@ -578,7 +582,7 @@ Source: `9a069d2^:EXPERIMENT_STATUS.md:518-569`.
 ```text
 ## Current blockers
 
-1. The original 20-hour profile failed admission. The user has since
+1. The original 20-hour profile failed admission. The maintainer has since
    authorized a separately frozen continuation with additional GPU time;
    RING-on timing is now complete. Carry every old allocation interval into
    the authorization ledger and bind revised ceilings to both controllers.
@@ -637,12 +641,12 @@ Source: `9a069d2^:EXPERIMENT_STATUS.md:570-601`.
 ```text
 ## Immediate next action
 
-Continue the user-authorized runtime described under Current objective.
+Continue the maintainer-authorized runtime described under Current objective.
 Persist and independently verify each terminal attempt, account for every
 allocated second, and update remaining costs from actual measurements. Bind
 each recorded budget increase before it is needed by a launch. Retain the
 complete four/six-class discovery arms, shared folds/seeds, rare-class
-protection and separate five-class diagnostic identity. The existing user
+protection and separate five-class diagnostic identity. The existing maintainer
 authorization permits this campaign's GPU continuation; it does not authorize
 unrelated HPO, final refits or held-out evaluation.
 

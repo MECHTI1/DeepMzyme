@@ -152,7 +152,7 @@ class ColabQueueAdapter:
             raise ValueError("Downloaded state archive differs.")
         mirror = self.output / "state_snapshots" / payload["state_sha256"]
         remote_queue.verify_archive(archive, payload["files"], mirror)
-        # Host user decisions must never be overwritten by an older worker
+        # Host maintainer decisions must never be overwritten by an older worker
         # snapshot, including a STOP arriving during a transfer.
         with runtime._lock(self.output / "control_lock"):
             local_controls = {path.name: _sha(path) for path in self.output.glob("USER_REQUESTED_PAUSE*.json")}
@@ -161,7 +161,7 @@ class ColabQueueAdapter:
             remote_controls = {name: digest for name, digest in payload["files"].items()
                                if name == "control_events.json" or name.startswith("USER_REQUESTED_PAUSE")}
             if local_controls != remote_controls:
-                raise RuntimeError("Worker snapshot has stale user controls; preserve host pause/resume state.")
+                raise RuntimeError("Worker snapshot has stale maintainer controls; preserve host pause/resume state.")
             for name in payload["files"]:
                 _copy_exact(mirror / name, self.output / name)
         readback_archive = self.remote_output + "/queue_transport/state_" + payload["state_sha256"] + "_readback.tar.gz"

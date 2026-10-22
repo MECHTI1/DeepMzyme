@@ -16,7 +16,7 @@ def main() -> None:
     parser.add_argument("--dataset", default="train_and_test_sets_structures_common_pdbid_70_30_pinmymetal")
     parser.add_argument("--output-dir", type=Path,
                         default=root / "DeepMzyme_Data/notebook_outputs/plans/standalone_v1/colab")
-    parser.add_argument("--archive-name", default="deepmzyme-chat4-code.tar.gz")
+    parser.add_argument("--archive-name", default="deepmzyme-smoke-code.tar.gz")
     args = parser.parse_args()
     if Path(args.dataset).name != args.dataset or Path(args.archive_name).name != args.archive_name:
         parser.error("dataset and archive-name must be simple names")
