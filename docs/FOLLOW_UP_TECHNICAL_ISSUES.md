@@ -1313,3 +1313,22 @@ The metal completion successor is unaffected: recipe P uses gamma zero (where th
 the loss is exact population-normalized weighted CE), and `metal_completion_campaign.validate_recipe_config` refuses
 focal with nonzero smoothing before any command is built. Repair belongs to a future trainer change (refuse the
 combination at validation time; document or correct the weighted confidence), not to the frozen v3 source tree.
+
+## TECH-032 — A GVP-specific weight decay is silently ignored without a distinct GVP learning rate
+
+**Status:** Open; first recorded for Only-GVP in [v3-038](archive/campaigns/pmm_ion_metal_v3/log.md#v3-038)
+(2026-10-12) and registered here during the 2026-10-21 EC-class-versus-CLEAN30 planning review; repair is planned in that
+campaign's infrastructure phase ([campaign](campaigns/ec_class_vs_clean30_2026-10/README.md)).
+
+`src/training/run.py` builds separate trunk and head parameter groups only when `--gvp-learning-rate` is set and differs
+from `--learning-rate` (line 1592). Otherwise one AdamW group with `--weight-decay` is used, and `--gvp-weight-decay` has
+no effect, including when `--gvp-learning-rate` is unset. `src/training/config.py` does not reject that combination.
+`optimizer_groups.json` is written only inside the split branch and only when `--gvp-lr-scope` is not `trunk` (`run.py`
+line 1606), and its payload lists learning rates and parameter names but no weight decay, so no JSON run record states
+the decay each parameter received.
+
+Past runs are unaffected only where they set a distinct GVP learning rate or did not use `--gvp-weight-decay`; check a
+run's arguments before citing it as GVP-specific decay evidence. Repair: build the split groups whenever a GVP-specific
+decay is set, refuse flags that would be ignored, always write `optimizer_groups.json` with each group's parameters,
+learning rate and weight decay, and add regression tests for the unset and the equal GVP learning-rate cases. Do not
+change frozen campaign source trees.

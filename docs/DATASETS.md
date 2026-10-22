@@ -445,6 +445,14 @@ an exact metal-count label.
 All source targets were retained; site-count reduction reflects donor
 selection rather than target removal.
 
+Screening coverage: AlphaFill/MAHOMES screening covered fold-0 training plus the
+fold-0 curated test only, and the cohort was then repartitioned by official
+fold membership. About 439 fold-0 complement proteins that CLEAN's curation
+dropped (training proteins of folds 1–4) were never screened, so folds 1–4
+training likely lacks about 30 metalloenzymes each (an estimate; the unscreened
+proteins lean toward rare full EC numbers). Count source: the 2026-10-21 entry in
+the [test-use ledger](#test-use-ledger).
+
 Status:
 
 - Materialized locally: yes.
@@ -541,12 +549,12 @@ Tracked metadata:
 | Dataset | Labels/membership materialized | Evaluation artifacts found | Selection influence established | Current record |
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
-| Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set |
-| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11 |
+| Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set; names of its test-ID list files seen on 2026-10-21 (source unconfirmed; files not opened; below) |
+| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; three source test rows printed on 2026-10-21; tracked-path count of the source folder printed on 2026-10-22 (below) |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
-| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; incidental fold-0 test-metadata exposure 2026-10-16 (below) |
-| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15 and 2026-10-13 (below) |
+| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22 (below) |
+| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21 (below) |
 
 ### Local test-access artifacts (git-ignored)
 
@@ -647,6 +655,49 @@ disclose it.
 **2026-10-19 post-Step-F 180-checkpoint OOF-CV and held-out ensemble evaluation (exact Zenodo PinMyMetal test):** reusing the frozen Step F prepared manifest (`prepared_20261012T204640Z`) and CPU ESMC embeddings (`test_esm_20261012T213123Z`), 175 existing checkpoints from `pmm_ion_metal_v3`, `pmm_trunk_lr_2026-10`, and `metal_completion_2026-10` plus 5 newly trained `unified__P_five_class_trunklr1e4` fold checkpoints were evaluated across all five test slices (`Full: 1,488`, `LINK-Free: 1,349`, `Training-Eligible: 1,346`, `PDB-Dedup: 1,098 pairs`, `Clean Subset: 423`) with 10,000-resample PDB-cluster bootstrap CIs ([campaign report](campaigns/phase2_unified_2026-10/README.md); [log](campaigns/phase2_unified_2026-10/log.md)). Forward-pass parity on `stage6b_refit` matched the 2026-10-13 `test_predictions.csv` to $\max |\Delta p| = 1.61 \times 10^{-6}$. Because the test set was previously opened and multiple checkpoints were scored, these multi-fold and multi-recipe results carry the `both_results_secondary` / post-Step-F ensemble disclosure.
 
 **2026-10-20 pre-registered matched PinMyMetal comparison (exact Zenodo PinMyMetal test):** maintainer-authorized test use. A pre-registration (SHA-256 `f3a16ff53edd`, written 12:30:33 UTC, before any PinMyMetal fit and before any new test score) fixed the arms, lines, statistics and wording. PinMyMetal's released classifier recipe was refit in its pinned environment on the 7,398-site training cohort and the five v3 folds (variants: deployment-available features, all published features, without `bvs_*`, and a fixed gradient-boosting model on the deployment-available features). The test prediction step read the feature columns and three non-label ID columns (`metalid`, `residueid_ion`, `ched_count`) of `classmodel_test_set` (`ec6427ad0b8a`), with `label_metal` excluded at parse time; the scoring step then read `pdbid` and `label_metal` to score the frozen a0007846 step F predictions (unchanged), the PinMyMetal-feature models and ensembles built from the 2026-10-19 rescore probabilities. Results and wording: [matched comparison report](campaigns/phase2_unified_2026-10/pmm_matched/README.md). Pre-registered outcome: T1 better, T2 no clear difference (C1/C2 likewise in cross-validation), so the pre-registered "outperforms PinMyMetal" criterion was not met. Deviations, all recorded with timestamps: a parity-tolerance change before scoring; completion of pre-registered descriptive outputs after scoring; amendment A1 (post hoc, at the author's direction: the gradient-boosting model reclassified as an internal ablation, published-value context, a complete table of 15 ensembles chosen by cross-validation only, CV macro-precision); amendment A2 (post hoc: a seed-42-ranked Top-N family whose Top-4 and Top-5 test scores the author had already seen, computed outside this campaign). No DeepMzyme model was promoted from these results; a0007846 remains the pre-declared single model. An independent recomputation from the frozen inputs reproduced every reported value, including the amendment A1 and A2 tables (2,534 of 2,534). Pre-registration, deviations, scripts, manifests and outputs are kept with the private campaign artifacts (`<secondary-drive>/DeepMzyme_Data/campaigns/pmm_matched_2026-10/`). The test remains opened and non-pristine; any further use needs a new pre-registered decision.
+
+**2026-10-21 incidental test-side exposures during the EC-class-versus-CLEAN30 planning review:** during the read-only
+planning review for the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), review
+passes caused five exposures. No training, prediction, evaluation or selection followed. Only the aggregate counts in
+items 2 and 3 were kept; the item 2 count is used only to size the cohort's screening gap
+([CLEAN30 cohort](#clean30-conservativecurrent-main)).
+
+1. A broad repository text search for a CLEAN cohort size (pattern `10,?202`) printed three rows (file lines 670, 1056
+   and 1074) of `prepare_training_and_test_set/pinmymetal_files/classmodel_test_set`, the source behind the exact
+   Zenodo PinMyMetal test: leading columns including `pdbid` and label-like integers, and feature values, matched only
+   by a numeric substring. Later searches were restricted to Markdown, JSON and source files, skipping JSON keys that
+   contain "test".
+2. The public upstream CLEAN file `app/data/split30.csv` (fold-0 training proteins plus fold-0 curated test proteins,
+   with EC numbers) was downloaded to compare identifiers. Only its identifier column was loaded and only aggregate
+   counts were printed: 1,648 fold-0 curated test identifiers (not recorded before), which implies that curation
+   removed 439 of the 2,087 proteins in the fold-0 complement. The file was then deleted.
+3. A key listing of `DeepMzyme_Data/CLEAN_30_main/split_metadata.json` printed fold-level test metadata for folds 0–2:
+   site and target counts already recorded above, and `multi_donor_target_count` 40 / 30 / 41, not recorded before. No
+   identifier or label was shown.
+4. The scalar fields of a combined train-plus-test ESM generation receipt for CARE clusterRes30
+   (`docs/notebook_outputs/raw/colab_care_cache_smoke_20260914/esm.json`) were read. Its input count, 851, equals the
+   documented 817 training plus 34 test structures, so nothing new was learned.
+5. A review pass recorded the names of three identifier-list files in the non-overlapped PinMyMetal root
+   (`test_pdbids.txt` and two related lists). Whether the names came from a listing of that mixed root was not
+   recorded. The files were not opened, and the names carry no labels.
+
+CLEAN30 folds remain a five-fold benchmark, not a sealed test. Any later use of these tests must disclose these
+exposures.
+
+**2026-10-22 incidental directory-level reads near test files:** during the read-only review of the
+EC-class-versus-CLEAN30 campaign records, two directory-level reads occurred. Nothing was used, and no prediction,
+evaluation or selection followed.
+
+1. One review pass counted the Git-tracked paths under `prepare_training_and_test_set/pinmymetal_files/`, the folder
+   that holds `classmodel_test_set`, the source behind the exact Zenodo PinMyMetal test. Only the count (2) was
+   printed; no file name, row, label or content was displayed or opened.
+2. To confirm the structure source of the CLEAN30 cohort, a working session listed the top level of
+   `DeepMzyme_Data/CLEAN_30_main/` and its mixed `metadata/` folder with test-named entries filtered out of the
+   display, and printed the cohort's `README.md` with lines containing "test" removed. Displayed: three metadata file
+   names (`single_donor_selection_audit.csv`, `structure_sources.csv`, `structure_manifest.csv`) and the README's
+   selection rules. No test-named entry, row, label or identifier was shown.
+
+These are directory-level reads, not evaluations; any later use of these tests must disclose them.
 
 ## Current bundles
 

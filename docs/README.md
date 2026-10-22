@@ -48,7 +48,9 @@ Git commit `63d4cd52bf98b2448d42f4498364828431c962eb`:
   exploratory execution route.
 - [Single-GPU concurrency probe](plans/pmm_gpu_concurrency_probe.md): a bounded
   performance diagnostic; production remains one training process per GPU.
-- [Pocket-level EC prediction and CLEAN30 comparison](plans/pocket_level_EC_task_compare_clean30_final_plan.md).
+- [Pocket-level EC prediction and CLEAN30 comparison](plans/pocket_level_EC_task_compare_clean30_final_plan.md):
+  superseded by the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md) (2026-10-22);
+  the plan file stays unchanged.
 
 These documents describe planned work; they do not replace `Plan.md` as the
 scientific authority or establish implemented or evaluated behavior.
