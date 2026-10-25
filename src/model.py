@@ -352,6 +352,27 @@ class ESMGraphEncoder(nn.Module):
         return torch.cat([z_mean, z_attn], dim=-1)
 
 
+class GlobalESMEncoder(nn.Module):
+    """Whole-protein branch: a chain-mean ESMC vector -> LayerNorm -> Linear -> GELU -> Dropout.
+
+    Its output is appended to the pocket embedding of every pocket of the protein.
+    """
+
+    def __init__(self, in_dim: int, out_dim: int, dropout: float = 0.2):
+        super().__init__()
+        if in_dim < 1 or out_dim < 1 or not 0.0 <= float(dropout) < 1.0:
+            raise ValueError("GlobalESMEncoder needs positive widths and dropout in [0, 1)")
+        self.in_dim = int(in_dim)
+        self.net = nn.Sequential(nn.LayerNorm(in_dim), nn.Linear(in_dim, out_dim), nn.GELU(), nn.Dropout(float(dropout)))
+
+    def forward(self, data: Data) -> Tensor:
+        vector = getattr(data, "x_global_esm", None)
+        if vector is None:
+            raise ValueError("The whole-protein branch needs graphs with x_global_esm (attach chain-mean vectors)")
+        vector = vector.float().view(-1, self.in_dim)
+        return self.net(vector)
+
+
 def shell_mask_from_roles(x_role: Tensor, scope: str) -> Tensor:
     if scope == "all":
         return torch.ones(x_role.size(0), dtype=torch.bool, device=x_role.device)
@@ -796,8 +817,13 @@ class GVPPocketClassifier(nn.Module):
         gvp_vector_norm: bool = False,
         gvp_auxiliary_loss_weight: float = 0.0,
         esm_modality_dropout: float = 0.0,
+        use_global_esm_branch: bool = False,
+        global_esm_dim: int = 960,
+        global_esm_dropout: float = 0.2,
     ):
         super().__init__()
+        if use_global_esm_branch and (not use_esm_branch or str(fusion_mode) != "late_fusion" or use_early_esm):
+            raise ValueError("The whole-protein branch is supported for graph-level late fusion with the ESM branch only.")
         if float(gvp_auxiliary_loss_weight) < 0.0:
             raise ValueError(f"gvp_auxiliary_loss_weight must be >= 0, got {gvp_auxiliary_loss_weight}.")
         if not 0.0 <= float(esm_modality_dropout) < 1.0:
@@ -962,7 +988,7 @@ class GVPPocketClassifier(nn.Module):
             nn.Linear(2 * hidden_s, hidden_s),
             nn.Sigmoid(),
         )
-        fused_dim = 2 * hidden_s + self.site_feature_dim
+        fused_dim = 2 * hidden_s + self.site_feature_dim + (hidden_s if use_global_esm_branch else 0)
         self.predict_metal = bool(predict_metal)
         self.predict_ec = bool(predict_ec)
         self.use_esm_branch = bool(use_esm_branch)
@@ -1042,6 +1068,9 @@ class GVPPocketClassifier(nn.Module):
         self.esm_modality_dropout = float(esm_modality_dropout)
         # Built last: every shared module keeps the initial weights of its control for the same seed.
         self.gvp_aux_head = nn.Linear(hidden_s, n_metal) if self.gvp_auxiliary_loss_weight > 0.0 else None
+        self.global_esm_encoder = (
+            GlobalESMEncoder(global_esm_dim, hidden_s, global_esm_dropout) if use_global_esm_branch else None
+        )
 
     def _early_esm_scalar_features(self, x_esm: Tensor) -> Tensor | None:
         if not self.use_early_esm:
@@ -1248,6 +1277,12 @@ class GVPPocketClassifier(nn.Module):
                         temperature=self.ec_contrastive_temperature,
                     )
                     auxiliary_losses["ec_contrastive"] = self.ec_contrastive_weight * ec_contrastive
+        objective_diagnostics: dict[str, Tensor] = {}
+        if self.training and (getattr(self, "ec_aux_heads", None) is not None or getattr(self, "ec_supcon", None) is not None):
+            from ec_auxiliary_objectives import ec_auxiliary_terms
+
+            objective_losses, objective_diagnostics = ec_auxiliary_terms(self, pocket_embed, data)
+            auxiliary_losses.update(objective_losses)
         if not task_losses and not auxiliary_losses:
             raise ValueError("No supervised targets were available for the enabled prediction heads.")
         if task_losses:
@@ -1258,6 +1293,7 @@ class GVPPocketClassifier(nn.Module):
         if auxiliary_losses:
             supervised_loss = supervised_loss + torch.stack(list(auxiliary_losses.values())).sum()
             diagnostics.update({f"{name}_loss_raw": loss.detach() for name, loss in auxiliary_losses.items()})
+        diagnostics.update(objective_diagnostics)
         diagnostics["loss"] = supervised_loss
         return supervised_loss, diagnostics
 
@@ -1369,6 +1405,8 @@ class GVPPocketClassifier(nn.Module):
         # The gate lets the model decide how much ESM information to inject per pocket.
         fusion_gate = self.fusion_gate(torch.cat([gvp_fused, esm_fused], dim=-1))
         pocket_embed = torch.cat([gvp_fused, fusion_gate * esm_fused, site_fused], dim=-1)
+        if self.global_esm_encoder is not None:
+            pocket_embed = torch.cat([pocket_embed, self.global_esm_encoder(data)], dim=-1)
 
         outputs = {
             "embed": pocket_embed,

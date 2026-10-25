@@ -7,6 +7,7 @@ MODEL_ARCHITECTURE_CHOICES = (
     "only_esm",
     "only_gvp",
     "simple_gnn_esm",
+    "only_global",
 )
 
 SITE_GEOMETRY_FEATURE_CHOICES = ("legacy", "none", "counts", "counts_angles")
@@ -23,6 +24,9 @@ MODEL_ARCHITECTURE_ALIASES = {
     "simple_gnn_esm": "simple_gnn_esm",
     "simplegnn+esm": "simple_gnn_esm",
     "simplegnn_esm": "simple_gnn_esm",
+    "only_global": "only_global",
+    "global_only": "only_global",
+    "only_global_esm": "only_global",
 }
 
 FUSION_MODE_CHOICES = (
@@ -98,6 +102,28 @@ GVP_ONLY_OPTION_DEFAULTS = {
 }
 
 
+GLOBAL_ESM_OPTION_DEFAULTS = {
+    "use_global_esm_branch": False,
+    "global_esm_dim": 960,
+    "global_esm_dropout": 0.2,
+}
+
+ONLY_GLOBAL_KWARGS = (
+    "hidden_s", "n_metal", "n_ec", "head_mlp_layers", "head_mlp_dropout", "joint_loss_weighting",
+    "metal_loss_weight", "ec_loss_weight", "metal_class_weights", "metal_collapsed4_class_weights",
+    "ec_class_weights", "metal_loss_function", "metal_focal_gamma", "metal_label_smoothing",
+    "metal_collapsed_loss_weight", "ec_contrastive_weight", "ec_contrastive_temperature", "predict_metal",
+    "predict_ec", "global_esm_dim", "global_esm_dropout",
+)
+
+
+def _pop_disabled_global_options(kwargs: dict[str, Any], architecture: str) -> None:
+    """Families without the whole-protein branch accept its options only at their off values."""
+    for name, default in GLOBAL_ESM_OPTION_DEFAULTS.items():
+        if kwargs.pop(name, default) != default and name == "use_global_esm_branch":
+            raise ValueError(f"The whole-protein branch is not supported for {architecture}.")
+
+
 def _pop_disabled_gvp_options(kwargs: dict[str, Any], architecture: str) -> None:
     """Non-GVP families accept the v3 GVP options only at their off values."""
     for name, default in GVP_ONLY_OPTION_DEFAULTS.items():
@@ -123,6 +149,13 @@ def build_pocket_classifier(
             )
         resolved_kwargs.pop("site_geometry_features", None)
 
+    if architecture == "only_global":
+        from model_variants.models import OnlyGlobalESMClassifier
+
+        if not resolved_kwargs.get("use_global_esm_branch", False):
+            raise ValueError("only_global needs the whole-protein branch (use_global_esm_branch=True).")
+        _pop_disabled_gvp_options(resolved_kwargs, architecture)
+        return OnlyGlobalESMClassifier(**{key: resolved_kwargs[key] for key in ONLY_GLOBAL_KWARGS if key in resolved_kwargs})
     if architecture == "gvp":
         from model import GVPPocketClassifier
 
@@ -130,6 +163,7 @@ def build_pocket_classifier(
     if architecture == "only_gvp":
         from model import GVPPocketClassifier
 
+        _pop_disabled_global_options(resolved_kwargs, architecture)
         resolved_kwargs["use_esm_branch"] = False
         resolved_kwargs["use_early_esm"] = False
         resolved_kwargs["fusion_mode"] = "late_fusion"
@@ -175,5 +209,6 @@ def build_pocket_classifier(
         resolved_kwargs.pop("use_node_type_embedding", None)
         resolved_kwargs.pop("use_site_angle_features", None)
         _pop_disabled_gvp_options(resolved_kwargs, architecture)
+        _pop_disabled_global_options(resolved_kwargs, architecture)
         return SimpleGNNPocketClassifier(**resolved_kwargs)
     raise AssertionError(f"Unhandled model architecture: {architecture!r}")

@@ -282,6 +282,62 @@ ten-per-class floor. Report missing/no-hit cases explicitly. Held-out evaluation
 auxiliary training and Stage 6B/7 remain disabled by this attachment. The
 compatibility warning below still applies to later EC training stages.
 
+## EC class versus CLEAN30 campaign recipe
+
+This recipe runs the [EC class versus CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), a named
+five-fold benchmark on the official CLEAN `split30` folds. It is not the Stage 7 final-test route, which stays
+unresolved. Its inner selection, five-seed refits and single scoring pass are campaign steps, not Stage 6, 6B or 7
+sources. It does not modernise or certify the blocks below the compatibility warning, and
+[TECH-002](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface) stays
+open. Populations, systems, the claim rule and test access are in the campaign [design](campaigns/ec_class_vs_clean30_2026-10/design.md);
+phases and gates G1–G5 are in the campaign README. Run tiers: inner-fold fits are serious validation runs; the Phase 7
+scoring pass is a named-benchmark one-shot test read, run once after gate G5.
+
+Every command runs under the workstation cap (`systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G
+-p MemorySwapMax=0`). Real (non-smoke) runner actions refuse an uncommitted tree, and every tool refuses test flags
+and test-named paths. Identity tables, inner folds, a fold's training view and its dry run (training files only):
+
+```bash
+PY="${DEEPMZYME_PYTHON:-.venv/bin/python}"
+C=DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10
+K=0
+for step in fasta search edges components; do
+  "$PY" scripts/run_ec_clean30_identity.py "$step" --fold "$K" --work "$C/identity/fold$K"
+done
+"$PY" scripts/run_ec_clean30_identity.py assign-inner --fold "$K" --work "$C/identity/fold$K" --seed 42
+"$PY" scripts/run_ec_clean30_identity.py certify-inner --fold "$K" --work "$C/identity/fold$K"
+"$PY" scripts/run_ec_clean30_campaign.py build-view --fold "$K" --out "$C/views/fold$K" \
+  --inner-membership "$C/identity/fold$K/inner_membership_fold$K.csv"
+"$PY" src/embed_helpers/esmc_chain_means.py from-residue-cache --allowlist "$C/views/fold$K/allowlist.txt" \
+  --structure-dir "$C/views/fold$K/structures" --embeddings-dir "$C/views/fold$K/esm" \
+  --out "$C/views/fold$K/chain_means_final"
+"$PY" scripts/run_ec_clean30_campaign.py dry-run --view "$C/views/fold$K"
+"$PY" scripts/run_ec_clean30_campaign.py plan --fold "$K" --out "$C/plans/fold$K.json"
+```
+
+`dry-run` needs `--exclude-levers L8` until the `chain_means_block26` cache exists. The `select`, `gap-gate`, `refit`
+and `execute` actions follow gate G1 and only print their planned interface. The retrained CLEAN comparator uses the
+maintainer's runner, which contains no CLEAN code; the private CLEAN checkout and harness scripts are passed by path and
+pinned by SHA-256:
+
+```bash
+"$PY" scripts/run_clean_split30_comparator.py sequence-map --out-dir "$C/clean_sequence_map"
+"$PY" scripts/run_clean_split30_comparator.py prepare --official-train-csv "$SPLIT30_TRAIN_CSV" --fold "$K" \
+  --regime r1 --seed 42 --work-dir "$C/clean/fold$K/r1_seed42" --base-esm-dir "$BASE_FARM" --masked-esm-dir "$MASKED_FARM"
+"$PY" scripts/run_clean_split30_comparator.py fit --work-dir "$C/clean/fold$K/r1_seed42" --clean-python "$CLEAN_PY" \
+  --clean-clone "$CLEAN_CLONE" --training-script "$CLEAN_TRAIN" --distance-helper "$CLEAN_DISTANCE_HELPER"
+"$PY" scripts/run_clean_split30_comparator.py validate-export --npz "$EXPORT_NPZ"
+```
+
+Freeze manifests are written by `run_ec_clean30_campaign.py manifest --kind freeze1|freeze2`. A real Freeze 2 also
+takes every outer-fold CLEAN fit through `--clean-fit` and needs `--test-pass-output-root`. In Phase 7 the label-free
+test passes (`export_ec_test_predictions` in `src/training/ec_prediction_export.py`, and the comparator's `export
+--mode test`) refuse to run without the Freeze-2 manifest and its SHA-256. The nearest-hit baseline
+(`scripts/run_ec_clean30_baseline.py`) then writes its class table. `scripts/score_ec_clean30_comparison.py claim
+--manifest` validates and hashes every prediction without opening a label, and `score --claim --claim-sha256` performs
+the single label read and writes `report.json` and `report.md` once. A refit's probe predictions replay in a fresh
+process with `PYTHONPATH=src "$PY" -m training.ec_prediction_export replay --run-dir RUN`.
+
 ## Compatibility Warning — Later Stages Still Require Reconciliation
 
 The opening standalone Stage 0–2B block replaces the legacy baseline blocks

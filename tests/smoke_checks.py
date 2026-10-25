@@ -2784,6 +2784,54 @@ def check_reproducibility_metadata_helpers() -> None:
             raise AssertionError(f"Git commit/dirty state was not captured: {source_control}")
 
 
+def check_selected_site_extraction() -> None:
+    from graph.structure_parsing import SELECTED_SITE_EXTRACTION, extract_selected_site_pockets_from_structure
+    from graph.structure_parsing import parse_structure_file
+    from training.site_filter import selected_site_ids_for_structure
+
+    def pdb_line(record: str, serial: int, name: str, resname: str, resseq: int, xyz, element: str) -> str:
+        atom_name = f" {name:<3}" if len(name) < 4 and len(element) == 1 else f"{name:<4}"
+        return (f"{record:<6}{serial:>5} {atom_name} {resname:>3} A{resseq:>4}    "
+                f"{xyz[0]:>8.3f}{xyz[1]:>8.3f}{xyz[2]:>8.3f}{1.0:>6.2f}{20.0:>6.2f}          {element:>2}")
+
+    stem = "P12345__chain_A__EC_3.4.24.1"
+    lines = [pdb_line("ATOM", 1, "CA", "HIS", 1, (0.0, 4.0, 0.0), "C"),
+             pdb_line("ATOM", 2, "NE2", "HIS", 1, (0.0, 2.1, 0.0), "N"),
+             pdb_line("ATOM", 3, "CA", "ASP", 2, (6.6, 1.0, 0.0), "C"),
+             pdb_line("ATOM", 4, "OD1", "ASP", 2, (5.1, 0.0, 0.0), "O"),
+             pdb_line("HETATM", 5, "ZN", "ZN", 900, (0.0, 0.0, 0.0), "ZN"),
+             pdb_line("HETATM", 6, "ZN", "ZN", 901, (3.0, 0.0, 0.0), "ZN"), "END"]
+    with tempfile.TemporaryDirectory(prefix="deepmzyme_selected_site_") as tmp:
+        path = Path(tmp) / f"{stem}.pdb"
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        selected = selected_site_ids_for_structure(path, {("p12345", "3.4.24.1", "A_900")})
+        if selected != frozenset({("A", 900)}):
+            raise AssertionError(f"Site keys selected {sorted(selected)} instead of A_900 only.")
+        structure = parse_structure_file(str(path), structure_id=stem)
+        pockets, _report = extract_selected_site_pockets_from_structure(structure, structure_id=stem,
+                                                                        selected_site_ids=selected)
+    if len(pockets) != 1 or pockets[0].metal_count() != 1:
+        raise AssertionError("Selected-site extraction did not keep exactly the one selected ion.")
+    if pockets[0].metadata.get("site_extraction") != SELECTED_SITE_EXTRACTION:
+        raise AssertionError("Selected-site pockets do not record their extraction mode.")
+
+
+def check_global_esm_forward() -> None:
+    from torch_geometric.data import Batch
+
+    from model_variants.factory import build_pocket_classifier
+
+    model = build_pocket_classifier(model_architecture="only_global", esm_dim=8, hidden_s=16, predict_metal=False,
+                                    n_ec=7, use_global_esm_branch=True, global_esm_dim=8)
+    graphs = [Data(x_global_esm=torch.randn(1, 8), y_ec=torch.tensor([2]), y_metal=torch.tensor([-1]),
+                   ec_sample_weight=torch.ones(1), ec_group_id=torch.tensor([0])) for _ in range(2)]
+    model.eval()
+    with torch.no_grad():
+        logits = model(Batch.from_data_list(graphs))["logits_ec"]
+    if tuple(logits.shape) != (2, 7) or not torch.isfinite(logits).all():
+        raise AssertionError(f"Whole-protein ESMC forward gave logits of shape {tuple(logits.shape)}.")
+
+
 def check_portable_benchmark_subset_v2_round_trip() -> None:
     from benchmarking.artifacts import (
         REALISTIC_SUBSET_ARTIFACT_TYPE,
@@ -2952,6 +3000,8 @@ SMOKE_CHECKS = (
         check_docs_do_not_use_broken_training_command,
         check_multi_metal_site_level_granularity,
         check_reproducibility_metadata_helpers,
+        check_selected_site_extraction,
+        check_global_esm_forward,
         check_portable_benchmark_subset_v2_round_trip,
         check_benchmark_failure_exit_and_schema,
         check_benchmark_inventory_links,

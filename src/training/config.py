@@ -106,6 +106,7 @@ VALID_SELECTION_METRIC_CHOICES = (
     "val_ec_balanced_acc",
     "val_metal_macro_f1",
     "val_ec_macro_f1",
+    "val_ec_group_ec_classes_1_6_balanced_acc",
 )
 
 
@@ -135,12 +136,22 @@ class TrainConfig:
     feature_inventory_sha256: str | None = None
     campaign_run_identity: str | None = None
     export_validation_predictions: bool = False
+    export_ec_predictions: bool = False
+    ec_probe_structure_ids: str | None = None
+    ec_probe_structure_ids_sha256: str | None = None
     binding_residue_pooling: str = "none"
     gvp_residual_dropout: float = 0.0
     gvp_vector_norm: bool = False
     gvp_lr_scope: str = "trunk"
     gvp_auxiliary_loss_weight: float = 0.0
     esm_modality_dropout: float = 0.0
+    use_global_esm_branch: bool = False
+    global_esm_cache_dir: Path | None = None
+    global_esm_manifest_sha256: str | None = None
+    global_esm_layer: str = "final"
+    global_esm_dim: int = 960
+    global_esm_dropout: float = 0.2
+    global_esm_standardize: str = "none"
     train_metrics_every_n_epochs: int = 1
     allow_train_loss_test_eval_debug: bool = False
     allow_final_refit_test_eval: bool = False
@@ -182,6 +193,8 @@ class TrainConfig:
     edge_rbf_use_raw_distances: bool = False
     gvp_learning_rate: float | None = None
     gvp_weight_decay: float | None = None
+    gvp_target_shrink: float | None = None
+    gvp_target_shrink_scope: str = "trunk"
     classifier_pool_distance_cutoff: float = 0.0
     metal_node_mode: str = "none"
     site_geometry_features: str = "legacy"
@@ -190,6 +203,7 @@ class TrainConfig:
     position_noise_std: float = 0.0
     second_shell_dropout: float = 0.0
     outer_residue_dropout: float = 0.0
+    augmentation_rng: str = "global"
     node_feature_set: str = "conservative"
     shell_role_source: str = "edge_mode"
     omit_node_features: tuple[str, ...] = ()
@@ -231,14 +245,24 @@ class TrainConfig:
     require_esm_embeddings: bool = True
     prepare_missing_esm_embeddings: bool = True
     require_external_features: bool = True
+    prepare_missing_external_features: bool = True
     prepare_missing_ring_edges: bool = True
     unsupported_metal_policy: str = "error"
     invalid_structure_policy: str = "skip"
     ec_label_depth: int = 1
+    ec_class_vocabulary: str = "observed"
+    site_extraction: str = "component"
+    ec_conflicting_labels: str = "skip"
     ec_group_weighting: str = "structure_id"
     ec_class_weight_unit: str = "pocket"
     ec_contrastive_weight: float = 0.0
     ec_contrastive_temperature: float = 0.1
+    ec_aux_levels: str = ""
+    ec_aux_weight: float = 0.3
+    ec_supcon_weight: float = 0.0
+    ec_supcon_temperature: float = 0.1
+    ec_supcon_memory: int = 256
+    ec_supcon_projection_dim: int = 128
     lr_schedule: str = "fixed"
     lr_step_size: int = 0
     lr_decay_gamma: float = 0.5
@@ -472,6 +496,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Separate weight decay for GVP structural trunk parameters.",
     )
     parser.add_argument(
+        "--gvp-target-shrink",
+        type=float,
+        default=None,
+        help=(
+            "Set the weight decay so that weights shrink to this factor over the fit's planned optimizer "
+            "steps: exp(-wd * sum of per-step learning rates) = target, in (0, 1). Recomputed for every fit "
+            "from its own steps and schedule. Excludes --gvp-weight-decay."
+        ),
+    )
+    parser.add_argument(
+        "--gvp-target-shrink-scope",
+        type=str,
+        default="trunk",
+        choices=("trunk", "all"),
+        help="Parameters that receive the target-shrink decay: the GVP trunk group, or every parameter group.",
+    )
+    parser.add_argument(
         "--classifier-pool-distance-cutoff",
         type=float,
         default=0.0,
@@ -551,6 +592,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--augmentation-rng",
+        type=str,
+        default="global",
+        choices=("global", "per_fit"),
+        help=(
+            "Random source of the training augmentations. 'global' (default) shares the global RNG; "
+            "'per_fit' uses a generator seeded from --seed, separate from dropout and shuffling. "
+            "'per_fit' requires --num-workers 0 so every draw happens in one process."
+        ),
+    )
+    parser.add_argument(
         "--node-feature-set",
         type=str,
         default="conservative",
@@ -609,6 +661,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--allow-missing-esm-embeddings", action="store_true")
     parser.add_argument("--no-prepare-missing-esm-embeddings", action="store_true")
     parser.add_argument("--allow-missing-external-features", action="store_true")
+    parser.add_argument(
+        "--no-prepare-missing-external-features",
+        action="store_true",
+        help="Fail instead of generating external residue features that are missing for required structures.",
+    )
     parser.add_argument("--prepare-missing-ring-edges", action="store_true")
     parser.add_argument(
         "--no-prepare-missing-ring-edges",
@@ -792,6 +849,39 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--ec-label-depth", type=int, default=1)
     parser.add_argument(
+        "--ec-class-vocabulary",
+        type=str,
+        default="observed",
+        choices=("observed", "fixed_seven"),
+        help=(
+            "EC class (first digit) label map. 'observed' (default) indexes the classes present in the "
+            "loaded data; 'fixed_seven' uses classes 1-7 in fixed order with strict annotation checks, "
+            "excludes and counts proteins with several EC classes, and requires --task ec at depth 1."
+        ),
+    )
+    parser.add_argument(
+        "--site-extraction",
+        type=str,
+        default="component",
+        choices=("component", "selected_sites"),
+        help=(
+            "How pockets are cut from a structure. 'component' (default) groups every metal within the merge "
+            "distance and then keeps pockets matching the summary; 'selected_sites' builds pockets only around "
+            "the summary's selected sites, so other metals in the file shape no pocket. Requires pocket examples, "
+            "a summary CSV and no source cohort."
+        ),
+    )
+    parser.add_argument(
+        "--ec-conflicting-labels",
+        type=str,
+        default="skip",
+        choices=("skip", "fail"),
+        help=(
+            "Proteins whose pockets disagree on EC labels: 'skip' (default) leaves them out of grouped EC "
+            "metrics; 'fail' stops the run before splitting and when computing metrics."
+        ),
+    )
+    parser.add_argument(
         "--ec-group-weighting",
         type=str,
         default="structure_id",
@@ -803,6 +893,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--ec-contrastive-weight", type=float, default=0.0)
     parser.add_argument("--ec-contrastive-temperature", type=float, default=0.1)
+    parser.add_argument(
+        "--ec-aux-levels", type=str, default="",
+        help="Comma list of deeper EC levels (2, 3) with training-only auxiliary heads; empty (default) disables them.",
+    )
+    parser.add_argument("--ec-aux-weight", type=float, default=0.3, help="Weight of each auxiliary EC-level loss.")
+    parser.add_argument(
+        "--ec-supcon-weight", type=float, default=0.0,
+        help=("Weight of a supervised contrastive loss on the third EC level with a projection head and a "
+              "cross-batch memory; 0 (default) disables it. Excludes --ec-contrastive-weight."),
+    )
+    parser.add_argument("--ec-supcon-temperature", type=float, default=0.1)
+    parser.add_argument("--ec-supcon-memory", type=int, default=256, help="Memory size (detached projections).")
+    parser.add_argument("--ec-supcon-projection-dim", type=int, default=128)
     parser.add_argument(
         "--selection-metric",
         type=str,
@@ -991,6 +1094,24 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="After training, replay the selected checkpoint on validation and write val_predictions.csv.",
     )
     parser.add_argument(
+        "--export-ec-predictions", action="store_true",
+        help=(
+            "EC class runs (--task ec --ec-class-vocabulary fixed_seven --checkpoint-rule terminal): after training, "
+            "write pocket and protein logits of the terminal checkpoint and a receipt that reconciles them with the "
+            "terminal validation metrics. Needs an EC fold membership split, or --ec-probe-structure-ids for a run "
+            "without validation. See src/training/ec_prediction_export.py."
+        ),
+    )
+    parser.add_argument(
+        "--ec-probe-structure-ids", default=None,
+        help=(
+            "Runs without validation (--val-fraction 0): file of training structure IDs, one per line, whose "
+            "predictions --export-ec-predictions writes so that an independent replay can check the run."
+        ),
+    )
+    parser.add_argument("--ec-probe-structure-ids-sha256", default=None,
+                        help="Required SHA-256 of --ec-probe-structure-ids.")
+    parser.add_argument(
         "--train-metrics-every-n-epochs", type=int, default=1,
         help=(
             "Evaluate full training-set metrics every N epochs (and on the last epoch). "
@@ -1009,6 +1130,23 @@ def build_arg_parser() -> argparse.ArgumentParser:
                     help="Late fusion only: weight of a training-only metal loss on the GVP branch.")
     v3.add_argument("--esm-modality-dropout", type=float, default=0.0,
                     help="Late fusion only: probability of zeroing the ESM branch per training example.")
+    parser.add_argument(
+        "--use-global-esm-branch", action="store_true",
+        help=("Append a whole-protein branch (chain-mean ESMC vector -> LayerNorm -> Linear -> GELU -> dropout) "
+              "to the pocket embedding. Supported for gvp late fusion, only_esm and only_global (required there)."),
+    )
+    parser.add_argument("--global-esm-cache-dir", type=Path, default=None,
+                        help="Chain-mean cache built by src/embed_helpers/esmc_chain_means.py.")
+    parser.add_argument("--global-esm-manifest-sha256", type=str, default=None,
+                        help="SHA-256 of the cache manifest; the cache is refused on mismatch.")
+    parser.add_argument("--global-esm-layer", type=str, default="final",
+                        help="Cached layer to use: 'final' or 'blockNN'.")
+    parser.add_argument("--global-esm-dim", type=int, default=960)
+    parser.add_argument("--global-esm-dropout", type=float, default=0.2)
+    parser.add_argument(
+        "--global-esm-standardize", choices=("none", "train_proteins"), default="none",
+        help="'train_proteins' z-scores the vectors with means and SDs fitted on one vector per training protein.",
+    )
     parser.add_argument(
         "--binding-residue-pooling", choices=VALID_BINDING_RESIDUE_POOLING_CHOICES, default="none",
         help=(
@@ -1061,6 +1199,18 @@ def resolve_structural_readout_scope(metal_node_mode: str, requested_scope: str)
     return "residue_and_metal" if metal_node_mode != "none" else "residue_only"
 
 
+def parse_ec_aux_levels(value: str) -> tuple[int, ...]:
+    """Deeper EC levels for auxiliary heads from a comma list ("" -> none)."""
+    levels = []
+    for token in (part.strip() for part in str(value).split(",")):
+        if not token:
+            continue
+        if token not in {"2", "3"} or int(token) in levels:
+            raise ValueError(f"--ec-aux-levels takes distinct values from 2 and 3, got {value!r}")
+        levels.append(int(token))
+    return tuple(sorted(levels))
+
+
 def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
@@ -1081,6 +1231,16 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     if (args.gvp_residual_dropout > 0.0 or args.gvp_vector_norm or args.gvp_lr_scope != "trunk") and \
             args.model_architecture not in {"gvp", "only_gvp"}:
         parser.error("GVP options require --model-architecture gvp or only_gvp")
+    if args.gvp_weight_decay is not None and args.gvp_weight_decay < 0.0:
+        parser.error("--gvp-weight-decay must be >= 0")
+    if args.gvp_target_shrink is not None:
+        if not 0.0 < args.gvp_target_shrink < 1.0:
+            parser.error("--gvp-target-shrink must be in (0, 1)")
+        if args.gvp_weight_decay is not None:
+            parser.error("--gvp-target-shrink cannot be combined with --gvp-weight-decay")
+    if (args.gvp_weight_decay is not None or args.gvp_target_shrink is not None) and \
+            args.model_architecture not in {"gvp", "only_gvp"}:
+        parser.error("--gvp-weight-decay and --gvp-target-shrink require --model-architecture gvp or only_gvp")
     if args.gvp_lr_scope != "trunk" and args.gvp_learning_rate is None:
         parser.error("--gvp-lr-scope structural requires --gvp-learning-rate")
     if (args.gvp_auxiliary_loss_weight > 0.0 or args.esm_modality_dropout > 0.0) and (
@@ -1088,7 +1248,21 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
     ):
         parser.error("--gvp-auxiliary-loss-weight and --esm-modality-dropout require --model-architecture gvp "
                      "(late fusion) and --task metal")
-    if args.fold_split_source == "membership" and (
+    ec_fold_membership = (
+        args.fold_split_source == "membership" and args.task == "ec" and args.source_cohort_csv is None
+    )
+    if ec_fold_membership:
+        if args.metal_example_unit != "pocket":
+            parser.error("EC fold membership requires --metal-example-unit pocket")
+        if args.fold_membership_csv is None or not args.fold_membership_sha256 or args.n_folds is None \
+                or args.fold_index is None:
+            parser.error("EC fold membership requires --fold-membership-csv, --fold-membership-sha256, "
+                         "--n-folds and --fold-index")
+        if args.explicit_membership_manifest is not None or args.run_test_eval or args.test_structure_dir is not None:
+            parser.error("EC fold membership cannot be combined with an explicit membership manifest or a test set")
+        if not args.no_prepare_missing_esm_embeddings:
+            parser.error("EC fold membership requires --no-prepare-missing-esm-embeddings")
+    elif args.fold_split_source == "membership" and (
         args.fold_membership_csv is None or args.source_cohort_csv is None or args.fold_index is None
     ):
         parser.error("--fold-split-source membership requires --source-cohort-csv, --fold-membership-csv and --fold-index")
@@ -1097,6 +1271,63 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
             parser.error("--export-validation-predictions requires --source-cohort-csv --task metal --metal-example-unit ion")
         if not (args.val_fraction > 0.0 or (args.n_folds is not None and args.fold_index is not None)):
             parser.error("--export-validation-predictions requires a validation split")
+    ec_probe = args.ec_probe_structure_ids is not None
+    if (ec_probe or args.ec_probe_structure_ids_sha256 is not None) and not args.export_ec_predictions:
+        parser.error("--ec-probe-structure-ids requires --export-ec-predictions")
+    if args.export_ec_predictions:
+        if args.task != "ec" or args.ec_class_vocabulary != "fixed_seven" or args.checkpoint_rule != "terminal":
+            parser.error("--export-ec-predictions requires --task ec, --ec-class-vocabulary fixed_seven and "
+                         "--checkpoint-rule terminal")
+        if args.run_test_eval or args.test_structure_dir is not None or args.test_summary_csv is not None:
+            parser.error("--export-ec-predictions cannot be combined with a held-out test set")
+        if ec_fold_membership == ec_probe:
+            parser.error("--export-ec-predictions needs exactly one of an EC fold membership split "
+                         "(--fold-split-source membership) or --ec-probe-structure-ids")
+        if ec_probe and (args.val_fraction > 0.0 or args.n_folds is not None):
+            parser.error("--ec-probe-structure-ids is for runs without validation (--val-fraction 0, no folds)")
+        if ec_probe and not args.ec_probe_structure_ids_sha256:
+            parser.error("--ec-probe-structure-ids requires --ec-probe-structure-ids-sha256")
+    if args.ec_class_vocabulary == "fixed_seven":
+        if args.task != "ec" or args.ec_label_depth != 1:
+            parser.error("--ec-class-vocabulary fixed_seven requires --task ec and --ec-label-depth 1")
+        if args.require_all_task_classes:
+            parser.error("--ec-class-vocabulary fixed_seven cannot be combined with --require-all-task-classes")
+    if args.selection_metric == "val_ec_group_ec_classes_1_6_balanced_acc" and args.ec_class_vocabulary != "fixed_seven":
+        parser.error("--selection-metric val_ec_group_ec_classes_1_6_balanced_acc requires --ec-class-vocabulary fixed_seven")
+    if args.site_extraction == "selected_sites" and (
+        args.metal_example_unit != "pocket" or args.source_cohort_csv is not None
+    ):
+        parser.error("--site-extraction selected_sites requires --metal-example-unit pocket and no --source-cohort-csv")
+    try:
+        parse_ec_aux_levels(args.ec_aux_levels)
+    except ValueError as exc:
+        parser.error(str(exc))
+    if (args.ec_aux_levels.strip() or args.ec_supcon_weight > 0.0) and args.task != "ec":
+        parser.error("--ec-aux-levels and --ec-supcon-weight require --task ec")
+    if args.ec_aux_levels.strip() and args.ec_aux_weight <= 0.0:
+        parser.error("--ec-aux-weight must be > 0 when --ec-aux-levels is set")
+    if args.ec_supcon_weight < 0.0:
+        parser.error("--ec-supcon-weight must be >= 0")
+    if args.ec_supcon_weight > 0.0:
+        if args.ec_contrastive_weight > 0.0:
+            parser.error("--ec-supcon-weight cannot be combined with --ec-contrastive-weight")
+        if args.ec_supcon_temperature <= 0.0 or args.ec_supcon_memory < 1 or args.ec_supcon_projection_dim < 1:
+            parser.error("--ec-supcon-temperature, --ec-supcon-memory and --ec-supcon-projection-dim must be positive")
+    if args.model_architecture == "only_global" and not args.use_global_esm_branch:
+        parser.error("--model-architecture only_global requires --use-global-esm-branch")
+    if args.use_global_esm_branch:
+        if args.model_architecture not in {"gvp", "only_esm", "only_global"} or (
+            args.model_architecture == "gvp" and args.fusion_mode != "late_fusion"
+        ):
+            parser.error("--use-global-esm-branch supports gvp late fusion, only_esm and only_global")
+        if args.global_esm_cache_dir is None or not args.global_esm_manifest_sha256:
+            parser.error("--use-global-esm-branch requires --global-esm-cache-dir and --global-esm-manifest-sha256")
+        if args.metal_example_unit != "pocket":
+            parser.error("--use-global-esm-branch requires --metal-example-unit pocket")
+    if args.augmentation_rng == "per_fit" and args.num_workers != 0:
+        parser.error("--augmentation-rng per_fit requires --num-workers 0")
+    if args.ec_conflicting_labels == "fail" and args.task == "metal":
+        parser.error("--ec-conflicting-labels fail requires an EC task")
     if args.site_geometry_features != "legacy" and args.model_architecture not in {"gvp", "only_gvp"}:
         parser.error("--site-geometry-features explicit modes require --model-architecture gvp or only_gvp")
     omit_node_features = validate_node_feature_omissions(
@@ -1144,12 +1375,22 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         feature_inventory_sha256=args.feature_inventory_sha256,
         campaign_run_identity=args.campaign_run_identity,
         export_validation_predictions=args.export_validation_predictions,
+        export_ec_predictions=args.export_ec_predictions,
+        ec_probe_structure_ids=args.ec_probe_structure_ids,
+        ec_probe_structure_ids_sha256=args.ec_probe_structure_ids_sha256,
         binding_residue_pooling=args.binding_residue_pooling,
         gvp_residual_dropout=args.gvp_residual_dropout,
         gvp_vector_norm=args.gvp_vector_norm,
         gvp_lr_scope=args.gvp_lr_scope,
         gvp_auxiliary_loss_weight=args.gvp_auxiliary_loss_weight,
         esm_modality_dropout=args.esm_modality_dropout,
+        use_global_esm_branch=args.use_global_esm_branch,
+        global_esm_cache_dir=args.global_esm_cache_dir,
+        global_esm_manifest_sha256=args.global_esm_manifest_sha256,
+        global_esm_layer=args.global_esm_layer,
+        global_esm_dim=args.global_esm_dim,
+        global_esm_dropout=args.global_esm_dropout,
+        global_esm_standardize=args.global_esm_standardize,
         train_metrics_every_n_epochs=args.train_metrics_every_n_epochs,
         allow_train_loss_test_eval_debug=args.allow_train_loss_test_eval_debug,
         allow_final_refit_test_eval=args.allow_final_refit_test_eval,
@@ -1189,6 +1430,8 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         edge_rbf_use_raw_distances=args.edge_rbf_use_raw_distances or args.rbf_use_raw_distances,
         gvp_learning_rate=args.gvp_learning_rate,
         gvp_weight_decay=args.gvp_weight_decay,
+        gvp_target_shrink=args.gvp_target_shrink,
+        gvp_target_shrink_scope=args.gvp_target_shrink_scope,
         classifier_pool_distance_cutoff=args.classifier_pool_distance_cutoff,
         metal_node_mode=args.metal_node_mode,
         site_geometry_features=args.site_geometry_features,
@@ -1197,6 +1440,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         position_noise_std=args.position_noise_std,
         second_shell_dropout=args.second_shell_dropout,
         outer_residue_dropout=args.outer_residue_dropout,
+        augmentation_rng=args.augmentation_rng,
         node_feature_set=args.node_feature_set,
         shell_role_source=args.shell_role_source,
         omit_node_features=omit_node_features,
@@ -1239,14 +1483,24 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         require_esm_embeddings=model_uses_esm_inputs and not args.allow_missing_esm_embeddings,
         prepare_missing_esm_embeddings=not args.no_prepare_missing_esm_embeddings,
         require_external_features=not args.allow_missing_external_features,
+        prepare_missing_external_features=not args.no_prepare_missing_external_features,
         prepare_missing_ring_edges=args.prepare_missing_ring_edges or not args.no_prepare_missing_ring_edges,
         unsupported_metal_policy=args.unsupported_metal_policy,
         invalid_structure_policy=args.invalid_structure_policy,
         ec_label_depth=args.ec_label_depth,
+        ec_class_vocabulary=args.ec_class_vocabulary,
+        site_extraction=args.site_extraction,
+        ec_conflicting_labels=args.ec_conflicting_labels,
         ec_group_weighting=args.ec_group_weighting,
         ec_class_weight_unit=args.ec_class_weight_unit,
         ec_contrastive_weight=args.ec_contrastive_weight,
         ec_contrastive_temperature=args.ec_contrastive_temperature,
+        ec_aux_levels=args.ec_aux_levels,
+        ec_aux_weight=args.ec_aux_weight,
+        ec_supcon_weight=args.ec_supcon_weight,
+        ec_supcon_temperature=args.ec_supcon_temperature,
+        ec_supcon_memory=args.ec_supcon_memory,
+        ec_supcon_projection_dim=args.ec_supcon_projection_dim,
         lr_schedule=args.lr_schedule,
         lr_step_size=args.lr_step_size,
         lr_decay_gamma=args.lr_decay_gamma,

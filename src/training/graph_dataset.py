@@ -93,6 +93,7 @@ def _filter_residues_by_shell_role(
     outer_residue_dropout: float,
     use_ring_edges: bool,
     shell_role_source: str,
+    generator: torch.Generator | None = None,
 ) -> list[ResidueRecord]:
     if second_shell_dropout <= 0.0 and outer_residue_dropout <= 0.0:
         return list(pocket.residues)
@@ -102,12 +103,18 @@ def _filter_residues_by_shell_role(
     )
     keep_residues: list[ResidueRecord] = []
     for residue, (is_first_shell, is_second_shell) in zip(pocket.residues, shell_roles):
-        if is_second_shell and not is_first_shell and bool(torch.rand(()) < float(second_shell_dropout)):
+        if is_second_shell and not is_first_shell and bool(torch.rand((), generator=generator) < float(second_shell_dropout)):
             continue
-        if not is_first_shell and not is_second_shell and bool(torch.rand(()) < float(outer_residue_dropout)):
+        if not is_first_shell and not is_second_shell and bool(torch.rand((), generator=generator) < float(outer_residue_dropout)):
             continue
         keep_residues.append(residue)
     return keep_residues or list(pocket.residues)
+
+
+def _standard_noise(reference: torch.Tensor, generator: torch.Generator | None) -> torch.Tensor:
+    if generator is None:
+        return torch.randn_like(reference)
+    return torch.randn(reference.shape, generator=generator, dtype=reference.dtype)
 
 
 def augment_pocket_for_training(
@@ -118,8 +125,12 @@ def augment_pocket_for_training(
     outer_residue_dropout: float = 0.0,
     use_ring_edges: bool = False,
     shell_role_source: str = "edge_mode",
+    generator: torch.Generator | None = None,
 ) -> PocketRecord:
-    """Return an in-memory augmented pocket without mutating the loaded records."""
+    """Return an in-memory augmented pocket without mutating the loaded records.
+
+    ``generator`` draws every random value of this augmentation; None uses the global RNG.
+    """
     if not graph_augmentation_enabled(
         position_noise_std=position_noise_std,
         second_shell_dropout=second_shell_dropout,
@@ -133,6 +144,7 @@ def augment_pocket_for_training(
         outer_residue_dropout=float(outer_residue_dropout),
         use_ring_edges=use_ring_edges,
         shell_role_source=shell_role_source,
+        generator=generator,
     )
     if position_noise_std > 0.0:
         noise_std = float(position_noise_std)
@@ -140,14 +152,14 @@ def augment_pocket_for_training(
             _clone_residue_with_atoms(
                 residue,
                 {
-                    atom_name: coord.float().clone() + torch.randn_like(coord.float()) * noise_std
+                    atom_name: coord.float().clone() + _standard_noise(coord.float(), generator) * noise_std
                     for atom_name, coord in residue.atoms.items()
                 },
             )
             for residue in residues
         ]
         metal_coords = [
-            coord.float().clone() + torch.randn_like(coord.float()) * noise_std
+            coord.float().clone() + _standard_noise(coord.float(), generator) * noise_std
             for coord in pocket.metal_coords
         ]
         metadata = _clone_metadata_with_metal_coords(pocket.metadata, metal_coords)
@@ -351,8 +363,10 @@ class PocketGraphDataset(Dataset):
         outer_residue_dropout: float = 0.0,
         metal_node_mode: str = "none",
         shell_role_source: str = "edge_mode",
+        augmentation_generator: torch.Generator | None = None,
     ):
         self.pockets = pockets
+        self.augmentation_generator = augmentation_generator
         self.esm_dim = esm_dim
         self.edge_radius = edge_radius
         self.normalization_stats = normalization_stats
@@ -416,6 +430,7 @@ class PocketGraphDataset(Dataset):
                     outer_residue_dropout=self.outer_residue_dropout,
                     use_ring_edges=self.use_ring_edges or self.require_ring_edges,
                     shell_role_source=self.shell_role_source,
+                    generator=self.augmentation_generator,
                 ),
                 esm_dim=self.esm_dim,
                 edge_radius=self.edge_radius,

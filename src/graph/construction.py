@@ -327,6 +327,15 @@ def pocket_to_pyg_data(
         _GRAPH_EC_GROUP_ID_FIELD,
         torch.tensor([int(pocket.metadata.get(_GRAPH_EC_GROUP_ID_FIELD, -1))], dtype=torch.long),
     )
+    # Whole-protein chain-mean vector, present only when the global branch attached one.
+    global_vector = pocket.metadata.get("global_esm_vector")
+    if global_vector is not None:
+        data.x_global_esm = torch.as_tensor(global_vector, dtype=torch.float32).view(1, -1)
+    # Optional deeper-level EC targets for training-only auxiliary objectives; absent by default.
+    for level in (2, 3):
+        key = f"ec_aux_l{level}"
+        if key in pocket.metadata:
+            setattr(data, f"y_ec_l{level}", torch.tensor([int(pocket.metadata[key])], dtype=torch.long))
     return data
 
 

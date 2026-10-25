@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import csv
 import json
+import math
 import random
 import resource
 import sys
@@ -37,9 +38,16 @@ from training.config import (
     TrainConfig,
     config_to_payload,
     default_selection_metric_for_task,
+    parse_ec_aux_levels,
     required_targets_for_task,
 )
 from training.data import load_training_pockets_with_report_from_dir
+from training.ec_class_metrics import ec_class_metrics_from_logits
+from training.ec_membership import ec_membership_split, read_ec_fold_membership
+from training.ec_classes import complete_ec_prefix
+from training.ec_classes import (
+    EC_CLASS_TOKEN_TO_INDEX, assert_consistent_ec_protein_labels, ec_class_split_support,
+)
 from training.evaluation_protocols import enforce_held_out_overlap_policy
 from training.final_test_reporting import (
     build_metal_final_reporting_payload,
@@ -401,6 +409,57 @@ def validate_training_configuration(config: TrainConfig) -> None:
         raise ValueError("--metal-example-unit ion currently requires --task metal")
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
+    if config.gvp_weight_decay is not None and config.gvp_weight_decay < 0.0:
+        raise ValueError("--gvp-weight-decay must be >= 0")
+    if config.gvp_target_shrink is not None:
+        if not 0.0 < config.gvp_target_shrink < 1.0:
+            raise ValueError("--gvp-target-shrink must be in (0, 1)")
+        if config.gvp_weight_decay is not None:
+            raise ValueError("--gvp-target-shrink cannot be combined with --gvp-weight-decay")
+        if config.gvp_target_shrink_scope not in {"trunk", "all"}:
+            raise ValueError(f"Unsupported --gvp-target-shrink-scope {config.gvp_target_shrink_scope!r}")
+    if (config.gvp_weight_decay is not None or config.gvp_target_shrink is not None) and \
+            config.model_architecture not in {"gvp", "only_gvp"}:
+        raise ValueError("--gvp-weight-decay and --gvp-target-shrink require --model-architecture gvp or only_gvp")
+    if config.site_extraction not in {"component", "selected_sites"}:
+        raise ValueError(f"Unsupported site extraction: {config.site_extraction!r}")
+    if config.site_extraction == "selected_sites" and (
+        config.metal_example_unit != "pocket" or config.source_cohort_csv is not None or config.summary_csv is None
+    ):
+        raise ValueError("--site-extraction selected_sites requires pocket examples, a summary CSV and no source cohort")
+    if uses_ec_fold_membership(config):
+        if config.metal_example_unit != "pocket":
+            raise ValueError("EC fold membership requires --metal-example-unit pocket")
+        if config.fold_membership_csv is None or not config.fold_membership_sha256 or config.n_folds is None \
+                or config.fold_index is None:
+            raise ValueError("EC fold membership requires a membership file, its SHA-256, --n-folds and --fold-index")
+        if config.run_test_eval or config.test_structure_dir is not None:
+            raise ValueError("EC fold membership cannot be combined with a test set")
+    if config.use_global_esm_branch and config.run_test_eval:
+        raise ValueError("Held-out evaluation with the whole-protein branch is not supported by the training run")
+    if config.use_global_esm_branch and (config.global_esm_cache_dir is None or not config.global_esm_manifest_sha256):
+        raise ValueError("--use-global-esm-branch requires --global-esm-cache-dir and --global-esm-manifest-sha256")
+    if config.model_architecture == "only_global" and not config.use_global_esm_branch:
+        raise ValueError("--model-architecture only_global requires --use-global-esm-branch")
+    if config.global_esm_standardize not in {"none", "train_proteins"}:
+        raise ValueError(f"Unsupported --global-esm-standardize {config.global_esm_standardize!r}")
+    if config.augmentation_rng not in {"global", "per_fit"}:
+        raise ValueError(f"Unsupported --augmentation-rng {config.augmentation_rng!r}")
+    if config.augmentation_rng == "per_fit" and config.num_workers != 0:
+        raise ValueError("--augmentation-rng per_fit requires --num-workers 0")
+    if config.ec_class_vocabulary not in {"observed", "fixed_seven"}:
+        raise ValueError(f"Unsupported EC class vocabulary: {config.ec_class_vocabulary!r}")
+    if config.ec_class_vocabulary == "fixed_seven":
+        if config.task != "ec" or config.ec_label_depth != 1:
+            raise ValueError("--ec-class-vocabulary fixed_seven requires --task ec and --ec-label-depth 1")
+        if config.require_all_task_classes:
+            raise ValueError("--ec-class-vocabulary fixed_seven cannot be combined with --require-all-task-classes")
+    if config.ec_conflicting_labels not in {"skip", "fail"}:
+        raise ValueError(f"Unsupported EC conflicting-label policy: {config.ec_conflicting_labels!r}")
+    if config.ec_conflicting_labels == "fail" and config.task == "metal":
+        raise ValueError("--ec-conflicting-labels fail requires an EC task")
+    if config.selection_metric == "val_ec_group_ec_classes_1_6_balanced_acc" and config.ec_class_vocabulary != "fixed_seven":
+        raise ValueError("val_ec_group_ec_classes_1_6_balanced_acc requires --ec-class-vocabulary fixed_seven")
     if config.export_validation_predictions:
         if config.source_cohort_csv is None or config.task != "metal" or config.metal_example_unit != "ion":
             raise ValueError("--export-validation-predictions requires --source-cohort-csv --task metal --metal-example-unit ion")
@@ -689,6 +748,89 @@ def ec_level_metrics_from_logits(
     )
 
 
+def assign_ec_auxiliary_targets(split: PocketSplit, config: TrainConfig) -> dict[str, Any]:
+    """Training-only vocabularies for deeper EC levels; sets ``ec_aux_l{level}`` on every pocket.
+
+    Labels are the single complete EC prefix at that level (``complete_ec_prefix``);
+    validation pockets and training pockets without one get -1. Returns {} when no
+    auxiliary objective is enabled.
+    """
+    levels = set(parse_ec_aux_levels(config.ec_aux_levels))
+    if config.ec_supcon_weight > 0.0:
+        levels.add(3)
+    vocabularies: dict[str, Any] = {}
+    for level in sorted(levels):
+        prefixes = [complete_ec_prefix(_pocket_ec_numbers(pocket), level) for pocket in split.train_pockets]
+        tokens = sorted({prefix for prefix in prefixes if prefix is not None})
+        index = {token: position for position, token in enumerate(tokens)}
+        for pocket, prefix in zip(split.train_pockets, prefixes):
+            pocket.metadata[f"ec_aux_l{level}"] = index.get(prefix, -1) if prefix is not None else -1
+        for pocket in split.val_pockets:
+            pocket.metadata[f"ec_aux_l{level}"] = -1
+        vocabularies[str(level)] = {
+            "tokens": tokens,
+            "n_train_pockets_labelled": sum(prefix is not None for prefix in prefixes),
+            "n_train_pockets_masked": sum(prefix is None for prefix in prefixes),
+        }
+    return vocabularies
+
+
+def _pocket_ec_numbers(pocket) -> tuple[str, ...]:
+    values = pocket.metadata.get("ec_numbers")
+    if values is None:
+        return ()
+    return tuple(values.split(";")) if isinstance(values, str) else tuple(str(value) for value in values)
+
+
+AUGMENTATION_SEED_OFFSET = 7919
+
+
+def attach_global_esm_vectors(pockets, config: TrainConfig) -> dict[str, Any]:
+    """Load one chain-mean vector per loaded structure (exact names only) and attach it to every pocket."""
+    from training.global_esm_features import attach_global_esm_to_pockets, load_global_esm_vectors
+
+    structure_ids = sorted({pocket.structure_id for pocket in pockets})
+    vectors = load_global_esm_vectors(
+        Path(config.global_esm_cache_dir), str(config.global_esm_manifest_sha256), structure_ids,
+        expected_layer=config.global_esm_layer, expected_dim=config.global_esm_dim,
+    )
+    attach = attach_global_esm_to_pockets(pockets, vectors)
+    return {"cache_dir": str(config.global_esm_cache_dir), "manifest_sha256": config.global_esm_manifest_sha256,
+            "layer": config.global_esm_layer, "dim": config.global_esm_dim, "n_structures": len(structure_ids),
+            "n_pockets": len(pockets), "attach": attach}
+
+
+def standardize_global_esm_vectors(split: PocketSplit, config: TrainConfig) -> dict[str, Any] | None:
+    """Optionally z-score every pocket's vector with statistics of one vector per training protein."""
+    from training.global_esm_features import GLOBAL_ESM_METADATA_KEY
+
+    if config.global_esm_standardize == "none":
+        return None
+    per_protein = {}
+    for pocket in split.train_pockets:
+        per_protein.setdefault(pocket.structure_id, pocket.metadata[GLOBAL_ESM_METADATA_KEY])
+    stacked = torch.stack([per_protein[key] for key in sorted(per_protein)], dim=0)
+    mean = stacked.mean(dim=0)
+    std = stacked.std(dim=0, unbiased=False).clamp_min(1e-6)
+    for pocket in [*split.train_pockets, *split.val_pockets]:
+        pocket.metadata[GLOBAL_ESM_METADATA_KEY] = (pocket.metadata[GLOBAL_ESM_METADATA_KEY] - mean) / std
+    return {"mode": "train_proteins", "n_train_proteins": len(per_protein),
+            "mean": mean.tolist(), "std": std.tolist()}
+
+
+def uses_ec_fold_membership(config: TrainConfig) -> bool:
+    """EC runs split by a frozen per-structure fold file (no source cohort)."""
+    return config.fold_split_source == "membership" and config.task == "ec" and config.source_cohort_csv is None
+
+
+def ec_metric_options(config: TrainConfig) -> dict[str, bool]:
+    """Grouped EC metric options derived from the run configuration."""
+    return {
+        "fail_on_conflict": config.ec_conflicting_labels == "fail",
+        "fixed_ec_classes": config.ec_class_vocabulary == "fixed_seven",
+    }
+
+
 def ec_group_metrics_from_logits(
     logits: torch.Tensor,
     targets: torch.Tensor,
@@ -696,7 +838,11 @@ def ec_group_metrics_from_logits(
     *,
     ec_label_map: dict[int, str],
     ec_label_depth: int,
+    fail_on_conflict: bool = False,
+    fixed_ec_classes: bool = False,
 ) -> dict[str, Any]:
+    if fixed_ec_classes and dict(ec_label_map) != {index: token for token, index in EC_CLASS_TOKEN_TO_INDEX.items()}:
+        raise ValueError("Fixed EC-class metrics need the fixed seven-class label map")
     grouped_logits: dict[int, list[torch.Tensor]] = {}
     grouped_targets: dict[int, set[int]] = {}
     for logit, target, group_idx in zip(logits, targets, group_indices):
@@ -712,6 +858,8 @@ def ec_group_metrics_from_logits(
     for group_id in sorted(grouped_logits):
         target_values = grouped_targets[group_id]
         if len(target_values) != 1:
+            if fail_on_conflict:
+                raise ValueError(f"EC group {group_id} holds pockets with different EC labels {sorted(target_values)}")
             conflicting_groups += 1
             continue
         mean_logits.append(torch.stack(grouped_logits[group_id], dim=0).mean(dim=0))
@@ -742,6 +890,13 @@ def ec_group_metrics_from_logits(
             "confusion_matrix": metrics["confusion_matrix"],
         }
     )
+    if fixed_ec_classes:
+        fixed = ec_class_metrics_from_logits(group_logits.detach().cpu().numpy(), group_y.numpy())
+        for key in (
+            "ec_classes_1_6_balanced_accuracy", "ec_classes_1_6_n_present", "ec_classes_1_6_macro_f1",
+            "seven_class_balanced_accuracy", "seven_class_n_present", "seven_class_macro_f1",
+        ):
+            payload[key] = fixed[key]
     for level in range(1, ec_label_depth + 1):
         level_metrics = ec_level_metrics_from_logits(
             group_logits,
@@ -764,6 +919,8 @@ def metrics_from_predictions(
     task: str,
     ec_label_map: dict[int, str],
     ec_label_depth: int,
+    fail_on_conflict: bool = False,
+    fixed_ec_classes: bool = False,
 ) -> dict[str, Any]:
     payload = {
         f"{prefix}_loss": predictions["loss"],
@@ -863,6 +1020,8 @@ def metrics_from_predictions(
                 predictions["ec_group_id"],
                 ec_label_map=ec_label_map,
                 ec_label_depth=ec_label_depth,
+                fail_on_conflict=fail_on_conflict,
+                fixed_ec_classes=fixed_ec_classes,
             )
             payload.update(
                 {
@@ -877,6 +1036,17 @@ def metrics_from_predictions(
                     f"{prefix}_ec_group_n_conflicting_groups": group_metrics["n_conflicting_groups"],
                 }
             )
+            if fixed_ec_classes:
+                payload.update(
+                    {
+                        f"{prefix}_ec_group_ec_classes_1_6_balanced_acc": group_metrics.get("ec_classes_1_6_balanced_accuracy"),
+                        f"{prefix}_ec_group_ec_classes_1_6_n_present": group_metrics.get("ec_classes_1_6_n_present"),
+                        f"{prefix}_ec_group_ec_classes_1_6_macro_f1": group_metrics.get("ec_classes_1_6_macro_f1"),
+                        f"{prefix}_ec_group_seven_class_balanced_acc": group_metrics.get("seven_class_balanced_accuracy"),
+                        f"{prefix}_ec_group_seven_class_n_present": group_metrics.get("seven_class_n_present"),
+                        f"{prefix}_ec_group_seven_class_macro_f1": group_metrics.get("seven_class_macro_f1"),
+                    }
+                )
             for level in range(1, ec_label_depth + 1):
                 if f"level_{level}_accuracy" not in group_metrics:
                     continue
@@ -924,6 +1094,8 @@ def evaluate_split_metrics(
     task: str,
     ec_label_map: dict[int, str],
     ec_label_depth: int,
+    fail_on_conflict: bool = False,
+    fixed_ec_classes: bool = False,
 ) -> dict[str, Any]:
     if loader is None:
         return {}
@@ -935,6 +1107,8 @@ def evaluate_split_metrics(
         task=task,
         ec_label_map=ec_label_map,
         ec_label_depth=ec_label_depth,
+        fail_on_conflict=fail_on_conflict,
+        fixed_ec_classes=fixed_ec_classes,
     )
 
 
@@ -1139,6 +1313,152 @@ def gvp_learning_rate_prefixes(scope: str) -> tuple[str, ...]:
     raise ValueError(f"Unsupported --gvp-lr-scope {scope!r}")
 
 
+OPTIMIZER_GROUPS_SCHEMA_VERSION = 2
+
+
+def scheduler_epoch_lr_factors(config: TrainConfig) -> list[float]:
+    """Per-epoch learning-rate multipliers of the configured schedule (stepped once per epoch)."""
+    probe = torch.nn.Parameter(torch.zeros(1))
+    optimizer = torch.optim.SGD([probe], lr=1.0)
+    scheduler = build_scheduler(optimizer, config)
+    factors = []
+    for _ in range(int(config.epochs)):
+        factors.append(float(optimizer.param_groups[0]["lr"]))
+        if scheduler is not None:
+            optimizer.step()
+            scheduler.step()
+    return factors
+
+
+def build_optimizer_param_groups(
+    model: torch.nn.Module,
+    config: TrainConfig,
+    *,
+    steps_per_epoch: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """AdamW parameter groups plus the record written to optimizer_groups.json.
+
+    The GVP trunk gets its own group when a distinct GVP learning rate, a GVP weight
+    decay or a trunk target shrink is set (TECH-032: a GVP decay alone used to be
+    ignored). Without a split, one group holds every parameter, as before. A target
+    shrink sets the decay so that exp(-wd * sum of per-step learning rates) equals
+    the target over this fit's planned optimizer steps.
+    """
+    has_trunk = hasattr(model, "layers")
+    gvp_lr = config.gvp_learning_rate
+    reasons = []
+    if has_trunk and gvp_lr is not None and gvp_lr != config.learning_rate:
+        reasons.append("distinct_gvp_learning_rate")
+    if has_trunk and config.gvp_weight_decay is not None:
+        reasons.append("gvp_weight_decay")
+    if has_trunk and config.gvp_target_shrink is not None and config.gvp_target_shrink_scope == "trunk":
+        reasons.append("gvp_target_shrink")
+    if not has_trunk and (config.gvp_weight_decay is not None or config.gvp_target_shrink is not None):
+        raise ValueError("GVP weight decay options need a model with a GVP trunk")
+    ignored = []
+    if not has_trunk and gvp_lr is not None:
+        ignored.append("gvp_learning_rate")
+    if has_trunk and not reasons and config.gvp_lr_scope != "trunk":
+        ignored.append("gvp_lr_scope")
+
+    if reasons:
+        prefixes = gvp_learning_rate_prefixes(config.gvp_lr_scope)
+        named = [(name, param) for name, param in model.named_parameters() if param.requires_grad]
+        trunk = [(name, param) for name, param in named if any(name.startswith(prefix) for prefix in prefixes)]
+        base = [(name, param) for name, param in named if not any(name.startswith(prefix) for prefix in prefixes)]
+        specs = [
+            ["gvp_trunk", trunk, gvp_lr if gvp_lr is not None else config.learning_rate,
+             config.gvp_weight_decay if config.gvp_weight_decay is not None else config.weight_decay],
+            ["base", base, config.learning_rate, config.weight_decay],
+        ]
+    else:
+        # All parameters, including frozen ones, exactly as the single-group optimizer always did.
+        specs = [["all", list(model.named_parameters()), config.learning_rate, config.weight_decay]]
+
+    factors = scheduler_epoch_lr_factors(config)
+    target_shrink = None
+    if config.gvp_target_shrink is not None:
+        target = float(config.gvp_target_shrink)
+        shrink_groups = {"gvp_trunk"} if config.gvp_target_shrink_scope == "trunk" else {spec[0] for spec in specs}
+        target_shrink = {"target": target, "scope": config.gvp_target_shrink_scope, "groups": {}}
+        for spec in specs:
+            if spec[0] not in shrink_groups:
+                continue
+            sum_lr = steps_per_epoch * spec[2] * sum(factors)
+            if sum_lr <= 0:
+                raise ValueError("A target shrink needs a positive learning-rate sum")
+            spec[3] = -math.log(target) / sum_lr
+            per_step = [spec[2] * factor * spec[3] for factor in factors]
+            target_shrink["groups"][spec[0]] = {
+                "computed_weight_decay": spec[3],
+                "sum_lr": sum_lr,
+                "planned_product_shrink": float(math.prod((1.0 - value) ** steps_per_epoch for value in per_step)),
+                "peak_lr_times_weight_decay": max(per_step),
+                "float32_step_rounds_to_one": bool(any(float(torch.tensor(1.0 - value, dtype=torch.float32)) == 1.0
+                                                       for value in per_step if value > 0)),
+            }
+
+    param_groups = [{"params": [param for _, param in params], "lr": lr, "weight_decay": wd}
+                    for _name, params, lr, wd in specs]
+    by_name = {spec[0]: spec for spec in specs}
+    record = {
+        "schema_version": OPTIMIZER_GROUPS_SCHEMA_VERSION,
+        "gvp_lr_scope": config.gvp_lr_scope,
+        "gvp_learning_rate": gvp_lr,
+        "learning_rate": config.learning_rate,
+        "gvp_rate_parameters": [name for name, _ in by_name["gvp_trunk"][1]] if "gvp_trunk" in by_name else [],
+        "base_rate_parameters": [name for name, _ in (by_name.get("base") or by_name["all"])[1]],
+        "split_reason": reasons,
+        "ignored_flags": ignored,
+        "groups": [
+            {"name": name, "lr": lr, "weight_decay": wd, "n_tensors": len(params),
+             "n_values": int(sum(param.numel() for _, param in params)),
+             "parameter_names": [param_name for param_name, _ in params]}
+            for name, params, lr, wd in specs
+        ],
+        "optimizer_steps_per_epoch": int(steps_per_epoch),
+        "planned_total_steps": int(steps_per_epoch) * int(config.epochs),
+        "epoch_lr_factors": factors,
+        "target_shrink": target_shrink,
+    }
+    return param_groups, record
+
+
+def realised_optimizer_steps(optimizer: torch.optim.Optimizer) -> list[int | None]:
+    """Largest AdamW step count per group; None when no parameter of the group was ever updated."""
+    realised = []
+    for group in optimizer.param_groups:
+        steps = [int(float(optimizer.state[param]["step"])) for param in group["params"]
+                 if param in optimizer.state and "step" in optimizer.state[param]]
+        realised.append(max(steps) if steps else None)
+    return realised
+
+
+def finalize_optimizer_groups(
+    run_dir: Path,
+    optimizer: torch.optim.Optimizer,
+    n_epochs_run: int,
+    *,
+    amp_active: bool = False,
+) -> dict[str, Any]:
+    """Add realised step counts to optimizer_groups.json; fail when they differ from the plan.
+
+    Mixed precision may skip steps on overflow, so with AMP a difference is recorded, not raised.
+    """
+    path = run_dir / "optimizer_groups.json"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    planned = int(record["optimizer_steps_per_epoch"]) * int(n_epochs_run)
+    realised = realised_optimizer_steps(optimizer)
+    record["planned_steps_for_epochs_run"] = planned
+    record["realised_total_steps"] = realised
+    record["realised_steps_match"] = all(value is None or value == planned for value in realised)
+    record["amp_active"] = bool(amp_active)
+    save_json(path, record)
+    if not record["realised_steps_match"] and not amp_active:
+        raise ValueError(f"Optimizer steps {realised} differ from the planned {planned}; see {path}")
+    return record
+
+
 def metric_sort_value(record: dict[str, Any], selection_metric: str) -> tuple[float, bool]:
     if selection_metric not in record or record[selection_metric] is None:
         raise ValueError(f"Selection metric {selection_metric!r} is missing from the epoch record.")
@@ -1166,6 +1486,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         "position_noise_std": float(config.position_noise_std),
         "second_shell_dropout": float(config.second_shell_dropout),
         "outer_residue_dropout": float(config.outer_residue_dropout),
+        "rng": config.augmentation_rng,
+        **({"rng_seed": int(config.seed) + AUGMENTATION_SEED_OFFSET} if config.augmentation_rng == "per_fit" else {}),
         "training_only": True,
         "validation_and_test_unchanged": True,
     }
@@ -1206,6 +1528,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             external_features_root_dir=config.external_features_root_dir,
             external_feature_source=config.external_feature_source,
             require_external_features=config.require_external_features,
+            prepare_missing_external_features=config.prepare_missing_external_features,
             use_ring_edges=config.use_ring_edges,
             require_ring_edges=config.require_ring_edges,
             prepare_missing_ring_edges=config.prepare_missing_ring_edges,
@@ -1221,6 +1544,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 external_features_root_dir=config.external_features_root_dir,
                 external_feature_source=config.external_feature_source,
                 require_external_features=config.require_external_features,
+                prepare_missing_external_features=config.prepare_missing_external_features,
                 use_ring_edges=config.use_ring_edges,
                 require_ring_edges=config.require_ring_edges,
                 prepare_missing_ring_edges=config.prepare_missing_ring_edges,
@@ -1237,6 +1561,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                     "test_runtime_preparation": test_runtime_preparation_report,
                 },
             ),
+        )
+        ec_fold_membership = (
+            read_ec_fold_membership(Path(config.fold_membership_csv), str(config.fold_membership_sha256))
+            if uses_ec_fold_membership(config) else None
         )
         load_result = load_training_pockets_with_report_from_dir(
             load_workers=config.load_workers,
@@ -1256,6 +1584,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             unsupported_metal_policy=config.unsupported_metal_policy,
             invalid_structure_policy=config.invalid_structure_policy,
             ec_label_depth=config.ec_label_depth,
+            ec_class_vocabulary=config.ec_class_vocabulary,
+            site_extraction=config.site_extraction,
             source_cohort_csv=config.source_cohort_csv,
             source_cohort_sha256=config.source_cohort_sha256,
             feature_inventory_sha256=config.feature_inventory_sha256,
@@ -1263,6 +1593,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 row["structure_id"] for part in ("train", "inner_validation")
                 for row in membership["partitions"][part]
             }} if membership is not None else {}),
+            **({"allowed_structure_ids": set(ec_fold_membership.fold_by_structure)}
+               if ec_fold_membership is not None else {}),
         )
         pockets = load_result.pockets
         if not pockets:
@@ -1272,18 +1604,32 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 "No EC labels were available after applying the configured "
                 f"--ec-label-depth {config.ec_label_depth}."
             )
+        global_esm_report = attach_global_esm_vectors(pockets, config) if config.use_global_esm_branch else None
+        ec_protein_label_check = None
+        if config.ec_conflicting_labels == "fail":
+            ec_protein_label_check = assert_consistent_ec_protein_labels(pockets)
         save_json(
             run_dir / "prepare_status.json",
             prepare_status_payload(
                 stage="load_training_pockets",
                 status="completed",
                 config_payload=config_payload,
-                extra={"n_loaded_pockets": len(pockets), "feature_load_report": load_result.feature_report},
+                extra={
+                    "n_loaded_pockets": len(pockets),
+                    "feature_load_report": load_result.feature_report,
+                    **({"ec_label_report": load_result.ec_label_report} if load_result.ec_label_report else {}),
+                    **({"ec_protein_label_check": ec_protein_label_check} if ec_protein_label_check else {}),
+                },
             ),
         )
 
+        ec_fold_membership_receipt = None
         if membership is not None:
             split = fixed_split(pockets, membership)
+        elif ec_fold_membership is not None:
+            split, ec_fold_membership_receipt = ec_membership_split(
+                pockets, ec_fold_membership, fold_index=int(config.fold_index), n_folds=int(config.n_folds),
+            )
         elif config.fold_split_source == "membership":
             split = membership_split(
                 pockets,
@@ -1312,8 +1658,8 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             )
         if config.export_validation_predictions and not split.val_pockets:
             raise ValueError("--export-validation-predictions requires a nonempty validation split")
-        fold_membership_receipt = None
-        if config.fold_membership_csv is not None:
+        fold_membership_receipt = ec_fold_membership_receipt
+        if config.fold_membership_csv is not None and ec_fold_membership is None:
             fold_membership_receipt = verify_fold_membership(
                 train_pockets=split.train_pockets,
                 val_pockets=split.val_pockets,
@@ -1323,11 +1669,17 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
         if task_predicts_ec(config.task):
             assign_ec_group_metadata(split.train_pockets, weighting_mode=config.ec_group_weighting)
             assign_ec_group_metadata(split.val_pockets, weighting_mode=config.ec_group_weighting)
+        ec_auxiliary_vocabularies = assign_ec_auxiliary_targets(split, config)
+        if global_esm_report is not None:
+            global_esm_report["standardization"] = standardize_global_esm_vectors(split, config)
         split_diagnostics = build_split_diagnostics(
             split,
             config,
             ec_label_map=load_result.ec_index_to_label,
         )
+        if config.ec_class_vocabulary == "fixed_seven":
+            split_diagnostics["ec_class_support"] = ec_class_split_support(split.train_pockets, split.val_pockets)
+            split_diagnostics["ec_label_report"] = load_result.ec_label_report
         print(format_split_diagnostics(split_diagnostics))
         save_json(run_dir / "split_diagnostics.json", split_diagnostics)
         dataset_summary = build_dataset_summary(
@@ -1349,6 +1701,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             }
         )
         dataset_summary["runtime_preparation"] = runtime_preparation_report
+        if ec_auxiliary_vocabularies:
+            dataset_summary["ec_auxiliary_objectives"] = {"vocabularies": ec_auxiliary_vocabularies}
+        if global_esm_report is not None:
+            dataset_summary["global_esm"] = global_esm_report
         train_graphs = build_graph_data_list(
             split.train_pockets,
             esm_dim=config.esm_dim,
@@ -1433,6 +1789,10 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
                 position_noise_std=config.position_noise_std,
                 second_shell_dropout=config.second_shell_dropout,
                 outer_residue_dropout=config.outer_residue_dropout,
+                augmentation_generator=(
+                    torch.Generator().manual_seed(int(config.seed) + AUGMENTATION_SEED_OFFSET)
+                    if config.augmentation_rng == "per_fit" else None
+                ),
             ),
             batch_size=config.batch_size,
             shuffle=train_sampler is None,
@@ -1587,47 +1947,31 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             gvp_vector_norm=config.gvp_vector_norm,
             gvp_auxiliary_loss_weight=config.gvp_auxiliary_loss_weight,
             esm_modality_dropout=config.esm_modality_dropout,
+            use_global_esm_branch=config.use_global_esm_branch,
+            global_esm_dim=config.global_esm_dim,
+            global_esm_dropout=config.global_esm_dropout,
         ).to(config.device)
-        gvp_lr = config.gvp_learning_rate
-        if gvp_lr is not None and gvp_lr != config.learning_rate and hasattr(model, "layers"):
-            trunk_params = []
-            head_params = []
-            trunk_names, head_names = [], []
-            prefixes = gvp_learning_rate_prefixes(config.gvp_lr_scope)
-            for name, param in model.named_parameters():
-                if not param.requires_grad:
-                    continue
-                if any(name.startswith(prefix) for prefix in prefixes):
-                    trunk_params.append(param)
-                    trunk_names.append(name)
-                else:
-                    head_params.append(param)
-                    head_names.append(name)
-            if config.gvp_lr_scope != "trunk":
-                save_json(run_dir / "optimizer_groups.json", {
-                    "gvp_lr_scope": config.gvp_lr_scope, "gvp_learning_rate": gvp_lr,
-                    "learning_rate": config.learning_rate, "gvp_rate_parameters": trunk_names,
-                    "base_rate_parameters": head_names,
-                })
-            param_groups = [
-                {
-                    "params": trunk_params,
-                    "lr": gvp_lr,
-                    "weight_decay": config.gvp_weight_decay if config.gvp_weight_decay is not None else config.weight_decay,
-                },
-                {
-                    "params": head_params,
-                    "lr": config.learning_rate,
-                    "weight_decay": config.weight_decay,
-                },
-            ]
-            optimizer = torch.optim.AdamW(param_groups)
-        else:
-            optimizer = torch.optim.AdamW(
-                model.parameters(),
-                lr=config.learning_rate,
-                weight_decay=config.weight_decay,
+        if ec_auxiliary_vocabularies:
+            from ec_auxiliary_objectives import attach_ec_auxiliary_objectives
+
+            attachments = attach_ec_auxiliary_objectives(
+                model,
+                aux_level_sizes={level: len(ec_auxiliary_vocabularies[str(level)]["tokens"])
+                                 for level in parse_ec_aux_levels(config.ec_aux_levels)},
+                aux_weight=config.ec_aux_weight,
+                supcon_weight=config.ec_supcon_weight,
+                supcon_temperature=config.ec_supcon_temperature,
+                supcon_memory=config.ec_supcon_memory,
+                supcon_projection_dim=config.ec_supcon_projection_dim,
             )
+            model = model.to(config.device)
+            dataset_summary["ec_auxiliary_objectives"]["attachments"] = attachments
+        steps_per_epoch = math.ceil(len(train_loader) / config.grad_accum_steps)
+        param_groups, optimizer_groups = build_optimizer_param_groups(model, config, steps_per_epoch=steps_per_epoch)
+        for flag in optimizer_groups["ignored_flags"]:
+            print(f"[WARN] {flag} has no effect for this model; recorded in optimizer_groups.json", flush=True)
+        save_json(run_dir / "optimizer_groups.json", optimizer_groups)
+        optimizer = torch.optim.AdamW(param_groups)
         scheduler = build_scheduler(optimizer, config)
         save_json(
             run_dir / "prepare_status.json",
@@ -1698,6 +2042,7 @@ def train_and_select_checkpoint(
                 task=config.task,
                 ec_label_map=prepared.ec_labels,
                 ec_label_depth=config.ec_label_depth,
+                **ec_metric_options(config),
             )
             train_metrics.pop("train_loss", None)
             _record_runtime_phase(prepared.run_dir, config, "train_metric_evaluation", phase_started)
@@ -1708,6 +2053,7 @@ def train_and_select_checkpoint(
             "epoch": epoch,
             "train_loss": train_loss,
             "lr": float(prepared.optimizer.param_groups[0]["lr"]),
+            "lr_groups": [float(group["lr"]) for group in prepared.optimizer.param_groups],
             **train_metrics,
             **task_loss_weighting_state(prepared.model),
             **binding_bias_state(prepared.model),
@@ -1722,6 +2068,7 @@ def train_and_select_checkpoint(
             task=config.task,
             ec_label_map=prepared.ec_labels,
             ec_label_depth=config.ec_label_depth,
+            **ec_metric_options(config),
         )
         if prepared.val_loader is not None:
             _record_runtime_phase(prepared.run_dir, config, "validation", phase_started)
@@ -1872,6 +2219,8 @@ def evaluate_held_out_test_split(
             invalid_structure_policy=config.invalid_structure_policy,
             ec_label_depth=config.ec_label_depth,
             ec_label_to_index=prepared.ec_label_to_index,
+            ec_class_vocabulary=config.ec_class_vocabulary,
+            site_extraction=config.site_extraction,
             metal_example_unit=config.metal_example_unit,
         )
         if not test_load_result.pockets:
@@ -1923,6 +2272,7 @@ def evaluate_held_out_test_split(
             task=config.task,
             ec_label_map=prepared.ec_labels,
             ec_label_depth=config.ec_label_depth,
+            **ec_metric_options(config),
         )
         final_reporting_payload: dict[str, Any] = {
             "metrics": metrics,
@@ -2146,6 +2496,10 @@ def persist_run_outputs(
         run_metadata["fit_status"] = "completed" if len(history) == prepared.config_payload["epochs"] else "incomplete"
         run_metadata["outer_observed_during_training"] = False
 
+    run_metadata["optimizer_groups"] = finalize_optimizer_groups(
+        prepared.run_dir, prepared.optimizer, len(history),
+        amp_active=bool(prepared.config_payload.get("use_amp")) and str(prepared.config_payload.get("device", "")).startswith("cuda"),
+    )
     save_json(
         prepared.run_dir / "run_config.json",
         {
@@ -2188,6 +2542,10 @@ def run_training(config: TrainConfig) -> Path:
     configure_active_metal_label_scheme(config.metal_label_scheme)
     config = resolve_selection_metric(config)
     validate_training_configuration(config)
+    if config.export_ec_predictions or config.ec_probe_structure_ids is not None:
+        from training.ec_prediction_export import validate_ec_export_configuration
+
+        validate_ec_export_configuration(config)
     validate_held_out_structure_disjointness(config)
     set_seed(config.seed, deterministic=config.deterministic)
     if config.omit_node_features:
@@ -2216,6 +2574,12 @@ def run_training(config: TrainConfig) -> Path:
             run_dir=prepared.run_dir,
             device=config.device,
         )
+        _record_runtime_phase(prepared.run_dir, config, "selected_export", phase_started)
+    if config.export_ec_predictions:
+        from training.ec_prediction_export import export_ec_run_predictions
+
+        phase_started = perf_counter()
+        export_ec_run_predictions(prepared, config, history=history, checkpoint=best_checkpoint)
         _record_runtime_phase(prepared.run_dir, config, "selected_export", phase_started)
     return prepared.run_dir
 

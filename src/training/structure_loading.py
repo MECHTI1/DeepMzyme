@@ -5,7 +5,10 @@ from typing import Any
 
 from data_structures import PocketRecord
 from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_output_path
-from graph.structure_parsing import extract_metal_pockets_from_structure, parse_structure_file
+from graph.structure_parsing import (
+    NO_SELECTED_SITES_REASON, SELECTED_SITE_EXTRACTION, extract_metal_pockets_from_structure,
+    extract_selected_site_pockets_from_structure, parse_structure_file,
+)
 from label_schemes import map_site_metal_symbols, map_site_metal_symbols_for_scheme
 from structure_store import STRUCTURE_MANIFEST_FILENAME, read_structure_manifest
 from training.feature_sources import (
@@ -20,7 +23,9 @@ from training.labels import (
 )
 from training.metal_examples import metal_ion_examples
 from training.source_cohort import CohortBindingError, binding_from_payload, build_cohort_ion_examples
-from training.site_filter import AllowedSiteMetalLabels, matched_site_metal_types, pocket_matches_allowed_sites
+from training.site_filter import (
+    AllowedSiteMetalLabels, matched_site_metal_types, pocket_matches_allowed_sites, selected_site_ids_for_structure,
+)
 
 
 class StructureLoadError(ValueError):
@@ -105,8 +110,14 @@ def load_structure_pockets(
     metal_example_unit: str = "pocket",
     cohort_bindings: dict[str, tuple] | None = None,
     feature_inventory_sha256: str | None = None,
+    site_extraction: str = "component",
 ) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
     """Parse one structure into labeled examples.
+
+    ``site_extraction="selected_sites"`` builds pockets only around the summary's
+    selected sites, so unselected metals in the file shape no pocket (see
+    ``extract_selected_site_pockets_from_structure``); the default keeps the
+    component extraction followed by the summary filter.
 
     ``cohort_bindings`` (structure stem -> frozen binding tuples) switches to the
     source-row cohort path: one example per bound ion, no summary-key matching.
@@ -115,6 +126,13 @@ def load_structure_pockets(
     """
     if metal_example_unit not in {"pocket", "ion"}:
         raise ValueError(f"Unsupported metal example unit: {metal_example_unit!r}")
+    if site_extraction not in {"component", SELECTED_SITE_EXTRACTION}:
+        raise ValueError(f"Unsupported site extraction: {site_extraction!r}")
+    selected_mode = site_extraction == SELECTED_SITE_EXTRACTION
+    if selected_mode and (
+        allowed_site_metal_labels is None or metal_example_unit != "pocket" or cohort_bindings is not None
+    ):
+        raise ValueError("Selected-site extraction needs a site summary, pocket examples and no source cohort")
     if cohort_bindings is not None:
         return _load_cohort_structure_pockets(
             structure_path=structure_path,
@@ -128,13 +146,33 @@ def load_structure_pockets(
             require_external_features=require_external_features,
             ec_label_depth=ec_label_depth,
         )
+    selected_report = None
     try:
         structure = parse_structure_file(str(structure_path), structure_id=structure_path.stem)
-        extracted_pockets = extract_metal_pockets_from_structure(structure, structure_id=structure_path.stem)
+        if selected_mode:
+            selected_ids = selected_site_ids_for_structure(structure_path, allowed_site_metal_labels)
+            if not selected_ids:
+                return [], [], [{"structure_id": structure_path.stem, "pocket_id": "", "reason": NO_SELECTED_SITES_REASON}]
+            extracted_pockets, selected_report = extract_selected_site_pockets_from_structure(
+                structure, structure_id=structure_path.stem, selected_site_ids=selected_ids,
+            )
+        else:
+            extracted_pockets = extract_metal_pockets_from_structure(structure, structure_id=structure_path.stem)
     except Exception as exc:
         raise StructureLoadError(f"Failed to parse structure {structure_path}: {exc}") from exc
     if not extracted_pockets:
+        if selected_report is not None:
+            return [], [], [{"structure_id": structure_path.stem, "pocket_id": "",
+                             "reason": "selected_sites_without_pocket"}]
         return [], [], []
+    if selected_report is not None:
+        compact_report = {key: selected_report[key] for key in (
+            "metal_records_total", "metal_records_selected", "metal_records_dropped", "selected_cluster_count",
+            "components_with_unselected_metals_count", "split_component_count", "residue_count_delta_total",
+        )}
+        compact_report["selected_sites_without_pocket"] = len(selected_report["selected_sites_without_pocket"])
+        for pocket in extracted_pockets:
+            pocket.metadata["site_extraction_report"] = compact_report
 
     feature_fallbacks: list[dict[str, str]] = []
     skipped_pockets: list[dict[str, str]] = []
@@ -197,6 +235,8 @@ def load_structure_pockets(
             continue
 
         matched_summary_metal_types: set[str] = set()
+        if selected_mode and not pocket_matches_allowed_sites(pocket, structure_path, allowed_site_metal_labels):
+            raise StructureLoadError(f"Selected-site pocket {pocket.pocket_id} matches no summary site")
         if allowed_site_metal_labels is not None and not pocket_matches_allowed_sites(
             pocket,
             structure_path,

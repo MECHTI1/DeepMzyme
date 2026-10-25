@@ -17,6 +17,7 @@ from model import (
     DEFAULT_SITE_FEATURE_DIM,
     DEFAULT_SITE_FEATURE_INPUT_DIM,
     ESMGraphEncoder,
+    GlobalESMEncoder,
     EarlyESMEncoder,
     EdgeScalarEncoder,
     LocalizedCrossAttentionBlock,
@@ -195,6 +196,12 @@ class PocketClassifierBase(nn.Module):
                         temperature=self.ec_contrastive_temperature,
                     )
                     auxiliary_losses["ec_contrastive"] = self.ec_contrastive_weight * ec_contrastive
+        objective_diagnostics: dict[str, Tensor] = {}
+        if self.training and (getattr(self, "ec_aux_heads", None) is not None or getattr(self, "ec_supcon", None) is not None):
+            from ec_auxiliary_objectives import ec_auxiliary_terms
+
+            objective_losses, objective_diagnostics = ec_auxiliary_terms(self, pocket_embed, data)
+            auxiliary_losses.update(objective_losses)
         if not task_losses and not auxiliary_losses:
             raise ValueError("No supervised targets were available for the enabled prediction heads.")
         if task_losses:
@@ -205,6 +212,7 @@ class PocketClassifierBase(nn.Module):
         if auxiliary_losses:
             supervised_loss = supervised_loss + torch.stack(list(auxiliary_losses.values())).sum()
             diagnostics.update({f"{name}_loss_raw": loss.detach() for name, loss in auxiliary_losses.items()})
+        diagnostics.update(objective_diagnostics)
         diagnostics["loss"] = supervised_loss
         return supervised_loss, diagnostics
 
@@ -272,6 +280,9 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         node_rbf_use_raw_distances: bool = False,
         edge_rbf_use_raw_distances: bool = False,
         binding_residue_pooling: str = "none",
+        use_global_esm_branch: bool = False,
+        global_esm_dim: int = 960,
+        global_esm_dropout: float = 0.2,
     ):
         super().__init__()
         self.binding_residue_pooling = str(binding_residue_pooling)
@@ -303,7 +314,7 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             nn.SiLU(),
         )
         self._initialize_prediction_heads(
-            fused_dim=hidden_s + self.site_feature_dim,
+            fused_dim=hidden_s + self.site_feature_dim + (hidden_s if use_global_esm_branch else 0),
             hidden_dim=hidden_s,
             n_metal=n_metal,
             n_ec=n_ec,
@@ -324,6 +335,10 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
             ec_contrastive_weight=ec_contrastive_weight,
             ec_contrastive_temperature=ec_contrastive_temperature,
         )
+        # Built after the heads so every shared module keeps its control initialization.
+        self.global_esm_encoder = (
+            GlobalESMEncoder(global_esm_dim, hidden_s, global_esm_dropout) if use_global_esm_branch else None
+        )
 
     def forward(self, data: Data) -> dict[str, Tensor]:
         classifier_pool_mask = metal_distance_pool_mask(data, self.classifier_pool_distance_cutoff)
@@ -341,6 +356,8 @@ class OnlyESMPocketClassifier(PocketClassifierBase):
         )
         site_fused = self.site_feature_encoder(site_stats)
         pocket_embed = torch.cat([esm_fused, site_fused], dim=-1)
+        if self.global_esm_encoder is not None:
+            pocket_embed = torch.cat([pocket_embed, self.global_esm_encoder(data)], dim=-1)
         logits_metal = self.head_metal(pocket_embed) if self.head_metal is not None else None
         logits_ec = self.head_ec(pocket_embed) if self.head_ec is not None else None
         return self._attach_outputs(
@@ -643,5 +660,75 @@ class SimpleGNNPocketClassifier(PocketClassifierBase):
                 "esm_embed": esm_graph_embed,
                 "fusion_gate": fusion_gate,
             },
+            data=data,
+        )
+
+
+class OnlyGlobalESMClassifier(PocketClassifierBase):
+    """Whole-protein control: predictions from the chain-mean ESMC vector alone, no pocket input.
+
+    Every pocket of a protein carries the same vector, so its pocket logits are identical
+    and the protein prediction equals the single-vector prediction.
+    """
+
+    def __init__(
+        self,
+        *,
+        hidden_s: int = 128,
+        n_metal: int = N_METAL_CLASSES,
+        n_ec: int = N_EC_CLASSES,
+        head_mlp_layers: int = 2,
+        head_mlp_dropout: float = 0.2,
+        joint_loss_weighting: str = "fixed",
+        metal_loss_weight: float = 1.0,
+        ec_loss_weight: float = 1.0,
+        metal_class_weights: Optional[Tensor] = None,
+        metal_collapsed4_class_weights: Optional[Tensor] = None,
+        ec_class_weights: Optional[Tensor] = None,
+        metal_loss_function: str = "cross_entropy",
+        metal_focal_gamma: float = 2.0,
+        metal_label_smoothing: float = 0.0,
+        metal_collapsed_loss_weight: float = 0.0,
+        ec_contrastive_weight: float = 0.0,
+        ec_contrastive_temperature: float = 0.1,
+        predict_metal: bool = True,
+        predict_ec: bool = True,
+        global_esm_dim: int = 960,
+        global_esm_dropout: float = 0.2,
+    ):
+        super().__init__()
+        self.global_esm_encoder = GlobalESMEncoder(global_esm_dim, hidden_s, global_esm_dropout)
+        self._initialize_prediction_heads(
+            fused_dim=hidden_s,
+            hidden_dim=hidden_s,
+            n_metal=n_metal,
+            n_ec=n_ec,
+            head_mlp_layers=head_mlp_layers,
+            head_mlp_dropout=head_mlp_dropout,
+            predict_metal=predict_metal,
+            predict_ec=predict_ec,
+            joint_loss_weighting=joint_loss_weighting,
+            metal_loss_weight=metal_loss_weight,
+            ec_loss_weight=ec_loss_weight,
+            metal_class_weights=metal_class_weights,
+            metal_collapsed4_class_weights=metal_collapsed4_class_weights,
+            ec_class_weights=ec_class_weights,
+            metal_loss_function=metal_loss_function,
+            metal_focal_gamma=metal_focal_gamma,
+            metal_label_smoothing=metal_label_smoothing,
+            metal_collapsed_loss_weight=metal_collapsed_loss_weight,
+            ec_contrastive_weight=ec_contrastive_weight,
+            ec_contrastive_temperature=ec_contrastive_temperature,
+        )
+
+    def forward(self, data: Data) -> dict[str, Tensor]:
+        pocket_embed = self.global_esm_encoder(data)
+        logits_metal = self.head_metal(pocket_embed) if self.head_metal is not None else None
+        logits_ec = self.head_ec(pocket_embed) if self.head_ec is not None else None
+        return self._attach_outputs(
+            pocket_embed=pocket_embed,
+            logits_metal=logits_metal,
+            logits_ec=logits_ec,
+            extra_outputs={"global_embed": pocket_embed},
             data=data,
         )

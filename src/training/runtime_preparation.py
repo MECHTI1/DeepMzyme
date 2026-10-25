@@ -213,6 +213,7 @@ def prepare_runtime_inputs(
     external_features_root_dir: str | Path | None = None,
     external_feature_source: str = "auto",
     require_external_features: bool = True,
+    prepare_missing_external_features: bool = True,
 ) -> dict[str, Any]:
     structure_files = find_structure_files(Path(structure_dir))
     structure_dir = Path(structure_dir)
@@ -293,6 +294,13 @@ def prepare_runtime_inputs(
             external_features_root_dir=resolved_external_feature_root_dir,
         )
         report["missing_updated_external_feature_structures_before"] = len(missing_external_feature_structures)
+        if missing_external_feature_structures and not prepare_missing_external_features:
+            raise ValueError(
+                "External residue features are required but missing for "
+                f"{len(missing_external_feature_structures)} structure(s) and generation is disabled "
+                f"(--no-prepare-missing-external-features). Feature root: {resolved_external_feature_root_dir}. "
+                f"Sample missing structures: {_sample_structure_paths(missing_external_feature_structures)}"
+            )
         if missing_external_feature_structures:
             summary = _generate_missing_updated_external_features(
                 missing_external_feature_structures,

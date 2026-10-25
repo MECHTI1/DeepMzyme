@@ -71,6 +71,10 @@ def validate_config(config):
     require(config.get("train_val_split_by", config.get("split_by")) == "pdbid", "Replay requires saved protein/PDB grouping")
     require(config.get("selection_metric", "").startswith("val_"), "Checkpoint must have validation selection")
     require(config.get("ec_label_depth") == 1 or config["task"] == "metal", "This exporter supports EC depth 1")
+    require(config.get("site_extraction", "component") == "component",
+            "This exporter replays component pockets only; selected-site runs use the EC prediction export")
+    require(config.get("ec_class_vocabulary", "observed") == "observed",
+            "This exporter supports the observed EC vocabulary only; fixed-class runs use the EC prediction export")
     for key in ("structure_dir", "summary_csv"):
         path = Path(config[key])
         require("train" in path.parts, f"External-training membership must be explicit in {key}")
@@ -127,6 +131,10 @@ V3_OPTIONAL_CONFIG_DEFAULTS = {
     "gvp_vector_norm": False,
     "gvp_auxiliary_loss_weight": 0.0,
     "esm_modality_dropout": 0.0,
+    # Whole-protein branch (EC class campaign); runs saved before it existed trained without it.
+    "use_global_esm_branch": False,
+    "global_esm_dim": 960,
+    "global_esm_dropout": 0.2,
 }
 
 

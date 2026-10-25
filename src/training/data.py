@@ -21,6 +21,7 @@ from project_paths import resolve_ring_features_dir
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
 from training.feature_paths import resolve_runtime_feature_paths
+from training.ec_classes import EC_CLASS_TOKEN_TO_INDEX, STATUS_AMBIGUOUS, apply_fixed_ec_class_vocabulary
 from training.labels import assign_ec_targets
 from training.parallel_loading import iter_structure_load_results, resolve_load_workers
 from training.site_filter import resolve_allowed_site_metal_labels
@@ -44,6 +45,29 @@ class PocketLoadResult:
     feature_report: Dict[str, Any]
     ec_label_to_index: Dict[str, int]
     ec_index_to_label: Dict[int, str]
+    ec_label_report: Optional[Dict[str, Any]] = None
+
+
+EC_CLASS_VOCABULARY_CHOICES = ("observed", "fixed_seven")
+
+
+def site_extraction_summary(pockets: List[PocketRecord], skipped_pockets: List[Dict[str, str]]) -> Dict[str, Any]:
+    """Totals of the per-structure selected-site reports, counted once per structure."""
+    per_structure: Dict[str, Dict[str, Any]] = {}
+    for pocket in pockets:
+        report = pocket.metadata.get("site_extraction_report")
+        if report is not None:
+            per_structure.setdefault(pocket.structure_id, report)
+    totals: Dict[str, Any] = {"site_extraction": "selected_sites", "n_structures": len(per_structure)}
+    for report in per_structure.values():
+        for key, value in report.items():
+            totals[key] = totals.get(key, 0) + int(value)
+    totals["structures_with_unselected_metals"] = sum(
+        1 for report in per_structure.values() if report["metal_records_dropped"] > 0
+    )
+    for reason in ("no_selected_sites", "selected_sites_without_pocket"):
+        totals[f"structures_skipped_{reason}"] = sum(1 for row in skipped_pockets if row.get("reason") == reason)
+    return totals
 
 
 def _assemble_pocket_load_result(
@@ -110,6 +134,8 @@ def load_labeled_pockets_with_report_from_dir(
     source_cohort_csv: str | Path | None = None,
     source_cohort_sha256: str | None = None,
     feature_inventory_sha256: str | None = None,
+    ec_class_vocabulary: str = "observed",
+    site_extraction: str = "component",
 ) -> PocketLoadResult:
     """Load labeled pockets from a structure directory and return them with a load report.
 
@@ -122,9 +148,22 @@ def load_labeled_pockets_with_report_from_dir(
     ``training.parallel_loading.resolve_load_workers`` for the default (every available
     core, unless overridden by environment or per-machine config). Output is identical
     to serial loading.
+
+    ``ec_class_vocabulary="fixed_seven"`` labels proteins by EC class (first digit)
+    with the strict rule of ``training.ec_classes`` and the fixed index map 1..7, so
+    indices never depend on which classes a fold happens to contain; proteins with
+    several EC classes are excluded and counted, and unusable annotations raise.
     """
     if metal_example_unit == "ion" and required_targets != ("metal",):
         raise ValueError("Ion examples currently require metal-only supervision")
+    if ec_class_vocabulary not in EC_CLASS_VOCABULARY_CHOICES:
+        raise ValueError(f"Unknown EC class vocabulary {ec_class_vocabulary!r}")
+    fixed_ec_classes = ec_class_vocabulary == "fixed_seven"
+    if fixed_ec_classes:
+        if "ec" not in required_targets or ec_label_depth != 1:
+            raise ValueError("The fixed seven-class EC vocabulary needs EC supervision at depth 1")
+        if ec_label_to_index is not None and dict(ec_label_to_index) != EC_CLASS_TOKEN_TO_INDEX:
+            raise ValueError("The fixed seven-class EC vocabulary cannot take a different label map")
     structure_root = Path(structure_dir)
     cohort = None
     if source_cohort_csv is not None:
@@ -189,6 +228,9 @@ def load_labeled_pockets_with_report_from_dir(
     if cohort is not None:
         load_kwargs["cohort_bindings"] = cohort_load_payload(cohort)
         load_kwargs["feature_inventory_sha256"] = feature_inventory_sha256
+    if site_extraction != "component":
+        # Only non-default modes enter the kwargs, so default parse-cache entries stay valid.
+        load_kwargs["site_extraction"] = site_extraction
     load_results = iter_structure_load_results(structure_files, load_kwargs, workers=workers)
     for loaded_count, (structure_path, (status, outcome)) in enumerate(load_results, start=1):
         if progress_every and (loaded_count % progress_every == 0 or loaded_count == len(structure_files)):
@@ -229,6 +271,10 @@ def load_labeled_pockets_with_report_from_dir(
     if cohort is not None:
         raw_pockets = _order_and_check_cohort_examples(raw_pockets, cohort)
 
+    ec_label_report = None
+    if fixed_ec_classes:
+        ec_label_report = apply_fixed_ec_class_vocabulary(raw_pockets)
+        ec_label_to_index = EC_CLASS_TOKEN_TO_INDEX
     ec_label_to_index, ec_index_to_label = assign_ec_targets(
         raw_pockets,
         depth=ec_label_depth,
@@ -241,11 +287,12 @@ def load_labeled_pockets_with_report_from_dir(
             required_targets=required_targets,
             metal_eligibility_scheme=metal_eligibility_scheme,
         ):
+            ambiguous = pocket.metadata.get("ec_label_status") == STATUS_AMBIGUOUS
             skipped_pockets.append(
                 {
                     "structure_id": pocket.structure_id,
                     "pocket_id": pocket.pocket_id,
-                    "reason": "missing_required_supervision",
+                    "reason": "ambiguous_ec_class" if ambiguous else "missing_required_supervision",
                 }
             )
             continue
@@ -263,6 +310,7 @@ def load_labeled_pockets_with_report_from_dir(
                 feature_report=result.feature_report,
                 ec_label_to_index=ec_label_to_index,
                 ec_index_to_label=ec_index_to_label,
+                ec_label_report=ec_label_report,
             )
 
     if not pockets:
@@ -281,11 +329,14 @@ def load_labeled_pockets_with_report_from_dir(
         skipped_pockets=skipped_pockets,
         invalid_structures=invalid_structures,
     )
+    if site_extraction != "component":
+        result.feature_report["site_extraction_summary"] = site_extraction_summary(pockets, skipped_pockets)
     return PocketLoadResult(
         pockets=result.pockets,
         feature_report=result.feature_report,
         ec_label_to_index=ec_label_to_index,
         ec_index_to_label=ec_index_to_label,
+        ec_label_report=ec_label_report,
     )
 
 
@@ -376,6 +427,8 @@ def load_training_pockets_with_report_from_dir(
     source_cohort_csv: str | Path | None = None,
     source_cohort_sha256: str | None = None,
     feature_inventory_sha256: str | None = None,
+    ec_class_vocabulary: str = "observed",
+    site_extraction: str = "component",
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
     return load_labeled_pockets_with_report_from_dir(
@@ -402,6 +455,8 @@ def load_training_pockets_with_report_from_dir(
         source_cohort_csv=source_cohort_csv,
         source_cohort_sha256=source_cohort_sha256,
         feature_inventory_sha256=feature_inventory_sha256,
+        ec_class_vocabulary=ec_class_vocabulary,
+        site_extraction=site_extraction,
     )
 
 

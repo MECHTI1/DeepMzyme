@@ -164,6 +164,35 @@ def predict_batch(model: nn.Module, loader: DataLoader, device: str = "cpu") -> 
 
 
 @torch.no_grad()
+def predict_logits(model: nn.Module, loader: DataLoader, device: str = "cpu") -> dict[str, Tensor]:
+    """Logits of every graph in loader order; never reads a loss or a target.
+
+    Graphs without targets (label-free inference) are predicted like any other.
+    ``graph_index`` numbers the graphs in loader order, so an unshuffled loader maps
+    them back to its examples; ``ec_group_id`` is returned when the graphs carry one.
+    """
+    model.eval()
+    collected: dict[str, list[Tensor]] = {"metal_logits": [], "ec_logits": [], "ec_group_id": []}
+    n_graphs = 0
+    for batch in loader:
+        batch = batch.to(device)
+        model_outputs = model(batch)
+        batch_graphs = int(batch.num_graphs)
+        for output_key, result_key in (("logits_metal", "metal_logits"), ("logits_ec", "ec_logits")):
+            if output_key in model_outputs:
+                logits = model_outputs[output_key]
+                if logits.size(0) != batch_graphs:
+                    raise ValueError(f"{output_key} has {logits.size(0)} rows for {batch_graphs} graphs")
+                collected[result_key].append(logits.detach().cpu())
+        if hasattr(batch, _GRAPH_EC_GROUP_ID_FIELD):
+            collected["ec_group_id"].append(getattr(batch, _GRAPH_EC_GROUP_ID_FIELD).view(-1).cpu())
+        n_graphs += batch_graphs
+    result = {key: torch.cat(values, dim=0) for key, values in collected.items() if values}
+    result["graph_index"] = torch.arange(n_graphs, dtype=torch.long)
+    return result
+
+
+@torch.no_grad()
 def evaluate_epoch_with_predictions(
     model: nn.Module,
     loader: DataLoader,

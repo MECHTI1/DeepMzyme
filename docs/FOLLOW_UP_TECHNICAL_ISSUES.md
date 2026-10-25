@@ -1316,9 +1316,10 @@ combination at validation time; document or correct the weighted confidence), no
 
 ## TECH-032 — A GVP-specific weight decay is silently ignored without a distinct GVP learning rate
 
-**Status:** Open; first recorded for Only-GVP in [v3-038](archive/campaigns/pmm_ion_metal_v3/log.md#v3-038)
-(2026-10-12) and registered here during the 2026-10-21 EC-class-versus-CLEAN30 planning review; repair is planned in that
-campaign's infrastructure phase ([campaign](campaigns/ec_class_vs_clean30_2026-10/README.md)).
+**Status:** Repaired for new runs on 2026-10-23 in the EC-class-versus-CLEAN30 infrastructure phase
+([campaign](campaigns/ec_class_vs_clean30_2026-10/README.md)); past runs keep the old behaviour described below. First
+recorded for Only-GVP in [v3-038](archive/campaigns/pmm_ion_metal_v3/log.md#v3-038) (2026-10-12) and registered here
+during the 2026-10-21 planning review.
 
 `src/training/run.py` builds separate trunk and head parameter groups only when `--gvp-learning-rate` is set and differs
 from `--learning-rate` (line 1592). Otherwise one AdamW group with `--weight-decay` is used, and `--gvp-weight-decay` has
@@ -1332,3 +1333,51 @@ run's arguments before citing it as GVP-specific decay evidence. Repair: build t
 decay is set, refuse flags that would be ignored, always write `optimizer_groups.json` with each group's parameters,
 learning rate and weight decay, and add regression tests for the unset and the equal GVP learning-rate cases. Do not
 change frozen campaign source trees.
+
+Repair (2026-10-23): `build_optimizer_param_groups` in `src/training/run.py` now splits the GVP trunk into its own
+AdamW group whenever a distinct GVP learning rate, `--gvp-weight-decay` or a trunk `--gvp-target-shrink` is set; without
+any of them, one group holds every parameter, as before. GVP options on a model without a GVP trunk are refused, and
+`--gvp-target-shrink` cannot be combined with `--gvp-weight-decay`. Every run writes `optimizer_groups.json` (schema 2)
+with each group's parameter names, learning rate, weight decay and planned versus realised optimizer steps, plus the
+options that had no effect. `tests/test_gvp_weight_decay_groups.py` covers the unset, equal and distinct GVP
+learning-rate cases.
+
+## TECH-033 — The observed EC vocabulary silently drops held-out classes absent from training
+
+**Status:** Open for the default `--ec-class-vocabulary observed`; avoided by `fixed_seven` (2026-10-23, EC-class-versus-CLEAN30
+infrastructure).
+
+With the default observed vocabulary, `src/training/labels.py` indexes only the EC tokens present in the loaded data
+(line 99). When a held-out load reuses the training map, a protein whose class is absent from it gets `y_ec = None`
+(line 105) and is then skipped as `missing_required_supervision`, the same reason used for unlabeled pockets. Such
+proteins are guaranteed errors, but they leave the denominator silently instead of being counted.
+
+The fixed seven-class vocabulary (`src/training/ec_classes.py`) keeps every class at a fixed index, so these proteins
+stay in the evaluation and their classes are reported as absent from training. Repair for the default mode: count and
+report the dropped proteins and their classes; changing the default would change historical EC metrics and needs
+the maintainer's decision.
+
+## TECH-034 — Duplicate rows in a metal fold-membership file collapse silently
+
+**Status:** Open; low impact (2026-10-23 review).
+
+`read_fold_membership` in `src/training/campaign_runtime.py` (line 47) builds a dictionary keyed by `source_uid`, so a
+repeated row silently replaces the earlier one, including when the two rows name different folds. The file is
+hash-checked, so this matters only for a malformed file written by a tool, but the reader should refuse duplicates.
+The EC membership reader (`src/training/ec_membership.py`) refuses repeated structures and accessions. Repair belongs
+to a future change; frozen campaign runners keep their own copies.
+
+## TECH-035 — The per-residue ESM loader falls back to a prefix glob
+
+**Status:** Open; latent (2026-10-23 EC-class-versus-CLEAN30 infrastructure review).
+
+When no exact cache file exists for a structure, `embedding_path_candidates` in `src/training/esm_feature_loading.py`
+(line 256) falls back to `glob(f"{stem}*_esmc.pt")`, kept for older caches whose names carry extra EC annotations. The
+glob also matches other structures whose stems start with this stem, for example `..._EC_1.1.1.1` against a cache of
+`..._EC_1.1.1.10`, and loading checks residue IDs but not the sequence, so a single match is used without warning. Only
+two or more matches fail, through the duplicate-residue check.
+
+The EC-class-versus-CLEAN30 views copy each structure's cache under its exact name, so their fits never reach the
+fallback. Repair: accept a fallback match only when the name parses to the same accession and chain, and check the
+payload's sequence against the structure, or refuse ambiguous prefixes. The loader's SHA-256 is part of the metal release
+runtime identity, so the change needs its own release review.

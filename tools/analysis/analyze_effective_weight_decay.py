@@ -83,8 +83,10 @@ def resolved_config(paths: v3.V3Paths, unit: v3.Unit):
 
 
 def trainer_groups(model, config) -> list[dict[str, Any]]:
-    """The optimizer groups of training.run.prepare_run, in its order (GVP-rate group first when it exists).
-    Mirrored here because the trainer builds them inline; verify_against_saved_groups checks the mirror."""
+    """The optimizer groups of training.run.prepare_run before the TECH-032 repair, in its order (GVP-rate
+    group first when it exists). This is the rule the v3 runs used; verify_against_saved_groups checks it
+    against their checkpoints. Newer runs record their groups in optimizer_groups.json
+    (training.run.build_optimizer_param_groups), where a GVP weight decay alone also splits the groups."""
     from training.run import gvp_learning_rate_prefixes
 
     named = [(name, param) for name, param in model.named_parameters() if param.requires_grad]

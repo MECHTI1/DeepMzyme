@@ -550,11 +550,11 @@ Tracked metadata:
 |---|---:|---:|---:|---|
 | Exact PinMyMetal | Yes | Yes — opened 2026-09-22 (3 single-split) and 2026-09-23 (15 fold + 3 ensemble) | Yes (exploratory: model ranking, claims; no model promoted) | Opened test set; see [exact test artifacts](#local-test-access-artifacts-git-ignored) |
 | Non-overlapped PinMyMetal | Present locally and in v12; absent from historical v10 | Yes — seven early reports + six runs on 2026-09-18 | Early runs: not established; 09-18: exploratory | Historically accessed; byte-identical to exact test structure set; names of its test-ID list files seen on 2026-10-21 (source unconfirmed; files not opened; below) |
-| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; three source test rows printed on 2026-10-21; tracked-path count of the source folder printed on 2026-10-22 (below) |
+| Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; three source test rows printed on 2026-10-21; tracked-path count of the source folder printed on 2026-10-22; tracked names near the source folder listed on 2026-10-23 (below) |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
 | CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22 (below) |
-| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21 (below) |
+| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21; tracked file names listed 2026-10-23 (below) |
 
 ### Local test-access artifacts (git-ignored)
 
@@ -693,11 +693,35 @@ evaluation or selection followed.
    printed; no file name, row, label or content was displayed or opened.
 2. To confirm the structure source of the CLEAN30 cohort, a working session listed the top level of
    `DeepMzyme_Data/CLEAN_30_main/` and its mixed `metadata/` folder with test-named entries filtered out of the
-   display, and printed the cohort's `README.md` with lines containing "test" removed. Displayed: three metadata file
-   names (`single_donor_selection_audit.csv`, `structure_sources.csv`, `structure_manifest.csv`) and the README's
-   selection rules. No test-named entry, row, label or identifier was shown.
+   display, and printed the cohort's `README.md` with lines containing "test" removed. Displayed: two metadata file
+   names (`single_donor_selection_audit.csv`, `structure_sources.csv`), the name of the only entry of `structures/`
+   (`structure_manifest.csv`) and the README's selection rules. No test-named entry, row, label or identifier was
+   shown.
 
 These are directory-level reads, not evaluations; any later use of these tests must disclose them.
+
+**2026-10-23 private CLEAN checkout without upstream data files:** the campaign's private CLEAN copy is a sparse
+checkout of upstream commit `f2bf2a4` that leaves out `app/data` (whose split files include the fold-0 curated test
+proteins with EC numbers; see the 2026-10-21 entry, item 2) and `app/results`. While it was set up, Git index commands
+printed the names of those excluded upstream files (for example `app/data/split30.csv`) and one review pass printed
+the index count (44). No excluded file was checked out, opened or read, and none is on disk. This is a file-name
+display from the public upstream repository, not a read of a DeepMzyme test set.
+
+**2026-10-23 tracked file names listed near test files during the campaign-runner review:** to check which
+repository folders the runner's read guard must cover, one review pass of the EC-class-versus-CLEAN30 runner code
+ran name-only Git index commands:
+
+1. `git ls-files` over `CARE_prepare_training_and_test_set/` and `prepare_training_and_test_set/`, including
+   `pinmymetal_files/` (the folder that holds `classmodel_test_set`), filtered to names containing "test";
+2. per-folder counts of tracked files under `prepare_training_and_test_set/`;
+3. repository-wide filters of tracked names containing "test", with per-folder counts;
+4. a count of tracked files under `docs/notebook_outputs/`.
+
+Only tracked file names and counts were displayed. They included the CARE task-1 clusterRes30 test-protein metadata
+file name, saved test-report names under `docs/notebook_outputs/raw/`, and possibly entry names under
+`pinmymetal_files/`. No file was opened; no row, label or identifier was shown; and no prediction, evaluation or
+selection followed. The same pass ran existence checks (`test -e`, `readlink`) on named data-root folders. These
+are name-level reads, not evaluations; any later use of these tests must disclose them.
 
 ## Current bundles
 
