@@ -43,6 +43,35 @@ External features were computed on full structures, including metals outside the
 selected sites; the view copies them unchanged (decision D2 stays open until Freeze 1,
 ``EXTERNAL_FEATURES_POLICY``).
 
+Location: a fold view lives at ``<campaign root>/views/fold<k>`` and a smoke view at
+``<campaign root>/smoke_views/<name>``, where the campaign root's name is the campaign ID;
+build, loading, verification and commands refuse any other place. Their runs live (real
+path) in ``<campaign root>/runs/fold<k>`` and ``<campaign root>/smoke_runs/<name>`` or in a
+folder inside them (``runs_dir_problem``).
+
+Read guard (manifest schema 2): the manifest records rules, not paths (``read_guard``):
+data-root children (``FORBIDDEN_DATA_ROOT_NAMES`` and the source layout's ESMC and
+external folders relative to the data root), campaign children
+(``CAMPAIGN_FORBIDDEN_CHILDREN``, the other folds' views and runs, and the smoke or real
+counterpart folders), for a smoke view every other entry of ``smoke_views/`` and
+``smoke_runs/`` (``campaign_sibling_dirs``; names listed when the rules are expanded),
+repository paths and the PinMyMetal root. ``expand_read_guard`` expands them on the
+machine that runs: below the view's recorded source data root, every ``DeepMzyme_Data``
+folder that contains the view and the project data root; below the campaign root two
+levels above the view (given and real path); below the running checkout. An expanded
+root that contains the view is refused, never dropped.
+
+File modes: data files 0444, data folders 0555, writable folders 0755. A filesystem that
+ignores or refuses chmod (Data1 under ntfs-3g) does not stop a build; the outcome goes to
+``receipts/file_modes.json``. ``verify_view`` tests chmod in ``receipts/`` each time and
+checks writable bits only where modes are enforced (content hashes always);
+``apply_view_modes`` sets the modes again after a driver change (chmod only, no byte or
+manifest change; ``receipts/file_modes_applied.json``).
+
+Overlay binding: when ``<data root>/overlay_manifest.json`` exists, the build checks that
+it lists every input the view copies with the same SHA-256 and records
+``overlay: {id, manifest_sha256}``.
+
 Dry-run probe: ``python -m ec_clean30.views probe-child --request R`` runs the trainer's
 preparation path (``training.run.prepare_run``: input checks, loading, split, graphs,
 model and optimizer; no training step) under a recorder (``sys.addaudithook``) of every
@@ -60,6 +89,7 @@ from __future__ import annotations
 import argparse
 import csv
 from dataclasses import dataclass
+from functools import cached_property
 import hashlib
 import io
 import json
@@ -72,6 +102,7 @@ import subprocess
 import sys
 import time
 from typing import Any, Iterable, Mapping, Optional, Sequence
+import uuid
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -89,7 +120,10 @@ from training.ec_classes import (
 
 
 VIEW_FORMAT = "deepmzyme_ec_clean30_view_v1"
-VIEW_SCHEMA_VERSION = 1
+# Schema 2: read-guard rules instead of absolute roots, overlay record, location rule. Schema-1 views
+# (the G1 smoke view) no longer load; their files stay as records and are read by exact name only.
+VIEW_SCHEMA_VERSION = 2
+RETIRED_VIEW_SCHEMA_VERSIONS: frozenset[int] = frozenset({1})
 KIND_FOLD_VIEW = "fold_training_view"
 KIND_SMOKE_VIEW = "smoke_view"
 
@@ -115,6 +149,10 @@ RECEIPTS_DIR = "receipts"
 WRITABLE_DIRS: tuple[str, ...] = (CACHE_DIR, RECEIPTS_DIR, *CHAIN_MEAN_DIRS.values())
 VERIFY_RECEIPT_NAME = "verify_view_receipt.json"
 DRY_RUN_RECEIPT_NAME = "dry_run_receipt.json"
+FILE_MODES_RECEIPT_NAME = "file_modes.json"
+FILE_MODES_APPLIED_RECEIPT_NAME = "file_modes_applied.json"
+# Written by the overlay builder at the overlay root (the data root of an overlay view).
+OVERLAY_MANIFEST_NAME = "overlay_manifest.json"
 
 STRUCTURE_MANIFEST_FIELDS = ("structure_name", "relative_path", "sha256", "size_bytes")
 STRUCTURE_SUFFIXES = (".pdb", ".cif", ".mmcif")
@@ -136,9 +174,20 @@ SOURCE_ROOT_BASIS = (
 DATA_FILE_MODE = 0o444
 DATA_DIR_MODE = 0o555
 WRITABLE_DIR_MODE = 0o755
+FILE_MODES_ENFORCED = "enforced"
+FILE_MODES_IGNORED = "ignored"   # chmod returned, but the modes did not change (e.g. ntfs-3g without permissions)
+FILE_MODES_REFUSED = "refused"   # chmod raised (PermissionError, EPERM, ...)
+
+# Where views live, relative to the campaign root (whose name is the campaign ID).
+VIEWS_DIR = "views"
+RUNS_DIR = "runs"
+SMOKE_VIEWS_DIR = "smoke_views"
+SMOKE_RUNS_DIR = "smoke_runs"
+# CLEAN embedding farms and active CLEAN fit folders on the internal disk, below the project data root.
+CAMPAIGN_LOCAL_DIR_NAME = "campaign_local"
 
 # Shared or test-bearing roots below a data root that a fit may never read (child guard). They are
-# expanded below the given data root, the project's data root, the real paths of both, and every
+# expanded below the view's source data root, the project's data root, the real paths of both, and every
 # ``DeepMzyme_Data`` folder that contains the view (the campaign folder may be a symlink to another disk
 # that holds its own copies of the shared caches).
 DATA_DIR_NAME = "DeepMzyme_Data"
@@ -163,6 +212,7 @@ FORBIDDEN_DATA_ROOT_NAMES: tuple[str, ...] = (
     "train_and_test_sets_structures_zenodo_pmm_exact",
     "notebook_outputs",
     "backups",
+    CAMPAIGN_LOCAL_DIR_NAME,
 )
 # Repository folders with test-side or mixed train/test files, past reports and run outputs.
 FORBIDDEN_REPO_PATHS: tuple[str, ...] = (
@@ -171,6 +221,27 @@ FORBIDDEN_REPO_PATHS: tuple[str, ...] = (
     "CARE_prepare_training_and_test_set",
     "docs/notebook_outputs",
     "runs",
+)
+# Campaign folders that hold the 740-protein union, test-side or identity outputs, CLEAN work, records
+# or other folds' material; a fit of any view may never read them. Real views also may not read the smoke
+# folders, smoke views not the real ``views`` and ``runs``, and a fold-k view not ``views/fold<j>`` or
+# ``runs/fold<j>`` (j != k): every fold-j view holds fold-k test proteins as training proteins.
+CAMPAIGN_FORBIDDEN_CHILDREN: tuple[str, ...] = (
+    "overlay", "identity", "identity_stdout", "labels", "cohort", "r2_lists", "clean", "clean_sequence_map",
+    "clean_harness", "g1_smoke", "freeze", "simulation", "scoring_pass", "timing", "plans",
+)
+# Campaign folders whose entries other than the view's own name are forbidden for a smoke view: a smoke
+# view of fold j holds fold-k test proteins as training proteins, and the rules cannot name the other
+# smoke views in advance, so the entry names (only) are listed when the rules are expanded.
+SMOKE_SIBLING_DIRS: tuple[str, ...] = (SMOKE_VIEWS_DIR, SMOKE_RUNS_DIR)
+READ_GUARD_RULE_VERSION = 1
+READ_GUARD_BASES = (
+    "data_root_children and source_layout_dirs below each data root: the view's recorded source data root, every "
+    "DeepMzyme_Data folder that contains the view (given and real path) and the project data root of the running "
+    "checkout; campaign_children below the campaign root two levels above the view (given and real path); "
+    "campaign_sibling_dirs: every entry of these campaign folders except the view's own name (entry names listed "
+    "on the running machine, nothing inside opened); repository_paths below the running checkout; "
+    "pinmymetal_sets_root is project_paths.PINMYMETAL_SETS_DIR of the running checkout"
 )
 GENERATOR_FUNCTIONS: tuple[str, ...] = (
     "_generate_missing_esm_embeddings",
@@ -242,34 +313,216 @@ class SourceLayout:
         return {"data_root": str(self.data_root), "esm_dir": str(self.esm_dir), "external_root": str(self.external_root)}
 
 
-def _data_roots(layout: SourceLayout, view_root: Optional[str | os.PathLike]) -> list[Path]:
-    """Data roots whose shared and test-bearing folders are forbidden (see ``FORBIDDEN_DATA_ROOT_NAMES``)."""
+def _path_forms(path: str | os.PathLike) -> list[Path]:
+    """The given (absolute) and the real form of a path, without duplicates."""
+    return list(dict.fromkeys([Path(os.path.abspath(os.fspath(path))), Path(os.path.realpath(os.fspath(path)))]))
+
+
+def view_location_problem(view_root: str | os.PathLike, *, smoke: bool, fold: int) -> Optional[str]:
+    """Why ``view_root`` is not a valid view location (``None`` when it is).
+
+    A fold view sits at ``<campaign root>/views/fold<k>``, a smoke view at
+    ``<campaign root>/smoke_views/<name>``; the campaign root's name is the campaign ID.
+    """
+    root = Path(os.path.abspath(os.fspath(view_root)))
+    campaign_root = root.parent.parent
+    if smoke:
+        if root.parent.name != SMOKE_VIEWS_DIR:
+            return f"a smoke view lives at <campaign root>/{SMOKE_VIEWS_DIR}/<name>, not at {root}"
+    elif root.parent.name != VIEWS_DIR or root.name != f"fold{int(fold)}":
+        return f"the fold-{int(fold)} view lives at <campaign root>/{VIEWS_DIR}/fold{int(fold)}, not at {root}"
+    if campaign_root.name != CAMPAIGN_ID:
+        return f"the campaign root {campaign_root} is not named {CAMPAIGN_ID!r}"
+    return None
+
+
+def campaign_root_of(view_root: str | os.PathLike, *, smoke: bool, fold: int) -> Path:
+    """The campaign root two levels above a view at a valid location; raises ``ViewError`` otherwise."""
+    problem = view_location_problem(view_root, smoke=smoke, fold=fold)
+    if problem is not None:
+        raise ViewError(f"View location refused: {problem}.")
+    return Path(os.path.abspath(os.fspath(view_root))).parent.parent
+
+
+def _campaign_children(*, fold: int, smoke: bool) -> list[str]:
+    children = list(CAMPAIGN_FORBIDDEN_CHILDREN)
+    if smoke:
+        children += [VIEWS_DIR, RUNS_DIR]
+    else:
+        others = [other for other in range(N_OUTER_FOLDS) if other != int(fold)]
+        children += [SMOKE_VIEWS_DIR, SMOKE_RUNS_DIR]
+        children += [f"{VIEWS_DIR}/fold{other}" for other in others] + [f"{RUNS_DIR}/fold{other}" for other in others]
+    return children
+
+
+def source_layout_dirs(layout: SourceLayout) -> list[str]:
+    """The layout's ESMC and external folders relative to its data root (POSIX; both must lie inside it)."""
+    layout_dirs = []
+    for flag, directory in (("--esm-dir", layout.esm_dir), ("--external-root", layout.external_root)):
+        try:
+            relative = Path(os.path.abspath(directory)).relative_to(Path(os.path.abspath(layout.data_root)))
+        except ValueError:
+            raise ViewError(f"{flag} {directory} lies outside the data root {layout.data_root}; the read guard records "
+                            "the source folders relative to the data root, so they must lie inside it.") from None
+        if not relative.parts:
+            raise ViewError(f"{flag} {directory} is the data root itself; it must be a folder inside it.")
+        layout_dirs.append(relative.as_posix())
+    return list(dict.fromkeys(layout_dirs))
+
+
+def read_guard_rules(layout: SourceLayout, *, fold: int, smoke: bool) -> dict[str, Any]:
+    """The read-guard rules a view manifest records (relative names only; expanded where the view runs).
+
+    The source layout's ESMC and external folders must lie inside the data root, so they can
+    be recorded relative to it.
+    """
+    return {
+        "rule_version": READ_GUARD_RULE_VERSION,
+        "data_root_children": list(FORBIDDEN_DATA_ROOT_NAMES),
+        "source_layout_dirs": source_layout_dirs(layout),
+        "campaign_children": _campaign_children(fold=fold, smoke=smoke),
+        "campaign_sibling_dirs": list(SMOKE_SIBLING_DIRS) if smoke else [],
+        "repository_paths": list(FORBIDDEN_REPO_PATHS),
+        "pinmymetal_sets_root": True,
+        "bases": READ_GUARD_BASES,
+    }
+
+
+_RULE_NAME_KEYS = ("data_root_children", "source_layout_dirs", "campaign_children", "campaign_sibling_dirs",
+                   "repository_paths")
+
+
+def read_guard_rule_problems(rules: Mapping[str, Any], *, fold: int, smoke: bool,
+                             layout: Optional[SourceLayout] = None) -> list[str]:
+    """Why recorded rules are malformed or weaker than this code's rules for the same kind and fold.
+
+    With ``layout`` (the view's recorded source layout), ``source_layout_dirs`` must also hold
+    that layout's ESMC and external folders.
+    """
+    if not isinstance(rules, Mapping) or rules.get("rule_version") != READ_GUARD_RULE_VERSION:
+        return [f"the read-guard rules are not rule version {READ_GUARD_RULE_VERSION}"]
+    problems = []
+    for key in _RULE_NAME_KEYS:
+        values = rules.get(key)
+        if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+            problems.append(f"read-guard rule {key} is not a list of names")
+            continue
+        for value in values:
+            parts = Path(value).parts
+            if not value or Path(value).is_absolute() or ".." in parts or "." in parts or "\\" in value:
+                problems.append(f"read-guard rule {key} holds {value!r}; rules are plain relative names")
+    if problems:
+        return problems
+    expected: dict[str, Sequence[str]] = {"data_root_children": FORBIDDEN_DATA_ROOT_NAMES,
+                                          "campaign_children": _campaign_children(fold=fold, smoke=smoke),
+                                          "campaign_sibling_dirs": SMOKE_SIBLING_DIRS if smoke else (),
+                                          "repository_paths": FORBIDDEN_REPO_PATHS}
+    if layout is not None:
+        try:
+            expected["source_layout_dirs"] = source_layout_dirs(layout)
+        except ViewError as exc:
+            problems.append(f"the recorded source layout cannot be checked against the read guard: {exc}")
+    for key, names in expected.items():
+        missing = sorted(set(names) - set(rules[key]))
+        if missing:
+            problems.append(f"read-guard rule {key} lacks {missing[:6]} (weaker than this code's rules)")
+    if rules.get("pinmymetal_sets_root") is not True:
+        problems.append("read-guard rules do not forbid the PinMyMetal sets root")
+    return problems
+
+
+def _guard_data_roots(view_root: Path, source_data_root: Optional[str | os.PathLike]) -> list[Path]:
+    """Data roots whose shared and test-bearing folders are forbidden (see ``READ_GUARD_BASES``)."""
     from project_paths import DATA_DIR
 
-    candidates: list[Path] = [layout.data_root, Path(DATA_DIR)]
-    if view_root is not None:
-        for form in (Path(os.path.abspath(os.fspath(view_root))), Path(os.path.realpath(os.fspath(view_root)))):
-            candidates.extend(ancestor for ancestor in (form, *form.parents) if ancestor.name == DATA_DIR_NAME)
-    roots: list[Path] = []
-    for candidate in candidates:
-        roots.extend([Path(os.path.abspath(os.fspath(candidate))), Path(os.path.realpath(os.fspath(candidate)))])
-    return list(dict.fromkeys(roots))
+    candidates: list[Path] = [] if source_data_root is None else [Path(os.fspath(source_data_root))]
+    for form in _path_forms(view_root):
+        candidates.extend(ancestor for ancestor in (form, *form.parents) if ancestor.name == DATA_DIR_NAME)
+    candidates.append(Path(DATA_DIR))
+    return list(dict.fromkeys(form for candidate in candidates for form in _path_forms(candidate)))
 
 
-def forbidden_read_roots(layout: SourceLayout, *, view_root: Optional[str | os.PathLike] = None) -> list[str]:
-    """Roots a training child may never read: shared, mixed and test-bearing data plus the source roots.
+def _sibling_entries(folder: Path, own_name: str) -> list[Path]:
+    """Every entry of ``folder`` except ``own_name`` (entry names only; nothing inside is opened)."""
+    try:
+        names = sorted(os.listdir(folder))
+    except (FileNotFoundError, NotADirectoryError):
+        return []
+    except OSError as exc:
+        raise ViewError(f"Cannot list the entry names of {folder} to expand the read guard: "
+                        f"{type(exc).__name__}") from None
+    return [folder / name for name in names if name != own_name]
 
-    ``view_root`` adds the forbidden folders of every ``DeepMzyme_Data`` folder that contains
-    the view (by its given and its real path).
-    """
+
+def _expand_rules(rules: Mapping[str, Any], *, view_root: Path,
+                  source_data_root: Optional[str | os.PathLike]) -> list[str]:
     from project_paths import PINMYMETAL_SETS_DIR
 
     roots: list[Path] = []
-    for data_root in _data_roots(layout, view_root):
-        roots.extend(data_root / name for name in FORBIDDEN_DATA_ROOT_NAMES)
-    roots.extend([layout.esm_dir, layout.external_root, Path(PINMYMETAL_SETS_DIR)])
-    roots.extend(REPO_ROOT / relative for relative in FORBIDDEN_REPO_PATHS)
+    for data_root in _guard_data_roots(view_root, source_data_root):
+        roots.extend(data_root / name for name in (*rules["data_root_children"], *rules["source_layout_dirs"]))
+    for campaign_root in dict.fromkeys(form.parent.parent for form in _path_forms(view_root)):
+        roots.extend(campaign_root / child for child in rules["campaign_children"])
+        for sibling_dir in rules["campaign_sibling_dirs"]:
+            roots.extend(_sibling_entries(campaign_root / sibling_dir, view_root.name))
+    roots.extend(REPO_ROOT / relative for relative in rules["repository_paths"])
+    if rules.get("pinmymetal_sets_root"):
+        roots.append(Path(PINMYMETAL_SETS_DIR))
     return list(dict.fromkeys(str(Path(os.path.abspath(root))) for root in roots))
+
+
+def expand_read_guard(rules: Mapping[str, Any], *, view_root: str | os.PathLike, smoke: bool, fold: int,
+                      layout: Optional[SourceLayout] = None) -> list[str]:
+    """Expand recorded read-guard rules for a view on this machine; the roots a fit of the view may never read.
+
+    ``layout`` is the view's source layout (its data root is one expansion base, and its ESMC
+    and external folders must be in the rules). Raises ``ViewError`` when the rules are
+    malformed or weaker than this code's, when the view is not at a valid location, or when
+    an expanded root contains the view (refused, never dropped).
+    """
+    campaign_root_of(view_root, smoke=smoke, fold=fold)
+    problems = read_guard_rule_problems(rules, fold=fold, smoke=smoke, layout=layout)
+    if problems:
+        raise ViewError("The view's read guard is refused: " + "; ".join(problems))
+    view_root = Path(os.path.abspath(os.fspath(view_root)))
+    roots = _expand_rules(rules, view_root=view_root, source_data_root=None if layout is None else layout.data_root)
+    forms = [str(form) for form in _path_forms(view_root)] + [_real(view_root)]
+    for root in roots:
+        if any(_under(form, [root, _real(root)]) for form in forms):
+            raise ViewError(f"View folder {view_root} lies inside the forbidden read root {root} (a shared, "
+                            "test-bearing or other-fold folder); views live in a campaign folder (never under "
+                            "CLEAN_30_main or another shared root).")
+    return roots
+
+
+def forbidden_read_roots(layout: SourceLayout, *, view_root: str | os.PathLike, fold: int,
+                         smoke: bool = False) -> list[str]:
+    """Roots a fit of a view at ``view_root`` built from ``layout`` may never read (rules expanded here)."""
+    return expand_read_guard(read_guard_rules(layout, fold=fold, smoke=smoke), view_root=view_root, smoke=smoke,
+                             fold=fold, layout=layout)
+
+
+def runs_dir_problem(view: "View", runs_dir: str | os.PathLike) -> Optional[str]:
+    """Why ``runs_dir`` may not hold the runs of ``view``, or ``None``.
+
+    Refused: a folder inside the view or inside an expanded read-guard root (given or real
+    path), and any folder whose real path lies outside ``view.default_runs_dir``
+    (``<campaign root>/runs/fold<k>``, or ``<campaign root>/smoke_runs/<name>`` for a smoke
+    view; only the campaign root is resolved), so every fold's runs sit where the other
+    folds' guards forbid them.
+    """
+    given, real = os.path.abspath(os.fspath(runs_dir)), _real(runs_dir)
+    if _under(real, [_real(view.root)]) or _under(given, [str(view.root)]):
+        return f"the runs folder {runs_dir} lies inside the view {view.root}"
+    for root in view.forbidden_read_roots:
+        if _under(real, [_real(root)]) or _under(given, [root]):
+            return f"the runs folder {runs_dir} lies inside the forbidden read root {root}"
+    expected = view.default_runs_dir
+    if not _under(real, [os.path.join(_real(view.campaign_root), os.fspath(expected.relative_to(view.campaign_root)))]):
+        place = f"{SMOKE_RUNS_DIR}/{view.root.name}" if view.smoke else f"{RUNS_DIR}/fold{view.fold}"
+        return (f"the runs folder {runs_dir} of this {view.kind} must be <campaign root>/{place} or a folder inside "
+                f"it (real path; expected {expected})")
+    return None
 
 
 def _check_relative_source(relative: str, *, what: str) -> None:
@@ -453,36 +706,167 @@ def _csv_bytes(columns: Sequence[str], rows: Iterable[Mapping[str, Any]]) -> byt
     return buffer.getvalue().encode("utf-8")
 
 
-def _check_output_location(out_dir: Path, layout: SourceLayout) -> None:
+def _check_output_location(out_dir: Path, rules: Mapping[str, Any], *, layout: SourceLayout, fold: int,
+                           smoke: bool) -> list[str]:
+    """Refuse a view folder at the wrong place or inside a forbidden root; returns the expanded roots."""
     if is_test_named_path(out_dir):
         raise HeldOutInputError(f"View folder {out_dir} is test-named; refused.")
+    roots = expand_read_guard(rules, view_root=out_dir, smoke=smoke, fold=fold, layout=layout)
     real = _real(out_dir)
-    if _under(real, [_real(root) for root in forbidden_read_roots(layout, view_root=out_dir)]):
-        raise ViewError(f"View folder {out_dir} lies inside a shared or test-bearing data root; views live in a "
-                        "campaign folder (never under CLEAN_30_main).")
     if _under(real, [_real(SRC_ROOT)]):
         raise ViewError(f"View folder {out_dir} lies inside the source tree.")
     if real == _real(REPO_ROOT) or _under(_real(REPO_ROOT), [real]):
         raise ViewError(f"View folder {out_dir} is the repository root or contains it.")
     if out_dir.exists() and (not out_dir.is_dir() or any(out_dir.iterdir())):
         raise ViewError(f"View folder {out_dir} already exists and is not empty; use a new folder.")
+    return roots
 
 
-def _set_permissions(root: Path) -> None:
-    """Data files read-only, data folders read-only and listable; writable folders stay writable."""
+def _chmod(path: Path, mode: int) -> None:
+    """The one chmod call of view permissions (replaceable to model filesystems that ignore or refuse it)."""
+    os.chmod(path, mode)
+
+
+def filesystem_record(path: str | os.PathLike) -> Optional[dict[str, str]]:
+    """Filesystem type, source, mount point and options of the mount holding ``path`` (``findmnt``), or ``None``."""
+    try:
+        completed = subprocess.run(["findmnt", "-n", "-P", "-o", "FSTYPE,SOURCE,TARGET,OPTIONS", "--target",
+                                    os.fspath(path)], capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0 or not completed.stdout.strip():
+        return None
+    record = {}
+    for token in shlex.split(completed.stdout.strip().splitlines()[0]):
+        key, _sep, value = token.partition("=")
+        record[key.lower()] = value
+    return record
+
+
+def _set_permissions(root: Path) -> dict[str, Any]:
+    """Data files read-only, data folders read-only and listable; writable folders stay writable.
+
+    Never raises for a chmod: each failure is caught and counted. The outcome is
+    ``enforced`` (every mode set), ``ignored`` (chmod returned but a mode did not change) or
+    ``refused`` (a chmod raised).
+    """
     writable = {root / name for name in WRITABLE_DIRS}
+    targets: list[tuple[Path, int]] = []
     for current, dirs, files in os.walk(root, topdown=True):
         current_path = Path(current)
         if any(current_path == path or path in current_path.parents for path in writable):
-            os.chmod(current_path, WRITABLE_DIR_MODE)
+            targets.append((current_path, WRITABLE_DIR_MODE))
             continue
-        for name in files:
-            os.chmod(current_path / name, DATA_FILE_MODE)
+        targets.extend((current_path / name, DATA_FILE_MODE) for name in files)
     for current, dirs, _files in os.walk(root, topdown=False):
         current_path = Path(current)
         if any(current_path == path or path in current_path.parents for path in writable):
             continue
-        os.chmod(current_path, DATA_DIR_MODE)
+        targets.append((current_path, DATA_DIR_MODE))
+    refused: list[str] = []
+    ignored: list[str] = []
+    for path, mode in targets:
+        relative = path.relative_to(root).as_posix()
+        try:
+            _chmod(path, mode)
+            actual = stat.S_IMODE(os.lstat(path).st_mode) & 0o777
+        except OSError as exc:
+            refused.append(f"{relative} ({type(exc).__name__}: errno {exc.errno})")
+            continue
+        if actual != mode:
+            ignored.append(f"{relative} (mode {actual:o}, wanted {mode:o})")
+    outcome = FILE_MODES_REFUSED if refused else FILE_MODES_IGNORED if ignored else FILE_MODES_ENFORCED
+    return {"outcome": outcome, "n_paths": len(targets), "n_refused": len(refused), "n_ignored": len(ignored),
+            "refused_sample": refused[:10], "ignored_sample": ignored[:10],
+            "modes": {"data_file": f"{DATA_FILE_MODE:o}", "data_dir": f"{DATA_DIR_MODE:o}",
+                      "writable_dir": f"{WRITABLE_DIR_MODE:o}"},
+            "checked_utc": utc_now(), "filesystem": filesystem_record(root)}
+
+
+def probe_file_modes(directory: Path) -> dict[str, Any]:
+    """Whether chmod changes modes in ``directory`` now (a temporary file is created, changed and removed).
+
+    ``enforced`` is ``None`` when no probe file can be created there.
+    """
+    probe = Path(directory) / f".file_mode_probe-{os.getpid()}-{uuid.uuid4().hex[:12]}"
+    try:
+        with probe.open("xb"):
+            pass
+    except OSError as exc:
+        return {"enforced": None, "outcome": None, "detail": f"cannot create a probe file: {type(exc).__name__}",
+                "filesystem": filesystem_record(directory)}
+    try:
+        try:
+            _chmod(probe, 0o444)
+            read_only = stat.S_IMODE(os.lstat(probe).st_mode) & 0o777
+            _chmod(probe, 0o644)
+            writable = stat.S_IMODE(os.lstat(probe).st_mode) & 0o777
+        except OSError as exc:
+            outcome, detail = FILE_MODES_REFUSED, f"{type(exc).__name__}: errno {exc.errno}"
+        else:
+            enforced = read_only == 0o444 and writable == 0o644
+            outcome = FILE_MODES_ENFORCED if enforced else FILE_MODES_IGNORED
+            detail = f"modes after chmod 444 and 644: {read_only:o}, {writable:o}"
+    finally:
+        try:
+            probe.unlink()
+        except OSError:
+            pass
+    return {"enforced": outcome == FILE_MODES_ENFORCED, "outcome": outcome, "detail": detail,
+            "filesystem": filesystem_record(directory)}
+
+
+def _data_relative(path: Path, data_root: Path) -> Optional[str]:
+    """``path`` relative to the data root (POSIX, normalised), or ``None`` when it lies outside it."""
+    relative = os.path.relpath(os.path.normpath(os.path.abspath(path)), os.path.abspath(data_root))
+    if relative == os.curdir or relative.split(os.sep, 1)[0] == os.pardir:
+        return None
+    return Path(relative).as_posix()
+
+
+def overlay_record(data_root: Path, used: Mapping[str, tuple[Optional[str], str]]) -> Optional[dict[str, Any]]:
+    """The overlay a view is built from, after a light check; ``None`` when the data root is no overlay.
+
+    ``used`` maps each source file the view copies (absolute path) to its path relative to
+    the data root (``None`` outside it) and the SHA-256 of the copied bytes. The overlay manifest
+    (``<data root>/overlay_manifest.json``, a regular file) must hold a non-empty
+    ``overlay_id`` and a ``files`` list of ``{path, sha256, ...}`` entries (paths relative to
+    the overlay root) that lists every used file with the same SHA-256.
+    """
+    path = Path(data_root) / OVERLAY_MANIFEST_NAME
+    if not os.path.lexists(path):
+        return None
+    if os.path.islink(path) or not path.is_file():
+        raise ViewError(f"{path} is not a regular file; an overlay manifest is read only as one.")
+    data = path.read_bytes()
+    try:
+        manifest = json.loads(data.decode("utf-8"))
+    except ValueError as exc:
+        raise ViewError(f"{path} is not a JSON overlay manifest: {exc}") from exc
+    overlay_id = manifest.get("overlay_id") if isinstance(manifest, Mapping) else None
+    files = manifest.get("files") if isinstance(manifest, Mapping) else None
+    if not isinstance(overlay_id, str) or not overlay_id.strip() or not isinstance(files, list):
+        raise ViewError(f"{path} needs a non-empty 'overlay_id' and a 'files' list.")
+    listed: dict[str, Optional[str]] = {}
+    n_duplicates = 0
+    for item in files:
+        if not isinstance(item, Mapping) or not isinstance(item.get("path"), str):
+            raise ViewError(f"{path} has a 'files' entry without a path.")
+        n_duplicates += item["path"] in listed
+        listed[item["path"]] = item.get("sha256")
+    if n_duplicates:
+        # Counted, not named: the overlay lists other folds' proteins, so an entry may name a test-side protein.
+        raise ViewError(f"{path} lists {n_duplicates} paths more than once; an overlay manifest names each file once.")
+    outside = [Path(source).name for source, (relative, _digest) in used.items() if relative is None]
+    if outside:
+        raise ViewError(f"{len(outside)} inputs of this view lie outside the overlay root {data_root}, e.g. "
+                        f"{sorted(outside)[:3]}; an overlay view reads only the overlay.")
+    differing = sorted(relative for relative, digest in used.values() if listed.get(relative) != digest)
+    if differing:
+        raise ViewError(f"{len(differing)} inputs of this view are missing from the overlay manifest or differ from "
+                        f"its SHA-256, e.g. {differing[:3]}.")
+    return {"id": overlay_id, "manifest_file": OVERLAY_MANIFEST_NAME, "manifest_sha256": sha256_bytes(data),
+            "n_files_checked": len(used)}
 
 
 def _file_role(relative: str) -> str:
@@ -511,13 +895,16 @@ def build_view(
     needs ``inner_certificate``, the ``inner_certification_receipt.json`` of ``certify-inner``
     (default: next to the membership file) that certifies exactly this file for this fold; both
     are copied into the view. Nothing is left at ``out_dir`` unless the build succeeds (it is
-    assembled in a sibling staging folder and renamed).
+    assembled in a sibling staging folder and renamed). ``out_dir`` must follow the location
+    rule (``view_location_problem``). File modes are set after the rename and never stop the
+    build; their outcome is written to ``receipts/file_modes.json``.
     """
     from training.ec_membership import read_ec_fold_membership, write_ec_fold_membership
 
     fold = int(fold)
     out_dir = Path(os.path.abspath(os.fspath(out_dir)))
-    _check_output_location(out_dir, layout)
+    rules = read_guard_rules(layout, fold=fold, smoke=smoke)
+    _check_output_location(out_dir, rules, layout=layout, fold=fold, smoke=smoke)
     if smoke:
         if max_proteins is None or int(max_proteins) < SMOKE_N_FOLDS or seed is None:
             raise ViewError(f"A smoke view needs --max-proteins >= {SMOKE_N_FOLDS} and --seed.")
@@ -548,10 +935,22 @@ def build_view(
     staging.mkdir(parents=True)
     try:
         structure_rows, missing = [], []
+        # Every source file copied, for the overlay check: absolute path -> (data-root relative path, SHA-256).
+        used: dict[str, tuple[Optional[str], str]] = {
+            str(sources["manifest_path"]): (_data_relative(sources["manifest_path"], layout.data_root),
+                                            sources["manifest_sha256"]),
+            str(sources["csv_path"]): (_data_relative(sources["csv_path"], layout.data_root), sources["csv_sha256"]),
+        }
+
+        def copy_source(source: Path, target: Path, **expected: Any) -> tuple[str, int]:
+            digest, size = _copy_exact(source, target, **expected)
+            used[str(source)] = (_data_relative(source, layout.data_root), digest)
+            return digest, size
+
         for stem in selected:
             row = sources["sources"][stem]
             try:
-                digest, size = _copy_exact(row.path, staging / STRUCTURES_DIR / row.structure_name,
+                digest, size = copy_source(row.path, staging / STRUCTURES_DIR / row.structure_name,
                                            expected_sha256=row.sha256, expected_size=row.size_bytes)
             except FileNotFoundError:
                 missing.append(f"{stem}: structure file")
@@ -560,11 +959,11 @@ def build_view(
                                    "sha256": digest, "size_bytes": size})
             for name in (esm_file_name(stem), esm_sidecar_name(stem)):
                 try:
-                    _copy_exact(layout.esm_dir / name, staging / ESM_DIR / name)
+                    copy_source(layout.esm_dir / name, staging / ESM_DIR / name)
                 except FileNotFoundError:
                     missing.append(f"{stem}: {name}")
             try:
-                _copy_exact(layout.external_root / stem / EXTERNAL_FEATURE_FILE,
+                copy_source(layout.external_root / stem / EXTERNAL_FEATURE_FILE,
                             staging / EXTERNAL_DIR / stem / EXTERNAL_FEATURE_FILE)
             except FileNotFoundError:
                 missing.append(f"{stem}: {EXTERNAL_FEATURE_FILE}")
@@ -610,18 +1009,20 @@ def build_view(
             membership = read_ec_fold_membership(source_path, source_sha)
             ids = {row["structure_id"] for row in membership.rows}
             if ids != set(eligible):
-                raise ViewError(f"The inner membership covers {len(ids)} structures; the fold's eligible training "
-                                f"structures are {len(eligible)}. They must be identical.")
+                # No counts here: per-fold eligible counts are class numbers (one EC class per protein).
+                raise ViewError("The inner membership's structures differ from the fold's eligible training "
+                                "structures. They must be identical.")
             folds = sorted({int(row["fold"]) for row in membership.rows})
             if folds != list(range(N_INNER_FOLDS)):
                 raise ViewError(f"The inner membership uses folds {folds}, expected 0..{N_INNER_FOLDS - 1}.")
-            digest, _size = _copy_exact(source_path, staging / INNER_MEMBERSHIP_NAME, expected_sha256=source_sha)
-            certificate_sha, _size = _copy_exact(certificate["path"], staging / INNER_CERTIFICATE_NAME,
+            digest, _size = copy_source(source_path, staging / INNER_MEMBERSHIP_NAME, expected_sha256=source_sha)
+            certificate_sha, _size = copy_source(Path(certificate["path"]), staging / INNER_CERTIFICATE_NAME,
                                                  expected_sha256=certificate["sha256"])
             membership_record = {"role": "inner", "file": INNER_MEMBERSHIP_NAME, "sha256": digest,
                                  "identity_sha256": membership.identity_sha256, "n_folds": N_INNER_FOLDS,
                                  "n_rows": len(membership.rows), "source_name": source_path.name,
                                  "certificate_file": INNER_CERTIFICATE_NAME, "certificate_sha256": certificate_sha}
+        overlay = overlay_record(layout.data_root, used)
 
         files = []
         for current, dirs, names in os.walk(staging):
@@ -661,8 +1062,9 @@ def build_view(
             "site_summary": {"file": SUMMARY_NAME, "sha256": summary_sha, "n_rows": summary_rows},
             "probe": {"file": PROBE_IDS_NAME, "sha256": probe_sha, "n": len(probe_ids), "rule": PROBE_RULE},
             "membership": membership_record,
+            "overlay": overlay,
             "external_features_policy": EXTERNAL_FEATURES_POLICY,
-            "forbidden_read_roots": forbidden_read_roots(layout, view_root=out_dir),
+            "read_guard": rules,
             "layout": {"structures": STRUCTURES_DIR, "esm": ESM_DIR, "external": EXTERNAL_DIR, "ring": RING_DIR,
                        "chain_means": dict(CHAIN_MEAN_DIRS), "caches": CACHE_DIR, "cache_subdirs": list(CACHE_SUBDIRS),
                        "receipts": RECEIPTS_DIR},
@@ -679,8 +1081,12 @@ def build_view(
     except BaseException:
         _remove_tree(staging)
         raise
-    _set_permissions(out_dir)
-    return {"view": str(out_dir), "manifest": manifest, "manifest_sha256": sha256_bytes(manifest_bytes)}
+    manifest_sha256 = sha256_bytes(manifest_bytes)
+    # The manifest is final here; modes are applied afterwards and never stop the build.
+    modes = _set_permissions(out_dir)
+    write_receipt_file(out_dir / RECEIPTS_DIR / FILE_MODES_RECEIPT_NAME,
+                       {"stage": "build", "view_manifest_sha256": manifest_sha256, **modes})
+    return {"view": str(out_dir), "manifest": manifest, "manifest_sha256": manifest_sha256, "file_modes": modes}
 
 
 def check_inner_certificate(certificate: Mapping[str, Any], *, fold: int, membership_name: str,
@@ -753,9 +1159,18 @@ class View:
             raise ViewError(f"{root} holds no {VIEW_MANIFEST_NAME}; it is not a campaign view.")
         data = path.read_bytes()
         manifest = json.loads(data.decode("utf-8"))
-        if manifest.get("format") != VIEW_FORMAT or manifest.get("schema_version") != VIEW_SCHEMA_VERSION:
+        if manifest.get("format") != VIEW_FORMAT:
             raise ViewError(f"{path} is not a {VIEW_FORMAT} manifest.")
-        return cls(root, manifest, sha256_bytes(data))
+        if manifest.get("schema_version") in RETIRED_VIEW_SCHEMA_VERSIONS:
+            raise ViewError(f"{path} is a schema-{manifest.get('schema_version')} view (absolute guard roots, no "
+                            "location rule); it is retired as a view and no longer loads. Build a new view.")
+        if manifest.get("schema_version") != VIEW_SCHEMA_VERSION:
+            raise ViewError(f"{path} has view schema {manifest.get('schema_version')!r}; this code reads "
+                            f"schema {VIEW_SCHEMA_VERSION}.")
+        view = cls(root, manifest, sha256_bytes(data))
+        # The location rule and the read guard are checked on every load, on the machine that loads it.
+        view.forbidden_read_roots
+        return view
 
     @property
     def kind(self) -> str:
@@ -844,8 +1259,40 @@ class View:
         return self.manifest["structures"]["allowlist_sha256"]
 
     @property
+    def campaign_root(self) -> Path:
+        return campaign_root_of(self.root, smoke=self.smoke, fold=self.fold)
+
+    @property
+    def read_guard(self) -> Mapping[str, Any]:
+        return self.manifest["read_guard"]
+
+    @property
+    def source_layout(self) -> SourceLayout:
+        """The source layout recorded at build time (paths of the build machine; no file is opened)."""
+        source = self.manifest["source"]
+        return SourceLayout.from_data_root(source["data_root"], esm_dir=source["esm_dir"],
+                                           external_root=source["external_root"])
+
+    @cached_property
+    def _expanded_read_guard(self) -> tuple[str, ...]:
+        return tuple(expand_read_guard(self.read_guard, view_root=self.root, smoke=self.smoke, fold=self.fold,
+                                       layout=self.source_layout))
+
+    @property
     def forbidden_read_roots(self) -> list[str]:
-        return list(self.manifest["forbidden_read_roots"])
+        """The view's read-guard rules expanded on this machine (see ``expand_read_guard``)."""
+        return list(self._expanded_read_guard)
+
+    @property
+    def overlay(self) -> Optional[Mapping[str, Any]]:
+        return self.manifest.get("overlay")
+
+    @property
+    def default_runs_dir(self) -> Path:
+        """``<campaign root>/runs/fold<k>`` for a fold view, ``<campaign root>/smoke_runs/<name>`` for a smoke view."""
+        if self.smoke:
+            return self.campaign_root / SMOKE_RUNS_DIR / self.root.name
+        return self.campaign_root / RUNS_DIR / f"fold{self.fold}"
 
 
 def _walk_view(view: View, problems: list[str]) -> dict[str, Path]:
@@ -881,7 +1328,12 @@ def verify_view(
     write_receipt: bool = True,
     provenance: Optional[Mapping[str, Any]] = None,
 ) -> dict[str, Any]:
-    """Rehash and cross-check a view; raise ``ViewVerificationError`` listing every failed check."""
+    """Rehash and cross-check a view; raise ``ViewVerificationError`` listing every failed check.
+
+    File modes are tested in ``receipts/`` first (``probe_file_modes``): only where chmod
+    works are writable data files a problem; content hashes are always checked. The receipt
+    records ``file_modes_enforced``.
+    """
     from training.ec_membership import EcMembershipError, read_ec_fold_membership
     from training.global_esm_features import GlobalEsmCacheError, load_global_esm_vectors, read_manifest
     from training.runtime_preparation import discover_missing_esm_embeddings, discover_missing_updated_external_features
@@ -891,18 +1343,33 @@ def verify_view(
     view = View.load(view_root)
     manifest = view.manifest
     problems: list[str] = []
+    file_modes = probe_file_modes(view.receipts)
+    modes_enforced = file_modes["enforced"]
+    if modes_enforced is None:
+        problems.append(f"file modes cannot be tested in {RECEIPTS_DIR}/ ({file_modes['detail']}); the folder must be "
+                        "writable")
     found = _walk_view(view, problems)
     recorded = {item["path"]: item for item in manifest["files"]}
     for relative in sorted(set(found) - set(recorded)):
         problems.append(f"extra file not in the view manifest: {relative}")
     for relative in sorted(set(recorded) - set(found)):
         problems.append(f"file listed in the view manifest is missing: {relative}")
+    writable_files = []
     for relative in sorted(set(found) & set(recorded)):
         path = found[relative]
         if path.stat().st_size != recorded[relative]["size_bytes"] or sha256_file(path) != recorded[relative]["sha256"]:
             problems.append(f"content differs from the view manifest: {relative}")
-        if path.stat().st_mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH):
-            problems.append(f"data file is writable: {relative}")
+        if modes_enforced and path.stat().st_mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH):
+            writable_files.append(relative)
+    recorded_modes = recorded_file_modes_outcome(view)
+    if writable_files and recorded_modes != FILE_MODES_ENFORCED:
+        problems.append(f"{len(writable_files)} data files are writable, e.g. {writable_files[:3]}: file modes were not "
+                        f"applied since the build (recorded outcome {recorded_modes!r}, chmod works now); run "
+                        "apply-view-modes")
+    else:
+        problems.extend(f"data file is writable: {relative}" for relative in writable_files)
+    problems.extend(read_guard_rule_problems(view.read_guard, fold=view.fold, smoke=view.smoke,
+                                             layout=view.source_layout))
 
     stems = view.structure_ids()
     if ids_sha256(stems) != manifest["structures"]["ids_sha256"] or len(stems) != len(set(stems)):
@@ -946,12 +1413,16 @@ def verify_view(
             problems.append(f"{stem} is listed as eligible but has no single EC class")
 
     if check_sources:
-        layout = SourceLayout.from_data_root(manifest["source"]["data_root"], esm_dir=manifest["source"]["esm_dir"],
-                                             external_root=manifest["source"]["external_root"])
+        layout = view.source_layout
         for key, path in (("training_manifest", layout.training_manifest(view.fold)),
                           ("training_csv", layout.training_csv(view.fold))):
             if not path.is_file() or sha256_file(path) != manifest["source"][key]["sha256"]:
                 problems.append(f"source {key} differs from the hash frozen in the view manifest")
+        if view.overlay is not None:
+            overlay_path = layout.data_root / str(view.overlay.get("manifest_file") or OVERLAY_MANIFEST_NAME)
+            if os.path.islink(overlay_path) or not overlay_path.is_file() \
+                    or sha256_file(overlay_path) != view.overlay.get("manifest_sha256"):
+                problems.append("the source overlay manifest differs from the hash recorded in the view manifest")
 
     structure_files: list[Path] = []
     try:
@@ -1044,10 +1515,46 @@ def verify_view(
         "chain_means": chain_means,
         "site_summary": summary_report,
         "checked_sources": bool(check_sources),
+        "file_modes_enforced": bool(modes_enforced),
+        "file_modes": {**file_modes, "recorded_outcome": recorded_modes},
+        "overlay": None if view.overlay is None else dict(view.overlay),
         "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=view.smoke),
     }
     if write_receipt:
         write_receipt_file(view.receipts / VERIFY_RECEIPT_NAME, receipt)
+    return receipt
+
+
+def recorded_file_modes_outcome(view: View) -> Optional[str]:
+    """The last recorded file-mode outcome: ``file_modes_applied.json`` if present, else ``file_modes.json``."""
+    for name in (FILE_MODES_APPLIED_RECEIPT_NAME, FILE_MODES_RECEIPT_NAME):
+        path = view.receipts / name
+        if path.is_file():
+            try:
+                return json.loads(path.read_text(encoding="utf-8")).get("outcome")
+            except (OSError, ValueError):
+                return None
+    return None
+
+
+def apply_view_modes(view_root: str | os.PathLike, *, provenance: Optional[Mapping[str, Any]] = None
+                     ) -> dict[str, Any]:
+    """Set a built view's file modes again (chmod only) and write ``receipts/file_modes_applied.json``.
+
+    No byte and no manifest entry changes (modes are not part of the manifest's ``files``
+    entries), so the manifest SHA-256 and every receipt bound to it stay valid. Used after
+    the filesystem driver changes, e.g. when a view built where chmod was ignored now sits
+    on a mount that enforces modes.
+    """
+    view = View.load(view_root)
+    modes = _set_permissions(view.root)
+    after = sha256_file(view.root / VIEW_MANIFEST_NAME)
+    if after != view.manifest_sha256:
+        raise ViewError(f"{view.root}: the view manifest changed while modes were applied; refused.")
+    receipt = {"stage": "apply_view_modes", "view": str(view.root), "view_manifest_sha256": view.manifest_sha256,
+               **modes,
+               "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=view.smoke)}
+    receipt["receipt_sha256"] = write_receipt_file(view.receipts / FILE_MODES_APPLIED_RECEIPT_NAME, receipt)
     return receipt
 
 
@@ -1066,7 +1573,8 @@ def dry_run_problems(view: View, receipt: Optional[Mapping[str, Any]], *,
     """Why a view's dry-run receipt does not clear it (empty when it passed on this exact view).
 
     ``chain_means`` (layer -> record with ``manifest_sha256``) must equal the chain means the
-    dry run verified, so a cache rebuilt after the dry run needs a new dry run.
+    dry run verified, so a cache rebuilt after the dry run needs a new dry run. The dry run of
+    a fold view must have run its probes under a cap prefix.
     """
     if receipt is None:
         return [f"the view has no {DRY_RUN_RECEIPT_NAME}; run dry-run first"]
@@ -1077,6 +1585,8 @@ def dry_run_problems(view: View, receipt: Optional[Mapping[str, Any]], *,
         problems.append("the dry-run receipt names another view manifest")
     if receipt.get("verified_view") is not True:
         problems.append("the dry run did not verify the view")
+    if not view.smoke and not receipt.get("cap_prefix"):
+        problems.append("the dry run of this fold view ran its probes without a cap prefix")
     if chain_means is not None:
         verified = ((receipt.get("verification") or {}).get("chain_means")) or {}
         for layer, record in chain_means.items():
@@ -1120,6 +1630,8 @@ def freeze1_view_record(view_root: str | os.PathLike, *, require_dry_run: bool,
                                                  "certificate_sha256")},
         "chain_means": {layer: record["manifest_sha256"]
                         for layer, record in sorted(verification["chain_means"].items())},
+        "file_modes_enforced": verification["file_modes_enforced"],
+        "overlay": None if view.overlay is None else {key: view.overlay.get(key) for key in ("id", "manifest_sha256")},
         "dry_run_receipt": None if dry is None else {
             "status": dry.get("status"), "sha256": dry["_file_sha256"],
             "view_manifest_sha256": dry.get("view_manifest_sha256")},

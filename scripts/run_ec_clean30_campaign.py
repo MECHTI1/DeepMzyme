@@ -1,14 +1,32 @@
-"""Runner of the EC class vs CLEAN30 campaign: unit matrix, training-only views, dry run, smoke units, manifests.
+"""Runner of the EC class vs CLEAN30 campaign: unit matrix, training-side inputs, views, dry run, smoke units,
+simulation, manifests.
 
 Actions
   plan          Per-fold unit matrix (S1 96, S2 <= 72, S3 8, S4 5; at most 181 fits) as deterministic JSON.
+  cohort-audit  Training-side cohort audit over the five training sides (P2-3): load status as the trainer
+                maps it, selected sites, D2 geometry and charge-proxy parity, sequences, per-protein inputs
+                and labels; writes <campaign root>/cohort once; exit 1 when a check stops it.
+  r2-lists      CLEAN R2 and fold-0 R2-inner accession allowlists, from the training-side identity folders
+                and a passed cohort audit (P2-6).
+  overlay build Data overlay (P2-7): byte copies of every training-side input of later steps, laid out like
+                the data root, with its manifest, reproducible tar, .sha256 file and build receipt.
+  overlay verify
+                Rehash and re-derive an overlay and check its tar and build receipt; exit 1 with the problems.
   build-view    Training-only view of one outer fold (byte copies, per-file SHA-256, read-only); an inner
                 membership needs its certify-inner receipt.
   smoke-view    Engineering subset view: --max-proteins eligible structures by --seed, plus a 2-fold
                 smoke EC membership.
-  verify-view   Rehash a view and cross-check its IDs, inputs, membership, probe list and chain means.
+  verify-view   Rehash a view and cross-check its IDs, inputs, membership, probe list and chain means;
+                writable data files count only where chmod works (file_modes_enforced).
+  apply-view-modes
+                Set a built view's file modes again (chmod only; no byte or manifest change), e.g. after
+                Data1 changes driver; writes receipts/file_modes_applied.json.
   dry-run       Check every planned command of a view, then run the trainer's preparation path for one
-                inner and one refit unit per probed family under the held-out guard and a read recorder.
+                inner and one refit unit per probed family under the held-out guard and a read recorder
+                (--cap-prefix: the probes' cap, default the workstation cap).
+  simulate      Null-adoption sweep of the promotion rule (P2-9) on fold populations calibrated from the
+                data overlay's identity copies (--calibrate-from K=PATH, one per fold the sweep uses);
+                write-once records; exit 4 when the CPU-hour forecast stops it.
   run-unit      One capped engineering smoke fit (--smoke only; real fits come with GPU execution) on a
                 view that verifies again and holds a passed dry-run receipt.
   verify-unit   Check the receipts of finished units (terminal checkpoint, steps, no generation, ...);
@@ -21,8 +39,12 @@ Actions
 
 Real (non-smoke) actions refuse a tree with uncommitted or untracked changes, every action refuses
 test flags and test-named paths, and every receipt records git HEAD, tree status, code hashes and
-the environment. Fits and probes run under the workstation cap (2 cores, 3 GB, no swap). See
-src/ec_clean30/{campaign,views,commands,provenance}.py for the rules.
+the environment. Fits and probes run under the workstation cap (2 cores, 3 GB, no swap). The input
+actions (cohort-audit, r2-lists, overlay, simulate) print no accession; counts that are per-fold
+class numbers are printed for fold 0 at most, and their receipts and records keep the rest. Exit
+codes: 0 done, 1 a check or unit did not pass, 2 refused or an input error, 3 not implemented, 4 a
+simulation stopped by its forecast. See src/ec_clean30/{campaign,views,commands,provenance,cohort,r2_lists,
+overlay,simulation}.py for the rules.
 """
 from __future__ import annotations
 
@@ -136,9 +158,16 @@ def _build(args: argparse.Namespace, *, smoke: bool) -> int:
                         inner_certificate=getattr(args, "inner_certificate", None), probe_count=args.probe_count,
                         provenance=provenance_record(smoke=smoke, git=git))
     manifest = result["manifest"]
+    membership = manifest["membership"]
+    # No eligible or membership row counts on screen: with n_structures they give the fold's count of proteins
+    # with several EC classes, and per-fold class numbers are never printed for more than one fold. They stay
+    # in the view manifest and the receipts.
     _print({"view": result["view"], "view_manifest_sha256": result["manifest_sha256"], "kind": manifest["kind"],
-            "n_structures": manifest["structures"]["n"], "n_eligible": manifest["eligible"]["n"],
-            "membership": manifest["membership"], "allowlist_sha256": manifest["structures"]["allowlist_sha256"]})
+            "n_structures": manifest["structures"]["n"], "eligible_ids_sha256": manifest["eligible"]["ids_sha256"],
+            "eligible_matches_membership": None if membership is None else True,
+            "membership": None if membership is None else {key: value for key, value in membership.items()
+                                                           if key != "n_rows"},
+            "allowlist_sha256": manifest["structures"]["allowlist_sha256"]})
     return 0
 
 
@@ -172,23 +201,49 @@ def action_verify_view(args: argparse.Namespace) -> int:
     except ViewVerificationError as exc:
         _print({"status": "failed", "problems": exc.problems})
         return 1
-    _print({key: receipt[key] for key in ("status", "view_manifest_sha256", "n_structures", "n_eligible",
-                                          "membership", "chain_means")})
+    # No eligible or membership row counts on screen (per-fold class numbers; see _build); the receipt keeps them.
+    membership = receipt["membership"]
+    _print({**{key: receipt[key] for key in ("status", "view_manifest_sha256", "n_structures", "chain_means",
+                                             "file_modes_enforced")},
+            "eligible_matches_membership": None if membership is None else True,
+            "membership": None if membership is None else {key: value for key, value in membership.items()
+                                                           if key != "n_rows"}})
+    return 0
+
+
+def action_apply_view_modes(args: argparse.Namespace) -> int:
+    from ec_clean30.provenance import provenance_record
+    from ec_clean30.views import FILE_MODES_APPLIED_RECEIPT_NAME, apply_view_modes
+
+    view = _load_view(args)
+    git = _git_for(view.smoke)
+    receipt = apply_view_modes(view.root, provenance=provenance_record(smoke=view.smoke, git=git))
+    _print({"outcome": receipt["outcome"], "view_manifest_sha256": receipt["view_manifest_sha256"],
+            "n_paths": receipt["n_paths"], "n_ignored": receipt["n_ignored"], "n_refused": receipt["n_refused"],
+            "filesystem": receipt["filesystem"], "receipt": str(view.receipts / FILE_MODES_APPLIED_RECEIPT_NAME),
+            "receipt_sha256": receipt["receipt_sha256"]})
     return 0
 
 
 def action_dry_run(args: argparse.Namespace) -> int:
-    from ec_clean30.commands import dry_run
+    import shlex
+
+    from ec_clean30.commands import CAP_PREFIX, dry_run
     from ec_clean30.provenance import provenance_record
     from ec_clean30.views import ViewVerificationError
 
     view = _load_view(args)
     _refuse_paths(args, ["runs"])
+    # The probes' cap prefix: one shell-quoted string, or the workstation cap when not given (kept inside this
+    # function, so the dry-run source hash of rule R-CMD covers it).
+    cap_prefix = CAP_PREFIX if args.cap_prefix is None else tuple(shlex.split(args.cap_prefix))
+    if not cap_prefix:
+        raise SystemExit("--cap-prefix needs a command prefix; dry-run probes always run under a cap.")
     git = _git_for(view.smoke)
     try:
         receipt = dry_run(view, runs_dir=args.runs, probe_families=_csv(args.probe_families) or ("F4",),
                           exclude_levers=_csv(args.exclude_levers) or (), timeout=args.timeout,
-                          provenance=provenance_record(smoke=view.smoke, git=git))
+                          cap_prefix=cap_prefix, provenance=provenance_record(smoke=view.smoke, git=git))
     except ViewVerificationError as exc:
         _print({"status": "failed", "stage": "verify-view", "problems": exc.problems})
         return 1
@@ -197,6 +252,35 @@ def action_dry_run(args: argparse.Namespace) -> int:
             "probes": [{key: probe.get(key) for key in ("unit_id", "kind", "status", "problems")}
                        for probe in receipt["probes"]]})
     return 0 if receipt["status"] == "passed" else 1
+
+
+# Folds whose per-fold counts the input actions print (as the r2-lists summary does); the others stay in the
+# private records: eligible protein counts with the training structure counts give each fold's count of proteins
+# with several EC classes, and per-fold class numbers are shown for one fold at most.
+PRINTED_COUNT_FOLDS: tuple[int, ...] = (0,)
+
+
+def action_simulate(args: argparse.Namespace) -> int:
+    from ec_clean30.provenance import refuse_test_paths
+    from ec_clean30.simulation import SimulationError, run_simulate_action
+
+    # Every path is refused by name before the clean-tree check (the sweep checks them again); a K=PATH value
+    # also by its path part alone, since "K=" is part of the value's first component.
+    _refuse_paths(args, ["sweep", "out", "calibrate_from"])
+    for value in args.calibrate_from or ():
+        refuse_test_paths([str(value).partition("=")[2] or None], what="--calibrate-from")
+    try:
+        code, payload = run_simulate_action(args)
+    except SimulationError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    calibrations = payload.get("calibrations") or {}
+    payload = {**payload, "calibrations": {
+        fold: record if int(fold) in PRINTED_COUNT_FOLDS else {key: value for key, value in record.items()
+                                                                if key != "n_proteins"}
+        for fold, record in calibrations.items()}}
+    _print(payload)
+    return code
 
 
 def action_run_unit(args: argparse.Namespace) -> int:
@@ -305,6 +389,9 @@ def _not_implemented(name: str):
 
 
 def build_parser() -> argparse.ArgumentParser:
+    # Torch-free at import; each module defines its own action's arguments and handler.
+    from ec_clean30 import cohort, overlay, r2_lists
+
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="action", required=True)
 
@@ -317,6 +404,12 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--full", action="store_true", help="Print every unit when no --out is given.")
     plan.add_argument("--smoke", action="store_true", help="Engineering use: allow a dirty tree for --out.")
     plan.set_defaults(handler=action_plan)
+
+    cohort.add_cohort_audit_arguments(sub.add_parser("cohort-audit", help=cohort.COHORT_AUDIT_HELP)).set_defaults(
+        handler=cohort.action_cohort_audit)
+    r2_lists.add_r2_lists_arguments(sub.add_parser("r2-lists", help=r2_lists.R2_LISTS_HELP)).set_defaults(
+        handler=r2_lists.action_r2_lists)
+    overlay.add_overlay_arguments(sub.add_parser("overlay", help=overlay.OVERLAY_HELP))  # build, verify
 
     def source_arguments(target: argparse.ArgumentParser) -> None:
         target.add_argument("--fold", type=int, required=True)
@@ -352,14 +445,43 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Also rehash the source training manifest and site table (training files only).")
     verify.set_defaults(handler=action_verify_view)
 
+    modes = sub.add_parser("apply-view-modes", help="Set a built view's file modes again (chmod only).")
+    modes.add_argument("--view", required=True)
+    modes.add_argument("--smoke", action="store_true")
+    modes.set_defaults(handler=action_apply_view_modes)
+
     dry = sub.add_parser("dry-run", help="Check every planned command of a view and probe preparation.")
     dry.add_argument("--view", required=True)
     dry.add_argument("--smoke", action="store_true")
-    dry.add_argument("--runs", default=None, help="Runs folder the commands name (default <view>/../runs).")
+    dry.add_argument("--runs", default=None,
+                     help="Runs folder the commands name: <campaign root>/runs/fold<k> (smoke view: "
+                          "<campaign root>/smoke_runs/<name>) or a folder inside it, by real path; that folder "
+                          "is the default.")
     dry.add_argument("--probe-families", default="F4", help="Comma list of families to probe (inner and refit).")
     dry.add_argument("--exclude-levers", default=None, help="Levers whose inputs are not built yet (e.g. L8).")
     dry.add_argument("--timeout", type=float, default=None, help="Seconds per probe.")
+    dry.add_argument("--cap-prefix", default=None,
+                     help="Cap each probe runs under, as one shell-quoted string (default the workstation cap: "
+                          "systemd-run --user --scope -q -p CPUQuota=200%% -p MemoryMax=3G -p MemorySwapMax=0).")
     dry.set_defaults(handler=action_dry_run)
+
+    simulate = sub.add_parser("simulate",
+                              help="Null-adoption sweep of the promotion rule on calibrated fold populations.")
+    simulate.add_argument("--sweep", required=True,
+                          help="Sweep file (format deepmzyme_ec_clean30_simulation_sweep_v1).")
+    simulate.add_argument("--out", required=True,
+                          help="Simulation folder (new, or one this sweep started); not under the campaign's identity "
+                               "folder, a calibration folder or a data overlay.")
+    simulate.add_argument("--calibrate-from", action="append", default=[], metavar="K=PATH",
+                          help="Fold K's identity folder in the data overlay (<overlay>/identity/fold<K>); one for "
+                               "every fold the sweep uses, on every call.")
+    simulate.add_argument("--points", default=None,
+                          help="Comma list of point IDs (default: every point without a record).")
+    simulate.add_argument("--max-forecast-cpu-hours", type=float, default=8.0,
+                          help="Stop before the next point when the whole-sweep forecast exceeds this.")
+    simulate.add_argument("--smoke", action="store_true",
+                          help="Engineering use: dirty tree, folders outside the overlay.")
+    simulate.set_defaults(handler=action_simulate)
 
     run = sub.add_parser("run-unit", help="One capped engineering smoke fit.")
     run.add_argument("--smoke", action="store_true")
@@ -370,7 +492,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--refit", action="store_true", help="Train on the whole view with --val-fraction 0 and the probe list.")
     run.add_argument("--inner-fold", type=int, default=0)
     run.add_argument("--lr-index", type=int, default=1, help="Grid setting of the family (default the second).")
-    run.add_argument("--runs", required=True)
+    run.add_argument("--runs", required=True,
+                     help="<campaign root>/smoke_runs/<name> of the smoke view, or a folder inside it.")
     run.add_argument("--timeout", type=float, default=None)
     run.set_defaults(handler=action_run_unit)
 
@@ -412,14 +535,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     from ec_clean30.campaign import CampaignPlanError
     from ec_clean30.commands import CommandError
     from ec_clean30.provenance import DirtyTreeError, FreezeManifestError, HeldOutInputError
+    from ec_clean30.r2_lists import R2ListError
     from ec_clean30.views import ViewError
 
     try:
         return int(args.handler(args))
-    except (DirtyTreeError, HeldOutInputError) as exc:
+    except DirtyTreeError as exc:
+        # The tree check names up to five status entries; an untracked file's name could carry a held-out
+        # name, so only the reason and the entry count are shown (git status lists the entries).
+        reason, sample, _rest = str(exc).partition(" (e.g. ")
+        print(f"refused: {reason}" + (". Commit first: real campaign actions run only from a clean tree "
+                                      "(engineering smokes use --smoke); git status lists the entries."
+                                      if sample else ""), file=sys.stderr)
+        return 2
+    except HeldOutInputError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
-    except (CampaignPlanError, CommandError, FreezeManifestError, ViewError, FileExistsError) as exc:
+    except (CampaignPlanError, CommandError, FreezeManifestError, ViewError, R2ListError, FileExistsError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

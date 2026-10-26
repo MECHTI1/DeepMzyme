@@ -5,9 +5,9 @@
 
 ## Current objective and stage
 
-- Current campaign: [ec_class_vs_clean30_2026-10](docs/campaigns/ec_class_vs_clean30_2026-10/README.md) (Phase 1, CPU infrastructure).
+- Current campaign: [ec_class_vs_clean30_2026-10](docs/campaigns/ec_class_vs_clean30_2026-10/README.md) (Phase 2, CPU inputs).
 - Objective: an EC-class (first EC digit) model that outperforms a retrained CLEAN on the official split30 metallo benchmark and on its test proteins without a ≥30% identity hit to training.
-- Stage: gate G1 approved 2026-10-25 (evc-004); Phase 2 CPU inputs; no GPU use or test read authorized yet.
+- Stage: Phase 2 CPU inputs (evc-005): identity chain built for all five folds, input code at commit point CP-A; no GPU use or test read authorized yet.
 - Other open campaigns: [phase2_unified_2026-10](docs/campaigns/phase2_unified_2026-10/README.md) (metal deployment default not yet chosen: the 55-model best-CV reference against the 20-, 25- and 30-model late-fusion ensembles); [EC support](docs/campaigns/ec1_independent_support_2026-10/README.md) deferred; [metal_single_gpu](docs/campaigns/metal_single_gpu/README.md) and [exact Zenodo](docs/campaigns/zenodo_pmm_exact_2026-09-24/README.md) paused.
 
 ## Anchor and evidence state
@@ -25,7 +25,7 @@
 
 ## Blockers and immediate next action
 
-- Authorized now: Phase 2 CPU work of ec_class_vs_clean30_2026-10 (training-side inputs; one 6 GB CLEAN distance-map step).
+- Authorized now: Phase 2 CPU work of ec_class_vs_clean30_2026-10 (training-side inputs; each one-off CLEAN distance map may use 4.5 GB, run alone).
 - GPU/VM: none in use; the Phase 3 smoke (at most $3) needs its own approval (G2).
 - Next: Phase 2 inputs, then the Freeze-1 decisions; the metal deployment default remains the maintainer's open choice.
 

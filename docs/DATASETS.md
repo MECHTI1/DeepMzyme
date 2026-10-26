@@ -553,8 +553,8 @@ Tracked metadata:
 | Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; three source test rows printed on 2026-10-21; tracked-path count of the source folder printed on 2026-10-22; tracked names near the source folder listed on 2026-10-23 (below) |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
-| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22 (below) |
-| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21; tracked file names listed 2026-10-23 (below) |
+| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22, Phase 2 process notes and a derivability note 2026-10-25 (below) |
+| CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21; tracked file names listed 2026-10-23; one training protein's audit lines printed 2026-10-25 (below) |
 
 ### Local test-access artifacts (git-ignored)
 
@@ -722,6 +722,40 @@ file name, saved test-report names under `docs/notebook_outputs/raw/`, and possi
 `pinmymetal_files/`. No file was opened; no row, label or identifier was shown; and no prediction, evaluation or
 selection followed. The same pass ran existence checks (`test -e`, `readlink`) on named data-root folders. These
 are name-level reads, not evaluations; any later use of these tests must disclose them.
+
+**2026-10-25 process notes from the Phase 2 review passes, and a derivability note:** during the read-only planning
+and mapping passes for Phase 2 of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md),
+four displays occurred. No prediction, evaluation or selection followed.
+
+1. A repository-wide listing of tracked file names printed three notebook paths, one of them inside
+   `docs/notebook_outputs/`. None was test-named, and nothing was opened.
+2. A count table printed per-fold training-side EC-class counts next to the union counts. The complement was not
+   computed, and the same numbers were already in a 2026-10-21 inventory.
+3. A review pass read the five training CSVs (`CLEAN_30_main/folds/*_train.csv`, exact names) and reported, for each
+   fold, the number of training proteins with one EC class and the number excluded for carrying several, plus the
+   union count with several. Because each cohort protein is in four of the five training files, these totals imply
+   each fold's number of test proteins with one EC class and with several. No per-class breakdown, identifier, label
+   value or test file was shown or opened.
+4. A planning pass listed the top-level names of the NVMe `backups` folder, which the campaign code treats as a
+   protected root. Nothing inside was opened.
+
+Derivability: per-fold training-side counts (identity assignment receipts, cohort counts) sum to four times the
+union, because every cohort protein is in four of the five training files. Each fold's complement class counts, and
+for fold 0 its curated metallo test class counts, can therefore be derived from training-side files alone. The same
+holds for identifiers: the other folds' training files minus fold 0's give fold 0's curated metallo test identifiers.
+The campaign's data overlay holds all 740 cohort proteins, so it carries the same property. No step computes either.
+Later steps keep per-fold class counts out of console output and public records and never report them for more than
+one fold.
+
+**2026-10-25 name search into a protected docs folder:** while preparing the campaign records, a working session
+searched tracked `docs/` files for one accession, `Q96KN2`, to check whether it was already public. The search also
+covered `docs/notebook_outputs/` and printed four lines of
+`docs/notebook_outputs/raw/colab_care_cache_smoke_20260914/audit.json`, the CARE cache-smoke audit of training and
+test structures together. The lines name that protein's structure and cache files, whose stem carries its EC number.
+This document already lists `Q96KN2` as a CARE training protein ([remoteness provenance](#development-sequence-provenance-for-remoteness-reporting)),
+so no test-side row was shown. An earlier search in the same session for a cohort size also covered that folder;
+only its first five matches were shown, none from that folder. Nothing else was displayed or opened, and nothing was
+used. Later name searches leave out `docs/notebook_outputs/`.
 
 ## Current bundles
 

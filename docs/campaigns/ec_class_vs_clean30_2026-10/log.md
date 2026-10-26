@@ -171,3 +171,112 @@ smoke is then repeated under 3 GB with the map linked, alone and as two concurre
 
 No GPU use, test read or Freeze-1 decision is part of this approval. Next: Phase 2, CPU only (training-side inputs for
 all five folds, then the Freeze-1 decisions).
+
+## evc-005
+
+2026-10-25 — **Phase 2 start: CLEAN timing smoke, round-1a decisions, identity chain for all five folds, layer-26
+check and the code for the training-side inputs (commit point CP-A).** CPU only, training files only: no GPU, no test
+read, nothing evaluated.
+
+**CLEAN timing smoke, repeated.** Fold-0 R1 fits on the real `split30_train_split_0.csv` with synthetic 1280-d tensors
+(no ESM-1b), run under the forbidden-read guard. Results were discarded; receipts and loss logs were kept privately and
+mirrored to the NVMe drive.
+
+| Step | Setting | Result |
+|---|---|---|
+| Distance map | Run alone under a 4.5 GB scope. The approved ceiling was 6 GB, but only about 5.9 GB was free | Peak 3.45 GB RSS (scope 3.61 GB), verified |
+| One fit, 200 epochs | 3 GB, map linked, 2 threads | Training peak 2.45 GB RSS (scope 2.86 of 3.22 GB); final model present |
+| Two fits together | One 3 GB scope, 1 thread each | Both OOM-killed about 4 minutes into training, before the first epoch |
+| One fit, 20 epochs, internal ext4 disk | 3 GB, map linked | Median 4.0 s/epoch, refresh about 10 s, peak 2.40 GB RSS |
+
+On the secondary drive the fit ran at a median 9.9 s/epoch and the map took 195 s; on the ext4 disk the map took 72 s.
+After a restart the drive was mounted through ntfs-3g (FUSE), which slows the per-file reads of every epoch. At the
+published 2,500 epochs a fit takes about 2.9 h on fast storage, so the CLEAN fits planned for five folds need about
+160 CPU-hours run serially, above the plan's estimate of 95–135. Two concurrent fits would need about 6 GB.
+
+Deviation: evc-004 allowed the distance-map step to run once above the 3 GB cap. It ran twice, both times alone and
+under a 4.5 GB scope (below the approved 6 GB): first for the secondary-drive smoke, then for the ext4 timing check.
+The second run was confirmed in round 1a (below).
+
+| Run | Receipt | SHA-256 |
+|---|---|---|
+| Secondary drive | `phase_distance.json` | `eb9994b855e9da2ab16147fe16dfeaa05b89a99cb23cf438f0e7acbce75e1aee` |
+| Secondary drive | `phase_alone.json` | `94aa527fd502be167133142564cb3387843eb030d996ca0fbb36b0890e5ff749` |
+| Secondary drive | `phase_pair.json` | `b83fc3af22ac92a2942b783bdbd47debf2bae57f02a297ec7a99a28991fcc4f9` |
+| ext4 disk | `phase_distance.json` | `ba94ef0930fb63e12f1bda6c96a7a6b1082417fbd3d8b98ff91b1dd952b73bfe` |
+| ext4 disk | `phase_alone.json` | `c66bcfd140b943d8163536e8c38c192c02ebea141ff98744431230ca53fa4ff7` |
+
+**Round-1a decisions: all as recommended.** The maintainer accepted every recommendation of the round-1a sheet, kept
+with the private campaign plan:
+- CLEAN fits run one at a time on this workstation; the final choice is made in Phase 4. Each one-off distance map may
+  use a 4.5 GB limit with nothing else running.
+- The second distance-map run (above) is confirmed.
+- CLEAN embedding files and fit folders go on the internal ext4 disk, in a folder that DeepMzyme fits may not read.
+- Only the fold-0 view, timing sequences from fold 0's training file and the pushed code go to the GPU machine in
+  Phase 3.
+- The layer-26 vectors are built on this workstation if a 5-protein parity check passes; otherwise in Phase 3.
+- The lever settings stay as coded (L1 GVP-trunk target shrink; L3 0.1 Å noise and 0.1 dropout; L5 weight 0.1,
+  temperature 0.1, width 128; L8 block 26).
+- The confirm-default items stand as listed, including that per-fold EC-class counts are never printed or published
+  for more than one fold.
+
+The maintainer will restore the faster kernel NTFS driver for the secondary drive when convenient, and will do the
+names-only Google Drive check before round 2.
+
+**Identity chain (P2-1).** The identity tool's fasta, search, edges and inner-components steps ran for folds 0–4 at
+the clean commit `697427e`, in `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/identity/fold<k>/`, in about
+2 minutes. Console output was written to private files. The largest inner component holds 4.3–5.5% of a fold's
+metallo training proteins, so no fold needs the too-large-component fallback. Fold 0 equals the gate G1.9 run: same
+code SHA-256 and the same node, sorted-search, edge, pair and component tables. Only the unsorted raw search output and
+the search log differ.
+
+| Fold | `fasta_receipt_metallo_train.json` | `components_receipt_inner.json` |
+|---|---|---|
+| 0 | `dcc2872c9b06f113367aa60edfd32622d8f4be28330d09ca33d4eea78f510047` | `9b4888ca4c6029199b39d984720f0c3023760de58e25d417129308783ae1adbb` |
+| 1 | `ff81f71fbd21b599dc780478eda0f7d2a32503ac537534374fc66be75739a299` | `365abb449b42b7b3e9b363a0dcac31d1893b2a43bf169b7cb32a315a82e7f0a2` |
+| 2 | `96e1bac04943926c18aef241278dab87cb8b22dbe3aba3b4d2fe80ee525671f2` | `81982f3a3e4e66e77d36d7241a996f21882bcceac1bec1fb58d42324b71f80cb` |
+| 3 | `e7a214af294679f3ae02764a1190044b13fc66db930ff962cf46ac734d273e09` | `d9a2df7041c2ca2a00fc4a8aacca3ee6b86ed79b92a89681c4aeeb471aebcbe5` |
+| 4 | `007257cef1281d0c99962369f0039f69b5cc30ba5cd9e381f88bd28f1bd80b87` | `34f8347f59da0c6f51965bb65596888d7ba744734223808d230148988e0afd68` |
+
+**Layer-26 check (P2-0b).** `esmc_chain_means.py from-model --layer-index 26 --device cpu` built block-26 and
+final-layer means for 5 fold-0 training chains of the G1 smoke view (ESM C 300M, float32 parameters, no autocast).
+Its final-layer means matched the G1 means (manifest `0da84e71…`): minimum cosine 0.99999999999991, largest absolute
+difference 1.4e-7 (limits 0.9999 and 1e-4). Parity receipt
+`6b93a5d11a640a35703b46c01bbe79f36a30dd1ba8a3e462ef997e4d3c6d699f`; new manifest
+`bf29febd38ebdf7d425931024e78fb2d616a7a2bdf9d48c4d92a0059a819b382`. The layer-26 vectors can therefore be built on
+this workstation. The run took 21 s including the model load, so the first forecast for 2,960 chains is at most about
+3.4 h; P2-8 sets the final forecast from the time per residue. `time -v` reported a peak RSS of 3,202,036 kB, and the
+process group reached the 3 GiB cap, held there by file-cache reclaim. This is above the plan's 2.5 GB stop line, so
+the full CPU build waits for the maintainer's memory decision.
+
+**Code for the training-side inputs (CP-A).** New actions, each reviewed and tested on synthetic data:
+- `label-table` (comparator script): the native EC label table from the five official training files, checked
+  against the readers of the scorer, the nearest-hit baseline and the EC-class parser;
+- `cohort-audit`: structure, site, pocket, ESM and label checks over the union of cohort proteins. On the 32 G1 smoke
+  structures it reproduces the trainer's site-extraction totals (118 metal records, 42 selected, 76 dropped; 16
+  structures with unselected metals; none skipped);
+- `r2-lists`: CLEAN's R2 accession lists and the fold-0 R2-inner lists, from the identity tables and the cohort audit;
+- `overlay build` and `overlay verify`: the data overlay `ecc30-overlay-v1` (a tar with its SHA-256 file), built from
+  training files only;
+- `simulate`: the null-adoption simulation and promotion-rule calibration;
+- before the dry runs, in the view and dry-run code: the read guard as rules, file-mode handling with an
+  `apply-view-modes` action, and three Phase 3 hooks (a Freeze-1b field in the unit identity, a per-unit memory limit
+  and a cap prefix for `dry-run`).
+
+Per-fold class counts are printed for fold 0 only. Refusals withhold reader messages that could name an accession,
+and clean-tree refusals print no file names. Checks with the new files staged: full suite 2,832 passed and 18
+skipped; 45 smoke checks passed; docs contract without strict failures;
+the campaign modules import without torch; the six identity files under rule R-ID are unchanged since `697427e`. The
+[playbook recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) lists the new
+actions in order.
+
+Records: the [test-use ledger](../../DATASETS.md#test-use-ledger) entries of 2026-10-25: process notes from the
+Phase 2 review passes, a note on which test-side counts are derivable from training-side files, and a name search
+that printed four lines of a CARE cache-smoke audit for one training protein.
+
+Open for the maintainer:
+- the memory limit for the full layer-26 CPU build, or the GPU in Phase 3;
+- the names-only Google Drive check before round 2.
+
+Next: P2-2 (sequence map regenerated, native label table) and P2-3 (cohort audit) on the committed code, then
+round 1b.

@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import random
+import re
 import statistics
 import subprocess
 import sys
@@ -893,6 +894,356 @@ def test_sequence_map_reads_training_files_only(space):
     result = subprocess.run([sys.executable, str(ROOT / "scripts" / "run_clean_split30_comparator.py"), "sequence-map",
                              "--split30-dir", str(guarded), "--out-dir", str(space / "guarded_out"),
                              "--forbidden-root", str(guarded)], capture_output=True, text=True, timeout=120)
+    assert result.returncode != 0 and "forbidden root" in result.stderr
+    assert not (space / "guarded_out").exists()
+
+
+# ---------------------------------------------------------------- native EC label table
+
+# Two several-class proteins (one with its numbers out of class order), a two-number single-class
+# protein and a class-7 protein beside SPLIT30_PROTEINS; protein i is left out of fold (i % 5)'s file.
+LABEL_PROTEINS = SPLIT30_PROTEINS + [
+    ("Q00011", "3.4.21.4;1.1.1.1", 58), ("Q00012", "1.1.1.1;1.2.1.3", 61), ("Q00013", "7.1.2.2", 55),
+]
+# accession -> (ec_numbers, ec_class, ec_class_status), written out by hand.
+LABEL_EXPECTED = {
+    "Q00001": ("1.1.1.1", "1", "ok"), "Q00002": ("1.1.1.1", "1", "ok"), "Q00003": ("2.7.1.1", "2", "ok"),
+    "Q00004": ("2.7.1.1;5.3.1.1", "", "ambiguous_ec_class"), "Q00005": ("3.4.21.4", "3", "ok"),
+    "Q00006": ("6.3.2.1", "6", "ok"), "Q00007": ("3.1.1.-", "3", "ok"), "Q00008": ("4.2.1.1", "4", "ok"),
+    "Q00009": ("4.2.1.1", "4", "ok"), "Q00010": ("6.2.1.n2", "6", "ok"),
+    "Q00011": ("3.4.21.4;1.1.1.1", "", "ambiguous_ec_class"), "Q00012": ("1.1.1.1;1.2.1.3", "1", "ok"),
+    "Q00013": ("7.1.2.2", "7", "ok"),
+}
+LABEL_RECEIPT_KEYS = {
+    "schema_version", "action", "inputs", "n_rows_total", "n_rows_whitespace_or_separator_normalized",
+    "n_accessions", "accessions_sha256", "n_files_histogram", "status_totals", "n_fatal", "n_conflicts",
+    "reader_parity", "outputs", "rules", "forbidden_roots", "runner", "runner_sha256", "provenance",
+}
+ACCESSION_PRINT_RE = r"Q\d{5}"
+# The action runs only from a clean, committed checkout; the tests stand in for one, since the
+# working tree may hold uncommitted work while they run.
+CLEAN_GIT = {"repository_root": str(ROOT), "head": "c" * 40, "branch": "main", "clean": True, "status_entries": 0,
+             "status_sample": [], "status_sha256": hashlib.sha256(b"").hexdigest()}
+
+
+@pytest.fixture
+def clean_git(monkeypatch):
+    from ec_clean30 import provenance
+
+    monkeypatch.setattr(provenance, "git_state", lambda repo=provenance.REPO_ROOT: dict(CLEAN_GIT))
+    return CLEAN_GIT
+
+
+def write_label_split30(directory, *, edits=None):
+    long = sequence_for("Q00001", 80)
+    # Whitespace, an empty field and a repeated EC number are normalised, so these rows agree with the rest.
+    noisy = {(1, "Q00004"): (" 2.7.1.1 ;2.7.1.1;5.3.1.1; ", sequence_for("Q00004", 75)),
+             (2, "Q00001"): ("1.1.1.1", f"{long[:40]} {long[40:]}"),
+             (3, "Q00012"): ("1.1.1.1;;1.2.1.3;1.1.1.1", sequence_for("Q00012", 61))}
+    return write_split30(directory, LABEL_PROTEINS, edits={**noisy, **(edits or {})})
+
+
+def expected_label_table_bytes():
+    sequences = split30_sequences(LABEL_PROTEINS)
+    lines = ["accession\tec_numbers\tec_class\tec_class_status\tn_files\tsequence_sha256\n"]
+    for accession in sorted(LABEL_EXPECTED):
+        ec_numbers, ec_class, status = LABEL_EXPECTED[accession]
+        digest = hashlib.sha256(sequences[accession].encode()).hexdigest()
+        lines.append(f"{accession}\t{ec_numbers}\t{ec_class}\t{status}\t4\t{digest}\n")
+    return "".join(lines).encode()
+
+
+def test_label_table_exact_bytes_receipt_and_readers(space, clean_git):
+    from ec_clean30 import baseline, scoring
+    from training.ec_classes import classify_ec_class
+
+    split30 = write_label_split30(space / "split30")
+    out = space / "labels" / "label_table"  # the parent is created too
+    receipt = runner.write_label_table(split30_dir=split30, out_dir=out)
+    table = out / runner.LABEL_TABLE_FILE
+    assert runner.LABEL_TABLE_COLUMNS == ("accession", "ec_numbers", "ec_class", "ec_class_status", "n_files",
+                                          "sequence_sha256")
+    assert table.read_bytes() == expected_label_table_bytes()
+    assert sorted(path.name for path in out.iterdir()) == sorted([runner.LABEL_TABLE_FILE, runner.LABEL_TABLE_RECEIPT])
+    assert json.loads((out / runner.LABEL_TABLE_RECEIPT).read_text()) == receipt
+
+    # Union-level totals only: no count per EC class or per fold.
+    assert set(receipt) == LABEL_RECEIPT_KEYS
+    assert receipt["status_totals"] == {"ok": 11, "ambiguous_ec_class": 2}
+    assert receipt["n_fatal"] == 0 and receipt["n_conflicts"] == 0
+    assert receipt["n_accessions"] == 13 and receipt["n_rows_total"] == 52 and receipt["n_files_histogram"] == {"4": 13}
+    parity = receipt["reader_parity"]
+    assert parity["n_rows_checked"] == parity["n_rows_matched"] == 13
+    assert parity["n_rows_matched_by_reader"] == {reader: 13 for reader in runner.LABEL_TABLE_READERS[:3]}
+    assert parity["n_file_rows_checked_by_baseline"] == parity["n_file_rows_matched_by_baseline"] == 52
+    assert parity["readers"] == list(runner.LABEL_TABLE_READERS)
+    names = [runner.OFFICIAL_TRAIN_NAME.format(fold=fold) for fold in range(runner.N_FOLDS)]
+    assert [item["file"] for item in receipt["inputs"]] == names
+    assert [item["sha256"] for item in receipt["inputs"]] == [runner.sha256_file(split30 / name) for name in names]
+    assert [item["n_rows"] for item in receipt["inputs"]] == [10, 10, 10, 11, 11]
+    assert [item["n_rows_whitespace_or_separator_normalized"] for item in receipt["inputs"]] == [0, 1, 1, 1, 0]
+    assert receipt["n_rows_whitespace_or_separator_normalized"] == 3
+    assert receipt["outputs"]["label_table"] == {"file": runner.LABEL_TABLE_FILE, "sha256": runner.sha256_file(table),
+                                                 "n_rows": 13, "columns": list(runner.LABEL_TABLE_COLUMNS)}
+    assert receipt["runner_sha256"] == runner.sha256_file(ROOT / "scripts" / "run_clean_split30_comparator.py")
+    provenance = receipt["provenance"]
+    assert provenance["smoke"] is False and provenance["git"] == clean_git
+    assert {"src/ec_clean30/baseline.py", "src/ec_clean30/scoring.py", "src/ec_clean30/identity.py",
+            "src/training/ec_classes.py"} <= set(provenance["code_sha256"])
+    # The same accessions as the sequence map of the same files.
+    seqmap = runner.write_sequence_map(split30_dir=split30, out_dir=space / "seqmap")
+    assert receipt["accessions_sha256"] == seqmap["accessions_sha256"]
+
+    # The scorer reads the file back; the baseline reads the official files to the same strings and classes.
+    labels = scoring.parse_label_table(table.read_bytes(), table.name)
+    assert labels == {accession: values[0] for accession, values in LABEL_EXPECTED.items()}
+    for fold, name in enumerate(names):
+        official = baseline.read_official_ec_numbers(split30 / name)
+        assert official == {accession: labels[accession] for accession in official}
+        assert len(official) == receipt["inputs"][fold]["n_rows"]
+    for accession, (ec_numbers, ec_class, status) in LABEL_EXPECTED.items():
+        result = classify_ec_class(labels[accession].split(";"))
+        assert (result.token or "", result.status) == (ec_class, status)
+
+
+def test_label_table_refusals(space, clean_git):
+    q3 = sequence_for("Q00003", 70)
+    cases = [
+        ({(3, "Q00003"): ("2.7.1.2", q3)}, "EC string in"),  # a cross-file EC conflict
+        ({(1, "Q00003"): ("2.7.1.1,5.3.1.1", q3)}, "Malformed EC token"),  # a comma inside a token
+        ({(4, "Q00003"): ("-.-.-.-", q3)}, "has no EC class"),  # no EC class: no fatal status is written
+    ]
+    for index, (edits, message) in enumerate(cases):
+        split30 = write_label_split30(space / f"bad{index}", edits=edits)
+        with pytest.raises(ComparatorError, match=message):
+            runner.write_label_table(split30_dir=split30, out_dir=space / f"bad_out{index}")
+        assert not (space / f"bad_out{index}").exists()
+
+    split30 = write_label_split30(space / "split30")
+    with pytest.raises(ComparatorError, match="held-out name"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "labels_test_out")
+    assert not (space / "labels_test_out").exists()
+    held_out = write_label_split30(space / "split30_test_copy")
+    with pytest.raises(ComparatorError, match="held-out name"):
+        runner.write_label_table(split30_dir=held_out, out_dir=space / "held_out_out")
+    assert not (space / "held_out_out").exists()
+    with pytest.raises(ComparatorError, match="forbidden root"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "guarded_out", forbidden_roots=[split30])
+    assert not (space / "guarded_out").exists()
+
+    # Written once, in a new directory: an existing directory is refused even when empty, and so is a
+    # link to a directory that does not exist yet.
+    (space / "empty_out").mkdir()
+    with pytest.raises(ComparatorError, match="already exists"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "empty_out")
+    assert not any((space / "empty_out").iterdir())
+    (space / "dangling_out").symlink_to(space / "link_target")
+    with pytest.raises(ComparatorError, match="already exists"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "dangling_out")
+    assert not (space / "link_target").exists()
+    runner.write_label_table(split30_dir=split30, out_dir=space / "once_out")
+    before = (space / "once_out" / runner.LABEL_TABLE_FILE).read_bytes()
+    with pytest.raises(ComparatorError, match="already exists"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "once_out")
+    assert (space / "once_out" / runner.LABEL_TABLE_FILE).read_bytes() == before
+
+
+def test_label_table_refuses_a_directory_inside_the_repository(space, monkeypatch, clean_git):
+    def no_read(*args, **kwargs):  # if the guard ever failed, nothing would be written into the checkout
+        raise AssertionError("the official training files were read")
+
+    inside = ROOT / "no_such_label_dir"
+    assert not inside.exists()
+    monkeypatch.setattr(runner, "collect_sequence_map", no_read)
+    with pytest.raises(ComparatorError, match="inside the repository"):
+        runner.write_label_table(split30_dir=write_label_split30(space / "split30"), out_dir=inside / "x")
+    assert not inside.exists()
+
+
+def _sorting_normaliser(value):
+    return ";".join(sorted({token.strip() for token in value.replace(",", ";").split(";") if token.strip()}))
+
+
+def _first_number_class(ec_numbers):
+    from training import ec_classes
+    return ec_classes.EcClassResult(str(list(ec_numbers)[0]).split(".")[0], ec_classes.STATUS_OK)
+
+
+def _raiser(kind, accession):
+    def raise_naming_a_protein(*args, **kwargs):
+        raise kind(f"Invalid accession '{accession}' in a file")
+    return raise_naming_a_protein
+
+
+@pytest.mark.parametrize("target, attribute, replacement, reader", [
+    ("runner", "_normalize_ec_field", "sorting_field", "baseline.read_official_ec_numbers on"),
+    ("baseline", "normalize_ec_number_list", _sorting_normaliser, "baseline.read_official_ec_numbers on"),
+    ("baseline", "read_official_ec_numbers", "drop_one_key", "baseline.read_official_ec_numbers on"),
+    ("ec_classes", "normalize_ec_number_list", _sorting_normaliser, "normalize_ec_number_list disagrees"),
+    ("ec_classes", "classify_ec_class", _first_number_class, "classify_ec_class disagrees"),
+    ("ec_classes", "classify_ec_class", "wrong_token", "classify_ec_class disagrees"),
+    ("scoring", "parse_label_table", "drop_first_row", "scoring.parse_label_table disagrees"),
+    ("scoring", "parse_label_table", "add_a_row", "scoring.parse_label_table disagrees"),
+    ("baseline", "read_official_ec_numbers", _raiser(ValueError, "Q00001"),
+     "read_official_ec_numbers refused split30_train_split_0.csv (ValueError; its message is withheld"),
+    ("baseline", "read_official_ec_numbers", _raiser(csv.Error, "Q00001"),
+     "read_official_ec_numbers refused split30_train_split_0.csv (Error; its message is withheld"),
+    ("scoring", "parse_label_table", _raiser(TypeError, "Q00003"),
+     "parse_label_table refused native_label_table.tsv (TypeError; its message is withheld"),
+    ("ec_classes", "classify_ec_class", _raiser(TypeError, "Q00002"),
+     "classify_ec_class refused a row (TypeError; its message is withheld"),
+    ("ec_classes", "normalize_ec_number_list", _raiser(LookupError, "Q00002"),
+     "normalize_ec_number_list refused a row (LookupError; its message is withheld"),
+], ids=["comparator-normaliser", "baseline-normaliser", "baseline-drops-a-key", "training-normaliser",
+        "classifier-status", "classifier-token", "scorer", "scorer-extra-row", "baseline-raises", "baseline-csv-error",
+        "scorer-raises", "classifier-raises", "training-normaliser-raises"])
+def test_label_table_reader_parity_catches_broken_readers(space, monkeypatch, clean_git, target, attribute,
+                                                          replacement, reader):
+    # Import the readers before patching, so no module binds a patched function at import time.
+    from ec_clean30 import baseline, scoring
+    from training import ec_classes
+
+    modules = {"runner": runner, "baseline": baseline, "scoring": scoring, "ec_classes": ec_classes}
+    original = getattr(modules[target], attribute)
+    if replacement == "sorting_field":
+        def replacement(value, where):
+            numbers, changed = original(value, where)
+            return tuple(sorted(numbers)), changed
+    elif replacement == "drop_first_row":
+        def replacement(data, what):
+            return dict(list(original(data, what).items())[1:])
+    elif replacement == "add_a_row":
+        def replacement(data, what):
+            return {**original(data, what), "Q99999": "1.1.1.1"}
+    elif replacement == "drop_one_key":
+        def replacement(path):
+            labels = original(path)
+            labels.pop(next(iter(labels)))
+            return labels
+    elif replacement == "wrong_token":  # the right status with another class token
+        def replacement(ec_numbers):
+            result = original(ec_numbers)
+            return ec_classes.EcClassResult("7" if result.token == "1" else result.token, result.status,
+                                            result.flags)
+    split30 = write_label_split30(space / "split30")
+    monkeypatch.setattr(modules[target], attribute, replacement)
+    with pytest.raises(ComparatorError, match="Reader parity failed") as caught:
+        runner.write_label_table(split30_dir=split30, out_dir=space / "parity_out")
+    assert reader in str(caught.value)
+    assert not re.search(ACCESSION_PRINT_RE, str(caught.value))  # no accession is printed
+    assert not (space / "parity_out").exists()
+
+
+def test_label_table_refuses_a_file_changed_between_reads(space, monkeypatch, clean_git):
+    from ec_clean30 import baseline
+
+    original = baseline.read_official_ec_numbers
+    changed = runner.OFFICIAL_TRAIN_NAME.format(fold=2)
+
+    def read_then_append(path):
+        labels = original(path)
+        if Path(path).name == changed:
+            with Path(path).open("a") as handle:
+                handle.write("\n")
+        return labels
+
+    split30 = write_label_split30(space / "split30")
+    monkeypatch.setattr(baseline, "read_official_ec_numbers", read_then_append)
+    with pytest.raises(ComparatorError, match=re.escape(f"{changed} changed while it was read")):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "changed_out")
+    assert not (space / "changed_out").exists()
+
+
+def test_label_table_counts_the_files_holding_each_accession(space, clean_git):
+    # accession -> the folds whose official training file holds it: 1, 3, 4 and 5 files.
+    membership = {"Q00021": (0,), "Q00022": (0, 1, 2), "Q00023": (1, 2, 3, 4), "Q00024": (0, 1, 2, 3, 4)}
+    fields = {"Q00021": ("1.1.1.1", 60), "Q00022": ("2.7.1.1", 61), "Q00023": ("3.4.21.4", 62),
+              "Q00024": ("7.1.2.2", 63)}
+    split30 = space / "split30"
+    for fold in range(runner.N_FOLDS):
+        write_official(split30, fold, [(accession, *fields[accession]) for accession, folds in membership.items()
+                                       if fold in folds])
+    out = space / "labels"
+    receipt = runner.write_label_table(split30_dir=split30, out_dir=out)
+    with (out / runner.LABEL_TABLE_FILE).open(newline="") as handle:
+        table = list(csv.DictReader(handle, delimiter="\t"))
+    assert [row["accession"] for row in table] == sorted(membership)
+    assert {row["accession"]: row["n_files"] for row in table} == {accession: str(len(folds))
+                                                                   for accession, folds in membership.items()}
+    assert receipt["n_files_histogram"] == {"1": 1, "3": 1, "4": 1, "5": 1}
+    assert [item["n_rows"] for item in receipt["inputs"]] == [3, 3, 3, 2, 2]
+    parity = receipt["reader_parity"]
+    assert receipt["n_rows_total"] == parity["n_file_rows_checked_by_baseline"] == 13
+    assert parity["n_file_rows_matched_by_baseline"] == 13 and parity["n_rows_matched"] == 4
+
+
+def test_label_table_receipt_is_complete_before_the_directory_is_made(space, monkeypatch, clean_git):
+    from ec_clean30 import provenance
+
+    def provenance_fails(**kwargs):
+        raise RuntimeError("provenance could not be recorded")
+
+    split30 = write_label_split30(space / "split30")
+    monkeypatch.setattr(provenance, "provenance_record", provenance_fails)
+    with pytest.raises(RuntimeError, match="provenance could not be recorded"):
+        runner.write_label_table(split30_dir=split30, out_dir=space / "labels" / "label_table")
+    assert not (space / "labels").exists()
+
+
+@pytest.mark.parametrize("state", [
+    {"head": "c" * 40, "clean": False, "status_entries": 1, "status_sample": ["?? notes_Q00042.txt"]},
+    {"head": None, "clean": None, "status_entries": None, "status_sample": [], "error": "not a git checkout"},
+], ids=["uncommitted", "no-checkout"])
+def test_label_table_refuses_an_uncommitted_tree_before_reading(space, monkeypatch, state):
+    from ec_clean30 import provenance
+
+    monkeypatch.setattr(provenance, "git_state", lambda repo=provenance.REPO_ROOT: dict(state))
+    # The input folder does not exist: a read would refuse with another message.
+    with pytest.raises(ComparatorError, match="clean, committed checkout") as caught:
+        runner.write_label_table(split30_dir=space / "no_such_split30", out_dir=space / "dirty_out")
+    assert not re.search(ACCESSION_PRINT_RE, str(caught.value))  # no git status entry is printed
+    assert not (space / "dirty_out").exists()
+
+
+# The CLI child blocks torch, so the action is checked to run without it, and stands in for a clean,
+# committed checkout as the clean_git fixture does.
+NO_TORCH_LAUNCH = "\n".join((
+    "import runpy, sys",
+    "class NoTorch:",
+    "    def find_spec(self, name, path=None, target=None):",
+    "        if name == 'torch' or name.startswith('torch.'):",
+    "            raise ImportError('torch is blocked in this check')",
+    "sys.meta_path.insert(0, NoTorch())",
+    "script, src = sys.argv[1], sys.argv[2]",
+    "sys.path.insert(0, src)",
+    "from ec_clean30 import provenance",
+    f"provenance.git_state = lambda repo=None: dict({CLEAN_GIT!r})",
+    "sys.argv = [script] + sys.argv[3:]",
+    "runpy.run_path(script, run_name='__main__')",
+))
+
+
+def test_label_table_cli_runs_without_torch(space):
+    split30 = write_label_split30(space / "split30")
+    script = str(ROOT / "scripts" / "run_clean_split30_comparator.py")
+    launch = [sys.executable, "-c", NO_TORCH_LAUNCH, script, str(ROOT / "src"), "label-table"]
+    cli_out = space / "labels_cli"
+    result = subprocess.run([*launch, "--split30-dir", str(split30), "--out-dir", str(cli_out)],
+                            capture_output=True, text=True, timeout=120)
+    assert result.returncode == 0, result.stderr
+    summary = json.loads(result.stdout)
+    assert set(summary) == {"n_accessions", "n_rows_total", "n_fatal", "n_conflicts", "reader_parity",
+                            "accessions_sha256", "outputs", "out_dir"}
+    assert not re.search(ACCESSION_PRINT_RE, result.stdout)  # totals only, no row
+    assert (cli_out / runner.LABEL_TABLE_FILE).read_bytes() == expected_label_table_bytes()
+    assert summary["outputs"]["label_table"]["sha256"] == runner.sha256_file(cli_out / runner.LABEL_TABLE_FILE)
+    receipt = json.loads((cli_out / runner.LABEL_TABLE_RECEIPT).read_text())
+    assert receipt["provenance"]["argv"][1:] == ["label-table", "--split30-dir", str(split30), "--out-dir",
+                                                 str(cli_out)]
+    assert receipt["provenance"]["git"] == CLEAN_GIT
+    # A fresh process with the guard roots over the folder refuses before opening anything.
+    result = subprocess.run([*launch, "--split30-dir", str(split30), "--out-dir", str(space / "guarded_out"),
+                             "--forbidden-root", str(split30)], capture_output=True, text=True, timeout=120)
     assert result.returncode != 0 and "forbidden root" in result.stderr
     assert not (space / "guarded_out").exists()
 

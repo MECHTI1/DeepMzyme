@@ -13,6 +13,14 @@ Subcommands
   sequences and a receipt. It refuses a duplicate Entry within a file and any accession whose
   sequence or native EC string differs between files (the EC string is normalised for
   separators, whitespace and repeated numbers only, as ``prepare`` reads it).
+- ``label-table``: the native EC label table of the same five files, written once in a new
+  directory from a clean, committed checkout: ``native_label_table.tsv`` (accession, ec_numbers,
+  ec_class, ec_class_status, n_files, sequence_sha256; one row per accession, sorted) and a
+  receipt with union-level totals only. Every row must read the same in ``training.ec_classes``
+  (normaliser and ``classify_ec_class``), in the nearest-hit baseline's reader of the official
+  files and in the scorer's label-table reader; a disagreement or a reader error is refused
+  before anything is written, naming the reader and a count or an error type only (these files
+  hold every fold's test proteins, so no accession or EC string is printed).
 - ``prepare``: the CLEAN training table (Entry, EC number, Sequence) from one official
   ``split30_train_split_<fold>.csv`` (never a test file), masked copies keyed by
   (accession, seed), optional links to precomputed embeddings (checked against each
@@ -164,7 +172,7 @@ from project_paths import DATA_DIR, PROJECT_ROOT  # noqa: E402
 from training.access_guard import (  # noqa: E402
     FORBIDDEN_READ_ROOTS_ENV, forbidden_roots_environment, install_forbidden_read_guard,
 )
-from training.ec_classes import EC_CLASS_TOKENS  # noqa: E402
+from training.ec_classes import EC_CLASS_TOKENS, STATUS_AMBIGUOUS, STATUS_OK  # noqa: E402
 
 
 SCHEMA_VERSION = 1
@@ -264,6 +272,10 @@ SEQUENCE_MAP_FILE = "sequence_map.tsv"
 SEQUENCE_MAP_COLUMNS = ("accession", "sha256", "length", "n_files", "sequence")
 SEQUENCE_MAP_FASTA = "sequence_map_base.fasta"
 SEQUENCE_MAP_RECEIPT = "sequence_map_receipt.json"
+LABEL_TABLE_FILE = "native_label_table.tsv"
+LABEL_TABLE_COLUMNS = ("accession", "ec_numbers", "ec_class", "ec_class_status", "n_files", "sequence_sha256")
+LABEL_TABLE_RECEIPT = "label_table_receipt.json"
+LABEL_TABLE_STATUSES = (STATUS_OK, STATUS_AMBIGUOUS)
 # A label '<accession>_<n>' names masked copy n (no leading zeros) of a sequence-map accession.
 COPY_LABEL_RE = re.compile(r"^(?P<accession>.+)_(?P<copy>0|[1-9][0-9]*)$")
 ACCESS_GUARD_FILE = PROJECT_ROOT / "src" / "training" / "access_guard.py"
@@ -711,6 +723,227 @@ def read_sequence_map_file(path: Path | str, forbidden_roots: Sequence[Path],
         raise ComparatorError(f"Empty sequence map: {path}")
     return sequences, {"path": str(path), "sha256": digest, "n_accessions": len(sequences),
                        "accessions_sha256": canonical_ids_sha256(sequences)}
+
+
+# ---------------------------------------------------------------- native EC label table
+
+@dataclass(frozen=True)
+class LabelTableRow:
+    accession: str
+    ec_numbers: str  # normalised native EC numbers, ';'-joined in first-appearance order
+    ec_class: str  # the EC class token, or empty when the numbers span several EC classes
+    ec_class_status: str  # training.ec_classes status: 'ok' or 'ambiguous_ec_class'
+    n_files: int
+    sequence_sha256: str
+
+    def fields(self) -> tuple[str, ...]:
+        return (self.accession, self.ec_numbers, self.ec_class, self.ec_class_status, str(self.n_files),
+                self.sequence_sha256)
+
+
+def label_table_rows(entries: Sequence[SequenceMapEntry]) -> list[LabelTableRow]:
+    """One row per sequence-map entry, in its (sorted) order; the EC class by this runner's rule:
+    the first field of every EC number, one class gives its token, several give none."""
+    rows: list[LabelTableRow] = []
+    for entry in entries:
+        classes = tuple(dict.fromkeys(ec_class_of_label(ec) for ec in entry.ec_string.split(";")))
+        single = len(classes) == 1
+        rows.append(LabelTableRow(entry.accession, entry.ec_string, classes[0] if single else "",
+                                  STATUS_OK if single else STATUS_AMBIGUOUS, len(entry.files), entry.sha256))
+    return rows
+
+
+def render_label_table(rows: Sequence[LabelTableRow]) -> bytes:
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter="\t", lineterminator="\n")
+    writer.writerow(LABEL_TABLE_COLUMNS)
+    writer.writerows(row.fields() for row in rows)
+    return buffer.getvalue().encode("utf-8")
+
+
+def _parity_failure(reader: str, count: int, unit: str = "rows") -> ComparatorError:
+    return ComparatorError(f"Reader parity failed: {reader} disagrees with this runner on {count} {unit}; nothing "
+                           "was written (accessions and EC strings are not printed)")
+
+
+def _reader_refused(reader: str, what: str, exc: BaseException) -> ComparatorError:
+    return ComparatorError(f"Reader parity failed: {reader} refused {what} ({type(exc).__name__}; its message is "
+                           "withheld because it can name a protein); nothing was written")
+
+
+LABEL_TABLE_READERS = (
+    "training.ec_classes.normalize_ec_number_list", "training.ec_classes.classify_ec_class",
+    "ec_clean30.scoring.parse_label_table", "ec_clean30.baseline.read_official_ec_numbers",
+)
+
+
+def check_scorer_reads_label_table(data: bytes, rows: Sequence[LabelTableRow]) -> list[bool]:
+    """``ec_clean30.scoring.parse_label_table`` must read the table bytes to every row's EC string.
+
+    Returns, per row, whether the scorer read it back unchanged (all true, or the call refuses).
+    """
+    from ec_clean30 import scoring
+
+    reader = LABEL_TABLE_READERS[2]
+    try:
+        labels = scoring.parse_label_table(data, LABEL_TABLE_FILE)
+    except Exception as exc:  # any reader error: its message could name a protein
+        raise _reader_refused(reader, LABEL_TABLE_FILE, exc) from None
+    read_back = [labels.get(row.accession) == row.ec_numbers for row in rows]
+    differing = len(labels.keys() - {row.accession for row in rows}) + read_back.count(False)
+    if differing:
+        raise _parity_failure(reader, differing)
+    return read_back
+
+
+def check_label_table_parity(rows: Sequence[LabelTableRow], entries: Sequence[SequenceMapEntry],
+                             inputs: Sequence[Mapping[str, Any]], data: bytes) -> dict[str, Any]:
+    """Refuses unless the campaign's other EC readers agree with this runner on every row and file.
+
+    - ``training.ec_classes.normalize_ec_number_list`` leaves every ``ec_numbers`` value unchanged;
+    - ``training.ec_classes.classify_ec_class`` gives every row's class and status, never a fatal one;
+    - ``ec_clean30.scoring.parse_label_table`` reads the table bytes ``data`` back to every row;
+    - ``ec_clean30.baseline.read_official_ec_numbers`` (its own CSV reader and the training normaliser
+      on the raw EC field) reads every official training file to the same accessions and EC strings,
+      and each file still has the SHA-256 recorded when this runner read it.
+
+    The counts returned are counted from the comparisons themselves. A refusal names the reader and
+    a count; a reader error is reported by its type only, since its message could name a protein.
+    """
+    from ec_clean30 import baseline
+    from training import ec_classes
+
+    normaliser, classifier, scorer, official = LABEL_TABLE_READERS
+    try:
+        normalised = [ec_classes.normalize_ec_number_list(row.ec_numbers) == row.ec_numbers for row in rows]
+    except Exception as exc:  # any reader error: its message could name a protein
+        raise _reader_refused(normaliser, "a row", exc) from None
+    if not all(normalised):
+        raise _parity_failure(normaliser, normalised.count(False))
+    try:
+        results = [ec_classes.classify_ec_class(row.ec_numbers.split(";")) for row in rows]
+    except Exception as exc:
+        raise _reader_refused(classifier, "a row", exc) from None
+    classified = [result.status not in ec_classes.FATAL_STATUSES and result.status == row.ec_class_status
+                  and (result.token or "") == row.ec_class for row, result in zip(rows, results)]
+    if not all(classified):
+        raise _parity_failure(classifier, classified.count(False))
+    read_back = check_scorer_reads_label_table(data, rows)
+    expected_by_file: dict[str, dict[str, str]] = defaultdict(dict)
+    for entry in entries:
+        for name in entry.files:
+            expected_by_file[name][entry.accession] = entry.ec_string
+    file_rows_read = file_rows_matched = 0
+    for item in inputs:
+        path = Path(item["path"])
+        try:
+            labels = baseline.read_official_ec_numbers(path)
+        except Exception as exc:
+            raise _reader_refused(official, item["file"], exc) from None
+        if sha256_file(path) != item["sha256"]:
+            raise ComparatorError(f"{item['file']} changed while it was read; nothing was written")
+        expected = expected_by_file[item["file"]]
+        common = labels.keys() & expected.keys()
+        matched = sum(labels[key] == expected[key] for key in common)
+        differing = len(labels.keys() ^ expected.keys()) + len(common) - matched
+        if differing:
+            raise _parity_failure(f"{official} on {item['file']}", differing, "accessions")
+        file_rows_read += len(labels)
+        file_rows_matched += matched
+    return {
+        "n_rows_checked": len(rows),
+        "n_rows_matched": sum(all(flags) for flags in zip(normalised, classified, read_back)),
+        "n_rows_matched_by_reader": {normaliser: sum(normalised), classifier: sum(classified),
+                                     scorer: sum(read_back)},
+        "n_file_rows_checked_by_baseline": file_rows_read,
+        "n_file_rows_matched_by_baseline": file_rows_matched,
+        "readers": list(LABEL_TABLE_READERS),
+    }
+
+
+def write_label_table(*, split30_dir: Path | str = SPLIT30_DIR, out_dir: Path | str,
+                      forbidden_roots: Sequence[Path] = (), argv: Optional[Sequence[str]] = None) -> dict[str, Any]:
+    """Write-once ``native_label_table.tsv`` and its receipt in a new directory outside the repository.
+
+    The rows cover every accession of the five official training files (each fold's test proteins
+    are other folds' training rows, inherent to the table). The action runs only from a clean,
+    committed checkout, checked before any input is read. Every check, the reader parity included,
+    and the whole receipt are done before the directory is made, so a refusal leaves nothing behind.
+    The receipt holds union-level totals only (no count per EC class or per fold).
+    """
+    from ec_clean30 import provenance
+
+    roots = resolve_forbidden_roots(forbidden_roots)
+    literal = Path(out_dir).absolute()
+    out_dir = refuse_inside_repository(refuse_held_out_path(out_dir, roots, "the label-table directory"),
+                                       "the label-table directory")
+    exists = ComparatorError(f"The label-table directory already exists; the table is written once, in a new "
+                             f"directory: {literal}")
+    if os.path.lexists(literal) or os.path.lexists(out_dir):  # a dangling link counts as existing
+        raise exists
+    try:
+        git = provenance.real_action_git_state(smoke=False)
+    except provenance.DirtyTreeError:
+        # git status names are withheld: an untracked file in the checkout can carry a held-out name.
+        raise ComparatorError("label-table runs only from a clean, committed checkout: git reports uncommitted or "
+                              "untracked entries, or no checkout (names are not printed); commit first") from None
+    entries, inputs = collect_sequence_map(official_training_paths(split30_dir), roots)
+    rows = label_table_rows(entries)
+    data = render_label_table(rows)
+    parity = check_label_table_parity(rows, entries, inputs, data)
+    table_sha256 = sha256_bytes(data)
+    statuses = Counter(row.ec_class_status for row in rows)
+    histogram = Counter(row.n_files for row in rows)
+    receipt = {
+        "schema_version": SCHEMA_VERSION, "action": "label-table", "inputs": inputs,
+        "n_rows_total": sum(item["n_rows"] for item in inputs),
+        "n_rows_whitespace_or_separator_normalized": sum(item["n_rows_whitespace_or_separator_normalized"]
+                                                         for item in inputs),
+        "n_accessions": len(rows),
+        "accessions_sha256": canonical_ids_sha256(row.accession for row in rows),
+        "n_files_histogram": {str(count): histogram[count] for count in sorted(histogram)},
+        "status_totals": {status: statuses[status] for status in LABEL_TABLE_STATUSES},
+        "n_fatal": 0, "n_conflicts": 0,
+        "reader_parity": parity,
+        "outputs": {"label_table": {"file": LABEL_TABLE_FILE, "sha256": table_sha256, "n_rows": len(rows),
+                                    "columns": list(LABEL_TABLE_COLUMNS)}},
+        "rules": {
+            "rows": "one row per accession of the five official training files, sorted by accession",
+            "ec_numbers": "native EC numbers joined by ';' in first-appearance order after removing whitespace, "
+                          "empty fields and repeated numbers; no number is remapped",
+            "ec_class": "the first field of every EC number: one EC class gives its token and status 'ok', "
+                        "several give an empty class and status 'ambiguous_ec_class' (training.ec_classes)",
+            "refused": "an EC token with whitespace or a comma or without an EC class 1-7 (so no fatal status "
+                       "is written), a duplicate Entry within a file, and a different sequence or EC string "
+                       "across files (so no conflict is written)",
+            "sequence_sha256": "SHA-256 of the UTF-8 residue string (whitespace removed), as in sequence_map.tsv",
+            "reader_parity": "every listed reader agrees on every row (the baseline reader on every file row); "
+                             "any disagreement or reader error is refused before writing",
+            "totals": "a receipt exists only when every reader count equals its total; n_fatal and n_conflicts "
+                      "are 0 by construction, because a fatal status, a cross-file conflict or a duplicate Entry "
+                      "is refused before writing",
+            "written": "only from a clean, committed checkout (provenance.git); the directory must not exist, "
+                       "not even empty or as a link, and every check and this receipt are complete before it "
+                       "is made",
+        },
+        "forbidden_roots": [str(root) for root in roots],
+        "runner": Path(__file__).name, "runner_sha256": sha256_file(Path(__file__)),
+        # No smoke mode: the clean-tree check above holds for every run.
+        "provenance": provenance.provenance_record(smoke=False, argv=argv, git=git),
+    }
+    receipt_text = json.dumps(receipt, indent=2, sort_keys=True) + "\n"  # as _write_json_once writes it
+    try:
+        out_dir.mkdir(parents=True)
+    except FileExistsError:
+        raise exists from None
+    table_path = out_dir / LABEL_TABLE_FILE
+    with table_path.open("xb") as handle:
+        handle.write(data)
+    if sha256_file(table_path) != table_sha256:
+        raise ComparatorError(f"{table_path} does not hold the bytes that were checked; no receipt was written")
+    with (out_dir / LABEL_TABLE_RECEIPT).open("x", encoding="utf-8") as handle:
+        handle.write(receipt_text)
+    return receipt
 
 
 # ---------------------------------------------------------------- masked copies
@@ -2040,6 +2273,15 @@ def build_parser() -> argparse.ArgumentParser:
     sequence_map.add_argument("--out-dir", type=Path, required=True, help="New directory outside the repository.")
     sequence_map.add_argument("--forbidden-root", type=Path, action="append", default=[])
 
+    label_table = sub.add_parser("label-table", help="Native EC label table of every accession of the five official "
+                                                     "training files, with reader parity.")
+    label_table.add_argument("--split30-dir", type=Path, default=SPLIT30_DIR,
+                             help="Folder of split30_train_split_<fold>.csv; only those five exact names are "
+                                  "opened and the folder is never listed.")
+    label_table.add_argument("--out-dir", type=Path, required=True,
+                             help="Directory to create outside the repository (refused if it exists).")
+    label_table.add_argument("--forbidden-root", type=Path, action="append", default=[])
+
     prepare = sub.add_parser("prepare", help="Write one fit work directory from training-side inputs.")
     prepare.add_argument("--official-train-csv", type=Path, required=True,
                          help="The fold's official split30_train_split_<fold>.csv (never a test file).")
@@ -2130,6 +2372,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         result = write_sequence_map(split30_dir=args.split30_dir, out_dir=args.out_dir, forbidden_roots=roots)
         summary = {key: result[key] for key in ("n_accessions", "n_rows_total", "n_unique_sequences",
                                                 "n_files_histogram", "accessions_sha256", "outputs")}
+        summary["out_dir"] = str(Path(args.out_dir).resolve())
+    elif args.action == "label-table":
+        result = write_label_table(split30_dir=args.split30_dir, out_dir=args.out_dir, forbidden_roots=roots,
+                                   argv=argv)
+        # Totals without a status breakdown; the receipt holds the union-level status totals.
+        summary = {key: result[key] for key in ("n_accessions", "n_rows_total", "n_fatal", "n_conflicts",
+                                                "reader_parity", "accessions_sha256", "outputs")}
         summary["out_dir"] = str(Path(args.out_dir).resolve())
     elif args.action == "export":
         result = run_export(work_dir=args.work_dir, query_ids_file=args.query_ids, query_esm_dir=args.query_esm_dir,

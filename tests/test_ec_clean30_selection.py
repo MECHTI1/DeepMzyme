@@ -1,4 +1,5 @@
 """Inner-fold promotion rule, selection steps, step records and null simulator (synthetic; no dataset access)."""
+import hashlib
 import inspect
 import json
 from pathlib import Path
@@ -16,7 +17,8 @@ from ec_clean30.selection import (
     LEVER_NOT_APPLICABLE, LEVER_NOT_TESTED, LEVER_PASSED, LR_TIE_BAND_POINTS, MIN_GAIN_POINTS, N_INNER_FOLDS,
     PROMOTION_ALPHA, REFIT_SEEDS, SCREENING_SEEDS, SUPCON_MIN_POSITIVE_STEP_FRACTION, InnerFoldPredictions,
     LeverOutcome, NullNoiseModel, PooledOof, PromotionConfig, StepChain, append_step_record, apply_tau,
-    canonical_json, lever_applies, lever_not_applicable, lever_not_tested, pool_inner_oof, promote,
+    canonical_json, lever_applies, lever_not_applicable, lever_not_tested, membership_noise_statistics,
+    noise_model_from_membership, pool_inner_oof, promote,
     read_step_chain, s1_choose_learning_rate, s1_family_escalation, s1_learning_rate_labels, s2_lever_screen,
     s3_combination, s4_refit_specification, screen_epoch_lever, screen_lever, screen_logit_adjustment,
     seed_mean_ba_points, simulate_null_adoption, supcon_lever_testable, verify_step_chain,
@@ -663,3 +665,97 @@ def test_module_does_not_import_torch():
     code = f"import sys; sys.path.insert(0, {str(src)!r}); import ec_clean30.selection; print('torch' in sys.modules)"
     output = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout
     assert output.strip() == "False"
+
+
+SIMULATOR_SOURCE_SHA256 = "673d16453eead70266eb493b7ad5c654275b79cafe41dd2f2e9c3d56763c589a"  # as at 697427e
+
+
+def test_null_simulator_source_is_unchanged():
+    # simulate_null_adoption is frozen for the campaign (Phase 2 plan, WP-6); calibration lives beside it.
+    source = inspect.getsource(simulate_null_adoption).encode("utf-8")
+    assert hashlib.sha256(source).hexdigest() == SIMULATOR_SOURCE_SHA256
+
+
+# ---------------------------------------------------------------------------
+# Noise-model calibration from a certified inner membership
+
+
+def _membership_rows(groups):
+    """``groups`` maps a group ID to its members' EC class tokens."""
+    rows, components = [], {}
+    for group, tokens in groups.items():
+        for position, token in enumerate(tokens):
+            accession = f"{group.upper()}{position:03d}"
+            rows.append({"accession": accession, "group_id": group, "ec_class": token, "fold": "0",
+                         "structure_id": f"{accession}__chain_A__EC_{token}.1.1.1"})
+            components[accession] = group
+    return rows, components
+
+
+CALIBRATION_GROUPS = {"g1": ["1", "1", "1", "2"], "g2": ["3", "3"], "s1": ["3"], "s2": ["4"], "s3": ["5"],
+                      "s4": ["6"], "s5": ["7"], "s6": ["2"]}
+
+
+def test_membership_statistics_by_hand():
+    rows, components = _membership_rows(CALIBRATION_GROUPS)
+    components["X0001"] = "g1"  # an excluded node of a component: not counted
+    components["Y0001"] = components["Y0002"] = "x1"  # a component of excluded nodes only: not a component here
+    stats = membership_noise_statistics(rows, components)
+    counts = np.array([3, 2, 3, 1, 1, 1, 1])
+    concentration = float(np.sum((counts / 12) ** 2))
+    agreement = 4 / 7  # g1: 3 of 6 pairs agree; g2: 1 of 1
+    assert stats["n_proteins"] == 12 and stats["n_components"] == 8
+    assert np.allclose(stats["class_proportions"], counts / 12)
+    assert stats["mean_component_size"] == 1.5 and stats["largest_component_size"] == 4
+    assert stats["singleton_components"] == 6 and stats["within_component_pairs"] == 7
+    assert stats["component_size_variance"] == pytest.approx(1.0)
+    assert stats["geometric_size_variance"] == pytest.approx(0.75)
+    assert stats["within_component_pair_agreement"] == pytest.approx(agreement)
+    assert stats["class_concentration"] == pytest.approx(concentration)
+    expected = np.sqrt((agreement - concentration) / (1 - concentration))
+    assert stats["component_class_purity"] == pytest.approx(expected) and stats["purity_identified"]
+    model = noise_model_from_membership(rows, components, base=NullNoiseModel(fit_shift_sd=0.2, protein_sd=0.7))
+    assert (model.n_proteins, model.mean_component_size) == (12, 1.5)
+    assert np.allclose(model.class_proportions, counts / 12)
+    assert model.component_class_purity == pytest.approx(expected)
+    assert (model.fit_shift_sd, model.protein_sd, model.class_recall) == (0.2, 0.7, NullNoiseModel().class_recall)
+
+
+def test_membership_statistics_without_pairs_and_refusals():
+    rows, components = _membership_rows({f"s{k}": [token] for k, token in enumerate("1223")})
+    stats = membership_noise_statistics(rows, components)
+    assert (stats["component_class_purity"], stats["purity_identified"]) == (1.0, False)
+    assert stats["mean_component_size"] == 1.0 and stats["within_component_pair_agreement"] is None
+    refusals = [
+        ((rows, dict(components, S0000="s9", S2000="s9")),
+         r"2 row\(s\) name a group other than their inner component \(first at data row 1\)"),
+        ((rows, {key: value for key, value in components.items() if key != "S1000"}),
+         r"1 row\(s\) have no inner identity component \(first at data row 2\)"),
+        ((rows + rows[:1], components), r"1 row\(s\) repeat the accession of an earlier row \(first at data row 5\)"),
+        (([dict(rows[0], ec_class="")] + rows[1:], components), r"1 row\(s\) have no EC class 1-7"),
+        (([dict(rows[0], accession="")] + rows[1:], components), r"1 row\(s\) lack an accession or a group"),
+        (([dict(rows[0], ec_class="x"), dict(rows[1], group_id="s9")] + rows[2:], components),
+         r"have no EC class 1-7 \(first at data row 1\); 1 row\(s\) name a group other"),
+    ]
+    for arguments, message in refusals:
+        with pytest.raises(ValueError, match=message) as caught:
+            membership_noise_statistics(*arguments)
+        # No accession, group or class token is printed (a step may read every fold's membership).
+        assert not any(text in str(caught.value) for text in ("S0", "S1", "S2", "S3", "s9", "'x'", "'1'"))
+    with pytest.raises(ValueError, match="fewer than two EC classes"):
+        membership_noise_statistics(*_membership_rows({"g": ["3", "3"], "s": ["3"]}))
+    with pytest.raises(ValueError, match="no rows"):
+        membership_noise_statistics([], components)
+
+
+def test_purity_estimate_recovers_the_simulated_purity():
+    from ec_clean30.selection import _simulated_population
+
+    model = NullNoiseModel(n_proteins=6000, mean_component_size=3.0, component_class_purity=0.6)
+    true, component, _difficulty = _simulated_population(np.random.default_rng(11), model)
+    rows = [{"accession": f"P{k:05d}", "group_id": f"c{group}", "ec_class": str(cls + 1)}
+            for k, (cls, group) in enumerate(zip(true.tolist(), component.tolist()))]
+    components = {row["accession"]: row["group_id"] for row in rows}
+    stats = membership_noise_statistics(rows, components)
+    assert stats["component_class_purity"] == pytest.approx(0.6, abs=0.05)
+    assert stats["mean_component_size"] == pytest.approx(3.0, abs=0.15)

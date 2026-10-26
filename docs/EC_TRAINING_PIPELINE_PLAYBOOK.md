@@ -286,57 +286,70 @@ compatibility warning below still applies to later EC training stages.
 
 This recipe runs the [EC class versus CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), a named
 five-fold benchmark on the official CLEAN `split30` folds. It is not the Stage 7 final-test route, which stays
-unresolved. Its inner selection, five-seed refits and single scoring pass are campaign steps, not Stage 6, 6B or 7
-sources. It does not modernise or certify the blocks below the compatibility warning, and
-[TECH-002](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface) stays
-open. Populations, systems, the claim rule and test access are in the campaign [design](campaigns/ec_class_vs_clean30_2026-10/design.md);
-phases and gates G1–G5 are in the campaign README. Run tiers: inner-fold fits are serious validation runs; the Phase 7
-scoring pass is a named-benchmark one-shot test read, run once after gate G5.
-
-Every command runs under the workstation cap (`systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=3G
--p MemorySwapMax=0`). Real (non-smoke) runner actions refuse an uncommitted tree, and every tool refuses test flags
-and test-named paths. Identity tables, inner folds, a fold's training view and its dry run (training files only):
+unresolved, and its inner selection, five-seed refits and single scoring pass are not Stage 6, 6B or 7 sources. It
+certifies no block below the compatibility warning; [TECH-002](FOLLOW_UP_TECHNICAL_ISSUES.md#tech-002--ec-playbook-assignments-do-not-match-the-notebook-surface)
+stays open. Populations, systems, the claim rule and test access are in the [design](campaigns/ec_class_vs_clean30_2026-10/design.md),
+phases and gates G1–G5 in the README. Inner-fold fits are serious validation runs; the Phase 7 scoring pass is a
+named-benchmark one-shot test read, run once after gate G5. Commands run one at a time; the `dry-run` parent runs under
+`SMALL` because each probe opens its own `CAP` scope (`--cap-prefix`). Real (non-smoke) actions refuse an uncommitted
+or untracked tree, every tool refuses test flags and test-named paths, and identity output holds per-fold EC-class
+counts, so it goes to private files. Training files only; stop at the first failure:
 
 ```bash
-PY="${DEEPMZYME_PYTHON:-.venv/bin/python}"
-C=DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10
-K=0
-for step in fasta search edges components; do
-  "$PY" scripts/run_ec_clean30_identity.py "$step" --fold "$K" --work "$C/identity/fold$K"
-done
-"$PY" scripts/run_ec_clean30_identity.py assign-inner --fold "$K" --work "$C/identity/fold$K" --seed 42
-"$PY" scripts/run_ec_clean30_identity.py certify-inner --fold "$K" --work "$C/identity/fold$K"
-"$PY" scripts/run_ec_clean30_campaign.py build-view --fold "$K" --out "$C/views/fold$K" \
-  --inner-membership "$C/identity/fold$K/inner_membership_fold$K.csv"
-"$PY" src/embed_helpers/esmc_chain_means.py from-residue-cache --allowlist "$C/views/fold$K/allowlist.txt" \
-  --structure-dir "$C/views/fold$K/structures" --embeddings-dir "$C/views/fold$K/esm" \
-  --out "$C/views/fold$K/chain_means_final"
-"$PY" scripts/run_ec_clean30_campaign.py dry-run --view "$C/views/fold$K"
-"$PY" scripts/run_ec_clean30_campaign.py plan --fold "$K" --out "$C/plans/fold$K.json"
+PY="${DEEPMZYME_PYTHON:?set DEEPMZYME_PYTHON to the project environment python}"
+CAP=(systemd-run --user --scope -q -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0)
+SMALL=(systemd-run --user --scope -q -p CPUQuota=100% -p MemoryMax=1G -p MemorySwapMax=0)
+C=DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10; L="$C/labels"; O="$C/overlay/ecc30-overlay-v1"; S="$C/identity_stdout"
+R=scripts/run_ec_clean30_campaign.py; I=scripts/run_ec_clean30_identity.py; X=scripts/run_clean_split30_comparator.py
+sha() { "$PY" -c 'import json,sys; print(json.load(open(sys.argv[1]))["outputs"][sys.argv[2]]["sha256"])' "$@"; }
+m() { sha256sum "$1/manifest.json" | cut -c1-64; }; mkdir -p "$S"
+for K in 0 1 2 3 4; do for step in fasta search edges components; do
+  "${CAP[@]}" "$PY" "$I" $step --fold "$K" --work "$C/identity/fold$K" > "$S/fold${K}_$step.json" || break 2; done; done
+for t in sequence_map label_table; do "${SMALL[@]}" "$PY" "$X" "${t/_/-}" --out-dir "$L/$t" || break; done
+"${CAP[@]}" "$PY" "$R" cohort-audit --out "$C/cohort" --label-table "$L/label_table/native_label_table.tsv" \
+  --label-table-sha256 "$(sha "$L/label_table/label_table_receipt.json" label_table)" --sequence-map \
+  "$L/sequence_map/sequence_map.tsv" --sequence-map-sha256 "$(sha "$L/sequence_map/sequence_map_receipt.json" sequence_map)"
+for K in 0 1 2 3 4; do for step in "assign-inner --seed 42" certify-inner; do
+  "${CAP[@]}" "$PY" "$I" $step --fold "$K" --work "$C/identity/fold$K" > "$S/fold${K}_${step%% *}.json" || break 2; done; done
+for J in 0 1 2 3; do "${SMALL[@]}" "$PY" "$I" r1-inner-exclusions --fold 0 --work "$C/identity/fold0" \
+  --inner-fold "$J" > "$S/fold0_r1inner$J.json" || break; done
+"${SMALL[@]}" "$PY" "$R" r2-lists --identity-root "$C/identity" --cohort "$C/cohort" --out "$C/r2_lists"
+"${CAP[@]}" "$PY" "$R" overlay build --out "$O" --cohort "$C/cohort" --identity-root "$C/identity" \
+  --r2-lists "$C/r2_lists" --d2-option b && "${CAP[@]}" "$PY" "$R" overlay verify --overlay "$O"
+E=src/embed_helpers/esmc_chain_means.py; T=(env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 MKL_THREADING_LAYER=GNU HF_HUB_OFFLINE=1)
+for K in 0 1 2 3 4; do V="$C/views/fold$K"; A="$O/identity/fold$K"; Q=(--allowlist "$V/allowlist.txt" --structure-dir "$V/structures")
+  "${SMALL[@]}" "$PY" "$R" plan --fold "$K" --out "$C/plans/fold$K.json" &&
+  "${CAP[@]}" "$PY" "$R" build-view --fold "$K" --out "$V" --data-root "$O" --esm-dir "$O/esm" \
+    --external-root "$O/external" --bundle-id "ecc30-v1-fold$K" --inner-membership "$A/inner_membership_fold$K.csv" \
+    --inner-membership-sha256 "$(sha "$A/inner_assignment_receipt.json" membership)" &&
+  "${CAP[@]}" "$PY" "$E" from-residue-cache "${Q[@]}" --embeddings-dir "$V/esm" --out "$V/chain_means_final" &&
+  "${CAP[@]}" "${T[@]}" "$PY" "$E" from-model "${Q[@]}" --layer-index 26 --device cpu --out "$V/chain_means_block26" &&
+  "${SMALL[@]}" "$PY" "$E" compare --cache-a "$V/chain_means_final" --cache-b "$V/chain_means_block26" --layer final \
+    --manifest-a-sha256 "$(m "$V/chain_means_final")" --manifest-b-sha256 "$(m "$V/chain_means_block26")" \
+    --ids "$V/allowlist.txt" --out "$V/receipts/l8_final_layer_parity.json" &&
+  "${CAP[@]}" "$PY" "$R" verify-view --view "$V" --require-chain-means final,block26 --check-sources &&
+  "${SMALL[@]}" "$PY" "$R" dry-run --view "$V" --runs "$C/runs/fold$K" || break; done
 ```
 
-`dry-run` needs `--exclude-levers L8` until the `chain_means_block26` cache exists. The `select`, `gap-gate`, `refit`
-and `execute` actions follow gate G1 and only print their planned interface. The retrained CLEAN comparator uses the
-maintainer's runner, which contains no CLEAN code; the private CLEAN checkout and harness scripts are passed by path and
-pinned by SHA-256:
+If block 26 is built on the GPU machine instead, drop `from-model` and `compare`, verify with `--require-chain-means
+final` and add `--exclude-levers L8` to the dry run. A fold rerun in another identity folder takes `--fold-work K=PATH`
+in `r2-lists` and `overlay build`. `simulate --sweep FILE --out DIR` needs one `--calibrate-from
+K=<overlay>/identity/fold<K>` per fold of its sweep (exit 4: its CPU-hour forecast stopped it). `smoke-view` writes to
+`$C/smoke_views/<name>` and its dry run takes `--smoke --runs "$C/smoke_runs/<name>"`. After a disk-driver change,
+`apply-view-modes --view V` (chmod only) precedes `verify-view`. Planned for Freeze 1, not in the runner yet:
+`transfer-list`, `verify-freeze1`, the `freeze1-document` and `freeze1b` manifest kinds and a Phase 3 runner.
 
-```bash
-"$PY" scripts/run_clean_split30_comparator.py sequence-map --out-dir "$C/clean_sequence_map"
-"$PY" scripts/run_clean_split30_comparator.py prepare --official-train-csv "$SPLIT30_TRAIN_CSV" --fold "$K" \
-  --regime r1 --seed 42 --work-dir "$C/clean/fold$K/r1_seed42" --base-esm-dir "$BASE_FARM" --masked-esm-dir "$MASKED_FARM"
-"$PY" scripts/run_clean_split30_comparator.py fit --work-dir "$C/clean/fold$K/r1_seed42" --clean-python "$CLEAN_PY" \
-  --clean-clone "$CLEAN_CLONE" --training-script "$CLEAN_TRAIN" --distance-helper "$CLEAN_DISTANCE_HELPER"
-"$PY" scripts/run_clean_split30_comparator.py validate-export --npz "$EXPORT_NPZ"
-```
+The CLEAN comparator runner (`"$X" prepare`, `fit`, `export`, `validate-export`) holds no CLEAN code; the private CLEAN
+checkout and harness scripts are passed by path and pinned by SHA-256, and R2 fits take `--accession-allowlist
+"$C/r2_lists/r2_allowlist_fold<k>.txt"`. Fits run one at a time, each distance map alone under the limit the campaign
+log records; every call names the campaign folders a fit must not read as `--forbidden-root`.
 
-Freeze manifests are written by `run_ec_clean30_campaign.py manifest --kind freeze1|freeze2`. A real Freeze 2 also
-takes every outer-fold CLEAN fit through `--clean-fit` and needs `--test-pass-output-root`. In Phase 7 the label-free
-test passes (`export_ec_test_predictions` in `src/training/ec_prediction_export.py`, and the comparator's `export
---mode test`) refuse to run without the Freeze-2 manifest and its SHA-256. The nearest-hit baseline
-(`scripts/run_ec_clean30_baseline.py`) then writes its class table. `scripts/score_ec_clean30_comparison.py claim
---manifest` validates and hashes every prediction without opening a label, and `score --claim --claim-sha256` performs
-the single label read and writes `report.json` and `report.md` once. A refit's probe predictions replay in a fresh
-process with `PYTHONPATH=src "$PY" -m training.ec_prediction_export replay --run-dir RUN`.
+Freeze manifests: `"$R" manifest --kind freeze1|freeze2`; `select`, `gap-gate`, `refit` and `execute` print their
+planned interface only. The Phase 7 label-free test passes (`export_ec_test_predictions` in
+`src/training/ec_prediction_export.py`, the comparator's `export --mode test`, `scripts/run_ec_clean30_baseline.py`)
+refuse to run without the Freeze-2 manifest and its SHA-256; `scripts/score_ec_clean30_comparison.py claim --manifest`
+hashes every prediction without opening a label, and `score --claim --claim-sha256` performs the single label read. A
+refit's probe predictions replay with `PYTHONPATH=src "$PY" -m training.ec_prediction_export replay --run-dir RUN`.
 
 ## Compatibility Warning — Later Stages Still Require Reconciliation
 

@@ -4,7 +4,8 @@
 ``src/train.py`` arguments and environment of one fit. Every data path points into the
 view; caches, temporary files and library caches point into the view's ``caches/``
 folder; the held-out guard (``DEEPMZYME_FORBIDDEN_READ_ROOTS``) lists the view's
-recorded shared and test-bearing roots. The trainer may not generate any input
+read-guard rules expanded on the running machine (``views.expand_read_guard``: shared,
+test-bearing, campaign and other-fold folders). The trainer may not generate any input
 (``--no-prepare-missing-*``), evaluate a test set, or select a checkpoint by validation
 (cosine schedule to zero, terminal checkpoint, campaign training rule). Inner units split
 by the view's frozen EC membership and export validation predictions; refit units train
@@ -35,9 +36,10 @@ outside it, no other path, and the same configuration as the recipe's own comman
 ``run_unit`` executes one command under the workstation cap (``CAP_PREFIX``: 2 cores,
 3 GB, no swap) after re-verifying the view and requiring its passed dry run, and writes
 ``<runs>/<unit>.runner.json`` and ``<runs>/<unit>.log`` next to the trainer's run folder
-``<runs>/<unit>/``. ``verify_unit`` checks the receipts a unit must leave (gate G1.10
-step 5, plus the prediction files, their structures and the absence of the global branch
-where a family has none). ``collect_refit_checkpoints`` re-verifies refit units for a
+``<runs>/<unit>/``; ``<runs>`` lies in ``<campaign root>/runs/fold<k>`` (smoke views:
+``smoke_runs/<name>``), where every other fold's guard forbids it. ``verify_unit`` checks
+the receipts a unit must leave (gate G1.10 step 5, plus the prediction files, their
+structures and the absence of the global branch where a family has none). ``collect_refit_checkpoints`` re-verifies refit units for a
 Freeze-2 manifest, and ``delete_smoke_checkpoints`` removes verified smoke checkpoints.
 """
 from __future__ import annotations
@@ -186,6 +188,16 @@ def _payload_sha256(payload: Mapping[str, Any]) -> str:
     return sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode("utf-8"))
 
 
+def _is_sha256(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 64 and all(ch in "0123456789abcdef" for ch in value)
+
+
+def _view_overlay(view: View) -> tuple[Optional[str], Optional[str]]:
+    """(overlay ID, overlay manifest SHA-256) of the view's overlay record, or (None, None)."""
+    record = view.overlay or {}
+    return record.get("id"), record.get("manifest_sha256")
+
+
 def resolved_config_sha256(argv: Sequence[str]) -> str:
     """Hash of the trainer configuration these arguments resolve to (``training.config.config_to_payload``)."""
     from training.config import config_to_payload, parse_args
@@ -281,14 +293,25 @@ def build_unit_command(
     overlay_sha256: Optional[str] = None,
     git_head: Optional[str] = None,
     tree_sha256: Optional[str] = None,
+    freeze1b_sha256: Optional[str] = None,
 ) -> UnitCommand:
     """Exact trainer arguments of one unit on ``view`` (see the module docstring for the order).
 
     The run identity follows map I-10: campaign, Freeze-1 SHA-256 and its amendment chain,
-    code tree, overlay ID and SHA-256 (``None`` until the Phase 2 overlay exists), view,
-    allowlist, membership or probe list, chain means, fold, inner fold, step, recipe, seed
-    and the resolved configuration's SHA-256.
+    the Freeze-1b SHA-256 (identity audit; ``None`` before it exists), code tree, overlay ID
+    and SHA-256, view, allowlist, membership or probe list, chain means, fold, inner fold,
+    step, recipe, seed and the resolved configuration's SHA-256. The overlay values default
+    to the view's overlay record (``None`` for a view not built from an overlay); explicit
+    values that differ from it are refused.
     """
+    expected_overlay = _view_overlay(view)
+    for name, given, expected in (("overlay_id", overlay_id, expected_overlay[0]),
+                                  ("overlay_sha256", overlay_sha256, expected_overlay[1])):
+        if given is not None and given != expected:
+            raise CommandError(f"{name} {given!r} differs from the view's overlay record {expected!r}.")
+    overlay_id, overlay_sha256 = expected_overlay
+    if freeze1b_sha256 is not None and not _is_sha256(freeze1b_sha256):
+        raise CommandError(f"freeze1b_sha256 must be a 64-character lowercase hex SHA-256, got {freeze1b_sha256!r}.")
     base_argv, cache_digest = _base_argv(view, recipe, unit_id=unit_id, kind=kind, seed=seed, runs_dir=runs_dir,
                                          inner_fold=inner_fold, device=device)
     membership = view.membership
@@ -308,6 +331,7 @@ def build_unit_command(
         "probe_sha256": view.probe_sha256 if kind == KIND_REFIT else None,
         "chain_means_manifest_sha256": cache_digest,
         "freeze1_sha256": freeze1_sha256,
+        "freeze1b_sha256": freeze1b_sha256,
         "freeze1_amendment_chain": list(freeze1_amendment_chain),
         "overlay_id": overlay_id,
         "overlay_sha256": overlay_sha256,
@@ -422,7 +446,8 @@ def check_command(command: UnitCommand, view: View) -> list[str]:
             if value is None or _inside(value, view.root):
                 problems.append(f"{flag} {value!r} must be an output folder outside the view")
             elif any(_inside(value, root) for root in view.forbidden_read_roots):
-                problems.append(f"{flag} {value!r} lies inside a shared or test-bearing data root")
+                problems.append(f"{flag} {value!r} lies inside a forbidden read root (shared, test-bearing or "
+                                "other-fold folder)")
     if values.get("--dataset-bundle-sha256", [None])[0] != view.manifest_sha256:
         problems.append("--dataset-bundle-sha256 differs from the view manifest SHA-256")
     if values.get("--dataset-bundle-id", [None])[0] != view.bundle_id:
@@ -498,10 +523,12 @@ def check_command(command: UnitCommand, view: View) -> list[str]:
         identity = {}
     if not identity or canonical_json(identity) != canonical_json(dict(command.identity)):
         problems.append("--campaign-run-identity differs from the unit's identity")
+    overlay_id, overlay_sha256 = _view_overlay(view)
     bound = {"campaign_id": CAMPAIGN_ID, "unit_id": command.unit_id, "kind": command.kind, "step": command.step,
              "fold": view.fold, "inner_fold": command.inner_fold, "seed": command.seed, "smoke": view.smoke,
              "recipe": command.recipe.to_dict(), "view_manifest_sha256": view.manifest_sha256,
-             "allowlist_sha256": view.allowlist_sha256, "resolved_config_sha256": _payload_sha256(actual)}
+             "allowlist_sha256": view.allowlist_sha256, "overlay_id": overlay_id, "overlay_sha256": overlay_sha256,
+             "resolved_config_sha256": _payload_sha256(actual)}
     for name, value in bound.items():
         if identity.get(name) != value:
             problems.append(f"the campaign run identity's {name} does not match this unit and view")
@@ -553,10 +580,20 @@ def run_unit(
 ) -> dict[str, Any]:
     """Run one unit (fresh run folder only) and write its runner receipt and log.
 
-    The command must pass ``check_command``, the view must verify again, and the view must
-    hold a passed dry-run receipt for its exact manifest (``clear_view_for_unit``).
+    The command must pass ``check_command``, its runs folder must pass ``runs_dir_problem``
+    (``<campaign root>/runs/fold<k>`` or ``smoke_runs/<name>``, or a folder inside it), the
+    view must verify again, and the view must hold a passed dry-run receipt for its exact
+    manifest (``clear_view_for_unit``). A unit of a fold view runs only under a non-empty
+    ``cap_prefix`` (engineering smoke units may run uncapped, e.g. in tests).
     """
+    from ec_clean30.views import runs_dir_problem
+
     problems = check_command(command, view)
+    runs_problem = runs_dir_problem(view, command.runs_dir) if command.runs_dir else "the unit names no runs folder"
+    if runs_problem:
+        problems.append(runs_problem)
+    if not view.smoke and not tuple(cap_prefix):
+        problems.append("a unit of a fold view runs only under a cap prefix (cap_prefix is empty)")
     if problems:
         raise CommandError("Refusing to run:\n  " + "\n  ".join(problems))
     clearance = clear_view_for_unit(view, command, provenance=provenance)
@@ -578,10 +615,12 @@ def run_unit(
         "started_utc": utc_now(),
         "command": full_command,
         "cap_prefix": list(cap_prefix),
+        "capped": bool(tuple(cap_prefix)),
         "unit": command.to_dict(),
         "view": str(view.root),
         "view_manifest_sha256": view.manifest_sha256,
         "view_clearance": clearance,
+        "read_guard": {"expanded_roots": view.forbidden_read_roots},
         "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=view.smoke),
     }
     with receipt_path.open("x", encoding="utf-8") as handle:
@@ -629,8 +668,15 @@ class _Checks:
         return all(item["ok"] for item in self.results.values())
 
 
-def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None) -> dict[str, Any]:
-    """Check one finished unit against the campaign's receipt contract; returns a per-check record."""
+def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
+                memory_limit_bytes: int = MEMORY_LIMIT_BYTES) -> dict[str, Any]:
+    """Check one finished unit against the campaign's receipt contract; returns a per-check record.
+
+    ``memory_limit_bytes`` is the cap the unit ran under (the workstation's 3 GB by default;
+    another machine passes its own). Whether a unit is real is decided by its view, not by
+    the receipt: the identity's ``smoke`` flag must equal the view's, a unit of a fold view
+    must carry the view's overlay ID and SHA-256 and must have run under a cap prefix.
+    """
     from training.ec_membership import read_ec_fold_membership
 
     runs_dir = Path(runs_dir)
@@ -758,8 +804,17 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None) ->
     if profile_path.is_file():
         peaks["trainer_process_peak_rss_bytes"] = _load_json(profile_path).get("process_peak_rss_bytes")
     recorded = [value for value in peaks.values() if isinstance(value, int)]
-    checks.add("peak_memory", all(value < MEMORY_LIMIT_BYTES for value in recorded), peaks)
+    checks.add("peak_memory", all(value < int(memory_limit_bytes) for value in recorded),
+               {**peaks, "limit_bytes": int(memory_limit_bytes)})
     checks.add("campaign_identity", metadata.get("campaign_run_identity") == identity, identity.get("unit_id"))
+    checks.add("smoke_matches_view", identity.get("smoke") is view.smoke,
+               {"unit": identity.get("smoke"), "view": view.smoke})
+    overlay_id, overlay_sha256 = _view_overlay(view)
+    unit_overlay = (identity.get("overlay_id"), identity.get("overlay_sha256"))
+    checks.add("overlay_identity", unit_overlay == (overlay_id, overlay_sha256)
+               and (view.smoke or (overlay_id is not None and overlay_sha256 is not None)),
+               {"unit": list(unit_overlay), "view": [overlay_id, overlay_sha256]})
+    checks.add("capped", view.smoke or bool(runner.get("cap_prefix")), runner.get("cap_prefix"))
     config = run_config.get("config") or {}
     outside = [key for key in ("structure_dir", "summary_csv", "esm_embeddings_dir", "external_features_root_dir",
                                "ring_features_dir", "global_esm_cache_dir", "fold_membership_csv",
@@ -775,7 +830,8 @@ SMOKE_CHECKPOINT_DELETION_RECEIPT_NAME = "smoke_checkpoint_deletion_receipt.json
 
 
 def verify_units(runs_dir: Path, *, unit_ids: Optional[Sequence[str]] = None,
-                 provenance: Optional[Mapping[str, Any]] = None, write: bool = True) -> dict[str, Any]:
+                 provenance: Optional[Mapping[str, Any]] = None, write: bool = True,
+                 memory_limit_bytes: int = MEMORY_LIMIT_BYTES) -> dict[str, Any]:
     """Verify every unit with a runner receipt in ``runs_dir`` (or the named ones); write one receipt."""
     runs_dir = Path(runs_dir)
     if unit_ids is None:
@@ -783,13 +839,14 @@ def verify_units(runs_dir: Path, *, unit_ids: Optional[Sequence[str]] = None,
                           if path.name.endswith(".runner.json"))
     if not unit_ids:
         raise CommandError(f"No unit runner receipts in {runs_dir}.")
-    units = [verify_unit(runs_dir, unit_id) for unit_id in unit_ids]
+    units = [verify_unit(runs_dir, unit_id, memory_limit_bytes=memory_limit_bytes) for unit_id in unit_ids]
     smoke = {unit.get("smoke") for unit in units}
     receipt = {
         "schema_version": 1,
         "status": "passed" if all(unit["passed"] for unit in units) else "failed",
         "runs_dir": str(runs_dir),
         "n_units": len(units),
+        "memory_limit_bytes": int(memory_limit_bytes),
         "units": units,
         "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=smoke != {False}),
     }
@@ -1090,15 +1147,27 @@ def dry_run(
 ) -> dict[str, Any]:
     """Check every planned command of ``view`` statically, then probe one inner and one refit unit per family.
 
-    ``verify=False`` skips ``verify_view`` (used only to show that the probe layer catches
-    what verification would also catch).
+    ``runs_dir`` defaults to ``view.default_runs_dir`` (``<campaign root>/runs/fold<k>`` or
+    ``<campaign root>/smoke_runs/<name>``); a runs folder that fails ``runs_dir_problem``
+    (inside the view or an expanded read-guard root, or outside that folder) is refused.
+    Each probe runs under ``cap_prefix`` (the workstation cap by default; another machine
+    passes its own); a fold view's dry run refuses an empty prefix. ``verify=False`` skips
+    ``verify_view`` (used only to show that the probe layer catches what verification would
+    also catch). ``write=False`` writes no receipt at all (neither the dry-run nor the
+    verification receipt).
     """
-    from ec_clean30.views import DRY_RUN_RECEIPT_NAME, run_probe, verify_view
+    from ec_clean30.views import DRY_RUN_RECEIPT_NAME, run_probe, runs_dir_problem, verify_view
 
-    runs_dir = Path(os.path.abspath(os.fspath(runs_dir))) if runs_dir is not None else view.root.parent / "runs"
+    runs_dir = Path(os.path.abspath(os.fspath(runs_dir))) if runs_dir is not None else view.default_runs_dir
+    problem = runs_dir_problem(view, runs_dir)
+    if problem:
+        raise CommandError(f"Refusing the dry run: {problem}.")
+    if not view.smoke and not tuple(cap_prefix):
+        raise CommandError("Refusing the dry run: the probes of a fold view run only under a cap prefix "
+                           "(cap_prefix is empty).")
     verification = None
     if verify:
-        verification = verify_view(view.root, require_chain_means=("final",), write_receipt=True,
+        verification = verify_view(view.root, require_chain_means=("final",), write_receipt=write,
                                    provenance=provenance)
     planned = view_unit_commands(view, runs_dir=runs_dir, exclude_levers=exclude_levers)
     static_failures = [{"unit_id": item.unit_id, "problem": item.problem} for item in planned if item.problem]
@@ -1128,7 +1197,8 @@ def dry_run(
         "verified_view": verification is not None,
         "verification": None if verification is None else {
             key: verification.get(key) for key in ("view_manifest_sha256", "n_files", "n_structures", "n_eligible",
-                                                   "membership", "chain_means")},
+                                                   "membership", "chain_means", "file_modes_enforced", "overlay")},
+        "read_guard": {"rules": dict(view.read_guard), "expanded_roots": view.forbidden_read_roots},
         "n_commands_checked": len(planned),
         "n_template_commands": sum(1 for item in planned if item.template_of),
         "static_failures": static_failures,
@@ -1136,6 +1206,7 @@ def dry_run(
         "runs_dir_checked": str(runs_dir),
         "probes": probes,
         "cap_prefix": list(cap_prefix),
+        "capped": bool(tuple(cap_prefix)),
         "provenance": dict(provenance) if provenance is not None else provenance_record(smoke=view.smoke),
     }
     if write:

@@ -42,6 +42,7 @@ from ec_clean30.stats import (
     build_cluster_count_table, paired_cluster_bootstrap,
 )
 from training.ec_class_metrics import N_EC_CLASSES, PRIMARY_CLASS_INDICES, ec_class_metrics
+from training.ec_classes import EC_CLASS_TOKEN_TO_INDEX
 
 
 POINTS = 100.0
@@ -1272,4 +1273,116 @@ def simulate_null_adoption(
         seed=int(seed),
         noise_model=noise_model.to_record(),
         promotion_config=config.to_record(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Noise-model calibration from a certified inner membership
+
+
+def membership_noise_statistics(rows: Iterable[Mapping[str, Any]], components: Mapping[str, str]) -> dict[str, Any]:
+    """Population statistics of one fold's certified inner membership, as ``NullNoiseModel`` reads them.
+
+    ``rows`` are membership rows with ``accession``, ``group_id`` and ``ec_class`` (token "1".."7");
+    ``components`` maps every node of the inner identity graph to its component, and each row's
+    ``group_id`` must equal its accession's component. Component sizes count the membership's
+    proteins only, the unit the promotion bootstrap resamples.
+
+    Purity is a moment estimate under the model's own assumption: two members of one component
+    share their class with probability ``q**2 + (1 - q**2) * S``, where ``S`` is the sum of the
+    squared class proportions, so ``q = sqrt((A - S) / (1 - S))`` from the agreement ``A`` pooled
+    over all within-component pairs (clipped to [0, 1]). Without a component of two or more
+    proteins ``q`` is not identified and is set to 1; it then has no effect, because the mean
+    component size is 1 and every simulated component is a singleton. The geometric size model
+    is compared with the observed sizes through their variances.
+
+    The result holds per-fold class proportions: it belongs in private records only. Refusals
+    name row numbers and counts, never an accession, a group or a class: a step that reads every
+    fold's membership must not print another fold's proteins.
+    """
+    rows = list(rows)
+    if not rows:
+        raise ValueError("The inner membership has no rows.")
+    class_counts = np.zeros(N_EC_CLASSES, dtype=np.int64)
+    members: dict[str, list[int]] = {}
+    seen: set[str] = set()
+    failed: dict[str, list[int]] = {}
+    for number, row in enumerate(rows, start=1):
+        accession, group = str(row.get("accession") or ""), str(row.get("group_id") or "")
+        token = str(row.get("ec_class", ""))
+        if not accession or not group:
+            reason = "lack an accession or a group"
+        elif accession in seen:
+            reason = "repeat the accession of an earlier row"
+        elif token not in EC_CLASS_TOKEN_TO_INDEX:
+            reason = "have no EC class 1-7"
+        elif accession not in components:
+            reason = "have no inner identity component"
+        elif str(components[accession]) != group:
+            reason = "name a group other than their inner component"
+        else:
+            seen.add(accession)
+            index = EC_CLASS_TOKEN_TO_INDEX[token]
+            class_counts[index] += 1
+            members.setdefault(group, []).append(index)
+            continue
+        seen.add(accession)
+        failed.setdefault(reason, []).append(number)
+    if failed:
+        raise ValueError("The inner membership cannot calibrate the noise model: " + "; ".join(
+            f"{len(numbers)} row(s) {reason} (first at data row {numbers[0]})" for reason, numbers in failed.items()))
+    n = len(rows)
+    if int(np.count_nonzero(class_counts)) < 2:
+        raise ValueError("The membership holds fewer than two EC classes; the noise model needs at least two.")
+    proportions = class_counts / n
+    concentration = float(np.sum(proportions ** 2))
+    sizes = np.array([len(classes) for classes in members.values()], dtype=np.float64)
+    pairs = agreeing = 0
+    for classes in members.values():
+        counts = np.bincount(classes, minlength=N_EC_CLASSES)
+        pairs += len(classes) * (len(classes) - 1) // 2
+        agreeing += int(np.sum(counts * (counts - 1) // 2))
+    agreement = agreeing / pairs if pairs else None
+    if agreement is None:
+        purity = 1.0
+    else:
+        purity = math.sqrt(min(1.0, max(0.0, (agreement - concentration) / (1.0 - concentration))))
+    mean_size = n / len(members)
+    return {
+        "n_proteins": n,
+        "class_proportions": tuple(float(value) for value in proportions),
+        "n_ec_classes_present": int(np.count_nonzero(class_counts)),
+        "n_components": len(members),
+        "mean_component_size": mean_size,
+        "largest_component_size": int(sizes.max()),
+        "singleton_components": int(np.sum(sizes == 1)),
+        "component_size_variance": float(sizes.var()),
+        "geometric_size_variance": mean_size * (mean_size - 1.0),
+        "within_component_pairs": int(pairs),
+        "within_component_pair_agreement": agreement,
+        "class_concentration": concentration,
+        "component_class_purity": purity,
+        "purity_identified": agreement is not None,
+    }
+
+
+def noise_model_from_membership(
+    rows: Iterable[Mapping[str, Any]],
+    components: Mapping[str, str],
+    *,
+    base: NullNoiseModel = NullNoiseModel(),
+) -> NullNoiseModel:
+    """``base`` with the population taken from a certified inner membership.
+
+    Sets ``n_proteins``, ``class_proportions``, ``mean_component_size`` and
+    ``component_class_purity`` (``membership_noise_statistics``); the recall, difficulty and
+    fit-noise parameters stay as in ``base``.
+    """
+    stats = membership_noise_statistics(rows, components)
+    return replace(
+        base,
+        n_proteins=stats["n_proteins"],
+        class_proportions=stats["class_proportions"],
+        mean_component_size=stats["mean_component_size"],
+        component_class_purity=stats["component_class_purity"],
     )

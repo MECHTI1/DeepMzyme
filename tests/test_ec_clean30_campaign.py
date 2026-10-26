@@ -1,14 +1,20 @@
 """Unit matrix, command builder, smoke units, verification and Freeze manifests of the EC class vs CLEAN30 runner.
 
-Synthetic data only: every view is built from the fixture tree of tests/ec_clean30_fixtures.py.
+Synthetic data only: every view is built from the fixture tree of tests/ec_clean30_fixtures.py, and the
+command-line tests of the training-side input actions (cohort-audit, r2-lists, overlay, simulate) use the
+overlay tests' synthetic five-fold world (tests/test_ec_clean30_overlay.py).
 """
 from __future__ import annotations
 
+import argparse
+import contextlib
 from dataclasses import replace
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -32,10 +38,21 @@ from ec_clean30.commands import (  # noqa: E402
     run_unit, verify_unit, verify_units, view_unit_commands,
 )
 from ec_clean30.views import SourceLayout, View, ViewError, build_view, freeze1_view_record  # noqa: E402
+from ec_clean30 import cohort, identity, overlay, r2_lists, simulation, views  # noqa: E402
+from test_ec_clean30_overlay import build_world  # noqa: E402  (synthetic world: data root, cohort, identity, R2)
 
 PROVENANCE = {"note": "synthetic test provenance"}
 PYTHON = sys.executable
 SCRIPT = ROOT / "scripts" / "run_ec_clean30_campaign.py"
+
+
+def _fold_dir(base: Path, fold: int = 0) -> Path:
+    """Where the fold-k view of a campaign rooted below ``base`` lives (the location rule)."""
+    return Path(base) / campaign.CAMPAIGN_ID / views.VIEWS_DIR / f"fold{fold}"
+
+
+def _smoke_dir(base: Path, name: str = "view") -> Path:
+    return Path(base) / campaign.CAMPAIGN_ID / views.SMOKE_VIEWS_DIR / name
 
 
 def _script():
@@ -54,7 +71,7 @@ def source(tmp_path_factory):
 
 @pytest.fixture(scope="module")
 def smoke_view(source, tmp_path_factory):
-    return build_smoke_view(source, tmp_path_factory.mktemp("g1") / "view", provenance=PROVENANCE)
+    return build_smoke_view(source, _smoke_dir(tmp_path_factory.mktemp("g1")), provenance=PROVENANCE)
 
 
 # ---------------------------------------------------------------------------
@@ -145,11 +162,12 @@ def test_recipes_refuse_inapplicable_or_unknown_levers():
 # Commands
 
 
-def _command(view, family, *, refit=False, runs="runs", lr_index=1, levers=()):
+def _command(view, family, *, refit=False, runs_dir=None, lr_index=1, levers=()):
+    """A smoke unit command; its runs folder defaults to the view's own (``<campaign root>/smoke_runs/<name>``)."""
     recipe = default_smoke_recipe(family, lr_index=lr_index)
     for config_id in levers:
         recipe = recipe_with_lever(recipe, config_id)
-    runs_dir = view.root.parent / runs
+    runs_dir = view.default_runs_dir if runs_dir is None else runs_dir
     unit_id = smoke_unit_id(view.fold, recipe, refit=refit, seed=42)
     return build_unit_command(view, recipe, unit_id=unit_id, kind=KIND_REFIT if refit else KIND_INNER, seed=42,
                               runs_dir=runs_dir, step="smoke", inner_fold=None if refit else 0)
@@ -177,7 +195,7 @@ def test_f4_inner_command_matches_the_reference_argv(smoke_view):
     ]
     assert list(command.argv[: len(reference)]) == reference
     extras = list(command.argv[len(reference):])
-    assert extras[:6] == ["--ring-features-dir", f"{root}/ring", "--runs-dir", str(view.root.parent / "runs"),
+    assert extras[:6] == ["--ring-features-dir", f"{root}/ring", "--runs-dir", str(view.default_runs_dir),
                           "--run-name", command.unit_id]
     assert extras[6] == "--campaign-run-identity" and len(extras) == 8
     identity = json.loads(extras[7])
@@ -307,7 +325,7 @@ def test_static_check_follows_the_resolved_configuration(smoke_view, source, tmp
 
 def test_fold_view_plan_commands_cover_the_matrix(source, tmp_path):
     membership, digest, _certificate = write_inner_membership(source, tmp_path / "identity")
-    root = tmp_path / "fold0_view"
+    root = _fold_dir(tmp_path)
     build_view(fold=0, layout=SourceLayout.from_data_root(source["data_root"]), out_dir=root,
                inner_membership=(membership, digest), provenance=PROVENANCE)
     build_chain_means(root)
@@ -387,7 +405,7 @@ def test_test_flags_are_refused():
 
 @pytest.fixture(scope="module")
 def smoke_runs(smoke_view):
-    runs = smoke_view.root.parent / "runs"
+    runs = smoke_view.default_runs_dir
     receipt = dry_run(smoke_view, cap_prefix=(), provenance=PROVENANCE, timeout=600)
     assert receipt["status"] == "passed", receipt["probes"]
     receipts = {}
@@ -401,7 +419,7 @@ def smoke_runs(smoke_view):
 G1_CHECKS = {"exit_code", "terminal_checkpoint", "selected_epoch", "history_length", "no_test_report",
              "optimizer_groups", "no_generated_features", "ec_label_report", "site_extraction_summary",
              "ec_predictions", "prediction_checkpoint", "prediction_files", "prediction_structures", "peak_memory",
-             "campaign_identity", "data_paths_in_view"}
+             "campaign_identity", "data_paths_in_view", "overlay_identity", "smoke_matches_view", "capped"}
 
 
 def test_smoke_units_run_and_verify(smoke_runs, smoke_view):
@@ -413,6 +431,8 @@ def test_smoke_units_run_and_verify(smoke_runs, smoke_view):
     runs, receipts = smoke_runs
     assert all(receipt["status"] == "completed" and receipt["returncode"] == 0 for receipt in receipts.values())
     assert all(receipt["view_clearance"]["view_manifest_sha256"] == smoke_view.manifest_sha256
+               for receipt in receipts.values())
+    assert all(receipt["read_guard"]["expanded_roots"] == smoke_view.forbidden_read_roots
                for receipt in receipts.values())
     report = verify_units(runs, provenance=PROVENANCE)
     assert report["status"] == "passed", [(unit["unit_id"], {k: v for k, v in unit["checks"].items() if not v["ok"]})
@@ -433,7 +453,14 @@ def test_smoke_units_run_and_verify(smoke_runs, smoke_view):
 
 
 def test_run_unit_needs_a_verified_view_with_a_passed_dry_run(source, tmp_path):
-    view = build_smoke_view(source, tmp_path / "view", chain_means=False, provenance=PROVENANCE)
+    view = build_smoke_view(source, _smoke_dir(tmp_path), chain_means=False, provenance=PROVENANCE)
+    # The runs folder must be the view's own (the static command check alone does not test the location).
+    for runs in (tmp_path / "elsewhere", view.campaign_root / views.SMOKE_RUNS_DIR / "another_view"):
+        loose = _command(view, "F2", runs_dir=runs)
+        assert check_command(loose, view) == []
+        with pytest.raises(CommandError, match="must be <campaign root>/smoke_runs/view or a folder inside it"):
+            run_unit(loose, view=view, cap_prefix=(), provenance=PROVENANCE)
+        assert not runs.exists()
     command = _command(view, "F2")
     with pytest.raises(CommandError, match="run dry-run first"):
         run_unit(command, view=view, cap_prefix=(), provenance=PROVENANCE)
@@ -451,7 +478,7 @@ def test_run_unit_needs_a_verified_view_with_a_passed_dry_run(source, tmp_path):
     (view.esm / "extra_chain_A_esmc.pt").write_bytes(b"x")
     with pytest.raises(CommandError, match="does not verify"):
         run_unit(command, view=view, cap_prefix=(), provenance=PROVENANCE)
-    assert not (tmp_path / "runs").exists()
+    assert not view.default_runs_dir.exists()
     make_writable(view.root)
 
 
@@ -660,6 +687,7 @@ def test_freeze1_manifest_records_plans_constants_and_views(smoke_runs, smoke_vi
                        "identity_sha256": smoke_view.membership["identity_sha256"], "n_folds": 2,
                        "certificate_sha256": None},
         "chain_means": {"final": smoke_view.chain_means_manifest_sha256("final")},
+        "file_modes_enforced": True, "overlay": None,
         "dry_run_receipt": {"status": "passed", "sha256": provenance.sha256_file(dry),
                             "view_manifest_sha256": smoke_view.manifest_sha256},
     }
@@ -670,7 +698,7 @@ def test_freeze1_manifest_records_plans_constants_and_views(smoke_runs, smoke_vi
 
 
 def test_freeze1_view_records_need_a_verified_view_and_a_real_dry_run(source, tmp_path):
-    view = build_smoke_view(source, tmp_path / "view", chain_means=False, provenance=PROVENANCE)
+    view = build_smoke_view(source, _smoke_dir(tmp_path), chain_means=False, provenance=PROVENANCE)
     with pytest.raises(ViewError, match="chain means for layer final are required"):
         freeze1_view_record(view.root, require_dry_run=False, provenance=PROVENANCE)
     build_chain_means(view.root)
@@ -691,12 +719,26 @@ def test_freeze1_view_records_need_a_verified_view_and_a_real_dry_run(source, tm
 
 def test_cli_smoke_view_plan_and_verify(source, tmp_path, capsys):
     script = _script()
-    out = tmp_path / "cli_view"
+    out = _smoke_dir(tmp_path, "cli_view")
+    capsys.readouterr()
     assert script.main(["smoke-view", "--fold", "0", "--max-proteins", "6", "--seed", "3", "--out", str(out),
                         "--data-root", str(source["data_root"])]) == 0
     view = View.load(out)
     assert view.bundle_id == "g1-smoke-view" and len(view.structure_ids()) == 6
     assert script.main(["verify-view", "--view", str(out), "--smoke"]) == 0
+    # Neither action prints eligible or membership row counts (per-fold class numbers stay off the screen).
+    text = capsys.readouterr().out
+    built, end = json.JSONDecoder().raw_decode(text)
+    verified, _end = json.JSONDecoder().raw_decode(text, end + 1)
+    assert "n_eligible" not in text and "n_rows" not in text
+    for printed in (built, verified):
+        assert printed["n_structures"] == 6 and printed["eligible_matches_membership"] is True
+        assert "n_eligible" not in printed and "n_rows" not in printed["membership"]
+        assert printed["membership"]["sha256"] == view.membership["sha256"]
+    assert built["eligible_ids_sha256"] == view.manifest["eligible"]["ids_sha256"]
+    assert verified["status"] == "verified" and verified["file_modes_enforced"] is True
+    stored = json.loads((view.receipts / views.VERIFY_RECEIPT_NAME).read_text())
+    assert stored["n_eligible"] == 6 and stored["membership"]["n_rows"] == 6  # kept in the private receipt
     with pytest.raises(SystemExit, match="pass --smoke exactly"):
         script.main(["verify-view", "--view", str(out)])
     assert script.main(["build-view", "--fold", "0", "--out", str(tmp_path / "x_test"),
@@ -785,3 +827,445 @@ def test_freeze2_pins_every_scorer_and_baseline_file(tmp_path):
     pinned = set(manifest["code_sha256"]) | set(manifest["additional_code_sha256"])
     assert set(scoring.SCORER_CODE_PATHS) <= pinned, sorted(set(scoring.SCORER_CODE_PATHS) - pinned)
     assert {"src/ec_clean30/baseline.py", "scripts/run_ec_clean30_baseline.py"} <= pinned
+
+
+# ---------------------------------------------------------------------------
+# Phase 3 hooks, overlay identity and file modes from the command line
+
+
+def test_unit_identity_carries_the_freeze1b_and_overlay_keys(smoke_view):
+    command = _command(smoke_view, "F2")
+    assert {"freeze1_sha256", "freeze1b_sha256", "overlay_id", "overlay_sha256"} <= set(command.identity)
+    assert command.identity["freeze1b_sha256"] is None and command.identity["overlay_id"] is None
+    recipe = default_smoke_recipe("F2", lr_index=1)
+    pinned = build_unit_command(smoke_view, recipe, unit_id=smoke_unit_id(0, recipe, refit=False, seed=42),
+                                kind=KIND_INNER, seed=42, runs_dir=smoke_view.root.parent / "runs", step="smoke",
+                                inner_fold=0, freeze1_sha256="a" * 64, freeze1b_sha256="b" * 64)
+    assert (pinned.identity["freeze1_sha256"], pinned.identity["freeze1b_sha256"]) == ("a" * 64, "b" * 64)
+    assert json.loads(pinned.argv[list(pinned.argv).index("--campaign-run-identity") + 1])["freeze1b_sha256"] == \
+        "b" * 64
+    assert check_command(pinned, smoke_view) == []
+    # A view without an overlay record takes no overlay values.
+    with pytest.raises(CommandError, match="overlay record"):
+        build_unit_command(smoke_view, recipe, unit_id="u", kind=KIND_INNER, seed=42, runs_dir=smoke_view.root.parent,
+                           step="smoke", inner_fold=0, overlay_id="ecc30-overlay-v1")
+
+
+def test_verify_unit_honours_a_raised_memory_limit_and_the_overlay_rule(smoke_runs, source, tmp_path):
+    runs, receipts = smoke_runs
+    unit_id = next(unit for unit in receipts if "__inner0__" in unit and "__F4_" in unit)
+    copy = tmp_path / "runs_copy"
+    _copy_unit(runs, unit_id, copy)
+    receipt_path = copy / f"{unit_id}.runner.json"
+    runner = json.loads(receipt_path.read_text())
+    runner["children_peak_rss_bytes"] = 4 * 1024 ** 3
+    receipt_path.write_text(json.dumps(runner))
+    default = verify_unit(copy, unit_id)
+    assert not default["passed"] and not default["checks"]["peak_memory"]["ok"]
+    assert default["checks"]["peak_memory"]["detail"]["limit_bytes"] == 3 * 1024 ** 3
+    raised = verify_unit(copy, unit_id, memory_limit_bytes=8 * 1024 ** 3)
+    assert raised["passed"], {name: item for name, item in raised["checks"].items() if not item["ok"]}
+    assert verify_units(copy, memory_limit_bytes=8 * 1024 ** 3, write=False,
+                        provenance=PROVENANCE)["memory_limit_bytes"] == 8 * 1024 ** 3
+    assert raised["checks"]["overlay_identity"]["ok"] and raised["checks"]["capped"]["ok"]
+    # The view, not the editable receipt, decides whether a unit is real: checked against a fold view (no
+    # overlay), the unit must name the view's overlay and must have run capped, whatever its identity says.
+    fold_root = _fold_dir(tmp_path / "fold_view")
+    build_view(fold=0, layout=SourceLayout.from_data_root(source["data_root"]), out_dir=fold_root,
+               provenance=PROVENANCE)
+    real = verify_unit(copy, unit_id, view=View.load(fold_root), memory_limit_bytes=8 * 1024 ** 3)
+    assert not real["checks"]["smoke_matches_view"]["ok"]
+    assert not real["checks"]["overlay_identity"]["ok"] and not real["checks"]["capped"]["ok"]
+    make_writable(fold_root)
+    runner["unit"]["identity"]["smoke"] = False
+    receipt_path.write_text(json.dumps(runner))
+    flipped = verify_unit(copy, unit_id, memory_limit_bytes=8 * 1024 ** 3)
+    assert not flipped["passed"] and not flipped["checks"]["smoke_matches_view"]["ok"]
+    assert flipped["checks"]["overlay_identity"]["ok"] and flipped["checks"]["capped"]["ok"]
+
+
+def test_fold_views_need_a_cap_prefix_for_probes_and_units(source, tmp_path):
+    from ec_clean30.commands import CAP_PREFIX
+
+    root = _fold_dir(tmp_path)
+    build_view(fold=0, layout=SourceLayout.from_data_root(source["data_root"]), out_dir=root, provenance=PROVENANCE)
+    build_chain_means(root)
+    view = View.load(root)
+    with pytest.raises(CommandError, match="only under a cap prefix"):
+        dry_run(view, probe_families=(), cap_prefix=(), provenance=PROVENANCE, write=False)
+    recipe = default_smoke_recipe("F2")
+    command = build_unit_command(view, recipe, unit_id="ecc30__fold0__cap_case__refit__seed42", kind=KIND_REFIT,
+                                 seed=42, runs_dir=view.default_runs_dir, step="S4")
+    with pytest.raises(CommandError, match="only under a cap prefix"):
+        run_unit(command, view=view, cap_prefix=(), provenance=PROVENANCE)
+    assert not view.default_runs_dir.exists()
+    # A fold view's dry-run receipt without a cap prefix does not clear the view.
+    final = view.chain_means_manifest_sha256("final")
+    receipt = {"status": "passed", "view_manifest_sha256": view.manifest_sha256, "verified_view": True,
+               "verification": {"chain_means": {"final": {"manifest_sha256": final}}}, "cap_prefix": []}
+    (view.receipts / "dry_run_receipt.json").write_text(json.dumps(receipt))
+    with pytest.raises(ViewError, match="ran its probes without a cap prefix"):
+        freeze1_view_record(view.root, require_dry_run=True, provenance=PROVENANCE)
+    receipt["cap_prefix"] = list(CAP_PREFIX)
+    (view.receipts / "dry_run_receipt.json").write_text(json.dumps(receipt))
+    assert freeze1_view_record(view.root, require_dry_run=True, provenance=PROVENANCE)["dry_run_receipt"][
+        "status"] == "passed"
+    make_writable(root)
+
+
+def test_cli_dry_run_passes_the_cap_prefix(smoke_view, monkeypatch, capsys):
+    from ec_clean30 import commands
+
+    seen = {}
+
+    def fake_dry_run(view, **kwargs):
+        seen.clear()
+        seen.update(kwargs, view=view.root)
+        return {"status": "passed", "n_commands_checked": 0, "static_failures": [], "probes": []}
+
+    monkeypatch.setattr(commands, "dry_run", fake_dry_run)
+    script = _script()
+    base = ["dry-run", "--smoke", "--view", str(smoke_view.root)]
+    assert script.main([*base, "--cap-prefix", "systemd-run --scope -q -p 'MemoryMax=20G' -p CPUQuota=800%"]) == 0
+    assert seen["cap_prefix"] == ("systemd-run", "--scope", "-q", "-p", "MemoryMax=20G", "-p", "CPUQuota=800%")
+    assert script.main(base) == 0 and seen["cap_prefix"] == commands.CAP_PREFIX
+    with pytest.raises(SystemExit, match="needs a command prefix"):
+        script.main([*base, "--cap-prefix", "  "])
+    capsys.readouterr()
+
+
+def test_cli_apply_view_modes(source, tmp_path, capsys):
+    script = _script()
+    out = _smoke_dir(tmp_path)
+    build_smoke_view(source, out, chain_means=False, provenance=PROVENANCE)
+    manifest_sha = provenance.sha256_file(out / views.VIEW_MANIFEST_NAME)
+    capsys.readouterr()
+    assert script.main(["apply-view-modes", "--smoke", "--view", str(out)]) == 0
+    printed = json.loads(capsys.readouterr().out)
+    assert printed["outcome"] == "enforced" and printed["view_manifest_sha256"] == manifest_sha
+    stored = out / "receipts" / views.FILE_MODES_APPLIED_RECEIPT_NAME
+    assert provenance.sha256_file(stored) == printed["receipt_sha256"]
+    assert json.loads(stored.read_text())["provenance"]["smoke"] is True
+    with pytest.raises(SystemExit, match="pass --smoke exactly"):
+        script.main(["apply-view-modes", "--view", str(out)])
+    assert script.main(["verify-view", "--smoke", "--view", str(out)]) == 0
+    assert json.loads(capsys.readouterr().out)["file_modes_enforced"] is True
+    make_writable(out)
+
+
+# ---------------------------------------------------------------------------
+# Training-side input actions from the command line (cohort-audit, r2-lists, overlay, simulate)
+
+CLEAN_GIT = {"head": "c" * 40, "branch": "main", "clean": True, "status_entries": 0, "status_sample": []}
+DIRTY_ENTRY = "untracked_entry_marker.txt"
+SWEEP = {
+    "format": simulation.SWEEP_FORMAT, "sweep_id": "cli_sweep", "n_replicates": 2,
+    "rules": {"current": {"n_draws": 50, "stratified": True}}, "noise_base": {"fit_shift_sd": 0.15},
+    "noise_points": {"central": {}},
+    "groups": [{"group": "null", "folds": [0, 1], "rules": ["current"], "looks": [1], "noise_points": ["central"]}],
+}
+
+
+def _git_states(monkeypatch, modules, *, repo=None):
+    """Stand in for each module's clean-tree check: a clean checkout, or the real check on ``repo``."""
+    calls = []
+
+    def state(*, smoke):
+        calls.append(smoke)
+        return dict(CLEAN_GIT) if repo is None else provenance.real_action_git_state(smoke=smoke, repo=repo)
+
+    for module in modules:
+        monkeypatch.setattr(module, "real_action_git_state", state)
+    return calls
+
+
+def _run_cli(capsys, argv):
+    """Run the runner's main on ``argv``; returns (exit code, stdout, stderr)."""
+    capsys.readouterr()
+    code = _script().main([str(item) for item in argv])
+    captured = capsys.readouterr()
+    return code, captured.out, captured.err
+
+
+def _named(text: str, world) -> list[str]:
+    return sorted(accession for accession in world.stems if accession in text)
+
+
+@pytest.fixture(scope="module")
+def dirty_checkout(tmp_path_factory):
+    """A git checkout with one untracked file, whose name a refusal must not show."""
+    repo = tmp_path_factory.mktemp("dirty_checkout")
+    _git(repo, "init", "-q")
+    (repo / "tracked.txt").write_text("one\n")
+    _git(repo, "add", "tracked.txt")
+    _git(repo, "commit", "-q", "-m", "fixture")
+    (repo / DIRTY_ENTRY).write_text("new\n")
+    return repo
+
+
+@pytest.fixture(scope="module")
+def phase2_world(tmp_path_factory):
+    """Five-fold synthetic data root, a passed cohort audit, the training-side identity chain (fake pinned search)
+    and R2 lists, in a campaign root named after the campaign (the overlay tests' builder)."""
+    return build_world(tmp_path_factory.mktemp("phase2_world"))
+
+
+@pytest.fixture
+def pinned_search(phase2_world, monkeypatch):
+    """The fake search binary counts as the pinned MMseqs2 build (the identity loaders require it)."""
+    monkeypatch.setattr(identity, "MMSEQS_BINARY_SHA256", phase2_world.binary_sha)
+
+
+@pytest.fixture(scope="module")
+def cli_overlay(phase2_world, tmp_path_factory):
+    """A real overlay built through the runner (the clean-tree check stood in), with what the build printed."""
+    world = phase2_world
+    campaign_dir = tmp_path_factory.mktemp("phase2_overlay") / campaign.CAMPAIGN_ID
+    root = campaign_dir / overlay.OVERLAYS_DIR / overlay.DEFAULT_OVERLAY_ID
+    printed = io.StringIO()
+    with pytest.MonkeyPatch.context() as patch, contextlib.redirect_stdout(printed):
+        patch.setattr(identity, "MMSEQS_BINARY_SHA256", world.binary_sha)
+        calls = _git_states(patch, [overlay])
+        code = _script().main(["overlay", "build", "--out", str(root), "--cohort", str(world.cohort),
+                               "--identity-root", str(world.identity_root), "--r2-lists", str(world.r2),
+                               "--d2-option", "b"])
+    return {"root": root, "code": code, "printed": printed.getvalue(), "calls": calls}
+
+
+def test_cli_wires_the_input_actions_to_their_modules():
+    script = _script()
+    parser = script.build_parser()
+    cases = [
+        (["cohort-audit", "--out", "o", "--label-table", "l", "--label-table-sha256", "a", "--sequence-map", "m",
+          "--sequence-map-sha256", "b"], cohort.action_cohort_audit),
+        (["r2-lists", "--identity-root", "i", "--cohort", "c", "--out", "o"], r2_lists.action_r2_lists),
+        (["overlay", "build", "--out", "o", "--cohort", "c", "--identity-root", "i", "--r2-lists", "r",
+          "--d2-option", "b"], overlay.action_overlay_build),
+        (["overlay", "verify", "--overlay", "o"], overlay.action_overlay_verify),
+        (["simulate", "--sweep", "s", "--out", "o", "--calibrate-from", "0=p", "--calibrate-from", "2=q"],
+         script.action_simulate),
+    ]
+    for argv, handler in cases:
+        assert parser.parse_args(argv).handler is handler, argv
+    simulate = parser.parse_args(cases[-1][0])
+    assert simulate.calibrate_from == ["0=p", "2=q"] and simulate.points is None and simulate.smoke is False
+    assert simulate.max_forecast_cpu_hours == simulation.DEFAULT_MAX_FORECAST_CPU_HOURS
+    audit = parser.parse_args(cases[0][0])
+    assert audit.coordinate_tolerance == cohort.A3_COORDINATE_TOLERANCE and audit.expected_sequence_difference == []
+    for argv in (["overlay"], ["overlay", "build", "--out", "o", "--cohort", "c", "--identity-root", "i",
+                               "--r2-lists", "r", "--d2-option", "c"],
+                 [*cases[0][0], "--expected-label-eligible", "1,2,3,4,5"]):
+        with pytest.raises(SystemExit):
+            parser.parse_args(argv)
+    # Every action has an entry in the docstring's action list, which is the --help description.
+    sub = next(action for action in parser._actions if isinstance(action, argparse._SubParsersAction))
+    assert {"cohort-audit", "r2-lists", "overlay", "simulate"} <= set(sub.choices)
+    missing = [name for name in sub.choices
+               if not re.search(rf"^  (?:[a-z-]+, )*{re.escape(name)}(?:,| |$)", script.__doc__, re.M)]
+    assert missing == [] and script.__doc__.strip() in parser.format_help()
+    assert {"overlay build", "overlay verify"} <= {line.strip()[:14].strip() for line in script.__doc__.splitlines()}
+
+
+def test_cli_parser_is_torch_free_and_protected_modules_load_no_input_module():
+    """Building the parser imports the input modules (torch-free); the modules rule R-CMD protects load none."""
+    code = "\n".join([
+        "import importlib.util, sys",
+        "sys.path.insert(0, 'src')",
+        "import ec_clean30.campaign, ec_clean30.commands, ec_clean30.views, ec_clean30.provenance, ec_clean30.identity",
+        "print(sorted(name for name in ('cohort', 'overlay', 'r2_lists', 'simulation')",
+        "             if 'ec_clean30.' + name in sys.modules))",
+        "spec = importlib.util.spec_from_file_location('runner', 'scripts/run_ec_clean30_campaign.py')",
+        "module = importlib.util.module_from_spec(spec)",
+        "spec.loader.exec_module(module)",
+        "module.build_parser()",
+        "print('torch' in sys.modules, 'ec_clean30.overlay' in sys.modules, 'ec_clean30.simulation' in sys.modules)",
+    ])
+    env = {**os.environ, "MKL_THREADING_LAYER": "GNU"}
+    completed = subprocess.run([PYTHON, "-c", code], cwd=ROOT, capture_output=True, text=True, env=env, timeout=120)
+    assert completed.returncode == 0, completed.stderr[-2000:]
+    assert completed.stdout.splitlines() == ["[]", "False True False"]
+
+
+def test_cli_cohort_audit_exit_codes_and_refusals(phase2_world, dirty_checkout, tmp_path, monkeypatch, capsys):
+    world = phase2_world
+    labels = world.base / "source" / "labels"
+    table, sequence_map = labels / "native_label_table.tsv", labels / "sequence_map.tsv"
+
+    def argv(out, *extra, label_table=table):
+        return ["cohort-audit", "--out", out, "--label-table", label_table,
+                "--label-table-sha256", provenance.sha256_file(label_table), "--sequence-map", sequence_map,
+                "--sequence-map-sha256", provenance.sha256_file(sequence_map), "--data-root", world.data_root, *extra]
+
+    calls = _git_states(monkeypatch, [cohort])
+    out = tmp_path / campaign.CAMPAIGN_ID / cohort.COHORT_FOLDER_NAME
+    code, text, err = _run_cli(capsys, argv(out))
+    assert code == 0, err
+    printed = json.loads(text)
+    assert calls == [False] and printed["status"] == "passed" and printed["failed_checks"] == []
+    assert printed["n_proteins"] == len(world.stems) and printed["out"] == str(out)
+    assert not _named(text + err, world) and "__EC_" not in text + err
+    receipt = json.loads((out / cohort.RECEIPT_NAME).read_text())
+    assert receipt["smoke"] is False and receipt["provenance"]["git"]["head"] == CLEAN_GIT["head"]
+    # Same inputs and code as the world's own audit: the same tables.
+    for name in (cohort.PROTEINS_NAME, cohort.SITES_NAME, cohort.FOLD_COUNTS_NAME.format(fold=0)):
+        assert (out / name).read_bytes() == (world.cohort / name).read_bytes(), name
+    # A written cohort folder is not written again (an input error, exit 2, not a traceback).
+    code, _text, err = _run_cli(capsys, argv(out))
+    assert code == 2 and err.startswith("error: ") and "not empty" in err
+    # A check that fails stops the audit (exit 1); its outputs and receipt are still written.
+    stopped = tmp_path / "stopped" / campaign.CAMPAIGN_ID / cohort.COHORT_FOLDER_NAME
+    code, text, _err = _run_cli(capsys, argv(stopped, "--smoke", "--expected-sequence-difference", "P1000:A1G"))
+    printed = json.loads(text)
+    assert code == 1 and printed["status"] == "stopped" and calls[-1] is True
+    assert printed["failed_checks"] == ["sequence_map_differences_as_expected"]
+    assert json.loads((stopped / cohort.RECEIPT_NAME).read_text())["smoke"] is True
+    # A test-named input is refused before the clean-tree check, and nothing is written.
+    named = tmp_path / "copies" / "native_label_table_test.tsv"
+    named.parent.mkdir()
+    shutil.copyfile(table, named)
+    before = list(calls)
+    for case in (argv(tmp_path / "named" / campaign.CAMPAIGN_ID / cohort.COHORT_FOLDER_NAME, label_table=named),
+                 argv(tmp_path / "named" / campaign.CAMPAIGN_ID / "cohort_test")):
+        code, _text, err = _run_cli(capsys, case)
+        assert code == 2 and err.startswith("refused: ") and "test" in err
+    assert calls == before and not (tmp_path / "named").exists()
+    # A real audit from a dirty checkout is refused without naming its status entries.
+    _git_states(monkeypatch, [cohort], repo=dirty_checkout)
+    code, _text, err = _run_cli(capsys, argv(tmp_path / "dirty" / campaign.CAMPAIGN_ID / cohort.COHORT_FOLDER_NAME))
+    assert code == 2 and err.startswith("refused: ") and "has 1 uncommitted or untracked entries" in err
+    assert DIRTY_ENTRY not in err and "git status lists the entries" in err and not (tmp_path / "dirty").exists()
+
+
+def test_cli_r2_lists_exit_codes_and_refusals(phase2_world, dirty_checkout, pinned_search, tmp_path_factory,
+                                              monkeypatch, capsys):
+    world = phase2_world
+    # The comparator refuses an allowlist path with any test-named part, and pytest's own tmp_path names the test.
+    tmp_path = tmp_path_factory.mktemp("r2cli")
+    base = ["r2-lists", "--identity-root", world.identity_root, "--cohort", world.cohort]
+    calls = _git_states(monkeypatch, [r2_lists])
+    out = tmp_path / "r2_lists"
+    code, text, err = _run_cli(capsys, [*base, "--out", out, "--fold-work", f"1={world.work(1)}"])
+    assert code == 0, err
+    printed = json.loads(text)
+    assert calls == [False] and printed["smoke"] is False and printed["out"] == str(out)
+    assert printed["r2_allowlists"]["0"]["n_accessions"] == len(world.training(0))
+    for fold in range(1, campaign.N_OUTER_FOLDS):
+        assert printed["r2_allowlists"][str(fold)] == {"file": f"r2_allowlist_fold{fold}.txt", "size_in_receipt": True}
+    assert not _named(text + err, world)
+    assert r2_lists.verify_r2_lists(out)["status"] == "verified"
+    for fold in range(campaign.N_OUTER_FOLDS):
+        name = r2_lists.R2_ALLOWLIST_NAME.format(fold=fold)
+        assert (out / name).read_bytes() == (world.r2 / name).read_bytes(), name
+    # Input errors are one line on the console (exit 2), from the action itself or from main.
+    code, _text, err = _run_cli(capsys, [*base, "--out", out])
+    assert code == 2 and err.startswith("error: The output folder exists")
+    assert calls == [False, False]
+    code, _text, err = _run_cli(capsys, [*base, "--out", tmp_path / "other", "--fold-work", "9=/a"])
+    assert code == 2 and err.startswith("error: ") and "outside 0..4" in err
+    for argv in (["--out", tmp_path / "lists_test"],
+                 ["--out", tmp_path / "other", "--fold-work", f"2={tmp_path / 'fold2_test'}"]):
+        code, _text, err = _run_cli(capsys, [*base, *argv])
+        assert code == 2 and err.startswith("refused: ")
+    assert calls == [False, False]  # each refused before the clean-tree check
+    assert not (tmp_path / "lists_test").exists() and not (tmp_path / "other").exists()
+    _git_states(monkeypatch, [r2_lists], repo=dirty_checkout)
+    code, _text, err = _run_cli(capsys, [*base, "--out", tmp_path / "dirty"])
+    assert code == 2 and err.startswith("refused: ") and DIRTY_ENTRY not in err and not (tmp_path / "dirty").exists()
+    code, text, _err = _run_cli(capsys, [*base, "--out", tmp_path / "smoked", "--smoke"])
+    assert code == 0 and json.loads(text)["smoke"] is True
+
+
+def test_cli_overlay_build_and_verify(phase2_world, cli_overlay, dirty_checkout, pinned_search, tmp_path,
+                                      monkeypatch, capsys):
+    world, root = phase2_world, cli_overlay["root"]
+    assert cli_overlay["code"] == 0 and cli_overlay["calls"] == [False]
+    printed = json.loads(cli_overlay["printed"])
+    assert printed["status"] == "built" and printed["smoke"] is False and printed["overlay"] == str(root)
+    assert printed["n_proteins"] == len(world.stems) and not _named(cli_overlay["printed"], world)
+    manifest = json.loads((root / overlay.MANIFEST_NAME).read_text())
+    assert manifest["provenance"]["git"]["head"] == CLEAN_GIT["head"] and manifest["smoke"] is False
+
+    calls = _git_states(monkeypatch, [overlay])
+    receipt = tmp_path / "overlay_verify.json"
+    code, text, err = _run_cli(capsys, ["overlay", "verify", "--overlay", root, "--receipt", receipt])
+    assert code == 0, err
+    result = json.loads(text)
+    assert calls == [False] and result["status"] == "verified"
+    assert result["manifest_sha256"] == printed["manifest_sha256"] and result["tar_sha256"] == printed["tar_sha256"]
+    assert provenance.sha256_file(receipt) == result["receipt_sha256"]
+    # A changed copy fails verification: exit 1 with the problems printed.
+    copy = tmp_path / "copy" / campaign.CAMPAIGN_ID / overlay.OVERLAYS_DIR
+    shutil.copytree(root.parent, copy)
+    make_writable(copy)
+    (copy / overlay.DEFAULT_OVERLAY_ID / overlay.LABEL_FREE_INDEX_NAME).write_text("accession\n")
+    code, text, _err = _run_cli(capsys, ["overlay", "verify", "--overlay", copy / overlay.DEFAULT_OVERLAY_ID])
+    failed = json.loads(text)
+    assert code == 1 and failed["status"] == "failed" and failed["problems"] and not _named(text, world)
+
+    # Build refusals: one line on the console (exit 2) and nothing written.
+    other = tmp_path / "refusals" / campaign.CAMPAIGN_ID / overlay.OVERLAYS_DIR
+    build = ["overlay", "build", "--out", other / overlay.DEFAULT_OVERLAY_ID, "--cohort", world.cohort,
+             "--identity-root", world.identity_root, "--r2-lists", world.r2]
+    code, _text, err = _run_cli(capsys, [*build, "--d2-option", "d"])
+    assert code == 2 and err.startswith("error: ") and "not built" in err and calls == [False] * 3
+    for argv in ([*build, "--d2-option", "b", "--fold-work", f"2={tmp_path / 'fold2_test'}"],
+                 ["overlay", "build", "--out", other / overlay.DEFAULT_OVERLAY_ID, "--cohort", tmp_path / "cohort_test",
+                  "--identity-root", world.identity_root, "--r2-lists", world.r2, "--d2-option", "b"]):
+        code, _text, err = _run_cli(capsys, argv)
+        assert code == 2 and err.startswith("refused: ")
+    assert calls == [False] * 3  # refused before the clean-tree check
+    _git_states(monkeypatch, [overlay], repo=dirty_checkout)
+    code, _text, err = _run_cli(capsys, [*build, "--d2-option", "b"])
+    assert code == 2 and err.startswith("refused: ") and DIRTY_ENTRY not in err
+    code, _text, err = _run_cli(capsys, ["overlay", "verify", "--overlay", root])
+    assert code == 2 and err.startswith("refused: ") and DIRTY_ENTRY not in err  # a real overlay: clean tree only
+    assert not other.exists() or not any(other.iterdir())
+
+
+def test_cli_simulate_on_the_overlay_copies(phase2_world, cli_overlay, dirty_checkout, pinned_search, tmp_path,
+                                            monkeypatch, capsys):
+    monkeypatch.setattr(simulation, "SEED_SPREAD_POPULATIONS", 40)
+    world, root = phase2_world, cli_overlay["root"]
+    sweep = tmp_path / "sweep.json"
+    sweep.write_text(json.dumps(SWEEP, indent=1))
+    calibrate = [part for fold in (0, 1)
+                 for part in ("--calibrate-from", f"{fold}={root / overlay.IDENTITY_DIR / f'fold{fold}'}")]
+    calls = _git_states(monkeypatch, [simulation])
+    out = tmp_path / "sweep_v1"
+    code, text, err = _run_cli(capsys, ["simulate", "--sweep", sweep, "--out", out, *calibrate])
+    assert code == 0, err
+    payload = json.loads(text)
+    assert calls == [False] and payload["status"] == simulation.STATUS_COMPLETE
+    assert payload["smoke"] is False and payload["points_recorded"] == 2
+    assert "class_proportions" not in text and not _named(text + err, world)
+    # Eligible counts are printed for fold 0 only; the private sweep receipt keeps every fold's.
+    stored = json.loads((out / simulation.RECEIPT_FILE).read_text())["calibrations"]
+    assert payload["calibrations"]["0"] == stored["0"] and stored["1"]["n_proteins"] > 0
+    assert payload["calibrations"]["1"] == {key: value for key, value in stored["1"].items() if key != "n_proteins"}
+    assert len(list((out / simulation.RECORDS_FOLDER).glob("*.json"))) == 2
+    # The forecast limit stops before the next point (exit 4).
+    code, text, _err = _run_cli(capsys, ["simulate", "--sweep", sweep, "--out", tmp_path / "stopped", *calibrate,
+                                         "--max-forecast-cpu-hours", "1e-9"])
+    assert code == simulation.EXIT_STOPPED == 4 and json.loads(text)["status"] == simulation.STATUS_STOPPED
+    # Input errors: one line on the console (exit 2), nothing written.
+    for argv, message in (
+            (["--out", tmp_path / "identity_read", "--calibrate-from", f"0={world.work(0)}",
+              "--calibrate-from", f"1={world.work(1)}"], "campaign's identity folder"),
+            (["--out", tmp_path / "one_fold", calibrate[0], calibrate[1]], "without a --calibrate-from"),
+            (["--out", tmp_path / "unknown", *calibrate, "--points", "no_such_point"], "does not define")):
+        code, _text, err = _run_cli(capsys, ["simulate", "--sweep", sweep, *argv])
+        assert code == 2 and err.startswith("error: ") and message in err, err
+        assert not Path(argv[1]).exists()
+    # Test-named paths are refused before the clean-tree check (a K=PATH value by its path part too).
+    named_sweep = tmp_path / "sweep_test.json"
+    shutil.copyfile(sweep, named_sweep)
+    before = list(calls)
+    for argv in (["--sweep", named_sweep, "--out", tmp_path / "o", *calibrate],
+                 ["--sweep", sweep, "--out", tmp_path / "out_test", *calibrate],
+                 ["--sweep", sweep, "--out", tmp_path / "o", "--calibrate-from", "0=test", *calibrate[2:]]):
+        code, _text, err = _run_cli(capsys, ["simulate", *argv])
+        assert code == 2 and err.startswith("refused: ")
+    assert calls == before and not (tmp_path / "o").exists()
+    _git_states(monkeypatch, [simulation], repo=dirty_checkout)
+    code, _text, err = _run_cli(capsys, ["simulate", "--sweep", sweep, "--out", tmp_path / "dirty", *calibrate])
+    assert code == 2 and err.startswith("refused: ") and DIRTY_ENTRY not in err and not (tmp_path / "dirty").exists()
