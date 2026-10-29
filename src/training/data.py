@@ -11,12 +11,19 @@ from __future__ import annotations
 
 import os
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from data_structures import PocketRecord
 from graph.ring_edges import default_ring_output_dir
+from graph.structure_parsing import (
+    POCKET_GROUPING_CLUSTER,
+    POCKET_GROUPING_STRUCTURE,
+    SELECTED_SITE_EXTRACTION,
+    SELECTED_SITE_POCKET_GROUPINGS,
+)
 from project_paths import resolve_ring_features_dir
 from training.defaults import DEFAULT_STRUCTURE_DIR, DEFAULT_TRAIN_SUMMARY_CSV
 from training.esm_feature_loading import DEFAULT_ESMC_EMBED_DIM
@@ -51,8 +58,17 @@ class PocketLoadResult:
 EC_CLASS_VOCABULARY_CHOICES = ("observed", "fixed_seven")
 
 
-def site_extraction_summary(pockets: List[PocketRecord], skipped_pockets: List[Dict[str, str]]) -> Dict[str, Any]:
-    """Totals of the per-structure selected-site reports, counted once per structure."""
+def site_extraction_summary(
+    pockets: List[PocketRecord],
+    skipped_pockets: List[Dict[str, str]],
+    selected_site_pocket_grouping: str = POCKET_GROUPING_CLUSTER,
+) -> Dict[str, Any]:
+    """Totals of the per-structure selected-site reports, counted once per structure.
+
+    Under structure pocket grouping the totals also name the grouping and count the loaded
+    pockets (one per structure) and the structures whose selected sites the default grouping
+    would have split into several pockets.
+    """
     per_structure: Dict[str, Dict[str, Any]] = {}
     for pocket in pockets:
         report = pocket.metadata.get("site_extraction_report")
@@ -67,6 +83,12 @@ def site_extraction_summary(pockets: List[PocketRecord], skipped_pockets: List[D
     )
     for reason in ("no_selected_sites", "selected_sites_without_pocket"):
         totals[f"structures_skipped_{reason}"] = sum(1 for row in skipped_pockets if row.get("reason") == reason)
+    if selected_site_pocket_grouping != POCKET_GROUPING_CLUSTER:
+        totals["selected_site_pocket_grouping"] = selected_site_pocket_grouping
+        totals["n_pockets"] = len(pockets)
+        totals["structures_with_merged_clusters"] = sum(
+            1 for report in per_structure.values() if report["cluster_grouping_cluster_count"] > 1
+        )
     return totals
 
 
@@ -136,6 +158,7 @@ def load_labeled_pockets_with_report_from_dir(
     feature_inventory_sha256: str | None = None,
     ec_class_vocabulary: str = "observed",
     site_extraction: str = "component",
+    selected_site_pocket_grouping: str = POCKET_GROUPING_CLUSTER,
 ) -> PocketLoadResult:
     """Load labeled pockets from a structure directory and return them with a load report.
 
@@ -153,7 +176,16 @@ def load_labeled_pockets_with_report_from_dir(
     with the strict rule of ``training.ec_classes`` and the fixed index map 1..7, so
     indices never depend on which classes a fold happens to contain; proteins with
     several EC classes are excluded and counted, and unusable annotations raise.
+
+    ``selected_site_pocket_grouping="structure"`` (with ``site_extraction="selected_sites"``)
+    gives one pocket per structure around all its selected sites, and a load that yields two
+    pockets of one structure raises; it enters the parse-cache key, the default ``"cluster"``
+    does not.
     """
+    if selected_site_pocket_grouping not in SELECTED_SITE_POCKET_GROUPINGS:
+        raise ValueError(f"Unsupported selected-site pocket grouping: {selected_site_pocket_grouping!r}")
+    if selected_site_pocket_grouping != POCKET_GROUPING_CLUSTER and site_extraction != SELECTED_SITE_EXTRACTION:
+        raise ValueError("A selected-site pocket grouping other than 'cluster' needs site_extraction='selected_sites'")
     if metal_example_unit == "ion" and required_targets != ("metal",):
         raise ValueError("Ion examples currently require metal-only supervision")
     if ec_class_vocabulary not in EC_CLASS_VOCABULARY_CHOICES:
@@ -231,6 +263,8 @@ def load_labeled_pockets_with_report_from_dir(
     if site_extraction != "component":
         # Only non-default modes enter the kwargs, so default parse-cache entries stay valid.
         load_kwargs["site_extraction"] = site_extraction
+    if selected_site_pocket_grouping != POCKET_GROUPING_CLUSTER:
+        load_kwargs["selected_site_pocket_grouping"] = selected_site_pocket_grouping
     load_results = iter_structure_load_results(structure_files, load_kwargs, workers=workers)
     for loaded_count, (structure_path, (status, outcome)) in enumerate(load_results, start=1):
         if progress_every and (loaded_count % progress_every == 0 or loaded_count == len(structure_files)):
@@ -267,6 +301,14 @@ def load_labeled_pockets_with_report_from_dir(
             f"{len(raw_pockets)} examples, {len(invalid_structures)} invalid structures",
             flush=True,
         )
+
+    if selected_site_pocket_grouping == POCKET_GROUPING_STRUCTURE:
+        # The grouping's rule, checked on what was loaded: never two pockets of one structure.
+        pockets_per_structure = Counter(pocket.structure_id for pocket in raw_pockets)
+        repeated = sorted(structure_id for structure_id, count in pockets_per_structure.items() if count > 1)
+        if repeated:
+            raise ValueError(f"Structure pocket grouping loaded several pockets for {len(repeated)} structure(s), "
+                             f"e.g. {repeated[:3]}")
 
     if cohort is not None:
         raw_pockets = _order_and_check_cohort_examples(raw_pockets, cohort)
@@ -330,7 +372,8 @@ def load_labeled_pockets_with_report_from_dir(
         invalid_structures=invalid_structures,
     )
     if site_extraction != "component":
-        result.feature_report["site_extraction_summary"] = site_extraction_summary(pockets, skipped_pockets)
+        result.feature_report["site_extraction_summary"] = site_extraction_summary(
+            pockets, skipped_pockets, selected_site_pocket_grouping)
     return PocketLoadResult(
         pockets=result.pockets,
         feature_report=result.feature_report,
@@ -429,6 +472,7 @@ def load_training_pockets_with_report_from_dir(
     feature_inventory_sha256: str | None = None,
     ec_class_vocabulary: str = "observed",
     site_extraction: str = "component",
+    selected_site_pocket_grouping: str = POCKET_GROUPING_CLUSTER,
 ) -> PocketLoadResult:
     """Load the full training set from a structure directory with a load report."""
     return load_labeled_pockets_with_report_from_dir(
@@ -457,6 +501,7 @@ def load_training_pockets_with_report_from_dir(
         feature_inventory_sha256=feature_inventory_sha256,
         ec_class_vocabulary=ec_class_vocabulary,
         site_extraction=site_extraction,
+        selected_site_pocket_grouping=selected_site_pocket_grouping,
     )
 
 

@@ -1,7 +1,8 @@
 """Data overlay of the EC class vs CLEAN30 campaign: builder and verifier (step P2-7; torch-free at import).
 
 The overlay is one folder of byte copies (never links) of every training-side input the later
-steps read, laid out like the source data root, so ``build-view --data-root <overlay>
+steps read (under decision A1 option (d) the external feature files are derived instead, see
+below), laid out like the source data root, so ``build-view --data-root <overlay>
 --esm-dir <overlay>/esm --external-root <overlay>/external`` works unchanged and the inner tables
 can be read after the identity audit makes the campaign's own identity folder test-bearing:
 
@@ -10,8 +11,11 @@ can be read after the identity audit makes the campaign's own identity folder te
 - every structure the five manifests name, at the same path relative to the data root (so the
   copied manifests resolve inside the overlay), e.g. ``structure_store/objects/...``;
 - ``esm/<stem>_chain_<chain>_esmc.pt`` with its ``.json`` sidecar and
-  ``external/<stem>/residue_features.json`` of every protein (byte copies under decision A1
-  option (b); the other options need the derived-feature builder, which is not built);
+  ``external/<stem>/residue_features.json`` of every protein: byte copies under decision A1 option
+  (b); under option (d) each external file is derived from its source (``D2_DERIVATION_RULE``):
+  ``custom_charge_distance_proxy`` counts only the protein's selected (catalytic) metal atoms,
+  resolved from its training site rows as the trainer resolves them, and every other value and
+  string stays as stored. Option (a) is not built;
 - ``identity/fold<k>/``: every file the identity loaders read for fold k's metallo training chain
   and inner steps (fasta receipt, node table and FASTAs; ``search_metallo_train/`` receipt and
   sorted output; edges receipt and tables; inner components, links and receipt; assignment
@@ -36,14 +40,18 @@ given, file-mode outcome; it binds the manifest and tar SHA-256 values). Mirror 
 
 Rules: inputs by exact names only (no folder is listed and no test-side file is opened); the
 cohort audit must have passed and the R2 lists must verify; every copied structure, ESMC payload,
-sidecar and external file must hash to what the cohort audit recorded, and the training files to
-what it read; the identity chain must load with the identity tool's own loaders, have read the
-same five training site tables and manifests as the cohort audit (fasta receipt, assignment
-receipt and inner certificate), name exactly the fold's training proteins, and match the chain
-the R2 lists were built from; an identity folder that holds any complement (test-side) output is
-refused; symlinks, test-named paths, an existing output and (for a real overlay) a smoke input or
-a place other than ``<campaign root>/overlay/<overlay id>`` are refused. The folder is assembled
-in a sibling staging folder, verified there, then renamed.
+sidecar and external file (the source of a derived one) must hash to what the cohort audit
+recorded, and the training files to what it read; a derived file is marked in the manifest
+(origin ``derived`` with the rule, the source and derived SHA-256 values, the structure and the
+selected sites) and the label-free index records its SHA-256; the identity chain must load with
+the identity tool's own loaders, have read the same five training site tables and manifests as
+the cohort audit (fasta receipt, assignment receipt and inner certificate), name exactly the
+fold's training proteins, and match the chain the R2 lists were built from; an identity folder
+that holds any complement (test-side) output is refused; symlinks, test-named paths, an existing
+output and, for a real overlay, a smoke input, a D2 option other than the one the cohort audit
+recommends for decision A1 (``a1_recommended_option``) or a place other than
+``<campaign root>/overlay/<overlay id>`` are refused (a smoke overlay may take either built
+option). The folder is assembled in a sibling staging folder, verified there, then renamed.
 Messages name folds, roles, files without accessions and counts, never an accession or a
 per-protein file name; a refusal of a reused reader that can name one is shown without its text,
 and an operating-system error is shown as its errno name only (its text names the path).
@@ -52,7 +60,13 @@ and an operating-system error is shown as its errno name only (its text names th
 copies (each protein once per role, the identity loaders on the copies, the R2 lists, the
 derived lists), rescans the strings, and checks the tar: its SHA-256 against the ``.sha256``
 file, its member list against the manifest, and a deterministic re-creation from the folder. The
-build receipt must bind the manifest and the tar (required for a real overlay).
+build receipt must bind the manifest and the tar (required for a real overlay). The manifest's
+D2 block must hold this code's policy text for its option and the copied cohort receipt's
+recommendation (which a real overlay must follow), and its rules block this code's rules for
+that option. Under option (d) each derived file must carry its derivation record, and its charge
+proxy is recomputed from the overlay's own structure and site tables with the selected metal
+atoms only (the source files stay outside the overlay, so the other values are bound by the
+recorded SHA-256 values).
 
 Runner wiring (``scripts/run_ec_clean30_campaign.py``)::
 
@@ -62,9 +76,11 @@ Runner wiring (``scripts/run_ec_clean30_campaign.py``)::
 ``add_overlay_arguments`` adds the sub-actions ``build`` and ``verify`` with their handlers;
 ``OverlayError`` is a ``ViewError``, so the runner's existing error handling applies::
 
-    overlay build --out DIR --cohort DIR --identity-root DIR --r2-lists DIR --d2-option {a,b,d}
+    overlay build --out DIR --cohort DIR --identity-root DIR --r2-lists DIR --d2-option {b,d}
                   [--fold-work K=PATH ...] [--data-root D [--esm-dir E] [--external-root X]] [--smoke]
     overlay verify --overlay DIR [--receipt FILE]
+
+``--d2-option`` also accepts ``a`` (refused: not built) and refuses ``c``.
 
 ``build`` exits 0 when the overlay is written; ``verify`` exits 0 when every check passes and 1
 (problems printed) otherwise. Both refuse a dirty tree unless the overlay is a smoke one.
@@ -79,12 +95,14 @@ import errno
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import re
 import stat
 import tarfile
 from typing import Any, BinaryIO, Iterable, Mapping, Optional, Sequence
+import warnings
 
 from ec_clean30 import cohort, identity, r2_lists
 from ec_clean30.campaign import CAMPAIGN_ID, N_OUTER_FOLDS
@@ -93,8 +111,8 @@ from ec_clean30.provenance import (
     refuse_test_paths, sha256_bytes, utc_now, write_new_json,
 )
 from ec_clean30.views import (
-    ESM_DIR, EXTERNAL_DIR, EXTERNAL_FEATURE_FILE, FORBIDDEN_DATA_ROOT_NAMES, OVERLAY_MANIFEST_NAME, SourceLayout,
-    ViewError, _data_relative, _set_permissions, esm_file_name, esm_sidecar_name, read_training_sources,
+    ESM_DIR, EXTERNAL_DIR, EXTERNAL_FEATURE_FILE, FORBIDDEN_DATA_ROOT_NAMES, OVERLAY_D2_POLICY, OVERLAY_MANIFEST_NAME,
+    SourceLayout, ViewError, _data_relative, _set_permissions, esm_file_name, esm_sidecar_name, read_training_sources,
 )
 from training.ec_classes import STATUS_AMBIGUOUS, STATUS_OK, accession_from_structure_id
 from training.ec_membership import EcMembershipError
@@ -103,7 +121,8 @@ from training.ec_membership import EcMembershipError
 OVERLAY_FORMAT = "deepmzyme_ec_clean30_data_overlay_v1"
 OVERLAY_SCHEMA_VERSION = 1
 OVERLAY_KIND = "data_overlay"
-OVERLAY_HELP = "Data overlay: byte copies of every training-side input of later steps, and its verifier (P2-7)."
+OVERLAY_HELP = ("Data overlay: copies of every training-side input of later steps (external features derived under "
+                "decision A1 option d), and its verifier (P2-7).")
 DEFAULT_OVERLAY_ID = "ecc30-overlay-v1"
 # A real overlay's folder name is its ID; it lives at <campaign root>/overlay/<overlay id>.
 REAL_OVERLAY_ID_RE = re.compile(r"^ecc30-overlay-v[0-9]+$")
@@ -144,13 +163,36 @@ ROLES: tuple[str, ...] = (ROLE_TRAINING_MANIFEST, ROLE_TRAINING_SITE_TABLE, ROLE
 PER_PROTEIN_ROLES = frozenset({ROLE_STRUCTURE, ROLE_ESM, ROLE_ESM_SIDECAR, ROLE_EXTERNAL})
 SCAN_ROLES: tuple[str, ...] = (ROLE_ESM, ROLE_ESM_SIDECAR, ROLE_EXTERNAL)
 
-# Decision A1 (D2): (b) copies external features unchanged; (d) and (a) need the derived-feature builder.
+# Decision A1 (D2): (b) copies external features unchanged; (d) derives them (only the charge proxy changes);
+# (a), regenerating every feature on metal-filtered structures, is not built. A real overlay takes the option the
+# cohort audit recommends (a1_recommended_option). The policy texts are the ones a view states (views.py).
 D2_OPTIONS: tuple[str, ...] = ("a", "b", "d")
-D2_OPTIONS_BUILT: tuple[str, ...] = ("b",)
-D2_POLICY = {
-    "b": "external features copied unchanged; they were computed on the full structure, including metals outside the "
-         "selected sites (decision A1 option b; disclosed)",
-}
+D2_OPTIONS_BUILT: tuple[str, ...] = ("b", "d")
+D2_POLICY: Mapping[str, str] = OVERLAY_D2_POLICY
+D2_DERIVED_FEATURE = "custom_charge_distance_proxy"
+# A selected site's metal atom in the feature module's parse must lie this close to the trainer's record (Å).
+D2_SELECTED_COORDINATE_TOLERANCE = 0.001
+D2_DERIVATION_RULE = (
+    "custom_charge_distance_proxy := the stored value minus, for a charged residue, the sum over the metal atoms "
+    "outside the selected sites of q_residue * q_metal / max(d, 2.0) (feature_extraction.core: residue geometry, "
+    "metal atoms, formula and constants), i.e. the residue-pair term plus the selected metal atoms' terms. A "
+    "selected metal atom is one whose (chain, residue number) is a selected site of the protein's training site "
+    "rows (training.site_filter.selected_site_ids_for_structure, key mode accession_ec; "
+    "graph.structure_parsing.metal_record_selected_site_id) and that equals the trainer's metal record of that site "
+    f"(element, coordinates within {D2_SELECTED_COORDINATE_TOLERANCE} Å). The value recomputed with every metal "
+    f"must equal the stored one for every residue (rel {cohort.CHARGE_PROXY_REL_TOLERANCE} or abs "
+    f"{cohort.CHARGE_PROXY_ABS_TOLERANCE}). Every other value and string is kept; the file is written as "
+    "json.dumps(payload, indent=2) in UTF-8, the form feature_extraction.generate_features writes"
+)
+D2_HASHES_RULE = (
+    "structures, ESMC payloads and sidecars hash to the cohort audit's values, and so does the source of each derived "
+    "external file (decision A1 option d; origin 'derived' with its rule and SHA-256 values); the training manifests "
+    "and site tables hash to the files the cohort audit read, cohort and R2 outputs to their receipts"
+)
+D2_COPIES_RULE = (
+    "byte copies of regular files read by exact names, except the external feature files, which are derived from "
+    "their sources (decision A1 option d; d2.derivation.rule); symlinks and test-named paths refused"
+)
 TAR_FILE_MODE = 0o444
 TAR_DIR_MODE = 0o555
 TAR_RULE = ("Python tarfile, POSIX (pax) format, members sorted by name under '<overlay id>/', every parent folder "
@@ -430,14 +472,28 @@ class _Protein:
 
 
 @dataclass(frozen=True)
+class _Derivation:
+    """How one external feature file is derived (decision A1 option d)."""
+    stem: str
+    structure: str  # the structure's path inside the overlay (and relative to the source data root)
+    source_sha256: str  # the cohort audit's SHA-256 of the source file
+    selected_sites: tuple[tuple[str, int], ...]
+
+
+@dataclass(frozen=True)
 class _Item:
-    """One overlay file: where it goes, its role and origin, and its source (or bytes) with the expected SHA-256."""
+    """One overlay file: where it goes, its role and origin, and its source (or bytes) with the expected SHA-256.
+
+    A derived item (``derive`` set) is written from its source by ``derive_external_features``; its
+    expected SHA-256 is known only from a built manifest (verification).
+    """
     path: str
     role: str
     origin: Mapping[str, Any]
     source: Optional[Path] = None
     data: Optional[bytes] = None
     expected_sha256: Optional[str] = None
+    derive: Optional[_Derivation] = None
 
 
 @dataclass(frozen=True)
@@ -605,6 +661,38 @@ def _union(layout: SourceLayout, cohort_info: _Cohort) -> tuple[dict[int, dict[s
                                  size_bytes=entry["key"][3])
              for accession, entry in sorted(entries.items())}
     return folds, union
+
+
+def _selected_sites(folds: Mapping[int, Mapping[str, Any]],
+                    union: Mapping[str, _Protein]) -> dict[str, tuple[tuple[str, int], ...]]:
+    """Each protein's selected (chain, residue number) sites, as the trainer selects them from the site tables.
+
+    The keys of the five training site tables (``training.site_filter.load_allowed_site_metal_labels``:
+    catalytic rows only) select the sites of the protein's structure name
+    (``selected_site_ids_for_structure``, key mode ``accession_ec``); the cohort audit checked that
+    every training file that holds a protein holds the same site rows.
+    """
+    from training.site_filter import SiteKeyIndex, load_allowed_site_metal_labels, selected_site_ids_for_structure
+
+    keys: set = set()
+    for fold in range(N_OUTER_FOLDS):
+        try:
+            keys.update(load_allowed_site_metal_labels(Path(folds[fold]["csv_path"])))
+        except Exception as exc:  # the reader's messages can quote a site key (an accession)
+            raise _withheld(exc, f"Fold {fold}'s training site table") from None
+    index = SiteKeyIndex(keys)
+    selected: dict[str, tuple[tuple[str, int], ...]] = {}
+    for accession, protein in union.items():
+        try:
+            sites = selected_site_ids_for_structure(Path(protein.structure_name), index, key_mode="accession_ec")
+        except ValueError as exc:
+            raise _withheld(exc, "A training site table's selected sites") from None
+        selected[accession] = tuple(sorted(sites))
+    empty = sum(1 for sites in selected.values() if not sites)
+    if empty:
+        raise OverlayError(f"{empty} proteins have no selected site in the training site tables; option d counts the "
+                           "selected metal atoms only, so every protein needs one.")
+    return selected
 
 
 def _complement_names(fold: int) -> tuple[str, ...]:
@@ -780,10 +868,69 @@ def _r2_inputs(r2_dir: str | os.PathLike, identity_info: Mapping[int, Mapping[st
     return {"root": root, "receipt": receipt, "receipt_sha256": verified["receipt_sha256"], "outputs": outputs}
 
 
+def _label_free_index_item(cohort_info: _Cohort,
+                           external_sha256: Optional[Mapping[str, str]] = None) -> _Item:
+    """The label-free index; ``external_sha256`` (accession -> SHA-256) gives the derived external files' values
+    in place of the cohort audit's (decision A1 option d)."""
+    rows = []
+    for accession in sorted(cohort_info.proteins):
+        row = {column: cohort_info.proteins[accession][column] for column in LABEL_FREE_INDEX_COLUMNS}
+        if external_sha256 is not None:
+            row["external_sha256"] = external_sha256.get(accession, "")
+        rows.append(row)
+    origin: dict[str, Any] = {"kind": "derived", "rule": RULES["label_free_index"],
+                              "from": {"cohort_proteins_sha256": cohort_info.outputs[cohort.PROTEINS_NAME]}}
+    if external_sha256 is not None:
+        origin["from"]["external_sha256"] = "the derived external feature files (decision A1 option d)"
+    return _Item(LABEL_FREE_INDEX_NAME, ROLE_LABEL_FREE_INDEX, origin, data=_tsv_bytes(LABEL_FREE_INDEX_COLUMNS, rows))
+
+
+def _recorded_derived_sha256(recorded: Optional[Mapping[str, Mapping[str, Any]]], path: str) -> Optional[str]:
+    """The derived SHA-256 a built manifest records for ``path`` (``None`` when absent or malformed)."""
+    entry = (recorded or {}).get(path)
+    origin = entry.get("origin") if isinstance(entry, Mapping) else None
+    digest = origin.get("derived_sha256") if isinstance(origin, Mapping) else None
+    return digest if isinstance(digest, str) and SHA256_RE.match(digest) else None
+
+
+def d2_block(d2_option: str, recommended: Optional[str]) -> dict[str, Any]:
+    """The manifest's D2 block without the derivation record: the option, its policy text and the cohort audit's
+    recommendation for decision A1."""
+    return {"option": d2_option, "policy": D2_POLICY[d2_option], "cohort_a1_recommended_option": recommended,
+            "follows_cohort_recommendation": d2_option == recommended}
+
+
+def overlay_rules(d2_option: str) -> dict[str, str]:
+    """The manifest's rules block: ``RULES``, with the copy and hash rules of the derived external files under
+    option d."""
+    rules = dict(RULES)
+    if d2_option == "d":
+        rules.update(copies=D2_COPIES_RULE, hashes=D2_HASHES_RULE)
+    return rules
+
+
+def _check_d2_recommendation(d2_option: str, cohort_receipt: Mapping[str, Any], *, smoke: bool) -> None:
+    """A real overlay takes the D2 option the cohort audit recommends for decision A1; a smoke one either."""
+    recommended = cohort_receipt.get("a1_recommended_option")
+    if not smoke and d2_option != recommended:
+        raise OverlayError(f"A real overlay takes the D2 option the cohort audit recommends for decision A1 "
+                           f"({recommended!r}); option {d2_option!r} is refused (a smoke overlay may take either "
+                           "built option).")
+
+
 def _collect(*, layout: SourceLayout, cohort_dir: str | os.PathLike, identity_root: str | os.PathLike,
-             fold_work: Any, r2_dir: str | os.PathLike, smoke: bool) -> _Plan:
-    """Read and cross-check every input; return the overlay's file list (nothing is written)."""
+             fold_work: Any, r2_dir: str | os.PathLike, smoke: bool, d2_option: str,
+             recorded_entries: Optional[Mapping[str, Mapping[str, Any]]] = None) -> _Plan:
+    """Read and cross-check every input; return the overlay's file list (nothing is written).
+
+    Under option d the external files are derived items. ``recorded_entries`` (a built manifest's
+    entries by path, when an overlay is verified) gives their derived SHA-256 values; without it (a
+    build) the label-free index, which records them, is left out and written after the derivation.
+    """
+    if d2_option not in D2_OPTIONS_BUILT:
+        raise OverlayError(f"D2 option {d2_option!r} cannot be built or verified; only {list(D2_OPTIONS_BUILT)}.")
     cohort_info = _load_cohort(cohort_dir, smoke=smoke)
+    _check_d2_recommendation(d2_option, cohort_info.receipt, smoke=smoke)
     folds, union = _union(layout, cohort_info)
     if set(union) != set(cohort_info.proteins):
         raise OverlayError(f"The training sides hold {len(union)} proteins and {cohort.PROTEINS_NAME} "
@@ -795,6 +942,7 @@ def _collect(*, layout: SourceLayout, cohort_dir: str | os.PathLike, identity_ro
         raise OverlayError(f"{differing} structures differ from the SHA-256 the cohort audit recorded.")
     identity_info = _identity_inputs(identity_root, fold_work, folds)
     r2_info = _r2_inputs(r2_dir, identity_info, cohort_info, smoke=smoke)
+    selected = _selected_sites(folds, union) if d2_option == "d" else {}
 
     items: list[_Item] = []
     for fold in range(N_OUTER_FOLDS):
@@ -816,9 +964,20 @@ def _collect(*, layout: SourceLayout, cohort_dir: str | os.PathLike, identity_ro
                                expected_sha256=recorded[column]))
         relative = f"{protein.stem}/{EXTERNAL_FEATURE_FILE}"
         external = cohort.protein_layout_path(layout.external_root, protein.stem) / EXTERNAL_FEATURE_FILE
-        items.append(_Item(f"{EXTERNAL_DIR}/{relative}", ROLE_EXTERNAL,
-                           {"kind": "copy", "root": "external_root", "path": relative},
-                           source=external, expected_sha256=recorded["external_sha256"]))
+        if d2_option != "d":
+            items.append(_Item(f"{EXTERNAL_DIR}/{relative}", ROLE_EXTERNAL,
+                               {"kind": "copy", "root": "external_root", "path": relative},
+                               source=external, expected_sha256=recorded["external_sha256"]))
+            continue
+        sites = selected[accession]
+        origin = {"kind": "derived", "root": "external_root", "path": relative, "rule": D2_DERIVATION_RULE,
+                  "source_sha256": recorded["external_sha256"], "structure": protein.relative,
+                  "structure_sha256": protein.sha256,
+                  "selected_sites": [f"{chain}_{resseq}" for chain, resseq in sites]}
+        items.append(_Item(f"{EXTERNAL_DIR}/{relative}", ROLE_EXTERNAL, origin, source=external,
+                           expected_sha256=_recorded_derived_sha256(recorded_entries, f"{EXTERNAL_DIR}/{relative}"),
+                           derive=_Derivation(stem=protein.stem, structure=protein.relative,
+                                              source_sha256=recorded["external_sha256"], selected_sites=sites)))
     for fold, info in identity_info.items():
         folder = f"{IDENTITY_DIR}/{IDENTITY_FOLD_DIR.format(fold=fold)}"
         for name in info["names"]:
@@ -849,12 +1008,13 @@ def _collect(*, layout: SourceLayout, cohort_dir: str | os.PathLike, identity_ro
                             "from": {"membership_sha256": inputs.membership.file_sha256,
                                      "certificate_sha256": inputs.certificate_sha256}},
                            data=_lines_bytes(identity_info[fold]["membership_ids"])))
-    index_rows = [{column: cohort_info.proteins[accession][column] for column in LABEL_FREE_INDEX_COLUMNS}
-                  for accession in sorted(cohort_info.proteins)]
-    items.append(_Item(LABEL_FREE_INDEX_NAME, ROLE_LABEL_FREE_INDEX,
-                       {"kind": "derived", "rule": RULES["label_free_index"],
-                        "from": {"cohort_proteins_sha256": cohort_info.outputs[cohort.PROTEINS_NAME]}},
-                       data=_tsv_bytes(LABEL_FREE_INDEX_COLUMNS, index_rows)))
+    if d2_option != "d":
+        items.append(_label_free_index_item(cohort_info))
+    elif recorded_entries is not None:
+        derived = {item.path: item.expected_sha256 for item in items if item.derive is not None}
+        items.append(_label_free_index_item(cohort_info, {
+            accession: derived.get(f"{EXTERNAL_DIR}/{protein.stem}/{EXTERNAL_FEATURE_FILE}") or ""
+            for accession, protein in union.items()}))
 
     paths = Counter(item.path for item in items)
     repeated = sorted(path for path, count in paths.items() if count > 1)
@@ -865,6 +1025,270 @@ def _collect(*, layout: SourceLayout, cohort_dir: str | os.PathLike, identity_ro
         raise HeldOutInputError("An overlay path would name a test or mixed folder; refused.")
     return _Plan(items=tuple(sorted(items, key=lambda item: item.path)), cohort=cohort_info, folds=folds, union=union,
                  identity=identity_info, r2=r2_info)
+
+
+# ---------------------------------------------------------------------------
+# Derived external features (decision A1 option d)
+# ---------------------------------------------------------------------------
+
+ResidueKey = tuple[str, int, str]
+
+
+class ExternalDerivationError(ValueError):
+    """An external feature file cannot be derived or checked; ``reason`` is a fixed token (never a path or a stem)."""
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
+
+
+@dataclass(frozen=True)
+class ChargeProxyTerms:
+    """``custom_charge_distance_proxy`` of every residue the feature module builds, recomputed three ways.
+
+    ``every_metal``: the residue-pair term plus every metal atom's term (what a stored value equals);
+    ``selected_only``: the residue-pair term plus the selected metal atoms' terms; ``other_metals``: the
+    sum of the other metal atoms' terms. Every sum is formed in the feature module's order.
+    """
+    keys: frozenset[ResidueKey]
+    every_metal: Mapping[ResidueKey, float]
+    selected_only: Mapping[ResidueKey, float]
+    other_metals: Mapping[ResidueKey, float]
+    n_selected_metal_atoms: int
+    n_other_metal_atoms: int
+
+
+def _site_set(selected_sites: Iterable[Any]) -> frozenset[tuple[str, int]]:
+    """(chain, residue number) pairs, given as tuples or as ``<chain>_<resseq>`` strings."""
+    sites = set()
+    for site in selected_sites:
+        if isinstance(site, str):
+            chain, _, resseq = site.rpartition("_")
+            site = (chain, int(resseq))
+        sites.add((str(site[0]).strip(), int(site[1])))
+    return frozenset(sites)
+
+
+def _trainer_selected_records(structure_path: Path, structure_id: str, selected: frozenset[tuple[str, int]]) -> dict:
+    """The trainer's metal atom record of each selected site (``graph.structure_parsing``); exactly one per site."""
+    from graph.structure_parsing import (
+        collect_structure_residues_and_metals, metal_record_selected_site_id, parse_structure_file,
+    )
+
+    try:
+        structure = parse_structure_file(str(structure_path), structure_id=structure_id)
+        _residues, records = collect_structure_residues_and_metals(structure)
+    except Exception:  # Bio.PDB raises several types for files it cannot read
+        raise ExternalDerivationError("structure_parse_failed") from None
+    by_site: dict[tuple[str, int], list] = {}
+    for record in records:
+        by_site.setdefault(metal_record_selected_site_id(record), []).append(record)
+    if any(len(by_site.get(site, ())) != 1 for site in selected):
+        raise ExternalDerivationError("selected_site_without_one_metal_record")
+    return {site: by_site[site][0] for site in selected}
+
+
+def charge_proxy_terms(structure_path: str | os.PathLike, *, structure_id: str,
+                       selected_sites: Iterable[Any]) -> ChargeProxyTerms:
+    """The charge proxy of every residue of a structure, with every metal and with the selected metal atoms only.
+
+    Residues, metal atoms and the residue-pair term come from ``feature_extraction.core`` itself
+    (the pair function runs on the structure without its metal atoms, as in the cohort audit); the
+    metal loop is the module's, split by whether the atom's (chain, residue number) is a selected
+    site. Each selected site must resolve to one trainer metal record (``graph.structure_parsing``)
+    and to one metal atom of the feature module with the same element and coordinates.
+    """
+    import numpy as np
+    from feature_extraction import core
+    from feature_extraction.constants import METAL_CHARGE_PROXIES, RESIDUE_CHARGE_PROXIES
+
+    proxy = core.EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY
+    selected = _site_set(selected_sites)
+    if not selected:
+        raise ExternalDerivationError("no_selected_site")
+    path = Path(structure_path)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        records = _trainer_selected_records(path, structure_id, selected)
+        try:
+            atom_array, metal_mask, residues, metals = cohort._feature_module_geometry(path)
+        except Exception:  # biotite raises several types for files it cannot read
+            raise ExternalDerivationError("feature_module_failed") from None
+    for site, record in records.items():
+        atoms = [(element, coord) for element, coord, key in metals if key == site]
+        if (len(atoms) != 1 or atoms[0][0].upper() != record.symbol.upper()
+                or math.dist(atoms[0][1].tolist(), record.coord.tolist()) > D2_SELECTED_COORDINATE_TOLERANCE):
+            raise ExternalDerivationError("selected_metal_differs_from_trainer_record")
+    feature_map = {residue.key: core.default_feature_dict() for residue in residues}
+    core._apply_pairwise_interaction_proxies(residues, atom_array[~metal_mask], feature_map)
+    every = {key: entry[proxy] for key, entry in feature_map.items()}
+    chosen, other = dict(every), {key: 0.0 for key in every}
+    for residue in residues:
+        charge = RESIDUE_CHARGE_PROXIES.get(residue.resname, 0.0)
+        if not charge:
+            continue
+        for element, coord, site in metals:
+            metal_charge = METAL_CHARGE_PROXIES.get(element, 0.0)
+            if not metal_charge:
+                continue
+            min_distance = float(np.linalg.norm(residue.heavy_coords - coord, axis=1).min())
+            term = (charge * metal_charge) / max(min_distance, 2.0)
+            every[residue.key] = every[residue.key] + term
+            if site in selected:
+                chosen[residue.key] = chosen[residue.key] + term
+            else:
+                other[residue.key] = other[residue.key] + term
+    n_selected = sum(1 for _element, _coord, site in metals if site in selected)
+    return ChargeProxyTerms(keys=frozenset(every), every_metal=every, selected_only=chosen, other_metals=other,
+                            n_selected_metal_atoms=n_selected, n_other_metal_atoms=len(metals) - n_selected)
+
+
+def _proxy_close(value: float, expected: float) -> bool:
+    return math.isclose(value, expected, rel_tol=cohort.CHARGE_PROXY_REL_TOLERANCE,
+                        abs_tol=cohort.CHARGE_PROXY_ABS_TOLERANCE)
+
+
+def external_writer_bytes(payload: Mapping[str, Any]) -> bytes:
+    """An external feature payload in the form ``feature_extraction.generate_features`` writes it."""
+    return json.dumps(payload, indent=2).encode("utf-8")
+
+
+def _feature_entries(data: bytes) -> tuple[dict[str, Any], list[tuple[ResidueKey, dict[str, Any]]]]:
+    """The parsed payload and, per residue entry in file order, its key and features (checked, never repaired)."""
+    try:
+        payload = json.loads(data.decode("utf-8"))
+    except ValueError:
+        raise ExternalDerivationError("unreadable_json") from None
+    residues = payload.get("residues") if isinstance(payload, dict) else None
+    if not isinstance(residues, list):
+        raise ExternalDerivationError("malformed_residues")
+    entries = []
+    try:
+        for entry in residues:
+            features = entry["features"]
+            if not isinstance(features, dict):
+                raise TypeError("no feature mapping")
+            value = features[D2_DERIVED_FEATURE]
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise TypeError("not a feature value")
+            entries.append(((str(entry["chain_id"]), int(entry["resseq"]), str(entry.get("icode", "")).strip()),
+                            features))
+    except (KeyError, TypeError, ValueError, AttributeError):
+        raise ExternalDerivationError("malformed_residues") from None
+    if len({key for key, _features in entries}) != len(entries):
+        raise ExternalDerivationError("duplicate_residue_keys")
+    return payload, entries
+
+
+def _derivation_stats(entries: Sequence[tuple[ResidueKey, Mapping[str, Any]]], terms: ChargeProxyTerms) -> dict:
+    """The per-file numbers a verification can recompute from the overlay's own copies."""
+    return {"n_residues": len(entries),
+            "n_residues_with_other_metal_terms": sum(1 for key, _features in entries if terms.other_metals[key] != 0.0),
+            "n_selected_metal_atoms": terms.n_selected_metal_atoms, "n_other_metal_atoms": terms.n_other_metal_atoms}
+
+
+def derive_external_features(source: bytes, structure_path: str | os.PathLike, *, structure_id: str,
+                             selected_sites: Iterable[Any]) -> tuple[bytes, dict[str, Any]]:
+    """One derived external feature file (``D2_DERIVATION_RULE``) and its numbers.
+
+    The residue keys must equal the feature module's, and the value recomputed with every metal
+    must equal the stored one for every residue. A residue to which no metal outside the selected
+    sites contributes keeps its stored value bit for bit; nothing else in the payload changes.
+    Raises ``ExternalDerivationError`` (a reason token, no path) when the file cannot be derived.
+    """
+    payload, entries = _feature_entries(source)
+    in_writer_form = external_writer_bytes(payload) == source
+    terms = charge_proxy_terms(structure_path, structure_id=structure_id, selected_sites=selected_sites)
+    if {key for key, _features in entries} != terms.keys:
+        raise ExternalDerivationError("residue_keys_differ")
+    if not all(_proxy_close(float(features[D2_DERIVED_FEATURE]), terms.every_metal[key]) for key, features in entries):
+        raise ExternalDerivationError("charge_proxy_parity")
+    changed = 0
+    for key, features in entries:
+        other = terms.other_metals[key]
+        if other != 0.0:
+            stored = float(features[D2_DERIVED_FEATURE])
+            features[D2_DERIVED_FEATURE] = stored - other
+            changed += features[D2_DERIVED_FEATURE] != stored
+    derived = external_writer_bytes(payload)
+    return derived, {**_derivation_stats(entries, terms), "n_residues_changed": changed,
+                     "source_in_writer_form": in_writer_form, "bytes_unchanged": derived == source}
+
+
+def check_derived_external_features(derived: bytes, structure_path: str | os.PathLike, *, structure_id: str,
+                                    selected_sites: Iterable[Any]) -> dict[str, Any]:
+    """Recompute a derived file's charge proxy with the selected metal atoms only; return its numbers.
+
+    Every residue's value must equal the recomputation within the cohort audit's parity tolerance
+    (``ExternalDerivationError("derived_value_differs")`` otherwise).
+    """
+    _payload, entries = _feature_entries(derived)
+    terms = charge_proxy_terms(structure_path, structure_id=structure_id, selected_sites=selected_sites)
+    if {key for key, _features in entries} != terms.keys:
+        raise ExternalDerivationError("residue_keys_differ")
+    if not all(_proxy_close(float(features[D2_DERIVED_FEATURE]), terms.selected_only[key])
+               for key, features in entries):
+        raise ExternalDerivationError("derived_value_differs")
+    return _derivation_stats(entries, terms)
+
+
+DERIVATION_TOTAL_KEYS: tuple[str, ...] = ("n_files", "n_files_with_other_metal_atoms", "n_selected_metal_atoms",
+                                          "n_other_metal_atoms", "n_residues", "n_residues_with_other_metal_terms")
+DERIVATION_BUILD_KEYS: tuple[str, ...] = ("n_residues_changed", "n_files_bytes_unchanged", "n_sources_in_writer_form")
+
+
+def _derivation_totals(stats: Iterable[Mapping[str, Any]]) -> dict[str, int]:
+    """Union totals of per-file derivation numbers (the recomputable ones, then the build-only ones when present)."""
+    totals: Counter[str] = Counter()
+    build_only = False
+    for item in stats:
+        totals["n_files"] += 1
+        totals["n_files_with_other_metal_atoms"] += item["n_other_metal_atoms"] > 0
+        for key in ("n_selected_metal_atoms", "n_other_metal_atoms", "n_residues", "n_residues_with_other_metal_terms"):
+            totals[key] += item[key]
+        if "n_residues_changed" in item:
+            build_only = True
+            totals["n_residues_changed"] += item["n_residues_changed"]
+            totals["n_files_bytes_unchanged"] += bool(item["bytes_unchanged"])
+            totals["n_sources_in_writer_form"] += bool(item["source_in_writer_form"])
+    keys = DERIVATION_TOTAL_KEYS + (DERIVATION_BUILD_KEYS if build_only else ())
+    return {key: int(totals[key]) for key in keys}
+
+
+def derivation_record(totals: Mapping[str, int]) -> dict[str, Any]:
+    """The manifest's ``d2.derivation`` block under option d (rule, tolerances and the recomputable totals)."""
+    return {"feature": D2_DERIVED_FEATURE, "rule": D2_DERIVATION_RULE,
+            "parity_rel_tolerance": cohort.CHARGE_PROXY_REL_TOLERANCE,
+            "parity_abs_tolerance": cohort.CHARGE_PROXY_ABS_TOLERANCE,
+            "selected_coordinate_tolerance": D2_SELECTED_COORDINATE_TOLERANCE,
+            "totals": {key: int(totals[key]) for key in DERIVATION_TOTAL_KEYS}}
+
+
+def _recheck_derivations(root: Path, plan: _Plan, d2: Mapping[str, Any]) -> list[str]:
+    """Option d: recompute every derived file's charge proxy from the overlay's own structures and site tables;
+    ``d2`` is the manifest's D2 block, whose derivation record must match the recomputed totals."""
+    reasons: Counter[str] = Counter()
+    stats = []
+    for item in plan.items:
+        if item.derive is None:
+            continue
+        try:
+            data = (root / item.path).read_bytes()
+            stats.append(check_derived_external_features(data, root / item.derive.structure,
+                                                         structure_id=item.derive.stem,
+                                                         selected_sites=item.derive.selected_sites))
+        except ExternalDerivationError as exc:
+            reasons[exc.reason] += 1
+        except OSError as exc:
+            reasons[_errno_text(exc)] += 1
+    problems = []
+    if reasons:
+        problems.append(f"{sum(reasons.values())} derived external feature files do not re-derive from the overlay's "
+                        "structures and site tables (" + ", ".join(f"{count} {reason}" for reason, count
+                                                                  in sorted(reasons.items())) + ")")
+    elif d2.get("derivation") != derivation_record(_derivation_totals(stats)):
+        problems.append("the manifest's derivation record differs from a re-derivation from the overlay's copies")
+    return problems
 
 
 # ---------------------------------------------------------------------------
@@ -1065,16 +1489,32 @@ def _verify_tree(root: Path, manifest: Mapping[str, Any], *, rescan: bool,
     if differing:
         problems.append(_describe(differing, "files differ from the overlay manifest", roles))
 
+    d2 = manifest.get("d2") if isinstance(manifest.get("d2"), Mapping) else {}
+    d2_option = d2.get("option")
+    if d2_option not in D2_OPTIONS_BUILT:
+        problems.append(f"the overlay manifest records D2 option {d2_option!r}; only {list(D2_OPTIONS_BUILT)} are "
+                        "built and verified")
+        return problems, None
     plan = None
     try:
         plan = _collect(layout=_overlay_layout(root), cohort_dir=root / COHORT_DIR, identity_root=root / IDENTITY_DIR,
-                        fold_work=None, r2_dir=root / R2_DIR, smoke=bool(manifest.get("smoke")))
+                        fold_work=None, r2_dir=root / R2_DIR, smoke=bool(manifest.get("smoke")), d2_option=d2_option,
+                        recorded_entries=entries)
     except (OverlayError, HeldOutInputError) as exc:
         problems.append(f"the overlay's own copies do not load as inputs: {exc}")
     except OSError as exc:
         problems.append(f"the overlay's own copies do not load as inputs ({_errno_text(exc)}; the path is withheld)")
     if plan is None:
         return problems, None
+    # The manifest's statements of the D2 option: this code's policy text and rules for the option, and the copied
+    # cohort receipt's recommendation (a real overlay follows it, checked while the inputs load).
+    stated = {key: value for key, value in d2.items() if key != "derivation"}
+    if (stated != d2_block(d2_option, plan.cohort.receipt.get("a1_recommended_option"))
+            or ("derivation" in d2) != (d2_option == "d")):
+        problems.append(f"the manifest's D2 block differs from this code's policy text for option {d2_option} or from "
+                        "the overlay's cohort receipt")
+    if manifest.get("rules") != overlay_rules(d2_option):
+        problems.append(f"the manifest's rules differ from this code's rules for D2 option {d2_option}")
 
     items = {item.path: item for item in plan.items}
     needed = sorted(set(items) - set(entries))
@@ -1084,7 +1524,7 @@ def _verify_tree(root: Path, manifest: Mapping[str, Any], *, rescan: bool,
         problems.append(_describe(needed, "files the overlay's inputs need are not in the manifest", item_roles))
     if unneeded:
         problems.append(_describe(unneeded, "manifest entries are not needed by the overlay's inputs", roles))
-    wrong_role, wrong_hash = [], []
+    wrong_role, wrong_hash, wrong_origin = [], [], []
     for path, item in items.items():
         entry = entries.get(path)
         if entry is None:
@@ -1094,12 +1534,19 @@ def _verify_tree(root: Path, manifest: Mapping[str, Any], *, rescan: bool,
         expected = sha256_bytes(item.data) if item.data is not None else item.expected_sha256
         if expected is not None and expected != entry["sha256"]:
             wrong_hash.append(path)
+        # A derived file's record: its rule, the source SHA-256 the cohort audit recorded, its structure and
+        # selected sites as the overlay's copies give them, and the derived SHA-256 of the file itself.
+        if item.derive is not None and entry.get("origin") != {**item.origin, "derived_sha256": entry["sha256"]}:
+            wrong_origin.append(path)
     if wrong_role:
         problems.append(_describe(wrong_role, "manifest entries carry another role than their input", roles,
                                   item_roles))
     if wrong_hash:
         problems.append(_describe(wrong_hash, "files differ from the SHA-256 their receipts or the cohort audit "
                                               "record, or from their derivation", roles, item_roles))
+    if wrong_origin:
+        problems.append(_describe(wrong_origin, "derived files do not carry their derivation record (rule, source "
+                                                "and derived SHA-256, structure, selected sites)", roles, item_roles))
     by_protein = Counter(item.role for item in plan.items if item.role in PER_PROTEIN_ROLES)
     if any(by_protein[role] != len(plan.union) for role in PER_PROTEIN_ROLES):
         problems.append(f"the per-protein roles do not cover each of the {len(plan.union)} proteins once")
@@ -1124,6 +1571,8 @@ def _verify_tree(root: Path, manifest: Mapping[str, Any], *, rescan: bool,
         scan = string_scan(root, plan.items)
         if scan["count"] != (manifest.get("string_scan") or {}).get("count") or scan["n_unreadable"]:
             problems.append("the string scan of the per-protein inputs differs from the manifest's count")
+        if d2_option == "d":
+            problems.extend(_recheck_derivations(root, plan, d2))
     return problems, plan
 
 
@@ -1262,8 +1711,14 @@ def verify_overlay(overlay_dir: str | os.PathLike, *, receipt_path: Optional[str
         "checks": ["every file rehashed", "no extra, missing or linked file", "each protein once per role",
                    "identity loaders on the copies", "R2 lists verified", "derived lists re-derived",
                    "string scan repeated", "tar SHA-256 file, member list and re-creation",
-                   "build receipt binds the manifest and the tar"],
+                   "build receipt binds the manifest and the tar",
+                   "D2 policy text and rules are this code's for the option; the cohort recommendation is the "
+                   "copied receipt's (a real overlay follows it)"],
     }
+    if manifest["d2"]["option"] == "d":
+        result["d2_option"] = "d"
+        result["checks"].append("derived external features: derivation records, and the charge proxy recomputed with "
+                                "the selected metal atoms from the overlay's structures and site tables")
     if receipt_path is not None:
         result["receipt"] = str(receipt_path)
         result["receipt_sha256"] = write_new_json(receipt_path, {**result, "verified_utc": utc_now(),
@@ -1344,6 +1799,33 @@ def _copy_item(staging: Path, item: _Item) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def _derive_item(staging: Path, item: _Item) -> Optional[tuple[str, int, dict[str, Any]]]:
+    """Derive one external file into the staging folder from its source and the staged structure copy.
+
+    Returns (SHA-256, size, numbers), or ``None`` when the source differs from the SHA-256 the cohort
+    audit recorded. Raises ``_Uncopied`` for an unreadable source and ``ExternalDerivationError``.
+    """
+    problem = _file_problem(item.source)
+    if problem is not None:
+        raise _Uncopied(problem)
+    try:
+        source = item.source.read_bytes()
+    except OSError as exc:
+        raise _Uncopied(_errno_text(exc)) from None
+    if sha256_bytes(source) != item.derive.source_sha256:
+        return None
+    derived, stats = derive_external_features(source, staging / item.derive.structure, structure_id=item.derive.stem,
+                                              selected_sites=item.derive.selected_sites)
+    target = staging / item.path
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("xb") as handle:
+            handle.write(derived)
+    except OSError as exc:
+        raise _Uncopied(_errno_text(exc)) from None
+    return sha256_bytes(derived), len(derived), stats
+
+
 def _remove_tree(path: Path) -> None:
     """Remove a staging folder or file; never raises (it runs while another error is on its way out)."""
     import shutil
@@ -1396,15 +1878,15 @@ def build_overlay(
     if d2_option not in D2_OPTIONS:
         raise OverlayError(f"--d2-option must be one of {list(D2_OPTIONS)} (option c is never used).")
     if d2_option not in D2_OPTIONS_BUILT:
-        raise OverlayError(f"D2 option {d2_option} needs the derived-feature builder, which is not built; only "
-                           f"{list(D2_OPTIONS_BUILT)} can be built now.")
+        raise OverlayError(f"D2 option {d2_option} (regenerating every external feature on metal-filtered structures) "
+                           f"is not built; only {list(D2_OPTIONS_BUILT)} can be built now.")
     layout_from = "given" if layout is not None else "cohort_receipt"
     if layout is None:
         layout = layout_from_cohort(cohort_dir)
     _check_output_location(out, overlay_id=overlay_id, smoke=smoke, layout=layout)
     try:
         plan = _collect(layout=layout, cohort_dir=cohort_dir, identity_root=identity_root, fold_work=fold_work,
-                        r2_dir=r2_lists_dir, smoke=smoke)
+                        r2_dir=r2_lists_dir, smoke=smoke, d2_option=d2_option)
     except OSError as exc:
         raise OverlayError(f"An input cannot be read ({_errno_text(exc)}); the path is withheld because it can name a "
                            "structure.") from None
@@ -1419,7 +1901,19 @@ def build_overlay(
         copied: dict[str, tuple[str, int]] = {}
         unreadable: Counter[tuple[str, str]] = Counter()
         mismatched: list[str] = []
+        roles = {item.path: item.role for item in plan.items}
+
+        def check_copies() -> None:
+            if unreadable:
+                raise OverlayError("Inputs cannot be copied: " + ", ".join(
+                    f"{count} {role} ({reason})" for (role, reason), count in sorted(unreadable.items())))
+            if mismatched:
+                raise OverlayError(_describe(mismatched, "inputs differ from the SHA-256 the cohort audit or their "
+                                                         "receipts record", roles))
+
         for item in plan.items:
+            if item.derive is not None:
+                continue
             try:
                 copied[item.path] = _copy_item(staging, item)
             except _Uncopied as exc:
@@ -1427,14 +1921,43 @@ def build_overlay(
                 continue
             if item.expected_sha256 is not None and copied[item.path][0] != item.expected_sha256:
                 mismatched.append(item.path)
-        roles = {item.path: item.role for item in plan.items}
-        if unreadable:
-            raise OverlayError("Inputs cannot be copied: " + ", ".join(
-                f"{count} {role} ({reason})" for (role, reason), count in sorted(unreadable.items())))
-        if mismatched:
-            raise OverlayError(_describe(mismatched, "inputs differ from the SHA-256 the cohort audit or their "
-                                                     "receipts record", roles))
-        scan = string_scan(staging, plan.items)
+        check_copies()
+        items = list(plan.items)
+        derivation: Optional[dict[str, int]] = None
+        if d2_option == "d":
+            # Derived after every copy, from the staged (hash-checked) structure copies.
+            stats, underived = [], Counter()
+            for item in plan.items:
+                if item.derive is None:
+                    continue
+                try:
+                    result = _derive_item(staging, item)
+                except _Uncopied as exc:
+                    unreadable[(item.role, exc.reason)] += 1
+                    continue
+                except ExternalDerivationError as exc:
+                    underived[exc.reason] += 1
+                    continue
+                if result is None:
+                    mismatched.append(item.path)
+                    continue
+                copied[item.path] = result[:2]
+                stats.append(result[2])
+            check_copies()
+            if underived:
+                reasons = ", ".join(f"{count} {reason}" for reason, count in sorted(underived.items()))
+                raise OverlayError(f"{sum(underived.values())} external feature files cannot be derived under option "
+                                   f"d ({reasons}); no file is named because the names carry structure stems.")
+            derivation = _derivation_totals(stats)
+            index = _label_free_index_item(plan.cohort, {
+                accession: copied[f"{EXTERNAL_DIR}/{protein.stem}/{EXTERNAL_FEATURE_FILE}"][0]
+                for accession, protein in plan.union.items()})
+            try:
+                copied[index.path] = _copy_item(staging, index)
+            except _Uncopied as exc:
+                raise OverlayError(f"The label-free index cannot be written ({exc.reason}).") from None
+            items = sorted([*items, index], key=lambda item: item.path)
+        scan = string_scan(staging, items)
         cohort_a13 = ((plan.cohort.receipt.get("totals") or {}).get("a13_test_named_string_count") or {}).get("total")
         if scan["n_unreadable"]:
             raise OverlayError(f"The string scan cannot read {scan['n_unreadable']} per-protein inputs.")
@@ -1443,6 +1966,16 @@ def build_overlay(
                                f"{cohort_a13}; both read the same bytes with the same rule.")
         scan["cohort_a13_total"] = cohort_a13
         recommended = plan.cohort.receipt.get("a1_recommended_option")
+        d2 = d2_block(d2_option, recommended)
+        if derivation is not None:
+            d2["derivation"] = derivation_record(derivation)
+        files = []
+        for item in items:
+            origin = dict(item.origin)
+            if item.derive is not None:
+                origin["derived_sha256"] = copied[item.path][0]
+            files.append({"path": item.path, "sha256": copied[item.path][0], "size_bytes": copied[item.path][1],
+                          "role": item.role, "origin": origin})
         manifest = {
             "format": OVERLAY_FORMAT,
             "schema_version": OVERLAY_SCHEMA_VERSION,
@@ -1470,27 +2003,25 @@ def build_overlay(
                                          "r1_inner": {str(inner): dict(record) for inner, record in info["r1"].items()}}
                              for fold, info in plan.identity.items()},
             },
-            "d2": {"option": d2_option, "policy": D2_POLICY[d2_option], "cohort_a1_recommended_option": recommended,
-                   "follows_cohort_recommendation": d2_option == recommended},
+            "d2": d2,
             "ring": RING_NOTE,
             "exclusions": dict(EXCLUSIONS_STATEMENT),
             "union_note": UNION_NOTE,
             "counts": {
                 "n_proteins": len(plan.union),
-                "n_files": len(plan.items),
-                "files_by_role": dict(sorted(Counter(item.role for item in plan.items).items())),
+                "n_files": len(items),
+                "files_by_role": dict(sorted(Counter(item.role for item in items).items())),
                 "per_fold": {str(fold): {"n_eligible": len(info["membership_ids"])}
                              for fold, info in plan.identity.items()},
             },
             "string_scan": scan,
-            "rules": dict(RULES),
+            "rules": overlay_rules(d2_option),
             "code_sha256": {"src/ec_clean30/overlay.py": _hash_file(Path(__file__).resolve())[0],
                             **identity.code_sha256()},
             "provenance": _stable_provenance(provenance),
             "tar": {"file": side["tar"].name, "sha256_file": side["tar_sha256"].name, "member_root": overlay_id,
                     "rule": TAR_RULE},
-            "files": [{"path": item.path, "sha256": copied[item.path][0], "size_bytes": copied[item.path][1],
-                       "role": item.role, "origin": dict(item.origin)} for item in plan.items],
+            "files": files,
         }
         manifest_bytes = _json_bytes(manifest)
         with (staging / MANIFEST_NAME).open("xb") as handle:
@@ -1519,18 +2050,25 @@ def build_overlay(
                "created_utc": utc_now(), "layout_from": layout_from,
                "manifest_sha256": manifest_sha, "tar": {"file": side["tar"].name, "sha256": tar_sha},
                "file_modes": modes, "provenance": dict(provenance)}
+    if derivation is not None:
+        # Union totals; the build-only ones (values changed, byte-equal files, sources in the writer's form)
+        # need the source files, so they live here and in the printed summary, not in the manifest.
+        receipt["d2_derivation"] = dict(derivation)
     receipt_sha = write_new_json(side["build_receipt"], receipt)
     for path in (side["tar"], side["tar_sha256"], side["build_receipt"]):
         _chmod_read_only(path)
-    return {
+    summary = {
         "status": "built", "overlay_id": overlay_id, "overlay": str(out), "smoke": bool(smoke),
         "manifest_sha256": manifest_sha, "tar": str(side["tar"]), "tar_sha256": tar_sha,
         "tar_sha256_file": str(side["tar_sha256"]), "build_receipt": str(side["build_receipt"]),
-        "build_receipt_sha256": receipt_sha, "n_proteins": len(plan.union), "n_files": len(plan.items),
+        "build_receipt_sha256": receipt_sha, "n_proteins": len(plan.union), "n_files": len(items),
         "files_by_role": manifest["counts"]["files_by_role"], "string_scan_count": scan["count"],
         "d2_option": d2_option, "cohort_a1_recommended_option": recommended, "file_modes": modes["outcome"],
         "note": "union totals only; per-fold numbers stay in the private manifest",
     }
+    if derivation is not None:
+        summary["d2_derivation"] = dict(derivation)
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -1549,7 +2087,9 @@ def add_overlay_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentP
                        help="Identity root with one training-side folder fold<k> per outer fold.")
     build.add_argument("--r2-lists", required=True, help=f"R2-list folder (holds {r2_lists.RECEIPT_NAME}).")
     build.add_argument("--d2-option", required=True, choices=D2_OPTIONS,
-                       help="Decision A1: b copies external features unchanged (a and d are not built yet).")
+                       help="Decision A1: b copies external features unchanged; d derives them, the charge proxy "
+                            "counting the selected (catalytic) metal atoms only (a is not built). A real overlay "
+                            "takes the option the cohort audit recommends.")
     build.add_argument("--fold-work", action="append", default=[], metavar="K=PATH",
                        help="Identity folder of fold K instead of <identity root>/fold<K> (repeatable); the copy "
                             "still goes to identity/fold<K>.")

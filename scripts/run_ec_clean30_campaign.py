@@ -8,8 +8,10 @@ Actions
                 and labels; writes <campaign root>/cohort once; exit 1 when a check stops it.
   r2-lists      CLEAN R2 and fold-0 R2-inner accession allowlists, from the training-side identity folders
                 and a passed cohort audit (P2-6).
-  overlay build Data overlay (P2-7): byte copies of every training-side input of later steps, laid out like
-                the data root, with its manifest, reproducible tar, .sha256 file and build receipt.
+  overlay build Data overlay (P2-7): copies of every training-side input of later steps, laid out like the
+                data root, with its manifest, reproducible tar, .sha256 file and build receipt. Copies are
+                byte copies, except that under D2 option d the external feature files carry a charge proxy
+                derived from the selected metals only.
   overlay verify
                 Rehash and re-derive an overlay and check its tar and build receipt; exit 1 with the problems.
   build-view    Training-only view of one outer fold (byte copies, per-file SHA-256, read-only); an inner

@@ -553,7 +553,7 @@ Tracked metadata:
 | Exact Zenodo PinMyMetal | Yes | Yes — v3 step F one-shot report 2026-10-13; 180-checkpoint rescore 2026-10-19; matched PinMyMetal comparison 2026-10-20 (earlier: possibly evaluated, fold 0 of `pmm-zenodo-v2` relaunch on 2026-09-24) | Step F: no (rules and model frozen before the label read). 2026-10-19: historical ensemble membership may be test-informed ([release audit](campaigns/phase2_unified_2026-10/release_audit/README.md)). 2026-10-20: none in the pre-registered analysis; amendments A1/A2 (re-scoped claim rule, added R2b) were made after test results were known; no model promoted | Evaluated by v3 step F on 2026-10-13 (confirmed; frozen rules, secondary report; Freeze 1, F3b, Freeze 2 and the single test pass below). Separately unresolved: whether the 2026-09-24 `pmm-zenodo-v2` relaunch evaluated it; treat that earlier access as possible. Source test-file metadata read on 2026-10-03; test-directory bytes scanned without display on 2026-10-11; three source test rows printed on 2026-10-21; tracked-path count of the source folder printed on 2026-10-22; tracked names near the source folder listed on 2026-10-23 (below) |
 | Harsh PinMyMetal | No current root | No | No | Availability must be restored before use; test PDB IDs are the opened exact test side |
 | Common-PDBID 70/30 | Yes | No | No | Custom comparison only; test PDB IDs come from the opened exact test |
-| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22, Phase 2 process notes and a derivability note 2026-10-25 (below) |
+| CLEAN30 fold pairs | Yes | No completed result found | No | Evaluate as five-fold benchmark, not sealed one-shot test; named secondary benchmark of the [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md), not an EC final-test route; incidental test-metadata exposures 2026-10-16 and 2026-10-21, directory-level read 2026-10-22, Phase 2 process notes and a derivability note 2026-10-25, top-level listing of the cohort root 2026-10-26 (below) |
 | CARE clusterRes30 | Yes | No | No | Prepared/bundled test; do not equate preparation with evaluation; incidental metadata exposure 2026-09-15, 2026-10-13 and 2026-10-21; tracked file names listed 2026-10-23; one training protein's audit lines printed 2026-10-25 (below) |
 
 ### Local test-access artifacts (git-ignored)
@@ -756,6 +756,12 @@ This document already lists `Q96KN2` as a CARE training protein ([remoteness pro
 so no test-side row was shown. An earlier search in the same session for a cohort size also covered that folder;
 only its first five matches were shown, none from that folder. Nothing else was displayed or opened, and nothing was
 used. Later name searches leave out `docs/notebook_outputs/`.
+
+**2026-10-26 top-level listing of the CLEAN30 cohort root:** while checking which site table records the MAHOMES
+calls, a working session listed the top level of `DeepMzyme_Data/CLEAN_30_main/`, whose subfolders hold test files,
+with names containing "test", "metadata" or "folds" filtered out of the display. Displayed: `README.md` and
+`structures`, both already recorded in the 2026-10-22 entry. No test-named entry, row, label or identifier was shown,
+nothing was opened, and nothing was used. The session then read the five training site tables by exact name only.
 
 ## Current bundles
 

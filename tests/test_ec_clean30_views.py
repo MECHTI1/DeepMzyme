@@ -766,9 +766,13 @@ def test_a_two_layer_from_model_cache_verifies_as_block26(source, tmp_path):
 # Overlay binding
 
 
+SYNTHETIC_D2 = {"option": "b", "policy": views.OVERLAY_D2_POLICY["b"]}
+
+
 def _write_overlay_manifest(data_root: Path, *, overlay_id: str = "ecc30-overlay-synthetic",
-                            override: dict | None = None) -> Path:
-    """An overlay manifest over the synthetic training-side files (test-named and mixed folders left out)."""
+                            override: dict | None = None, d2: dict | None = SYNTHETIC_D2) -> Path:
+    """An overlay manifest over the synthetic training-side files (test-named and mixed folders left out); ``d2``
+    is its decision A1 block (``None`` leaves it out)."""
     files = []
     for current, dirs, names in os.walk(data_root):
         dirs.sort()
@@ -784,7 +788,8 @@ def _write_overlay_manifest(data_root: Path, *, overlay_id: str = "ecc30-overlay
             files.append({"path": relative, "sha256": (override or {}).get(relative, sha256_file(path)),
                           "size_bytes": path.stat().st_size, "role": "copy", "origin": "shared_root_copy"})
     path = data_root / views.OVERLAY_MANIFEST_NAME
-    path.write_text(json.dumps({"overlay_id": overlay_id, "files": files}, indent=2, sort_keys=True) + "\n")
+    payload = {"overlay_id": overlay_id, "files": files, **({"d2": d2} if d2 is not None else {})}
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     return path
 
 
@@ -799,6 +804,12 @@ def test_the_overlay_record_survives_a_round_trip(fresh_source, tmp_path):
                         provenance=PROVENANCE)
     record = result["manifest"]["overlay"]
     assert record["id"] == "ecc30-overlay-synthetic" and record["manifest_sha256"] == sha256_file(overlay_path)
+    assert (record["d2_option"], record["d2_policy"]) == (SYNTHETIC_D2["option"], SYNTHETIC_D2["policy"])
+    assert result["manifest"]["external_features_policy"] == (
+        "copied unchanged by exact name <external root>/<stem>/residue_features.json from data overlay "
+        "ecc30-overlay-synthetic, built under decision A1 (D2) option b: external features copied unchanged; they "
+        "were computed on the full structure, including metals outside the selected sites (decision A1 option b; "
+        "disclosed)")
     # Training manifest and site table; per protein the structure, ESMC payload, sidecar and external
     # features; the inner membership and its certificate.
     assert record["n_files_checked"] == 2 + 4 * 13 + 2
@@ -857,6 +868,41 @@ def test_the_overlay_record_survives_a_round_trip(fresh_source, tmp_path):
     make_writable(view.root)
 
 
+def test_a_view_states_the_overlays_d2_option_and_refuses_an_unknown_one(fresh_source, tmp_path):
+    data = fresh_source["data_root"]
+    membership, digest, _certificate = write_inner_membership(fresh_source, data / "identity" / "fold0")
+    layout = _layout(fresh_source)
+    policy = views.OVERLAY_D2_POLICY["d"]
+    assert "counts only the protein's selected (catalytic) metal atoms" in policy
+    _write_overlay_manifest(data, overlay_id="ecc30-overlay-v7", d2={"option": "d", "policy": policy})
+    result = build_view(fold=0, layout=layout, out_dir=_fold_dir(tmp_path / "d"), inner_membership=(membership, digest),
+                        provenance=PROVENANCE)
+    assert result["manifest"]["overlay"]["d2_option"] == "d"
+    assert result["manifest"]["external_features_policy"] == views.OVERLAY_EXTERNAL_FEATURES_POLICY.format(
+        overlay_id="ecc30-overlay-v7", option="d", policy=policy)
+    assert "decision D2 open until Freeze 1" not in result["manifest"]["external_features_policy"]
+    for name, d2, message in (("none", None, r"option None; a view knows only \['b', 'd'\]"),
+                              ("a", {"option": "a", "policy": "regenerated"}, r"option 'a'; a view knows only"),
+                              ("x", {"option": "x", "policy": "text"}, r"option 'x'; a view knows only"),
+                              ("nopolicy", {"option": "d", "policy": " "}, "another policy text for D2 option 'd'"),
+                              ("otherpolicy", {"option": "d", "policy": views.OVERLAY_D2_POLICY["b"]},
+                               "another policy text for D2 option 'd' than this code states for it")):
+        _write_overlay_manifest(data, d2=d2)
+        with pytest.raises(ViewError, match=message):
+            build_view(fold=0, layout=layout, out_dir=_fold_dir(tmp_path / name), inner_membership=(membership, digest),
+                       provenance=PROVENANCE)
+        assert not _fold_dir(tmp_path / name).exists()
+
+
+def test_a_view_without_an_overlay_keeps_the_shared_root_policy(fold_view):
+    # Regression: views built from the shared roots state the unchanged pre-overlay text.
+    assert fold_view["manifest"]["overlay"] is None
+    assert fold_view["manifest"]["external_features_policy"] == views.EXTERNAL_FEATURES_POLICY == (
+        "copied unchanged by exact name <external root>/<stem>/residue_features.json; the features were computed on "
+        "the full structure, including metals outside the selected sites (decision D2 open until Freeze 1)")
+    assert views.external_features_policy(None) == views.EXTERNAL_FEATURES_POLICY
+
+
 # ---------------------------------------------------------------------------
 # Dry run
 
@@ -872,6 +918,7 @@ def test_dry_run_passes_on_a_clean_smoke_view(smoke_view):
     assert inner["n_train_structures"] == 4 and inner["n_val_structures"] == 4
     assert refit["n_train_structures"] == 8 and refit["n_val_structures"] == 0
     assert inner["records"]["n_view_reads"] > 0 and not any(inner["outside"].values())
+    assert inner["one_pocket_per_protein"] is True and refit["one_pocket_per_protein"] is True
     assert receipt["runs_dir_checked"] == str(smoke_view.default_runs_dir)
     assert receipt["read_guard"]["expanded_roots"] == smoke_view.forbidden_read_roots
     assert receipt["read_guard"]["rules"] == dict(smoke_view.read_guard)

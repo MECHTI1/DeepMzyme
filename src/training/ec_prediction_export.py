@@ -23,7 +23,9 @@ In-run export (``--export-ec-predictions``)
   ``ec_prediction_receipt.json`` records the run, fold, seed, model family, vocabulary,
   checkpoint, run configuration, membership or probe file and normalization hashes, the
   training protein counts per class (for logit-adjustment priors), the planned and realised
-  optimizer steps of ``optimizer_groups.json`` and, in validation mode, a reconciliation of
+  optimizer steps of ``optimizer_groups.json``, the selected-site pocket grouping when it is
+  not the default ``cluster`` (under ``structure`` every protein has one pocket, so its protein
+  row holds that pocket's logits) and, in validation mode, a reconciliation of
   every ``val_ec_*`` metric of the terminal history record recomputed from the written CSVs
   with ``training.ec_class_metrics``: floats within 1e-9, counts and confusion matrices exact.
   The trainer takes accuracy as a float32 mean, so accuracy is recomputed as the float32
@@ -34,7 +36,7 @@ Replay (run it in a fresh process)
   ``PYTHONPATH=src python -m training.ec_prediction_export replay --run-dir RUN``
   rebuilds the model from the checkpoint (frozen factory call plus the recorded EC auxiliary
   attachments, strict state-dict load), reloads only the exported structures with the run's
-  recorded settings (membership or probe list, site extraction, whole-protein vectors and
+  recorded settings (membership or probe list, site extraction and pocket grouping, whole-protein vectors and
   their standardization, normalization statistics; no parse or graph cache, serial parsing),
   predicts again and compares with the saved CSVs: identities and labels exactly, logits
   within 1e-6, predicted classes exactly unless the saved top-two logit margin is at most
@@ -55,8 +57,9 @@ Label-free test pass (``export_ec_test_predictions``; decisions D7 and D12)
   it, and the pass bypasses that parser and never assigns a target. Its selected sites come
   from an accession-keyed site table with exactly the columns ``accession``, ``chain_resi`` and
   ``metaltype`` (no EC column is accepted). Structures load with ``site_extraction=
-  selected_sites``, so only checkpoints trained with ``--site-extraction selected_sites`` are
-  accepted; per-protein logits are keyed by accession.
+  selected_sites`` and the checkpoint's ``--selected-site-pocket-grouping`` (recorded in the
+  receipt when it is not ``cluster``), so only checkpoints trained with ``--site-extraction
+  selected_sites`` are accepted; per-protein logits are keyed by accession.
 
   Enforcement (D12) cannot rest on who calls the function, so the pass refuses unless the
   Freeze-2 manifest file hashes to the expected SHA-256, lists the checkpoint, pins the live
@@ -100,7 +103,7 @@ from label_schemes import METAL_TARGET_LABELS, configure_active_metal_label_sche
 from model_variants import build_pocket_classifier
 from model_variants.factory import MODEL_ARCHITECTURE_ALIASES
 from training.campaign_runtime import RECONCILIATION_TOLERANCE, CampaignContractError
-from training.config import TrainConfig, required_targets_for_task
+from training.config import DEFAULT_SELECTED_SITE_POCKET_GROUPING, TrainConfig, required_targets_for_task
 from training.ec_class_metrics import N_EC_CLASSES, ec_class_metrics_from_logits
 from training.ec_classes import (
     EC_CLASS_TOKEN_TO_INDEX, EC_CLASS_TOKENS, STRUCTURE_ID_RE, accession_from_structure_id, complete_ec_prefix,
@@ -272,6 +275,17 @@ def _site_ids(pocket: PocketRecord) -> str:
         f"{str(chain).strip()}_{str(resseq).strip()}{str(icode).strip()}"
         for chain, resseq, icode in pocket.metadata.get("metal_site_ids", [])
     )
+
+
+def _pocket_grouping(config: Mapping[str, Any]) -> str:
+    """A run's selected-site pocket grouping (configurations from before the option hold the default)."""
+    return config.get("selected_site_pocket_grouping", DEFAULT_SELECTED_SITE_POCKET_GROUPING)
+
+
+def _pocket_grouping_record(config: Mapping[str, Any]) -> dict[str, str]:
+    """A run's selected-site pocket grouping, recorded only when it is not the default ``cluster``."""
+    grouping = _pocket_grouping(config)
+    return {} if grouping == DEFAULT_SELECTED_SITE_POCKET_GROUPING else {"selected_site_pocket_grouping": grouping}
 
 
 def _graph_options(config: Mapping[str, Any]) -> dict[str, Any]:
@@ -756,6 +770,7 @@ def export_ec_run_predictions(
         "reconciliation_status": status,
         "export_source_sha256": _sha256_file(Path(__file__)),
         "created_utc": _utc_now(),
+        **_pocket_grouping_record(config_payload),
     }
     _write_json_once(run_dir / EC_PREDICTION_RECEIPT_NAME, receipt)
     if status == "mismatch":
@@ -920,6 +935,7 @@ def _reload_exported_pockets(config: Mapping[str, Any], checkpoint: Mapping[str,
         load_workers=1,
         ec_class_vocabulary=config["ec_class_vocabulary"],
         site_extraction=config.get("site_extraction", "component"),
+        selected_site_pocket_grouping=_pocket_grouping(config),
     )
     pockets = list(result.pockets)
     assign_ec_group_metadata(pockets, weighting_mode=config["ec_group_weighting"])
@@ -1293,6 +1309,7 @@ def export_ec_test_predictions(
                 require_external_features=bool(config["require_external_features"]),
                 unsupported_metal_policy=config["unsupported_metal_policy"], ec_label_depth=1,
                 metal_example_unit="pocket", site_extraction="selected_sites",
+                selected_site_pocket_grouping=_pocket_grouping(config),
             )
         except (StructureLoadError, ValueError) as exc:
             failures.append({"accession": accession, "reason": "load_error", "detail": str(exc)})
@@ -1355,6 +1372,7 @@ def export_ec_test_predictions(
         "failures": failures,
         "protein_predictions": predictions_file,
         "created_utc": _utc_now(),
+        **_pocket_grouping_record(config),
     }
     receipt_sha256 = _write_json_once(pass_dir / TEST_RECEIPT_NAME, receipt)
     _append_ledger(ledger, {**claim, "status": "completed", "receipt_sha256": receipt_sha256,

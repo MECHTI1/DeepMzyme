@@ -334,7 +334,8 @@ def _trainer_load(paths: dict, inputs: Path, *, fold: int = 0):
         esm_dim=ESM_DIM, esm_embeddings_dir=inputs / "esm", require_esm_embeddings=True,
         ring_features_dir=inputs / "ring", external_features_root_dir=inputs / "external",
         external_feature_source="auto", require_external_features=True, required_targets=("ec",),
-        ec_label_depth=1, ec_class_vocabulary="fixed_seven", site_extraction="selected_sites", load_workers=1)
+        ec_label_depth=1, ec_class_vocabulary="fixed_seven", site_extraction="selected_sites",
+        selected_site_pocket_grouping=cohort.SELECTED_SITE_POCKET_GROUPING, load_workers=1)
 
 
 def _trainer_outcomes(paths: dict, work: Path, *, fold: int = 0) -> tuple[dict[str, str], dict]:
@@ -695,6 +696,60 @@ def test_unsupported_site_metal_is_a_fatal_load_outcome(tmp_path, monkeypatch):
     inputs = _trainer_inputs(paths, tmp_path / "inputs", sorted(paths["stems"]))
     with pytest.raises(ValueError):
         _trainer_load(paths, inputs)
+
+
+def test_audit_uses_one_pocket_per_protein_and_keeps_the_d2_tables(tmp_path, monkeypatch):
+    """Two catalytic sites 6 Å apart give one pocket, as the fits load it; the D2 tables equal the cluster grouping's,
+    because the pocket residues are the same union of residues near any selected metal."""
+    from ec_clean30.commands import POCKET_GROUPING
+    from graph.structure_parsing import POCKET_GROUPING_STRUCTURE
+
+    assert cohort.SELECTED_SITE_POCKET_GROUPING == POCKET_GROUPING == POCKET_GROUPING_STRUCTURE
+    two_sites = [(900, "ZN", (0.0, 0.0, 0.0), "1"), (901, "ZN", (6.0, 0.0, 0.0), "1")]
+    proteins = {"P1000": {"ec": "1.1.1.1"},
+                "P1001": {"ec": "1.1.1.2", "sites": two_sites,
+                          "metals": [site[:3] for site in two_sites] + [(902, "FE", (20.0, 0.0, 0.0))]}}
+    paths = build_cohort(tmp_path / "source", proteins, test_folds={"P1000": 4, "P1001": 4})
+    grouped_out = _out(tmp_path / "structure")
+    _run(paths, grouped_out, expected_sequence_differences=[])
+    monkeypatch.setattr(cohort, "SELECTED_SITE_POCKET_GROUPING", "cluster")
+    cluster_out = _out(tmp_path / "cluster")
+    _run(paths, cluster_out, expected_sequence_differences=[])
+
+    grouped = _rows_by_accession(grouped_out / PROTEINS_NAME)
+    clustered = _rows_by_accession(cluster_out / PROTEINS_NAME)
+    assert {accession: row["pocket_count"] for accession, row in grouped.items()} == {"P1000": "1", "P1001": "1"}
+    assert (grouped["P1001"]["selected_cluster_count"], clustered["P1001"]["selected_cluster_count"]) == ("1", "2")
+    assert clustered["P1001"]["pocket_count"] == "2"
+    assert grouped["P1001"]["n_pocket_residues"] == clustered["P1001"]["n_pocket_residues"]
+    assert grouped["P1001"]["n_unselected_metals"] == "1"
+    for name in (D2_METALS_NAME, D2_RESIDUES_NAME):
+        assert (grouped_out / name).read_bytes() == (cluster_out / name).read_bytes(), name
+    receipt = json.loads((grouped_out / RECEIPT_NAME).read_text())
+    assert receipt["settings"]["selected_site_pocket_grouping"] == "structure"
+    extraction = receipt["totals"]["site_extraction"]
+    assert extraction["selected_site_pocket_grouping"] == "structure"
+    assert extraction["n_pockets"] == extraction["n_structures"] == extraction["selected_cluster_count"] == 2
+    assert (extraction["cluster_grouping_cluster_count"], extraction["structures_with_merged_clusters"]) == (3, 1)
+    cluster_totals = json.loads((cluster_out / RECEIPT_NAME).read_text())["totals"]["site_extraction"]
+    assert "selected_site_pocket_grouping" not in cluster_totals and cluster_totals["selected_cluster_count"] == 3
+
+
+def test_an_audit_from_before_the_structure_grouping_is_refused_by_the_overlay(tmp_path):
+    """Schema 2 marks the structure grouping; the overlay builder refuses a schema-1 (cluster-grouping) audit."""
+    from ec_clean30 import overlay
+
+    paths = build_cohort(tmp_path / "source", {"P1000": {"ec": "1.1.1.1"}}, test_folds={"P1000": 4})
+    out = _out(tmp_path / "audit")
+    _run(paths, out, expected_sequence_differences=[])
+    receipt = json.loads((out / RECEIPT_NAME).read_text())
+    assert receipt["schema_version"] == cohort.COHORT_SCHEMA_VERSION == 2
+    assert receipt["settings"]["selected_site_pocket_grouping"] == cohort.SELECTED_SITE_POCKET_GROUPING
+    old = _out(tmp_path / "old")
+    shutil.copytree(out, old)
+    (old / RECEIPT_NAME).write_text(json.dumps({**receipt, "schema_version": 1}))
+    with pytest.raises(overlay.OverlayError, match="is not a cohort audit receipt of schema 2"):
+        overlay._load_cohort(old, smoke=True)
 
 
 # ---------------------------------------------------------------------------

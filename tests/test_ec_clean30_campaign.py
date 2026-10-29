@@ -179,7 +179,8 @@ def test_f4_inner_command_matches_the_reference_argv(smoke_view):
     root = str(view.root)
     reference = [
         "--task", "ec", "--ec-label-depth", "1", "--ec-class-vocabulary", "fixed_seven", "--ec-conflicting-labels",
-        "fail", "--site-extraction", "selected_sites", "--model-architecture", "gvp", "--fusion-mode", "late_fusion",
+        "fail", "--site-extraction", "selected_sites", "--selected-site-pocket-grouping", "structure",
+        "--model-architecture", "gvp", "--fusion-mode", "late_fusion",
         "--gvp-learning-rate", "3e-4", "--learning-rate", "1e-4", "--use-global-esm-branch",
         "--global-esm-cache-dir", f"{root}/chain_means_final", "--global-esm-manifest-sha256",
         view.chain_means_manifest_sha256("final"),
@@ -225,6 +226,7 @@ def test_every_family_builds_a_contract_command(smoke_view, family, refit):
     else:
         assert config.gvp_learning_rate is None and config.learning_rate == 3e-4
     assert (config.task, config.ec_class_vocabulary, config.site_extraction) == ("ec", "fixed_seven", "selected_sites")
+    assert config.selected_site_pocket_grouping == "structure"  # one pocket per protein from all its catalytic sites
     assert (config.lr_schedule, config.checkpoint_rule, config.batch_size, config.edge_radius) == \
         ("cosine", "terminal", 4, 6.0)
     assert not (config.prepare_missing_esm_embeddings or config.prepare_missing_external_features
@@ -285,6 +287,10 @@ def _set_flag(argv: list[str], flag: str, value: str) -> list[str]:
     (lambda argv: _set_flag(argv, "--dataset-bundle-sha256", "0" * 64), "--dataset-bundle-sha256 differs"),
     (lambda argv: _set_flag(argv, "--checkpoint-rule", "best_validation"), "the trainer refuses the arguments"),
     (lambda argv: _set_flag(argv, "--lr-schedule", "fixed"), "resolved lr_schedule is 'fixed'"),
+    (lambda argv: _set_flag(argv, "--selected-site-pocket-grouping", "cluster"),
+     "resolved selected_site_pocket_grouping is 'cluster', expected 'structure'"),
+    (lambda argv: [token for token in argv if token not in {"--selected-site-pocket-grouping", "structure"}],
+     "resolved selected_site_pocket_grouping is 'cluster', expected 'structure'"),
 ])
 def test_static_check_refuses_test_flags_generation_and_bundle_mismatch(smoke_view, edit, message):
     command = _command(smoke_view, "F2")
@@ -418,8 +424,9 @@ def smoke_runs(smoke_view):
 
 G1_CHECKS = {"exit_code", "terminal_checkpoint", "selected_epoch", "history_length", "no_test_report",
              "optimizer_groups", "no_generated_features", "ec_label_report", "site_extraction_summary",
-             "ec_predictions", "prediction_checkpoint", "prediction_files", "prediction_structures", "peak_memory",
-             "campaign_identity", "data_paths_in_view", "overlay_identity", "smoke_matches_view", "capped"}
+             "one_pocket_per_protein", "ec_predictions", "prediction_checkpoint", "prediction_files",
+             "prediction_structures", "peak_memory", "campaign_identity", "data_paths_in_view", "overlay_identity",
+             "smoke_matches_view", "capped"}
 
 
 def test_smoke_units_run_and_verify(smoke_runs, smoke_view):
@@ -516,6 +523,18 @@ def _tamper_run(run_dir: Path, case: str) -> str:
     if case == "stray_probe_file":
         (run_dir / "ec_probe_pocket_predictions.csv").write_text("x\n")
         return "prediction_files"
+    if case in ("cluster_grouping", "extra_pocket", "pockets_not_loaded"):
+        summary = json.loads((run_dir / "dataset_summary.json").read_text())
+        extraction = summary["feature_load_report"]["site_extraction_summary"]
+        if case == "cluster_grouping":
+            del extraction["selected_site_pocket_grouping"]
+        elif case == "extra_pocket":
+            extraction["n_pockets"] += 1
+        else:  # pockets, structures and clusters agree with each other but not with the loaded proteins
+            for key in ("n_pockets", "n_structures", "selected_cluster_count"):
+                extraction[key] += 1
+        (run_dir / "dataset_summary.json").write_text(json.dumps(summary))
+        return "one_pocket_per_protein"
     raise AssertionError(case)
 
 
@@ -526,7 +545,8 @@ def _copy_unit(runs: Path, unit_id: str, target: Path) -> None:
 
 
 @pytest.mark.parametrize("case", ["test_report", "best_checkpoint", "generated", "short_history", "steps",
-                                  "prediction_csv", "prediction_structures", "stray_probe_file"])
+                                  "prediction_csv", "prediction_structures", "stray_probe_file", "cluster_grouping",
+                                  "extra_pocket", "pockets_not_loaded"])
 def test_verify_unit_rejects_broken_receipts(smoke_runs, tmp_path, case):
     runs, receipts = smoke_runs
     unit_id = next(unit for unit in receipts if "__inner0__" in unit and "__F4_" in unit)
@@ -535,6 +555,32 @@ def test_verify_unit_rejects_broken_receipts(smoke_runs, tmp_path, case):
     failed = _tamper_run(copy / unit_id, case)
     result = verify_unit(copy, unit_id)
     assert not result["passed"] and not result["checks"][failed]["ok"]
+
+
+def test_probe_evaluation_checks_one_pocket_per_protein(smoke_view, tmp_path):
+    from ec_clean30.commands import POCKET_GROUPING, evaluate_probe
+
+    command = _command(smoke_view, "F2", refit=True)
+    eligible = sorted(smoke_view.eligible_ids())
+    n = len(eligible)
+    report = {"status": "prepared", "returncode": 0, "records": {}, "train_structure_ids": eligible,
+              "val_structure_ids": [], "generated": {}}
+
+    def evaluate(summary):
+        probe_report = report if summary is None else {**report, "site_extraction_summary": summary}
+        return evaluate_probe(probe_report, view=smoke_view, command=command, probe_dir=tmp_path / "probe")
+
+    good = {"site_extraction": "selected_sites", "selected_site_pocket_grouping": POCKET_GROUPING, "n_structures": n,
+            "n_pockets": n, "selected_cluster_count": n}
+    missing = evaluate(None)
+    assert (missing["status"], missing["one_pocket_per_protein"]) == ("failed", None)
+    assert missing["problems"] == ["the probe report has no site-extraction summary"]
+    assert (evaluate(good)["status"], evaluate(good)["one_pocket_per_protein"]) == ("passed", True)
+    for broken in ({**good, "selected_site_pocket_grouping": None}, {**good, "n_pockets": n + 1},
+                   {**good, "n_pockets": n + 1, "n_structures": n + 1, "selected_cluster_count": n + 1}):
+        evaluated = evaluate(broken)
+        assert evaluated["status"] == "failed" and evaluated["one_pocket_per_protein"] is False
+        assert any("not one per protein" in problem for problem in evaluated["problems"])
 
 
 def _refit_tamper(run_dir: Path, case: str) -> str:
@@ -1028,7 +1074,7 @@ def cli_overlay(phase2_world, tmp_path_factory):
         calls = _git_states(patch, [overlay])
         code = _script().main(["overlay", "build", "--out", str(root), "--cohort", str(world.cohort),
                                "--identity-root", str(world.identity_root), "--r2-lists", str(world.r2),
-                               "--d2-option", "b"])
+                               "--d2-option", "d"])
     return {"root": root, "code": code, "printed": printed.getvalue(), "calls": calls}
 
 
@@ -1206,7 +1252,7 @@ def test_cli_overlay_build_and_verify(phase2_world, cli_overlay, dirty_checkout,
     other = tmp_path / "refusals" / campaign.CAMPAIGN_ID / overlay.OVERLAYS_DIR
     build = ["overlay", "build", "--out", other / overlay.DEFAULT_OVERLAY_ID, "--cohort", world.cohort,
              "--identity-root", world.identity_root, "--r2-lists", world.r2]
-    code, _text, err = _run_cli(capsys, [*build, "--d2-option", "d"])
+    code, _text, err = _run_cli(capsys, [*build, "--d2-option", "a"])
     assert code == 2 and err.startswith("error: ") and "not built" in err and calls == [False] * 3
     for argv in ([*build, "--d2-option", "b", "--fold-work", f"2={tmp_path / 'fold2_test'}"],
                  ["overlay", "build", "--out", other / overlay.DEFAULT_OVERLAY_ID, "--cohort", tmp_path / "cohort_test",

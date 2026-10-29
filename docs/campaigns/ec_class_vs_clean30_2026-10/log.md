@@ -280,3 +280,91 @@ Open for the maintainer:
 
 Next: P2-2 (sequence map regenerated, native label table) and P2-3 (cohort audit) on the committed code, then
 round 1b.
+
+## evc-006
+
+2026-10-26 — **training-side inputs built: label table, regenerated sequence map and cohort audit; round-1b
+decisions.** CPU only, training files only, at the clean commit `36498cd`. Console output was written to private files;
+no test file was read.
+
+The maintainer chose the layer-26 build route: the full CPU build of block-26 means runs on this workstation once,
+alone, under a 4 GB limit (evc-005 recorded the 3 GiB peak of the 5-chain check).
+
+P2-2: `sequence-map` regenerated `sequence_map.tsv` with the same SHA-256 as on 2026-10-23
+(`e9d6ddbb9c772f893f7e9194c94ecac139c3b5893a7d40384368b41b3e487fe0`). `label-table` wrote the native label table of the
+10,202 proteins in the five official training files: 0 conflicts, 0 fatal statuses, and agreement of the scorer's,
+the EC-class parser's and the normaliser's readers on all 10,202 rows (the baseline reader on all 40,808 file rows).
+Both list the same accessions.
+
+P2-3: `cohort-audit` over the 740 cohort proteins passed every check in 3.6 min (peak 0.7 GB):
+- every structure loads and matches its manifest; ESMC and external files are present and valid for all 740;
+- all 882 selected sites resolve to one metal atom of the same element (largest distance 1.8e-6 Å; tolerance 0.01 Å);
+- the EC set in each file name equals the native EC set for all 740 (A4);
+- the per-fold label-only eligible counts equal the expected values (compared from a private file, not printed);
+- the structure sequence equals the ESMC sidecar's for all 740, and equals the CLEAN sequence map for 739; the one
+  difference is the known Q96KN2 V113I (A5);
+- the shortest cohort sequence has 126 residues (A6: nothing to report);
+- 370 string values in ESMC and external files name a test or mixed folder (A13; counted, not shown).
+
+D2: 1,396 of the 2,278 metal records are unselected AlphaFill metals, in 383 proteins. Over the 29,944 pocket residues,
+13.7% get a non-zero charge-proxy contribution from unselected metals, with a median share of 57% among them, so the
+criteria for keeping the features as they are (A1 option b) fail in all five folds. Recomputed with every metal present, the
+charge proxy matches the stored value for all 29,944 pocket residues within the audit's tolerance. 13 of the unselected
+metals are copies of a selected site from another donor. PROPKA did not run or failed for 475 of 740 proteins
+("unavailable"); for 134 of the 265 PROPKA proteins its input held the unselected metals.
+
+| Output | SHA-256 |
+|---|---|
+| `cohort_audit_receipt.json` | `476c396dea2ba770faba2af1570953249de4cd9da1ed307c9161cf959f7b1884` |
+| `cohort_proteins.tsv` | `a1ef06a4eaa8165fcabadf2b93eb161f20572bd76ce175696a537cae4cd023ec` |
+| `cohort_sites_label_free.csv` | `1a9b8797c3bd6d00f4ee7404f9281de719667fdd2667ff1c46ab992e35e78c29` |
+| `native_label_table.tsv` | `afc316a961bde53f618b440595bf6f4dbcba63f2755a10b926ad0c1efe01abb3` |
+| `label_table_receipt.json` | `a83f1d4197e5b4a857ea305b135c32e9bbff5ec2794008372c6339a71162c2e2` |
+
+Outputs and receipts are mirrored to the NVMe drive and checked by SHA-256.
+
+Round 1b (2026-10-26):
+- A1: option (d), at the maintainer's direction that only metals MAHOMES classified as catalytic count. The five
+  training site tables list exactly the 882 selected sites, all marked catalytic; none of the 1,396 other metals in the
+  structure files is in them. The charge proxy is recomputed in the campaign's data copy with those catalytic metals
+  only, so other-site metals and the 13 same-site copies from other donors no longer count; every other feature value
+  and every structure file stays unchanged. About 115 of the other metals lie 3–4.5 Å from a catalytic metal (likely
+  the second metal of a two-metal centre) and are not counted either. PROPKA's term keeps the other metals for 134
+  proteins (disclosed).
+- One pocket per protein (added at the maintainer's direction: one pocket, not one per metal, no duplicates): every
+  fit builds a single pocket per protein from all of its catalytic metals. With the trainer's default, catalytic
+  metals within 4.5 Å share a pocket, which left 57 of the 740 proteins with two or three pockets; 45 of their 59 site
+  pairs lie 4.5–12 Å apart, so those 10 Å pockets largely overlap. The new trainer option is used only by this campaign;
+  the default and the metal task are unchanged.
+- A2: no load failure, so WP-7 is not built. A5: Q96KN2 V113I kept and disclosed. A6: no short sequence (shortest
+  126 residues). A13: the count of 370 is disclosed; file bytes unchanged. PROPKA "unavailable" for 475 proteins:
+  kept and disclosed.
+- Seed-spread stand-in for the simulation: the metal v3 seed-42/43 spreads, 1.5 points (17 late-fusion pairs) as the
+  central point and 2.2 points (31 fold-0 pairs) as the upper point and pessimistic corner, each added in quadrature to
+  the simulator's per-protein noise floor on the fold's population. The CARE two-seed value (1.8 points) is recorded
+  for reference only.
+
+**Code for the round-1b decisions (CP-B).** Reviewed and tested on synthetic data:
+- `overlay build --d2-option d`: the overlay's external feature files carry the charge-distance proxy recomputed with
+  the selected (catalytic) metals only, as the stored value minus the terms of every other metal. The build first
+  checks that each selected site resolves to one trainer metal record and one feature-module metal atom of the same
+  element within 0.001 Å, and that the stored value equals a recomputation with every metal present for every residue;
+  any mismatch stops it. Every other value and every structure file is unchanged. The manifest marks each such file as
+  derived, with its source and derived SHA-256, and `overlay verify` recomputes every derived value. A real overlay is
+  refused unless its option equals the cohort audit's recommendation (d). On a synthetic structure with two selected
+  metals, a same-site copy and two other metals, the derived values equal a full feature run without the other metals
+  within 1e-12. Option b output is byte-identical to CP-A's.
+- Trainer option `--selected-site-pocket-grouping {cluster,structure}` (default `cluster`; only with
+  `--site-extraction selected_sites`): under `structure` each structure gives one pocket, the residues within 10 Å of
+  any selected metal, with all selected metals as its metals; other metals never enter. The option is recorded in the
+  run config, the cache keys, the site-extraction summary and the prediction receipts, and the loader refuses a second
+  pocket of one structure. Campaign fits carry `structure`; `verify-unit` and the dry run check one pocket per protein.
+  Under `cluster`, extraction and loading match `36498cd` byte for byte; every run config gains the one key, as
+  `site_extraction` did in Phase 1.
+- The cohort audit uses the structure grouping and writes schema 2; the overlay refuses the schema-1 audit above, so
+  P2-3 runs again at the CP-B commit. The D2 numbers above do not depend on the grouping.
+- Consequence of one pocket per protein: catalytic sites far apart form one multinuclear site (metal–metal edges,
+  centroid), and a protein whose sites hold different metals has no metal label; the EC task does not use that label.
+
+Next: P2-3 again at the CP-B commit, then P2-5 (inner folds), P2-6 (R2 lists), P2-7 (overlay, option d) and P2-8
+(views, the layer-26 build, dry runs).

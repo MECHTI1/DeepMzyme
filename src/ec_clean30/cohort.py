@@ -16,7 +16,10 @@ fold's fits will see before any inner assignment is made:
 - **selected sites (A3):** each selected site resolves to one metal atom of the element in
   ``metaltype`` within the coordinate tolerance of ``single_donor_coordinate_{x,y,z}``;
 - **extraction counts** of the selected-site report (metal records, pockets, clusters, split
-  components, residue change, sites without a pocket);
+  components, residue change, sites without a pocket), with the fits' pocket grouping
+  (``SELECTED_SITE_POCKET_GROUPING``: one pocket per protein from all its selected sites, so
+  ``pocket_count`` is 1 for every loaded protein; the D2 pocket residues are the same union of
+  residues near any selected metal under either grouping);
 - **D2 geometry:** per unselected metal its distance to the nearest selected metal (2.0 Å or less
   flags a copy of the same site from another donor) and to the nearest pocket residue; per pocket
   residue the unselected metals' contribution to ``custom_charge_distance_proxy``, recomputed with
@@ -139,7 +142,9 @@ from training.ec_classes import STATUS_AMBIGUOUS, STATUS_OK, STRUCTURE_ID_RE, no
 
 
 COHORT_AUDIT_FORMAT = "deepmzyme_ec_clean30_cohort_audit_v1"
-COHORT_SCHEMA_VERSION = 1
+# 2 (CP-B): pockets extracted with the structure pocket grouping (SELECTED_SITE_POCKET_GROUPING); a schema-1 audit
+# counted the cluster grouping's pockets, so readers that require this version (the overlay builder) refuse it.
+COHORT_SCHEMA_VERSION = 2
 COHORT_AUDIT_HELP = "Training-side cohort audit over the five training sides (step P2-3)."
 
 # The audit writes only <campaign root>/cohort, a campaign folder that every fit's read guard covers.
@@ -230,12 +235,19 @@ COMPACT_REPORT_KEYS: tuple[str, ...] = (
     "metal_records_total", "metal_records_selected", "metal_records_dropped", "selected_cluster_count",
     "components_with_unselected_metals_count", "split_component_count", "residue_count_delta_total",
 )
+# The campaign's fits load pockets with --selected-site-pocket-grouping structure (ec_clean30.commands), so the
+# audit extracts them the same way (graph.structure_parsing.POCKET_GROUPING_STRUCTURE; kept here torch-free).
+SELECTED_SITE_POCKET_GROUPING = "structure"
+# Extra per-structure report counts of the structure grouping (training.structure_loading's compact report).
+STRUCTURE_GROUPING_REPORT_KEYS: tuple[str, ...] = ("cluster_grouping_cluster_count", "selected_sites_without_residues")
 
 RULES: Mapping[str, str] = {
     "load_status": "the trainer's selected-site path (parse, site keys in accession_ec mode, extraction, ESMC and "
                    "external alignment, pocket-to-site match, metal label); ambiguous_ec_class after a clean load",
     "load_time_exclusion": "a label-eligible protein with load status no_selected_sites, "
                            "selected_sites_without_pocket or invalid_structure",
+    "pocket_grouping": "one pocket per protein around all its selected sites (residues within the pocket radius of "
+                       "any selected metal; every selected metal), as the fits load it; other metals never enter it",
     "site_check": "one metal atom per selected (chain, resseq), element equal to metaltype, distance to "
                   "single_donor_coordinate_{x,y,z} at most the tolerance",
     "same_site_copy": f"an unselected metal within {SAME_SITE_COPY_DISTANCE} Å of a selected metal",
@@ -864,7 +876,8 @@ def audit_protein(protein: UnionProtein, ctx: _Context) -> dict[str, Any]:
         if failure is None and selected:
             try:
                 pockets, report = extract_selected_site_pockets_from_structure(
-                    structure, structure_id=protein.stem, selected_site_ids=selected)
+                    structure, structure_id=protein.stem, selected_site_ids=selected,
+                    pocket_grouping=SELECTED_SITE_POCKET_GROUPING)
             except UnresolvedSelectedSiteError:
                 failure = "unresolved_selected_site"
             except AmbiguousSelectedSiteError:
@@ -892,9 +905,14 @@ def audit_protein(protein: UnionProtein, ctx: _Context) -> dict[str, Any]:
         if report is not None:
             compact = {key: int(report[key]) for key in COMPACT_REPORT_KEYS}
             compact["selected_sites_without_pocket"] = len(report["selected_sites_without_pocket"])
-            record["extraction"] = compact
             row.update(compact)
             row["pocket_count"] = int(report["pocket_count"])
+            if report.get("pocket_grouping") == SELECTED_SITE_POCKET_GROUPING:
+                # Kept in the extraction totals only (as in the trainer's summary), not as protein columns.
+                cluster_count_key, bare_sites_key = STRUCTURE_GROUPING_REPORT_KEYS
+                compact[cluster_count_key] = int(report[cluster_count_key])
+                compact[bare_sites_key] = len(report[bare_sites_key])
+            record["extraction"] = compact
 
         chain_input = None
         if structure is not None:
@@ -1044,15 +1062,23 @@ def site_extraction_totals(records: Sequence[Mapping[str, Any]]) -> dict[str, An
     """Totals in the form of ``training.data.site_extraction_summary`` over trainer-ok structures.
 
     The trainer sums the per-structure reports of the structures it keeps; the skip counts are
-    over the given records.
+    over the given records. Under the structure grouping the totals add the grouping, the pocket
+    count and the structures whose sites the default grouping would split, as the trainer does.
     """
     kept = [item for item in records if item["trainer_status"] == LOAD_OK and item["extraction"] is not None]
+    grouped = SELECTED_SITE_POCKET_GROUPING != "cluster"
     totals: dict[str, Any] = {"site_extraction": "selected_sites", "n_structures": len(kept)}
-    for key in (*COMPACT_REPORT_KEYS, "selected_sites_without_pocket"):
+    extra_keys = STRUCTURE_GROUPING_REPORT_KEYS if grouped else ()
+    for key in (*COMPACT_REPORT_KEYS, "selected_sites_without_pocket", *extra_keys):
         totals[key] = sum(int(item["extraction"][key]) for item in kept)
     totals["structures_with_unselected_metals"] = sum(1 for item in kept if item["extraction"]["metal_records_dropped"] > 0)
     for reason in (LOAD_NO_SELECTED_SITES, LOAD_SITES_WITHOUT_POCKET):
         totals[f"structures_skipped_{reason}"] = sum(1 for item in records if item["row"]["load_status"] == reason)
+    if grouped:
+        totals["selected_site_pocket_grouping"] = SELECTED_SITE_POCKET_GROUPING
+        totals["n_pockets"] = sum(int(item["row"]["pocket_count"]) for item in kept)
+        cluster_count_key = STRUCTURE_GROUPING_REPORT_KEYS[0]
+        totals["structures_with_merged_clusters"] = sum(1 for item in kept if item["extraction"][cluster_count_key] > 1)
     return totals
 
 
@@ -1445,6 +1471,7 @@ def run_cohort_audit(
             "settings": {"coordinate_tolerance": tolerance, "a3_tolerance": A3_COORDINATE_TOLERANCE,
                          "site_key_mode": "accession_ec", "pocket_radius": float(DEFAULT_POCKET_RADIUS),
                          "multinuclear_merge_distance": float(DEFAULT_MULTINUCLEAR_MERGE_DISTANCE),
+                         "selected_site_pocket_grouping": SELECTED_SITE_POCKET_GROUPING,
                          "same_site_copy_distance": SAME_SITE_COPY_DISTANCE, "near_distance": NEAR_METAL_DISTANCE,
                          "residue_pair_ca_cutoff": RESIDUE_PAIR_CA_CUTOFF, "esm_model_name": esm_model_name,
                          "esm_dim": int(esm_dim), "a1_residue_fraction_limit": A1_RESIDUE_FRACTION_LIMIT,

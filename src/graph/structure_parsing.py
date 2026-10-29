@@ -256,6 +256,12 @@ def extract_metal_pockets_from_structure(
 SELECTED_SITE_EXTRACTION = "selected_sites"
 NO_SELECTED_SITES_REASON = "no_selected_sites"
 SelectedSiteId = Tuple[str, int]
+# How the selected metals of one structure are grouped into pockets: "cluster" (default)
+# merges selected metals within the multinuclear merge distance, so a structure can give
+# several pockets; "structure" makes all selected metals of the structure one pocket.
+POCKET_GROUPING_CLUSTER = "cluster"
+POCKET_GROUPING_STRUCTURE = "structure"
+SELECTED_SITE_POCKET_GROUPINGS = (POCKET_GROUPING_CLUSTER, POCKET_GROUPING_STRUCTURE)
 
 
 class UnresolvedSelectedSiteError(ValueError):
@@ -300,6 +306,7 @@ def extract_selected_site_pockets_from_structure(
     pocket_radius: float = DEFAULT_POCKET_RADIUS,
     multinuclear_merge_distance: float = DEFAULT_MULTINUCLEAR_MERGE_DISTANCE,
     model_index: Optional[int] = None,
+    pocket_grouping: str = POCKET_GROUPING_CLUSTER,
 ) -> tuple[List[PocketRecord], dict[str, object]]:
     """Extract pockets defined only by the selected metal sites.
 
@@ -308,6 +315,9 @@ def extract_selected_site_pockets_from_structure(
     ``metal_coords`` and everything derived from them see only selected ions.
     Selected ions within ``multinuclear_merge_distance`` still form one
     multinuclear pocket; an unselected ion never bridges two selected ones.
+    ``pocket_grouping="structure"`` replaces that clustering: all selected ions
+    form one pocket (structure grouping, below); the default ``"cluster"``
+    path is unchanged.
 
     Each selected ``(chain, resseq)`` must resolve to exactly one metal atom
     record. Insertion codes are ignored, as in the summary-site matcher, so two
@@ -328,9 +338,25 @@ def extract_selected_site_pockets_from_structure(
     such component, the residues covered by its selected pockets minus its
     legacy pocket residues. Selected sites whose cluster has no residue within
     ``pocket_radius`` appear only in ``selected_sites_without_pocket``.
+
+    Structure grouping: the one pocket (``{structure_id}_METAL_0``, metadata
+    ``selected_site_pocket_grouping``) holds the residues within ``pocket_radius``
+    of any selected ion and every selected ion in file order, also an ion with
+    no residue of its own (listed in ``selected_sites_without_residues``); the
+    pocket is dropped, and all selected sites listed in
+    ``selected_sites_without_pocket``, only when no residue is near any selected
+    ion. ``selected_cluster_count`` is 1 (0 without selected ions),
+    ``cluster_grouping_cluster_count`` the number of selected clusters the
+    default grouping forms, ``split_components`` is empty, and its pocket
+    row lists every legacy component holding a selected ion
+    (``legacy_pocket_ids``). ``residue_count_delta_total`` keeps its per-component
+    meaning (residues near the component's selected ions minus its legacy pocket
+    residues), so it equals the cluster-grouping value.
     """
     if not structure_id:
         raise ValueError("structure_id is required for selected-site extraction.")
+    if pocket_grouping not in SELECTED_SITE_POCKET_GROUPINGS:
+        raise ValueError(f"Unsupported selected-site pocket grouping: {pocket_grouping!r}")
     selected = _normalize_selected_site_ids(selected_site_ids)
     all_residues, metal_records = collect_structure_residues_and_metals(structure, model_index=model_index)
 
@@ -361,6 +387,7 @@ def extract_selected_site_pockets_from_structure(
         for record in component
     }
     selected_clusters = cluster_metal_records(selected_records, merge_distance=multinuclear_merge_distance)
+    structure_mode = pocket_grouping == POCKET_GROUPING_STRUCTURE
     residue_coord_tensors = _residue_coordinate_tensors(all_residues)
 
     pockets: List[PocketRecord] = []
@@ -372,7 +399,7 @@ def extract_selected_site_pockets_from_structure(
     # Residue records are shared objects of all_residues, so the union over a
     # split component's pockets counts each residue once.
     pocket_residue_ids_by_component: dict[int, set[int]] = {}
-    for cluster_index, metal_cluster in enumerate(selected_clusters):
+    for cluster_index, metal_cluster in enumerate([] if structure_mode else selected_clusters):
         # A filtered cluster is a subset of exactly one legacy component.
         component_indices = {legacy_index_by_record[id(record)] for record in metal_cluster}
         if len(component_indices) != 1:
@@ -427,6 +454,64 @@ def extract_selected_site_pockets_from_structure(
             }
         )
 
+    selected_sites_without_residues: list[SelectedSiteId] = []
+    if structure_mode and selected_records:
+        def residues_near(metals: List[MetalAtomRecord]) -> List[ResidueRecord]:
+            return find_pocket_residues_near_metal_cluster(
+                all_residues, metals, pocket_radius=pocket_radius, residue_coord_tensors=residue_coord_tensors,
+            )
+
+        # The legacy-component diagnostics stay per component: residues near the
+        # component's selected ions against the component's legacy pocket residues.
+        component_indices = sorted({legacy_index_by_record[id(record)] for record in selected_records})
+        legacy_residue_ids: set[int] = set()
+        for component_index in component_indices:
+            legacy_residues = residues_near(legacy_clusters[component_index])
+            legacy_residue_counts[component_index] = len(legacy_residues)
+            legacy_residue_ids.update(id(residue) for residue in legacy_residues)
+            component_selected = [
+                record for record in selected_records if legacy_index_by_record[id(record)] == component_index
+            ]
+            pocket_residue_ids_by_component[component_index] = {
+                id(residue) for residue in residues_near(component_selected)
+            }
+        selected_sites_without_residues = sorted(
+            metal_record_selected_site_id(record) for record in selected_records if not residues_near([record])
+        )
+        site_keys = [metal_record_selected_site_id(record) for record in selected_records]
+        pocket = pocket_record_from_metal_cluster(
+            structure_id=structure_id,
+            cluster_index=0,
+            metal_cluster=selected_records,
+            all_residues=all_residues,
+            pocket_radius=pocket_radius,
+            residue_coord_tensors=residue_coord_tensors,
+        )
+        if pocket is None:
+            sites_without_pocket.extend(site_keys)
+        else:
+            legacy_component_site_ids = [
+                record.site_id for component_index in component_indices for record in legacy_clusters[component_index]
+            ]
+            pocket.metadata["site_extraction"] = SELECTED_SITE_EXTRACTION
+            pocket.metadata["selected_site_pocket_grouping"] = POCKET_GROUPING_STRUCTURE
+            pocket.metadata["selected_site_keys"] = site_keys
+            pocket.metadata["legacy_component_site_ids"] = legacy_component_site_ids
+            pockets.append(pocket)
+            pocket_rows.append(
+                {
+                    "pocket_id": pocket.pocket_id,
+                    "selected_site_keys": site_keys,
+                    "metal_count": pocket.metal_count(),
+                    "legacy_pocket_ids": [f"{structure_id}_METAL_{index}" for index in component_indices],
+                    "legacy_component_site_ids": legacy_component_site_ids,
+                    "legacy_component_metal_count": len(legacy_component_site_ids),
+                    "residue_count": len(pocket.residues),
+                    "legacy_residue_count": len(legacy_residue_ids),
+                    "residue_count_delta": len(pocket.residues) - len(legacy_residue_ids),
+                }
+            )
+
     components_with_unselected_metals = []
     legacy_components_without_selected_sites = 0
     for component_index, component in enumerate(legacy_clusters):
@@ -475,7 +560,7 @@ def extract_selected_site_pockets_from_structure(
         "metal_records_dropped": len(metal_records) - len(selected_records),
         "legacy_component_count": len(legacy_clusters),
         "legacy_components_without_selected_sites": legacy_components_without_selected_sites,
-        "selected_cluster_count": len(selected_clusters),
+        "selected_cluster_count": (1 if selected_records else 0) if structure_mode else len(selected_clusters),
         "pocket_count": len(pockets),
         "pockets": pocket_rows,
         "components_with_unselected_metals": components_with_unselected_metals,
@@ -485,4 +570,9 @@ def extract_selected_site_pockets_from_structure(
         "selected_sites_without_pocket": sorted(sites_without_pocket),
         "residue_count_delta_total": residue_count_delta_total,
     }
+    if structure_mode:
+        # Added only under structure grouping, so the default report stays as it was.
+        report["pocket_grouping"] = POCKET_GROUPING_STRUCTURE
+        report["cluster_grouping_cluster_count"] = len(selected_clusters)
+        report["selected_sites_without_residues"] = selected_sites_without_residues
     return pockets, report

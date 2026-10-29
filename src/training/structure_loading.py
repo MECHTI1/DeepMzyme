@@ -6,8 +6,9 @@ from typing import Any
 from data_structures import PocketRecord
 from graph.ring_edges import canonical_ring_edges_output_path, ring_edges_output_path
 from graph.structure_parsing import (
-    NO_SELECTED_SITES_REASON, SELECTED_SITE_EXTRACTION, extract_metal_pockets_from_structure,
-    extract_selected_site_pockets_from_structure, parse_structure_file,
+    NO_SELECTED_SITES_REASON, POCKET_GROUPING_CLUSTER, POCKET_GROUPING_STRUCTURE, SELECTED_SITE_EXTRACTION,
+    SELECTED_SITE_POCKET_GROUPINGS, extract_metal_pockets_from_structure, extract_selected_site_pockets_from_structure,
+    parse_structure_file,
 )
 from label_schemes import map_site_metal_symbols, map_site_metal_symbols_for_scheme
 from structure_store import STRUCTURE_MANIFEST_FILENAME, read_structure_manifest
@@ -111,6 +112,7 @@ def load_structure_pockets(
     cohort_bindings: dict[str, tuple] | None = None,
     feature_inventory_sha256: str | None = None,
     site_extraction: str = "component",
+    selected_site_pocket_grouping: str = POCKET_GROUPING_CLUSTER,
 ) -> tuple[list[PocketRecord], list[dict[str, str]], list[dict[str, str]]]:
     """Parse one structure into labeled examples.
 
@@ -118,6 +120,8 @@ def load_structure_pockets(
     selected sites, so unselected metals in the file shape no pocket (see
     ``extract_selected_site_pockets_from_structure``); the default keeps the
     component extraction followed by the summary filter.
+    ``selected_site_pocket_grouping="structure"`` (selected sites only) makes the
+    selected sites of the structure one pocket instead of one per cluster.
 
     ``cohort_bindings`` (structure stem -> frozen binding tuples) switches to the
     source-row cohort path: one example per bound ion, no summary-key matching.
@@ -133,6 +137,11 @@ def load_structure_pockets(
         allowed_site_metal_labels is None or metal_example_unit != "pocket" or cohort_bindings is not None
     ):
         raise ValueError("Selected-site extraction needs a site summary, pocket examples and no source cohort")
+    if selected_site_pocket_grouping not in SELECTED_SITE_POCKET_GROUPINGS:
+        raise ValueError(f"Unsupported selected-site pocket grouping: {selected_site_pocket_grouping!r}")
+    structure_grouping = selected_site_pocket_grouping == POCKET_GROUPING_STRUCTURE
+    if structure_grouping and not selected_mode:
+        raise ValueError("Structure pocket grouping needs selected-site extraction")
     if cohort_bindings is not None:
         return _load_cohort_structure_pockets(
             structure_path=structure_path,
@@ -155,6 +164,7 @@ def load_structure_pockets(
                 return [], [], [{"structure_id": structure_path.stem, "pocket_id": "", "reason": NO_SELECTED_SITES_REASON}]
             extracted_pockets, selected_report = extract_selected_site_pockets_from_structure(
                 structure, structure_id=structure_path.stem, selected_site_ids=selected_ids,
+                pocket_grouping=selected_site_pocket_grouping,
             )
         else:
             extracted_pockets = extract_metal_pockets_from_structure(structure, structure_id=structure_path.stem)
@@ -171,6 +181,9 @@ def load_structure_pockets(
             "components_with_unselected_metals_count", "split_component_count", "residue_count_delta_total",
         )}
         compact_report["selected_sites_without_pocket"] = len(selected_report["selected_sites_without_pocket"])
+        if structure_grouping:
+            compact_report["cluster_grouping_cluster_count"] = selected_report["cluster_grouping_cluster_count"]
+            compact_report["selected_sites_without_residues"] = len(selected_report["selected_sites_without_residues"])
         for pocket in extracted_pockets:
             pocket.metadata["site_extraction_report"] = compact_report
 

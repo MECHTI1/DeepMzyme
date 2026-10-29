@@ -12,12 +12,14 @@ by the view's frozen EC membership and export validation predictions; refit unit
 on the whole view with ``--val-fraction 0`` and export predictions of the view's probe
 list for the later replay.
 
-Reference argument list of an inner F4 unit (Phase 1 build plan, gate G1.10) followed by
-the runner's own additions (``--ring-features-dir``, ``--runs-dir``, ``--run-name``,
+Reference argument list of an inner F4 unit (Phase 1 build plan, gate G1.10; the pocket
+grouping, one pocket per protein from all its selected sites, was added in Phase 2 at CP-B)
+followed by the runner's own additions (``--ring-features-dir``, ``--runs-dir``, ``--run-name``,
 ``--campaign-run-identity``)::
 
     --task ec --ec-label-depth 1 --ec-class-vocabulary fixed_seven --ec-conflicting-labels fail
-    --site-extraction selected_sites --model-architecture gvp --fusion-mode late_fusion
+    --site-extraction selected_sites --selected-site-pocket-grouping structure
+    --model-architecture gvp --fusion-mode late_fusion
     --gvp-learning-rate 3e-4 --learning-rate 1e-4 --use-global-esm-branch
     --global-esm-cache-dir V/chain_means_final --global-esm-manifest-sha256 <sha>
     --ec-group-weighting structure_id --ec-class-weight-unit group --batch-size 4 --epochs 1
@@ -71,6 +73,8 @@ TRAIN_SCRIPT = SRC_ROOT / "train.py"
 CAP_PREFIX: tuple[str, ...] = ("systemd-run", "--user", "--scope", "-q", "-p", "CPUQuota=200%", "-p", "MemoryMax=3G",
                                "-p", "MemorySwapMax=0")
 MEMORY_LIMIT_BYTES = 3 * 1024 ** 3
+# One pocket per protein from all its selected (catalytic) sites (graph.structure_parsing; kept here torch-free).
+POCKET_GROUPING = "structure"
 EC_CLASS_TOKENS = tuple(str(index) for index in range(1, 8))
 # Prediction files of the EC export (training.ec_prediction_export.PREDICTION_FILE_NAMES; kept here torch-free).
 PREDICTION_FILE_NAMES: Mapping[str, tuple[str, str]] = {
@@ -240,6 +244,7 @@ def _base_argv(
 
     head = {"--task": "ec", "--ec-label-depth": 1, "--ec-class-vocabulary": "fixed_seven",
             "--ec-conflicting-labels": "fail", "--site-extraction": "selected_sites",
+            "--selected-site-pocket-grouping": POCKET_GROUPING,
             "--model-architecture": spec.model_architecture, "--fusion-mode": spec.fusion_mode}
     if "gvp_learning_rate" in lr:
         head["--gvp-learning-rate"] = float(lr["gvp_learning_rate"])
@@ -393,7 +398,8 @@ ALWAYS_SET_DATA_FIELDS = frozenset({"structure_dir", "summary_csv", "esm_embeddi
 def _expected_settings(command: UnitCommand) -> dict[str, Any]:
     return {
         "task": "ec", "ec_label_depth": 1, "ec_class_vocabulary": "fixed_seven", "ec_conflicting_labels": "fail",
-        "site_extraction": "selected_sites", "lr_schedule": "cosine", "checkpoint_rule": "terminal",
+        "site_extraction": "selected_sites", "selected_site_pocket_grouping": POCKET_GROUPING,
+        "lr_schedule": "cosine", "checkpoint_rule": "terminal",
         "batch_size": 4, "ec_contrastive_weight": 0.0, "prepare_missing_esm_embeddings": False,
         "prepare_missing_external_features": False, "prepare_missing_ring_edges": False,
         "require_external_features": True, "run_test_eval": False, "test_structure_dir": None,
@@ -668,6 +674,20 @@ class _Checks:
         return all(item["ok"] for item in self.results.values())
 
 
+def one_pocket_per_protein(site_summary: Optional[Mapping[str, Any]], loaded: int) -> tuple[bool, dict[str, Any]]:
+    """Whether a site-extraction summary shows the structure pocket grouping with one pocket per loaded protein.
+
+    The grouping must be ``POCKET_GROUPING`` and the pockets, the structures, the selected
+    clusters and ``loaded`` (the proteins the run loaded) must all be equal.
+    """
+    summary = site_summary or {}
+    detail = {"grouping": summary.get("selected_site_pocket_grouping"), "structures": summary.get("n_structures"),
+              "pockets": summary.get("n_pockets"), "clusters": summary.get("selected_cluster_count"), "loaded": loaded}
+    ok = detail["grouping"] == POCKET_GROUPING and \
+        detail["pockets"] == detail["structures"] == detail["clusters"] == loaded
+    return ok, detail
+
+
 def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
                 memory_limit_bytes: int = MEMORY_LIMIT_BYTES) -> dict[str, Any]:
     """Check one finished unit against the campaign's receipt contract; returns a per-check record.
@@ -676,6 +696,8 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
     another machine passes its own). Whether a unit is real is decided by its view, not by
     the receipt: the identity's ``smoke`` flag must equal the view's, a unit of a fold view
     must carry the view's overlay ID and SHA-256 and must have run under a cap prefix.
+    ``one_pocket_per_protein`` requires the structure pocket grouping in the site-extraction
+    summary and as many pockets as loaded proteins.
     """
     from training.ec_membership import read_ec_fold_membership
 
@@ -741,6 +763,7 @@ def verify_unit(runs_dir: Path, unit_id: str, *, view: Optional[View] = None,
     n_train = sum((support.get("train_proteins_by_ec_class") or {}).values())
     n_val = sum((support.get("val_proteins_by_ec_class") or {}).values())
     loaded = n_train + n_val
+    checks.add("one_pocket_per_protein", *one_pocket_per_protein(site_summary, loaded))
     if recipe.family in GLOBAL_FAMILIES:
         global_esm = summary.get("global_esm") or {}
         attach = global_esm.get("attach") or {}
@@ -1091,7 +1114,13 @@ def view_unit_commands(
 
 
 def evaluate_probe(report: Mapping[str, Any], *, view: View, command: UnitCommand, probe_dir: Path) -> dict[str, Any]:
-    """Problems of one preparation probe: reads or writes outside the view, generation, wrong cohort."""
+    """Problems of one preparation probe: reads or writes outside the view, generation, wrong cohort.
+
+    The trainer refuses to load two pockets of one structure under the structure pocket grouping
+    (``training.data``), so a prepared probe whose structures equal the expected ones loaded one
+    pocket per protein. A prepared probe must also report the site-extraction summary, which is
+    checked with ``one_pocket_per_protein`` (``None`` in the result when the report has none).
+    """
     from ec_clean30.views import classify_probe_records
     from training.ec_membership import read_ec_fold_membership
 
@@ -1122,8 +1151,16 @@ def evaluate_probe(report: Mapping[str, Any], *, view: View, command: UnitComman
                 problems.append(f"split type is {report.get('split_type')!r}, not frozen_ec_membership")
         elif val or train != set(view.eligible_ids()):
             problems.append("refit structures differ from the view's eligible structures")
+    one_pocket = None
+    if report.get("status") == "prepared" and report.get("site_extraction_summary") is None:
+        problems.append("the probe report has no site-extraction summary")
+    elif report.get("status") == "prepared":
+        one_pocket, detail = one_pocket_per_protein(report["site_extraction_summary"], len(train | val))
+        if not one_pocket:
+            problems.append(f"the loaded pockets are not one per protein under the structure grouping: {detail}")
     return {"unit_id": command.unit_id, "kind": command.kind, "family": command.recipe.family,
             "status": "passed" if not problems else "failed", "problems": problems,
+            "one_pocket_per_protein": one_pocket,
             "returncode": report.get("returncode"), "wall_seconds": report.get("wall_seconds"),
             "n_train_structures": len(train), "n_val_structures": len(val),
             "generation_attempts": report.get("generation_attempts"), "generated": generated,

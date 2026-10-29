@@ -291,7 +291,10 @@ certifies no block below the compatibility warning; [TECH-002](FOLLOW_UP_TECHNIC
 stays open. Populations, systems, the claim rule and test access are in the [design](campaigns/ec_class_vs_clean30_2026-10/design.md),
 phases and gates G1–G5 in the README. Inner-fold fits are serious validation runs; the Phase 7 scoring pass is a
 named-benchmark one-shot test read, run once after gate G5. Commands run one at a time; the `dry-run` parent runs under
-`SMALL` because each probe opens its own `CAP` scope (`--cap-prefix`). Real (non-smoke) actions refuse an uncommitted
+`SMALL` because each probe opens its own `CAP` scope (`--cap-prefix`), and the layer-26 `from-model` build runs alone
+under `L8`, a one-off 4 GB limit (campaign log evc-006). Every campaign fit takes `--site-extraction selected_sites
+--selected-site-pocket-grouping structure`, one pocket per protein from all its catalytic metals; the runner writes
+both flags and the dry run checks them. Real (non-smoke) actions refuse an uncommitted
 or untracked tree, every tool refuses test flags and test-named paths, and identity output holds per-fold EC-class
 counts, so it goes to private files. Training files only; stop at the first failure:
 
@@ -299,6 +302,7 @@ counts, so it goes to private files. Training files only; stop at the first fail
 PY="${DEEPMZYME_PYTHON:?set DEEPMZYME_PYTHON to the project environment python}"
 CAP=(systemd-run --user --scope -q -p CPUQuota=200% -p MemoryMax=3G -p MemorySwapMax=0)
 SMALL=(systemd-run --user --scope -q -p CPUQuota=100% -p MemoryMax=1G -p MemorySwapMax=0)
+L8=(systemd-run --user --scope -q -p CPUQuota=200% -p MemoryMax=4G -p MemorySwapMax=0)
 C=DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10; L="$C/labels"; O="$C/overlay/ecc30-overlay-v1"; S="$C/identity_stdout"
 R=scripts/run_ec_clean30_campaign.py; I=scripts/run_ec_clean30_identity.py; X=scripts/run_clean_split30_comparator.py
 sha() { "$PY" -c 'import json,sys; print(json.load(open(sys.argv[1]))["outputs"][sys.argv[2]]["sha256"])' "$@"; }
@@ -315,7 +319,7 @@ for J in 0 1 2 3; do "${SMALL[@]}" "$PY" "$I" r1-inner-exclusions --fold 0 --wor
   --inner-fold "$J" > "$S/fold0_r1inner$J.json" || break; done
 "${SMALL[@]}" "$PY" "$R" r2-lists --identity-root "$C/identity" --cohort "$C/cohort" --out "$C/r2_lists"
 "${CAP[@]}" "$PY" "$R" overlay build --out "$O" --cohort "$C/cohort" --identity-root "$C/identity" \
-  --r2-lists "$C/r2_lists" --d2-option b && "${CAP[@]}" "$PY" "$R" overlay verify --overlay "$O"
+  --r2-lists "$C/r2_lists" --d2-option d && "${CAP[@]}" "$PY" "$R" overlay verify --overlay "$O"
 E=src/embed_helpers/esmc_chain_means.py; T=(env OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 MKL_THREADING_LAYER=GNU HF_HUB_OFFLINE=1)
 for K in 0 1 2 3 4; do V="$C/views/fold$K"; A="$O/identity/fold$K"; Q=(--allowlist "$V/allowlist.txt" --structure-dir "$V/structures")
   "${SMALL[@]}" "$PY" "$R" plan --fold "$K" --out "$C/plans/fold$K.json" &&
@@ -323,7 +327,7 @@ for K in 0 1 2 3 4; do V="$C/views/fold$K"; A="$O/identity/fold$K"; Q=(--allowli
     --external-root "$O/external" --bundle-id "ecc30-v1-fold$K" --inner-membership "$A/inner_membership_fold$K.csv" \
     --inner-membership-sha256 "$(sha "$A/inner_assignment_receipt.json" membership)" &&
   "${CAP[@]}" "$PY" "$E" from-residue-cache "${Q[@]}" --embeddings-dir "$V/esm" --out "$V/chain_means_final" &&
-  "${CAP[@]}" "${T[@]}" "$PY" "$E" from-model "${Q[@]}" --layer-index 26 --device cpu --out "$V/chain_means_block26" &&
+  "${L8[@]}" "${T[@]}" "$PY" "$E" from-model "${Q[@]}" --layer-index 26 --device cpu --out "$V/chain_means_block26" &&
   "${SMALL[@]}" "$PY" "$E" compare --cache-a "$V/chain_means_final" --cache-b "$V/chain_means_block26" --layer final \
     --manifest-a-sha256 "$(m "$V/chain_means_final")" --manifest-b-sha256 "$(m "$V/chain_means_block26")" \
     --ids "$V/allowlist.txt" --out "$V/receipts/l8_final_layer_parity.json" &&
@@ -333,7 +337,8 @@ for K in 0 1 2 3 4; do V="$C/views/fold$K"; A="$O/identity/fold$K"; Q=(--allowli
 
 If block 26 is built on the GPU machine instead, drop `from-model` and `compare`, verify with `--require-chain-means
 final` and add `--exclude-levers L8` to the dry run. A fold rerun in another identity folder takes `--fold-work K=PATH`
-in `r2-lists` and `overlay build`. `simulate --sweep FILE --out DIR` needs one `--calibrate-from
+in `r2-lists` and `overlay build`. `cohort-audit` writes once: a rerun at newer code needs an empty `$C/cohort`, the
+earlier output moved aside, and `overlay build` refuses an audit of an older schema. `simulate --sweep FILE --out DIR` needs one `--calibrate-from
 K=<overlay>/identity/fold<K>` per fold of its sweep (exit 4: its CPU-hour forecast stopped it). `smoke-view` writes to
 `$C/smoke_views/<name>` and its dry run takes `--smoke --runs "$C/smoke_runs/<name>"`. After a disk-driver change,
 `apply-view-modes --view V` (chmod only) precedes `verify-view`. Planned for Freeze 1, not in the runner yet:

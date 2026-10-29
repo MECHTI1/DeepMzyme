@@ -43,6 +43,9 @@ VALID_UNSUPPORTED_METAL_POLICY_CHOICES = ("error", "skip")
 VALID_INVALID_STRUCTURE_POLICY_CHOICES = ("error", "skip")
 VALID_TASK_CHOICES = ("joint", "metal", "ec")
 VALID_METAL_EXAMPLE_UNITS = ("pocket", "ion")
+# graph.structure_parsing.SELECTED_SITE_POCKET_GROUPINGS, repeated so the configuration does not import the parser.
+VALID_SELECTED_SITE_POCKET_GROUPING_CHOICES = ("cluster", "structure")
+DEFAULT_SELECTED_SITE_POCKET_GROUPING = "cluster"
 VALID_BINDING_RESIDUE_POOLING_CHOICES = ("none", "first_shell_bias")
 VALID_METAL_LABEL_SCHEME_CHOICES = tuple(METAL_LABEL_SCHEMES)
 VALID_NODE_FEATURE_SET_CHOICES = NODE_FEATURE_SET_CHOICES
@@ -252,6 +255,7 @@ class TrainConfig:
     ec_label_depth: int = 1
     ec_class_vocabulary: str = "observed"
     site_extraction: str = "component"
+    selected_site_pocket_grouping: str = DEFAULT_SELECTED_SITE_POCKET_GROUPING
     ec_conflicting_labels: str = "skip"
     ec_group_weighting: str = "structure_id"
     ec_class_weight_unit: str = "pocket"
@@ -872,6 +876,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--selected-site-pocket-grouping",
+        type=str,
+        default=DEFAULT_SELECTED_SITE_POCKET_GROUPING,
+        choices=VALID_SELECTED_SITE_POCKET_GROUPING_CHOICES,
+        help=(
+            "How --site-extraction selected_sites groups a structure's selected sites into pockets. 'cluster' "
+            "(default) merges selected metals within the multinuclear merge distance, so a structure can give "
+            "several pockets; 'structure' builds one pocket per structure from all its selected metals (residues "
+            "within the pocket radius of any of them). Unselected metals never enter a pocket in either mode. "
+            "Requires --site-extraction selected_sites."
+        ),
+    )
+    parser.add_argument(
         "--ec-conflicting-labels",
         type=str,
         default="skip",
@@ -1298,6 +1315,9 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         args.metal_example_unit != "pocket" or args.source_cohort_csv is not None
     ):
         parser.error("--site-extraction selected_sites requires --metal-example-unit pocket and no --source-cohort-csv")
+    if args.selected_site_pocket_grouping != DEFAULT_SELECTED_SITE_POCKET_GROUPING and \
+            args.site_extraction != "selected_sites":
+        parser.error("--selected-site-pocket-grouping structure requires --site-extraction selected_sites")
     try:
         parse_ec_aux_levels(args.ec_aux_levels)
     except ValueError as exc:
@@ -1490,6 +1510,7 @@ def parse_args(argv: Sequence[str] | None = None) -> TrainConfig:
         ec_label_depth=args.ec_label_depth,
         ec_class_vocabulary=args.ec_class_vocabulary,
         site_extraction=args.site_extraction,
+        selected_site_pocket_grouping=args.selected_site_pocket_grouping,
         ec_conflicting_labels=args.ec_conflicting_labels,
         ec_group_weighting=args.ec_group_weighting,
         ec_class_weight_unit=args.ec_class_weight_unit,

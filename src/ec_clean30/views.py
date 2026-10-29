@@ -39,9 +39,12 @@ Layout of a view (data folders and files read-only after the build)::
     caches/{parse,graph,tmp,dry_run}/   writable per-view caches
     receipts/                 writable verification and dry-run receipts
 
-External features were computed on full structures, including metals outside the
-selected sites; the view copies them unchanged (decision D2 stays open until Freeze 1,
-``EXTERNAL_FEATURES_POLICY``).
+The view copies external features unchanged. In the shared roots they were computed on full
+structures, including metals outside the selected sites (``EXTERNAL_FEATURES_POLICY``); a view
+built from a data overlay states instead the overlay's decision A1 (D2) option and policy, read
+from the overlay manifest, and refuses an option it does not know (``OVERLAY_D2_OPTIONS``) or a
+policy text other than this code's text for that option (``OVERLAY_D2_POLICY``, which the
+overlay builder writes).
 
 Location: a fold view lives at ``<campaign root>/views/fold<k>`` and a smoke view at
 ``<campaign root>/smoke_views/<name>``, where the campaign root's name is the campaign ID;
@@ -70,7 +73,7 @@ manifest change; ``receipts/file_modes_applied.json``).
 
 Overlay binding: when ``<data root>/overlay_manifest.json`` exists, the build checks that
 it lists every input the view copies with the same SHA-256 and records
-``overlay: {id, manifest_sha256}``.
+``overlay: {id, manifest_sha256, d2_option, d2_policy}``.
 
 Dry-run probe: ``python -m ec_clean30.views probe-child --request R`` runs the trainer's
 preparation path (``training.run.prepare_run``: input checks, loading, split, graphs,
@@ -166,6 +169,23 @@ SMOKE_SUBSET_RULE = ("eligible training structures ordered by SHA-256 of '<seed>
 EXTERNAL_FEATURES_POLICY = (
     "copied unchanged by exact name <external root>/<stem>/residue_features.json; the features were computed on the "
     "full structure, including metals outside the selected sites (decision D2 open until Freeze 1)"
+)
+# A view built from a data overlay states the overlay's decision A1 (D2) option and its policy text, both read from
+# the overlay manifest. The texts live here because the view states them; the overlay builder writes them
+# (ec_clean30.overlay.D2_POLICY). An overlay with another option, or another text for its option, is refused.
+OVERLAY_D2_POLICY: Mapping[str, str] = {
+    "b": "external features copied unchanged; they were computed on the full structure, including metals outside the "
+         "selected sites (decision A1 option b; disclosed)",
+    "d": "external features derived from the source files: custom_charge_distance_proxy counts only the protein's "
+         "selected (catalytic) metal atoms, so a metal atom outside the selected sites, including a copy of a "
+         "selected site from another donor, counts nowhere; the residue-pair term and every other value are kept "
+         "as stored; PROPKA's dpka_titr still reflects every metal of the structure (decision A1 option d; "
+         "disclosed)",
+}
+OVERLAY_D2_OPTIONS: tuple[str, ...] = tuple(OVERLAY_D2_POLICY)
+OVERLAY_EXTERNAL_FEATURES_POLICY = (
+    "copied unchanged by exact name <external root>/<stem>/residue_features.json from data overlay {overlay_id}, "
+    "built under decision A1 (D2) option {option}: {policy}"
 )
 SOURCE_ROOT_BASIS = (
     "docs/DATASETS.md (v10 bundle roots esm_embeddings and updated_feature_extraction; v11 cache readiness for all "
@@ -830,8 +850,10 @@ def overlay_record(data_root: Path, used: Mapping[str, tuple[Optional[str], str]
     ``used`` maps each source file the view copies (absolute path) to its path relative to
     the data root (``None`` outside it) and the SHA-256 of the copied bytes. The overlay manifest
     (``<data root>/overlay_manifest.json``, a regular file) must hold a non-empty
-    ``overlay_id`` and a ``files`` list of ``{path, sha256, ...}`` entries (paths relative to
-    the overlay root) that lists every used file with the same SHA-256.
+    ``overlay_id``, a ``files`` list of ``{path, sha256, ...}`` entries (paths relative to
+    the overlay root) that lists every used file with the same SHA-256, and a ``d2`` block whose
+    option is one of ``OVERLAY_D2_OPTIONS`` and whose policy text is ``OVERLAY_D2_POLICY`` of that
+    option; the record carries both.
     """
     path = Path(data_root) / OVERLAY_MANIFEST_NAME
     if not os.path.lexists(path):
@@ -847,6 +869,15 @@ def overlay_record(data_root: Path, used: Mapping[str, tuple[Optional[str], str]
     files = manifest.get("files") if isinstance(manifest, Mapping) else None
     if not isinstance(overlay_id, str) or not overlay_id.strip() or not isinstance(files, list):
         raise ViewError(f"{path} needs a non-empty 'overlay_id' and a 'files' list.")
+    d2 = manifest.get("d2")
+    d2_option = d2.get("option") if isinstance(d2, Mapping) else None
+    d2_policy = d2.get("policy") if isinstance(d2, Mapping) else None
+    if d2_option not in OVERLAY_D2_OPTIONS:
+        raise ViewError(f"{path} records decision A1 (D2) option {d2_option!r}; a view knows only "
+                        f"{list(OVERLAY_D2_OPTIONS)} and cannot state the external-feature policy of another.")
+    if d2_policy != OVERLAY_D2_POLICY[d2_option]:
+        raise ViewError(f"{path} records another policy text for D2 option {d2_option!r} than this code states for "
+                        "it; a view states only that text.")
     listed: dict[str, Optional[str]] = {}
     n_duplicates = 0
     for item in files:
@@ -866,7 +897,15 @@ def overlay_record(data_root: Path, used: Mapping[str, tuple[Optional[str], str]
         raise ViewError(f"{len(differing)} inputs of this view are missing from the overlay manifest or differ from "
                         f"its SHA-256, e.g. {differing[:3]}.")
     return {"id": overlay_id, "manifest_file": OVERLAY_MANIFEST_NAME, "manifest_sha256": sha256_bytes(data),
-            "n_files_checked": len(used)}
+            "n_files_checked": len(used), "d2_option": d2_option, "d2_policy": d2_policy}
+
+
+def external_features_policy(overlay: Optional[Mapping[str, Any]]) -> str:
+    """The view manifest's external-feature policy: the shared-root text, or the overlay's D2 option and policy."""
+    if overlay is None:
+        return EXTERNAL_FEATURES_POLICY
+    return OVERLAY_EXTERNAL_FEATURES_POLICY.format(overlay_id=overlay["id"], option=overlay["d2_option"],
+                                                   policy=overlay["d2_policy"])
 
 
 def _file_role(relative: str) -> str:
@@ -1063,7 +1102,7 @@ def build_view(
             "probe": {"file": PROBE_IDS_NAME, "sha256": probe_sha, "n": len(probe_ids), "rule": PROBE_RULE},
             "membership": membership_record,
             "overlay": overlay,
-            "external_features_policy": EXTERNAL_FEATURES_POLICY,
+            "external_features_policy": external_features_policy(overlay),
             "read_guard": rules,
             "layout": {"structures": STRUCTURES_DIR, "esm": ESM_DIR, "external": EXTERNAL_DIR, "ring": RING_DIR,
                        "chain_means": dict(CHAIN_MEAN_DIRS), "caches": CACHE_DIR, "cache_subdirs": list(CACHE_SUBDIRS),
@@ -1781,6 +1820,7 @@ def _probe_child(request_path: Path) -> int:
                                                             "generated_ring_edge_files")},
             "split_type": (summary.get("fold_membership") or {}).get("split_type"),
             "global_esm_attach": (summary.get("global_esm") or {}).get("attach"),
+            "site_extraction_summary": (summary.get("feature_load_report") or {}).get("site_extraction_summary"),
         })
         exit_code = 0
     except BaseException as exc:  # recorded, then reported by the parent

@@ -9,6 +9,7 @@ path parts. No real campaign file is read.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 from dataclasses import dataclass
 import hashlib
@@ -40,7 +41,9 @@ from ec_clean30.overlay import (  # noqa: E402
 from ec_clean30.provenance import DirtyTreeError, HeldOutInputError  # noqa: E402
 from ec_clean30.views import SourceLayout, ViewError, build_view, verify_view  # noqa: E402
 from ec_clean30_fixtures import make_writable  # noqa: E402
-from test_ec_clean30_cohort import AMBIGUOUS, DEFAULT_RESIDUES, TRAIN_COLUMNS, build_cohort  # noqa: E402
+from test_ec_clean30_cohort import (  # noqa: E402
+    AMBIGUOUS, DEFAULT_RESIDUES, TRAIN_COLUMNS, build_cohort, write_structure,
+)
 from test_ec_clean30_identity import FakeMMseqs, fake_binary, random_sequence  # noqa: E402
 
 N_FOLDS = 5
@@ -53,14 +56,25 @@ A13_ACCESSION = "P3002"
 NON_METALLO = ("N0001", "N0002")
 
 
+D2_ACCESSION = "P2001"
+# P2001: two selected sites in separate pockets (ZN 900, MN 902), a copy of its ZN site from another donor 1.0 Å
+# away (no site row) and a CU whose site row is not catalytic.
+D2_METALS = [(900, "ZN", (0.0, 0.0, 0.0)), (901, "ZN", (1.0, 0.0, 0.0)), (902, "MN", (0.0, 0.0, 10.0)),
+             (903, "CU", (-8.0, 0.0, 0.0))]
+D2_SITES = [(900, "ZN", (0.0, 0.0, 0.0), "1"), (902, "MN", (0.0, 0.0, 10.0), "1"), (903, "CU", (-8.0, 0.0, 0.0), "0")]
+D2_SELECTED_RESSEQ = (900, 902)
+
+
 def overlay_proteins() -> dict[str, dict]:
     """Twelve single-class proteins (EC classes 1-3) and one with two EC classes; P1001 holds an unselected
-    FE, and P3002's payload names a test folder in its source path (an A13 string)."""
+    FE, P2001 the metals of ``D2_METALS``, and P3002's payload names a test folder in its source path (an A13
+    string)."""
     proteins: dict[str, dict] = {}
     for class_index, ec_class in enumerate(("1", "2", "3")):
         for k in range(4):
             proteins[f"P{class_index + 1}00{k}"] = {"ec": f"{ec_class}.1.1.{k + 1}"}
     proteins["P1001"]["metals"] = [(900, "ZN", (0.0, 0.0, 0.0)), (901, "FE", (6.0, 0.0, 0.0))]
+    proteins[D2_ACCESSION].update(metals=list(D2_METALS), sites=list(D2_SITES))
     proteins[A13_ACCESSION]["esm_source_path"] = f"/synthetic/CLEAN_30_train_test_split_0/test/{A13_ACCESSION}.pdb"
     proteins[AMBIGUOUS] = {"ec": "2.5.1.3,4.1.99.17"}
     for index, accession in enumerate(sorted(proteins)):
@@ -184,22 +198,40 @@ def campaign_root(tmp_path_factory, name: str = "overlaybuild") -> Path:
     return tmp_path_factory.mktemp(name) / CAMPAIGN_ID
 
 
+# The synthetic cohort audit recommends option d for decision A1 (P1001's and P2001's other metal atoms reach their
+# pockets in every fold's training side), so a real overlay of this world takes option d; option b is built as a
+# smoke overlay.
+REAL_D2_OPTION = "d"
+SMOKE_B = {"d2_option": "b", "provenance": SMOKE_PROVENANCE, "smoke": True}
+
+
 def build(world: World, campaign: Path, *, overlay_id: str = DEFAULT_OVERLAY_ID, **kwargs) -> dict:
     options = {"cohort_dir": world.cohort, "identity_root": world.identity_root, "r2_lists_dir": world.r2,
-               "d2_option": "b", "provenance": REAL_PROVENANCE, "layout": world.layout}
+               "d2_option": REAL_D2_OPTION, "provenance": REAL_PROVENANCE, "layout": world.layout}
     options.update(kwargs)
     return build_overlay(out_dir=campaign / "overlay" / overlay_id, **options)
 
 
-@pytest.fixture(scope="module")
-def built(world_template, tmp_path_factory):
-    campaign = campaign_root(tmp_path_factory, "builtoverlay")
+def _built(world_template, tmp_path_factory, name: str, **kwargs) -> dict:
+    campaign = campaign_root(tmp_path_factory, name)
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(identity, "MMSEQS_BINARY_SHA256", world_template.binary_sha)
-        summary = build(world_template, campaign, layout=None)  # the layout the cohort audit recorded
+        summary = build(world_template, campaign, layout=None, **kwargs)  # the layout the cohort audit recorded
     root = campaign / "overlay" / DEFAULT_OVERLAY_ID
     return {"summary": summary, "root": root, "campaign": campaign,
             "manifest": json.loads((root / MANIFEST_NAME).read_text())}
+
+
+@pytest.fixture(scope="module")
+def built(world_template, tmp_path_factory):
+    """The real overlay of the synthetic world (option d, as its cohort audit recommends)."""
+    return _built(world_template, tmp_path_factory, "builtoverlay")
+
+
+@pytest.fixture(scope="module")
+def built_b(world_template, tmp_path_factory):
+    """A smoke overlay under option b (a real one is refused while the audit recommends d)."""
+    return _built(world_template, tmp_path_factory, "builtoverlayb", **SMOKE_B)
 
 
 def copy_overlay(built: dict, tmp_path_factory) -> Path:
@@ -224,6 +256,11 @@ def accessions_named(text: str, accessions) -> set[str]:
 
 def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _cohort_proteins(world: World) -> dict[str, dict[str, str]]:
+    with (world.cohort / "cohort_proteins.tsv").open(newline="") as handle:
+        return {row["accession"]: row for row in csv.DictReader(handle, delimiter="\t")}
 
 
 # ---------------------------------------------------------------- the built overlay
@@ -264,9 +301,43 @@ def test_build_writes_every_input_by_role(built, world_template):
     for entry in manifest["files"]:
         assert _sha((root / entry["path"]).read_bytes()) == entry["sha256"]
     assert manifest["base"]["archive_sha256"].startswith("90c08998")
-    assert manifest["d2"]["option"] == "b" and manifest["d2"]["cohort_a1_recommended_option"] in ("b", "d")
+    cohort_receipt = json.loads((world_template.cohort / COHORT_RECEIPT).read_text())
+    assert cohort_receipt["a1_recommended_option"] == REAL_D2_OPTION
+    assert {key: manifest["d2"][key] for key in ("option", "cohort_a1_recommended_option",
+                                                 "follows_cohort_recommendation")} == {
+        "option": "d", "cohort_a1_recommended_option": "d", "follows_cohort_recommendation": True}
     assert "RING not used" in manifest["ring"] and not (root / "ring").exists()
     assert not list(root.rglob("split_metadata.json")) and not list(root.rglob("*_test.csv"))
+
+
+def test_option_b_copies_external_features_as_before(built_b, world_template):
+    """Regression for option b (a smoke overlay here): byte copies with the copy origin, the cohort audit's SHA-256
+    values in the label-free index, the unchanged rules and D2 block, and no derivation record anywhere."""
+    root, manifest, summary = built_b["root"], built_b["manifest"], built_b["summary"]
+    assert manifest["smoke"] is True and manifest["d2"]["option"] == "b"
+    assert manifest["d2"]["cohort_a1_recommended_option"] == "d"
+    assert manifest["d2"]["follows_cohort_recommendation"] is False
+    cohort_rows = _cohort_proteins(world_template)
+    externals = [entry for entry in manifest["files"] if entry["role"] == overlay.ROLE_EXTERNAL]
+    assert len(externals) == len(world_template.stems)
+    for accession, stem in world_template.stems.items():
+        relative = f"{stem}/residue_features.json"
+        entry = next(entry for entry in externals if entry["path"] == f"external/{relative}")
+        assert entry["origin"] == {"kind": "copy", "root": "external_root", "path": relative}
+        assert entry["sha256"] == cohort_rows[accession]["external_sha256"]
+        assert (root / entry["path"]).read_bytes() == (world_template.layout.external_root / relative).read_bytes()
+    with (root / overlay.LABEL_FREE_INDEX_NAME).open(newline="") as handle:
+        for row in csv.DictReader(handle, delimiter="\t"):
+            assert row["external_sha256"] == cohort_rows[row["accession"]]["external_sha256"]
+    index = next(entry for entry in manifest["files"] if entry["path"] == overlay.LABEL_FREE_INDEX_NAME)
+    assert index["origin"] == {"kind": "derived", "rule": overlay.RULES["label_free_index"],
+                               "from": {"cohort_proteins_sha256": _sha((world_template.cohort
+                                                                        / "cohort_proteins.tsv").read_bytes())}}
+    assert set(manifest["d2"]) == {"option", "policy", "cohort_a1_recommended_option", "follows_cohort_recommendation"}
+    assert manifest["d2"]["policy"] == overlay.D2_POLICY["b"] and manifest["rules"] == dict(overlay.RULES)
+    build_receipt = json.loads(Path(summary["build_receipt"]).read_text())
+    assert "d2_derivation" not in summary and "d2_derivation" not in build_receipt
+    assert "d2_option" not in verify_overlay(root)
 
 
 def test_identity_copies_hold_what_the_loaders_read(built, world_template):
@@ -626,7 +697,7 @@ def test_verification_repeats_the_string_scan(built, world_template, tmp_path_fa
 
 def test_verification_checks_the_build_receipt(built, tmp_path_factory):
     copy = copy_overlay(built, tmp_path_factory)
-    _write_manifest(copy, lambda payload: payload["d2"].update(policy="edited after the build"))
+    _write_manifest(copy, lambda payload: payload.update(union_note="edited after the build"))
     reseal(copy, receipt=False)  # a consistent tar and .sha256 file, but the receipt still names the built ones
     with pytest.raises(OverlayVerificationError) as failed:
         verify_overlay(copy)
@@ -690,6 +761,518 @@ def test_overlay_r2_lists_load_in_the_comparator(built, world_template):
         assert accessions == world_template.training(fold)
 
 
+# ---------------------------------------------------------------- decision A1 option d: derived external features
+
+PROXY = overlay.D2_DERIVED_FEATURE
+# Standalone structures for the derivation: chain A as in the cohort fixture plus four residues of chain B.
+UNIT_RESIDUES = (*DEFAULT_RESIDUES, ("ASP", (12.0, 2.0, 0.0), "B"), ("LYS", (2.0, 12.0, 3.0), "B"),
+                 ("HIS", (-6.0, -9.0, 4.0), "B"), ("GLU", (9.0, -6.0, -3.0), "B"))
+# Selected ZN 900 and MN 902; a copy of the ZN site from another donor 1.0 Å away; unselected CU and FE.
+UNIT_METALS = ((900, "ZN", (0.0, 0.0, 0.0)), (901, "ZN", (1.0, 0.0, 0.0)), (902, "MN", (0.0, 0.0, 10.0)),
+               (903, "CU", (-8.0, 0.0, 0.0)), (904, "FE", (6.0, 6.0, 6.0)))
+UNIT_SELECTED = (("A", 900), ("A", 902))
+UNIT_STEM = "P7001__chain_A__EC_1.1.1.1"
+
+
+def _unit_structure(folder: Path, metals=UNIT_METALS, *, edit=None) -> Path:
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{UNIT_STEM}.pdb"
+    write_structure(path, UNIT_RESIDUES, metals)
+    if edit is not None:
+        path.write_text("".join(edit(line) for line in path.read_text().splitlines(keepends=True)))
+    return path
+
+
+def _stored_features(structure: Path) -> bytes:
+    """The external file the feature generator writes for ``structure`` (every metal present, no PROPKA), through
+    its own writer (``generate_features.write_structure_payload``) in a sibling folder."""
+    from feature_extraction.core import build_structure_feature_payload
+    from feature_extraction.generate_features import write_structure_payload
+
+    payload = build_structure_feature_payload(structure, include_propka=False)
+    return write_structure_payload(structure.parent / "written_features", structure, payload).read_bytes()
+
+
+def _module_run(structure: Path, keep_resseq, folder: Path) -> dict:
+    """A full run of the feature module on a copy of ``structure`` holding only the metal atoms (HETATM records)
+    of the residue numbers ``keep_resseq``."""
+    from feature_extraction.core import generate_feature_map_for_structure
+
+    folder.mkdir(parents=True, exist_ok=True)
+    kept = folder / structure.name
+    kept.write_text("".join(line for line in structure.read_text().splitlines(keepends=True)
+                            if not line.startswith("HETATM") or int(line[22:26]) in keep_resseq))
+    feature_map, _metadata = generate_feature_map_for_structure(kept, include_propka=False)
+    return feature_map
+
+
+def _residue_key(entry: dict) -> tuple:
+    return entry["chain_id"], entry["resseq"], entry["icode"]
+
+
+def _without_proxy(features: dict) -> dict:
+    return {name: value for name, value in features.items() if name != PROXY}
+
+
+def test_derived_charge_proxy_equals_a_full_run_without_the_other_metal_atoms(tmp_path):
+    """The WP-8 check: selected metals, unselected metals and a same-site copy 1 Å from a selected metal."""
+    from feature_extraction.constants import RESIDUE_CHARGE_PROXIES
+
+    full = _unit_structure(tmp_path / "full")
+    source = _stored_features(full)
+    derived, stats = overlay.derive_external_features(source, full, structure_id=UNIT_STEM,
+                                                      selected_sites=UNIT_SELECTED)
+    reference = _module_run(full, (900, 902), tmp_path / "selected_only")
+    with_copy = _module_run(full, (900, 901, 902), tmp_path / "with_copy")
+    payload, original = json.loads(derived), json.loads(source)
+    assert {key: value for key, value in payload.items() if key != "residues"} == {
+        key: value for key, value in original.items() if key != "residues"}
+    assert len(payload["residues"]) == len(original["residues"]) == len(reference) == len(UNIT_RESIDUES)
+    changed = copy_differs = 0
+    for new, old, residue in zip(payload["residues"], original["residues"], UNIT_RESIDUES):
+        key = _residue_key(new)
+        assert key == _residue_key(old) and _without_proxy(new["features"]) == _without_proxy(old["features"])
+        assert new["features"][PROXY] == pytest.approx(reference[key][PROXY], rel=1e-12, abs=1e-12)
+        charged = residue[0] in RESIDUE_CHARGE_PROXIES
+        assert (new["features"][PROXY] != old["features"][PROXY]) == charged, key
+        changed += charged
+        copy_differs += abs(with_copy[key][PROXY] - reference[key][PROXY]) > 1e-6
+    assert changed == 9 and copy_differs == 9  # the copy from another donor would have changed every charged residue
+    assert stats == {"n_residues": 12, "n_residues_with_other_metal_terms": 9, "n_selected_metal_atoms": 2,
+                     "n_other_metal_atoms": 3, "n_residues_changed": 9, "source_in_writer_form": True,
+                     "bytes_unchanged": False}
+    checked = overlay.check_derived_external_features(derived, full, structure_id=UNIT_STEM,
+                                                      selected_sites=["A_900", "A_902"])
+    assert checked == {key: stats[key] for key in ("n_residues", "n_residues_with_other_metal_terms",
+                                                   "n_selected_metal_atoms", "n_other_metal_atoms")}
+
+
+def test_a_file_without_other_metal_atoms_keeps_its_bytes(tmp_path):
+    only = _unit_structure(tmp_path, [metal for metal in UNIT_METALS if metal[0] in (900, 902)])
+    source = _stored_features(only)
+    derived, stats = overlay.derive_external_features(source, only, structure_id=UNIT_STEM,
+                                                      selected_sites=UNIT_SELECTED)
+    assert derived == source and stats["bytes_unchanged"] and stats["n_residues_changed"] == 0
+    assert stats["n_other_metal_atoms"] == 0 and stats["n_selected_metal_atoms"] == 2
+    assert overlay.D2_DERIVED_FEATURE == __import__("data_structures").EXTERNAL_FEATURE_CUSTOM_CHARGE_DISTANCE_PROXY
+
+
+def _edit_payload(source: bytes, change) -> bytes:
+    payload = json.loads(source)
+    change(payload)
+    return overlay.external_writer_bytes(payload)
+
+
+def _shift_first_proxy(payload, delta):
+    payload["residues"][0]["features"][PROXY] += delta
+
+
+def _element_line(resseq: int, element: str):
+    def edit(line: str) -> str:
+        if line.startswith("HETATM") and int(line[22:26]) == resseq:
+            return line.rstrip("\n")[:-2] + f"{element:>2}\n"
+        return line
+    return edit
+
+
+def _alternate_locations(resseq: int, shift: float):
+    """Two alternate locations of the metal atom ``resseq``: A (occupancy 0.40) where it was, B (0.60) ``shift`` Å
+    along x. The trainer's parser (Bio.PDB) keeps the higher occupancy (B), the feature module's (biotite) the first
+    location (A); element, residue and count agree, so only the coordinate check can tell them apart."""
+    def edit(line: str) -> str:
+        if not (line.startswith("HETATM") and int(line[22:26]) == resseq):
+            return line
+        x = float(line[30:38])
+        first = line[:16] + "A" + line[17:54] + f"{0.40:>6.2f}" + line[60:]
+        second = line[:16] + "B" + line[17:30] + f"{x + shift:>8.3f}" + line[38:54] + f"{0.60:>6.2f}" + line[60:]
+        return first + second
+    return edit
+
+
+@pytest.mark.parametrize("case, reason", [
+    ("parity", "charge_proxy_parity"),
+    ("missing_residue", "residue_keys_differ"),
+    ("duplicate_residue", "duplicate_residue_keys"),
+    ("no_proxy", "malformed_residues"),
+    ("not_json", "unreadable_json"),
+    ("absent_site", "selected_site_without_one_metal_record"),
+    ("two_atoms", "selected_site_without_one_metal_record"),
+    ("element", "selected_metal_differs_from_trainer_record"),
+    ("alternate_location", "selected_metal_differs_from_trainer_record"),
+    ("no_sites", "no_selected_site"),
+])
+def test_derivation_refusals_carry_a_reason_token(tmp_path, monkeypatch, case, reason):
+    metals, edit, sites = UNIT_METALS, None, UNIT_SELECTED
+    if case == "two_atoms":  # a second atom in the selected MN residue (the records stay contiguous)
+        metals = [*UNIT_METALS[:3], (902, "MN", (0.0, 0.0, 13.0), "MN1"), *UNIT_METALS[3:]]
+    elif case == "element":
+        edit = _element_line(902, "FE")  # residue MN (the trainer's symbol), element FE (the feature module's)
+    elif case == "alternate_location":
+        edit = _alternate_locations(902, 0.5)
+    structure = _unit_structure(tmp_path, metals, edit=edit)
+    source = _stored_features(structure)
+    if case == "parity":
+        source = _edit_payload(source, lambda payload: _shift_first_proxy(payload, 1e-3))
+    elif case == "missing_residue":
+        source = _edit_payload(source, lambda payload: payload["residues"].pop())
+    elif case == "duplicate_residue":
+        source = _edit_payload(source, lambda payload: payload["residues"].append(payload["residues"][0]))
+    elif case == "no_proxy":
+        source = _edit_payload(source, lambda payload: payload["residues"][3]["features"].pop(PROXY))
+    elif case == "not_json":
+        source = source[:-1]
+    elif case == "absent_site":
+        sites = (*UNIT_SELECTED, ("A", 950))
+    elif case == "no_sites":
+        sites = ()
+    with pytest.raises(overlay.ExternalDerivationError) as refused:
+        overlay.derive_external_features(source, structure, structure_id=UNIT_STEM, selected_sites=sites)
+    assert refused.value.reason == reason and str(refused.value) == reason
+    if case == "alternate_location":
+        # The two parsers' atoms lie 0.5 Å apart: a tolerance above that lets the same file derive, so the
+        # coordinate check (not the count or the element) is what refused it.
+        monkeypatch.setattr(overlay, "D2_SELECTED_COORDINATE_TOLERANCE", 0.6)
+        _derived, stats = overlay.derive_external_features(source, structure, structure_id=UNIT_STEM,
+                                                           selected_sites=sites)
+        assert stats["n_selected_metal_atoms"] == 2 and stats["n_other_metal_atoms"] == 3
+
+
+def test_the_check_refuses_a_changed_derived_value(tmp_path):
+    full = _unit_structure(tmp_path)
+    derived, _stats = overlay.derive_external_features(_stored_features(full), full, structure_id=UNIT_STEM,
+                                                       selected_sites=UNIT_SELECTED)
+    changed = _edit_payload(derived, lambda payload: _shift_first_proxy(payload, 1e-3))
+    with pytest.raises(overlay.ExternalDerivationError, match="^derived_value_differs$"):
+        overlay.check_derived_external_features(changed, full, structure_id=UNIT_STEM, selected_sites=UNIT_SELECTED)
+    # The stored (every-metal) file is no derived file either.
+    with pytest.raises(overlay.ExternalDerivationError, match="^derived_value_differs$"):
+        overlay.check_derived_external_features(_stored_features(full), full, structure_id=UNIT_STEM,
+                                                selected_sites=UNIT_SELECTED)
+
+
+@pytest.fixture(scope="module")
+def built_d(built):
+    """The real overlay, built under option d (the synthetic audit's recommendation)."""
+    assert built["manifest"]["d2"]["option"] == "d"
+    return built
+
+
+def _selected_resseq(accession: str) -> tuple[int, ...]:
+    return D2_SELECTED_RESSEQ if accession == D2_ACCESSION else (900,)
+
+
+def test_option_d_counts_only_the_selected_metal_atoms(built_d, world_template, tmp_path):
+    """End to end: selected sites from the training site tables, every residue of every protein against a full
+    feature-module run on the overlay's structure without the other metal atoms."""
+    root, manifest = built_d["root"], built_d["manifest"]
+    entries = {entry["path"]: entry for entry in manifest["files"]}
+    cohort_rows = _cohort_proteins(world_template)
+    changed = Counter()
+    for accession, stem in world_template.stems.items():
+        relative = f"external/{stem}/residue_features.json"
+        source = json.loads((world_template.layout.external_root / stem / "residue_features.json").read_text())
+        derived = json.loads((root / relative).read_text())
+        structure = next((root / "structure_store").rglob(f"{stem}.pdb"))
+        reference = _module_run(structure, _selected_resseq(accession), tmp_path / accession)
+        assert {key: value for key, value in derived.items() if key != "residues"} == {
+            key: value for key, value in source.items() if key != "residues"}
+        assert len(derived["residues"]) == len(source["residues"]) == len(reference)
+        for new, old in zip(derived["residues"], source["residues"]):
+            key = _residue_key(new)
+            assert key == _residue_key(old) and _without_proxy(new["features"]) == _without_proxy(old["features"])
+            assert new["features"][PROXY] == pytest.approx(reference[key][PROXY], rel=1e-12, abs=1e-12)
+            changed[accession] += new["features"][PROXY] != old["features"][PROXY]
+        entry = entries[relative]
+        assert entry["sha256"] == _sha((root / relative).read_bytes())
+        assert entry["origin"] == {
+            "kind": "derived", "root": "external_root", "path": f"{stem}/residue_features.json",
+            "rule": overlay.D2_DERIVATION_RULE, "source_sha256": cohort_rows[accession]["external_sha256"],
+            "structure": structure.relative_to(root).as_posix(),
+            "structure_sha256": cohort_rows[accession]["structure_sha256"],
+            "selected_sites": [f"A_{resseq}" for resseq in _selected_resseq(accession)],
+            "derived_sha256": entry["sha256"]}
+    assert dict(+changed) == {"P1001": 5, D2_ACCESSION: 5}  # the charged residues of the two proteins
+    assert manifest["d2"]["option"] == "d" and manifest["d2"]["policy"] == overlay.D2_POLICY["d"]
+    assert manifest["d2"]["derivation"] == overlay.derivation_record({
+        "n_files": 13, "n_files_with_other_metal_atoms": 2, "n_selected_metal_atoms": 14, "n_other_metal_atoms": 3,
+        "n_residues": 104, "n_residues_with_other_metal_terms": 10})
+    assert manifest["rules"] == overlay.overlay_rules("d") == {**overlay.RULES, "copies": overlay.D2_COPIES_RULE,
+                                                               "hashes": overlay.D2_HASHES_RULE}
+    # The cohort fixture writes compact JSON, so no source is in the writer's form and every file is rewritten.
+    assert built_d["summary"]["d2_derivation"] == {
+        **manifest["d2"]["derivation"]["totals"], "n_residues_changed": 10, "n_files_bytes_unchanged": 0,
+        "n_sources_in_writer_form": 0}
+    receipt = json.loads(Path(built_d["summary"]["build_receipt"]).read_text())
+    assert receipt["d2_derivation"] == built_d["summary"]["d2_derivation"]
+    assert not accessions_named(json.dumps(built_d["summary"]), world_template.stems)
+
+
+def test_option_d_index_scan_and_counts(built_d, world_template):
+    root, manifest = built_d["root"], built_d["manifest"]
+    entries = {entry["path"]: entry for entry in manifest["files"]}
+    cohort_rows = _cohort_proteins(world_template)
+    with (root / overlay.LABEL_FREE_INDEX_NAME).open(newline="") as handle:
+        rows = list(csv.DictReader(handle, delimiter="\t"))
+    assert [row["accession"] for row in rows] == sorted(world_template.stems)
+    for row in rows:
+        stem = world_template.stems[row["accession"]]
+        assert row["external_sha256"] == entries[f"external/{stem}/residue_features.json"]["sha256"]
+        assert row["external_sha256"] != cohort_rows[row["accession"]]["external_sha256"]  # compact source, rewritten
+        assert row["structure_sha256"] == cohort_rows[row["accession"]]["structure_sha256"]
+    index = entries[overlay.LABEL_FREE_INDEX_NAME]
+    assert index["origin"]["from"]["external_sha256"] == "the derived external feature files (decision A1 option d)"
+    scan = manifest["string_scan"]
+    assert scan["count"] == scan["cohort_a13_total"] >= 1
+    assert manifest["counts"]["n_files"] == len(manifest["files"]) and manifest["counts"]["n_proteins"] == 13
+
+
+def test_option_d_overlay_verifies(built_d):
+    # Two option-d builds agree: test_two_builds_give_the_same_tar.
+    result = verify_overlay(built_d["root"])
+    assert result["status"] == "verified" and result["d2_option"] == "d"
+    assert any("charge proxy recomputed" in check for check in result["checks"])
+
+
+def _rewrite_derived(copy: Path, world: World, change) -> str:
+    """Change P2001's derived file through ``change(payload)`` and record it consistently: manifest entry, origin,
+    label-free index and its entry. Returns the file's overlay path."""
+    relative = f"external/{world.stems[D2_ACCESSION]}/residue_features.json"
+    data = _edit_payload((copy / relative).read_bytes(), change)
+    (copy / relative).write_bytes(data)
+    index_path = copy / overlay.LABEL_FREE_INDEX_NAME
+    with index_path.open(newline="") as handle:
+        rows = list(csv.DictReader(handle, delimiter="\t"))
+    for row in rows:
+        if row["accession"] == D2_ACCESSION:
+            row["external_sha256"] = _sha(data)
+    index = overlay._tsv_bytes(overlay.LABEL_FREE_INDEX_COLUMNS, rows)
+    index_path.write_bytes(index)
+
+    def record(payload):
+        for entry in payload["files"]:
+            if entry["path"] == relative:
+                entry.update(sha256=_sha(data), size_bytes=len(data))
+                entry["origin"]["derived_sha256"] = _sha(data)
+            elif entry["path"] == overlay.LABEL_FREE_INDEX_NAME:
+                entry.update(sha256=_sha(index), size_bytes=len(index))
+
+    _write_manifest(copy, record)
+    return relative
+
+
+def _case_d_value(copy, world):
+    def change(payload):
+        entry = next(entry for entry in payload["residues"] if entry["features"][PROXY] != 0.0)
+        entry["features"][PROXY] += 0.5
+
+    _rewrite_derived(copy, world, change)
+    return ["1 derived external feature files do not re-derive from the overlay's structures and site tables "
+            "(1 derived_value_differs)"]
+
+
+def _case_d_same_values(copy, world):
+    # Any consistently recorded byte change that keeps the values is only bound by the recorded SHA-256 values.
+    _rewrite_derived(copy, world, lambda payload: payload.update(note="kept values"))
+    return []
+
+
+def _case_d_origin(copy, world):
+    relative = f"external/{world.stems['P1000']}/residue_features.json"
+    _write_manifest(copy, lambda payload: next(entry for entry in payload["files"] if entry["path"] == relative)[
+        "origin"].update(source_sha256="0" * 64))
+    return ["1 derived files do not carry their derivation record (rule, source and derived SHA-256, structure, "
+            "selected sites): 1 under external/"]
+
+
+def _case_d_unrecorded_bytes(copy, world):
+    relative = f"external/{world.stems['P1000']}/residue_features.json"
+    data = json.dumps(json.loads((copy / relative).read_bytes())).encode()  # same values, other bytes
+    _replace_file(copy, relative, data)
+    return ["1 files differ from the SHA-256 their receipts or the cohort audit record, or from their derivation: "
+            "1 under external/",
+            "1 derived files do not carry their derivation record (rule, source and derived SHA-256, structure, "
+            "selected sites): 1 under external/"]
+
+
+def _case_d_totals(copy, world):
+    _write_manifest(copy, lambda payload: payload["d2"]["derivation"]["totals"].update(n_other_metal_atoms=4))
+    return ["the manifest's derivation record differs from a re-derivation from the overlay's copies"]
+
+
+def _case_d_option(copy, world):
+    _write_manifest(copy, lambda payload: payload["d2"].update(option="a"))
+    return ["the overlay manifest records D2 option 'a'; only ['b', 'd'] are built and verified"]
+
+
+D2_BLOCK_PROBLEM = ("the manifest's D2 block differs from this code's policy text for option {option} or from the "
+                    "overlay's cohort receipt")
+
+
+def _case_d_policy(copy, world):
+    _write_manifest(copy, lambda payload: payload["d2"].update(policy="edited after the build"))
+    return [D2_BLOCK_PROBLEM.format(option="d")]
+
+
+def _case_d_recommendation(copy, world):
+    _write_manifest(copy, lambda payload: payload["d2"].update(cohort_a1_recommended_option="b",
+                                                               follows_cohort_recommendation=False))
+    return [D2_BLOCK_PROBLEM.format(option="d")]
+
+
+def _case_d_no_derivation(copy, world):
+    _write_manifest(copy, lambda payload: payload["d2"].pop("derivation"))
+    return [D2_BLOCK_PROBLEM.format(option="d"),
+            "the manifest's derivation record differs from a re-derivation from the overlay's copies"]
+
+
+def _case_d_rules(copy, world):
+    _write_manifest(copy, lambda payload: payload["rules"].update(copies=overlay.RULES["copies"]))
+    return ["the manifest's rules differ from this code's rules for D2 option d"]
+
+
+def _case_d_real_b(copy, world):
+    # A real overlay that states option b (consistently) over files derived under d: refused while its inputs load.
+    def change(payload):
+        payload["d2"], payload["rules"] = overlay.d2_block("b", "d"), overlay.overlay_rules("b")
+
+    _write_manifest(copy, change)
+    return ["the overlay's own copies do not load as inputs: A real overlay takes the D2 option the cohort audit "
+            "recommends for decision A1 ('d'); option 'b' is refused (a smoke overlay may take either built option)."]
+
+
+D_VERIFY_CASES = {"value": _case_d_value, "same_values": _case_d_same_values, "origin": _case_d_origin,
+                  "unrecorded_bytes": _case_d_unrecorded_bytes, "totals": _case_d_totals, "option": _case_d_option,
+                  "policy": _case_d_policy, "recommendation": _case_d_recommendation,
+                  "no_derivation": _case_d_no_derivation, "rules": _case_d_rules, "real_b": _case_d_real_b}
+
+
+@pytest.mark.parametrize("case", sorted(D_VERIFY_CASES))
+def test_option_d_verification_checks_records_and_values(built_d, world_template, tmp_path_factory, case):
+    copy = copy_overlay(built_d, tmp_path_factory)
+    expected = D_VERIFY_CASES[case](copy, world_template)
+    reseal(copy)
+    if not expected:
+        assert verify_overlay(copy)["status"] == "verified"
+        return
+    with pytest.raises(OverlayVerificationError) as failed:
+        verify_overlay(copy)
+    assert failed.value.problems == expected
+    assert not accessions_named("\n".join(failed.value.problems), world_template.stems)
+
+
+@pytest.mark.parametrize("change, expected", [
+    ("policy", D2_BLOCK_PROBLEM.format(option="b")),
+    ("derivation", D2_BLOCK_PROBLEM.format(option="b")),
+    ("rules", "the manifest's rules differ from this code's rules for D2 option b"),
+])
+def test_option_b_verification_checks_its_d2_block_and_rules(built_b, world_template, tmp_path_factory, change,
+                                                             expected):
+    copy = copy_overlay(built_b, tmp_path_factory)
+    assert verify_overlay(copy)["status"] == "verified"
+
+    def edit(payload):
+        if change == "policy":
+            payload["d2"]["policy"] = overlay.D2_POLICY["d"]
+        elif change == "derivation":
+            payload["d2"]["derivation"] = overlay.derivation_record(dict.fromkeys(overlay.DERIVATION_TOTAL_KEYS, 0))
+        else:
+            payload["rules"] = overlay.overlay_rules("d")
+
+    _write_manifest(copy, edit)
+    reseal(copy)
+    with pytest.raises(OverlayVerificationError) as failed:
+        verify_overlay(copy)
+    assert failed.value.problems == [expected]
+
+
+def test_a_real_overlay_takes_the_option_the_cohort_audit_recommends(world_template, tmp_path_factory):
+    campaign = campaign_root(tmp_path_factory, "d2recommended")
+    with pytest.raises(OverlayError) as refused:
+        build(world_template, campaign, d2_option="b")
+    assert str(refused.value) == ("A real overlay takes the D2 option the cohort audit recommends for decision A1 "
+                                  "('d'); option 'b' is refused (a smoke overlay may take either built option).")
+    assert_nothing_written(campaign)
+
+
+def test_the_view_states_every_built_d2_option_with_the_builders_text():
+    from ec_clean30 import views
+
+    assert views.OVERLAY_D2_OPTIONS == overlay.D2_OPTIONS_BUILT == tuple(overlay.D2_POLICY) == ("b", "d")
+    assert overlay.D2_POLICY is views.OVERLAY_D2_POLICY and set(overlay.D2_OPTIONS_BUILT) < set(overlay.D2_OPTIONS)
+
+
+def test_a_fold_view_from_an_option_d_overlay_states_its_policy(built_d):
+    from ec_clean30 import views
+
+    root = built_d["root"]
+    layout = SourceLayout.from_data_root(root, esm_dir=root / "esm", external_root=root / "external")
+    work = root / "identity" / "fold1"
+    assignment = json.loads((work / identity.INNER_ASSIGNMENT_RECEIPT).read_text())
+    out = built_d["campaign"] / "views" / "fold1"
+    result = build_view(fold=1, layout=layout, out_dir=out,
+                        inner_membership=(work / assignment["outputs"]["membership"]["file"],
+                                          assignment["outputs"]["membership"]["sha256"]),
+                        provenance=REAL_PROVENANCE)
+    manifest = result["manifest"]
+    assert manifest["overlay"]["d2_option"] == "d" and manifest["overlay"]["d2_policy"] == overlay.D2_POLICY["d"]
+    assert manifest["external_features_policy"] == views.OVERLAY_EXTERNAL_FEATURES_POLICY.format(
+        overlay_id=DEFAULT_OVERLAY_ID, option="d", policy=overlay.D2_POLICY["d"])
+    assert "including metals outside the selected sites (decision D2 open" not in manifest["external_features_policy"]
+    for item in manifest["files"]:
+        if item["role"] == "external_features":
+            assert (out / item["path"]).read_bytes() == (root / item["path"]).read_bytes()
+    receipt = verify_view(out, check_sources=True, provenance=REAL_PROVENANCE)
+    assert receipt["status"] == "verified" and receipt["overlay"]["d2_option"] == "d"
+
+
+def test_option_d_refusals_name_no_protein(world, tmp_path_factory, monkeypatch):
+    stems = world.stems
+    campaign = campaign_root(tmp_path_factory, "derivationrefusals")
+    source = world.layout.external_root / stems[D2_ACCESSION] / "residue_features.json"
+    original = source.read_bytes()
+    source.write_bytes(original + b" ")
+    with pytest.raises(OverlayError, match="^1 inputs differ from the SHA-256 the cohort audit or their receipts "
+                                           "record: 1 under external/$"):
+        build(world, campaign, d2_option="d")
+    source.write_bytes(original)
+
+    derive = overlay.derive_external_features
+
+    def failing(data, structure, *, structure_id, selected_sites):
+        if structure_id == stems[D2_ACCESSION]:
+            raise overlay.ExternalDerivationError("charge_proxy_parity")
+        return derive(data, structure, structure_id=structure_id, selected_sites=selected_sites)
+
+    monkeypatch.setattr(overlay, "derive_external_features", failing)
+    with pytest.raises(OverlayError) as refused:
+        build(world, campaign, d2_option="d")
+    assert str(refused.value) == ("1 external feature files cannot be derived under option d (1 charge_proxy_parity); "
+                                  "no file is named because the names carry structure stems.")
+    monkeypatch.setattr(overlay, "derive_external_features", derive)
+
+    sites = overlay._selected_sites
+    monkeypatch.setattr(overlay, "_selected_sites", lambda folds, union: {
+        accession: (*value, ("A", 950)) if accession == "P1000" else value
+        for accession, value in sites(folds, union).items()})
+    with pytest.raises(OverlayError, match=r"\(1 selected_site_without_one_metal_record\)") as refused:
+        build(world, campaign, d2_option="d")
+    assert not accessions_named(str(refused.value), stems)
+    assert_nothing_written(campaign)
+
+
+def test_selected_sites_come_from_the_site_tables_as_the_trainer_reads_them(world_template):
+    from dataclasses import replace
+
+    folds, union = overlay._union(world_template.layout, overlay._load_cohort(world_template.cohort, smoke=False))
+    selected = overlay._selected_sites(folds, union)
+    assert selected == {accession: tuple(("A", resseq) for resseq in _selected_resseq(accession))
+                        for accession in world_template.stems}
+    # Another EC in the structure name selects nothing (key mode accession_ec), which option d refuses.
+    other = replace(union["P1000"], structure_name="P1000__chain_A__EC_9.9.9.9.pdb")
+    with pytest.raises(OverlayError, match="^1 proteins have no selected site in the training site tables"):
+        overlay._selected_sites(folds, {**union, "P1000": other})
+
+
 # ---------------------------------------------------------------- refusals (nothing is left behind)
 
 def test_an_existing_output_is_refused(built, world_template):
@@ -738,7 +1321,7 @@ def test_an_overlay_inside_a_shared_root_is_refused(world):
 
 def test_unbuilt_d2_options_are_refused(world_template, tmp_path_factory):
     campaign = campaign_root(tmp_path_factory, "d2options")
-    for option, message in (("d", "not built"), ("a", "not built"), ("c", "never used")):
+    for option, message in (("a", "is not built"), ("c", "never used")):
         with pytest.raises(OverlayError, match=message):
             build(world_template, campaign, d2_option=option)
     assert_nothing_written(campaign)
@@ -1043,11 +1626,13 @@ def test_r2_lists_must_bind_this_cohort_and_these_identity_tables(world, tmp_pat
     assert_nothing_written(campaign)
 
 
+@pytest.mark.parametrize("d2_option", ["b", "d"])
 @pytest.mark.parametrize("change, message", [
     ("count", r"The string scan counts \d+ test-named strings and the cohort audit \d+; both read the same bytes"),
     ("unreadable", "The string scan cannot read"),
 ])
-def test_the_string_scan_must_match_the_cohort_audit(world_template, tmp_path_factory, monkeypatch, change, message):
+def test_the_string_scan_must_match_the_cohort_audit(world_template, tmp_path_factory, monkeypatch, change, message,
+                                                     d2_option):
     original = overlay.string_scan
 
     def changed(root, items):
@@ -1057,9 +1642,9 @@ def test_the_string_scan_must_match_the_cohort_audit(world_template, tmp_path_fa
         return {**scan, "n_unreadable": {overlay.ROLE_ESM: 1}}
 
     monkeypatch.setattr(overlay, "string_scan", changed)
-    campaign = campaign_root(tmp_path_factory, f"scan{change}")
+    campaign = campaign_root(tmp_path_factory, f"scan{change}{d2_option}")
     with pytest.raises(OverlayError, match=message):
-        build(world_template, campaign)
+        build(world_template, campaign, **(SMOKE_B if d2_option == "b" else {}))
     assert_nothing_written(campaign)
 
 
@@ -1165,10 +1750,14 @@ def test_runner_actions_wire_to_build_and_verify(world_template, tmp_path_factor
     campaign = campaign_root(tmp_path_factory, "runner")
     out = campaign / "overlay" / DEFAULT_OVERLAY_ID
     parser = _runner_parser()
-    args = parser.parse_args(["overlay", "build", "--out", str(out), "--cohort", str(world_template.cohort),
-                              "--identity-root", str(world_template.identity_root), "--r2-lists",
-                              str(world_template.r2), "--d2-option", "b", "--fold-work",
-                              f"1={world_template.work(1)}"])
+    build_argv = ["overlay", "build", "--out", str(out), "--cohort", str(world_template.cohort), "--identity-root",
+                  str(world_template.identity_root), "--r2-lists", str(world_template.r2), "--d2-option"]
+    args = parser.parse_args([*build_argv, "b"])
+    with pytest.raises(OverlayError, match=r"takes the D2 option the cohort audit recommends for decision A1 \('d'\)"):
+        args.handler(args)
+    assert calls == [False] and not out.exists()
+    calls.clear()
+    args = parser.parse_args([*build_argv, "d", "--fold-work", f"1={world_template.work(1)}"])
     assert (args.overlay_action, args.fold_work, args.smoke) == ("build", [f"1={world_template.work(1)}"], False)
     assert args.handler(args) == 0
     printed = json.loads(capsys.readouterr().out)

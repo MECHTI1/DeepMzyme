@@ -35,6 +35,8 @@ from model_variants import build_pocket_classifier
 from project_paths import resolve_runs_dir
 from training.labels import ec_prefix_from_label_token, parse_structure_identity
 from training.config import (
+    DEFAULT_SELECTED_SITE_POCKET_GROUPING,
+    VALID_SELECTED_SITE_POCKET_GROUPING_CHOICES,
     TrainConfig,
     config_to_payload,
     default_selection_metric_for_task,
@@ -427,6 +429,11 @@ def validate_training_configuration(config: TrainConfig) -> None:
         config.metal_example_unit != "pocket" or config.source_cohort_csv is not None or config.summary_csv is None
     ):
         raise ValueError("--site-extraction selected_sites requires pocket examples, a summary CSV and no source cohort")
+    if config.selected_site_pocket_grouping not in VALID_SELECTED_SITE_POCKET_GROUPING_CHOICES:
+        raise ValueError(f"Unsupported selected-site pocket grouping: {config.selected_site_pocket_grouping!r}")
+    if config.selected_site_pocket_grouping != DEFAULT_SELECTED_SITE_POCKET_GROUPING and \
+            config.site_extraction != "selected_sites":
+        raise ValueError("--selected-site-pocket-grouping structure requires --site-extraction selected_sites")
     if uses_ec_fold_membership(config):
         if config.metal_example_unit != "pocket":
             raise ValueError("EC fold membership requires --metal-example-unit pocket")
@@ -1586,6 +1593,7 @@ def prepare_run(config: TrainConfig) -> PreparedRun:
             ec_label_depth=config.ec_label_depth,
             ec_class_vocabulary=config.ec_class_vocabulary,
             site_extraction=config.site_extraction,
+            selected_site_pocket_grouping=config.selected_site_pocket_grouping,
             source_cohort_csv=config.source_cohort_csv,
             source_cohort_sha256=config.source_cohort_sha256,
             feature_inventory_sha256=config.feature_inventory_sha256,
@@ -2221,6 +2229,7 @@ def evaluate_held_out_test_split(
             ec_label_to_index=prepared.ec_label_to_index,
             ec_class_vocabulary=config.ec_class_vocabulary,
             site_extraction=config.site_extraction,
+            selected_site_pocket_grouping=config.selected_site_pocket_grouping,
             metal_example_unit=config.metal_example_unit,
         )
         if not test_load_result.pockets:
