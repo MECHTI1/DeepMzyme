@@ -616,3 +616,107 @@ the correct count was 44 passed and 1 skipped. Smoke counts are now taken from p
 was regenerated and the check is unchanged. The cause was found from the check's source and its skip message. Only
 existence tests on the exact paths it names (and on that bundle's folder) and the bundles folder's modification time
 were used; no folder was listed and no file was opened.
+
+## evc-008
+
+2026-11-01 — **dry runs repeated at the SupCon-coverage commit, environment exports, and the Freeze-1 code (CP-C).**
+CPU only, training files only.
+
+The maintainer committed the evc-007 package as `451c190`. Because it changed three trainer files under the
+source-freeze rule, the five dry runs were repeated at that commit on a clean tree (the secondary drive on the same
+FUSE driver as when the views were built), one fold at a time under the 1 GB parent limit, each probe in its own
+3 GB scope. Every fold checked its 356 planned commands with no static failure, and both probes passed (one pocket
+per protein). Each run took 10–12 min (parent peak 1.3 GB). Each new receipt records the SHA-256 of the P2-8 receipt
+it supersedes. Before each run the P2-8 receipt was checked against its NVMe copy and checksum list and kept as a
+dated copy; the new receipts and console files are mirrored and checked with `sha256sum -c`. Rule R-CMD restarts at
+`451c190`.
+
+| Fold | Dry-run receipt SHA-256 |
+|---|---|
+| 0 | `f71214bd98cfd5b042549d4a0bd0e2922aa5a573c65288e8548219488dff495a` |
+| 1 | `e19350c09c7cc01f251ab46428c7ecaa08abeb4b1495c4dbde7e0c29c1ce0b5d` |
+| 2 | `422128fd0e3c3872b9c011fa02528ee740f1cf1e044df456851de255727ff5a0` |
+| 3 | `657ee6a60ef268df8d3ce9416085b1bc86b667fb964c3cf8931e8e5cbb658283` |
+| 4 | `e27ce825fd1c313d5f624282d01b5ddb1c7b02bed6c5c2dd678fce4c21c3d805` |
+
+P2-9c environment exports (G5) of the campaign environment, mirrored and checked:
+
+| Export | SHA-256 |
+|---|---|
+| `freeze/env/env_conda_explicit.txt` (`conda list --explicit --md5`) | `c809b698ea3434f66946db2ffaaedb8e6b42b0b7988a3c6050309cdfdac6ecee` |
+| `freeze/env/env_pip_freeze.txt` (`pip list --format=freeze`) | `8c64efba609359e896046aed4d1b6357b7b479515a56b815dad59ce4615b1c4f` |
+
+**Freeze-1 code (CP-C), staged for the maintainer's review.**
+- D1 in code: `PROMOTION_ALPHA` 0.04 for every promotion including L7's two looks; `L9_PROMOTION_ALPHA` 0.01 through
+  L9's own `PromotionConfig` (`promotion_config_for`). No plan SHA-256 changes. A counter given as a boolean no longer
+  counts as an integer in the coverage rule.
+- WP-12, `transfer-list`: reads the published ENZYME nomenclature file into `ec_transfer_list.csv` in the scorer's
+  comma-separated format (the plan's `.tsv` would fail the scorer's header check) and a receipt. Transfers are
+  followed to their current entries; a missing target, a cycle or text outside the grammar stops the run; the
+  scorer's own reader must read the list the same way. Keyed by EC number; no label is read. The download (A8) waits
+  for the maintainer's approval.
+- WP-9 and WP-10 (`ec_clean30.freeze`): the real Freeze-1 inputs manifest (exactly folds 0–4, inner membership and
+  certificate checked against the overlay's identity copies, one overlay, a smoke overlay refused, per-file SHA-256
+  of every tracked `src/` and `scripts/` file) with the R-CMD check (changed files against the allowlist from each
+  view's dry-run HEAD, the twelve pinned runner functions with their decorators, a fresh-interpreter import check
+  for added modules, and each fold's live plan against `$C/plans`); `freeze1-document` (decisions answered, no
+  placeholder or absolute path, live constants including both promotion levels, records bound by SHA-256 only, no
+  per-fold class count); `verify-freeze1`; and `freeze1b`.
+- WP-11 (`ec_clean30.selector`): `select` for S1, S2 and S3 and the fold-0 `gap-gate`, each appending to or reading
+  the hash-chained step records anchored on the Freeze-1 SHA-256. L5 is certified as the maintainer required:
+  1. The plan's eight fits (four inner folds × two seeds) come from the frozen plan, which must equal the live plan.
+     A missing, duplicate or foreign fit refuses the step.
+  2. Each fit's checkpoint, run configuration, predictions and identity are bound by SHA-256 to its prediction
+     receipt and the runs folder's verification receipt. The checkpoint's per-epoch counters must equal the run
+     configuration's.
+  3. The totals are recomputed from that history, and a receipt whose coverage disagrees refuses the step.
+  4. The lever's fraction is the minimum over the eight fits, with the 90% rule. Counters that are absent or invalid
+     on an intact fit leave L5 "not tested".
+  These checks are tested on synthetic fits. L5 is certified for a fold only when its eight real Phase 4 fits pass
+  them.
+
+Choices the code makes where the plan is silent are listed for round 2 (S3 with L5, L3 without fits, gap-gate
+details, root-level files under R-CMD, required pins and decision identifiers). The runner, the playbook recipe and
+the DATASETS overlay entry are updated. Checks with the package staged: full suite 3,103 passed and 18 skipped (the
+same skips as before); campaign tests 979 passed and 1 skipped; smoke 44 passed and 1 skipped (the absent local
+training CSV of evc-007); docs contract without strict failures.
+
+## evc-009
+
+2026-11-02 — **CP-C completion and round-2 decisions before Freeze 1.** CPU only. The maintainer approved
+completion through Freeze 1b, the ENZYME source download, publication of the reviewed campaign commits and the
+maintainer-owned CLEAN wrapper, and acknowledgement name `mechti`. Private CLEAN source and weights remain private.
+The optional metal-release parity check is omitted. The bounded Drive filename search is recorded in
+[DATASETS](../../DATASETS.md#test-use-ledger); no matching accessible output was found and no contents were opened.
+
+The five dry-run receipts at `451c190` match their mirrored bytes and the environment exports match evc-008.
+They are reused subject to the real Freeze-1 source and plan checks. The root STATUS still describes CP-B: changing
+that protected root file before Freeze 1 would invalidate the dry-run source rule, so current progress is maintained
+here and in the campaign README while that discrepancy remains explicit. No source-freeze rule is weakened.
+
+The remaining selection changes are limited to authenticated L3 cost dispositions, reuse of S2 fits when L9 combines
+with one fitted lever, descriptive S3 SupCon coverage, and certified gap-gate membership. The one-point S3 discount
+applies only to the primary R1 EC1–6 gap. The existing eight-fit S2 SupCon gate, promotion levels, recall guards,
+folds, seeds, model families and terminal-checkpoint policy are unchanged. A completed L3 grid is always screened;
+missing fits alone never imply a cost skip. The later execution coordinator must record the ceiling, actual use,
+forecast, attempted-unit evidence and authority before closing a partial L3 grid without screening it.
+
+**Final simulation specification (resolved before results).** P2-9b had not specified its noise-point set. It retains
+the eight declared pessimistic corners on each of five overlay training populations, with 400 replicates at looks
+1, 2 and 4: 120 null points, 48,000 replicates. Simulation seed 20261024, bootstrap seed 20261023, 10,000 draws,
+ordinary/L7 alpha 0.04, L9 alpha 0.01, gain floor 1 point and the existing guards. Fit noise is 0.4 or 1.2, recall
+offset −0.1 or +0.1, component difficulty 0.5 or 1.5, and protein difficulty 1.5. Each fold/corner recomputes its
+noise floor F over 1,000 populations and uses `ceil(sqrt(F*F + 2.2*2.2)*10000)/10000` for the seed-spread target.
+No other alpha, seed, noise range or power point is searched; the prior confirmation and fold-2 power evidence stay
+separate. Per-point intervals are reported without pooling correlated draws. The policy thresholds are 10% for
+one look and 15% for L7/L9, not the simulator's generic 10% flag; material contradictions require review without
+automatic retuning. The existing eight-CPU-hour forecast safeguard remains in force.
+
+**Verification at final CP-C source.** Campaign and comparator tests: 1,041 passed, 1 skipped. CPU smoke: 44 passed,
+1 skipped (the existing missing training fixture). Full suite: 3,155 passed, 18 skipped and 15 subtests passed,
+in 15 min 42 s; no new skip. Two inconsistent synthetic L9 fixtures were corrected before this final run.
+Documentation contract: no strict failures, the same 11 baseline warnings. The current conda and pip exports are
+byte-identical to the environment records of evc-008. SupCon certification is still synthetic-test evidence, not
+certification of any real Phase 4 fit. The ENZYME source (release 02-Sep-2026) was downloaded on 2026-11-02, SHA-256
+`6e1f553fcaa15ba7018344d4181012002547cf15febeb9d3a03dacdd75963001`; parser preflight found 8,472 records and
+1,308 resolved transfer rows. The source and download receipt are mirrored and byte-verified.

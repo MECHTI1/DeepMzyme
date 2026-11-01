@@ -803,11 +803,33 @@ def test_cli_smoke_view_plan_and_verify(source, tmp_path, capsys):
 
 def test_cli_stubs_and_real_run_unit_are_not_implemented(smoke_view, capsys):
     script = _script()
-    for action in ("select", "gap-gate", "refit", "execute"):
+    for action in ("refit", "execute"):
         assert script.main([action, "--fold", "0"]) == script.EXIT_NOT_IMPLEMENTED
         assert "not implemented yet" in capsys.readouterr().out
     assert script.main(["run-unit", "--view", str(smoke_view.root), "--family", "F4", "--runs",
                         str(smoke_view.root.parent / "runs_real")]) == script.EXIT_NOT_IMPLEMENTED
+    # select and gap-gate are real actions now (ec_clean30.selector): a call without their inputs is an
+    # argument error, not a stub.
+    for action in ("select", "gap-gate"):
+        with pytest.raises(SystemExit) as raised:
+            script.main([action, "--fold", "0"])
+        assert raised.value.code == 2
+    assert set(script.PLANNED_INTERFACES) == {"refit", "execute"}
+
+
+def test_cli_routes_the_new_actions():
+    script = _script()
+    parser = script.build_parser()
+    sub = next(action for action in parser._actions if isinstance(action, argparse._SubParsersAction))
+    assert {"transfer-list", "verify-freeze1", "select", "gap-gate"} <= set(sub.choices)
+    from ec_clean30 import freeze, selector, transfers
+
+    assert sub.choices["transfer-list"].get_default("handler") is transfers.action_transfer_list
+    assert sub.choices["verify-freeze1"].get_default("handler") is freeze.action_verify_freeze1
+    assert sub.choices["select"].get_default("handler") is selector.action_select
+    assert sub.choices["gap-gate"].get_default("handler") is selector.action_gap_gate
+    kinds = next(action for action in sub.choices["manifest"]._actions if action.dest == "kind").choices
+    assert tuple(kinds) == freeze.MANIFEST_KINDS and {"freeze1-document", "freeze1b"} <= set(kinds)
 
 
 def test_cli_help_and_torch_free_imports():
@@ -1118,18 +1140,20 @@ def test_cli_parser_is_torch_free_and_protected_modules_load_no_input_module():
         "import importlib.util, sys",
         "sys.path.insert(0, 'src')",
         "import ec_clean30.campaign, ec_clean30.commands, ec_clean30.views, ec_clean30.provenance, ec_clean30.identity",
-        "print(sorted(name for name in ('cohort', 'overlay', 'r2_lists', 'simulation')",
+        "print(sorted(name for name in ('cohort', 'overlay', 'r2_lists', 'simulation', 'transfers', 'freeze',",
+        "                               'selector', 'scoring')",
         "             if 'ec_clean30.' + name in sys.modules))",
         "spec = importlib.util.spec_from_file_location('runner', 'scripts/run_ec_clean30_campaign.py')",
         "module = importlib.util.module_from_spec(spec)",
         "spec.loader.exec_module(module)",
         "module.build_parser()",
         "print('torch' in sys.modules, 'ec_clean30.overlay' in sys.modules, 'ec_clean30.simulation' in sys.modules)",
+        "print('ec_clean30.scoring' in sys.modules)",
     ])
     env = {**os.environ, "MKL_THREADING_LAYER": "GNU"}
     completed = subprocess.run([PYTHON, "-c", code], cwd=ROOT, capture_output=True, text=True, env=env, timeout=120)
     assert completed.returncode == 0, completed.stderr[-2000:]
-    assert completed.stdout.splitlines() == ["[]", "False True False"]
+    assert completed.stdout.splitlines() == ["[]", "False True False", "False"]
 
 
 def test_cli_cohort_audit_exit_codes_and_refusals(phase2_world, dirty_checkout, tmp_path, monkeypatch, capsys):

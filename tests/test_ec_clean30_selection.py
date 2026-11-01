@@ -15,10 +15,10 @@ from ec_clean30.logit_adjustment import protein_class_priors
 from ec_clean30.selection import (
     GENESIS_SHA256, GUARD_MIN_TRAINING_PROTEINS, GUARD_NET_PROTEINS, GUARD_RECALL_DROP_POINTS, LEVER_FAILED,
     LEVER_NOT_APPLICABLE, LEVER_NOT_TESTED, LEVER_PASSED, LR_TIE_BAND_POINTS, MIN_GAIN_POINTS, N_INNER_FOLDS,
-    PROMOTION_ALPHA, REFIT_SEEDS, SCREENING_SEEDS, SUPCON_MIN_POSITIVE_STEP_FRACTION, InnerFoldPredictions,
-    LeverOutcome, NullNoiseModel, PooledOof, PromotionConfig, StepChain, append_step_record, apply_tau,
-    canonical_json, lever_applies, lever_not_applicable, lever_not_tested, membership_noise_statistics,
-    noise_model_from_membership, pool_inner_oof, promote,
+    L9_PROMOTION_ALPHA, PROMOTION_ALPHA, REFIT_SEEDS, SCREENING_SEEDS, SUPCON_MIN_POSITIVE_STEP_FRACTION,
+    InnerFoldPredictions, LeverOutcome, NullNoiseModel, PooledOof, PromotionConfig, StepChain, append_step_record,
+    apply_tau, canonical_json, lever_applies, lever_not_applicable, lever_not_tested, membership_noise_statistics,
+    noise_model_from_membership, pool_inner_oof, promote, promotion_config_for,
     read_step_chain, s1_choose_learning_rate, s1_family_escalation, s1_learning_rate_labels, s2_lever_screen,
     s3_combination, s4_refit_specification, screen_epoch_lever, screen_lever, screen_logit_adjustment,
     seed_mean_ba_points, simulate_null_adoption, supcon_lever_testable, supcon_positive_step_fraction,
@@ -77,22 +77,39 @@ def _promote(incumbent, challenger, counts=SIZES, config=FAST, components=SINGLE
 INCUMBENT = _oof("incumbent", BASE)
 
 FROZEN_PROMOTION_CONFIG = {
-    "min_gain_points": 1.0, "alpha": 0.10, "n_draws": 10_000, "bootstrap_seed": 20261023, "stratified": False,
+    "min_gain_points": 1.0, "alpha": 0.04, "n_draws": 10_000, "bootstrap_seed": 20261023, "stratified": False,
     "max_skip_fraction": 0.01, "guard_min_training_proteins": 30, "guard_recall_drop_points": 5.0,
     "guard_net_proteins": 3.0, "zero_recall_unit": "seed_mean",
 }
+FROZEN_L9_PROMOTION_CONFIG = {**FROZEN_PROMOTION_CONFIG, "alpha": 0.01}
 
 
 def test_frozen_promotion_settings():
-    assert (MIN_GAIN_POINTS, PROMOTION_ALPHA, LR_TIE_BAND_POINTS) == (1.0, 0.10, 0.5)
+    # D1 (P2-9a, confirmed on fresh draws): alpha 0.04 for every promotion including L7; L9 alone 0.01.
+    assert (MIN_GAIN_POINTS, PROMOTION_ALPHA, L9_PROMOTION_ALPHA, LR_TIE_BAND_POINTS) == (1.0, 0.04, 0.01, 0.5)
     assert (GUARD_MIN_TRAINING_PROTEINS, GUARD_RECALL_DROP_POINTS, GUARD_NET_PROTEINS) == (30, 5.0, 3.0)
     assert (DEFAULT_N_DRAWS, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_BOOTSTRAP_SEED) == (10_000, 0.01, 20261023)
     assert (SCREENING_SEEDS, REFIT_SEEDS, N_INNER_FOLDS) == ((42, 43), (42, 43, 44, 45, 46), 4)
     assert SUPCON_MIN_POSITIVE_STEP_FRACTION == 0.90
     assert PromotionConfig().to_record() == FROZEN_PROMOTION_CONFIG
-    for function in (promote, s1_family_escalation, screen_lever, screen_epoch_lever, screen_logit_adjustment,
-                     s3_combination, simulate_null_adoption):
+    for function in (promote, s1_family_escalation, screen_lever, screen_epoch_lever, s3_combination,
+                     simulate_null_adoption):
         assert inspect.signature(function).parameters["config"].default.to_record() == FROZEN_PROMOTION_CONFIG
+    assert inspect.signature(screen_logit_adjustment).parameters["config"].default.to_record() == \
+        FROZEN_L9_PROMOTION_CONFIG
+
+
+def test_promotion_level_per_lever():
+    assert promotion_config_for(None).to_record() == FROZEN_PROMOTION_CONFIG
+    for lever in ("L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"):
+        assert promotion_config_for(lever).alpha == 0.04
+    assert promotion_config_for("L9").to_record() == FROZEN_L9_PROMOTION_CONFIG
+    # Only alpha changes: the other Freeze-1 choices of a base config carry over.
+    base = PromotionConfig(n_draws=2000, stratified=True, alpha=0.2)
+    assert promotion_config_for("L9", base) == PromotionConfig(n_draws=2000, stratified=True, alpha=0.01)
+    assert promotion_config_for("L7", base).alpha == 0.04 and promotion_config_for(None, base).alpha == 0.04
+    with pytest.raises(ValueError, match="Unknown lever"):
+        promotion_config_for("L10")
     assert s1_learning_rate_labels("F2") == ("learning_rate=0.0001", "learning_rate=0.0003")
     assert s1_learning_rate_labels("F4") == (
         "gvp_learning_rate=0.0001,learning_rate=0.0001", "gvp_learning_rate=0.0003,learning_rate=0.0001",
@@ -107,11 +124,11 @@ def _churned(net_gain, churn):
 @pytest.mark.parametrize(
     ("net_gain", "churn", "p_band", "promoted"),
     [
-        (7, 4, (0.05, 0.10), True),    # passes at the frozen one-sided 90% level, would fail at 95%
-        (6, 5, (0.10, 0.20), False),   # fails at 90%, would pass at 80%
+        (9, 4, (0.02, 0.04), True),    # passes at the frozen one-sided 96% level (alpha 0.04), would fail at 98%
+        (8, 4, (0.04, 0.05), False),   # fails at 96%, would pass at 95%
     ],
 )
-def test_default_promotion_uses_a_one_sided_ninety_percent_bound(net_gain, churn, p_band, promoted):
+def test_default_promotion_uses_a_one_sided_ninety_six_percent_bound(net_gain, churn, p_band, promoted):
     decision = promote(INCUMBENT, _churned(net_gain, churn), component_of=SINGLETONS, training_class_counts=SIZES)
     low, high = p_band
     assert low < decision.p_value <= high
@@ -466,7 +483,9 @@ def test_supcon_coverage_holds_for_each_required_fit_and_missing_counters_never_
     assert low == pytest.approx(0.88) and not supcon_lever_testable(low)
     assert details["aggregation"] == "minimum over the required inner fits"
     for missing in (None, {}, {"train_batches": None, "batches_with_positive": None},
-                    {"train_batches": 0, "batches_with_positive": 0}, {"train_batches": 10, "batches_with_positive": 11}):
+                    {"train_batches": 0, "batches_with_positive": 0}, {"train_batches": 10, "batches_with_positive": 11},
+                    {"train_batches": True, "batches_with_positive": True}, {"train_batches": 10.0,
+                                                                             "batches_with_positive": 9}):
         fraction, details = supcon_positive_step_fraction({"f0s42": good, "f1s42": missing})
         assert fraction is None and details["uncertified_fits"] == ["f1s42"]
     with pytest.raises(ValueError, match="at least one required fit"):

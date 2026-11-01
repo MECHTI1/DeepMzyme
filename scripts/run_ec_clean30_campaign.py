@@ -14,6 +14,8 @@ Actions
                 derived from the selected metals only.
   overlay verify
                 Rehash and re-derive an overlay and check its tar and build receipt; exit 1 with the problems.
+  transfer-list EC-class transfer list (P2-9d) from the downloaded nomenclature file, in the scorer's
+                ec_class_transfers.csv format, with a receipt; keyed by EC number, no label is read.
   build-view    Training-only view of one outer fold (byte copies, per-file SHA-256, read-only); an inner
                 membership needs its certify-inner receipt.
   smoke-view    Engineering subset view: --max-proteins eligible structures by --seed, plus a 2-fold
@@ -34,10 +36,19 @@ Actions
   verify-unit   Check the receipts of finished units (terminal checkpoint, steps, no generation, ...);
                 --delete-smoke-checkpoints then removes the verified smoke checkpoints (gate G1.10).
   manifest      Freeze manifests: --kind freeze1 (pre-registration inputs; each view verified, with its
-                chain means, membership and dry run) or freeze2 (models and code pinned for the label-free
-                test pass; every refit re-verified; a smoke manifest is marked so the test pass refuses it).
-  select, gap-gate, refit, execute
-                Not implemented yet (they follow gate G1); each prints its planned interface and exits 3.
+                chain means, membership and dry run; a real one needs all five folds, --plans-dir and rule
+                R-CMD), freeze1-document (the hashed Freeze-1 document and its rendering), freeze1b (the
+                identity audit addendum) or freeze2 (models and code pinned for the label-free test pass;
+                every refit re-verified; a smoke manifest is marked so the test pass refuses it).
+  verify-freeze1
+                Check that the Freeze-1 document hashes to F, that F is in log.md at HEAD and that the
+                commit introducing it is an ancestor of HEAD (--require-pushed: also on origin/main).
+  select        Inner-fold selection step S1, S2 or S3 of one outer fold from verified fits (L5 certified
+                on the plan's eight inner fits), appended to the hash-chained step records.
+  gap-gate      Fold-0 development gap gate after S1 or S3 against the CLEAN inner arms.
+  refit, execute
+                Not implemented yet (Phase 3 and 4 execution code); each prints its planned interface and
+                exits 3.
 
 Real (non-smoke) actions refuse a tree with uncommitted or untracked changes, every action refuses
 test flags and test-named paths, and every receipt records git HEAD, tree status, code hashes and
@@ -46,7 +57,7 @@ actions (cohort-audit, r2-lists, overlay, simulate) print no accession; counts t
 class numbers are printed for fold 0 at most, and their receipts and records keep the rest. Exit
 codes: 0 done, 1 a check or unit did not pass, 2 refused or an input error, 3 not implemented, 4 a
 simulation stopped by its forecast. See src/ec_clean30/{campaign,views,commands,provenance,cohort,r2_lists,
-overlay,simulation}.py for the rules.
+overlay,simulation,transfers,freeze,selector}.py for the rules.
 """
 from __future__ import annotations
 
@@ -61,20 +72,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 EXIT_NOT_IMPLEMENTED = 3
 
 PLANNED_INTERFACES = {
-    "select": (
-        "select --fold K --step {S1,S2,S3} --runs R [--runs R2 ...] --components C5_TABLE --out STEP_RECORD\n"
-        "  Pools the verified inner units' EC prediction exports per (configuration, seed) with\n"
-        "  ec_clean30.selection.pool_inner_oof, applies the S1 learning-rate choice and family escalation,\n"
-        "  the S2 lever screen (L7 two looks, L9 on pooled logits) or the S3 combination, and appends a\n"
-        "  hash-chained step record (ec_clean30.selection.append_step_record)."
-    ),
-    "gap-gate": (
-        "gap-gate --fold 0 --after {S1,S3} --step-chain RECORDS --clean-r1-inner P --clean-r2-inner P --out G\n"
-        "  Fold 0 only. Scores DeepMzyme's seed-averaged inner OOF and the CLEAN inner arms on inner-validation\n"
-        "  proteins whose full EC numbers occur in R1-inner training (denominators reported); continues if the\n"
-        "  gap is >= -3.0 points (after S3, a 1.0-point optimism discount first), else records\n"
-        "  maintainer_decision_required."
-    ),
     "refit": (
         "refit --fold K --step-chain RECORDS --view V --runs R\n"
         "  Builds the five S4 refit units (seeds 42-46) of the selected recipe on the fold view, with\n"
@@ -345,6 +342,14 @@ def action_verify_unit(args: argparse.Namespace) -> int:
 
 
 def action_manifest(args: argparse.Namespace) -> int:
+    from ec_clean30 import freeze
+
+    # The real Freeze-1 inputs, the Freeze-1 document and Freeze 1b (ec_clean30.freeze); the smoke Freeze-1
+    # inputs and Freeze 2 keep the path below.
+    handler = freeze.route_manifest(args)
+    if handler is not None:
+        return handler(args)
+
     from ec_clean30.campaign import N_OUTER_FOLDS, build_fold_plan
     from ec_clean30.commands import collect_clean_checkpoints, collect_refit_checkpoints
     from ec_clean30.provenance import (
@@ -392,7 +397,7 @@ def _not_implemented(name: str):
 
 def build_parser() -> argparse.ArgumentParser:
     # Torch-free at import; each module defines its own action's arguments and handler.
-    from ec_clean30 import cohort, overlay, r2_lists
+    from ec_clean30 import cohort, freeze, overlay, r2_lists, selector, transfers
 
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="action", required=True)
@@ -412,6 +417,8 @@ def build_parser() -> argparse.ArgumentParser:
     r2_lists.add_r2_lists_arguments(sub.add_parser("r2-lists", help=r2_lists.R2_LISTS_HELP)).set_defaults(
         handler=r2_lists.action_r2_lists)
     overlay.add_overlay_arguments(sub.add_parser("overlay", help=overlay.OVERLAY_HELP))  # build, verify
+    transfers.add_transfer_list_arguments(sub.add_parser("transfer-list", help=transfers.TRANSFER_LIST_HELP)) \
+        .set_defaults(handler=transfers.action_transfer_list)
 
     def source_arguments(target: argparse.ArgumentParser) -> None:
         target.add_argument("--fold", type=int, required=True)
@@ -508,8 +515,8 @@ def build_parser() -> argparse.ArgumentParser:
                             "receipt that names the verification receipt's SHA-256.")
     check.set_defaults(handler=action_verify_unit)
 
-    manifest = sub.add_parser("manifest", help="Freeze-1 inputs or Freeze-2 manifest.")
-    manifest.add_argument("--kind", required=True, choices=("freeze1", "freeze2"))
+    manifest = sub.add_parser("manifest", help="Freeze-1 inputs, Freeze-1 document, Freeze 1b or Freeze-2 manifest.")
+    manifest.add_argument("--kind", required=True, choices=freeze.MANIFEST_KINDS)
     manifest.add_argument("--out", required=True, help="New manifest file.")
     manifest.add_argument("--runs", action="append", default=[], help="Verified runs folder (freeze2; repeatable).")
     manifest.add_argument("--view", action="append", default=[], help="View folder (freeze1; repeatable).")
@@ -519,10 +526,19 @@ def build_parser() -> argparse.ArgumentParser:
     manifest.add_argument("--test-pass-output-root", default=None,
                           help="Absolute folder of the single test pass (real freeze2; a smoke manifest omits it).")
     manifest.add_argument("--smoke", action="store_true")
+    freeze.add_manifest_freeze_arguments(manifest)
     manifest.set_defaults(handler=action_manifest)
+    freeze.add_verify_freeze1_arguments(sub.add_parser("verify-freeze1", help=freeze.VERIFY_FREEZE1_HELP)) \
+        .set_defaults(handler=freeze.action_verify_freeze1)
 
-    for name in ("select", "gap-gate", "refit", "execute"):
-        stub = sub.add_parser(name, help=f"Not implemented yet (after G1). {PLANNED_INTERFACES[name].splitlines()[0]}")
+    selector.add_select_arguments(sub.add_parser("select", help=selector.SELECT_HELP)) \
+        .set_defaults(handler=selector.action_select)
+    selector.add_gap_gate_arguments(sub.add_parser("gap-gate", help=selector.GAP_GATE_HELP)) \
+        .set_defaults(handler=selector.action_gap_gate)
+
+    for name in ("refit", "execute"):
+        first_line = PLANNED_INTERFACES[name].splitlines()[0]
+        stub = sub.add_parser(name, help=f"Not implemented yet (Phase 3 and 4). {first_line}")
         stub.set_defaults(handler=_not_implemented(name), stub=True)
     return parser
 
@@ -538,6 +554,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     from ec_clean30.commands import CommandError
     from ec_clean30.provenance import DirtyTreeError, FreezeManifestError, HeldOutInputError
     from ec_clean30.r2_lists import R2ListError
+    from ec_clean30.transfers import TransferListError
     from ec_clean30.views import ViewError
 
     try:
@@ -553,7 +570,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except HeldOutInputError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
-    except (CampaignPlanError, CommandError, FreezeManifestError, ViewError, R2ListError, FileExistsError) as exc:
+    except (CampaignPlanError, CommandError, FreezeManifestError, ViewError, R2ListError, TransferListError,
+            FileExistsError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

@@ -341,16 +341,51 @@ in `r2-lists` and `overlay build`. `cohort-audit` writes once: a rerun at newer 
 earlier output moved aside, and `overlay build` refuses an audit of an older schema. `simulate --sweep FILE --out DIR` needs one `--calibrate-from
 K=<overlay>/identity/fold<K>` per fold of its sweep (exit 4: its CPU-hour forecast stopped it). `smoke-view` writes to
 `$C/smoke_views/<name>` and its dry run takes `--smoke --runs "$C/smoke_runs/<name>"`. After a disk-driver change,
-`apply-view-modes --view V` (chmod only) precedes `verify-view`. Planned for Freeze 1, not in the runner yet:
-`transfer-list`, `verify-freeze1`, the `freeze1-document` and `freeze1b` manifest kinds and a Phase 3 runner.
+`apply-view-modes --view V` (chmod only) precedes `verify-view`. Freeze 1 and inner selection (each real action from a
+clean tree; `DOCS` is `docs/campaigns/ec_class_vs_clean30_2026-10`):
+
+```bash
+"${SMALL[@]}" "$PY" "$R" transfer-list --source "$L/ec_transfer_source/enzyme.dat" --source-sha256 SHA \
+  --source-url URL --retrieved YYYY-MM-DD --out "$L/ec_transfer_list"      # scorer format, comma-separated
+"${CAP[@]}" "$PY" "$R" manifest --kind freeze1 --plans-dir "$C/plans" --view "$C/views/fold0" ... \
+  --view "$C/views/fold4" --out "$C/freeze/freeze1_inputs.json"            # all five folds; checks rule R-CMD
+"${CAP[@]}" "$PY" "$R" manifest --kind freeze1-document --inputs "$C/freeze/freeze1_inputs.json" \
+  --inputs-sha256 SHA --decisions DOCS/freeze1_decisions.json --overlay "$O/overlay_manifest.json" --labels "$L" \
+  --cohort "$C/cohort" --r2-lists "$C/r2_lists" --simulation "$C/simulation/final_v1" --environment "$C/freeze/env" \
+  --pin clean_patch_manifest=SHA --pin clean_environment_lock=SHA --pin esmc_300m_weights=SHA \
+  --pin mmseqs2_binary=SHA --out DOCS/freeze1.json                         # also writes freeze1.md
+"${SMALL[@]}" "$PY" "$R" verify-freeze1 --sha256 F --document DOCS/freeze1.json --require-pushed --out RECEIPT
+"${CAP[@]}" "$PY" "$R" manifest --kind freeze1b --freeze1 DOCS/freeze1.json --freeze1-sha256 F \
+  --identity-root "$C/identity" --verify-freeze1 RECEIPT --identity-head SHA --out "$C/freeze/freeze1b.json"
+"${CAP[@]}" "$PY" "$R" select --fold K --step S1 --plan "$C/plans/foldK.json" --runs "$C/runs/foldK" \
+  --components "$O/identity/foldK" --freeze1-sha256 F --out "$C/selection/foldK_steps.jsonl"   # then S2, S3
+"${CAP[@]}" "$PY" "$R" gap-gate --fold 0 --after S1 --step-chain "$C/selection/fold0_steps.jsonl" \
+  --freeze1-sha256 F --plan "$C/plans/fold0.json" --runs "$C/runs/fold0" --components "$O/identity/fold0" \
+  --clean-r1-inner NPZ ... \
+  --clean-r2-inner NPZ ... --out "$C/selection/fold0_gap_gate_S1.json"
+```
+
+`select --step S2` certifies L5 on the plan's eight inner fits before screening it. A missing, duplicate or foreign
+fit, a hash mismatch, or a receipt whose coverage disagrees with the recomputed counters refuses the step. Incomplete
+counters leave L5 "not tested". S3 re-certifies that S2 evidence and records combination coverage descriptively;
+it adds no new coverage gate. When L9 combines with just one fitted lever, S3 reuses its verified S2 fits and the
+fixed S2 tau. For an authorized L3 cost stop, S2 takes `--freeze1c FILE --l3-cost-disposition FILE`: the two records
+bind the ceiling, actual use, attempted fits and close-out authority. Partial fits are retained but never screened;
+a complete eight-fit grid is screened normally. Missing fits alone cannot authorize a cost skip.
+With the current fit runner, close out between completed fits. A terminal `stopped_cost` record requires explicit
+support in the later execution coordinator; ordinary failed receipts must never be relabelled as cost stops.
+
+The gap gate requires the overlay components and exact CLEAN query membership before its closure filter. Only the
+primary R1 EC1–6 gap after S3 receives the one-point discount; seven-class and R2 gaps remain descriptive and
+undiscounted. A Phase 3 runner is still to be built.
 
 The CLEAN comparator runner (`"$X" prepare`, `fit`, `export`, `validate-export`) holds no CLEAN code; the private CLEAN
 checkout and harness scripts are passed by path and pinned by SHA-256, and R2 fits take `--accession-allowlist
 "$C/r2_lists/r2_allowlist_fold<k>.txt"`. Fits run one at a time, each distance map alone under the limit the campaign
 log records; every call names the campaign folders a fit must not read as `--forbidden-root`.
 
-Freeze manifests: `"$R" manifest --kind freeze1|freeze2`; `select`, `gap-gate`, `refit` and `execute` print their
-planned interface only. The Phase 7 label-free test passes (`export_ec_test_predictions` in
+Freeze manifests: `"$R" manifest --kind freeze1|freeze1-document|freeze1b|freeze2`; `refit` and `execute` print
+their planned interface only. The Phase 7 label-free test passes (`export_ec_test_predictions` in
 `src/training/ec_prediction_export.py`, the comparator's `export --mode test`, `scripts/run_ec_clean30_baseline.py`)
 refuse to run without the Freeze-2 manifest and its SHA-256; `scripts/score_ec_clean30_comparison.py claim --manifest`
 hashes every prediction without opening a label, and `score --claim --claim-sha256` performs the single label read. A

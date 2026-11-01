@@ -477,6 +477,28 @@ selected shared source when its source/version marker changes.
 No `CLEAN10`/`CLEAN_10` root, preparation script, notebook option, or active
 documentation was found. Status: **not present or documented**.
 
+### EC class vs CLEAN30 data overlay `ecc30-overlay-v1` (derived, training side only)
+
+The [EC class vs CLEAN30 campaign](campaigns/ec_class_vs_clean30_2026-10/README.md) reads its training-side inputs
+from a data overlay built on 2026-10-29 at commit `e69a272`: one folder and a reproducible tar
+(`ecc30-overlay-v1.tar`, SHA-256 `60d3a6ecfc50f68f3908fae6407ab9fb6a2f8604b2cad62fc1578ed9f479528a`), kept under
+`DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/overlay/` and mirrored to the NVMe backup. It holds the 740
+cohort proteins of the five official CLEAN `split30` training files (metalloenzyme subset): their structures, ESM C
+residue files and sidecars, external feature files, the five training site tables and manifests, the identity
+outputs, the R2 lists and a label-free index, 3,094 files in all. No test file is in it.
+
+Every file is a byte copy except the 740 external feature files. In those, the residue feature
+`custom_charge_distance_proxy` is recomputed with the catalytic metals of the training site tables only (decision A1,
+option d; campaign log evc-006): the stored value minus the terms of the 1,396 other metal atoms in 383 structures.
+357 files are byte-identical to their source; every other value in them is unchanged. The build first checked that
+each stored value equals a recomputation with every metal present, for all 360,881 residues. The PROPKA term
+`dpka_titr` keeps the other metals for the proteins PROPKA ran on. The overlay manifest records each derived file with
+its source and derived SHA-256.
+
+Because every cohort protein is in four of the five training files, the overlay carries the derivability property
+recorded in the 2026-10-25 ledger entry: each fold's held-out cohort members follow from training-side files alone.
+No step computes them.
+
 ## CARE
 
 CARE metallo subsets are computationally filtered AlphaFill/MAHOMES
@@ -777,6 +799,11 @@ on the three training-only paths that the check names, and on the PinMyMetal bun
 `DeepMzyme_Data/DeepMzyme_Colab_Bundles/` that would hold one of them. It also read the modification time of
 `DeepMzyme_Data/DeepMzyme_Colab_Bundles/`. The bundle folder and its training CSV are absent; the two inputs in the
 training folder are present. No folder was listed, no file was opened, and nothing was used.
+
+**2026-11-01 Drive filename check (EC-class-vs-CLEAN30, M7):** metadata-only searches of accessible, non-trashed
+files and folders found no matches for `*_maxsep.csv`, `ec_level_metrics.csv`, `all_clean_predictor_metrics.csv`
+or `scored_results`. A broader filename search for those stems also returned no results. No file contents,
+labels or scores were opened. This bounded search does not establish that no earlier evaluation occurred.
 
 ## Current bundles
 

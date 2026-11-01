@@ -4,8 +4,9 @@ Every outer fold runs the same steps on its own training proteins only:
 
 - ``promote``: a challenger replaces the incumbent only if (1) the seed-averaged pooled inner
   out-of-fold gain in balanced accuracy over EC classes 1-6 is at least 1.0 point; (2) the
-  one-sided 90% paired bootstrap lower bound of that gain, resampling inner identity components
-  (10,000 draws, frozen seed), is above 0; (3) no class with at least 30 training proteins loses
+  one-sided 96% paired bootstrap lower bound of that gain (alpha 0.04; L9 alone 0.01, its own
+  ``PromotionConfig``), resampling inner identity components (10,000 draws, frozen seed), is
+  above 0; (3) no class with at least 30 training proteins loses
   at least 5 recall points that are also at least 3 net proteins; (4) no EC class 1-6 recall
   falls to zero, read as: positive for the incumbent and zero for the challenger.
 - S1: the learning rate per family (higher pooled BA; within 0.5 points the first-listed
@@ -53,7 +54,10 @@ REFIT_SEEDS: tuple[int, ...] = (42, 43, 44, 45, 46)
 N_INNER_FOLDS = 4
 
 MIN_GAIN_POINTS = 1.0
-PROMOTION_ALPHA = 0.10
+# D1 (P2-9a, confirmed on fresh simulation draws 2026-10-30): alpha 0.04 for every promotion,
+# including L7's two looks; L9's four looks take alpha / 4 = 0.01 through its own PromotionConfig.
+PROMOTION_ALPHA = 0.04
+L9_PROMOTION_ALPHA = 0.01
 LR_TIE_BAND_POINTS = 0.5
 GUARD_MIN_TRAINING_PROTEINS = 30
 GUARD_RECALL_DROP_POINTS = 5.0
@@ -386,6 +390,22 @@ class PromotionConfig:
         return asdict(self)
 
 
+# D1: the promotion level per lever; every lever not listed uses PROMOTION_ALPHA (L7 included).
+LEVER_PROMOTION_ALPHA: Mapping[str, float] = {LOGIT_ADJUSTMENT_LEVER: L9_PROMOTION_ALPHA}
+
+
+def promotion_config_for(lever: Optional[str], base: Optional[PromotionConfig] = None) -> PromotionConfig:
+    """``base`` (default: the frozen config) with the promotion level D1 sets for ``lever``.
+
+    ``lever`` None (S1 and S3) and every lever except L9 take ``PROMOTION_ALPHA``; L9 takes
+    ``L9_PROMOTION_ALPHA``. Only ``alpha`` changes, so the other Freeze-1 choices carry over.
+    """
+    base = PromotionConfig() if base is None else base
+    if lever is not None and lever not in LEVERS:
+        raise ValueError(f"Unknown lever {lever!r}; expected one of {LEVERS}.")
+    return replace(base, alpha=LEVER_PROMOTION_ALPHA.get(lever, PROMOTION_ALPHA) if lever else PROMOTION_ALPHA)
+
+
 @dataclass(frozen=True)
 class PromotionDecision:
     incumbent: str
@@ -696,6 +716,11 @@ def supcon_lever_testable(positive_step_fraction: float) -> bool:
     return value >= SUPCON_MIN_POSITIVE_STEP_FRACTION - FLOAT_TOLERANCE
 
 
+def _is_count(value: Any) -> bool:
+    """A non-negative integer count; booleans are refused (``True`` is an ``int`` in Python)."""
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
 def supcon_positive_step_fraction(
     coverage_by_fit: Mapping[str, Optional[Mapping[str, Any]]],
 ) -> tuple[Optional[float], dict[str, Any]]:
@@ -719,8 +744,7 @@ def supcon_positive_step_fraction(
     for fit, record in coverage_by_fit.items():
         batches = None if record is None else record.get("train_batches")
         positive = None if record is None else record.get("batches_with_positive")
-        valid = (isinstance(batches, int) and isinstance(positive, int) and batches > 0
-                 and 0 <= positive <= batches)
+        valid = (_is_count(batches) and _is_count(positive) and batches > 0 and 0 <= positive <= batches)
         shares[str(fit)] = positive / batches if valid else None
     uncertified = sorted(fit for fit, share in shares.items() if share is None)
     fraction = None if uncertified else min(share for share in shares.values() if share is not None)
@@ -825,9 +849,11 @@ def screen_logit_adjustment(
     *,
     component_of: Mapping[str, str],
     training_class_counts: Sequence[int] | np.ndarray,
-    config: PromotionConfig = PromotionConfig(),
+    config: PromotionConfig = promotion_config_for(LOGIT_ADJUSTMENT_LEVER),
 ) -> LeverOutcome:
     """L9: the best tau other than 0 by pooled BA must pass ``promote`` against tau = 0.
+
+    Its four looks take their own promotion level (D1: ``L9_PROMOTION_ALPHA``), the default here.
 
     No extra fits: each row is adjusted with its own inner fit's training priors. Equal scores
     go to the smaller |tau|, then to the negative value (the order of ``TAUS``).
