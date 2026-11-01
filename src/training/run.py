@@ -62,6 +62,8 @@ from training.graph_dataset import (
     compute_feature_normalization_stats,
 )
 from training.loop import (
+    SUPCON_BATCHES_KEY,
+    SUPCON_BATCHES_WITH_POSITIVE_KEY,
     balanced_class_weights_from_pockets,
     class_weights_from_labels,
     classification_metrics_from_logits,
@@ -2028,6 +2030,9 @@ def train_and_select_checkpoint(
     grad_scaler = torch.amp.GradScaler("cuda") if amp_active else None
     for epoch in range(1, config.epochs + 1):
         phase_started = perf_counter()
+        # Per-epoch SupCon coverage (L5); the history carries it into the checkpoint and run_config.json.
+        supcon_counts = ({SUPCON_BATCHES_KEY: 0, SUPCON_BATCHES_WITH_POSITIVE_KEY: 0}
+                         if getattr(prepared.model, "ec_supcon", None) is not None else None)
         train_loss = train_epoch(
             prepared.model,
             prepared.train_loader,
@@ -2037,6 +2042,7 @@ def train_and_select_checkpoint(
             grad_accum_steps=config.grad_accum_steps,
             use_amp=config.use_amp,
             scaler=grad_scaler,
+            supcon_counts=supcon_counts,
         )
         _record_runtime_phase(prepared.run_dir, config, "train_epoch", phase_started)
         every = max(1, int(config.train_metrics_every_n_epochs))
@@ -2063,6 +2069,7 @@ def train_and_select_checkpoint(
             "lr": float(prepared.optimizer.param_groups[0]["lr"]),
             "lr_groups": [float(group["lr"]) for group in prepared.optimizer.param_groups],
             **train_metrics,
+            **(supcon_counts or {}),
             **task_loss_weighting_state(prepared.model),
             **binding_bias_state(prepared.model),
         }

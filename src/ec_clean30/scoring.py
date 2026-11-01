@@ -95,6 +95,10 @@ Statistics (``ec_clean30.stats``, one bootstrap run per population and metric, s
     forms, and the similarity difference in differences
     (R1 seed-mean on the [30,50] and >50 bins minus on B1-NH30) - (DeepMzyme-final, same strata).
     A hypothesis whose bootstrap cannot run is untestable, ordered with p = 1, and never passes.
+    The stratum support gate is metric-aware: a single-cluster class-7-only stratum leaves balanced
+    accuracy over EC classes 1-6 testable, but not accuracy, nor macro-F1 when a compared system
+    predicts one of its proteins as an EC class 1-6 present in the population; a gated hypothesis
+    keeps its point estimates.
   - Descriptive results carry no claim: B1-NH30-seq (also the template check of P2, reported
     in both directions of a difference), B1-D2,
     B1-bins, seven-class balanced accuracy with per-protein class-7 outcomes, C-ESMC, the
@@ -287,6 +291,25 @@ DECISION_NOT_SHOWN = {
     "P2": "Not shown to outperform CLEAN on test proteins without a ≥30% identity hit to training",
 }
 DECISION_NO_DECISION = "No decision: only folds {folds} of the five official folds were scored"
+# Analysis amendment of 2026-10-30 (before Freeze 1): a population whose bootstrap has a stratum of
+# EC classes 1-6 with a single homology cluster is reported descriptively, with no superiority
+# inference; no class or cluster is removed to make it eligible.
+DECISION_UNAVAILABLE = {
+    "P1": "No superiority inference on the official CLEAN split30 benchmark: a bootstrap stratum of EC classes "
+          "1-6 holds a single homology cluster, so between-family uncertainty cannot be estimated; results are "
+          "descriptive",
+    "P2": "No superiority inference on test proteins without a ≥30% identity hit to training: a bootstrap stratum "
+          "of EC classes 1-6 holds a single homology cluster, so between-family uncertainty cannot be estimated; "
+          "results are descriptive",
+}
+STRATUM_GATE_REASON = ("superiority inference unavailable: a bootstrap stratum of EC classes 1-6 holds a single "
+                       "homology cluster ({strata})")
+# The class-7-only exemption covers balanced accuracy over EC classes 1-6 only: class-7 proteins enter
+# accuracy directly, and macro-F1 through false positives of EC classes 1-6.
+METRIC_STRATUM_GATE_REASON = ("superiority inference unavailable for {metric}: a bootstrap stratum that this metric "
+                              "reads holds a single homology cluster ({strata}); the class-7-only exemption covers "
+                              "balanced accuracy over EC classes 1-6 only")
+SIX_CLASSES: tuple[int, ...] = tuple(index + 1 for index in PRIMARY_CLASS_INDICES)
 POPULATION_WORDING = {
     "P1": "official CLEAN split30 benchmark (nominal 30% clustering)",
     "P2": "test proteins without a ≥30% identity hit to training",
@@ -1649,7 +1672,56 @@ def _contrasts(systems: Mapping[str, Sequence[str]], extra: bool = True) -> list
     return [stats.Contrast.difference(name, minuend, subtrahend) for name, minuend, subtrahend in pairs]
 
 
-def _bootstrap_problem(arrays: _Arrays, mask: np.ndarray, subsets: Optional[Mapping[str, np.ndarray]]) -> Optional[str]:
+def _cluster_class_support(arrays: _Arrays, mask: np.ndarray) -> np.ndarray:
+    """Weighted true-class support per cluster of the population, as the bootstrap table builds it."""
+    index = np.flatnonzero(mask)
+    clusters = sorted({arrays.cluster_of[arrays.accessions[i]] for i in index})
+    position = {cluster: k for k, cluster in enumerate(clusters)}
+    rows = np.array([position[arrays.cluster_of[arrays.accessions[i]]] for i in index], dtype=np.int64)
+    support = np.zeros((len(clusters), N_EC_CLASSES))
+    np.add.at(support, (rows, arrays.true[index]), arrays.weights[index])
+    return support
+
+
+def stratum_support(arrays: _Arrays, mask: np.ndarray) -> dict[str, Any]:
+    """Class and cluster support of a population and its bootstrap strata (analysis amendment 2026-10-30)."""
+    support = _cluster_class_support(arrays, mask)
+    single = stats.single_cluster_primary_strata(support)
+    sizes = stats.stratum_sizes(support)
+    return {"clusters_per_ec_class": dict(zip(EC_CLASS_TOKENS, (support > 0).sum(axis=0).astype(int).tolist())),
+            "stratum_sizes": sizes,
+            "single_cluster_strata": list(single),
+            "superiority_inference_available": not single,
+            "single_cluster_class_7_only_stratum": sizes.get(stats.CLASS_7_ONLY_STRATUM) == 1}
+
+
+def _contrast_systems(systems: Mapping[str, Sequence[str]],
+                      contrasts: Sequence[stats.Contrast]) -> dict[str, tuple[str, ...]]:
+    """The systems that ``contrasts`` compare."""
+    names = {system for contrast in contrasts for _, system, _ in contrast.terms}
+    return {name: tuple(systems[name]) for name in sorted(names) if name in systems}
+
+
+def _stratum_gate(arrays: _Arrays, mask: np.ndarray, metric: str = stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY,
+                  systems: Optional[Mapping[str, Sequence[str]]] = None) -> Optional[str]:
+    """The reason superiority inference on ``metric`` is unavailable on a population, or None.
+
+    Balanced accuracy over EC classes 1-6 reads the class support only (the class-7-only stratum is
+    exempt). Accuracy and macro-F1 are judged on the count table of the compared ``systems``.
+    """
+    if metric == stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY:
+        single = stats.single_cluster_primary_strata(_cluster_class_support(arrays, mask))
+    else:
+        _require(bool(systems), f"The stratum gate for {metric} needs the compared systems")
+        single = stats.single_cluster_strata(_count_table(arrays, mask, systems, metric), metric)
+    if not single:
+        return None
+    if stats.CLASS_7_ONLY_STRATUM in single:
+        return METRIC_STRATUM_GATE_REASON.format(metric=metric, strata=", ".join(single))
+    return STRATUM_GATE_REASON.format(strata=", ".join(single))
+
+
+def _data_problem(arrays: _Arrays, mask: np.ndarray, subsets: Optional[Mapping[str, np.ndarray]]) -> Optional[str]:
     if not mask.any():
         return "the population is empty"
     for name, subset in (subsets or {stats.DEFAULT_SUBSET: mask}).items():
@@ -1660,18 +1732,39 @@ def _bootstrap_problem(arrays: _Arrays, mask: np.ndarray, subsets: Optional[Mapp
     return None
 
 
-def _run_bootstrap(arrays: _Arrays, mask: np.ndarray, systems: Mapping[str, Sequence[str]],
-                   contrasts: Sequence[stats.Contrast], metric: str, settings: Mapping[str, Any],
-                   subsets: Optional[Mapping[str, np.ndarray]] = None) -> stats.BootstrapResult:
-    problem = _bootstrap_problem(arrays, mask, subsets)
-    _require(problem is None, f"Bootstrap not possible: {problem}")
+def _bootstrap_problem(arrays: _Arrays, mask: np.ndarray, subsets: Optional[Mapping[str, np.ndarray]], metric: str,
+                       systems: Mapping[str, Sequence[str]], contrasts: Sequence[stats.Contrast]) -> Optional[str]:
+    problem = _data_problem(arrays, mask, subsets)
+    if problem is not None:
+        return problem
+    return _stratum_gate(arrays, mask, metric, _contrast_systems(systems, contrasts))
+
+
+def _count_table(arrays: _Arrays, mask: np.ndarray, systems: Mapping[str, Sequence[str]], metric: str,
+                 subsets: Optional[Mapping[str, np.ndarray]] = None) -> stats.ClusterCountTable:
     index = np.flatnonzero(mask)
     arms = sorted({arm for name in systems for arm in systems[name]})
     predicted = arrays.predictions_for(metric)
-    table = stats.build_cluster_count_table(
+    return stats.build_cluster_count_table(
         [arrays.accessions[i] for i in index], arrays.true[index], {arm: predicted[arm][index] for arm in arms},
         arrays.cluster_of, weights=arrays.weights[index],
         subsets=None if subsets is None else {name: subset[index] for name, subset in subsets.items()})
+
+
+def _point_contrasts(arrays: _Arrays, mask: np.ndarray, systems: Mapping[str, Sequence[str]],
+                     contrasts: Sequence[stats.Contrast], metric: str) -> dict[str, float]:
+    """Contrast estimates with no draws, for a population reported descriptively."""
+    points = stats.point_contrasts(_count_table(arrays, mask, systems, metric), contrasts,
+                                   systems={name: tuple(arms_of) for name, arms_of in systems.items()}, metric=metric)
+    return {name: float(_snap(np.array(value))) for name, value in points.items()}
+
+
+def _run_bootstrap(arrays: _Arrays, mask: np.ndarray, systems: Mapping[str, Sequence[str]],
+                   contrasts: Sequence[stats.Contrast], metric: str, settings: Mapping[str, Any],
+                   subsets: Optional[Mapping[str, np.ndarray]] = None) -> stats.BootstrapResult:
+    problem = _bootstrap_problem(arrays, mask, subsets, metric, systems, contrasts)
+    _require(problem is None, f"Bootstrap not possible: {problem}")
+    table = _count_table(arrays, mask, systems, metric, subsets)
     result = stats.paired_cluster_bootstrap(
         table, contrasts, systems={name: tuple(arms_of) for name, arms_of in systems.items()}, metric=metric,
         n_draws=settings["n_draws"], seed=settings["bootstrap_seed"], max_skip_fraction=settings["max_skip_fraction"])
@@ -1688,13 +1781,15 @@ def snap_contrasts(result: stats.BootstrapResult) -> stats.BootstrapResult:
     return replace(result, contrast_point=_snap(result.contrast_point), contrast_draws=_snap(result.contrast_draws))
 
 
-def _try_bootstrap(*args, **kwargs) -> tuple[Optional[stats.BootstrapResult], Optional[str]]:
-    arrays, mask = args[0], args[1]
-    problem = _bootstrap_problem(arrays, mask, kwargs.get("subsets"))
+def _try_bootstrap(arrays: _Arrays, mask: np.ndarray, systems: Mapping[str, Sequence[str]],
+                   contrasts: Sequence[stats.Contrast], metric: str, settings: Mapping[str, Any],
+                   subsets: Optional[Mapping[str, np.ndarray]] = None
+                   ) -> tuple[Optional[stats.BootstrapResult], Optional[str]]:
+    problem = _bootstrap_problem(arrays, mask, subsets, metric, systems, contrasts)
     if problem is not None:
         return None, problem
     try:
-        return _run_bootstrap(*args, **kwargs), None
+        return _run_bootstrap(arrays, mask, systems, contrasts, metric, settings, subsets), None
     except stats.BootstrapAbort as exc:
         return None, f"bootstrap aborted: {exc}"
 
@@ -1781,7 +1876,27 @@ def population_summary(arrays: _Arrays, mask: np.ndarray) -> dict[str, Any]:
             "total_weight": float(arrays.weights[mask].sum()),
             "n_clusters": len({arrays.cluster_of[arrays.accessions[i]] for i in np.flatnonzero(mask)}),
             "class_support": dict(zip(EC_CLASS_TOKENS, support.tolist())),
-            "ec_classes_1_6_present": present, "primary_metric_label": f"{len(present)}-class BA"}
+            "ec_classes_1_6_present": present, "primary_metric_label": f"{len(present)}-class BA",
+            "ec_classes_1_6_absent": [token for token in SIX_CLASSES if token not in present],
+            "six_class_endpoint_evaluated": tuple(present) == SIX_CLASSES,
+            **stratum_support(arrays, mask)}
+
+
+def _class_list(classes: Sequence[int]) -> str:
+    items = [str(item) for item in classes]
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def class_scope(present: Sequence[int]) -> Optional[str]:
+    """The scope clause of a decision whose population lacks some of EC classes 1-6, else None."""
+    present = tuple(present)
+    if present == SIX_CLASSES:
+        return None
+    absent = [token for token in SIX_CLASSES if token not in present]
+    plural = len(absent) > 1
+    return (f"balanced accuracy over EC class{'es' if len(present) > 1 else ''} {_class_list(present)} only; the "
+            f"six-class endpoint over EC classes 1-6 was not evaluated because EC class{'es' if plural else ''} "
+            f"{_class_list(absent)} {'are' if plural else 'is'} absent from this population")
 
 
 def holm_fixed_family(hypotheses: Sequence[tuple[str, Optional[stats.BootstrapResult], Sequence[str], Optional[str]]],
@@ -1810,13 +1925,20 @@ def holm_fixed_family(hypotheses: Sequence[tuple[str, Optional[stats.BootstrapRe
 
 
 def decision_wording(name: str, passed: bool, dependent_classes: Sequence[str] = (),
-                     template_dependent: bool = False, folds: Sequence[int] = ALL_FOLDS) -> str:
-    """The design's decision sentence for co-primary ``name`` ("P1" or "P2"); none for a fold subset."""
+                     template_dependent: bool = False, folds: Sequence[int] = ALL_FOLDS, *,
+                     available: bool = True, classes_present: Sequence[int] = SIX_CLASSES) -> str:
+    """The design's decision sentence for co-primary ``name`` ("P1" or "P2"); none for a fold subset.
+
+    A population lacking some of EC classes 1-6 gets a scope clause naming the classes evaluated and
+    stating that the six-class endpoint was not evaluated, whatever the outcome.
+    """
     if tuple(folds) != ALL_FOLDS:
         return DECISION_NO_DECISION.format(folds=list(folds))
-    if not passed:
-        return DECISION_NOT_SHOWN[name]
-    qualifiers = []
+    scope = class_scope(classes_present)
+    if not available or not passed:
+        text = (DECISION_UNAVAILABLE if not available else DECISION_NOT_SHOWN)[name]
+        return text + (f" ({scope})" if scope else "")
+    qualifiers = [scope] if scope else []
     if dependent_classes:
         qualifiers.append("dependent on EC class " + " and EC class ".join(sorted(dependent_classes)))
     if template_dependent:
@@ -1834,9 +1956,15 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
     contrasts = _contrasts(systems)
     primary_contrasts = _contrasts(systems, extra=False)
 
-    # Co-primary contrasts (a skip-limit abort stops the run).
-    ba = {}
+    # Co-primary contrasts (a skip-limit abort stops the run). A population failing the stratum gate
+    # gets no bootstrap; it stays in the two-hypothesis Holm family as unavailable.
+    ba: dict[str, Optional[stats.BootstrapResult]] = {}
+    gate: dict[str, Optional[str]] = {}
     for name, population in CO_PRIMARY_POPULATIONS.items():
+        gate[population] = _stratum_gate(arrays, masks[population]) if masks[population].any() else None
+        if gate[population] is not None:
+            ba[population] = None
+            continue
         try:
             ba[population] = _run_bootstrap(arrays, masks[population], systems, contrasts,
                                             stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, settings)
@@ -1845,14 +1973,27 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
                                "The pre-declared rule stops the run.") from None
     co_primary = stats.co_primary_holm(("P1", ba[POP_ALL], PRIMARY_COMPONENTS),
                                        ("P2", ba[POP_NH30], PRIMARY_COMPONENTS))
+    summaries = {population: population_summary(arrays, masks[population])
+                 for population in (POP_ALL, POP_NH30, POP_NH30_SEQ, POP_D2)}
+    estimates = {name: ({component: ba[population].estimate(component) for component in PRIMARY_COMPONENTS}
+                        if ba[population] is not None else
+                        _point_contrasts(arrays, masks[population], systems, primary_contrasts,
+                                         stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY))
+                 for name, population in CO_PRIMARY_POPULATIONS.items()}
 
-    # Rare-class dependence at each claim's own Holm level.
+    # Rare-class dependence at each claim's own Holm level; not run for an unavailable claim, since
+    # removing a class may not be used to recover eligibility.
     dependence: dict[str, Any] = {}
     dependent: dict[str, list[str]] = {}
     for name, population in CO_PRIMARY_POPULATIONS.items():
         step = co_primary.step(name)
-        dependence[name] = {"alpha": step.alpha, "claim_passed": step.passed, "removed": {}}
+        dependence[name] = {"alpha": step.alpha, "claim_passed": step.passed, "claim_available": step.available,
+                            "removed": {}}
         dependent[name] = []
+        if not step.available:
+            dependence[name]["reason"] = "not run: " + str(gate[population])
+            dependence[name]["dependent_on_ec_classes"] = []
+            continue
         for token in RARE_CLASS_TOKENS:
             index = EC_CLASS_TOKEN_TO_INDEX[token]
             present = bool((arrays.true[masks[population]] == index).any())
@@ -1876,23 +2017,47 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
     seq_test = _iu_record(seq_result, PRIMARY_COMPONENTS, p2_step.alpha, "P2 on B1-NH30-seq", seq_problem)
     template_dependent = bool(p2_step.passed and not seq_test["passed"])
     # The reverse difference: B1-NH30-seq (which keeps donor-sharing proteins) passes where P2 does not.
-    sequence_only_passes_alone = bool(not p2_step.passed and seq_test["passed"])
+    sequence_only_passes_alone = bool(p2_step.available and not p2_step.passed and seq_test["passed"])
 
     decisions = {name: decision_wording(name, co_primary.passed(name), dependent[name],
-                                        template_dependent if name == "P2" else False, table.folds)
-                 for name in CO_PRIMARY_POPULATIONS}
+                                        template_dependent if name == "P2" else False, table.folds,
+                                        available=co_primary.step(name).available,
+                                        classes_present=summaries[population]["ec_classes_1_6_present"])
+                 for name, population in CO_PRIMARY_POPULATIONS.items()}
+    endpoint_scope = {name: {"population": population,
+                             "ec_classes_evaluated": summaries[population]["ec_classes_1_6_present"],
+                             "ec_classes_absent": summaries[population]["ec_classes_1_6_absent"],
+                             "six_class_endpoint_evaluated": summaries[population]["six_class_endpoint_evaluated"],
+                             "superiority_inference_available": ba[population] is not None,
+                             "reason": gate[population]}
+                      for name, population in CO_PRIMARY_POPULATIONS.items()}
 
-    # Secondary family.
+    # Secondary family (an unavailable population's hypotheses stay in the family, untestable). The
+    # stratum gate is metric-aware: the class-7-only exemption covers balanced accuracy only. A gated
+    # hypothesis keeps its contrast point estimates.
     hypotheses = []
+    gated_points: dict[str, dict[str, float]] = {}
     r2_components = R2_COMPONENTS[settings["r2_form"]]
     for name, population in CO_PRIMARY_POPULATIONS.items():
-        hypotheses.append((f"{name} versus R2 ({settings['r2_form']})", ba[population], r2_components, None))
+        hypothesis = f"{name} versus R2 ({settings['r2_form']})"
+        if gate[population] is not None:
+            points = _point_contrasts(arrays, masks[population], systems, contrasts,
+                                      stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY)
+            gated_points[hypothesis] = {component: points[component] for component in r2_components}
+        hypotheses.append((hypothesis, ba[population], r2_components, gate[population]))
     other_metric_runs = {}
     for metric in (stats.METRIC_ACCURACY, stats.METRIC_EC_CLASSES_1_6_MACRO_F1):
         for name, population in CO_PRIMARY_POPULATIONS.items():
+            hypothesis = f"{name} {metric} versus R1"
             result, problem = _try_bootstrap(arrays, masks[population], systems, primary_contrasts, metric, settings)
+            metric_gate = (None if _data_problem(arrays, masks[population], None) is not None else
+                           _stratum_gate(arrays, masks[population], metric,
+                                         _contrast_systems(systems, primary_contrasts)))
+            if metric_gate is not None:
+                gated_points[hypothesis] = _point_contrasts(arrays, masks[population], systems, primary_contrasts,
+                                                            metric)
             other_metric_runs[f"{metric} {population}"] = result
-            hypotheses.append((f"{name} {metric} versus R1", result, PRIMARY_COMPONENTS, problem))
+            hypotheses.append((hypothesis, result, PRIMARY_COMPONENTS, problem))
     did_mask = masks["high_similarity"] | masks[POP_NH30]
     did_subsets = {SUBSET_HIGH_SIMILARITY: masks["high_similarity"], POP_NH30: masks[POP_NH30]}
     did_contrast = stats.Contrast(DID_CONTRAST, (
@@ -1903,6 +2068,8 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
                                              subsets=did_subsets)
     hypotheses.append((DID_CONTRAST, did_result, (DID_CONTRAST,), did_problem))
     secondary = holm_fixed_family(hypotheses, settings["secondary_family_alpha"])
+    for step in secondary:
+        step["point_estimates"] = gated_points.get(step["name"])
 
     # Descriptive results.
     descriptive_alpha = settings["descriptive_alpha"]
@@ -1933,8 +2100,11 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
         transfers = {}
         for name, population in CO_PRIMARY_POPULATIONS.items():
             mask = masks[population] & ~masks["ec_class_transferred"]
-            result, problem = _try_bootstrap(arrays, mask, systems, primary_contrasts,
-                                             stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, settings)
+            if gate[population] is not None:  # removing proteins may not recover eligibility
+                result, problem = None, "not run: " + gate[population]
+            else:
+                result, problem = _try_bootstrap(arrays, mask, systems, primary_contrasts,
+                                                 stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, settings)
             transfers[name] = {"population": population_summary(arrays, mask),
                                "test": _iu_record(result, PRIMARY_COMPONENTS, co_primary.step(name).alpha,
                                                   f"{name} without EC-class transfers", problem),
@@ -1948,19 +2118,18 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
                                      for arm in sorted(table.arms)}})
 
     return {
-        "populations": {population: population_summary(arrays, masks[population])
-                        for population in (POP_ALL, POP_NH30, POP_NH30_SEQ, POP_D2)},
+        "populations": summaries,
         "co_primary": {
             **co_primary.to_record(),
             "components": list(PRIMARY_COMPONENTS),
-            "estimates": {name: {component: ba[population].estimate(component) for component in PRIMARY_COMPONENTS}
-                          for name, population in CO_PRIMARY_POPULATIONS.items()},
+            "estimates": estimates,
             "population_of": dict(CO_PRIMARY_POPULATIONS),
         },
         "folds_scored": list(table.folds),
         "decisions": decisions,
+        "endpoint_scope": endpoint_scope,
         "rare_class_dependence": dependence,
-        "template_check": {"test": seq_test, "p2_passed": bool(p2_step.passed),
+        "template_check": {"test": seq_test, "p2_passed": bool(p2_step.passed), "p2_available": p2_step.available,
                            "claims_differ": bool(p2_step.passed) != bool(seq_test["passed"]),
                            "template_dependent": template_dependent,
                            "sequence_only_passes_without_p2": sequence_only_passes_alone},
@@ -1968,7 +2137,7 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
                              "r2_form": settings["r2_form"], "steps": secondary,
                              "difference_in_differences": {
                                  "definition": "(R1 seed-mean on the [30,50] and >50 bins - on B1-NH30) - "
-                                               "(DeepMzyme-final, same strata); EC classes 1-6 BA",
+                                               "(DeepMzyme-final, same strata); BA over the EC classes 1-6 present",
                                  "estimate": None if did_result is None else did_result.estimate(DID_CONTRAST),
                                  "bootstrap": None if did_result is None else did_result.to_record(),
                                  "reason": did_problem}},
@@ -1976,8 +2145,10 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
                    for population in CO_PRIMARY_POPULATIONS.values()},
         "descriptive": {
             "alpha": descriptive_alpha,
-            "contrasts": {population: _descriptive_contrasts(ba[population], descriptive_alpha)
-                          for population in CO_PRIMARY_POPULATIONS.values()},
+            "contrasts": {population: _descriptive_contrasts(ba[population], descriptive_alpha) if ba[population]
+                          is not None else {component: {"estimate": estimates[name][component], "lower_bound": None,
+                                                        "p_value": None} for component in PRIMARY_COMPONENTS}
+                          for name, population in CO_PRIMARY_POPULATIONS.items()},
             "sensitivity": sensitivity,
             "identity_bins": bins,
             "per_fold": per_fold,
@@ -1986,7 +2157,8 @@ def analyse_comparison(table: ScoringTable, settings: Mapping[str, Any]) -> dict
             "r1_epoch_variants": "not run: the published recipe only (decision U12)",
         },
         "bootstrap": {
-            **{f"{stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY} {population}": ba[population].to_record()
+            **{f"{stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY} {population}":
+               None if ba[population] is None else ba[population].to_record()
                for population in CO_PRIMARY_POPULATIONS.values()},
             **{name: None if result is None else result.to_record() for name, result in other_metric_runs.items()},
         },
@@ -2144,7 +2316,7 @@ def _number(value: Any) -> str:
 
 
 def _points_table(points: Mapping[str, Any]) -> list[str]:
-    lines = ["| System | EC classes 1-6 BA | Accuracy | Macro-F1 (1-6) | Seven-class BA | Classes | n |",
+    lines = ["| System | BA, EC classes 1-6 present | Accuracy | Macro-F1 (1-6 present) | Seven-class BA | Classes | n |",
              "|---|---|---|---|---|---|---|"]
     for name, record in points.items():
         lines.append(f"| {name} | {_points(record['ec_classes_1_6_balanced_accuracy'])} | "
@@ -2165,20 +2337,42 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
     lines += ["", "## Decisions", ""]
     for name, text in report["decisions"].items():
         lines.append(f"- {name} ({POPULATION_WORDING[name]}): {text}.")
-    lines += ["", "## Co-primary contrasts (EC classes 1-6 BA, one-sided)", "",
-              "| Step | Contrast | Population | Alpha | p | Tested | Passed | Component | Estimate | Lower bound |",
-              "|---|---|---|---|---|---|---|---|---|---|"]
+    lines += ["", "## Endpoint scope and stratum support", ""]
+    for name, scope in report["endpoint_scope"].items():
+        summary = report["populations"][scope["population"]]
+        evaluated = ", ".join(str(item) for item in scope["ec_classes_evaluated"])
+        lines.append(
+            f"- {name} ({scope['population']}): EC classes evaluated {evaluated}; six-class endpoint "
+            + ("evaluated" if scope["six_class_endpoint_evaluated"] else
+               "not evaluated (absent: " + ", ".join(str(item) for item in scope["ec_classes_absent"]) + ")")
+            + f"; clusters per EC class {summary['clusters_per_ec_class']}; stratum sizes {summary['stratum_sizes']}; "
+            + ("superiority inference available." if scope["superiority_inference_available"] else
+               f"{scope['reason']}; reported descriptively."))
+    lines += ["", "A stratum of EC classes 1-6 with a single homology cluster makes a population descriptive only. "
+                  "The class-7-only stratum is exempt for balanced accuracy over EC classes 1-6 only: a single-cluster "
+                  "class-7-only stratum also makes the accuracy comparison descriptive, and the macro-F1 comparison "
+                  "when a compared system predicts one of its proteins as an EC class 1-6 present in the population. "
+                  "Two or more clusters only avoid that degeneracy; they do not establish adequate power.", ""]
+    lines += ["## Co-primary contrasts (one-sided; BA over the EC classes 1-6 present in each population)", "",
+              "| Step | Contrast | Population | Classes | Available | Alpha | p | Tested | Passed | Component | "
+              "Estimate | Lower bound |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     population_of = report["co_primary"]["population_of"]
     for step in report["co_primary"]["steps"]:
+        label = report["populations"][population_of[step["name"]]]["primary_metric_label"]
         components = (step["test"] or {}).get("components") or [
             {"name": name, "estimate": report["co_primary"]["estimates"][step["name"]][name], "lower_bound": None}
             for name in report["co_primary"]["components"]]
         for component in components:
-            lines.append(f"| {step['rank']} | {step['name']} | {population_of[step['name']]} | {step['alpha']} | "
+            lines.append(f"| {step['rank']} | {step['name']} | {population_of[step['name']]} | {label} | "
+                         f"{step.get('available', True)} | {step['alpha']} | "
                          f"{_number(step['p_value'])} | {step['tested']} | {step['passed']} | {component['name']} | "
                          f"{_points(component['estimate'])} | {_points(component['lower_bound'])} |")
     lines += ["", "## Rare-class dependence", ""]
     for name, record in report["rare_class_dependence"].items():
+        if not record.get("claim_available", True):
+            lines.append(f"- {name}: {record['reason']}.")
+            continue
         for token, removed in record["removed"].items():
             if not removed["class_present"]:
                 lines.append(f"- {name} without EC class {token}: class absent from the population.")
@@ -2193,6 +2387,8 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
     elif template["sequence_only_passes_without_p2"]:
         difference = ("the claims differ: B1-NH30-seq passes but P2 does not (the sequence-only result depends on "
                       "test proteins that share a donor with training)")
+    elif not template.get("p2_available", True):
+        difference = "no comparison: P2 has no superiority inference"
     else:
         difference = "the claims agree"
     lines += ["", f"Template check (P2 on B1-NH30-seq at alpha {template['test']['alpha']}): P2 passed "
@@ -2201,8 +2397,12 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
               f"{report['secondary_family']['size']} hypotheses)", "",
               "| Rank | Hypothesis | Alpha | p | Tested | Passed | Note |", "|---|---|---|---|---|---|---|"]
     for step in report["secondary_family"]["steps"]:
+        note = step["reason"] or ""
+        if step.get("point_estimates"):
+            note += "; point estimates " + ", ".join(f"{name} {_points(value)}"
+                                                     for name, value in step["point_estimates"].items())
         lines.append(f"| {step['rank']} | {step['name']} | {step['alpha']:.4f} | {_number(step['p_value'])} | "
-                     f"{step['tested']} | {step['passed']} | {step['reason'] or ''} |")
+                     f"{step['tested']} | {step['passed']} | {note} |")
     did = report["secondary_family"]["difference_in_differences"]
     lines += ["", f"Difference in differences: {did['definition']}; estimate {_points(did['estimate'])}.", ""]
     for population, points in report["points"].items():
@@ -2224,7 +2424,7 @@ def render_report_markdown(report: Mapping[str, Any]) -> str:
             if record["points"]:
                 lines += [f"#### Fold {fold}, {population} (n = {record['population']['n_rows']})", ""]
                 lines += _points_table(record["points"]) + [""]
-    lines += ["### Descriptive contrasts (EC classes 1-6 BA)", ""]
+    lines += ["### Descriptive contrasts (BA over the EC classes 1-6 present)", ""]
     for population, contrasts in report["descriptive"]["contrasts"].items():
         for name, record in (contrasts or {}).items():
             lines.append(f"- {population}, {name}: {_points(record['estimate'])} (one-sided "

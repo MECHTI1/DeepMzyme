@@ -1061,6 +1061,136 @@ def test_rare_class_removal_marks_a_dependent_claim():
         assert result["decisions"][name] == f"{DECISION_PASS[name]} (dependent on EC class 5)"
 
 
+# ---------------------------------------------------------------- analysis amendment of 2026-10-30
+
+def _with_clusters(table: ScoringTable, cluster_of_row) -> ScoringTable:
+    return replace(table, rows=tuple(replace(row, cluster=cluster_of_row(row)) for row in table.rows))
+
+
+def _rendered(result: dict) -> str:
+    return scoring.render_report_markdown(scoring._jsonable({
+        **result, "claim": {"sha256": "c"}, "access_receipt": {"label_table": {"sha256": "l"}}, "folds": list(ALL_FOLDS),
+        "warnings": [], "rows": {"n_rows": 0, "n_membership_rows": 0, "n_excluded_ambiguous_ec_class": 0},
+        "disclosures": [], "acknowledgement": ACKNOWLEDGEMENT}))
+
+
+def test_a_single_cluster_stratum_makes_both_populations_descriptive():
+    # 180 proteins, 30 per EC class; every class-5 protein in one homology family that DeepMzyme gets
+    # right and CLEAN gets wrong. Before the amendment this passed with p = 0 and a bound equal to
+    # the estimate (+16.67 points).
+    specs = specs_for({"nh30": 15, "high": 15})
+    clean = lambda index, spec: wrong(spec[1]) if spec[1] == "5" else spec[1]  # noqa: E731
+    table = _with_clusters(synthetic_table(specs, truth, clean),
+                           lambda row: "family5" if row.true_index == 4 else row.cluster)
+    result = scoring.analyse_comparison(table, ANALYSIS_SETTINGS)
+    assert result["decisions"] == scoring.DECISION_UNAVAILABLE
+    for step in result["co_primary"]["steps"]:
+        assert not step["available"] and not step["tested"] and not step["passed"] and step["p_value"] == 1.0
+    for name, population in scoring.CO_PRIMARY_POPULATIONS.items():
+        scope = result["endpoint_scope"][name]
+        assert not scope["superiority_inference_available"] and scope["six_class_endpoint_evaluated"]
+        assert "rarest_ec_class_5" in scope["reason"]
+        summary = result["populations"][population]
+        assert summary["single_cluster_strata"] == ["rarest_ec_class_5"] and summary["clusters_per_ec_class"]["5"] == 1
+        assert summary["stratum_sizes"]["rarest_ec_class_5"] == 1
+        # Descriptive only: point estimates, no bounds, no class removal to recover eligibility.
+        assert result["co_primary"]["estimates"][name][scoring.PRIMARY_COMPONENTS[0]] == pytest.approx(1 / 6)
+        assert result["descriptive"]["contrasts"][population][scoring.PRIMARY_COMPONENTS[0]]["lower_bound"] is None
+        assert result["bootstrap"][f"ec_classes_1_6_balanced_accuracy {population}"] is None
+        assert result["rare_class_dependence"][name]["removed"] == {}
+        assert not result["rare_class_dependence"][name]["claim_available"]
+    assert not any(step["tested"] for step in result["secondary_family"]["steps"]
+                   if step["name"].startswith(("P1 ", "P2 ")))
+    assert len(result["secondary_family"]["steps"]) == 7
+    markdown = _rendered(result)
+    assert "No superiority inference" in markdown and "reported descriptively" in markdown
+    assert "do not establish adequate power" in markdown
+
+
+def test_an_unavailable_population_does_not_shrink_the_holm_family():
+    # Class 5's no-hit proteins form one family (P2 unavailable); in B1-all class 5 has 16 clusters.
+    specs = specs_for({"nh30": 15, "high": 15})
+    clean = lambda index, spec: wrong(spec[1]) if index % 2 else spec[1]  # noqa: E731
+    table = _with_clusters(synthetic_table(specs, truth, clean),
+                           lambda row: "family5" if row.true_index == 4 and row.b1_nh30 else row.cluster)
+    result = scoring.analyse_comparison(table, ANALYSIS_SETTINGS)
+    first, second = result["co_primary"]["steps"]
+    assert (first["name"], first["alpha"], first["available"], first["passed"]) == ("P1", 0.025, True, True)
+    assert (second["name"], second["alpha"], second["available"], second["tested"]) == ("P2", 0.05, False, False)
+    assert result["decisions"] == {"P1": DECISION_PASS["P1"], "P2": scoring.DECISION_UNAVAILABLE["P2"]}
+    assert result["populations"]["B1-all"]["stratum_sizes"]["rarest_ec_class_5"] == 16
+    assert not result["template_check"]["sequence_only_passes_without_p2"]
+
+
+def test_a_single_class_7_cluster_does_not_trigger_the_gate():
+    specs = specs_for({"nh30": 6, "high": 6}) + [("C7nh3000", "7", "nh30"), ("C7nh3001", "7", "nh30")]
+    clean = lambda index, spec: wrong(spec[1]) if spec[1] in "12" else spec[1]  # noqa: E731
+    table = _with_clusters(synthetic_table(specs, truth, clean),
+                           lambda row: "family7" if row.true_index == 6 else row.cluster)
+    result = scoring.analyse_comparison(table, ANALYSIS_SETTINGS)
+    assert result["populations"]["B1-NH30"]["stratum_sizes"]["class_7_only"] == 1
+    assert all(step["available"] and step["passed"] for step in result["co_primary"]["steps"])
+    assert result["decisions"] == {"P1": DECISION_PASS["P1"], "P2": DECISION_PASS["P2"]}
+
+
+@pytest.mark.parametrize("leak", [False, True])
+def test_a_single_class_7_cluster_gates_accuracy_and_a_macro_f1_it_enters(leak):
+    # One class-7-only family in both populations. The exemption keeps balanced accuracy over EC classes
+    # 1-6 testable; accuracy is gated; macro-F1 is gated once a compared system calls the family EC class 2.
+    specs = specs_for({"nh30": 6, "high": 6}) + [("C7nh3000", "7", "nh30"), ("C7nh3001", "7", "nh30")]
+    class_7_call = "2" if leak else "7"
+    clean = lambda index, spec: class_7_call if spec[1] == "7" else (  # noqa: E731
+        wrong(spec[1]) if spec[1] in "12" else spec[1])
+    table = _with_clusters(synthetic_table(specs, truth, clean),
+                           lambda row: "family7" if row.true_index == 6 else row.cluster)
+    result = scoring.analyse_comparison(table, ANALYSIS_SETTINGS)
+    assert all(step["available"] and step["passed"] for step in result["co_primary"]["steps"])
+    steps = {step["name"]: step for step in result["secondary_family"]["steps"]}
+    assert len(steps) == 7 and result["secondary_family"]["size"] == 7
+    for name, population in scoring.CO_PRIMARY_POPULATIONS.items():
+        summary = result["populations"][population]
+        assert summary["single_cluster_class_7_only_stratum"] and summary["superiority_inference_available"]
+        accuracy = steps[f"{name} accuracy versus R1"]
+        assert not accuracy["available"] and not accuracy["tested"] and not accuracy["passed"]
+        assert accuracy["p_value"] == 1.0 and "for accuracy" in accuracy["reason"]
+        assert "class_7_only" in accuracy["reason"]
+        assert accuracy["point_estimates"][scoring.PRIMARY_COMPONENTS[0]] > 0
+        assert result["bootstrap"][f"accuracy {population}"] is None
+        macro_f1 = steps[f"{name} ec_classes_1_6_macro_f1 versus R1"]
+        assert macro_f1["available"] is not leak
+        if leak:
+            assert not macro_f1["tested"] and "class_7_only" in macro_f1["reason"]
+            assert macro_f1["point_estimates"][scoring.PRIMARY_COMPONENTS[0]] > 0
+        else:
+            assert macro_f1["reason"] is None and macro_f1["point_estimates"] is None
+        assert steps[f"{name} versus R2 ({ANALYSIS_SETTINGS['r2_form']})"]["available"]
+    markdown = _rendered(result)
+    assert "exempt for balanced accuracy over EC classes 1-6 only" in markdown
+    assert "; point estimates deepmzyme_final_minus_r1_seed_mean " in markdown
+
+
+def test_missing_classes_scope_both_claims_and_the_report():
+    specs = specs_for({"nh30": 15, "high": 15}, classes="12")
+    clean = lambda index, spec: wrong(spec[1]) if index % 3 == 0 else spec[1]  # noqa: E731
+    result = scoring.analyse_comparison(synthetic_table(specs, truth, clean), ANALYSIS_SETTINGS)
+    scope = ("balanced accuracy over EC classes 1 and 2 only; the six-class endpoint over EC classes 1-6 was not "
+             "evaluated because EC classes 3, 4, 5 and 6 are absent from this population")
+    assert result["decisions"] == {name: f"{DECISION_PASS[name]} ({scope})" for name in ("P1", "P2")}
+    for name in ("P1", "P2"):
+        assert result["endpoint_scope"][name]["ec_classes_evaluated"] == [1, 2]
+        assert not result["endpoint_scope"][name]["six_class_endpoint_evaluated"]
+    markdown = _rendered(result)
+    assert markdown.count("six-class endpoint over EC classes 1-6 was not evaluated") == 2
+    assert "six-class endpoint not evaluated (absent: 3, 4, 5, 6)" in markdown
+    assert "EC classes 1-6 BA" not in markdown and "2-class BA" in markdown
+    # The scope clause also qualifies a claim that is not shown, and names a single absent class.
+    specs = specs_for({"nh30": 10, "high": 10}, classes="12345")
+    result = scoring.analyse_comparison(synthetic_table(specs, truth, truth), ANALYSIS_SETTINGS)
+    scope = ("balanced accuracy over EC classes 1, 2, 3, 4 and 5 only; the six-class endpoint over EC classes 1-6 "
+             "was not evaluated because EC class 6 is absent from this population")
+    assert result["decisions"] == {name: f"{DECISION_NOT_SHOWN[name]} ({scope})" for name in ("P1", "P2")}
+
+
 def test_seed_mean_rounding_does_not_separate_identical_systems():
     # Five identical arms average to values that differ from one arm in the last place, so the raw
     # engine gives identical systems p < 1; the scorer's snap restores p = 1 and a bound of exactly 0.

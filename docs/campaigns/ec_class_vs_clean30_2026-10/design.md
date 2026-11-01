@@ -41,6 +41,26 @@ Campaign [README](README.md); decisions and reasons: [log evc-001](log.md#evc-00
   the R1 seed mean and the R1 ensemble, Holm-corrected over B1-all and B1-NH30. Expected detectable margins: at least
   about 8 BA points (B1-all) and 11 (B1-NH30), before homology-cluster inflation. Without a pass the wording is "not
   shown to outperform"; every outcome is reported.
+- **Analysis amendment (2026-10-30, before Freeze 1).**
+  - *Stratum support.* The bootstrap stratifies homology clusters by the rarest EC class they contain. If a stratum of
+    EC classes 1–6 holds a single cluster, every resample draws it unchanged, so between-family uncertainty cannot be
+    estimated. That population is then reported descriptively (point estimates, no bounds), and its superiority
+    inference is marked unavailable. A class-7-only stratum does not trigger this for the primary BA, which reads only
+    proteins of EC classes 1–6. No class or cluster is removed to recover eligibility. Class and cluster support and
+    the stratum sizes are reported for every population. Two clusters only avoid this degeneracy; they do not
+    establish adequate power.
+  - *Secondary metrics (clarification, 2026-11-01).* The gate is applied per metric. Class-7 proteins enter accuracy
+    directly, and they enter macro-F1 over EC classes 1–6 as false positives when a compared system assigns them to an
+    EC class 1–6 present in the population. A single-cluster class-7-only stratum therefore also makes the accuracy
+    comparison descriptive, and the macro-F1 comparison when such false positives occur. Those hypotheses keep their
+    place in the secondary Holm family, are marked unavailable and keep their point estimates. The primary BA exemption
+    is unchanged.
+  - *Class scope.* If a population lacks some of EC classes 1–6, its BA averages the classes present (the k-class
+    fallback). For both P1 and P2, the decision sentence, headings and summaries then name the classes evaluated
+    and state that the six-class endpoint was not evaluated. A narrower result is never presented as meeting the
+    six-class endpoint.
+  - *Multiplicity.* An unavailable population stays in the two-hypothesis Holm family. The other population is
+    still tested at 0.025, never at 0.05.
 
 ## Test access, disclosures and licence
 

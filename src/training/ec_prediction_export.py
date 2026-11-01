@@ -25,7 +25,10 @@ In-run export (``--export-ec-predictions``)
   training protein counts per class (for logit-adjustment priors), the planned and realised
   optimizer steps of ``optimizer_groups.json``, the selected-site pocket grouping when it is
   not the default ``cluster`` (under ``structure`` every protein has one pocket, so its protein
-  row holds that pocket's logits) and, in validation mode, a reconciliation of
+  row holds that pocket's logits), for a SupCon run (lever L5) the fit's training minibatches
+  and those with a SupCon positive summed over the history (``ec_supcon_coverage``; counts are
+  None when any epoch lacks them, which leaves the fit uncertified) and, in validation mode, a
+  reconciliation of
   every ``val_ec_*`` metric of the terminal history record recomputed from the written CSVs
   with ``training.ec_class_metrics``: floats within 1e-9, counts and confusion matrices exact.
   The trainer takes accuracy as a float32 mean, so accuracy is recomputed as the float32
@@ -334,6 +337,24 @@ def _model_identity(config: Mapping[str, Any]) -> dict[str, Any]:
         "ec_aux_levels": config.get("ec_aux_levels", ""),
         "ec_supcon_weight": config.get("ec_supcon_weight", 0.0),
         "campaign_family": campaign_family(config),
+    }
+
+
+def supcon_coverage(config: Mapping[str, Any], history: Sequence[Mapping[str, Any]]) -> dict[str, Any] | None:
+    """A SupCon run's training minibatches and those with a positive, summed over the history; else None."""
+    from training.loop import SUPCON_BATCHES_KEY, SUPCON_BATCHES_WITH_POSITIVE_KEY
+
+    if not float(config.get("ec_supcon_weight") or 0.0) > 0.0:
+        return None
+    complete = bool(history) and all(SUPCON_BATCHES_KEY in record and SUPCON_BATCHES_WITH_POSITIVE_KEY in record
+                                     for record in history)
+    return {
+        "train_batches": sum(int(record[SUPCON_BATCHES_KEY]) for record in history) if complete else None,
+        "batches_with_positive": (sum(int(record[SUPCON_BATCHES_WITH_POSITIVE_KEY]) for record in history)
+                                  if complete else None),
+        "epochs_counted": sum(SUPCON_BATCHES_KEY in record for record in history),
+        "definition": "training minibatches; a positive is a candidate of the same EC level-3 label from another "
+                      "protein, among the other batch items and the memory",
     }
 
 
@@ -759,6 +780,7 @@ def export_ec_run_predictions(
         "training_protein_class_counts": ec_class_split_support(prepared.split.train_pockets, [])[
             "train_proteins_by_ec_class"],
         "epochs": {"planned": int(config.epochs), "completed": len(history)},
+        "ec_supcon_coverage": supcon_coverage(config_payload, history),
         "optimizer_steps": {key: optimizer_groups.get(key) for key in (
             "optimizer_steps_per_epoch", "planned_total_steps", "planned_steps_for_epochs_run",
             "realised_total_steps", "realised_steps_match")},

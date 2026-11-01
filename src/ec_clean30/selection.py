@@ -14,8 +14,8 @@ Every outer fold runs the same steps on its own training proteins only:
   F1 and C-G are reported, never selected).
 - S2: each lever alone against the S1 winner; every decision must name that winner as its
   incumbent. L7 compares the better of 12 and 20 epochs with 30; L9 picks tau on the pooled
-  out-of-fold predictions and compares it with tau = 0; L5 counts as tested only with in-memory
-  positives on at least 90% of steps. Inapplicable levers are logged "not applicable".
+  out-of-fold predictions and compares it with tau = 0; L5 counts as tested only with SupCon
+  positives (batch or memory) on at least 90% of training minibatches of every required inner fit. Inapplicable levers are logged "not applicable".
 - S3: two or more passing levers are combined; the combination is adopted only if it passes
   ``promote`` against the best single lever, otherwise the best single lever (or S1) stays.
 - S4: the refit specification (a grid learning-rate setting, seeds 42-46).
@@ -689,11 +689,44 @@ SUPCON_LEVER = "L5"
 
 
 def supcon_lever_testable(positive_step_fraction: float) -> bool:
-    """L5 counts as tested only if in-memory positives appeared on at least 90% of steps."""
+    """L5 counts as tested only if SupCon positives appeared on at least 90% of training minibatches."""
     value = float(positive_step_fraction)
     if not 0.0 <= value <= 1.0:
         raise ValueError(f"positive_step_fraction must lie in [0, 1], got {positive_step_fraction!r}.")
     return value >= SUPCON_MIN_POSITIVE_STEP_FRACTION - FLOAT_TOLERANCE
+
+
+def supcon_positive_step_fraction(
+    coverage_by_fit: Mapping[str, Optional[Mapping[str, Any]]],
+) -> tuple[Optional[float], dict[str, Any]]:
+    """L5's coverage over its required inner fits (aggregation rule of 2026-10-30).
+
+    ``coverage_by_fit`` maps every required L5 inner fit to the ``ec_supcon_coverage`` record of
+    its prediction receipt. A fit's share is ``batches_with_positive / train_batches`` (training
+    minibatches; a positive is a same-label candidate of another protein among the batch and the
+    memory). The lever's fraction is the smallest share, so the 90% condition must hold for each
+    required fit. A fit without counters leaves the lever uncertified: the fraction is None and the
+    lever is logged "not tested", never assumed to pass.
+
+    This function only aggregates the records it is given. Certification also needs the caller
+    (``select``) to derive the complete grid of required fits (inner folds × seeds) from the frozen
+    plan, reject missing, duplicate or foreign fits, and check each record against the per-epoch
+    counters of the fit's hash-bound checkpoint and run records; this function does neither.
+    """
+    if not coverage_by_fit:
+        raise ValueError("L5 coverage needs at least one required fit.")
+    shares: dict[str, Optional[float]] = {}
+    for fit, record in coverage_by_fit.items():
+        batches = None if record is None else record.get("train_batches")
+        positive = None if record is None else record.get("batches_with_positive")
+        valid = (isinstance(batches, int) and isinstance(positive, int) and batches > 0
+                 and 0 <= positive <= batches)
+        shares[str(fit)] = positive / batches if valid else None
+    uncertified = sorted(fit for fit, share in shares.items() if share is None)
+    fraction = None if uncertified else min(share for share in shares.values() if share is not None)
+    details = {"aggregation": "minimum over the required inner fits", "per_fit": shares,
+               "uncertified_fits": uncertified, "positive_step_fraction": fraction}
+    return fraction, details
 
 
 @dataclass(frozen=True, eq=False)
@@ -739,8 +772,8 @@ def screen_lever(
 ) -> LeverOutcome:
     """One lever applied alone to the S1 winner (L7 and L9 have their own rules).
 
-    L5 needs ``positive_step_fraction``, the share of its training steps with an in-memory
-    positive; below 90% it is logged "not tested" and not compared.
+    L5 needs ``positive_step_fraction``, the share of its training minibatches with a SupCon
+    positive (``supcon_positive_step_fraction``); below 90% it is logged "not tested" and not compared.
     """
     if lever in (EPOCH_LEVER, LOGIT_ADJUSTMENT_LEVER):
         raise ValueError(f"Lever {lever} has its own screening rule.")
@@ -748,11 +781,11 @@ def screen_lever(
     details: dict[str, Any] = {}
     if lever == SUPCON_LEVER:
         if positive_step_fraction is None:
-            raise ValueError("L5 needs positive_step_fraction, the share of steps with an in-memory positive.")
+            raise ValueError("L5 needs positive_step_fraction, the share of minibatches with a SupCon positive.")
         fraction = float(positive_step_fraction)
         details["positive_step_fraction"] = fraction
         if not supcon_lever_testable(fraction):
-            reason = (f"in-memory positives on {fraction:.1%} of steps, below "
+            reason = (f"SupCon positives on {fraction:.1%} of training minibatches, below "
                       f"{SUPCON_MIN_POSITIVE_STEP_FRACTION:.0%}")
             return LeverOutcome(lever, LEVER_NOT_TESTED, reason=reason, details=details)
     elif positive_step_fraction is not None:
@@ -855,7 +888,7 @@ def _check_screened_outcome(lever: str, outcome: LeverOutcome, s1_sha256: str) -
     if lever == SUPCON_LEVER:
         fraction = outcome.details.get("positive_step_fraction")
         if fraction is None or not supcon_lever_testable(fraction):
-            raise ValueError("L5 was screened without in-memory positives on at least 90% of steps.")
+            raise ValueError("L5 was screened without SupCon positives on at least 90% of minibatches.")
 
 
 def s2_lever_screen(family: str, s1_winner: PooledOof, outcomes: Iterable[LeverOutcome]) -> LeverScreen:

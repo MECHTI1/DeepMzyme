@@ -165,6 +165,31 @@ def test_export_writes_the_three_files_and_reconciles(campaign, family):
         assert {row["site_ids"] for row in pockets if row["structure_id"] == structure_id} == SITE_IDS
 
 
+def test_supcon_coverage_is_bound_to_the_fit(campaign):
+    # L5: the receipt carries the fit's training minibatches and those with a SupCon positive,
+    # summed from the history the checkpoint (hashed in the receipt) also holds.
+    from ec_clean30.selection import supcon_positive_step_fraction
+    from training.loop import SUPCON_BATCHES_KEY, SUPCON_BATCHES_WITH_POSITIVE_KEY
+
+    rich_dir = campaign["runs"]["rich"]
+    rich = json.loads((rich_dir / export.EC_PREDICTION_RECEIPT_NAME).read_text())
+    plain = json.loads((campaign["runs"]["plain"] / export.EC_PREDICTION_RECEIPT_NAME).read_text())
+    assert plain["ec_supcon_coverage"] is None
+    coverage = rich["ec_supcon_coverage"]
+    epochs = rich["epochs"]["completed"]
+    assert coverage["train_batches"] == rich["optimizer_steps"]["optimizer_steps_per_epoch"] * epochs
+    assert coverage["epochs_counted"] == epochs and 0 <= coverage["batches_with_positive"] <= coverage["train_batches"]
+    checkpoint = torch.load(rich_dir / "terminal_model_checkpoint.pt", map_location="cpu", weights_only=False)
+    assert sum(record[SUPCON_BATCHES_KEY] for record in checkpoint["history"]) == coverage["train_batches"]
+    assert sum(record[SUPCON_BATCHES_WITH_POSITIVE_KEY] for record in checkpoint["history"]) == \
+        coverage["batches_with_positive"]
+    fraction, details = supcon_positive_step_fraction({"rich": coverage})
+    assert fraction == coverage["batches_with_positive"] / coverage["train_batches"] and not details["uncertified_fits"]
+    # A history without counters (an older run) leaves the fit uncertified.
+    older = export.supcon_coverage({"ec_supcon_weight": 0.1}, [{"epoch": 1}, {"epoch": 2}])
+    assert older["train_batches"] is None and supcon_positive_step_fraction({"older": older})[0] is None
+
+
 @pytest.mark.parametrize("family", VALIDATION_FAMILIES)
 def test_protein_rows_are_the_mean_of_their_pocket_logits(campaign, family):
     run_dir = campaign["runs"][family]

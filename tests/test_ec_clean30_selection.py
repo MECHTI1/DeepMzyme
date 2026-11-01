@@ -21,7 +21,8 @@ from ec_clean30.selection import (
     noise_model_from_membership, pool_inner_oof, promote,
     read_step_chain, s1_choose_learning_rate, s1_family_escalation, s1_learning_rate_labels, s2_lever_screen,
     s3_combination, s4_refit_specification, screen_epoch_lever, screen_lever, screen_logit_adjustment,
-    seed_mean_ba_points, simulate_null_adoption, supcon_lever_testable, verify_step_chain,
+    seed_mean_ba_points, simulate_null_adoption, supcon_lever_testable, supcon_positive_step_fraction,
+    verify_step_chain,
 )
 from ec_clean30.stats import DEFAULT_BOOTSTRAP_SEED, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_N_DRAWS, BootstrapAbort
 
@@ -452,6 +453,24 @@ def test_supcon_lever_is_compared_only_with_enough_positive_steps():
     assert tested.status == LEVER_PASSED and tested.details == {"positive_step_fraction": 0.95}
     with pytest.raises(ValueError, match="L5 only"):
         screen_lever("L4", "F2", INCUMBENT, challenger, positive_step_fraction=0.95, **_screen())
+
+
+def test_supcon_coverage_holds_for_each_required_fit_and_missing_counters_never_pass():
+    good = {"train_batches": 100, "batches_with_positive": 95}
+    fraction, details = supcon_positive_step_fraction({"f0s42": good, "f1s42": {"train_batches": 50,
+                                                                                "batches_with_positive": 46}})
+    assert fraction == pytest.approx(0.92) and supcon_lever_testable(fraction) and not details["uncertified_fits"]
+    # Pooled the two fits reach 92.7%, but one fit is at 88%: the minimum decides.
+    low, details = supcon_positive_step_fraction({"f0s42": good, "f1s42": {"train_batches": 50,
+                                                                           "batches_with_positive": 44}})
+    assert low == pytest.approx(0.88) and not supcon_lever_testable(low)
+    assert details["aggregation"] == "minimum over the required inner fits"
+    for missing in (None, {}, {"train_batches": None, "batches_with_positive": None},
+                    {"train_batches": 0, "batches_with_positive": 0}, {"train_batches": 10, "batches_with_positive": 11}):
+        fraction, details = supcon_positive_step_fraction({"f0s42": good, "f1s42": missing})
+        assert fraction is None and details["uncertified_fits"] == ["f1s42"]
+    with pytest.raises(ValueError, match="at least one required fit"):
+        supcon_positive_step_fraction({})
 
 
 def _f2_s1_winner():

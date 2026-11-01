@@ -129,6 +129,64 @@ def test_supcon_enqueues_only_in_training_and_reports_stats():
     assert int(model.ec_supcon.mem_valid.sum()) == 2
 
 
+def test_supcon_positives_with_an_empty_queue_come_from_the_batch():
+    # L5 coverage counts a minibatch with a positive by the loss's own candidates: the other batch
+    # items plus the memory. An empty queue therefore still allows in-batch positives.
+    z = _normalized(4, 3, 3)
+    empty_z, empty = torch.zeros(0, 3), torch.zeros(0, dtype=torch.long)
+
+    def stats(labels, proteins):
+        return memory_supcon_loss(z, torch.tensor(labels), torch.tensor(proteins), empty_z, empty, empty, 0.1)[1]
+
+    assert stats([0, 1, 2, 3], [1, 2, 3, 4])["anchors_with_positive"] == 0      # distinct EC3 labels
+    same_label = stats([5, 5, -1, -1], [1, 2, 3, 4])                            # same EC3 label, two proteins
+    assert same_label["anchors_with_positive"] == 2 and same_label["positive_pairs"] == 2
+    same_protein = stats([5, 5, -1, -1], [1, 1, 3, 4])                          # same protein: excluded
+    assert same_protein["anchors_with_positive"] == 0 and same_protein["positive_pairs"] == 0
+    # The trainer's path: a fresh memory module (empty queue) reports the same in-batch positives.
+    model = _TinyModel()
+    attach_ec_auxiliary_objectives(model, aux_level_sizes={}, aux_weight=0.3, supcon_weight=0.1,
+                                   supcon_memory=8, supcon_projection_dim=3)
+    model.train()
+    data = SimpleNamespace(y_ec_l3=torch.tensor([0, 0, 1, -1]), ec_group_id=torch.tensor([0, 1, 2, 3]),
+                           ec_sample_weight=torch.ones(4))
+    assert int(model.ec_supcon.mem_valid.sum()) == 0
+    _, diagnostics = ec_auxiliary_terms(model, torch.randn(4, 4), data)
+    assert int(diagnostics["ec_supcon_anchors_with_positive"]) == 2
+
+
+class _CountingModel(torch.nn.Module):
+    """A loss plus, per batch, the SupCon statistic the real model reports (None: not reported)."""
+
+    def __init__(self):
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.ones(1))
+
+    def forward(self, batch):
+        outputs = {"loss": (self.weight * batch.x).pow(2).sum()}
+        if batch.positives is not None:
+            outputs["ec_supcon_anchors_with_positive"] = torch.tensor(batch.positives)
+        return outputs
+
+
+class _Batch(SimpleNamespace):
+    def to(self, device):
+        return self
+
+
+def test_train_epoch_counts_every_training_minibatch_and_changes_nothing_else():
+    from training.loop import SUPCON_BATCHES_KEY, SUPCON_BATCHES_WITH_POSITIVE_KEY, train_epoch
+
+    loader = [_Batch(x=torch.tensor([float(i + 1)]), positives=p) for i, p in enumerate((0, 3, None, 1, 0))]
+    counts = {SUPCON_BATCHES_KEY: 0, SUPCON_BATCHES_WITH_POSITIVE_KEY: 0}
+    counted = _CountingModel()
+    counted_loss = train_epoch(counted, loader, torch.optim.SGD(counted.parameters(), lr=0.01), supcon_counts=counts)
+    assert counts == {SUPCON_BATCHES_KEY: 5, SUPCON_BATCHES_WITH_POSITIVE_KEY: 2}
+    plain = _CountingModel()
+    plain_loss = train_epoch(plain, loader, torch.optim.SGD(plain.parameters(), lr=0.01))
+    assert plain_loss == counted_loss and torch.equal(plain.weight, counted.weight)
+
+
 def test_attach_refusals():
     with pytest.raises(ValueError, match="EC head"):
         attach_ec_auxiliary_objectives(torch.nn.Linear(2, 2), aux_level_sizes={2: 3}, aux_weight=0.3)
@@ -197,3 +255,13 @@ def test_default_model_is_unchanged_and_tiny_fit_runs(tmp_path, monkeypatch):
     assert base_keys <= set(state["model_state_dict"])
     history = json.loads((with_objectives / "run_config.json").read_text())["history"]
     assert all(math.isfinite(epoch["train_loss"]) for epoch in history)
+    # L5 coverage: every training minibatch of every epoch, nothing from the train-metric or
+    # validation passes; kept in the history of the checkpoint and run_config.json, and only for SupCon.
+    from training.loop import SUPCON_BATCHES_KEY, SUPCON_BATCHES_WITH_POSITIVE_KEY
+
+    steps = json.loads((with_objectives / "optimizer_groups.json").read_text())["optimizer_steps_per_epoch"]
+    assert len(history) == 2 and all(epoch[SUPCON_BATCHES_KEY] == steps > 0 for epoch in history)
+    assert all(0 <= epoch[SUPCON_BATCHES_WITH_POSITIVE_KEY] <= steps for epoch in history)
+    assert [epoch[SUPCON_BATCHES_KEY] for epoch in state["history"]] == [steps, steps]
+    plain_history = json.loads((plain / "run_config.json").read_text())["history"]
+    assert not any(SUPCON_BATCHES_KEY in epoch or SUPCON_BATCHES_WITH_POSITIVE_KEY in epoch for epoch in plain_history)

@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-10-29; Phase 2 CPU inputs: label table, cohort audit, round-1b code at CP-B)
+Status: active (2026-11-01; Phase 2 CPU inputs, views, calibration, amendment)
 
 Goal: a DeepMzyme model for the EC class (the first digit of the EC number: 1 oxidoreductases to 7 translocases) that
 outperforms a retrained CLEAN on the official CLEAN `split30` five-fold benchmark (metalloenzyme subset), and on its test proteins without a ≥30% identity hit to training. This is a
@@ -10,7 +10,7 @@ It supersedes the 2026-09-25 [CLEAN30 plan](../../plans/pocket_level_EC_task_com
 reference; that file stays unchanged.
 
 - [Design](design.md): benchmark, populations, systems, training rule, metric, claim rule, test access and licence.
-- [Log](log.md): evc-001 (decisions and reasons), evc-002 (G0 approval), evc-003 (gate G1 checks), evc-004 (G1 approval), evc-005 (Phase 2 start, input code), evc-006 (inputs, round 1b).
+- [Log](log.md): evc-001 (decisions and reasons), evc-002 (G0 approval), evc-003 (gate G1 checks), evc-004 (G1 approval), evc-005 (Phase 2 start, input code), evc-006 (inputs, round 1b), evc-007 (views, calibration).
 - [Recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe): commands.
 - Outputs (secondary drive, NVMe mirror): `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/`.
 
@@ -25,7 +25,7 @@ most $3); 4 fold-0 development with a stop-or-continue gap gate; 5 folds 1–4; 
 scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (three lanes) or $99–166 (serial), CLEAN about
 160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
 
-Current state: Phase 1 built; gate G1 approved on 2026-10-25 (evc-004); Phase 2 under way: identity chain, label
-table, cohort audit and the round-1b code (evc-005, evc-006). Only engineering smokes ran (one-epoch fits on
+Current state: Phase 1 built; gate G1 approved on 2026-10-25 (evc-004); Phase 2 under way: inputs, views, promotion
+calibration, analysis amendment (evc-005 to evc-007). Only engineering smokes ran (one-epoch fits on
 training proteins, CLEAN on synthetic tensors); nothing was evaluated, and the test read (G5) has not happened. Incidental planning-time exposures, including one
 deleted upstream download, are in the [test-use ledger](../../DATASETS.md#test-use-ledger).

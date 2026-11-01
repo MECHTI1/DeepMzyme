@@ -763,6 +763,21 @@ with names containing "test", "metadata" or "folds" filtered out of the display.
 `structures`, both already recorded in the 2026-10-22 entry. No test-named entry, row, label or identifier was shown,
 nothing was opened, and nothing was used. The session then read the five training site tables by exact name only.
 
+**2026-10-30 recursive code search from the repository root:** while checking which modules import the EC auxiliary
+objectives, a working session ran one recursive text search for that module name from the repository root, restricted
+to `*.py` files. The search walked folders that hold test files (among them `DeepMzyme_Data/`, `runs/`,
+`prepare_training_and_test_set/`, `CARE_prepare_training_and_test_set/` and `CLEAN/`). Only `.py` files were opened;
+no data file was opened. The display showed six matches, all under `src/` and `tests/`; matches under
+`DeepMzyme_Data/`, `runs/` and `docs/notebook_outputs/` would have been filtered out of the display, and none came
+from the other folders. No test-named entry, row, label or identifier was shown, and nothing was used. Later searches
+name `src/`, `scripts/`, `tools/` and `tests/` explicitly.
+
+**2026-11-01 smoke-check skip:** to explain the skipped multi-metal smoke check, a working session ran existence tests
+on the three training-only paths that the check names, and on the PinMyMetal bundle folder under
+`DeepMzyme_Data/DeepMzyme_Colab_Bundles/` that would hold one of them. It also read the modification time of
+`DeepMzyme_Data/DeepMzyme_Colab_Bundles/`. The bundle folder and its training CSV are absent; the two inputs in the
+training folder are present. No folder was listed, no file was opened, and nothing was used.
+
 ## Current bundles
 
 ### Hugging Face repository inventory

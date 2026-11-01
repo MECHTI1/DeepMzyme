@@ -18,6 +18,17 @@ Conventions:
 - A draw is skipped, and counted, when it lacks an EC class 1-6 that is present in the
   population (per subset, over that subset's own population). Class 7 never causes a skip.
   More than ``max_skip_fraction`` skipped draws aborts the run.
+- Stratum support gate (analysis amendment of 2026-10-30): a stratum of an EC class 1-6 that
+  holds a single cluster is drawn identically in every resample, so the bootstrap cannot
+  estimate between-family uncertainty there. ``single_cluster_primary_strata`` names such
+  strata; callers then report the population descriptively, with no superiority inference.
+  For balanced accuracy over EC classes 1-6 the class-7-only stratum does not trigger the gate.
+  For accuracy, and for macro-F1 when a compared arm predicts a protein of that stratum as an
+  EC class 1-6 present in the population, a single-cluster class-7-only stratum does
+  (``single_cluster_strata``). Two clusters only avoid this degeneracy; they do not establish
+  adequate power.
+- A Holm family may hold an unavailable hypothesis (no bootstrap result): it keeps its place in
+  the family size, is ordered with p = 1 after the available ones and never passes.
 - The one-sided lower bound at ``alpha`` is the order statistic d[k] (0-based) of the sorted
   valid draws, k = floor(alpha * n). The p-value for H0: difference <= 0 is the share of valid
   draws <= 0. Draws exactly at 0 count toward H0, so identical systems give p = 1 and a lower
@@ -225,6 +236,42 @@ def stratum_members(strata: Sequence[str]) -> dict[str, np.ndarray]:
     names = sorted(set(strata), key=_stratum_order_key)
     labels = np.asarray(strata, dtype=object)
     return {name: np.flatnonzero(labels == name) for name in names}
+
+
+def stratum_sizes(class_support: np.ndarray) -> dict[str, int]:
+    """Clusters per stratum of the stratified bootstrap, in drawing order."""
+    return {name: int(indices.size) for name, indices in stratum_members(assign_cluster_strata(class_support)).items()}
+
+
+def single_cluster_primary_strata(class_support: np.ndarray) -> tuple[str, ...]:
+    """Strata of EC classes 1-6 holding exactly one cluster (the class-7-only stratum is exempt)."""
+    return tuple(name for name, size in stratum_sizes(class_support).items()
+                 if size == 1 and name != CLASS_7_ONLY_STRATUM)
+
+
+def single_cluster_strata(table: ClusterCountTable, metric: str) -> tuple[str, ...]:
+    """Single-cluster strata that the stratum support gate counts for ``metric``.
+
+    ``table`` holds the counts a bootstrap of ``metric`` would use, with the arms being compared.
+    Every single-cluster stratum of an EC class 1-6 counts. The class-7-only stratum is exempt
+    for balanced accuracy over EC classes 1-6, which reads only the rows of those classes. It
+    counts for accuracy, whose numerator and denominator hold every row, and for macro-F1 over
+    EC classes 1-6 when an arm predicts one of its proteins as an averaged class (an EC class
+    1-6 present in a subset), which is a false positive of that class.
+    """
+    if metric not in BOOTSTRAP_METRICS:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    strata = assign_cluster_strata(table.class_support)
+    class_7_counts = False
+    if metric == METRIC_ACCURACY:
+        class_7_counts = True
+    elif metric == METRIC_EC_CLASSES_1_6_MACRO_F1:
+        members = [index for index, name in enumerate(strata) if name == CLASS_7_ONLY_STRATUM]
+        averaged = sorted({index for subset in table.subset_names for index in PRIMARY_CLASS_INDICES
+                           if table.subset_support(subset)[index] > 0})
+        class_7_counts = bool(members and averaged) and bool(table.counts[members][..., averaged].sum() > 0)
+    return tuple(name for name, indices in stratum_members(strata).items()
+                 if indices.size == 1 and (name != CLASS_7_ONLY_STRATUM or class_7_counts))
 
 
 def stratified_multiplicities(
@@ -460,6 +507,35 @@ def _system_values(
     return np.stack([arm_values[..., arms].mean(axis=-1) for arms in systems.values()], axis=-1)
 
 
+def _averaged_classes(table: ClusterCountTable) -> list[tuple[int, ...]]:
+    """Per subset, the EC classes 1-6 present in that subset's population."""
+    averaged = []
+    for subset in table.subset_names:
+        support = table.subset_support(subset)
+        classes = tuple(index for index in PRIMARY_CLASS_INDICES if support[index] > 0)
+        if not classes:
+            raise ValueError(f"Subset {subset!r} holds no protein of EC classes 1-6.")
+        averaged.append(classes)
+    return averaged
+
+
+def point_contrasts(
+    table: ClusterCountTable,
+    contrasts: Sequence[Contrast],
+    *,
+    systems: Optional[Mapping[str, Sequence[str]]] = None,
+    metric: str = METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY,
+) -> dict[str, float]:
+    """Contrast point estimates on the full table, with no draws (descriptive use)."""
+    if metric not in BOOTSTRAP_METRICS:
+        raise ValueError(f"Unknown bootstrap metric {metric!r}; expected one of {BOOTSTRAP_METRICS}.")
+    resolved = _resolve_systems(table, systems)
+    weights = _contrast_matrix(contrasts, table.subset_names, tuple(resolved))
+    system_point = _system_values(table.counts.sum(axis=0), metric, _averaged_classes(table), resolved)
+    values = np.einsum("csk,sk->c", weights, system_point)
+    return {contrast.name: float(value) for contrast, value in zip(contrasts, values)}
+
+
 def paired_cluster_bootstrap(
     table: ClusterCountTable,
     contrasts: Sequence[Contrast],
@@ -486,14 +562,7 @@ def paired_cluster_bootstrap(
     resolved = _resolve_systems(table, systems)
     system_names = tuple(resolved)
     weights = _contrast_matrix(contrasts, table.subset_names, system_names)
-
-    averaged = []
-    for subset in table.subset_names:
-        support = table.subset_support(subset)
-        classes = tuple(index for index in PRIMARY_CLASS_INDICES if support[index] > 0)
-        if not classes:
-            raise ValueError(f"Subset {subset!r} holds no protein of EC classes 1-6.")
-        averaged.append(classes)
+    averaged = _averaged_classes(table)
 
     strata = assign_cluster_strata(table.class_support) if stratified else (UNSTRATIFIED_STRATUM,) * len(table.cluster_ids)
     members = stratum_members(strata)
@@ -638,6 +707,7 @@ class HolmContrastStep:
     tested: bool
     passed: bool
     test: Optional[IntersectionUnionResult]
+    available: bool = True
 
     def to_record(self) -> dict[str, Any]:
         return {
@@ -647,33 +717,37 @@ class HolmContrastStep:
             "p_value": self.p_value,
             "tested": self.tested,
             "passed": self.passed,
+            "available": self.available,
             "test": None if self.test is None else self.test.to_record(),
         }
 
 
 def holm_intersection_union(
-    contrasts: Mapping[str, tuple[BootstrapResult, Sequence[str]]],
+    contrasts: Mapping[str, tuple[Optional[BootstrapResult], Sequence[str]]],
     family_alpha: float = 0.05,
 ) -> tuple[HolmContrastStep, ...]:
     """Holm across intersection-union contrasts, each from its own bootstrap run.
 
     Contrasts are ordered by their intersection-union p-value (equal values keep the given
     order). The j-th contrast is tested at ``family_alpha / (m - j)`` with lower bounds at that
-    level, and only while every earlier contrast passed.
+    level, and only while every earlier contrast passed. A contrast without a result is
+    unavailable: it counts in m, takes p = 1, is ordered after the available ones and never passes.
     """
     family_alpha = _check_alpha(family_alpha)
-    p_values = {name: intersection_union_p_value(result, components) for name, (result, components) in contrasts.items()}
+    names = [name for name, (result, _) in contrasts.items() if result is not None]
+    names += [name for name, (result, _) in contrasts.items() if result is None]
+    p_values = {name: 1.0 if contrasts[name][0] is None else intersection_union_p_value(*contrasts[name])
+                for name in names}
     ordered = _holm_order(p_values)
     m = len(ordered)
     steps, still_testing = [], True
     for rank, (name, value) in enumerate(ordered):
         alpha = family_alpha / (m - rank)
-        test = None
-        if still_testing:
-            result, components = contrasts[name]
-            test = intersection_union_test(result, components, alpha, name=name)
+        result, components = contrasts[name]
+        tested = still_testing and result is not None
+        test = intersection_union_test(result, components, alpha, name=name) if tested else None
         passed = bool(test is not None and test.passed)
-        steps.append(HolmContrastStep(name, rank + 1, alpha, value, still_testing, passed, test))
+        steps.append(HolmContrastStep(name, rank + 1, alpha, value, tested, passed, test, result is not None))
         still_testing = passed
     return tuple(steps)
 
@@ -702,13 +776,14 @@ class CoPrimaryResult:
 
 
 def co_primary_holm(
-    contrast_a: tuple[str, BootstrapResult, Sequence[str]],
-    contrast_b: tuple[str, BootstrapResult, Sequence[str]],
+    contrast_a: tuple[str, Optional[BootstrapResult], Sequence[str]],
+    contrast_b: tuple[str, Optional[BootstrapResult], Sequence[str]],
 ) -> CoPrimaryResult:
     """The two co-primary contrasts: the smaller p at 0.025, the other at 0.05 only if the first passes.
 
     This is Holm with two hypotheses at a family level of 0.05, each contrast an
-    intersection-union test over its components. Argument order carries no meaning.
+    intersection-union test over its components. Argument order carries no meaning. An
+    unavailable contrast (``None``) stays in the family: the other is still tested at 0.025.
     """
     if contrast_a[0] == contrast_b[0]:
         raise ValueError("The co-primary contrasts need distinct names.")

@@ -11,6 +11,11 @@ from data_structures import GRAPH_TARGET_FIELDS, MISSING_CLASS_LABEL, PocketReco
 
 _GRAPH_Y_METAL_FIELD, _GRAPH_Y_EC_FIELD = GRAPH_TARGET_FIELDS
 _GRAPH_EC_GROUP_ID_FIELD = "ec_group_id"
+# SupCon coverage (lever L5): training minibatches, and those whose loss found at least one
+# cross-protein positive among the batch and memory candidates.
+SUPCON_BATCHES_KEY = "ec_supcon_train_batches"
+SUPCON_BATCHES_WITH_POSITIVE_KEY = "ec_supcon_batches_with_positive"
+_SUPCON_ANCHORS_WITH_POSITIVE_OUTPUT = "ec_supcon_anchors_with_positive"
 
 
 def train_epoch(
@@ -23,7 +28,15 @@ def train_epoch(
     grad_accum_steps: int = 1,
     use_amp: bool = False,
     scaler: torch.amp.GradScaler | None = None,
+    supcon_counts: dict[str, int] | None = None,
 ) -> float:
+    """One training epoch; returns the mean minibatch loss.
+
+    ``supcon_counts``, when given, gains every training minibatch of this epoch under
+    ``SUPCON_BATCHES_KEY`` and those with a SupCon positive under ``SUPCON_BATCHES_WITH_POSITIVE_KEY``;
+    a minibatch whose outputs carry no SupCon statistics counts as one without a positive. Only this
+    function adds to the counts, so evaluation, export and replay never do.
+    """
     if grad_accum_steps < 1:
         raise ValueError(f"grad_accum_steps must be >= 1, got {grad_accum_steps}.")
     model.train()
@@ -64,6 +77,11 @@ def train_epoch(
         if not bool(torch.isfinite(loss).item()):
             raise FloatingPointError(f"Non-finite training loss detected: {float(loss.item())}")
         total += float(loss.item())
+        if supcon_counts is not None:
+            supcon_counts[SUPCON_BATCHES_KEY] = supcon_counts.get(SUPCON_BATCHES_KEY, 0) + 1
+            with_positive = int(model_outputs.get(_SUPCON_ANCHORS_WITH_POSITIVE_OUTPUT, 0)) > 0
+            supcon_counts[SUPCON_BATCHES_WITH_POSITIVE_KEY] = (
+                supcon_counts.get(SUPCON_BATCHES_WITH_POSITIVE_KEY, 0) + int(with_positive))
         loss_for_backward = loss / window_size
         if amp_active:
             assert scaler is not None

@@ -15,8 +15,9 @@ from ec_clean30.stats import (
     CLASS_7_ONLY_STRATUM, CO_PRIMARY_FAMILY_ALPHA, DEFAULT_BOOTSTRAP_SEED, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_N_DRAWS,
     DRAW_BATCH_SIZE, UNSTRATIFIED_STRATUM, BootstrapAbort, Contrast, assign_cluster_strata,
     build_cluster_count_table, co_primary_holm, confusion_metric, holm_intersection_union, holm_step_down,
-    intersection_union_test, one_sided_lower_bound, one_sided_p_value, paired_cluster_bootstrap,
-    rarest_class_stratum, stratified_multiplicities, stratum_members,
+    intersection_union_test, one_sided_lower_bound, one_sided_p_value, paired_cluster_bootstrap, point_contrasts,
+    rarest_class_stratum, single_cluster_primary_strata, single_cluster_strata, stratified_multiplicities,
+    stratum_members, stratum_sizes,
 )
 from training.ec_class_metrics import ec_class_metrics
 
@@ -367,6 +368,89 @@ def test_co_primary_holm_tests_the_smaller_p_first_and_stops_on_failure():
     assert not second.tested and not second.passed and second.test is None
     both = co_primary_holm(("P1", strong, strong_components), ("P2", strong, strong_components))
     assert all(step.passed for step in both.steps)
+
+
+def test_an_unavailable_co_primary_keeps_the_family_size():
+    # Analysis amendment 2026-10-30: the available claim is still tested at 0.025, never at 0.05.
+    strong, components = _contrast_run(0.95, 0.5, 50)
+    for arguments in ((("P1", None, components), ("P2", strong, components)),
+                      (("P2", strong, components), ("P1", None, components))):
+        result = co_primary_holm(*arguments)
+        first, second = result.steps
+        assert (first.name, first.alpha, first.tested, first.passed, first.available) == ("P2", 0.025, True, True, True)
+        assert (second.name, second.alpha, second.p_value) == ("P1", 0.05, 1.0)
+        assert not second.tested and not second.passed and not second.available and second.test is None
+        assert result.to_record()["steps"][1]["available"] is False
+    neither = co_primary_holm(("P1", None, components), ("P2", None, components))
+    assert not any(step.tested or step.passed or step.available for step in neither.steps)
+
+
+def test_single_cluster_strata_of_classes_1_6_are_named_and_class_7_is_exempt():
+    support = np.zeros((5, 7))
+    support[0, 0] = support[1, 0] = 3     # class 1: two clusters
+    support[2, 4] = 5                     # class 5: one cluster
+    support[3, 1] = support[4, 6] = 1     # class 2: one cluster; class 7 only: one cluster
+    assert stratum_sizes(support) == {rarest_class_stratum(0): 2, rarest_class_stratum(1): 1,
+                                      rarest_class_stratum(4): 1, CLASS_7_ONLY_STRATUM: 1}
+    assert single_cluster_primary_strata(support) == (rarest_class_stratum(1), rarest_class_stratum(4))
+    lone_class_7 = np.zeros((3, 7))
+    lone_class_7[0, 0] = lone_class_7[1, 0] = lone_class_7[2, 6] = 1
+    assert stratum_sizes(lone_class_7)[CLASS_7_ONLY_STRATUM] == 1
+    assert single_cluster_primary_strata(lone_class_7) == ()
+
+
+def test_the_class_7_exemption_covers_balanced_accuracy_only():
+    # Two clusters for each of EC classes 1 and 2, and one class-7-only family of two proteins.
+    ids = [f"p{i}" for i in range(6)]
+    true = np.array([0, 0, 1, 1, 6, 6])
+    clusters = {pid: ("family7" if true[i] == 6 else pid) for i, pid in enumerate(ids)}
+    as_class_7 = true.copy()                     # the class-7 proteins predicted as class 7
+    as_class_2 = np.where(true == 6, 1, true)    # one arm calls them EC class 2: false positives
+    as_class_3 = np.where(true == 6, 2, true)    # EC class 3 is absent, so it is not averaged
+    plain = build_cluster_count_table(ids, true, {"a": true, "b": as_class_7}, clusters)
+    leaking = build_cluster_count_table(ids, true, {"a": true, "b": as_class_2}, clusters)
+    absent = build_cluster_count_table(ids, true, {"a": true, "b": as_class_3}, clusters)
+    assert stratum_sizes(plain.class_support)[CLASS_7_ONLY_STRATUM] == 1
+    ba, accuracy, macro_f1 = stats.METRIC_EC_CLASSES_1_6_BALANCED_ACCURACY, stats.METRIC_ACCURACY, \
+        stats.METRIC_EC_CLASSES_1_6_MACRO_F1
+    for table in (plain, leaking, absent):
+        assert single_cluster_strata(table, ba) == ()
+        assert single_cluster_strata(table, accuracy) == (CLASS_7_ONLY_STRATUM,)
+    # Macro-F1 over classes 1-6 reads the class-7 family only through false positives of an averaged class.
+    contrast = [Contrast.difference("gain", "a", "b")]
+    assert single_cluster_strata(leaking, macro_f1) == (CLASS_7_ONLY_STRATUM,)
+    assert point_contrasts(leaking, contrast, metric=macro_f1)["gain"] > 0
+    for table in (plain, absent):
+        assert single_cluster_strata(table, macro_f1) == ()
+        assert point_contrasts(table, contrast, metric=macro_f1)["gain"] == 0
+    assert point_contrasts(absent, contrast, metric=accuracy)["gain"] == pytest.approx(2 / 6)
+    # A single-cluster stratum of an EC class 1-6 counts for every metric, before the class-7 one.
+    lone = {**clusters, "p1": "p0"}
+    table = build_cluster_count_table(ids, true, {"a": true, "b": as_class_2}, lone)
+    for metric, expected in ((ba, (rarest_class_stratum(0),)),
+                             (accuracy, (rarest_class_stratum(0), CLASS_7_ONLY_STRATUM)),
+                             (macro_f1, (rarest_class_stratum(0), CLASS_7_ONLY_STRATUM))):
+        assert single_cluster_strata(table, metric) == expected
+    # Two class-7-only families avoid the degeneracy for every metric.
+    two = {**clusters, "p5": "family7b"}
+    assert all(single_cluster_strata(build_cluster_count_table(ids, true, {"a": true, "b": as_class_2}, two), metric)
+               == () for metric in (ba, accuracy, macro_f1))
+    with pytest.raises(ValueError, match="Unknown bootstrap metric"):
+        single_cluster_strata(plain, "top_1")
+
+
+def test_a_single_cluster_stratum_gives_a_degenerate_bootstrap():
+    # Why the gate exists: one family of class 5, right for one system and wrong for the other.
+    ids = [f"p{i}" for i in range(12)]
+    true = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5])
+    clusters = {pid: ("family5" if true[i] == 4 else pid) for i, pid in enumerate(ids)}
+    other = np.where(true == 4, 0, true)
+    table = build_cluster_count_table(ids, true, {"ours": true, "other": other}, clusters)
+    assert single_cluster_primary_strata(table.class_support) == (rarest_class_stratum(4),)
+    result = paired_cluster_bootstrap(table, [Contrast.difference("gain", "ours", "other")], n_draws=500)
+    assert result.lower_bound("gain", 0.025) == pytest.approx(1 / 6) and result.p_value("gain") == 0.0
+    assert point_contrasts(table, [Contrast.difference("gain", "ours", "other")]) == {
+        "gain": pytest.approx(result.estimate("gain"))}
 
 
 def test_bootstrap_holm_matches_p_value_holm():

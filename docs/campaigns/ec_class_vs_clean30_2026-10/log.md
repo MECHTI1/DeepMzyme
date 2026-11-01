@@ -368,3 +368,251 @@ Round 1b (2026-10-26):
 
 Next: P2-3 again at the CP-B commit, then P2-5 (inner folds), P2-6 (R2 lists), P2-7 (overlay, option d) and P2-8
 (views, the layer-26 build, dry runs).
+
+## evc-007
+
+2026-10-29 — **cohort audit at the CP-B commit (one pocket per protein).** CPU only, training files only, at the clean
+commit `e69a272`. The schema-1 audit of 2026-10-26 was moved to `cohort_schema1_20261026/` (unchanged); the new audit
+wrote `cohort/` (schema 2, structure grouping). Console output went to private files.
+
+`cohort-audit`, same inputs and expected values as evc-006, passed every check in 8.0 min (peak 0.7 GB; the secondary
+drive is still on the FUSE driver). All 740 proteins give one pocket each (740 pockets; the default grouping would
+give 798); 57 proteins had catalytic sites in more than one group and now have one pocket; no selected site lacks a
+residue within 10 Å. Every other total equals the schema-1 audit's. The site table and both D2 tables are
+byte-identical to evc-006's, so the D2 numbers and the A1 recommendation (d) stand; only `cohort_proteins.tsv` and the
+receipt changed.
+
+| Output | SHA-256 |
+|---|---|
+| `cohort_audit_receipt.json` | `3c10d49afeac52531fa8bfd47f8cd575c20edb0dab4ab3bc613b94f14915e2c5` |
+| `cohort_proteins.tsv` | `0e7c180fe9ff06070b93649ba0b5e8edd4946fdce43d524a0f6baec09f9a010c` |
+
+Outputs are mirrored to the NVMe drive and checked by SHA-256.
+
+P2-5, same commit: `assign-inner` (seed 42, largest component share at most 1/4) and `certify-inner` for folds 0–4, and
+the fold-0 R1-inner exclusion lists for inner folds 0–3. Console output went to private files. All five memberships are
+certified with 0 cross-fold links and no other problem count; the largest inner component holds 4.5–5.7% of a fold's
+eligible proteins. The fold-0 membership equals the gate G1 run (`862bbdcc…`). Every fold has at least 10 identity
+components in each EC class 1–6, so the inner bootstrap is not stratified (rule D2 of the plan). Some inner folds hold
+no class-7 protein; class-7 recall is reported only where it exists (B11; which folds is kept privately). Fold 0's R1-inner lists exclude 189–437 of 8,115 training proteins per inner fold, and no kept protein
+is identical to a validation sequence.
+
+P2-6: `r2-lists` wrote CLEAN's R2 lists for the five folds and the fold-0 R2-inner lists. Fold 0: 622 accessions in R2
+against 603 DeepMzyme proteins; the 19 not in DeepMzyme all carry several EC classes. The other folds' sizes equal the
+plan's and stay in the receipt. Every list loads with the comparator's reader, and no R2-inner list shares an accession
+with the R1-inner exclusions of the same inner fold.
+
+| Output | SHA-256 |
+|---|---|
+| `r2_lists_receipt.json` | `a86ef8e79ab8e9cc61b8c406af02e516f7da9b1a57c87f1d1b18fc6fe9f926b7` |
+| `inner_membership_fold0.csv` | `862bbdcc4dcc49b79e5a4285cba21f981dd8dd589c4f174bf4fd009bed33b440` |
+| `inner_membership_fold1.csv` | `d5f631327c59fa5e6625392230fb8ef63ad25047743813397ac8e5a59dfab0ea` |
+| `inner_membership_fold2.csv` | `47a972f1872b4eef5520cfa5f79873b8e662f67d4ea296b1a9389bede593d72b` |
+| `inner_membership_fold3.csv` | `cb52619ba7a6878357367ddcc7954b545d72cc17ad60f305462c38d7e752ebbd` |
+| `inner_membership_fold4.csv` | `a4c78e9b0f33746d437f296cd846e8d46f6188c2a2563c5e2a3a6a272d3d699a` |
+
+Outputs are mirrored to the NVMe drive and checked by SHA-256.
+
+P2-7: `overlay build --d2-option d` built `ecc30-overlay-v1` from the cohort audit above, the identity folders and the
+R2 lists in 15 min (peak 0.7 GB): 3,094 files for the 740 cohort proteins. The cohort audit recommends option d and
+the overlay follows it. All 740 external feature files passed the parity check with every metal present (360,881
+residues); 383 of them carry other metal atoms (1,396 in all, against 882 selected), and 49,767 residues have a new
+charge-proxy value. The other 357 files are byte-identical to their sources. The string scan found 370 values, equal
+to the cohort audit's (A13). `overlay verify` (19 min) rehashed every file, recomputed every derived charge proxy from
+the overlay's own structures and site tables, re-created the tar and passed every check. The secondary drive ignores
+file modes (FUSE driver), as recorded in the manifest. The tar is mirrored to the NVMe drive and checked by SHA-256.
+
+| Output | SHA-256 |
+|---|---|
+| `ecc30-overlay-v1.tar` | `60d3a6ecfc50f68f3908fae6407ab9fb6a2f8604b2cad62fc1578ed9f479528a` |
+| overlay manifest | `6f259f952aeb48692f741debed3c880c24b0ad25622f3536829346331cf5562f` |
+| `ecc30-overlay-v1.build_receipt.json` | `c07e4a29b39217c3dc5721f284d2cfeb1900a705a72d78603502b299d7b407e3` |
+
+P2-8, same commit, one fold at a time: `plan`, `build-view` from the overlay with the certified inner membership,
+final-layer chain means from the residue files, block-26 chain means from the model on the CPU (`--layer-index 26
+--device cpu`, two threads, 4 GB limit, nothing else running), the final-layer parity check between the two, `verify-view
+--require-chain-means final,block26 --check-sources`, and `dry-run`. Console output went to private files.
+
+All five folds passed every step. Each view's eligible proteins equal its certified inner membership: 603, 561, 545,
+568 and 595 proteins for folds 0–4 (the views hold 622, 578, 562, 586 and 612 structures). The block-26 builds took
+32–92 min per fold, about 5.0 h in all against a forecast of at most 4.2 h (peak 3.3 GB in every fold). The fold-3
+build was stopped once at the maintainer's request after 106 of its 586 structures and continued with `--resume`,
+which reused those 106 after matching their identity and source records. In every fold the final-layer means from
+the model match the residue-file means on every structure (lowest cosine 0.9999999999997, largest absolute difference
+2.5e-7; limits 0.9999 and 1e-4), and `verify-view` passed. Each dry run checked 356 commands at the clean commit
+`e69a272` and ran the inner and refit probes; all ten probes passed with one pocket per protein. The secondary drive
+ignores file modes (FUSE driver), as each view records. The view records, both chain-mean folders and the step
+outputs are mirrored to the NVMe drive and checked by SHA-256.
+
+| Fold | View manifest | Final chain means | Block-26 chain means | Dry-run receipt |
+|---|---|---|---|---|
+| 0 | `2d36e3bc…` | `32bc960f…` | `1b5af792…` | `91f4afbc…` |
+| 1 | `c704be50…` | `55bcbaa0…` | `162622fb…` | `ccad7054…` |
+| 2 | `50fd0517…` | `29c63f4b…` | `ed40fd71…` | `22b18db5…` |
+| 3 | `bec69c7b…` | `4760211a…` | `63eca3ed…` | `c8887ff6…` |
+| 4 | `b1b0fe59…` | `7da675f6…` | `1b6b6687…` | `2b5fe66a…` |
+
+P2-9a, part 1, same commit: `simulate` on fold 2's population (545 eligible proteins, the smallest fold), read from
+the overlay's copy of the certified membership. The sweep file is kept with the outputs (`simulation/sweep_v1.json`).
+Per-protein noise alone gives fold 2 a seed-to-seed spread of 3.61 BA points (floor F). Round 1b's stand-in is added
+on top of each noise point's own floor, so that it stays in BA points: target √(F² + s²), with s = 1.5 (central and
+one-factor points) and s = 2.2 (upper point and the pessimistic corner). Rules: the current rule (gain 1.0 point,
+α 0.10), α 0.05, gain 1.5, and both. One factor at a time around the central point: fit noise 0.4 and 1.2, class
+recall −0.10 and +0.10, component and protein difficulty 0.5 and 1.5, and the upper fit shift. Also the L7 and L9
+looks (2 and 4) at the central and upper points, and power at true gains of 1, 2 and 3 points.
+
+Before anything ran in the campaign folder, a review pass checked the sweep file against the plan, the round-1b
+decisions and the simulator code. Six of its findings were upheld and are built into this file. First, the stand-in
+is applied on each point's own floor, as round 1b describes, not as a fixed logit shift. Second, the pessimistic
+corner (part 2) is fixed in full in the sweep file: rules, looks, replicates, the rule for picking each factor's end
+with a margin of two standard errors (a factor below the margin keeps both ends, and D1 reads the highest one-look
+adoption across the resulting corners), and where D1's 15% clause for L7 and L9 is judged. Third, the replicates per
+point were raised over the plan's 200, to 1,000 for one-look null points and 400 for the others. The first two timed
+points took 0.2–0.4 CPU seconds per replicate, so the whole sweep stays far under the 8 CPU-hour limit. Fourth, every
+record's floor must equal the value precomputed for the file, or the sweep is void. Those two timing points ran in a
+scratch folder from the first draft; their adoption rates were seen before this file was final.
+
+Part 1 ran 68 points in 55 min (1.66 CPU hours, peak 0.12 GB). Every record's floor equals the value precomputed for
+the file. One-look null adoption, current rule: 9.4% at the central point and 12.7% at the upper fit shift; with
+α 0.05: 6.4% and 8.0%. The one-factor ends move the four-rule mean by at most 1.8 points. Raising the gain floor to
+1.5 points changes no adoption anywhere: every replicate whose lower bound passed already had a gain above 1.5, so α
+is the only tightening that acts. The recall guard vetoes about 35% of null replicates. With two looks (L7) and four
+(L9), the current rule adopts 14.2% and 21.0% at the central point; with α 0.05, 9.0% and 14.2%; at the upper point,
+about 5–8 points more. Power at the central point, one look: a true gain of 1, 2 and 3 points is adopted 14.8%, 23.2%
+and 26.0% of the time under the current rule, and 9.8%, 17.8% and 18.8% under α 0.05. By the fixed rule, only protein
+difficulty has a clear worse end (1.5); the other three factors keep both ends, so part 2 has eight corners.
+
+| Output | SHA-256 |
+|---|---|
+| `sweep_v1.json` | `0b5279d775a18af04c57330725d3370e970126bbe1b1331aa1c348146449c91e` |
+| `sweep_v1/sweep_receipt.json` | `9f1d8ff47e209f2958cdd4375da34debae174ef2b5c97ff53a8a756d9f258e1d` |
+| `sweep_v1/summary.tsv` | `e726d982c36a7439a92cd5e034125c9fd1c483617ae82a9fe54a8993d02b5731` |
+
+Part 2 ran the eight corners (protein difficulty 1.5; both ends of fit noise, class recall and component difficulty;
+s = 2.2 on each corner's own floor) in 75 min (2.33 CPU hours). Every record's floor equals the precomputed value. The
+highest one-look null adoption across the corners: current rule 14.3% (143 of 1,000; 95% interval 12.3–16.6%), α
+0.05 10.1% (101 of 1,000; 8.4–12.1%); the gain-1.5 rules again equal their gain-1.0 counterparts. No rule reaches
+10% or less at the corners with one look, so the plan's stop condition for P2-9 applies and the choice goes to the
+maintainer. Under α 0.05 the corners give at most 14.5% with two looks (L7) and 21.8% with four (L9); under the
+current rule 22.8% and 31.5%. A true gain of 2 points is adopted 16–20% of the time under α 0.05 and 24–27% under
+the current rule. The maximum over eight corners, each estimated with 1,000 replicates, reads high by about one
+standard error on average; that is part of the rule as fixed.
+
+| Output | SHA-256 |
+|---|---|
+| `sweep_v1b.json` | `514ac13b25ddee3785bdbe6cbc934f4b96074237b9d1d9b65f267de8a4d0c4da` |
+| `sweep_v1b/sweep_receipt.json` | `3a148fc1188ec65f8646f747a55b057f9858324ac3a71c8af7baa5cebbfa92ba` |
+| `sweep_v1b/summary.tsv` | `2b2faa7cac7ff02723af3a5a1d6bca87461f50688a7e7a0cb23d37e85bf85779` |
+
+**Plan amendment P2-9-A1 (2026-10-30, maintainer's choice after the stop).** The maintainer chose a ladder of smaller
+α, fixed before it runs, with a confirmation on fresh simulation draws, and the plan's seed-variance term as the
+fallback. The gain floor stays 1.0, since 1.5 changed nothing. Selection (`sweep_v1c`, the draws of parts 1 and 2):
+one look at α 0.04, 0.03 and 0.025; L7 under each α and α/2; L9 under each α and α/4; power at the central point and
+the corners. An α passes when its highest one-look null adoption across the eight corners is at most 10%, and L7 and
+L9 are at most 15% under α or, failing that, under the divided α. The largest passing α is selected. Confirmation
+(`sweep_v1d`, simulation seed 20261030, every corner's floor and target recomputed on those draws): 2,000 replicates
+per one-look point and 800 per multi-look point. The selected α must meet the same criteria there; if it fails, the
+next smaller α that passed selection is judged on the same draws. If none holds, the seed-variance term is built,
+reviewed and committed (CP-B2) before the corners are rerun. The plan also records what D1 sets in code at CP-C.
+
+Selection (`sweep_v1c`) ran 153 points in 80 min (2.53 CPU hours, peak 0.12 GB). Every record's floor equals the
+precomputed value. All three α pass, so α 0.04 is selected. Highest one-look null adoption across the corners: α 0.04
+9.0% (90 of 1,000; 95% interval 7.4–10.9%), α 0.03 7.4% (5.9–9.2%), α 0.025 6.9% (5.5–8.6%). L7 passes undivided at
+every α: 13.5%, 11.2% and 9.8%. L9 fails undivided at α 0.04 (18.8%) and 0.03 (16.0%) and passes divided, at 0.01
+(9.5%) and 0.0075 (8.2%); at α 0.025 it passes undivided at 14.8% (11.6–18.6%). Selected levels: α 0.04 one look and
+L7, α 0.01 for L9. The recall guard vetoes 35% of null replicates at one look, 26.5% at two and 21.0% at four. Power,
+one look: at the central point, a true gain of 1, 2 and 3 points is adopted 9.0%, 14.0% and 15.8% of the time under
+α 0.04 (6.8%, 10.5% and 13.2% under α 0.025). A gain of 2 at the corners is adopted 14.2–17.5% of the time per
+corner under α 0.04, 12.8–15.8% under 0.03 and 10.8–15.0% under 0.025; each corner's 95% interval spans about ±3.6
+points. The corners share simulation draws (one seed), so they are reported one by one and no pooled interval is
+formed.
+
+| Output | SHA-256 |
+|---|---|
+| `sweep_v1c.json` | `f1b0f1bbd8efc921381ba6ccaa1176d3dbca0d6779cd034e9f80b0e6c1b664de` |
+| `sweep_v1c/sweep_receipt.json` | `b444cb28c3c22e02d8e6ce3f9aab85a58bed1bbefce4e2f2d8e00d2257dfd930` |
+| `sweep_v1c/summary.tsv` | `c871fe5978119a35cddcd06590e1e8cb6f3ca2a3d19398bc3d3d77726d978476` |
+
+Confirmation floors on seed 20261030 (F_c, then target): fnL-rcL-csL 3.4306/4.0755, fnL-rcL-csH 3.1424/3.8360,
+fnL-rcH-csL 3.3706/4.0251, fnL-rcH-csH 3.0496/3.7604, fnH-rcL-csL 3.5814/4.2032, fnH-rcL-csH 3.3514/4.0090,
+fnH-rcH-csL 3.5669/4.1909, fnH-rcH-csH 3.2540/3.9280 (protein difficulty 1.5 at all). `sweep_v1d.json`:
+`cc613f49d367b8d9f5c2160f063e3141129420fa62d6f7dc6852d45b3ff111f7`; 96 points, 96,000 replicates.
+
+Confirmation (`sweep_v1d`) ran 96 points in 71 min (2.24 CPU hours, peak 0.12 GB), and every record's floor equals
+the precomputed value. **α 0.04 is confirmed and is D1's rule: one look and L7 at α 0.04, L9 at α 0.01.** The smaller
+α also hold on these draws.
+
+| α (L7, L9 level) | One look, highest across corners | L7 | L9 | Gain of 2 points, one look, per corner |
+|---|---|---|---|---|
+| 0.04 (0.04, 0.01) | 6.8% (135/2,000; 5.7–7.9) | 13.9% (111/800; 11.7–16.4) | 8.9% (71/800; 7.1–11.0) | 13.5–15.8% |
+| 0.03 (0.03, 0.0075) | 6.0% (5.1–7.2) | 11.6% (9.6–14.0) | 8.0% (6.3–10.1) | 11.0–14.2% |
+| 0.025 (0.025, 0.025) | 5.2% (4.3–6.3) | 10.2% (8.3–12.5) | 13.4% (11.2–15.9) | 9.0–13.2% |
+
+The recall guard vetoes 33.8% of null replicates at one look, 26.3% at two and 20.8% at four. Each per-corner power
+value carries a 95% interval of about ±3.6 points; the corners share draws, so no pooled interval is given.
+
+**Low power, disclosed.** Under the confirmed rule, a true gain of 2 BA points is adopted about 14–16% of the time
+(selection draws: 14.0% at the central point, 14.2–17.5% at the corners; confirmation draws: 13.5–15.8% at the
+corners). A gain of 3 points is adopted 15.8% of the time at the central point. The noise stand-in (about 4 points of
+seed-to-seed spread on fold 2) limits power more than α does. The rule mainly keeps null or harmful levers out.
+The simulation calibrates one promotion decision at 1, 2 or 4 looks. It does not validate the learning-rate choice,
+the family escalation, the screening of up to nine levers, the S3 combination, or real model performance. The inner
+promotion α is separate from the claim levels.
+
+| Output | SHA-256 |
+|---|---|
+| `sweep_v1d/sweep_receipt.json` | `df8ac4bcee89e45f790c68693640f062d2f53f28bae06346c68fdd2da903de3b` |
+| `sweep_v1d/summary.tsv` | `84c5f3f3268950fdf7f05ff65c9bf55dd433f4b6382a133d2f24a93369ccab97` |
+
+**Independent review and two amendments before Freeze 1 (2026-10-30).** A review of the scorer, the selection code
+and the trainer raised four points. Each was checked against the code on synthetic tables only.
+1. **Bootstrap support.** With every EC class 5 protein in one homology family, the stratified bootstrap gave p = 0
+   and a lower bound equal to the estimate (+16.67 points). Thirty independent families gave the same output.
+2. **Class scope.** When classes were absent, the record said "2-class BA" while the decision sentences and one
+   heading read as the six-class endpoint.
+3. **L5 coverage.** The trainer kept only the loss, so nothing recorded the share of minibatches with SupCon
+   positives that L5 requires.
+4. **Power.** The promotion rule's power is low, and the pooled power intervals ignored the corners' shared draws.
+
+The maintainer's decisions:
+- **Analysis amendment.** A population whose bootstrap has a stratum of EC classes 1–6 with a single homology cluster
+  is reported descriptively, with its superiority inference marked unavailable (class-7-only strata are exempt for
+  the primary BA).
+  - Clarification (2026-11-01): the gate is applied per metric. A single-cluster class-7-only stratum also makes the
+    secondary accuracy comparison descriptive, and the macro-F1 comparison when a compared system assigns one of its
+    proteins to an EC class 1–6 present in the population. Those hypotheses stay in the secondary Holm family,
+    marked unavailable, with their point estimates.
+  - No class or cluster is removed to recover eligibility.
+  - Class and cluster support and the stratum sizes are reported for every population.
+  - Both P1 and P2 name the classes they evaluate and say when the six-class endpoint was not evaluated.
+  - An unavailable population stays in the two-hypothesis Holm family, so the other is still tested at 0.025.
+- **Promotion.** Use the confirmed rule and disclose its low power. Add no screening seeds and do not expand the
+  simulation. Inner promotion levels stay separate from the claim levels. Power is reported per corner.
+- **L5.** Count every training minibatch of a SupCon fit and those with a positive, using the loss's own candidates
+  (the other batch items and the memory, other proteins only).
+  - The counts are kept in the fit history (checkpoint and `run_config.json`) and summed into the prediction receipt.
+  - L5 counts as tested only if each required inner fit reaches 90%. Missing counters leave it uncertified.
+  - This package records the counts only; end-to-end L5 certification is not in place yet. The selector built at
+    CP-C must derive the full grid of required fits (four inner folds × two seeds) from the frozen plan and reject
+    missing, duplicate or foreign fits. It must check complete, valid per-epoch counters against the hash-bound
+    checkpoint and run records, recompute the totals, and reject a prediction receipt whose coverage disagrees.
+    It then applies the minimum coverage across all eight fits.
+  - The change touches three trainer files that the source-freeze rule protects, so the rule is amended for them
+    and the five dry runs are repeated at the new commit. Views, chain means, overlay, identity chain and simulation
+    records are reused unchanged.
+
+Regression evidence for the change, before the commit. A tiny synthetic CPU parity fit was run at `e69a272` and
+with the change: plain, L5, and L5 with the L4 heads, four epochs each. The per-epoch training and validation losses
+and every shared state-dict tensor are bitwise identical. The state-dict keys are unchanged, and the history gains
+only the two counters. Checkpoints written by either version load strictly with the other. The targeted tests
+(193), the campaign tests, the smoke checks and the full suite were run on the change; their counts are in the
+commit message. The five dry runs are repeated after the commit.
+
+Smoke-check count, corrected. One smoke check is skipped on this machine: the multi-metal site-granularity check
+needs a local Colab-bundle copy of a PinMyMetal training CSV, which is absent. Its two inputs in the training folder
+are present. The bundles folder has not changed since 2026-09-14, so the check was skipped at CP-B as well. The CP-B
+entry's "45 smoke checks passed" came from the script runner, which prints its total even when a check is skipped;
+the correct count was 44 passed and 1 skipped. Smoke counts are now taken from pytest, which reports skips. Nothing
+was regenerated and the check is unchanged. The cause was found from the check's source and its skip message. Only
+existence tests on the exact paths it names (and on that bundle's folder) and the bundles folder's modification time
+were used; no folder was listed and no file was opened.
