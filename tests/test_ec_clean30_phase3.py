@@ -313,16 +313,22 @@ def test_embedding_rejects_forbidden_timing_namespace_before_reading(esmc_comman
         phase3.embedding_command(request, source, transfer_view, output)
 
 
-def test_esm1b_cuda_preflight_uses_clean_interpreter_and_resource_cap(tmp_path, monkeypatch):
+@pytest.mark.parametrize("profile", ["gcp_l4", "runpod_rtx4090"])
+def test_esm1b_cuda_preflight_uses_clean_interpreter_and_resource_cap(tmp_path, monkeypatch, profile):
     request = {"cap_prefix": ["fixture-cap", "--"], "clean_python": "/fixture/clean/bin/python",
                "unit_timeout_seconds": 120}
+    if profile != "gcp_l4":
+        request["hardware_profile"] = profile
     env = {"CUDA_VISIBLE_DEVICES": "0"}
-    evidence = {"device_name": "NVIDIA L4", "torch": "fixture", "cuda": "fixture", "kernel_value": 8.0}
+    evidence = {"hardware_profile": profile, "device_name": phase3.hardware_profile(profile)["device_name"],
+                "device_count": 1, "total_memory_bytes": 24 * 1024 ** 3,
+                "torch": "fixture", "cuda": "fixture", "kernel_value": 8.0, "tf32_override": "0"}
     calls = []
 
     def run(argv, **kwargs):
         calls.append((argv, kwargs))
         json.dump(evidence, kwargs["stdout"])
+        kwargs["stderr"].write('{"cap_status":"started"}\n{"cap_status":"finished"}\n')
 
     monkeypatch.setattr(phase3.subprocess, "run", run)
     result = phase3._esm1b_cuda_preflight(request, env, tmp_path)
@@ -332,7 +338,64 @@ def test_esm1b_cuda_preflight_uses_clean_interpreter_and_resource_cap(tmp_path, 
     assert kwargs["env"] == env and kwargs["check"] is True and kwargs["timeout"] == 60
     assert kwargs["cwd"] == phase3.REPO_ROOT
     assert json.loads((tmp_path / "cuda_preflight.json").read_text()) == evidence
-    assert result == {"cuda_preflight_sha256": _sha(tmp_path / "cuda_preflight.json")}
+    assert result == {"cuda_preflight_sha256": _sha(tmp_path / "cuda_preflight.json"),
+                      "cuda_preflight_log_sha256": _sha(tmp_path / "cuda_preflight.stderr.log")}
+    assert "cap_status" in (tmp_path / "cuda_preflight.stderr.log").read_text()
+
+
+@pytest.mark.parametrize("profile", ["gcp_l4", "runpod_rtx4090"])
+@pytest.mark.parametrize("case", ["profile", "device", "cpu", "multiple_devices", "small_memory", "large_memory", "kernel"])
+def test_cuda_profile_evidence_refuses_unapproved_or_unusable_hardware(profile, case):
+    evidence = {"hardware_profile": profile, "device_name": phase3.hardware_profile(profile)["device_name"],
+                "device_count": 1, "total_memory_bytes": 24 * 1024 ** 3,
+                "torch": "fixture", "cuda": "fixture", "kernel_value": 8.0, "tf32_override": "0"}
+    mutations = {"profile": ("hardware_profile", "unapproved"), "device": ("device_name", "NVIDIA A100"),
+                 "cpu": ("cuda", None), "multiple_devices": ("device_count", 2),
+                 "small_memory": ("total_memory_bytes", 16 * 1024 ** 3),
+                 "large_memory": ("total_memory_bytes", 48 * 1024 ** 3), "kernel": ("kernel_value", 0.0)}
+    key, value = mutations[case]
+    evidence[key] = value
+    with pytest.raises(phase3.Phase3Error, match="CUDA preflight"):
+        phase3.validate_cuda_evidence(evidence, profile)
+
+
+@pytest.mark.parametrize("profile", ["gcp_l4", "runpod_rtx4090"])
+def test_cuda_probe_program_executes_kernel_and_reports_actual_device(monkeypatch, capsys, profile):
+    if profile.startswith("runpod_"):
+        monkeypatch.setenv("NVIDIA_TF32_OVERRIDE", "0")
+    calls = []
+
+    class Tensor:
+        def __mul__(self, value):
+            assert value == 2
+            return self
+
+        def sum(self):
+            return self
+
+        def item(self):
+            return 8.0
+
+    def ones(size, *, device):
+        calls.append((size, device))
+        return Tensor()
+
+    cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1,
+                           get_device_name=lambda index: phase3.hardware_profile(profile)["device_name"],
+                           get_device_properties=lambda index: SimpleNamespace(total_memory=24 * 1024 ** 3),
+                           synchronize=lambda: calls.append("synchronized"))
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(cuda=cuda, version=SimpleNamespace(cuda="fixture"),
+                                                             __version__="fixture", ones=ones))
+    exec(phase3.cuda_probe_program(profile), {})
+    evidence = json.loads(capsys.readouterr().out)
+    assert phase3.validate_cuda_evidence(evidence, profile) == evidence
+    assert calls == [(4, "cuda"), "synchronized"]
+
+
+def test_cuda_profile_defaults_to_l4_and_refuses_unknown_hardware():
+    assert phase3.hardware_profile()["device_name"] == "NVIDIA L4"
+    with pytest.raises(phase3.Phase3Error, match="hardware profile"):
+        phase3.cuda_probe_program("any_cuda_gpu")
 
 
 @pytest.mark.parametrize("case", ["cpu_build", "child_failure"])

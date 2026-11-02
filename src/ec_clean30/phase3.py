@@ -17,11 +17,13 @@ from pathlib import Path, PurePosixPath
 import re
 import signal
 import shutil
+import socket
 import stat
 import subprocess
 import sys
 import tarfile
 import tempfile
+import textwrap
 import time
 from typing import Any, Mapping, Sequence
 
@@ -41,7 +43,20 @@ EXECUTION_FORMAT = "deepmzyme_ec_clean30_execution_v1"
 AUTOMATION_FORMAT = "deepmzyme_ec_clean30_execution_v2"
 AUTOMATION_FILES = (*EXECUTION_FILES, "src/ec_clean30/phase4.py", "scripts/run_ec_clean30_phase4.py",
                     "src/ec_clean30/workstation.py", "scripts/run_ec_clean30_workstation.py")
+RUNPOD_FORMAT = "deepmzyme_ec_clean30_execution_v3"
+RUNPOD_FILES = (*AUTOMATION_FILES, "src/ec_clean30/runpod_controller.py", "src/ec_clean30/container_caps.py")
 TRANSFER_FORMAT = "deepmzyme_ec_clean30_fold0_transfer_v1"
+GPU_PROFILES = {"gcp_l4": "NVIDIA L4", "runpod_l4": "NVIDIA L4",
+                "runpod_rtx4090": "NVIDIA GeForce RTX 4090"}
+GPU_MEMORY_MIN_BYTES = 22 * 1024 ** 3
+GPU_MEMORY_MAX_BYTES = 25 * 1024 ** 3
+ESM1B_WEIGHTS_SHA256 = "0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1"
+ESM1B_CONTACT_SHA256 = "77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a"
+# Feature qualification is distinct from the unchanged 1e-6 absolute EC-logit replay policy.
+ESM1B_REPLAY_ATOL = 1.0e-4
+ESM1B_REPLAY_RTOL = 1.0e-4
+MAIN_REPLAY_ATOL = 1.0e-6
+MAIN_PROBE_SEED = 42017
 
 
 class Phase3Error(ValueError):
@@ -51,6 +66,291 @@ class Phase3Error(ValueError):
 def _require(condition: Any, message: str) -> None:
     if not condition:
         raise Phase3Error(message)
+
+
+def hardware_profile(name: str = "gcp_l4") -> dict[str, Any]:
+    """Resolve only the reviewed nominal-24-GB, single-device provider profiles."""
+    _require(isinstance(name, str) and name in GPU_PROFILES, "Unknown approved GPU hardware profile.")
+    return {"name": name, "device_name": GPU_PROFILES[name], "device_count": 1,
+            "minimum_memory_bytes": GPU_MEMORY_MIN_BYTES, "maximum_memory_bytes": GPU_MEMORY_MAX_BYTES,
+            "runtime_environment": {"NVIDIA_TF32_OVERRIDE": "0"} if name.startswith("runpod_") else {}}
+
+
+def cuda_probe_program(profile: str = "gcp_l4") -> str:
+    """Run in the selected interpreter so a working host driver alone cannot pass."""
+    expected = hardware_profile(profile)
+    return (
+        "import json,os,torch; "
+        f"expected={expected!r}; "
+        "assert all(os.environ.get(key)==value for key,value in expected['runtime_environment'].items()), 'Runtime precision environment differs'; "
+        "assert torch.version.cuda and torch.cuda.is_available(), 'Interpreter has no usable CUDA'; "
+        "count=torch.cuda.device_count(); assert count==expected['device_count'], 'Expected one visible GPU'; "
+        "name=torch.cuda.get_device_name(0); assert name==expected['device_name'], 'GPU profile differs'; "
+        "memory=int(torch.cuda.get_device_properties(0).total_memory); "
+        "assert expected['minimum_memory_bytes']<=memory<=expected['maximum_memory_bytes'], 'Expected nominal 24-GB GPU'; "
+        "value=(torch.ones(4,device='cuda')*2).sum().item(); torch.cuda.synchronize(); "
+        "assert value==8.0, 'CUDA kernel check failed'; "
+        "print(json.dumps({'hardware_profile':expected['name'],'device_name':name,'device_count':count,"
+        "'total_memory_bytes':memory,'torch':torch.__version__,'cuda':torch.version.cuda,'kernel_value':value,"
+        "'tf32_override':os.environ.get('NVIDIA_TF32_OVERRIDE')}))"
+    )
+
+
+def validate_cuda_evidence(evidence: Mapping[str, Any], profile: str = "gcp_l4") -> dict[str, Any]:
+    expected = hardware_profile(profile)
+    memory = evidence.get("total_memory_bytes")
+    _require(evidence.get("hardware_profile") == profile
+             and evidence.get("device_name") == expected["device_name"]
+             and type(evidence.get("device_count")) is int and evidence["device_count"] == 1
+             and type(memory) is int and expected["minimum_memory_bytes"] <= memory <= expected["maximum_memory_bytes"]
+             and bool(evidence.get("torch")) and bool(evidence.get("cuda")) and evidence.get("kernel_value") == 8.0,
+             "CUDA preflight did not prove the approved device, memory class and working interpreter.")
+    if profile.startswith("runpod_"):
+        _require(evidence.get("tf32_override") == "0", "Runpod CUDA preflight requires its fixed full-FP32 environment.")
+    return dict(evidence)
+
+
+def esm1b_model_probe_program(profile: str, weights: str, weights_sha256: str,
+                              contact_weights_sha256: str) -> str:
+    """Qualify the complete pinned local ESM-1b model in the separate CLEAN interpreter."""
+    hardware_profile(profile)
+    _require(Path(weights).is_absolute() and ".." not in Path(weights).parts,
+             "The model probe requires an absolute local weights path.")
+    _require(weights_sha256 == ESM1B_WEIGHTS_SHA256 and contact_weights_sha256 == ESM1B_CONTACT_SHA256,
+             "The model probe must use the existing pinned ESM-1b weights and companion.")
+    return textwrap.dedent(f"""\
+        import contextlib,hashlib,io,json,pathlib,socket,sys,time,torch
+        from esm import pretrained
+        captured=io.StringIO()
+        with contextlib.redirect_stdout(captured):
+            exec({cuda_probe_program(profile)!r}, {{}})
+        evidence=json.loads(captured.getvalue())
+        weights=pathlib.Path({weights!r})
+        contact=pathlib.Path(str(weights.with_suffix(''))+'-contact-regression.pt')
+        def digest(path):
+            assert path.is_file() and not path.is_symlink(), 'Expected a regular local weight file'
+            value=hashlib.sha256()
+            with path.open('rb') as handle:
+                for chunk in iter(lambda:handle.read(8*1024*1024),b''):
+                    value.update(chunk)
+            return value.hexdigest()
+        assert digest(weights)=={weights_sha256!r}, 'ESM-1b weight hash differs'
+        assert digest(contact)=={contact_weights_sha256!r}, 'ESM-1b companion hash differs'
+        with contextlib.redirect_stdout(io.StringIO()):
+            model,alphabet=pretrained.load_model_and_alphabet_local(str(weights))
+            model.eval()
+            assert model.num_layers==33, 'Expected the complete ESM-1b model'
+            _,_,tokens=alphabet.get_batch_converter()([('runtime_qualification','MKT')])
+            with torch.no_grad():
+                cpu_representation=model(tokens,repr_layers=[33],return_contacts=False)['representations'][33]
+            assert not cpu_representation.is_cuda and torch.isfinite(cpu_representation).all().item(), 'ESM-1b CPU forward failed'
+            model=model.cuda()
+            parameters=list(model.parameters())
+            assert parameters and all(value.is_cuda for value in parameters), 'Full model did not transfer to CUDA'
+            with torch.no_grad():
+                result=model(tokens.cuda(),repr_layers=[33],return_contacts=False)
+            representation=result['representations'][33]
+            assert representation.is_cuda and torch.isfinite(representation).all().item(), 'ESM-1b CUDA forward failed'
+            torch.cuda.synchronize()
+            gpu_representation=representation.cpu()
+            assert list(cpu_representation.shape)==list(gpu_representation.shape)==[1,5,1280], 'ESM-1b representation shape differs'
+            difference=(cpu_representation-gpu_representation).abs()
+            max_difference=float(difference.max().item())
+            max_reference=float(cpu_representation.abs().max().item())
+            max_scaled_error=float((difference/({ESM1B_REPLAY_ATOL!r}+{ESM1B_REPLAY_RTOL!r}*cpu_representation.abs())).max().item())
+            replay_passed=bool(torch.allclose(gpu_representation,cpu_representation,atol={ESM1B_REPLAY_ATOL!r},rtol={ESM1B_REPLAY_RTOL!r}))
+            assert replay_passed, 'ESM-1b CPU/GPU replay differs at the fixed feature tolerance'
+            replay={{'sequence_sha256':hashlib.sha256(b'MKT').hexdigest(),'representation_layer':33,
+                    'representation_shape':[1,5,1280],'atol':{ESM1B_REPLAY_ATOL!r},'rtol':{ESM1B_REPLAY_RTOL!r},
+                    'max_abs_difference':max_difference,'max_reference_abs':max_reference,
+                    'max_scaled_error':max_scaled_error,'passed':replay_passed,
+                    'cpu_finite':True,'gpu_finite':True}}
+        evidence.update(format='deepmzyme_ec_clean30_esm1b_model_probe_v1',status='passed',
+                        weights_sha256={weights_sha256!r},contact_weights_sha256={contact_weights_sha256!r},
+                        model_on_cuda=True,model_layers=model.num_layers,
+                        model_parameter_count=sum(value.numel() for value in parameters),
+                        synthetic_forward_finite=True,cpu_gpu_replay=replay,hostname=socket.gethostname(),
+                        boot_id=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                        python_executable=sys.executable,created_unix=time.time())
+        print(json.dumps(evidence,sort_keys=True))
+    """)
+
+
+def validate_esm1b_model_evidence(evidence: Mapping[str, Any], profile: str) -> dict[str, Any]:
+    validate_cuda_evidence(evidence, profile)
+    count = evidence.get("model_parameter_count")
+    replay = evidence.get("cpu_gpu_replay", {})
+    _require(isinstance(replay, dict), "ESM-1b CPU/GPU replay evidence is missing.")
+    difference = replay.get("max_abs_difference")
+    reference, scaled = replay.get("max_reference_abs"), replay.get("max_scaled_error")
+    _require(replay.get("sequence_sha256") == hashlib.sha256(b"MKT").hexdigest()
+             and replay.get("representation_layer") == 33 and replay.get("representation_shape") == [1, 5, 1280]
+             and type(replay.get("atol")) in (int, float) and replay["atol"] == ESM1B_REPLAY_ATOL
+             and type(replay.get("rtol")) in (int, float) and replay["rtol"] == ESM1B_REPLAY_RTOL
+             and type(reference) in (int, float) and math.isfinite(reference) and reference >= 0
+             and type(scaled) in (int, float) and math.isfinite(scaled) and 0 <= scaled <= 1
+             and type(difference) in (int, float) and math.isfinite(difference)
+             and 0 <= difference <= ESM1B_REPLAY_ATOL + ESM1B_REPLAY_RTOL * reference
+             and replay.get("passed") is True and replay.get("cpu_finite") is True and replay.get("gpu_finite") is True,
+             "ESM-1b CPU/GPU replay must pass the fixed feature tolerance with finite representations.")
+    _require(evidence.get("format") == "deepmzyme_ec_clean30_esm1b_model_probe_v1"
+             and evidence.get("status") == "passed" and evidence.get("weights_sha256") == ESM1B_WEIGHTS_SHA256
+             and evidence.get("contact_weights_sha256") == ESM1B_CONTACT_SHA256
+             and evidence.get("model_on_cuda") is True and evidence.get("model_layers") == 33
+             and type(count) is int and 600_000_000 < count < 700_000_000
+             and evidence.get("synthetic_forward_finite") is True and bool(evidence.get("hostname"))
+             and re.fullmatch(r"[0-9a-f-]{36}", str(evidence.get("boot_id", "")))
+             and Path(str(evidence.get("python_executable", ""))).is_absolute()
+             and type(evidence.get("created_unix")) in (int, float)
+             and math.isfinite(evidence["created_unix"]) and evidence["created_unix"] > 0,
+             "ESM-1b qualification requires the complete pinned model on CUDA and a finite forward pass.")
+    return dict(evidence)
+
+
+def main_model_probe_program(profile: str, output_directory: str) -> str:
+    """Invoke the authenticated production-model probe from the clean repository root."""
+    hardware_profile(profile)
+    path = Path(output_directory)
+    _require(path.is_absolute() and ".." not in path.parts, "An absolute main-model probe directory is required.")
+    return ("import json,pathlib,sys; sys.path.insert(0,str(pathlib.Path.cwd()/'src')); "
+            "from ec_clean30 import phase3; "
+            f"print(json.dumps(phase3.main_model_probe({profile!r},pathlib.Path({str(path)!r})),sort_keys=True))")
+
+
+def _main_model_fixture():
+    """Two deterministic, synthetic pockets; never consult campaign or held-out inputs."""
+    from dataclasses import asdict
+    import torch
+    from data_structures import PocketRecord, ResidueRecord
+    from training.config import TrainConfig
+
+    config = asdict(TrainConfig(task="ec", ec_class_vocabulary="fixed_seven", model_architecture="gvp",
+        esm_dim=8, hidden_s=16, hidden_v=4, edge_hidden=8, gvp_layers=1, esm_fusion_dim=16,
+        use_esm_branch=True, fusion_mode="late_fusion", use_global_esm_branch=True, global_esm_dim=8,
+        head_mlp_dropout=0.0, esm_graph_encoder_dropout=0.0, global_esm_dropout=0.0, batch_size=2,
+        shell_role_source="geometry"))
+    pockets = []
+    for index in range(2):
+        residues = []
+        for number in range(1, 4):
+            residues.append(ResidueRecord(chain_id="A", resseq=number, icode="", resname="ASP",
+                atoms={name: torch.tensor([float(number + index), y, z]) for name, y, z in
+                       (("N", .3, 0.), ("CA", 0., 0.), ("C", -.3, 0.), ("O", -.5, 0.),
+                        ("CB", 0., .8), ("CG", 0., .3), ("OD1", 0., 0.), ("OD2", .4, 0.))},
+                esm_embedding=torch.arange(8, dtype=torch.float32) / 8 + number / 10,
+                has_esm_embedding=True))
+        structure = f"qualification{index}__chain_A__EC_{index + 1}.1.1.1"
+        pockets.append(PocketRecord(structure_id=structure, pocket_id=f"qualification_pocket_{index}",
+            metal_element="ZN", metal_coords=[torch.zeros(3)], residues=residues, y_ec=index,
+            metadata={"ec_group_key": structure, "ec_group_id": index,
+                      "global_esm_vector": torch.arange(8, dtype=torch.float32) / 8 + index / 10}))
+    return config, pockets
+
+
+def _main_model_checkpoint(output_directory: Path) -> tuple[Path, dict[str, Any], list[Any]]:
+    """Exercise the real graph/factory/optimizer/checkpoint path using synthetic data only."""
+    import torch
+    from torch_geometric.data import Batch
+    from graph.construction import pocket_to_pyg_data
+    from label_schemes import METAL_TARGET_LABELS, configure_active_metal_label_scheme
+    from model_variants import build_pocket_classifier
+    from training import ec_prediction_export as export
+
+    torch.manual_seed(MAIN_PROBE_SEED)
+    torch.set_num_threads(2)
+    config, pockets = _main_model_fixture()
+    configure_active_metal_label_scheme(config["metal_label_scheme"])
+    labels = {index: str(index + 1) for index in range(7)}
+    checkpoint = {"config": config, "ec_labels": labels, "metal_labels": dict(METAL_TARGET_LABELS),
+                  "model_state_dict": {}, "checkpoint_rule": "terminal"}
+    kwargs = export.factory_kwargs(REPO_ROOT / "src/training/run.py", config, checkpoint, METAL_TARGET_LABELS, labels)
+    model = build_pocket_classifier(**kwargs)
+    graphs = [pocket_to_pyg_data(pocket, **export._graph_options(config)) for pocket in pockets]
+    batch = Batch.from_data_list(graphs)
+    model.train()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    optimizer.zero_grad(set_to_none=True)
+    loss = model(batch)["loss"]
+    _require(bool(torch.isfinite(loss)), "Synthetic qualification optimizer loss is not finite.")
+    loss.backward()
+    optimizer.step()
+    checkpoint["model_state_dict"] = model.state_dict()
+    output_directory.mkdir(parents=True, exist_ok=False)
+    path = output_directory / "synthetic_checkpoint.pt"
+    torch.save(checkpoint, path)
+    return path, config, pockets
+
+
+def main_model_probe(profile: str, output_directory: Path) -> dict[str, Any]:
+    """Reconstruct a small production F4 model independently on CPU and CUDA."""
+    import contextlib
+    import torch
+    from training import ec_prediction_export as export
+
+    _require(Path(output_directory).is_absolute(), "An absolute main-model probe directory is required.")
+    captured = io.StringIO()
+    with contextlib.redirect_stdout(captured):
+        exec(cuda_probe_program(profile), {})
+    evidence = json.loads(captured.getvalue())
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
+    with contextlib.redirect_stdout(io.StringIO()):
+        path, config, pockets = _main_model_checkpoint(Path(output_directory))
+        exported = {}
+        identity = {"run_id": "runtime_qualification", "mode": "synthetic_qualification", "fold_index": "0",
+                    "seed": str(MAIN_PROBE_SEED)}
+        for device in ("cpu", "cuda"):
+            model, _ = export.rebuild_model_from_checkpoint(path, device=device)
+            _require(all(parameter.device.type == device for parameter in model.parameters()),
+                     "Reconstructed qualification model is on the wrong device.")
+            loader = export._prediction_loader(pockets, config, None)
+            prediction = export._predict(model, loader, pockets, device)
+            pocket_rows, protein_rows, conflicts = export.build_prediction_rows(pockets, prediction["ec_logits"], identity)
+            _require(conflicts == 0, "Synthetic qualification identities conflict.")
+            exported[device] = {"pockets": pocket_rows, "proteins": protein_rows}
+            _write(Path(output_directory) / f"{device}_predictions.json", exported[device])
+            del model, loader, prediction
+        torch.cuda.synchronize()
+        differences, ties = [], 0
+        for kind, keys in (("pockets", ("pocket_id",)), ("proteins", ("ec_group_key",))):
+            difference, problems, near_ties = export.compare_prediction_rows(exported["cpu"][kind],
+                exported["cuda"][kind], key_columns=keys, logit_atol=MAIN_REPLAY_ATOL)
+            _require(not problems, "Main-model CPU/GPU replay failed: " + "; ".join(problems))
+            differences.append(difference)
+            ties += near_ties
+    evidence.update(format="deepmzyme_ec_clean30_main_model_probe_v1", status="passed", synthetic_only=True,
+        model_family="F4", fixture_version=1, seed=MAIN_PROBE_SEED, optimizer_steps=1,
+        checkpoint_sha256=_sha(path), cpu_predictions_sha256=_sha(Path(output_directory) / "cpu_predictions.json"),
+        gpu_predictions_sha256=_sha(Path(output_directory) / "cuda_predictions.json"),
+        pocket_count=2, protein_count=2, classes=7, logit_atol=MAIN_REPLAY_ATOL, logit_rtol=0.0,
+        max_abs_difference=max(differences), near_tie_class_changes=ties, cpu_gpu_replay_passed=True,
+        phase3_sha256=_sha(Path(__file__)), hostname=socket.gethostname(),
+        boot_id=Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+        python_executable=sys.executable, created_unix=time.time())
+    validate_main_model_evidence(evidence, profile)
+    return evidence
+
+
+def validate_main_model_evidence(evidence: Mapping[str, Any], profile: str) -> dict[str, Any]:
+    validate_cuda_evidence(evidence, profile)
+    difference = evidence.get("max_abs_difference")
+    _require(evidence.get("format") == "deepmzyme_ec_clean30_main_model_probe_v1"
+             and evidence.get("status") == "passed" and evidence.get("synthetic_only") is True
+             and evidence.get("model_family") == "F4" and evidence.get("fixture_version") == 1
+             and evidence.get("seed") == MAIN_PROBE_SEED and evidence.get("optimizer_steps") == 1
+             and evidence.get("pocket_count") == evidence.get("protein_count") == 2 and evidence.get("classes") == 7
+             and evidence.get("logit_atol") == MAIN_REPLAY_ATOL and evidence.get("logit_rtol") == 0.0
+             and type(difference) in (int, float) and math.isfinite(difference) and 0 <= difference <= MAIN_REPLAY_ATOL
+             and type(evidence.get("near_tie_class_changes")) is int and evidence["near_tie_class_changes"] >= 0
+             and evidence.get("cpu_gpu_replay_passed") is True
+             and all(re.fullmatch(r"[0-9a-f]{64}", str(evidence.get(key, "")))
+                     for key in ("checkpoint_sha256", "cpu_predictions_sha256", "gpu_predictions_sha256"))
+             and evidence.get("phase3_sha256") == _sha(Path(__file__)) and bool(evidence.get("hostname"))
+             and re.fullmatch(r"[0-9a-f-]{36}", str(evidence.get("boot_id", "")))
+             and Path(str(evidence.get("python_executable", ""))).is_absolute()
+             and type(evidence.get("created_unix")) in (int, float) and math.isfinite(evidence["created_unix"])
+             and evidence["created_unix"] > 0, "Main-model qualification requires the fixed synthetic CPU/GPU checkpoint replay.")
+    return dict(evidence)
 
 
 def _sha(path: Path) -> str:
@@ -327,7 +627,7 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
              and manifest_path.resolve() == manifest_path,
              "Execution manifest must be a regular repository document.")
     document = _json(manifest_path)
-    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT}
+    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT, RUNPOD_FORMAT}
              and document.get("campaign_id") == CAMPAIGN_ID,
              "Unknown execution manifest.")
     _require(document.get("freeze1b_sha256") == FREEZE1B_SHA256, "Freeze-1b binding is missing or changed.")
@@ -344,7 +644,11 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
     expected = dict(base["code"]["tracked_file_sha256"])
     expected.update({name: row["after"] for name, row in amendment["source_changes"].items()})
     pins = document.get("source_sha256", {})
-    if document["format"] == AUTOMATION_FORMAT:
+    if document["format"] == RUNPOD_FORMAT:
+        _verify_execution_base(repo, document)
+        _verify_automation_base(repo, document)
+        allowed = RUNPOD_FILES
+    elif document["format"] == AUTOMATION_FORMAT:
         _verify_execution_base(repo, document)
         allowed = AUTOMATION_FILES
     else:
@@ -406,6 +710,113 @@ def make_automation_manifest(base_execution: Path, out: Path, *, base_commit: st
     return document
 
 
+def _verify_automation_base(repo: Path, document: Mapping[str, Any]) -> dict[str, Any]:
+    """Authenticate the unchanged published v2 before allowing only the named provider additions."""
+    reference = document.get("base_automation", {})
+    commit = reference.get("commit", "")
+    _require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit),
+             "Runpod extension requires a full published automation commit.")
+    _require(_git(repo, "merge-base", commit, "refs/remotes/origin/main") == commit
+             and _git(repo, "merge-base", commit, "HEAD") == commit,
+             "Automation base must be published and an ancestor of the execution checkout.")
+    name = _relative(reference.get("path", ""))
+    path = _safe_file(repo, name)
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
+             "Original published automation manifest changed.")
+    base = json.loads(published)
+    _require(base.get("format") == AUTOMATION_FORMAT
+             and set(base.get("source_sha256", {})) == set(AUTOMATION_FILES),
+             "Runpod base must be the original six-file automation manifest.")
+    _verify_execution_base(repo, base)
+    for key in ("campaign_id", "freeze1_sha256", "freeze1b_sha256", "amendment_path", "amendment_sha256",
+                "amendment_commit", "amendment_chain", "official_fold0_training_sha256", "timing_inputs_sha256",
+                "base_execution"):
+        _require(document.get(key) == base.get(key), f"Runpod extension changed the automation {key} binding.")
+    for name, digest in base["source_sha256"].items():
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        _require(hashlib.sha256(content).hexdigest() == digest, "Published automation source pin differs.")
+    _require(document.get("hardware_profiles") == sorted(GPU_PROFILES), "Approved hardware profiles differ.")
+    return base
+
+
+def make_runpod_manifest(base_automation: Path, out: Path, *, base_commit: str,
+                         repo: Path = REPO_ROOT) -> dict[str, Any]:
+    repo = Path(repo).resolve()
+    base_automation = Path(base_automation).resolve()
+    document = {**_json(base_automation), "format": RUNPOD_FORMAT,
+                "base_automation": {"path": base_automation.relative_to(repo).as_posix(),
+                                    "sha256": _sha(base_automation), "commit": base_commit},
+                "source_sha256": {name: _sha(_safe_file(repo, name)) for name in RUNPOD_FILES},
+                "hardware_profiles": sorted(GPU_PROFILES),
+                "purpose": "Bounded G2 provider qualification; Phase 4 remains gated by numerical G3 authority"}
+    _verify_automation_base(repo, document)
+    _write(out, document)
+    verify_execution_source(out, repo=repo, require_published=False)
+    return document
+
+
+def _approved_runtime_profile(source: Mapping[str, Any], profile: str) -> dict[str, Any]:
+    expected = hardware_profile(profile)
+    if profile.startswith("runpod_"):
+        _require(source.get("format") == RUNPOD_FORMAT and profile in source.get("hardware_profiles", []),
+                 "Runpod hardware requires its authenticated provider extension.")
+    return expected
+
+
+def _verify_container_caps(source: Mapping[str, Any], evidence: dict[str, Any], cap_prefix: Sequence[str],
+                           *, python: str, esm1b: bool = False) -> None:
+    from ec_clean30 import container_caps
+
+    container_caps.validate_probe_evidence(evidence)
+    _require(evidence["helper_sha256"] == source.get("source_sha256", {}).get("src/ec_clean30/container_caps.py")
+             == _sha(REPO_ROOT / "src/ec_clean30/container_caps.py"),
+             "Container-cap probe does not bind the authenticated helper.")
+    _require(evidence["hostname"] == socket.gethostname()
+             and evidence["boot_id"] == Path("/proc/sys/kernel/random/boot_id").read_text().strip(),
+             "Container-cap probe belongs to another host or boot.")
+    _require(Path(evidence["python_executable"]).resolve() == Path(python).resolve(),
+             "Container-cap probe used a different interpreter.")
+    cores, gib = (4, 24) if esm1b else (2, 8)
+    expected = container_caps.cap_prefix(python, REPO_ROOT, evidence["cgroup_root"],
+                                         cpu_cores=cores, memory_bytes=gib * 1024 ** 3)
+    _require(list(cap_prefix) == expected, "Runtime cap differs from its validated container profile.")
+
+
+def _verify_esm1b_model_probe(request: Mapping[str, Any], view: views.View, profile: str) -> dict[str, Any]:
+    _require(isinstance(request.get("esm1b_model_probe"), str) and request["esm1b_model_probe"],
+             "Runpod G2 requires the completed full-model ESM-1b qualification.")
+    path = Path(request["esm1b_model_probe"])
+    _outside_guard(path, view.forbidden_read_roots)
+    _require(not path.is_symlink() and re.fullmatch(r"[0-9a-f]{64}", str(request.get("esm1b_model_probe_sha256", "")))
+             and _sha(path) == request["esm1b_model_probe_sha256"], "ESM-1b qualification bytes differ.")
+    evidence = validate_esm1b_model_evidence(_json(path), profile)
+    _require(evidence["hostname"] == socket.gethostname()
+             and evidence["boot_id"] == Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+             and float(request["allocation_started_unix"]) <= evidence["created_unix"] < float(request["deadline_unix"]),
+             "ESM-1b qualification belongs to another host, boot or allocation.")
+    if request.get("kind") == "esm1b":
+        _require(Path(evidence["python_executable"]).resolve() == Path(request["clean_python"]).resolve(),
+                 "ESM-1b timing interpreter differs from its full-model qualification.")
+    return evidence
+
+
+def _verify_main_model_probe(request: Mapping[str, Any], view: views.View, profile: str) -> dict[str, Any]:
+    _require(isinstance(request.get("main_model_probe"), str) and request["main_model_probe"],
+             "Runpod G2 requires the completed main-model CPU/GPU qualification.")
+    path = Path(request["main_model_probe"])
+    _outside_guard(path, view.forbidden_read_roots)
+    _require(not path.is_symlink() and re.fullmatch(r"[0-9a-f]{64}", str(request.get("main_model_probe_sha256", "")))
+             and _sha(path) == request["main_model_probe_sha256"], "Main-model qualification bytes differ.")
+    evidence = validate_main_model_evidence(_json(path), profile)
+    _require(evidence["hostname"] == socket.gethostname()
+             and evidence["boot_id"] == Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+             and Path(evidence["python_executable"]).resolve() == Path(request["python"]).resolve()
+             and float(request["allocation_started_unix"]) <= evidence["created_unix"] < float(request["deadline_unix"]),
+             "Main-model qualification belongs to another host, boot, interpreter or allocation.")
+    return evidence
+
+
 def _bind_view(view: views.View, source: Mapping[str, Any]) -> None:
     if view.smoke:
         return
@@ -417,17 +828,28 @@ def _bind_view(view: views.View, source: Mapping[str, Any]) -> None:
 
 
 def vm_probe(view_root: Path, execution_manifest_path: Path, out: Path, *,
-             cap_prefix: Sequence[str], python: str = sys.executable, smoke: bool = False) -> dict[str, Any]:
+             cap_prefix: Sequence[str], python: str = sys.executable, smoke: bool = False,
+             hardware_profile: str = "gcp_l4", cap_probe_path: Path | None = None) -> dict[str, Any]:
     source = verify_execution_source(execution_manifest_path, require_published=not smoke)
+    _approved_runtime_profile(source, hardware_profile)
     view = views.View.load(view_root)
     _require(view.fold == 0 and view.smoke == smoke, "Probe view differs from its declared role.")
     _bind_view(view, source)
+    cap_evidence = {}
+    if hardware_profile.startswith("runpod_"):
+        _require(cap_probe_path is not None, "Runpod requires a measured container-cap probe.")
+        _outside_guard(cap_probe_path, view.forbidden_read_roots)
+        measured = _json(cap_probe_path)
+        _verify_container_caps(source, measured, cap_prefix, python=python)
+        cap_evidence = {"container_caps_probe": measured, "container_caps_probe_sha256": _sha(cap_probe_path),
+                        "container_caps_evidence_sha256": hashlib.sha256(_bytes(measured)).hexdigest()}
     original = _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME)
     verification = views.verify_view(view.root, require_chain_means=("final", "block26"), write_receipt=False)
     report = commands.dry_run(view, cap_prefix=cap_prefix, python=python, write=False)
     _require(_sha(view.receipts / views.DRY_RUN_RECEIPT_NAME) == original, "Probe rewrote the original dry run.")
     _require(report.get("status") == "passed", "Relocated VM dry-run probe failed.")
     receipt = {"format": "deepmzyme_ec_clean30_vm_probe_v1", "status": "passed", "source": source,
+               "hardware_profile": hardware_profile, **cap_evidence,
                "view_manifest_sha256": view.manifest_sha256, "original_dry_run_sha256": original,
                "verification": verification, "dry_run": report}
     _write(out, receipt)
@@ -446,6 +868,9 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
     smoke = request.get("smoke", False)
     _require(type(smoke) is bool, "smoke must be explicit boolean.")
     source = verify_execution_source(Path(request["execution_manifest"]), require_published=not smoke)
+    approved = _approved_runtime_profile(source, request.get("hardware_profile", "gcp_l4"))
+    _require(all(os.environ.get(key) == value for key, value in approved["runtime_environment"].items()),
+             "Runtime precision environment differs from its approved hardware profile.")
     view = views.View.load(request["view"])
     _require(view.fold == 0 and view.smoke == smoke, "Runtime view role differs.")
     _bind_view(view, source)
@@ -453,6 +878,21 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
     _require(probe.get("status") == "passed" and probe.get("view_manifest_sha256") == view.manifest_sha256
              and probe.get("source", {}).get("execution_manifest_sha256") == source["execution_manifest_sha256"],
              "Runtime requires its matching completed VM probe.")
+    profile = request.get("hardware_profile", "gcp_l4")
+    if profile.startswith("runpod_"):
+        _require(probe.get("hardware_profile") == profile, "Runtime hardware profile differs from its VM probe.")
+        _require(isinstance(probe.get("container_caps_probe"), dict)
+                 and re.fullmatch(r"[0-9a-f]{64}", str(probe.get("container_caps_probe_sha256", "")))
+                 and probe.get("container_caps_evidence_sha256")
+                 == hashlib.sha256(_bytes(probe["container_caps_probe"])).hexdigest(),
+                 "Runtime requires its hash-bound container-cap probe.")
+        _verify_container_caps(source, probe["container_caps_probe"], request["cap_prefix"],
+                               python=request["python"], esm1b=request.get("kind") == "esm1b")
+        _verify_esm1b_model_probe(request, view, profile)
+        _verify_main_model_probe(request, view, profile)
+        cap_gib = 24 if request.get("kind") == "esm1b" else 8
+        _require(request.get("memory_limit_bytes") == cap_gib * 1024 ** 3,
+                 "Runtime memory verification limit differs from its declared container cap.")
     _require(isinstance(request.get("cap_prefix"), list) and request["cap_prefix"], "A nonempty runtime cap is required.")
     _require(request.get("device") in {"cpu", "cuda"} and (smoke or request["device"] == "cuda"),
              "Real G2 timing requires the declared CUDA device.")
@@ -464,6 +904,8 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
                              allocation_started_unix=float(request["allocation_started_unix"]),
                              reserve_seconds=900, forecast_margin=1.25)
     _require(policy.max_total_seconds <= 7200, "This G2 package permits at most a two-hour allocation.")
+    if profile.startswith("runpod_"):
+        _require(policy.max_total_seconds <= 7020, "Runpod G2 permits at most the reviewed 117-minute allocation.")
     execution_root = Path(request["execution_root"]).resolve()
     _require(execution_root == (view.default_runs_dir / "g2").resolve(), "G2 uses its dedicated fold-0 execution root.")
     _require(request.get("persistence_mode") == "host_pull", "G2 uses independent host-pull acknowledgment.")
@@ -918,24 +1360,17 @@ def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], vie
 
 
 def _esm1b_cuda_preflight(request: Mapping[str, Any], env: Mapping[str, str], directory: Path) -> dict[str, str]:
-    """The private extractor can silently use CPU, so prove this interpreter can use the L4."""
-    program = (
-        "import json,torch; "
-        "assert torch.version.cuda and torch.cuda.is_available(), 'ESM-1b interpreter has no usable CUDA'; "
-        "name=torch.cuda.get_device_name(0); assert name=='NVIDIA L4', 'G2 requires the approved L4'; "
-        "value=(torch.ones(4,device='cuda')*2).sum().item(); torch.cuda.synchronize(); "
-        "assert value==8.0, 'CUDA kernel check failed'; "
-        "print(json.dumps({'device_name':name,'torch':torch.__version__,'cuda':torch.version.cuda,'kernel_value':value}))"
-    )
+    """The private extractor can silently use CPU, so qualify its actual interpreter."""
+    profile = request.get("hardware_profile", "gcp_l4")
+    program = cuda_probe_program(profile)
     path = directory / "cuda_preflight.json"
-    with path.open("x") as handle:
+    log = directory / "cuda_preflight.stderr.log"
+    with path.open("x") as handle, log.open("x") as errors:
         subprocess.run([*request["cap_prefix"], request["clean_python"], "-c", program],
-                       cwd=REPO_ROOT, env=dict(env), stdout=handle, stderr=subprocess.STDOUT,
+                       cwd=REPO_ROOT, env=dict(env), stdout=handle, stderr=errors,
                        check=True, timeout=min(60.0, float(request["unit_timeout_seconds"])))
-    evidence = _json(path)
-    _require(evidence.get("device_name") == "NVIDIA L4" and evidence.get("cuda")
-             and evidence.get("kernel_value") == 8.0, "ESM-1b CUDA preflight did not pass.")
-    return {"cuda_preflight_sha256": _sha(path)}
+    validate_cuda_evidence(_json(path), profile)
+    return {"cuda_preflight_sha256": _sha(path), "cuda_preflight_log_sha256": _sha(log)}
 
 
 def _esm1b_gpu_evidence(output: Path) -> dict[str, str]:
@@ -1037,6 +1472,10 @@ def build_parser() -> argparse.ArgumentParser:
     automation.add_argument("--base-execution", type=Path, required=True)
     automation.add_argument("--base-commit", required=True)
     automation.add_argument("--out", type=Path, required=True)
+    runpod = actions.add_parser("runpod-manifest")
+    runpod.add_argument("--base-automation", type=Path, required=True)
+    runpod.add_argument("--base-commit", required=True)
+    runpod.add_argument("--out", type=Path, required=True)
     verify = actions.add_parser("verify-execution")
     verify.add_argument("--manifest", type=Path, required=True)
     verify.add_argument("--draft", action="store_true")
@@ -1046,6 +1485,8 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--out", type=Path, required=True)
     probe.add_argument("--cap-json", type=Path, required=True, help="JSON array of the approved runtime cap argv.")
     probe.add_argument("--python", default=sys.executable)
+    probe.add_argument("--hardware-profile", choices=sorted(GPU_PROFILES), default="gcp_l4")
+    probe.add_argument("--cap-probe", type=Path)
     probe.add_argument("--smoke", action="store_true")
     for name in ("timing-unit", "lane-gate", "embed-timing", "_timing-worker", "_lane-worker", "_embedding-worker"):
         action = actions.add_parser(name)
@@ -1077,11 +1518,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 freeze1b_sha256=args.freeze1b_sha256, timing_inputs_sha256=args.timing_inputs_sha256)
         elif args.action == "automation-manifest":
             result = make_automation_manifest(args.base_execution, args.out, base_commit=args.base_commit)
+        elif args.action == "runpod-manifest":
+            result = make_runpod_manifest(args.base_automation, args.out, base_commit=args.base_commit)
         elif args.action == "verify-execution":
             result = verify_execution_source(args.manifest, require_published=not args.draft)
         elif args.action == "vm-probe":
             result = vm_probe(args.view, args.execution_manifest, args.out, cap_prefix=_json(args.cap_json),
-                              python=args.python, smoke=args.smoke)
+                              python=args.python, smoke=args.smoke, hardware_profile=args.hardware_profile,
+                              cap_probe_path=args.cap_probe)
         elif args.action == "ack-host":
             result = host_ack(args.manifest, args.downloaded_root, args.ack, transfer_seconds=args.transfer_seconds)
         elif args.action == "freeze1c":

@@ -1,0 +1,718 @@
+"""One-attempt Runpod allocation with a separate workstation stop watchdog.
+
+The watchdog survives the submitting process, but is not a provider-side stop
+guarantee: workstation power/network/authentication loss can delay shutdown.
+Stopped allocations are deleted only after independent preservation readback.
+No method replaces, restarts, or resumes an allocation.
+"""
+from __future__ import annotations
+
+import argparse
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import fcntl
+import hashlib
+import ipaddress
+import json
+import math
+import os
+from pathlib import Path
+import re
+import stat
+import subprocess
+import sys
+import time
+from typing import Any, Mapping
+import uuid
+
+MAX_SECONDS = 117 * 60
+MAX_REQUESTED_HOURS = 2.0
+MAX_GROSS_USD = 5.0
+
+
+class RunpodError(RuntimeError):
+    """A configuration, ownership, budget, or shutdown check failed."""
+
+
+def _require(value: Any, message: str) -> None:
+    if not value:
+        raise RunpodError(message)
+
+
+def _read(path: Path) -> Any:
+    return json.loads(path.read_text())
+
+
+def _write(path: Path, value: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}.partial")
+    with temporary.open("x") as handle:
+        os.chmod(temporary, 0o600)
+        json.dump(value, handle, indent=2, sort_keys=True, allow_nan=False)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    temporary.replace(path)
+
+
+def _sha(path: Path) -> str:
+    with path.open("rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+
+
+def _utc(epoch: float) -> str:
+    return datetime.fromtimestamp(epoch, timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _epoch(value: Any) -> float:
+    _require(isinstance(value, str), "A timezone-aware timestamp is required.")
+    # Older runpodctl builds render Go's timestamp string.
+    value = re.sub(r" \+0000 UTC$", "+00:00", value)
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    _require(parsed.tzinfo is not None, "A timezone-aware timestamp is required.")
+    return parsed.timestamp()
+
+
+def _number(value: Any, name: str, *, zero: bool = False) -> float:
+    _require(type(value) in (int, float) and math.isfinite(value) and (value >= 0 if zero else value > 0),
+             f"{name} must be finite and {'nonnegative' if zero else 'positive'}.")
+    return float(value)
+
+
+def _settings(config: Mapping[str, Any]) -> dict[str, Any]:
+    _require(config.get("provider") == "runpod", "An explicit Runpod provider is required.")
+    settings = dict(config.get("runpod", {}))
+    settings.setdefault("state_root", config.get("state_root"))
+    return settings
+
+
+def _reject_inline_secrets(value: Any) -> None:
+    if isinstance(value, Mapping):
+        _require(not any(str(key).lower() in {"api_key", "runpod_api_key", "authorization", "access_token", "password"}
+                         for key in value), "Credentials belong in the protected credential file or environment, not launch configuration.")
+        for item in value.values():
+            _reject_inline_secrets(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            _reject_inline_secrets(item)
+    elif isinstance(value, str):
+        _require(not re.search(r"rpa_[A-Za-z0-9_-]{10,}|(?i:Bearer\s+)\S+", value),
+                 "Launch configuration contains a credential-like value.")
+
+
+def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
+    _reject_inline_secrets(config)
+    cfg = _settings(config)
+    hours = _number(cfg.get("requested_hours"), "requested_hours")
+    duration = _number(cfg.get("max_runtime_seconds", MAX_SECONDS), "max_runtime_seconds")
+    ceiling = _number(cfg.get("gross_ceiling_usd"), "gross_ceiling_usd")
+    reserve = _number(cfg.get("stop_reserve_seconds", 60), "stop_reserve_seconds")
+    _require(hours <= MAX_REQUESTED_HOURS and duration <= min(MAX_SECONDS, hours * 3600),
+             "Runpod runtime exceeds the two-hour request or 117-minute limit.")
+    _require(ceiling <= MAX_GROSS_USD, "Runpod gross ceiling exceeds $5.00.")
+    _require(min(120, duration / 2) <= reserve < duration, "Insufficient shutdown-request reserve.")
+    heartbeat = _number(cfg.get("heartbeat_timeout_seconds", 900), "heartbeat_timeout_seconds")
+    _require(heartbeat <= 900, "Owner heartbeat timeout exceeds 900 seconds.")
+    for key in ("state_root", "cli_path", "ssh_private_key"):
+        _require(isinstance(cfg.get(key), str) and Path(cfg[key]).is_absolute()
+                 and not any(x in cfg[key] for x in "\n\r\0"), f"{key} needs an explicit safe absolute path.")
+    for key in ("pod_name", "ssh_alias"):
+        _require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{1,100}", str(cfg.get(key, ""))), f"Invalid {key}.")
+    for key in ("gpu_id", "data_center_id", "image", "min_cuda_version"):
+        _require(isinstance(cfg.get(key), str) and cfg[key] and not any(x in cfg[key] for x in "\n\r\0"),
+                 f"Explicit {key} is required.")
+    profiles = {"runpod_l4": "NVIDIA L4", "runpod_rtx4090": "NVIDIA GeForce RTX 4090"}
+    _require(config.get("hardware_profile") in profiles
+             and cfg["gpu_id"] == profiles[config["hardware_profile"]], "Runpod GPU and approved hardware profile differ.")
+    _require(re.fullmatch(r"[^@\s]+@sha256:[0-9a-f]{64}", cfg["image"]), "Runpod image must be pinned by SHA-256 digest.")
+    _require(cfg.get("runtime_environment") == {"NVIDIA_TF32_OVERRIDE": "0"},
+             "Runpod requires the fixed full-FP32 runtime environment.")
+    for key in ("container_disk_gb", "volume_gb"):
+        _require(type(cfg.get(key)) is int and cfg[key] > 0, f"A positive integer {key} is required.")
+    mount = cfg.get("volume_mount_path", "/workspace")
+    _require(isinstance(mount, str) and Path(mount).is_absolute() and ".." not in Path(mount).parts
+             and not any(x in mount for x in "\n\r\0"), "Unsafe persistent volume path.")
+    quote = cfg.get("quote", {})
+    observed = _epoch(quote.get("observed_at"))
+    age_limit = _number(quote.get("max_age_seconds", 900), "quote max_age_seconds")
+    _require(age_limit <= 900, "Price quote freshness cannot exceed 900 seconds.")
+    if fresh:
+        _require(-5 <= time.time() - observed <= age_limit, "Runpod price quote is stale or in the future.")
+    _require(isinstance(quote.get("source"), str) and quote["source"], "Price quote evidence source is required.")
+    compute = _number(quote.get("hourly_compute_usd"), "hourly_compute_usd")
+    storage = _number(quote.get("running_storage_hourly_usd"), "running_storage_hourly_usd", zero=True)
+    stopped = _number(quote.get("stopped_storage_reserve_usd"), "stopped_storage_reserve_usd", zero=True)
+    retention = cfg.get("retention_policy", {})
+    retention_seconds = _number(retention.get("retention_seconds"), "retention_seconds")
+    stopped_rate = _number(quote.get("stopped_storage_hourly_usd"), "stopped_storage_hourly_usd")
+    _require(stopped > 0 and stopped >= stopped_rate * retention_seconds / 3600,
+             "Stopped storage reserve does not cover the defined retention period.")
+    _require(retention.get("cleanup_reviewed") is True
+             and retention.get("action") == "verified_backup_then_delete"
+             and all(isinstance(retention.get(key), str) and retention[key].strip() for key in ("owner", "evidence")),
+             "A reviewed finite storage retention and backup-dependent cleanup policy is required.")
+    egress = _number(quote.get("egress_reserve_usd"), "egress_reserve_usd", zero=True)
+    prior = _number(quote.get("prior_charge_usd"), "prior_charge_usd", zero=True)
+    margin = _number(quote.get("margin_fraction"), "margin_fraction")
+    _require(margin >= .15, "Runpod cost margin must be at least 15%.")
+    total = prior + ((compute + storage) * hours + stopped + egress) * (1 + margin)
+    _require(total <= ceiling, "Conservative Runpod gross envelope exceeds the authorized ceiling.")
+    return {"status": "ready", "gross_ceiling_usd": ceiling, "estimated_gross_usd": total,
+            "requested_hours": hours, "max_total_seconds": duration, "stop_reserve_seconds": reserve,
+            "quote_observed_at": quote["observed_at"], "quote_source": quote["source"],
+            "prior_charge_usd": prior, "running_compute_usd": compute * hours,
+            "running_storage_usd": storage * hours, "stopped_storage_reserve_usd": stopped,
+            "egress_reserve_usd": egress, "margin_fraction": margin,
+            "retention_seconds": retention_seconds, "stopped_storage_hourly_usd": stopped_rate,
+            "retention_policy": retention, "automatic_storage_cleanup": False,
+            "storage_cleanup_method": "closeout_after_independent_preservation",
+            "ceiling_scope": "execution_plus_bounded_retention_estimate",
+            "provider_enforced_stop": False, "stop_mechanism": "independent workstation process"}
+
+
+def validate_config(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate local configuration and a fresh fully priced envelope; no API call."""
+    return _validate(config, fresh=True)
+
+
+def _status(pod: Mapping[str, Any]) -> tuple[str, str]:
+    return str(pod.get("desiredStatus", pod.get("status", ""))).upper(), str(pod.get("runtimeStatus", "")).lower()
+
+
+def _stopped(pod: Mapping[str, Any]) -> bool:
+    desired, runtime = _status(pod)
+    return desired == "EXITED" and runtime == "stopped"
+
+
+def _gpu_count(pod: Mapping[str, Any]) -> int | None:
+    count = pod.get("gpuCount", pod.get("gpu", {}).get("count"))
+    return count if type(count) is int else None
+
+
+def _public_pod(pod: Mapping[str, Any]) -> dict[str, Any]:
+    """Provider environment and authentication fields must never enter receipts."""
+    keys = ("id", "name", "desiredStatus", "runtimeStatus", "runtimeStatusReason", "createdAt",
+            "startedAt", "costPerHr", "cost", "gpuCount", "gpuId", "imageName", "image",
+            "containerDiskInGb", "volumeInGb", "volumeMountPath", "dataCenterId")
+    return {key: pod[key] for key in keys if key in pod}
+
+
+class RunpodController:
+    """Bound one immutable launch intent to one pod; cleanup never widens ownership."""
+
+    def __init__(self, config: Mapping[str, Any], config_path: Path, *, _snapshot: Mapping[str, Any] | None = None):
+        self.config = json.loads(json.dumps(config))
+        self.cfg = _settings(self.config)
+        self.cost = _validate(self.config, fresh=False)
+        self.config_path = Path(config_path).resolve()
+        self.root = Path(self.cfg["state_root"]).resolve()
+        self.root.mkdir(parents=True, exist_ok=True)
+        self.state_path = self.root / "session.json"
+        self.snapshot_path = self.root / "runpod_config.snapshot.json"
+        self.owner_path = self.root / "ownership.json"
+        self.heartbeat_path = self.root / "owner_heartbeat.json"
+        self.watch_path = self.root / "watchdog_heartbeat.json"
+        self._cached_state: dict[str, Any] | None = None
+        self._cached_owner: dict[str, Any] | None = None
+        self.source_sha = _snapshot["source_sha256"] if _snapshot else _sha(self.config_path)
+        self.config_sha = _digest(self.config)
+        self.cli_sha = _snapshot["cli_sha256"] if _snapshot else _sha(Path(self.cfg["cli_path"]))
+        _require(_sha(Path(self.cfg["cli_path"])) == self.cli_sha, "Runpod CLI changed during this pass.")
+
+    @contextmanager
+    def _lock(self):
+        with (self.root / "controller.lock").open("a+") as handle:
+            fcntl.flock(handle, fcntl.LOCK_EX)
+            yield
+
+    def _state(self) -> dict[str, Any]:
+        state = _read(self.state_path)
+        _require(state.get("config_sha256") == self.config_sha, "Controller state belongs to another configuration.")
+        self._cached_state = dict(state)
+        return state
+
+    def _cleanup_state(self) -> dict[str, Any]:
+        try:
+            return self._state()
+        except (OSError, ValueError):
+            _require(self._cached_state is not None, "No authenticated launch state is available for cleanup.")
+            return dict(self._cached_state)
+
+    def _update(self, **values: Any) -> dict[str, Any]:
+        with self._lock():
+            state = self._state()
+            state.update(values)
+            _write(self.state_path, state)
+            self._cached_state = dict(state)
+            return state
+
+    def _cleanup_update(self, **values: Any) -> dict[str, Any]:
+        """Disk failure must close admission without preventing provider shutdown."""
+        try:
+            return self._update(**values)
+        except (OSError, ValueError):
+            state = self._cleanup_state()
+            state.update(values)
+            self._cached_state = dict(state)
+            return state
+
+    def _unchanged(self) -> None:
+        _require(_sha(self.config_path) == self.source_sha and _read(self.config_path) == self.config,
+                 "Launch configuration changed; admission is closed.")
+
+    def _environment(self) -> tuple[dict[str, str], str]:
+        env = os.environ.copy()
+        key = env.get("RUNPOD_API_KEY", "")
+        if not key:
+            path = Path(self.cfg.get("credential_file", ""))
+            _require(path.is_absolute() and path.is_file() and not path.is_symlink(), "Missing Runpod credential file.")
+            mode = stat.S_IMODE(path.stat().st_mode)
+            _require(mode == 0o600 and path.stat().st_uid == os.getuid(), "Credential file must be owned by this user and mode 0600.")
+            key = _read(path).get("api_key", "")
+        _require(isinstance(key, str) and key and not any(x in key for x in "\n\r\0"), "Missing or invalid Runpod credential.")
+        env["RUNPOD_API_KEY"] = key
+        return env, key
+
+    @staticmethod
+    def _redact(text: str, key: str = "") -> str:
+        if key:
+            text = text.replace(key, "[REDACTED]")
+        text = re.sub(r"rpa_[A-Za-z0-9_-]+", "[REDACTED]", text)
+        return re.sub(r"(?i)(Bearer\s+)[A-Za-z0-9._-]+", r"\1[REDACTED]", text)[:1200]
+
+    def _call(self, *args: str, timeout: float = 30) -> Any:
+        env, key = self._environment()
+        if args[0] == "create":
+            try:
+                self._unchanged()
+                validate_config(self.config)
+                with self._lock():
+                    state = self._state()
+                    _require(state.get("phase") == "creating" and state.get("create_attempted") is True
+                             and not state.get("stop_requested") and time.time() < state["deadline_unix"],
+                             "Create admission closed before the provider request.")
+                    self._watchdog_healthy()
+            except BaseException:
+                # No provider request has been made on this path. Preserve the
+                # intent without leaving its watchdog reconciling a nonexistent pod.
+                self._cleanup_update(create_cancelled_before_post=True)
+                raise
+        try:
+            result = subprocess.run([self.cfg["cli_path"], "pod", *args], stdin=subprocess.DEVNULL,
+                                    capture_output=True, text=True, timeout=timeout, env=env)
+        except (subprocess.TimeoutExpired, OSError) as exc:
+            raise RunpodError(f"Runpod {args[0]} result is uncertain ({type(exc).__name__}).") from None
+        if result.returncode:
+            raw = result.stderr or result.stdout
+            try:
+                error = json.loads(raw)
+                message = f"{error.get('code', 'unclassified')}: {error.get('error', 'operation failed')}"
+            except (ValueError, AttributeError):
+                message = "unclassified command failure"
+            raise RunpodError(f"Runpod {args[0]} failed: {self._redact(message, key)}")
+        try:
+            parsed = json.loads(result.stdout)
+        except ValueError:
+            if args[0] == "delete" and not result.stdout.strip():
+                return {"status": "delete_requested"}
+            raise RunpodError(f"Runpod {args[0]} returned invalid JSON.") from None
+        _require(not isinstance(parsed, dict) or not parsed.get("error"), f"Runpod {args[0]} returned an error payload.")
+        return parsed
+
+    def _pods(self) -> list[dict[str, Any]]:
+        rows = self._call("list", "--all")
+        if isinstance(rows, dict):
+            rows = rows.get("pods")
+        _require(isinstance(rows, list) and all(isinstance(p, dict) and p.get("id") for p in rows),
+                 "Runpod list has an unrecognized or incomplete shape.")
+        return rows
+
+    def _no_other_gpu(self, rows: list[dict[str, Any]], own: str | None = None) -> None:
+        for pod in rows:
+            if pod["id"] == own or _stopped(pod):
+                continue
+            _require(_gpu_count(pod) == 0, "Another Runpod GPU is active or its state is uncertain.")
+
+    def _bind(self, pod: Mapping[str, Any], *, source: str) -> str:
+        pod_id = str(pod.get("id", ""))
+        _require(re.fullmatch(r"[A-Za-z0-9_-]+", pod_id), "Provider returned an invalid pod ID.")
+        with self._lock():
+            state = self._state()
+            _require(pod.get("name") == self.cfg["pod_name"] and pod_id not in state["preexisting_pod_ids"]
+                     and _epoch(pod.get("createdAt")) >= state["allocation_started_unix"] - 5,
+                     "Provider response does not identify this new launch intent.")
+            owned = {"pod_id": pod_id, "session_id": state["session_id"],
+                     "config_sha256": self.config_sha, "source": source, "bound_at": _utc(time.time())}
+            if self.owner_path.exists():
+                owned = _read(self.owner_path)
+                _require(owned.get("pod_id") == pod_id and owned.get("session_id") == state["session_id"]
+                         and owned.get("config_sha256") == self.config_sha,
+                         "A second pod cannot replace this pass's owned pod.")
+            self._cached_owner = dict(owned)
+            if not self.owner_path.exists():
+                _write(self.owner_path, owned)
+            state.update(pod_id=pod_id, phase="allocated")
+            _write(self.state_path, state)
+            self._cached_state = dict(state)
+        return pod_id
+
+    def _owned_id(self) -> str | None:
+        try:
+            owned = _read(self.owner_path) if self.owner_path.exists() else self._cached_owner
+        except (OSError, ValueError):
+            owned = self._cached_owner
+        if owned is None:
+            return None
+        state = self._cleanup_state()
+        _require(owned.get("config_sha256") == self.config_sha and owned.get("session_id") == state["session_id"]
+                 and state.get("pod_id") in (None, owned.get("pod_id")), "Runpod ownership record disagrees with state.")
+        self._cached_owner = dict(owned)
+        return owned["pod_id"]
+
+    def _resolve(self) -> str | None:
+        owned = self._owned_id()
+        if owned:
+            return owned
+        state = self._cleanup_state()
+        if not state.get("create_attempted") or state.get("create_cancelled_before_post"):
+            return None
+        matches = [p for p in self._pods() if p.get("name") == self.cfg["pod_name"]]
+        _require(len(matches) <= 1, "Ambiguous pod name; no resource can be selected safely.")
+        if not matches:
+            return None
+        pod = matches[0]
+        _require(pod["id"] not in state["preexisting_pod_ids"]
+                 and _epoch(pod.get("createdAt")) >= state["allocation_started_unix"] - 5,
+                 "Matching pod predates this launch intent.")
+        try:
+            return self._bind(pod, source="unique_name_reconciliation")
+        except OSError:
+            # A successful authenticated binding remains usable in this process
+            # even when the private receipt filesystem is full.
+            owned = self._owned_id()
+            if owned:
+                return owned
+            raise
+
+    def heartbeat(self) -> None:
+        state = self._state()
+        _write(self.heartbeat_path, {"session_id": state["session_id"], "updated_unix": time.time(), "pid": os.getpid()})
+
+    def _watchdog_healthy(self) -> None:
+        watch = _read(self.watch_path) if self.watch_path.exists() else {}
+        _require(watch.get("session_id") == self._state()["session_id"]
+                 and watch.get("config_sha256") == self.config_sha
+                 and time.time() - watch.get("updated_unix", 0) < 45
+                 and watch.get("status") == "armed", "Independent stop watchdog is not healthy.")
+        try:
+            os.kill(int(watch["pid"]), 0)
+        except (KeyError, ValueError, ProcessLookupError):
+            raise RunpodError("Independent stop watchdog is absent.") from None
+
+    def _arm_watchdog(self) -> None:
+        snapshot = {"config": self.config, "config_path": str(self.config_path),
+                    "source_sha256": self.source_sha, "cli_sha256": self.cli_sha}
+        _write(self.snapshot_path, snapshot)
+        log = self.root / "watchdog.log"
+        with log.open("ab") as handle:
+            os.chmod(log, 0o600)
+            process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "--watchdog", str(self.snapshot_path)],
+                                       stdin=subprocess.DEVNULL, stdout=handle, stderr=handle, start_new_session=True)
+        self._update(watchdog_pid=process.pid)
+        until = time.monotonic() + 10
+        while time.monotonic() < until:
+            if process.poll() is not None:
+                raise RunpodError("Stop watchdog failed before allocation; create is blocked.")
+            if self.watch_path.exists():
+                self._watchdog_healthy()
+                return
+            time.sleep(.05)
+        raise RunpodError("Stop watchdog did not acknowledge readiness; create is blocked.")
+
+    def _create_args(self) -> list[str]:
+        cfg = self.cfg
+        return ["create", "--name", cfg["pod_name"], "--gpu-id", cfg["gpu_id"], "--gpu-count", "1",
+                "--data-center-ids", cfg["data_center_id"], "--cloud-type", "SECURE", "--image", cfg["image"],
+                "--min-cuda-version", cfg["min_cuda_version"], "--container-disk-in-gb", str(cfg["container_disk_gb"]),
+                "--volume-in-gb", str(cfg["volume_gb"]), "--volume-mount-path", cfg.get("volume_mount_path", "/workspace"),
+                "--env", json.dumps(cfg["runtime_environment"], sort_keys=True), "--ports", "22/tcp"]
+
+    def start(self) -> dict[str, Any]:
+        self._unchanged()
+        self.cost = validate_config(self.config)
+        with self._lock():
+            _require(not self.state_path.exists(), "This pass already has a launch intent; it cannot create again.")
+            rows = self._pods()
+            self._no_other_gpu(rows)
+            _require(not any(p.get("name") == self.cfg["pod_name"] for p in rows), "Pod name already exists.")
+            _write(self.state_path, {"schema_version": 1, "session_id": uuid.uuid4().hex, "phase": "arming",
+                                    "config_sha256": self.config_sha, "config_source_sha256": self.source_sha,
+                                    "preexisting_pod_ids": [p["id"] for p in rows], "create_attempted": False,
+                                    "cost_admission": self.cost, "stop_requested": False})
+        self.heartbeat()
+        self._arm_watchdog()
+        self._unchanged()
+        validate_config(self.config)
+        with self._lock():
+            state = self._state()
+            _require(state["phase"] == "arming" and not state.get("stop_requested")
+                     and not state.get("create_attempted"), "Launch intent is closed; create is blocked.")
+            self._watchdog_healthy()
+            self.heartbeat()
+            begun = time.time()
+            state.update(create_attempted=True, allocation_started_unix=begun,
+                         hard_stop_unix=begun + self.cost["max_total_seconds"],
+                         deadline_unix=begun + self.cost["max_total_seconds"] - self.cost["stop_reserve_seconds"],
+                         max_total_seconds=self.cost["max_total_seconds"], phase="creating")
+            _write(self.state_path, state)
+            self._cached_state = dict(state)
+        try:
+            try:
+                created = self._call(*self._create_args(), timeout=min(120, self.cost["max_total_seconds"]))
+                self._bind(created, source="successful_create_response")
+            except RunpodError as exc:
+                self._update(create_error=str(exc))
+                # Never retry POST/create after an uncertain response.
+                if not self._resolve():
+                    raise
+            until = min(time.time() + 600, self._state()["deadline_unix"])
+            while time.time() < until:
+                self.heartbeat()
+                pod = self._call("get", self._owned_id())
+                if _status(pod) == ("RUNNING", "running"):
+                    return self.session()
+                _require(not _stopped(pod) and _status(pod)[1] not in {"error", "terminated"}, "Pod did not become usable.")
+                time.sleep(min(5, max(.05, until - time.time())))
+            raise RunpodError("Pod readiness exceeded the bounded allocation window.")
+        except BaseException:
+            self._cleanup_update(stop_requested=True, phase="closing_after_failure")
+            try:
+                self.stop()
+            except Exception as exc:
+                self._cleanup_update(stop_error=self._redact(str(exc)))
+            raise
+
+    def session(self, previous: Mapping[str, Any] | str | None = None) -> dict[str, Any]:
+        self._unchanged()
+        state = self._state()
+        _require(not state.get("stop_requested") and state["phase"] != "stopped", "This allocation is closing or stopped.")
+        _require(time.time() < state["deadline_unix"], "Runpod stop-request deadline reached.")
+        self._watchdog_healthy()
+        owned = self._owned_id()
+        _require(owned, "No owned Runpod allocation is bound.")
+        pod = self._call("get", owned, "--include-machine")
+        _require(pod.get("id") == owned and pod.get("name") == self.cfg["pod_name"], "Provider identity differs from owned pod.")
+        _require(_status(pod) == ("RUNNING", "running") and _gpu_count(pod) == 1, "Owned pod is not a running single GPU.")
+        _require(pod.get("gpuId", pod.get("gpu", {}).get("id")) == self.cfg["gpu_id"], "Allocated GPU type differs.")
+        _require(pod.get("imageName", pod.get("image")) == self.cfg["image"], "Allocated image differs.")
+        _require(isinstance(pod.get("env"), dict) and pod["env"].get("NVIDIA_TF32_OVERRIDE") == "0",
+                 "Allocated runtime environment differs from the fixed full-FP32 contract.")
+        machine = pod.get("machine", {})
+        _require(machine.get("dataCenterId", pod.get("dataCenterId")) == self.cfg["data_center_id"]
+                 and machine.get("secureCloud") is True, "Allocated data center or secure-cloud placement differs.")
+        _require(pod.get("volumeInGb") == self.cfg["volume_gb"]
+                 and pod.get("volumeMountPath") == self.cfg.get("volume_mount_path", "/workspace"),
+                 "Allocated persistent volume differs from the approved request.")
+        rate = _number(pod.get("costPerHr", pod.get("cost")), "actual pod hourly price")
+        _require(rate <= self.cfg["quote"]["hourly_compute_usd"] + self.cfg["quote"]["running_storage_hourly_usd"],
+                 "Actual pod price exceeds the admitted quote.")
+        self._no_other_gpu(self._pods(), own=owned)
+        if isinstance(previous, str):
+            _require(previous == state["session_id"], "Runpod session identity changed.")
+        elif previous:
+            for key in ("session_id", "pod_id", "allocation_started_unix", "deadline_unix", "hard_stop_unix"):
+                if key in previous:
+                    _require(previous[key] == state.get(key), "Runpod session identity or deadline changed.")
+        self.heartbeat()
+        state = self._update(phase="running", provider_verified_at=_utc(time.time()), pod=_public_pod(pod))
+        return {key: state[key] for key in ("session_id", "pod_id", "allocation_started_unix", "deadline_unix",
+                                           "hard_stop_unix", "max_total_seconds", "cost_admission", "provider_verified_at")}
+
+    def stop(self) -> dict[str, Any]:
+        """Request stop and verify a fresh stopped provider state; never delete data."""
+        state = self._cleanup_update(stop_requested=True)
+        if not state.get("create_attempted") or state.get("create_cancelled_before_post"):
+            receipt = {"status": "CREATE_CANCELLED_BEFORE_POST" if state.get("create_cancelled_before_post")
+                       else "NO_CREATE_ATTEMPT", "verified_at": _utc(time.time())}
+            # Before create, the closed intent must be durable before the guard
+            # exits; otherwise a recovering writer could revive admission.
+            self._update(phase="stopped", stop_receipt=receipt)
+            return receipt
+        owned = self._resolve()
+        _require(owned, "Allocation result remains unresolved; watchdog continues name reconciliation.")
+        until = time.monotonic() + 90
+        last_error = ""
+        while time.monotonic() < until:
+            try:
+                pod = self._call("get", owned)
+                _require(pod.get("id") == owned, "Stop read returned another pod.")
+                if _stopped(pod):
+                    receipt = {"pod_id": owned, "status": "EXITED", "runtime_status": "stopped",
+                               "verified_at": _utc(time.time()), "pod": _public_pod(pod)}
+                    self._cleanup_update(phase="stopped", stop_receipt=receipt)
+                    return receipt
+                self._call("stop", owned)
+            except RunpodError as exc:
+                last_error = str(exc)
+            time.sleep(1)
+        raise RunpodError(f"Stop is not verified; independent watchdog keeps retrying. {self._redact(last_error)}")
+
+    def admit_workload(self) -> None:
+        """Permanently distinguish an execution from a pre-workload qualification failure."""
+        self.session()
+        self._update(workload_admitted=True)
+
+    def _verify_preservation(self, path: Path) -> str:
+        """Verify the complete collected inventory in two independent local copies."""
+        _require(path.is_absolute() and path.is_file() and not path.is_symlink(), "Preservation receipt must be a regular local file.")
+        proof, state = _read(path), self._state()
+        identity = {"pod_id": self._owned_id(), "session_id": state["session_id"], "config_sha256": self.config_sha}
+        _require(proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_v1"
+                 and all(proof.get(key) == value for key, value in identity.items()),
+                 "Preservation receipt belongs to another allocation.")
+        roots = [Path(proof.get(key, "")) for key in ("primary_root", "mirror_root")]
+        _require(all(root.is_absolute() and root.is_dir() and root.resolve() == root for root in roots)
+                 and roots[0].stat().st_dev != roots[1].stat().st_dev,
+                 "Preservation needs existing roots on two independent devices.")
+        files = proof.get("files")
+        _require(isinstance(files, list), "Preservation inventory is missing.")
+        members: dict[str, dict[str, Any]] = {}
+        for entry in files:
+            _require(isinstance(entry, dict), "Invalid preservation inventory member.")
+            name = entry.get("path", "")
+            relative = Path(name)
+            _require(isinstance(name, str) and name and not relative.is_absolute()
+                     and ".." not in relative.parts and str(relative) == name and "\\" not in name
+                     and name not in members and type(entry.get("size_bytes")) is int and entry["size_bytes"] >= 0
+                     and re.fullmatch(r"[0-9a-f]{64}", str(entry.get("sha256", ""))),
+                     "Unsafe or invalid preservation inventory member.")
+            for root in roots:
+                item = root / relative
+                _require(root in item.resolve().parents and not item.is_symlink() and item.is_file()
+                         and item.stat().st_size == entry["size_bytes"] and _sha(item) == entry["sha256"],
+                         "Preservation bytes are missing or differ between local copies.")
+            members[name] = entry
+        inventory_name = proof.get("remote_inventory_path")
+        _require(inventory_name in members, "Complete remote inventory must be preserved in both copies.")
+        inventory = _read(roots[0] / inventory_name)
+        pending = inventory.get("pending_unit")
+        _require(inventory.get("format") == "deepmzyme_ec_clean30_runpod_remote_inventory_v1"
+                 and all(inventory.get(key) == value for key, value in identity.items())
+                 and inventory.get("pending_transfer") is None
+                 and (pending is None or (isinstance(pending, dict) and pending.get("persisted") is True
+                                          and pending.get("status") != "running")),
+                 "Remote inventory is foreign or contains unacknowledged work.")
+        remote_files = inventory.get("files")
+        _require(isinstance(remote_files, list) and all(isinstance(entry, dict) for entry in remote_files)
+                 and len({entry.get("path") for entry in remote_files}) == len(remote_files)
+                 and all(entry == members.get(entry.get("path")) for entry in remote_files),
+                 "Collected bytes do not cover the complete remote inventory.")
+        manifests = proof.get("host_pull_manifests", [])
+        _require(isinstance(manifests, list) and len(set(manifests)) == len(manifests), "Invalid HostPull manifest list.")
+        if state.get("workload_admitted"):
+            _require(remote_files and manifests, "An admitted workload needs its complete artifacts and HostPull acknowledgments.")
+        else:
+            _require(not remote_files or manifests, "Nonempty execution artifacts require HostPull acknowledgments.")
+        for name in manifests:
+            _require(name in members, "A HostPull manifest is absent from the preserved inventory.")
+            manifest = _read(roots[0] / name)
+            ack_name = manifest.get("ack_path")
+            _require(manifest.get("persistence_mode") == "host_pull" and manifest.get("schema_version") == 1
+                     and manifest.get("destination_root") == str(roots[0]) and ack_name in members,
+                     "HostPull manifest or acknowledgment is missing or foreign.")
+            ack = _read(roots[0] / ack_name)
+            payload = manifest.get("files", [])
+            _require(isinstance(payload, list) and ack.get("manifest_sha256") == members[name]["sha256"]
+                     and ack.get("verified_root") == str(roots[0]) and ack.get("file_count") == len(payload)
+                     and all(entry == members.get(entry.get("path")) for entry in payload),
+                     "HostPull acknowledgment does not cover its preserved payload.")
+        return _sha(path)
+
+    def closeout(self, preservation_path: Path) -> dict[str, Any]:
+        """Delete only this stopped pod after both copies of every output read back."""
+        owned = self._owned_id()
+        _require(owned, "No owned Runpod allocation is bound for closeout.")
+        proof_sha = self._verify_preservation(Path(preservation_path))
+        state = self._state()
+        if state.get("phase") != "deleted":
+            self.stop()
+            self._update(preservation_sha256=proof_sha, preservation_path=str(preservation_path))
+            try:
+                self._call("delete", owned)
+            except RunpodError:
+                # A lost DELETE reply is reconciled from a fresh list, never a new pod.
+                if any(pod["id"] == owned for pod in self._pods()):
+                    raise
+        _require(not any(pod["id"] == owned for pod in self._pods()), "Provider deletion is not verified.")
+        receipt = {"pod_id": owned, "session_id": state["session_id"], "status": "DELETED",
+                   "provider_absence_verified": True, "preservation_sha256": proof_sha, "verified_at": _utc(time.time())}
+        self._update(phase="deleted", delete_receipt=receipt)
+        return receipt
+
+    def write_ssh_config(self) -> Path:
+        self.session()
+        pod = self._call("get", self._owned_id())
+        ssh = pod.get("ssh", {})
+        direct = ssh.get("direct", ssh)
+        host, port = direct.get("host", direct.get("ip")), direct.get("port")
+        try:
+            ipaddress.ip_address(host)
+        except ValueError:
+            raise RunpodError("Provider did not return a direct SSH IP address.") from None
+        _require(type(port) is int and 1 <= port <= 65535, "Provider did not return a valid SSH port.")
+        username = direct.get("username", "root")
+        _require(re.fullmatch(r"[A-Za-z0-9_-]+", username), "Unsafe SSH username.")
+        key = Path(self.cfg["ssh_private_key"])
+        _require(key.is_file() and not stat.S_IMODE(key.stat().st_mode) & 0o077, "SSH private key is absent or permissions are unsafe.")
+        path = self.root / "ssh_config"
+        contents = (f"Host {self.cfg['ssh_alias']}\n  HostName {host}\n  Port {port}\n  User {username}\n"
+                    f"  IdentityFile {json.dumps(str(key))}\n  IdentitiesOnly yes\n  BatchMode yes\n"
+                    f"  UserKnownHostsFile {json.dumps(str(self.root / 'known_hosts'))}\n  StrictHostKeyChecking accept-new\n")
+        path.write_text(contents)
+        os.chmod(path, 0o600)
+        return path
+
+
+def _watchdog(snapshot_path: Path) -> None:
+    snapshot = _read(snapshot_path)
+    controller = RunpodController(snapshot["config"], Path(snapshot["config_path"]), _snapshot=snapshot)
+    cfg = controller.cfg
+    interval = min(10, controller.cost["stop_reserve_seconds"] / 4)
+    while True:
+        state = controller._cleanup_state()
+        if state["phase"] in {"stopped", "deleted"}:
+            return
+        bookkeeping_failed = False
+        try:
+            _write(controller.watch_path, {"session_id": state["session_id"], "config_sha256": controller.config_sha,
+                                          "pid": os.getpid(), "updated_unix": time.time(), "status": "armed"})
+            beat = _read(controller.heartbeat_path) if controller.heartbeat_path.exists() else {}
+        except (OSError, ValueError):
+            bookkeeping_failed, beat = True, {}
+        owner_stale = beat.get("session_id") != state["session_id"] or time.time() - beat.get("updated_unix", 0) > cfg.get("heartbeat_timeout_seconds", 900)
+        expired = state.get("deadline_unix") is not None and time.time() >= state["deadline_unix"]
+        if state.get("stop_requested") or expired or owner_stale or bookkeeping_failed:
+            try:
+                # stop() re-reads and closes the intent under the same lock used
+                # for create admission; a stale pre-create read cannot win later.
+                controller.stop()
+                return
+            except Exception as exc:
+                # Transient network/auth failures must not disable the stop loop.
+                controller._cleanup_update(watchdog_last_error=controller._redact(str(exc)), watchdog_last_retry_at=_utc(time.time()))
+        time.sleep(interval)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--watchdog", type=Path, required=True)
+    args = parser.parse_args()
+    _watchdog(args.watchdog)
+
+
+if __name__ == "__main__":
+    main()

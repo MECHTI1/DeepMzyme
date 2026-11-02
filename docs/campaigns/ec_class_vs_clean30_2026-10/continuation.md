@@ -1,14 +1,15 @@
 # Continuation after Freeze 1b
 
-Status: updated, 2026-11-02; preparation and the S1 amendment are published through `3154a7f`.
+Status: updated, 2026-11-03; preparation and the S1 amendment are published through `3154a7f`.
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
 The recovery extension is published at `4fb4bdd`; its stockout closeout is published at `8d84e95`.
 All three central zones returned stockout; temporary resources are removed ([evc-018](log.md#evc-018)).
 The cross-region extension is published at `1749cda`; its exhausted $19 pass is preserved in
 [evc-022](log.md#evc-022). The subsequent $3 same-region pass also exhausted the three central zones;
 its temporary resources are removed and the original VM is `TERMINATED` ([evc-023](log.md#evc-023)).
-A separately authorized Runpod setup was stopped after input and off-pod preservation checks;
-execution qualification remains pending ([evc-024](log.md#evc-024)). Zero of twelve G2 events ran.
+A separately authorized Runpod setup was stopped after input and off-pod preservation checks
+([evc-024](log.md#evc-024)). The replacement extension is CPU-verified; actual Runpod qualification
+and all twelve G2 events remain pending ([evc-025](log.md#evc-025)).
 The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
 cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.

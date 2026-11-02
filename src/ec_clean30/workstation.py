@@ -231,13 +231,33 @@ class HostPull:
     """Independent readback; conservative transfer reservation survives retries and restarts."""
 
     def __init__(self, transport: ControllerTransport, durable_root: Path, state_root: Path, *,
-                 max_download_bytes: int, deadline_unix: float):
+                 max_download_bytes: int, deadline_unix: float, mirror_root: Path | None = None):
         self.transport, self.root, self.state_root = transport, Path(durable_root).resolve(), Path(state_root).resolve()
         self.max_bytes, self.deadline = max_download_bytes, deadline_unix
         _require(max_download_bytes > 0, "A positive host-download ceiling is required.")
         self.root.mkdir(parents=True, exist_ok=True)
         self.state_root.mkdir(parents=True, exist_ok=True)
         self.budget_path = self.state_root / "transfer_budget.json"
+        self.mirror_root = Path(mirror_root).resolve() if mirror_root is not None else None
+        if self.mirror_root is not None:
+            _require(self.mirror_root != self.root and self.root not in self.mirror_root.parents
+                     and self.mirror_root not in self.root.parents, "Persistence destinations must be separate.")
+            self.mirror_root.mkdir(parents=True, exist_ok=True)
+
+    def _mirror(self, relative: str) -> None:
+        if self.mirror_root is None:
+            return
+        relative = _relative(relative)
+        source, target = self.root / relative, self.mirror_root / relative
+        _require(self.mirror_root in target.resolve().parents and not target.is_symlink(), "Mirror path escapes its destination.")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_name(target.name + ".partial")
+        with source.open("rb") as reader, temporary.open("wb") as writer:
+            shutil.copyfileobj(reader, writer)
+            writer.flush()
+            os.fsync(writer.fileno())
+        _require(_sha(temporary) == _sha(source), "NVMe mirror readback differs from independent HostPull.")
+        temporary.replace(target)
 
     def _reserve(self, count: int) -> None:
         state = _json(self.budget_path) if self.budget_path.exists() else {"reserved_payload_bytes": 0}
@@ -292,6 +312,11 @@ class HostPull:
             temporary.unlink()
         else:
             phase3.host_ack(manifest_path, self.root, ack_path, transfer_seconds=time.monotonic() - started)
+        # A remote acknowledgment is released only after both local copies read back.
+        for entry in manifest["files"]:
+            self._mirror(entry["path"])
+        self._mirror(relative)
+        self._mirror(ack_relative)
         self.transport.upload(ack_path, f"{execution_root}/{ack_relative}", timeout=self._timeout())
         return True
 
@@ -304,6 +329,7 @@ class HostPull:
         local = self.root / relative
         self.transport.download(remote, local, timeout=self._timeout())
         _require(_sha(local) == expected["sha256"], "Completed receipt changed in transit.")
+        self._mirror(relative)
         return _json(local)
 
 
@@ -581,17 +607,26 @@ def _weight_url(config: Mapping[str, Any], item: Mapping[str, Any]) -> str | Non
 
 def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False) -> dict[str, Any]:
     """Local-only readiness; no controller or SSH call and no cloud allocation."""
-    controller = Path(config["controller_root"]).resolve()
-    controller_config = _controller_config(controller)
-    _identity(config, controller_config)
-    cost = _cost(config)  # Refuse an unaffordable recovery before hashing multi-gigabyte inputs.
-    _require(controller_config["REPO_URL"].startswith("https://github.com/"), "Controller checkout URL must use canonical HTTPS.")
+    runpod = config.get("provider", "gcp") == "runpod"
+    _require(config.get("provider", "gcp") in {"gcp", "runpod"}, "Unsupported execution provider.")
+    if runpod:
+        from ec_clean30 import runpod_controller
+        cost = runpod_controller.validate_config(config)
+        repo_url = config["repo_url"]
+        _require(config["hardware_profile"] in {"runpod_l4", "runpod_rtx4090"}, "Explicit Runpod hardware profile required.")
+    else:
+        controller = Path(config["controller_root"]).resolve()
+        controller_config = _controller_config(controller)
+        _identity(config, controller_config)
+        cost = _cost(config)  # Refuse an unaffordable recovery before hashing multi-gigabyte inputs.
+        repo_url = controller_config["REPO_URL"]
+        for name in ("status", "report", "start", "stop", "pycharm-info"):
+            _require(os.access(controller / "bin" / f"vm-{name}", os.X_OK), f"Controller vm-{name} is unavailable.")
+        if _fallback_policy(config):
+            _require(os.access(controller / "bin/vm-fallback", os.X_OK), "Controller vm-fallback is unavailable.")
+    _require(repo_url.startswith("https://github.com/"), "Checkout URL must use canonical HTTPS.")
     origin = subprocess.check_output(["git", "-C", str(phase3.REPO_ROOT), "config", "--get", "remote.origin.url"], text=True).strip()
-    _require(_repository_key(origin) == _repository_key(controller_config["REPO_URL"]), "Local/controller repository identities differ.")
-    for name in ("status", "report", "start", "stop", "pycharm-info"):
-        _require(os.access(controller / "bin" / f"vm-{name}", os.X_OK), f"Controller vm-{name} is unavailable.")
-    if _fallback_policy(config):
-        _require(os.access(controller / "bin/vm-fallback", os.X_OK), "Controller vm-fallback is unavailable.")
+    _require(_repository_key(origin) == _repository_key(repo_url), "Local/controller repository identities differ.")
     source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
     secondary = Path(config["secondary_drive"]).resolve()
     _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
@@ -601,6 +636,14 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     _require(shutil.disk_usage(secondary).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
              "The independent drive lacks the 5 GiB reserve plus the download allowance.")
     _require(shutil.disk_usage(phase3.REPO_ROOT).free >= 5 * GIB, "Internal ext4 is below its 5 GiB reserve.")
+    if runpod:
+        mirror = Path(_absolute(config["mirror_root"])).resolve()
+        ancestor = mirror
+        while not ancestor.exists():
+            ancestor = ancestor.parent
+        _require(ancestor.stat().st_dev != secondary.stat().st_dev
+                 and shutil.disk_usage(ancestor).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
+                 "Runpod requires an independent NVMe mirror with the payload allowance and reserve.")
     for key in ("remote_repo", "remote_python", "remote_campaign", "view_archive", "timing_inputs", "bootstrap_python"):
         _absolute(config[key])
     for command in ("ssh", "scp", "rsync"):
@@ -646,9 +689,16 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
         _number(profile["memory_limit_bytes"], "memory cap")
         cores, gib = (2, 8) if key == "fit" else (4, 24)
         required_cap = {"--user", "--scope", f"CPUQuota={cores * 100}%", f"MemoryMax={gib}G", "MemorySwapMax=0"}
-        _require(Path(profile["cap_prefix"][0]).name == "systemd-run"
-                 and required_cap.issubset(set(profile["cap_prefix"])) and profile["memory_limit_bytes"] == gib * GIB,
-                 "G2 requires its declared systemd CPU/RAM/no-swap cap.")
+        if runpod:
+            expected = [config["remote_python"], f"{config['remote_repo']}/src/ec_clean30/container_caps.py", "run",
+                        "--cgroup-root", _absolute(config["cgroup_root"]), "--cpu-cores", str(cores),
+                        "--memory-bytes", str(gib * GIB), "--"]
+            _require(profile["cap_prefix"] == expected and profile["memory_limit_bytes"] == gib * GIB,
+                     "Runpod requires its exact cgroup CPU/RAM/no-swap cap.")
+        else:
+            _require(Path(profile["cap_prefix"][0]).name == "systemd-run"
+                     and required_cap.issubset(set(profile["cap_prefix"])) and profile["memory_limit_bytes"] == gib * GIB,
+                     "G2 requires its declared systemd CPU/RAM/no-swap cap.")
     for key in ("cpu_percent", "ram_bytes", "vram_bytes"):
         _number(config["lane_limits"][key], key)
     _require(config["lane_limits"] == {"cpu_percent": 600, "ram_bytes": 24 * GIB, "vram_bytes": 21 * GIB},
@@ -664,6 +714,14 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     contact = str(PurePosixPath(clean["weights"]).with_suffix("")) + "-contact-regression.pt"
     required = [esmc["esmc_weights"], clean["clean_python"], clean["harness"], clean["extract_script"], clean["weights"], contact]
     required += [str(PurePosixPath(config["timing_inputs"]) / name) for name in ("timing_inputs.json", "timing.fasta", "sequence_map.tsv")]
+    if runpod:
+        required.append(config["remote_python"])
+        _require(set(config["runtime_environments"]) == {"fit", "esm1b"}, "Both runtime locks are required.")
+        for key, runtime in config["runtime_environments"].items():
+            _require(runtime["packages"] and runtime["python_version"] and runtime["torch_cuda"]
+                     and any(item["remote"] == runtime["archive"] and item["sha256"] == runtime["archive_sha256"]
+                             and item.get("conda_unpack") is True for item in config["stage"]),
+                     f"The {key} runtime lacks a locked, relocatable archive.")
     _require(all(path in content for path in required), "The prepared staging closure omits an embedding input or interpreter.")
     return {"status": "ready" if source.get("published") else "draft_unpublished", "source": source,
             "cost": cost, "queue": [{"action": action, "name": name} for action, name in QUEUE],
@@ -717,14 +775,18 @@ def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item:
     _require(existing == expected, "Remote staging checksum or size differs.")
 
 
-def _stage_runtime(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
-    origin = _controller_config(transport.controller_root)["REPO_URL"]
+def _stage_checkout(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
+    origin = config["repo_url"] if config.get("provider") == "runpod" else _controller_config(transport.controller_root)["REPO_URL"]
     checkout = ("import pathlib,subprocess,sys; p=pathlib.Path(sys.argv[1]); "
                 "\nif not p.exists(): subprocess.run(['git','clone',sys.argv[2],str(p)],check=True)\n"
                 "assert not subprocess.check_output(['git','-C',str(p),'status','--porcelain'],text=True).strip(), 'Remote checkout is dirty'; "
                 "subprocess.run(['git','-C',str(p),'fetch','origin','main:refs/remotes/origin/main'],check=True); "
                 "subprocess.run(['git','-C',str(p),'checkout','--detach',sys.argv[3]],check=True)")
     transport.remote([config["bootstrap_python"], "-c", checkout, config["remote_repo"], origin, source["git_head"]], timeout=300)
+
+
+def _stage_runtime(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
+    _stage_checkout(config, transport, source)
     for item in config["stage"]:
         _stage_file(config, transport, item)
         if item["kind"] == "tar":
@@ -739,17 +801,91 @@ def _stage_runtime(config: Mapping[str, Any], transport: ControllerTransport, so
                               item["sha256"], str(int(item.get("conda_unpack", False)))], timeout=600)
 
 
+def _container_probe(config: Mapping[str, Any], transport: ControllerTransport, *, early: bool = False) -> str:
+    from ec_clean30 import container_caps
+    python = config["bootstrap_python"] if early else config["remote_python"]
+    local = Path(config["state_root"]) / ("container_probe_early.json" if early else "container_probe.json")
+    if early:
+        inspect = ("import json,os,pathlib,sys; p=pathlib.Path(sys.argv[1]); "
+                   "print(json.dumps({'mountinfo':[s for s in pathlib.Path('/proc/self/mountinfo').read_text().splitlines() "
+                   "if ' - cgroup' in s],'membership':pathlib.Path('/proc/self/cgroup').read_text(),"
+                   "'cgroup_root':str(p),'writable':os.access(p,os.W_OK),"
+                   "'controls':{n:(p/n).read_text() if (p/n).is_file() else None "
+                   "for n in ('cgroup.controllers','cgroup.subtree_control','cpu.max','memory.max','memory.swap.max')}}))")
+        _write(local.parent / "container_observation.json", json.loads(transport.remote(
+            [python, "-c", inspect, config["cgroup_root"]], timeout=30)))
+    try:
+        result = json.loads(transport.remote([python, f"{config['remote_repo']}/src/ec_clean30/container_caps.py",
+            "probe", "--cgroup-root", config["cgroup_root"]], cwd=config["remote_repo"], timeout=90))
+        container_caps.validate_probe_evidence(result)
+    except BaseException as exc:
+        _write(local, {"status": "failed", "error": str(exc), "cgroup_root": config["cgroup_root"]})
+        raise
+    _write(local, result)
+    remote = f"{config['remote_campaign']}/g2_requests/{local.name}"
+    transport.upload(local, remote)
+    return remote
+
+
+def _verify_runtime_lock(config: Mapping[str, Any], transport: ControllerTransport, key: str, python: str) -> None:
+    program = ("import importlib.metadata as m,json,platform,re,torch; "
+               "print(json.dumps({'python_version':platform.python_version(),'torch_cuda':torch.version.cuda,"
+               "'packages':{re.sub(r'[-_.]+','-',d.metadata['Name']).lower():d.version for d in m.distributions()}}))")
+    measured = json.loads(transport.remote([*config["profiles"][key]["cap_prefix"], python, "-c", program],
+                                          cwd=config["remote_repo"], timeout=90))
+    expected = config["runtime_environments"][key]
+    _write(Path(config["state_root"]) / f"runtime_{key}.json", measured)
+    _require(all(measured[field] == expected[field] for field in ("python_version", "torch_cuda", "packages")),
+             f"The {key} interpreter differs from its complete published runtime lock.")
+
+
 def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> tuple[str, str]:
     repo, campaign = config["remote_repo"], config["remote_campaign"]
     manifest = str(PurePosixPath(repo) / Path(config["execution_manifest"]).resolve().relative_to(phase3.REPO_ROOT).as_posix())
     runner = f"{repo}/scripts/run_ec_clean30_phase3.py"
     transport.remote([config["remote_python"], runner, "verify-execution", "--manifest", manifest], cwd=repo)
-    gpu = ("import json,torch; assert torch.cuda.is_available() and torch.version.cuda; "
-           "assert torch.cuda.get_device_name(0)=='NVIDIA L4'; "
-           "assert (torch.ones(4,device='cuda')*2).sum().item()==8; torch.cuda.synchronize(); "
-           "print(json.dumps({'torch':torch.__version__,'cuda':torch.version.cuda,'device':torch.cuda.get_device_name(0)}))")
+    runpod = config.get("provider") == "runpod"
+    profile = config.get("hardware_profile", "gcp_l4")
+    cap_probe = _container_probe(config, transport) if runpod else None
+    gpu = phase3.cuda_probe_program(profile)
     for key, python in (("fit", config["remote_python"]), ("esm1b", config["embedding"]["esm1b"]["clean_python"])):
-        transport.remote([*config["profiles"][key]["cap_prefix"], python, "-c", gpu], cwd=repo, timeout=90)
+        if runpod:
+            _verify_runtime_lock(config, transport, key, python)
+        measured = json.loads(transport.remote([*config["profiles"][key]["cap_prefix"], python, "-c", gpu], cwd=repo, timeout=90))
+        phase3.validate_cuda_evidence(measured, profile)
+        _write(Path(config["state_root"]) / f"cuda_{key}.json", measured)
+    if runpod:
+        program = phase3.main_model_probe_program(profile, f"{campaign}/g2_requests/main_probe_payload")
+        measured = json.loads(transport.remote([*config["profiles"]["fit"]["cap_prefix"],
+            config["remote_python"], "-c", program], cwd=repo, timeout=180))
+        phase3.validate_main_model_evidence(measured, profile)
+        local = Path(config["state_root"]) / "main_model_probe.json"
+        _write(local, measured)
+        transport.upload(local, f"{campaign}/g2_requests/main_model_probe.json")
+        host = HostPull(transport, Path(config["durable_root"]), Path(config["state_root"]),
+                        max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=transport.deadline_unix,
+                        mirror_root=Path(config["mirror_root"]))
+        for name, key in (("synthetic_checkpoint.pt", "checkpoint_sha256"),
+                          ("cpu_predictions.json", "cpu_predictions_sha256"),
+                          ("cuda_predictions.json", "gpu_predictions_sha256")):
+            remote = f"{campaign}/g2_requests/main_probe_payload/{name}"
+            expected = transport.stat_file(remote)
+            _require(expected and expected["sha256"] == measured[key], "Qualification output differs from its receipt.")
+            host._reserve(expected["size_bytes"])
+            target = host.root / "qualification" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            transport.download(remote, target)
+            _require(_sha(target) == measured[key], "Qualification output changed during readback.")
+            host._mirror(f"qualification/{name}")
+        clean = config["embedding"]["esm1b"]
+        program = phase3.esm1b_model_probe_program(profile, clean["weights"], clean["weights_sha256"],
+                                                  clean["contact_weights_sha256"])
+        measured = json.loads(transport.remote([*config["profiles"]["esm1b"]["cap_prefix"],
+            clean["clean_python"], "-c", program], cwd=repo, timeout=300))
+        phase3.validate_esm1b_model_evidence(measured, profile)
+        local = Path(config["state_root"]) / "esm1b_model_probe.json"
+        _write(local, measured)
+        transport.upload(local, f"{campaign}/g2_requests/esm1b_model_probe.json")
     view = f"{campaign}/views/fold0"
     if transport.read_json(f"{view}/view_manifest.json", optional=True) is None:
         transport.remote([config["remote_python"], runner, "unpack-view", "--archive", config["view_archive"],
@@ -760,9 +896,12 @@ def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport
     transport.upload(local_cap, cap)
     probe = f"{campaign}/g2_requests/probe_{source['execution_manifest_sha256']}.json"
     if transport.read_json(probe, optional=True) is None:
-        transport.remote([config["remote_python"], runner, "vm-probe", "--view", view,
+        arguments = [config["remote_python"], runner, "vm-probe", "--view", view,
                           "--execution-manifest", manifest, "--out", probe, "--cap-json", cap,
-                          "--python", config["remote_python"]], cwd=repo, timeout=300)
+                          "--python", config["remote_python"]]
+        if runpod:
+            arguments += ["--hardware-profile", profile, "--cap-probe", cap_probe]
+        transport.remote(arguments, cwd=repo, timeout=300)
     return manifest, probe
 
 
@@ -871,7 +1010,203 @@ def _fallback_after_stockout(config: dict[str, Any], state: dict[str, Any], stat
     _selected_fallback(config, state, state_path)
 
 
+def _execute_queue(config, transport, state, state_path, session, ready, manifest, probe, check_session):
+    """The one fixed queue, shared by both provider controllers."""
+    state_root = Path(config["state_root"])
+    transport.reserve_seconds = 30
+    host = HostPull(transport, Path(config["durable_root"]), state_root,
+                    max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=session["deadline_unix"],
+                    mirror_root=Path(config["mirror_root"]) if config.get("mirror_root") else None)
+    root = f"{config['remote_campaign']}/runs/fold0/g2"
+    common = {**session, "execution_manifest": manifest, "view": f"{config['remote_campaign']}/views/fold0",
+              "vm_probe": probe, "execution_root": root, "durable_root": str(Path(config["durable_root"]).resolve()),
+              "persistence_mode": "host_pull", "python": config["remote_python"], "device": "cuda", "smoke": False,
+              "attempt": 1}
+    if config.get("provider") == "runpod":
+        common.update(hardware_profile=config["hardware_profile"],
+                      main_model_probe=f"{config['remote_campaign']}/g2_requests/main_model_probe.json",
+                      main_model_probe_sha256=_sha(Path(config["state_root"]) / "main_model_probe.json"),
+                      esm1b_model_probe=f"{config['remote_campaign']}/g2_requests/esm1b_model_probe.json",
+                      esm1b_model_probe_sha256=_sha(Path(config["state_root"]) / "esm1b_model_probe.json"))
+    for action, name in QUEUE:
+        if name in state["completed"]:
+            continue
+        check_session()
+        request = {**common, **config["profiles"]["esm1b" if name == "esm1b" else "fit"], **config["bounds"][name]}
+        if action == "timing-unit":
+            request["recipe"] = name
+            complete = f"runs/ecc30timing_{name}_attempt1/g2_complete.json"
+        elif action == "lane-gate":
+            request.update(serial_receipts=[f"{root}/runs/ecc30timing_lane_serial_{i}_attempt1/g2_complete.json" for i in (1, 2)],
+                           limits=config["lane_limits"])
+            complete = "runs/ecc30timing_lane_batch_attempt1/lane_gate.json"
+            measured = [transport.read_json(path)["wall_seconds"] for path in request["serial_receipts"]]
+            request["forecast_seconds"] = max(request["forecast_seconds"], 3 * max(measured))
+        else:
+            request.update(kind=name, timing_inputs=config["timing_inputs"], **config["embedding"][name])
+            complete = f"runs/ecc30timing_embed_{name}_attempt1/embedding_complete.json"
+        remaining = session["deadline_unix"] - time.time()
+        _require(remaining >= request["forecast_seconds"] * 1.25 + RESERVE_SECONDS,
+                 "Next complete unit does not fit the approved allocation; retain evidence and request a new decision.")
+        completed = complete_remote_unit(transport, host, request, runner=f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
+            action=action, remote_request=f"{config['remote_campaign']}/g2_requests/{name}.json",
+            completed_relative=complete, timeout=request["unit_timeout_seconds"] + 60)
+        _require(completed.get("execution_manifest_sha256") == ready["source"]["execution_manifest_sha256"]
+                 and completed.get("status") in ({"passed", "failed"} if action == "lane-gate" else {"passed"}),
+                 "The completed unit receipt is failed or foreign.")
+        state["completed"].append(name)
+        _write(state_path, state)
+    state["status"] = "measurements_complete"
+
+
+class RunpodTransport(ControllerTransport):
+    """The same authenticated file transport with an independent stop controller."""
+
+    def __init__(self, config, controller):
+        super().__init__(Path(config["state_root"]), config["runpod"]["ssh_alias"],
+                         bootstrap_python=config["bootstrap_python"])
+        self.stop_controller = controller
+
+    def _bounded(self, timeout):
+        self.stop_controller.heartbeat()
+        return super()._bounded(timeout)
+
+    def controller(self, name, *args, **kwargs):
+        raise WorkstationError("GCP lifecycle commands cannot operate a Runpod allocation.")
+
+
+def _preserve_runpod_outputs(config, transport, controller, session):
+    """Read every output back twice before authorizing deletion of persistent storage."""
+    root = f"{config['remote_campaign']}/runs/fold0/g2"
+    program = ("import hashlib,json,pathlib,sys; p=pathlib.Path(sys.argv[1]); files=[]; "
+        "\nif p.exists():\n for f in sorted(p.rglob('*')):\n"
+        "  assert not f.is_symlink(), 'Output symlink is not eligible for cleanup'\n"
+        "  if f.is_file():\n"
+        "   with f.open('rb') as h: digest=hashlib.file_digest(h,'sha256').hexdigest()\n"
+        "   files.append({'path':f.relative_to(p).as_posix(),'size_bytes':f.stat().st_size,'sha256':digest})\n"
+        "s=json.loads((p/'execution_state.json').read_text()) if (p/'execution_state.json').exists() else {}; "
+        "print(json.dumps({'files':files,'pending_transfer':s.get('pending_transfer'),'pending_unit':s.get('pending_unit')}))")
+    inventory = json.loads(transport.remote([config["bootstrap_python"], "-c", program, root], timeout=120))
+    identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
+    inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
+    host = HostPull(transport, Path(config["durable_root"]), Path(config["state_root"]),
+                    max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=session["deadline_unix"],
+                    mirror_root=Path(config["mirror_root"]))
+    missing, count = [], 0
+    for entry in inventory["files"]:
+        name = _relative(entry["path"])
+        local = host.root / name
+        _require(host.root in local.resolve().parents and not local.is_symlink(), "Unsafe closeout member.")
+        if not local.is_file() or local.stat().st_size != entry["size_bytes"] or _sha(local) != entry["sha256"]:
+            missing.append(name)
+            count += entry["size_bytes"]
+    if missing:
+        host._reserve(count)
+        transport.download_files(root, host.root, missing, timeout=host._timeout())
+    for entry in inventory["files"]:
+        local = host.root / entry["path"]
+        _require(local.stat().st_size == entry["size_bytes"] and _sha(local) == entry["sha256"],
+                 "Closeout output readback differs from the remote inventory.")
+        host._mirror(entry["path"])
+    relative = "closeout/remote_inventory.json"
+    _write(host.root / relative, inventory)
+    host._mirror(relative)
+    files = inventory["files"] + [{"path": relative, "size_bytes": (host.root / relative).stat().st_size,
+                                   "sha256": _sha(host.root / relative)}]
+    manifests = []
+    for entry in inventory["files"]:
+        name = entry["path"]
+        if name.startswith("persistence_receipts/") and name.endswith(".json"):
+            document = _json(host.root / name)
+            if (isinstance(document, dict) and document.get("schema_version") == 1
+                    and document.get("persistence_mode") == "host_pull"
+                    and isinstance(document.get("ack_path"), str) and isinstance(document.get("files"), list)):
+                manifests.append(name)
+    receipt = {"format": "deepmzyme_ec_clean30_runpod_preservation_v1", **identity,
+               "primary_root": str(host.root), "mirror_root": str(host.mirror_root), "files": files,
+               "remote_inventory_path": relative, "host_pull_manifests": manifests}
+    path = Path(config["state_root"]) / "preservation_receipt.json"
+    _write(path, receipt)
+    return path
+
+
+def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
+    from ec_clean30 import runpod_controller
+    controller = controller or runpod_controller.RunpodController(config, config_path)
+    transport = transport or RunpodTransport(config, controller)
+    state_root = Path(config["state_root"])
+    state_root.mkdir(parents=True, exist_ok=True)
+    state_path = state_root / "driver_state.json"
+    with (state_root / "driver.lock").open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        state = _json(state_path) if state_path.exists() else {"config_sha256": _sha(config_path), "completed": []}
+        _require(state["config_sha256"] == _sha(config_path) and not state.get("closed"),
+                 "Runpod configuration changed or its allocation is already closed.")
+        owned = bool(state.get("start_attempted"))
+        session = None
+        try:
+            ready = preflight(config, config_path, published=True)
+            gcp = Path(config["gcp_controller_root"])
+            status = subprocess.run([str(gcp / "bin/vm-status")], check=True, capture_output=True, text=True, timeout=90).stdout
+            _require(_status(status, config["gcp_stopped_identity"]) == "TERMINATED", "The retained GCP VM must remain stopped.")
+            _write(state_root / "gcp_before.json", {"status": status})
+            if not owned:
+                state["start_attempted"] = True
+                _write(state_path, state)
+                owned = True
+                session = controller.start()
+            else:
+                session = controller.session(state.get("session_id"))
+            state.update(session)
+            _write(state_path, state)
+            transport.deadline_unix = session["deadline_unix"]
+            transport.reserve_seconds = RESERVE_SECONDS
+            until = min(time.time() + 300, session["deadline_unix"] - RESERVE_SECONDS)
+            while True:
+                controller.heartbeat()
+                try:
+                    transport.ssh_config = controller.write_ssh_config()
+                    transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
+                    break
+                except (OSError, subprocess.SubprocessError, RuntimeError):
+                    _require(time.time() + 10 < until, "The owned pod did not become reachable within its startup bound.")
+                    time.sleep(10)
+            _stage_checkout(config, transport, ready["source"])
+            # Verify real kernel authority before transferring the multi-gigabyte closure.
+            _container_probe(config, transport, early=True)
+            free = int(transport.remote([config["bootstrap_python"], "-c",
+                "import shutil; print(shutil.disk_usage('/workspace').free)"]).strip())
+            _require(free >= ready["staging_peak_bytes"] + 5 * GIB, "Pod disk lacks staging and closeout space.")
+            _stage_runtime(config, transport, ready["source"])
+            manifest, probe = _runtime_preflight(config, transport, ready["source"])
+            controller.admit_workload()
+            _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
+                           lambda: controller.session(session["session_id"]))
+        except BaseException as exc:
+            state.update(status="interrupted", error=f"{type(exc).__name__}: {exc}")
+            raise
+        finally:
+            if owned:
+                try:
+                    preservation = None
+                    if session:
+                        transport.reserve_seconds = 15
+                        try:
+                            preservation = _preserve_runpod_outputs(config, transport, controller, session)
+                        except Exception as exc:
+                            state["preservation_error"] = f"{type(exc).__name__}: {exc}"
+                    stopped = controller.stop()
+                    state.update(closed=True, provider_stop_verified=True, stop_status=stopped)
+                    if preservation:
+                        state["closeout"] = controller.closeout(preservation)
+                finally:
+                    _write(state_path, state)
+        return state
+
+
 def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: ControllerTransport | None = None) -> dict[str, Any]:
+    if config.get("provider") == "runpod":
+        return _run_runpod_g2(config, config_path, transport=transport)
     config = dict(config)
     transport = transport or ControllerTransport(Path(config["controller_root"]), config["ssh_alias"],
                                                  bootstrap_python=config["bootstrap_python"])
@@ -926,43 +1261,8 @@ def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: Controlle
                      "VM disk cannot stage the prepared closure while keeping 5 GiB free.")
             _stage_runtime(config, transport, ready["source"])
             manifest, probe = _runtime_preflight(config, transport, ready["source"])
-            transport.reserve_seconds = 30
-            host = HostPull(transport, Path(config["durable_root"]), state_root,
-                            max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=session["deadline_unix"])
-            root = f"{config['remote_campaign']}/runs/fold0/g2"
-            common = {**session, "execution_manifest": manifest, "view": f"{config['remote_campaign']}/views/fold0",
-                      "vm_probe": probe, "execution_root": root, "durable_root": str(Path(config["durable_root"]).resolve()),
-                      "persistence_mode": "host_pull", "python": config["remote_python"], "device": "cuda", "smoke": False,
-                      "attempt": 1}
-            for action, name in QUEUE:
-                if name in state["completed"]:
-                    continue
-                _session(config, transport, session["session_id"])
-                request = {**common, **config["profiles"]["esm1b" if name == "esm1b" else "fit"], **config["bounds"][name]}
-                if action == "timing-unit":
-                    request["recipe"] = name
-                    complete = f"runs/ecc30timing_{name}_attempt1/g2_complete.json"
-                elif action == "lane-gate":
-                    request.update(serial_receipts=[f"{root}/runs/ecc30timing_lane_serial_{i}_attempt1/g2_complete.json" for i in (1, 2)],
-                                   limits=config["lane_limits"])
-                    complete = "runs/ecc30timing_lane_batch_attempt1/lane_gate.json"
-                    measured = [transport.read_json(path)["wall_seconds"] for path in request["serial_receipts"]]
-                    request["forecast_seconds"] = max(request["forecast_seconds"], 3 * max(measured))
-                else:
-                    request.update(kind=name, timing_inputs=config["timing_inputs"], **config["embedding"][name])
-                    complete = f"runs/ecc30timing_embed_{name}_attempt1/embedding_complete.json"
-                remaining = session["deadline_unix"] - time.time()
-                _require(remaining >= request["forecast_seconds"] * 1.25 + RESERVE_SECONDS,
-                         "Next complete unit does not fit the approved allocation; retain evidence and request a new decision.")
-                completed = complete_remote_unit(transport, host, request, runner=f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
-                    action=action, remote_request=f"{config['remote_campaign']}/g2_requests/{name}.json",
-                    completed_relative=complete, timeout=request["unit_timeout_seconds"] + 60)
-                _require(completed.get("execution_manifest_sha256") == ready["source"]["execution_manifest_sha256"]
-                         and completed.get("status") in ({"passed", "failed"} if action == "lane-gate" else {"passed"}),
-                         "The completed unit receipt is failed or foreign.")
-                state["completed"].append(name)
-                _write(state_path, state)
-            state["status"] = "measurements_complete"
+            _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
+                           lambda: _session(config, transport, session["session_id"]))
         except BaseException as exc:
             state.update(status="interrupted", error=f"{type(exc).__name__}: {exc}")
             raise
@@ -1002,6 +1302,6 @@ def main(argv: list[str] | None = None) -> int:
             result = preflight(config, args.config)
         print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
         return 0
-    except (WorkstationError, OSError, ValueError, KeyError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
+    except (RuntimeError, OSError, ValueError, KeyError, subprocess.SubprocessError, KeyboardInterrupt) as exc:
         print(f"Workstation refused: {exc}", file=sys.stderr)
         return 2

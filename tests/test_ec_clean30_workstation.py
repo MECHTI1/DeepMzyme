@@ -123,6 +123,71 @@ def test_remote_cycle_copies_reads_acknowledges_then_finalizes(cycle, lost, extr
     assert ("launch", ".seal") in events if extra else ("launch", ".seal") not in events
 
 
+def test_host_pull_mirrors_verified_bytes_before_releasing_ack(cycle, tmp_path):
+    request, durable, state, kwargs = cycle
+    transport = LocalTransport()
+    mirror = tmp_path / "nvme"
+    upload = transport.upload
+
+    def checked_upload(local, remote, **options):
+        if remote.endswith(".ack.json"):
+            assert (mirror / "runs/fixture/model.bin").read_bytes() == b"synthetic model bytes"
+            assert (mirror / "persistence_receipts/first.json").is_file()
+            assert (mirror / "persistence_receipts/first.ack.json").read_bytes() == Path(local).read_bytes()
+        upload(local, remote, **options)
+
+    transport.upload = checked_upload
+    host = ws.HostPull(transport, durable, state, max_download_bytes=100000,
+                       deadline_unix=time.time() + 600, mirror_root=mirror)
+    ws.complete_remote_unit(transport, host, request, **kwargs)
+    assert (mirror / "runs/fixture/complete.json").read_bytes() == (durable / "runs/fixture/complete.json").read_bytes()
+
+
+def test_mirror_failure_withholds_remote_ack_and_next_launch(cycle, tmp_path, monkeypatch):
+    request, durable, state, kwargs = cycle
+    transport = LocalTransport()
+    host = ws.HostPull(transport, durable, state, max_download_bytes=100000,
+                       deadline_unix=time.time() + 600, mirror_root=tmp_path / "nvme")
+
+    def failed(_):
+        raise OSError("synthetic mirror disk failure")
+
+    monkeypatch.setattr(host, "_mirror", failed)
+    with pytest.raises(OSError, match="mirror disk"):
+        ws.complete_remote_unit(transport, host, request, **kwargs)
+    assert not any(kind == "upload" and value.endswith(".ack.json") for kind, value in transport.events)
+    assert ("launch", ".finalize") not in transport.events
+
+
+def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifests(cycle, tmp_path):
+    request, durable, state, _ = cycle
+    root = Path(request["execution_root"])
+    payloads = {"runs/model.bin": b"checkpoint",
+                "persistence_receipts/unit.json": json.dumps({"schema_version": 1, "persistence_mode": "host_pull",
+                    "ack_path": "persistence_receipts/unit.ack.json", "files": []}).encode(),
+                "persistence_receipts/unit.ack.json": b'{"manifest_sha256":"fixture"}',
+                "persistence_receipts/unit.state.json": b'{"status":"persisted"}',
+                "persistence_receipts/unit.events.jsonl": b'{"event":"first"}\n{"event":"second"}\n'}
+    entries = []
+    for name, data in payloads.items():
+        target = root / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        entries.append({"path": name, "size_bytes": len(data), "sha256": ws._sha(target)})
+    transport = LocalTransport()
+    transport.remote = lambda *a, **kw: json.dumps({"files": entries, "pending_transfer": None, "pending_unit": None})
+    config = {"remote_campaign": str(root.parents[2]), "bootstrap_python": sys.executable,
+              "durable_root": str(durable), "mirror_root": str(tmp_path / "nvme"), "state_root": str(state)}
+    controller = type("Controller", (), {"config_sha": "a" * 64})()
+    receipt = ws._preserve_runpod_outputs(config, transport, controller,
+        {"pod_id": "pod", "session_id": "session", "deadline_unix": time.time() + 600})
+    proof = json.loads(receipt.read_text())
+    assert proof["host_pull_manifests"] == ["persistence_receipts/unit.json"]
+    assert {row["path"] for row in proof["files"]} == set(payloads) | {"closeout/remote_inventory.json"}
+    for name, data in payloads.items():
+        assert (durable / name).read_bytes() == (tmp_path / "nvme" / name).read_bytes() == data
+
+
 @pytest.mark.parametrize("returncode", [0, 2])
 def test_detached_launch_script_runs_once_and_keeps_terminal_code(tmp_path, monkeypatch, returncode):
     transport = ws.ControllerTransport(tmp_path, "fixture", bootstrap_python=sys.executable)
@@ -529,6 +594,73 @@ def test_driver_runs_exact_fixed_queue_once_then_stops(lifecycle):
     assert transport.calls.count(("start", ("--confirm", "--hours", "2"))) == 1
     with pytest.raises(ws.WorkstationError, match="no automatic restart"):
         ws.run_g2(cfg, path, transport=transport)
+
+
+@pytest.mark.parametrize("failure", [None, "caps", "unit", "start"])
+def test_runpod_uses_shared_queue_and_always_closes_owned_attempt(lifecycle, monkeypatch, failure):
+    cfg, path, measured = lifecycle
+    cfg.update(provider="runpod", hardware_profile="runpod_rtx4090", gcp_controller_root=cfg["controller_root"],
+               gcp_stopped_identity=cfg["expected_identity"], mirror_root=str(path.parent / "nvme"))
+    write(path, cfg)
+    transport = LifecycleTransport(cfg)
+    now = time.time()
+
+    class Controller:
+        def __init__(self):
+            self.starts, self.stops = 0, 0
+
+        def start(self):
+            self.starts += 1
+            if failure == "start":
+                raise ws.WorkstationError("synthetic start failure")
+            return self.session()
+
+        def session(self, previous=None):
+            assert previous in (None, "runpod-session")
+            return {"session_id": "runpod-session", "allocation_started_unix": now,
+                    "deadline_unix": now + 6960, "max_total_seconds": 6960}
+
+        def heartbeat(self):
+            pass
+
+        def admit_workload(self):
+            pass
+
+        def write_ssh_config(self):
+            return path.parent / "ssh_config"
+
+        def stop(self):
+            self.stops += 1
+            return {"desiredStatus": "EXITED", "runtimeStatus": "stopped"}
+
+    controller = Controller()
+    monkeypatch.setattr(ws, "preflight", lambda *a, **kw: {"source": {"execution_manifest_sha256": "a" * 64},
+                                                         "staging_peak_bytes": 1})
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 0, transport.controller("status"), ""))
+    monkeypatch.setattr(ws, "_stage_checkout", lambda *a: None)
+
+    def caps(*args, **kwargs):
+        if failure == "caps":
+            raise ws.WorkstationError("synthetic missing cgroup delegation")
+        return "probe.json"
+
+    monkeypatch.setattr(ws, "_container_probe", caps)
+    monkeypatch.setattr(ws, "_preserve_runpod_outputs", lambda *a: None)
+    write(Path(cfg["state_root"]) / "esm1b_model_probe.json", {"fixture": True})
+    write(Path(cfg["state_root"]) / "main_model_probe.json", {"fixture": True})
+    if failure == "unit":
+        monkeypatch.setattr(ws, "complete_remote_unit", lambda *a, **kw: (_ for _ in ()).throw(ws.WorkstationError("synthetic unit failure")))
+    if failure:
+        with pytest.raises(ws.WorkstationError):
+            ws._run_runpod_g2(cfg, path, transport=transport, controller=controller)
+    else:
+        result = ws._run_runpod_g2(cfg, path, transport=transport, controller=controller)
+        assert measured == list(ws.QUEUE) and result["status"] == "measurements_complete"
+    assert controller.starts == controller.stops == 1
+    state = json.loads((Path(cfg["state_root"]) / "driver_state.json").read_text())
+    assert state["closed"] and state["provider_stop_verified"]
+    if failure in {"caps", "start"}:
+        assert measured == []
 
 
 @pytest.mark.parametrize("problem", ["unit", "start_response"])

@@ -54,21 +54,23 @@ evidence before adoption; failed recovery uses the [abandonment gate](../../GCP_
 off-pod preservation and provider-confirmed shutdown. The pod has no persistent volume; recovery uses
 retained local inputs and source records, not an assumption that its container files survive.
 
-The current execution package is not qualified on this RTX 4090 allocation. Before any Runpod G2 fit:
+The [execution-v3 extension](execution_v3/manifest.json) implements the Runpod qualification route;
+[evc-025](log.md#evc-025) owns its CPU evidence, replacement preparation and limits. The old pod is
+deleted. Actual provider qualification remains pending. Before any Runpod G2 fit:
 
 - Preserve a clean, published checkout and authenticate its source/input manifests. The copied tree excluded
   `.git`; code inspection establishes the missing prerequisite, not a measured verifier failure.
-- Qualify the actual hardware and both Python runtimes. Existing G2 CUDA checks require an L4; the unpinned
-  container installation has only import/device-query evidence, not full-model or replay evidence.
+- Qualify the actual L4 or RTX 4090 hardware and both locked Python runtimes. Require full-model ESM-1b
+  CUDA transfer and the source-bound CPU/CUDA qualification receipts; old container imports are insufficient.
 - Provide a validated equivalent for the GCP-bound transport/session checks and the declared CPU/RAM/no-swap
   caps. Keep the exact queue, admission margin, closeout reserve, input/read guards and HostPull acknowledgments.
-- Record the applicable numerical spending/runtime ceiling and verify the actual stop mechanism before
-  admitting work. No automatic-stop deadline has been verified for this pod.
+- Enforce the approved $5 gross envelope and 117-minute maximum allocation with the independent workstation
+  stop process armed before creation. Verify its heartbeat and provider STOP; preserve the 900-second reserve.
 - Complete extraction/view checks, private-runtime checks and independent output persistence on the qualified
   runtime. The ten matching staged-file hashes establish input preservation, not execution readiness.
 
-Any implementation adaptation requires its own source record and relevant checks; no source pin or guard has
-been weakened. The fixed G2 scope below remains the reviewed GCP recipe. Zero measured G2 results are available;
+The v3 manifest preserves the original source records and scientific guards. The fixed G2 scope below remains
+the reviewed timing recipe. Zero measured G2 results are available;
 Freeze 1c and numerical G3 still precede the 96 S1 plus eight CLEAN inner fits.
 
 ## Previous start attempts

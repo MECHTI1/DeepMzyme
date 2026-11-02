@@ -1383,3 +1383,57 @@ hash readback. A separate GCP status read at **20:52:55 UTC** reconfirmed `TERMI
 report confirmed no active session and zero recorded GPU runtime that day. No GCP restart occurred.
 Zero of twelve G2 events completed and no scientific fit began. Freeze 1c and numerical G3 remain pending before
 the 96 S1 plus eight CLEAN inner fits. Root STATUS and all frozen scientific evidence remain unchanged under C-10.
+
+## evc-025
+
+2026-11-03 — **Runpod qualification extension and replacement preparation.** The evc-024 closeout was
+committed and published at `e2c5912`; the untracked launch helper was removed. The new approved scope is
+one Secure Cloud L4 or RTX 4090 G2 pass in an available datacenter, a two-hour requested window,
+117-minute maximum allocation, and **$5.00 gross** including storage and reserves. The original GCP VM
+remains stopped; its controller keeps the $25 daily guard. Phase 4 still requires measured Freeze 1c and
+the numerical G3 proposal to be reviewed before its fits begin.
+
+The additive [execution-v3 manifest](execution_v3/manifest.json) preserves the original WP-13 and v2
+manifests and authenticates their published source ancestry. It pins the provider controller, direct
+cgroup-v2 cap helper, and affected execution code. Remote execution requires a clean published `.git`
+checkout, the pinned inputs, an exact interpreter package fingerprint, and the verified relocated view.
+Both approved GPU profiles require one nominal 24-GB device and working CUDA in both interpreters.
+
+The new qualification checks exercise a synthetic production F4 checkpoint reconstructed on CPU and CUDA
+at the existing `1e-6` absolute logit tolerance. The separate CLEAN interpreter loads all 33 ESM-1b layers,
+checks both pinned weight files, transfers the complete model to CUDA, and compares CPU/CUDA representations
+for the synthetic sequence `MKT` at predeclared feature tolerances `atol=rtol=1e-4`. These are runtime checks,
+not campaign fits. `NVIDIA_TF32_OVERRIDE=0` applies to qualification and the actual pod workloads.
+Host, boot, interpreter, source and allocation bindings prevent reuse of another session's proof.
+
+The container helper enforces the original per-child CPU/RAM/zero-swap limits directly through delegated
+kernel cgroups. Its local CPU-only live verification passed **21 tests**, including measured throttling,
+contained OOM termination, membership and descendant cleanup. Probe SHA-256:
+`e03955dbd413874045530833711e38bf82c074a600781d956562c5e90a0a48f7`.
+This establishes the helper's behavior on Linux; actual Runpod delegation remains a prerequisite.
+Read-only or non-delegated cgroups refuse work before the input closure is staged.
+
+The workstation retains one exact twelve-event queue, the 1.25 admission multiplier, 900-second closeout
+reserve, F9 guards, independent replay and HostPull acknowledgments. Each acknowledgment follows verified
+Data1 readback and a second NVMe copy. The independent stop process is armed before creation, admission
+closes 120 seconds before the allocation ceiling, and provider STOP is read back. Source/config drift,
+lost creation replies, partial ownership records and failed bookkeeping are covered by focused tests.
+Stopped persistent storage has a priced finite reserve; deletion requires the complete output inventory
+and two verified local copies. A stopped failure with unacknowledged data is retained for recovery.
+
+The [CPU verification record](execution_v3/verification.json) records **342 passed, one skipped** across
+the six focused files. The skipped check requires a supplied delegated cgroup; the separate local live
+check above covers that mechanism. Source stayed unchanged during the focused run. The original frozen
+scientific inputs and selection rules were preserved.
+
+Both relocated runtime archives passed CPU imports and tensor checks. The complete
+[runtime fingerprints](execution_v3/runtime_locks.json) pin the main Python 3.12/CUDA 13.0 environment
+and CLEAN Python 3.10/CUDA 11.3 environment, including archive SHA-256 values and exact package versions.
+The main archive adds the pinned missing `gemmi==0.7.3` wheel without modifying the workstation environment.
+Only absent bytecode files were omitted; uncached conda metadata warnings and relocation evidence remain
+in the private runtime record. Actual CUDA/model/replay qualification on the replacement remains mandatory.
+
+The old stopped, zero-volume pod `mbg2lc6vg5oiki` had lost its assigned host GPU. After checking the retained
+preservation receipt, it was terminated under the approved cleanup scope; a fresh provider list confirmed
+its absence. Private `phase3/runpod_qualification_20261102/old_pod_deleted.json` records the action.
+Replacement qualification and measured G2 results are pending. No Freeze 1c or numerical G3 result is claimed.

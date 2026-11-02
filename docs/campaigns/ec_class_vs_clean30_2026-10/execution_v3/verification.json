@@ -1,0 +1,54 @@
+{
+  "boundaries": {
+    "freeze1c_complete": false,
+    "g2_completed_events": 0,
+    "held_out_read": false,
+    "original_wp13_and_v2_preserved": true,
+    "phase4_started": false
+  },
+  "cpu_smoke": {
+    "checks": 45,
+    "log_sha256": "9cb207dafdb22e4db0b19668cedf56cdb6417774593740b5f39ec600de1377d0",
+    "status": "passed_with_optional_skip"
+  },
+  "docs_contract": {
+    "baseline_warnings": 11,
+    "strict_failures": 0
+  },
+  "focused_tests": {
+    "files": [
+      "tests/test_ec_clean30_container_caps.py",
+      "tests/test_ec_clean30_runpod_controller.py",
+      "tests/test_ec_clean30_runpod_runtime.py",
+      "tests/test_ec_clean30_execution_v3.py",
+      "tests/test_ec_clean30_workstation.py",
+      "tests/test_ec_clean30_phase3.py"
+    ],
+    "log_sha256": "649878d0f40d1b233952efacd19fb194ce5ada21eea0b1b1bc941cc471deacb7",
+    "passed": 342,
+    "skipped": 1,
+    "source_unchanged": true,
+    "warnings": 3
+  },
+  "format": "deepmzyme_ec_clean30_runpod_verification_v1",
+  "local_kernel_caps": {
+    "probe_sha256": "e03955dbd413874045530833711e38bf82c074a600781d956562c5e90a0a48f7",
+    "runpod_delegation_verified": false,
+    "tests_passed": 21
+  },
+  "runpod_gpu_qualification": "pending",
+  "runtime_relocation": {
+    "clean_archive_sha256": "3a7706486611280cf3c17ce3b1b7be3f4a6ff60252e38d13a484e30f56df7b9d",
+    "cuda_validation": "pending actual allocation",
+    "fit_archive_sha256": "9eb513092b07628554761aef27be3b227fbfc1b536135460dd2596fb385ebbe5",
+    "source_environment_modified": false,
+    "status": "CPU imports and tensor checks passed"
+  },
+  "source_sha256": {
+    "src/ec_clean30/container_caps.py": "be1c65bdbccef06c80b238b7ad3acbacb947d2133acf8916b50b6c3132c74b01",
+    "src/ec_clean30/phase3.py": "2ec10f7fa0091665e43bdabf308402e4878af4b0a98140148ae43f46af8384c7",
+    "src/ec_clean30/runpod_controller.py": "523a71fcc95f3ad90d0c6eb3a70699f09ffdd6237810ab9ae0caf1c1b6e70782",
+    "src/ec_clean30/workstation.py": "70a4df770f42a55d3b9c7af84cc4c531021d6d8cb83fa69a906d5cd4851b50b6"
+  },
+  "status": "cpu_verified_remote_qualification_pending"
+}
