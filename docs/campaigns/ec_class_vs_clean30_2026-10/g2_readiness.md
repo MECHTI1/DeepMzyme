@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: CPU implementation and required verification complete, 2026-11-02; publication and G2 pending.
-This is a bounded execution proposal, not GPU authorization.
+Status: WP-13 published at `10e0e11`, 2026-11-02; local prerequisites, automation and launch preview CPU-verified.
+The paid VM remains stopped. The requested preparation does not authorize starting it.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -19,10 +19,11 @@ independent replay, host-copy acknowledgment and verified reuse. This is enginee
 S1 result. The [verification record](wp13/verification.json) also records 3,311 regression passes (18 existing skips,
 15 subtest passes), 44 CPU smoke passes (one existing skip) and zero strict documentation failures.
 
-Before G2, publish the tested package; prepare and hash the private local weights, CUDA embedding environment
-and relocatable package; and approve the exact session, resource limits and output destinations below. After
-start, verify the actual runtime and free space, perform the separate relocated-view probe, and bind requests to
-the controller's actual allocation/deadline. No paid preparation or measurement has run.
+Strict `verify-execution` passed without draft mode on published WP-13 before extending it. The
+[extended manifest](execution_v2/manifest.json) authenticates the workstation queue and Fold-0 dispatcher against
+that immutable base. Its publication is required before the launch command can allocate compute. After start,
+the queue verifies the actual runtime and free space, performs the relocated-view probe and binds all requests
+to the controller's actual allocation/deadline. No paid preparation or measurement has run.
 
 ## Proposed G2 scope
 
@@ -52,22 +53,37 @@ CPU cores and 8 GiB RAM; ESM-1b timing gets four CPU cores and 24 GiB RAM, with 
 Each of the three lane children uses the fit cap. The lane gate checks sampled whole-host use against 600%
 CPU, 24 GiB RAM and 21 GiB VRAM, and requires zero observed swap, no OOM and intact read guards. These aggregate
 measurements are acceptance checks, not a shared hard cgroup limit. CPU checks are not L4 performance evidence.
+The prepared per-unit timeouts are admission bounds, not measured throughput predictions: 360 seconds for each
+family/L3 probe and ESMC, 480 for ESM-1b, and 900 for each lane event. The lane forecast also includes three
+times the slower measured serial repeat. Each next unit must still fit with the margin and closeout reserve.
+The ESM-1b admission threshold is now 1,500 seconds (25 minutes), including the unchanged 900-second reserve.
 
-Before the paid start, prepare the ESM-1b weights and companion on Data1 and an isolated GPU embedding
-environment. The existing private CLEAN fit environment has `torch==1.11.0+cpu`; it cannot supply CUDA timings.
-Keep that environment unchanged. The proposed embedding environment retains Python 3.10.4, fair-esm 2.0.0,
+The ESM-1b weights and companion were downloaded directly to Data1 and independently read back. Weight SHA-256:
+`0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1` (7,828,576,466 bytes); companion SHA-256:
+`77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a` (3,174 bytes).
+The existing private CLEAN fit environment retains `torch==1.11.0+cpu`. The separate embedding environment retains
+Python 3.10.4, fair-esm 2.0.0,
 NumPy 1.22.3 and the other locked packages, replacing only Torch with `1.11.0+cu113` without dependency upgrades.
 The [official wheel index](https://download.pytorch.org/whl/cu113/torch/) supplies the CPython 3.10 Linux build;
 [NVIDIA's compatibility guide](https://docs.nvidia.com/cuda/ada-compatibility-guide/#applications-built-using-cuda-toolkit-11-0-through-11-7)
 supports testing compatible Ampere binaries on Ada. This is a candidate, not measured L4 compatibility.
-Record fresh environment locks/hashes and verify a relocatable package before starting the VM.
+CPU imports, tokenization, a small synthetic ESM forward/contact calculation and exact package comparisons passed
+both before and after fresh extraction and `conda-unpack`. The archive is 1,924,660,777 bytes, SHA-256
+`3a7706486611280cf3c17ce3b1b7be3f4a6ff60252e38d13a484e30f56df7b9d`; it expands to 3,882,102,310 regular-file bytes.
+The [verification record](execution_v2/verification.json) pins the locks, preparation receipt, CPU checks and
+local-only launch preview. Actual L4 kernels and a full ESM-1b model load remain G2 checks.
 
-Weights, this GPU environment and its relocatable package are not prepared by the CPU implementation task.
-Their preparation belongs in the bounded G2 authorization and should precede billing. Do not install fair-esm
+The offline ESMC-300m cache is also prepared and pinned; its original frozen weights are reused. Do not install fair-esm
 over the separate ESMC environment. On the VM, require CUDA proof from the actual private embedding interpreter
 and evidence that the extractor moved the model to the GPU; its requested-device field alone is insufficient
 because the pinned extractor can fall back to CPU. Unknown runtime/setup time prevents a guarantee that all
 measurements will finish within the proposed session.
+
+Both public ESM-1b files have pinned official HTTPS URLs. The VM attempts a direct download into a partial file,
+verifies its size and SHA-256, and only then renames it. A known terminal download failure permits the existing
+workstation-upload fallback; ambiguous SSH failure stops staging. Local preflight still fully verifies the Data1
+copies. The normal workstation upload is 4,743,701,970 bytes; direct download avoids sending the 7,828,579,640
+weight-file bytes through the workstation uplink. The full allocation deadline still includes all preparation.
 
 ## Budget and persistence
 
@@ -86,10 +102,12 @@ the published North America-to-Middle East rate of $0.15/GiB, without assuming a
 is free under [Google's network pricing](https://cloud.google.com/vpc/network-pricing). Keep cumulative
 host-pull payloads below 3 GiB to leave 1 GiB for overhead/retries; inspect each persistence manifest before
 copying. Adding approximately $0.04 for the retained snapshots during 117 minutes gives a planning total of
-about **$2.61 including margins**. Recheck rates and the remaining $3 allowance before starting and admitting work.
+about **$2.67 including margins** when conservatively charging two complete hours. Recheck rates and the remaining
+$3 allowance before starting and admitting work; the launcher rejects stale quotes.
 
-Each terminal unit or lane batch is copied to the independent workstation destination on Data1, verified by
-reading its bytes, and acknowledged before another unit starts. Include actual transfer/readback time in the
+The workstation queue automates all twelve events, including the two serial lane references, and produces the
+ten measurements required by Freeze 1c. Each terminal unit or lane batch is copied to the independent workstation
+destination on Data1, verified by reading its bytes, and acknowledged before another unit starts. Include actual transfer/readback time in the
 timing comparison. The controller owns provider STOP; the execution helper owns worker interruption and recovery.
 Confirm provider shutdown after closeout. Existing retained storage continues separately: approximately $15/month
 for the stopped boot disk and $15/month for retained snapshots; this proposal creates no additional disk/snapshot.
@@ -99,6 +117,9 @@ for the stopped boot disk and $15/month for retained snapshots; this proposal cr
 The first check found 7.015 GB free on internal ext4 and 59.755 GB on Data1. Completed synthetic pytest temporary
 directories from S1 verification were then removed after their logs had been preserved, increasing internal free
 space to **9.023 GB (8.40 GiB)**. No scientific artifact, archive or independent backup was removed.
+After this preparation and temporary-test cleanup, approximately **8.8 GB remained on ext4 and 36.1 GB on Data1**.
+The verified G2 staging peak is 19,269,249,867 bytes; the VM must have that space plus the 5 GiB reserve before
+transfer. Its capacity is checked after the deliberate start, without assuming stopped-VM free space.
 
 | Content | Placement |
 |---|---|
@@ -110,6 +131,8 @@ space to **9.023 GB (8.40 GiB)**. No scientific artifact, archive or independent
 
 Links from an ext4 farm back to Data1 would retain the observed FUSE I/O slowdown. Keep the hot vector payloads
 on ext4, as well as the farm's links. Do not copy the entire Fold-0 view or the 7.8 GB weights onto ext4.
+Local CLEAN uses two CPU cores and zero swap. Its separate map/coordinator envelope is 4,500,000,000 bytes;
+training and export children each retain the ordinary 3 GiB cap. Authenticate the completed map before training.
 
 The official training table and certified inner exclusions give a worst one-fit planning allowance of
 1,105,377,344 bytes, or **1,381,721,680 bytes (1.29 GiB)** with 25% margin. The allowance includes vector files,
@@ -120,12 +143,27 @@ checked after the authorized start; its free space was not inspected while stopp
 
 ## Path to the empirical milestone
 
-Publish WP-13 and its execution pins, approve the bounded G2 scope, and finish measured
-timing/replay/persistence checks. Freeze 1c records those measurements and the numerical L3 ceilings; G3 then
-authorizes the measured execution budget. Phase-4 real-unit orchestration still needs completion using these
-same hooks before reportable fits; no GPU should remain billed while that code is written.
+Publish the extended execution package, then deliberately launch the bounded G2 queue using the
+[playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues). Freeze 1c records the complete
+measurements and numerical L3 ceilings; G3 then authorizes the measured execution budget. The Phase-4 dispatcher
+is implemented before G2: it provides the 96-fit queue, two required CLEAN embedding farms, eight serial CLEAN
+fits, terminal verification/replay, independent persistence and the existing S1 selection/G4 route. Subsequent
+GPU queues attach only to an already authorized, protected allocation and stop their own allocation on exit.
+No additional Phase-4 framework is required between G2 and this first milestone.
 
 The next scientific workload is exactly **96 DeepMzyme S1 fits plus eight CLEAN inner fits**: all six families,
 two LRs, four inner folds and seeds 42/43; CLEAN R1-inner and R2-inner each use four folds and seed 42.
 Prepare only the embeddings needed by these eight CLEAN fits first. Run their serial CPU fits alongside remote
 S1 when authorized, then apply the unchanged G4 gate. Do not launch S2 or folds 1–4 before that decision.
+
+Training-only input preparation is complete: 8,115 base sequences, 20,120 distinct masked sequences and eight
+certified train/query units. R1-inner training counts are 7,898/7,926/7,840/7,678; R2-inner counts are
+471/469/469/470; their paired query counts are 151/150/151/151. No embeddings or scientific fits have run.
+The dispatcher currently runs S1 serially; price G3 with measured serial time even if the lane diagnostic passes.
+Later S2/S3 and refit dispatch remain separate work after the Fold-0 decision.
+
+The local preview verifies all ten staging inputs, the exact twelve-event queue and a conservative $2.6641 cost
+envelope. Strict source authentication refuses an unpublished start; the post-publication preview must report
+`ready` before deliberate launch. The private G2 configuration
+and five Phase-4 request templates are prepared on Data1. Phase-4 measurements and numerical G3 authority remain
+explicitly pending. Pricing evidence expires after 24 hours and must be refreshed if launch occurs later.

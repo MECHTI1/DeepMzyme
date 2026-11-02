@@ -38,6 +38,9 @@ TIMING_ROWS = 1000
 FREEZE1B_SHA256 = "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb"
 OFFICIAL_FOLD0_SHA256 = "ab8a8a21219aec19ba03dd7205dec8d8c1a156ff5cfad23aad344c7d7fbdd9c1"
 EXECUTION_FORMAT = "deepmzyme_ec_clean30_execution_v1"
+AUTOMATION_FORMAT = "deepmzyme_ec_clean30_execution_v2"
+AUTOMATION_FILES = (*EXECUTION_FILES, "src/ec_clean30/phase4.py", "scripts/run_ec_clean30_phase4.py",
+                    "src/ec_clean30/workstation.py", "scripts/run_ec_clean30_workstation.py")
 TRANSFER_FORMAT = "deepmzyme_ec_clean30_fold0_transfer_v1"
 
 
@@ -324,7 +327,8 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
              and manifest_path.resolve() == manifest_path,
              "Execution manifest must be a regular repository document.")
     document = _json(manifest_path)
-    _require(document.get("format") == EXECUTION_FORMAT and document.get("campaign_id") == CAMPAIGN_ID,
+    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT}
+             and document.get("campaign_id") == CAMPAIGN_ID,
              "Unknown execution manifest.")
     _require(document.get("freeze1b_sha256") == FREEZE1B_SHA256, "Freeze-1b binding is missing or changed.")
     verified = _baseline_authentication(repo, document["amendment_commit"], document["amendment_path"],
@@ -340,7 +344,12 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
     expected = dict(base["code"]["tracked_file_sha256"])
     expected.update({name: row["after"] for name, row in amendment["source_changes"].items()})
     pins = document.get("source_sha256", {})
-    _require(set(pins) == set(EXECUTION_FILES), "Only the two WP-13 source files may extend the frozen source.")
+    if document["format"] == AUTOMATION_FORMAT:
+        _verify_execution_base(repo, document)
+        allowed = AUTOMATION_FILES
+    else:
+        allowed = EXECUTION_FILES
+    _require(set(pins) == set(allowed), "Execution pins must name exactly the versioned execution files.")
     expected.update(pins)
     _require(freeze._amendment_code(repo) == expected, "Live source differs from frozen and execution pins.")
     head = _git(repo, "rev-parse", "HEAD")
@@ -354,6 +363,47 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
             "git_head": head, "source_tree_sha256": provenance.source_tree_sha256(repo),
             "frozen_fold0_view": base.get("views", {}).get("0"),
             "frozen_esmc_weight_sha256": base.get("pins", {}).get("esmc_300m_weights")}
+
+
+def _verify_execution_base(repo: Path, document: Mapping[str, Any]) -> dict[str, Any]:
+    """The automation extension preserves its published WP-13 manifest and scientific bindings."""
+    reference = document.get("base_execution", {})
+    commit = reference.get("commit", "")
+    _require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit),
+             "Automation requires a full published WP-13 commit.")
+    _require(_git(repo, "merge-base", commit, "refs/remotes/origin/main") == commit
+             and _git(repo, "merge-base", commit, "HEAD") == commit,
+             "WP-13 base must be published and an ancestor of the execution checkout.")
+    name = _relative(reference.get("path", ""))
+    path = _safe_file(repo, name)
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
+             "Original published WP-13 manifest changed.")
+    base = json.loads(published)
+    _require(base.get("format") == EXECUTION_FORMAT and set(base.get("source_sha256", {})) == set(EXECUTION_FILES),
+             "Automation base must be the original two-file WP-13 execution manifest.")
+    for key in ("campaign_id", "freeze1_sha256", "freeze1b_sha256", "amendment_path", "amendment_sha256",
+                "amendment_commit", "amendment_chain", "official_fold0_training_sha256", "timing_inputs_sha256"):
+        _require(document.get(key) == base.get(key), f"Automation changed the WP-13 {key} binding.")
+    for name, digest in base["source_sha256"].items():
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        _require(hashlib.sha256(content).hexdigest() == digest, "Published WP-13 source pin differs.")
+    return base
+
+
+def make_automation_manifest(base_execution: Path, out: Path, *, base_commit: str,
+                             repo: Path = REPO_ROOT) -> dict[str, Any]:
+    repo = Path(repo).resolve()
+    base_execution = Path(base_execution).resolve()
+    document = {**_json(base_execution), "format": AUTOMATION_FORMAT,
+                "base_execution": {"path": base_execution.relative_to(repo).as_posix(),
+                                   "sha256": _sha(base_execution), "commit": base_commit},
+                "source_sha256": {name: _sha(_safe_file(repo, name)) for name in AUTOMATION_FILES},
+                "purpose": "G2 automation and Fold-0 S1/CLEAN dispatch; Phase 4 requires numerical G3 authority"}
+    _verify_execution_base(repo, document)
+    _write(out, document)
+    verify_execution_source(out, repo=repo, require_published=False)
+    return document
 
 
 def _bind_view(view: views.View, source: Mapping[str, Any]) -> None:
@@ -983,6 +1033,10 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--freeze1b-sha256", required=True)
     source.add_argument("--timing-inputs-sha256", required=True)
     source.add_argument("--out", type=Path, required=True)
+    automation = actions.add_parser("automation-manifest")
+    automation.add_argument("--base-execution", type=Path, required=True)
+    automation.add_argument("--base-commit", required=True)
+    automation.add_argument("--out", type=Path, required=True)
     verify = actions.add_parser("verify-execution")
     verify.add_argument("--manifest", type=Path, required=True)
     verify.add_argument("--draft", action="store_true")
@@ -1021,6 +1075,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.action == "execution-manifest":
             result = make_execution_manifest(args.amendment, args.out, amendment_commit=args.amendment_commit,
                 freeze1b_sha256=args.freeze1b_sha256, timing_inputs_sha256=args.timing_inputs_sha256)
+        elif args.action == "automation-manifest":
+            result = make_automation_manifest(args.base_execution, args.out, base_commit=args.base_commit)
         elif args.action == "verify-execution":
             result = verify_execution_source(args.manifest, require_published=not args.draft)
         elif args.action == "vm-probe":

@@ -916,3 +916,95 @@ session and its explicit prerequisites. Weights and the isolated CUDA embedding 
 before billing. No GPU start, scientific fit, private weight/environment download or test scoring occurred.
 Next: publish WP-13, complete approved G2 preparation/measurements, then set numerical G3 ceilings and finish the
 minimal Phase-4 dispatcher for the unchanged 96 S1 plus eight CLEAN inner fits.
+
+## evc-014
+
+2026-11-02 — **WP-13 publication, pre-billing preparation and Fold-0 automation.** WP-13 was committed and pushed
+as `10e0e1144f8d73cfbf6bdc96b862038d33479e9d`; strict execution verification passed without draft mode. Original
+Freeze 1/1b, the S1 amendment, views, overlay, embeddings and simulations retain their previous bytes.
+
+The workstation driver prepares an isolated published checkout, transfers pinned inputs, checks both CUDA
+interpreters, probes the relocated view, and runs the fixed G2 queue. For every terminal unit it pulls the pending
+manifest and files to Data1, verifies hashes, acknowledges the transfer and finalizes before admitting another
+unit. Lost launch responses reconcile the same immutable job; transfer retries are charged conservatively.
+Actual controller identity, timestamps and automatic STOP are checked. One requested two-hour allocation has
+a 117-minute provider deadline, a $3 gross ceiling, 900-second reserve and a 3 GiB host-pull payload limit.
+The driver verifies shutdown of its own allocation and never automatically starts a replacement session.
+
+Phase 4 reuses the same execution/replay/persistence hooks for exactly 96 terminal 30-epoch S1 fits, the two
+required CLEAN embedding farms and eight serial 2,500-epoch CLEAN inner fits. Real work requires published source,
+all ten Freeze-1c measurements and explicit numerical G3 CPU/GPU/cost ceilings. S1 verification receipts feed the
+unchanged published selector and G4 logic. CLEAN active vectors, links, maps and outputs use ext4; inactive inputs
+and acknowledged outputs remain on Data1. The 5 GiB internal reserve is checked before work. CPU metadata
+preparation produced the input counts in [G2 readiness](g2_readiness.md), without embedding or fitting a model.
+
+The [extended execution manifest](execution_v2/manifest.json) binds these six execution files to the immutable
+published WP-13 manifest. Its SHA-256 is `0ea909ac40523c0253969f9e161733b43951733012437169b14c32e5da2d3b9f`.
+The prepared CLEAN receipt binds the same execution source, SHA-256
+`682d2df6487b2345b7eef56bc5895cbaacc06fe77ba8f187576bca04f71c7c60`; previous unpublished preparation receipts are
+retained, and all thirty scientific payload files and eight unit definitions remain byte-identical.
+Selection, scoring, hyperparameters and scientific access rules are unchanged.
+
+ESM-1b and its contact companion were downloaded and fully read back directly on Data1. The isolated CUDA
+environment replaces only Torch with `1.11.0+cu113`; all 31 conda records and the remaining package versions match
+the existing CPU environment. CPU imports, tokenization and a small synthetic ESM/contact forward pass succeeded.
+The original CPU environment remains intact. ESMC-300m offline transfer reuses the frozen weights. Local storage
+preparation does not establish L4 kernel compatibility or measured throughput; those checks remain in G2.
+
+Focused authentication tests initially passed 93 cases, Phase-4 tests passed 31 and workstation tests passed 34. The
+Phase-4 checks include an actual synthetic 30-epoch CPU fit, terminal verification, independent replay and
+acknowledged persistence. CPU smoke passed 44 tests with one existing missing-fixture skip. The final regression
+suite passed 3,386 tests, with 18 existing skips and 15 subtest passes, in 710.97 seconds. The earlier partial
+regression was interrupted to correct a staging-capacity check. Final request preparation then exposed the need
+to separate CLEAN's map memory exception from its training cap. The narrow execution correction keeps the map
+and coordinator below 4.5 GB, independently caps train/export children at 3 GiB, and authenticates the map before
+training. Resume also verifies its retained cap launcher, map record and fit manifest. All 42 Phase-4 tests passed
+after that correction, including actual launcher argument/environment preservation; 240 execution/authentication/
+freeze tests then passed against the final source. Unaffected full-suite results are reused, with both source
+snapshots retained. The [verification record](execution_v2/verification.json) binds final source, tests and logs.
+
+Independent environment extraction, `conda-unpack`, relocated CPU checks and original CPU-environment preservation
+all passed. The initial stock packer exceeded its 3 GiB cap while buffering a large CUDA library; the recovery
+streamed three unchanged, prefix-free libraries after checking their official wheel hashes. Every extracted
+library hash verified, and the memory cap was preserved. Only the failed temporary archive was removed.
+The final archive is 1,924,660,777 bytes, SHA-256
+`3a7706486611280cf3c17ce3b1b7be3f4a6ff60252e38d13a484e30f56df7b9d`.
+The private preparation receipt SHA-256 is `94ec2bf85a50c549f1f76371956f8f4c030f5206bf4d749907713a5f17ac83c4`.
+
+The local-only launch preview verified all ten staged inputs and twelve queue events, a 19,269,249,867-byte staging
+peak and $2.6641 conservative gross envelope. Its `draft_unpublished` status correctly requires publication before
+allocation. The concrete private launch configuration and pending Phase-4 requests are prepared; numerical G3
+authority is absent. Read-only controller status confirmed `TERMINATED`. Logs, source snapshots, preparation
+receipts and synthetic execution evidence are retained on Data1 and the independent NVMe mirror. No paid VM start,
+actual campaign fit, new selection simulation or test scoring occurred. Next: publish the execution extension,
+then deliberately launch the bounded G2 queue; use its measurements for Freeze 1c and G3 before the first 96+8 fits.
+
+## evc-015
+
+2026-11-02 — **Direct public-weight staging and shorter requested G2 bounds.** The two ESM-1b weight entries now
+carry their exact official HTTPS URLs alongside the unchanged SHA-256 pins. Local preflight still reads and hashes
+both Data1 copies. The VM download has its own wall-clock bound, no longer than 600 seconds and bounded by remaining
+allocation time. Its writer closes before reporting a terminal result. A verified partial receives one independent
+size/hash readback before rename; terminal HTTP/download/checksum failure permits the existing verified upload
+fallback. An ambiguous SSH failure stops staging. Already verified remote files are reused.
+
+The normal workstation upload falls to 4,743,701,970 bytes; the two directly downloaded files total 7,828,579,640
+bytes. This removes the largest uplink transfer without relaxing source, storage, host-acknowledgement or provider
+deadline checks. Actual datacenter download speed remains unmeasured until the deliberately started session.
+
+Requested forecasts and per-unit timeouts are now 360 seconds for each five-epoch family/L3 probe and ESMC,
+480 seconds for ESM-1b, and 900 seconds for each lane event. These are operational bounds, not measured throughput.
+The ESM-1b admission threshold becomes 1,500 seconds (25 minutes), retaining the 1.25 multiplier and 900-second
+closeout reserve. The $3 ceiling, 117-minute provider STOP, fixed queue, scientific scope and selection are unchanged.
+
+Only the requested focused checks ran: 50 workstation tests passed in 3.48 seconds and ten execution-extension
+authentication tests passed in 3.66 seconds. They cover direct success, terminal-failure fallback, altered local
+bytes, incorrect URLs/pins, verified-file reuse, ambiguous SSH, timeout admission and checksum rejection before
+promotion. The previous full-suite and unchanged Phase-4 evidence remain retained; the full suite was not rerun.
+The [execution manifest](execution_v2/manifest.json) and [verification record](execution_v2/verification.json)
+bind the corrected source. Manifest SHA-256:
+`5cbad8a934250036160d7c6007947b8092e662fd0649a9ce727b30a33f2ee685`.
+The refreshed CLEAN input receipt is `ece4eab3d7da05e4ceb7b785e9865dd20eb3b1eaf0f2a8dbfa8259e2f46842b5`;
+all thirty scientific files and eight unit definitions match the preceding preparation. Pending Phase-4 requests
+retain their unapproved numerical fields and now reference the updated source/input pins. Post-publication local
+readiness must report `ready` before any deliberate G2 start; its receipt is retained with the private launch inputs.

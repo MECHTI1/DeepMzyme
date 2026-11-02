@@ -1,7 +1,8 @@
 # Continuation after Freeze 1b
 
 Status: updated, 2026-11-02; preparation and the S1 amendment are published through `3154a7f`.
-WP-13 is implemented and CPU-tested; [G2 readiness](g2_readiness.md) records the concrete preparation.
+WP-13 is published at `10e0e11`; the G2 driver and Fold-0 queues passed CPU verification.
+[G2 readiness](g2_readiness.md) records the concrete preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
 
@@ -23,9 +24,9 @@ because execution moves to another phase. New code and a changed runtime require
 | Item | Current state | Continuation requirement |
 |---|---|---|
 | Fold plans, command construction, verification, selection and gap gate | Implemented; amended S1 validated | Reuse prepared inputs; authenticate the published amendment on fits, selection and gap records |
-| WP-13 timing/transfer runner | Implemented; CPU-tested ([evidence](wp13/verification.json)) | Publish its execution pins, then measure under G2 |
-| Real campaign execution and refit orchestration | Planned; current CLI entries are stubs | Implement and CPU-test before Phase 4 |
-| CLEAN wrapper and private harness | Implemented; timing evidence exists | Add per-call input restrictions, scheduling and persistence for real fits |
+| WP-13 timing/transfer runner | Published; CPU-tested ([evidence](wp13/verification.json)) | Measure under G2 with the published automation extension |
+| Fold-0 S1 and CLEAN queues | CPU-verified ([record](execution_v2/verification.json)) | Fill measured G3 authority; later S2/S3/refit orchestration remains separate |
+| CLEAN wrapper and private harness | Reused by the new serial queue | Exact input closure, F9 guards, ext4 staging and verified persistence precede each fit |
 | GPU cost and throughput | Historical forecasts only | Measure under G2 before setting G3 ceilings |
 | Final simulation | Integrity verified; targets not uniformly met | Retain the limitation and fixed rule; no retuning |
 | Root STATUS | Stale, explicitly preserved by C-10 | Use campaign README/log; no unrelated root edit here |
@@ -149,7 +150,7 @@ increase. Do not silently exceed the ceiling or terminate a safe active fit sole
 Completion gate: timing, replay, memory, lane and persistence evidence; verified shutdown; and a measured budget
 proposal. A partial session is labeled partial, not a passed G2 package.
 
-**5. Freeze the measured budget and finish Phase-4 orchestration**
+**5. Freeze the measured budget and launch the prepared Phase-4 queues**
 
 Create Freeze 1c with the timings, serial/passed-lane choice, added-code hashes and per-fold L3 ceilings. Use the
 existing selector contract `campaign_id`, `freeze1_sha256` and `l3_vm_hours_per_fold`; do not create a parallel
@@ -161,10 +162,12 @@ graph rebuilds, verification, replay, transfers, boot/idle time, session reserve
 historical estimates. The later CLEAN estimate is approximately 160 serial workstation hours, based on earlier
 timing rather than completed benchmark fits; reforecast from the first real gap fits.
 
-Complete real execution/refit orchestration in new files, reusing WP-13's tested contracts and the existing command
-builder, selector, CLEAN wrapper and execution helper. Keep original pinned modules unchanged. Added Phase-4
-code receives its own immutable execution pin before use. It must schedule the frozen plan, resolve later recipes
-only from verified selection records, enforce per-unit admission and persistence, and stop at every required gate.
+The new `phase4.py` dispatcher and workstation transfer loop implement the exact 96 S1 fits, the two required
+CLEAN embedding farms and eight serial CLEAN inner fits. Their [execution pins](execution_v2/manifest.json)
+extend the published WP-13 record without changing frozen scientific source. Each queue handles admission,
+verification, persistence and recovery; the GPU queues stop their owned allocation. Numerical G3 values remain
+to be filled from G2, but no further dispatcher implementation is planned between G2 and this Fold-0 comparison.
+S2/S3 and final refit orchestration remain outside this first-milestone package.
 
 For every CLEAN prepare/farm/fit/export call, compute and test the F9 forbidden roots for that fold and step.
 The wrapper defaults alone do not cover all campaign folders. R1-inner uses its recorded homology exclusions;

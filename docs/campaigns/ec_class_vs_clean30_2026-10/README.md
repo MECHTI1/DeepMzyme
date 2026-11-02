@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-02; Freeze 1b complete; S1 amendment published; WP-13 CPU-tested, awaiting publication)
+Status: active (2026-11-02; Freeze 1b complete; S1 amendment and WP-13 published; G2 preparation CPU-verified)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -26,5 +26,7 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 
 Current state: [Freeze 1](freeze1.md) is published and Freeze 1b passed ([evc-011](log.md#evc-011)). Historical
 simulation target exceedances remain disclosed (evc-010). [evc-012](log.md#evc-012) records the approved S1 amendment's
-characterization and verification. [evc-013](log.md#evc-013) records published S1 and CPU-tested WP-13. G2 remains next.
+characterization and verification. [evc-013](log.md#evc-013) records WP-13; [evc-014](log.md#evc-014) records its
+publication, local prerequisites and G2/Fold-0 automation. [evc-015](log.md#evc-015) records direct weight downloads.
+G2 remains next.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

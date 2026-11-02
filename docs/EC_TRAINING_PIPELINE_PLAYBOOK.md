@@ -473,6 +473,49 @@ and includes transfer/readback time. A failed attempt also requires persistence;
 `attempt` from the original seed. Freeze 1c needs seven family/L3 receipts, one passed-or-failed lane decision
 and two embedding receipts. Its numerical L3 ceilings are a proposal: G3 remains a separate budget decision.
 
+### Automated G2 and the Fold-0 queues
+
+The workstation loop uses the existing controller and the same WP-13 actions. Its default command is a local
+preview; `--run` is the deliberate start action. The private configuration binds the staging files, instance,
+cost quote, per-unit timeouts, resource caps and independent Data1 destination. Publication of the
+[extended execution manifest](campaigns/ec_class_vs_clean30_2026-10/execution_v2/manifest.json) precedes execution.
+The loop enforces the $3 ceiling, the 117-minute provider STOP and the 900-second reserve, then runs all twelve
+queue events including both serial references. It pulls and verifies terminal files, uploads acknowledgements,
+finalizes receipts and confirms provider shutdown. It never starts Phase 4 or restarts an allocation automatically.
+The two pinned public ESM-1b files may specify `remote_url`: direct VM download is verified before rename, with
+upload fallback only after a known terminal failure. Local Data1 copies remain mandatory and hash-checked.
+
+```bash
+PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"
+"$PY" scripts/run_ec_clean30_workstation.py --config "${ECC30_G2_CONFIG:?private prepared G2 configuration}"
+# Only when the bounded G2 session is authorized to start:
+"$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --run
+```
+
+`run_ec_clean30_phase4.py` implements the first Fold-0 milestone. `clean-inputs --request FILE` prepares only
+the certified official-training/inner-list closure, including the keyed masks; `draft:true` is accepted only
+for this CPU preparation. Real embedding, fit and selection actions require published source and numerical G3
+authority bound to Freeze 1c, the execution pins and the prepared input checksum. G3 records GPU/CPU seconds,
+gross cost and actual bounded allocations; recorded allocation history cannot reset on recovery. No numerical
+authority is inferred from the existence of these commands.
+
+The following are separate steps after G3, each with its completed request file. The GPU queues attach to the
+exact already-authorized running allocation and stop it on completion or refusal; they never start a VM.
+`embedding-queue` produces the exact base and seed-42 masked farms. `s1-queue` runs all 96 frozen fits serially
+with automatic host acknowledgements; price that serial route in G3 even if the G2 lane diagnostic passed.
+`clean-queue` runs the eight CPU fits serially using one ext4 hot working set and the 5 GiB reserve. It can run
+alongside the remote S1 queue. Verified completed units survive later allocations; incomplete fits restart
+their original seeds only under an explicitly incremented attempt. The final step uses the unchanged published
+selector and gap gate, and stops at G4 before S2 or other folds.
+
+```bash
+P4=scripts/run_ec_clean30_phase4.py
+"$PY" "$P4" embedding-queue --request "${ECC30_EMBED_REQUEST:?G3-bound two-farm request}"
+"$PY" "$P4" s1-queue --request "${ECC30_S1_REQUEST:?G3-bound 96-fit request}"
+"$PY" "$P4" clean-queue --request "${ECC30_CLEAN_REQUEST:?G3-bound eight-fit CPU request}"
+"$PY" "$P4" select-gap --request "${ECC30_GAP_REQUEST:?all 96 fits and eight exports verified}"
+```
+
 The CLEAN comparator runner (`"$X" prepare`, `fit`, `export`, `validate-export`) holds no CLEAN code; the private CLEAN
 checkout and harness scripts are passed by path and pinned by SHA-256, and R2 fits take `--accession-allowlist
 "$C/r2_lists/r2_allowlist_fold<k>.txt"`. Fits run one at a time, each distance map alone under the limit the campaign

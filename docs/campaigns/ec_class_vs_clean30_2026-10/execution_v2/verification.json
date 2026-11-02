@@ -1,0 +1,329 @@
+{
+  "boundaries": {
+    "actual_l4_kernel_tested": false,
+    "actual_scientific_fits": 0,
+    "cloud_allocation_started": false,
+    "later_s2_s3_refits_outside_package": true,
+    "new_selector_simulation": false,
+    "phase4_requires_measured_freeze1c_and_numerical_g3": true,
+    "phase4_s1_currently_serial": true,
+    "published_source_required_for_execution": true,
+    "selection_scoring_unchanged": true
+  },
+  "checks": {
+    "cpu_smoke": {
+      "log": "ecc30_automation_smoke.log",
+      "passed": 44,
+      "skipped": 1
+    },
+    "docs_contract": {
+      "baseline_warnings": 11,
+      "log": "ecc30_remote_download_docs.log",
+      "strict_failures": 0
+    },
+    "execution_v2_focused": {
+      "log": "ecc30_remote_download_auth.log",
+      "passed": 10,
+      "wall_seconds": 3.66
+    },
+    "final_execution_authentication_freeze": {
+      "applicability": "Prior unchanged authentication/freeze implementation; current execution-extension check recorded separately.",
+      "log": "ecc30_automation_binding_final.log",
+      "passed": 240,
+      "wall_seconds": 29.72
+    },
+    "final_phase4": {
+      "log": "deepmzyme_phase4_memory_caps_final.log",
+      "passed": 42,
+      "wall_seconds": 9.56
+    },
+    "full_regression": {
+      "applicability": "Historical baseline before the CLEAN cap and direct-download corrections; unaffected results retained. Corrected paths have the focused checks recorded here. No full-suite rerun for direct download.",
+      "passed": 3386,
+      "skipped": 18,
+      "source_sha256": {
+        "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+        "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
+        "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
+        "src/ec_clean30/phase3.py": "03c81e50376be46b91555e6105ea9e90339fb15d37207adeb6ab6b2943bc7ddc",
+        "src/ec_clean30/phase4.py": "82fbb6929f415d7a79bf53ab24e1cc58b962b53d53a2fbfb7cccb109d04d6266",
+        "src/ec_clean30/workstation.py": "b82c1c6d481467f4b61ec1e9c62c5541d30db8d69192c5f42e20b6ea0caf97db",
+        "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
+        "tests/test_ec_clean30_phase4.py": "096309b2e75e7baa3942592ae641ca63f52d388701bf03edc86c95f48cf26c28",
+        "tests/test_ec_clean30_workstation.py": "f3e9c85fd60bd512089b874b996489b1cc0b0d36c5636275257e9e6c103a5257"
+      },
+      "subtests_passed": 15,
+      "wall_seconds": 710.97
+    },
+    "workstation_focused": {
+      "capture_receipt": "ecc30_remote_download_workstation.receipt.json",
+      "log": "ecc30_remote_download_workstation.log",
+      "passed": 50,
+      "wall_seconds": 3.48
+    }
+  },
+  "clean_inputs": {
+    "base_sequences": 8115,
+    "masked_sequences": 20120,
+    "receipt_sha256": "ece4eab3d7da05e4ceb7b785e9865dd20eb3b1eaf0f2a8dbfa8259e2f46842b5",
+    "scientific_payload_identical_to_pre_cap_preparation": true,
+    "scientific_payload_identical_to_pre_remote_download_preparation": true,
+    "units": 8
+  },
+  "date": "2026-11-02",
+  "execution_manifest_sha256": "5cbad8a934250036160d7c6007947b8092e662fd0649a9ce727b30a33f2ee685",
+  "format": "deepmzyme_ec_clean30_execution_v2_verification",
+  "local_g2_preview": {
+    "config_sha256": "abfef1cfde9eda9149671dc82d4fe7ce4a4b91847dd711ea579102f7a8ac0205",
+    "cost": {
+      "conservative_max_usd": 2.6640955999999996,
+      "egress_usd_per_gib": 0.15,
+      "gross_usd_per_hour": 0.879172,
+      "snapshot_usd_per_hour": 0.021
+    },
+    "max_provider_seconds": 7020,
+    "payload_ceiling_bytes": 3221225472,
+    "purpose": "Pre-publication verification of all local input bytes and the revised configuration.",
+    "queue_events": 12,
+    "receipt_sha256": "1d2a86be0d2bb8c2d763306153d248a528d5c3a83b5e4c5b00c881d795af986d",
+    "staging_peak_bytes": 19269249867,
+    "status": "draft_unpublished"
+  },
+  "logs": {
+    "deepmzyme_phase4_memory_caps_final.log": {
+      "bytes": 99,
+      "sha256": "5309b369dd15bbc5a1267364e7186113eb8762277cd3e2cc48ee142160dcc746"
+    },
+    "ecc30_actual_clean_inputs.log": {
+      "bytes": 56,
+      "sha256": "855820360143b319dd995582879b9f9d42ebaf8f690547f614cf0a1f66495cb7"
+    },
+    "ecc30_actual_clean_inputs_final.log": {
+      "bytes": 56,
+      "sha256": "855820360143b319dd995582879b9f9d42ebaf8f690547f614cf0a1f66495cb7"
+    },
+    "ecc30_actual_clean_inputs_sealed.log": {
+      "bytes": 56,
+      "sha256": "855820360143b319dd995582879b9f9d42ebaf8f690547f614cf0a1f66495cb7"
+    },
+    "ecc30_automation_auth.log": {
+      "bytes": 1387,
+      "sha256": "e0086626d135c9f2f7bc9124b19a25fe7157b7083d607b6ac62337ab5ac274c3"
+    },
+    "ecc30_automation_binding_final.log": {
+      "bytes": 1548,
+      "sha256": "d22ed95cbec28dc55cbf71aad3e758c2f00c463187e1864ba21cf05333542881"
+    },
+    "ecc30_automation_docs.log": {
+      "bytes": 2191,
+      "sha256": "0190e2852ac3fc4c689f9555e3c64164490a71886d4157ebbf272ea0d0aef11c"
+    },
+    "ecc30_automation_docs_final.log": {
+      "bytes": 2191,
+      "sha256": "3a07540df6e63ed9f091f5748050334f0867475a0a6201198ee01e0632ab2c12"
+    },
+    "ecc30_automation_regression.log": {
+      "bytes": 2638,
+      "sha256": "1e89a94bdc85aaf8ee062a5db6e706d2fabc6f5680022c4f9b13e97176f0e4a9"
+    },
+    "ecc30_automation_regression_final.log": {
+      "bytes": 8108,
+      "sha256": "70a008efa23cb9f33193387c7f186e5607e8043457ad1fa9f095aa089227ca82"
+    },
+    "ecc30_automation_smoke.log": {
+      "bytes": 1693,
+      "sha256": "b112226c01962d07154e70d3567f1d427eb100fcddaa8e479d8d7700d1a45ad3"
+    },
+    "ecc30_automation_vm_status_final.txt": {
+      "bytes": 313,
+      "sha256": "14176b43df2a5d683e3d5f7079982dcb0e61427ca7369ce8c080210cce4180b9"
+    },
+    "ecc30_g2_local_preview.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ecc30_remote_download_auth.log": {
+      "bytes": 99,
+      "sha256": "1258d622099e870cbd0972710af0463212e968e58a7fb04bc795e9c977a26aec"
+    },
+    "ecc30_remote_download_clean_inputs.log": {
+      "bytes": 56,
+      "sha256": "855820360143b319dd995582879b9f9d42ebaf8f690547f614cf0a1f66495cb7"
+    },
+    "ecc30_remote_download_docs.log": {
+      "bytes": 2191,
+      "sha256": "4cff0acaa6879261dad76213a19c2b14e13a6cb77f8104abbf77967628b1e041"
+    },
+    "ecc30_remote_download_workstation.log": {
+      "bytes": 99,
+      "sha256": "26048f1bb0b19b37013e7a36da64e4b9afeaa71c6eb379bc8ac6230efeaf9f74"
+    },
+    "ecc30_remote_download_workstation.receipt.json": {
+      "bytes": 927,
+      "sha256": "1bde72a3abe111d730919b67d353476eff3a7aed9765209f011b604d87429734"
+    }
+  },
+  "phase4_requests": {
+    "files_sha256": {
+      "README.md": "3f191f46a11f323eef216f7e181b8fe882d05cd644b392249cf06548d0850680",
+      "clean_queue.json": "78f7bb235b44fd8bf81254a8dadae56bf3b08183e02e197e2affb82b31c2709c",
+      "embedding_queue.json": "c79530124eb510725874753b2fd4d21b70c03d5cd5dc95564b799936bc721aa2",
+      "g3_authority.json": "c117936bb5297fd52284470ccc6a096803f735d983209100013b9d389e6304fb",
+      "s1_queue.json": "8ec93c75638fd917cd7384984caabf2535ebb2d8ce44bd91ae6d33b67473f5eb",
+      "select_gap.json": "7ef0dffae0153e2717d6dde32a3166e7de1763583031a045f1d071891ddba65d",
+      "template_validation.json": "9ea5b5abbe2d6fd79d1c4c06616c7bd0665184378e5296fa1e3f181dbf9188e8"
+    },
+    "status": "pending_measured_g3"
+  },
+  "post_publication_readiness_receipt": "phase3/prebilling_20261102/remote_download_update/preflight_published.json",
+  "prebilling": {
+    "archive": {
+      "bytes": 1924660777,
+      "counts": {
+        "directories": 0,
+        "files": 27303,
+        "hardlinks": 0,
+        "symlinks": 1392,
+        "uncompressed_file_bytes": 3882102310
+      },
+      "name": "clean_esm1b_cuda113_py310.tar.gz",
+      "sha256": "3a7706486611280cf3c17ce3b1b7be3f4a6ff60252e38d13a484e30f56df7b9d"
+    },
+    "environment": {
+      "conda_package_count": 31,
+      "cuda_build": "11.3",
+      "fair_esm": "2.0.0",
+      "locks": {
+        "locks/conda_explicit.txt": "69748179b3f9dc00012a6be79aca562cb8e434317e5a3cdfe5ce16e605d1b41b",
+        "locks/cuda_torch_source.json": "de7644a9a5d53504f4506635b58ac5d18bc6045284ef1c01d18562e75902358b",
+        "locks/pip_versions.txt": "04b3ae20aa3677c9a0a533ca6f89fa6ae5a45def582bd9107972672eaae380a4"
+      },
+      "numpy": "1.22.3",
+      "only_package_change": {
+        "torch": {
+          "new": "1.11.0+cu113",
+          "old": "1.11.0+cpu"
+        }
+      },
+      "original_cpu_environment_preserved": true,
+      "python": "3.10.4",
+      "python_distribution_count": 26,
+      "relocated_cpu_checks": "passed",
+      "torch": "1.11.0+cu113"
+    },
+    "esmc_transfer_receipt_sha256": "cfff52323315fd0bfe635151f78a290796eba0b9f6946e9ce181e9d0ed25d648",
+    "receipt_sha256": "94ec2bf85a50c549f1f76371956f8f4c030f5206bf4d749907713a5f17ac83c4",
+    "weights": {
+      "esm1b_t33_650M_UR50S-contact-regression.pt": {
+        "bytes": 3174,
+        "sha256": "77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a",
+        "status": "independent_readback_passed"
+      },
+      "esm1b_t33_650M_UR50S.pt": {
+        "bytes": 7828576466,
+        "sha256": "0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1",
+        "status": "independent_readback_passed"
+      }
+    }
+  },
+  "previous_verification_sha256": "8b03bd1b7e3e5aa79687bf6ddd7b4ecf9876052c7e8b484f142a2916bca9682d",
+  "published_base": {
+    "commit": "10e0e1144f8d73cfbf6bdc96b862038d33479e9d",
+    "strict_verify_execution_without_draft": "passed_before_extension",
+    "wp13_manifest_sha256": "6be7525464aff0d2714d5d4fa523bfd9c64483f699c76ccca7d2b6590c35c431"
+  },
+  "remote_weight_download": {
+    "actual_remote_download_tested": false,
+    "ambiguous_ssh_aborts_staging": true,
+    "bounds_are_measured_throughput": false,
+    "esm1b_admission_seconds": 1500,
+    "files": [
+      {
+        "remote_url": "https://dl.fbaipublicfiles.com/fair-esm/models/esm1b_t33_650M_UR50S.pt",
+        "sha256": "0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1"
+      },
+      {
+        "remote_url": "https://dl.fbaipublicfiles.com/fair-esm/regression/esm1b_t33_650M_UR50S-contact-regression.pt",
+        "sha256": "77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a"
+      }
+    ],
+    "independent_readback_before_atomic_rename": true,
+    "local_sha_verification_retained": true,
+    "maximum_download_seconds": 600,
+    "ordinary_upload_bytes": 4743701970,
+    "requested_bounds": {
+      "C-G": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F1": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F2": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F3": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F4": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F4_L3": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "F5": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "esm1b": {
+        "forecast_seconds": 480,
+        "unit_timeout_seconds": 480
+      },
+      "esmc": {
+        "forecast_seconds": 360,
+        "unit_timeout_seconds": 360
+      },
+      "lane_batch": {
+        "forecast_seconds": 900,
+        "unit_timeout_seconds": 900
+      },
+      "lane_serial_1": {
+        "forecast_seconds": 900,
+        "unit_timeout_seconds": 900
+      },
+      "lane_serial_2": {
+        "forecast_seconds": 900,
+        "unit_timeout_seconds": 900
+      }
+    },
+    "upload_fallback_requires_terminal_result": true
+  },
+  "source_sha256": {
+    "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+    "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
+    "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
+    "src/ec_clean30/phase3.py": "03c81e50376be46b91555e6105ea9e90339fb15d37207adeb6ab6b2943bc7ddc",
+    "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
+    "src/ec_clean30/workstation.py": "7f88409562b4c9b34b9d449d2094d025cb095828d52489a33c5985b15c4b1f85"
+  },
+  "status": "cpu_verified",
+  "storage_free_bytes": {
+    "data1": 35688062976,
+    "internal_ext4": 8081448960
+  },
+  "synthetic_roundtrip": {
+    "bytes": 8495021,
+    "name": "synthetic_phase4_roundtrip.tar.gz",
+    "sha256": "bb2a8259f3808d22d7ff642cf7fc55069287ad5d66f40cc87eb6f9e7c830cf6c"
+  },
+  "test_sha256": {
+    "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
+    "tests/test_ec_clean30_phase4.py": "a1f1b6779cc604789ffb9a69a3a67da2c1d743460193cd3eb68d68aaa9e23648",
+    "tests/test_ec_clean30_workstation.py": "f8064a09d1fb987358bdaae66881f2b0fc070e7c325c347874a88d342a08291d"
+  }
+}
