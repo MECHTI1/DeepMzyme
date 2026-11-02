@@ -7,8 +7,10 @@ All three central zones returned stockout; temporary resources are removed ([evc
 The cross-region extension is published at `1749cda`; its exhausted $19 pass is preserved in
 [evc-022](log.md#evc-022). The subsequent $3 same-region pass also exhausted the three central zones;
 its temporary resources are removed and the original VM is `TERMINATED` ([evc-023](log.md#evc-023)).
-Zero of twelve G2 events ran. The private route now excludes cross-region recovery and retains the $25 daily
-guard; another allocation needs a fresh decision.
+A separately authorized Runpod setup was stopped after input and off-pod preservation checks;
+execution qualification remains pending ([evc-024](log.md#evc-024)). Zero of twelve G2 events ran.
+The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
+cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.

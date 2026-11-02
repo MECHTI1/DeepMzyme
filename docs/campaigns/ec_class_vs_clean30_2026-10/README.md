@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-02; same-region G2 pass stocked out; recovery cleaned; VM stopped)
+Status: active (2026-11-02; Runpod stopped after verified preservation; G2 execution qualification pending)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -25,9 +25,8 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
 
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)).
-The log preserves limitations, S1 verification, execution preparation and earlier attempts, including
-the exhausted cross-region pass ([evc-022](log.md#evc-022)). The subsequent $3 same-region pass exhausted
-`us-central1-a`, `us-central1-b` and `us-central1-c`; its temporary resources were removed
-([evc-023](log.md#evc-023)). Zero of twelve G2 events ran. Another allocation needs a fresh decision;
-Freeze 1c/G3 await measurements.
+The log preserves limitations, S1 verification, execution preparation, and earlier attempts:
+exhausted passes ([evc-022](log.md#evc-022), [evc-023](log.md#evc-023)) and Runpod evaluation
+with verified preservation, shutdown and unresolved execution checks ([evc-024](log.md#evc-024)).
+Zero of twelve G2 events ran; Freeze 1c/G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

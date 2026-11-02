@@ -1305,3 +1305,81 @@ The abandonment receipt SHA-256 is
 Zero of ten required measurements are available; Freeze 1c and numerical G3 remain blocked. Phase-4 requests
 remain pending. The closed driver and exhausted recovery pass cannot restart automatically; another allocation
 requires a fresh decision. Root STATUS remains unchanged under C-10; current progress stays in this campaign.
+
+## evc-024
+
+2026-11-02 — **Runpod setup and execution-readiness audit.** After the closed GCP capacity pass
+([evc-023](#evc-023)), the maintainer authorized Runpod setup. Pod `mbg2lc6vg5oiki` (`deepmzyme-4090`)
+started at **20:13:34 UTC** in `EUR-IS-2`. The provider record showed one RTX 4090, 12 assigned vCPUs,
+100 GB RAM and an active rate of **$0.89/hour**. Device queries recorded 24,564 MiB VRAM, driver 595.91.07,
+CUDA 13.2 driver support and PyTorch CUDA 12.4. The host CPU was AMD EPYC 7452; the memory probe reported zero swap.
+
+The pod was still `RUNNING` at the **20:42:14 UTC** provider read. No automatic-stop deadline or numerical
+Runpod spending ceiling had been recorded or verified. The $20 account credit is neither a campaign budget
+nor a stop control. The GCP two-hour request, 117-minute STOP and $25 daily controller guard did not transfer
+to this allocation. No additional resource or cross-region GCP recovery was launched during this audit.
+
+Creation returned `volumeInGb: 0`; provider inspection showed `mounts: {}` and filesystem inspection showed
+container overlay storage. Neither `/workspace` nor the staged inputs under `/home/mechti` have verified
+persistence across lifecycle changes. Recovery relies on the retained Data1 input archives and a reconstructed
+qualified runtime, not on preserving the container. At **20:39:14 UTC**, ten environment records had been
+copied off-pod to `phase3/runpod_setup_20261102/env_records/` under the private campaign output root.
+`env_records_sha256.txt` initially recorded hashes computed only from the downloaded files; the later
+source/destination comparison and closeout are recorded below.
+
+Five remote staged files were hashed and matched against the existing preparation pins:
+
+| File | SHA-256 |
+|---|---|
+| `esm1b_t33_650M_UR50S.pt` | `0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1` |
+| `esm1b_t33_650M_UR50S-contact-regression.pt` | `77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a` |
+| `fold0_view.tar` | `a036a782e3f0de041e896b7e2ff3a79dd13eb6d827629b0eca28dfcbc9b90334` |
+| `esmc300_hf_cache.tar` | `47182be2bbc30d1d2b3bd772b8660f7dd36beba71d2803339fe2cb06cfcf9cf9` |
+| `clean_esm1b_cuda113_py310.tar.gz` | `3a7706486611280cf3c17ce3b1b7be3f4a6ff60252e38d13a484e30f56df7b9d` |
+
+The ESM-1b weights were downloaded from their official HTTPS source. The private
+`phase3/runpod_setup_20261102/staged_archives_sha256.txt` records these five files; its SHA-256 is
+`3d65bd7fcd14ded6498cf8b342482d0177d123206acd5faf17d6a50003b08a42`.
+This initial check covered five staged files, not all ten required inputs, the extracted view or its read guards.
+The later preservation check verified the remaining timing and helper files against their existing pins.
+
+The unpinned Python 3.11 container installation reported `torch 2.4.1+cu124`, `torch-geometric 2.8.1`,
+`scikit-learn 1.9.1`, `biopython 1.88`, `optuna 5.0.0` and `pandas 3.1.0`. Imports and device queries passed;
+no actual-model, independent replay or HostPull round trip was measured in this environment. Code inspection
+identified L4-only CUDA checks, required `systemd-run` resource caps and GCP-bound session/transport checks.
+The uploaded repository excluded `.git`, leaving published-source authentication unsatisfied. This is an
+inspection finding, not a recorded `verify-execution` failure. No execution guard was bypassed.
+
+The unchanged [WP-13 manifest](wp13/execution_manifest.json) has SHA-256
+`6be7525464aff0d2714d5d4fa523bfd9c64483f699c76ccca7d2b6590c35c431`; the unchanged
+[automation manifest](execution_v2/manifest.json) has SHA-256
+`8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a`.
+[G2 readiness](g2_readiness.md#runpod-execution-qualification) owns the outstanding migration checks.
+Any adaptation must preserve source authentication, input/read guards, admission limits, replay and HostPull.
+
+**Preservation and shutdown.** At **20:50:21 UTC**, independent remote/local SHA-256 comparisons matched all
+ten copied environment records. The remaining five timing/helper inputs matched their prepared pins at
+20:51:17 UTC; together with the earlier five checks, all ten staged-file hashes match. All ten original local
+sources remain available. The filesystem inventory contained 6,874 files and found no trained outputs or active
+GPU process. A separate 1,936-file comparison, excluding derived views and caches, found no repository path
+missing locally. Four older campaign documents matched published commit `cf850ab97577e78e15db6f31df3e00f4bd996051`;
+the one differing local configuration file was copied off-pod and hash-verified. Derived views and caches can
+be reconstructed from retained inputs. This establishes preservation, not a qualified execution environment.
+
+The private `phase3/runpod_closeout_20261102/preservation_receipt.json` records this check; SHA-256:
+`82d8ea3558f93549f0e564d0abeba3876d9fa0fd41ebf5a5821f146b83344006`.
+The stop request at **20:52:15 UTC** succeeded; a fresh provider read at **20:52:25 UTC** confirmed
+`desiredStatus: EXITED`, `runtimeStatus: stopped` and `volumeInGb: 0`. The pod was not deleted or replaced.
+`stop_action.json`, `provider_after.json`, `environment_copy_verification.json` and
+`file_identity_comparison.json` retain the corresponding evidence in that closeout directory.
+
+The billing read at 20:52:25 UTC returned no rows, so final billed spend is unknown, not zero. Allocation start
+through verified stop spans 2,331.096 seconds (about 38 minutes 51 seconds); multiplying that interval by the
+observed $0.89/hour rate gives approximately **$0.5763**, an elapsed-time estimate rather than a provider-confirmed charge.
+The final `phase3/runpod_closeout_20261102/closeout.json` has SHA-256
+`15c1909d691d2250324cff2041f0b3b4f6c00d13b293abd0266eb0a391684d42`.
+All 25 closeout files, including `SHA256SUMS`, are retained on Data1 and independently mirrored to NVMe with
+hash readback. A separate GCP status read at **20:52:55 UTC** reconfirmed `TERMINATED`; the 20:53:01 UTC
+report confirmed no active session and zero recorded GPU runtime that day. No GCP restart occurred.
+Zero of twelve G2 events completed and no scientific fit began. Freeze 1c and numerical G3 remain pending before
+the 96 S1 plus eight CLEAN inner fits. Root STATUS and all frozen scientific evidence remain unchanged under C-10.
