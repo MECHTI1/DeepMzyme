@@ -497,7 +497,7 @@ its source and derived SHA-256.
 
 Because every cohort protein is in four of the five training files, the overlay carries the derivability property
 recorded in the 2026-10-25 ledger entry: each fold's held-out cohort members follow from training-side files alone.
-No step computes them.
+The overlay build does not compute them. The later post-Freeze-1 identity audit is recorded in the test-use ledger.
 
 ## CARE
 
@@ -811,6 +811,23 @@ has SHA-256 `28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c`, 
 verified training inputs, decisions, selection rules and simulation evidence, including the disclosed operating-rate
 exceedances. No held-out scoring occurred. A passed publication receipt is required before the label-blind
 complement identity audit; that access is recorded separately below when completed.
+
+**2026-11-02 EC-class-vs-CLEAN30 label-blind identity audit (L3):** after the published Freeze-1 check passed at
+`ea8417a`, the pinned identity tool derived each fold's metallo-cohort complement from the approved training-source
+columns and ran its frozen search, component and strata rules. All 21 steps passed; only aggregate counts were
+displayed ([evc-011](campaigns/ec_class_vs_clean30_2026-10/log.md#evc-011)). No model prediction, scoring or selection
+was performed. The campaign `identity/` tree and the NVMe `identity_after_p2-11.tar` now contain test-side material;
+the tar was written without a member listing and verified by SHA-256 only. Its hash is
+`fd9cd6b54254138bf344f69364db8245751554f292aecf39b1722a1c841fb66e`.
+Do not list, search, count or open that tree or archive outside the approved identity, Freeze-1b, mirror and final-scoring
+routes. Development continues from the overlay's frozen inner identity copies. This access does not make the
+historical benchmark pristine or change the earlier disclosures.
+
+**2026-11-02 EC-class-vs-CLEAN30 Freeze 1b (L4):** the builder verified 55 identity receipts and 75 outputs against
+the published Freeze 1 and its pinned code, with the R-ID source restriction intact. The private manifest has
+SHA-256 `fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb`; it and the publication receipt are mirrored
+and verified. No test score was produced or used. The approved CPU preparation endpoint is complete; later
+training and scoring retain their separate gates.
 
 ## Current bundles
 

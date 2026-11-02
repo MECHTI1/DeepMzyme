@@ -770,3 +770,46 @@ Identity source anchor (P2-1, R-ID): `697427e40e18aec018b66cb86cbd3a095fda981b`.
 [Freeze 1](freeze1.md) has SHA-256 `28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c`
 for [the canonical JSON](freeze1.json). No campaign complement audit or Phase 7 scoring preceded this freeze.
 The publication check must pass before the label-blind identity audit starts; GPU work remains outside this continuation.
+
+## evc-011
+
+2026-11-02 — **published Freeze 1, label-blind identity audit and Freeze 1b (CP-E).** The reviewed campaign commits
+through CP-D `ea8417a` were pushed to `origin/main`. After refreshing the remote reference,
+`verify-freeze1 --require-pushed` passed for the unchanged Freeze-1 bytes; its receipt SHA-256 is
+`7ea5babe8204f076a0400811ea0a62b3e942093629239217086a962884b1fa17`.
+
+P2-11 then ran at that clean commit under the two-core, 3 GB, zero-swap cap: complement FASTA, search and edges for
+each fold, cohort components, then all five strata tables. All 21 steps passed in 70.4 s, with no refusal.
+No fold-work remapping was needed. Only counts were displayed; no protein identifier, EC label, prediction or
+score was displayed. The audit derived test-side cohort complements from the approved training-source columns.
+It made no model prediction, score or selection decision.
+
+| Fold | Complement proteins | No hit | ≤20% | (20,25]% | (25,30)% | [30,50]% | >50% |
+|---|---|---|---|---|---|---|---|
+| 0 | 118 | 14 | 0 | 6 | 30 | 57 | 11 |
+| 1 | 162 | 23 | 0 | 7 | 34 | 83 | 15 |
+| 2 | 178 | 34 | 1 | 11 | 40 | 78 | 14 |
+| 3 | 154 | 22 | 0 | 8 | 44 | 68 | 12 |
+| 4 | 128 | 17 | 0 | 6 | 32 | 60 | 13 |
+
+These are cohort-complement identity counts, not single-label evaluation counts. The cohort has 740 proteins in
+307 components; the largest component has 39 proteins (5.27%). No class-support or performance claim follows
+from these label-blind counts.
+
+The identity folder is now test-bearing. It was mirrored as one deterministic tar without listing its members;
+only the archive checksum was read back and verified. `identity_after_p2-11.tar` has SHA-256
+`fd9cd6b54254138bf344f69364db8245751554f292aecf39b1722a1c841fb66e`.
+Later development uses the frozen inner identity copies in the overlay, not this folder or its archive.
+[DATASETS L3/L4](../../DATASETS.md#test-use-ledger) records the access and restrictions.
+
+P2-12 `manifest --kind freeze1b` passed at `ea8417a`: 55 receipts and 75 outputs across five folds, the published
+Freeze-1 binding, matching identity code, unchanged R-ID files from `697427e`, and the cohort/strata links.
+The private `freeze/freeze1b.json` has SHA-256
+`fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb`. It and the publication receipt, count summary and console
+records are mirrored and verified. Freeze 1 remains `28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c`.
+
+The approved CPU continuation through Freeze 1b is complete. The CP-C test evidence remains applicable because no
+source changed afterward: full suite 3,155 passed, 18 skipped, 15 subtests passed; campaign/comparator 1,041 passed,
+1 skipped; smoke 44 passed, 1 skipped. Documentation checks have no strict failure and the same 11 baseline
+warnings. The final simulation limitations in evc-010 remain explicit. No GPU, Phase 4 fit or Phase 7 scoring ran.
+WP-13 and G2 remain later work outside this continuation. Root STATUS retains the disclosed stale state of evc-009.

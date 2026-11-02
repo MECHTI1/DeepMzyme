@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-02; Freeze 1 recorded, identity audit next)
+Status: active (2026-11-02; Phase 2 CPU preparation complete through Freeze 1b)
 
 Goal: a DeepMzyme model for the EC class (the first digit of the EC number: 1 oxidoreductases to 7 translocases) that
 outperforms a retrained CLEAN on the official CLEAN `split30` five-fold benchmark (metalloenzyme subset), and on its test proteins without a ≥30% identity hit to training. This is a
@@ -22,7 +22,7 @@ most $3); 4 fold-0 development with a stop-or-continue gap gate; 5 folds 1–4; 
 scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (three lanes) or $99–166 (serial), CLEAN about
 160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
 
-Current state: [Freeze 1](freeze1.md) records the verified inputs and fixed rules. The [log](log.md#evc-010) reports
-the final simulation, including target exceedances; uniform control across folds is not established. No model
-comparison or Phase 7 scoring has occurred. Root STATUS remains stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger)
-records prior exposures. Publication verification precedes the label-blind identity audit and Freeze 1b.
+Current state: [Freeze 1](freeze1.md) is published; the label-blind identity audit and Freeze 1b passed
+([evc-011](log.md#evc-011)). The final simulation has target exceedances (evc-010); uniform control across folds is
+not established. No model comparison or Phase 7 scoring has occurred. WP-13 and G2 remain later work. Root STATUS
+is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) records exposures and the identity-folder restrictions.
