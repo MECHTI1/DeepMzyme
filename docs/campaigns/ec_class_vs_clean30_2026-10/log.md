@@ -720,3 +720,53 @@ byte-identical to the environment records of evc-008. SupCon certification is st
 certification of any real Phase 4 fit. The ENZYME source (release 02-Sep-2026) was downloaded on 2026-11-02, SHA-256
 `6e1f553fcaa15ba7018344d4181012002547cf15febeb9d3a03dacdd75963001`; parser preflight found 8,472 records and
 1,308 resolved transfer rows. The source and download receipt are mirrored and byte-verified.
+
+## evc-010
+
+2026-11-02 — **final fixed-rule simulation, transfer list and Freeze 1 (CP-D).** CPU only, at the clean
+CP-C commit `d96527f`. P2-9b completed all 120 null points and 48,000 replicates in 58 min (1.80 CPU hours,
+peak 0.13 GB), including the initial timed point reused by the full run. The eight-CPU-hour ceiling was respected.
+A separate verification matched every record, result, source and calibration hash, recomputed the 40
+fold/corner floors and targets, and regenerated the summary byte for byte. The outputs and verification record are
+mirrored to NVMe and checked by SHA-256. No new power point, alpha, seed or noise range was searched.
+
+**Operating characteristics are not a uniform target pass.** The table gives ranges across the 40 points at each
+look count, the number exceeding its point-estimate target, and the worst point's individual 95% Wilson interval.
+
+| Comparison | Target | Observed range | Above target | Worst-point interval |
+|---|---|---|---|---|
+| Ordinary, one look | 10% | 4.75–12.0% | 6/40 | 9.2–15.6% (48/400) |
+| L7, two looks | 15% | 9.5–18.0% | 11/40 | 14.5–22.1% (72/400) |
+| L9, four looks | 15% | 5.75–14.0% | 0/40 | 10.9–17.7% (56/400) |
+
+The original selection and independent-confirmation population, fold 2, remains within the targets at every final
+corner: maxima 8.75%, 13.5% and 9.5% respectively. The excesses occur on the other folds. With 400 replicates per
+point and shared draws, uniform target control across folds is not established; some underlying rates may exceed
+their targets. The modest excesses at maxima across 40 points do not establish a substantial reversal of the earlier
+fold-2 confirmation. The already confirmed D1 levels are retained without retuning, as fixed before this grid.
+No individual interval lies wholly above its target, but that is not an acceptance rule or proof of target control.
+The verification record retains `all_points_meet_policy=false`; evidence integrity passed separately. No pooled
+interval is formed. These simulations concern individual promotion decisions, not family-wise control of the
+complete selection pipeline or real-model superiority; the low-power disclosure in evc-007 remains applicable.
+
+P2-9d at the same commit resolved the approved ENZYME source into 1,308 transfer rows: 214 cross-class and
+1,094 within-class transfers. Six source entries resolve entirely to deleted entries and are omitted; 16 chains
+were resolved. The scorer reader agrees with the emitted CSV. Source, download receipt, list and parser receipt
+are mirrored and verified.
+
+| Evidence | SHA-256 |
+|---|---|
+| Final sweep | `51f1d48af4c0295f0e962ffe6b012b4d1dad9a91b21f6a39715a488f2d43c7d4` |
+| Final sweep receipt | `d3685c31084cb603c3bdfb495c2e3f36ffd6294a9acbafd07b819a023e6c11aa` |
+| Final summary | `cf3b80437fd3d3e0063390bcd7d9b3d328ddacc3f2e9b7009ac6804169acbc84` |
+| Verification record | `93298ff914f70e739dc38a39e56a42c99fd9bcf3f49b41a936a9e9f1c117aa31` |
+| Transfer CSV | `84ec98b484fd8b048ec73a5344b20efc29924ee6726d9ecef448ee33a31de2d7` |
+| Transfer receipt | `adcf7e707754b54091c44e3df3a349eba2ff7d0f2a7ed159f274d322609e911f` |
+
+The real Freeze-1 inputs manifest verified all five views, their certified overlay memberships, unchanged plans and
+dry-run receipts, and the R-CMD source restrictions at CP-C. The document binds 129 answered decisions, those inputs,
+the final simulation, label/cohort/R2 records, environment exports, CLEAN harness pins, ESMC weights and MMseqs2.
+Identity source anchor (P2-1, R-ID): `697427e40e18aec018b66cb86cbd3a095fda981b`.
+[Freeze 1](freeze1.md) has SHA-256 `28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c`
+for [the canonical JSON](freeze1.json). No campaign complement audit or Phase 7 scoring preceded this freeze.
+The publication check must pass before the label-blind identity audit starts; GPU work remains outside this continuation.

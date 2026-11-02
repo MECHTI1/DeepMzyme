@@ -805,6 +805,13 @@ files and folders found no matches for `*_maxsep.csv`, `ec_level_metrics.csv`, `
 or `scored_results`. A broader filename search for those stems also returned no results. No file contents,
 labels or scores were opened. This bounded search does not establish that no earlier evaluation occurred.
 
+**2026-11-02 EC-class-vs-CLEAN30 Freeze 1 (L2):** the canonical [Freeze-1 document](campaigns/ec_class_vs_clean30_2026-10/freeze1.json)
+has SHA-256 `28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c`, recorded in
+[evc-010](campaigns/ec_class_vs_clean30_2026-10/log.md#evc-010) before any campaign complement audit. It binds the
+verified training inputs, decisions, selection rules and simulation evidence, including the disclosed operating-rate
+exceedances. No held-out scoring occurred. A passed publication receipt is required before the label-blind
+complement identity audit; that access is recorded separately below when completed.
+
 ## Current bundles
 
 ### Hugging Face repository inventory
