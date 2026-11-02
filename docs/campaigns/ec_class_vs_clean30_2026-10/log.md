@@ -1199,3 +1199,16 @@ $19 and continued refusal of the underfunded $3.50 route. Unchanged controller v
 The execution manifest is `8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a`.
 The CLEAN receipt was rebound to it; all thirty payload files and eight unit definitions are identical.
 The controller status check confirmed `TERMINATED`, zero running time and the $25 daily guard at 16:10 UTC.
+
+The first queue invocation passed local input checks but the controller's fresh price request returned HTTP
+429 at 16:30 UTC. This occurred before the provider-start step: the usage ledger contains no new
+`START_REQUESTED`, running or transfer event. Shutdown was independently confirmed at 16:33:50 UTC.
+The closed driver record is preserved; the authorized allocation remains unused.
+
+The private price client now retries HTTP 429 only, at most three attempts, honoring `Retry-After` or using
+30/60-second backoff within a shared 120-second verification deadline. Fresh pricing remains mandatory;
+unknown prices and other errors still refuse execution. **18 focused offline checks passed** (nine new,
+nine existing) in 6.39 seconds. The source SHA-256 is
+`43ecda3a57910dc20494433f55c4cdda8c081073af012d2ccb89ceb2e310e6b3`.
+This changes no public executable source or scientific input binding. A fresh driver namespace resumes the
+same unconsumed source launch and approved recovery scope.

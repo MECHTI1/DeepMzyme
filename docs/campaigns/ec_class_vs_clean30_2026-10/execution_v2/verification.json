@@ -3,7 +3,7 @@
     "actual_g2_measurements": 0,
     "authorization_sha256": "c3a645c19f42c0f202b30066789e5e107cf0c2711baf0ff195239b31201c22b9",
     "controller_daily_guard_usd": 25.0,
-    "controller_source_unchanged": true,
+    "controller_source_unchanged": false,
     "cost": {
       "conservative_max_usd": 18.2640956,
       "egress_usd_per_gib": 0.15,
@@ -143,6 +143,21 @@
     "private_controller_offline": {
       "passed": 17,
       "receipt": "controller_candidate_smoke_final.json"
+    },
+    "private_pricing_retry": {
+      "evidence_sha256": "92a99eb7d754bb7f8dc814c90f0114f68df568459f96bcad8f1b09c07d1a3758",
+      "existing": 9,
+      "fresh_prices_required": true,
+      "log": "g2_budget19_20261102/pricing_429_focused_tests.log",
+      "max_attempts": 3,
+      "new": 9,
+      "no_cache_fallback": true,
+      "no_new_gpu_or_provider_start": true,
+      "passed": 18,
+      "pricing_source_sha256": "43ecda3a57910dc20494433f55c4cdda8c081073af012d2ccb89ceb2e310e6b3",
+      "shared_deadline_seconds": 120,
+      "test_sha256": "9330aca09dada01e9c9208bd2ff87fd5725ff57fb164e53406d72ee296160012",
+      "wall_seconds": 6.39
     },
     "workstation_focused": {
       "joint_run": "fallback_focused_tests.log",
