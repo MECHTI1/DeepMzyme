@@ -632,6 +632,98 @@ def allow_fallback(cfg, path):
     write(path, cfg)
 
 
+def allow_cross_region(cfg, path):
+    allow_fallback(cfg, path)
+    regions = {"us-central1": ("10.42.0.0/24", "A88A-5A60-E821:1,D18E-3563-415F:8,F0A4-E3D3-33BD:32", "6AE1-525F-8B80", ".853624"),
+               "us-west1": ("10.44.0.0/24", "A88A-5A60-E821:1,D18E-3563-415F:8,F0A4-E3D3-33BD:32", "6AE1-525F-8B80", ".853624"),
+               "us-east4": ("10.45.0.0/24", "1D4C-3419-0297:1,CF07-A027-C390:8,A15F-B56F-97FE:32", "7D52-6D58-14FF", ".850829")}
+    budget = {"schema_version": 1, "scope": "cross-region-v1", "allowed_zones": list(ws.CROSS_REGION_ZONES),
+              "gross_ceiling_usd": 3.5, "host_egress_reserve_usd": .6, "retained_snapshot_usd_per_hour": .021,
+              "max_storage_seconds": 14400, "transfer_usd_per_gib": .02, "transfer_bytes_per_restore": 150 * ws.GIB,
+              "transfer_source_url": "https://cloud.google.com/compute/disks-image-pricing", "verified_at": stamp(),
+              "snapshot_usd_per_hour": 7.5 / 730, "recycle_usd_per_hour": 7.5 / 730,
+              "region_profiles": {region: {"REGION": region, "SUBNET": "deepmzyme-subnet", "SUBNET_RANGE": row[0],
+                  "PRICE_COMPUTE_SKUS": row[1], "PRICE_DISK_CAPACITY_SKU_ID": row[2],
+                  "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR": row[3]} for region, row in regions.items()},
+              "region_prices": {region: {"verified_at": stamp(), "gross_usd_per_hour": .879172,
+                  "disk_usd_per_hour": .023} for region in regions}}
+    budget_path = path.with_name("recovery_budget.json")
+    write(budget_path, budget)
+    cfg["fallback"].update(scope="cross-region-v1", allowed_zones=list(ws.CROSS_REGION_ZONES), storage_reserve_usd=.61,
+                           recovery_budget={"path": str(budget_path), "sha256": ws._sha(budget_path)})
+    cfg["fallback"]["storage_cost_evidence"]["disk_usd_per_hour"] = .023
+    controller_path = Path(cfg["controller_root"]) / "config.env"
+    controller = ws._controller_config(controller_path.parent)
+    controller.update(budget["region_profiles"]["us-central1"])
+    controller_path.write_text("".join(f"{key}={value}\n" for key, value in controller.items()))
+    write(path, cfg)
+    return budget, budget_path
+
+
+@pytest.mark.parametrize("zone", ws.CROSS_REGION_ZONES)
+def test_cross_region_identity_requires_matching_subnet_and_pricing(config, zone):
+    cfg, path = config
+    budget, _ = allow_cross_region(cfg, path)
+    region = zone.rsplit("-", 1)[0]
+    cfg["expected_identity"]["zone"] = zone
+    controller = ws._controller_config(Path(cfg["controller_root"]))
+    controller.update(budget["region_profiles"][region], ZONE=zone)
+    ws._identity(cfg, controller)
+    for key in ("REGION", "SUBNET", "PRICE_COMPUTE_SKUS", "PRICE_DISK_CAPACITY_SKU_ID"):
+        changed = {**controller, key: "wrong-region-value"}
+        with pytest.raises(ws.WorkstationError):
+            ws._identity(cfg, changed)
+
+
+def test_cross_region_profile_accepts_equivalent_price_rounding(config):
+    cfg, path = config
+    allow_cross_region(cfg, path)
+    controller = ws._controller_config(Path(cfg["controller_root"]))
+    controller["PRICE_EXPECTED_COMPUTE_USD_PER_HOUR"] = "0.853624271"
+    ws._identity(cfg, controller)
+    controller["PRICE_EXPECTED_COMPUTE_USD_PER_HOUR"] = "0.9"
+    with pytest.raises(ws.WorkstationError):
+        ws._identity(cfg, controller)
+
+
+def test_full_cross_region_pass_refuses_three_fifty_before_any_cloud_call(config, monkeypatch):
+    cfg, path = config
+    allow_cross_region(cfg, path)
+    monkeypatch.setattr(ws.ControllerTransport, "controller", lambda *a, **kw: pytest.fail("budget refusal must precede cloud calls"))
+    with pytest.raises(ws.WorkstationError, match=r"require \$18.*exceeding the \$3.5 gross ceiling"):
+        ws.run_g2(cfg, path)
+    assert not (Path(cfg["state_root"]) / "driver_state.json").exists()
+
+
+@pytest.mark.parametrize("problem", ["checksum", "scope", "order", "ceiling", "transfer_rate", "transfer_bytes", "stale", "profile", "missing_region"])
+def test_cross_region_budget_cannot_omit_authority_or_charge(config, problem):
+    cfg, path = config
+    budget, budget_path = allow_cross_region(cfg, path)
+    if problem == "checksum":
+        budget["gross_ceiling_usd"] = 3.4
+    elif problem == "scope":
+        cfg["fallback"].pop("scope")
+    elif problem == "order":
+        cfg["fallback"]["allowed_zones"].reverse()
+    elif problem == "ceiling":
+        budget["gross_ceiling_usd"] = 20
+    elif problem == "transfer_rate":
+        budget["transfer_usd_per_gib"] = 0
+    elif problem == "transfer_bytes":
+        budget["transfer_bytes_per_restore"] = 20 * ws.GIB
+    elif problem == "stale":
+        budget["region_prices"]["us-east4"]["verified_at"] = stamp(time.time() - 90000)
+    elif problem == "profile":
+        budget["region_profiles"]["us-east4"].pop("PRICE_COMPUTE_SKUS")
+    else:
+        budget["region_prices"].pop("us-west1")
+    write(budget_path, budget)
+    if problem != "checksum":
+        cfg["fallback"]["recovery_budget"]["sha256"] = ws._sha(budget_path)
+    with pytest.raises(ws.WorkstationError):
+        ws._cross_region_budget(cfg)
+
+
 @pytest.mark.parametrize("zone", ["us-central1-b", "us-central1-c"])
 def test_replacement_identity_requires_exact_authorized_controller_endpoint(config, zone):
     cfg, path = config

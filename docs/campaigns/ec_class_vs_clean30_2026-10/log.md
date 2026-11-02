@@ -1104,3 +1104,52 @@ The five Phase-4 request files retain pending status and unset numerical budgets
 capacity pass. Freeze 1c cannot be built and no measured G3 ceiling or lane outcome can be claimed. The published
 code and prepared inputs remain reusable. A future authorized allocation must use a fresh attempt namespace;
 the closed driver state and archived recovery pass remain immutable.
+
+## evc-019
+
+2026-11-02 — **Cross-region recovery preparation; allocation blocked by its gross ceiling.** The evc-017/018
+closeout was committed and pushed as `8d84e95`. The maintainer authorized one source retry followed by the
+ordered destinations `us-west1-a`, `us-west1-b`, `us-west1-c`, `us-east4-a`, `us-east4-c`, with two requested
+runtime hours and a $3.50 gross ceiling including recovery. This authority does not change scientific scope.
+
+Read-only provider checks found both destination subnets on the expected network and each region's L4 quota
+at limit 1, usage 0. The three proposed west compute SKU identifiers returned HTTP 404. The runbook's existing
+Americas compute SKUs cover west; east's specified SKUs are valid. The controller uses `PRICE_COMPUTE_SKUS`
+and `PRICE_DISK_CAPACITY_SKU_ID`, rather than the proposed `EXPECTED_*` names.
+
+[Official snapshot pricing](https://cloud.google.com/compute/disks-image-pricing#network_charges_for_snapshot_creation_and_restoration)
+charges $0.02/GiB for North America cross-region restoration, including disks whose subsequent VM creation
+fails. The previous deleted recovery snapshot recorded 69,027,758,175 `downloadBytes` (64.287 GiB), compared
+with 20,025,475,200 incremental `storageBytes`. The [API](https://docs.cloud.google.com/compute/docs/reference/rest/v1/snapshots)
+defines these separately. Even that historical download size implies $6.429 for five restores, before G2;
+it is not a bound for a new snapshot. The safe pre-allocation bound is 150 GiB per candidate, or **$15** for
+five restores. G2's existing compute/margin/egress/retained-snapshot envelope adds $2.6641, before temporary
+recovery storage. The $3.50 ceiling therefore cannot admit this pass.
+
+The private evidence is `phase3/cross_region_update_20261102/pricing_audit.json`, SHA-256
+`6ede236635f70d0b3f680f611dfc69d25e792f78220d93fbb333778b9740830b`. Provider status at 14:04 UTC confirmed
+the original VM `TERMINATED` and zero GPU runtime. No billable action was performed for this preparation.
+
+The execution update preserves the default same-region route and adds the exact ordered cross-region scope,
+full regional profile binding, priced restoration reserves and a one-hour/five-candidate initiation bound.
+The private controller records transfer charges before each restore and retains them for failed candidates.
+`--adopt-recovered` uses the existing fit/replay/independent-backup finalization gate; selected-but-unverified
+replacements cannot authorize source deletion. No controller caps or selected configuration were changed.
+
+The two focused repository files passed **114 tests in 10.20 seconds**. The full regression suite and simulations
+were not repeated. The refreshed execution manifest is
+`49c140b0b35b400c1dacd8b6c37af5d9083f6a254ecbb1373a890d681038e7da`. The CLEAN input receipt is
+`12b8a88716071d1e719ab4ed648159b6d61f3d0fe510b25797d19594a3ed470b`; all thirty payload files and eight unit
+definitions match their preserved predecessors. Freeze 1/1b, the S1 amendment, views and embeddings remain intact.
+
+The actual workstation preflight refused **$18.264096 required versus $3.50 authorized** before large-file
+hashing or controller calls. The controller's independent live-price preview refused **$18.254731** before
+creating any storage or compute; the workstation reserve rounds storage upward. The source-only leg remains
+within its $2.6641 envelope and uses a fresh namespace for the single authorized retry after publication.
+
+Seven new private-controller tests passed, including ordinary central start, regional adoption, five failed
+candidates, transfer accounting and cleanup. The legacy run passed 38 of 39 checks; one setup failed because
+the simulated provider timestamp had finer precision than the ledger timestamp. That check passed unchanged
+on rerun. The stopped-source fixture was then made deterministic and three affected checks passed; the
+production capacity guard was unchanged. Detailed counts, logs and hashes are bound in the execution
+verification record. Documentation checks passed with zero strict failures and eleven baseline warnings.

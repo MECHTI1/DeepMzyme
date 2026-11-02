@@ -28,6 +28,8 @@ from ec_clean30 import phase3
 GIB = 1024 ** 3
 MAX_G2_SECONDS = 117 * 60
 GROSS_CEILING_USD = 3.0
+CROSS_REGION_CEILING_USD = 3.5
+CROSS_REGION_ZONES = ("us-west1-a", "us-west1-b", "us-west1-c", "us-east4-a", "us-east4-c")
 PAYLOAD_CEILING_BYTES = 3 * GIB
 EGRESS_RESERVE_GIB = 4
 RESERVE_SECONDS = 900
@@ -371,10 +373,19 @@ def _identity(config: Mapping[str, Any], controller: Mapping[str, str]) -> None:
              and all(str(config["expected_identity"][key]) == controller.get(name) for key, name in names.items()),
              "Controller endpoint differs from the reviewed immutable instance identity.")
     zones = {"us-central1-a", *_fallback_policy(config).get("allowed_zones", [])}
+    region = controller.get("ZONE", "").rsplit("-", 1)[0]
     _require(controller.get("MACHINE_TYPE") == "g2-standard-8" and controller.get("ZONE") in zones
-             and controller.get("REGION", "us-central1") == "us-central1"
+             and controller.get("REGION", "us-central1") == region
              and controller.get("PROVISIONING_MODEL", "STANDARD") == "STANDARD"
              and controller.get("SSH_HOST_ALIAS") == config["ssh_alias"], "G2 hardware, region or alias differs.")
+    budget = _cross_region_budget(config)
+    if budget:
+        profile = budget["region_profiles"][region]
+        expected_rate = "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR"
+        _require(all(controller.get(key) == str(value) for key, value in profile.items() if key != expected_rate)
+                 and math.isclose(float(controller.get(expected_rate, "nan")), float(profile[expected_rate]),
+                                  rel_tol=1e-6, abs_tol=1e-9),
+                 "Controller region/subnet/pricing profile differs from the reviewed recovery budget.")
 
 
 def _fallback_policy(config: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -383,9 +394,76 @@ def _fallback_policy(config: Mapping[str, Any]) -> Mapping[str, Any]:
     if policy:
         zones = policy.get("allowed_zones")
         _require(isinstance(zones, list) and zones and all(isinstance(zone, str) for zone in zones)
-                 and len(zones) == len(set(zones))
-                 and set(zones) <= {"us-central1-b", "us-central1-c"}, "Fallback zones exceed the authorized same-region pass.")
+                 and len(zones) == len(set(zones)), "Fallback requires distinct explicit destination zones.")
+        if policy.get("scope") == "cross-region-v1":
+            _require(tuple(zones) == CROSS_REGION_ZONES, "Fallback zones/order exceed the authorized cross-region pass.")
+        else:
+            _require(policy.get("scope") in (None, "same-region-v1")
+                     and set(zones) <= {"us-central1-b", "us-central1-c"},
+                     "Fallback zones exceed the authorized same-region pass.")
     return policy
+
+
+def _cross_region_budget(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    policy = _fallback_policy(config)
+    if policy.get("scope") != "cross-region-v1":
+        return {}
+    reference = policy["recovery_budget"]
+    path = Path(_absolute(reference["path"]))
+    _require(path.is_file() and _sha(path) == reference["sha256"], "Recovery budget checksum differs.")
+    budget = _json(path)
+    _require(budget.get("schema_version") == 1 and budget.get("scope") == "cross-region-v1"
+             and budget.get("allowed_zones") == policy["allowed_zones"], "Recovery budget scope differs.")
+    _require(0 < _number(budget["gross_ceiling_usd"], "cross-region gross ceiling") <= CROSS_REGION_CEILING_USD,
+             "Cross-region recovery exceeds the authorized $3.50 ceiling.")
+    _require(0 <= time.time() - _epoch(budget["verified_at"]) <= 86400,
+             "Cross-region recovery prices are stale or future-dated.")
+    _require(budget["max_storage_seconds"] == policy["storage_window_seconds"] == 14400,
+             "Cross-region recovery requires its bounded four-hour storage window.")
+    _require(budget["host_egress_reserve_usd"] >= EGRESS_RESERVE_GIB * config["pricing"]["egress_usd_per_gib"]
+             and budget["retained_snapshot_usd_per_hour"] >= config["pricing"]["snapshot_usd_per_hour"],
+             "Recovery budget omits host egress or retained snapshots.")
+    for key in ("host_egress_reserve_usd", "retained_snapshot_usd_per_hour", "snapshot_usd_per_hour", "recycle_usd_per_hour"):
+        _number(budget[key], key)
+    _require(_number(budget["transfer_usd_per_gib"], "snapshot restore transfer rate") >= .02
+             and type(budget["transfer_bytes_per_restore"]) is int
+             and budget["transfer_bytes_per_restore"] >= 150 * GIB
+             and budget["transfer_source_url"] == "https://cloud.google.com/compute/disks-image-pricing",
+             "Recovery budget omits the conservative cross-region snapshot restore charge.")
+    regions = {"us-central1", "us-west1", "us-east4"}
+    _require(set(budget["region_profiles"]) == set(budget["region_prices"]) == regions,
+             "Recovery budget must cover every authorized region.")
+    keys = {"REGION", "SUBNET", "SUBNET_RANGE", "PRICE_COMPUTE_SKUS", "PRICE_DISK_CAPACITY_SKU_ID",
+            "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR"}
+    for region in regions:
+        profile, price = budget["region_profiles"][region], budget["region_prices"][region]
+        _require(set(profile) == keys and profile["REGION"] == region and profile["SUBNET"] == "deepmzyme-subnet",
+                 "Recovery budget region profile is incomplete or foreign.")
+        _require(0 <= time.time() - _epoch(price["verified_at"]) <= 86400,
+                 "Regional price evidence is stale or future-dated.")
+        for key in ("gross_usd_per_hour", "disk_usd_per_hour"):
+            _number(price[key], key)
+    return budget
+
+
+def _verify_recovery_envelope(config: Mapping[str, Any], envelope: Mapping[str, Any]) -> None:
+    policy, budget = _fallback_policy(config), _cross_region_budget(config)
+    _require(budget and envelope.get("scope") == "cross-region-v1"
+             and envelope.get("budget_sha256") == policy["recovery_budget"]["sha256"]
+             and envelope.get("allowed") is True and envelope.get("allowed_zones") == policy["allowed_zones"]
+             and envelope.get("max_attempts") == 5 and envelope.get("attempt_window_seconds") == 3600
+             and envelope.get("max_storage_seconds") == budget["max_storage_seconds"],
+             "Controller recovery envelope differs from the reviewed pass.")
+    minimum_transfer = budget["transfer_bytes_per_restore"] / GIB * budget["transfer_usd_per_gib"] * 5
+    _require(_number(envelope["transfer_reserve_usd"], "controller transfer reserve") >= minimum_transfer
+             and envelope["gross_ceiling_usd"] == budget["gross_ceiling_usd"]
+             and _number(envelope["worst_case_gross_usd"], "controller recovery envelope") <= budget["gross_ceiling_usd"],
+             "Controller recovery envelope omits transfer charges or exceeds the authorized ceiling.")
+    _require(set(envelope["region_prices"]) == set(budget["region_prices"]), "Controller recovery price regions differ.")
+    for region, actual in envelope["region_prices"].items():
+        for key in ("gross_usd_per_hour", "disk_usd_per_hour"):
+            _require(0 < _number(actual[key], key) <= budget["region_prices"][region][key] + 1e-9,
+                     "Controller regional prices exceed the reviewed recovery budget.")
 
 
 def _fallback_cost(config: Mapping[str, Any]) -> float:
@@ -399,9 +477,18 @@ def _fallback_cost(config: Mapping[str, Any]) -> float:
     # The base envelope charges one disk and old snapshots for two hours. Cover
     # every candidate/source disk throughout recovery and the additional storage time.
     hours = window / 3600
-    required = ((len(policy["allowed_zones"]) + 1) * hours - 2) * _number(proof["disk_usd_per_hour"], "fallback disk rate")
+    disk = _number(proof["disk_usd_per_hour"], "fallback disk rate")
+    budget = _cross_region_budget(config)
+    if budget:
+        _require(disk >= max(row["disk_usd_per_hour"] for row in budget["region_prices"].values()),
+                 "Fallback storage reserve omits a destination region's disk rate.")
+        _require(proof["snapshot_usd_per_hour"] >= budget["snapshot_usd_per_hour"]
+                 and proof["recycle_minimum_usd"] >= budget["recycle_usd_per_hour"],
+                 "Fallback storage evidence omits snapshot or recycle-bin charges.")
+    required = ((len(policy["allowed_zones"]) + 1) * hours - 2) * disk
     required += hours * _number(proof["snapshot_usd_per_hour"], "fallback snapshot rate")
-    required += (hours - 2) * _number(config["pricing"]["snapshot_usd_per_hour"], "retained snapshot rate")
+    retained = budget["retained_snapshot_usd_per_hour"] if budget else config["pricing"]["snapshot_usd_per_hour"]
+    required += (hours - 2) * _number(retained, "retained snapshot rate")
     required += _number(proof["recycle_minimum_usd"], "recycled snapshot minimum")
     reserved = _number(policy["storage_reserve_usd"], "fallback storage reserve")
     _require(reserved >= required, "Fallback storage reserve omits overlapping disks or snapshot minimums.")
@@ -426,17 +513,31 @@ def _cost(config: Mapping[str, Any]) -> dict[str, float]:
     quote = config["pricing"]
     for record in (price, quote):
         _require(0 <= time.time() - _epoch(record["verified_at"]) <= 86400, "Cost evidence is stale or future-dated.")
-    _require(price.get("machine_type") == "g2-standard-8" and price.get("region") == "us-central1",
+    region = config["expected_identity"]["zone"].rsplit("-", 1)[0]
+    _require(price.get("machine_type") == "g2-standard-8" and price.get("region") == region,
              "Controller price is for different hardware or region.")
     gross = _number(price["gross_usd_per_hour"], "gross rate")
     snapshots = _number(quote["snapshot_usd_per_hour"], "retained snapshot rate")
     egress = _number(quote["egress_usd_per_gib"], "egress rate")
     _require(egress >= .15, "The recorded egress rate cannot omit the destination-region charge.")
     recovery = _fallback_cost(config)
-    ceiling = gross * 2 * 1.15 + snapshots * 2 + egress * EGRESS_RESERVE_GIB + recovery
-    _require(ceiling <= GROSS_CEILING_USD, "Compute, retained snapshots and egress exceed the $3 gross ceiling.")
+    budget = _cross_region_budget(config)
+    transfer, budget_gross, maximum = 0.0, gross, GROSS_CEILING_USD
+    host_egress = egress * EGRESS_RESERVE_GIB
+    if budget:
+        _require(gross <= budget["region_prices"][region]["gross_usd_per_hour"] + 1e-9,
+                 "Actual regional compute price exceeds the reviewed recovery budget.")
+        budget_gross = max(row["gross_usd_per_hour"] for row in budget["region_prices"].values())
+        transfer = budget["transfer_bytes_per_restore"] / GIB * budget["transfer_usd_per_gib"] * len(budget["allowed_zones"])
+        snapshots = budget["retained_snapshot_usd_per_hour"]
+        host_egress = budget["host_egress_reserve_usd"]
+        maximum = budget["gross_ceiling_usd"]
+    ceiling = budget_gross * 2 * 1.15 + snapshots * 2 + host_egress + recovery + transfer
+    _require(ceiling <= maximum,
+             f"Compute, storage, egress and recovery require ${ceiling:.6f}, exceeding the ${maximum:g} gross ceiling.")
     return {"gross_usd_per_hour": gross, "snapshot_usd_per_hour": snapshots,
-            "egress_usd_per_gib": egress, "recovery_storage_reserve_usd": recovery, "conservative_max_usd": ceiling}
+            "egress_usd_per_gib": egress, "recovery_storage_reserve_usd": recovery,
+            "recovery_transfer_reserve_usd": transfer, "gross_ceiling_usd": maximum, "conservative_max_usd": ceiling}
 
 
 def _view_archive_bytes(path: Path) -> int:
@@ -483,6 +584,7 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     controller = Path(config["controller_root"]).resolve()
     controller_config = _controller_config(controller)
     _identity(config, controller_config)
+    cost = _cost(config)  # Refuse an unaffordable recovery before hashing multi-gigabyte inputs.
     _require(controller_config["REPO_URL"].startswith("https://github.com/"), "Controller checkout URL must use canonical HTTPS.")
     origin = subprocess.check_output(["git", "-C", str(phase3.REPO_ROOT), "config", "--get", "remote.origin.url"], text=True).strip()
     _require(_repository_key(origin) == _repository_key(controller_config["REPO_URL"]), "Local/controller repository identities differ.")
@@ -563,7 +665,6 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     required = [esmc["esmc_weights"], clean["clean_python"], clean["harness"], clean["extract_script"], clean["weights"], contact]
     required += [str(PurePosixPath(config["timing_inputs"]) / name) for name in ("timing_inputs.json", "timing.fasta", "sequence_map.tsv")]
     _require(all(path in content for path in required), "The prepared staging closure omits an embedding input or interpreter.")
-    cost = _cost(config)
     return {"status": "ready" if source.get("published") else "draft_unpublished", "source": source,
             "cost": cost, "queue": [{"action": action, "name": name} for action, name in QUEUE],
             "staging_peak_bytes": staging_bytes, "pending_runtime_checks": ["VM free space", "both CUDA interpreters", "source and view probe"],
@@ -699,6 +800,13 @@ def _selected_fallback(config: dict[str, Any], state: dict[str, Any], state_path
     _write(state_path, state)
     _write(state_path.parent / "fallback_selected.json", receipt)
     _write(state_path.parent / "effective_config.json", config)
+    budget = _cross_region_budget(config)
+    if budget:
+        _require(receipt.get("recovery_budget_sha256") == policy["recovery_budget"]["sha256"],
+                 "Selected recovery is bound to a different budget.")
+        _verify_recovery_envelope(config, receipt["recovery_envelope"])
+        _require(budget["transfer_bytes_per_restore"] >= float(receipt["source_disk"]["sizeGb"]) * GIB,
+                 "Selected source disk exceeds the reserved restore-transfer size.")
     _require(0 < receipt["limit"]["effective_seconds"] <= MAX_G2_SECONDS,
              "Selected fallback exceeds the approved provider duration.")
     proof = policy["storage_cost_evidence"]
@@ -726,6 +834,9 @@ def _fallback_after_stockout(config: dict[str, Any], state: dict[str, Any], stat
     arguments = ["--hours", "2"]
     for zone in policy["allowed_zones"]:
         arguments += ["--allowed-zone", zone]
+    budget = _cross_region_budget(config)
+    if budget:
+        arguments += ["--recovery-budget", policy["recovery_budget"]["path"]]
     preview = transport.controller("fallback", "--dry-run", *arguments, timeout=300)
     candidates = re.search(r"^Candidate offerings \(capacity not guaranteed\): (.+)$", preview, re.MULTILINE)
     _require(candidates is not None and set(candidates[1].split(", ")) <= set(policy["allowed_zones"])
@@ -741,11 +852,15 @@ def _fallback_after_stockout(config: dict[str, Any], state: dict[str, Any], stat
                  ("disk_usd_per_hour", "disk_usd_per_hour"), ("snapshot_usd_per_hour", "snapshot_usd_per_hour"),
                  ("recycle_usd_per_hour", "recycle_minimum_usd"))),
              "Fallback preview storage prices exceed the approved reserve basis.")
+    if budget:
+        envelope_line = re.search(r"^Verified recovery envelope: (.+)$", preview, re.MULTILINE)
+        _require(envelope_line is not None, "Fallback preview lacks its cross-region recovery envelope.")
+        _verify_recovery_envelope(config, json.loads(envelope_line[1]))
     state.update(fallback_attempted=True, fallback_started_unix=time.time(), fallback_preview=preview,
                  fallback_source_identity=config["expected_identity"], start_failure=str(failure), cost=_cost(config))
     _write(state_path, state)
     try:
-        transport.controller("fallback", "--confirm", *arguments, timeout=3600)
+        transport.controller("fallback", "--confirm", *arguments, timeout=5400 if budget else 3600)
     except (WorkstationError, OSError, subprocess.SubprocessError):
         # A lost reply is not permission for another allocation. A durable selected
         # receipt can establish this pass's ownership, allowing the finalizer to stop it.

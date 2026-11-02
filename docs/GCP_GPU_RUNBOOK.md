@@ -78,9 +78,9 @@ past failure nor positive quota establishes current availability
 ([Google documentation](https://docs.cloud.google.com/compute/docs/troubleshooting/troubleshooting-vm-creation)).
 
 The GPU-use policy owns route selection; the controller enforces recovery limits.
-An existing stopped VM uses the same-region recovery below. A fresh allocation
-without a managed VM may use the policy's separately authorized cross-region
-creation pass. These are distinct procedures. Never delete, rename or unlabel
+An existing stopped VM uses the recovery below. An explicitly authorized cross-region
+pass also requires the priced extension described below. A fresh allocation
+without a managed VM uses a separate creation procedure. Never delete, rename or unlabel
 a source to evade a guard. Reconcile uncertain requests against actual cloud
 state before another attempt.
 
@@ -170,6 +170,34 @@ Snapshot deletion can retain a billable recycle-bin copy. The controller also
 verifies permanent removal of that exact temporary snapshot and records its
 separate one-hour minimum charge. It preserves unrelated recoverable snapshots
 and does not change project retention settings.
+
+### Explicit cross-region recovery
+
+The controller extension accepts an explicit ordered destination list in `us-west1`
+and `us-east4`. It permits at most five candidates within a persisted one-hour
+initiation window after snapshot preparation. The default same-region limits
+remain three candidates and ten minutes. Both routes retain provider STOP,
+ownership checks and the same fit/replay/independent-backup cleanup gate.
+
+Each destination uses its own verified region, subnet and compute/disk SKU profile
+from the table below. Actual configuration keys are `PRICE_COMPUTE_SKUS` and
+`PRICE_DISK_CAPACITY_SKU_ID`. The source configuration is backed up before recovery.
+The replacement's full profile and immutable instance ID are selected atomically
+after provider protection passes, so connection and shutdown address that VM.
+Evidence-gated finalization rechecks the profile and removes superseded resources;
+`--adopt-recovered` is an alias for this gate, not permission to delete the source
+before the replacement has verified artifacts.
+
+Regional snapshot restoration incurs network charges for every restored candidate,
+including one whose later VM creation fails. Reserve those costs before allocation
+and record each restore in the usage ledger. Use the full disk size as the safe
+preparation bound; a previous snapshot's smaller compressed `storageBytes` does not
+bound restoration traffic. The snapshot API defines `downloadBytes` separately.
+Unknown pricing or an envelope above the approved gross ceiling blocks the pass
+before a snapshot is created. See [snapshot network pricing](https://cloud.google.com/compute/disks-image-pricing#network_charges_for_snapshot_creation_and_restoration)
+and the [snapshot API](https://docs.cloud.google.com/compute/docs/reference/rest/v1/snapshots).
+Current prices, authorized destinations and the numerical ceiling belong in the
+campaign's readiness record. This extension grants no region or spending authority.
 
 ### Fresh allocation in another region
 

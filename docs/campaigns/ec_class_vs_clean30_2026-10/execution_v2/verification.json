@@ -11,14 +11,53 @@
     "selection_scoring_unchanged": true
   },
   "checks": {
+    "clean_input_rebind": {
+      "clean_inputs_sha256": "12b8a88716071d1e719ab4ed648159b6d61f3d0fe510b25797d19594a3ed470b",
+      "execution_manifest_sha256": "49c140b0b35b400c1dacd8b6c37af5d9083f6a254ecbb1373a890d681038e7da",
+      "previous_clean_inputs_sha256": "f01248bbbe975b0b6a7001af6836643e3383850f2913e69ffa8df532b3785934",
+      "status": "passed",
+      "unchanged_payload_files": 30,
+      "unchanged_units": 8
+    },
     "cpu_smoke": {
       "log": "ecc30_automation_smoke.log",
       "passed": 44,
       "skipped": 1
     },
+    "cross_region_controller": {
+      "actual_cloud_mutations": false,
+      "explanation": "Fake provider millisecond start timestamp could follow second-resolution ledger error; age stopped fixture before failure. Production capacity guard unchanged.",
+      "fixture_corrected_targeted_checks": {
+        "passed": 3,
+        "wall_seconds": 14.607
+      },
+      "legacy_initial": {
+        "failed_fixture": 1,
+        "passed": 38,
+        "total": 39,
+        "wall_seconds": 158.395
+      },
+      "new_tests_passed": 7,
+      "new_tests_wall_seconds": 41.394,
+      "receipt_sha256": "2ba8d2b5039eaa5192c85d789b5b337541144b64490074b44a691f029f33a1a3",
+      "unchanged_failed_test_rerun": {
+        "passed": 1,
+        "wall_seconds": 4.576
+      }
+    },
+    "cross_region_focused": {
+      "files": [
+        "tests/test_ec_clean30_workstation.py",
+        "tests/test_ec_clean30_execution_v2.py"
+      ],
+      "full_regression_repeated": false,
+      "log": "cross_region_update_20261102/repository_tests.log",
+      "passed": 114,
+      "wall_seconds": 10.2
+    },
     "docs_contract": {
       "baseline_warnings": 11,
-      "log": "fallback_docs_check_final.log",
+      "log": "cross_region_update_20261102/docs_check.log",
       "strict_failures": 0
     },
     "execution_v2_focused": {
@@ -92,8 +131,58 @@
     "scientific_payload_identical_to_pre_remote_download_preparation": true,
     "units": 8
   },
+  "cross_region_recovery": {
+    "actual_cross_region_recovery_tested": false,
+    "allowed_zones": [
+      "us-west1-a",
+      "us-west1-b",
+      "us-west1-c",
+      "us-east4-a",
+      "us-east4-c"
+    ],
+    "authorized_gross_ceiling_usd": 3.5,
+    "cleanup_requires_fit_replay_independent_backup": true,
+    "controller_config_unchanged": true,
+    "controller_keys": [
+      "REGION",
+      "ZONE",
+      "SUBNET",
+      "SUBNET_RANGE",
+      "PRICE_COMPUTE_SKUS",
+      "PRICE_DISK_CAPACITY_SKU_ID",
+      "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR",
+      "SELECTED_INSTANCE_ID"
+    ],
+    "controller_live_preview": {
+      "conservative_bound_usd": 18.254731463013698,
+      "log": "cross_region_update_20261102/controller_preview.log",
+      "status": "refused_before_allocation"
+    },
+    "controller_source_sha256": {
+      "lib/fallback.py": "24785db56969414d2c36aa4bce8b991cc9b9e5b7a1cd24e29911465e2c6383cb",
+      "lib/ledger.py": "46e793dba55ba9e9517fa5d7ed53fc84fd797816283c9fa1c11dc112d5bbebcc",
+      "lib/lifecycle.py": "d1190c384f2800a63812d34eb2e3cf1e94ce615c833172aa6de8d790149b343b",
+      "lib/vmctl.py": "e1a481d1976aad7498d76a1a7c802943ef92f0a20fbfbeb296ebcd2714cef327"
+    },
+    "preflight_refusal_sha256": "66f733ea2cd75403029851354d8963811874ca6897b55f85e4ae4b605ae08330",
+    "price_audit_sha256": "6ede236635f70d0b3f680f611dfc69d25e792f78220d93fbb333778b9740830b",
+    "recovery_budget_sha256": "920b1a41a86a25ad33314fdda37ff95817d771dbcc740754a127f1937fc27c35",
+    "restore_bound_bytes_per_candidate": 161061273600,
+    "restore_rate_usd_per_gib": 0.02,
+    "scope": "cross-region-v1",
+    "source_only_preview": {
+      "conservative_g2_envelope_usd": 2.6640956,
+      "log": "cross_region_update_20261102/central_start_preview.log",
+      "provider_stop_seconds": 7020,
+      "status": "passed"
+    },
+    "status": "budget_blocked_before_cloud_actions",
+    "storage_reserve_usd": 0.6,
+    "transfer_reserve_usd": 15,
+    "workstation_conservative_bound_usd": 18.2640956
+  },
   "date": "2026-11-02",
-  "execution_manifest_sha256": "5773dbda4a79cf88b423f0fe7d5136621130fdafa807c7caaeff8221289ddc7e",
+  "execution_manifest_sha256": "49c140b0b35b400c1dacd8b6c37af5d9083f6a254ecbb1373a890d681038e7da",
   "format": "deepmzyme_ec_clean30_execution_v2_verification",
   "local_g2_readiness": {
     "allowed_zones": [
@@ -280,7 +369,7 @@
     "staging_peak_bytes": 19269249867,
     "status": "draft_unpublished"
   },
-  "previous_verification_sha256": "1c4d3d241983a2de1956379675519e9a6627022a4584f98ab3904e3be2e60b12",
+  "previous_verification_sha256": "df26d45908ee8c48b85a61a5c598b103087c8431a2f2cae8e90b1edc9dcceb47",
   "published_base": {
     "commit": "10e0e1144f8d73cfbf6bdc96b862038d33479e9d",
     "strict_verify_execution_without_draft": "passed_before_extension",
@@ -386,12 +475,12 @@
     "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
     "src/ec_clean30/phase3.py": "03c81e50376be46b91555e6105ea9e90339fb15d37207adeb6ab6b2943bc7ddc",
     "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
-    "src/ec_clean30/workstation.py": "2f0e21715d3529b8dd8523dbf016f55ee5dbc4e41f269702459df01690c6dfee"
+    "src/ec_clean30/workstation.py": "f1cb3baf80d12e1dc3b3865ace0c7d9876470d8d28d6df95373dab21eaddaaec"
   },
   "status": "cpu_verified",
   "storage_free_bytes": {
-    "data1": 98387509248,
-    "internal_ext4": 7956574208
+    "data1": 148704133120,
+    "internal_ext4": 8105930752
   },
   "synthetic_roundtrip": {
     "bytes": 8495021,
@@ -401,6 +490,6 @@
   "test_sha256": {
     "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
     "tests/test_ec_clean30_phase4.py": "a1f1b6779cc604789ffb9a69a3a67da2c1d743460193cd3eb68d68aaa9e23648",
-    "tests/test_ec_clean30_workstation.py": "f76bc1822d46d4fbc774280b649e4905289563600adc4e89dbd393f4b829836c"
+    "tests/test_ec_clean30_workstation.py": "af1233df631058fe666946f41290d585e601abc427ff3da8c3f2de2c668fa754"
   }
 }

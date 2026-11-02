@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; the published recovery queue exhausted its three authorized zones on capacity failures.
-Temporary resources are removed; the original VM is stopped ([evc-018](log.md#evc-018)). Measurements remain pending.
+Status: 2026-11-02; central stockout cleanup is published; the requested cross-region pass exceeds $3.50.
+The original VM is stopped. [evc-019](log.md#evc-019) records pricing evidence; measurements remain pending.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -25,7 +25,26 @@ that immutable base. Its publication is required before the launch command can a
 the queue verifies the actual runtime and free space, performs the relocated-view probe and binds all requests
 to the controller's actual allocation/deadline. No paid preparation or measurement has run.
 
-## Latest start attempt
+## Current recovery readiness
+
+The authorized destination order is `us-west1-a`, `us-west1-b`, `us-west1-c`, `us-east4-a`, `us-east4-c`, after
+one retry of the existing source. Both regional subnets and L4 quota are present. The proposed west SKU IDs
+do not exist in the current catalog; use the runbook's verified Americas profile. East's profile is valid.
+The [cross-region contract](../../GCP_GPU_RUNBOOK.md#explicit-cross-region-recovery) retains protected runtime,
+HostPull and evidence-gated cleanup, while adding exact regional profiles and bounded restoration accounting.
+
+Each cross-region disk restoration costs $0.02/GiB, including a disk whose VM creation subsequently fails.
+The safe 150 GiB × five-candidate transfer reserve is $15. Together with the existing $2.6641 G2 envelope
+and $0.60 overlapping-storage reserve, the workstation bound is **$18.2641**, above the authorized **$3.50**.
+The local preflight rejects that configuration before hashing large inputs or allocating resources. Its
+private recovery budget and original launch configuration are preserved with the price audit.
+
+The existing source's single retry fits the original $2.6641 envelope. A separate fresh driver namespace
+can execute that authorized leg without creating cross-region resources. If it again returns stockout,
+the next step is the recorded stop-or-increase budget decision; no recovery pass is admitted under $3.50.
+Closed driver states, the archived central recovery pass and all scientific preparation remain unchanged.
+
+## Previous start attempts
 
 The maintainer authorized one existing-VM start with the $3 ceiling and 117-minute automatic STOP. Local
 preflight and the refreshed controller preview passed. Google rejected the start with
@@ -41,7 +60,8 @@ the failed operations, removed both destination disks and the temporary snapshot
 the pass. The original VM and boot disk remain intact. Further allocation needs a fresh start decision;
 all prepared inputs remain reusable. No Freeze 1c or numerical G3 proposal exists without measurements.
 
-The recovery configuration reserves $0.30 beyond the original $2.6641 envelope, giving **$2.9641** within $3.
+The previous same-region recovery configuration reserved $0.30 beyond the original $2.6641 envelope,
+giving **$2.9641** within $3.
 It prices up to four hours of overlapping storage through cleanup, including two possible destination disks,
 the source disk, the temporary snapshot, its recycle-bin minimum and retained snapshots. This storage window
 does not extend the 117-minute GPU STOP. Fresh controller prices and the explicit zone filter must pass before
@@ -185,8 +205,8 @@ certified train/query units. R1-inner training counts are 7,898/7,926/7,840/7,67
 The dispatcher currently runs S1 serially; price G3 with measured serial time even if the lane diagnostic passes.
 Later S2/S3 and refit dispatch remain separate work after the Fold-0 decision.
 
-The local preview verifies all ten staging inputs, the exact twelve-event queue and a conservative $2.6641 cost
-envelope. Strict source authentication refuses an unpublished start; the post-publication preview must report
-`ready` before deliberate launch. The private G2 configuration
+The source-only preview verifies all ten staging inputs, the exact twelve-event queue and a conservative
+$2.6641 cost envelope. Strict source authentication refuses an unpublished start; the launch-time preflight
+must pass before billing. The cross-region configuration remains budget-blocked. The private G2 configuration
 and five Phase-4 request templates are prepared on Data1. Phase-4 measurements and numerical G3 authority remain
 explicitly pending. Pricing evidence expires after 24 hours and must be refreshed if launch occurs later.

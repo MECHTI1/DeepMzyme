@@ -2,9 +2,10 @@
 
 Status: updated, 2026-11-02; preparation and the S1 amendment are published through `3154a7f`.
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
-The recovery extension is published at `4fb4bdd`. All three authorized zones returned stockout; the pass is
-closed and temporary resources removed ([evc-018](log.md#evc-018)). [G2 readiness](g2_readiness.md) records the
-remaining capacity blocker and preserved preparation.
+The recovery extension is published at `4fb4bdd`; its stockout closeout is published at `8d84e95`.
+All three central zones returned stockout; temporary resources are removed ([evc-018](log.md#evc-018)).
+The newly authorized cross-region route exceeds its $3.50 ceiling before allocation ([evc-019](log.md#evc-019)).
+[G2 readiness](g2_readiness.md) owns the current budget blocker and preserved preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
 
@@ -124,8 +125,9 @@ Follow the [GCP runbook](../../GCP_GPU_RUNBOOK.md) through the installed control
 inspect ownership and current resource state with its read-only status, report, preflight and price tools;
 preview the applicable start/restore route. No live cloud state was inspected while writing this plan.
 
-The existing G2 proposal is one session, about two VM-hours, at most $3. These are not demonstrated sufficient
-runtime or new authorization. Local controller configuration currently permits four hours/$6 per session and
+The original G2 proposal was one session, about two VM-hours, at most $3. The current cross-region request
+allows $3.50 but fails its priced envelope. Neither amount demonstrates sufficient runtime.
+Local controller configuration currently permits four hours/$6 per session and
 twelve hours/$18 daily; older documentation has different daily defaults. Do not edit configuration from stale
 examples or treat its wider ceilings as campaign authority. An explicit two-hour controller request currently
 allows approximately 117 minutes before remaining daily limits; setup consumes part of that allowance.
