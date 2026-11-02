@@ -1180,3 +1180,22 @@ provider checks and logs are preserved on Data1 and independently mirrored on NV
 twenty-nine preparation files). All five Phase-4 requests
 remain pending with the explicit source-stockout/recovery-budget blocker. Zero of ten measurements are
 available; no Freeze 1c, measured G2 timing or numerical G3 authority can be produced.
+
+## evc-021
+
+2026-11-02 — **Recovery budget approved.** The maintainer approved a **$19 campaign gross ceiling** and
+`MAX_DAILY_ESTIMATED_COST_USD=25.00`, retaining the two-hour request and 117-minute provider STOP.
+Scope is one source launch in `us-central1-a`, then one bounded pass through `us-west1-a`, `us-west1-b`,
+`us-west1-c`, `us-east4-a`, `us-east4-c` on confirmed stockout. All twelve G2 events retain HostPull;
+successful recovery uses evidence-gated adoption, and an exhausted failed pass uses abandonment.
+
+The original controller configuration was backed up; only the approved daily guard changed. The existing
+recovery budget now records $19 and is bound to a fresh driver namespace. The $18.2641 conservative envelope
+retains the full $15 transfer reserve and $0.60 recovery-storage reserve. No scientific recipe, selector,
+scorer, simulation, view, embedding or original freeze is changed. Publication and focused checks precede billing.
+
+The two focused repository files passed **116 tests in 4.42 seconds**, including $19 acceptance, refusal above
+$19 and continued refusal of the underfunded $3.50 route. Unchanged controller verification is reused.
+The execution manifest is `8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a`.
+The CLEAN receipt was rebound to it; all thirty payload files and eight unit definitions are identical.
+The controller status check confirmed `TERMINATED`, zero running time and the $25 daily guard at 16:10 UTC.

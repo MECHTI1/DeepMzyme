@@ -486,7 +486,7 @@ An explicitly authorized `fallback` configuration permits one controller recover
 stockout and verified stopped state. Its allowed zones, storage-cost evidence and reserve are mandatory; the
 controller enforces the destination list in both preview and execution. The queue binds the selected immutable
 instance and actual session without repeating local input hashing on the paid clock. Recovery still shares the
-default $3 ceiling and 117-minute STOP. Explicit cross-region authority permits a $3.50 ceiling only when
+default $3 ceiling and 117-minute STOP. Explicit cross-region authority permits the approved $19 ceiling only when
 verified regional prices, all candidate restore transfers and overlapping storage fit within it; an insufficient
 ceiling blocks allocation. The [GCP runbook](GCP_GPU_RUNBOOK.md#explicit-cross-region-recovery) owns that
 recovery contract. Finalize or abandon through the controller's evidence gate after closeout.

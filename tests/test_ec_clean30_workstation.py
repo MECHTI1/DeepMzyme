@@ -695,6 +695,27 @@ def test_full_cross_region_pass_refuses_three_fifty_before_any_cloud_call(config
     assert not (Path(cfg["state_root"]) / "driver_state.json").exists()
 
 
+@pytest.mark.parametrize("ceiling", [19.0, 19.01])
+def test_cross_region_budget_accepts_approved_nineteen_only(config, monkeypatch, ceiling):
+    cfg, path = config
+    budget, budget_path = allow_cross_region(cfg, path)
+    budget["gross_ceiling_usd"] = ceiling
+    write(budget_path, budget)
+    cfg["fallback"]["recovery_budget"]["sha256"] = ws._sha(budget_path)
+    write(path, cfg)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: pytest.fail("preview made an external call"))
+    if ceiling > 19:
+        with pytest.raises(ws.WorkstationError, match=r"authorized \$19 ceiling"):
+            ws.preflight(cfg, path, published=True)
+    else:
+        preview = ws.preflight(cfg, path, published=True)
+        assert preview["status"] == "ready" and len(preview["queue"]) == 12
+        assert preview["cost"]["gross_ceiling_usd"] == 19
+        assert preview["cost"]["conservative_max_usd"] < 19
+        assert preview["cost"]["recovery_transfer_reserve_usd"] == 15
+        assert preview["max_provider_seconds"] == 117 * 60
+
+
 @pytest.mark.parametrize("problem", ["checksum", "scope", "order", "ceiling", "transfer_rate", "transfer_bytes", "stale", "profile", "missing_region"])
 def test_cross_region_budget_cannot_omit_authority_or_charge(config, problem):
     cfg, path = config

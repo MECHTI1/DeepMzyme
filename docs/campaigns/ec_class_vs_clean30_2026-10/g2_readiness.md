@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; central stockout cleanup is published; the requested cross-region pass exceeds $3.50.
-The original VM is stopped. [evc-019](log.md#evc-019) records pricing evidence; measurements remain pending.
+Status: 2026-11-02; the $19 recovery/G2 ceiling and $25 daily guard are approved ([evc-021](log.md#evc-021)).
+The original VM is stopped. The two-hour request and 117-minute STOP remain; measurements are pending.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -35,13 +35,13 @@ HostPull and evidence-gated cleanup, while adding exact regional profiles and bo
 
 Each cross-region disk restoration costs $0.02/GiB, including a disk whose VM creation subsequently fails.
 The safe 150 GiB × five-candidate transfer reserve is $15. Together with the existing $2.6641 G2 envelope
-and $0.60 overlapping-storage reserve, the workstation bound is **$18.2641**, above the authorized **$3.50**.
-The local preflight rejects that configuration before hashing large inputs or allocating resources. Its
-private recovery budget and original launch configuration are preserved with the price audit.
+and $0.60 overlapping-storage reserve, the workstation bound is **$18.2641**, within the approved **$19**.
+The former $3.50 refusal and its price audit remain preserved. The new private recovery budget is hash-bound
+to a fresh launch configuration; controller daily accounting now permits $25 to cover full-day reservations.
 
 The existing source's single retry used the original $2.6641 envelope and a fresh driver namespace.
 It returned stockout; provider shutdown was confirmed at 14:53 UTC ([evc-020](log.md#evc-020)).
-The next step is the recorded stop-or-increase budget decision; no recovery pass is admitted under $3.50.
+The maintainer then approved one new bounded source launch and the ordered cross-region pass above.
 Closed driver states, the archived central recovery pass and all scientific preparation remain unchanged.
 
 ## Previous start attempts
@@ -207,6 +207,6 @@ Later S2/S3 and refit dispatch remain separate work after the Fold-0 decision.
 
 The source-only preview verifies all ten staging inputs, the exact twelve-event queue and a conservative
 $2.6641 cost envelope. Strict source authentication refuses an unpublished start; the launch-time preflight
-must pass before billing. The cross-region configuration remains budget-blocked. The private G2 configuration
+must pass before billing. The cross-region configuration additionally enforces its approved $19 ceiling. The private G2 configuration
 and five Phase-4 request templates are prepared on Data1. Phase-4 measurements and numerical G3 authority remain
 explicitly pending. Pricing evidence expires after 24 hours and must be refreshed if launch occurs later.

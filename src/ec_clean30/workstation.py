@@ -28,7 +28,7 @@ from ec_clean30 import phase3
 GIB = 1024 ** 3
 MAX_G2_SECONDS = 117 * 60
 GROSS_CEILING_USD = 3.0
-CROSS_REGION_CEILING_USD = 3.5
+CROSS_REGION_CEILING_USD = 19.0
 CROSS_REGION_ZONES = ("us-west1-a", "us-west1-b", "us-west1-c", "us-east4-a", "us-east4-c")
 PAYLOAD_CEILING_BYTES = 3 * GIB
 EGRESS_RESERVE_GIB = 4
@@ -415,7 +415,7 @@ def _cross_region_budget(config: Mapping[str, Any]) -> Mapping[str, Any]:
     _require(budget.get("schema_version") == 1 and budget.get("scope") == "cross-region-v1"
              and budget.get("allowed_zones") == policy["allowed_zones"], "Recovery budget scope differs.")
     _require(0 < _number(budget["gross_ceiling_usd"], "cross-region gross ceiling") <= CROSS_REGION_CEILING_USD,
-             "Cross-region recovery exceeds the authorized $3.50 ceiling.")
+             "Cross-region recovery exceeds the authorized $19 ceiling.")
     _require(0 <= time.time() - _epoch(budget["verified_at"]) <= 86400,
              "Cross-region recovery prices are stale or future-dated.")
     _require(budget["max_storage_seconds"] == policy["storage_window_seconds"] == 14400,

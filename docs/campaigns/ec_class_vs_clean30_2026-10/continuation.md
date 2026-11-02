@@ -4,9 +4,9 @@ Status: updated, 2026-11-02; preparation and the S1 amendment are published thro
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
 The recovery extension is published at `4fb4bdd`; its stockout closeout is published at `8d84e95`.
 All three central zones returned stockout; temporary resources are removed ([evc-018](log.md#evc-018)).
-The cross-region extension is published at `1749cda` but exceeds its $3.50 ceiling ([evc-019](log.md#evc-019)).
-The single funded central retry returned stockout; shutdown is verified ([evc-020](log.md#evc-020)).
-[G2 readiness](g2_readiness.md) owns the current budget blocker and preserved preparation.
+The cross-region extension is published at `1749cda`; the last central retry returned stockout
+([evc-020](log.md#evc-020)). The $19 campaign ceiling and $25 daily guard are now approved ([evc-021](log.md#evc-021)).
+[G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
 
@@ -126,10 +126,10 @@ Follow the [GCP runbook](../../GCP_GPU_RUNBOOK.md) through the installed control
 inspect ownership and current resource state with its read-only status, report, preflight and price tools;
 preview the applicable start/restore route. No live cloud state was inspected while writing this plan.
 
-The original G2 proposal was one session, about two VM-hours, at most $3. The current cross-region request
-allows $3.50 but fails its priced envelope. Neither amount demonstrates sufficient runtime.
-Local controller configuration currently permits four hours/$6 per session and
-twelve hours/$18 daily; older documentation has different daily defaults. Do not edit configuration from stale
+The original G2 proposal was one session, about two VM-hours, at most $3. The approved cross-region request
+now allows $19 including recovery, with the same two-hour request and 117-minute STOP.
+Local controller configuration permits four hours/$6 per session and
+twelve hours/$25 daily; older documentation has different daily defaults. Do not edit configuration from stale
 examples or treat its wider ceilings as campaign authority. An explicit two-hour controller request currently
 allows approximately 117 minutes before remaining daily limits; setup consumes part of that allowance.
 

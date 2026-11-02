@@ -1,4 +1,22 @@
 {
+  "approved_g2_recovery_budget": {
+    "actual_g2_measurements": 0,
+    "authorization_sha256": "c3a645c19f42c0f202b30066789e5e107cf0c2711baf0ff195239b31201c22b9",
+    "controller_daily_guard_usd": 25.0,
+    "controller_source_unchanged": true,
+    "cost": {
+      "conservative_max_usd": 18.2640956,
+      "egress_usd_per_gib": 0.15,
+      "gross_ceiling_usd": 19.0,
+      "gross_usd_per_hour": 0.879172,
+      "recovery_storage_reserve_usd": 0.6,
+      "recovery_transfer_reserve_usd": 15.0,
+      "snapshot_usd_per_hour": 0.021
+    },
+    "prior_budget_block_evidence_preserved": true,
+    "provider_stop_seconds": 7020,
+    "recovery_budget_sha256": "6c03b192033d0eb74451aea2a5a9d58e67b1e926cb4516c7244eb9b12f05b36a"
+  },
   "boundaries": {
     "actual_l4_kernel_tested": false,
     "actual_scientific_fits": 0,
@@ -11,10 +29,19 @@
     "selection_scoring_unchanged": true
   },
   "checks": {
+    "budget19_focused": {
+      "files": [
+        "tests/test_ec_clean30_workstation.py",
+        "tests/test_ec_clean30_execution_v2.py"
+      ],
+      "log": "g2_budget19_20261102/focused_tests.log",
+      "passed": 116,
+      "wall_seconds": 4.42
+    },
     "clean_input_rebind": {
-      "clean_inputs_sha256": "12b8a88716071d1e719ab4ed648159b6d61f3d0fe510b25797d19594a3ed470b",
-      "execution_manifest_sha256": "49c140b0b35b400c1dacd8b6c37af5d9083f6a254ecbb1373a890d681038e7da",
-      "previous_clean_inputs_sha256": "f01248bbbe975b0b6a7001af6836643e3383850f2913e69ffa8df532b3785934",
+      "clean_inputs_sha256": "bf9c7aaa0fe56ba11dcf18ab335f0f96a15a2f04133415dc412e7fdd517911bc",
+      "execution_manifest_sha256": "8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a",
+      "previous_clean_inputs_sha256": "12b8a88716071d1e719ab4ed648159b6d61f3d0fe510b25797d19594a3ed470b",
       "status": "passed",
       "unchanged_payload_files": 30,
       "unchanged_units": 8
@@ -57,7 +84,7 @@
     },
     "docs_contract": {
       "baseline_warnings": 11,
-      "log": "cross_region_update_20261102/docs_check.log",
+      "log": "g2_budget19_20261102/docs_check.log",
       "strict_failures": 0
     },
     "execution_v2_focused": {
@@ -131,58 +158,8 @@
     "scientific_payload_identical_to_pre_remote_download_preparation": true,
     "units": 8
   },
-  "cross_region_recovery": {
-    "actual_cross_region_recovery_tested": false,
-    "allowed_zones": [
-      "us-west1-a",
-      "us-west1-b",
-      "us-west1-c",
-      "us-east4-a",
-      "us-east4-c"
-    ],
-    "authorized_gross_ceiling_usd": 3.5,
-    "cleanup_requires_fit_replay_independent_backup": true,
-    "controller_config_unchanged": true,
-    "controller_keys": [
-      "REGION",
-      "ZONE",
-      "SUBNET",
-      "SUBNET_RANGE",
-      "PRICE_COMPUTE_SKUS",
-      "PRICE_DISK_CAPACITY_SKU_ID",
-      "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR",
-      "SELECTED_INSTANCE_ID"
-    ],
-    "controller_live_preview": {
-      "conservative_bound_usd": 18.254731463013698,
-      "log": "cross_region_update_20261102/controller_preview.log",
-      "status": "refused_before_allocation"
-    },
-    "controller_source_sha256": {
-      "lib/fallback.py": "24785db56969414d2c36aa4bce8b991cc9b9e5b7a1cd24e29911465e2c6383cb",
-      "lib/ledger.py": "46e793dba55ba9e9517fa5d7ed53fc84fd797816283c9fa1c11dc112d5bbebcc",
-      "lib/lifecycle.py": "d1190c384f2800a63812d34eb2e3cf1e94ce615c833172aa6de8d790149b343b",
-      "lib/vmctl.py": "e1a481d1976aad7498d76a1a7c802943ef92f0a20fbfbeb296ebcd2714cef327"
-    },
-    "preflight_refusal_sha256": "66f733ea2cd75403029851354d8963811874ca6897b55f85e4ae4b605ae08330",
-    "price_audit_sha256": "6ede236635f70d0b3f680f611dfc69d25e792f78220d93fbb333778b9740830b",
-    "recovery_budget_sha256": "920b1a41a86a25ad33314fdda37ff95817d771dbcc740754a127f1937fc27c35",
-    "restore_bound_bytes_per_candidate": 161061273600,
-    "restore_rate_usd_per_gib": 0.02,
-    "scope": "cross-region-v1",
-    "source_only_preview": {
-      "conservative_g2_envelope_usd": 2.6640956,
-      "log": "cross_region_update_20261102/central_start_preview.log",
-      "provider_stop_seconds": 7020,
-      "status": "passed"
-    },
-    "status": "budget_blocked_before_cloud_actions",
-    "storage_reserve_usd": 0.6,
-    "transfer_reserve_usd": 15,
-    "workstation_conservative_bound_usd": 18.2640956
-  },
   "date": "2026-11-02",
-  "execution_manifest_sha256": "49c140b0b35b400c1dacd8b6c37af5d9083f6a254ecbb1373a890d681038e7da",
+  "execution_manifest_sha256": "8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a",
   "format": "deepmzyme_ec_clean30_execution_v2_verification",
   "local_g2_readiness": {
     "allowed_zones": [
@@ -353,6 +330,56 @@
       }
     }
   },
+  "previous_cross_region_recovery": {
+    "actual_cross_region_recovery_tested": false,
+    "allowed_zones": [
+      "us-west1-a",
+      "us-west1-b",
+      "us-west1-c",
+      "us-east4-a",
+      "us-east4-c"
+    ],
+    "authorized_gross_ceiling_usd": 3.5,
+    "cleanup_requires_fit_replay_independent_backup": true,
+    "controller_config_unchanged": true,
+    "controller_keys": [
+      "REGION",
+      "ZONE",
+      "SUBNET",
+      "SUBNET_RANGE",
+      "PRICE_COMPUTE_SKUS",
+      "PRICE_DISK_CAPACITY_SKU_ID",
+      "PRICE_EXPECTED_COMPUTE_USD_PER_HOUR",
+      "SELECTED_INSTANCE_ID"
+    ],
+    "controller_live_preview": {
+      "conservative_bound_usd": 18.254731463013698,
+      "log": "cross_region_update_20261102/controller_preview.log",
+      "status": "refused_before_allocation"
+    },
+    "controller_source_sha256": {
+      "lib/fallback.py": "24785db56969414d2c36aa4bce8b991cc9b9e5b7a1cd24e29911465e2c6383cb",
+      "lib/ledger.py": "46e793dba55ba9e9517fa5d7ed53fc84fd797816283c9fa1c11dc112d5bbebcc",
+      "lib/lifecycle.py": "d1190c384f2800a63812d34eb2e3cf1e94ce615c833172aa6de8d790149b343b",
+      "lib/vmctl.py": "e1a481d1976aad7498d76a1a7c802943ef92f0a20fbfbeb296ebcd2714cef327"
+    },
+    "preflight_refusal_sha256": "66f733ea2cd75403029851354d8963811874ca6897b55f85e4ae4b605ae08330",
+    "price_audit_sha256": "6ede236635f70d0b3f680f611dfc69d25e792f78220d93fbb333778b9740830b",
+    "recovery_budget_sha256": "920b1a41a86a25ad33314fdda37ff95817d771dbcc740754a127f1937fc27c35",
+    "restore_bound_bytes_per_candidate": 161061273600,
+    "restore_rate_usd_per_gib": 0.02,
+    "scope": "cross-region-v1",
+    "source_only_preview": {
+      "conservative_g2_envelope_usd": 2.6640956,
+      "log": "cross_region_update_20261102/central_start_preview.log",
+      "provider_stop_seconds": 7020,
+      "status": "passed"
+    },
+    "status": "budget_blocked_before_cloud_actions",
+    "storage_reserve_usd": 0.6,
+    "transfer_reserve_usd": 15,
+    "workstation_conservative_bound_usd": 18.2640956
+  },
   "previous_local_g2_preview": {
     "config_sha256": "abfef1cfde9eda9149671dc82d4fe7ce4a4b91847dd711ea579102f7a8ac0205",
     "cost": {
@@ -369,7 +396,7 @@
     "staging_peak_bytes": 19269249867,
     "status": "draft_unpublished"
   },
-  "previous_verification_sha256": "df26d45908ee8c48b85a61a5c598b103087c8431a2f2cae8e90b1edc9dcceb47",
+  "previous_verification_sha256": "2bcb6c8ea56d479275567d5734c25d4de30a750ce9166735e9e4c23549104cfc",
   "published_base": {
     "commit": "10e0e1144f8d73cfbf6bdc96b862038d33479e9d",
     "strict_verify_execution_without_draft": "passed_before_extension",
@@ -475,7 +502,7 @@
     "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
     "src/ec_clean30/phase3.py": "03c81e50376be46b91555e6105ea9e90339fb15d37207adeb6ab6b2943bc7ddc",
     "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
-    "src/ec_clean30/workstation.py": "f1cb3baf80d12e1dc3b3865ace0c7d9876470d8d28d6df95373dab21eaddaaec"
+    "src/ec_clean30/workstation.py": "7303c88f8324d435c616b085bf1fe91e61bcf786e32501d3be4191ca246ddf89"
   },
   "status": "cpu_verified",
   "storage_free_bytes": {
@@ -490,6 +517,6 @@
   "test_sha256": {
     "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
     "tests/test_ec_clean30_phase4.py": "a1f1b6779cc604789ffb9a69a3a67da2c1d743460193cd3eb68d68aaa9e23648",
-    "tests/test_ec_clean30_workstation.py": "af1233df631058fe666946f41290d585e601abc427ff3da8c3f2de2c668fa754"
+    "tests/test_ec_clean30_workstation.py": "b871b0f56cde8e8e94cd6eaafe3b6ddcb8625836669eeaee4d32cc92b32b70ad"
   }
 }
