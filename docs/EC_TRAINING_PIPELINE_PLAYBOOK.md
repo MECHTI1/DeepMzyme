@@ -377,7 +377,7 @@ support in the later execution coordinator; ordinary failed receipts must never 
 
 The gap gate requires the overlay components and exact CLEAN query membership before its closure filter. Only the
 primary R1 EC1–6 gap after S3 receives the one-point discount; seven-class and R2 gaps remain descriptive and
-undiscounted. A Phase 3 runner is still to be built.
+undiscounted. The Phase 3 measurement runner is implemented below; real S1 orchestration remains separate.
 
 For continuation after Freeze 1b, preserve the completed preparation above. The approved
 [S1 amendment](campaigns/ec_class_vs_clean30_2026-10/design.md) uses the following additional interfaces;
@@ -403,7 +403,75 @@ The amendment-aware continuation uses the same `select` and `gap-gate` commands 
 `--freeze1-amendment "$A/amendment.json"` on every S1/S2/S3 and gap call. The execution coordinator must first
 authenticate the amendment and pass its exact chain into each fit identity; mixed or missing chains refuse
 selection. The original Freeze-1 hash remains the anchor. Current verification accepts only the explicit S1
-source changes; WP-13's later added execution files need separately authenticated execution pins.
+source changes; WP-13 authenticates its two execution files separately through its
+[execution manifest](campaigns/ec_class_vs_clean30_2026-10/wp13/execution_manifest.json).
+
+### WP-13: measured G2 preparation
+
+The runner is CPU-tested; GPU timings remain unmeasured. Reuse the certified Fold-0 view, both chain-mean caches,
+`g2_inputs/fold0_view.tar`, `g2_inputs/timing_sequences` and the execution manifest. Do not repeat the preparation
+or simulations above. The [G2 readiness record](campaigns/ec_class_vs_clean30_2026-10/g2_readiness.md) owns the
+proposed scope, storage and budget. These commands grant no GPU authority; allocation, connection and shutdown
+follow the [GCP runbook](GCP_GPU_RUNBOOK.md) through the existing controller.
+
+Copy the [request template](campaigns/ec_class_vs_clean30_2026-10/wp13/g2_request_template.json) outside the source
+checkout and replace every placeholder/null before use. It is deliberately not executable as supplied.
+Use the controller's actual `session_id`, `allocation_started_unix` and `deadline_unix`; `max_total_seconds` must
+stay within the approved allocation and at most 7,200 seconds. Admission retains the 900-second reserve and
+1.25 forecast multiplier. Set a bounded first-unit forecast, then use measured full-unit costs; keep
+`unit_timeout_seconds <= forecast_seconds`. `cap_prefix` is the approved resource-cap argv, and
+`memory_limit_bytes` must agree with it. `execution_root` is exactly `<campaign>/runs/fold0/g2`;
+`durable_root` names the independent workstation destination, not another VM directory.
+
+Keep a separate request per measurement. `timing-unit` accepts recipes `F1`–`F5`, `C-G`, `F4_L3`,
+`lane_serial_1` and `lane_serial_2`; it fixes the folds, seed, LR and epochs. For `lane-gate`, add
+`serial_receipts` (the two completed serial receipts in order) and `limits` with numeric `cpu_percent`,
+`ram_bytes`, `vram_bytes`. Its forecast must cover at least three times the slower completed serial unit;
+the command creates the three declared parallel units. For `embed-timing`, add `kind` (`esmc` or `esm1b`) and `timing_inputs`.
+ESMC also needs `hf_home` and `esmc_weights` matching the frozen offline SDK cache. ESM-1b needs `clean_python`,
+`harness`, `extract_script`, `weights`, `weights_sha256`, `contact_weights_sha256` and `threads`; its separate
+interpreter must pass the L4 CUDA/kernel check and its extraction log must prove GPU use. Inputs and weights
+must remain outside forbidden roots, including `<campaign>/timing`; use the prepared `g2_inputs` directory.
+
+Run from the matching repository root on each machine. Set every required environment value from verified
+artifacts. The following are individual steps, with the host acknowledgement cycle between measurements:
+
+```bash
+PY="${DEEPMZYME_PYTHON:?set the verified project interpreter for this machine}"
+"$PY" -c 'import sys; print(sys.executable)'
+P3=scripts/run_ec_clean30_phase3.py
+E=docs/campaigns/ec_class_vs_clean30_2026-10/wp13/execution_manifest.json
+"$PY" "$P3" verify-execution --manifest "$E" --draft  # workstation review only
+# VM: published, clean source; transfer only the prepared Fold-0 closure and timing inputs.
+"$PY" "$P3" verify-execution --manifest "$E"
+"$PY" "$P3" unpack-view --archive "${G2_INPUTS:?}/fold0_view.tar" \
+  --destination "${FOLD0_VIEW:?fresh destination}" --sha256 "${VIEW_ARCHIVE_SHA256:?prepared archive hash}"
+"$PY" "$P3" vm-probe --view "$FOLD0_VIEW" --execution-manifest "$E" \
+  --out "${VM_PROBE:?new probe receipt}" --cap-json "${CAP_JSON:?approved argv JSON array}" --python "$PY"
+"$PY" "$P3" timing-unit --request "${TIMING_REQUEST:?completed timing request JSON}"
+"$PY" "$P3" lane-gate --request "${LANE_REQUEST:?after both serial receipts are complete}"
+"$PY" "$P3" embed-timing --request "${EMBED_REQUEST:?one prepared ESMC or ESM-1b request}"
+# Workstation: after copying the pending manifest and all its listed files.
+"$PY" "$P3" ack-host --manifest "${HOST_MANIFEST:?downloaded pending manifest}" \
+  --downloaded-root "${HOST_DESTINATION:?exact manifest destination_root}" \
+  --ack "${HOST_ACK:?new local ack file}" --transfer-seconds "${TRANSFER_SECONDS:?measured copy duration}"
+# After uploading that ack, re-call the SAME VM command/request to finalize its receipt.
+# After all ten completed measurements: provide actual receipt paths, including retry attempt numbers.
+"$PY" "$P3" freeze1c --execution-manifest "$E" --out "${FREEZE1C_OUT:?new record}" \
+  --l3-ceilings "${L3_CEILINGS:?JSON fold keys 0 through 4 with positive hourly ceilings}" \
+  --evidence "${F1_COMPLETE:?}" --evidence "${F2_COMPLETE:?}" --evidence "${F3_COMPLETE:?}" \
+  --evidence "${F4_COMPLETE:?}" --evidence "${F5_COMPLETE:?}" --evidence "${CG_COMPLETE:?}" \
+  --evidence "${F4_L3_COMPLETE:?}" --evidence "${LANE_GATE_COMPLETE:?}" \
+  --evidence "${ESMC_COMPLETE:?}" --evidence "${ESM1B_COMPLETE:?}"
+```
+
+For every terminal attempt, read `execution_state.json` under `execution_root`: `pending_transfer` gives the
+relative `manifest_path` and required `ack_path`. Copy only its listed artifacts, preserve their relative paths,
+run `ack-host` on the workstation, then upload the ack to that exact VM `ack_path`. Re-call the original command
+before admitting another unit; completion writes `g2_complete.json`, `lane_gate.json` or `embedding_complete.json`
+and includes transfer/readback time. A failed attempt also requires persistence; retry with an incremented
+`attempt` from the original seed. Freeze 1c needs seven family/L3 receipts, one passed-or-failed lane decision
+and two embedding receipts. Its numerical L3 ceilings are a proposal: G3 remains a separate budget decision.
 
 The CLEAN comparator runner (`"$X" prepare`, `fit`, `export`, `validate-export`) holds no CLEAN code; the private CLEAN
 checkout and harness scripts are passed by path and pinned by SHA-256, and R2 fits take `--accession-allowlist

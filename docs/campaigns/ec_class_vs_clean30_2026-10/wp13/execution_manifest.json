@@ -1,0 +1,19 @@
+{
+  "amendment_chain": [
+    "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea"
+  ],
+  "amendment_commit": "3154a7f3b0ad44e8dffbc66072990cfb7d9c9030",
+  "amendment_path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/amendment.json",
+  "amendment_sha256": "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "format": "deepmzyme_ec_clean30_execution_v1",
+  "freeze1_sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c",
+  "freeze1b_sha256": "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb",
+  "official_fold0_training_sha256": "ab8a8a21219aec19ba03dd7205dec8d8c1a156ff5cfad23aad344c7d7fbdd9c1",
+  "purpose": "G2 measurements only; separate from S1 scientific fits",
+  "source_sha256": {
+    "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+    "src/ec_clean30/phase3.py": "88774fe2075edb07f50205e98bb5f7d0622c30eb5fc0dd8af2d120b7f7ed5f8b"
+  },
+  "timing_inputs_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f"
+}

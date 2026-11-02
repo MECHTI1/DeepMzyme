@@ -879,3 +879,40 @@ The documentation contract passes with zero strict failures and the same eleven 
 This reviewed package still requires commit/publication before real execution. The next deliverable is the
 CPU-tested WP-13 package in [the continuation](continuation.md), followed by the separately approved G2 smoke.
 No GPU work, campaign model training or test scoring occurred in this amendment.
+
+## evc-013
+
+2026-11-02 — **S1 publication and WP-13 CPU execution preparation.** The reviewed S1 package was committed and
+pushed as `3154a7f`; its clean published-source verification passed before WP-13 development. No new simulation,
+selection rule, scoring rule or secondary multiplicity change was introduced.
+
+WP-13 adds `src/ec_clean30/phase3.py` and its CLI, reusing the frozen command/view code and existing execution
+helper. It implements exact Fold-0 transfer, deterministic timing inputs, source authentication, relocated
+probing, timed training/replay, the fixed lane diagnostic, both embedding timings, host acknowledgement and
+Freeze 1c assembly. The [execution manifest](wp13/execution_manifest.json) pins only the two added source files;
+all source already published at `3154a7f` remains unchanged. Original Freeze 1/1b retain the evc-011 hashes.
+
+The prepared archive contains 4,366 files, 1,485,957,120 bytes, SHA-256
+`a036a782e3f0de041e896b7e2ff3a79dd13eb6d827629b0eca28dfcbc9b90334`.
+Its original dry-run receipt is preserved. Exactly 1,000 distinct official Fold-0 training sequences were selected
+by the declared hash/accession ordering; maximum length 1,021, total residues 437,329. Their receipt SHA-256 is
+`ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f`.
+Existing views, overlay, embeddings and simulations were reused, not regenerated.
+
+Focused checks passed 98 tests; CPU smoke passed 44 with one existing missing-fixture skip. A synthetic five-epoch
+F4 fit passed training, terminal verification, independent replay, 26-file host persistence, acknowledgement and
+verified reuse in 10.86 seconds for the execution cycle. This is engineering evidence only. Draft authentication
+passes; real execution correctly refuses unpublished WP-13. The full suite passed 3,311 tests, with 18 existing
+skips and 15 subtest passes, in 713.93 seconds. The [verification record](wp13/verification.json) binds these logs
+to unchanged source/test bytes. Documentation checks passed with zero strict failures and eleven baseline
+warnings; all 26 pre-existing playbook blocks are preserved. Initial checks corrected a read-only extraction-directory
+rename failure and verified the existing MKL GNU threading requirement; the final focused run is clean.
+
+CPU logs, deterministic timing inputs and the synthetic roundtrip archive are mirrored and verified on the
+independent NVMe store. The large transfer archive is a reproducible derivative of the already mirrored original
+view. Completed old synthetic pytest directories were removed after preserving their evidence; no scientific
+artifact or backup was deleted. [G2 readiness](g2_readiness.md) owns current storage sizing, the proposed existing-L4
+session and its explicit prerequisites. Weights and the isolated CUDA embedding environment still need preparation
+before billing. No GPU start, scientific fit, private weight/environment download or test scoring occurred.
+Next: publish WP-13, complete approved G2 preparation/measurements, then set numerical G3 ceilings and finish the
+minimal Phase-4 dispatcher for the unchanged 96 S1 plus eight CLEAN inner fits.

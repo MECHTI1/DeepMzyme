@@ -1,8 +1,8 @@
 # Continuation after Freeze 1b
 
-Status: updated, 2026-11-02; preparation is based on published commit `693697d`, with the approved S1 amendment
-validated and awaiting publication ([evc-012](log.md#evc-012)). This document records no new compute authorization.
-Next execution deliverable: CPU-tested WP-13 and a concrete G2 package. First scientific
+Status: updated, 2026-11-02; preparation and the S1 amendment are published through `3154a7f`.
+WP-13 is implemented and CPU-tested; [G2 readiness](g2_readiness.md) records the concrete preparation.
+This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
 
 The route is **execution readiness → measured G2 smoke → Freeze 1c and G3 budget → fold-0 S1/gap gate →
@@ -23,7 +23,7 @@ because execution moves to another phase. New code and a changed runtime require
 | Item | Current state | Continuation requirement |
 |---|---|---|
 | Fold plans, command construction, verification, selection and gap gate | Implemented; amended S1 validated | Reuse prepared inputs; authenticate the published amendment on fits, selection and gap records |
-| WP-13 timing/transfer runner | Missing | Add a small standalone runner using existing hooks |
+| WP-13 timing/transfer runner | Implemented; CPU-tested ([evidence](wp13/verification.json)) | Publish its execution pins, then measure under G2 |
 | Real campaign execution and refit orchestration | Planned; current CLI entries are stubs | Implement and CPU-test before Phase 4 |
 | CLEAN wrapper and private harness | Implemented; timing evidence exists | Add per-call input restrictions, scheduling and persistence for real fits |
 | GPU cost and throughput | Historical forecasts only | Measure under G2 before setting G3 ceilings |
@@ -37,15 +37,15 @@ establishes eventual superiority. Preserve the full interpretation in [evc-010](
 The separate fixed-alpha S1 characterization is complete; [evc-012](log.md#evc-012) records its low power,
 null selection rates and bootstrap aborts. It provides no uniform error-control guarantee and is not retuned.
 
-**2. Build the smallest useful CPU execution package**
+**2. Verify and publish the CPU execution package**
 
-Implement WP-13 in new `src/ec_clean30/phase3.py` and `scripts/run_ec_clean30_phase3.py`, with focused tests.
-Reuse [commands](../../../src/ec_clean30/commands.py), [views](../../../src/ec_clean30/views.py),
+WP-13 is implemented in new `src/ec_clean30/phase3.py` and `scripts/run_ec_clean30_phase3.py`, with focused tests.
+It reuses [commands](../../../src/ec_clean30/commands.py), [views](../../../src/ec_clean30/views.py),
 [freeze checks](../../../src/ec_clean30/freeze.py) and
 [CampaignExecution](../../../src/benchmarking/pmm_execution.py). No new scheduler, tracking service,
 database, cloud controller or training architecture is needed.
 
-| Proposed action | Required behavior |
+| Implemented action | Behavior |
 |---|---|
 | `pack-view` / `unpack-view` | Package only the recorded fold-0 files, manifests, receipts and both chain-mean caches. Exclude old probe/cache contents. Verify checksum, safe members and modes on extraction; preserve the original dry-run receipt. |
 | `timing-inputs` | Select exactly 1,000 rows from the exact official fold-0 training file by sequence hash, with a deterministic accession tie-breaker. Write FASTA, accession/hash map and source receipt. |
@@ -82,6 +82,8 @@ per-file hashes checked except for the exact authenticated amendment changes.
 The older wording requiring an exact CP-E checkout cannot run new code. Pin added execution code separately;
 preserve both completed freezes byte for byte. WP-13 must verify the S1 amendment and pass its chain to the
 existing command builder, and provide separately authenticated execution-code pins for its added files.
+The implemented [execution manifest](wp13/execution_manifest.json) binds exactly those two additions. Its verifier
+authenticates S1 in a temporary sparse checkout of `3154a7f`, then checks every live original and added source pin.
 A necessary edit to an existing pinned file requires a recorded amendment and affected revalidation.
 
 Transfer only the fold-0 view archive, the 1,000-row timing inputs, the pushed code and the explicitly approved
@@ -89,13 +91,11 @@ private CLEAN setup. Supply the logged Freeze-1b hash; do not ship the private f
 fold views, union sequence map or campaign identity tree. L8 is already prepared: transfer the existing fold-0
 cache and omit the old all-740-chain GPU regeneration task.
 
-The filesystem-only check on 2026-11-02 found about 7.4 GB free internally and 56 GB on the secondary drive.
-Preserve the existing 5 GiB internal reserve. The planned 7.8 GB ESM-1b download cannot fit on the internal disk
-under that reserve. Before downloads, calculate peak space from permitted training manifests: archive copies,
-extraction, environments, weights, active CLEAN farms, maps, checkpoints, temporary files and independent backups.
-Use only the active fold-0 working set on ext4 initially. Place the remote weights/cache and private backup only
-on verified destinations covered by the G2 package. If the approved destinations cannot fit, request specific
-cleanup or an alternative destination; never delete frozen evidence or silently weaken the backup requirement.
+[G2 storage readiness](g2_readiness.md#storage-placement) owns the measured free space and one-fit forecast.
+Keep weights, environments, the prepared view archive and inactive artifacts on Data1. Copy only one active
+CLEAN fit's hot vectors and working files to ext4; links back to Data1 retain the measured I/O slowdown.
+Preserve the existing 5 GiB reserve, check actual staged bytes before each fit, and verify completed outputs
+at their durable destination before reclaiming active scratch. No frozen evidence or backup cleanup is needed.
 
 Declare these proposed operational choices in the CPU package before measuring results:
 

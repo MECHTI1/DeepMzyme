@@ -1,0 +1,21 @@
+{
+  "execution_manifest": "REQUIRED_ABSOLUTE_REPO/docs/campaigns/ec_class_vs_clean30_2026-10/wp13/execution_manifest.json",
+  "view": "REQUIRED_ABSOLUTE_CAMPAIGN/views/fold0",
+  "vm_probe": "REQUIRED_ABSOLUTE_COMPLETED_VM_PROBE_JSON",
+  "execution_root": "REQUIRED_ABSOLUTE_CAMPAIGN/runs/fold0/g2",
+  "durable_root": "REQUIRED_ABSOLUTE_INDEPENDENT_WORKSTATION_DESTINATION",
+  "persistence_mode": "host_pull",
+  "session_id": "REQUIRED_ACTUAL_CONTROLLER_ALLOCATION_ID",
+  "allocation_started_unix": null,
+  "deadline_unix": null,
+  "max_total_seconds": null,
+  "forecast_seconds": null,
+  "unit_timeout_seconds": null,
+  "cap_prefix": ["REPLACE_WITH_APPROVED_RESOURCE_CAP_ARGV"],
+  "memory_limit_bytes": null,
+  "python": "REQUIRED_ABSOLUTE_VM_PROJECT_PYTHON",
+  "device": "cuda",
+  "smoke": false,
+  "recipe": "F1",
+  "attempt": 1
+}

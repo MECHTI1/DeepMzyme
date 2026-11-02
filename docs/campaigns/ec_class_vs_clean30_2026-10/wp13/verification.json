@@ -1,0 +1,111 @@
+{
+  "base_commit": "3154a7f3b0ad44e8dffbc66072990cfb7d9c9030",
+  "cpu_smoke": {
+    "log_sha256": "7e5a6eb96b37beb109069902709d5ec1d7a3102b82a51bcd641d2d76b79d338d",
+    "passed": 44,
+    "skipped": 1
+  },
+  "date": "2026-11-02",
+  "documentation": {
+    "baseline_warnings": 11,
+    "log_sha256": "3ef33cc9835e623810f9bfa5f923f9a2fffb5f3b565e0f77dc91627acdcb6663",
+    "preexisting_playbook_blocks_preserved": 26,
+    "strict_failures": 0
+  },
+  "environment": {
+    "MKL_NUM_THREADS": "2",
+    "MKL_THREADING_LAYER": "GNU",
+    "OMP_NUM_THREADS": "2",
+    "OPENBLAS_NUM_THREADS": "2",
+    "cpu_quota_percent": 200,
+    "memory_max_bytes": 3221225472,
+    "python_executable": "/home/mechti/miniconda3/envs/DeepMzyme/bin/python",
+    "swap_max_bytes": 0
+  },
+  "execution_manifest_sha256": "6be7525464aff0d2714d5d4fa523bfd9c64483f699c76ccca7d2b6590c35c431",
+  "focused": {
+    "log_sha256": "3d11480ca4ed5644a86c666fd297c110a175df424c7396087f8021373d06f3c5",
+    "passed": 98
+  },
+  "fold0_transfer": {
+    "archive_bytes": 1485957120,
+    "archive_sha256": "a036a782e3f0de041e896b7e2ff3a79dd13eb6d827629b0eca28dfcbc9b90334",
+    "files": 4366,
+    "original_dry_run_sha256": "f71214bd98cfd5b042549d4a0bd0e2922aa5a573c65288e8548219488dff495a",
+    "status": "passed",
+    "unpacked_bytes": 1481795101,
+    "view_manifest_sha256": "2d36e3bc6237dbd32c54e405ae1430d377423cfed11b48baca2a483aea23847e"
+  },
+  "format": "deepmzyme_ec_clean30_wp13_verification_v1",
+  "limitations": [
+    "CPU validation does not establish L4 timing, CUDA environment readiness or a completed G2 gate.",
+    "WP-13 must be published before real runtime verification can pass.",
+    "Phase-4 real-unit orchestration and measured G3 budget remain required."
+  ],
+  "regression": {
+    "log_sha256": "b9c27049fe1ff0e59ec7c8c957e636172e79a915fb0bf9616d83e626a195aac7",
+    "passed": 3311,
+    "skip_scope": "existing opt-in, fixture, unpublished bundle and closed-campaign checks",
+    "skipped": 18,
+    "subtests_passed": 15,
+    "wall_seconds": 713.93,
+    "warnings": 105
+  },
+  "scope": {
+    "gpu_started": false,
+    "private_weights_or_environment_downloads": false,
+    "scientific_fits_run": false,
+    "selection_or_scoring_changes": false,
+    "simulation_runs": 0
+  },
+  "source_checks": {
+    "draft_execution_verification": "passed",
+    "original_tracked_source": "unchanged",
+    "real_unpublished_execution": "refused_as_required",
+    "source_and_test_bytes_stable_through_checks": true
+  },
+  "source_sha256": {
+    "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+    "src/ec_clean30/phase3.py": "88774fe2075edb07f50205e98bb5f7d0622c30eb5fc0dd8af2d120b7f7ed5f8b"
+  },
+  "status": "passed",
+  "storage_after_fixture_cleanup": {
+    "ext4_free_bytes": 8982765568,
+    "one_active_clean_fit_forecast_with_margin_bytes": 1381721680,
+    "reserve_bytes": 5368709120
+  },
+  "synthetic_cpu_roundtrip": {
+    "archive": {
+      "archive_bytes": 450560,
+      "archive_sha256": "61329b99bbc3695bca257e7e1245ef0410fedd2edcb165fbf2b71f662b6254b4",
+      "files": 59,
+      "original_dry_run_sha256": "a85b819ff229704f8ba6a216dbec944674e1331e007c3574947244ca4180e09b",
+      "status": "passed",
+      "unpacked_bytes": 390356,
+      "view_manifest_sha256": "0e92bab646ae60ea93b4eb7ec0cb317cbf2a28419632dc3de146031f501ddaf1"
+    },
+    "execution_manifest_sha256": "6be7525464aff0d2714d5d4fa523bfd9c64483f699c76ccca7d2b6590c35c431",
+    "fit_unit_id": "ecc30timing_F4_attempt1",
+    "host_ack_sha256": "50fa942646a7be0defb614d9ab04874a8b66151e0159ee79d83506268b3c886d",
+    "host_manifest_sha256": "0552696f1ccfe9ce13ece63fd6ace2627373db2915001389bae208b49d724ec0",
+    "independent_replay_sha256": "24817853a49f5f64b789f4cfe66f87bb3023a02c3cc527181b82d4d954ead99a",
+    "original_dry_run_sha256": "a85b819ff229704f8ba6a216dbec944674e1331e007c3574947244ca4180e09b",
+    "persisted_files": 26,
+    "probe_sha256": "b433e88759e4b72b52ff129dbefeafccce568e9d966a416c9448aff0dcce3fb9",
+    "run_verify_replay_persist_reuse_wall_seconds": 10.862471767002717,
+    "scope": "synthetic CPU F4, five epochs; no scientific data or GPU",
+    "source_sha256": {
+      "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+      "src/ec_clean30/phase3.py": "88774fe2075edb07f50205e98bb5f7d0622c30eb5fc0dd8af2d120b7f7ed5f8b"
+    },
+    "status": "passed"
+  },
+  "test_source_sha256": "3aad97f0c440dc6dfab7de93151367d73d5b2cdd5e7bd5892dad09a912bf5a32",
+  "timing_inputs": {
+    "max_sequence_length": 1021,
+    "receipt_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f",
+    "rows": 1000,
+    "total_residues": 437329,
+    "unique_sequences": 1000
+  }
+}
