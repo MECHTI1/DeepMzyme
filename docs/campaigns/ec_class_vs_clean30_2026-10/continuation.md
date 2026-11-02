@@ -5,7 +5,9 @@ WP-13 is published at `10e0e11`; the execution extension is published at `589af0
 The recovery extension is published at `4fb4bdd`; its stockout closeout is published at `8d84e95`.
 All three central zones returned stockout; temporary resources are removed ([evc-018](log.md#evc-018)).
 The cross-region extension is published at `1749cda`; the last central retry returned stockout
-([evc-020](log.md#evc-020)). The $19 campaign ceiling and $25 daily guard are now approved ([evc-021](log.md#evc-021)).
+([evc-020](log.md#evc-020)). The approved $19 pass then exhausted all six zones; its temporary resources are
+removed and the original VM is `TERMINATED` ([evc-022](log.md#evc-022)). No G2 measurement ran.
+The $25 daily guard remains configured; another allocation needs a fresh decision.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.

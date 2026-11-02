@@ -1212,3 +1212,48 @@ nine existing) in 6.39 seconds. The source SHA-256 is
 `43ecda3a57910dc20494433f55c4cdda8c081073af012d2ccb89ceb2e310e6b3`.
 This changes no public executable source or scientific input binding. A fresh driver namespace resumes the
 same unconsumed source launch and approved recovery scope.
+
+## evc-022
+
+2026-11-02 — **Approved cross-region pass exhausted; cleanup verified.** The $19 update was published as
+`a647b87`, followed by the bounded pricing-retry verification in `243dcab`. Strict execution authentication
+passed without draft mode. The fresh launch configuration SHA-256 is
+`26d79b23d6ebd474f5dff3b03b2f07736403170383388f963946f717788fcb1f`.
+
+The single source start was requested at 16:55:32 UTC and failed with
+`ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS`. Recovery pass `ae739a6f6910` created its source snapshot, then
+requested candidates in the approved order:
+
+| Zone | Create request (UTC) | Provider result |
+|---|---|---|
+| us-west1-a | 17:10:29 | Capacity failure |
+| us-west1-b | 17:15:20 | Capacity failure |
+| us-west1-c | 17:19:09 | Capacity failure |
+| us-east4-a | 17:22:14 | Capacity failure |
+| us-east4-c | 17:29:42 | Capacity failure |
+
+All five provider insert operations reached `DONE` with the same stockout code. No replacement was selected.
+The driver closed with zero completed events and verified the source stopped. No remote staging, HostPull,
+embedding or scientific fit began; this is a capacity result, not G2 runtime evidence.
+
+After independent backup and a successful cleanup preview, authorized abandonment deleted the five exact
+restored disks, the temporary snapshot and its recycle-bin copy. It completed at **17:34:56 UTC** and archived
+the pass. Independent provider status at **17:35:35 UTC** and the subsequent report confirmed `TERMINATED`,
+no active session and zero recorded GPU runtime. The original VM, its 150-GB disk and two pre-existing snapshots
+remain. The controller configuration retains the approved $25 daily guard and original central endpoint.
+
+Conservative incremental pass accounting is **$15.0548006054**: $15 for five full-150-GiB transfer allowances,
+$0.0342486590 for temporary disks, $0.0102766438 for the snapshot and $0.0102753025 for its recycle minimum.
+This is not provider-confirmed billed spend. The full-day controller estimate is $16.56, including earlier and
+ongoing storage reservations; the retained disk and snapshots continue to cost approximately $30/month.
+All seven temporary storage records are closed; future minimum-charge timestamps do not denote live resources.
+
+The closeout is `phase3/g2_budget19_closeout_20261102/closeout.json`, SHA-256
+`b520dee31fb305cb07f73733e146f2996cb6dfb41ecfe3a77b284c976e1ee9f4`. Thirty-three evidence/request files are
+preserved on Data1 and independently mirrored with hash readback on NVMe. The abandonment receipt SHA-256 is
+`80e338cdc24bdbcafa3d3d9516ffb060a63a680b431b305787720f403a6beb26`.
+
+All five Phase-4 requests remain pending with the explicit all-six-zones-stockout/abandoned blocker. There are
+zero of ten required measurements, so no Freeze 1c or numerical G3 proposal is possible. The published source,
+views, embeddings, CLEAN input closure and earlier freezes remain reusable. Another allocation requires a
+fresh decision; the closed driver and exhausted recovery pass must not restart automatically.

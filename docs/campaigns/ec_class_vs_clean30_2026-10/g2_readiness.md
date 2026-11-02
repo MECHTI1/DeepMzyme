@@ -1,7 +1,8 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; the $19 recovery/G2 ceiling and $25 daily guard are approved ([evc-021](log.md#evc-021)).
-The original VM is stopped. The two-hour request and 117-minute STOP remain; measurements are pending.
+Status: 2026-11-02; the approved $19 pass exhausted all six zones ([evc-022](log.md#evc-022)).
+Temporary recovery resources are removed; the original VM is `TERMINATED`. Zero G2 events ran.
+Another allocation needs a fresh decision; the two-hour request and 117-minute STOP remain the reviewed bounds.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -23,7 +24,8 @@ Strict `verify-execution` passed without draft mode on published WP-13 before ex
 [extended manifest](execution_v2/manifest.json) authenticates the workstation queue and Fold-0 dispatcher against
 that immutable base. Its publication is required before the launch command can allocate compute. After start,
 the queue verifies the actual runtime and free space, performs the relocated-view probe and binds all requests
-to the controller's actual allocation/deadline. No paid preparation or measurement has run.
+to the controller's actual allocation/deadline. No remote staging or measurement has run; the failed recovery
+incurred transfer and temporary-storage accounting as recorded in evc-022.
 
 ## Current recovery readiness
 
@@ -42,7 +44,9 @@ to a fresh launch configuration; controller daily accounting now permits $25 to 
 The existing source's single retry used the original $2.6641 envelope and a fresh driver namespace.
 It returned stockout; provider shutdown was confirmed at 14:53 UTC ([evc-020](log.md#evc-020)).
 The maintainer then approved one new bounded source launch and the ordered cross-region pass above.
-Closed driver states, the archived central recovery pass and all scientific preparation remain unchanged.
+That pass also exhausted every candidate. Provider shutdown and deletion of all five temporary disks, the
+snapshot and its recycle-bin copy are verified. The source VM/disk and scientific preparation remain intact.
+The conservative incremental recovery accounting is $15.05; final provider billing is unverified.
 
 ## Previous start attempts
 
@@ -130,7 +134,8 @@ weight-file bytes through the workstation uplink. The full allocation deadline s
 
 ## Budget and persistence
 
-The proposal remains one requested two-hour session with a **$3 gross ceiling**. The existing-VM start preview
+The original G2-only envelope proposed one two-hour session with a **$3 gross ceiling**; the later
+**$19** approval included cross-region recovery. Its single pass is now consumed. The existing-VM start preview
 currently gives a **117-minute automatic STOP**. At the verified $0.879172/hour gross rate, the controller
 estimates $1.71, or $1.97 with its 15% margin. Allocation, setup, transfer, verification, fits and replay all
 consume this session. The actual allocation timestamp and provider deadline must come from the controller.
@@ -146,14 +151,14 @@ is free under [Google's network pricing](https://cloud.google.com/vpc/network-pr
 host-pull payloads below 3 GiB to leave 1 GiB for overhead/retries; inspect each persistence manifest before
 copying. Adding approximately $0.04 for the retained snapshots during 117 minutes gives a planning total of
 about **$2.67 including margins** when conservatively charging two complete hours. Recheck rates and the remaining
-$3 allowance before starting and admitting work; the launcher rejects stale quotes.
+authorized allowance before starting and admitting work; the launcher rejects stale quotes.
 
 The workstation queue automates all twelve events, including the two serial lane references, and produces the
 ten measurements required by Freeze 1c. Each terminal unit or lane batch is copied to the independent workstation
 destination on Data1, verified by reading its bytes, and acknowledged before another unit starts. Include actual transfer/readback time in the
 timing comparison. The controller owns provider STOP; the execution helper owns worker interruption and recovery.
 Confirm provider shutdown after closeout. Existing retained storage continues separately: approximately $15/month
-for the stopped boot disk and $15/month for retained snapshots; this proposal creates no additional disk/snapshot.
+for the stopped boot disk and $15/month for retained snapshots. The recovery pass's additional resources are removed.
 
 ## Storage placement
 
