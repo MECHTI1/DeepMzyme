@@ -188,6 +188,22 @@ def test_runpod_closeout_preserves_bookkeeping_without_mistaking_it_for_manifest
         assert (durable / name).read_bytes() == (tmp_path / "nvme" / name).read_bytes() == data
 
 
+def test_runpod_transport_propagates_fixed_precision_to_remote_launcher(tmp_path, monkeypatch):
+    calls = []
+    controller = type("Controller", (), {"heartbeat": lambda self: None})()
+    config = {"state_root": str(tmp_path), "bootstrap_python": sys.executable,
+              "runpod": {"ssh_alias": "fixture"}}
+    transport = ws.RunpodTransport(config, controller)
+
+    def execute(argv, **kwargs):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, 0, "ready", "")
+
+    monkeypatch.setattr(subprocess, "run", execute)
+    assert transport.remote(["python", "runner.py"], cwd="/workspace/repo") == "ready"
+    assert calls[0][-1] == "cd /workspace/repo && env NVIDIA_TF32_OVERRIDE=0 python runner.py"
+
+
 @pytest.mark.parametrize("returncode", [0, 2])
 def test_detached_launch_script_runs_once_and_keeps_terminal_code(tmp_path, monkeypatch, returncode):
     transport = ws.ControllerTransport(tmp_path, "fixture", bootstrap_python=sys.executable)

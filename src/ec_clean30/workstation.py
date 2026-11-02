@@ -1071,6 +1071,11 @@ class RunpodTransport(ControllerTransport):
         self.stop_controller.heartbeat()
         return super()._bounded(timeout)
 
+    def remote(self, argv, *, cwd=None, timeout=60):
+        # SSH does not necessarily retain container-level environment variables.
+        # The detached launcher and every descendant inherit this fixed policy.
+        return super().remote(["env", "NVIDIA_TF32_OVERRIDE=0", *argv], cwd=cwd, timeout=timeout)
+
     def controller(self, name, *args, **kwargs):
         raise WorkstationError("GCP lifecycle commands cannot operate a Runpod allocation.")
 
@@ -1154,7 +1159,8 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                 state["start_attempted"] = True
                 _write(state_path, state)
                 owned = True
-                session = controller.start()
+                adopt_id = config.get("runpod", {}).get("adopt_pod_id")
+                session = controller.adopt(adopt_id) if adopt_id else controller.start()
             else:
                 session = controller.session(state.get("session_id"))
             state.update(session)

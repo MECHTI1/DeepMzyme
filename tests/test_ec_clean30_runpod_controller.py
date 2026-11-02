@@ -5,7 +5,9 @@ import hashlib
 import os
 from pathlib import Path
 import signal
+import shutil
 import sys
+import tempfile
 import time
 
 import pytest
@@ -206,6 +208,127 @@ def test_other_active_gpu_blocks_before_watchdog_and_create(fixture):
     assert not json.loads(api.read_text()).get("create_calls")
 
 
+def adoption_fixture(config, *, ready=True, started=None):
+    started = time.time() - 60 if started is None else started
+    stamp = datetime.fromtimestamp(started, timezone.utc).isoformat()
+    config["runpod"].update(adopt_pod_id="handedpod123", adopt_started_at=stamp,
+                           absolute_hard_stop_unix=started + 6000)
+    cfg = config["runpod"]
+    return {"id": cfg["adopt_pod_id"], "name": cfg["pod_name"], "createdAt": stamp, "startedAt": stamp,
+            "desiredStatus": "RUNNING", "runtimeStatus": "running", "gpuCount": 1, "gpuId": cfg["gpu_id"],
+            "machine": {"dataCenterId": cfg["data_center_id"], "secureCloud": True}, "costPerHr": .89,
+            "imageName": cfg["image"] if ready else "example/unconfigured:tag",
+            "volumeInGb": cfg["volume_gb"] if ready else 0, "volumeMountPath": "/workspace",
+            "env": cfg["runtime_environment"] if ready else {}, "ssh": {"ip": "127.0.0.1", "port": 2222}}
+
+
+def test_named_adoption_arms_guard_without_creating_or_restarting(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config, ready=False)
+    controller = make(pods=[pod])
+    result = controller.adopt("handedpod123")
+    assert result["pending_qualification"] and result["pod_id"] == "handedpod123"
+    assert result["allocation_started_unix"] == rc._epoch(pod["startedAt"])
+    assert result["hard_stop_unix"] == config["runpod"]["absolute_hard_stop_unix"]
+    assert result["deadline_unix"] == result["hard_stop_unix"] - 120
+    assert not json.loads(api.read_text()).get("create_calls")
+    with pytest.raises(rc.RunpodError, match="image differs"):
+        controller.session()
+    assert controller.stop()["pod_id"] == "handedpod123"
+
+
+def test_adoption_configuration_cannot_create_even_at_low_level(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError, match="can never create"):
+        controller.start()
+    with pytest.raises(rc.RunpodError, match="can never create"):
+        controller._call("create")
+    assert not json.loads(api.read_text()).get("create_calls") and not controller.state_path.exists()
+
+
+def test_adoption_recovery_never_resets_original_clock(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    controller = make(pods=[pod])
+    first = controller.adopt("handedpod123", qualify=True)
+    later = json.loads(api.read_text())
+    later["pods"][0]["startedAt"] = datetime.now(timezone.utc).isoformat()
+    api.write_text(json.dumps(later))
+    recovered = controller.adopt("handedpod123", qualify=True)
+    for key in ("session_id", "allocation_started_unix", "deadline_unix", "hard_stop_unix"):
+        assert recovered[key] == first[key]
+
+
+@pytest.mark.parametrize("wrong", ["argument", "name", "start", "cloud"])
+def test_foreign_adoption_never_binds_or_stops_a_resource(fixture, wrong):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    argument = "handedpod123"
+    if wrong == "argument":
+        argument = "not-authorized"
+    elif wrong == "name":
+        pod["name"] = "other"
+    elif wrong == "start":
+        pod["startedAt"] = "2000-01-01T00:00:00Z"
+    else:
+        pod["machine"]["secureCloud"] = False
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError):
+        controller.adopt(argument)
+    assert not controller.owner_path.exists()
+    assert not json.loads(api.read_text()).get("stop_calls")
+
+
+def test_adoption_qualification_failure_stops_only_the_handed_over_pod(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config, ready=False)
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError, match="image differs"):
+        controller.adopt("handedpod123", qualify=True)
+    state = json.loads(controller.state_path.read_text())
+    assert state["adopted"] and state["phase"] == "stopped"
+    assert json.loads(api.read_text())["stopped_ids"] == ["handedpod123"]
+
+
+def test_adoption_accepts_missing_location_and_conservative_created_fallback(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    config["runpod"].update(data_center_id="ANY_SECURE", precision_environment_origin="transport")
+    start = rc._epoch(config["runpod"]["adopt_started_at"])
+    pod.pop("startedAt")
+    pod["createdAt"] = datetime.fromtimestamp(start + .004, timezone.utc).isoformat()
+    pod["machine"]["dataCenterId"] = ""
+    pod["env"] = {}
+    controller = make(pods=[pod])
+    result = controller.adopt("handedpod123", qualify=True)
+    assert result["allocation_started_unix"] == start
+    state = json.loads(controller.state_path.read_text())
+    assert state["pod"]["placement"]["data_center_id"] is None
+    assert state["precision_environment_origin"] == "transport"
+    assert not json.loads(api.read_text()).get("create_calls")
+
+
+def test_adoption_absolute_limit_cannot_extend_provider_start_window(fixture):
+    config, _, _, _, _ = fixture
+    adoption_fixture(config)
+    config["runpod"]["absolute_hard_stop_unix"] = rc._epoch(config["runpod"]["adopt_started_at"]) + 7021
+    with pytest.raises(rc.RunpodError, match="reset or extend"):
+        rc.validate_config(config)
+
+
+def test_adoption_price_failure_is_bound_and_stopped(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    pod["costPerHr"] = 2
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError, match="price exceeds"):
+        controller.adopt("handedpod123")
+    assert json.loads(controller.state_path.read_text())["phase"] == "stopped"
+    assert json.loads(api.read_text())["stopped_ids"] == ["handedpod123"]
+
+
 def test_config_drift_closes_admission_but_does_not_block_owned_stop(fixture):
     config, path, _, _, make = fixture
     controller = make()
@@ -323,8 +446,8 @@ def test_real_detached_watchdog_stops_at_short_deadline_after_transient_failure(
 
 
 def preservation(controller, primary, mirror, *, workload=False):
-    primary.mkdir(parents=True)
-    mirror.mkdir(parents=True)
+    primary.mkdir(parents=True, exist_ok=True)
+    mirror.mkdir(parents=True, exist_ok=True)
     identity = {"pod_id": controller._owned_id(), "session_id": controller._state()["session_id"],
                 "config_sha256": controller.config_sha}
     files = []
@@ -419,4 +542,110 @@ def test_failed_preservation_never_deletes(fixture, tmp_path, mirror_device, pro
     path.write_text(json.dumps(proof))
     with pytest.raises(rc.RunpodError):
         controller.closeout(path)
+    assert not json.loads(api.read_text()).get("deleted_ids")
+
+
+def ephemeral_adoption(config, primary, mirror):
+    pod = adoption_fixture(config)
+    mirror.mkdir(parents=True, exist_ok=True)
+    config.update(durable_root=str(primary), mirror_root=str(mirror))
+    cfg = config["runpod"]
+    cfg.update(storage_mode="ephemeral_host_pull", volume_gb=0)
+    cfg["quote"].update(stopped_storage_hourly_usd=0, stopped_storage_reserve_usd=0)
+    cfg["retention_policy"]["action"] = "host_pull_before_stop"
+    pod.update(volumeInGb=0, containerDiskInGb=cfg["container_disk_gb"])
+    pod.pop("volumeMountPath")
+    return pod
+
+
+@pytest.fixture
+def real_mirror(tmp_path):
+    root = Path("/dev/shm")
+    if not root.is_dir() or root.stat().st_dev == tmp_path.stat().st_dev:
+        pytest.skip("A second local device is needed for the real detached ephemeral watchdog test.")
+    path = Path(tempfile.mkdtemp(prefix="deepmzyme-controller-mirror-", dir=root))
+    yield path
+    shutil.rmtree(path)
+
+
+@pytest.mark.parametrize("problem", ["unnamed", "same_device", "stopped_cost", "volume", "policy"])
+def test_ephemeral_storage_is_exactly_scoped_to_independent_host_pull_adoption(fixture, tmp_path, mirror_device, problem):
+    config, _, _, _, _ = fixture
+    ephemeral_adoption(config, tmp_path / "primary", mirror_device)
+    if problem == "unnamed":
+        config["runpod"].pop("adopt_pod_id")
+    elif problem == "same_device":
+        config["mirror_root"] = str(tmp_path / "another-primary")
+    elif problem == "stopped_cost":
+        config["runpod"]["quote"]["stopped_storage_hourly_usd"] = .01
+    elif problem == "volume":
+        config["runpod"]["volume_gb"] = 1
+    else:
+        config["runpod"]["retention_policy"]["action"] = "verified_backup_then_delete"
+    with pytest.raises(rc.RunpodError):
+        rc.validate_config(config)
+
+
+def test_ephemeral_named_adoption_uses_host_pull_and_stops_without_delete(fixture, tmp_path, real_mirror):
+    config, _, api, _, make = fixture
+    pod = ephemeral_adoption(config, tmp_path / "primary", real_mirror)
+    controller = make(pods=[pod])
+    session = controller.adopt("handedpod123", qualify=True)
+    assert session["cost_admission"]["ceiling_scope"] == "execution_only_no_stopped_storage"
+    controller.admit_workload()
+    path = preservation(controller, tmp_path / "primary", real_mirror, workload=True)
+    result = controller.closeout(path)
+    assert result["status"] == "STOPPED" and result["provider_stop_verified"]
+    assert result["ephemeral_data_erased_on_stop"] and result["deletion_authorized"] is False
+    provider = json.loads(api.read_text())
+    assert not provider.get("deleted_ids") and provider["pods"][0]["runtimeStatus"] == "stopped"
+
+
+def test_failed_ephemeral_preservation_still_stops_and_never_qualifies(fixture, tmp_path, real_mirror):
+    config, _, api, _, make = fixture
+    pod = ephemeral_adoption(config, tmp_path / "primary", real_mirror)
+    controller = make(pods=[pod])
+    controller.adopt("handedpod123", qualify=True)
+    controller.admit_workload()
+    path = preservation(controller, tmp_path / "primary", real_mirror, workload=True)
+    (real_mirror / "runs/unit/model.bin").unlink()
+    with pytest.raises(rc.RunpodError, match="missing or differ"):
+        controller.closeout(path)
+    provider = json.loads(api.read_text())
+    assert provider["pods"][0]["runtimeStatus"] == "stopped" and not provider.get("deleted_ids")
+    assert "closeout_receipt" not in controller._state()
+
+
+def test_container_restart_does_not_reset_adopted_allocation_clock(fixture):
+    config, _, _, _, make = fixture
+    pod = adoption_fixture(config)
+    original = rc._epoch(config["runpod"]["adopt_started_at"])
+    pod["startedAt"] = datetime.now(timezone.utc).isoformat()
+    controller = make(pods=[pod])
+    result = controller.adopt("handedpod123", qualify=True)
+    assert result["allocation_started_unix"] == original
+    assert result["hard_stop_unix"] == config["runpod"]["absolute_hard_stop_unix"]
+
+
+def test_restarted_timestamp_cannot_rebase_an_older_allocation(fixture):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    original = rc._epoch(pod["createdAt"])
+    restarted = original + 60
+    pod["startedAt"] = datetime.fromtimestamp(restarted, timezone.utc).isoformat()
+    config["runpod"].update(adopt_started_at=pod["startedAt"], absolute_hard_stop_unix=restarted + 6000)
+    controller = make(pods=[pod])
+    with pytest.raises(rc.RunpodError, match="clock cannot reset"):
+        controller.adopt("handedpod123")
+    assert not controller.owner_path.exists() and not controller.state_path.exists()
+    assert not json.loads(api.read_text()).get("create_calls")
+
+
+def test_persistent_named_adoption_also_has_no_deletion_authority(fixture, tmp_path, mirror_device):
+    config, _, api, _, make = fixture
+    pod = adoption_fixture(config)
+    controller = make(pods=[pod])
+    controller.adopt("handedpod123", qualify=True)
+    path = preservation(controller, tmp_path / "primary", mirror_device)
+    assert controller.closeout(path)["status"] == "STOPPED"
     assert not json.loads(api.read_text()).get("deleted_ids")

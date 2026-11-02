@@ -1,4 +1,4 @@
-"""One-attempt Runpod allocation with a separate workstation stop watchdog.
+"""One-attempt allocation or named adoption with a workstation stop watchdog.
 
 The watchdog survives the submitting process, but is not a provider-side stop
 guarantee: workstation power/network/authentication loss can delay shutdown.
@@ -117,6 +117,11 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     _require(min(120, duration / 2) <= reserve < duration, "Insufficient shutdown-request reserve.")
     heartbeat = _number(cfg.get("heartbeat_timeout_seconds", 900), "heartbeat_timeout_seconds")
     _require(heartbeat <= 900, "Owner heartbeat timeout exceeds 900 seconds.")
+    if cfg.get("adopt_pod_id") is not None:
+        _require(re.fullmatch(r"[A-Za-z0-9_-]+", str(cfg["adopt_pod_id"])), "Invalid explicitly adopted pod ID.")
+        started = _epoch(cfg.get("adopt_started_at"))
+        hard = _number(cfg.get("absolute_hard_stop_unix"), "absolute_hard_stop_unix")
+        _require(started <= hard <= started + duration, "Adoption cannot reset or extend the original runtime window.")
     for key in ("state_root", "cli_path", "ssh_private_key"):
         _require(isinstance(cfg.get(key), str) and Path(cfg[key]).is_absolute()
                  and not any(x in cfg[key] for x in "\n\r\0"), f"{key} needs an explicit safe absolute path.")
@@ -131,8 +136,33 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     _require(re.fullmatch(r"[^@\s]+@sha256:[0-9a-f]{64}", cfg["image"]), "Runpod image must be pinned by SHA-256 digest.")
     _require(cfg.get("runtime_environment") == {"NVIDIA_TF32_OVERRIDE": "0"},
              "Runpod requires the fixed full-FP32 runtime environment.")
-    for key in ("container_disk_gb", "volume_gb"):
-        _require(type(cfg.get(key)) is int and cfg[key] > 0, f"A positive integer {key} is required.")
+    precision_origin = cfg.get("precision_environment_origin", "pod")
+    _require(precision_origin == "pod" or (cfg.get("adopt_pod_id") and precision_origin == "transport"),
+             "Only an explicitly adopted pod may use transport-enforced precision settings.")
+    _require(cfg["data_center_id"] != "ANY_SECURE" or cfg.get("adopt_pod_id"),
+             "New allocations require an exact data center.")
+    ephemeral = cfg.get("storage_mode") == "ephemeral_host_pull"
+    _require(cfg.get("storage_mode", "persistent") in {"persistent", "ephemeral_host_pull"}, "Unknown storage mode.")
+    _require(not ephemeral or bool(cfg.get("adopt_pod_id")), "Ephemeral HostPull is restricted to an explicitly adopted pod.")
+    _require(type(cfg.get("container_disk_gb")) is int and cfg["container_disk_gb"] > 0,
+             "A positive integer container_disk_gb is required.")
+    _require(type(cfg.get("volume_gb")) is int and (cfg["volume_gb"] == 0 if ephemeral else cfg["volume_gb"] > 0),
+             "A positive volume_gb is required unless explicit ephemeral HostPull adoption is selected.")
+    if ephemeral:
+        roots = []
+        devices = []
+        for key in ("durable_root", "mirror_root"):
+            value = config.get(key)
+            _require(isinstance(value, str) and Path(value).is_absolute() and ".." not in Path(value).parts,
+                     "Ephemeral HostPull requires explicit independent local destinations.")
+            root = Path(value).resolve()
+            roots.append(root)
+            ancestor = root
+            while not ancestor.exists():
+                ancestor = ancestor.parent
+            devices.append(ancestor.stat().st_dev)
+        _require(devices[0] != devices[1] and roots[0] not in roots[1].parents and roots[1] not in roots[0].parents,
+                 "Ephemeral HostPull requires primary and mirror destinations on independent devices.")
     mount = cfg.get("volume_mount_path", "/workspace")
     _require(isinstance(mount, str) and Path(mount).is_absolute() and ".." not in Path(mount).parts
              and not any(x in mount for x in "\n\r\0"), "Unsafe persistent volume path.")
@@ -148,11 +178,12 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     stopped = _number(quote.get("stopped_storage_reserve_usd"), "stopped_storage_reserve_usd", zero=True)
     retention = cfg.get("retention_policy", {})
     retention_seconds = _number(retention.get("retention_seconds"), "retention_seconds")
-    stopped_rate = _number(quote.get("stopped_storage_hourly_usd"), "stopped_storage_hourly_usd")
-    _require(stopped > 0 and stopped >= stopped_rate * retention_seconds / 3600,
+    stopped_rate = _number(quote.get("stopped_storage_hourly_usd"), "stopped_storage_hourly_usd", zero=ephemeral)
+    _require((stopped == stopped_rate == 0) if ephemeral else
+             (stopped > 0 and stopped >= stopped_rate * retention_seconds / 3600),
              "Stopped storage reserve does not cover the defined retention period.")
     _require(retention.get("cleanup_reviewed") is True
-             and retention.get("action") == "verified_backup_then_delete"
+             and retention.get("action") == ("host_pull_before_stop" if ephemeral else "verified_backup_then_delete")
              and all(isinstance(retention.get(key), str) and retention[key].strip() for key in ("owner", "evidence")),
              "A reviewed finite storage retention and backup-dependent cleanup policy is required.")
     egress = _number(quote.get("egress_reserve_usd"), "egress_reserve_usd", zero=True)
@@ -169,8 +200,8 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
             "egress_reserve_usd": egress, "margin_fraction": margin,
             "retention_seconds": retention_seconds, "stopped_storage_hourly_usd": stopped_rate,
             "retention_policy": retention, "automatic_storage_cleanup": False,
-            "storage_cleanup_method": "closeout_after_independent_preservation",
-            "ceiling_scope": "execution_plus_bounded_retention_estimate",
+            "storage_cleanup_method": "host_pull_before_stop" if ephemeral else "closeout_after_independent_preservation",
+            "ceiling_scope": "execution_only_no_stopped_storage" if ephemeral else "execution_plus_bounded_retention_estimate",
             "provider_enforced_stop": False, "stop_mechanism": "independent workstation process"}
 
 
@@ -198,7 +229,11 @@ def _public_pod(pod: Mapping[str, Any]) -> dict[str, Any]:
     keys = ("id", "name", "desiredStatus", "runtimeStatus", "runtimeStatusReason", "createdAt",
             "startedAt", "costPerHr", "cost", "gpuCount", "gpuId", "imageName", "image",
             "containerDiskInGb", "volumeInGb", "volumeMountPath", "dataCenterId")
-    return {key: pod[key] for key in keys if key in pod}
+    result = {key: pod[key] for key in keys if key in pod}
+    machine = pod.get("machine", {})
+    result["placement"] = {"data_center_id": machine.get("dataCenterId") or pod.get("dataCenterId") or None,
+                           "secure_cloud": machine.get("secureCloud")}
+    return result
 
 
 class RunpodController:
@@ -287,6 +322,7 @@ class RunpodController:
     def _call(self, *args: str, timeout: float = 30) -> Any:
         env, key = self._environment()
         if args[0] == "create":
+            _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod.")
             try:
                 self._unchanged()
                 validate_config(self.config)
@@ -342,8 +378,11 @@ class RunpodController:
         _require(re.fullmatch(r"[A-Za-z0-9_-]+", pod_id), "Provider returned an invalid pod ID.")
         with self._lock():
             state = self._state()
-            _require(pod.get("name") == self.cfg["pod_name"] and pod_id not in state["preexisting_pod_ids"]
-                     and _epoch(pod.get("createdAt")) >= state["allocation_started_unix"] - 5,
+            adoption = (source == "explicit_named_adoption" and state.get("adopted") is True
+                        and pod_id == self.cfg.get("adopt_pod_id") == state.get("adopt_pod_id"))
+            _require(pod.get("name") == self.cfg["pod_name"] and (adoption or
+                     (pod_id not in state["preexisting_pod_ids"]
+                      and _epoch(pod.get("createdAt")) >= state["allocation_started_unix"] - 5)),
                      "Provider response does not identify this new launch intent.")
             owned = {"pod_id": pod_id, "session_id": state["session_id"],
                      "config_sha256": self.config_sha, "source": source, "bound_at": _utc(time.time())}
@@ -378,6 +417,10 @@ class RunpodController:
         if owned:
             return owned
         state = self._cleanup_state()
+        if state.get("adopted") is True:
+            pod = self._call("get", self.cfg["adopt_pod_id"], "--include-machine")
+            self._verify_adopt_identity(pod)
+            return self._bind(pod, source="explicit_named_adoption")
         if not state.get("create_attempted") or state.get("create_cancelled_before_post"):
             return None
         matches = [p for p in self._pods() if p.get("name") == self.cfg["pod_name"]]
@@ -442,6 +485,7 @@ class RunpodController:
                 "--env", json.dumps(cfg["runtime_environment"], sort_keys=True), "--ports", "22/tcp"]
 
     def start(self) -> dict[str, Any]:
+        _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod; use adopt().")
         self._unchanged()
         self.cost = validate_config(self.config)
         with self._lock():
@@ -496,6 +540,91 @@ class RunpodController:
                 self._cleanup_update(stop_error=self._redact(str(exc)))
             raise
 
+    def _verify_adopt_identity(self, pod: Mapping[str, Any]) -> None:
+        """Establish the exact user-named identity before taking shutdown ownership."""
+        cfg = self.cfg
+        _require(pod.get("id") == cfg.get("adopt_pod_id") and pod.get("name") == cfg["pod_name"],
+                 "Provider identity differs from the explicitly adopted pod.")
+        _require(pod.get("gpuId", pod.get("gpu", {}).get("id")) == cfg["gpu_id"], "Adopted GPU type differs.")
+        _require(self._placement_matches(pod), "Adopted secure-cloud placement differs.")
+        actual_start = _epoch(pod.get("startedAt") or pod.get("createdAt"))
+        expected_start = _epoch(cfg["adopt_started_at"])
+        created = _epoch(pod.get("createdAt"))
+        original_creation_matches = -1e-6 <= created - expected_start <= 5
+        _require(original_creation_matches and actual_start >= expected_start - 1e-6,
+                 "Adopted pod start time differs; its allocation clock cannot reset.")
+
+    def _placement_matches(self, pod: Mapping[str, Any]) -> bool:
+        machine = pod.get("machine", {})
+        actual = machine.get("dataCenterId") or pod.get("dataCenterId") or None
+        any_secure = self.cfg.get("adopt_pod_id") and self.cfg["data_center_id"] == "ANY_SECURE"
+        return machine.get("secureCloud") is True and (bool(any_secure) or actual == self.cfg["data_center_id"])
+
+    @staticmethod
+    def _session_metadata(state: Mapping[str, Any]) -> dict[str, Any]:
+        return {key: state[key] for key in ("session_id", "pod_id", "allocation_started_unix", "deadline_unix",
+                                           "hard_stop_unix", "max_total_seconds", "cost_admission", "provider_verified_at")
+                if key in state}
+
+    def adopt(self, pod_id: str, *, qualify: bool = False) -> dict[str, Any]:
+        """Arm shutdown for one explicitly handed-over pod without creating or restarting it.
+
+        Initial adoption intentionally permits the existing image, environment,
+        and volume to await configuration. session() remains mandatory before
+        any workload and checks the complete approved execution configuration.
+        """
+        _require(pod_id == self.cfg.get("adopt_pod_id"), "Only the explicitly named pod can be adopted.")
+        self._unchanged()
+        self.cost = validate_config(self.config)
+        if self.state_path.exists():
+            state = self._state()
+            _require(state.get("adopted") is True and self._owned_id() == pod_id
+                     and not state.get("stop_requested") and state["phase"] not in {"stopped", "deleted"},
+                     "This adoption is closed or belongs to another allocation.")
+            self._watchdog_healthy()
+            self.heartbeat()
+            return self.session(state["session_id"]) if qualify else {**self._session_metadata(state), "pending_qualification": True}
+        pod = self._call("get", pod_id, "--include-machine")
+        self._verify_adopt_identity(pod)
+        _require(_status(pod)[0] == "RUNNING" and _gpu_count(pod) == 1,
+                 "Only a running single-GPU pod can be adopted.")
+        rows = self._pods()
+        started = _epoch(self.cfg["adopt_started_at"])
+        hard = min(started + self.cost["max_total_seconds"], self.cfg["absolute_hard_stop_unix"])
+        with self._lock():
+            _require(not self.state_path.exists(), "This pass already has an allocation intent.")
+            state = {"schema_version": 1, "session_id": uuid.uuid4().hex, "phase": "arming",
+                     "config_sha256": self.config_sha, "config_source_sha256": self.source_sha,
+                     "preexisting_pod_ids": [p["id"] for p in rows], "create_attempted": False,
+                     "adopted": True, "adopt_pod_id": pod_id, "allocation_started_unix": started,
+                     "hard_stop_unix": hard, "deadline_unix": hard - self.cost["stop_reserve_seconds"],
+                     "max_total_seconds": hard - started, "cost_admission": self.cost, "stop_requested": False}
+            _write(self.state_path, state)
+            self._cached_state = dict(state)
+        try:
+            self._bind(pod, source="explicit_named_adoption")
+            self.heartbeat()
+            self._arm_watchdog()
+            self._require_adoption_open()
+            rate = _number(pod.get("costPerHr", pod.get("cost")), "actual adopted hourly price")
+            _require(rate <= self.cfg["quote"]["hourly_compute_usd"] + self.cfg["quote"]["running_storage_hourly_usd"],
+                     "Adopted pod price exceeds the admitted quote.")
+            self._no_other_gpu(rows, own=pod_id)
+            return self.session() if qualify else {**self._session_metadata(self._state()), "pending_qualification": True}
+        except BaseException:
+            self._cleanup_update(stop_requested=True, phase="closing_after_failure")
+            try:
+                self.stop()
+            except Exception as exc:
+                self._cleanup_update(stop_error=self._redact(str(exc)))
+            raise
+
+    def _require_adoption_open(self) -> None:
+        state = self._state()
+        _require(not state.get("stop_requested") and state["phase"] not in {"stopped", "deleted"}
+                 and time.time() < state["deadline_unix"], "The adopted pod's original stop deadline has elapsed.")
+        self._watchdog_healthy()
+
     def session(self, previous: Mapping[str, Any] | str | None = None) -> dict[str, Any]:
         self._unchanged()
         state = self._state()
@@ -509,14 +638,16 @@ class RunpodController:
         _require(_status(pod) == ("RUNNING", "running") and _gpu_count(pod) == 1, "Owned pod is not a running single GPU.")
         _require(pod.get("gpuId", pod.get("gpu", {}).get("id")) == self.cfg["gpu_id"], "Allocated GPU type differs.")
         _require(pod.get("imageName", pod.get("image")) == self.cfg["image"], "Allocated image differs.")
-        _require(isinstance(pod.get("env"), dict) and pod["env"].get("NVIDIA_TF32_OVERRIDE") == "0",
-                 "Allocated runtime environment differs from the fixed full-FP32 contract.")
-        machine = pod.get("machine", {})
-        _require(machine.get("dataCenterId", pod.get("dataCenterId")) == self.cfg["data_center_id"]
-                 and machine.get("secureCloud") is True, "Allocated data center or secure-cloud placement differs.")
+        if self.cfg.get("precision_environment_origin", "pod") == "pod":
+            _require(isinstance(pod.get("env"), dict) and pod["env"].get("NVIDIA_TF32_OVERRIDE") == "0",
+                     "Allocated runtime environment differs from the fixed full-FP32 contract.")
+        _require(self._placement_matches(pod), "Allocated data center or secure-cloud placement differs.")
+        ephemeral = self.cfg.get("storage_mode") == "ephemeral_host_pull"
         _require(pod.get("volumeInGb") == self.cfg["volume_gb"]
-                 and pod.get("volumeMountPath") == self.cfg.get("volume_mount_path", "/workspace"),
+                 and (ephemeral or pod.get("volumeMountPath") == self.cfg.get("volume_mount_path", "/workspace")),
                  "Allocated persistent volume differs from the approved request.")
+        if ephemeral:
+            _require(pod.get("containerDiskInGb") == self.cfg["container_disk_gb"], "Adopted ephemeral disk size differs.")
         rate = _number(pod.get("costPerHr", pod.get("cost")), "actual pod hourly price")
         _require(rate <= self.cfg["quote"]["hourly_compute_usd"] + self.cfg["quote"]["running_storage_hourly_usd"],
                  "Actual pod price exceeds the admitted quote.")
@@ -528,14 +659,14 @@ class RunpodController:
                 if key in previous:
                     _require(previous[key] == state.get(key), "Runpod session identity or deadline changed.")
         self.heartbeat()
-        state = self._update(phase="running", provider_verified_at=_utc(time.time()), pod=_public_pod(pod))
-        return {key: state[key] for key in ("session_id", "pod_id", "allocation_started_unix", "deadline_unix",
-                                           "hard_stop_unix", "max_total_seconds", "cost_admission", "provider_verified_at")}
+        state = self._update(phase="running", provider_verified_at=_utc(time.time()), pod=_public_pod(pod),
+                             precision_environment_origin=self.cfg.get("precision_environment_origin", "pod"))
+        return self._session_metadata(state)
 
     def stop(self) -> dict[str, Any]:
         """Request stop and verify a fresh stopped provider state; never delete data."""
         state = self._cleanup_update(stop_requested=True)
-        if not state.get("create_attempted") or state.get("create_cancelled_before_post"):
+        if (not state.get("create_attempted") and not state.get("adopted")) or state.get("create_cancelled_before_post"):
             receipt = {"status": "CREATE_CANCELLED_BEFORE_POST" if state.get("create_cancelled_before_post")
                        else "NO_CREATE_ATTEMPT", "verified_at": _utc(time.time())}
             # Before create, the closed intent must be durable before the guard
@@ -633,11 +764,25 @@ class RunpodController:
         return _sha(path)
 
     def closeout(self, preservation_path: Path) -> dict[str, Any]:
-        """Delete only this stopped pod after both copies of every output read back."""
+        """Verify preservation and stop; delete only allocations this controller created."""
         owned = self._owned_id()
         _require(owned, "No owned Runpod allocation is bound for closeout.")
-        proof_sha = self._verify_preservation(Path(preservation_path))
         state = self._state()
+        if state.get("adopted") is True:
+            try:
+                proof_sha = self._verify_preservation(Path(preservation_path))
+            except BaseException:
+                self.stop()
+                raise
+            stopped = self.stop()
+            receipt = {"pod_id": owned, "session_id": state["session_id"], "status": "STOPPED",
+                       "provider_stop_verified": stopped.get("runtime_status") == "stopped",
+                       "preservation_sha256": proof_sha, "verified_at": _utc(time.time()),
+                       "ephemeral_data_erased_on_stop": self.cfg.get("storage_mode") == "ephemeral_host_pull",
+                       "deletion_authorized": False}
+            self._update(preservation_sha256=proof_sha, preservation_path=str(preservation_path), closeout_receipt=receipt)
+            return receipt
+        proof_sha = self._verify_preservation(Path(preservation_path))
         if state.get("phase") != "deleted":
             self.stop()
             self._update(preservation_sha256=proof_sha, preservation_path=str(preservation_path))

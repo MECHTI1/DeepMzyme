@@ -226,3 +226,286 @@ def test_cli_missing_delegation_does_not_execute_child(tmp_path):
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 125 and "container caps refused" in result.stderr
     assert not marker.exists()
+
+
+@pytest.fixture
+def kernel_v1(tmp_path, monkeypatch):
+    """A split-controller kernel fake, never proof of a provider host."""
+    root = tmp_path / 'v1'
+    cpu, memory = root / 'cpu,cpuacct', root / 'memory'
+    cpu.mkdir(parents=True)
+    memory.mkdir()
+    monkeypatch.setattr(caps, '_v1_roots', lambda path: {'cpu': cpu, 'memory': memory})
+    basis = {'swap_total_kib': 0, 'swap_devices': [], 'basis': 'host_has_no_swap_backing', 'pswpin': 5, 'pswpout': 6,
+             'boot_id': Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
+    monkeypatch.setattr(caps, '_no_host_swap', lambda: dict(basis))
+    mkdir, rmdir = Path.mkdir, Path.rmdir
+    created, children = [], []
+
+    def make(path, *args, **kwargs):
+        result = mkdir(path, *args, **kwargs)
+        if path.parent in (cpu, memory):
+            created.append(path)
+            controls = {'cgroup.procs': ''}
+            if path.parent == cpu:
+                controls.update({'cpu.cfs_quota_us': '-1', 'cpu.cfs_period_us': '100000', 'cpu.cfs_burst_us': '1000',
+                                 'cpu.stat': 'nr_throttled 0\nthrottled_time 0'})
+            else:
+                controls.update({'memory.limit_in_bytes': str(2**63-1), 'memory.memsw.limit_in_bytes': str(2**63-1),
+                    'memory.swappiness': '60', 'memory.use_hierarchy': '0',
+                    'memory.oom_control': 'oom_kill_disable 0\nunder_oom 0\noom_kill 0', 'cgroup.event_control': '',
+                    'memory.failcnt': '0', 'memory.usage_in_bytes': '0', 'memory.stat': 'swap 0\ntotal_swap 0'})
+            for name, value in controls.items():
+                (path / name).write_text(value + '\n')
+        return result
+
+    def remove(path):
+        if path in created:
+            for f in path.iterdir():
+                if f.is_file():
+                    f.unlink()
+        return rmdir(path)
+
+    def write(path, value):
+        assert path.exists()
+        if path.name != 'memory.oom_control':
+            path.write_text(value + '\n')
+        else:
+            assert value == '0'
+
+    class Child:
+        def __init__(self, argv, *, preexec_fn, **kwargs):
+            self.scope, self.argv, self.returncode = preexec_fn.__self__, argv, 0
+            preexec_fn()
+            assert all(str(os.getpid()) in caps._read(path / 'cgroup.procs') for path in self.scope.paths.values())
+            children.append(self)
+
+        def communicate(self, timeout=None):
+            if 'bytearray' in self.argv[-1]:
+                (self.scope.paths['memory'] / 'memory.oom_control').write_text('oom_kill_disable 0\nunder_oom 0\noom_kill 1\n')
+                (self.scope.paths['memory'] / 'memory.failcnt').write_text('1\n')
+                os.eventfd_write(self.scope.event_descriptor, 1)
+                self.returncode = -signal.SIGKILL
+            elif 'while time.monotonic()' in self.argv[-1]:
+                (self.scope.paths['cpu'] / 'cpu.stat').write_text('nr_throttled 20\nthrottled_time 1400000000\n')
+            for path in self.scope.paths.values():
+                (path / 'cgroup.procs').write_text('')
+            suffix = ''
+            if 'descendant_membership_verified=' in self.argv[-1]:
+                self.scope.kill_count += 1  # Explicit simulated kernel cleanup evidence.
+                suffix = 'descendant_membership_verified=12345\n'
+            return f'3:cpu,cpuacct:/docker/owned/{self.scope.path.name}\n5:memory:/docker/owned/{self.scope.path.name}\n'+suffix, ''
+
+        def wait(self, timeout=None):
+            return self.returncode
+
+    monkeypatch.setattr(Path, 'mkdir', make)
+    monkeypatch.setattr(Path, 'rmdir', remove)
+    monkeypatch.setattr(caps, '_write', write)
+    monkeypatch.setattr(caps.subprocess, 'Popen', Child)
+    return root, created, children, basis
+
+
+def test_v1_profiles_require_split_membership_exact_raw_limits_and_no_swap_host(kernel_v1):
+    root, created, children, _ = kernel_v1
+    evidence = caps.probe(root)
+    assert caps.validate_probe_evidence(evidence) == evidence
+    assert evidence['backend'] == 'cgroup_v1'
+    assert len(created) == 8 and len(children) == 4 and not any(p.exists() for p in created)
+    for name, gib in [('fit', 8), ('esm1b', 24)]:
+        record = evidence['profiles'][name]
+        assert record['limits']['memory']['memory.limit_in_bytes'] == str(gib*caps.GIB)
+        assert record['limits']['memory']['memory.memsw.limit_in_bytes'] == str(gib*caps.GIB)
+        assert record['limits']['memory']['memory.swappiness'] == '0'
+        assert record['limits']['cpu']['cpu.cfs_burst_us'] == '0'
+        assert record['before']['zero_swap_basis']['basis'] == 'host_has_no_swap_backing'
+        assert 'memory.swap.max' not in record['limits']
+
+
+def test_v1_unavailable_memsw_refuses_before_child_spawn(kernel_v1, monkeypatch):
+    root, created, children, _ = kernel_v1
+    original = caps._write
+
+    def unavailable(path, value):
+        if path.name == 'memory.memsw.limit_in_bytes':
+            raise PermissionError('memsw not delegated')
+        original(path, value)
+
+    monkeypatch.setattr(caps, '_write', unavailable)
+    with pytest.raises(PermissionError, match='memsw'):
+        caps._run(root, caps.PERIOD_US, caps.GIB, [sys.executable, '-c', 'pass'])
+    assert not children and not any(p.exists() for p in created)
+
+
+@pytest.mark.parametrize('key', ['memory.swappiness', 'memory.memsw.limit_in_bytes', 'memory.use_hierarchy'])
+def test_v1_control_tampering_refuses(kernel_v1, monkeypatch, key):
+    root, created, _, _ = kernel_v1
+    communicate = caps.subprocess.Popen.communicate
+
+    def tamper(child, timeout=None):
+        result = communicate(child, timeout)
+        (child.scope.paths['memory'] / key).write_text('999\n')
+        return result
+
+    monkeypatch.setattr(caps.subprocess.Popen, 'communicate', tamper)
+    with pytest.raises(caps.CapError, match='control differs'):
+        caps._run(root, caps.PERIOD_US, caps.GIB, [sys.executable, '-c', 'pass'])
+    assert not any(p.exists() for p in created)
+
+
+def test_v1_host_swap_io_change_invalidates_even_after_swap_disabled_again(kernel_v1, monkeypatch):
+    root, created, _, basis = kernel_v1
+    communicate = caps.subprocess.Popen.communicate
+
+    def changed(child, timeout=None):
+        result = communicate(child, timeout)
+        basis['pswpout'] += 1
+        return result
+
+    monkeypatch.setattr(caps.subprocess.Popen, 'communicate', changed)
+    with pytest.raises(caps.CapError, match='swap I/O counters changed'):
+        caps._run(root, caps.PERIOD_US, caps.GIB, [sys.executable, '-c', 'pass'])
+    assert not any(p.exists() for p in created)
+
+
+@pytest.mark.parametrize('mutation', [
+    lambda e: e['profiles']['fit']['before']['zero_swap_basis'].update({'swap_total_kib': 100}),
+    lambda e: e['profiles']['fit']['after']['zero_swap_basis'].update({'pswpout': 999}),
+    lambda e: e['profiles']['fit']['limits']['memory'].update({'memory.swappiness': '60'}),
+    lambda e: e['profiles']['fit']['controller_cgroups'].update({'cpu': '/host/other'}),
+    lambda e: e['memory_oom_test']['after'].update({'memory_failcnt': 0}),
+    lambda e: e['memory_oom_test']['after']['memory_events'].update({'oom': 0}),
+])
+def test_v1_probe_rejects_weakened_or_inconsistent_evidence(kernel_v1, mutation):
+    evidence = deepcopy(caps.probe(kernel_v1[0]))
+    mutation(evidence)
+    with pytest.raises(caps.CapError):
+        caps.validate_probe_evidence(evidence)
+
+
+@pytest.mark.parametrize('problem', [None, 'swap_total', 'swap_free', 'swap_device', 'empty_swaps', 'bound_proc_file', 'ambiguous_proc'])
+def test_v1_host_no_swap_evidence_must_be_genuine_and_complete(monkeypatch, problem):
+    original = Path.read_text
+    values = {'/proc/self/mountinfo': '1 0 0:1 / /proc rw - proc proc rw\n',
+              '/proc/meminfo': 'SwapTotal: 0 kB\nSwapFree: 0 kB\n',
+              '/proc/swaps': 'Filename Type Size Used Priority\n',
+              '/proc/vmstat': 'pswpin 11\npswpout 12\n',
+              '/proc/sys/kernel/random/boot_id': '00000000-0000-0000-0000-000000000000\n'}
+    if problem == 'swap_total': values['/proc/meminfo'] = 'SwapTotal: 100 kB\nSwapFree: 0 kB\n'
+    if problem == 'swap_free': values['/proc/meminfo'] = 'SwapTotal: 0 kB\nSwapFree: 100 kB\n'
+    if problem == 'swap_device': values['/proc/swaps'] += '/swap file 100 0 -2\n'
+    if problem == 'empty_swaps': values['/proc/swaps'] = ''
+    if problem == 'bound_proc_file': values['/proc/self/mountinfo'] += '2 1 0:1 /swaps /proc/swaps rw - proc proc rw\n'
+    if problem == 'ambiguous_proc': values['/proc/self/mountinfo'] += '2 1 0:2 / /proc rw - fuse.lxcfs lxcfs rw\n'
+    monkeypatch.setattr(Path, 'read_text', lambda path, *a, **kw: values.get(str(path), '') if str(path) in values else original(path, *a, **kw))
+    if problem:
+        with pytest.raises(caps.CapError): caps._no_host_swap()
+    else:
+        assert caps._no_host_swap()['pswpout'] == 12
+
+
+@pytest.mark.parametrize('problem', [None, 'host_wide_mount', 'foreign_membership', 'missing_membership'])
+def test_v1_controller_mounts_must_be_container_scoped(tmp_path, monkeypatch, problem):
+    root = tmp_path / 'controllers'
+    cpu, mem = root / 'cpu,cpuacct', root / 'memory'
+    cpu.mkdir(parents=True)
+    mem.mkdir()
+    for group in (cpu, mem): (group / 'cgroup.procs').write_text(str(os.getpid())+'\n')
+    if problem == 'missing_membership': (cpu / 'cgroup.procs').write_text('')
+    container = '/' if problem == 'host_wide_mount' else '/docker/owned'
+    member = '/docker/foreign' if problem == 'foreign_membership' else '/docker/owned'
+    mountinfo = (f'1 0 0:1 {container} {cpu} rw - cgroup cgroup rw,cpu,cpuacct\n'
+                 f'2 0 0:2 {container} {mem} rw - cgroup cgroup rw,memory\n')
+    original = Path.read_text
+
+    def read(path, *a, **kw):
+        if str(path) == '/proc/self/mountinfo': return mountinfo
+        if str(path) == '/proc/self/cgroup': return f'3:cpu,cpuacct:{member}\n5:memory:{member}\n'
+        return original(path, *a, **kw)
+
+    monkeypatch.setattr(Path, 'read_text', read)
+    monkeypatch.setattr(caps, '_no_host_swap', lambda: {})
+    if problem:
+        with pytest.raises(caps.CapError): caps._v1_roots(root)
+    else:
+        assert caps._v1_roots(root) == {'cpu': cpu, 'memory': mem}
+
+
+def test_pidfd_uses_runtime_libc_when_conda_omits_python_wrapper():
+    descriptor = caps._pidfd_open(os.getpid())
+    try:
+        signal.pidfd_send_signal(descriptor, 0)
+    finally:
+        os.close(descriptor)
+
+
+def test_v1_swap_accounting_can_be_absent_only_with_explicit_host_no_swap_basis(kernel_v1, monkeypatch):
+    root = kernel_v1[0]
+    create = Path.mkdir
+
+    def no_accounting(path, *args, **kwargs):
+        result = create(path, *args, **kwargs)
+        if path.parent.name == 'memory':
+            (path / 'memory.memsw.limit_in_bytes').unlink()
+            (path / 'memory.stat').write_text('rss 0\n')
+        return result
+
+    monkeypatch.setattr(Path, 'mkdir', no_accounting)
+    evidence = caps.probe(root)
+    assert caps.validate_probe_evidence(evidence) == evidence
+    record = evidence['profiles']['fit']
+    assert record['memsw_accounting_available'] is False
+    assert 'memory.memsw.limit_in_bytes' not in record['limits']['memory']
+    assert record['after']['swap_stat_bytes'] is None
+    assert record['after']['swap_current_source'] == 'host_no_swap_invariant'
+
+
+@pytest.mark.parametrize('foreign', [False, True])
+def test_v1_cleanup_binds_pidfd_and_rechecks_membership_before_signal(kernel_v1, monkeypatch, foreign):
+    root = kernel_v1[0]
+    signaled, descriptors, visits = [], [], []
+    original_read = Path.read_text
+
+    def open_pid(pid):
+        assert pid == 12345
+        descriptor = os.open('/dev/null', os.O_RDONLY)
+        descriptors.append(descriptor)
+        return descriptor
+
+    def read(path, *args, **kwargs):
+        if str(path) == '/proc/12345/cgroup':
+            return '5:memory:/docker/owned/'+('other' if foreign else scope.path.name)+'\n'
+        return original_read(path, *args, **kwargs)
+
+    def members():
+        visits.append(True)
+        return {12345} if len(visits) == 1 else set()
+
+    monkeypatch.setattr(caps, '_pidfd_open', open_pid)
+    monkeypatch.setattr(caps.signal, 'pidfd_send_signal', lambda fd, sig: signaled.append((fd, sig)))
+    monkeypatch.setattr(Path, 'read_text', read)
+    with caps._scope(root, caps.PERIOD_US, caps.GIB) as scope:
+        monkeypatch.setattr(scope, '_members', members)
+        scope.kill()
+    assert len(descriptors) == 1
+    assert signaled == ([] if foreign else [(descriptors[0], signal.SIGKILL)])
+    with pytest.raises(OSError): os.fstat(descriptors[0])
+
+
+def test_v1_swap_counter_change_while_child_runs_forces_termination(kernel_v1, monkeypatch):
+    root, created, _, basis = kernel_v1
+    killed = []
+
+    def running(child, timeout=None):
+        basis['pswpout'] += 1
+        raise subprocess.TimeoutExpired(child.argv, timeout)
+
+    def kill(scope):
+        killed.append(scope.path)
+        for path in scope.paths.values(): (path / 'cgroup.procs').write_text('')
+
+    monkeypatch.setattr(caps.subprocess.Popen, 'communicate', running)
+    monkeypatch.setattr(caps._V1Scope, 'kill', kill)
+    with pytest.raises(caps.CapError, match='swap I/O counters changed'):
+        caps._run(root, caps.PERIOD_US, caps.GIB, [sys.executable, '-c', 'pass'])
+    assert killed and not any(path.exists() for path in created)

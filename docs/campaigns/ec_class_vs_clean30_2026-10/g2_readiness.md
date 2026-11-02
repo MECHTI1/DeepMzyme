@@ -1,8 +1,9 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
-The separately authorized Runpod setup is stopped after verified preservation; execution qualification
-remains pending ([evc-024](log.md#evc-024)). Zero of twelve G2 events completed.
+Status: 2026-11-03; GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
+The initial Runpod setup was stopped after verified preservation ([evc-024](log.md#evc-024)).
+The named replacement passed kernel-cap checks; runtime qualification remains pending
+([evc-026](log.md#evc-026)). Zero of twelve G2 events completed.
 The GCP two-hour request and 117-minute STOP do not establish a Runpod deadline or spending ceiling.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
@@ -54,9 +55,10 @@ evidence before adoption; failed recovery uses the [abandonment gate](../../GCP_
 off-pod preservation and provider-confirmed shutdown. The pod has no persistent volume; recovery uses
 retained local inputs and source records, not an assumption that its container files survive.
 
-The [execution-v3 extension](execution_v3/manifest.json) implements the Runpod qualification route;
-[evc-025](log.md#evc-025) owns its CPU evidence, replacement preparation and limits. The old pod is
-deleted. Actual provider qualification remains pending. Before any Runpod G2 fit:
+The original [execution-v3 extension](execution_v3/manifest.json) remains preserved. The additive
+[compatibility manifest](execution_v3/manifest_cgroup_v1.json) pins delegated cgroup v1/v2 support
+and named-pod adoption; [evc-026](log.md#evc-026) owns its verification and handoff.
+The old pod is deleted. Full runtime qualification remains pending. Before any Runpod G2 fit:
 
 - Preserve a clean, published checkout and authenticate its source/input manifests. The copied tree excluded
   `.git`; code inspection establishes the missing prerequisite, not a measured verifier failure.
@@ -65,9 +67,12 @@ deleted. Actual provider qualification remains pending. Before any Runpod G2 fit
 - Provide a validated equivalent for the GCP-bound transport/session checks and the declared CPU/RAM/no-swap
   caps. Keep the exact queue, admission margin, closeout reserve, input/read guards and HostPull acknowledgments.
 - Enforce the approved $5 gross envelope and 117-minute maximum allocation with the independent workstation
-  stop process armed before creation. Verify its heartbeat and provider STOP; preserve the 900-second reserve.
+  stop process armed before creation or named adoption. Preserve the original allocation clock across
+  container restarts. Verify its heartbeat and provider STOP; preserve the 900-second reserve.
 - Complete extraction/view checks, private-runtime checks and independent output persistence on the qualified
-  runtime. The ten matching staged-file hashes establish input preservation, not execution readiness.
+  runtime. A named zero-volume handoff requires per-unit HostPull to independent Data1 and NVMe
+  devices before advancement; closeout stops the pod without deleting it. The ten matching staged-file
+  hashes establish input preservation, not execution readiness.
 
 The v3 manifest preserves the original source records and scientific guards. The fixed G2 scope below remains
 the reviewed timing recipe. Zero measured G2 results are available;

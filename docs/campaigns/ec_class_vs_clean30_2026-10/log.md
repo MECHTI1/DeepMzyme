@@ -1437,3 +1437,42 @@ The old stopped, zero-volume pod `mbg2lc6vg5oiki` had lost its assigned host GPU
 preservation receipt, it was terminated under the approved cleanup scope; a fresh provider list confirmed
 its absence. Private `phase3/runpod_qualification_20261102/old_pod_deleted.json` records the action.
 Replacement qualification and measured G2 results are pending. No Freeze 1c or numerical G3 result is claimed.
+
+## evc-026
+
+2026-11-03 — **Container compatibility and named-pod handoff.** The qualification package was published
+at `e30cc4f`. A fresh Secure Cloud L4 diagnostic allocation in EU-RO-1 exposed writable cgroup v1,
+which the original v2-only helper correctly refused. No payload or G2 fit ran. Its empty output inventory
+was copied to two local devices before provider-confirmed STOP and deletion. Billing returned no rows;
+the approximately $0.022 elapsed-time estimate is not a provider-confirmed charge.
+
+The additive [compatibility manifest](execution_v3/manifest_cgroup_v1.json) preserves the original v3, v2
+and WP-13 records. Its helper supports both delegated kernel layouts. The v1 route additionally requires
+genuine host-wide zero-swap evidence, unchanged swap counters and verified OOM notifications; missing
+memsw accounting is reported explicitly. Local live cap verification passed 49 tests. This does not
+establish actual Runpod v1 qualification.
+
+An explicitly transferred running RTX 4090 pod, `uahs9wg1dmohv1`, was pinned to the approved image digest
+and a 100-GB temporary disk. Its actual unified v2 namespace had finite outer CPU/RAM limits and zero swap.
+Only verified container processes were moved into a manager child to enable delegated CPU and memory
+controllers. All outer limits stayed unchanged. The actual helper passed throttling, contained OOM, both
+resource profiles, membership, zero-swap and descendant-cleanup checks. Probe SHA-256:
+`a9afa37bda2da1d23bad01c17b3840beb90faa440c09bf4e5c8a99bffcc57cb2`. Fresh SSH and provider telemetry remained healthy.
+
+The pod has no persistent volume. Original inputs remain local, and each completed unit still requires
+Data1 readback plus independent NVMe mirroring before its HostPull acknowledgment. Named adoption
+closeout is STOP-only; no deletion is authorized by the handoff. The locked runtime upload and exact
+input staging retain the original pins. Public weight downloads are accepted only after full checksum
+verification; the ESMC tar was reconstructed byte-for-byte with its existing archive hash.
+
+The independent stop process retains the original absolute ceiling: STOP request at **01:10:02 UTC**,
+hard boundary **01:12:02 UTC on November 3**. Adoption retains the pod's original 23:22 allocation clock;
+its container restart cannot grant another window. The observed compute rate is $0.89/hour. The private
+quote reserves $0.63 for prior use and retains the **$5 gross** ceiling, running storage and margin.
+Transport-enforced TF32 settings apply to every remote command and child.
+
+The [compatibility verification record](execution_v3/verification_cgroup_v1.json) records **390 passed,
+three skipped** with unchanged source. Separate targeted checks cover the real detached ephemeral
+watchdog and dual-device preservation; actual pod probing covers kernel enforcement. Full model/runtime
+qualification and the twelve-event timing queue remain pending. No G2 result, Freeze 1c or numerical G3
+is claimed. Phase 4 and held-out reads remain gated.
