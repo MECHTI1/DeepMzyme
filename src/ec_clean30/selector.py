@@ -4,7 +4,7 @@
 
     select --fold K --step {S1,S2,S3} --plan <campaign root>/plans/fold<K>.json --runs R [--runs R2 ...]
            --components C --freeze1-sha256 F --out STEP_RECORDS [--smoke]
-           [--freeze1c FILE --l3-cost-disposition FILE]
+           [--freeze1c FILE --l3-cost-disposition FILE] [--freeze1-amendment FILE]
 
 - The frozen plan ``--plan`` must hash to its own ``plan_sha256`` (``campaign.plan_units``) and equal the
   live ``campaign.build_fold_plan(K)``; every required fit comes from it.
@@ -22,7 +22,8 @@
   anything under ``<campaign root>/identity`` is refused. The pooled proteins must be exactly the certified
   membership's, each in its own inner fold, and every fit's identity must carry that membership's SHA-256.
 - S1: learning rate per family (``s1_choose_learning_rate``) and the family escalation
-  (``s1_family_escalation``) at ``promotion_config_for(None)``.
+  (``s1_family_escalation``) at ``promotion_config_for(None)`` for historical replay. A verified
+  ``--freeze1-amendment`` selects the fixed-anchor three-comparison Holm screen instead.
 - S2: each lever alone against the S1 winner (re-pooled from its fits and matched to the S1 record's hash).
   L5 counts as tested only through ``certify_l5`` (below) and then ``screen_lever(positive_step_fraction=...)``;
   L7 through ``screen_epoch_lever`` and L9 through ``screen_logit_adjustment``; every promotion uses
@@ -34,7 +35,8 @@
   and S3 record names the selected configuration (its units, recipe, tau and predictions hash), which the gap
   gate reads.
 - Records are appended with ``selection.append_step_record`` anchored on the Freeze-1 SHA-256; one record per
-  fold and step. A chain that does not verify refuses the step. S2 and S3 require the inner tables of
+  fold and step. The authenticated amendment chain and S1 rule bind every fit, step and gap record; mixed
+  policies are refused. A chain that does not verify refuses the step. S2 and S3 require the inner tables of
   ``--components`` to be the ones the earlier records of the fold used (all fields but the folder). ``--out``
   may not lie under ``<campaign root>/identity``, inside the ``--components`` folder or inside a data overlay
   (``simulation.check_out_folder``): step and gate records hold per-fold class numbers.
@@ -90,11 +92,12 @@ from ec_clean30.provenance import (
     provenance_record, real_action_git_state, refuse_test_paths, sha256_file, write_new_json,
 )
 from ec_clean30.selection import (
-    EPOCH_LEVER, EPOCH_LOOKS, FLOAT_TOLERANCE, LEVER_PASSED, LEVERS, LOGIT_ADJUSTMENT_LEVER,
+    AMENDED_S1_RULE, HISTORICAL_S1_RULE, EPOCH_LEVER, EPOCH_LOOKS, FLOAT_TOLERANCE, LEVER_PASSED, LEVERS, LOGIT_ADJUSTMENT_LEVER,
     N_INNER_FOLDS, POINTS, SCREENING_SEEDS, SUPCON_LEVER, SUPCON_MIN_POSITIVE_STEP_FRACTION, InnerFoldPredictions,
     LeverOutcome, LeverScreen, PooledOof, PromotionConfig, apply_tau, append_step_record, learning_rate_label,
     lever_applies, lever_not_applicable, lever_not_tested, pool_inner_oof, predictions_sha256, promotion_config_for,
-    read_step_chain, record_sha256, s1_choose_learning_rate, s1_family_escalation, s2_lever_screen, s3_combination,
+    read_step_chain, record_sha256, s1_choose_learning_rate, s1_family_escalation, s1_family_screen,
+    s2_lever_screen, s3_combination,
     screen_epoch_lever, screen_lever, screen_logit_adjustment, supcon_lever_testable,
     supcon_positive_step_fraction, verify_step_chain,
 )
@@ -173,6 +176,58 @@ def _read_json(path: Path, what: str) -> Any:
 def _check_sha256(value: Any, what: str) -> str:
     _require(isinstance(value, str) and bool(_SHA256_RE.match(value)), f"{what} must be a lower-case SHA-256.")
     return value
+
+
+def _selection_policy(amendment_path: Optional[Path], freeze1_sha256: str, *, smoke: bool) -> dict[str, Any]:
+    """Authenticate the policy before reading fits; historical replay has an empty amendment chain."""
+    if amendment_path is None:
+        return {"freeze1_amendment_chain": [], "s1_rule": HISTORICAL_S1_RULE}
+    from ec_clean30.freeze import Freeze1Error, verify_s1_amendment
+
+    refuse_test_paths([amendment_path], what="--freeze1-amendment")
+    try:
+        verified = verify_s1_amendment(Path(amendment_path), expected_freeze1_sha256=freeze1_sha256,
+                                       require_published=not smoke)
+    except (Freeze1Error, OSError, ValueError) as exc:
+        raise SelectionInputError(f"--freeze1-amendment does not verify ({exc}).") from exc
+    _require(verified.get("s1_rule") == AMENDED_S1_RULE, "The amendment names an unsupported S1 rule.")
+    chain = verified.get("amendment_chain")
+    _require(isinstance(chain, list) and len(chain) == 1
+             and chain == [verified.get("document_sha256")], "The amendment has an invalid authenticated chain.")
+    _check_sha256(chain[0], "amendment chain")
+    _require(smoke or verified.get("published") is True, "A real selection needs a published amendment.")
+    return {"freeze1_amendment_chain": list(chain), "s1_rule": AMENDED_S1_RULE}
+
+
+def _check_policy_record(record: Mapping[str, Any], policy: Mapping[str, Any], what: str, *, fit: bool = False) -> None:
+    """The command identity already carries the chain; new step/gap records also name its rule explicitly."""
+    chain = record.get("freeze1_amendment_chain", [])
+    _require(isinstance(chain, list) and all(isinstance(item, str) and _SHA256_RE.fullmatch(item) for item in chain),
+             f"{what}: malformed Freeze-1 amendment chain.")
+    _require(chain == policy["freeze1_amendment_chain"],
+             f"{what}: missing, foreign or mixed Freeze-1 amendment chain; supply the matching --freeze1-amendment.")
+    # Historical records predate these fields; authenticated fit chains identify the rule without a new trainer flag.
+    rule = record.get("s1_rule", policy["s1_rule"] if fit else HISTORICAL_S1_RULE)
+    _require(rule == policy["s1_rule"], f"{what}: the S1 rule differs from the authenticated selection policy.")
+
+
+def _check_policy_chain(records: Sequence[Mapping[str, Any]], policy: Mapping[str, Any]) -> None:
+    for record in records:
+        payload = record.get("payload") or {}
+        _check_policy_record(payload, policy, f"{record.get('step')} step record")
+        if record.get("step") == STEP_S1 and policy["s1_rule"] == AMENDED_S1_RULE:
+            screen = payload.get("family_screen")
+            _require(isinstance(screen, dict) and screen.get("rule_id") == AMENDED_S1_RULE
+                     and "family_escalation" not in payload,
+                     "The amended S1 record does not contain the authenticated family-screen rule.")
+            _require(screen.get("winner_family") == (payload.get("s1_winner") or {}).get("family")
+                     == ((payload.get("selected") or {}).get("recipe") or {}).get("family"),
+                     "The amended S1 winner differs from its family-screen result.")
+
+
+def _check_fit_policies(records: Mapping[str, FitRecord], policy: Mapping[str, Any]) -> None:
+    for unit_id, record in records.items():
+        _check_policy_record(record.identity, policy, unit_id, fit=True)
 
 
 def _recipe_key(recipe: Mapping[str, Any] | Recipe) -> dict[str, Any]:
@@ -949,7 +1004,8 @@ def _training_counts(pooled: PooledOof) -> np.ndarray:
     return np.bincount(pooled.true_idx, minlength=N_EC_CLASSES)
 
 
-def _s1(plan, records, tables, *, freeze1_sha256, smoke, base_config, verifier) -> dict[str, Any]:
+def _s1(plan, records, tables, *, freeze1_sha256, smoke, base_config, verifier,
+        s1_rule=HISTORICAL_S1_RULE) -> dict[str, Any]:
     s1_units = [unit for unit in plan_units(plan) if unit.step == STEP_S1]
     required = [(unit, Recipe(unit.family, tuple(unit.learning_rate), unit.epochs, tuple(unit.lever_configs)))
                 for unit in s1_units]
@@ -980,15 +1036,16 @@ def _s1(plan, records, tables, *, freeze1_sha256, smoke, base_config, verifier) 
         winners[family] = choices[family].winner
     reference = next(iter(winners.values()))
     try:
-        escalation = s1_family_escalation(winners, component_of=tables.component_of,
-                                          training_class_counts=_training_counts(reference), config=config)
+        choose_family = s1_family_screen if s1_rule == AMENDED_S1_RULE else s1_family_escalation
+        escalation = choose_family(winners, component_of=tables.component_of,
+                                   training_class_counts=_training_counts(reference), config=config)
     except ValueError as exc:
         raise SelectionInputError(f"S1 family escalation: {exc}") from exc
     winner_family = escalation.winner_family
     name, recipe, unit_ids = recipes[(winner_family, choices[winner_family].chosen)]
     return {
         "learning_rate_choices": {family: choice.to_record() for family, choice in choices.items()},
-        "family_escalation": escalation.to_record(),
+        ("family_screen" if s1_rule == AMENDED_S1_RULE else "family_escalation"): escalation.to_record(),
         "promotion_config": config.to_record(),
         "configurations": {key: value.record() for key, value in configurations.items()},
         "s1_winner": recipe.to_dict(),
@@ -1346,6 +1403,7 @@ def run_select(
     base_config: Optional[PromotionConfig] = None,
     freeze1c_path: Optional[Path] = None,
     l3_cost_disposition_path: Optional[Path] = None,
+    freeze1_amendment_path: Optional[Path] = None,
 ) -> dict[str, Any]:
     """One selection step of one outer fold; appends its record to ``out`` and returns it.
 
@@ -1354,6 +1412,7 @@ def run_select(
     """
     _require(step in SELECT_STEPS, f"--step must be one of {SELECT_STEPS}, got {step!r}.")
     freeze1_sha256 = _check_sha256(freeze1_sha256, "--freeze1-sha256")
+    policy = _selection_policy(freeze1_amendment_path, freeze1_sha256, smoke=smoke)
     _require((freeze1c_path is None) == (l3_cost_disposition_path is None),
              "--freeze1c and --l3-cost-disposition must be supplied together.")
     _require(freeze1c_path is None or step == STEP_S2, "L3 cost inputs are accepted only for S2.")
@@ -1362,6 +1421,7 @@ def run_select(
     _refuse_record_output(out, {fold: Path(folder)} if folder else {})
     plan = load_frozen_plan(plan_path, fold)
     chain_records = _read_chain(out, freeze1_sha256, "--out") if out.exists() else []
+    _check_policy_chain(chain_records, policy)
     chain = _fold_records(chain_records, fold)
     _require(step not in chain, f"The step chain already holds the {step} record of fold {fold}.")
     previous = {STEP_S1: None, STEP_S2: STEP_S1, STEP_S3: STEP_S2}[step]
@@ -1373,11 +1433,12 @@ def run_select(
                  f"--components differs from the inner tables the {earlier} record of fold {fold} used "
                  "(component, membership or certificate SHA-256, or their counts).")
     records = read_runner_records(runs_dirs, fold=fold)
+    _check_fit_policies(records, policy)
     verifier = FitVerifier()
     options = {"freeze1_sha256": None if smoke else freeze1_sha256, "smoke": smoke, "base_config": base_config,
                "verifier": verifier}
     if step == STEP_S1:
-        result = _s1(plan, records, tables, **options)
+        result = _s1(plan, records, tables, s1_rule=policy["s1_rule"], **options)
     elif step == STEP_S2:
         cost = None if freeze1c_path is None else verify_l3_cost_disposition(
             plan, records, recipe_from_record(chain[STEP_S1][0]["s1_winner"]),
@@ -1394,6 +1455,7 @@ def run_select(
         "step": step,
         "plan_sha256": plan["plan_sha256"],
         "freeze1_sha256": freeze1_sha256,
+        **policy,
         "smoke": bool(smoke),
         "components": dict(tables.record),
         "n_runner_records": len(records),
@@ -1577,17 +1639,20 @@ def run_gap_gate(
     out: Path,
     smoke: bool = False,
     provenance: Optional[Mapping[str, Any]] = None,
+    freeze1_amendment_path: Optional[Path] = None,
 ) -> dict[str, Any]:
     """The fold-0 gap gate after S1 or S3; writes the gate record ``out`` once and returns it."""
     _require(fold == GAP_GATE_FOLD, f"The gap gate runs on fold {GAP_GATE_FOLD} only, not fold {fold}.")
     _require(after in GAP_GATE_AFTER, f"--after must be one of {GAP_GATE_AFTER}, got {after!r}.")
     freeze1_sha256 = _check_sha256(freeze1_sha256, "--freeze1-sha256")
+    policy = _selection_policy(freeze1_amendment_path, freeze1_sha256, smoke=smoke)
     out = Path(out)
     folder = tables.record.get("folder")
     _refuse_record_output(out, {fold: Path(folder)} if folder else {})
     _require(not out.exists(), f"--out {out.name} already exists (written once).")
     plan = load_frozen_plan(plan_path, fold)
     records_chain = _read_chain(Path(step_chain), freeze1_sha256, "--step-chain")
+    _check_policy_chain(records_chain, policy)
     chain = _fold_records(records_chain, fold)
     _require(after in chain, f"The step chain holds no {after} record of fold {fold}.")
     payload, record_hash = chain[after]
@@ -1595,6 +1660,7 @@ def run_gap_gate(
     _require(_components_binding(payload.get("components")) == _components_binding(tables.record),
              "--components differs from the inner tables of the selected step record.")
     records = read_runner_records(runs_dirs, fold=fold)
+    _check_fit_policies(records, policy)
     configuration = pool_selected(payload["selected"], plan, records, tables=tables,
                                   freeze1_sha256=None if smoke else freeze1_sha256,
                                   smoke=smoke)
@@ -1609,6 +1675,7 @@ def run_gap_gate(
         "fold": fold,
         "after": after,
         "freeze1_sha256": freeze1_sha256,
+        **policy,
         "plan_sha256": plan["plan_sha256"],
         "components": dict(tables.record),
         "step_record_sha256": record_hash,
@@ -1644,6 +1711,7 @@ def add_select_arguments(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
                         help="The data overlay's identity copy <overlay>/identity/fold<K> "
                              "(or its components_inner.tsv).")
     parser.add_argument("--freeze1-sha256", required=True, help="Freeze-1 SHA-256, the step chain's anchor.")
+    parser.add_argument("--freeze1-amendment", help="Authenticated S1 amendment; required for amended fits and records.")
     parser.add_argument("--freeze1c", help="Freeze-1c JSON with the approved L3 ceiling (S2 cost skip only).")
     parser.add_argument("--l3-cost-disposition", help="Hash-bound L3 accounting and close-out decision (S2 only).")
     parser.add_argument("--out", required=True, help="Step-record chain (JSON lines; appended).")
@@ -1658,6 +1726,7 @@ def add_gap_gate_arguments(parser: argparse.ArgumentParser) -> argparse.Argument
     parser.add_argument("--step-chain", required=True, help="The fold's step-record chain.")
     parser.add_argument("--components", required=True, help="The data overlay's certified inner identity copy.")
     parser.add_argument("--freeze1-sha256", required=True, help="Freeze-1 SHA-256, the step chain's anchor.")
+    parser.add_argument("--freeze1-amendment", help="The same authenticated amendment used by selection and its fits.")
     parser.add_argument("--plan", required=True, help="The frozen plan <campaign root>/plans/fold0.json.")
     parser.add_argument("--runs", action="append", required=True, help="Runs folder of the fold's fits (repeatable).")
     parser.add_argument("--clean-r1-inner", action="append", required=True,
@@ -1679,7 +1748,7 @@ def action_select(args: argparse.Namespace) -> int:
     Returns 0 after appending a record and 2 when the inputs are refused (``SelectionInputError``, printed as
     ``error: ...``); ``HeldOutInputError`` and ``DirtyTreeError`` propagate to the runner.
     """
-    for name in ("plan", "components", "out", "freeze1c", "l3_cost_disposition"):
+    for name in ("plan", "components", "out", "freeze1c", "l3_cost_disposition", "freeze1_amendment"):
         if getattr(args, name, None) is not None:
             refuse_test_paths([getattr(args, name)], what=f"--{name.replace('_', '-')}")
     refuse_test_paths(args.runs, what="--runs")
@@ -1691,7 +1760,8 @@ def action_select(args: argparse.Namespace) -> int:
                             freeze1_sha256=args.freeze1_sha256, out=Path(args.out), smoke=args.smoke,
                             provenance=provenance_record(smoke=args.smoke, git=git),
                             freeze1c_path=Path(args.freeze1c) if args.freeze1c else None,
-                            l3_cost_disposition_path=Path(args.l3_cost_disposition) if args.l3_cost_disposition else None)
+                            l3_cost_disposition_path=Path(args.l3_cost_disposition) if args.l3_cost_disposition else None,
+                            freeze1_amendment_path=Path(args.freeze1_amendment) if args.freeze1_amendment else None)
     except SelectionInputError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -1711,6 +1781,8 @@ def action_gap_gate(args: argparse.Namespace) -> int:
     (``GAP_GATE_PRINTED_TOTALS``, the decision and the gap; no per-class counts)."""
     for name in ("step_chain", "plan", "out", "components"):
         refuse_test_paths([getattr(args, name)], what=f"--{name.replace('_', '-')}")
+    if args.freeze1_amendment:
+        refuse_test_paths([args.freeze1_amendment], what="--freeze1-amendment")
     refuse_test_paths(args.runs, what="--runs")
     try:
         git = real_action_git_state(smoke=args.smoke)
@@ -1720,7 +1792,8 @@ def action_gap_gate(args: argparse.Namespace) -> int:
                               runs_dirs=[Path(path) for path in args.runs],
                               clean_r1_inner=[Path(path) for path in args.clean_r1_inner],
                               clean_r2_inner=[Path(path) for path in args.clean_r2_inner], tables=tables, out=Path(args.out),
-                              smoke=args.smoke, provenance=provenance_record(smoke=args.smoke, git=git))
+                              smoke=args.smoke, provenance=provenance_record(smoke=args.smoke, git=git),
+                              freeze1_amendment_path=Path(args.freeze1_amendment) if args.freeze1_amendment else None)
     except SelectionInputError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

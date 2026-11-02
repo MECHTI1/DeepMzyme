@@ -31,6 +31,8 @@ Actions
   simulate      Null-adoption sweep of the promotion rule (P2-9) on fold populations calibrated from the
                 data overlay's identity copies (--calibrate-from K=PATH, one per fold the sweep uses);
                 write-once records; exit 4 when the CPU-hour forecast stops it.
+  simulate-s1   Source-sealed characterization of the fixed amended S1 rule; historical noise inputs,
+                no model training; --first-only times the first scenario before continuing.
   run-unit      One capped engineering smoke fit (--smoke only; real fits come with GPU execution) on a
                 view that verifies again and holds a passed dry-run receipt.
   verify-unit   Check the receipts of finished units (terminal checkpoint, steps, no generation, ...);
@@ -43,6 +45,9 @@ Actions
   verify-freeze1
                 Check that the Freeze-1 document hashes to F, that F is in log.md at HEAD and that the
                 commit introducing it is an ancestor of HEAD (--require-pushed: also on origin/main).
+  amend-s1      Build an immutable, source-pinned draft S1 amendment from completed verification evidence.
+  verify-s1-amendment
+                Authenticate the amendment; --draft permits review before publication, never real execution.
   select        Inner-fold selection step S1, S2 or S3 of one outer fold from verified fits (L5 certified
                 on the plan's eight inner fits), appended to the hash-chained step records.
   gap-gate      Fold-0 development gap gate after S1 or S3 against the CLEAN inner arms.
@@ -50,7 +55,8 @@ Actions
                 Not implemented yet (Phase 3 and 4 execution code); each prints its planned interface and
                 exits 3.
 
-Real (non-smoke) actions refuse a tree with uncommitted or untracked changes, every action refuses
+Real (non-smoke) campaign actions refuse a tree with uncommitted or untracked changes. simulate-s1
+is a source-sealed development characterization and does not confer training authority. Every action refuses
 test flags and test-named paths, and every receipt records git HEAD, tree status, code hashes and
 the environment. Fits and probes run under the workstation cap (2 cores, 3 GB, no swap). The input
 actions (cohort-audit, r2-lists, overlay, simulate) print no accession; counts that are per-fold
@@ -395,6 +401,36 @@ def _not_implemented(name: str):
     return action
 
 
+def action_amend_s1(args: argparse.Namespace) -> int:
+    from ec_clean30.freeze import build_s1_amendment
+    from ec_clean30.provenance import sha256_file
+
+    document = build_s1_amendment(
+        freeze1_path=args.freeze1,
+        evidence={"simulation_spec": Path(args.simulation_spec),
+                  "simulation_summary": Path(args.simulation_summary), "verification": Path(args.verification)},
+        out=args.out,
+    )
+    _print({"status": "draft", "amendment_sha256": sha256_file(args.out),
+            "s1_rule": document["s1_rule"], "publication_required_before_execution": True})
+    return 0
+
+
+def action_simulate_s1(args: argparse.Namespace) -> int:
+    from ec_clean30.s1_simulation import action
+
+    return action(args)
+
+
+def action_verify_s1_amendment(args: argparse.Namespace) -> int:
+    from ec_clean30.freeze import verify_s1_amendment
+
+    record = verify_s1_amendment(args.amendment, expected_freeze1_sha256=args.freeze1_sha256,
+                                 require_published=not args.draft)
+    _print({key: record[key] for key in ("document_sha256", "amendment_chain", "s1_rule", "published")})
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     # Torch-free at import; each module defines its own action's arguments and handler.
     from ec_clean30 import cohort, freeze, overlay, r2_lists, selector, transfers
@@ -531,10 +567,26 @@ def build_parser() -> argparse.ArgumentParser:
     freeze.add_verify_freeze1_arguments(sub.add_parser("verify-freeze1", help=freeze.VERIFY_FREEZE1_HELP)) \
         .set_defaults(handler=freeze.action_verify_freeze1)
 
+    amendment = sub.add_parser("amend-s1", help="Build the immutable draft S1 amendment.")
+    for flag in ("freeze1", "simulation-spec", "simulation-summary", "verification", "out"):
+        amendment.add_argument("--" + flag, required=True)
+    amendment.set_defaults(handler=action_amend_s1)
+    amendment_check = sub.add_parser("verify-s1-amendment", help="Authenticate the amended S1 source and evidence.")
+    amendment_check.add_argument("--amendment", required=True)
+    amendment_check.add_argument("--freeze1-sha256", required=True)
+    amendment_check.add_argument("--draft", action="store_true", help="Review only; do not require publication.")
+    amendment_check.set_defaults(handler=action_verify_s1_amendment)
+
     selector.add_select_arguments(sub.add_parser("select", help=selector.SELECT_HELP)) \
         .set_defaults(handler=selector.action_select)
     selector.add_gap_gate_arguments(sub.add_parser("gap-gate", help=selector.GAP_GATE_HELP)) \
         .set_defaults(handler=selector.action_gap_gate)
+
+    s1_simulation = sub.add_parser("simulate-s1", help="Bounded fixed-rule S1 characterization.")
+    for flag in ("spec", "freeze1", "campaign-root", "out"):
+        s1_simulation.add_argument("--" + flag, required=True)
+    s1_simulation.add_argument("--first-only", action="store_true", help="Time and retain the first scenario.")
+    s1_simulation.set_defaults(handler=action_simulate_s1)
 
     for name in ("refit", "execute"):
         first_line = PLANNED_INTERFACES[name].splitlines()[0]

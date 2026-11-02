@@ -38,6 +38,182 @@ LOG = freeze.LOG_PATH
 DOCUMENT = f"{freeze.CAMPAIGN_DOCS_DIR}/freeze1.json"
 
 
+def _s1_amendment_world(tmp_path):
+    """Small published base plus unpublished changed code; no scientific data fixtures."""
+    from ec_clean30.selection import s1_policy_record
+
+    repo = tmp_path / "s1repo"
+    initial = {name: "OLD = 1\n" for name in freeze.S1_AMENDMENT_SOURCE_FILES
+               if name != "src/ec_clean30/s1_simulation.py"}
+    initial.update({"src/train.py": "TRAINER = 1\n", LOG: "# Campaign log\n"})
+    _init(repo, initial)
+    base = {"format": freeze.FREEZE1_DOCUMENT_FORMAT, "campaign_id": CAMPAIGN_ID, "amendments": [],
+            "code": {"tracked_file_sha256": freeze.tracked_code_sha256(repo)}}
+    raw = freeze.canonical_bytes(base)
+    digest = provenance.sha256_bytes(raw)
+    _commit(repo, {DOCUMENT: raw, LOG: f"# Campaign log\n\nFreeze 1: {digest}\n"}, "publish base")
+    _git(repo, "update-ref", freeze.ORIGIN_MAIN_REF, "HEAD")
+    _write(repo, {name: "CURRENT = 2\n" for name in freeze.S1_AMENDMENT_SOURCE_FILES})
+    sources = {name: sha256_file(repo / name) for name in freeze.S1_AMENDMENT_SOURCE_FILES}
+    folder = repo / freeze.CAMPAIGN_DOCS_DIR / "s1_amendment"
+    folder.mkdir()
+    spec = folder / "simulation_spec.json"
+    spec_hash = provenance.write_new_json(spec, {"policy": s1_policy_record(), "scenarios": [{"id": "null"}],
+                                                "base_freeze1_sha256": digest, "n_replicates": 200})
+    summary = folder / "simulation_summary.json"
+    provenance.write_new_json(summary, {
+        "format": "deepmzyme_s1_characterization_summary_v1", "status": "complete", "policy": s1_policy_record(),
+        "source_sha256": sources, "spec_sha256": spec_hash, "base_freeze1_sha256": digest,
+        "n_scenarios": 1, "n_replicates": 200,
+        "results": [{"id": "null", "n_replicates": 200, "record_sha256": "a" * 64,
+                     "winner_counts": {"F2": 200, "F3": 0, "F5": 0, "F4": 0}}],
+    })
+    verification = folder / "verification.json"
+    provenance.write_new_json(verification, {"status": "passed", "source_sha256": sources,
+                                            "checks": {name: {"status": "passed"}
+                                                       for name in freeze.S1_AMENDMENT_CHECKS}})
+    evidence = dict(zip(freeze.S1_AMENDMENT_EVIDENCE, (spec, summary, verification)))
+    return repo, digest, evidence, folder / "amendment.json"
+
+
+def _build_s1_amendment_world(tmp_path):
+    repo, digest, evidence, out = _s1_amendment_world(tmp_path)
+    document = freeze.build_s1_amendment(freeze1_path=repo / DOCUMENT, evidence=evidence, out=out, repo=repo)
+    return repo, digest, evidence, out, document
+
+
+def test_s1_amendment_draft_is_canonical_source_bound_and_immutable(tmp_path):
+    repo, digest, evidence, out, document = _build_s1_amendment_world(tmp_path)
+    result = freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+    assert result["amendment_chain"] == [sha256_file(out)]
+    assert result["s1_rule"] == "fixed_anchor_holm_v1" and result["published"] is False
+    assert result["document"] == document
+    assert out.read_bytes() == freeze.canonical_bytes(document)
+    assert out.with_suffix(".md").read_text() == freeze.render_s1_amendment_markdown(document)
+    assert freeze.absolute_path_problems(document, "amendment") == []
+    assert document["source_changes"]["src/ec_clean30/s1_simulation.py"]["before"] is None
+    assert sha256_file(repo / DOCUMENT) == digest
+    with pytest.raises(Freeze1Error, match="written once"):
+        freeze.build_s1_amendment(freeze1_path=repo / DOCUMENT, evidence=evidence, out=out, repo=repo)
+
+
+def test_s1_amendment_execution_requires_clean_committed_published_document(tmp_path):
+    repo, digest, _, out, _ = _build_s1_amendment_world(tmp_path)
+    with pytest.raises(provenance.DirtyTreeError):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo)
+    amendment_hash = sha256_file(out)
+    _commit(repo, {LOG: (repo / LOG).read_text() + f"\nS1 amendment: {amendment_hash}\n"}, "amend S1")
+    with pytest.raises(Freeze1Error, match="not published"):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo)
+    _git(repo, "update-ref", freeze.ORIGIN_MAIN_REF, "HEAD")
+    verified = freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo,
+                                         expected_chain=[amendment_hash])
+    assert verified["published"] is True
+
+
+def test_s1_amendment_published_log_alone_does_not_publish_local_source(tmp_path):
+    repo, digest, _, out, _ = _build_s1_amendment_world(tmp_path)
+    amendment_hash = sha256_file(out)
+    _write(repo, {LOG: (repo / LOG).read_text() + f"\nS1 amendment: {amendment_hash}\n"})
+    _git(repo, "add", "--", LOG)
+    _git(repo, "commit", "-q", "-m", "publish hash ahead of source")
+    _git(repo, "update-ref", freeze.ORIGIN_MAIN_REF, "HEAD")
+    _commit(repo, {}, "local amendment and source")
+    assert freeze.verify_freeze1(sha256=amendment_hash, document=out, require_pushed=True,
+                                 repo=repo)["status"] == "passed"
+    draft = freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+    assert draft["published"] is False
+    with pytest.raises(Freeze1Error, match="current source HEAD is not published"):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo)
+    _git(repo, "update-ref", freeze.ORIGIN_MAIN_REF, "HEAD")
+    assert freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo)["published"] is True
+
+
+@pytest.mark.parametrize("change, message", [
+    (lambda d: d.update(previous_sha256="b" * 64), "wrong base or predecessor"),
+    (lambda d: d.update(sequence=2), "wrong base or predecessor"),
+    (lambda d: d.update(s1_rule="unapproved_rule"), "policy differs"),
+    (lambda d: d["policy"].update(family_alpha=0.05), "policy differs"),
+    (lambda d: d.update(source_parent_commit="0" * 40), "source parent"),
+    (lambda d: d["source_changes"]["src/ec_clean30/selection.py"].update(before="c" * 64), "original source pin"),
+    (lambda d: d["source_changes"].update({"src/train.py": {"before": "a" * 64, "after": "b" * 64}}),
+     "source scope"),
+    (lambda d: d["evidence"]["simulation_summary"].update(sha256="b" * 64), "evidence hash differs"),
+])
+def test_s1_amendment_refuses_tampering_even_in_draft_review(tmp_path, change, message):
+    repo, digest, _, out, document = _build_s1_amendment_world(tmp_path)
+    change(document)
+    out.write_bytes(freeze.canonical_bytes(document))
+    with pytest.raises(Freeze1Error, match=message):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+
+
+@pytest.mark.parametrize("extra_path", ["src/train.py", "src/unapproved.py", "src/ec_clean30/selection.py"])
+def test_s1_amendment_refuses_changed_or_extra_live_source(tmp_path, extra_path):
+    repo, digest, _, out, _ = _build_s1_amendment_world(tmp_path)
+    _write(repo, {extra_path: "UNAPPROVED = True\n"})
+    with pytest.raises(Freeze1Error, match="Live source differs"):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+
+
+def test_s1_amendment_refuses_changed_chain_and_restricted_paths_before_read(tmp_path, monkeypatch):
+    repo, digest, _, out, _ = _build_s1_amendment_world(tmp_path)
+    with pytest.raises(Freeze1Error, match="chain differs"):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False,
+                                  expected_chain=[digest, sha256_file(out)])
+    forbidden = repo / "DeepMzyme_Data" / "campaigns" / CAMPAIGN_ID / "identity" / "amendment.json"
+    monkeypatch.setattr(freeze, "_read_json", lambda *a: pytest.fail("restricted file was opened"))
+    with pytest.raises(Freeze1Error, match="must be a JSON file under"):
+        freeze.verify_s1_amendment(forbidden, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+
+
+def test_s1_amendment_refuses_symlink_evidence_and_unsupported_source_at_build(tmp_path):
+    repo, _, evidence, out = _s1_amendment_world(tmp_path)
+    evidence["simulation_summary"].rename(evidence["simulation_summary"].with_suffix(".old"))
+    evidence["simulation_summary"].symlink_to(evidence["simulation_summary"].with_suffix(".old"))
+    with pytest.raises(Freeze1Error, match="symlink"):
+        freeze.build_s1_amendment(freeze1_path=repo / DOCUMENT, evidence=evidence, out=out, repo=repo)
+    _write(repo, {"src/train.py": "CHANGED = 1\n"})
+    with pytest.raises(Freeze1Error, match="outside the S1 scope"):
+        freeze.build_s1_amendment(freeze1_path=repo / DOCUMENT, evidence=evidence, out=out, repo=repo)
+
+
+@pytest.mark.parametrize("role, change, message", [
+    ("simulation_spec", lambda d: d.update(scenarios=[]), "specification does not declare"),
+    ("simulation_summary", lambda d: d.update(status="partial"), "completely characterize"),
+    ("simulation_summary", lambda d: d.pop("results"), "specified scenario results"),
+    ("simulation_summary", lambda d: d.update(format="different"), "completely characterize"),
+    ("simulation_summary", lambda d: d.update(base_freeze1_sha256="b" * 64), "another base Freeze 1"),
+    ("simulation_summary", lambda d: d.update(n_scenarios=2), "scenario or replicate totals"),
+    ("simulation_summary", lambda d: d.update(n_replicates=201), "replicate total differs"),
+    ("simulation_summary", lambda d: d["results"].append(dict(d["results"][0])), "missing, duplicate, or extra"),
+    ("simulation_summary", lambda d: d["results"][0].update(id="extra"), "missing, duplicate, or extra"),
+    ("simulation_summary", lambda d: d["results"][0].update(record_sha256="invalid"), "result record hash"),
+    ("simulation_summary", lambda d: d["results"][0]["winner_counts"].update(F2=199), "result counts"),
+    ("simulation_summary", lambda d: d["results"][0]["winner_counts"].update(F3=True), "result counts"),
+    ("simulation_summary", lambda d: d.update(spec_sha256="b" * 64), "another specification"),
+    ("simulation_summary", lambda d: d["source_sha256"].update({"src/ec_clean30/selection.py": "b" * 64}),
+     "current selection and simulation source"),
+    ("verification", lambda d: d["checks"].pop("dry_run_reuse"), "Verification evidence must pass"),
+    ("verification", lambda d: d["checks"]["regression"].update(status="failed"), "Verification evidence must pass"),
+    ("verification", lambda d: d["source_sha256"].pop("src/ec_clean30/freeze.py"), "Verification evidence must pass"),
+])
+def test_s1_amendment_refuses_incomplete_or_inapplicable_evidence(tmp_path, role, change, message):
+    repo, _, evidence, out = _s1_amendment_world(tmp_path)
+    payload = json.loads(evidence[role].read_text())
+    change(payload)
+    evidence[role].write_bytes(freeze.canonical_bytes(payload))
+    with pytest.raises(Freeze1Error, match=message):
+        freeze.build_s1_amendment(freeze1_path=repo / DOCUMENT, evidence=evidence, out=out, repo=repo)
+
+
+def test_s1_amendment_refuses_mismatched_rendering(tmp_path):
+    repo, digest, _, out, _ = _build_s1_amendment_world(tmp_path)
+    out.with_suffix(".md").write_text("Different policy.\n")
+    with pytest.raises(Freeze1Error, match="rendering differs"):
+        freeze.verify_s1_amendment(out, expected_freeze1_sha256=digest, repo=repo, require_published=False)
+
+
 # ---------------------------------------------------------------------------
 # Git helpers
 

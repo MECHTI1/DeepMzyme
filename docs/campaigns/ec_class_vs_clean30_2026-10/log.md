@@ -813,3 +813,69 @@ source changed afterward: full suite 3,155 passed, 18 skipped, 15 subtests passe
 1 skipped; smoke 44 passed, 1 skipped. Documentation checks have no strict failure and the same 11 baseline
 warnings. The final simulation limitations in evc-010 remain explicit. No GPU, Phase 4 fit or Phase 7 scoring ran.
 WP-13 and G2 remain later work outside this continuation. Root STATUS retains the disclosed stale state of evc-009.
+
+## evc-012
+
+2026-11-02 — **approved S1 fixed-anchor amendment, implementation and bounded characterization.** Before any
+campaign model comparison, the maintainer approved the rule in [the design](design.md): three direct comparisons
+against F2, fixed Holm family alpha 0.04, existing gain/recall guards, and the 0.5-point F5/F3/F4 tie preference.
+Historical escalation, S2/S3, R2 scoring and its seven-hypothesis secondary family remain unchanged.
+
+The characterization specification was fixed before results: five existing fold populations, the recorded
+`fnL-rcL-csL-psH` and `fnH-rcH-csH-psH` noise settings, and five effect patterns (null, F4-only +2/+3 BA points,
+mixed F3 benefit and mixed F5/F4 benefit). Both LRs and both screening seeds for all six families are simulated;
+the actual LR chooser and amended selector run in every replicate. Fifty scenarios, 200 replicates each, 10,000
+bootstrap draws, seed 20261102; no alpha search or outcome-driven scenario expansion. The existing noise records
+are authenticated against the original Freeze-1 simulation receipt. No new identity or test read is needed.
+
+The first scenario used 77.94 CPU seconds; its 25%-margin forecast was 1.35 CPU hours. The existing eight-CPU-hour
+ceiling and two-core/3 GB/zero-swap scope remain enforced. The first scenario is reused. Source snapshots and
+per-scenario hashes make the development characterization reproducible before the amendment is committed;
+this does not grant training authority.
+
+All 50 scenarios completed (10,000 selections) in 1.115 CPU hours, 33.59 minutes of summed scenario wall time,
+with peak RSS 478.19 MiB. The [fixed specification](s1_amendment/simulation_spec.json) and
+[complete summary](s1_amendment/simulation_summary.json) retain every outcome. Summary SHA-256:
+`d765f615d61d7d51b2c2b27855a3fba52c710e640c49b6c195be58695cee6624`.
+
+| Scenario pattern | Selection rate across the ten fold/noise settings |
+|---|---|
+| All challengers null | Any challenger: 3.0–7.0% |
+| Only F4 benefits by +2 BA points | F4: 3.0–9.5% |
+| Only F4 benefits by +3 BA points | F4: 7.5–16.5% |
+| Mixed F3 benefit | Non-beneficial challenger: 1.0–3.5%; harmful: 0–0.5% |
+| Mixed F5/F4 benefit | Non-beneficial challenger: 0–2.5%; harmful: 0–0.5% |
+
+The worst observed null setting selected a challenger in 14/200 replicates (7.0%; individual Wilson 95% interval
+4.22–11.41%). These are final-selection rates, not the probability that any false hypothesis passes. They do not
+establish uniform family-wise error control. The two noise corners and 200 replicates per setting provide bounded
+characterization; correlated scenarios must not be pooled for a confidence interval. No alpha or scenario was
+changed after results. F4 is reachable under this rule, but the measured selection power remains low.
+
+There were 825 bootstrap aborts among the 10,000 selections (8.25%; 3–38 of 200 per scenario). The same population
+draws repeat across the five effect patterns. These arise when too many resamples lack a supported EC class.
+The simulation counts them separately and includes them in the F2 count as no challenger selected; production
+selection raises an error instead of treating an abort as a successful F2 selection. No guard was relaxed.
+
+All 50 scenario record hashes and 13 simulation source pins verified. The 67 output/snapshot files were mirrored
+to the existing NVMe backup and verified byte for byte.
+
+Implementation verification passed: 443 focused tests; CPU smoke 44 passed and 1 skipped. The full suite reported
+3,227 passed, 18 skipped and 15 subtests passed, plus one source-tree hash failure because the new simulation
+module was not yet indexed. Staging that file resolved the mismatch; the exact failing test then passed.
+Source bytes were unchanged throughout these checks, so the remaining full-suite results were reused.
+The existing fixture, closed-campaign and opt-in skips remain explicit in the preserved test logs.
+
+The amendment authenticates the exact five changed/new source files, the fixed policy, completed characterization
+and verification record. Real selection and gap records reject missing or mixed amendment chains and unpublished
+source. Historical selection remains available for replay. The original 217 unamended source pins, twelve
+preparation command functions and all five plan/dry-run bindings verified; Freeze 1 and Freeze 1b retain their
+evc-011 hashes. No view, overlay, embedding or historical simulation was regenerated. R2 scoring is unchanged.
+
+The [canonical amendment](s1_amendment/amendment.json), [rendering](s1_amendment/amendment.md) and
+[verification record](s1_amendment/verification.json) are complete. Amendment SHA-256:
+`d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea`.
+The documentation contract passes with zero strict failures and the same eleven baseline warnings.
+This reviewed package still requires commit/publication before real execution. The next deliverable is the
+CPU-tested WP-13 package in [the continuation](continuation.md), followed by the separately approved G2 smoke.
+No GPU work, campaign model training or test scoring occurred in this amendment.

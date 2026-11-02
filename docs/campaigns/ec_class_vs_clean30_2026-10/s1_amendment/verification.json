@@ -1,0 +1,163 @@
+{
+  "checks": {
+    "cpu_smoke": {
+      "evidence": {
+        "path": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/s1_amendment_verification/deepmzyme_s1_smoke_pytest.log",
+        "sha256": "d80a71530817ec5d8e06e5f58dfd5e63c1366df0a9dc6f8757aca0fc79f7200e"
+      },
+      "passed": 44,
+      "seconds": 21.08,
+      "skipped": 1,
+      "status": "passed"
+    },
+    "docs_contract": {
+      "baseline_warnings": 11,
+      "evidence": {
+        "path": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/s1_amendment_verification/deepmzyme_s1_docs_contract.log",
+        "sha256": "a93fe0453919837be2386d90cbfc0a75bd6069e05ab7b91c053278c284908da2"
+      },
+      "phase": "before amendment rendering; rendering and final links also checked at close-out",
+      "status": "passed",
+      "strict_failures": 0
+    },
+    "dry_run_reuse": {
+      "dry_run_heads": {
+        "0": "451c190c4049f721b21e433c82679617174165aa",
+        "1": "451c190c4049f721b21e433c82679617174165aa",
+        "2": "451c190c4049f721b21e433c82679617174165aa",
+        "3": "451c190c4049f721b21e433c82679617174165aa",
+        "4": "451c190c4049f721b21e433c82679617174165aa"
+      },
+      "environment": {
+        "numpy": "2.4.4",
+        "python": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:20:58) [GCC 14.3.0]",
+        "scikit-learn": "1.8.0",
+        "torch": "2.11.0",
+        "torch-geometric": "2.7.0"
+      },
+      "freeze1_sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c",
+      "freeze1b_sha256": "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb",
+      "mode": "working-tree source compatibility, no preparation reruns",
+      "pinned_runner_function_sha256": {
+        "_build": "9b6afcb2b3ba5df066ff18aaa0cf171e6a2ba6d1e58d67c393c6033ed8449ae2",
+        "_csv": "78a0b14c05b18f8c2fe2b52e381448c7b0c3eaf262f350f97a77dcd9ca8272dc",
+        "_git_for": "fd9a370a61fbc06aa27d50aeab10c43c825b58c13b71ea8e4c55e154dd4e4069",
+        "_layout": "efdf48812e1101d21efd6bb3e416e48d77f65fa468ea5da55f3882278fde2a4a",
+        "_load_view": "ee93dff1f34e996eaadd97ec13256c165c0a8c7fbe1f4bd52b90784fb56f4231",
+        "_refuse_paths": "87c54faabf463158da1aff9a69e1cfa3c5c71a2b3409dd6fa21cb4d39dda76dc",
+        "action_apply_view_modes": "1f62603edebe7f8a32f050322cc3796985bd6a4566eb43e4b9a6b05a503b1372",
+        "action_build_view": "02419d5cb836b3ca7295895c08c71c2478ddf1867b59b6eae28e336afebfbb79",
+        "action_dry_run": "c7c88eac42987c35d769d817bfa110d6adb934c54bbb9d2244480b2cb42db0e5",
+        "action_plan": "e1f64bbcfa9f59b37955ed56c438de41857a02aebc1bd89a45c38b8af5b41557",
+        "action_smoke_view": "c7d6283345bd42706ebe0e2839a1b2352ee2ca7e98a08b9f11432f841f1c29de",
+        "action_verify_view": "85489e2906e0e31c7b82e3abc0107b098e96fff535e01063190504c23d6d0aa8"
+      },
+      "plans": {
+        "0": {
+          "plan": "fold0.json",
+          "plan_file_sha256": "a604acbe6b1e5d6bf5e43a754614774cedae255d7e110522457a162226d85273",
+          "plan_sha256": "45c43b6529d538b3caaef3ce3b1f1382e1ab1e79195b27c77cbba9c34cba1718",
+          "receipt_sha256": "ee262a23d316e03324eeaeb61a4ca10a923d7ed9b777c4aaba591a7c240a1dd2"
+        },
+        "1": {
+          "plan": "fold1.json",
+          "plan_file_sha256": "8149deb52d4f9dfda166a0b56071ffc5761d2bd462052bc3a20eaf03629ed20b",
+          "plan_sha256": "5d974909feb83224aa8af35549760254faa40e247babe28e060750c650b19b7f",
+          "receipt_sha256": "475f99c9c70f9cfc97d73f0207099852d914f5331117d95c954fb22be0b91065"
+        },
+        "2": {
+          "plan": "fold2.json",
+          "plan_file_sha256": "458a144f28520e7d221cd6144aacc1c541ac14b49d23389dbb13d22d6d893b82",
+          "plan_sha256": "18cc61ab328436fe440174f9dc4c83a4f063e004650fc4e70d25cfd4241ed24f",
+          "receipt_sha256": "bab45cb6c83b80daf73baf1c586c52b4ff8e0496cf8ef168f29e2d5618122c49"
+        },
+        "3": {
+          "plan": "fold3.json",
+          "plan_file_sha256": "e744558b359e8a0f536e2acc4f7b457544a47e0159cdb654640fb21b55def385",
+          "plan_sha256": "3f935ffe1e7860ad4e76115c957aeb647d004a9b77f8e5176a14aed73c6a263b",
+          "receipt_sha256": "b1e8625930ffb02f08c28934eac8d81eaa773ace1d2d89c1eb7a03d996105042"
+        },
+        "4": {
+          "plan": "fold4.json",
+          "plan_file_sha256": "a262d6ef807da27cd5b3d6bfe05bf33d0ff1caf3b7cf84a3f40a21f80626de93",
+          "plan_sha256": "388bc4d88696cf2156cd7d800f4f7548f48fd92545cbff8cc96a29285839e993",
+          "receipt_sha256": "07b9e068c024a91f45b8a4aecfb59a3f1bc8832dc766f4630ec0e7eb70e17e94"
+        }
+      },
+      "source_sha256": {
+        "scripts/run_ec_clean30_campaign.py": "d501f311f30b856ff0efc961e2e1a08a872a31119c1373f2bb90e6f1f936c1b1",
+        "src/ec_clean30/freeze.py": "58a00799356925622d1ef1d1a231bdab8233e82d830ba3dd6eb141c7ccc375be",
+        "src/ec_clean30/s1_simulation.py": "6b8fe336f9f977843b39f3225a3f60a9acbcf08d1d810dee850dcbd214cf7d7d",
+        "src/ec_clean30/selection.py": "3d6eb993a262b4df629e7a6efd2eed7e2ba079c4dbe22b4ee8548acb2ade7792",
+        "src/ec_clean30/selector.py": "e67b989376816f7193282d57caa609850547dd673a05783775ca527e478cf509"
+      },
+      "status": "passed",
+      "unamended_source_files_verified": 217
+    },
+    "focused_tests": {
+      "evidence": {
+        "path": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/s1_amendment_verification/deepmzyme_s1_focused_pytest.log",
+        "sha256": "08d3c0d4d97d4f95bda9ce2b0be0fc5b6bbeaa8316aa9f96c70b1541c95cf452"
+      },
+      "passed": 443,
+      "seconds": 93.13,
+      "status": "passed"
+    },
+    "regression": {
+      "full_run": {
+        "evidence": {
+          "path": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/s1_amendment_verification/deepmzyme_s1_regression_pytest.log",
+          "sha256": "e05ec7718a8385f62afe79238d555341ef0e211b2a296f954b418e2fd2da9211"
+        },
+        "failed": 1,
+        "passed": 3227,
+        "seconds": 725.53,
+        "skipped": 18,
+        "subtests_passed": 15
+      },
+      "mode": "full suite followed by the single affected check after indexing the new source file",
+      "recheck": {
+        "evidence": {
+          "path": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/s1_amendment_verification/deepmzyme_s1_regression_recheck.log",
+          "sha256": "1ea20f32eaa2077416e6d3905d530293043d705c6a37e773d54ec21a58bdd923"
+        },
+        "node_id": "tests/benchmarking/test_pinmymetal_near_copy_bundle.py::test_tree_hash_follows_the_campaign_rule",
+        "passed": 1,
+        "seconds": 2.3
+      },
+      "resolution": "The tree-hash check compares indexed and on-disk source. Staging src/ec_clean30/s1_simulation.py resolved the mismatch without changing source bytes.",
+      "status": "passed"
+    },
+    "simulation_integrity": {
+      "files_mirrored_and_verified": 67,
+      "mirror": "DeepMzyme_Data/backups/ec_class_vs_clean30_2026-10_phase2/simulation/s1_fixed_anchor_v1",
+      "scenario_records_verified": 50,
+      "source_files_verified": 13,
+      "status": "passed",
+      "summary_sha256": "d765f615d61d7d51b2c2b27855a3fba52c710e640c49b6c195be58695cee6624"
+    }
+  },
+  "date": "2026-11-02",
+  "environment": {
+    "numpy": "2.4.4",
+    "python": "3.12.13 | packaged by Anaconda, Inc. | (main, Mar 19 2026, 20:20:58) [GCC 14.3.0]",
+    "scikit-learn": "1.8.0",
+    "torch": "2.11.0",
+    "torch-geometric": "2.7.0"
+  },
+  "format": "deepmzyme_s1_amendment_verification_v1",
+  "resource_caps": {
+    "cpu_quota_percent": 200,
+    "memory_max": "3G",
+    "memory_swap_max": 0
+  },
+  "scope": "CPU implementation, synthetic characterization and verification only. Original freezes and prepared artifacts are reused; real campaign execution requires publication.",
+  "source_sha256": {
+    "scripts/run_ec_clean30_campaign.py": "d501f311f30b856ff0efc961e2e1a08a872a31119c1373f2bb90e6f1f936c1b1",
+    "src/ec_clean30/freeze.py": "58a00799356925622d1ef1d1a231bdab8233e82d830ba3dd6eb141c7ccc375be",
+    "src/ec_clean30/s1_simulation.py": "6b8fe336f9f977843b39f3225a3f60a9acbcf08d1d810dee850dcbd214cf7d7d",
+    "src/ec_clean30/selection.py": "3d6eb993a262b4df629e7a6efd2eed7e2ba079c4dbe22b4ee8548acb2ade7792",
+    "src/ec_clean30/selector.py": "e67b989376816f7193282d57caa609850547dd673a05783775ca527e478cf509"
+  },
+  "status": "passed"
+}

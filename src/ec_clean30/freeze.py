@@ -1805,3 +1805,254 @@ def action_verify_freeze1(args: argparse.Namespace) -> int:
     digest = provenance.write_new_json(Path(args.out), {**record, "provenance": block})
     _print({**shown, "receipt": str(args.out), "receipt_sha256": digest})
     return 0
+
+
+# ---------------------------------------------------------------------------
+# First, narrowly scoped S1 amendment. Original freeze documents remain immutable.
+# ---------------------------------------------------------------------------
+
+S1_AMENDMENT_FORMAT = "deepmzyme_ec_clean30_s1_amendment_v1"
+S1_AMENDMENT_ID = "s1-fixed-anchor-holm-v1"
+S1_AMENDMENT_SOURCE_FILES = (
+    "src/ec_clean30/selection.py", "src/ec_clean30/selector.py", "src/ec_clean30/freeze.py",
+    "scripts/run_ec_clean30_campaign.py", "src/ec_clean30/s1_simulation.py",
+)
+S1_AMENDMENT_EVIDENCE = ("simulation_spec", "simulation_summary", "verification")
+S1_AMENDMENT_CHECKS = ("focused_tests", "cpu_smoke", "regression", "docs_contract", "dry_run_reuse")
+
+
+def _amendment_repo_file(path: str | os.PathLike, repo: Path, what: str, *, exists: bool = True,
+                         document: bool = False) -> tuple[Path, str]:
+    """Check repository containment and symlinks before any amendment input is read."""
+    repo = _real(repo)
+    given = Path(path)
+    absolute = Path(os.path.abspath(os.fspath(given if given.is_absolute() else repo / given)))
+    _require(absolute == repo or repo in absolute.parents, f"{what} must be inside the repository.")
+    relative = absolute.relative_to(repo)
+    _require(relative.parts and ".." not in relative.parts, f"{what} has an unsafe path.")
+    cursor = repo
+    for part in relative.parts:
+        cursor /= part
+        _require(not cursor.is_symlink(), f"{what} must not traverse a symlink.")
+    name = relative.as_posix()
+    if document:
+        _require(name.startswith(CAMPAIGN_DOCS_DIR + "/") and absolute.suffix == ".json",
+                 f"{what} must be a JSON file under {CAMPAIGN_DOCS_DIR}.")
+    else:
+        _require(any(name.startswith(folder + "/") for folder in TRACKED_CODE_FOLDERS),
+                 f"{what} must be a src/ or scripts/ file.")
+    if exists:
+        _require(absolute.is_file(), f"{what} is not a regular file: {name}")
+    return absolute, name
+
+
+def _amendment_code(repo: Path) -> dict[str, str]:
+    names = _git_out(repo, "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--",
+                     *TRACKED_CODE_FOLDERS, what="amendment source files")
+    return {name: sha256_file(_amendment_repo_file(name, repo, "source file")[0])
+            for name in sorted(set(filter(None, names.split("\0"))))}
+
+
+def _amendment_base(path: Path, digest: str, repo: Path) -> dict[str, Any]:
+    path, name = _amendment_repo_file(path, repo, "base Freeze 1", document=True)
+    _require(name == f"{CAMPAIGN_DOCS_DIR}/freeze1.json", "The amendment must bind the original Freeze-1 path.")
+    _require(sha256_file(path) == digest, "The base Freeze-1 hash differs.")
+    base = _read_json(path, "base Freeze 1")
+    _require(isinstance(base, dict) and base.get("format") == FREEZE1_DOCUMENT_FORMAT
+             and base.get("campaign_id") == CAMPAIGN_ID and base.get("amendments") == [],
+             "The amendment needs the original, unamended Freeze-1 document.")
+    published = verify_freeze1(sha256=digest, document=path, require_pushed=True, repo=repo)
+    _refuse_problems("The base Freeze 1 is not published.", published["problems"])
+    pins = (base.get("code") or {}).get("tracked_file_sha256")
+    _require(isinstance(pins, dict) and bool(pins), "The base Freeze 1 has no code pins.")
+    for name, value in pins.items():
+        _amendment_repo_file(name, repo, "base source pin")
+        _sha256_argument(value, f"base source pin {name}")
+    return base
+
+
+def _amendment_evidence(entries: Mapping[str, Any], repo: Path, policy: Mapping[str, Any],
+                        sources: Mapping[str, str], *, base_sha256: str,
+                        all_sources: Mapping[str, str]) -> None:
+    _require(isinstance(entries, Mapping) and set(entries) == set(S1_AMENDMENT_EVIDENCE),
+             "The amendment needs simulation_spec, simulation_summary and verification evidence.")
+    loaded = {}
+    for role, entry in entries.items():
+        _require(isinstance(entry, Mapping) and set(entry) == {"path", "sha256"}, f"Malformed {role} evidence.")
+        path, _ = _amendment_repo_file(entry["path"], repo, role, document=True)
+        _require(sha256_file(path) == _sha256_argument(entry["sha256"], role), f"{role} evidence hash differs.")
+        loaded[role] = _read_json(path, role)
+        _require(isinstance(loaded[role], dict), f"{role} evidence must be an object.")
+    spec, summary, verification = (loaded[name] for name in S1_AMENDMENT_EVIDENCE)
+    _require(spec.get("policy") == policy and isinstance(spec.get("scenarios"), list) and bool(spec["scenarios"]),
+             "Simulation specification does not declare this policy and its scenarios.")
+    _require(summary.get("format") == "deepmzyme_s1_characterization_summary_v1"
+             and summary.get("status") == "complete" and summary.get("policy") == policy,
+             "Simulation summary must completely characterize this fixed policy.")
+    _require(spec.get("base_freeze1_sha256") == base_sha256
+             and summary.get("base_freeze1_sha256") == base_sha256,
+             "Simulation evidence names another base Freeze 1.")
+    _require(summary.get("spec_sha256") == entries["simulation_spec"]["sha256"],
+             "Simulation summary names another specification.")
+    simulation_sources = summary.get("source_sha256") or {}
+    _require(isinstance(simulation_sources, dict)
+             and all(simulation_sources.get(name) == sources[name]
+                     for name in ("src/ec_clean30/selection.py", "src/ec_clean30/s1_simulation.py"))
+             and all(name in all_sources and digest == all_sources[name]
+                     for name, digest in simulation_sources.items()),
+             "Simulation summary does not bind the current selection and simulation source.")
+    scenarios, results = spec["scenarios"], summary.get("results")
+    _require(all(isinstance(row, dict) and isinstance(row.get("id"), str) and row["id"] for row in scenarios)
+             and isinstance(results, list)
+             and all(isinstance(row, dict) and isinstance(row.get("id"), str) for row in results),
+             "Simulation summary must contain the specified scenario results.")
+    scenario_ids, result_ids = [row["id"] for row in scenarios], [row["id"] for row in results]
+    _require(len(set(scenario_ids)) == len(scenario_ids) and len(set(result_ids)) == len(result_ids)
+             and set(result_ids) == set(scenario_ids),
+             "Simulation summary has missing, duplicate, or extra scenarios.")
+    _require(type(spec.get("n_replicates")) is int and spec["n_replicates"] == 200
+             and type(summary.get("n_scenarios")) is int and summary["n_scenarios"] == len(scenario_ids),
+             "Simulation scenario or replicate totals differ from the fixed specification.")
+    total = 0
+    for row in results:
+        count, winners = row.get("n_replicates"), row.get("winner_counts")
+        _require(type(count) is int and count == spec["n_replicates"]
+                 and isinstance(winners, dict) and set(winners) == {"F2", "F3", "F5", "F4"}
+                 and all(type(value) is int and value >= 0 for value in winners.values())
+                 and sum(winners.values()) == count,
+                 "Simulation result counts do not cover every replicate exactly once.")
+        _sha256_argument(row.get("record_sha256"), "simulation result record hash")
+        total += count
+    _require(type(summary.get("n_replicates")) is int and summary["n_replicates"] == total,
+             "Simulation summary replicate total differs from its results.")
+    checks = verification.get("checks")
+    _require(verification.get("status") == "passed" and verification.get("source_sha256") == dict(sources)
+             and isinstance(checks, dict) and all(isinstance(checks.get(name), dict)
+                                                 and checks[name].get("status") == "passed"
+                                                 for name in S1_AMENDMENT_CHECKS),
+             "Verification evidence must pass and bind every amended source file.")
+
+
+def build_s1_amendment(*, freeze1_path: str | os.PathLike, evidence: Mapping[str, Path],
+                        out: str | os.PathLike, repo: Path = REPO_ROOT) -> dict[str, Any]:
+    """Write a source-pinned draft once. Publication is checked separately before real execution."""
+    from ec_clean30.selection import AMENDED_S1_RULE, s1_policy_record
+
+    repo = _real(repo)
+    base_path, base_name = _amendment_repo_file(freeze1_path, repo, "base Freeze 1", document=True)
+    out_path, _ = _amendment_repo_file(out, repo, "amendment output", exists=False, document=True)
+    rendering = out_path.with_suffix(".md")
+    _require(not os.path.lexists(out_path) and not os.path.lexists(rendering), "Amendment files are written once.")
+    digest = sha256_file(base_path)
+    base = _amendment_base(base_path, digest, repo)
+    base_pins = base["code"]["tracked_file_sha256"]
+    current = _amendment_code(repo)
+    _require(set(S1_AMENDMENT_SOURCE_FILES) <= set(current), "An amended source file is missing.")
+    changes = {name: {"before": base_pins.get(name), "after": current[name]}
+               for name in S1_AMENDMENT_SOURCE_FILES}
+    expected = {**base_pins, **{name: row["after"] for name, row in changes.items()}}
+    _require(current == expected, "Unamended source files changed, disappeared, or were added outside the S1 scope.")
+    policy = s1_policy_record()
+    records = {}
+    for role, path in evidence.items():
+        checked, name = _amendment_repo_file(path, repo, f"{role} evidence", document=True)
+        records[role] = {"path": name, "sha256": sha256_file(checked)}
+    _amendment_evidence(records, repo, policy, {name: current[name] for name in S1_AMENDMENT_SOURCE_FILES},
+                        base_sha256=digest, all_sources=current)
+    parent = _resolve_commit(repo, "HEAD")
+    _require(parent is not None, "Amendment source needs a repository parent commit.")
+    document = {
+        "format": S1_AMENDMENT_FORMAT, "schema_version": 1, "campaign_id": CAMPAIGN_ID,
+        "amendment_id": S1_AMENDMENT_ID, "base_freeze1": {"path": base_name, "sha256": digest},
+        "previous_sha256": digest, "sequence": 1, "s1_rule": AMENDED_S1_RULE, "policy": policy,
+        "source_parent_commit": parent, "source_changes": changes, "evidence": records,
+        "publication": "required_before_execution",
+        "reused_artifacts": ["original Freeze 1 and Freeze 1b", "five fit plans and dry runs",
+                             "overlay and five views", "inner memberships and identity audit",
+                             "final and block-26 embeddings", "historical simulations"],
+    }
+    provenance.write_new_json(out_path, document)
+    with rendering.open("x", encoding="utf-8") as handle:
+        handle.write(render_s1_amendment_markdown(document))
+    return document
+
+
+def verify_s1_amendment(path: str | os.PathLike, *, expected_freeze1_sha256: str,
+                         repo: Path = REPO_ROOT, require_published: bool = True,
+                         expected_chain: Optional[Sequence[str]] = None) -> dict[str, Any]:
+    """Authenticate the first S1 amendment, all original/changed source pins and bound evidence.
+
+    ``require_published=False`` is only for draft review and synthetic tests. It never makes a
+    draft eligible for real selection or execution. No private identity artifact is read.
+    """
+    from ec_clean30.selection import AMENDED_S1_RULE, s1_policy_record
+
+    repo = _real(repo)
+    path, _ = _amendment_repo_file(path, repo, "amendment", document=True)
+    document = _read_json(path, "S1 amendment")
+    _require(isinstance(document, dict) and document.get("format") == S1_AMENDMENT_FORMAT
+             and document.get("schema_version") == 1 and document.get("campaign_id") == CAMPAIGN_ID
+             and document.get("amendment_id") == S1_AMENDMENT_ID, "Unknown S1 amendment format or identity.")
+    _require(path.read_bytes() == canonical_bytes(document), "S1 amendment is not canonical JSON.")
+    digest = sha256_file(path)
+    chain = [digest]
+    _require(expected_chain is None or list(expected_chain) == chain, "S1 amendment chain differs or is reordered.")
+    base_digest = _sha256_argument(expected_freeze1_sha256, "expected Freeze-1 SHA-256")
+    base_record = document.get("base_freeze1") or {}
+    _require(base_record.get("sha256") == base_digest and document.get("previous_sha256") == base_digest
+             and document.get("sequence") == 1, "S1 amendment has the wrong base or predecessor.")
+    base_path, _ = _amendment_repo_file(base_record.get("path", ""), repo, "base Freeze 1", document=True)
+    base = _amendment_base(base_path, base_digest, repo)
+    _require(document.get("s1_rule") == AMENDED_S1_RULE and document.get("policy") == s1_policy_record(),
+             "S1 amendment policy differs from the implemented fixed policy.")
+    _require(document.get("publication") == "required_before_execution", "S1 publication requirement differs.")
+    parent = document.get("source_parent_commit")
+    head = _resolve_commit(repo, "HEAD")
+    _require(isinstance(parent, str) and _resolve_commit(repo, parent) == parent
+             and head is not None and _is_ancestor(repo, parent, head), "S1 amendment source parent is not an ancestor.")
+    changes = document.get("source_changes")
+    _require(isinstance(changes, dict) and set(changes) == set(S1_AMENDMENT_SOURCE_FILES),
+             "S1 amendment source scope differs.")
+    expected = dict(base["code"]["tracked_file_sha256"])
+    sources = {}
+    for name, change in changes.items():
+        _require(isinstance(change, dict) and set(change) == {"before", "after"}
+                 and change["before"] == expected.get(name), f"S1 amendment original source pin differs: {name}")
+        sources[name] = _sha256_argument(change["after"], f"amended source pin {name}")
+        expected[name] = sources[name]
+    _require(_amendment_code(repo) == expected, "Live source differs from the authenticated amendment scope.")
+    _amendment_evidence(document.get("evidence"), repo, document["policy"], sources,
+                        base_sha256=base_digest, all_sources=expected)
+    rendering = path.with_suffix(".md")
+    _require(rendering.is_file() and not rendering.is_symlink()
+             and rendering.read_text(encoding="utf-8") == render_s1_amendment_markdown(document),
+             "S1 amendment rendering differs from the canonical JSON.")
+    publication = verify_freeze1(sha256=digest, document=path, require_pushed=True, repo=repo)
+    origin = _resolve_commit(repo, ORIGIN_MAIN_REF)
+    if origin is None or not _is_ancestor(repo, head, origin):
+        publication["problems"].append("the current source HEAD is not published on refs/remotes/origin/main")
+        publication["status"] = "failed"
+    published = publication["status"] == "passed"
+    if require_published:
+        provenance.require_clean_tree(repo)
+        _refuse_problems("The S1 amendment is not published; real execution is refused.", publication["problems"])
+    return {"document_sha256": digest, "amendment_chain": chain, "s1_rule": AMENDED_S1_RULE,
+            "policy": document["policy"], "published": published, "document": document}
+
+
+def render_s1_amendment_markdown(document: Mapping[str, Any]) -> str:
+    """Compact public rendering; the canonical JSON and existing Freeze 1 own all pins."""
+    digest = sha256_bytes(canonical_bytes(document))
+    lines = ["# S1 fixed-anchor family selection amendment", "",
+             f"- Amendment SHA-256: `{digest}`",
+             f"- Original Freeze 1: `{document['base_freeze1']['sha256']}`",
+             f"- Rule: `{document['s1_rule']}`; publication is required before execution.", "",
+             "The original freeze documents and prepared data remain unchanged. This amendment changes only S1",
+             "family selection and the evidence/authentication needed to execute that rule. Historical selection",
+             "remains available for replay. Simulation describes the fixed rule; it does not tune alpha or establish",
+             "real-model superiority. R2 scoring and all secondary multiplicity settings remain unchanged.", "",
+             "## Fixed policy", "", "```json", json.dumps(document["policy"], indent=2, sort_keys=True), "```", "",
+             "## Evidence", "", "| Role | File | SHA-256 |", "|---|---|---|"]
+    for role, entry in document["evidence"].items():
+        lines.append(f"| {role} | `{entry['path']}` | `{entry['sha256']}` |")
+    return "\n".join(lines) + "\n"

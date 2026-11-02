@@ -1,0 +1,99 @@
+{
+  "amendment_id": "s1-fixed-anchor-holm-v1",
+  "base_freeze1": {
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/freeze1.json",
+    "sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c"
+  },
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "evidence": {
+    "simulation_spec": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/simulation_spec.json",
+      "sha256": "bfaff6799a65604761a9d1f93736feabf1998e29d48dfa1476e471cc24fed39d"
+    },
+    "simulation_summary": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/simulation_summary.json",
+      "sha256": "d765f615d61d7d51b2c2b27855a3fba52c710e640c49b6c195be58695cee6624"
+    },
+    "verification": {
+      "path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/verification.json",
+      "sha256": "3b2053583770372b9b26da845881eaf4da9c2e4e7e4d779248d65129bb0f083f"
+    }
+  },
+  "format": "deepmzyme_ec_clean30_s1_amendment_v1",
+  "policy": {
+    "anchor_family": "F2",
+    "candidate_families": [
+      "F3",
+      "F5",
+      "F4"
+    ],
+    "control_families": [
+      "F1",
+      "C-G"
+    ],
+    "fallback_family": "F2",
+    "family_alpha": 0.04,
+    "family_tie_band_points": 0.5,
+    "family_tie_preference": [
+      "F5",
+      "F3",
+      "F4"
+    ],
+    "family_tie_rule": "preferred passing family within the band of the maximum passing score",
+    "gain_and_recall_reference": "F2",
+    "historical_rule_id": "family_escalation_v1",
+    "incremental_superiority_claim": false,
+    "learning_rate_tie_band_points": 0.5,
+    "learning_rate_tie_rule": "first listed grid setting within the band of the maximum",
+    "multiplicity": "Holm step-down over all three fixed contrasts",
+    "promotion_config": {
+      "alpha": 0.04,
+      "bootstrap_seed": 20261023,
+      "guard_min_training_proteins": 30,
+      "guard_net_proteins": 3.0,
+      "guard_recall_drop_points": 5.0,
+      "max_skip_fraction": 0.01,
+      "min_gain_points": 1.0,
+      "n_draws": 10000,
+      "stratified": false,
+      "zero_recall_unit": "seed_mean"
+    },
+    "rule_id": "fixed_anchor_holm_v1"
+  },
+  "previous_sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c",
+  "publication": "required_before_execution",
+  "reused_artifacts": [
+    "original Freeze 1 and Freeze 1b",
+    "five fit plans and dry runs",
+    "overlay and five views",
+    "inner memberships and identity audit",
+    "final and block-26 embeddings",
+    "historical simulations"
+  ],
+  "s1_rule": "fixed_anchor_holm_v1",
+  "schema_version": 1,
+  "sequence": 1,
+  "source_changes": {
+    "scripts/run_ec_clean30_campaign.py": {
+      "after": "d501f311f30b856ff0efc961e2e1a08a872a31119c1373f2bb90e6f1f936c1b1",
+      "before": "52e40a26775f6a881b0519a14df81bc14d051c0e580da5a98c2816aaf977b893"
+    },
+    "src/ec_clean30/freeze.py": {
+      "after": "58a00799356925622d1ef1d1a231bdab8233e82d830ba3dd6eb141c7ccc375be",
+      "before": "a37138fa530395d01bdfb9aec3ae5a9cd6aafbb425e33fa7849105b9da6d2195"
+    },
+    "src/ec_clean30/s1_simulation.py": {
+      "after": "6b8fe336f9f977843b39f3225a3f60a9acbcf08d1d810dee850dcbd214cf7d7d",
+      "before": null
+    },
+    "src/ec_clean30/selection.py": {
+      "after": "3d6eb993a262b4df629e7a6efd2eed7e2ba079c4dbe22b4ee8548acb2ade7792",
+      "before": "be4a5137787695d8ba32c90b3d2bd961cd6dcb0af8d597591c9d45e1edfa77f7"
+    },
+    "src/ec_clean30/selector.py": {
+      "after": "e67b989376816f7193282d57caa609850547dd673a05783775ca527e478cf509",
+      "before": "da88a4deecba771bf686a9d54ad50863286c42ae2a2d55c4228658e05794c85b"
+    }
+  },
+  "source_parent_commit": "693697d894695d9c0efce1b81fda32c78c7444bf"
+}

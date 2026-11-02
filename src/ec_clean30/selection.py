@@ -12,7 +12,9 @@ Every outer fold runs the same steps on its own training proteins only:
 - S1: the learning rate per family (higher pooled BA; within 0.5 points the first-listed
   setting of ``S1_LEARNING_RATE_GRID``, whose labels key the inputs) and the family escalation
   (anchor F2; F5 vs F2; then F4 vs F5 if the whole-protein branch was adopted, else F3 vs F2;
-  F1 and C-G are reported, never selected).
+  F1 and C-G are reported, never selected). This historical rule remains available for replay.
+  The versioned amended ``s1_family_screen`` compares F3, F5 and F4 directly with F2 in one
+  Holm family at alpha 0.04, retaining all three hypotheses even when a promotion guard fails.
 - S2: each lever alone against the S1 winner; every decision must name that winner as its
   incumbent. L7 compares the better of 12 and 20 epochs with 30; L9 picks tau on the pooled
   out-of-fold predictions and compares it with tau = 0; L5 counts as tested only with SupCon
@@ -70,6 +72,13 @@ ANCHOR_FAMILY = "F2"
 CONTROL_FAMILIES: tuple[str, ...] = ("F1", "C-G")
 GVP_FAMILIES = frozenset({"F1", "F3", "F4"})
 GLOBAL_BRANCH_FAMILIES = frozenset({"F4", "F5", "C-G"})
+
+HISTORICAL_S1_RULE = "family_escalation_v1"
+AMENDED_S1_RULE = "fixed_anchor_holm_v1"
+S1_FAMILY_ALPHA = 0.04
+S1_FAMILY_TIE_BAND_POINTS = 0.5
+S1_CANDIDATES: tuple[str, ...] = ("F3", "F5", "F4")
+S1_TIE_PREFERENCE: tuple[str, ...] = ("F5", "F3", "F4")
 
 # Listed order matters: within the tie band the first-listed setting wins.
 _SINGLE_LR = ((("learning_rate", 1e-4),), (("learning_rate", 3e-4),))
@@ -691,6 +700,156 @@ def s1_family_escalation(
         pocket_graph_decision=pocket_decision,
         control_scores_points=controls,
         winner=winners[winner_family],
+    )
+
+
+def s1_policy_record() -> dict[str, Any]:
+    """Fresh serializable descriptor of the amended rule, for its authenticated amendment."""
+    return {
+        "rule_id": AMENDED_S1_RULE,
+        "historical_rule_id": HISTORICAL_S1_RULE,
+        "anchor_family": ANCHOR_FAMILY,
+        "candidate_families": list(S1_CANDIDATES),
+        "control_families": list(CONTROL_FAMILIES),
+        "multiplicity": "Holm step-down over all three fixed contrasts",
+        "family_alpha": S1_FAMILY_ALPHA,
+        "gain_and_recall_reference": ANCHOR_FAMILY,
+        "promotion_config": PromotionConfig().to_record(),
+        "learning_rate_tie_band_points": LR_TIE_BAND_POINTS,
+        "learning_rate_tie_rule": "first listed grid setting within the band of the maximum",
+        "family_tie_band_points": S1_FAMILY_TIE_BAND_POINTS,
+        "family_tie_preference": list(S1_TIE_PREFERENCE),
+        "family_tie_rule": "preferred passing family within the band of the maximum passing score",
+        "fallback_family": ANCHOR_FAMILY,
+        "incremental_superiority_claim": False,
+    }
+
+
+@dataclass(frozen=True, eq=False)
+class FamilyScreen:
+    winner_family: str
+    candidate_scores_points: Mapping[str, float]
+    control_scores_points: Mapping[str, float]
+    comparisons: tuple[Mapping[str, Any], ...]
+    passing_families: tuple[str, ...]
+    tied_families: tuple[str, ...]
+    anchor_score_points: float
+    bootstrap: Mapping[str, Any]
+    inputs: Mapping[str, Any]
+    winner: PooledOof = field(repr=False)
+
+    def to_record(self) -> dict[str, Any]:
+        return to_jsonable({
+            "rule_id": AMENDED_S1_RULE,
+            "policy": s1_policy_record(),
+            "winner_family": self.winner_family,
+            "anchor_score_points": self.anchor_score_points,
+            "candidate_scores_points": self.candidate_scores_points,
+            "control_scores_points": self.control_scores_points,
+            "comparisons": self.comparisons,
+            "passing_families": self.passing_families,
+            "tied_families": self.tied_families,
+            "bootstrap": self.bootstrap,
+            "inputs": self.inputs,
+        })
+
+
+def s1_family_screen(
+    winners: Mapping[str, PooledOof],
+    *,
+    component_of: Mapping[str, str],
+    training_class_counts: Sequence[int] | np.ndarray,
+    config: PromotionConfig = PromotionConfig(),
+) -> FamilyScreen:
+    """Compare every amended S1 candidate with F2 using one fixed three-test Holm family.
+
+    Every candidate gets a bootstrap test, even if its gain or recall guard fails. Only
+    statistical rejection controls Holm continuation; the promotion guards separately decide
+    eligibility. All comparisons share the same paired component draws. ``config.alpha`` is
+    ignored: the family level is always 0.04. Selection does not claim that a passing winner
+    outperforms the other passing candidates, nor protect their recall gains relative to F2.
+    """
+    for family in winners:
+        _check_family(family)
+    missing = [family for family in (ANCHOR_FAMILY, *S1_CANDIDATES) if family not in winners]
+    if missing:
+        raise ValueError(f"Family screen needs F2, F3, F5 and F4; missing {missing}.")
+    config = replace(config, alpha=S1_FAMILY_ALPHA)
+    anchor = winners[ANCHOR_FAMILY]
+    _require_components(component_of, anchor)
+    counts = _training_counts(training_class_counts)
+    summaries = {}
+    arms: dict[str, np.ndarray] = {}
+    systems: dict[str, list[str]] = {}
+    for family in (ANCHOR_FAMILY, *S1_CANDIDATES):
+        pooled = winners[family]
+        _require_paired(anchor, pooled)
+        summaries[family] = _summarise(pooled)
+        systems[family] = []
+        for position, seed in enumerate(pooled.seeds):
+            arm = f"{family}/seed_{seed}"
+            arms[arm] = pooled.predictions[position]
+            systems[family].append(arm)
+    contrasts = [Contrast.difference(f"{family}_minus_{ANCHOR_FAMILY}", family, ANCHOR_FAMILY)
+                 for family in S1_CANDIDATES]
+    table = build_cluster_count_table(anchor.protein_ids, anchor.true_idx, arms, component_of)
+    result = paired_cluster_bootstrap(
+        table, contrasts, systems=systems, n_draws=config.n_draws, seed=config.bootstrap_seed,
+        stratified=config.stratified, max_skip_fraction=config.max_skip_fraction,
+    )
+    p_values = {family: result.p_value(contrast.name) for family, contrast in zip(S1_CANDIDATES, contrasts)}
+    order = sorted(S1_CANDIDATES, key=p_values.__getitem__)
+    records = {}
+    still_testing, adjusted_p = True, 0.0
+    for index, family in enumerate(order):
+        alpha = S1_FAMILY_ALPHA / (len(S1_CANDIDATES) - index)
+        contrast = f"{family}_minus_{ANCHOR_FAMILY}"
+        test = result.test(contrast, alpha)
+        adjusted_p = max(adjusted_p, min(1.0, (len(S1_CANDIDATES) - index) * p_values[family]))
+        tested = still_testing
+        holm_passed = tested and test.passed
+        still_testing = holm_passed
+        summary = summaries[family]
+        gain = summary.ba_points - summaries[ANCHOR_FAMILY].ba_points
+        guard_rows, guard_ok = _recall_guard(summaries[ANCHOR_FAMILY], summary, counts, config)
+        zero_classes = _zero_recall_classes(summaries[ANCHOR_FAMILY], summary, config.zero_recall_unit)
+        checks = {"gain": gain >= config.min_gain_points - FLOAT_TOLERANCE,
+                  "holm": holm_passed, "recall_guard": guard_ok, "zero_recall": not zero_classes}
+        vetoes = tuple(name for name, passed in checks.items() if not passed)
+        records[family] = {
+            "family": family, "incumbent_family": ANCHOR_FAMILY, "contrast": contrast,
+            "holm_rank": index + 1, "alpha": alpha, "p_value": p_values[family],
+            "adjusted_p_value": adjusted_p, "tested": tested, "holm_passed": holm_passed,
+            "lower_bound_points": POINTS * test.lower_bound,
+            "gain_points": gain, "incumbent_ba_points": summaries[ANCHOR_FAMILY].ba_points,
+            "challenger_ba_points": summary.ba_points,
+            "incumbent_ba_points_by_seed": summaries[ANCHOR_FAMILY].ba_points_by_seed,
+            "challenger_ba_points_by_seed": summary.ba_points_by_seed,
+            "passed": not vetoes, "checks": checks, "vetoes": vetoes,
+            "reason": None if not vetoes else ", ".join(vetoes),
+            "recall_guard": guard_rows, "zero_recall_ec_classes": zero_classes,
+            "config": config.to_record(),
+        }
+    passing = tuple(family for family in S1_CANDIDATES if records[family]["passed"])
+    scores = {family: summaries[family].ba_points for family in S1_CANDIDATES}
+    tied = ()
+    winner = ANCHOR_FAMILY
+    if passing:
+        maximum = max(scores[family] for family in passing)
+        tied = tuple(family for family in S1_TIE_PREFERENCE if family in passing
+                     and maximum - scores[family] <= S1_FAMILY_TIE_BAND_POINTS + FLOAT_TOLERANCE)
+        winner = tied[0]
+    return FamilyScreen(
+        winner_family=winner, candidate_scores_points=scores,
+        control_scores_points={family: seed_mean_ba_points(winners[family])
+                              for family in CONTROL_FAMILIES if family in winners},
+        comparisons=tuple(records[family] for family in S1_CANDIDATES),
+        passing_families=passing, tied_families=tied, anchor_score_points=summaries[ANCHOR_FAMILY].ba_points,
+        bootstrap=result.to_record(),
+        inputs={"predictions_sha256": {family: predictions_sha256(winners[family])
+                                       for family in (ANCHOR_FAMILY, *S1_CANDIDATES)},
+                "component_table_sha256": component_table_sha256(component_of, anchor.protein_ids)},
+        winner=winners[winner],
     )
 
 

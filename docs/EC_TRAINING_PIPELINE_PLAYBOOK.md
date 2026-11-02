@@ -379,6 +379,32 @@ The gap gate requires the overlay components and exact CLEAN query membership be
 primary R1 EC1–6 gap after S3 receives the one-point discount; seven-class and R2 gaps remain descriptive and
 undiscounted. A Phase 3 runner is still to be built.
 
+For continuation after Freeze 1b, preserve the completed preparation above. The approved
+[S1 amendment](campaigns/ec_class_vs_clean30_2026-10/design.md) uses the following additional interfaces;
+`simulate-s1` is a source-sealed development characterization, and `amend-s1` builds a draft. Neither permits
+training from unpublished code. The characterization uses the fixed specification, reuses the first scenario,
+and exits 4 before further work if its CPU forecast exceeds the ceiling. Do not rerun completed evidence.
+
+```bash
+D=docs/campaigns/ec_class_vs_clean30_2026-10; A="$D/s1_amendment"
+F=$(sha256sum "$D/freeze1.json" | cut -d' ' -f1)
+"${CAP[@]}" "$PY" "$R" simulate-s1 --spec "$A/simulation_spec.json" --freeze1 "$D/freeze1.json" \
+  --campaign-root "$C" --out "$C/simulation/s1_fixed_anchor_v1" --first-only
+"${CAP[@]}" "$PY" "$R" simulate-s1 --spec "$A/simulation_spec.json" --freeze1 "$D/freeze1.json" \
+  --campaign-root "$C" --out "$C/simulation/s1_fixed_anchor_v1"
+"${SMALL[@]}" "$PY" "$R" amend-s1 --freeze1 "$D/freeze1.json" --simulation-spec "$A/simulation_spec.json" \
+  --simulation-summary "$A/simulation_summary.json" --verification "$A/verification.json" --out "$A/amendment.json"
+"${SMALL[@]}" "$PY" "$R" verify-s1-amendment --amendment "$A/amendment.json" --freeze1-sha256 "$F" --draft
+# After the reviewed package is committed and published, verify without --draft:
+"${SMALL[@]}" "$PY" "$R" verify-s1-amendment --amendment "$A/amendment.json" --freeze1-sha256 "$F"
+```
+
+The amendment-aware continuation uses the same `select` and `gap-gate` commands above with
+`--freeze1-amendment "$A/amendment.json"` on every S1/S2/S3 and gap call. The execution coordinator must first
+authenticate the amendment and pass its exact chain into each fit identity; mixed or missing chains refuse
+selection. The original Freeze-1 hash remains the anchor. Current verification accepts only the explicit S1
+source changes; WP-13's later added execution files need separately authenticated execution pins.
+
 The CLEAN comparator runner (`"$X" prepare`, `fit`, `export`, `validate-export`) holds no CLEAN code; the private CLEAN
 checkout and harness scripts are passed by path and pinned by SHA-256, and R2 fits take `--accession-allowlist
 "$C/r2_lists/r2_allowlist_fold<k>.txt"`. Fits run one at a time, each distance map alone under the limit the campaign

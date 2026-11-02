@@ -20,6 +20,15 @@ Campaign [README](README.md); decisions and reasons: [log evc-001](log.md#evc-00
   added whole-protein ESMC branch. In every fold one pre-registered algorithm chooses the learning rate, family and
   levers from that fold's training proteins only (4 inner folds under the same identity rule, 2 screening seeds). The
   final model is a 5-seed refit ensemble.
+- **S1 amendment (2026-11-02, before any model comparison).** The approved versioned selector compares F3, F5
+  and F4 directly with F2 in one fixed three-hypothesis Holm family at alpha 0.04. All three remain in the family
+  when a gain or recall guard fails. The existing gain floor and recall/zero-recall guards apply against F2.
+  Select the highest pooled seed-mean BA among passing candidates; within 0.5 points of that maximum prefer F5,
+  then F3, then F4. If none passes, retain F2. F1 and C-G remain controls. The two-LR choice is unchanged.
+  This selects a model; it does not establish an incremental modality benefit over another passing candidate
+  or protect that candidate's recall gains. Historical escalation remains available for replay. The amendment
+  requires authenticated source/evidence and publication before real execution; [the log](log.md#evc-012) owns
+  verification and characterization results. Original Freeze 1/1b and prepared inputs remain unchanged.
 - **Inner selection** (declared deviation from the EC playbook's class-support rule,
   [launch gate](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#readiness-outputs-and-explicit-launch-gate)): pooled inner
   out-of-fold BA over EC classes 1–6, 2 seeds. Class 7 (2–4 training proteins in at most 3 components per fold) may be absent from an

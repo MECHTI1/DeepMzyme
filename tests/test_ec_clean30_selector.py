@@ -489,23 +489,25 @@ def test_ninety_percent_boundary_over_the_eight_fits(l5_world, positives, testab
 # select S1 -> S2 -> S3 and the gap gate on one synthetic fold
 
 
-def _s1_world(root, runs):
+def _s1_world(root, runs, *, family_accuracies=None, identity_changes=None):
     plan = build_fold_plan(0)
     for unit in plan["units"]:
         if unit["step"] != "S1":
             continue
         recipe = Recipe(unit["family"], tuple(unit["learning_rate"].items()), unit["epochs"])
-        write_fit(runs, unit_id=unit["unit_id"], step="S1", inner=unit["inner_fold"], seed=unit["seed"], recipe=recipe)
+        write_fit(runs, unit_id=unit["unit_id"], step="S1", inner=unit["inner_fold"], seed=unit["seed"], recipe=recipe,
+                  accuracy=(family_accuracies or {}).get(unit["family"], 0.7), identity_changes=identity_changes)
 
 
-def _s2_world(runs, family_recipe, accuracies, special=None):
+def _s2_world(runs, family_recipe, accuracies, special=None, *, identity_changes=None):
     """The S2 fits of the applicable levers; ``special`` maps (config, inner, seed) to write_fit options."""
     for config_id in ("L3", "L4", "L5", "L6", "L7e12", "L7e20"):
         recipe = recipe_with_lever(family_recipe, config_id)
         for inner, seed in GRID:
+            options = {"identity_changes": identity_changes, **(special or {}).get((config_id, inner, seed), {})}
             write_fit(runs, unit_id=l5_id(inner, seed, config=config_id), step="S2", inner=inner, seed=seed,
                       recipe=recipe, accuracy=accuracies.get(config_id, 0.7),
-                      **(special or {}).get((config_id, inner, seed), {}))
+                      **options)
 
 
 TABLES = selector.InnerTables(COMPONENTS, INNER, {"source": "synthetic"}, MEMBERSHIP)
@@ -1012,6 +1014,171 @@ def test_runner_arguments_parse():
                            "--freeze1-sha256", FREEZE1, "--out", "o"])
     assert issubclass(SelectionInputError, ValueError)
     assert hashlib.sha256(b"").hexdigest() != FREEZE1
+
+
+# ---------------------------------------------------------------------------
+# Versioned S1 amendment: source authentication is tested in test_ec_clean30_freeze;
+# these tests exercise its verified result through real synthetic fit/step/gap chains.
+
+AMENDMENT = "a1" * 32
+
+
+def _verified_amendment(monkeypatch, tmp_path):
+    from ec_clean30 import freeze
+
+    path = tmp_path / "s1_amendment.json"
+    path.write_text("{}\n")
+    calls = []
+
+    def verify(given, *, expected_freeze1_sha256, require_published):
+        assert given == path and expected_freeze1_sha256 == FREEZE1
+        calls.append(require_published)
+        return {"document_sha256": AMENDMENT, "amendment_chain": [AMENDMENT],
+                "s1_rule": selector.AMENDED_S1_RULE, "published": True}
+
+    monkeypatch.setattr(freeze, "verify_s1_amendment", verify)
+    return path, calls
+
+
+def _amended_world(tmp_path, *, family_accuracies=None):
+    root = tmp_path / CAMPAIGN_ID
+    world = {"root": root, "plan_path": write_plan(root), "runs": root / "runs" / "fold0"}
+    _s1_world(root, world["runs"], family_accuracies=family_accuracies,
+              identity_changes={"freeze1_amendment_chain": [AMENDMENT]})
+    write_verify_receipt(world["runs"])
+    return world
+
+
+def test_amended_s1_selects_f4_even_when_both_single_additions_fail(tmp_path, monkeypatch):
+    amendment, calls = _verified_amendment(monkeypatch, tmp_path)
+    world = _amended_world(tmp_path, family_accuracies={"F4": 0.98})
+    record = _select(world, "S1", tmp_path / "steps.jsonl", freeze1_amendment_path=amendment)
+    payload = record["payload"]
+    assert payload["s1_winner"]["family"] == "F4"
+    assert payload["s1_rule"] == selector.AMENDED_S1_RULE
+    assert payload["freeze1_amendment_chain"] == [AMENDMENT]
+    assert payload["family_screen"]["winner_family"] == "F4" and "family_escalation" not in payload
+    assert record["previous_sha256"] == FREEZE1 and calls == [True]
+
+
+def test_amendment_identity_persists_through_s1_s2_s3_and_gap(tmp_path, monkeypatch):
+    amendment, calls = _verified_amendment(monkeypatch, tmp_path)
+    world = _amended_world(tmp_path)
+    out = tmp_path / "steps.jsonl"
+    s1 = _select(world, "S1", out, freeze1_amendment_path=amendment)
+    assert s1["payload"]["s1_winner"] == S1_WINNER.to_dict()
+    _s2_world(world["runs"], S1_WINNER, {"L4": 0.95},
+              identity_changes={"freeze1_amendment_chain": [AMENDMENT]})
+    write_verify_receipt(world["runs"])
+    s2 = _select(world, "S2", out, freeze1_amendment_path=amendment)
+    s3 = _select(world, "S3", out, freeze1_amendment_path=amendment)
+    r1 = _write_clean_exports(tmp_path / "clean", "r1_inner")
+    r2 = _write_clean_exports(tmp_path / "clean", "r2_inner")
+    gate = selector.run_gap_gate(tables=TABLES, fold=0, after="S3", step_chain=out, freeze1_sha256=FREEZE1,
+                                 plan_path=world["plan_path"], runs_dirs=[world["runs"]], clean_r1_inner=r1,
+                                 clean_r2_inner=r2, out=tmp_path / "gap.json", provenance={"note": "synthetic"},
+                                 freeze1_amendment_path=amendment)
+    for payload in (s1["payload"], s2["payload"], s3["payload"], gate):
+        assert payload["freeze1_sha256"] == FREEZE1
+        assert payload["freeze1_amendment_chain"] == [AMENDMENT]
+        assert payload["s1_rule"] == selector.AMENDED_S1_RULE
+    assert gate["selected"]["config"] == "L4"
+    assert calls == [True] * 4
+    assert verify_step_chain(read_step_chain(out, anchor_sha256=FREEZE1), anchor_sha256=FREEZE1)
+
+
+@pytest.mark.parametrize("chain", [[], ["b2" * 32], [AMENDMENT, "b2" * 32], "not-a-list"])
+def test_amended_s1_refuses_missing_foreign_or_malformed_fit_chain(tmp_path, monkeypatch, chain):
+    amendment, _ = _verified_amendment(monkeypatch, tmp_path)
+    world = _amended_world(tmp_path)
+    path = next(world["runs"].glob("*.runner.json"))
+    value = json.loads(path.read_text())
+    value["unit"]["identity"]["freeze1_amendment_chain"] = chain
+    path.write_text(json.dumps(value))
+    out = tmp_path / "steps.jsonl"
+    with pytest.raises(SelectionInputError, match="amendment chain"):
+        _select(world, "S1", out, freeze1_amendment_path=amendment)
+    assert not out.exists()
+
+
+def test_historical_selector_refuses_amended_fits_without_amendment(tmp_path):
+    world = _amended_world(tmp_path)
+    out = tmp_path / "steps.jsonl"
+    with pytest.raises(SelectionInputError, match="matching --freeze1-amendment"):
+        _select(world, "S1", out)
+    assert not out.exists()
+
+
+def test_amendment_cannot_be_added_or_removed_mid_chain(tmp_path, monkeypatch):
+    amendment, _ = _verified_amendment(monkeypatch, tmp_path)
+    world, out = _s1_selected(tmp_path)
+    with pytest.raises(SelectionInputError, match="amendment chain"):
+        _select(world, "S2", out, freeze1_amendment_path=amendment)
+    # Check the converse before any selected fit or CLEAN export is opened.
+    records = read_step_chain(out, anchor_sha256=FREEZE1)
+    payload = dict(records[0]["payload"], freeze1_amendment_chain=[AMENDMENT], s1_rule=selector.AMENDED_S1_RULE)
+    amended = tmp_path / "amended_steps.jsonl"
+    selector.append_step_record(amended, "S1", payload, anchor_sha256=FREEZE1)
+    with pytest.raises(SelectionInputError, match="amendment chain"):
+        selector.run_gap_gate(tables=TABLES, fold=0, after="S1", step_chain=amended, freeze1_sha256=FREEZE1,
+                             plan_path=world["plan_path"], runs_dirs=[], clean_r1_inner=[], clean_r2_inner=[],
+                             out=tmp_path / "gap.json")
+    assert not (tmp_path / "gap.json").exists()
+
+
+def test_step_record_rule_must_match_authenticated_amendment(tmp_path, monkeypatch):
+    amendment, _ = _verified_amendment(monkeypatch, tmp_path)
+    world = _amended_world(tmp_path)
+    original = _select(world, "S1", tmp_path / "original.jsonl", freeze1_amendment_path=amendment)
+    payload = dict(original["payload"], s1_rule=selector.HISTORICAL_S1_RULE)
+    out = tmp_path / "wrong_rule.jsonl"
+    selector.append_step_record(out, "S1", payload, anchor_sha256=FREEZE1)
+    with pytest.raises(SelectionInputError, match="S1 rule differs"):
+        _select(world, "S2", out, freeze1_amendment_path=amendment)
+
+
+def test_historical_s1_record_cannot_be_relabelled_as_amended(tmp_path, monkeypatch):
+    amendment, _ = _verified_amendment(monkeypatch, tmp_path)
+    world, historical = _s1_selected(tmp_path)
+    payload = dict(read_step_chain(historical, anchor_sha256=FREEZE1)[0]["payload"],
+                   s1_rule=selector.AMENDED_S1_RULE, freeze1_amendment_chain=[AMENDMENT])
+    out = tmp_path / "relabelled.jsonl"
+    selector.append_step_record(out, "S1", payload, anchor_sha256=FREEZE1)
+    with pytest.raises(SelectionInputError, match="family-screen rule"):
+        _select(world, "S2", out, freeze1_amendment_path=amendment)
+
+
+def test_real_amended_selection_requires_publication_and_smoke_does_not(tmp_path, monkeypatch):
+    from ec_clean30 import freeze
+
+    calls = []
+
+    def unpublished(path, *, expected_freeze1_sha256, require_published):
+        calls.append(require_published)
+        return {"document_sha256": AMENDMENT, "amendment_chain": [AMENDMENT],
+                "s1_rule": selector.AMENDED_S1_RULE, "published": False}
+
+    monkeypatch.setattr(freeze, "verify_s1_amendment", unpublished)
+    with pytest.raises(SelectionInputError, match="published amendment"):
+        selector._selection_policy(tmp_path / "amendment.json", FREEZE1, smoke=False)
+    policy = selector._selection_policy(tmp_path / "amendment.json", FREEZE1, smoke=True)
+    assert policy["freeze1_amendment_chain"] == [AMENDMENT] and calls == [True, False]
+
+
+@pytest.mark.parametrize("action", ["select", "gap-gate"])
+def test_amendment_cli_rejects_test_named_path_before_any_read(tmp_path, monkeypatch, action):
+    from ec_clean30.provenance import HeldOutInputError
+
+    _refuse_any_reading(monkeypatch)
+    if action == "select":
+        argv = ["select", "--fold", "0", "--step", "S1", "--freeze1-sha256", FREEZE1,
+                "--plan", "p/plans/fold0.json", "--components", "o/identity/fold0", "--out", "s", "--runs", "r"]
+    else:
+        argv = _gate_argv({"plan_path": Path("p"), "runs": Path("r")}, Path("s"),
+                          [Path(f"r1_{k}.npz") for k in range(4)], [Path(f"r2_{k}.npz") for k in range(4)], Path("g"))
+    args = _parser().parse_args([*argv, "--freeze1-amendment", str(tmp_path / "held_test.json")])
+    with pytest.raises(HeldOutInputError):
+        args.handler(args)
 
 
 # ---------------------------------------------------------------------------

@@ -62,6 +62,21 @@ def _script():
     return module
 
 
+def test_s1_amendment_and_characterization_cli_routes():
+    module = _script()
+    parser = module.build_parser()
+    args = parser.parse_args(["simulate-s1", "--spec", "spec.json", "--freeze1", "freeze1.json",
+                              "--campaign-root", "campaign", "--out", "output", "--first-only"])
+    assert args.first_only and args.handler is module.action_simulate_s1
+    args = parser.parse_args(["amend-s1", "--freeze1", "freeze1.json", "--simulation-spec", "spec.json",
+                              "--simulation-summary", "summary.json", "--verification", "verification.json",
+                              "--out", "amendment.json"])
+    assert args.handler is module.action_amend_s1
+    args = parser.parse_args(["verify-s1-amendment", "--amendment", "amendment.json",
+                              "--freeze1-sha256", "a" * 64])
+    assert not args.draft and args.handler is module.action_verify_s1_amendment
+
+
 @pytest.fixture(scope="module")
 def source(tmp_path_factory):
     paths = write_clean30_data_root(tmp_path_factory.mktemp("clean30_source"))

@@ -25,6 +25,8 @@ from ec_clean30.selection import (
     verify_step_chain,
 )
 from ec_clean30.stats import DEFAULT_BOOTSTRAP_SEED, DEFAULT_MAX_SKIP_FRACTION, DEFAULT_N_DRAWS, BootstrapAbort
+from ec_clean30 import selection
+from ec_clean30.stats import one_sided_test
 
 
 # Pooled inner out-of-fold fixture: proteins per EC class 1..7. Class 4 (index 3) has 40 proteins
@@ -380,6 +382,132 @@ def test_family_escalation_without_the_global_branch_compares_f3_with_f2():
     assert "C-G" in result.control_scores_points
     with pytest.raises(ValueError, match="missing"):
         s1_family_escalation({"F2": winners["F2"]}, component_of=SINGLETONS, training_class_counts=SIZES)
+
+
+def _family_winners(f3=0, f5=0, f4=0):
+    return {family: _oof(family, _changed(BASE, gains={1: count}))
+            for family, count in (("F2", 0), ("F3", f3), ("F5", f5), ("F4", f4))}
+
+
+def _family_screen(winners, **kwargs):
+    return selection.s1_family_screen(winners, component_of=SINGLETONS,
+                                      training_class_counts=kwargs.pop("counts", SIZES),
+                                      config=kwargs.pop("config", FAST), **kwargs)
+
+
+def test_amended_family_screen_can_select_f4_without_either_single_addition():
+    winners = _family_winners(f4=18)
+    winners["F1"] = _oof("F1", _changed(BASE, gains={0: 30, 1: 30}))
+    winners["C-G"] = _oof("C-G", _changed(BASE, gains={0: 30, 1: 30, 2: 30}))
+    screen = _family_screen(winners)
+    assert screen.winner_family == "F4" and screen.winner is winners["F4"]
+    assert screen.passing_families == screen.tied_families == ("F4",)
+    assert set(screen.control_scores_points) == {"F1", "C-G"}
+    assert [row["family"] for row in screen.comparisons] == ["F3", "F5", "F4"]
+    assert all(row["incumbent_family"] == "F2" for row in screen.comparisons)
+    assert screen.bootstrap["n_draws"] == FAST.n_draws
+    assert set(screen.bootstrap["contrast_point"]) == {"F3_minus_F2", "F5_minus_F2", "F4_minus_F2"}
+    historical = s1_family_escalation(winners, component_of=SINGLETONS, training_class_counts=SIZES, config=FAST)
+    assert historical.winner_family == "F2"
+    assert json.loads(canonical_json(screen.to_record()))["rule_id"] == selection.AMENDED_S1_RULE
+
+
+@pytest.mark.parametrize(("gains", "expected", "tied"), [
+    ((12, 15, 18), "F5", ("F5", "F4")),
+    ((15, 12, 18), "F3", ("F3", "F4")),
+    ((12, 12, 18), "F4", ("F4",)),
+    ((20, 12, 18), "F3", ("F3", "F4")),
+])
+def test_amended_family_screen_uses_global_maximum_tie_band(gains, expected, tied):
+    screen = _family_screen(_family_winners(*gains))
+    assert set(screen.passing_families) == {"F3", "F5", "F4"}
+    assert screen.winner_family == expected and screen.tied_families == tied
+
+
+def test_amended_family_screen_falls_back_and_requires_paired_candidates():
+    winners = _family_winners()
+    screen = _family_screen(winners)
+    assert screen.winner_family == "F2" and not screen.passing_families and not screen.tied_families
+    with pytest.raises(ValueError, match="missing"):
+        _family_screen({"F2": winners["F2"], "F3": winners["F3"]})
+    winners["F4"] = _oof("F4", BASE, seeds=(42, 44))
+    with pytest.raises(ValueError, match="different seeds"):
+        _family_screen(winners)
+
+
+def _fake_family_bootstrap(monkeypatch, nonpositive_counts, n=3000):
+    """Exact discrete draws expose Holm boundaries independently of population resampling."""
+    from types import SimpleNamespace
+    draws = {f"{family}_minus_F2": np.r_[np.zeros(count), np.ones(n - count) * 0.02]
+             for family, count in nonpositive_counts.items()}
+    result = SimpleNamespace(
+        p_value=lambda name: float(np.mean(draws[name] <= 0)),
+        test=lambda name, alpha: one_sided_test(name, 0.02, draws[name], alpha),
+        to_record=lambda: {"n_draws": n, "synthetic": True},
+    )
+    monkeypatch.setattr(selection, "paired_cluster_bootstrap", lambda *args, **kwargs: result)
+
+
+def test_amended_holm_keeps_guard_failures_in_fixed_family(monkeypatch):
+    # F3 passes its statistical test but fails the gain guard. Its hypothesis stays in Holm,
+    # so the first threshold is .04/3 and a guard failure does not stop the statistical chain.
+    _fake_family_bootstrap(monkeypatch, {"F3": 30, "F5": 60, "F4": 90})
+    screen = _family_screen(_family_winners(f3=3, f5=12, f4=18))
+    rows = {row["family"]: row for row in screen.comparisons}
+    assert [rows[family]["alpha"] for family in ("F3", "F5", "F4")] == pytest.approx([.04 / 3, .02, .04])
+    assert all(row["tested"] and row["holm_passed"] for row in rows.values())
+    assert rows["F3"]["checks"]["gain"] is False and rows["F3"]["passed"] is False
+    assert rows["F3"]["vetoes"] == ("gain",)
+    assert all(row["adjusted_p_value"] == pytest.approx(.04) for row in (rows["F5"], rows["F4"]))
+    assert screen.passing_families == ("F5", "F4") and screen.winner_family == "F4"
+
+
+def test_amended_holm_stops_after_first_statistical_failure(monkeypatch):
+    _fake_family_bootstrap(monkeypatch, {"F3": 41, "F5": 42, "F4": 43})
+    screen = _family_screen(_family_winners(12, 18, 24))
+    rows = screen.comparisons
+    assert [row["tested"] for row in rows] == [True, False, False]
+    assert not any(row["holm_passed"] for row in rows)
+    assert screen.winner_family == "F2"
+    assert all(row["adjusted_p_value"] == pytest.approx(41 * 3 / 3000) for row in rows)
+
+
+def test_amended_holm_boundary_requires_strictly_positive_bound(monkeypatch):
+    _fake_family_bootstrap(monkeypatch, {"F3": 40, "F5": 60, "F4": 120})
+    screen = _family_screen(_family_winners(12, 18, 24))
+    assert all(row["holm_passed"] and row["lower_bound_points"] > 0 for row in screen.comparisons)
+    _fake_family_bootstrap(monkeypatch, {"F3": 41, "F5": 60, "F4": 120})
+    screen = _family_screen(_family_winners(12, 18, 24))
+    assert screen.comparisons[0]["lower_bound_points"] == 0.0
+    assert not any(row["holm_passed"] for row in screen.comparisons)
+
+
+def test_amended_screen_retains_recall_and_zero_recall_guards(monkeypatch):
+    _fake_family_bootstrap(monkeypatch, {"F3": 0, "F5": 0, "F4": 0})
+    winners = _family_winners(f3=12)
+    winners["F5"] = _oof("F5", _changed(BASE, gains={1: 30}, losses={3: 3}))
+    winners["F4"] = _oof("F4", _changed(BASE, gains={0: 31, 1: 30, 2: 30, 3: 12, 5: 30}, losses={4: 70}))
+    screen = _family_screen(winners, counts=(101, 100, 100, 40, 29, 100, 3))
+    rows = {row["family"]: row for row in screen.comparisons}
+    assert rows["F5"]["vetoes"] == ("recall_guard",)
+    assert rows["F4"]["vetoes"] == ("zero_recall",)
+    assert rows["F4"]["zero_recall_ec_classes"] == (5,)
+    assert screen.winner_family == "F3"
+
+
+def test_amended_screen_policy_is_fixed_deterministic_and_fresh(monkeypatch):
+    _fake_family_bootstrap(monkeypatch, {"F3": 0, "F5": 0, "F4": 0})
+    winners = _family_winners(12, 12, 12)
+    config = PromotionConfig(alpha=.5, n_draws=2000)
+    first, second = _family_screen(winners, config=config), _family_screen(dict(reversed(list(winners.items()))))
+    assert canonical_json(first.to_record()) == canonical_json(second.to_record())
+    assert first.winner_family == "F5"
+    assert [row["holm_rank"] for row in first.comparisons] == [1, 2, 3]
+    assert all(row["config"]["alpha"] == .04 for row in first.comparisons)
+    policy = selection.s1_policy_record()
+    policy["candidate_families"].clear()
+    assert selection.s1_policy_record()["candidate_families"] == ["F3", "F5", "F4"]
+    assert selection.s1_policy_record()["family_alpha"] == .04
 
 
 # S2
