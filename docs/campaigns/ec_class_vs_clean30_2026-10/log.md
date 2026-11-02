@@ -1153,3 +1153,30 @@ the simulated provider timestamp had finer precision than the ledger timestamp. 
 on rerun. The stopped-source fixture was then made deterministic and three affected checks passed; the
 production capacity guard was unchanged. Detailed counts, logs and hashes are bound in the execution
 verification record. Documentation checks passed with zero strict failures and eleven baseline warnings.
+
+## evc-020
+
+2026-11-02 — **Published recovery support; source retry stocked out.** The execution update was committed and
+pushed as `1749cdaa52e897c0fa53fb26341bf730325e97c7`; strict execution authentication passed without draft mode.
+The source-only launch configuration is `7dc3038d780230a0e48fcb73dd9c6eba873749e4f9f3b78c75ba4f8bf72d2415`.
+Its pre-billing input checks passed. An initial read-only start preview could not verify billing because its
+provider lookup failed with quota-related error output; no start was requested. Direct provider rechecks
+confirmed billing enabled. The same authorized leg then passed its preview and issued exactly one start.
+
+The start attempt began at 14:50:15 UTC and returned `ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS` in
+`us-central1-a`. The driver closed the attempt, preserved the error and confirmed `TERMINATED` at 14:51:03.
+Independent status at **14:53:21 UTC** reconfirmed shutdown and zero GPU runtime. No G2 unit, remote staging,
+cross-region candidate or temporary resource was created. There is no active recovery receipt to finalize
+or abandon. The original disk and two retained snapshots remain; their existing storage charges continue.
+
+The cross-region configuration stays blocked at **$18.2641 required versus $3.50 authorized**. A private,
+unapproved proposal prices a $19 campaign ceiling and a $25 controller daily guard; the latter accommodates
+full-day temporary-storage reservations while retaining the two-hour request and 117-minute STOP. The
+proposal changes no live caps or authority. The alternative is to close at this evidence boundary.
+
+The closeout is `phase3/g2_cross_region_closeout_20261102/closeout.json`, SHA-256
+`7dd0478d066f26ea3b5b1dd276bd118b409bc297c36384c2041d79e2a520a8bf`. Its source configuration, driver state,
+provider checks and logs are preserved on Data1 and independently mirrored on NVMe (eleven closeout files;
+twenty-nine preparation files). All five Phase-4 requests
+remain pending with the explicit source-stockout/recovery-budget blocker. Zero of ten measurements are
+available; no Freeze 1c, measured G2 timing or numerical G3 authority can be produced.

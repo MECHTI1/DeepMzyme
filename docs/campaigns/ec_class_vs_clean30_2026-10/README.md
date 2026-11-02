@@ -27,7 +27,7 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)). The log records
 simulation limitations (evc-010), S1 verification (evc-012), WP-13 (evc-013), automation (evc-014) and direct
 downloads (evc-015). [evc-016](log.md#evc-016) records the authorized G2 start's capacity failure and verified
-shutdown. [evc-017](log.md#evc-017) records recovery verification; [evc-018](log.md#evc-018) records the exhausted
-pass and cleanup. [evc-019](log.md#evc-019) records cross-region readiness.
+shutdown. [evc-017](log.md#evc-017) covers verification; [evc-018](log.md#evc-018) covers cleanup.
+[evc-019](log.md#evc-019) covers region pricing; [evc-020](log.md#evc-020) records the blocked retry.
 Freeze 1c and G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

@@ -39,9 +39,9 @@ and $0.60 overlapping-storage reserve, the workstation bound is **$18.2641**, ab
 The local preflight rejects that configuration before hashing large inputs or allocating resources. Its
 private recovery budget and original launch configuration are preserved with the price audit.
 
-The existing source's single retry fits the original $2.6641 envelope. A separate fresh driver namespace
-can execute that authorized leg without creating cross-region resources. If it again returns stockout,
-the next step is the recorded stop-or-increase budget decision; no recovery pass is admitted under $3.50.
+The existing source's single retry used the original $2.6641 envelope and a fresh driver namespace.
+It returned stockout; provider shutdown was confirmed at 14:53 UTC ([evc-020](log.md#evc-020)).
+The next step is the recorded stop-or-increase budget decision; no recovery pass is admitted under $3.50.
 Closed driver states, the archived central recovery pass and all scientific preparation remain unchanged.
 
 ## Previous start attempts

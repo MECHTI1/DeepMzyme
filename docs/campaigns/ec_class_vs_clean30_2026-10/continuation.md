@@ -4,7 +4,8 @@ Status: updated, 2026-11-02; preparation and the S1 amendment are published thro
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
 The recovery extension is published at `4fb4bdd`; its stockout closeout is published at `8d84e95`.
 All three central zones returned stockout; temporary resources are removed ([evc-018](log.md#evc-018)).
-The newly authorized cross-region route exceeds its $3.50 ceiling before allocation ([evc-019](log.md#evc-019)).
+The cross-region extension is published at `1749cda` but exceeds its $3.50 ceiling ([evc-019](log.md#evc-019)).
+The single funded central retry returned stockout; shutdown is verified ([evc-020](log.md#evc-020)).
 [G2 readiness](g2_readiness.md) owns the current budget blocker and preserved preparation.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
