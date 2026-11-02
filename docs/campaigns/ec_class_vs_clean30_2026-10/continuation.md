@@ -1,8 +1,9 @@
 # Continuation after Freeze 1b
 
 Status: updated, 2026-11-02; preparation and the S1 amendment are published through `3154a7f`.
-WP-13 is published at `10e0e11`; the G2 driver and Fold-0 queues passed CPU verification.
-[G2 readiness](g2_readiness.md) records the concrete preparation.
+WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
+The first G2 start failed on capacity ([evc-016](log.md#evc-016)); a retry with bounded same-region recovery is
+authorized ([evc-017](log.md#evc-017)). [G2 readiness](g2_readiness.md) records preparation and the recovery limits.
 This document records no new compute authorization. First scientific
 milestone: the complete fold-0 S1 comparison with CLEAN and its frozen stop-or-continue decision.
 

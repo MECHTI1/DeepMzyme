@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: WP-13 published at `10e0e11`, 2026-11-02; local prerequisites, automation and launch preview CPU-verified.
-The paid VM remains stopped. The requested preparation does not authorize starting it.
+Status: 2026-11-02; the first G2 start was blocked by capacity ([evc-016](log.md#evc-016)); a retry with bounded
+same-region recovery is authorized ([evc-017](log.md#evc-017)). The VM is stopped; measurements remain pending.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -25,7 +25,27 @@ that immutable base. Its publication is required before the launch command can a
 the queue verifies the actual runtime and free space, performs the relocated-view probe and binds all requests
 to the controller's actual allocation/deadline. No paid preparation or measurement has run.
 
-## Proposed G2 scope
+## Latest start attempt
+
+The maintainer authorized one existing-VM start with the $3 ceiling and 117-minute automatic STOP. Local
+preflight and the refreshed controller preview passed. Google rejected the start with
+`ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS` in `us-central1-a`; the closed attempt records zero completed units.
+Independent provider status confirmed `TERMINATED` at 11:12 UTC and zero recorded running time that day.
+The closeout receipt, original configuration and error are preserved on Data1 and independently mirrored on NVMe.
+
+Freeze 1c cannot be assembled without its ten verified measurements. The five private Phase-4 requests remain
+pending with an explicit capacity blocker; numerical forecasts and G3 ceilings remain unset. The existing closed
+attempt must not be reset. The newly authorized retry uses a new namespace and permits recovery only to
+`us-central1-b` or `us-central1-c`, after another confirmed source stockout. All prepared inputs remain reusable.
+
+The recovery configuration reserves $0.30 beyond the original $2.6641 envelope, giving **$2.9641** within $3.
+It prices up to four hours of overlapping storage through cleanup, including two possible destination disks,
+the source disk, the temporary snapshot, its recycle-bin minimum and retained snapshots. This storage window
+does not extend the 117-minute GPU STOP. Fresh controller prices and the explicit zone filter must pass before
+allocation. Successful fit/replay/independent-backup evidence permits authorized finalization; an exhausted pass
+uses the separate abandonment evidence gate. No further start or region is included.
+
+## Fixed G2 scope
 
 Use the existing stopped `g2-standard-8` VM in `us-central1-a`: one L4, 8 vCPU and 32 GiB RAM.
 Read-only controller status, price and preflight checks passed on 2026-11-02. This establishes the current

@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-02; Freeze 1b complete; S1 amendment and WP-13 published; G2 preparation CPU-verified)
+Status: active (2026-11-02; G2 retry and bounded same-region recovery authorized; VM stopped)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -24,9 +24,8 @@ most $3); 4 fold-0 development with a stop-or-continue gap gate; 5 folds 1–4; 
 scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (three lanes) or $99–166 (serial), CLEAN about
 160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
 
-Current state: [Freeze 1](freeze1.md) is published and Freeze 1b passed ([evc-011](log.md#evc-011)). Historical
-simulation target exceedances remain disclosed (evc-010). [evc-012](log.md#evc-012) records the approved S1 amendment's
-characterization and verification. [evc-013](log.md#evc-013) records WP-13; [evc-014](log.md#evc-014) records its
-publication, local prerequisites and G2/Fold-0 automation. [evc-015](log.md#evc-015) records direct weight downloads.
-G2 remains next.
+Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)). The log records
+simulation limitations (evc-010), S1 verification (evc-012), WP-13 (evc-013), automation (evc-014) and direct
+downloads (evc-015). [evc-016](log.md#evc-016) records the authorized G2 start's capacity failure and verified
+shutdown. [evc-017](log.md#evc-017) records the authorized recovery. Freeze 1c and G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

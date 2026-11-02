@@ -116,7 +116,7 @@ class ControllerTransport:
         return timeout
 
     def controller(self, name: str, *args: str, timeout: float = 120) -> str:
-        _require(name in {"status", "report", "start", "stop", "pycharm-info"}, "Unknown controller action.")
+        _require(name in {"status", "report", "start", "stop", "pycharm-info", "fallback"}, "Unknown controller action.")
         result = subprocess.run([str(self.controller_root / "bin" / f"vm-{name}"), *args],
                                 stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
         _require(result.returncode == 0, f"Controller {name} failed: {(result.stderr or result.stdout)[-2000:]}")
@@ -370,8 +370,42 @@ def _identity(config: Mapping[str, Any], controller: Mapping[str, str]) -> None:
     _require(set(config["expected_identity"]) == set(names)
              and all(str(config["expected_identity"][key]) == controller.get(name) for key, name in names.items()),
              "Controller endpoint differs from the reviewed immutable instance identity.")
-    _require(controller.get("MACHINE_TYPE") == "g2-standard-8" and controller.get("ZONE") == "us-central1-a"
+    zones = {"us-central1-a", *_fallback_policy(config).get("allowed_zones", [])}
+    _require(controller.get("MACHINE_TYPE") == "g2-standard-8" and controller.get("ZONE") in zones
+             and controller.get("REGION", "us-central1") == "us-central1"
+             and controller.get("PROVISIONING_MODEL", "STANDARD") == "STANDARD"
              and controller.get("SSH_HOST_ALIAS") == config["ssh_alias"], "G2 hardware, region or alias differs.")
+
+
+def _fallback_policy(config: Mapping[str, Any]) -> Mapping[str, Any]:
+    policy = config.get("fallback", {})
+    _require(isinstance(policy, Mapping), "Fallback authority must be an explicit configuration object.")
+    if policy:
+        zones = policy.get("allowed_zones")
+        _require(isinstance(zones, list) and zones and all(isinstance(zone, str) for zone in zones)
+                 and len(zones) == len(set(zones))
+                 and set(zones) <= {"us-central1-b", "us-central1-c"}, "Fallback zones exceed the authorized same-region pass.")
+    return policy
+
+
+def _fallback_cost(config: Mapping[str, Any]) -> float:
+    policy = _fallback_policy(config)
+    if not policy:
+        return 0.0
+    proof = policy["storage_cost_evidence"]
+    _require(0 <= time.time() - _epoch(proof["verified_at"]) <= 86400, "Fallback storage prices are stale or future-dated.")
+    window = _number(policy["storage_window_seconds"], "fallback storage window")
+    _require(window == 14400, "Fallback reserves one hour of preparation, two hours running and one hour of cleanup.")
+    # The base envelope charges one disk and old snapshots for two hours. Cover
+    # every candidate/source disk throughout recovery and the additional storage time.
+    hours = window / 3600
+    required = ((len(policy["allowed_zones"]) + 1) * hours - 2) * _number(proof["disk_usd_per_hour"], "fallback disk rate")
+    required += hours * _number(proof["snapshot_usd_per_hour"], "fallback snapshot rate")
+    required += (hours - 2) * _number(config["pricing"]["snapshot_usd_per_hour"], "retained snapshot rate")
+    required += _number(proof["recycle_minimum_usd"], "recycled snapshot minimum")
+    reserved = _number(policy["storage_reserve_usd"], "fallback storage reserve")
+    _require(reserved >= required, "Fallback storage reserve omits overlapping disks or snapshot minimums.")
+    return reserved
 
 
 def _status(text: str, expected: Mapping[str, Any]) -> str:
@@ -398,10 +432,11 @@ def _cost(config: Mapping[str, Any]) -> dict[str, float]:
     snapshots = _number(quote["snapshot_usd_per_hour"], "retained snapshot rate")
     egress = _number(quote["egress_usd_per_gib"], "egress rate")
     _require(egress >= .15, "The recorded egress rate cannot omit the destination-region charge.")
-    ceiling = gross * 2 * 1.15 + snapshots * 2 + egress * EGRESS_RESERVE_GIB
+    recovery = _fallback_cost(config)
+    ceiling = gross * 2 * 1.15 + snapshots * 2 + egress * EGRESS_RESERVE_GIB + recovery
     _require(ceiling <= GROSS_CEILING_USD, "Compute, retained snapshots and egress exceed the $3 gross ceiling.")
     return {"gross_usd_per_hour": gross, "snapshot_usd_per_hour": snapshots,
-            "egress_usd_per_gib": egress, "conservative_max_usd": ceiling}
+            "egress_usd_per_gib": egress, "recovery_storage_reserve_usd": recovery, "conservative_max_usd": ceiling}
 
 
 def _view_archive_bytes(path: Path) -> int:
@@ -453,6 +488,8 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     _require(_repository_key(origin) == _repository_key(controller_config["REPO_URL"]), "Local/controller repository identities differ.")
     for name in ("status", "report", "start", "stop", "pycharm-info"):
         _require(os.access(controller / "bin" / f"vm-{name}", os.X_OK), f"Controller vm-{name} is unavailable.")
+    if _fallback_policy(config):
+        _require(os.access(controller / "bin/vm-fallback", os.X_OK), "Controller vm-fallback is unavailable.")
     source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
     secondary = Path(config["secondary_drive"]).resolve()
     _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
@@ -550,6 +587,9 @@ def _session(config: Mapping[str, Any], transport: ControllerTransport, previous
              and started <= time.time() < deadline, "Actual provider deadline exceeds 117 minutes or has elapsed.")
     _require(abs(float(current["gross_usd_per_hour"]) - _cost(config)["gross_usd_per_hour"]) < 1e-6,
              "Actual session pricing differs from the verified quote.")
+    if config.get("fallback_started_unix"):
+        _require(time.time() + RESERVE_SECONDS < config["fallback_started_unix"]
+                 + config["fallback"]["storage_window_seconds"], "Fallback storage/cleanup window is exhausted.")
     return {"session_id": current["session_id"], "allocation_started_unix": started, "deadline_unix": deadline,
             "max_total_seconds": min(MAX_G2_SECONDS, deadline - started)}
 
@@ -625,8 +665,99 @@ def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport
     return manifest, probe
 
 
+def _selected_fallback(config: dict[str, Any], state: dict[str, Any], state_path: Path) -> None:
+    """Bind only this pass's selected replacement before subsequent checks can fail."""
+    root = Path(config["controller_root"])
+    receipt = _json(root / "state/fallback.json")
+    current = _json(root / "state/current_session.json")
+    policy = _fallback_policy(config)
+    replacement = receipt.get("replacement", {})
+    source = state.get("fallback_source_identity", config["expected_identity"])
+    _require(policy and receipt.get("phase") == "selected" and receipt.get("source") == source
+             and receipt.get("requested_hours") == 2 and receipt.get("pass_id")
+             and set(receipt.get("allowed_zones", [])) == set(policy["allowed_zones"])
+             and receipt.get("candidates")
+             and set(receipt.get("candidates", [])) <= set(policy["allowed_zones"])
+             and replacement.get("zone") in receipt["candidates"]
+             and replacement.get("project") == source["project"], "Selected fallback is outside this authorized pass.")
+    _require(not state.get("fallback_pass_id") or state["fallback_pass_id"] == receipt["pass_id"],
+             "A different fallback pass cannot replace this allocation.")
+    effective = {**config, "expected_identity": replacement}
+    _identity(effective, _controller_config(root))
+    _require(current.get("active") is True and current.get("session_id") == receipt.get("session_id")
+             and bool(current.get("session_id"))
+             and all(str(current.get(key)) == str(value) for key, value in replacement.items())
+             and current.get("session_start") == receipt.get("session_start")
+             and math.floor(state["fallback_started_unix"]) <= _epoch(current["session_start"]) <= time.time(),
+             "Selected fallback has no matching fresh owned session.")
+    _require(not state.get("session_id") or state["session_id"] == current["session_id"],
+             "The fallback now owns a different allocation.")
+    config.update(expected_identity=replacement, fallback_started_unix=state["fallback_started_unix"])
+    state.update(effective_identity=replacement, fallback_pass_id=receipt["pass_id"],
+                 session_id=current["session_id"], controller_session_start=current["session_start"],
+                 fallback_source_identity=source)
+    _write(state_path, state)
+    _write(state_path.parent / "fallback_selected.json", receipt)
+    _write(state_path.parent / "effective_config.json", config)
+    _require(0 < receipt["limit"]["effective_seconds"] <= MAX_G2_SECONDS,
+             "Selected fallback exceeds the approved provider duration.")
+    proof = policy["storage_cost_evidence"]
+    size = _number(float(receipt["source_disk"]["sizeGb"]), "fallback source disk size")
+    actual = {"disk_usd_per_hour": receipt["price"]["disk_usd_per_hour"],
+              "snapshot_usd_per_hour": size * receipt["snapshot_price"]["usd_per_gib_month"] / 730,
+              "recycle_minimum_usd": size * receipt["recycle_price"]["usd_per_gib_month"] / 730}
+    _require(all(0 < float(rate) <= proof[key] + 1e-9 for key, rate in actual.items()),
+             "Actual fallback storage prices exceed the verified reserve basis.")
+    _cost(config)
+
+
+def _fallback_after_stockout(config: dict[str, Any], state: dict[str, Any], state_path: Path,
+                             transport: ControllerTransport, failure: Exception) -> None:
+    policy = _fallback_policy(config)
+    _require(policy and "ZONE_RESOURCE_POOL_EXHAUSTED" in str(failure),
+             "Fallback requires an authorized, confirmed source capacity failure.")
+    _require(not state.get("fallback_attempted") and config["expected_identity"]["zone"] == "us-central1-a",
+             "Only one fallback pass after the source start is authorized.")
+    _require(_status(transport.controller("status"), config["expected_identity"]) == "TERMINATED"
+             and _json(transport.controller_root / "state/current_session.json").get("active") is False,
+             "Fallback requires a positively stopped source without an active session.")
+    _require(not (transport.controller_root / "state/fallback.json").exists(),
+             "An existing fallback pass must be reconciled; no new pass is admitted.")
+    arguments = ["--hours", "2"]
+    for zone in policy["allowed_zones"]:
+        arguments += ["--allowed-zone", zone]
+    preview = transport.controller("fallback", "--dry-run", *arguments, timeout=300)
+    candidates = re.search(r"^Candidate offerings \(capacity not guaranteed\): (.+)$", preview, re.MULTILINE)
+    _require(candidates is not None and set(candidates[1].split(", ")) <= set(policy["allowed_zones"])
+             and ("maxRunDuration=7020s" in preview or re.search(r"hard STOP after:\s+117 min", preview)),
+             "Fallback preview differs from the approved zones or 117-minute STOP.")
+    rates_line = re.search(r"^Verified storage rates: (.+)$", preview, re.MULTILINE)
+    _require(rates_line is not None, "Fallback preview lacks verified storage prices.")
+    rates = json.loads(rates_line[1])
+    proof = policy["storage_cost_evidence"]
+    _require(0 <= time.time() - _epoch(rates["verified_at"]) <= 86400
+             and rates.get("snapshot_minimum_seconds") == rates.get("recycle_minimum_seconds") == 3600
+             and all(0 < float(rates[key]) <= proof[field] + 1e-9 for key, field in (
+                 ("disk_usd_per_hour", "disk_usd_per_hour"), ("snapshot_usd_per_hour", "snapshot_usd_per_hour"),
+                 ("recycle_usd_per_hour", "recycle_minimum_usd"))),
+             "Fallback preview storage prices exceed the approved reserve basis.")
+    state.update(fallback_attempted=True, fallback_started_unix=time.time(), fallback_preview=preview,
+                 fallback_source_identity=config["expected_identity"], start_failure=str(failure), cost=_cost(config))
+    _write(state_path, state)
+    try:
+        transport.controller("fallback", "--confirm", *arguments, timeout=3600)
+    except (WorkstationError, OSError, subprocess.SubprocessError):
+        # A lost reply is not permission for another allocation. A durable selected
+        # receipt can establish this pass's ownership, allowing the finalizer to stop it.
+        receipt_path = transport.controller_root / "state/fallback.json"
+        if receipt_path.is_file() and _json(receipt_path).get("phase") == "selected":
+            _selected_fallback(config, state, state_path)
+        raise
+    _selected_fallback(config, state, state_path)
+
+
 def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: ControllerTransport | None = None) -> dict[str, Any]:
-    ready = preflight(config, config_path, published=True)
+    config = dict(config)
     transport = transport or ControllerTransport(Path(config["controller_root"]), config["ssh_alias"],
                                                  bootstrap_python=config["bootstrap_python"])
     state_root = Path(config["state_root"])
@@ -639,6 +770,9 @@ def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: Controlle
         _require(not state.get("closed"), "This allocation is closed; no automatic restart is permitted.")
         owned = bool(state.get("start_attempted"))
         try:
+            if state.get("fallback_pass_id"):
+                _selected_fallback(config, state, state_path)
+            ready = preflight(config, config_path, published=True)
             if not owned:
                 _require(_status(transport.controller("status"), config["expected_identity"]) == "TERMINATED",
                          "Start requires the existing instance to be positively stopped.")
@@ -649,7 +783,12 @@ def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: Controlle
                 state.update(start_attempted=True, start_preview=preview, cost=ready["cost"], started_attempt_unix=time.time())
                 _write(state_path, state)
                 owned = True
-                transport.controller("start", "--confirm", "--hours", "2", timeout=1200)
+                try:
+                    transport.controller("start", "--confirm", "--hours", "2", timeout=1200)
+                except WorkstationError as exc:
+                    if not _fallback_policy(config) or "ZONE_RESOURCE_POOL_EXHAUSTED" not in str(exc):
+                        raise
+                    _fallback_after_stockout(config, state, state_path, transport, exc)
                 candidate = _json(transport.controller_root / "state/current_session.json")
                 _require(candidate.get("active") is True and candidate.get("session_id")
                          and all(str(candidate.get(key)) == str(value)

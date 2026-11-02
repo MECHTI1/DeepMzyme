@@ -18,13 +18,21 @@
     },
     "docs_contract": {
       "baseline_warnings": 11,
-      "log": "ecc30_remote_download_docs.log",
+      "log": "fallback_docs_check_final.log",
       "strict_failures": 0
     },
     "execution_v2_focused": {
-      "log": "ecc30_remote_download_auth.log",
-      "passed": 10,
-      "wall_seconds": 3.66
+      "joint_run": "fallback_focused_tests.log",
+      "passed": 10
+    },
+    "fallback_focused": {
+      "files": [
+        "tests/test_ec_clean30_workstation.py",
+        "tests/test_ec_clean30_execution_v2.py"
+      ],
+      "log": "fallback_focused_tests.log",
+      "passed": 98,
+      "wall_seconds": 6.68
     },
     "final_execution_authentication_freeze": {
       "applicability": "Prior unchanged authentication/freeze implementation; current execution-extension check recorded separately.",
@@ -38,7 +46,7 @@
       "wall_seconds": 9.56
     },
     "full_regression": {
-      "applicability": "Historical baseline before the CLEAN cap and direct-download corrections; unaffected results retained. Corrected paths have the focused checks recorded here. No full-suite rerun for direct download.",
+      "applicability": "Historical baseline retained; no full-suite rerun. The fallback change is covered by the recorded two-file focused run.",
       "passed": 3386,
       "skipped": 18,
       "source_sha256": {
@@ -55,41 +63,55 @@
       "subtests_passed": 15,
       "wall_seconds": 710.97
     },
-    "workstation_focused": {
+    "previous_execution_v2_focused": {
+      "log": "ecc30_remote_download_auth.log",
+      "passed": 10,
+      "wall_seconds": 3.66
+    },
+    "previous_workstation_focused": {
       "capture_receipt": "ecc30_remote_download_workstation.receipt.json",
       "log": "ecc30_remote_download_workstation.log",
       "passed": 50,
       "wall_seconds": 3.48
+    },
+    "private_controller_offline": {
+      "passed": 17,
+      "receipt": "controller_candidate_smoke_final.json"
+    },
+    "workstation_focused": {
+      "joint_run": "fallback_focused_tests.log",
+      "passed": 88
     }
   },
   "clean_inputs": {
     "base_sequences": 8115,
     "masked_sequences": 20120,
-    "receipt_sha256": "ece4eab3d7da05e4ceb7b785e9865dd20eb3b1eaf0f2a8dbfa8259e2f46842b5",
+    "receipt_sha256": "f01248bbbe975b0b6a7001af6836643e3383850f2913e69ffa8df532b3785934",
     "scientific_payload_identical_to_pre_cap_preparation": true,
+    "scientific_payload_identical_to_pre_fallback_preparation": true,
     "scientific_payload_identical_to_pre_remote_download_preparation": true,
     "units": 8
   },
   "date": "2026-11-02",
-  "execution_manifest_sha256": "5cbad8a934250036160d7c6007947b8092e662fd0649a9ce727b30a33f2ee685",
+  "execution_manifest_sha256": "5773dbda4a79cf88b423f0fe7d5136621130fdafa807c7caaeff8221289ddc7e",
   "format": "deepmzyme_ec_clean30_execution_v2_verification",
-  "local_g2_preview": {
-    "config_sha256": "abfef1cfde9eda9149671dc82d4fe7ce4a4b91847dd711ea579102f7a8ac0205",
-    "cost": {
-      "conservative_max_usd": 2.6640955999999996,
-      "egress_usd_per_gib": 0.15,
-      "gross_usd_per_hour": 0.879172,
-      "snapshot_usd_per_hour": 0.021
-    },
-    "max_provider_seconds": 7020,
-    "payload_ceiling_bytes": 3221225472,
-    "purpose": "Pre-publication verification of all local input bytes and the revised configuration.",
-    "queue_events": 12,
-    "receipt_sha256": "1d2a86be0d2bb8c2d763306153d248a528d5c3a83b5e4c5b00c881d795af986d",
-    "staging_peak_bytes": 19269249867,
-    "status": "draft_unpublished"
+  "local_g2_readiness": {
+    "allowed_zones": [
+      "us-central1-b",
+      "us-central1-c"
+    ],
+    "config_sha256": "59b23f1b58b13dd44b7c3db2f9a6b14fc00f434549d81306c0eee0802a0e388a",
+    "cost_usd": 2.9640956,
+    "fresh_filtered_controller_preview": "passed",
+    "full_launch_preflight": "required_before_allocation; prior full input checks retained",
+    "input_payloads_unchanged": true,
+    "recovery_reserve_usd": 0.3
   },
   "logs": {
+    "controller_candidate_smoke_final.json": {
+      "bytes": 1066,
+      "sha256": "40eaea9e8c05f5e25a13a1e8f39d0153f652dbdf89d28b764e61aab4fb84e129"
+    },
     "deepmzyme_phase4_memory_caps_final.log": {
       "bytes": 99,
       "sha256": "5309b369dd15bbc5a1267364e7186113eb8762277cd3e2cc48ee142160dcc746"
@@ -161,21 +183,37 @@
     "ecc30_remote_download_workstation.receipt.json": {
       "bytes": 927,
       "sha256": "1bde72a3abe111d730919b67d353476eff3a7aed9765209f011b604d87429734"
+    },
+    "fallback_clean_inputs_refresh.log": {
+      "bytes": 56,
+      "sha256": "855820360143b319dd995582879b9f9d42ebaf8f690547f614cf0a1f66495cb7"
+    },
+    "fallback_docs_check_final.log": {
+      "bytes": 2191,
+      "sha256": "bb2f66447f0ae4b3c4cbc06294ef14d42f5bec7790ab7b0dade061ebb67dd47d"
+    },
+    "fallback_filtered_preview.txt": {
+      "bytes": 1427,
+      "sha256": "fde9e41df40a2a531eb6057edc540ebed4cbf42854ca1f9050c0b8747e98259f"
+    },
+    "fallback_focused_tests.log": {
+      "bytes": 179,
+      "sha256": "9ffa5d0ffaa24d15697513e3e8ca1a6759e76698e24193e117bc2400d7ff95be"
     }
   },
   "phase4_requests": {
     "files_sha256": {
       "README.md": "3f191f46a11f323eef216f7e181b8fe882d05cd644b392249cf06548d0850680",
-      "clean_queue.json": "78f7bb235b44fd8bf81254a8dadae56bf3b08183e02e197e2affb82b31c2709c",
-      "embedding_queue.json": "c79530124eb510725874753b2fd4d21b70c03d5cd5dc95564b799936bc721aa2",
-      "g3_authority.json": "c117936bb5297fd52284470ccc6a096803f735d983209100013b9d389e6304fb",
-      "s1_queue.json": "8ec93c75638fd917cd7384984caabf2535ebb2d8ce44bd91ae6d33b67473f5eb",
-      "select_gap.json": "7ef0dffae0153e2717d6dde32a3166e7de1763583031a045f1d071891ddba65d",
-      "template_validation.json": "9ea5b5abbe2d6fd79d1c4c06616c7bd0665184378e5296fa1e3f181dbf9188e8"
+      "clean_queue.json": "6d7d7de49c3c6a430697236cde4b1e8e73f490fcb6ab8163dba3a83b0228832f",
+      "embedding_queue.json": "58d3066fea55c9adff39325a62efc1a47e6e4bb7deed6ba5bfaa8dd72932cd62",
+      "g3_authority.json": "acd12f1c6556498a08e1aff342ec173b1d91cefa07eced6311d43980f9a3da0d",
+      "s1_queue.json": "fc48cbe14d0d46f5528e7179ef86659f6771070d692b35e6292139c95b1f6651",
+      "select_gap.json": "5dae37bde72d11be83165dc9c5b994b3cc04adbbc0d34364c0b8acbf093db8c7",
+      "template_validation.json": "1c9e44222615d9a61190e8c6491f613ccdba75503a7a062d29e48f99b8f98726"
     },
     "status": "pending_measured_g3"
   },
-  "post_publication_readiness_receipt": "phase3/prebilling_20261102/remote_download_update/preflight_published.json",
+  "post_publication_readiness_receipt": "phase3/g2_driver_state_fallback1/driver_state.json",
   "prebilling": {
     "archive": {
       "bytes": 1924660777,
@@ -226,7 +264,23 @@
       }
     }
   },
-  "previous_verification_sha256": "8b03bd1b7e3e5aa79687bf6ddd7b4ecf9876052c7e8b484f142a2916bca9682d",
+  "previous_local_g2_preview": {
+    "config_sha256": "abfef1cfde9eda9149671dc82d4fe7ce4a4b91847dd711ea579102f7a8ac0205",
+    "cost": {
+      "conservative_max_usd": 2.6640955999999996,
+      "egress_usd_per_gib": 0.15,
+      "gross_usd_per_hour": 0.879172,
+      "snapshot_usd_per_hour": 0.021
+    },
+    "max_provider_seconds": 7020,
+    "payload_ceiling_bytes": 3221225472,
+    "purpose": "Pre-publication verification of all local input bytes and the revised configuration.",
+    "queue_events": 12,
+    "receipt_sha256": "1d2a86be0d2bb8c2d763306153d248a528d5c3a83b5e4c5b00c881d795af986d",
+    "staging_peak_bytes": 19269249867,
+    "status": "draft_unpublished"
+  },
+  "previous_verification_sha256": "1c4d3d241983a2de1956379675519e9a6627022a4584f98ab3904e3be2e60b12",
   "published_base": {
     "commit": "10e0e1144f8d73cfbf6bdc96b862038d33479e9d",
     "strict_verify_execution_without_draft": "passed_before_extension",
@@ -303,18 +357,41 @@
     },
     "upload_fallback_requires_terminal_result": true
   },
+  "same_region_fallback": {
+    "actual_recovery_tested": false,
+    "allowed_zones": [
+      "us-central1-b",
+      "us-central1-c"
+    ],
+    "cleanup_requires_controller_evidence": true,
+    "closed_prior_attempt_preserved": true,
+    "confirmed_stockout_required": true,
+    "controller_source_sha256": {
+      "README.md": "7e7be55e56188d94850754acf2fbdde6ad5e73a6ed5ee36203d7a2edfe5040d3",
+      "lib/fallback.py": "35ac8f51661f24bc1600ab62759702c8ed5c5f236853a16ae03ac69694ffee03",
+      "lib/vmctl.py": "65246a69032555f2a5b8d258b5d4d2c8676a6a87d583252a93f0bfdde60dd5f0"
+    },
+    "one_source_start_then_one_pass": true,
+    "storage_cost_evidence": {
+      "disk_usd_per_hour": 0.020548,
+      "recycle_minimum_usd": 0.010273972602739725,
+      "snapshot_usd_per_hour": 0.010273972602739725,
+      "verified_at": "2026-11-02T11:48:45Z"
+    },
+    "storage_window_seconds": 14400
+  },
   "source_sha256": {
     "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
     "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
     "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
     "src/ec_clean30/phase3.py": "03c81e50376be46b91555e6105ea9e90339fb15d37207adeb6ab6b2943bc7ddc",
     "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
-    "src/ec_clean30/workstation.py": "7f88409562b4c9b34b9d449d2094d025cb095828d52489a33c5985b15c4b1f85"
+    "src/ec_clean30/workstation.py": "2f0e21715d3529b8dd8523dbf016f55ee5dbc4e41f269702459df01690c6dfee"
   },
   "status": "cpu_verified",
   "storage_free_bytes": {
-    "data1": 35688062976,
-    "internal_ext4": 8081448960
+    "data1": 98387509248,
+    "internal_ext4": 7956574208
   },
   "synthetic_roundtrip": {
     "bytes": 8495021,
@@ -324,6 +401,6 @@
   "test_sha256": {
     "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
     "tests/test_ec_clean30_phase4.py": "a1f1b6779cc604789ffb9a69a3a67da2c1d743460193cd3eb68d68aaa9e23648",
-    "tests/test_ec_clean30_workstation.py": "f8064a09d1fb987358bdaae66881f2b0fc070e7c325c347874a88d342a08291d"
+    "tests/test_ec_clean30_workstation.py": "f76bc1822d46d4fbc774280b649e4905289563600adc4e89dbd393f4b829836c"
   }
 }

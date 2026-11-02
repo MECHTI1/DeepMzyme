@@ -1008,3 +1008,66 @@ The refreshed CLEAN input receipt is `ece4eab3d7da05e4ceb7b785e9865dd20eb3b1eaf0
 all thirty scientific files and eight unit definitions match the preceding preparation. Pending Phase-4 requests
 retain their unapproved numerical fields and now reference the updated source/input pins. Post-publication local
 readiness must report `ready` before any deliberate G2 start; its receipt is retained with the private launch inputs.
+
+## evc-016
+
+2026-11-02 — **Authorized G2 start blocked by provider capacity.** The execution extension was published at
+`589af0a96a44fbe36dc1c2773d7a0221e4e61867`; strict source authentication and local readiness passed. The maintainer
+authorized one start of the existing `g2-standard-8` L4 in `us-central1-a`, with a $3 gross ceiling, a two-hour
+request and 117-minute automatic STOP. The exact prepared workstation queue was invoked. Local checksum checks
+finished before billing, and the refreshed controller preview retained the $2.6641 conservative envelope.
+
+The single start attempt at approximately 11:11 UTC failed with `ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS`.
+Google returned no suggested available zone. No allocation was established, no remote staging or measurement
+ran, and all twelve queue events remain incomplete. The driver closed the attempt and verified `TERMINATED`;
+an independent status check at 11:12 UTC confirmed the same state and zero recorded GPU running time that day.
+The recorded running-compute estimate is $0; retained disk/snapshot charges continue and this is not an invoice.
+
+Private evidence: `phase3/g2_closeout_20261102/closeout.json`, SHA-256
+`3752dd11d106c4aee85615127d05999039f8287996fd7d584546323438f004cc`, under the campaign output root. It binds
+the original launch configuration, authorization, driver error/state, provider status and preceding Phase-4
+requests. All thirteen closeout files were independently copied to the NVMe campaign backup and read back by hash.
+The launch configuration SHA-256 remains
+`abfef1cfde9eda9149671dc82d4fe7ce4a4b91847dd711ea579102f7a8ac0205`.
+
+No Freeze 1c was created: there are zero of ten required verified measurements. The five private Phase-4 request
+files now record the capacity blocker while preserving their pending status and unset numerical fields. No G3
+ceiling, throughput, lane result, model comparison or test result can be inferred from this attempt. Prepared
+views, weights, environments, source pins and scientific evidence remain reusable; no tests or simulations were
+rerun. Root STATUS remains the disclosed frozen-source exception of evc-009.
+
+Next: obtain a fresh start decision, then use a new attempt namespace while retaining this closed attempt.
+There was no automatic retry, replacement, zone change or budget increase. Complete G2 before assembling
+Freeze 1c and proposing numerical G3 authority for the first 96 S1 and eight CLEAN inner fits.
+
+## evc-017
+
+2026-11-02 — **Bounded same-region recovery authorization.** The maintainer authorized one further existing-VM
+start in `us-central1-a`, followed only after a confirmed capacity failure by one disk-preserving controller pass
+restricted to `us-central1-b` and `us-central1-c`. The shared ceiling remains $3 gross, a two-hour request and
+117-minute provider STOP. Cleanup is authorized through the controller's finalization or abandonment evidence
+gate. The closed evc-016 attempt is retained; this authorization uses a fresh execution namespace.
+
+The local controller now accepts an explicit destination allowlist in both preview and execution; a resumed
+pass cannot omit or change it. Seventeen isolated offline checks cover filtering, CLI propagation, persisted
+candidate restrictions, a non-mutating preview and fresh storage-rate reporting. The private controller's prior
+files and verification evidence are preserved under `phase3/fallback_update_20261102/`. The pre-change live preview
+listed only the two approved destination offerings; this is not evidence of available capacity.
+
+The recovery storage reserve is $0.30, added to the original $2.6641 envelope. At the verified prices, a four-hour
+storage window covers the source and two possible destination disks less the disk charge already included in
+the base envelope, the temporary snapshot, its one-hour recycle-bin minimum and additional retained-snapshot
+time. The resulting conservative total is $2.9641. This accounting window includes setup and cleanup; it does
+not enlarge the GPU runtime. Price checks, identity matching, independent persistence and the evidence gate
+continue to apply. Scientific source, selection, scoring, freezes and timing inputs are unchanged.
+
+The workstation extension binds recovery to the original source, the controller's selected replacement and its
+actual session before further runtime checks. It persists the selected receipt and effective configuration,
+allows recovery only of that same active session, and retains closed attempts. Ambiguous replies, foreign
+sessions, unapproved candidates and excessive costs refuse further allocation. Local input hashing occurs
+before either allocation route. The Phase-4 dispatcher reuses the same endpoint checks; its source is unchanged.
+
+Only the requested two repository test files ran: **98 passed in 6.68 seconds**. The previous full regression
+and unchanged scientific checks remain historical evidence. The refreshed execution-manifest SHA-256 is
+`5773dbda4a79cf88b423f0fe7d5136621130fdafa807c7caaeff8221289ddc7e`.
+Publication and the launch-time preflight precede the authorized retry. Measurements and G3 remain pending.

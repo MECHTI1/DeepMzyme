@@ -482,6 +482,11 @@ cost quote, per-unit timeouts, resource caps and independent Data1 destination. 
 The loop enforces the $3 ceiling, the 117-minute provider STOP and the 900-second reserve, then runs all twelve
 queue events including both serial references. It pulls and verifies terminal files, uploads acknowledgements,
 finalizes receipts and confirms provider shutdown. It never starts Phase 4 or restarts an allocation automatically.
+An explicitly authorized `fallback` configuration permits one controller recovery pass after a confirmed source
+stockout and verified stopped state. Its allowed zones, storage-cost evidence and reserve are mandatory; the
+controller enforces the destination list in both preview and execution. The queue binds the selected immutable
+instance and actual session without repeating local input hashing on the paid clock. Recovery still shares the
+$3 ceiling and 117-minute STOP. Finalize or abandon through the controller's evidence gate after closeout.
 The two pinned public ESM-1b files may specify `remote_url`: direct VM download is verified before rename, with
 upload fallback only after a known terminal failure. Local Data1 copies remain mandatory and hash-checked.
 

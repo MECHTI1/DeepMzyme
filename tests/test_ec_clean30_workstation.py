@@ -200,7 +200,7 @@ def config(tmp_path, monkeypatch):
     secondary.mkdir()
     identity = {"project": "fixture-project", "zone": "us-central1-a", "vm_name": "fixture-l4", "instance_id": "123"}
     controller.mkdir()
-    (controller / "config.env").write_text("PROJECT_ID=fixture-project\nZONE=us-central1-a\nVM_NAME=fixture-l4\nSELECTED_INSTANCE_ID=123\nMACHINE_TYPE=g2-standard-8\nSSH_HOST_ALIAS=fixture-host\nREPO_URL=https://github.com/fixture/repository.git\n")
+    (controller / "config.env").write_text("PROJECT_ID=fixture-project\nREGION=us-central1\nZONE=us-central1-a\nVM_NAME=fixture-l4\nSELECTED_INSTANCE_ID=123\nMACHINE_TYPE=g2-standard-8\nPROVISIONING_MODEL=STANDARD\nSSH_HOST_ALIAS=fixture-host\nREPO_URL=https://github.com/fixture/repository.git\n")
     for name in ("status", "report", "start", "stop", "pycharm-info"):
         path = controller / "bin" / f"vm-{name}"
         path.parent.mkdir(exist_ok=True)
@@ -617,3 +617,302 @@ def test_unknown_provider_state_fails_closed(config, text):
     cfg, _ = config
     with pytest.raises(ws.WorkstationError):
         ws._status(text, cfg["expected_identity"])
+
+
+def allow_fallback(cfg, path):
+    cfg["fallback"] = {
+        "allowed_zones": ["us-central1-b", "us-central1-c"], "storage_reserve_usd": .30,
+        "storage_window_seconds": 14400,
+        "storage_cost_evidence": {"verified_at": stamp(), "disk_usd_per_hour": 15 / 730,
+                                  "snapshot_usd_per_hour": 7.5 / 730, "recycle_minimum_usd": 7.5 / 730},
+    }
+    executable = Path(cfg["controller_root"]) / "bin/vm-fallback"
+    executable.write_text("#!/bin/sh\nexit 99\n")
+    executable.chmod(0o755)
+    write(path, cfg)
+
+
+@pytest.mark.parametrize("zone", ["us-central1-b", "us-central1-c"])
+def test_replacement_identity_requires_exact_authorized_controller_endpoint(config, zone):
+    cfg, path = config
+    allow_fallback(cfg, path)
+    cfg["expected_identity"] = {**cfg["expected_identity"], "zone": zone, "instance_id": "456"}
+    controller = ws._controller_config(Path(cfg["controller_root"]))
+    controller.update(ZONE=zone, SELECTED_INSTANCE_ID="456")
+    ws._identity(cfg, controller)
+    controller["SELECTED_INSTANCE_ID"] = "789"
+    with pytest.raises(ws.WorkstationError):
+        ws._identity(cfg, controller)
+
+
+@pytest.mark.parametrize("problem", ["unapproved", "cross_region", "region_mismatch", "hardware", "project", "name"])
+def test_fallback_does_not_expand_endpoint_authority(config, problem):
+    cfg, path = config
+    allow_fallback(cfg, path)
+    controller = ws._controller_config(Path(cfg["controller_root"]))
+    zone = "us-central1-b"
+    cfg["expected_identity"] = {**cfg["expected_identity"], "zone": zone}
+    controller["ZONE"] = zone
+    if problem == "unapproved":
+        cfg.pop("fallback")
+    elif problem == "cross_region":
+        controller.update(REGION="us-east4", ZONE="us-east4-a")
+        cfg["expected_identity"]["zone"] = "us-east4-a"
+    elif problem == "region_mismatch":
+        controller["REGION"] = "us-east4"
+    elif problem == "hardware":
+        controller["MACHINE_TYPE"] = "g2-standard-12"
+    elif problem == "project":
+        controller["PROJECT_ID"] = "another-project"
+    else:
+        controller["VM_NAME"] = "another-vm"
+    with pytest.raises(ws.WorkstationError):
+        ws._identity(cfg, controller)
+
+
+def test_fallback_cost_reserves_storage_without_widening_three_dollars(config):
+    cfg, path = config
+    baseline = ws._cost(cfg)
+    allow_fallback(cfg, path)
+    recovered = ws._cost(cfg)
+    assert recovered["conservative_max_usd"] == pytest.approx(baseline["conservative_max_usd"] + .30)
+    assert recovered["conservative_max_usd"] < 3
+    cfg["fallback"]["storage_reserve_usd"] = .40
+    with pytest.raises(ws.WorkstationError):
+        ws._cost(cfg)
+
+
+@pytest.mark.parametrize("problem", ["missing_reserve", "insufficient_reserve", "stale_price", "unapproved_zone"])
+def test_recovery_storage_and_zone_evidence_cannot_be_omitted(config, problem):
+    cfg, path = config
+    allow_fallback(cfg, path)
+    if problem == "missing_reserve":
+        cfg["fallback"].pop("storage_reserve_usd")
+    elif problem == "insufficient_reserve":
+        cfg["fallback"]["storage_reserve_usd"] = .05
+    elif problem == "stale_price":
+        cfg["fallback"]["storage_cost_evidence"]["verified_at"] = stamp(time.time() - 90000)
+    else:
+        cfg["fallback"]["allowed_zones"] = ["us-central1-b", "us-east4-a"]
+    with pytest.raises((ws.WorkstationError, KeyError)):
+        ws._cost(cfg)
+
+
+class FallbackTransport(LifecycleTransport):
+    """The controller's selected endpoint changes only after a completed recovery."""
+
+    def __init__(self, cfg, *, zone="us-central1-b", start_error="ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS",
+                 preview_zones="us-central1-b, us-central1-c", replacement_problem=None, preview_problem=None):
+        super().__init__(cfg)
+        self.source = dict(cfg["expected_identity"])
+        self.zone, self.start_error = zone, start_error
+        self.preview_zones, self.replacement_problem = preview_zones, replacement_problem
+        self.preview_problem = preview_problem
+        self.replacement_session = None
+
+    def controller(self, name, *args, **kwargs):
+        if name == "status":
+            self.calls.append((name, args))
+            live = ws._controller_config(self.controller_root)
+            return (f"VM: {live['VM_NAME']} project={live['PROJECT_ID']} zone={live['ZONE']}\n"
+                    f"State: {self.state}\nGoogle-side auto-STOP: VERIFIED\n")
+        if name == "start" and "--confirm" in args and self.start_error:
+            self.calls.append((name, args))
+            raise ws.WorkstationError(f"Controller start failed: {self.start_error}")
+        if name != "fallback":
+            return super().controller(name, *args, **kwargs)
+        self.calls.append((name, args))
+        if "--dry-run" in args:
+            rates = {"verified_at": stamp(), "disk_usd_per_hour": 15 / 730,
+                     "snapshot_usd_per_hour": 7.5 / 730, "recycle_usd_per_hour": 7.5 / 730,
+                     "snapshot_minimum_seconds": 3600, "recycle_minimum_seconds": 3600}
+            if self.preview_problem == "storage_price":
+                rates["disk_usd_per_hour"] *= 2
+            elif self.preview_problem == "minimum_charge":
+                rates["recycle_minimum_seconds"] = 7200
+            elif self.preview_problem == "stale_price":
+                rates["verified_at"] = stamp(time.time() - 90000)
+            return ("Google-side hard STOP after:  117 min (maxRunDuration=7020s, instanceTerminationAction=STOP)\n"
+                    f"Candidate offerings (capacity not guaranteed): {self.preview_zones}\n"
+                    f"Verified storage rates: {json.dumps(rates)}\n")
+        assert "--confirm" in args
+        if self.replacement_problem == "all_stockout":
+            raise ws.WorkstationError("ZONE_RESOURCE_POOL_EXHAUSTED: bounded recovery exhausted")
+        identity = {**self.source, "zone": self.zone, "instance_id": "456"}
+        now = time.time()
+        current = {**identity, "active": True, "session_id": "replacement-session", "session_start": stamp(now),
+                   "termination_ts": stamp(now + 7020), "max_run_duration_s": 7020,
+                   "gross_usd_per_hour": .879172}
+        receipt = {"schema_version": 1, "project": identity["project"], "pass_id": "f01234567890",
+                   "source": self.source, "source_disk": {"sizeGb": "150"}, "replacement": identity,
+                   "phase": "selected", "requested_hours": 2, "limit": {"effective_seconds": 7020},
+                   "allowed_zones": ["us-central1-b", "us-central1-c"],
+                   "candidates": ["us-central1-b", "us-central1-c"],
+                   "attempts": [{"zone": self.zone, "status": "create_requested"}],
+                   "session_id": current["session_id"], "session_start": current["session_start"],
+                   "termination_ts": current["termination_ts"], "updated_at": stamp(),
+                   "price": {"disk_usd_per_hour": 15 / 730, "gross_usd_per_hour": .879172},
+                   "snapshot_price": {"usd_per_gib_month": .05}, "recycle_price": {"usd_per_gib_month": .05}}
+        if self.replacement_problem == "source":
+            receipt["source"] = {**self.source, "instance_id": "wrong-source"}
+        elif self.replacement_problem == "session_id":
+            receipt["session_id"] = "unrelated-session"
+        elif self.replacement_problem == "instance_id":
+            current["instance_id"] = "unrelated-instance"
+        elif self.replacement_problem == "duration":
+            current.update(termination_ts=stamp(time.time() + 8000), max_run_duration_s=8000)
+        elif self.replacement_problem == "rate":
+            current["gross_usd_per_hour"] = 1.1
+        elif self.replacement_problem == "stale_session":
+            current["session_start"] = receipt["session_start"] = stamp(time.time() - 100)
+        elif self.replacement_problem == "limit":
+            receipt["limit"]["effective_seconds"] = 8000
+        elif self.replacement_problem == "storage_price":
+            receipt["price"]["disk_usd_per_hour"] *= 2
+        live_path = self.controller_root / "config.env"
+        live = ws._controller_config(self.controller_root)
+        live.update(ZONE=identity["zone"], SELECTED_INSTANCE_ID=identity["instance_id"])
+        live_path.write_text("".join(f"{key}={value}\n" for key, value in live.items()))
+        write(self.controller_root / "state/fallback.json", receipt)
+        write(self.controller_root / "state/current_session.json", current)
+        self.state, self.replacement_session = "RUNNING", current
+        return "Recovery selected fixture-l4; source and snapshot preserved."
+
+
+@pytest.fixture
+def fallback_lifecycle(lifecycle):
+    cfg, path, measured = lifecycle
+    allow_fallback(cfg, path)
+    return cfg, path, measured
+
+
+@pytest.mark.parametrize("zone", ["us-central1-b", "us-central1-c"])
+def test_confirmed_stockout_runs_one_bounded_pass_then_same_measurement_queue(fallback_lifecycle, zone):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, zone=zone)
+    state = ws.run_g2(cfg, path, transport=transport)
+    assert measured == list(ws.QUEUE)
+    assert state["provider_stop_verified"] and state["closed"]
+    assert state["effective_identity"]["zone"] == zone
+    assert state["fallback_pass_id"] == "f01234567890"
+    assert state["session_id"] == "replacement-session"
+    assert cfg["expected_identity"]["zone"] == "us-central1-a"
+    assert len([call for call in transport.calls if call[0] == "start" and "--confirm" in call[1]]) == 1
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--dry-run" in call[1]]) == 1
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+    assert not any(call[0] == "fallback" and "--finalize" in call[1] for call in transport.calls)
+
+
+@pytest.mark.parametrize("error", ["permission denied", "QUOTA_EXCEEDED", "start response lost"])
+def test_noncapacity_or_ambiguous_start_failure_never_falls_back(fallback_lifecycle, error):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, start_error=error)
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured and not any(call[0] == "fallback" for call in transport.calls)
+
+
+@pytest.mark.parametrize("provider_state", ["RUNNING", "TERMINATED", "UNKNOWN"])
+def test_stockout_text_cannot_override_an_active_foreign_session(fallback_lifecycle, provider_state):
+    cfg, path, measured = fallback_lifecycle
+
+    class ForeignSessionTransport(FallbackTransport):
+        def controller(self, name, *args, **kwargs):
+            try:
+                return super().controller(name, *args, **kwargs)
+            except ws.WorkstationError:
+                if name == "start" and "--confirm" in args:
+                    self.state = provider_state
+                    write(self.controller_root / "state/current_session.json",
+                          {**self.source, "active": True, "session_id": "foreign-session"})
+                raise
+
+    transport = ForeignSessionTransport(cfg)
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured
+    assert not any(call[0] in {"fallback", "stop"} for call in transport.calls)
+
+
+@pytest.mark.parametrize("zones", ["us-central1-b, us-central1-f", "us-east4-a", ""])
+def test_fallback_preview_refuses_candidates_outside_authorized_pass(fallback_lifecycle, zones):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, preview_zones=zones)
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured
+    assert not any(call[0] == "fallback" and "--confirm" in call[1] for call in transport.calls)
+
+
+@pytest.mark.parametrize("problem", ["storage_price", "minimum_charge", "stale_price"])
+def test_fallback_preview_rechecks_live_storage_prices_before_spending(fallback_lifecycle, problem):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, preview_problem=problem)
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured
+    assert not any(call[0] == "fallback" and "--confirm" in call[1] for call in transport.calls)
+
+
+@pytest.mark.parametrize("problem", ["source", "session_id", "instance_id", "duration", "rate", "stale_session", "limit", "storage_price"])
+def test_replacement_requires_valid_session_before_any_measurement(fallback_lifecycle, problem):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, replacement_problem=problem)
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+    if problem in {"source", "session_id", "instance_id", "stale_session"}:
+        assert not any(call[0] == "stop" for call in transport.calls), "Unbound replacement must not be blindly stopped"
+
+
+def test_exhausted_fallback_is_not_repeated(fallback_lifecycle):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg, replacement_problem="all_stockout")
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert not measured
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+
+
+def test_recovery_reattaches_only_its_live_replacement_without_another_start(fallback_lifecycle):
+    cfg, path, measured = fallback_lifecycle
+    transport = FallbackTransport(cfg)
+    started = time.time()
+    transport.controller("fallback", "--confirm", "--hours", "2")
+    identity = {key: transport.replacement_session[key] for key in cfg["expected_identity"]}
+    write(Path(cfg["state_root"]) / "driver_state.json", {
+        "config_sha256": ws._sha(path), "completed": [], "start_attempted": True,
+        "session_id": "replacement-session", "effective_identity": identity,
+        "fallback_attempted": True, "fallback_started_unix": started, "fallback_pass_id": "f01234567890",
+        "fallback_source_identity": dict(cfg["expected_identity"]),
+    })
+    transport.calls.clear()
+    result = ws.run_g2(cfg, path, transport=transport)
+    assert measured == list(ws.QUEUE) and result["closed"] and result["provider_stop_verified"]
+    assert not any(call[0] in {"start", "fallback"} for call in transport.calls)
+
+
+def test_lost_fallback_reply_uses_selected_ownership_only_to_close_safely(fallback_lifecycle):
+    cfg, path, measured = fallback_lifecycle
+
+    class LostReplyTransport(FallbackTransport):
+        def controller(self, name, *args, **kwargs):
+            response = super().controller(name, *args, **kwargs)
+            if name == "fallback" and "--confirm" in args:
+                raise ws.WorkstationError("fallback reply lost")
+            return response
+
+    transport = LostReplyTransport(cfg)
+    with pytest.raises(ws.WorkstationError, match="reply lost"):
+        ws.run_g2(cfg, path, transport=transport)
+    state = json.loads((Path(cfg["state_root"]) / "driver_state.json").read_text())
+    assert not measured and state["closed"] and state["provider_stop_verified"]
+    assert state["session_id"] == "replacement-session"
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
+    with pytest.raises(ws.WorkstationError):
+        ws.run_g2(cfg, path, transport=transport)
+    assert len([call for call in transport.calls if call[0] == "fallback" and "--confirm" in call[1]]) == 1
