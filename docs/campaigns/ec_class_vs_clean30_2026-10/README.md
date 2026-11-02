@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-02; G2 retry and bounded same-region recovery authorized; VM stopped)
+Status: active (2026-11-02; G2 blocked by stockout in all three authorized zones; recovery cleaned up; VM stopped)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -27,5 +27,6 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)). The log records
 simulation limitations (evc-010), S1 verification (evc-012), WP-13 (evc-013), automation (evc-014) and direct
 downloads (evc-015). [evc-016](log.md#evc-016) records the authorized G2 start's capacity failure and verified
-shutdown. [evc-017](log.md#evc-017) records the authorized recovery. Freeze 1c and G3 await measurements.
+shutdown. [evc-017](log.md#evc-017) records recovery verification; [evc-018](log.md#evc-018) records the exhausted
+pass and cleanup. Freeze 1c and G3 await measurements and fresh start authority.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

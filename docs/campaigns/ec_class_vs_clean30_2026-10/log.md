@@ -1071,3 +1071,36 @@ Only the requested two repository test files ran: **98 passed in 6.68 seconds**.
 and unchanged scientific checks remain historical evidence. The refreshed execution-manifest SHA-256 is
 `5773dbda4a79cf88b423f0fe7d5136621130fdafa807c7caaeff8221289ddc7e`.
 Publication and the launch-time preflight precede the authorized retry. Measurements and G3 remain pending.
+
+## evc-018
+
+2026-11-02 — **All authorized zones exhausted; recovery cleaned up.** The combined evc-016 record and recovery
+extension were committed and pushed as `4fb4bdd6136b3a8f09cc78f226c082141a62172f`. Strict execution authentication
+passed without draft mode. The refreshed CLEAN input receipt is
+`f01248bbbe975b0b6a7001af6836643e3383850f2913e69ffa8df532b3785934`; all thirty scientific payloads and eight unit
+definitions match their preserved predecessors. The launch configuration is
+`59b23f1b58b13dd44b7c3db2f9a6b14fc00f434549d81306c0eee0802a0e388a`.
+
+The queue passed full local preflight before the single source retry. `us-central1-a` returned
+`ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS` at 12:09 UTC. Recovery pass `98e162169164` then created its source
+snapshot and tried the explicit destination list. Provider insert operations in `us-central1-b` and
+`us-central1-c` finished with the same capacity error at approximately 12:20 and 12:23 UTC. No replacement was
+selected, no GPU session opened, no remote G2 staging occurred, and zero of ten measurements completed.
+The driver closed the attempt and confirmed the source VM stopped. There was no extra retry or zone expansion.
+
+The authorized abandonment preview passed after the attempt window closed and independent backup hashes were
+verified. Cleanup completed at 12:27:08 UTC: both restored destination disks, the temporary snapshot and its
+recycle-bin copy were removed; all four temporary-storage ledger events closed. The source VM and its original
+boot disk were preserved. Independent provider status at 12:28:26 UTC confirmed `TERMINATED` and zero recorded
+GPU runtime. The final inventory contains only the original disk and two pre-existing snapshots.
+
+Estimated temporary-storage charge: **$0.0269563**, including the snapshot and recycle-bin one-hour minima.
+Original retained storage continues separately; these controller estimates are not a billing invoice. The
+private closeout receipt is `phase3/g2_fallback_closeout_20261102/closeout.json`, SHA-256
+`d38067b386938399de918978c890a2bf07b4ea70d6bea925d1494a92166dfbd5`. Its evidence and request snapshots were copied
+to the independent NVMe backup and read back by hash (28 files).
+
+The five Phase-4 request files retain pending status and unset numerical budgets, now naming the exhausted
+capacity pass. Freeze 1c cannot be built and no measured G3 ceiling or lane outcome can be claimed. The published
+code and prepared inputs remain reusable. A future authorized allocation must use a fresh attempt namespace;
+the closed driver state and archived recovery pass remain immutable.

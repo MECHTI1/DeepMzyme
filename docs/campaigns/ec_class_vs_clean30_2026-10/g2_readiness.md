@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; the first G2 start was blocked by capacity ([evc-016](log.md#evc-016)); a retry with bounded
-same-region recovery is authorized ([evc-017](log.md#evc-017)). The VM is stopped; measurements remain pending.
+Status: 2026-11-02; the published recovery queue exhausted its three authorized zones on capacity failures.
+Temporary resources are removed; the original VM is stopped ([evc-018](log.md#evc-018)). Measurements remain pending.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
 The S1 amendment is published at `3154a7f`; its publication check passed before WP-13 development.
@@ -35,8 +35,11 @@ The closeout receipt, original configuration and error are preserved on Data1 an
 
 Freeze 1c cannot be assembled without its ten verified measurements. The five private Phase-4 requests remain
 pending with an explicit capacity blocker; numerical forecasts and G3 ceilings remain unset. The existing closed
-attempt must not be reset. The newly authorized retry uses a new namespace and permits recovery only to
-`us-central1-b` or `us-central1-c`, after another confirmed source stockout. All prepared inputs remain reusable.
+attempt must not be reset. The authorized retry used a new namespace and tried `us-central1-b` and
+`us-central1-c` after another confirmed source stockout. Both returned capacity failures. The controller verified
+the failed operations, removed both destination disks and the temporary snapshot/recycle copy, and archived
+the pass. The original VM and boot disk remain intact. Further allocation needs a fresh start decision;
+all prepared inputs remain reusable. No Freeze 1c or numerical G3 proposal exists without measurements.
 
 The recovery configuration reserves $0.30 beyond the original $2.6641 envelope, giving **$2.9641** within $3.
 It prices up to four hours of overlapping storage through cleanup, including two possible destination disks,
