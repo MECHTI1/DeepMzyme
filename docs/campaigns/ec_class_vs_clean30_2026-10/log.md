@@ -1257,3 +1257,51 @@ All five Phase-4 requests remain pending with the explicit all-six-zones-stockou
 zero of ten required measurements, so no Freeze 1c or numerical G3 proposal is possible. The published source,
 views, embeddings, CLEAN input closure and earlier freezes remain reusable. Another allocation requires a
 fresh decision; the closed driver and exhausted recovery pass must not restart automatically.
+
+## evc-023
+
+2026-11-02 — **Same-region pass exhausted; abandonment and shutdown verified.** The maintainer authorized
+one source start in `us-central1-a`, followed on stockout by `us-central1-b` and `us-central1-c` only.
+Cross-region recovery was excluded. The two-hour request, 117-minute provider STOP and exact twelve-event
+HostPull queue retained a **$3 gross ceiling**, including the **$0.30 same-region recovery-storage reserve**.
+The existing $25 controller daily guard was retained; `config.env` is byte-identical to its pre-pass backup.
+
+The private launch configuration was rebound to `same-region-v1`, without a cross-region budget reference,
+and a fresh driver namespace. Its SHA-256 is
+`54833fce33fe0399c57982654d64b09aaba3951ef0ca8c9b02471d0a99de927c`.
+Published execution authentication and all ten staging-input checks passed. The unchanged execution manifest
+is `8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a`; source HEAD was `f919182`.
+Fresh controller pricing admitted the **$2.9640956** conservative envelope, with zero recovery-transfer reserve.
+No scientific source, freeze, view, embedding or CLEAN input closure changed; existing code verification was reused.
+
+| Zone | Recorded request (UTC) | Result |
+|---|---|---|
+| us-central1-a | 18:49:27 source start | Capacity failure |
+| us-central1-b | 19:00:45 recovery request | Capacity failure |
+| us-central1-c | 19:03:59 recovery request | Capacity failure |
+
+Recovery pass `b3502feb877b` used one central-region snapshot. Both destination insert operations reached
+`DONE` with `ZONE_RESOURCE_POOL_EXHAUSTED_WITH_DETAILS`. No replacement was selected. The driver closed
+with **zero of twelve events completed** and verified the source stopped. No remote staging, HostPull transfer,
+embedding or fit began. This is capacity evidence, not a measured G2 result.
+
+After the ten-minute recovery window expired, independent backup verification and the cleanup preview passed.
+Authorized `--abandon` removed both restored disks, the temporary snapshot and its recycle-bin copy, then
+archived the pass at **19:08:08 UTC**. Independent provider status at **19:08:23 UTC** and the report at
+19:08:29 confirmed `TERMINATED`, no active session and zero GPU runtime. The original VM, its 150-GB disk
+and two pre-existing snapshots remain. All four temporary-storage records are closed.
+
+Conservative incremental storage accounting is **$0.0267665548**, including snapshot and recycle minimums;
+no cross-region transfer charge was recorded. This is not provider-confirmed billed spend. The controller's
+full-day estimate is $16.59, including prior passes and ongoing storage reservations, within its unchanged $25
+guard. The retained original disk and snapshots continue to cost approximately $30/month.
+
+The closeout is `phase3/g2_same_region_20261102/closeout.json`, SHA-256
+`595a5bf2d2ffce4073e5939f7da3f3ac691d2ff99349bfb21fc9c69e9ab281d0`.
+All 33 evidence files are preserved on Data1 and independently mirrored to NVMe with hash readback.
+The abandonment receipt SHA-256 is
+`72a198cd3157fc2e7dbe14dc56fe0a9a871ea56310ae7e0974204ce220603b58`.
+
+Zero of ten required measurements are available; Freeze 1c and numerical G3 remain blocked. Phase-4 requests
+remain pending. The closed driver and exhausted recovery pass cannot restart automatically; another allocation
+requires a fresh decision. Root STATUS remains unchanged under C-10; current progress stays in this campaign.

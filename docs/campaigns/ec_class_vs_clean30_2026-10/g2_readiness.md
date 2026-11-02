@@ -1,7 +1,7 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-02; the approved $19 pass exhausted all six zones ([evc-022](log.md#evc-022)).
-Temporary recovery resources are removed; the original VM is `TERMINATED`. Zero G2 events ran.
+Status: 2026-11-02; the new $3 same-region pass exhausted all three central zones ([evc-023](log.md#evc-023)).
+Temporary recovery resources are removed; the original VM is `TERMINATED`. Zero of twelve G2 events ran.
 Another allocation needs a fresh decision; the two-hour request and 117-minute STOP remain the reviewed bounds.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
@@ -24,29 +24,27 @@ Strict `verify-execution` passed without draft mode on published WP-13 before ex
 [extended manifest](execution_v2/manifest.json) authenticates the workstation queue and Fold-0 dispatcher against
 that immutable base. Its publication is required before the launch command can allocate compute. After start,
 the queue verifies the actual runtime and free space, performs the relocated-view probe and binds all requests
-to the controller's actual allocation/deadline. No remote staging or measurement has run; the failed recovery
-incurred transfer and temporary-storage accounting as recorded in evc-022.
+to the controller's actual allocation/deadline. No remote staging or measurement has run. The latest pass
+incurred temporary-storage accounting only; [evc-022](log.md#evc-022) preserves the earlier cross-region charges.
 
 ## Current recovery readiness
 
-The authorized destination order is `us-west1-a`, `us-west1-b`, `us-west1-c`, `us-east4-a`, `us-east4-c`, after
-one retry of the existing source. Both regional subnets and L4 quota are present. The proposed west SKU IDs
-do not exist in the current catalog; use the runbook's verified Americas profile. East's profile is valid.
-The [cross-region contract](../../GCP_GPU_RUNBOOK.md#explicit-cross-region-recovery) retains protected runtime,
-HostPull and evidence-gated cleanup, while adding exact regional profiles and bounded restoration accounting.
+The private launch configuration now binds `same-region-v1`: one source start in `us-central1-a`, then
+`us-central1-b` and `us-central1-c` only, in a fresh driver namespace. Cross-region recovery is excluded.
+The requested runtime stays two hours with a 117-minute provider STOP. The **$3 gross ceiling** includes
+the **$0.30 same-region recovery-storage reserve**, giving a conservative envelope of **$2.9640956**.
+The controller's $25 daily guard is unchanged; it does not expand campaign authority.
 
-Each cross-region disk restoration costs $0.02/GiB, including a disk whose VM creation subsequently fails.
-The safe 150 GiB × five-candidate transfer reserve is $15. Together with the existing $2.6641 G2 envelope
-and $0.60 overlapping-storage reserve, the workstation bound is **$18.2641**, within the approved **$19**.
-The former $3.50 refusal and its price audit remain preserved. The new private recovery budget is hash-bound
-to a fresh launch configuration; controller daily accounting now permits $25 to cover full-day reservations.
+The authorized pass returned stockout in all three zones. No remote staging, HostPull, embedding or fit began.
+Evidence-gated abandonment removed both restored disks, the temporary snapshot and its recycle-bin copy.
+The source VM, its disk and two pre-existing snapshots remain; provider status confirmed `TERMINATED`.
+Incremental temporary-storage accounting is approximately **$0.02677**, not provider-confirmed billed spend.
+The published execution manifest and all scientific preparation are reused unchanged.
 
-The existing source's single retry used the original $2.6641 envelope and a fresh driver namespace.
-It returned stockout; provider shutdown was confirmed at 14:53 UTC ([evc-020](log.md#evc-020)).
-The maintainer then approved one new bounded source launch and the ordered cross-region pass above.
-That pass also exhausted every candidate. Provider shutdown and deletion of all five temporary disks, the
-snapshot and its recycle-bin copy are verified. The source VM/disk and scientific preparation remain intact.
-The conservative incremental recovery accounting is $15.05; final provider billing is unverified.
+[evc-023](log.md#evc-023) owns this pass's authorization, attempts and cleanup evidence;
+[evc-022](log.md#evc-022) preserves the earlier exhausted $19 cross-region pass. Both passes are closed.
+Another allocation requires a fresh decision. Successful recovery still requires fit/replay/independent-backup
+evidence before adoption; failed recovery uses the [abandonment gate](../../GCP_GPU_RUNBOOK.md#recover-a-stopped-vm-in-the-same-region).
 
 ## Previous start attempts
 
@@ -134,9 +132,9 @@ weight-file bytes through the workstation uplink. The full allocation deadline s
 
 ## Budget and persistence
 
-The original G2-only envelope proposed one two-hour session with a **$3 gross ceiling**; the later
-**$19** approval included cross-region recovery. Its single pass is now consumed. The existing-VM start preview
-currently gives a **117-minute automatic STOP**. At the verified $0.879172/hour gross rate, the controller
+The latest G2 envelope retained a two-hour request and **$3 gross ceiling**, including the $0.30 recovery
+reserve described above. Its single same-region pass is consumed. The existing-VM start preview
+gives a **117-minute automatic STOP**. At the verified $0.879172/hour gross rate, the controller
 estimates $1.71, or $1.97 with its 15% margin. Allocation, setup, transfer, verification, fits and replay all
 consume this session. The actual allocation timestamp and provider deadline must come from the controller.
 
@@ -210,8 +208,9 @@ certified train/query units. R1-inner training counts are 7,898/7,926/7,840/7,67
 The dispatcher currently runs S1 serially; price G3 with measured serial time even if the lane diagnostic passes.
 Later S2/S3 and refit dispatch remain separate work after the Fold-0 decision.
 
-The source-only preview verifies all ten staging inputs, the exact twelve-event queue and a conservative
-$2.6641 cost envelope. Strict source authentication refuses an unpublished start; the launch-time preflight
-must pass before billing. The cross-region configuration additionally enforces its approved $19 ceiling. The private G2 configuration
-and five Phase-4 request templates are prepared on Data1. Phase-4 measurements and numerical G3 authority remain
+The preview verifies all ten staging inputs and the exact twelve-event queue. The current same-region
+configuration adds $0.30 recovery storage to the $2.6641 source-only envelope and enforces the $3 ceiling.
+Strict source authentication refuses an unpublished start; the launch-time preflight must pass before billing.
+The private G2 configuration and five Phase-4 request templates are preserved on Data1; the closed pass cannot
+restart automatically. Phase-4 measurements and numerical G3 authority remain
 explicitly pending. Pricing evidence expires after 24 hours and must be refreshed if launch occurs later.
