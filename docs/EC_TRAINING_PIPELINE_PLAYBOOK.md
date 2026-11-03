@@ -505,7 +505,7 @@ Explicit `runpod.keep_alive_for_operator:true` keeps the same heartbeat and watc
 qualification failure or completed G2, until a control or the original deadline minus 900 seconds. It never
 extends runtime or spending. Session-bound controls may retry qualification only before workload admission,
 with the exact same published source; they cannot rerun failed scientific units or launch Phase 4. Changed
-source requires a separately verified handoff. Default closeout behavior is unchanged.
+source requires separate execution verification. Default closeout behavior is unchanged.
 
 ```bash
 PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"
