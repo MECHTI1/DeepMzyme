@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-03; cache verified; G2 host repair)
+Status: active (2026-11-03; cache verified; G2 stockout)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;

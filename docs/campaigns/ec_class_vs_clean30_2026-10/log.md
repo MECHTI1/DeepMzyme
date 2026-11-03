@@ -1622,3 +1622,10 @@ retry only after absence and active-GPU checks; uncertain responses never permit
 The first create intent fixes the 117-minute clock across retries. Keep-alive, the $5 gross ceiling including
 prior charges, independent stop controls, kernel caps, replay and HostPull gates remain unchanged.
 Actual qualification and all measurements remain pending; Freeze 1c/G3 and Phase 4 are not established here.
+
+The next pass completed local published-source verification, then searched for exactly 1,800 seconds
+(14:33:26–15:03:26 UTC), recording 60 catalog reads. Three create-admission attempts lost stock before
+the provider request and returned to polling. No create request was sent, no pod was allocated and no new
+GPU charge accrued. Fresh provider inventory verified absence; both older pods remain `EXITED`, and GCP
+was verified `TERMINATED` at 15:03:48 UTC. The complete search and closeout record is independently mirrored.
+The warm cache remains retained; G2 stays 0/12 and no Freeze 1c or numerical G3 result is available.
