@@ -110,8 +110,9 @@ allocation; the destination still verifies every downloaded chunk and assembled 
 resumes only at verified chunk boundaries. Cache preparation allocates no GPU and does not waive pricing or
 storage accounting.
 
-[evc-029](log.md#evc-029) records configured S3 authentication, local preflight/reuse timings and the
-signed-GET client-identifier compatibility correction; complete seeding and GPU qualification remain pending.
+[evc-029](log.md#evc-029) records S3 authentication, local preflight timings and transport corrections.
+[evc-030](log.md#evc-030) records verified seeding and the closed stockout with provider absence verified;
+actual GPU qualification remains pending.
 
 After allocation, only the authenticated cap helper transfers initially. It must prepare private delegated
 controls without changing provider limits and pass the actual kernel probe before checkout or bulk staging.

@@ -30,6 +30,8 @@ with p.with_suffix('.lock').open('a+') as lock:
  if action=='list': out=state.get('pods',[])
  elif action=='create':
   state['create_calls']=state.get('create_calls',0)+1
+  if state.get('reject_create_error'):
+   p.write_text(json.dumps(state));print(json.dumps(state['reject_create_error']),file=sys.stderr);sys.exit(1)
   options=dict(zip(args[::2],args[1::2])); now=state.get('created_at',datetime.datetime.now(datetime.timezone.utc).isoformat())
   pod={'id':'ownedpod123','name':options['--name'],'createdAt':now,'desiredStatus':'RUNNING','runtimeStatus':'running',
        'gpuCount':1,'gpuId':state.get('actual_gpu',options['--gpu-id']),'imageName':options['--image'],
@@ -123,6 +125,65 @@ def test_cost_admission_accounts_for_prior_storage_egress_and_margin(fixture):
     config["runpod"]["quote"]["prior_charge_usd"] = 4
     with pytest.raises(rc.RunpodError, match="gross envelope"):
         rc.validate_config(config)
+
+
+CAPACITY_REJECTION = ('Runpod create failed: bad_request: failed to create pod: '
+                      'There are no longer any instances available with the requested specifications. '
+                      'Please refresh and try again.')
+
+
+def test_explicit_provider_capacity_rejection_closes_after_absence_readback(fixture):
+    _, _, api, _, make = fixture
+    controller = make(reject_create_error={'code': 'bad_request',
+        'error': CAPACITY_REJECTION.split('bad_request: ', 1)[1]})
+    with pytest.raises(rc.RunpodError, match='no longer any instances'):
+        controller.start()
+    state = controller._state()
+    assert state['phase'] == 'stopped' and state['stop_requested']
+    assert state['stop_receipt']['status'] == 'CREATE_REJECTED_NO_POD'
+    assert state['stop_receipt']['provider_absence_verified'] and not controller.owner_path.exists()
+    observed = json.loads(api.read_text())
+    assert observed['create_calls'] == 1 and observed['pods'] == []
+    assert observed['calls'].count('list') >= 3 and 'stop' not in observed['calls']
+    with pytest.raises(rc.RunpodError, match='launch intent'):
+        controller.start()
+    assert json.loads(api.read_text())['create_calls'] == 1
+
+
+@pytest.mark.parametrize('error', ['Runpod create result is uncertain (TimeoutExpired).',
+    'Runpod create failed: network_error: response lost',
+    'Runpod create failed: bad_request: another validation error'])
+def test_uncertain_or_unclassified_create_keeps_shutdown_reconciliation_open(fixture, monkeypatch, error):
+    _, _, _, _, make = fixture
+    controller = make()
+    rc._write(controller.state_path, {'config_sha256': controller.config_sha, 'session_id': 'fixture',
+        'phase': 'closing_after_failure', 'create_attempted': True, 'create_error': error})
+    monkeypatch.setattr(controller, '_resolve', lambda: None)
+    with pytest.raises(rc.RunpodError, match='remains unresolved'):
+        controller.stop()
+    assert controller._state()['phase'] == 'closing_after_failure'
+
+
+def test_rejected_create_absence_is_rechecked_before_closing(fixture, monkeypatch):
+    _, _, _, _, make = fixture
+    controller = make()
+    rc._write(controller.state_path, {'config_sha256': controller.config_sha, 'session_id': 'fixture',
+        'phase': 'closing_after_failure', 'create_attempted': True, 'create_error': CAPACITY_REJECTION})
+    monkeypatch.setattr(controller, '_resolve', lambda: None)
+    monkeypatch.setattr(controller, '_pods', lambda: [{'id': 'latepod', 'name': controller.cfg['pod_name']}])
+    with pytest.raises(rc.RunpodError, match='appeared after'):
+        controller.stop()
+    assert controller._state()['phase'] == 'closing_after_failure'
+
+
+def test_owned_pod_is_stopped_even_if_create_error_claimed_capacity_rejection(fixture):
+    _, _, api, _, make = fixture
+    controller = make()
+    controller.start()
+    controller._update(create_error=CAPACITY_REJECTION)
+    receipt = controller.stop()
+    assert receipt['runtime_status'] == 'stopped' and receipt['pod_id'] == 'ownedpod123'
+    assert json.loads(api.read_text())['stop_calls'] == 1
 
 
 def test_continuous_heartbeat_covers_a_simulated_long_blocking_transfer(fixture, monkeypatch):

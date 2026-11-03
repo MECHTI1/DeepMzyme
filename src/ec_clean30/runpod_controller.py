@@ -789,6 +789,20 @@ class RunpodController:
             self._update(phase="stopped", stop_receipt=receipt)
             return receipt
         owned = self._resolve()
+        rejection = state.get("create_error", "")
+        if (not owned and isinstance(rejection, str)
+                and rejection.startswith("Runpod create failed: bad_request: failed to create pod:")
+                and "There are no longer any instances available with the requested specifications." in rejection):
+            # An explicit capacity rejection is different from a lost POST reply.
+            # Reconcile a fresh complete inventory before ending its stop guard.
+            rows = self._pods()
+            _require(not any(pod.get("name") == self.cfg["pod_name"] for pod in rows),
+                     "A pod appeared after the capacity rejection; shutdown remains unresolved.")
+            receipt = {"status": "CREATE_REJECTED_NO_POD", "provider_absence_verified": True,
+                       "create_error_sha256": hashlib.sha256(rejection.encode()).hexdigest(),
+                       "observed_pod_ids": sorted(pod["id"] for pod in rows), "verified_at": _utc(time.time())}
+            self._cleanup_update(phase="stopped", stop_receipt=receipt)
+            return receipt
         _require(owned, "Allocation result remains unresolved; watchdog continues name reconciliation.")
         until = time.monotonic() + 90
         last_error = ""

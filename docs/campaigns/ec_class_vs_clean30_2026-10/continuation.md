@@ -12,6 +12,8 @@ A separately authorized Runpod setup was stopped after input and off-pod preserv
 and named-pod cap checks are recorded in [evc-026](log.md#evc-026). The runtime repair and replacement
 window are recorded in [evc-027](log.md#evc-027). The cache-backed bootstrap extension is implemented
 ([evc-028](log.md#evc-028)); actual model/CUDA checks and all twelve G2 events remain pending.
+[evc-030](log.md#evc-030) records completed cache seeding and a provider-rejected allocation with verified
+absence. That pass is closed; a further launch requires a fresh deliberate trigger and current stock evidence.
 The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
 cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.

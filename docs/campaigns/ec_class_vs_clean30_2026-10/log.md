@@ -1576,3 +1576,20 @@ truncated S3 response streams. Complete chunk reads now retry at most three time
 discarding partial data and restarting the checksum; authentication, checksum, size and deadline guards remain.
 No GPU was allocated. Complete cache seeding, host qualification and all twelve G2 events remain pending;
 Freeze 1c/G3 are unmeasured, and Phase 4 and held-out reads remain gated.
+
+## evc-030
+
+2026-11-03 — **Verified cache and closed Runpod stockout pass.** All 100 transport chunks were verified:
+31 reused and 69 newly uploaded, covering 6,569,324,775 transport bytes. New uploads totalled 4,543,996,174 bytes;
+seeding took 2,048.14 seconds, excluding local preflight. Warm canonical preflight plus three completion-descriptor
+readbacks passed in 6.42 seconds. These preparation measurements do not establish model or scientific validity.
+
+Fresh EU-RO-1 RTX 4090 stock with CUDA 13.2 at $0.89/hour preceded one bounded create. Runpod rejected it
+because the requested stock disappeared. Fresh inventories found no new pod; the original intent is closed as
+`CREATE_REJECTED_NO_POD`, with provider absence verified. The retained GCP VM remains `TERMINATED`.
+The controller now closes this explicit rejection only after another fresh absence check; uncertain create
+replies still retain reconciliation. Its focused suite passed 80 tests. Earlier source and failure records remain preserved.
+
+The pre-launch conservative estimate was $3.8185 under the unchanged $5 ceiling and 117-minute stop rule;
+no new GPU was allocated. The 20-GB cache remains retained and billed. Actual host qualification, all twelve
+G2 events, Freeze 1c and numerical G3 remain pending. Phase 4 and held-out reads remain gated.
