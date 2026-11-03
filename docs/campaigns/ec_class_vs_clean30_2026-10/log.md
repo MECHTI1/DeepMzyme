@@ -1520,3 +1520,45 @@ transferred pods remain stopped. The [runtime-v2 manifest](execution_v3/manifest
 The final six-file focused suite passed **400 tests, one skipped**, with unchanged source; the
 independent deadline review found no blocking issue. Documentation checks had zero strict failures.
 Zero G2 events are complete; Freeze 1c and numerical G3 remain unmeasured. Phase 4 and held-out reads stay gated.
+
+## evc-028
+
+2026-11-03 — **Reproducible Runpod bootstrap and artifact-cache extension.** The implementation adds
+execution-v4 source authentication, preserving the published runtime-v2 ancestor and every older manifest.
+The exact twelve-event queue, original source/input/archive identities, F9 guards, 1.25 admission multiplier,
+900-second reserve, independent replay and dual-device HostPull acknowledgments remain unchanged.
+The [bootstrap readiness record](g2_readiness.md#reproducible-runpod-bootstrap) owns the implemented preparation
+and staging contract; the [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues)
+owns the single entry point and its separate prepare, seed and deliberate-run actions.
+
+The approved private cache is a 20-GB Standard network volume in EU-RO-1 used as an S3 origin, without
+mounting it on the GPU pod. It stores only the two pinned runtime archives and compressed Fold-0 view
+transport. SHA-addressed 64-MiB chunks, a tiny signed-header compatibility probe, full readback and final
+archive verification support reuse and bounded resume. Permanent S3 keys remain in the protected local
+profile; temporary request authorizations are excluded from durable receipts. Public ESM-1b and ESMC
+model bytes use source-pinned official origins and full checksums. The ESMC tar is reconstructed against
+its original archive pin. The warm path avoids repeated bulk workstation uploads by design; no measured
+transfer-time improvement is claimed yet.
+
+Bootstrap prepares and probes actual delegated kernel controls before checkout or large payloads. It stages
+one clean published checkout, restores the main environment first, checks its complete isolated package lock
+and executes a capped CUDA probe before staging the remaining inputs with at most two workers. Full-model
+ESM-1b CUDA transfer and CPU/GPU replay still precede scientific admission. A continuous workstation heartbeat
+protects long preparation operations while the independent stop process retains the original allocation clock.
+
+The $5 gross pass ceiling, 117-minute hard stop and two-hour requested maximum remain unchanged. The
+separate configurable local $10 gross rolling-24-hour spending policy does not establish a provider hard cap
+or increase campaign authority. Cache storage is included in accounting. Earlier absolute windows remain
+closed; the new pass requires a fresh namespace and current source, seed, price, spending, storage and
+provider-state checks. The retained GCP VM must remain `TERMINATED`, with its $25 daily guard unchanged.
+
+The [verification record](execution_v4/verification.json) records **583 focused passes, one skip** and
+**44 CPU smoke passes, one skip**, with unchanged source and zero strict documentation failures.
+A combined check encountered two synthetic launch refusals during severe workstation memory pressure;
+the complete unchanged controller suite then passed separately. The runtime recipes are now bound to the
+published complete 187/26-package locks, and final session admission cannot overwrite a concurrent STOP.
+The approved cache was created and read back as 20-GB Standard storage in EU-RO-1. Seeding is blocked on the
+separate protected S3 profile; the cache continues to bill while retained.
+
+Actual cache seeding, host qualification and G2 timing remain pending. Zero G2 events are complete;
+Freeze 1c and numerical G3 remain unmeasured. This implementation does not authorize Phase 4 or held-out reads.

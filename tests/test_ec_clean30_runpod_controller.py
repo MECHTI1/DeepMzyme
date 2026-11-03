@@ -8,6 +8,7 @@ import signal
 import shutil
 import sys
 import tempfile
+import threading
 import time
 from types import SimpleNamespace
 
@@ -122,6 +123,122 @@ def test_cost_admission_accounts_for_prior_storage_egress_and_margin(fixture):
     config["runpod"]["quote"]["prior_charge_usd"] = 4
     with pytest.raises(rc.RunpodError, match="gross envelope"):
         rc.validate_config(config)
+
+
+def test_continuous_heartbeat_covers_a_simulated_long_blocking_transfer(fixture, monkeypatch):
+    _, _, api, _, make = fixture
+    controller = make()
+    session = controller.start()
+    started = time.time()
+    elapsed = [0]
+    advanced = threading.Event()
+    real_event = threading.Event
+    real_thread = threading.Thread
+
+    class AcceleratedEvent:
+        def __init__(self): self.event = real_event()
+        def is_set(self): return self.event.is_set()
+        def set(self): return self.event.set()
+        def wait(self, interval):
+            if self.event.wait(.002): return True
+            elapsed[0] = min(1050, elapsed[0] + interval)
+            if elapsed[0] == 1050: advanced.set()
+            return False
+
+    monkeypatch.setattr(rc, 'threading', SimpleNamespace(Event=AcceleratedEvent, Thread=real_thread))
+    monkeypatch.setattr(rc, 'time', SimpleNamespace(time=lambda: started + elapsed[0],
+                                                   monotonic=time.monotonic, sleep=time.sleep))
+    with controller.maintain_heartbeat(interval=30) as heartbeat:
+        # No foreground transport call runs during this simulated 1050-second block.
+        assert advanced.wait(3), 'The background ticker did not progress while the foreground waited.'
+        beat = json.loads(controller.heartbeat_path.read_text())
+        assert elapsed[0] > 900 and 0 <= started + elapsed[0] - beat['updated_unix'] <= 30
+        assert beat['pid'] == os.getpid() and beat['session_id'] == session['session_id']
+        heartbeat.check()
+        state = controller._state()
+        assert all(state[key] == session[key] for key in ('allocation_started_unix', 'deadline_unix', 'hard_stop_unix'))
+        with pytest.raises(rc.RunpodError, match='before verified shutdown'):
+            heartbeat.close()
+    assert not heartbeat.thread.is_alive()
+    assert json.loads(api.read_text())['pods'][0]['runtimeStatus'] == 'stopped'
+
+
+def test_continuous_heartbeat_failure_closes_admission_and_still_stops(fixture, monkeypatch):
+    _, _, api, _, make = fixture
+    controller = make()
+    controller.start()
+    original = rc._write
+    writes = [0]
+
+    def broken_owner_disk(path, value):
+        if path == controller.heartbeat_path:
+            writes[0] += 1
+            if writes[0] > 1: raise OSError('owner disk failed rpa_private_credential')
+        original(path, value)
+
+    monkeypatch.setattr(rc, '_write', broken_owner_disk)
+    with pytest.raises(rc.RunpodError, match='Continuous owner heartbeat failed'):
+        with controller.maintain_heartbeat(interval=.005) as heartbeat:
+            assert heartbeat.finished.wait(2)
+            assert controller._state()['stop_requested']
+            before = list(json.loads(api.read_text())['calls'])
+            with pytest.raises(rc.RunpodError, match='Continuous owner heartbeat failed'):
+                controller.session()
+            assert json.loads(api.read_text())['calls'] == before
+            heartbeat.check()
+    assert controller._state()['phase'] == 'stopped'
+    assert not heartbeat.thread.is_alive()
+    assert 'rpa_private_credential' not in controller.state_path.read_text()
+
+
+def test_heartbeat_context_refuses_another_coordinator_process(fixture, monkeypatch):
+    _, _, api, _, make = fixture
+    controller = make()
+    controller.start()
+    with controller.maintain_heartbeat(interval=30) as heartbeat:
+        original = rc.os.getpid
+        monkeypatch.setattr(rc.os, 'getpid', lambda: heartbeat.pid + 100)
+        try:
+            with pytest.raises(rc.RunpodError, match='another coordinator process'):
+                controller.heartbeat()
+        finally:
+            monkeypatch.setattr(rc.os, 'getpid', original)
+    assert json.loads(api.read_text())['pods'][0]['runtimeStatus'] == 'stopped'
+
+
+def test_heartbeat_context_keeps_ticker_when_stop_cannot_be_verified(fixture, monkeypatch):
+    _, _, _, _, make = fixture
+    controller = make()
+    controller.start()
+    stop = controller.stop
+    monkeypatch.setattr(controller, 'stop', lambda: (_ for _ in ()).throw(rc.RunpodError('STOP unavailable')))
+    try:
+        with pytest.raises(rc.RunpodError, match='STOP unavailable'):
+            with controller.maintain_heartbeat(interval=.01) as heartbeat:
+                pass
+        assert heartbeat.thread.is_alive() and not heartbeat.finished.is_set()
+    finally:
+        monkeypatch.setattr(controller, 'stop', stop)
+        controller.stop()
+        heartbeat.close()
+
+
+def test_independent_watchdog_stops_after_losing_continuous_owner(fixture, monkeypatch):
+    _, path, _, _, make = fixture
+    controller = make()
+    state = {'phase': 'running', 'session_id': 'lost-owner', 'deadline_unix': 9000}
+    controller._cached_state = state
+    controller.heartbeat_path.parent.mkdir(parents=True, exist_ok=True)
+    controller.heartbeat_path.write_text(json.dumps({'session_id': 'lost-owner', 'updated_unix': 0, 'pid': 123}))
+    snapshot = controller.root / 'watchdog-fixture.json'
+    snapshot.write_text(json.dumps({'config': controller.config, 'config_path': str(path)}))
+    stopped = []
+    monkeypatch.setattr(controller, '_cleanup_state', lambda: dict(state))
+    monkeypatch.setattr(controller, 'stop', lambda: stopped.append('owned-stop'))
+    monkeypatch.setattr(rc, 'RunpodController', lambda *args, **kwargs: controller)
+    monkeypatch.setattr(rc, 'time', SimpleNamespace(time=lambda: 1001))
+    rc._watchdog(snapshot)
+    assert stopped == ['owned-stop'] and state['deadline_unix'] == 9000
 
 
 @pytest.mark.parametrize("field,value,match", [("requested_hours", 2.1, "runtime"),
@@ -461,6 +578,43 @@ def test_stale_precreate_watchdog_cannot_be_resurrected(fixture, monkeypatch):
     with pytest.raises(rc.RunpodError, match="intent is closed"):
         controller.start()
     assert not json.loads(api.read_text()).get("create_calls")
+
+
+@pytest.mark.parametrize("boundary", ["closing", "stopped", "deleted", "deadline"])
+def test_session_cannot_admit_a_stale_provider_response_after_close(fixture, monkeypatch, boundary):
+    _, _, api, _, make = fixture
+    controller = make()
+    session = controller.start()
+    verified_at = controller._state()["provider_verified_at"]
+    original_pods = controller._pods
+
+    def read_then_close():
+        # The provider response was valid when read, but shutdown wins before
+        # session() publishes its result, as with a concurrent stop watchdog.
+        rows = original_pods()
+        if boundary in {"stopped", "deleted"}:
+            controller.stop()
+            if boundary == "deleted":
+                controller._cleanup_update(phase="deleted")
+        elif boundary == "closing":
+            controller._cleanup_update(phase="closing_after_failure", stop_requested=True)
+        else:
+            controller._cleanup_update(deadline_unix=time.time() - 1)
+        return rows
+
+    monkeypatch.setattr(controller, "_pods", read_then_close)
+    try:
+        with pytest.raises(rc.RunpodError, match="admission closed during provider verification"):
+            controller.session(session["session_id"])
+        state = controller._state()
+        assert state["provider_verified_at"] == verified_at
+        if boundary != "deadline":
+            assert state["stop_requested"] and state["phase"] != "running"
+        else:
+            assert state["deadline_unix"] < time.time()
+    finally:
+        controller.stop()
+    assert json.loads(api.read_text())["pods"][0]["runtimeStatus"] == "stopped"
 
 
 @pytest.mark.parametrize("problem", ["closing", "deadline", "watchdog"])

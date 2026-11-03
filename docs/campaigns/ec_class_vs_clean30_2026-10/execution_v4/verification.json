@@ -1,0 +1,104 @@
+{
+  "actual_new_gpu_qualification": "pending",
+  "cache": {
+    "blocking_requirement": "Protected Runpod S3 profile is absent.",
+    "data_center": "EU-RO-1",
+    "provisioned_and_read_back": true,
+    "seeded": false,
+    "size_gb": 20,
+    "type": "STANDARD"
+  },
+  "cpu_smoke": {
+    "failed": 0,
+    "log_sha256": "9cb207dafdb22e4db0b19668cedf56cdb6417774593740b5f39ec600de1377d0",
+    "passed": 44,
+    "skipped": 1
+  },
+  "docs_contract": {
+    "baseline_warnings": 11,
+    "strict_failures": 0
+  },
+  "earlier_combined_check": {
+    "context": "Severe workstation memory pressure was observed. The unchanged complete controller suite then passed in isolation.",
+    "failed": 2,
+    "interrupted": true,
+    "log_sha256": "92abd134c2d8190ec654f647832b4c1df74afc65ce4fa23e890f50301ff256e2",
+    "observed_failures": [
+      "Watchdog readiness timed out before synthetic allocation",
+      "Synthetic provider timestamp predated the allowed launch-intent boundary"
+    ],
+    "passed": 124,
+    "skipped": 1
+  },
+  "execution_manifest": "manifest.json",
+  "execution_manifest_sha256": "e33942fda50972af2ee443295a9521c421f67d9e3f977264831e23f347524fe2",
+  "focused_tests": {
+    "batches": [
+      {
+        "log_sha256": "3af38f598293b09472361baf3795dd6eb1cce64e5d20a6a5ed62cb5e81ee9953",
+        "name": "controller",
+        "passed": 74,
+        "returncode": 0,
+        "skipped": 0
+      },
+      {
+        "log_sha256": "e8599a3aac75fe80c2acff8cf126eb3ac601693ced20ab46e10c8253438156f0",
+        "name": "execution",
+        "passed": 509,
+        "returncode": 0,
+        "skipped": 1
+      }
+    ],
+    "passed": 583,
+    "process_isolation": "Controller checks run separately from model imports to bound workstation memory.",
+    "skipped": 1,
+    "source_sha256": {
+      "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+      "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
+      "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
+      "src/ec_clean30/container_caps.py": "19059d788514f4daf4910b4154fe27fe0f40c27fd9a08f5e9daa41bbef128a4a",
+      "src/ec_clean30/phase3.py": "74ac112a7c9b9af16e3d80be5b1e6e8fe08f9eeb5231ace89535714624305fe8",
+      "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
+      "src/ec_clean30/runpod_bootstrap.py": "faaff405b9e5a7aed32851be4ebf60f633b002821a59d14710c13fc05d13ac75",
+      "src/ec_clean30/runpod_controller.py": "dae931ce57831411c3f315aadb5b791594dbd5dd61c62bbc95cd2d896c84c228",
+      "src/ec_clean30/workstation.py": "c01a2171c1de34124d02d26625e25a597dcb1b5b296413728606204625ffb456",
+      "tests/test_ec_clean30_container_caps.py": "aee85ebb1c87efe11ad182cfe7d5648885ff55f71b1c4d4db404613674ea9339",
+      "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
+      "tests/test_ec_clean30_execution_v3.py": "f5b75d001b3078a57556d43be6083bbe47ff1cf6cc0f8cda2898e24bb67bfe4b",
+      "tests/test_ec_clean30_execution_v4.py": "e15e5a37f52dd7c4b221f134cd700107e85028e08dc84556642146e5429a934e",
+      "tests/test_ec_clean30_phase3.py": "743dbbf0533ea2b5cd2692ce57451475958a5112c6078d16a058a40f7f648e01",
+      "tests/test_ec_clean30_public_archive.py": "5df1aa1ff7dffe0002b19529327f6b18f5c313a7e3cb557723deba790fcf4858",
+      "tests/test_ec_clean30_runpod_bootstrap.py": "f0e99f136283528bd4b465ab5c0c299f8853b39efe840a56f81bbe8a356a908d",
+      "tests/test_ec_clean30_runpod_controller.py": "c18abf0c3d3b15494c0cee8f13439b94d67c18b8f66b74dbca9687dcb4fabaa6",
+      "tests/test_ec_clean30_runpod_runtime.py": "a15946144c5d073f67fcb96951df46dfddf1996a8296b8c14a22d29b1c453c53",
+      "tests/test_ec_clean30_runtime_lock_binding.py": "530a09b9a3250262c12be7b9ec0eb9cac11a15239aa1345603df22987ecd6b68",
+      "tests/test_ec_clean30_workstation.py": "43dbfae2ae89b1da7f01d3219715da6cb6d864810e56db0530266ed7972f097b",
+      "tests/test_ec_clean30_workstation_bootstrap.py": "64e220d4e531c6736cbb7ae3f3156ab17450dcd9f1e1e28517a7f18ab7fcbe30"
+    },
+    "source_unchanged": true
+  },
+  "format": "deepmzyme_ec_clean30_bootstrap_verification_v1",
+  "formatting_followup": {
+    "after_sha256": "110dda1c1da02324199d631f4cedc1aa0aa8e087014c580a05c93cad0c2feaa7",
+    "before_sha256": "5df1aa1ff7dffe0002b19529327f6b18f5c313a7e3cb557723deba790fcf4858",
+    "change": "Removed one trailing blank line; runtime sources unchanged.",
+    "log_sha256": "585ad77db71454a791369b571271f79e4d855a79341287aad6decf8eae42e120",
+    "passed": 32,
+    "path": "tests/test_ec_clean30_public_archive.py"
+  },
+  "g2_completed_events": 0,
+  "held_out_read": false,
+  "original_execution_records_preserved": true,
+  "phase4_started": false,
+  "runtime_lock_binding": {
+    "complete_maps_and_archive_pins_enforced": true,
+    "esm1b_unique_packages": 26,
+    "fit_unique_packages": 187
+  },
+  "status": "cpu_verified_live_cache_and_gpu_qualification_pending",
+  "template": {
+    "complete_published_runtime_maps": true,
+    "intentional_stale_quote_refusal_verified": true
+  },
+  "transfer_speedup_measured": false
+}

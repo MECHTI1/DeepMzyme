@@ -7,10 +7,199 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import pytest
 
 from ec_clean30 import container_caps as caps
+
+
+@pytest.fixture
+def preparation_kernel(tmp_path, monkeypatch):
+    """Private proc/cgroup interface simulation; no host controls are changed."""
+    root = tmp_path / 'private_cgroup'
+    root.mkdir()
+    for name, value in {'cgroup.type': 'domain', 'cgroup.controllers': 'cpu memory',
+                        'cgroup.subtree_control': '', 'cpu.max': '1020000 100000', 'cpu.weight': '100',
+                        'memory.max': '31000000000', 'memory.high': 'max', 'memory.swap.max': '0',
+                        'pids.max': 'max', 'cgroup.procs': ''}.items():
+        (root / name).write_text(value + '\n')
+    owner = 'owned-pod'
+    current = os.getpid()
+    memberships = {1: '0::/', current: '0::/', 222: '0::/'}
+    evidence = {'init': 'docker-init', 'namespace': 'pid:[987]', 'self_namespace': 'pid:[987]',
+                'mounts': f'1 0 0:1 / /proc rw - proc proc rw\n2 0 0:2 / {root} rw - cgroup2 cgroup rw,nsdelegate\n',
+                'foreign_pid': None, 'changed_pid': None}
+    reads, writes, managers = {}, [], []
+    original_read, original_mkdir, original_rmdir, original_link = Path.read_text, Path.mkdir, Path.rmdir, os.readlink
+
+    def read(path, *args, **kwargs):
+        value = str(path)
+        if value == '/proc/self/mountinfo': return evidence['mounts']
+        if value == '/proc/1/comm': return evidence['init'] + '\n'
+        parts = path.parts
+        if len(parts) >= 4 and parts[:2] == ('/', 'proc') and parts[2].isdigit():
+            pid = int(parts[2]); name = parts[3]
+            if name == 'cgroup': return memberships[pid] + '\n'
+            if name == 'status':
+                return ''.join(f'{key}:\t{pid}'+(' 999' if key == 'NSpid' and evidence['foreign_pid'] == pid else '')+'\n'
+                               for key in ('Pid', 'Tgid', 'NSpid', 'NStgid'))
+            if name == 'stat':
+                if evidence.get('malformed_pid') == pid: return 'incomplete stat record\n'
+                reads[pid] = reads.get(pid, 0) + 1
+                stamp = 1000 + pid + (reads[pid] if evidence['changed_pid'] == pid else 0)
+                return f'{pid} (owned process) ' + ' '.join(['S'] + ['0'] * 18 + [str(stamp)]) + '\n'
+        if path.name == 'cgroup.procs' and (path.parent == root or path.parent in managers):
+            membership = '0::/' if path.parent == root else f'0::/{path.parent.name}'
+            return ''.join(f'{pid}\n' for pid, group in memberships.items() if group == membership)
+        return original_read(path, *args, **kwargs)
+
+    def link(path, *args, **kwargs):
+        if path == '/proc/self/ns/pid': return evidence['self_namespace']
+        if path.startswith('/proc/') and path.endswith('/ns/pid'): return evidence['namespace']
+        if path in ('/proc/self/ns/cgroup', '/proc/1/ns/cgroup'): return 'cgroup:[654]'
+        return original_link(path, *args, **kwargs)
+
+    def mkdir(path, *args, **kwargs):
+        result = original_mkdir(path, *args, **kwargs)
+        if path.parent == root and path.name.startswith('deepmzyme-control-'):
+            managers.append(path)
+            for name, value in {'cgroup.type': 'domain', 'cgroup.subtree_control': '', 'cgroup.procs': ''}.items():
+                (path / name).write_text(value + '\n')
+        return result
+
+    def rmdir(path):
+        if path in managers:
+            assert not read(path / 'cgroup.procs').strip()
+            for entry in path.iterdir(): entry.unlink()
+        return original_rmdir(path)
+
+    def write(path, value):
+        writes.append((path, value))
+        assert path.is_file()
+        if path.name == 'cgroup.procs':
+            memberships[int(value)] = '0::/' if path.parent == root else f'0::/{path.parent.name}'
+        elif path.name == 'cgroup.subtree_control':
+            controllers = set(read(path).split())
+            for token in value.split():
+                if token.startswith('+'): controllers.add(token[1:])
+                elif token.startswith('-'): controllers.discard(token[1:])
+                else: raise AssertionError(value)
+            path.write_text(' '.join(sorted(controllers)) + '\n')
+        else: path.write_text(value + '\n')
+
+    monkeypatch.setattr(Path, 'read_text', read)
+    monkeypatch.setattr(Path, 'mkdir', mkdir)
+    monkeypatch.setattr(Path, 'rmdir', rmdir)
+    monkeypatch.setattr(caps.os, 'readlink', link)
+    monkeypatch.setattr(caps, '_write', write)
+    return SimpleNamespace(root=root, owner=owner, evidence=evidence, writes=writes, members=memberships,
+                           managers=managers, read=read, write=write)
+
+
+def test_prepare_enables_only_delegated_child_controllers_and_is_idempotent(preparation_kernel):
+    k = preparation_kernel
+    result = caps.prepare(k.root, owner_id=k.owner)
+    assert result['status'] == 'prepared' and result['parent_limits_unchanged'] and result['probe_required']
+    assert result['parent_limits_before'] == result['parent_limits_after']
+    assert set(result['moved_container_pids']) == set(k.members)
+    assert all(group == f'0::/deepmzyme-control-{k.owner}' for group in k.members.values())
+    writes = list(k.writes)
+    again = caps.prepare(k.root, owner_id=k.owner)
+    assert again['status'] == 'already_delegated' and k.writes == writes
+    assert all(path.name in {'cgroup.procs', 'cgroup.subtree_control'} for path, _ in writes)
+
+
+@pytest.mark.parametrize('case', ['foreign_init', 'foreign_namespace', 'foreign_pid', 'changed_pid',
+                                  'obscured_proc', 'malformed_proc', 'unbounded_root', 'zero_cpu', 'zero_memory', 'empty_cpu',
+                                  'partial_controllers', 'unknown_child'])
+def test_prepare_refuses_unproven_namespace_without_mutating_controls(preparation_kernel, case):
+    k = preparation_kernel
+    if case == 'foreign_init': k.evidence['init'] = 'systemd'
+    elif case == 'foreign_namespace': k.evidence['self_namespace'] = 'pid:[123]'
+    elif case == 'foreign_pid': k.evidence['foreign_pid'] = 1
+    elif case == 'changed_pid': k.evidence['changed_pid'] = 1
+    elif case == 'obscured_proc': k.evidence['mounts'] += '3 1 0:3 / /proc/1/status rw - tmpfs tmpfs rw\n'
+    elif case == 'malformed_proc': k.evidence['malformed_pid'] = 1
+    elif case == 'unbounded_root': (k.root / 'memory.max').write_text('max\n')
+    elif case == 'zero_cpu': (k.root / 'cpu.max').write_text('0 100000\n')
+    elif case == 'zero_memory': (k.root / 'memory.max').write_text('0\n')
+    elif case == 'empty_cpu': (k.root / 'cpu.max').write_text('\n')
+    elif case == 'partial_controllers': (k.root / 'cgroup.subtree_control').write_text('cpu\n')
+    else: (k.root / 'foreign').mkdir()
+    with pytest.raises(caps.CapError): caps.prepare(k.root, owner_id=k.owner)
+    assert k.writes == []
+
+
+def test_prepare_reconciles_an_owned_partial_manager(preparation_kernel):
+    k = preparation_kernel
+    manager = k.root / f'deepmzyme-control-{k.owner}'
+    manager.mkdir()
+    k.members[1] = k.members[os.getpid()] = f'0::/{manager.name}'
+    result = caps.prepare(k.root, owner_id=k.owner)
+    assert result['status'] == 'prepared'
+    assert result['moved_container_pids'] == [222]
+
+
+def test_prepare_rolls_back_its_membership_changes_on_permission_failure(preparation_kernel, monkeypatch):
+    k = preparation_kernel
+    initial = dict(k.members)
+
+    def refuse(path, value):
+        if path == k.root / 'cgroup.subtree_control' and value.startswith('+'):
+            raise PermissionError('delegation refused')
+        k.write(path, value)
+
+    monkeypatch.setattr(caps, '_write', refuse)
+    with pytest.raises(PermissionError, match='delegation refused'):
+        caps.prepare(k.root, owner_id=k.owner)
+    assert k.members == initial and not k.managers[0].exists()
+
+
+def test_prepare_reports_failed_rollback_without_claiming_success(preparation_kernel, monkeypatch):
+    k = preparation_kernel
+
+    def fail(path, value):
+        if path == k.root / 'cgroup.subtree_control': raise PermissionError('cannot enable')
+        if path == k.root / 'cgroup.procs': raise PermissionError('cannot restore')
+        k.write(path, value)
+
+    monkeypatch.setattr(caps, '_write', fail)
+    with pytest.raises(caps.CapError, match='rollback is unconfirmed'):
+        caps.prepare(k.root, owner_id=k.owner)
+
+
+@pytest.mark.parametrize('owner', ['', '../foreign', 'pod/foreign', 'pod\nother', True])
+def test_prepare_refuses_unsafe_owner_before_inspection(tmp_path, owner):
+    with pytest.raises(caps.CapError, match='owner ID'):
+        caps.prepare(tmp_path, owner_id=owner)
+
+
+def test_prepare_cli_requires_explicit_owner_and_emits_structured_receipt(tmp_path, monkeypatch, capsys):
+    expected = {'status': 'already_delegated', 'probe_required': True}
+    called = []
+    monkeypatch.setattr(caps.signal, 'signal', lambda *args: None)
+    monkeypatch.setattr(caps, 'prepare', lambda root, *, owner_id: called.append((root, owner_id)) or expected)
+    assert caps.main(['prepare', '--cgroup-root', str(tmp_path), '--owner-id', 'named-pod']) == 0
+    import json
+    assert json.loads(capsys.readouterr().out) == expected
+    assert called == [(tmp_path, 'named-pod')]
+
+
+def test_prepare_inspects_existing_v1_delegation_without_changing_it(kernel_v1):
+    root, created, children, _ = kernel_v1
+    result = caps.prepare(root, owner_id='owned-pod')
+    assert result == {'status': 'already_delegated', 'backend': 'cgroup_v1', 'owner_id': 'owned-pod',
+                      'cgroup_root': str(root), 'parent_limits_unchanged': True, 'probe_required': True}
+    assert created == children == []
+
+
+def test_prepare_refuses_unwritable_v1_before_creating_any_child(kernel_v1, monkeypatch):
+    root, created, children, _ = kernel_v1
+    monkeypatch.setattr(caps.os, 'access', lambda *args: False)
+    with pytest.raises(caps.CapError, match='not writable'):
+        caps.prepare(root, owner_id='owned-pod')
+    assert created == children == []
 
 
 @pytest.fixture

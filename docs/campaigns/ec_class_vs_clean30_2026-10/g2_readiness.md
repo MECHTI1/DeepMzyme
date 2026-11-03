@@ -3,7 +3,8 @@
 Status: 2026-11-03; GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
 The initial Runpod setup was stopped after verified preservation ([evc-024](log.md#evc-024)).
 An earlier host passed kernel caps; migration reached a host without delegated controls. The isolated
-runtime repair is CPU-verified ([evc-027](log.md#evc-027)); actual G2 qualification remains pending. Zero events completed.
+runtime repair is CPU-verified ([evc-027](log.md#evc-027)). The reproducible cache/bootstrap extension is
+implemented ([evc-028](log.md#evc-028)); actual G2 qualification remains pending. Zero events completed.
 The GCP two-hour request and 117-minute STOP do not establish a Runpod deadline or spending ceiling.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
@@ -57,8 +58,9 @@ retained local inputs and source records, not an assumption that its container f
 
 The original [execution-v3 extension](execution_v3/manifest.json) remains preserved. The additive
 [compatibility manifest](execution_v3/manifest_cgroup_v1.json) remains preserved. The current
-[runtime-v2 manifest](execution_v3/manifest_runtime_v2.json) pins isolated execution and the fixed
-replacement deadline; [evc-027](log.md#evc-027) owns its verification. The corrected
+[runtime-v2 manifest](execution_v3/manifest_runtime_v2.json) preserves isolated execution and its closed
+replacement window; [evc-027](log.md#evc-027) owns its verification. The additive
+[execution-v4 manifest](execution_v4/manifest.json) authenticates the bootstrap extension against that published ancestor. The corrected
 [runtime locks](execution_v3/runtime_locks_v2.json) retain the same complete package maps.
 The old pod is deleted. Full runtime qualification remains pending. Before any Runpod G2 fit:
 
@@ -80,6 +82,54 @@ The old pod is deleted. Full runtime qualification remains pending. Before any R
 The v3 manifest preserves the original source records and scientific guards. The fixed G2 scope below remains
 the reviewed timing recipe. Zero measured G2 results are available;
 Freeze 1c and numerical G3 still precede the 96 S1 plus eight CLEAN inner fits.
+
+## Reproducible Runpod bootstrap
+
+The committed workstation entry point now owns local preparation, cache seeding and bounded execution;
+the [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues) owns its commands.
+The extension preserves the original execution manifests and runtime/archive pins. Its warm path is designed
+to avoid repeated bulk transfers from the workstation; actual cold/warm throughput remains unmeasured.
+The [private-configuration template](execution_v4/workstation_config.example.json) supplies the complete
+staging closure and runtime maps. Replace every local path and resource placeholder, reconcile prior spending
+and refresh the quote; its deliberately expired quote and ceiling-sized prior reserve refuse accidental launch.
+The [verification record](execution_v4/verification.json) binds the CPU checks to unchanged source. Both complete
+runtime maps and archive pins are checked against the published lock document before large input reads.
+
+The approved cache is a private **20-GB Standard network volume in EU-RO-1**, accessed as an S3 origin rather
+than mounted on a GPU pod. It holds exactly the two locked runtime archives and compressed Fold-0 transfer
+archive. This leaves GPU placement independent of the cache datacenter. The original view archive is restored
+and checked against its existing full checksum. Both public ESM-1b files download from their pinned official
+origins; the ESMC model downloads from its pinned published revision and reconstructs the original tar bytes.
+Every model and final archive must match its full source-bound SHA-256 before use.
+
+The S3 profile `runpod-artifact-cache` stays on the workstation. Configuration and receipts contain no keys;
+the pod receives only temporary exact-GET request headers in protected files. Seeding first verifies a tiny
+signed-header PUT/GET round trip, then uploads SHA-addressed 64-MiB chunks with at most two workers.
+Chunk and descriptor readback precede the completion record. A warm start reads the small descriptors before
+allocation; the destination still verifies every downloaded chunk and assembled archive. Interrupted transport
+resumes only at verified chunk boundaries. Cache preparation allocates no GPU and does not waive pricing or
+storage accounting.
+
+After allocation, only the authenticated cap helper transfers initially. It must prepare private delegated
+controls without changing provider limits and pass the actual kernel probe before checkout or bulk staging.
+The clean published `.git` checkout is staged once. The main runtime is restored first, its complete package
+lock is checked with user site disabled, and an actual capped CUDA workload must pass before the remaining
+inputs stage with at most two workers. Full ESM-1b model transfer and independent CPU/GPU replay remain
+mandatory after staging. Host-specific delegation failures close out the pass; GPU model identity cannot
+substitute for these checks.
+
+A continuous workstation heartbeat protects long transfers and qualification; the independent stop process
+and original allocation clock remain authoritative. The **$5 pass gross ceiling**, **117-minute hard stop**,
+two-hour requested maximum, 1.25 admission multiplier, 900-second closeout reserve, exact twelve-event queue,
+F9 guards, replay and per-unit dual-device HostPull acknowledgments are unchanged. The separate local
+**$10 gross rolling-24-hour policy** requires a decision near its warning threshold; it is not a provider hard
+cap and does not expand the narrower pass ceiling. Cache storage counts toward spending.
+
+The prior absolute windows are closed and must not be reset. A new authorized pass uses a fresh state namespace
+and actual allocation clock. Before it starts, publish execution-v4, verify the seeded cache, refresh the price
+and spending bounds, confirm GCP remains `TERMINATED`, and recheck the independent Data1/NVMe reserves.
+No new GPU qualification or G2 measurement is established by this implementation record. Freeze 1c and numerical
+G3 still require measured outputs and provider-confirmed shutdown; Phase 4 and held-out reads stay gated.
 
 ## Previous start attempts
 

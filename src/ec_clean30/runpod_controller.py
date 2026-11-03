@@ -21,6 +21,7 @@ import re
 import stat
 import subprocess
 import sys
+import threading
 import time
 from typing import Any, Mapping
 import uuid
@@ -32,6 +33,56 @@ MAX_GROSS_USD = 5.0
 
 class RunpodError(RuntimeError):
     """A configuration, ownership, budget, or shutdown check failed."""
+
+
+class _HeartbeatGuard:
+    """A same-process ticker; the independent watchdog remains the stop owner."""
+
+    def __init__(self, controller: 'RunpodController', interval: float):
+        self.controller, self.interval = controller, interval
+        self.pid = os.getpid()
+        self.error: str | None = None
+        self.finished = threading.Event()
+        self.thread: threading.Thread | None = None
+
+    def check(self) -> None:
+        _require(os.getpid() == self.pid, "Continuous heartbeat belongs to another coordinator process.")
+        _require(self.error is None, f"Continuous owner heartbeat failed; admission is closed: {self.error}")
+        if self.thread is not None and not self.finished.is_set():
+            _require(self.thread.is_alive(), "Continuous owner heartbeat ended unexpectedly; admission is closed.")
+
+    def _tick(self) -> None:
+        try:
+            self.controller.heartbeat()
+        except BaseException as exc:
+            self.error = self.controller._redact(f'{type(exc).__name__}: {exc}')
+            # A writable intent asks the independent guard to stop immediately.
+            # If bookkeeping itself fails, its stale-owner rule still applies.
+            try:
+                self.controller._cleanup_update(stop_requested=True, heartbeat_error=self.error)
+            except BaseException:
+                pass
+            self.finished.set()
+
+    def _run(self) -> None:
+        while not self.finished.wait(self.interval):
+            self._tick()
+
+    def start(self) -> None:
+        self._tick()
+        self.check()
+        thread = threading.Thread(target=self._run, name='runpod-owner-heartbeat', daemon=True)
+        # Publish only a started thread: heartbeat() itself checks this guard.
+        thread.start()
+        self.thread = thread
+
+    def close(self) -> None:
+        _require(self.controller._cleanup_state().get('phase') in {'stopped', 'deleted'},
+                 "Continuous heartbeat cannot end before verified shutdown.")
+        self.finished.set()
+        if self.thread is not None:
+            self.thread.join(timeout=5)
+            _require(not self.thread.is_alive(), "Continuous heartbeat did not terminate after verified shutdown.")
 
 
 def _require(value: Any, message: str) -> None:
@@ -258,6 +309,7 @@ class RunpodController:
         self.watch_path = self.root / "watchdog_heartbeat.json"
         self._cached_state: dict[str, Any] | None = None
         self._cached_owner: dict[str, Any] | None = None
+        self._heartbeat_guard: _HeartbeatGuard | None = None
         self.source_sha = _snapshot["source_sha256"] if _snapshot else _sha(self.config_path)
         self.config_sha = _digest(self.config)
         self.cli_sha = _snapshot["cli_sha256"] if _snapshot else _sha(Path(self.cfg["cli_path"]))
@@ -455,8 +507,39 @@ class RunpodController:
             raise
 
     def heartbeat(self) -> None:
+        if self._heartbeat_guard is not None:
+            self._heartbeat_guard.check()
         state = self._state()
         _write(self.heartbeat_path, {"session_id": state["session_id"], "updated_unix": time.time(), "pid": os.getpid()})
+
+    @contextmanager
+    def maintain_heartbeat(self, *, interval: float = 30):
+        """Cover blocking work; end the ticker only after verified terminal state.
+
+        Enter after start/adopt. The caller may perform its normal preservation
+        and closeout inside the context. Leaving early still requests STOP.
+        """
+        interval = _number(interval, 'heartbeat interval')
+        _require(interval <= min(30, self.cfg.get('heartbeat_timeout_seconds', 900) / 3),
+                 "Continuous heartbeat interval exceeds its safe owner-timeout margin.")
+        _require(self._heartbeat_guard is None, "A continuous heartbeat is already active for this coordinator.")
+        state = self._state()
+        _require(state.get('phase') not in {'stopped', 'deleted'} and not state.get('stop_requested'),
+                 "A closed allocation cannot acquire a continuous heartbeat.")
+        guard = _HeartbeatGuard(self, interval)
+        self._heartbeat_guard = guard
+        try:
+            guard.start()
+            yield guard
+            guard.check()
+        finally:
+            # Keep the ticker and independent watchdog alive if STOP cannot be
+            # confirmed. No new work is admitted after stop_requested is set.
+            state = self._cleanup_state()
+            if state.get('phase') not in {'stopped', 'deleted'}:
+                self.stop()
+            guard.close()
+            self._heartbeat_guard = None
 
     def _watchdog_healthy(self) -> None:
         watch = _read(self.watch_path) if self.watch_path.exists() else {}
@@ -643,6 +726,8 @@ class RunpodController:
         self._watchdog_healthy()
 
     def session(self, previous: Mapping[str, Any] | str | None = None) -> dict[str, Any]:
+        if self._heartbeat_guard is not None:
+            self._heartbeat_guard.check()
         self._unchanged()
         state = self._state()
         _require(not state.get("stop_requested") and state["phase"] != "stopped", "This allocation is closing or stopped.")
@@ -676,8 +761,21 @@ class RunpodController:
                 if key in previous:
                     _require(previous[key] == state.get(key), "Runpod session identity or deadline changed.")
         self.heartbeat()
-        state = self._update(phase="running", provider_verified_at=_utc(time.time()), pod=_public_pod(pod),
-                             precision_environment_origin=self.cfg.get("precision_environment_origin", "pod"))
+        # A watchdog STOP may win while the provider reads are in flight.
+        # Recheck and publish admission under its lock so terminal state cannot
+        # be overwritten by a stale successful provider response.
+        with self._lock():
+            current = self._state()
+            _require(current.get("session_id") == state["session_id"]
+                     and not current.get("stop_requested")
+                     and current["phase"] not in {"stopped", "deleted"}
+                     and time.time() < current["deadline_unix"],
+                     "Session admission closed during provider verification.")
+            current.update(phase="running", provider_verified_at=_utc(time.time()), pod=_public_pod(pod),
+                           precision_environment_origin=self.cfg.get("precision_environment_origin", "pod"))
+            _write(self.state_path, current)
+            self._cached_state = dict(current)
+            state = current
         return self._session_metadata(state)
 
     def stop(self) -> dict[str, Any]:

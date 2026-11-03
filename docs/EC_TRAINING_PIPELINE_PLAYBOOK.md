@@ -493,9 +493,19 @@ recovery contract. Finalize or abandon through the controller's evidence gate af
 The two pinned public ESM-1b files may specify `remote_url`: direct VM download is verified before rename, with
 upload fallback only after a known terminal failure. Local Data1 copies remain mandatory and hash-checked.
 
+The execution-v4 Runpod route uses the same entry point with an explicit private `artifact_cache`
+configuration. Prepare and seed it before allocating a GPU. Cache seeding verifies signed-header compatibility,
+chunks and completion descriptors; `--run` refuses a missing or changed seed. The main runtime and actual
+kernel/CUDA checks precede remaining bulk staging. The cache route uses verified public model downloads and
+refuses a failed public download without silently starting a multi-gigabyte workstation upload. The
+[campaign bootstrap record](campaigns/ec_class_vs_clean30_2026-10/g2_readiness.md#reproducible-runpod-bootstrap)
+owns cache placement, source bindings and the unchanged spending, persistence and scientific gates.
+
 ```bash
 PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"
 "$PY" scripts/run_ec_clean30_workstation.py --config "${ECC30_G2_CONFIG:?private prepared G2 configuration}"
+# Runpod artifact-cache configurations only; published source, no GPU allocation:
+"$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --seed-cache
 # Only when the bounded G2 session is authorized to start:
 "$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --run
 ```

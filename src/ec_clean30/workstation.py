@@ -6,6 +6,8 @@ local readiness; --run starts once or recovers this driver's still-active sessio
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+import copy
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -33,6 +35,8 @@ CROSS_REGION_ZONES = ("us-west1-a", "us-west1-b", "us-west1-c", "us-east4-a", "u
 PAYLOAD_CEILING_BYTES = 3 * GIB
 EGRESS_RESERVE_GIB = 4
 RESERVE_SECONDS = 900
+PUBLISHED_RUNTIME_LOCKS_PATH = "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v3/runtime_locks_v2.json"
+PUBLISHED_RUNTIME_LOCKS_SHA256 = "dbbf3cd47be2062f444d4648a57b54c4aa83e717437e139dd3e20a2e261c0483"
 OFFICIAL_ESM1B_WEIGHTS = {
     "https://dl.fbaipublicfiles.com/fair-esm/models/esm1b_t33_650M_UR50S.pt": {
         "field": "weights", "sha256": "0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1", "size_bytes": 7828576466},
@@ -605,12 +609,123 @@ def _weight_url(config: Mapping[str, Any], item: Mapping[str, Any]) -> str | Non
     return url
 
 
+def _validate_runpod_structure(config: Mapping[str, Any]) -> None:
+    """Reject incomplete runtime references before reading large archives."""
+    runtimes = config.get("runtime_environments", {})
+    _require(isinstance(runtimes, dict) and set(runtimes) == {"fit", "esm1b"}, "Both runtime locks are required.")
+    stage = config.get("stage", [])
+    _require(isinstance(stage, list) and stage, "A nonempty staging closure is required.")
+    for key, runtime in runtimes.items():
+        _require(isinstance(runtime, dict) and isinstance(runtime.get("archive"), str)
+                 and isinstance(runtime.get("packages"), dict) and runtime["packages"]
+                 and runtime.get("python_version") and runtime.get("torch_cuda")
+                 and re.fullmatch(r"[0-9a-f]{64}", str(runtime.get("archive_sha256", "")))
+                 and any(item.get("remote") == runtime["archive"]
+                         and item.get("sha256") == runtime["archive_sha256"]
+                         and item.get("conda_unpack") is True for item in stage),
+                 f"The {key} runtime lacks a locked, relocatable archive.")
+    if config.get("artifact_cache"):
+        from ec_clean30 import runpod_bootstrap
+        runpod_bootstrap.validate_cache_config(config)
+
+
+def _validate_published_runtime_locks(config: Mapping[str, Any], source: Mapping[str, Any]) -> None:
+    """Bind execution-v4 environments to the complete published runtime recipes."""
+    if source.get("format") != phase3.BOOTSTRAP_FORMAT:
+        return
+    path = phase3.REPO_ROOT / PUBLISHED_RUNTIME_LOCKS_PATH
+    _require(path.is_file() and not path.is_symlink() and path.resolve() == path
+             and _sha(path) == PUBLISHED_RUNTIME_LOCKS_SHA256,
+             "The published runtime lock document is missing or changed.")
+    document = _json(path)
+    _require(document.get("format") == "deepmzyme_ec_clean30_runtime_locks_v1"
+             and set(document.get("runtimes", {})) == {"fit", "esm1b"},
+             "The published runtime lock document has an unexpected format.")
+    runtimes = config.get("runtime_environments", {})
+    _require(isinstance(runtimes, dict) and set(runtimes) == {"fit", "esm1b"},
+             "Both published runtime recipes are required.")
+    for key, expected in document["runtimes"].items():
+        runtime = runtimes[key]
+        _require(isinstance(runtime, dict)
+                 and all(runtime.get(field) == expected[field] for field in
+                         ("packages", "python_version", "torch_cuda", "archive_sha256", "bytes")),
+                 f"The {key} runtime differs from its complete published recipe.")
+        staged = [item for item in config.get("stage", []) if item.get("remote") == runtime.get("archive")]
+        _require(len(staged) == 1 and staged[0].get("sha256") == expected["archive_sha256"]
+                 and staged[0].get("conda_unpack") is True,
+                 f"The {key} staging archive differs from its published runtime recipe.")
+        local = Path(staged[0]["local"])
+        _require(local.is_file() and not local.is_symlink() and local.stat().st_size == expected["bytes"],
+                 f"The {key} archive size differs from its published runtime recipe.")
+
+
+def _local_storage(config: Mapping[str, Any]) -> None:
+    secondary = Path(config["secondary_drive"]).resolve()
+    _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
+    for key in ("durable_root", "state_root"):
+        _require(secondary in Path(_absolute(config[key])).resolve().parents,
+                 f"{key} must be on the independent secondary drive.")
+    _require(shutil.disk_usage(secondary).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
+             "The independent drive lacks the 5 GiB reserve plus the download allowance.")
+    _require(shutil.disk_usage(phase3.REPO_ROOT).free >= 5 * GIB, "Internal ext4 is below its 5 GiB reserve.")
+    if config.get("provider") == "runpod":
+        ancestor = Path(_absolute(config["mirror_root"])).resolve()
+        while not ancestor.exists():
+            ancestor = ancestor.parent
+        _require(ancestor.stat().st_dev != secondary.stat().st_dev
+                 and shutil.disk_usage(ancestor).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
+                 "Runpod requires an independent NVMe mirror with the payload allowance and reserve.")
+
+
+def _preparation_identity(config: Mapping[str, Any]) -> str:
+    value = copy.deepcopy(config)
+    if value.get("provider") == "runpod":
+        settings = value["runpod"]
+        settings.pop("data_center_id", None)
+        for name in ("observed_at", "source"):
+            settings["quote"].pop(name, None)
+    return json.dumps(value, sort_keys=True, allow_nan=False)
+
+
+def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False) -> dict[str, Any]:
+    """Reuse a completed input proof only for explicit quote/placement changes."""
+    if config.get("provider") != "runpod" or not config.get("artifact_cache"):
+        return preflight(config, config_path, published=published)
+    _validate_runpod_structure(config)
+    from ec_clean30 import runpod_controller
+    cost = runpod_controller.validate_config(config)
+    source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
+    _validate_published_runtime_locks(config, source)
+    root = Path(config["state_root"])
+    proof_path, baseline_path = root / "prepared_inputs.json", root / "prepared_config.json"
+    if proof_path.exists() and baseline_path.exists():
+        original, baseline = _json(proof_path), _json(baseline_path)
+        if (original.get("status") == "ready" and original.get("source") == source
+                and original.get("config_sha256") == _sha(baseline_path)
+                and _preparation_identity(config) == _preparation_identity(baseline)):
+            _local_storage(config)
+            result = {**original, "config_sha256": _sha(config_path), "cost": cost,
+                      "input_proof_reused": True, "original_input_proof_sha256": _sha(proof_path),
+                      "allowed_metadata_changes": ["runpod.data_center_id", "runpod.quote.observed_at", "runpod.quote.source"]}
+            _write(root / "readiness.json", result)
+            return result
+    result = preflight(config, config_path, published=published)
+    result.update(config_sha256=_sha(config_path), input_proof_reused=False)
+    # Preserve the exact original configuration bytes rather than reserializing its hash binding.
+    root.mkdir(parents=True, exist_ok=True)
+    baseline_path.write_bytes(config_path.read_bytes())
+    _write(proof_path, result)
+    _write(root / "readiness.json", result)
+    return result
+
+
 def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool = False) -> dict[str, Any]:
     """Local-only readiness; no controller or SSH call and no cloud allocation."""
     runpod = config.get("provider", "gcp") == "runpod"
     _require(config.get("provider", "gcp") in {"gcp", "runpod"}, "Unsupported execution provider.")
     if runpod:
         from ec_clean30 import runpod_controller
+        _validate_runpod_structure(config)
         cost = runpod_controller.validate_config(config)
         repo_url = config["repo_url"]
         _require(config["hardware_profile"] in {"runpod_l4", "runpod_rtx4090"}, "Explicit Runpod hardware profile required.")
@@ -628,22 +743,8 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
     origin = subprocess.check_output(["git", "-C", str(phase3.REPO_ROOT), "config", "--get", "remote.origin.url"], text=True).strip()
     _require(_repository_key(origin) == _repository_key(repo_url), "Local/controller repository identities differ.")
     source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
-    secondary = Path(config["secondary_drive"]).resolve()
-    _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
-    for key in ("durable_root", "state_root"):
-        path = Path(_absolute(config[key])).resolve()
-        _require(secondary in path.parents, f"{key} must be on the independent secondary drive.")
-    _require(shutil.disk_usage(secondary).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
-             "The independent drive lacks the 5 GiB reserve plus the download allowance.")
-    _require(shutil.disk_usage(phase3.REPO_ROOT).free >= 5 * GIB, "Internal ext4 is below its 5 GiB reserve.")
-    if runpod:
-        mirror = Path(_absolute(config["mirror_root"])).resolve()
-        ancestor = mirror
-        while not ancestor.exists():
-            ancestor = ancestor.parent
-        _require(ancestor.stat().st_dev != secondary.stat().st_dev
-                 and shutil.disk_usage(ancestor).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
-                 "Runpod requires an independent NVMe mirror with the payload allowance and reserve.")
+    _validate_published_runtime_locks(config, source)
+    _local_storage(config)
     for key in ("remote_repo", "remote_python", "remote_campaign", "view_archive", "timing_inputs", "bootstrap_python"):
         _absolute(config[key])
     for command in ("ssh", "scp", "rsync"):
@@ -754,6 +855,14 @@ def _session(config: Mapping[str, Any], transport: ControllerTransport, previous
 
 
 def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item: Mapping[str, Any]) -> None:
+    if config.get("provider") == "runpod" and config.get("artifact_cache"):
+        from ec_clean30 import runpod_bootstrap
+        receipt = runpod_bootstrap.hydrate_cached_artifact(config, transport, item, transport.deadline_unix)
+        if receipt is not None:
+            _require(transport.stat_file(item["remote"]) == {"sha256": item["sha256"],
+                     "size_bytes": Path(item["local"]).stat().st_size}, "Cached artifact readback differs.")
+            _write(Path(config["state_root"]) / "staging_receipts" / f"{item['sha256']}.json", receipt)
+            return
     url = _weight_url(config, item)
     expected = {"sha256": item["sha256"], "size_bytes": Path(item["local"]).stat().st_size}
     existing = transport.stat_file(item["remote"])
@@ -765,6 +874,8 @@ def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item:
             # The downloader has exited and closed its writer before returning this status.
             if result["status"] == "verified":
                 downloaded = transport.stat_file(partial)
+            elif config.get("provider") == "runpod" and config.get("artifact_cache"):
+                raise WorkstationError("Official model download failed; a bulk workstation fallback is not enabled for the cached route.")
         if downloaded != expected:
             transport.upload(Path(item["local"]), partial, timeout=MAX_G2_SECONDS)
             existing = transport.stat_file(partial)
@@ -778,27 +889,101 @@ def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item:
 def _stage_checkout(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
     origin = config["repo_url"] if config.get("provider") == "runpod" else _controller_config(transport.controller_root)["REPO_URL"]
     checkout = ("import pathlib,subprocess,sys; p=pathlib.Path(sys.argv[1]); "
-                "\nif not p.exists(): subprocess.run(['git','clone',sys.argv[2],str(p)],check=True)\n"
+                "\nif not p.exists(): subprocess.run(['git','clone','--filter=blob:none',sys.argv[2],str(p)],check=True)\n"
                 "assert not subprocess.check_output(['git','-C',str(p),'status','--porcelain'],text=True).strip(), 'Remote checkout is dirty'; "
                 "subprocess.run(['git','-C',str(p),'fetch','origin','main:refs/remotes/origin/main'],check=True); "
                 "subprocess.run(['git','-C',str(p),'checkout','--detach',sys.argv[3]],check=True)")
     transport.remote([config["bootstrap_python"], "-c", checkout, config["remote_repo"], origin, source["git_head"]], timeout=300)
 
 
+def _unpack_stage(config: Mapping[str, Any], transport: ControllerTransport, item: Mapping[str, Any]) -> None:
+    if item["kind"] == "tar":
+        # Python's data filter rejects paths/links escaping the new extraction directory.
+        unpack = ("import json,pathlib,subprocess,sys,tarfile; a,p,h,u=sys.argv[1:]; p=pathlib.Path(p); "
+                  "m=p/'.g2_archive.json'; "
+                  "\nif p.exists():\n assert m.is_file() and json.loads(m.read_text())['sha256']==h, 'Unrecognized existing extraction'\n"
+                  "else:\n p.mkdir(parents=True)\n with tarfile.open(a) as t: t.extractall(p,filter='data')\n"
+                  " if u=='1': subprocess.run([str(p/'bin/python'),str(p/'bin/conda-unpack')],check=True)\n"
+                  " m.write_text(json.dumps({'sha256':h}))\n")
+        transport.remote([config["bootstrap_python"], "-c", unpack, item["remote"], item["extract_to"],
+                          item["sha256"], str(int(item.get("conda_unpack", False)))], timeout=600)
+
+
 def _stage_runtime(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
     _stage_checkout(config, transport, source)
     for item in config["stage"]:
         _stage_file(config, transport, item)
-        if item["kind"] == "tar":
-            # Python's data filter rejects paths/links escaping the new extraction directory.
-            unpack = ("import json,pathlib,subprocess,sys,tarfile; a,p,h,u=sys.argv[1:]; p=pathlib.Path(p); "
-                      "m=p/'.g2_archive.json'; "
-                      "\nif p.exists():\n assert m.is_file() and json.loads(m.read_text())['sha256']==h, 'Unrecognized existing extraction'\n"
-                      "else:\n p.mkdir(parents=True)\n with tarfile.open(a) as t: t.extractall(p,filter='data')\n"
-                      " if u=='1': subprocess.run([str(p/'bin/python'),str(p/'bin/conda-unpack')],check=True)\n"
-                      " m.write_text(json.dumps({'sha256':h}))\n")
-            transport.remote([config["bootstrap_python"], "-c", unpack, item["remote"], item["extract_to"],
-                              item["sha256"], str(int(item.get("conda_unpack", False)))], timeout=600)
+        _unpack_stage(config, transport, item)
+
+
+def _bootstrap_runpod(config, transport, source, session):
+    """Prove kernel authority using only the pinned helper before bulk transfer."""
+    from ec_clean30 import container_caps
+    root = f"/workspace/.deepmzyme-bootstrap/{session['session_id']}"
+    local = phase3.REPO_ROOT / "src/ec_clean30/container_caps.py"
+    _require(_sha(local) == source["source_sha256"]["src/ec_clean30/container_caps.py"],
+             "Bootstrap helper differs from its published pin.")
+    remote = root + "/container_caps.py"
+    transport.upload(local, remote)
+    _require(transport.stat_file(remote) == {"sha256": _sha(local), "size_bytes": local.stat().st_size},
+             "Bootstrap helper transfer differs.")
+    prepared = json.loads(transport.remote([config["bootstrap_python"], remote, "prepare", "--cgroup-root",
+                          config["cgroup_root"], "--owner-id", session["pod_id"]], timeout=60))
+    _require(prepared.get("parent_limits_unchanged") is True, "Bootstrap changed provider limits.")
+    _write(Path(config["state_root"]) / "bootstrap_prepare.json", prepared)
+    evidence = json.loads(transport.remote([config["bootstrap_python"], remote, "probe", "--cgroup-root",
+                                          config["cgroup_root"]], timeout=90))
+    container_caps.validate_probe_evidence(evidence)
+    _require(evidence["helper_sha256"] == source["source_sha256"]["src/ec_clean30/container_caps.py"],
+             "Early kernel proof belongs to another helper.")
+    _write(Path(config["state_root"]) / "bootstrap_kernel.json", evidence)
+    tools = json.loads(transport.remote([config["bootstrap_python"], "-c",
+        "import json,shutil,tarfile;print(json.dumps({'missing':[n for n in ('git','curl','rsync') if not shutil.which(n)],"
+        "'safe_tar':hasattr(tarfile,'data_filter')}))"], timeout=20))
+    _require(tools["safe_tar"], "Bootstrap Python lacks safe archive extraction.")
+    if tools["missing"]:
+        _require(set(tools["missing"]) <= {"git", "curl", "rsync"}, "Unexpected system prerequisite.")
+        transport.remote(["env", "DEBIAN_FRONTEND=noninteractive", "apt-get", "update"], timeout=180)
+        transport.remote(["env", "DEBIAN_FRONTEND=noninteractive", "apt-get", "install", "-y",
+                          "--no-install-recommends", *tools["missing"]], timeout=180)
+    _write(Path(config["state_root"]) / "bootstrap_tools.json", tools)
+    return evidence
+
+
+def _stage_runpod_runtime(config, transport, source, check_session):
+    """Main runtime first, followed by at most two independent staging writers."""
+    from ec_clean30 import runpod_bootstrap
+    _stage_checkout(config, transport, source)
+    main = next(item for item in config["stage"] if item["remote"] == config["runtime_environments"]["fit"]["archive"])
+
+    def stage(item):
+        check_session()
+        if not runpod_bootstrap.hydrate_public_artifact(config, transport, item, source, transport.deadline_unix):
+            _stage_file(config, transport, item)
+        _unpack_stage(config, transport, item)
+        check_session()
+
+    begun = time.time()
+    stage(main)
+    _container_probe(config, transport)
+    _verify_runtime_lock(config, transport, "fit", config["remote_python"])
+    cuda = json.loads(transport.remote([*config["profiles"]["fit"]["cap_prefix"], config["remote_python"], "-c",
+                      phase3.cuda_probe_program(config["hardware_profile"])], cwd=config["remote_repo"], timeout=90))
+    phase3.validate_cuda_evidence(cuda, config["hardware_profile"])
+    _write(Path(config["state_root"]) / "cuda_fit_early.json", cuda)
+    check_session()
+    pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="runpod-staging")
+    pending = {pool.submit(stage, item) for item in config["stage"] if item is not main}
+    try:
+        while pending:
+            check_session()
+            done, pending = wait(pending, timeout=30, return_when=FIRST_COMPLETED)
+            for future in done:
+                future.result()
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    _write(Path(config["state_root"]) / "staging_complete.json", {"status": "passed", "seconds": time.time() - begun,
+            "workers": 2, "source": source, "main_runtime_first": True})
 
 
 def _container_probe(config: Mapping[str, Any], transport: ControllerTransport, *, early: bool = False) -> str:
@@ -1148,9 +1333,16 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
         _require(state["config_sha256"] == _sha(config_path) and not state.get("closed"),
                  "Runpod configuration changed or its allocation is already closed.")
         owned = bool(state.get("start_attempted"))
-        session = None
+        session, heartbeat_context, heartbeat = None, None, None
         try:
-            ready = preflight(config, config_path, published=True)
+            ready = _prepared_preflight(config, config_path, published=True)
+            cached = bool(config.get("artifact_cache"))
+            if cached:
+                from ec_clean30 import runpod_bootstrap
+                _require(ready["source"]["format"] == phase3.BOOTSTRAP_FORMAT,
+                         "Cached bootstrap requires its authenticated execution-v4 manifest.")
+                runpod_bootstrap.verify_seeded_cache(config, source=ready["source"])
+                staging_scratch = runpod_bootstrap.staging_scratch_bytes(config)
             gcp = Path(config["gcp_controller_root"])
             status = subprocess.run([str(gcp / "bin/vm-status")], check=True, capture_output=True, text=True, timeout=90).stdout
             _require(_status(status, config["gcp_stopped_identity"]) == "TERMINATED", "The retained GCP VM must remain stopped.")
@@ -1165,11 +1357,18 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                 session = controller.session(state.get("session_id"))
             state.update(session)
             _write(state_path, state)
+            heartbeat_context = controller.maintain_heartbeat(interval=30)
+            heartbeat = heartbeat_context.__enter__()
+
+            def check_session():
+                heartbeat.check()
+                return controller.session(session["session_id"])
+
             transport.deadline_unix = session["deadline_unix"]
             transport.reserve_seconds = RESERVE_SECONDS
             until = min(time.time() + 300, session["deadline_unix"] - RESERVE_SECONDS)
             while True:
-                controller.heartbeat()
+                check_session()
                 try:
                     transport.ssh_config = controller.write_ssh_config()
                     transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
@@ -1177,17 +1376,29 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                 except (OSError, subprocess.SubprocessError, RuntimeError):
                     _require(time.time() + 10 < until, "The owned pod did not become reachable within its startup bound.")
                     time.sleep(10)
-            _stage_checkout(config, transport, ready["source"])
-            # Verify real kernel authority before transferring the multi-gigabyte closure.
-            _container_probe(config, transport, early=True)
+            if cached:
+                _bootstrap_runpod(config, transport, ready["source"], session)
+            else:
+                _stage_checkout(config, transport, ready["source"])
+                _container_probe(config, transport, early=True)
+            check_session()
             free = int(transport.remote([config["bootstrap_python"], "-c",
                 "import shutil; print(shutil.disk_usage('/workspace').free)"]).strip())
-            _require(free >= ready["staging_peak_bytes"] + 5 * GIB, "Pod disk lacks staging and closeout space.")
-            _stage_runtime(config, transport, ready["source"])
+            extra = 0
+            if cached:
+                extra = staging_scratch + PAYLOAD_CEILING_BYTES
+            _require(free >= ready["staging_peak_bytes"] + extra + 5 * GIB,
+                     "Pod disk lacks staging and closeout space.")
+            if cached:
+                _stage_runpod_runtime(config, transport, ready["source"], check_session)
+            else:
+                _stage_runtime(config, transport, ready["source"])
+            check_session()
             manifest, probe = _runtime_preflight(config, transport, ready["source"])
+            check_session()
             controller.admit_workload()
             _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
-                           lambda: controller.session(session["session_id"]))
+                           check_session)
         except BaseException as exc:
             state.update(status="interrupted", error=f"{type(exc).__name__}: {exc}")
             raise
@@ -1206,7 +1417,11 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                     if preservation:
                         state["closeout"] = controller.closeout(preservation)
                 finally:
-                    _write(state_path, state)
+                    try:
+                        if heartbeat_context is not None:
+                            heartbeat_context.__exit__(None, None, None)
+                    finally:
+                        _write(state_path, state)
         return state
 
 
@@ -1295,7 +1510,9 @@ def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: Controlle
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--run", action="store_true", help="Deliberately start once, or recover this still-active owned allocation.")
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--run", action="store_true", help="Deliberately start once, or recover this still-active owned allocation.")
+    actions.add_argument("--seed-cache", action="store_true", help="Verify and seed the configured private artifact cache without allocating a GPU.")
     args = parser.parse_args(argv)
     try:
         config = _json(args.config)
@@ -1304,8 +1521,12 @@ def main(argv: list[str] | None = None) -> int:
                 raise KeyboardInterrupt(f"signal {signum}")
             signal.signal(signal.SIGTERM, interrupted)
             result = run_g2(config, args.config)
+        elif args.seed_cache:
+            from ec_clean30 import runpod_bootstrap
+            ready = _prepared_preflight(config, args.config, published=True)
+            result = runpod_bootstrap.seed_cache(config, args.config, source=ready["source"])
         else:
-            result = preflight(config, args.config)
+            result = _prepared_preflight(config, args.config)
         print(json.dumps(result, indent=2, sort_keys=True, allow_nan=False))
         return 0
     except (RuntimeError, OSError, ValueError, KeyError, subprocess.SubprocessError, KeyboardInterrupt) as exc:

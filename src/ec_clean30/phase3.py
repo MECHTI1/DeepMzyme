@@ -45,6 +45,8 @@ AUTOMATION_FILES = (*EXECUTION_FILES, "src/ec_clean30/phase4.py", "scripts/run_e
                     "src/ec_clean30/workstation.py", "scripts/run_ec_clean30_workstation.py")
 RUNPOD_FORMAT = "deepmzyme_ec_clean30_execution_v3"
 RUNPOD_FILES = (*AUTOMATION_FILES, "src/ec_clean30/runpod_controller.py", "src/ec_clean30/container_caps.py")
+BOOTSTRAP_FORMAT = "deepmzyme_ec_clean30_execution_v4"
+BOOTSTRAP_FILES = (*RUNPOD_FILES, "src/ec_clean30/runpod_bootstrap.py")
 TRANSFER_FORMAT = "deepmzyme_ec_clean30_fold0_transfer_v1"
 GPU_PROFILES = {"gcp_l4": "NVIDIA L4", "runpod_l4": "NVIDIA L4",
                 "runpod_rtx4090": "NVIDIA GeForce RTX 4090"}
@@ -627,7 +629,7 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
              and manifest_path.resolve() == manifest_path,
              "Execution manifest must be a regular repository document.")
     document = _json(manifest_path)
-    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT, RUNPOD_FORMAT}
+    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT, RUNPOD_FORMAT, BOOTSTRAP_FORMAT}
              and document.get("campaign_id") == CAMPAIGN_ID,
              "Unknown execution manifest.")
     _require(document.get("freeze1b_sha256") == FREEZE1B_SHA256, "Freeze-1b binding is missing or changed.")
@@ -644,7 +646,10 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
     expected = dict(base["code"]["tracked_file_sha256"])
     expected.update({name: row["after"] for name, row in amendment["source_changes"].items()})
     pins = document.get("source_sha256", {})
-    if document["format"] == RUNPOD_FORMAT:
+    if document["format"] == BOOTSTRAP_FORMAT:
+        _verify_runpod_base(repo, document)
+        allowed = BOOTSTRAP_FILES
+    elif document["format"] == RUNPOD_FORMAT:
         _verify_execution_base(repo, document)
         _verify_automation_base(repo, document)
         allowed = RUNPOD_FILES
@@ -756,10 +761,56 @@ def make_runpod_manifest(base_automation: Path, out: Path, *, base_commit: str,
     return document
 
 
+def _verify_runpod_base(repo: Path, document: Mapping[str, Any]) -> dict[str, Any]:
+    """Bind bootstrap additions to the unchanged published provider extension."""
+    reference = document.get("base_runpod", {})
+    commit = reference.get("commit", "")
+    _require(isinstance(commit, str) and re.fullmatch(r"[0-9a-f]{40}", commit),
+             "Bootstrap extension requires a full published Runpod commit.")
+    _require(_git(repo, "merge-base", commit, "refs/remotes/origin/main") == commit
+             and _git(repo, "merge-base", commit, "HEAD") == commit,
+             "Runpod base must be published and an ancestor of the execution checkout.")
+    name = _relative(reference.get("path", ""))
+    path = _safe_file(repo, name)
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
+             "Original published Runpod manifest changed.")
+    base = json.loads(published)
+    _require(base.get("format") == RUNPOD_FORMAT
+             and set(base.get("source_sha256", {})) == set(RUNPOD_FILES),
+             "Bootstrap base must be the original eight-file Runpod execution manifest.")
+    _verify_execution_base(repo, base)
+    _verify_automation_base(repo, base)
+    for key in ("campaign_id", "freeze1_sha256", "freeze1b_sha256", "amendment_path", "amendment_sha256",
+                "amendment_commit", "amendment_chain", "official_fold0_training_sha256", "timing_inputs_sha256",
+                "base_execution", "base_automation", "hardware_profiles"):
+        _require(document.get(key) == base.get(key), f"Bootstrap extension changed the Runpod {key} binding.")
+    for name, digest in base["source_sha256"].items():
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        _require(hashlib.sha256(content).hexdigest() == digest, "Published Runpod source pin differs.")
+    return base
+
+
+def make_bootstrap_manifest(base_runpod: Path, out: Path, *, base_commit: str,
+                            repo: Path = REPO_ROOT) -> dict[str, Any]:
+    repo = Path(repo).resolve()
+    base_runpod = Path(base_runpod).resolve()
+    document = {**_json(base_runpod), "format": BOOTSTRAP_FORMAT,
+                "base_runpod": {"path": base_runpod.relative_to(repo).as_posix(),
+                                "sha256": _sha(base_runpod), "commit": base_commit},
+                "source_sha256": {name: _sha(_safe_file(repo, name)) for name in BOOTSTRAP_FILES},
+                "purpose": "Verified Runpod bootstrap and cached G2 staging; Phase 4 remains gated by numerical G3 authority"}
+    _verify_runpod_base(repo, document)
+    _write(out, document)
+    verify_execution_source(out, repo=repo, require_published=False)
+    return document
+
+
 def _approved_runtime_profile(source: Mapping[str, Any], profile: str) -> dict[str, Any]:
     expected = hardware_profile(profile)
     if profile.startswith("runpod_"):
-        _require(source.get("format") == RUNPOD_FORMAT and profile in source.get("hardware_profiles", []),
+        _require(source.get("format") in {RUNPOD_FORMAT, BOOTSTRAP_FORMAT}
+                 and profile in source.get("hardware_profiles", []),
                  "Runpod hardware requires its authenticated provider extension.")
     return expected
 
@@ -1476,6 +1527,10 @@ def build_parser() -> argparse.ArgumentParser:
     runpod.add_argument("--base-automation", type=Path, required=True)
     runpod.add_argument("--base-commit", required=True)
     runpod.add_argument("--out", type=Path, required=True)
+    bootstrap = actions.add_parser("bootstrap-execution-manifest")
+    bootstrap.add_argument("--base-runpod", type=Path, required=True)
+    bootstrap.add_argument("--base-commit", required=True)
+    bootstrap.add_argument("--out", type=Path, required=True)
     verify = actions.add_parser("verify-execution")
     verify.add_argument("--manifest", type=Path, required=True)
     verify.add_argument("--draft", action="store_true")
@@ -1520,6 +1575,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = make_automation_manifest(args.base_execution, args.out, base_commit=args.base_commit)
         elif args.action == "runpod-manifest":
             result = make_runpod_manifest(args.base_automation, args.out, base_commit=args.base_commit)
+        elif args.action == "bootstrap-execution-manifest":
+            result = make_bootstrap_manifest(args.base_runpod, args.out, base_commit=args.base_commit)
         elif args.action == "verify-execution":
             result = verify_execution_source(args.manifest, require_published=not args.draft)
         elif args.action == "vm-probe":

@@ -10,7 +10,8 @@ its temporary resources are removed and the original VM is `TERMINATED` ([evc-02
 A separately authorized Runpod setup was stopped after input and off-pod preservation checks
 ([evc-024](log.md#evc-024)). The replacement extension is CPU-verified ([evc-025](log.md#evc-025)); the compatibility update
 and named-pod cap checks are recorded in [evc-026](log.md#evc-026). The runtime repair and replacement
-window are recorded in [evc-027](log.md#evc-027). Actual model/CUDA checks and all twelve G2 events remain pending.
+window are recorded in [evc-027](log.md#evc-027). The cache-backed bootstrap extension is implemented
+([evc-028](log.md#evc-028)); actual model/CUDA checks and all twelve G2 events remain pending.
 The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
 cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.
@@ -108,6 +109,13 @@ Keep weights, environments, the prepared view archive and inactive artifacts on 
 CLEAN fit's hot vectors and working files to ext4; links back to Data1 retain the measured I/O slowdown.
 Preserve the existing 5 GiB reserve, check actual staged bytes before each fit, and verify completed outputs
 at their durable destination before reclaiming active scratch. No frozen evidence or backup cleanup is needed.
+
+The [Runpod bootstrap](g2_readiness.md#reproducible-runpod-bootstrap) stages the same pinned inputs through a
+private artifact cache and official model origins. Prepare and seed the cache with no GPU allocated, then use
+the single workstation entry point from the [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues).
+The new execution-v4 extension authenticates the added transport code against the preserved runtime-v2
+ancestor. Publication, cache readback, current pricing, independent local free space and fresh host qualification
+precede a new bounded pass. No upload-time reduction is claimed before actual cold/warm measurements.
 
 Declare these proposed operational choices in the CPU package before measuring results:
 

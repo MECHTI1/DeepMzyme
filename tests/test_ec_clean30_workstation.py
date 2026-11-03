@@ -1,5 +1,6 @@
 """CPU fixtures for the bounded workstation queue; no controller/network/GPU use."""
 from datetime import datetime, timezone
+from contextlib import contextmanager
 import hashlib
 import io
 import json
@@ -638,6 +639,11 @@ def test_runpod_uses_shared_queue_and_always_closes_owned_attempt(lifecycle, mon
 
         def heartbeat(self):
             pass
+
+        @contextmanager
+        def maintain_heartbeat(self, *, interval=30):
+            assert interval == 30
+            yield type("Heartbeat", (), {"check": lambda self: None})()
 
         def admit_workload(self):
             pass

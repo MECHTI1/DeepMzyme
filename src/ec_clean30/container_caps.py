@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 from contextlib import contextmanager
+import errno
 import hashlib
 import json
 import math
@@ -163,6 +164,160 @@ def validate_root(root: Path) -> Path:
     _require({"cpu", "memory"}.issubset(_read(root / "cgroup.subtree_control").split()),
              "The provider must delegate cpu and memory controllers enabled for child cgroups.")
     return root
+
+
+def _private_container_namespace(root: Path) -> str:
+    """Prove the narrowly supported private container namespace before moving PIDs."""
+    _require(root.is_absolute() and root.is_dir() and root.resolve() == root,
+             "Preparation requires a canonical existing cgroup root.")
+    mounts = [line.split() for line in Path('/proc/self/mountinfo').read_text().splitlines()]
+    cgroup = [row for row in mounts if _mount_unescape(row[4]) == str(root)]
+    _require(len(cgroup) == 1, "Preparation requires an unambiguous private cgroup mount.")
+    row = cgroup[0]
+    split = row.index('-')
+    _require(row[3] == '/' and row[split + 1] == 'cgroup2'
+             and 'rw' in row[5].split(',') and 'nsdelegate' in row[split + 3].split(',')
+             and not os.statvfs(root).f_flag & os.ST_RDONLY,
+             "Preparation requires a writable private delegated cgroup v2 namespace.")
+    proc = [row for row in mounts if row[4] == '/proc']
+    _require(len(proc) == 1 and proc[0][3] == '/' and proc[0][proc[0].index('-') + 1] == 'proc'
+             and not any(row[4].startswith('/proc/') and row[4].split('/')[2].isdigit() for row in mounts),
+             "Preparation requires genuine, unobscured container procfs.")
+    namespace = os.readlink('/proc/self/ns/pid')
+    _require(os.readlink('/proc/1/ns/pid') == namespace
+             and os.readlink('/proc/1/ns/cgroup') == os.readlink('/proc/self/ns/cgroup')
+             and _read(Path('/proc/1/comm')) == 'docker-init',
+             "Preparation requires the expected private container PID namespace and init.")
+    _require(_read(root / 'cgroup.type') == 'domain'
+             and {'cpu', 'memory'} <= set(_read(root / 'cgroup.controllers').split()),
+             "The private namespace lacks domain CPU and memory delegation.")
+    return namespace
+
+
+def _namespace_pid(pid: int, namespace: str, membership: str | None = None) -> str:
+    """Check process identity on both sides of its namespace and membership reads."""
+    base = Path('/proc') / str(pid)
+    try:
+        before = (base / 'stat').read_text().rsplit(')', 1)[1].split()[19]
+        status = dict(line.split(':', 1) for line in (base / 'status').read_text().splitlines() if ':' in line)
+        _require(all(status[name].split() == [str(pid)] for name in ('Pid', 'Tgid', 'NSpid', 'NStgid'))
+                 and os.readlink(str(base / 'ns/pid')) == namespace,
+                 "A process is outside the private container PID namespace.")
+        actual = _read(base / 'cgroup')
+        _require(len(actual.splitlines()) == 1 and actual.startswith('0::/') and '..' not in Path(actual[3:]).parts
+                 and (membership is None or actual == membership),
+                 "A process is outside the expected owned cgroup.")
+        after = (base / 'stat').read_text().rsplit(')', 1)[1].split()[19]
+    except (KeyError, IndexError, ValueError) as exc:
+        raise CapError('Malformed process identity evidence in private procfs.') from exc
+    _require(before == after, "Process identity changed during namespace verification.")
+    return actual
+
+
+def prepare(root: Path, *, owner_id: str) -> dict[str, Any]:
+    """Enable already-delegated v2 child controls without changing provider limits.
+
+    Existing v1 delegation is inspected but never rewritten. The actual kernel
+    enforcement probe remains mandatory after this preparation receipt.
+    """
+    root = Path(root)
+    _require(isinstance(owner_id, str) and re.fullmatch(r'[A-Za-z0-9_-]{1,100}', owner_id),
+             "A safe explicit allocation owner ID is required.")
+    if not (root / 'cgroup.type').exists():
+        validate_root(root)
+        delegated = _v1_roots(root)
+        _require(all(os.access(path, os.W_OK | os.X_OK) for path in delegated.values()),
+                 "The container-scoped v1 controls are not writable by this container.")
+        return {'status': 'already_delegated', 'backend': 'cgroup_v1', 'owner_id': owner_id,
+                'cgroup_root': str(root), 'parent_limits_unchanged': True, 'probe_required': True}
+    namespace = _private_container_namespace(root)
+    _namespace_pid(1, namespace)
+    _namespace_pid(os.getpid(), namespace)
+    names = ('cpu.max', 'cpu.weight', 'memory.max', 'memory.high', 'memory.swap.max', 'pids.max')
+    before = {name: _read(root / name) if (root / name).exists() else None for name in names}
+    quota = before['cpu.max'].split() if before['cpu.max'] else []
+    _require(quota and quota[0] != 'max'
+             and before['memory.max'] not in (None, 'max'),
+             "Preparation refuses an unbounded provider cgroup root.")
+    _require(len(quota) == 2 and all(value.isdigit() and int(value) > 0 for value in quota)
+             and before['memory.max'].isdigit() and int(before['memory.max']) > 0,
+             "Preparation requires positive finite provider CPU and memory limits.")
+    enabled = set(_read(root / 'cgroup.subtree_control').split())
+    if {'cpu', 'memory'} <= enabled:
+        after = {name: _read(root / name) if (root / name).exists() else None for name in names}
+        _require(before == after, "Provider parent limits changed during preparation inspection.")
+        return {'status': 'already_delegated', 'backend': 'cgroup_v2', 'owner_id': owner_id,
+                'cgroup_root': str(root), 'parent_limits_before': before, 'parent_limits_after': after,
+                'parent_limits_unchanged': True, 'enabled': sorted(enabled), 'probe_required': True}
+    _require(not enabled, "Do not rewrite a partial or unknown provider controller arrangement.")
+    # A retry may inherit the manager after an interrupted earlier preparation.
+    manager = root / f'deepmzyme-control-{owner_id}'
+    allowed = {'0::/', f'0::/{manager.name}'}
+    _require(_namespace_pid(1, namespace) in allowed, "Container init is outside the owned root or manager.")
+    _require(_namespace_pid(os.getpid(), namespace) in allowed, "Preparation is outside the owned root or manager.")
+    _require(all(not path.is_dir() or path == manager for path in root.iterdir()),
+             "The unprepared provider namespace contains an unknown child cgroup.")
+    created = not manager.exists()
+    moved = []
+    try:
+        if created:
+            manager.mkdir(mode=0o700)
+        _require(manager.resolve() == manager and _read(manager / 'cgroup.type') == 'domain'
+                 and not _read(manager / 'cgroup.subtree_control'), "The existing manager is not an owned plain domain.")
+        for pid in map(int, _read(manager / 'cgroup.procs').split()):
+            _namespace_pid(pid, namespace, f'0::/{manager.name}')
+        for _ in range(40):
+            pids = [int(value) for value in _read(root / 'cgroup.procs').split()]
+            _require(len(pids) < 500 and all(pid > 0 for pid in pids),
+                     "Unexpected process namespace while preparing child controls.")
+            for pid in pids:
+                try:
+                    _namespace_pid(pid, namespace, '0::/')
+                    _write(manager / 'cgroup.procs', str(pid))
+                    moved.append(pid)
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+                except OSError as exc:
+                    if exc.errno != errno.ESRCH:
+                        raise
+            if not _read(root / 'cgroup.procs'):
+                try:
+                    _write(root / 'cgroup.subtree_control', '+cpu +memory')
+                    break
+                except OSError as exc:
+                    if exc.errno != errno.EBUSY:
+                        raise
+            time.sleep(.05)
+        else:
+            raise CapError('Container-root processes did not settle within preparation bound.')
+        after = {name: _read(root / name) if (root / name).exists() else None for name in names}
+        _require(before == after, "Provider parent limits changed during preparation.")
+        enabled = set(_read(root / 'cgroup.subtree_control').split())
+        _require({'cpu', 'memory'} <= enabled, "Child controllers were not enabled after preparation.")
+    except BaseException as original:
+        try:
+            current = set(_read(root / 'cgroup.subtree_control').split())
+            added = current & {'cpu', 'memory'}
+            if added:
+                _write(root / 'cgroup.subtree_control', ' '.join('-' + name for name in sorted(added)))
+            for pid in moved:
+                try:
+                    _namespace_pid(pid, namespace, f'0::/{manager.name}')
+                    _write(root / 'cgroup.procs', str(pid))
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+                except OSError as exc:
+                    if exc.errno != errno.ESRCH:
+                        raise
+            if created and manager.exists():
+                _require(not _read(manager / 'cgroup.procs'), "The manager still contains processes during rollback.")
+                manager.rmdir()
+        except BaseException as rollback:
+            raise CapError(f'Preparation failed and its rollback is unconfirmed: {type(rollback).__name__}: {rollback}') from original
+        raise
+    return {'status': 'prepared', 'backend': 'cgroup_v2', 'owner_id': owner_id, 'cgroup_root': str(root),
+            'parent_limits_before': before, 'parent_limits_after': after, 'parent_limits_unchanged': True,
+            'manager': str(manager), 'moved_container_pids': moved, 'enabled': sorted(enabled), 'probe_required': True}
 
 
 def cap_prefix(python: str, repo: str | Path, cgroup_root: str | Path, *,
@@ -576,9 +731,11 @@ def _interrupted(signum: int, _frame: Any) -> None:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
-    for name in ("probe", "run"):
+    for name in ("prepare", "probe", "run"):
         command = commands.add_parser(name)
         command.add_argument("--cgroup-root", type=Path, required=True)
+        if name == "prepare":
+            command.add_argument("--owner-id", required=True)
         if name == "run":
             command.add_argument("--cpu-cores", type=int, required=True)
             command.add_argument("--memory-bytes", type=int, required=True)
@@ -587,6 +744,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     for signum in (signal.SIGTERM, signal.SIGINT):
         signal.signal(signum, _interrupted)
     try:
+        if args.action == "prepare":
+            print(json.dumps(prepare(args.cgroup_root, owner_id=args.owner_id), sort_keys=True))
+            return 0
         if args.action == "probe":
             print(json.dumps(probe(args.cgroup_root), sort_keys=True))
             return 0
