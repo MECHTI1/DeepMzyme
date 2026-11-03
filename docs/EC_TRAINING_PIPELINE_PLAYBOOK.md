@@ -506,6 +506,9 @@ qualification failure or completed G2, until a control or the original deadline 
 extends runtime or spending. Session-bound controls may retry qualification only before workload admission,
 with the exact same published source; they cannot rerun failed scientific units or launch Phase 4. Changed
 source requires separate execution verification. Default closeout behavior is unchanged.
+Explicit `runpod.stock_search_seconds:1800` and `stock_poll_interval_seconds:45` enable the
+[bounded stock retry](campaigns/ec_class_vs_clean30_2026-10/g2_readiness.md#reproducible-runpod-bootstrap)
+through the same `--run` command, without resetting allocation deadlines after a rejected create.
 
 ```bash
 PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"

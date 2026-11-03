@@ -135,6 +135,10 @@ cap and does not expand the narrower pass ceiling. Cache storage counts toward s
 The prior absolute windows are closed and must not be reset. A new authorized pass uses a fresh state namespace
 and actual allocation clock. Before it starts, publish execution-v4, verify the seeded cache, refresh the price
 and spending bounds, confirm GCP remains `TERMINATED`, and recheck the independent Data1/NVMe reserves.
+Explicit `runpod.stock_search_seconds:1800` enables a persistent stock search with
+`stock_poll_interval_seconds` between 30 and 45. Only definite capacity rejections with fresh provider absence
+may retry creation; uncertain replies retain reconciliation. Exact Secure EU-RO-1 placement, CUDA floor,
+live price and billing are checked before each request. The first create intent fixes the runtime deadline.
 No new GPU qualification or G2 measurement is established by this implementation record. Freeze 1c and numerical
 G3 still require measured outputs; retained-resource shutdown is verified at its bounded closeout.
 Phase 4 and held-out reads stay gated.

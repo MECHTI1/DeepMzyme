@@ -1,5 +1,30 @@
 {
   "actual_new_gpu_qualification": "pending",
+  "bounded_stock_search": {
+    "docs_baseline_warnings": 11,
+    "docs_strict_failures": 0,
+    "execution_v4_passed": 26,
+    "execution_v4_seconds": 10.19,
+    "fixed_clock_from_first_create_intent": true,
+    "focused_passed": 260,
+    "focused_seconds": 73.45,
+    "fresh_absence_required_for_rejected_create_retry": true,
+    "fresh_exact_region_cuda_price_and_billing_required": true,
+    "live_read_compute_hourly_usd": 0.89,
+    "live_read_cuda": "13.2",
+    "live_read_dc": "EU-RO-1",
+    "live_read_gpu": "NVIDIA GeForce RTX 4090",
+    "live_read_rolling_gross_usd": 1.377897496917285,
+    "poll_interval_seconds": [
+      30,
+      45
+    ],
+    "search_max_seconds": 1800,
+    "source_sha256": "0d00810eb7f70b705f440f21d010793d711d2db949a1c67cfe7a955372cacef8",
+    "status": "cpu_verified_live_read_adapter_verified_gpu_execution_pending",
+    "tests_sha256": "b6be4e6aff679c9679f01214a5a627b9c15b83c286aee1a064401a92f37c9a0a",
+    "uncertain_post_never_retried": true
+  },
   "cache": {
     "blocking_requirement": "Fresh compatible stock and host qualification remain pending.",
     "data_center": "EU-RO-1",

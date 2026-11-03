@@ -1,4 +1,4 @@
-"""One-attempt allocation or named adoption with a workstation stop watchdog.
+"""Bounded allocation or named adoption with a workstation stop watchdog.
 
 The watchdog survives the submitting process, but is not a provider-side stop
 guarantee: workstation power/network/authentication loss can delay shutdown.
@@ -25,6 +25,8 @@ import threading
 import time
 from typing import Any, Mapping
 import uuid
+import urllib.parse
+import urllib.request
 
 MAX_SECONDS = 117 * 60
 MAX_REQUESTED_HOURS = 2.0
@@ -33,6 +35,10 @@ MAX_GROSS_USD = 5.0
 
 class RunpodError(RuntimeError):
     """A configuration, ownership, budget, or shutdown check failed."""
+
+
+class StockUnavailable(RunpodError):
+    """A fresh read lost compatible capacity before a provider POST."""
 
 
 class _HeartbeatGuard:
@@ -160,6 +166,11 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     cfg = _settings(config)
     _require(type(cfg.get('keep_alive_for_operator', False)) is bool,
              'keep_alive_for_operator must be a boolean.')
+    search = _number(cfg.get('stock_search_seconds', 0), 'stock_search_seconds', zero=True)
+    interval = _number(cfg.get('stock_poll_interval_seconds', 45), 'stock_poll_interval_seconds')
+    _require(search <= 1800 and 30 <= interval <= 45, 'Stock search is limited to 1800 seconds with 30–45 second polls.')
+    _require(not search or (cfg.get('data_center_id') == 'EU-RO-1' and not cfg.get('adopt_pod_id')),
+             'Stock search requires a new EU-RO-1 allocation.')
     hours = _number(cfg.get("requested_hours"), "requested_hours")
     duration = _number(cfg.get("max_runtime_seconds", MAX_SECONDS), "max_runtime_seconds")
     ceiling = _number(cfg.get("gross_ceiling_usd"), "gross_ceiling_usd")
@@ -384,7 +395,7 @@ class RunpodController:
             _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod.")
             try:
                 self._unchanged()
-                validate_config(self.config)
+                self._create_cost()
                 with self._lock():
                     state = self._state()
                     _require(state.get("phase") == "creating" and state.get("create_attempted") is True
@@ -419,6 +430,87 @@ class RunpodController:
             raise RunpodError(f"Runpod {args[0]} returned invalid JSON.") from None
         _require(not isinstance(parsed, dict) or not parsed.get("error"), f"Runpod {args[0]} returned an error payload.")
         return parsed
+
+    def _catalog_call(self, path: str, query: Mapping[str, Any]) -> dict[str, Any]:
+        """Read only public catalog/account billing routes; never log credentials."""
+        allowed = '/v2/catalog/gpus/' + urllib.parse.quote(self.cfg['gpu_id'], safe='')
+        _require(path in {allowed, '/v2/billing'}, 'Unsupported stock-search read route.')
+        _, key = self._environment()
+        request = urllib.request.Request('https://api.runpod.io' + path + '?' + urllib.parse.urlencode(query),
+                                         headers={'Authorization': 'Bearer ' + key})
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                result = json.load(response)
+        except Exception as exc:
+            raise RunpodError(f'Stock-search read failed ({type(exc).__name__}).') from None
+        _require(isinstance(result, dict), 'Stock-search response has an invalid shape.')
+        return result
+
+    def _stock_available(self) -> bool:
+        row = self._catalog_call('/v2/catalog/gpus/' + urllib.parse.quote(self.cfg['gpu_id'], safe=''),
+            {'include': 'AVAILABILITY', 'product': 'POD', 'cloud': 'SECURE', 'count': 1,
+             'countryCodes': 'RO', 'minCudaVersion': self.cfg['min_cuda_version']})
+        _require(row.get('id') == self.cfg['gpu_id'] and row.get('secure') is True,
+                 'Stock read returned a different GPU or cloud.')
+        _require(row.get('price', {}).get('secure') == self.cfg['quote']['hourly_compute_usd'],
+                 'Live secure compute price differs from the bounded quote.')
+        floor = tuple(map(int, self.cfg['min_cuda_version'].split('.')))
+        cuda = any(v.get('available') is True and re.fullmatch(r'\d+\.\d+', str(v.get('version', '')))
+                   and tuple(map(int, v['version'].split('.'))) >= floor for v in row.get('cudaVersions', []))
+        available = cuda and any(v.get('id') == self.cfg['data_center_id']
+            and v.get('availability') in {'LOW', 'MEDIUM', 'HIGH'} for v in row.get('dataCenters', []))
+        observation = {'config_sha256': self.config_sha, 'observed_unix': time.time(),
+                       'available': bool(available), 'catalog': row}
+        _write(self.root / 'stock_observation.json', observation)
+        with (self.root / 'stock_polls.jsonl').open('a') as handle:
+            handle.write(json.dumps(observation, sort_keys=True) + '\n')
+        return bool(available)
+
+    def _search_admission(self) -> None:
+        if not self._stock_available():
+            raise StockUnavailable('Compatible stock disappeared before create admission.')
+        billing = self._catalog_call('/v2/billing', {'bucketSize': 'hour', 'lastN': 25})
+        total = _number(billing.get('metadata', {}).get('totals', {}).get('totalAmount'), 'fresh rolling billing', zero=True)
+        _require(total <= self.cfg['quote']['prior_charge_usd'], 'Fresh billing exceeds the recorded prior-charge reserve.')
+        _write(self.root / 'stock_billing.json', {'observed_unix': time.time(), 'total_usd': total,
+                                                'config_sha256': self.config_sha, 'billing': billing})
+
+    def _create_cost(self) -> dict[str, Any]:
+        if not self.cfg.get('stock_search_seconds'):
+            return validate_config(self.config)
+        # Live price and billing replace only quote-age validation, never the caps.
+        cost = _validate(self.config, fresh=False)
+        self._search_admission()
+        return cost
+
+    def _await_stock(self) -> None:
+        path = self.root / 'stock_search.json'
+        if path.exists():
+            search = _read(path)
+            _require(search.get('config_sha256') == self.config_sha, 'Stock search belongs to another configuration.')
+            _require(0 <= search['deadline_unix'] - search['started_unix'] <= self.cfg['stock_search_seconds']
+                     and search['started_unix'] <= time.time(), 'Invalid persisted stock-search window.')
+        else:
+            now = time.time()
+            search = {'config_sha256': self.config_sha, 'started_unix': now,
+                      'deadline_unix': now + self.cfg['stock_search_seconds']}
+            _write(path, search)
+        while time.time() < search['deadline_unix']:
+            self._unchanged()
+            if self.state_path.exists():
+                state = self._state()
+                _require(not state.get('stop_requested') and time.time() < state['deadline_unix'] - 900,
+                         'Stock retry reached the original runtime closeout boundary.')
+                self.heartbeat()
+                self._watchdog_healthy()
+            rows = self._pods()
+            self._no_other_gpu(rows)
+            _require(not any(p.get('name') == self.cfg['pod_name'] for p in rows),
+                     'A matching pod appeared during stock polling; reconciliation is required.')
+            if self._stock_available():
+                return
+            time.sleep(min(self.cfg.get('stock_poll_interval_seconds', 45), max(0, search['deadline_unix'] - time.time())))
+        raise RunpodError('The bounded 30-minute stock search is exhausted.')
 
     def _pods(self) -> list[dict[str, Any]]:
         rows = self._call("list", "--all")
@@ -585,7 +677,19 @@ class RunpodController:
     def start(self) -> dict[str, Any]:
         _require(not self.cfg.get("adopt_pod_id"), "An adoption configuration can never create a pod; use adopt().")
         self._unchanged()
-        self.cost = validate_config(self.config)
+        search = bool(self.cfg.get('stock_search_seconds'))
+        if search:
+            _require(not self.state_path.exists(), 'This pass already has a launch intent; it cannot create again.')
+            while True:
+                self._await_stock()
+                try:
+                    self.cost = self._create_cost()
+                    break
+                except StockUnavailable:
+                    time.sleep(min(self.cfg.get('stock_poll_interval_seconds', 45),
+                        max(0, _read(self.root / 'stock_search.json')['deadline_unix'] - time.time())))
+        else:
+            self.cost = self._create_cost()
         with self._lock():
             _require(not self.state_path.exists(), "This pass already has a launch intent; it cannot create again.")
             rows = self._pods()
@@ -606,7 +710,8 @@ class RunpodController:
         self.heartbeat()
         self._arm_watchdog()
         self._unchanged()
-        validate_config(self.config)
+        if not search:
+            validate_config(self.config)
         with self._lock():
             state = self._state()
             _require(state["phase"] == "arming" and not state.get("stop_requested")
@@ -617,14 +722,49 @@ class RunpodController:
             _write(self.state_path, state)
             self._cached_state = dict(state)
         try:
-            try:
-                created = self._call(*self._create_args(), timeout=min(120, self.cost["max_total_seconds"]))
-                self._bind(created, source="successful_create_response")
-            except RunpodError as exc:
-                self._update(create_error=str(exc))
-                # Never retry POST/create after an uncertain response.
-                if not self._resolve():
-                    raise
+            while True:
+                try:
+                    if search:
+                        until = _read(self.root / 'stock_search.json')['deadline_unix']
+                        if time.time() >= until:
+                            self._update(create_cancelled_before_post=True)
+                            raise RunpodError('The bounded stock search expired before create.')
+                    with self._lock():
+                        current = self._state()
+                        _require(not current.get('stop_requested'), 'Create intent is closed.')
+                        current.pop('create_error', None)
+                        current.pop('create_cancelled_before_post', None)
+                        current['create_attempt_count'] = current.get('create_attempt_count', 0) + 1
+                        _write(self.state_path, current)
+                    created = self._call(*self._create_args(), timeout=min(120, self.cost["max_total_seconds"],
+                        max(1, until - time.time()) if search else 120))
+                    self._bind(created, source="successful_create_response")
+                    break
+                except RunpodError as exc:
+                    self._update(create_error=str(exc))
+                    if search and isinstance(exc, StockUnavailable):
+                        time.sleep(min(self.cfg.get('stock_poll_interval_seconds', 45), max(0, until - time.time())))
+                        self._await_stock()
+                        continue
+                    # An uncertain response can bind a uniquely reconciled pod, never retry POST.
+                    if self._resolve():
+                        break
+                    rejection = str(exc)
+                    definite = (rejection.startswith('Runpod create failed: bad_request: failed to create pod:')
+                        and 'There are no longer any instances available with the requested specifications.' in rejection)
+                    if not search or not definite:
+                        raise
+                    rows = self._pods()
+                    self._no_other_gpu(rows)
+                    _require(not any(p.get('name') == self.cfg['pod_name'] for p in rows),
+                             'A pod appeared after rejection; retry is blocked.')
+                    with (self.root / 'create_rejections.jsonl').open('a') as handle:
+                        handle.write(json.dumps({'at': _utc(time.time()), 'error': rejection,
+                            'absence_verified': True, 'observed_ids': sorted(p['id'] for p in rows)}) + '\n')
+                    remaining = until - time.time()
+                    _require(remaining > 0, 'The bounded stock search is exhausted after capacity rejection.')
+                    time.sleep(min(self.cfg.get('stock_poll_interval_seconds', 45), remaining))
+                    self._await_stock()
             until = min(time.time() + 600, self._state()["deadline_unix"])
             while time.time() < until:
                 self.heartbeat()

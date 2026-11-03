@@ -1611,3 +1611,14 @@ The subsequent explicit keep-alive continuation retains repairable failures for 
 deadline and spending ceiling. The [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues)
 owns same-source qualification retry and closeout controls. It does not authorize scientific-unit retries,
 Phase 4, held-out reads or an extended budget. Freeze 1c and numerical G3 remain pending actual measurements.
+
+## evc-032
+
+2026-11-03 — **Bounded stock retry.** The subsequent warm preparation passed, but its create request lost
+capacity after a positive catalog read. Fresh inventory verified no new pod; zero G2 events completed.
+Both copies of the closed attempt remain preserved. A separately authorized next pass uses fresh state,
+the verified cache and a 30-minute stock search with 30–45-second polls. Definite capacity rejection can
+retry only after absence and active-GPU checks; uncertain responses never permit another create request.
+The first create intent fixes the 117-minute clock across retries. Keep-alive, the $5 gross ceiling including
+prior charges, independent stop controls, kernel caps, replay and HostPull gates remain unchanged.
+Actual qualification and all measurements remain pending; Freeze 1c/G3 and Phase 4 are not established here.

@@ -28,6 +28,7 @@ Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](
 The [log](log.md) preserves earlier exhausted capacity passes and Runpod closeout.
 [evc-026](log.md#evc-026) records cap verification; [evc-027](log.md#evc-027) records the
 isolated runtime repair, migration closeout and bounded replacement window.
-[evc-030](log.md#evc-030) covers cache verification; [evc-031](log.md#evc-031) records host qualification and bounded repair.
+[evc-030](log.md#evc-030) covers cache verification; [evc-031](log.md#evc-031) records host repair;
+[evc-032](log.md#evc-032) records bounded stock retry.
 Zero of twelve G2 events completed; Freeze 1c/G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.
