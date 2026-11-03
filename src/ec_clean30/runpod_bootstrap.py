@@ -223,7 +223,7 @@ def _signed_get(cache: Mapping[str, Any], key: str, credentials) -> dict[str, An
     from botocore.auth import S3SigV4Auth
     from botocore.awsrequest import AWSRequest
     url = f"{cache['endpoint']}/{cache['volume_id']}/{key}"
-    request = AWSRequest(method="GET", url=url)
+    request = AWSRequest(method="GET", url=url, headers={"User-Agent": "DeepMzyme-ArtifactCache/1.0"})
     S3SigV4Auth(credentials, "s3", cache["data_center_id"]).add_auth(request)
     return {"url": url, "headers": dict(request.headers.items())}
 

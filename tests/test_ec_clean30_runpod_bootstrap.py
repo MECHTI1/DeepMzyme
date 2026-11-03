@@ -367,7 +367,36 @@ def test_real_sigv4_headers_do_not_contain_permanent_secret():
     secret = "rps_private_credential_value"
     request = rb._signed_get(cache, f"{rb.PREFIX}/chunks/{'1'*64}", Credentials("user_example", secret))
     assert "Authorization" in request["headers"]
+    assert request["headers"]["User-Agent"] == "DeepMzyme-ArtifactCache/1.0"
     assert secret not in json.dumps(request) and "?" not in request["url"]
+
+
+def test_signed_get_fetch_preserves_explicit_client_user_agent(tmp_path, monkeypatch):
+    from botocore.credentials import Credentials
+    data = b"EC-cache-v1\n"
+    cache = {"endpoint": rb.ENDPOINT, "volume_id": "cache_123", "data_center_id": rb.REGION}
+    secret = "rps_private_credential_value"
+    signed = rb._signed_get(cache, f"{rb.PREFIX}/probes/{digest(data)}", Credentials("user_example", secret))
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Length": str(len(data))}
+
+        def geturl(self):
+            return signed["url"]
+
+    def open_request(request, **kwargs):
+        assert request.get_method() == "GET" and request.full_url == signed["url"]
+        assert request.get_header("User-agent") == "DeepMzyme-ArtifactCache/1.0"
+        assert request.get_header("Authorization") == signed["headers"]["Authorization"]
+        assert "?" not in request.full_url and secret not in str(request.header_items())
+        return Response(data)
+
+    monkeypatch.setattr(rb.urllib.request, "build_opener", lambda *a: SimpleNamespace(open=open_request))
+    destination = tmp_path / "fixture"
+    rb._fetch(signed, destination, expected_sha256=digest(data), expected_size=len(data),
+              endpoint=rb.ENDPOINT, deadline=time.time() + 60)
+    assert destination.read_bytes() == data
 
 
 def test_warm_completion_check_reads_only_small_descriptors(tmp_path, small_chunks, monkeypatch):

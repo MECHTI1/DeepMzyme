@@ -1,12 +1,33 @@
 {
   "actual_new_gpu_qualification": "pending",
   "cache": {
-    "blocking_requirement": "Protected Runpod S3 profile is absent.",
+    "blocking_requirement": "Complete verified bulk seed and actual GPU qualification remain pending.",
     "data_center": "EU-RO-1",
     "provisioned_and_read_back": true,
     "seeded": false,
     "size_gb": 20,
     "type": "STANDARD"
+  },
+  "cache_client_compatibility_followup": {
+    "bulk_cache_seeded": false,
+    "compute_allocated": false,
+    "focused_bootstrap_passed": 41,
+    "focused_extension_tests": {
+      "failed": 0,
+      "passed": 83,
+      "seconds": 16.45,
+      "suites": [
+        "test_ec_clean30_runpod_bootstrap.py",
+        "test_ec_clean30_execution_v4.py",
+        "test_ec_clean30_workstation_bootstrap.py"
+      ]
+    },
+    "live_fixture_bytes": 12,
+    "live_fixture_status": "passed",
+    "live_independent_signed_get_sha256": "201a608605b9090b4bad977bc7bf32f0f6a1d92267f0e084d14165efff477695",
+    "manifest_sha256": "276091d794afc5fcdba53da41c7e4983eb32373ff6aeec1f79bd8c93f6139f38",
+    "source_sha256": "50a5a1d378e67e6864083929670cf3ec6331aef7270932fd1b4d874e5365b165",
+    "test_sha256": "6156d1a02e89824da8b8279ca948d4e910f8be157b229a00b4de551c0f96a195"
   },
   "cpu_smoke": {
     "failed": 0,
@@ -31,7 +52,7 @@
     "skipped": 1
   },
   "execution_manifest": "manifest.json",
-  "execution_manifest_sha256": "e33942fda50972af2ee443295a9521c421f67d9e3f977264831e23f347524fe2",
+  "execution_manifest_sha256": "276091d794afc5fcdba53da41c7e4983eb32373ff6aeec1f79bd8c93f6139f38",
   "focused_tests": {
     "batches": [
       {

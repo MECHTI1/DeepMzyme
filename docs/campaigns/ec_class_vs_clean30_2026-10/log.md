@@ -1562,3 +1562,14 @@ separate protected S3 profile; the cache continues to bill while retained.
 
 Actual cache seeding, host qualification and G2 timing remain pending. Zero G2 events are complete;
 Freeze 1c and numerical G3 remain unmeasured. This implementation does not authorize Phase 4 or held-out reads.
+
+## evc-029
+
+2026-11-03 — **Cache authentication and client compatibility.** The protected S3 profile is configured.
+Complete local input preflight passed in 794.05 seconds; reuse after a quote-metadata refresh passed in
+2.83 seconds. These are local verification timings, not measured bulk-transfer throughput.
+The initial independent signed-GET fixture returned HTTP 403 (`1010`) with Python's default client identifier;
+the same authenticated request passed its 12-byte SHA-256 check with an explicit client identifier.
+The compatibility correction is being republished with its execution-v4 source pin and regression checks.
+No GPU was allocated. Complete cache seeding, host qualification and all twelve G2 events remain pending;
+Freeze 1c/G3 are unmeasured, and Phase 4 and held-out reads remain gated.
