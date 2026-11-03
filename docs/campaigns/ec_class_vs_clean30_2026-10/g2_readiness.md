@@ -119,8 +119,11 @@ controls without changing provider limits and pass the actual kernel probe befor
 The clean published `.git` checkout is staged once. The main runtime is restored first, its complete package
 lock is checked with user site disabled, and an actual capped CUDA workload must pass before the remaining
 inputs stage with at most two workers. Full ESM-1b model transfer and independent CPU/GPU replay remain
-mandatory after staging. Host-specific delegation failures close out the pass; GPU model identity cannot
-substitute for these checks.
+mandatory after staging. Default failures close out the pass. Explicit `runpod.keep_alive_for_operator:true`
+retains a qualified ownership lease for diagnosis or completed-result review, bounded by the original deadline
+minus the 900-second closeout reserve. The [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues)
+owns its controls. Only unchanged published-source qualification can retry before workload admission;
+no failed scientific unit is rerun by this control. GPU identity never substitutes for kernel-cap verification.
 
 A continuous workstation heartbeat protects long transfers and qualification; the independent stop process
 and original allocation clock remain authoritative. The **$5 pass gross ceiling**, **117-minute hard stop**,
@@ -133,7 +136,8 @@ The prior absolute windows are closed and must not be reset. A new authorized pa
 and actual allocation clock. Before it starts, publish execution-v4, verify the seeded cache, refresh the price
 and spending bounds, confirm GCP remains `TERMINATED`, and recheck the independent Data1/NVMe reserves.
 No new GPU qualification or G2 measurement is established by this implementation record. Freeze 1c and numerical
-G3 still require measured outputs and provider-confirmed shutdown; Phase 4 and held-out reads stay gated.
+G3 still require measured outputs; retained-resource shutdown is verified at its bounded closeout.
+Phase 4 and held-out reads stay gated.
 
 ## Previous start attempts
 

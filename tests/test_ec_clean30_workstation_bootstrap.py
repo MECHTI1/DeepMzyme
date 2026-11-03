@@ -2,6 +2,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 import threading
@@ -134,6 +135,9 @@ def cached_driver(tmp_path, monkeypatch):
     write(path, config)
     source = {"format": phase3.BOOTSTRAP_FORMAT, "published": True}
     ready = {"source": source, "staging_peak_bytes": 1}
+    begun = time.time()
+    session_record = {"session_id": "owned-session", "pod_id": "owned-pod", "allocation_started_unix": begun,
+                      "deadline_unix": begun + 6900, "hard_stop_unix": begun + 7020}
 
     class Controller:
         def start(self):
@@ -142,8 +146,7 @@ def cached_driver(tmp_path, monkeypatch):
 
         def session(self, previous=None):
             assert previous in (None, "owned-session")
-            return {"session_id": "owned-session", "pod_id": "owned-pod",
-                    "deadline_unix": time.time() + 7020}
+            return dict(session_record)
 
         @contextmanager
         def maintain_heartbeat(self, *, interval):
@@ -186,7 +189,7 @@ def cached_driver(tmp_path, monkeypatch):
     monkeypatch.setattr(ws, "_execute_queue", lambda *a: events.append("queue"))
     monkeypatch.setattr(ws, "_preserve_runpod_outputs", preserve)
     return SimpleNamespace(config=config, path=path, ready=ready, events=events,
-                           controller=Controller(), transport=Transport())
+                           controller=Controller(), transport=Transport(), session=session_record)
 
 
 def test_cold_cache_refuses_before_any_allocation_or_provider_command(cached_driver, monkeypatch):
@@ -250,6 +253,241 @@ def test_cached_preparation_failure_closes_owned_pod_without_admission(cached_dr
     state = json.loads((Path(case.config["state_root"]) / "driver_state.json").read_text())
     assert state["closed"] is True and state["provider_stop_verified"] is True
     assert state["status"] == "interrupted"
+    assert not (Path(case.config['state_root']) / 'operator_hold.json').exists()
+
+
+def _operator_case(case, monkeypatch, *, now=None, sleep=None):
+    case.config['runpod'] = {'keep_alive_for_operator': True}
+    case.config['execution_manifest'] = str(case.path.with_name('manifest.json'))
+    write(case.path, case.config)
+    clock = [case.session['allocation_started_unix'] + 1 if now is None else now]
+
+    def advance(seconds):
+        assert 0 <= seconds <= 15
+        if sleep is not None: sleep(clock)
+        clock[0] += seconds
+
+    monkeypatch.setattr(ws, 'time', SimpleNamespace(time=lambda: clock[0], sleep=advance))
+    monkeypatch.setattr(ws.phase3, 'verify_execution_source', lambda *a, **kw: dict(case.ready['source']))
+    monkeypatch.setattr(ws, '_local_storage', lambda *a: case.events.append('local_storage'))
+    monkeypatch.setattr(ws, '_stage_runpod_runtime', lambda *a: case.events.append('staging'))
+    return clock
+
+
+def test_keepalive_retries_qualification_on_same_pod_then_holds_completed_queue(cached_driver, monkeypatch):
+    case = cached_driver
+    root = Path(case.config['state_root'])
+    attempts, held_sessions = [], []
+
+    def bootstrap_attempt(*args):
+        attempts.append(True)
+        if len(attempts) == 1: raise ws.WorkstationError('repairable qualification failure')
+
+    def queue(config, transport, state, *args):
+        case.events.append('queue')
+        state.update(completed=[name for _, name in ws.QUEUE], status='measurements_complete')
+
+    def control(clock):
+        hold = ws._operator_json(root / 'operator_hold.json')
+        assert 'stop' not in case.events and 'heartbeat_exit' not in case.events
+        held_sessions.append({key: hold[key] for key in case.session})
+        action = 'retry-qualification' if len(attempts) == 1 else 'closeout'
+        assert hold['retry_allowed'] == (action == 'retry-qualification')
+        ws.request_operator(case.config, case.path, action)
+        assert (root / 'operator_request.json').stat().st_mode & 0o777 == 0o600
+
+    _operator_case(case, monkeypatch, sleep=control)
+    monkeypatch.setattr(ws, '_bootstrap_runpod', bootstrap_attempt)
+    monkeypatch.setattr(ws, '_execute_queue', queue)
+    result = ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert attempts == [True, True] and held_sessions == [case.session, case.session]
+    assert case.events.count('start') == case.events.count('stop') == case.events.count('queue') == 1
+    assert result['qualification_retry_count'] == 1 and result['completed'] == [name for _, name in ws.QUEUE]
+    assert result['closed'] and result['status'] == 'measurements_complete'
+    assert result['qualification_errors'] == ['WorkstationError: repairable qualification failure']
+    assert not ws._operator_json(root / 'operator_hold.json')['active']
+
+
+def test_keepalive_deadline_preserves_closeout_reserve_and_never_restarts(cached_driver, monkeypatch):
+    case = cached_driver
+    until = case.session['deadline_unix'] - ws.RESERVE_SECONDS
+    clock = _operator_case(case, monkeypatch, now=until - 20)
+    monkeypatch.setattr(ws, '_bootstrap_runpod', lambda *a: (_ for _ in ()).throw(ws.WorkstationError('qualification failed')))
+    with pytest.raises(ws.WorkstationError, match='qualification failed'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert clock[0] == until and case.events.count('start') == case.events.count('stop') == 1
+    state = json.loads((Path(case.config['state_root']) / 'driver_state.json').read_text())
+    assert state['operator_hold']['exit_action'] == 'closeout-reserve'
+    assert state['deadline_unix'] == case.session['deadline_unix'] and state['closed']
+    assert 'admit' not in case.events
+
+
+def test_ssh_qualification_failure_enters_hold_before_any_cleanup(cached_driver, monkeypatch):
+    case = cached_driver
+    root = Path(case.config['state_root'])
+    holds = []
+
+    def control(clock):
+        if not (root / 'operator_hold.json').exists(): return
+        assert 'stop' not in case.events and 'bootstrap' not in case.events
+        holds.append(True)
+        ws.request_operator(case.config, case.path, 'closeout')
+
+    _operator_case(case, monkeypatch, sleep=control)
+    monkeypatch.setattr(case.transport, 'remote', lambda *a, **kw:
+                        (_ for _ in ()).throw(ws.WorkstationError('SSH not reachable')))
+    with pytest.raises(ws.WorkstationError, match='startup bound'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert holds == [True] and case.events.count('start') == case.events.count('stop') == 1
+
+
+def test_admitted_failure_can_hold_but_never_retry_or_overwrite_units(cached_driver, monkeypatch, tmp_path):
+    case = cached_driver
+    root = Path(case.config['state_root'])
+    output = tmp_path / 'F1_complete'
+    output.write_text('verified prior result')
+    visits = []
+
+    def queue(config, transport, state, *args):
+        visits.append('queue')
+        state['completed'] = ['F1']
+        raise ws.WorkstationError('later unit failed')
+
+    def control(clock):
+        assert 'stop' not in case.events and output.read_text() == 'verified prior result'
+        hold = ws._operator_json(root / 'operator_hold.json')
+        assert not hold['retry_allowed']
+        if visits[-1] == 'queue':
+            with pytest.raises(ws.WorkstationError, match='forbidden after workload admission'):
+                ws.request_operator(case.config, case.path, 'retry-qualification')
+            request = {key: hold[key] for key in ('hold_id', 'config_sha256', 'session_id', 'pod_id',
+                                                'deadline_unix', 'source_identity_sha256')}
+            ws._operator_write(root / 'operator_request.json', {**request, 'action': 'retry-qualification',
+                                                               'created_unix': clock[0]})
+            visits.append('forged_retry')
+        else:
+            assert not ws._operator_json(root / 'operator_control_result.json')['accepted']
+            ws.request_operator(case.config, case.path, 'closeout')
+
+    _operator_case(case, monkeypatch, sleep=control)
+    monkeypatch.setattr(ws, '_execute_queue', queue)
+    with pytest.raises(ws.WorkstationError, match='later unit failed'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert visits == ['queue', 'forged_retry'] and case.events.count('start') == 1
+    state = json.loads((root / 'driver_state.json').read_text())
+    assert state['completed'] == ['F1'] and not state.get('qualification_retry_count')
+    assert output.read_text() == 'verified prior result'
+
+
+@pytest.mark.parametrize('change', ['hold_id', 'session_id', 'pod_id', 'config_sha256', 'deadline_unix',
+                                   'source_identity_sha256', 'stale', 'future', 'permissions', 'source_changed'])
+def test_operator_hold_rejects_foreign_stale_or_changed_source_controls(cached_driver, monkeypatch, change):
+    case = cached_driver
+    root = Path(case.config['state_root'])
+    visits = []
+
+    def control(clock):
+        assert 'stop' not in case.events
+        if not visits:
+            ws.request_operator(case.config, case.path, 'retry-qualification')
+            path = root / 'operator_request.json'
+            request = ws._operator_json(path)
+            if change == 'stale': request['created_unix'] -= 61
+            elif change == 'future': request['created_unix'] += 100
+            elif change == 'permissions': pass
+            elif change == 'source_changed':
+                monkeypatch.setattr(ws.phase3, 'verify_execution_source', lambda *a, **kw: {'published': True, 'different': True})
+            else: request[change] = 'foreign'
+            ws._operator_write(path, request)
+            if change == 'permissions': path.chmod(0o644)
+            visits.append('invalid')
+        else:
+            result = ws._operator_json(root / 'operator_control_result.json')
+            assert result['accepted'] is False and result['reason']
+            ws.request_operator(case.config, case.path, 'closeout')
+
+    _operator_case(case, monkeypatch, sleep=control)
+    monkeypatch.setattr(ws, '_bootstrap_runpod', lambda *a: (_ for _ in ()).throw(ws.WorkstationError('qualification failed')))
+    with pytest.raises(ws.WorkstationError, match='qualification failed'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert visits == ['invalid'] and case.events.count('start') == case.events.count('stop') == 1
+    state = json.loads((root / 'driver_state.json').read_text())
+    assert not state.get('qualification_retry_count') and 'admit' not in case.events
+
+
+def test_operator_request_requires_fresh_private_hold_and_never_calls_provider(cached_driver, monkeypatch):
+    case = cached_driver
+    clock = _operator_case(case, monkeypatch)
+    root = Path(case.config['state_root'])
+    root.mkdir(parents=True)
+    root.chmod(0o700)
+    ws._operator_write(root / 'operator_hold.json', {'active': True, 'config_sha256': ws._sha(case.path),
+        'updated_unix': clock[0] - 46, 'hold_until_unix': clock[0] + 100})
+    with pytest.raises(ws.WorkstationError, match='stale'):
+        ws.request_operator(case.config, case.path, 'closeout')
+    assert not (root / 'operator_request.json').exists() and case.events == []
+
+
+def test_operator_action_is_exclusive_with_run_and_seed(tmp_path):
+    for action in ('--run', '--seed-cache'):
+        with pytest.raises(SystemExit) as result:
+            ws.main(['--config', str(tmp_path / 'config.json'), '--operator', 'closeout', action])
+        assert result.value.code == 2
+
+
+def test_private_operator_controls_use_nvme_when_data_status_has_nonposix_modes(cached_driver, monkeypatch, tmp_path):
+    case = cached_driver
+    case.config['mirror_root'] = str(tmp_path / 'nvme' / 'host')
+    root = tmp_path / 'nvme' / 'operator'
+    status_root = Path(case.config['state_root'])
+    visits = []
+
+    def control(clock):
+        state = status_root / 'driver_state.json'
+        state.chmod(0o777)  # Simulate Data1's synthetic status-file mode.
+        status_root.chmod(0o777)
+        hold = ws._operator_json(root / 'operator_hold.json')
+        assert hold['control_root'] == str(root)
+        assert root.stat().st_mode & 0o777 == 0o700
+        assert (root / 'operator_hold.json').stat().st_mode & 0o777 == 0o600
+        assert not (status_root / 'operator_hold.json').exists()
+        visits.append(True)
+        ws.request_operator(case.config, case.path, 'closeout')
+        assert (root / 'operator_request.json').stat().st_mode & 0o777 == 0o600
+
+    _operator_case(case, monkeypatch, sleep=control)
+    monkeypatch.setattr(ws, '_bootstrap_runpod', lambda *a: (_ for _ in ()).throw(ws.WorkstationError('repairable')))
+    with pytest.raises(ws.WorkstationError, match='repairable'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert visits == [True] and case.events.count('stop') == 1
+
+
+@pytest.mark.parametrize('problem', ['symlink', 'nonposix_directory', 'nonposix_file'])
+def test_private_control_permissions_are_proved_before_allocation(cached_driver, monkeypatch, tmp_path, problem):
+    case = cached_driver
+    case.config['mirror_root'] = str(tmp_path / 'nvme' / 'host')
+    _operator_case(case, monkeypatch)
+    root = tmp_path / 'nvme' / 'operator'
+    root.parent.mkdir()
+    if problem == 'symlink':
+        target = tmp_path / 'foreign'
+        target.mkdir()
+        root.symlink_to(target, target_is_directory=True)
+    else:
+        root.mkdir(mode=0o755)
+        if problem == 'nonposix_directory':
+            monkeypatch.setattr(ws.os, 'chmod', lambda *a: None)
+        else:
+            original = ws._operator_write
+
+            def synthetic_file_modes(path, value):
+                original(path, value)
+                path.chmod(0o777)
+
+            monkeypatch.setattr(ws, '_operator_write', synthetic_file_modes)
+    with pytest.raises(ws.WorkstationError, match='Operator|private owned'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert case.events == []
 
 
 def test_staging_checks_main_first_and_limits_remaining_writers_to_two(tmp_path, monkeypatch):
@@ -305,3 +543,54 @@ def test_staging_checks_main_first_and_limits_remaining_writers_to_two(tmp_path,
     assert sorted(started) == sorted(item["remote"] for item in others)
     receipt = json.loads((tmp_path / "staging_complete.json").read_text())
     assert receipt["workers"] == 2 and receipt["main_runtime_first"] is True
+
+
+def test_keepalive_staging_failure_joins_existing_writer_before_recovery(tmp_path, monkeypatch):
+    main = {'remote': '/main', 'kind': 'file'}
+    others = [{'remote': '/failing', 'kind': 'file'}, {'remote': '/still_running', 'kind': 'file'}]
+    config = {'runpod': {'keep_alive_for_operator': True}, 'stage': [main, *others],
+        'runtime_environments': {'fit': {'archive': '/main'}}, 'profiles': {'fit': {'cap_prefix': ['limits']}},
+        'remote_python': '/main/python', 'remote_repo': '/repo', 'hardware_profile': 'approved', 'state_root': str(tmp_path)}
+    both_started = threading.Barrier(2)
+    release, shutdown_entered = threading.Event(), threading.Event()
+    events, shutdown_waits = [], []
+
+    class TrackedPool(ThreadPoolExecutor):
+        def shutdown(self, wait=True, *, cancel_futures=False):
+            shutdown_waits.append(wait)
+            shutdown_entered.set()
+            return super().shutdown(wait=wait, cancel_futures=cancel_futures)
+
+    def stage(config, transport, item):
+        if item is main: return
+        both_started.wait(timeout=10)
+        if item['remote'] == '/failing': raise ws.WorkstationError('staging failed')
+        assert release.wait(10)
+        events.append('writer_settled')
+
+    def drive():
+        try:
+            ws._stage_runpod_runtime(config, SimpleNamespace(deadline_unix=time.time() + 600,
+                remote=lambda *a, **kw: '{}'), {}, lambda: None)
+        finally:
+            events.append('recovery_can_begin')
+
+    monkeypatch.setattr(ws, 'ThreadPoolExecutor', TrackedPool)
+    monkeypatch.setattr(ws, '_stage_checkout', lambda *a: None)
+    monkeypatch.setattr(bootstrap, 'hydrate_public_artifact', lambda *a: False)
+    monkeypatch.setattr(ws, '_stage_file', stage)
+    monkeypatch.setattr(ws, '_unpack_stage', lambda *a: None)
+    monkeypatch.setattr(ws, '_container_probe', lambda *a: None)
+    monkeypatch.setattr(ws, '_verify_runtime_lock', lambda *a: None)
+    monkeypatch.setattr(phase3, 'cuda_probe_program', lambda *a: 'probe')
+    monkeypatch.setattr(phase3, 'validate_cuda_evidence', lambda *a: None)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(drive)
+        try:
+            assert shutdown_entered.wait(10)
+            assert shutdown_waits == [True] and not future.done()
+            assert 'recovery_can_begin' not in events
+        finally:
+            release.set()
+        with pytest.raises(ws.WorkstationError, match='staging failed'): future.result(timeout=10)
+    assert events == ['writer_settled', 'recovery_can_begin']

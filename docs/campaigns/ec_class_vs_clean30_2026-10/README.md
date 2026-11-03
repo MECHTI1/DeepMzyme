@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-03; cache verified; G2 allocation stockout)
+Status: active (2026-11-03; cache verified; G2 host repair)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -28,6 +28,6 @@ Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](
 The [log](log.md) preserves earlier exhausted capacity passes and Runpod closeout.
 [evc-026](log.md#evc-026) records cap verification; [evc-027](log.md#evc-027) records the
 isolated runtime repair, migration closeout and bounded replacement window.
-[evc-028](log.md#evc-028) covers bootstrap; [evc-030](log.md#evc-030) records cache verification and the unallocated stockout.
+[evc-030](log.md#evc-030) covers cache verification; [evc-031](log.md#evc-031) records host qualification and bounded repair.
 Zero of twelve G2 events completed; Freeze 1c/G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

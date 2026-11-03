@@ -166,6 +166,23 @@ def validate_root(root: Path) -> Path:
     return root
 
 
+def _private_procfs_namespace() -> str:
+    """Anchor genuine procfs to the expected container's directly readable init."""
+    mounts = [line.split() for line in Path('/proc/self/mountinfo').read_text().splitlines()]
+    proc = [row for row in mounts if row[4] == '/proc']
+    _require(len(proc) == 1 and proc[0][3] == '/' and proc[0][proc[0].index('-') + 1] == 'proc'
+             and not any(row[4].startswith('/proc/')
+                         and (row[4].split('/')[2].isdigit() or row[4].split('/')[2] in {'self', 'thread-self'})
+                         for row in mounts),
+             "Preparation requires genuine, unobscured container procfs.")
+    namespace = os.readlink('/proc/self/ns/pid')
+    _require(os.readlink('/proc/1/ns/pid') == namespace
+             and os.readlink('/proc/1/ns/cgroup') == os.readlink('/proc/self/ns/cgroup')
+             and _read(Path('/proc/1/comm')) == 'docker-init',
+             "Preparation requires the expected private container PID namespace and init.")
+    return namespace
+
+
 def _private_container_namespace(root: Path) -> str:
     """Prove the narrowly supported private container namespace before moving PIDs."""
     _require(root.is_absolute() and root.is_dir() and root.resolve() == root,
@@ -179,15 +196,7 @@ def _private_container_namespace(root: Path) -> str:
              and 'rw' in row[5].split(',') and 'nsdelegate' in row[split + 3].split(',')
              and not os.statvfs(root).f_flag & os.ST_RDONLY,
              "Preparation requires a writable private delegated cgroup v2 namespace.")
-    proc = [row for row in mounts if row[4] == '/proc']
-    _require(len(proc) == 1 and proc[0][3] == '/' and proc[0][proc[0].index('-') + 1] == 'proc'
-             and not any(row[4].startswith('/proc/') and row[4].split('/')[2].isdigit() for row in mounts),
-             "Preparation requires genuine, unobscured container procfs.")
-    namespace = os.readlink('/proc/self/ns/pid')
-    _require(os.readlink('/proc/1/ns/pid') == namespace
-             and os.readlink('/proc/1/ns/cgroup') == os.readlink('/proc/self/ns/cgroup')
-             and _read(Path('/proc/1/comm')) == 'docker-init',
-             "Preparation requires the expected private container PID namespace and init.")
+    namespace = _private_procfs_namespace()
     _require(_read(root / 'cgroup.type') == 'domain'
              and {'cpu', 'memory'} <= set(_read(root / 'cgroup.controllers').split()),
              "The private namespace lacks domain CPU and memory delegation.")
@@ -200,8 +209,17 @@ def _namespace_pid(pid: int, namespace: str, membership: str | None = None) -> s
     try:
         before = (base / 'stat').read_text().rsplit(')', 1)[1].split()[19]
         status = dict(line.split(':', 1) for line in (base / 'status').read_text().splitlines() if ':' in line)
-        _require(all(status[name].split() == [str(pid)] for name in ('Pid', 'Tgid', 'NSpid', 'NStgid'))
-                 and os.readlink(str(base / 'ns/pid')) == namespace,
+        _require(all(status[name].split() == [str(pid)] for name in ('Pid', 'Tgid', 'NSpid', 'NStgid')),
+                 "A process is outside the private container PID namespace.")
+        try:
+            actual_namespace = os.readlink(str(base / 'ns/pid'))
+        except PermissionError as exc:
+            if exc.errno != errno.EACCES or pid in (1, os.getpid()):
+                raise
+            # NSpid/NStgid start at the procfs mount's namespace. Singleton
+            # values prove exact membership only after rechecking that anchor.
+            actual_namespace = _private_procfs_namespace()
+        _require(actual_namespace == namespace,
                  "A process is outside the private container PID namespace.")
         actual = _read(base / 'cgroup')
         _require(len(actual.splitlines()) == 1 and actual.startswith('0::/') and '..' not in Path(actual[3:]).parts

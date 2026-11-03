@@ -158,6 +158,8 @@ def _reject_inline_secrets(value: Any) -> None:
 def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     _reject_inline_secrets(config)
     cfg = _settings(config)
+    _require(type(cfg.get('keep_alive_for_operator', False)) is bool,
+             'keep_alive_for_operator must be a boolean.')
     hours = _number(cfg.get("requested_hours"), "requested_hours")
     duration = _number(cfg.get("max_runtime_seconds", MAX_SECONDS), "max_runtime_seconds")
     ceiling = _number(cfg.get("gross_ceiling_usd"), "gross_ceiling_usd")

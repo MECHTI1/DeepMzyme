@@ -76,7 +76,15 @@
     "skipped": 1
   },
   "execution_manifest": "manifest.json",
-  "execution_manifest_sha256": "b1e3ccc6702eabd88021aa3e97fb564e8d8e8e67dc94bc8b0169ed3ade442c60",
+  "execution_manifest_sha256": "9f4b3421284648d98d1af6fc7b9486be0f54169ea815ccb62698ddbd1d6649b4",
+  "f_live_qualification": {
+    "early_prepare": "failed_EACCES_nonanchor_namespace_link",
+    "g2_completed_events": 0,
+    "preservation_sha256": "2bd0aa167eeb89d5a24f865ad73893accf5f118ec14b4e72560129f36971ecd8",
+    "provider_allocation_and_ssh": "passed",
+    "provider_deletion_verified": true,
+    "provider_stop_verified": true
+  },
   "focused_tests": {
     "batches": [
       {
@@ -133,6 +141,34 @@
   },
   "g2_completed_events": 0,
   "held_out_read": false,
+  "namespace_keepalive_followup": {
+    "actual_new_host_kernel_probe": "pending",
+    "caps_and_workstation_passed": 127,
+    "caps_and_workstation_seconds": 6.19,
+    "controller_passed": 80,
+    "controller_seconds": 68.51,
+    "controller_service_probe": "passed_verified_interpreter_and_required_cli_tools",
+    "default_closeout_preserved": true,
+    "hold_same_allocation_and_original_deadline": true,
+    "live_kernel_skipped": 1,
+    "namespace_alternative_proof_cpu_verified": true,
+    "operator_controls_nvme_private_modes": true,
+    "private_control_root": "NVMe mirror parent/operator,700directory600files",
+    "source_sha256": {
+      "src/ec_clean30/container_caps.py": "9bbbb625f902705c9f126c5a48f3940844d08f7737ce233b43719564c38bfccd",
+      "src/ec_clean30/runpod_controller.py": "f16dd0b8cc314e376796dcf0a5d914f05bf67d476d667da8e764eecbd81e8e1f",
+      "src/ec_clean30/workstation.py": "d6805caaa29c593e609aa591ab142adc5010f30c4f1e2ca2f95ee4a049091bc1"
+    },
+    "tests_sha256": {
+      "tests/test_ec_clean30_container_caps.py": "98dbd48cd5d77bd0aaad690d983f5ded0d1900e375245de76573d8df9c34da54",
+      "tests/test_ec_clean30_workstation_bootstrap.py": "ac2f82bede014b362db2e1baebed8325ec84e60e62ef94ce54ee8a938fb1baa6"
+    },
+    "total_focused_passed": 347,
+    "unchanged_source_qualification_retry_only": true,
+    "workload_retry_forbidden": true,
+    "workstation_and_execution_passed": 140,
+    "workstation_and_execution_seconds": 16.92
+  },
   "original_execution_records_preserved": true,
   "phase4_started": false,
   "provider_rejection_closeout_followup": {
@@ -158,7 +194,7 @@
     "esm1b_unique_packages": 26,
     "fit_unique_packages": 187
   },
-  "status": "cache_verified_g2_allocation_rejected_for_stockout",
+  "status": "namespace_repair_cpu_verified_replacement_qualification_pending",
   "template": {
     "complete_published_runtime_maps": true,
     "intentional_stale_quote_refusal_verified": true

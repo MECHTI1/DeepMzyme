@@ -1593,3 +1593,21 @@ replies still retain reconciliation. Its focused suite passed 80 tests. Earlier 
 The pre-launch conservative estimate was $3.8185 under the unchanged $5 ceiling and 117-minute stop rule;
 no new GPU was allocated. The 20-GB cache remains retained and billed. Actual host qualification, all twelve
 G2 events, Freeze 1c and numerical G3 remain pending. Phase 4 and held-out reads remain gated.
+
+## evc-031
+
+2026-11-03 — **Host qualification and bounded repair.** The 45-second stock watch found Secure EU-RO-1
+RTX 4090 capacity with CUDA 13.2. Allocation and SSH succeeded, but early cgroup preparation refused a
+namespace-link permission error before checkout or runtime staging. Zero G2 events ran. The then-active
+cleanup policy verified both copies of the empty execution inventory, stopped the pod and verified deletion.
+
+The narrow namespace correction retains genuine private-procfs anchors, singleton PID hierarchy fields,
+start-time checks, exact cgroup membership, unchanged parent limits and the mandatory kernel enforcement
+probe. Denied non-anchor namespace links can use that independent proof; readable mismatches, denied anchors
+and nested namespaces still fail. Actual host migration and enforcement remain unqualified until a live probe.
+The proof follows the [Linux procfs PID hierarchy semantics](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html).
+
+The subsequent explicit keep-alive continuation retains repairable failures for diagnosis under the original
+deadline and spending ceiling. The [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues)
+owns same-source qualification retry and closeout controls. It does not authorize scientific-unit retries,
+Phase 4, held-out reads or an extended budget. Freeze 1c and numerical G3 remain pending actual measurements.

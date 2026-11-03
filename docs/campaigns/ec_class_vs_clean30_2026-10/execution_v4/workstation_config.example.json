@@ -137,6 +137,7 @@
     "gross_ceiling_usd": 5,
     "heartbeat_timeout_seconds": 900,
     "image": "runpod/pytorch@sha256:8a64f0df2571496a99db9af3b28f638ec627d971bea789569c358bb59c606fa6",
+    "keep_alive_for_operator": false,
     "max_runtime_seconds": 7020,
     "min_cuda_version": "13.0",
     "pod_name": "deepmzyme-g2-unique-pass",

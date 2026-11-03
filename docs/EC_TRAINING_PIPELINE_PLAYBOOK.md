@@ -501,6 +501,12 @@ refuses a failed public download without silently starting a multi-gigabyte work
 [campaign bootstrap record](campaigns/ec_class_vs_clean30_2026-10/g2_readiness.md#reproducible-runpod-bootstrap)
 owns cache placement, source bindings and the unchanged spending, persistence and scientific gates.
 
+Explicit `runpod.keep_alive_for_operator:true` keeps the same heartbeat and watchdog alive after a repairable
+qualification failure or completed G2, until a control or the original deadline minus 900 seconds. It never
+extends runtime or spending. Session-bound controls may retry qualification only before workload admission,
+with the exact same published source; they cannot rerun failed scientific units or launch Phase 4. Changed
+source requires a separately verified handoff. Default closeout behavior is unchanged.
+
 ```bash
 PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"
 "$PY" scripts/run_ec_clean30_workstation.py --config "${ECC30_G2_CONFIG:?private prepared G2 configuration}"
@@ -509,6 +515,12 @@ PY="${DEEPMZYME_PYTHON:?set the verified project interpreter}"
 # Only when the bounded G2 session is authorized to start:
 "$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --run
 ```
+
+While an explicit keep-alive coordinator is held, use a second terminal with the same verified interpreter
+and private configuration. Choose the applicable control:
+
+- Retry qualification: `"$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --operator retry-qualification`.
+- Finish closeout: `"$PY" scripts/run_ec_clean30_workstation.py --config "$ECC30_G2_CONFIG" --operator closeout`.
 
 `run_ec_clean30_phase4.py` implements the first Fold-0 milestone. `clean-inputs --request FILE` prepares only
 the certified official-training/inner-list closure, including the keyed masks; `draft:true` is accepted only

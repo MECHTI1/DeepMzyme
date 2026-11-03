@@ -14,6 +14,8 @@ window are recorded in [evc-027](log.md#evc-027). The cache-backed bootstrap ext
 ([evc-028](log.md#evc-028)); actual model/CUDA checks and all twelve G2 events remain pending.
 [evc-030](log.md#evc-030) records completed cache seeding and a provider-rejected allocation with verified
 absence. That pass is closed; a further launch requires a fresh deliberate trigger and current stock evidence.
+[evc-031](log.md#evc-031) records the subsequent host-permission failure and bounded keep-alive repair path;
+retained allocations still require the original deadline, source checks and numerical G3 before S1 fits.
 The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
 cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.

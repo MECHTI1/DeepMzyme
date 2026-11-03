@@ -16,9 +16,11 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import secrets
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tarfile
@@ -627,6 +629,10 @@ def _validate_runpod_structure(config: Mapping[str, Any]) -> None:
     if config.get("artifact_cache"):
         from ec_clean30 import runpod_bootstrap
         runpod_bootstrap.validate_cache_config(config)
+    keep_alive = config.get('runpod', {}).get('keep_alive_for_operator', False)
+    _require(type(keep_alive) is bool, 'keep_alive_for_operator must be a boolean.')
+    if keep_alive:
+        _operator_root(config, prepare=True)
 
 
 def _validate_published_runtime_locks(config: Mapping[str, Any], source: Mapping[str, Any]) -> None:
@@ -981,7 +987,8 @@ def _stage_runpod_runtime(config, transport, source, check_session):
             for future in done:
                 future.result()
     finally:
-        pool.shutdown(wait=False, cancel_futures=True)
+        pool.shutdown(wait=config.get('runpod', {}).get('keep_alive_for_operator') is True,
+                      cancel_futures=True)
     _write(Path(config["state_root"]) / "staging_complete.json", {"status": "passed", "seconds": time.time() - begun,
             "workers": 2, "source": source, "main_runtime_first": True})
 
@@ -1320,8 +1327,158 @@ def _preserve_runpod_outputs(config, transport, controller, session):
     return path
 
 
+def _operator_root(config, *, prepare=False) -> Path:
+    # Data1 may expose synthetic 0777 modes. Controls live on the independent
+    # POSIX mirror; ordinary status can still be preserved on both devices.
+    root = (Path(config['mirror_root']).parent / 'operator' if config.get('mirror_root')
+            else Path(config['state_root']))
+    _require(root.is_absolute() and root == root.resolve(), 'Operator control root must be canonical without symlinks.')
+    if prepare:
+        root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(root, 0o700)
+    info = root.stat()
+    _require(stat.S_ISDIR(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o700
+             and info.st_uid == os.getuid() and not root.is_symlink(),
+             'Operator control root must be a private owned directory with genuine POSIX permissions.')
+    if prepare:
+        probe = root / ('permission-probe-' + secrets.token_hex(8) + '.json')
+        try:
+            _operator_write(probe, {'private': True})
+            _operator_json(probe)
+        finally:
+            probe.unlink(missing_ok=True)
+    return root
+
+
+def _operator_write(path: Path, value: Mapping[str, Any]) -> None:
+    temporary = path.with_name(path.name + '.' + secrets.token_hex(8) + '.partial')
+    try:
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, 'w') as handle:
+            json.dump(value, handle, sort_keys=True, allow_nan=False)
+            handle.write('\n')
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _operator_json(path: Path) -> dict[str, Any]:
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    with os.fdopen(descriptor) as handle:
+        info = os.fstat(handle.fileno())
+        _require(stat.S_ISREG(info.st_mode) and stat.S_IMODE(info.st_mode) == 0o600
+                 and info.st_uid == os.getuid() and info.st_nlink == 1 and info.st_size <= 128 * 1024,
+                 'Operator controls require a private owned regular file.')
+        value = json.load(handle)
+    _require(isinstance(value, dict), 'Malformed operator control.')
+    return value
+
+
+def request_operator(config, config_path: Path, action: str) -> dict[str, Any]:
+    """Queue one session-bound control; never allocate or operate the provider."""
+    _require(config.get('provider') == 'runpod' and config.get('runpod', {}).get('keep_alive_for_operator') is True,
+             'Operator controls require explicit Runpod keep-alive mode.')
+    _require(action in {'retry-qualification', 'closeout'}, 'Unknown operator action.')
+    root = _operator_root(config)
+    with (root / 'operator.lock').open('a+') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        hold = _operator_json(root / 'operator_hold.json')
+        now = time.time()
+        _require(hold.get('active') is True and hold.get('config_sha256') == _sha(config_path)
+                 and 0 <= now - hold.get('updated_unix', 0) <= 45 and now < hold['hold_until_unix'],
+                 'Operator hold is stale, closed or belongs to another configuration.')
+        _require(action != 'retry-qualification' or hold.get('retry_allowed') is True,
+                 'Qualification retry is forbidden after workload admission.')
+        request = {key: hold[key] for key in ('hold_id', 'config_sha256', 'session_id', 'pod_id',
+                                              'deadline_unix', 'source_identity_sha256')}
+        request.update(action=action, created_unix=now)
+        path = root / 'operator_request.json'
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, 'w') as handle:
+            json.dump(request, handle, sort_keys=True, allow_nan=False)
+            handle.write('\n')
+            handle.flush()
+            os.fsync(handle.fileno())
+    return {'status': 'operator_request_recorded', **request}
+
+
+def _operator_hold(config, config_path, state, state_path, session, source, check_session, *, retry_allowed, reason):
+    """Keep the existing owner alive without admitting work or extending its window."""
+    root = _operator_root(config)
+    until = session['deadline_unix'] - RESERVE_SECONDS
+    identity = {key: session[key] for key in ('session_id', 'pod_id', 'allocation_started_unix',
+                                             'deadline_unix', 'hard_stop_unix')}
+    hold = {**identity, 'hold_id': secrets.token_hex(16), 'config_sha256': state['config_sha256'],
+            'source_identity_sha256': hashlib.sha256(json.dumps(source, sort_keys=True).encode()).hexdigest(),
+            'started_unix': time.time(), 'hold_until_unix': until, 'active': True,
+            'retry_allowed': bool(retry_allowed), 'reason': reason, 'control_root': str(root)}
+    previous_status = state.get('status')
+    result = 'closeout-reserve'
+    try:
+        while time.time() < until:
+            current = check_session()
+            _require(all(current.get(key) == value for key, value in identity.items()),
+                     'Operator hold session identity or deadline changed.')
+            _require(_sha(config_path) == state['config_sha256'], 'Held launch configuration changed.')
+            if time.time() >= until:
+                break
+            hold['updated_unix'] = time.time()
+            _operator_write(root / 'operator_hold.json', hold)
+            state.update(status='operator_hold', operator_hold=dict(hold))
+            _write(state_path, state)
+            request_path = root / 'operator_request.json'
+            if request_path.exists() or request_path.is_symlink():
+                with (root / 'operator.lock').open('a+') as lock:
+                    fcntl.flock(lock, fcntl.LOCK_EX)
+                    accepted = False
+                    action = None
+                    try:
+                        request = _operator_json(request_path)
+                        _require(all(request.get(key) == hold[key] for key in ('hold_id', 'config_sha256',
+                            'session_id', 'pod_id', 'deadline_unix', 'source_identity_sha256')),
+                            'Operator request is foreign or belongs to an earlier hold.')
+                        now = time.time()
+                        _require(hold['started_unix'] <= request.get('created_unix', 0) <= now + 5
+                                 and now - request['created_unix'] <= 60,
+                                 'Operator request is stale or future-dated.')
+                        action = request.get('action')
+                        _require(action in {'retry-qualification', 'closeout'}, 'Unknown operator action.')
+                        if action == 'retry-qualification':
+                            _require(retry_allowed and not state.get('workload_admission_attempted')
+                                     and not state.get('completed'), 'Qualification retry is forbidden after workload admission.')
+                            measured = phase3.verify_execution_source(Path(config['execution_manifest']), require_published=True)
+                            _require(measured == source, 'Qualification retry requires the exact same published source.')
+                            _local_storage(config)
+                            _require(time.time() < until, 'Qualification retry would consume the closeout reserve.')
+                        accepted = True
+                    except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
+                        state['operator_control_error'] = f'{type(exc).__name__}: {exc}'
+                    finally:
+                        request_path.unlink(missing_ok=True)
+                        _operator_write(root / 'operator_control_result.json', {
+                            'hold_id': hold['hold_id'], 'session_id': session['session_id'], 'pod_id': session['pod_id'],
+                            'accepted': accepted, 'action': action, 'reason': state.get('operator_control_error') if not accepted else None,
+                            'observed_unix': time.time()})
+                if accepted:
+                    result = action
+                    return result
+            time.sleep(min(15, max(0, until - time.time())))
+        return result
+    finally:
+        hold.update(active=False, updated_unix=time.time(), exit_action=result)
+        _operator_write(root / 'operator_hold.json', hold)
+        state.update(status=previous_status, operator_hold=dict(hold))
+        _write(state_path, state)
+
+
 def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
     from ec_clean30 import runpod_controller
+    keep_alive = config.get('runpod', {}).get('keep_alive_for_operator', False)
+    _require(type(keep_alive) is bool, 'keep_alive_for_operator must be a boolean.')
+    if keep_alive:
+        _operator_root(config, prepare=True)
     controller = controller or runpod_controller.RunpodController(config, config_path)
     transport = transport or RunpodTransport(config, controller)
     state_root = Path(config["state_root"])
@@ -1366,39 +1523,66 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
 
             transport.deadline_unix = session["deadline_unix"]
             transport.reserve_seconds = RESERVE_SECONDS
-            until = min(time.time() + 300, session["deadline_unix"] - RESERVE_SECONDS)
             while True:
-                check_session()
+                problem = None
                 try:
-                    transport.ssh_config = controller.write_ssh_config()
-                    transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
+                    until = min(time.time() + 300, session["deadline_unix"] - RESERVE_SECONDS)
+                    while True:
+                        check_session()
+                        try:
+                            transport.ssh_config = controller.write_ssh_config()
+                            transport.remote([config["bootstrap_python"], "-c", "print('ready')"], timeout=15)
+                            break
+                        except (OSError, subprocess.SubprocessError, RuntimeError):
+                            _require(time.time() + 10 < until, "The owned pod did not become reachable within its startup bound.")
+                            time.sleep(10)
+                    if cached:
+                        _bootstrap_runpod(config, transport, ready["source"], session)
+                    else:
+                        _stage_checkout(config, transport, ready["source"])
+                        _container_probe(config, transport, early=True)
+                    check_session()
+                    free = int(transport.remote([config["bootstrap_python"], "-c",
+                        "import shutil; print(shutil.disk_usage('/workspace').free)"]).strip())
+                    extra = staging_scratch + PAYLOAD_CEILING_BYTES if cached else 0
+                    _require(free >= ready["staging_peak_bytes"] + extra + 5 * GIB,
+                             "Pod disk lacks staging and closeout space.")
+                    if cached:
+                        _stage_runpod_runtime(config, transport, ready["source"], check_session)
+                    else:
+                        _stage_runtime(config, transport, ready["source"])
+                    check_session()
+                    manifest, probe = _runtime_preflight(config, transport, ready["source"])
+                    check_session()
+                    # An uncertain admission must never enable a qualification retry.
+                    state['workload_admission_attempted'] = True
+                    _write(state_path, state)
+                    controller.admit_workload()
+                    state['workload_admitted'] = True
+                    _write(state_path, state)
+                    _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
+                                   check_session)
+                except Exception as exc:
+                    state.update(status='interrupted', error=f'{type(exc).__name__}: {exc}')
+                    state.setdefault('qualification_errors', []).append(state['error'])
+                    if not keep_alive:
+                        raise
+                    problem = exc
+                if not keep_alive:
                     break
-                except (OSError, subprocess.SubprocessError, RuntimeError):
-                    _require(time.time() + 10 < until, "The owned pod did not become reachable within its startup bound.")
-                    time.sleep(10)
-            if cached:
-                _bootstrap_runpod(config, transport, ready["source"], session)
-            else:
-                _stage_checkout(config, transport, ready["source"])
-                _container_probe(config, transport, early=True)
-            check_session()
-            free = int(transport.remote([config["bootstrap_python"], "-c",
-                "import shutil; print(shutil.disk_usage('/workspace').free)"]).strip())
-            extra = 0
-            if cached:
-                extra = staging_scratch + PAYLOAD_CEILING_BYTES
-            _require(free >= ready["staging_peak_bytes"] + extra + 5 * GIB,
-                     "Pod disk lacks staging and closeout space.")
-            if cached:
-                _stage_runpod_runtime(config, transport, ready["source"], check_session)
-            else:
-                _stage_runtime(config, transport, ready["source"])
-            check_session()
-            manifest, probe = _runtime_preflight(config, transport, ready["source"])
-            check_session()
-            controller.admit_workload()
-            _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
-                           check_session)
+                check_session()  # Identity, watchdog and ownership failures still close safely.
+                action = _operator_hold(config, config_path, state, state_path, session, ready['source'], check_session,
+                    retry_allowed=problem is not None and not state.get('workload_admission_attempted')
+                                  and not state.get('completed'),
+                    reason=state.get('error') if problem else 'measurements_complete')
+                if action == 'retry-qualification':
+                    state.pop('error', None)
+                    state['qualification_retry_count'] = state.get('qualification_retry_count', 0) + 1
+                    _write(state_path, state)
+                    continue
+                if problem:
+                    raise problem
+                break
         except BaseException as exc:
             state.update(status="interrupted", error=f"{type(exc).__name__}: {exc}")
             raise
@@ -1513,10 +1697,14 @@ def main(argv: list[str] | None = None) -> int:
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--run", action="store_true", help="Deliberately start once, or recover this still-active owned allocation.")
     actions.add_argument("--seed-cache", action="store_true", help="Verify and seed the configured private artifact cache without allocating a GPU.")
+    actions.add_argument('--operator', choices=('retry-qualification', 'closeout'),
+                         help='Send one private control to this still-active Runpod operator hold.')
     args = parser.parse_args(argv)
     try:
         config = _json(args.config)
-        if args.run:
+        if args.operator:
+            result = request_operator(config, args.config, args.operator)
+        elif args.run:
             def interrupted(signum, frame):
                 raise KeyboardInterrupt(f"signal {signum}")
             signal.signal(signal.SIGTERM, interrupted)

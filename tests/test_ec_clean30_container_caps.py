@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import errno
 import os
 from pathlib import Path
 import signal
@@ -111,7 +112,8 @@ def test_prepare_enables_only_delegated_child_controllers_and_is_idempotent(prep
 
 
 @pytest.mark.parametrize('case', ['foreign_init', 'foreign_namespace', 'foreign_pid', 'changed_pid',
-                                  'obscured_proc', 'malformed_proc', 'unbounded_root', 'zero_cpu', 'zero_memory', 'empty_cpu',
+                                  'obscured_proc', 'obscured_self', 'obscured_thread_self', 'malformed_proc',
+                                  'unbounded_root', 'zero_cpu', 'zero_memory', 'empty_cpu',
                                   'partial_controllers', 'unknown_child'])
 def test_prepare_refuses_unproven_namespace_without_mutating_controls(preparation_kernel, case):
     k = preparation_kernel
@@ -120,6 +122,8 @@ def test_prepare_refuses_unproven_namespace_without_mutating_controls(preparatio
     elif case == 'foreign_pid': k.evidence['foreign_pid'] = 1
     elif case == 'changed_pid': k.evidence['changed_pid'] = 1
     elif case == 'obscured_proc': k.evidence['mounts'] += '3 1 0:3 / /proc/1/status rw - tmpfs tmpfs rw\n'
+    elif case == 'obscured_self': k.evidence['mounts'] += '3 1 0:3 / /proc/self/ns/pid rw - tmpfs tmpfs rw\n'
+    elif case == 'obscured_thread_self': k.evidence['mounts'] += '3 1 0:3 / /proc/thread-self rw - tmpfs tmpfs rw\n'
     elif case == 'malformed_proc': k.evidence['malformed_pid'] = 1
     elif case == 'unbounded_root': (k.root / 'memory.max').write_text('max\n')
     elif case == 'zero_cpu': (k.root / 'cpu.max').write_text('0 100000\n')
@@ -139,6 +143,117 @@ def test_prepare_reconciles_an_owned_partial_manager(preparation_kernel):
     result = caps.prepare(k.root, owner_id=k.owner)
     assert result['status'] == 'prepared'
     assert result['moved_container_pids'] == [222]
+
+
+def _deny_namespace_link(monkeypatch, path, *, number=errno.EACCES, before_denial=None):
+    original = caps.os.readlink
+
+    def readlink(candidate, *args, **kwargs):
+        if str(candidate) == path:
+            if before_denial is not None:
+                before_denial()
+            raise OSError(number, 'synthetic namespace access failure')
+        return original(candidate, *args, **kwargs)
+
+    monkeypatch.setattr(caps.os, 'readlink', readlink)
+
+
+def test_prepare_accepts_denied_nonanchor_namespace_only_with_private_procfs_proof(preparation_kernel, monkeypatch):
+    k = preparation_kernel
+    _deny_namespace_link(monkeypatch, '/proc/222/ns/pid')
+    result = caps.prepare(k.root, owner_id=k.owner)
+    assert result['parent_limits_before'] == result['parent_limits_after']
+    assert result['probe_required'] and 222 in result['moved_container_pids']
+    assert all(group == f'0::/deepmzyme-control-{k.owner}' for group in k.members.values())
+    assert all(path.name in {'cgroup.procs', 'cgroup.subtree_control'} for path, _ in k.writes)
+
+
+def test_denied_namespace_fallback_preserves_complete_rollback(preparation_kernel, monkeypatch):
+    k = preparation_kernel
+    initial = dict(k.members)
+    _deny_namespace_link(monkeypatch, '/proc/222/ns/pid')
+
+    def refuse_enable(path, value):
+        if path == k.root / 'cgroup.subtree_control' and value.startswith('+'):
+            raise PermissionError('delegation refused after process migration')
+        k.write(path, value)
+
+    monkeypatch.setattr(caps, '_write', refuse_enable)
+    with pytest.raises(PermissionError, match='after process migration'):
+        caps.prepare(k.root, owner_id=k.owner)
+    assert k.members == initial and not k.managers[0].exists()
+    assert not k.read(k.root / 'cgroup.subtree_control').strip()
+
+
+@pytest.mark.parametrize('problem', ['nested_pid', 'changed_start', 'obscured_proc', 'changed_anchor'])
+def test_late_denied_namespace_with_unproven_identity_rolls_back(preparation_kernel, monkeypatch, problem):
+    k = preparation_kernel
+    initial = dict(k.members)
+    if problem == 'nested_pid': k.evidence['foreign_pid'] = 222
+    elif problem == 'changed_start': k.evidence['changed_pid'] = 222
+
+    def invalidate_anchor():
+        if problem == 'obscured_proc':
+            k.evidence['mounts'] += '3 1 0:3 / /proc/222/status rw - tmpfs tmpfs rw\n'
+        elif problem == 'changed_anchor':
+            k.evidence['self_namespace'] = 'pid:[other]'
+
+    _deny_namespace_link(monkeypatch, '/proc/222/ns/pid', before_denial=invalidate_anchor)
+    with pytest.raises(caps.CapError):
+        caps.prepare(k.root, owner_id=k.owner)
+    assert k.members == initial and not k.managers[0].exists()
+    assert not k.read(k.root / 'cgroup.subtree_control').strip()
+
+
+def test_readable_namespace_mismatch_is_never_replaced_by_procfs_fallback(preparation_kernel, monkeypatch):
+    k = preparation_kernel
+    initial = dict(k.members)
+    original = caps.os.readlink
+    monkeypatch.setattr(caps.os, 'readlink', lambda path, *a, **kw:
+        'pid:[foreign]' if str(path) == '/proc/222/ns/pid' else original(path, *a, **kw))
+    with pytest.raises(caps.CapError, match='outside the private'):
+        caps.prepare(k.root, owner_id=k.owner)
+    assert k.members == initial and not k.managers[0].exists()
+
+
+@pytest.mark.parametrize('path', ['/proc/1/ns/pid', '/proc/self/ns/pid', '/proc/self/ns/cgroup',
+                                  '/proc/1/ns/cgroup'])
+def test_denied_procfs_anchor_refuses_before_mutation(preparation_kernel, monkeypatch, path):
+    k = preparation_kernel
+    _deny_namespace_link(monkeypatch, path)
+    with pytest.raises(PermissionError): caps.prepare(k.root, owner_id=k.owner)
+    assert not k.writes and not k.managers
+
+
+@pytest.mark.parametrize('number', [errno.EPERM, errno.EIO])
+def test_non_eacces_namespace_errors_are_not_accepted(preparation_kernel, monkeypatch, number):
+    k = preparation_kernel
+    initial = dict(k.members)
+    _deny_namespace_link(monkeypatch, '/proc/222/ns/pid', number=number)
+    with pytest.raises(OSError) as caught: caps.prepare(k.root, owner_id=k.owner)
+    assert caught.value.errno == number
+    assert k.members == initial and not k.managers[0].exists()
+
+
+@pytest.mark.parametrize('problem', ['missing_status', 'foreign_cgroup', 'numeric_self_denied'])
+def test_denied_namespace_does_not_relax_remaining_identity_guards(preparation_kernel, monkeypatch, problem):
+    k = preparation_kernel
+    _deny_namespace_link(monkeypatch, f'/proc/{os.getpid()}/ns/pid' if problem == 'numeric_self_denied'
+                         else '/proc/222/ns/pid')
+    original = Path.read_text
+
+    def read(path, *args, **kwargs):
+        result = original(path, *args, **kwargs)
+        if str(path) == '/proc/222/status' and problem == 'missing_status':
+            return '\n'.join(line for line in result.splitlines() if not line.startswith('NSpid:'))
+        if str(path) == '/proc/222/cgroup' and problem == 'foreign_cgroup': return '0::/foreign\n'
+        return result
+
+    monkeypatch.setattr(Path, 'read_text', read)
+    initial = dict(k.members)
+    with pytest.raises((caps.CapError, PermissionError)): caps.prepare(k.root, owner_id=k.owner)
+    assert k.members == initial
+    assert not any(manager.exists() for manager in k.managers)
 
 
 def test_prepare_rolls_back_its_membership_changes_on_permission_failure(preparation_kernel, monkeypatch):
