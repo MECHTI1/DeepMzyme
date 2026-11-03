@@ -1,0 +1,133 @@
+{
+  "archive_builder_receipt_sha256": "3efd659e76909c1f175ddfebe09bb1020848080c2cab6eeb9c24f11821d97c58",
+  "base_archive_preserved": {
+    "bytes": 3491879800,
+    "sha256": "9eb513092b07628554761aef27be3b227fbfc1b536135460dd2596fb385ebbe5"
+  },
+  "conda_unpack_patch": {
+    "original_sha256": "1e8b06f6200e8539cb43b3fab9ab837063e6fb6070c911473d30918b106c879e",
+    "patched_sha256": "9d98970f14723337e84877d45b94253f80086f29142f38cbb57b97e6d2785b09",
+    "removed_prefix_records": [
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/INSTALLER",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/METADATA",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/RECORD",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/WHEEL",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/entry_points.txt",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/licenses/LICENSE",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ],
+      [
+        "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/top_level.txt",
+        "/home/mechti/miniconda3/envs/DeepMzyme",
+        "text"
+      ]
+    ],
+    "retained_jedi_stub_records": 2,
+    "retained_pkg_resources_records": 17
+  },
+  "expected_clean_packages_unchanged": 26,
+  "expected_fit_packages_unchanged": 187,
+  "format": "deepmzyme_ec_clean30_runtime_repair_v1",
+  "held_out_read": false,
+  "isolated_cpu_receipts": {
+    "esm1b": "ef86304c5707cf0bc4dae238a85ef7171960c1767e4132ef2a127cd0091d884f",
+    "fit": "a09d9e4266f213789365ef9d19bfba18e0cd9d2ac5fd629db24e2581d4fb3703"
+  },
+  "new_archive": {
+    "bytes": 3491750629,
+    "sha256": "ec43f3537038522b460175fb90d1c3ca47393b810d85520a54b98aeb130d8863"
+  },
+  "original_runtime_locks_sha256": "f8b0910dfd915507c7425a1b94d35e0eccceb5231a3fd6b45add7830e35ab60c",
+  "phase4_started": false,
+  "remote_qualification": "Fresh unpack, actual CUDA and full model/replay checks remain mandatory",
+  "removed_archive_members": [
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/INSTALLER",
+      "size": 4,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/METADATA",
+      "size": 6573,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/RECORD",
+      "size": 67466,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/WHEEL",
+      "size": 91,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/entry_points.txt",
+      "size": 2449,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/licenses/LICENSE",
+      "size": 1023,
+      "type": "0"
+    },
+    {
+      "path": "lib/python3.12/site-packages/setuptools-81.0.0.dist-info/top_level.txt",
+      "size": 41,
+      "type": "0"
+    }
+  ],
+  "retained_compatibility_tree": {
+    "base_archive_sha256": "9eb513092b07628554761aef27be3b227fbfc1b536135460dd2596fb385ebbe5",
+    "origin": "unchanged bytes from base archive",
+    "path": "lib/python3.12/site-packages/pkg_resources",
+    "preserved": true
+  },
+  "runtime_locks_v2_sha256": "dbbf3cd47be2062f444d4648a57b54c4aa83e717437e139dd3e20a2e261c0483",
+  "setuptools_source_audit": {
+    "matching_data_files": 120,
+    "matching_source_files": 319,
+    "report_sha256": "a5774d4bdcce78c88b0f06097abecdec7d6cfe7c00002918fa221cddc64c5811"
+  },
+  "status": "isolated_prefix_cpu_and_archive_integrity_verified",
+  "wheel_sources": [
+    {
+      "bytes": 10876435,
+      "filename": "pandas-3.0.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "name": "pandas",
+      "sha256": "532527a701281b9dd371e2f582ed9094f4c12dd9ffb82c0c54ee28d8ac9520c4",
+      "url": "https://files.pythonhosted.org/packages/3d/fe/89d77e424365280b79d99b3e1e7d606f5165af2f2ecfaf0c6d24c799d607/pandas-3.0.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "3.0.1"
+    },
+    {
+      "bytes": 324985,
+      "filename": "lmdb-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "name": "lmdb",
+      "sha256": "f99c549fb98819a1ce8ebbcd427dd56fcec0b630eb39260032b4dd023252e0ee",
+      "url": "https://files.pythonhosted.org/packages/a3/0b/e9a16b95d77b28ee2d872f24149d16bb3794de1a4b6501c1d2435011056b/lmdb-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "version": "2.0.0"
+    }
+  ]
+}

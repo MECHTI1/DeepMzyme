@@ -1,0 +1,40 @@
+{
+  "amendment_chain": [
+    "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea"
+  ],
+  "amendment_commit": "3154a7f3b0ad44e8dffbc66072990cfb7d9c9030",
+  "amendment_path": "docs/campaigns/ec_class_vs_clean30_2026-10/s1_amendment/amendment.json",
+  "amendment_sha256": "d07dbb6a68de7f441a0030661f110f2de9dabd4786a702a1e23d92a3a7a242ea",
+  "base_automation": {
+    "commit": "e2c5912392d6f7d440fccc7ca98c775d7eeb3106",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v2/manifest.json",
+    "sha256": "8ba64dc725ebbe694718dcaf5bc3ab0f0ea0f3695da37b246f0ee18f16d8ce1a"
+  },
+  "base_execution": {
+    "commit": "10e0e1144f8d73cfbf6bdc96b862038d33479e9d",
+    "path": "docs/campaigns/ec_class_vs_clean30_2026-10/wp13/execution_manifest.json",
+    "sha256": "6be7525464aff0d2714d5d4fa523bfd9c64483f699c76ccca7d2b6590c35c431"
+  },
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "format": "deepmzyme_ec_clean30_execution_v3",
+  "freeze1_sha256": "28077f4c3701820c9aa20f53b570d12f8b70a46514211fc63e62976e393a3c0c",
+  "freeze1b_sha256": "fc6f032805f084d7aef4f704a42149e92fb7894af3699b2ad5c12e86c87bcbdb",
+  "hardware_profiles": [
+    "gcp_l4",
+    "runpod_l4",
+    "runpod_rtx4090"
+  ],
+  "official_fold0_training_sha256": "ab8a8a21219aec19ba03dd7205dec8d8c1a156ff5cfad23aad344c7d7fbdd9c1",
+  "purpose": "Bounded G2 with isolated runtimes and one immutable campaign stop boundary",
+  "source_sha256": {
+    "scripts/run_ec_clean30_phase3.py": "d430de569f0aa98a9fce305c4c8d6af3aadd9646dab80bee2ed97a712748650a",
+    "scripts/run_ec_clean30_phase4.py": "95c3cd506ded1c728882471c8cc3d879168a5efaf4d8ea47bb5a71d7aed31759",
+    "scripts/run_ec_clean30_workstation.py": "1d2a394867c4a4fc4197b4f589845481ffcbbc3676e6c1c57e433141f798c42f",
+    "src/ec_clean30/container_caps.py": "af4764ebe307f4dc9099ab748294ac88150db6b6db3fcea2f65881db7853022d",
+    "src/ec_clean30/phase3.py": "2ec10f7fa0091665e43bdabf308402e4878af4b0a98140148ae43f46af8384c7",
+    "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
+    "src/ec_clean30/runpod_controller.py": "a6aeeb0f4249c8d21905dce9b8b353bbd4c113b847d0255eef91b741b85d3945",
+    "src/ec_clean30/workstation.py": "542451eb5e9fdf6eff199517c105cee8b698510aa53cdfd1cb3ee11a36a9fc72"
+  },
+  "timing_inputs_sha256": "ee368d99a5e88a6b5f84c3cd131b8d043432d41cea59c5266beb1d9fac48ff2f"
+}

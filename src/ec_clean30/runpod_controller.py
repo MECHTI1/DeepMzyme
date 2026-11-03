@@ -117,6 +117,11 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     _require(min(120, duration / 2) <= reserve < duration, "Insufficient shutdown-request reserve.")
     heartbeat = _number(cfg.get("heartbeat_timeout_seconds", 900), "heartbeat_timeout_seconds")
     _require(heartbeat <= 900, "Owner heartbeat timeout exceeds 900 seconds.")
+    if not cfg.get("adopt_pod_id") and "absolute_hard_stop_unix" in cfg:
+        hard = _number(cfg["absolute_hard_stop_unix"], "absolute_hard_stop_unix")
+        if fresh:
+            _require(min(duration, hard - time.time()) - reserve >= 900,
+                     "Absolute launch deadline leaves no 900-second closeout reserve.")
     if cfg.get("adopt_pod_id") is not None:
         _require(re.fullmatch(r"[A-Za-z0-9_-]+", str(cfg["adopt_pod_id"])), "Invalid explicitly adopted pod ID.")
         started = _epoch(cfg.get("adopt_started_at"))
@@ -329,7 +334,9 @@ class RunpodController:
                 with self._lock():
                     state = self._state()
                     _require(state.get("phase") == "creating" and state.get("create_attempted") is True
-                             and not state.get("stop_requested") and time.time() < state["deadline_unix"],
+                             and not state.get("stop_requested") and time.time() < state["deadline_unix"]
+                             and ("absolute_hard_stop_unix" not in self.cfg
+                                  or state["deadline_unix"] - time.time() >= 900),
                              "Create admission closed before the provider request.")
                     self._watchdog_healthy()
             except BaseException:
@@ -394,6 +401,12 @@ class RunpodController:
             self._cached_owner = dict(owned)
             if not self.owner_path.exists():
                 _write(self.owner_path, owned)
+            if not adoption:
+                started = min(state["allocation_started_unix"], _epoch(pod.get("createdAt")))
+                hard = min(state["hard_stop_unix"], started + self.cost["max_total_seconds"])
+                state.update(allocation_started_unix=started, hard_stop_unix=hard,
+                             deadline_unix=min(state["deadline_unix"], hard - self.cost["stop_reserve_seconds"]),
+                             max_total_seconds=hard - started)
             state.update(pod_id=pod_id, phase="allocated")
             _write(self.state_path, state)
             self._cached_state = dict(state)
@@ -493,9 +506,17 @@ class RunpodController:
             rows = self._pods()
             self._no_other_gpu(rows)
             _require(not any(p.get("name") == self.cfg["pod_name"] for p in rows), "Pod name already exists.")
+            begun = time.time()
+            hard = min(begun + self.cost["max_total_seconds"],
+                       self.cfg.get("absolute_hard_stop_unix", begun + self.cost["max_total_seconds"]))
+            _require("absolute_hard_stop_unix" not in self.cfg or hard - begun - self.cost["stop_reserve_seconds"] >= 900,
+                     "Absolute launch deadline leaves no 900-second closeout reserve.")
             _write(self.state_path, {"schema_version": 1, "session_id": uuid.uuid4().hex, "phase": "arming",
                                     "config_sha256": self.config_sha, "config_source_sha256": self.source_sha,
                                     "preexisting_pod_ids": [p["id"] for p in rows], "create_attempted": False,
+                                    "allocation_started_unix": begun, "hard_stop_unix": hard,
+                                    "deadline_unix": hard - self.cost["stop_reserve_seconds"],
+                                    "max_total_seconds": hard - begun,
                                     "cost_admission": self.cost, "stop_requested": False})
         self.heartbeat()
         self._arm_watchdog()
@@ -507,11 +528,7 @@ class RunpodController:
                      and not state.get("create_attempted"), "Launch intent is closed; create is blocked.")
             self._watchdog_healthy()
             self.heartbeat()
-            begun = time.time()
-            state.update(create_attempted=True, allocation_started_unix=begun,
-                         hard_stop_unix=begun + self.cost["max_total_seconds"],
-                         deadline_unix=begun + self.cost["max_total_seconds"] - self.cost["stop_reserve_seconds"],
-                         max_total_seconds=self.cost["max_total_seconds"], phase="creating")
+            state.update(create_attempted=True, phase="creating")
             _write(self.state_path, state)
             self._cached_state = dict(state)
         try:

@@ -1476,3 +1476,47 @@ three skipped** with unchanged source. Separate targeted checks cover the real d
 watchdog and dual-device preservation; actual pod probing covers kernel enforcement. Full model/runtime
 qualification and the twelve-event timing queue remain pending. No G2 result, Freeze 1c or numerical G3
 is claimed. Phase 4 and held-out reads remain gated.
+
+## evc-027
+
+2026-11-03 — **Runtime isolation repair and replacement boundary.** The compatibility package was
+published at `cb8d5de`. The first actual interpreter check found 185 distributions against the intended
+187-package main lock: `pandas==3.0.1` and `lmdb==2.0.0` came from the workstation user site and were
+not inside conda-pack. The earlier CPU import check had inherited that site. The strict comparison
+refused execution before CUDA/model qualification or G2 admission. STOP was provider-confirmed at
+00:02:12 UTC; an independent read confirmed `EXITED`. The transferred pod was not deleted.
+
+The provider's OOM warnings began at 23:50:16 UTC, during the intentionally contained 64-MiB child
+OOM enforcement test. Its child termination and cleanup passed, and the controller continued afterward.
+Provider logs record the explicit container stop at 00:02:11 UTC following the package-lock refusal.
+No G2 fit had started; the console banner is not evidence that a 31-GB campaign fit failed.
+
+The [runtime repair record](execution_v3/runtime_repair_v1.json) binds the original archive, official
+PyPI wheel hashes and the corrected self-contained archive. Original archive bytes remain unchanged.
+An isolated audit also found stale setuptools 81 metadata alongside verified conda 82 code. All 319
+source files and 120 data files checked against conda 82 matched. Only the stale metadata is removed;
+existing compatibility code remains bound to the original archive. Seven corresponding relocation
+records are omitted so `conda-unpack` does not visit absent files. The scientific source is unchanged.
+
+The corrected archive has SHA-256 `ec43f3537038522b460175fb90d1c3ca47393b810d85520a54b98aeb130d8863`
+and 3,491,750,629 bytes. Its raw metadata has exactly 187 unique distributions. The corrected private
+prefix passed isolated full-fingerprint, import, pandas, LMDB and Torch CPU checks with user site
+disabled. CLEAN separately passed its unchanged 26-package lock, CPU tensor and ESM-1b tokenization
+checks. These preparation checks do not replace fresh unpack, full-model CUDA and replay qualification
+on the actual allocation. The [new locks](execution_v3/runtime_locks_v2.json) preserve package versions.
+
+An additional guarded 117-minute attempt was authorized within the unchanged **$5 gross** ceiling.
+The supplied migration created `vzi08j1ntuijvn` at 00:24:11 UTC with the approved RTX 4090. Its
+workspace was empty. That host remaps container root to UID 100000; the v1 controllers are owned by
+unmapped UID 65534. The actual helper returned permission denied before creating a child memory
+cgroup. No scientific payload or G2 work was staged. The empty pod was stopped and independently
+read back as `EXITED`; no deletion occurred. This was a host-delegation refusal, not a GPU-model mismatch.
+
+The replacement pass retains **02:21:11 UTC** as its absolute hard boundary, with STOP requested
+120 seconds earlier. New creation, delayed replies and recovery must not reset it. The $5 envelope
+includes a conservative $1.40 prior-use reserve; provider billing still lacks final rows. Both original
+transferred pods remain stopped. The [runtime-v2 manifest](execution_v3/manifest_runtime_v2.json) and
+[verification record](execution_v3/verification_runtime_v2.json) preserve all original source records.
+The final six-file focused suite passed **400 tests, one skipped**, with unchanged source; the
+independent deadline review found no blocking issue. Documentation checks had zero strict failures.
+Zero G2 events are complete; Freeze 1c and numerical G3 remain unmeasured. Phase 4 and held-out reads stay gated.

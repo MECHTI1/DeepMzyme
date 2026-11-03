@@ -9,8 +9,8 @@ The cross-region extension is published at `1749cda`; its exhausted $19 pass is 
 its temporary resources are removed and the original VM is `TERMINATED` ([evc-023](log.md#evc-023)).
 A separately authorized Runpod setup was stopped after input and off-pod preservation checks
 ([evc-024](log.md#evc-024)). The replacement extension is CPU-verified ([evc-025](log.md#evc-025)); the compatibility update
-and named-pod cap checks are recorded in [evc-026](log.md#evc-026). Both full runtime checks
-and all twelve G2 events remain pending.
+and named-pod cap checks are recorded in [evc-026](log.md#evc-026). The runtime repair and replacement
+window are recorded in [evc-027](log.md#evc-027). Actual model/CUDA checks and all twelve G2 events remain pending.
 The private GCP route excludes cross-region recovery and retains the $25 daily guard. Its exhausted pass
 cannot restart automatically; Runpod setup does not extend that pass or authorize Phase 4.
 [G2 readiness](g2_readiness.md) owns the bounded launch scope and preserved preparation.

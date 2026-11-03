@@ -1,0 +1,40 @@
+{
+  "actual_new_gpu_qualification": "pending",
+  "cpu_runtime_checks": {
+    "ambient_user_site": false,
+    "cpu_checks": "passed",
+    "esm1b_unique_packages": 26,
+    "fit_unique_packages": 187
+  },
+  "deadline_review": "No blocking issue; intent, watchdog, pre-POST, provider binding and recovery preserve or shorten the absolute boundary",
+  "docs_contract": {
+    "baseline_warnings": 11,
+    "strict_failures": 0
+  },
+  "focused_tests": {
+    "log_sha256": "8e8d06ae5a04dd59bb089594296ce15200bbb9fb7cc023f166806e6f5c2d17f3",
+    "passed": 400,
+    "skipped": 1,
+    "source_sha256": {
+      "src/ec_clean30/container_caps.py": "af4764ebe307f4dc9099ab748294ac88150db6b6db3fcea2f65881db7853022d",
+      "src/ec_clean30/phase3.py": "2ec10f7fa0091665e43bdabf308402e4878af4b0a98140148ae43f46af8384c7",
+      "src/ec_clean30/runpod_controller.py": "a6aeeb0f4249c8d21905dce9b8b353bbd4c113b847d0255eef91b741b85d3945",
+      "src/ec_clean30/workstation.py": "542451eb5e9fdf6eff199517c105cee8b698510aa53cdfd1cb3ee11a36a9fc72",
+      "tests/test_ec_clean30_container_caps.py": "e113599e093caa12db1b078b238f9c062f3f069bdd6cb4c99c14917f08e94f7a",
+      "tests/test_ec_clean30_execution_v3.py": "f5b75d001b3078a57556d43be6083bbe47ff1cf6cc0f8cda2898e24bb67bfe4b",
+      "tests/test_ec_clean30_phase3.py": "743dbbf0533ea2b5cd2692ce57451475958a5112c6078d16a058a40f7f648e01",
+      "tests/test_ec_clean30_runpod_controller.py": "66e8d2ec0ac7acee6e8ea9f1b11dcbd7d7bc070e7a7456ec71aa165c1ea4c775",
+      "tests/test_ec_clean30_runpod_runtime.py": "a15946144c5d073f67fcb96951df46dfddf1996a8296b8c14a22d29b1c453c53",
+      "tests/test_ec_clean30_workstation.py": "c0698da59c0d967452acb3ccfd92b751ad04420a12b21ff71c07673a39d640c0"
+    },
+    "source_unchanged": true,
+    "warnings": 3
+  },
+  "format": "deepmzyme_ec_clean30_runpod_verification_v1",
+  "g2_completed_events": 0,
+  "held_out_read": false,
+  "original_execution_records_preserved": true,
+  "phase4_started": false,
+  "runtime_repair": "runtime_repair_v1.json",
+  "status": "isolated_runtime_cpu_verified_actual_candidate_pending"
+}

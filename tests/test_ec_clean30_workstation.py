@@ -201,7 +201,7 @@ def test_runpod_transport_propagates_fixed_precision_to_remote_launcher(tmp_path
 
     monkeypatch.setattr(subprocess, "run", execute)
     assert transport.remote(["python", "runner.py"], cwd="/workspace/repo") == "ready"
-    assert calls[0][-1] == "cd /workspace/repo && env NVIDIA_TF32_OVERRIDE=0 python runner.py"
+    assert calls[0][-1] == "cd /workspace/repo && env NVIDIA_TF32_OVERRIDE=0 PYTHONNOUSERSITE=1 python runner.py"
 
 
 @pytest.mark.parametrize("returncode", [0, 2])

@@ -2,8 +2,8 @@
 
 Status: 2026-11-03; GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
 The initial Runpod setup was stopped after verified preservation ([evc-024](log.md#evc-024)).
-The named replacement passed kernel-cap checks; runtime qualification remains pending
-([evc-026](log.md#evc-026)). Zero of twelve G2 events completed.
+An earlier host passed kernel caps; migration reached a host without delegated controls. The isolated
+runtime repair is CPU-verified ([evc-027](log.md#evc-027)); actual G2 qualification remains pending. Zero events completed.
 The GCP two-hour request and 117-minute STOP do not establish a Runpod deadline or spending ceiling.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
@@ -56,13 +56,16 @@ off-pod preservation and provider-confirmed shutdown. The pod has no persistent 
 retained local inputs and source records, not an assumption that its container files survive.
 
 The original [execution-v3 extension](execution_v3/manifest.json) remains preserved. The additive
-[compatibility manifest](execution_v3/manifest_cgroup_v1.json) pins delegated cgroup v1/v2 support
-and named-pod adoption; [evc-026](log.md#evc-026) owns its verification and handoff.
+[compatibility manifest](execution_v3/manifest_cgroup_v1.json) remains preserved. The current
+[runtime-v2 manifest](execution_v3/manifest_runtime_v2.json) pins isolated execution and the fixed
+replacement deadline; [evc-027](log.md#evc-027) owns its verification. The corrected
+[runtime locks](execution_v3/runtime_locks_v2.json) retain the same complete package maps.
 The old pod is deleted. Full runtime qualification remains pending. Before any Runpod G2 fit:
 
 - Preserve a clean, published checkout and authenticate its source/input manifests. The copied tree excluded
   `.git`; code inspection establishes the missing prerequisite, not a measured verifier failure.
-- Qualify the actual L4 or RTX 4090 hardware and both locked Python runtimes. Require full-model ESM-1b
+- Qualify the actual L4 or RTX 4090 hardware, delegated child resource controls and both locked Python
+  runtimes with user-site packages disabled. GPU identity alone does not establish delegation. Require full-model ESM-1b
   CUDA transfer and the source-bound CPU/CUDA qualification receipts; old container imports are insufficient.
 - Provide a validated equivalent for the GCP-bound transport/session checks and the declared CPU/RAM/no-swap
   caps. Keep the exact queue, admission margin, closeout reserve, input/read guards and HostPull acknowledgments.

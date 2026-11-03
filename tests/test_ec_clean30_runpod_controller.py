@@ -9,6 +9,7 @@ import shutil
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -28,7 +29,7 @@ with p.with_suffix('.lock').open('a+') as lock:
  if action=='list': out=state.get('pods',[])
  elif action=='create':
   state['create_calls']=state.get('create_calls',0)+1
-  options=dict(zip(args[::2],args[1::2])); now=datetime.datetime.now(datetime.timezone.utc).isoformat()
+  options=dict(zip(args[::2],args[1::2])); now=state.get('created_at',datetime.datetime.now(datetime.timezone.utc).isoformat())
   pod={'id':'ownedpod123','name':options['--name'],'createdAt':now,'desiredStatus':'RUNNING','runtimeStatus':'running',
        'gpuCount':1,'gpuId':state.get('actual_gpu',options['--gpu-id']),'imageName':options['--image'],
        'machine':{'dataCenterId':state.get('actual_dc',options['--data-center-ids']),'secureCloud':True},
@@ -182,6 +183,81 @@ def test_one_create_even_when_response_is_lost_and_receipts_redact_env(fixture):
     assert "rpa_fake_secret" not in receipt_text
     assert "rpa_should_never_enter_receipts" not in receipt_text
     assert json.loads(controller.state_path.read_text())["stop_receipt"]["runtime_status"] == "stopped"
+
+
+@pytest.mark.parametrize("absolute_seconds,lost_response", [(2000, False), (2000, True), (10000, False)])
+def test_fresh_absolute_window_is_bound_before_watchdog_and_survives_recovery(fixture, monkeypatch, absolute_seconds, lost_response):
+    config, path, api, _, make = fixture
+    absolute = time.time() + absolute_seconds
+    config["runpod"]["absolute_hard_stop_unix"] = absolute
+    controller = make(lose_create_response=lost_response)
+    original_arm = controller._arm_watchdog
+    observed = {}
+    offset = [0]
+    real_time = time.time
+    monkeypatch.setattr(rc, "time", SimpleNamespace(time=lambda: real_time() + offset[0],
+                                                   monotonic=time.monotonic, sleep=time.sleep))
+
+    def arm_then_advance():
+        observed.update(controller._state())
+        original_arm()
+        offset[0] = 3
+
+    monkeypatch.setattr(controller, "_arm_watchdog", arm_then_advance)
+    session = controller.start()
+    for key in ("allocation_started_unix", "hard_stop_unix", "deadline_unix", "max_total_seconds"):
+        assert session[key] == observed[key]
+    assert session["hard_stop_unix"] == min(absolute, observed["allocation_started_unix"] + 7020)
+    assert session["hard_stop_unix"] - session["deadline_unix"] == 120
+    assert session["max_total_seconds"] == session["hard_stop_unix"] - session["allocation_started_unix"]
+    assert session["cost_admission"]["max_total_seconds"] == 7020
+    recovered = rc.RunpodController(config, path).session(session)
+    assert recovered["deadline_unix"] == session["deadline_unix"]
+    assert json.loads(api.read_text())["create_calls"] == 1
+
+
+@pytest.mark.parametrize("seconds", [-1, 120, 1019])
+def test_fresh_absolute_deadline_without_closeout_reserve_refuses_before_intent(fixture, seconds):
+    config, _, api, _, make = fixture
+    config["runpod"]["absolute_hard_stop_unix"] = time.time() + seconds
+    controller = make()
+    with pytest.raises(rc.RunpodError, match="900-second closeout reserve"):
+        controller.start()
+    assert not controller.state_path.exists() and not controller.snapshot_path.exists()
+    assert not json.loads(api.read_text()).get("create_calls")
+
+
+def test_fresh_absolute_reserve_is_rechecked_immediately_before_post(fixture, monkeypatch):
+    config, _, api, _, make = fixture
+    config["runpod"]["absolute_hard_stop_unix"] = time.time() + 1030
+    controller = make()
+    original_call = controller._call
+    real_time = time.time
+
+    def advance_at_post(*args, **kwargs):
+        if args[0] == "create":
+            monkeypatch.setattr(rc, "time", SimpleNamespace(time=lambda: real_time() + 20,
+                                                           monotonic=time.monotonic, sleep=time.sleep))
+        return original_call(*args, **kwargs)
+
+    monkeypatch.setattr(controller, "_call", advance_at_post)
+    with pytest.raises(rc.RunpodError, match="900-second closeout reserve"):
+        controller.start()
+    assert not json.loads(api.read_text()).get("create_calls")
+    state = controller._state()
+    assert state["create_cancelled_before_post"] and state["phase"] == "stopped"
+
+
+def test_fresh_bind_earlier_provider_creation_shortens_the_intent_window(fixture):
+    _, _, _, _, make = fixture
+    created_at = datetime.fromtimestamp(time.time() - 3, timezone.utc).isoformat()
+    created = rc._epoch(created_at)
+    controller = make(created_at=created_at)
+    session = controller.start()
+    assert session["allocation_started_unix"] == created
+    assert session["hard_stop_unix"] == created + 7020
+    assert session["deadline_unix"] == created + 7020 - 120
+    assert session["max_total_seconds"] == 7020
 
 
 @pytest.mark.parametrize("api_change,match", [({"actual_rate": 2.0}, "price"),

@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-03; Runpod cap enforcement verified; runtime qualification pending)
+Status: active (2026-11-03; isolated runtimes verified; G2 host qualification pending)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -26,7 +26,7 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)).
 The [log](log.md) preserves earlier exhausted capacity passes and Runpod closeout.
-[evc-025](log.md#evc-025) records the execution-v3 extension; [evc-026](log.md#evc-026) records
-container compatibility, named-pod handoff and actual cap verification.
+[evc-026](log.md#evc-026) records cap verification; [evc-027](log.md#evc-027) records the
+isolated runtime repair, migration closeout and bounded replacement window.
 Zero of twelve G2 events completed; Freeze 1c/G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.
