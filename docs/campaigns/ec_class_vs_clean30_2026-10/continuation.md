@@ -1,6 +1,7 @@
 # Continuation after Freeze 1b
 
-The next bounded stock retry is recorded in [evc-032](log.md#evc-032); G2 measurements remain pending.
+The latest local readiness check is recorded in [evc-033](log.md#evc-033): Data1 is mounted, and the
+staged Pass I stock-retry correction awaits publication. Current preflight and G2 measurements remain pending.
 
 Status: updated, 2026-11-03; preparation and the S1 amendment are published through `3154a7f`.
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.

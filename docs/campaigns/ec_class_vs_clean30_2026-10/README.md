@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-03; cache verified; G2 stockout)
+Status: active (2026-11-03; G2 measurements pending)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -10,7 +10,7 @@ It supersedes the 2026-09-25 [CLEAN30 plan](../../plans/pocket_level_EC_task_com
 reference; that file stays unchanged.
 
 - [Design](design.md): benchmark, populations, systems, training rule, metric, claim rule, test access and licence.
-- [Log](log.md): evc-001 (decisions), evc-002 (G0), evc-003 (G1 checks), evc-004 (G1 approval), evc-005 (Phase 2 start), evc-006 (inputs, round 1b), evc-007 (views, calibration), evc-008 (dry runs, Freeze-1 code).
+- [Log](log.md): dated decisions, preparation evidence and execution attempts.
 - [Recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe): commands.
 - [S1 amendment](s1_amendment/amendment.md): fixed policy, source pins and verification evidence.
 - [Continuation](continuation.md) and [G2 readiness](g2_readiness.md): path to the first fold-0 decision.
@@ -25,10 +25,9 @@ scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (thre
 160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
 
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)).
-The [log](log.md) preserves earlier exhausted capacity passes and Runpod closeout.
-[evc-026](log.md#evc-026) records cap verification; [evc-027](log.md#evc-027) records the
-isolated runtime repair, migration closeout and bounded replacement window.
-[evc-030](log.md#evc-030) covers cache verification; [evc-031](log.md#evc-031) records host repair;
-[evc-032](log.md#evc-032) records bounded stock retry.
-Zero of twelve G2 events completed; Freeze 1c/G3 await measurements.
+The [log](log.md) preserves earlier capacity attempts, runtime repairs and Runpod closeout.
+[evc-030](log.md#evc-030) records verified cache seeding; [evc-032](log.md#evc-032) records bounded stock retries.
+[evc-033](log.md#evc-033) records mounted Data1 and the staged, unpublished Pass I correction.
+Next: verify and publish the execution package, complete current preflight, then measure G2 under applicable authorization.
+Recorded G2 completion remains 0/12; Freeze 1c/G3 await measurements.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

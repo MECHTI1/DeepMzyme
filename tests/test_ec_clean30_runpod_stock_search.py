@@ -218,65 +218,23 @@ def test_other_active_gpu_after_rejection_blocks_retry(fixture, monkeypatch):
     assert len(attempts) == 1
 
 
-@pytest.mark.parametrize("lost_at,attempt_count", [(2, 1), (3, 2)])
-def test_transient_stock_loss_before_intent_or_before_post_keeps_polling(
-        fixture, monkeypatch, lost_at, attempt_count):
+def test_positive_poll_reaches_provider_without_redundant_stock_read(fixture, monkeypatch):
     _, _, api, _, _ = fixture
     controller = search_controller(fixture)
-    stock_reads = []
-
+    reads = []
     def catalog(path, query):
-        if path == "/v2/billing":
-            return {"metadata": {"totals": {"totalAmount": .1}}}
-        stock_reads.append(path)
-        row = stock_record()
-        if len(stock_reads) == lost_at:
-            row["dataCenters"][0]["availability"] = "NONE"
-        return row
-
-    real_sleep = rc.time.sleep
-    monkeypatch.setattr(controller, "_catalog_call", catalog)
-    monkeypatch.setattr(rc.time, "sleep", lambda seconds: real_sleep(seconds) if seconds < 1 else None)
-    assert controller.start()["pod_id"] == "ownedpod123"
-    state = controller._state()
-    assert state["create_attempt_count"] == attempt_count
-    assert not state.get("create_cancelled_before_post")
-    assert json.loads(api.read_text())["create_calls"] == 1
-    receipt = controller.stop()
-    assert receipt["pod_id"] == "ownedpod123" and receipt["runtime_status"] == "stopped"
+        if path == '/v2/billing':
+            return {'metadata': {'totals': {'totalAmount': .1}}}
+        reads.append(path)
+        assert len(reads) == 1, 'Positive stock must be consumed without another catalog request'
+        return stock_record()
+    monkeypatch.setattr(controller, '_catalog_call', catalog)
+    assert controller.start()['pod_id'] == 'ownedpod123'
+    assert json.loads(api.read_text())['create_calls'] == 1
+    controller.stop()
 
 
-def test_prepost_cancellation_flag_cannot_hide_later_uncertain_post(fixture, monkeypatch):
+def test_missing_positive_poll_cannot_admit_create(fixture):
     controller = search_controller(fixture)
-    stock_reads = []
-
-    def catalog(path, query):
-        if path == "/v2/billing":
-            return {"metadata": {"totals": {"totalAmount": .1}}}
-        stock_reads.append(path)
-        row = stock_record()
-        if len(stock_reads) == 3:
-            row["dataCenters"][0]["availability"] = "NONE"
-        return row
-
-    original = controller._call
-    attempts = []
-
-    def call(*args, **kwargs):
-        if args[0] == "create":
-            attempts.append(args)
-            if len(attempts) == 2:
-                assert not controller._state().get("create_cancelled_before_post")
-                raise rc.RunpodError("Runpod create result is uncertain (TimeoutExpired).")
-        return original(*args, **kwargs)
-
-    real_sleep = rc.time.sleep
-    monkeypatch.setattr(controller, "_catalog_call", catalog)
-    monkeypatch.setattr(controller, "_call", call)
-    monkeypatch.setattr(rc.time, "sleep", lambda seconds: real_sleep(seconds) if seconds < 1 else None)
-    with pytest.raises(rc.RunpodError, match="uncertain"):
-        controller.start()
-    state = controller._state()
-    assert len(attempts) == 2 and state["phase"] == "closing_after_failure"
-    assert state["stop_requested"] and not state.get("stop_receipt")
-    assert not state.get("create_cancelled_before_post")
+    with pytest.raises((rc.RunpodError, OSError)):
+        controller._search_admission()

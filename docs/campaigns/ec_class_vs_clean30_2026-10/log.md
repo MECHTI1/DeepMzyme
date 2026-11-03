@@ -1629,3 +1629,27 @@ the provider request and returned to polling. No create request was sent, no pod
 GPU charge accrued. Fresh provider inventory verified absence; both older pods remain `EXITED`, and GCP
 was verified `TERMINATED` at 15:03:48 UTC. The complete search and closeout record is independently mirrored.
 The warm cache remains retained; G2 stays 0/12 and no Freeze 1c or numerical G3 result is available.
+
+Pass I preparation removes redundant catalog reads after a positive stock poll. Create admission consumes
+that configuration-bound observation within 45 seconds while retaining billing and all ownership/stop checks.
+The focused stock suite passed 28 tests. Execution is blocked while the required Data1 mount is unavailable;
+no new allocation or timing result is established. EU-RO-1 placement remains unchanged.
+
+## evc-033
+
+2026-11-03 — **Local storage observation and continuation readiness.** At 20:37:45 UTC, Data1 was
+confirmed mounted on `/dev/sda1`, separate from the repository's `/dev/nvme0n1p6` device. Available space
+was 125,938,049,024 bytes on Data1 and 20,789,297,152 bytes on the internal NVMe filesystem. This supersedes
+the mount-unavailable observation in evc-032; it does not establish full execution readiness. Full preflight,
+current provider state, capacity, pricing and spending were not rechecked.
+
+At this observation, the Pass I stock-retry correction, its tests and execution-manifest update were staged
+but uncommitted and unpublished. The previously recorded test evidence remains in evc-032. The next step is
+to verify and publish that execution package, complete current preflight, and perform the bounded G2
+measurement under applicable authorization using the
+[existing recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues).
+
+Recorded G2 completion remains 0/12; Freeze 1c and numerical G3 await measurements. The
+[continuation](continuation.md) retains the existing scientific sequence and gates. No compute was started,
+no held-out data was read, and this update grants no new execution or budget authority. Root STATUS remains
+unchanged under [C-10](freeze1_decisions.json); current progress stays in these campaign records.

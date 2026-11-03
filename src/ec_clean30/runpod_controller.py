@@ -467,8 +467,12 @@ class RunpodController:
         return bool(available)
 
     def _search_admission(self) -> None:
-        if not self._stock_available():
-            raise StockUnavailable('Compatible stock disappeared before create admission.')
+        # Consume the positive poll rather than racing another catalog read.
+        observation = _read(self.root / 'stock_observation.json')
+        _require(observation.get('config_sha256') == self.config_sha
+                 and observation.get('available') is True
+                 and 0 <= time.time() - observation.get('observed_unix', 0) <= 45,
+                 'A fresh positive stock poll is required before create.')
         billing = self._catalog_call('/v2/billing', {'bucketSize': 'hour', 'lastN': 25})
         total = _number(billing.get('metadata', {}).get('totals', {}).get('totalAmount'), 'fresh rolling billing', zero=True)
         _require(total <= self.cfg['quote']['prior_charge_usd'], 'Fresh billing exceeds the recorded prior-charge reserve.')

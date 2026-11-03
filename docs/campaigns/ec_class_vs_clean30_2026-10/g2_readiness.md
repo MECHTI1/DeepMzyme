@@ -1,10 +1,12 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-03; GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
+Status: 2026-11-03; Data1 is mounted; the staged Pass I correction awaits publication
+([evc-033](log.md#evc-033)). Full preflight and current cloud state remain unchecked.
+GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
 The initial Runpod setup was stopped after verified preservation ([evc-024](log.md#evc-024)).
 An earlier host passed kernel caps; migration reached a host without delegated controls. The isolated
 runtime repair is CPU-verified ([evc-027](log.md#evc-027)). The reproducible cache/bootstrap extension is
-implemented ([evc-028](log.md#evc-028)); actual G2 qualification remains pending. Zero events completed.
+implemented ([evc-028](log.md#evc-028)); actual G2 qualification remains pending. Recorded completion is 0/12.
 The GCP two-hour request and 117-minute STOP do not establish a Runpod deadline or spending ceiling.
 The [continuation](continuation.md) owns the full sequence; the
 [EC playbook](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#ec-class-versus-clean30-campaign-recipe) owns commands.
