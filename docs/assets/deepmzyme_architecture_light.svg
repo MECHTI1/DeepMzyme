@@ -1,0 +1,320 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1176 806" width="1176" height="806" role="img" aria-labelledby="title desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji'"><title id="title">DeepMzyme architecture</title><desc id="desc">A holo protein structure and a supplied metal position (the metal's element is never used) feed three branches. Structure: a graph of the protein residues with any atom within 10 Å of the metal, linked when their closest atoms are within 8 Å, encoded by a four-layer GVP-GNN and pooled over the pocket residues. Sequence: each chain embedded in full by frozen ESM-C 600M and pooled over the same pocket residues. Site: a four-value summary that is constant in this release. A sigmoid gate computed from the two pooled vectors scales the sequence vector; the three vectors are concatenated (288 values) and an MLP gives softmax scores for five classes: Mn, Cu, Zn, Fe and Co/Ni. The release sums Fe and Co/Ni into Class VIII and averages the 4-class scores of five copies, each trained with one CV fold held out.</desc><style>.mono{font-family:ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;} text{font-kerning:normal;}</style><defs><marker id="arrow-s" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1.2 L9,5 L1,8.8 L2.8,5 z" fill="#0f766e"/></marker><marker id="arrow-q" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1.2 L9,5 L1,8.8 L2.8,5 z" fill="#6d3fd6"/></marker><marker id="arrow-t" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1.2 L9,5 L1,8.8 L2.8,5 z" fill="#b45309"/></marker><marker id="arrow-ink" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1.2 L9,5 L1,8.8 L2.8,5 z" fill="#1f2328"/></marker><marker id="arrow-ink3" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1,1.2 L9,5 L1,8.8 L2.8,5 z" fill="#98a2b3"/></marker><radialGradient id="metal" cx="38%" cy="34%" r="70%"><stop offset="0" stop-color="#fef3c7"/><stop offset="1" stop-color="#f59e0b"/></radialGradient><radialGradient id="halo"><stop offset="0" stop-color="#f59e0b" stop-opacity="0.45"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/></radialGradient><pattern id="frost" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="#f6f3ff"/><line x1="0" y1="0" x2="0" y2="7" stroke="#ebe5ff" stroke-width="3"/></pattern><clipPath id="pocket-clip"><circle cx="104" cy="336" r="73"/></clipPath></defs>
+<circle cx="78.0" cy="22.0" r="9" fill="#1f2328"/>
+<text x="78.0" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">1</text>
+<text x="93.0" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="12.0,8.0,196.0,34.0">INPUT</text>
+<circle cx="291.6" cy="22.0" r="9" fill="#1f2328"/>
+<text x="291.6" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">2</text>
+<text x="306.6" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="194.0,8.0,478.0,34.0">FEATURIZE</text>
+<circle cx="555.4" cy="22.0" r="9" fill="#1f2328"/>
+<text x="555.4" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">3</text>
+<text x="570.4" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="474.0,8.0,698.0,34.0">ENCODE</text>
+<circle cx="747.6" cy="22.0" r="9" fill="#1f2328"/>
+<text x="747.6" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">4</text>
+<text x="762.6" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="692.0,8.0,846.0,34.0">POOL</text>
+<circle cx="869.6" cy="22.0" r="9" fill="#1f2328"/>
+<text x="869.6" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">5</text>
+<text x="884.6" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="832.0,8.0,950.0,34.0">FUSE</text>
+<circle cx="1015.2" cy="22.0" r="9" fill="#1f2328"/>
+<text x="1015.2" y="26.2" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">6</text>
+<text x="1030.2" y="26.5" font-size="12" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="946.0,8.0,1164.0,34.0">CLASSIFY</text>
+<path d="M 24 42 H 1152" fill="none" stroke="#e4e7ec" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="104.0" y="78.0" font-size="17" fill="#1f2328" font-weight="650" text-anchor="middle" data-fit="22.0,44.0,186.0,664.0">Holo structure</text>
+<text x="104.0" y="97.0" font-size="13.5" fill="#475467" text-anchor="middle" data-fit="22.0,44.0,186.0,664.0">+ metal position</text>
+<text x="104.0" y="113.0" font-size="12" fill="#5b6576" text-anchor="middle" data-fit="22.0,44.0,186.0,664.0">(atom ID or x, y, z)</text>
+<circle cx="31.0" cy="135.5" r="6" fill="#0f766e" stroke="#ffffff" stroke-width="1"/>
+<text x="43.0" y="140.0" font-size="12" fill="#475467" data-fit="22.0,44.0,186.0,664.0">first-shell residue</text>
+<circle cx="31.0" cy="152.5" r="5" fill="#ffffff" stroke="#0f766e" stroke-width="2"/>
+<text x="43.0" y="157.0" font-size="12" fill="#475467" data-fit="22.0,44.0,186.0,664.0">second-shell residue</text>
+<circle cx="31.0" cy="169.5" r="4.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<text x="43.0" y="174.0" font-size="12" fill="#475467" data-fit="22.0,44.0,186.0,664.0">other pocket residue</text>
+<circle cx="31.0" cy="186.5" r="6" fill="url(#metal)"/>
+<text x="43.0" y="191.0" font-size="12" fill="#475467" data-fit="22.0,44.0,186.0,664.0">metal: position used,</text>
+<text x="43.0" y="206.0" font-size="12" fill="#1f2328" font-weight="650" data-fit="22.0,44.0,186.0,664.0">element never used</text>
+<circle cx="28.0" cy="219.5" r="3.2" fill="#3b6fe0"/>
+<circle cx="35.0" cy="219.5" r="3.2" fill="#e5484d"/>
+<text x="43.0" y="224.0" font-size="12" fill="#475467" data-fit="22.0,44.0,186.0,664.0">N, O donor atoms</text>
+<text x="104.0" y="253.0" font-size="12.5" fill="#5b6576" font-weight="600" text-anchor="middle" data-fit="22.0,44.0,186.0,664.0">any atom ≤ 10 Å</text>
+<circle cx="104.0" cy="336.0" r="74" fill="#ffffff" stroke="#98a2b3" stroke-width="1.1"/>
+<circle cx="104" cy="336" r="74" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-dasharray="2.5 4"/>
+<g clip-path="url(#pocket-clip)">
+<path d="M 0.0 346.0 C 6.5 344.9, 29.9 332.4, 39.2 339.7 C 48.6 347.0, 49.4 385.3, 55.9 389.6 C 62.4 394.0, 75.3 378.2, 78.1 365.6 C 80.9 353.0, 77.8 323.4, 72.5 313.8 C 67.3 304.2, 42.3 314.7, 46.6 308.2 C 51.0 301.8, 81.5 279.6, 98.5 274.9 C 115.4 270.3, 142.4 274.3, 148.4 280.5 C 154.4 286.7, 131.4 302.1, 134.5 311.9 C 137.6 321.8, 167.4 331.1, 166.9 339.7 C 166.4 348.3, 141.6 353.9, 131.8 363.8 C 121.9 373.6, 103.7 395.2, 107.7 398.9 C 111.7 402.6, 148.2 387.3, 155.8 385.9 C 163.4 384.6, 151.6 385.8, 153.5 391.0 C 155.5 396.2, 165.2 412.7, 167.5 417.0" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.38" data-overlay="1"/>
+</g>
+<g><clipPath id="outside-clip"><path d="M 0 0 H 1176 V 806 H 0 Z M 178 336 A 74 74 0 1 0 30 336 A 74 74 0 1 0 178 336 Z" clip-rule="evenodd"/></clipPath></g>
+<g clip-path="url(#outside-clip)">
+<path d="M 155.8 385.9 L 153.5 391.0 C 151.5 431.0, 136.0 443.0, 166.0 443.0" fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" data-overlay="1"/>
+</g>
+<text x="164.0" y="463.0" font-size="11.5" fill="#5b6576" text-anchor="end" font-style="italic" data-fit="22.0,44.0,186.0,664.0">rest of chain</text>
+<g clip-path="url(#pocket-clip)">
+<path d="M 72.5 313.8 L 134.5 311.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 72.5 313.8 L 131.8 363.8" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 72.5 313.8 L 78.1 365.6" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 72.5 313.8 L 46.6 308.2" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 72.5 313.8 L 98.5 274.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 72.5 313.8 L 39.2 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 134.5 311.9 L 131.8 363.8" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 134.5 311.9 L 78.1 365.6" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 134.5 311.9 L 98.5 274.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 134.5 311.9 L 148.4 280.5" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 134.5 311.9 L 166.9 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 131.8 363.8 L 78.1 365.6" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 131.8 363.8 L 166.9 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 131.8 363.8 L 155.8 385.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 131.8 363.8 L 107.7 398.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 78.1 365.6 L 107.7 398.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 78.1 365.6 L 55.9 389.6" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 78.1 365.6 L 39.2 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 46.6 308.2 L 39.2 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 98.5 274.9 L 148.4 280.5" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 166.9 339.7 L 155.8 385.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 155.8 385.9 L 107.7 398.9" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 107.7 398.9 L 55.9 389.6" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 55.9 389.6 L 39.2 339.7" fill="none" stroke="#8fd6cb" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+</g>
+<path d="M 72.5 313.8 L 91.3 327.0" fill="none" stroke="#0f766e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<circle cx="91.3" cy="327.0" r="3.2" fill="#3b6fe0" stroke="#ffffff" stroke-width="0.8"/>
+<path d="M 134.5 311.9 L 116.2 326.4" fill="none" stroke="#0f766e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<circle cx="116.2" cy="326.4" r="3.2" fill="#3b6fe0" stroke="#ffffff" stroke-width="0.8"/>
+<path d="M 131.8 363.8 L 115.0 347.0" fill="none" stroke="#0f766e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<circle cx="115.0" cy="347.0" r="3.2" fill="#e5484d" stroke="#ffffff" stroke-width="0.8"/>
+<path d="M 78.1 365.6 L 93.8 347.7" fill="none" stroke="#0f766e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<circle cx="93.8" cy="347.7" r="3.2" fill="#3b6fe0" stroke="#ffffff" stroke-width="0.8"/>
+<circle cx="72.5" cy="313.8" r="11" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+<text x="72.5" y="318.1" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">H</text>
+<circle cx="134.5" cy="311.9" r="11" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+<text x="134.5" y="316.2" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">H</text>
+<circle cx="131.8" cy="363.8" r="11" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+<text x="131.8" y="368.1" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">E</text>
+<circle cx="78.1" cy="365.6" r="11" fill="#0f766e" stroke="#ffffff" stroke-width="1.5"/>
+<text x="78.1" y="369.9" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle" data-overlay="1">H</text>
+<circle cx="46.6" cy="308.2" r="10" fill="#ffffff" stroke="#0f766e" stroke-width="2.2"/>
+<text x="46.6" y="312.6" font-size="12" fill="#0f766e" font-weight="700" text-anchor="middle" data-overlay="1">D</text>
+<circle cx="98.5" cy="274.9" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="148.4" cy="280.5" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="166.9" cy="339.7" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="155.8" cy="385.9" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="107.7" cy="398.9" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="55.9" cy="389.6" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="39.2" cy="339.7" r="6.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="104.0" cy="336.0" r="9.5" fill="url(#metal)" stroke="#ffffff" stroke-width="1.3"/>
+<text x="104.0" y="340.6" font-size="13" fill="#1f2328" font-weight="800" text-anchor="middle" data-overlay="1">?</text>
+<rect x="206.0" y="62.5" width="260.0" height="258.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="206.0" y="60.0" width="260.0" height="258.0" rx="12" fill="#f0faf8" stroke="#0f766e" stroke-width="1.3" />
+<text x="220.0" y="82.0" font-size="11.5" fill="#0f766e" font-weight="700" letter-spacing="1.2" data-fit="214.0,60.0,458.0,318.0">STRUCTURE</text>
+<text x="220.0" y="104.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="214.0,60.0,458.0,318.0">Pocket graph</text>
+<text x="220.0" y="126.0" font-size="13.5" fill="#1f2328" data-fit="214.0,60.0,458.0,318.0"><tspan font-weight="700" fill="#0f766e" letter-spacing="1.1" font-size="11.5">NODES</tspan><tspan dx="7" font-weight="650">protein residues</tspan></text>
+<text x="230.0" y="144.0" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">any atom ≤ 10 Å from the metal</text>
+<text x="230.0" y="160.5" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">scalars: residue type, chemistry,</text>
+<text x="230.0" y="177.0" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">shell flags, 3 distances to metal,</text>
+<text x="230.0" y="193.5" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">ligand-orientation cosine</text>
+<text x="230.0" y="210.0" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">vectors: Cβ→side chain, metal→Cα</text>
+<path d="M 220 223.5 H 452" fill="none" stroke="#8fd6cb" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="220.0" y="240.5" font-size="13.5" fill="#1f2328" data-fit="214.0,60.0,458.0,318.0"><tspan font-weight="700" fill="#0f766e" letter-spacing="1.1" font-size="11.5">EDGES</tspan><tspan dx="7" font-weight="650">contacts</tspan></text>
+<text x="230.0" y="258.5" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">closest atoms ≤ 8 Å apart</text>
+<text x="230.0" y="275.0" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">contact and Cα–Cα distances,</text>
+<text x="230.0" y="291.5" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">sequence separation, same chain,</text>
+<text x="230.0" y="308.0" font-size="12.5" fill="#475467" data-fit="214.0,60.0,458.0,318.0">contact vector</text>
+<rect x="486.0" y="62.5" width="200.0" height="258.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="486.0" y="60.0" width="200.0" height="258.0" rx="12" fill="#f0faf8" stroke="#0f766e" stroke-width="1.3" />
+<text x="500.0" y="82.0" font-size="11.5" fill="#0f766e" font-weight="700" letter-spacing="1.2" data-fit="494.0,60.0,678.0,318.0">STRUCTURE ENCODER</text>
+<text x="500.0" y="104.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="494.0,60.0,678.0,318.0">GVP-GNN</text>
+<text x="500.0" y="126.0" font-size="13.5" fill="#475467" data-fit="494.0,60.0,678.0,318.0">4 message-passing layers</text>
+<rect x="510.0" y="153.0" width="162.0" height="62.0" rx="7" fill="#ffffff" stroke="#0f766e" stroke-width="1.1" />
+<rect x="507.0" y="148.0" width="162.0" height="62.0" rx="7" fill="#ffffff" stroke="#0f766e" stroke-width="1.1" />
+<rect x="504.0" y="143.0" width="162.0" height="62.0" rx="7" fill="#ffffff" stroke="#0f766e" stroke-width="1.1" />
+<rect x="501.0" y="138.0" width="162.0" height="62.0" rx="7" fill="#ffffff" stroke="#0f766e" stroke-width="1.1" />
+<path d="M 521 153 L 518 184 L 553 190" fill="none" stroke="#8fd6cb" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 528.2 155.0 L 568.9 166.0" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 525.3 182.2 L 568.8 171.7" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 558.9 185.4 L 570.9 176.1" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 562.7 153.9 L 571.3 161.5" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<circle cx="521.0" cy="153.0" r="5.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="518.0" cy="184.0" r="5.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="553.0" cy="190.0" r="5.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="557.0" cy="149.0" r="5.5" fill="#d5f1ec" stroke="#0f766e" stroke-width="1.2"/>
+<circle cx="580.0" cy="169.0" r="9" fill="#d5f1ec" stroke="#0f766e" stroke-width="2.4"/>
+<text x="580.0" y="173.5" font-size="12.5" fill="#0f766e" font-weight="700" text-anchor="middle" font-style="italic" data-overlay="1">i</text>
+<text x="596.0" y="160.0" font-size="12" fill="#475467" data-fit="503.0,140.0,659.0,198.0">sum of</text>
+<text x="596.0" y="174.0" font-size="12" fill="#475467" data-fit="503.0,140.0,659.0,198.0">messages</text>
+<text x="596.0" y="188.0" font-size="12" fill="#475467" data-fit="503.0,140.0,659.0,198.0">updates i</text>
+<text x="500.0" y="242.0" font-size="13.5" fill="#475467" data-fit="494.0,60.0,678.0,318.0">per residue: 128 scalars</text>
+<text x="500.0" y="259.0" font-size="13.5" fill="#475467" data-fit="494.0,60.0,678.0,318.0">+ 16 vectors (3D)</text>
+<text x="500.0" y="278.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="494.0,60.0,678.0,318.0">vectors rotate with protein;</text>
+<text x="500.0" y="293.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="494.0,60.0,678.0,318.0">scalars do not</text>
+<text x="500.0" y="308.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="494.0,60.0,678.0,318.0">(only scalars are pooled)</text>
+<rect x="704.0" y="119.5" width="130.0" height="144.0" rx="10" fill="#1f2328" opacity="0.07" />
+<rect x="704.0" y="117.0" width="130.0" height="144.0" rx="10" fill="#f0faf8" stroke="#0f766e" stroke-width="1.3" />
+<text x="769.0" y="137.0" font-size="13.5" fill="#1f2328" font-weight="650" text-anchor="middle" data-fit="709.0,117.0,829.0,261.0">Pool residues</text>
+<text x="769.0" y="155.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,117.0,829.0,261.0">128 scalars each</text>
+<rect x="723.0" y="165.0" width="6.0" height="22.0" rx="1.5" fill="#0f766e" />
+<rect x="732.0" y="165.0" width="6.0" height="22.0" rx="1.5" fill="#0f766e" />
+<rect x="741.0" y="165.0" width="6.0" height="22.0" rx="1.5" fill="#0f766e" />
+<text x="757.0" y="181.0" font-size="13" fill="#475467" text-anchor="middle" data-overlay="1">…</text>
+<rect x="765.0" y="165.0" width="6.0" height="22.0" rx="1.5" fill="#0f766e" />
+<path d="M 778.0 176.0 H 798.0" fill="none" stroke="#0f766e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<rect x="805.0" y="165.0" width="8.0" height="22.0" rx="1.5" fill="#0f766e" />
+<text x="769.0" y="207.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,117.0,829.0,261.0">mean &amp; attention</text>
+<text x="769.0" y="225.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,117.0,829.0,261.0">2×128 → 128</text>
+<text x="769.0" y="249.0" font-size="15" fill="#0f766e" font-weight="700" text-anchor="middle" data-fit="709.0,117.0,829.0,261.0"><tspan font-style="italic">h</tspan><tspan dy="4" font-size="70%" font-style="normal">struct</tspan></text>
+<path d="M 171.1 304.7 C 189.1 286.7, 180 189, 204 189" fill="none" stroke="#0f766e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 466 189 H 484" fill="none" stroke="#0f766e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 686 189 H 702" fill="none" stroke="#0f766e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<rect x="206.0" y="370.5" width="260.0" height="150.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="206.0" y="368.0" width="260.0" height="150.0" rx="12" fill="#f6f3ff" stroke="#6d3fd6" stroke-width="1.3" />
+<text x="220.0" y="390.0" font-size="11.5" fill="#6d3fd6" font-weight="700" letter-spacing="1.2" data-fit="214.0,368.0,458.0,518.0">SEQUENCE</text>
+<text x="220.0" y="412.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="214.0,368.0,458.0,518.0">Chain sequences</text>
+<text x="220.0" y="434.0" font-size="13.5" fill="#475467" data-fit="214.0,368.0,458.0,518.0">one sequence per chain,</text>
+<text x="220.0" y="452.0" font-size="13.5" fill="#475467" data-fit="214.0,368.0,458.0,518.0">observed residues only</text>
+<text x="224.6" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">…</text>
+<text x="235.8" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">K</text>
+<rect x="241.4" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="247.0" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">A</text>
+<rect x="252.6" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="258.2" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">H</text>
+<text x="269.4" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">G</text>
+<rect x="275.0" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="280.6" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">E</text>
+<rect x="286.2" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="291.8" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">H</text>
+<text x="303.0" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">V</text>
+<text x="314.2" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">P</text>
+<rect x="319.8" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="325.4" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">H</text>
+<rect x="331.0" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="336.6" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">D</text>
+<text x="347.8" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">L</text>
+<rect x="353.4" y="464.0" width="11.0" height="19.0" rx="2.5" fill="#6d3fd6" />
+<text x="359.0" y="478.0" font-size="12.5" fill="#ffffff" font-weight="650" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0" data-overlay="1">W</text>
+<text x="370.2" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">T</text>
+<text x="381.4" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">A</text>
+<text x="392.6" y="478.0" font-size="12.5" fill="#475467" text-anchor="middle" class="mono" data-fit="214.0,368.0,458.0,518.0">…</text>
+<rect x="220.0" y="495.0" width="10.0" height="10.0" rx="2" fill="#6d3fd6" />
+<text x="236.0" y="504.5" font-size="12" fill="#5b6576" data-fit="214.0,368.0,458.0,518.0">pocket residue</text>
+<rect x="486.0" y="370.5" width="200.0" height="150.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="486.0" y="368.0" width="200.0" height="150.0" rx="12" fill="url(#frost)" stroke="#6d3fd6" stroke-width="1.3" />
+<text x="500.0" y="390.0" font-size="11.5" fill="#6d3fd6" font-weight="700" letter-spacing="1.2" data-fit="494.0,368.0,678.0,518.0">SEQUENCE ENCODER</text>
+<text x="500.0" y="412.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="494.0,368.0,678.0,518.0">ESM-C 600M</text>
+<rect x="602.0" y="356.0" width="68.0" height="23.0" rx="11.5" fill="#ffffff" />
+<rect x="604.0" y="358.0" width="64.0" height="19.0" rx="9.5" fill="#6d3fd6" data-avoid="1"/>
+<path d="M 610.1 367.5 L 620.9 367.5" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 612.8 362.8 L 618.2 372.2" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 618.2 362.8 L 612.8 372.2" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<text x="643.5" y="371.5" font-size="11.5" fill="#ffffff" font-weight="700" text-anchor="middle" data-fit="623.0,358.0,667.0,377.0" data-overlay="1">frozen</text>
+<text x="500.0" y="434.0" font-size="13.5" fill="#475467" data-fit="494.0,368.0,678.0,518.0">protein language model</text>
+<text x="500.0" y="452.0" font-size="13.5" fill="#475467" data-fit="494.0,368.0,678.0,518.0">per residue: 1152 values,</text>
+<text x="500.0" y="470.0" font-size="13.5" fill="#475467" data-fit="494.0,368.0,678.0,518.0">with whole-chain context</text>
+<text x="504.3" y="492.0" font-size="12.5" fill="#475467" text-anchor="middle" data-fit="494.0,368.0,678.0,518.0">…</text>
+<rect x="510.6" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="521.2" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="531.8" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="542.4" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="553.0" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="563.6" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="574.2" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="584.8" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="595.4" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="606.0" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="616.6" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="627.2" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.95" />
+<rect x="637.8" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<rect x="648.4" y="482.0" width="9.0" height="11.0" rx="1.5" fill="#6d3fd6" opacity="0.25" />
+<text x="663.3" y="492.0" font-size="12.5" fill="#475467" text-anchor="middle" data-fit="494.0,368.0,678.0,518.0">…</text>
+<rect x="704.0" y="373.5" width="130.0" height="144.0" rx="10" fill="#1f2328" opacity="0.07" />
+<rect x="704.0" y="371.0" width="130.0" height="144.0" rx="10" fill="#f6f3ff" stroke="#6d3fd6" stroke-width="1.3" />
+<text x="769.0" y="391.0" font-size="13.5" fill="#1f2328" font-weight="650" text-anchor="middle" data-fit="709.0,371.0,829.0,515.0">Pool residues</text>
+<text x="769.0" y="409.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,371.0,829.0,515.0">1152 → 128 each</text>
+<rect x="723.0" y="419.0" width="6.0" height="22.0" rx="1.5" fill="#6d3fd6" />
+<rect x="732.0" y="419.0" width="6.0" height="22.0" rx="1.5" fill="#6d3fd6" />
+<rect x="741.0" y="419.0" width="6.0" height="22.0" rx="1.5" fill="#6d3fd6" />
+<text x="757.0" y="435.0" font-size="13" fill="#475467" text-anchor="middle" data-overlay="1">…</text>
+<rect x="765.0" y="419.0" width="6.0" height="22.0" rx="1.5" fill="#6d3fd6" />
+<path d="M 778.0 430.0 H 798.0" fill="none" stroke="#6d3fd6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<rect x="805.0" y="419.0" width="8.0" height="22.0" rx="1.5" fill="#6d3fd6" />
+<text x="769.0" y="461.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,371.0,829.0,515.0">mean &amp; attention</text>
+<text x="769.0" y="479.0" font-size="13" fill="#475467" text-anchor="middle" data-fit="709.0,371.0,829.0,515.0">2×128 → 128</text>
+<text x="769.0" y="503.0" font-size="15" fill="#6d3fd6" font-weight="700" text-anchor="middle" data-fit="709.0,371.0,829.0,515.0"><tspan font-style="italic">h</tspan><tspan dy="4" font-size="70%" font-style="normal">seq</tspan></text>
+<path d="M 336.0 321 V 343.0 H 508.0" fill="none" stroke="#98a2b3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1.5 4"/>
+<path d="M 664.0 343.0 H 769.0 V 368" fill="none" stroke="#98a2b3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1.5 4" marker-end="url(#arrow-ink3)"/>
+<text x="586.0" y="347.5" font-size="12.5" fill="#5b6576" text-anchor="middle" font-style="italic" data-fit="514.0,331.0,658.0,355.0">same pocket residues</text>
+<path d="M 170 443 H 204" fill="none" stroke="#6d3fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<path d="M 466 443 H 484" fill="none" stroke="#6d3fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<path d="M 686 443 H 702" fill="none" stroke="#6d3fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<rect x="206.0" y="550.5" width="260.0" height="116.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="206.0" y="548.0" width="260.0" height="116.0" rx="12" fill="#fff8ec" stroke="#b45309" stroke-width="1.3" />
+<text x="220.0" y="570.0" font-size="11.5" fill="#b45309" font-weight="700" letter-spacing="1.2" data-fit="214.0,548.0,458.0,664.0">SITE</text>
+<text x="220.0" y="592.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="214.0,548.0,458.0,664.0">Site summary</text>
+<text x="452.0" y="592.0" font-size="12.5" fill="#475467" text-anchor="end" data-fit="214.0,548.0,458.0,664.0">4 values</text>
+<text x="220.0" y="614.0" font-size="12.5" fill="#475467" data-fit="214.0,548.0,458.0,664.0">multinuclear flag, metal count,</text>
+<text x="220.0" y="631.0" font-size="12.5" fill="#475467" data-fit="214.0,548.0,458.0,664.0">min and mean metal–metal distance</text>
+<text x="220.0" y="650.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="214.0,548.0,458.0,664.0">constant: one metal per example</text>
+<rect x="486.0" y="550.5" width="200.0" height="116.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="486.0" y="548.0" width="200.0" height="116.0" rx="12" fill="#fff8ec" stroke="#b45309" stroke-width="1.3" />
+<text x="500.0" y="570.0" font-size="11.5" fill="#b45309" font-weight="700" letter-spacing="1.2" data-fit="494.0,548.0,678.0,664.0">SITE ENCODER</text>
+<text x="500.0" y="592.0" font-size="17" fill="#1f2328" font-weight="650" data-fit="494.0,548.0,678.0,664.0">Linear layer</text>
+<text x="500.0" y="613.0" font-size="13.5" fill="#475467" data-fit="494.0,548.0,678.0,664.0">4 → 32</text>
+<text x="672.0" y="613.0" font-size="15" fill="#b45309" font-weight="700" text-anchor="end" data-fit="494.0,548.0,678.0,664.0"><tspan font-style="italic">h</tspan><tspan dy="4" font-size="70%" font-style="normal">site</tspan></text>
+<text x="500.0" y="632.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="494.0,548.0,678.0,664.0">constant input, so it</text>
+<text x="500.0" y="648.0" font-size="12" fill="#5b6576" font-style="italic" data-fit="494.0,548.0,678.0,664.0">acts as a learned bias</text>
+<path d="M 69.3 401.3 C 63.3 521.3, 136 606, 204 606" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-t)"/>
+<path d="M 466 606 H 484" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-t)"/>
+<path d="M 834 189 H 898" fill="none" stroke="#0f766e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<circle cx="846.0" cy="189.0" r="3" fill="#0f766e"/>
+<circle cx="846.0" cy="443.0" r="3" fill="#6d3fd6"/>
+<path d="M 846 189 V 298.0 Q 846 308.0 859 310.0" fill="none" stroke="#0f766e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-s)"/>
+<path d="M 846 443 V 334.0 Q 846 324.0 859 322.0" fill="none" stroke="#6d3fd6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<circle cx="872.0" cy="316.0" r="13" fill="#ffffff" stroke="#1f2328" stroke-width="1.5"/>
+<text x="872.0" y="321.0" font-size="15" fill="#1f2328" font-weight="700" text-anchor="middle" data-overlay="1">σ</text>
+<text x="872.0" y="296.0" font-size="12.5" fill="#475467" font-weight="650" text-anchor="middle" data-fit="842.0,280.0,898.0,303.0">gate</text>
+<path d="M 872 329.0 V 431" fill="none" stroke="#1f2328" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-ink)"/>
+<path d="M 834 443 H 862" fill="none" stroke="#6d3fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="872.0" cy="443.0" r="9.5" fill="#ffffff" stroke="#1f2328" stroke-width="1.5"/>
+<circle cx="872.0" cy="443.0" r="2.6" fill="#1f2328"/>
+<path d="M 881.5 443 H 898" fill="none" stroke="#6d3fd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-q)"/>
+<path d="M 686 606 H 858 Q 866 606 866 598 V 477.44 Q 866 469.44 874 469.44 H 898" fill="none" stroke="#b45309" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-t)"/>
+<rect x="900.0" y="124.0" width="20.0" height="162.6" rx="3" fill="#0f766e" />
+<rect x="900.0" y="283.6" width="20.0" height="165.6" rx="0" fill="#6d3fd6" />
+<rect x="900.0" y="446.1" width="20.0" height="43.6" rx="3" fill="#b45309" />
+<path d="M 900 286.56 H 920 M 900 449.12 H 920" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="butt" stroke-linejoin="round" data-overlay="1"/>
+<text x="910.0" y="205.28" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central" class="mono" transform="rotate(-90 910.0 205.28)">128</text>
+<text x="910.0" y="367.84000000000003" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central" class="mono" transform="rotate(-90 910.0 367.84000000000003)">128</text>
+<text x="910.0" y="469.44" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle" dominant-baseline="central" class="mono" transform="rotate(-90 910.0 469.44)">32</text>
+<text x="910.0" y="102.0" font-size="12.5" fill="#475467" font-weight="650" text-anchor="middle" data-fit="878.0,86.0,942.0,108.0">concat</text>
+<text x="910.0" y="117.0" font-size="12.5" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="878.0,104.0,942.0,124.0">288</text>
+<path d="M 925 124 Q 931 124 931 132 V 298.88 Q 931 306.88 937 306.88 Q 931 306.88 931 314.88 V 481.76 Q 931 489.76 925 489.76" fill="none" stroke="#1f2328" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 938 306.88 H 956" fill="none" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-ink)"/>
+<rect x="958.0" y="209.4" width="194.0" height="210.0" rx="12" fill="#1f2328" opacity="0.07" />
+<rect x="958.0" y="206.9" width="194.0" height="210.0" rx="12" fill="#f6f8fa" stroke="#98a2b3" stroke-width="1.3" />
+<text x="972.0" y="228.9" font-size="11.5" fill="#475467" font-weight="700" letter-spacing="1.2" data-fit="966.0,206.9,1144.0,416.9">CLASSIFIER</text>
+<text x="972.0" y="250.9" font-size="17" fill="#1f2328" font-weight="650" data-fit="966.0,206.9,1144.0,416.9">MLP head</text>
+<text x="972.0" y="272.9" font-size="13.5" fill="#475467" data-fit="966.0,206.9,1144.0,416.9">288 → 128 → 5</text>
+<text x="972.0" y="290.9" font-size="12.5" fill="#5b6576" data-fit="966.0,206.9,1144.0,416.9">softmax over 5 classes</text>
+<rect x="972.0" y="302.9" width="28.0" height="30.0" rx="4" fill="#ffffff" stroke="#1f2328" stroke-width="1.1" />
+<text x="986.0" y="322.9" font-size="14" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="973.0,302.9,999.0,332.9">Mn</text>
+<rect x="1003.5" y="302.9" width="28.0" height="30.0" rx="4" fill="#ffffff" stroke="#1f2328" stroke-width="1.1" />
+<text x="1017.5" y="322.9" font-size="14" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="1004.5,302.9,1030.5,332.9">Cu</text>
+<rect x="1035.0" y="302.9" width="28.0" height="30.0" rx="4" fill="#ffffff" stroke="#1f2328" stroke-width="1.1" />
+<text x="1049.0" y="322.9" font-size="14" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="1036.0,302.9,1062.0,332.9">Zn</text>
+<rect x="1066.5" y="302.9" width="28.0" height="30.0" rx="4" fill="#ffffff" stroke="#1f2328" stroke-width="1.1" />
+<text x="1080.5" y="322.9" font-size="14" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="1067.5,302.9,1093.5,332.9">Fe</text>
+<rect x="1098.0" y="302.9" width="40.0" height="30.0" rx="4" fill="#ffffff" stroke="#1f2328" stroke-width="1.1" />
+<text x="1118.0" y="322.9" font-size="12" fill="#1f2328" font-weight="700" text-anchor="middle" data-fit="1099.0,302.9,1137.0,332.9">Co/Ni</text>
+<path d="M 1080.5 336.88 V 338.88 Q 1080.5 342.88 1084.5 342.88 H 1114.0 Q 1118.0 342.88 1118.0 338.88 V 336.88" fill="none" stroke="#98a2b3" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1099.25 342.88 V 348.88" fill="none" stroke="#98a2b3" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="1099.2" y="362.9" font-size="12" fill="#475467" font-weight="650" text-anchor="middle" data-fit="966.0,206.9,1144.0,416.9">Class VIII</text>
+<text x="972.0" y="388.9" font-size="12.5" fill="#475467" font-weight="650" data-fit="966.0,206.9,1144.0,416.9">4-class scores:</text>
+<text x="972.0" y="406.9" font-size="12.5" fill="#475467" data-fit="966.0,206.9,1144.0,416.9">Mn, Cu, Zn, Class VIII</text>
+<path d="M 24 690 H 1152" fill="none" stroke="#e4e7ec" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="24.0" y="702.5" width="12.0" height="12.0" rx="3" fill="#0f766e" />
+<text x="42.0" y="714.0" font-size="12.5" fill="#475467" data-fit="21.0,694.0,1152.0,806.0">structure</text>
+<rect x="132.0" y="702.5" width="12.0" height="12.0" rx="3" fill="#6d3fd6" />
+<text x="150.0" y="714.0" font-size="12.5" fill="#475467" data-fit="21.0,694.0,1152.0,806.0">sequence</text>
+<rect x="238.0" y="702.5" width="12.0" height="12.0" rx="3" fill="#b45309" />
+<text x="256.0" y="714.0" font-size="12.5" fill="#475467" data-fit="21.0,694.0,1152.0,806.0">site (constant)</text>
+<rect x="380.0" y="702.0" width="22.0" height="13.0" rx="6.5" fill="#6d3fd6" />
+<path d="M 386.6 708.5 L 395.4 708.5" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 388.8 704.7 L 393.2 712.3" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<path d="M 393.2 704.7 L 388.8 712.3" fill="none" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" data-overlay="1"/>
+<text x="408.0" y="714.0" font-size="12.5" fill="#475467" data-fit="21.0,694.0,1152.0,806.0">frozen; all other modules are trained together</text>
+<text x="24.0" y="736.0" font-size="12" fill="#5b6576" data-fit="21.0,694.0,1152.0,806.0">σ gate: a 0–1 weight for each of the 128 h_seq values, computed from h_struct and h_seq  ·  ⊙: element-wise product  ·  attention: weighted average, a learned score per residue</text>
+<text x="24.0" y="754.0" font-size="12" fill="#5b6576" data-fit="21.0,694.0,1152.0,806.0">First shell: side-chain donor atom ≤ 2.7 Å from the metal  ·  second shell: side-chain group ≤ 4.5 Å from a first-shell group  ·  not used: waters, small molecules, other metals</text>
+<text x="24.0" y="772.0" font-size="12" fill="#5b6576" data-fit="21.0,694.0,1152.0,806.0">Shown: one network of public release unified_p5_trunklr1e4_5fold_s42, which averages the 4-class scores of five such networks, each trained with a different CV fold held out.</text>
+<text x="24.0" y="790.0" font-size="12" fill="#5b6576" data-fit="21.0,694.0,1152.0,806.0">Drawings are schematic; a real pocket has about 38 residues (training median).</text></svg>
