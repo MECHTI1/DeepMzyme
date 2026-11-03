@@ -1570,6 +1570,9 @@ Complete local input preflight passed in 794.05 seconds; reuse after a quote-met
 2.83 seconds. These are local verification timings, not measured bulk-transfer throughput.
 The initial independent signed-GET fixture returned HTTP 403 (`1010`) with Python's default client identifier;
 the same authenticated request passed its 12-byte SHA-256 check with an explicit client identifier.
-The compatibility correction is being republished with its execution-v4 source pin and regression checks.
+The compatibility correction is published with its execution-v4 source pin and regression checks.
+Initial seeding verified 29 chunks (1,891,110,873 bytes) before interruption. Two subsequent resumes refused
+truncated S3 response streams. Complete chunk reads now retry at most three times for transport failures,
+discarding partial data and restarting the checksum; authentication, checksum, size and deadline guards remain.
 No GPU was allocated. Complete cache seeding, host qualification and all twelve G2 events remain pending;
 Freeze 1c/G3 are unmeasured, and Phase 4 and held-out reads remain gated.

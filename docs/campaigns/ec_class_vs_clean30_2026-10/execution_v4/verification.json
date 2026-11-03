@@ -29,6 +29,20 @@
     "source_sha256": "50a5a1d378e67e6864083929670cf3ec6331aef7270932fd1b4d874e5365b165",
     "test_sha256": "6156d1a02e89824da8b8279ca948d4e910f8be157b229a00b4de551c0f96a195"
   },
+  "cache_stream_retry_followup": {
+    "authentication_checksum_size_deadline_guards_preserved": true,
+    "failed": 0,
+    "focused_passed": 90,
+    "gpu_allocated": false,
+    "live_retry_seed": "pending",
+    "maximum_complete_read_attempts": 3,
+    "observed_prior_seed_bytes": 1891110873,
+    "observed_prior_seed_chunks": 29,
+    "partial_digest_reuse": false,
+    "seconds": 10.87,
+    "source_sha256": "fb59c64ad0b26d13a3b674d86bd5cb26ff042e0fcd24f7e8544dc723451a112b",
+    "test_sha256": "52c970dff0b5c60e23e2820249d6c74325d0f8d842c53bb79a3949a7aaaff3e1"
+  },
   "cpu_smoke": {
     "failed": 0,
     "log_sha256": "9cb207dafdb22e4db0b19668cedf56cdb6417774593740b5f39ec600de1377d0",
@@ -52,7 +66,7 @@
     "skipped": 1
   },
   "execution_manifest": "manifest.json",
-  "execution_manifest_sha256": "276091d794afc5fcdba53da41c7e4983eb32373ff6aeec1f79bd8c93f6139f38",
+  "execution_manifest_sha256": "1f585fa7b56ad5fb98ce3113fab36a474886cd7cad53534b86b5290a03393b35",
   "focused_tests": {
     "batches": [
       {

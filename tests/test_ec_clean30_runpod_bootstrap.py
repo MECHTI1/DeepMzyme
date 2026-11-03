@@ -371,6 +371,76 @@ def test_real_sigv4_headers_do_not_contain_permanent_secret():
     assert secret not in json.dumps(request) and "?" not in request["url"]
 
 
+@pytest.mark.parametrize("failures", [1, 2, 3])
+def test_cache_read_restarts_digest_and_closes_every_truncated_stream(monkeypatch, failures):
+    from botocore.exceptions import ResponseStreamingError
+    payload = b"verified complete object"
+    streams = []
+
+    class Stream(io.BytesIO):
+        def read(self, size):
+            if self.tell() and len(streams) <= failures:
+                raise ResponseStreamingError(error=OSError("truncated"))
+            return super().read(4 if len(streams) <= failures else size)
+
+    def get_object(**kwargs):
+        stream = Stream(payload)
+        streams.append(stream)
+        return {"Body": stream}
+
+    monkeypatch.setattr(rb.time, "sleep", lambda _: None)
+    client = SimpleNamespace(get_object=get_object)
+    if failures == 3:
+        with pytest.raises(RuntimeError, match="retries exhausted"):
+            rb._object_digest(client, "cache", "chunk")
+    else:
+        assert rb._object_digest(client, "cache", "chunk") == (digest(payload), len(payload))
+    assert len(streams) == min(failures + 1, 3) and all(stream.closed for stream in streams)
+
+
+@pytest.mark.parametrize("failure", ["truncated", "forbidden", "checksum", "deadline"])
+def test_receiving_retry_keeps_hash_auth_and_deadline_guards(tmp_path, monkeypatch, failure):
+    payload = b"verified chunk"
+    url = f"{rb.ENDPOINT}/cache_123/chunk"
+    streams = []
+
+    class Response(io.BytesIO):
+        status = 200
+        headers = {"Content-Length": str(len(payload))}
+
+        def geturl(self):
+            return url
+
+        def read(self, size):
+            if failure in {"truncated", "deadline"} and len(streams) == 1:
+                if self.tell():
+                    raise rb.http.client.IncompleteRead(b"partial", 3)
+                return super().read(3)
+            return super().read(size)
+
+    def open_request(*args, **kwargs):
+        if failure == "forbidden":
+            streams.append(None)
+            raise rb.urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+        response = Response(b"wrong checksum!" if failure == "checksum" else payload)
+        streams.append(response)
+        return response
+
+    monkeypatch.setattr(rb.urllib.request, "build_opener", lambda *a: SimpleNamespace(open=open_request))
+    monkeypatch.setattr(rb.time, "sleep", lambda _: None)
+    destination = tmp_path / "chunk"
+    deadline = time.time() + (0.5 if failure == "deadline" else 60)
+    kwargs = dict(expected_sha256=digest(payload), expected_size=len(payload), endpoint=rb.ENDPOINT, deadline=deadline)
+    if failure == "truncated":
+        rb._fetch({"url": url, "headers": {"Authorization": "exact GET"}}, destination, **kwargs)
+        assert destination.read_bytes() == payload and len(streams) == 2
+    else:
+        with pytest.raises((RuntimeError, rb.urllib.error.HTTPError)):
+            rb._fetch({"url": url, "headers": {"Authorization": "exact GET"}}, destination, **kwargs)
+        assert not destination.exists() and len(streams) == 1
+    assert all(stream is None or stream.closed for stream in streams)
+
+
 def test_signed_get_fetch_preserves_explicit_client_user_agent(tmp_path, monkeypatch):
     from botocore.credentials import Credentials
     data = b"EC-cache-v1\n"

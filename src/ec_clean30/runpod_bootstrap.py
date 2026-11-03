@@ -12,6 +12,7 @@ from contextlib import contextmanager
 import fcntl
 import gzip
 import hashlib
+import http.client
 import json
 import math
 import os
@@ -233,7 +234,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         raise RuntimeError("Artifact endpoint redirects are refused.")
 
 
-def _fetch(request: Mapping[str, Any], destination: Path, *, expected_sha256: str,
+def _fetch_once(request: Mapping[str, Any], destination: Path, *, expected_sha256: str,
            expected_size: int, endpoint: str, deadline: float) -> None:
     parsed, origin = urllib.parse.urlsplit(request["url"]), urllib.parse.urlsplit(endpoint)
     require(parsed.scheme == origin.scheme == "https" and parsed.netloc == origin.netloc
@@ -267,7 +268,22 @@ def _fetch(request: Mapping[str, Any], destination: Path, *, expected_sha256: st
         raise
 
 
-def _object_digest(client, volume: str, key: str) -> tuple[str, int] | None:
+def _fetch(request: Mapping[str, Any], destination: Path, *, expected_sha256: str,
+           expected_size: int, endpoint: str, deadline: float) -> None:
+    for attempt in range(3):
+        try:
+            return _fetch_once(request, destination, expected_sha256=expected_sha256,
+                               expected_size=expected_size, endpoint=endpoint, deadline=deadline)
+        except (http.client.IncompleteRead, TimeoutError, ConnectionError, urllib.error.URLError) as exc:
+            if isinstance(exc, urllib.error.HTTPError) and exc.code not in {408, 429, 500, 502, 503, 504}:
+                raise
+            delay = attempt + 1
+            if attempt == 2 or time.time() + delay >= deadline:
+                raise RuntimeError("Private artifact transport retries exhausted; no verified chunk was produced.") from None
+            time.sleep(delay)
+
+
+def _object_digest_once(client, volume: str, key: str) -> tuple[str, int] | None:
     try:
         response = client.get_object(Bucket=volume, Key=key)
     except Exception as exc:
@@ -285,6 +301,17 @@ def _object_digest(client, volume: str, key: str) -> tuple[str, int] | None:
     finally:
         body.close()
     return digest.hexdigest(), size
+
+
+def _object_digest(client, volume: str, key: str) -> tuple[str, int] | None:
+    from botocore.exceptions import ResponseStreamingError, ReadTimeoutError, ConnectionClosedError
+    for attempt in range(3):
+        try:
+            return _object_digest_once(client, volume, key)
+        except (ResponseStreamingError, ReadTimeoutError, ConnectionClosedError):
+            if attempt == 2:
+                raise RuntimeError("Private cache stream retries exhausted; complete readback is required.") from None
+            time.sleep(attempt + 1)
 
 
 def _put_verified(client, cache: Mapping[str, Any], key: str, data: bytes) -> bool:

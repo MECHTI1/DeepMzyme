@@ -38,7 +38,7 @@
     "src/ec_clean30/container_caps.py": "19059d788514f4daf4910b4154fe27fe0f40c27fd9a08f5e9daa41bbef128a4a",
     "src/ec_clean30/phase3.py": "74ac112a7c9b9af16e3d80be5b1e6e8fe08f9eeb5231ace89535714624305fe8",
     "src/ec_clean30/phase4.py": "ad2ae1a3c866a12a7706e4f6b0a7b0bec0120866463a475b7eea7cddd4f845a2",
-    "src/ec_clean30/runpod_bootstrap.py": "50a5a1d378e67e6864083929670cf3ec6331aef7270932fd1b4d874e5365b165",
+    "src/ec_clean30/runpod_bootstrap.py": "fb59c64ad0b26d13a3b674d86bd5cb26ff042e0fcd24f7e8544dc723451a112b",
     "src/ec_clean30/runpod_controller.py": "dae931ce57831411c3f315aadb5b791594dbd5dd61c62bbc95cd2d896c84c228",
     "src/ec_clean30/workstation.py": "c01a2171c1de34124d02d26625e25a597dcb1b5b296413728606204625ffb456"
   },
