@@ -394,6 +394,7 @@ SCORER_CODE_PATHS: tuple[str, ...] = (
     "src/project_paths.py",
     "src/training/__init__.py",
     "src/training/access_guard.py",
+    "src/ec_clean30/runtime_precision.py",
     "src/training/ec_class_metrics.py",
     "src/training/ec_classes.py",
     "src/training/ec_membership.py",

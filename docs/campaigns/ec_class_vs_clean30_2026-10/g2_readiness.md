@@ -1,7 +1,10 @@
 # G2 readiness and the first Fold-0 comparison
 
-Status: 2026-11-03; Data1 is mounted; the staged Pass I correction awaits publication
-([evc-033](log.md#evc-033)). Full preflight and current cloud state remain unchecked.
+**2026-11-04 execution hold:** all launches are paused. [Execution v5](execution_v5/README.md) supersedes the launch sequence and budgets below; amendment 2, v5 publication and separate explicit launch authorization are required. The following preparation and recipes describe the earlier design.
+
+Status: 2026-11-03; Pass I is closed with provider-confirmed STOP and deletion
+([evc-034](log.md#evc-034)). Its main-runtime checks passed; G2 remains 0/12.
+The POSIX bootstrap correction is CPU-verified; publication and live qualification remain pending.
 GCP recovery is closed after stockout ([evc-023](log.md#evc-023)).
 The initial Runpod setup was stopped after verified preservation ([evc-024](log.md#evc-024)).
 An earlier host passed kernel caps; migration reached a host without delegated controls. The isolated
@@ -62,7 +65,8 @@ The original [execution-v3 extension](execution_v3/manifest.json) remains preser
 [compatibility manifest](execution_v3/manifest_cgroup_v1.json) remains preserved. The current
 [runtime-v2 manifest](execution_v3/manifest_runtime_v2.json) preserves isolated execution and its closed
 replacement window; [evc-027](log.md#evc-027) owns its verification. The additive
-[execution-v4 manifest](execution_v4/manifest.json) authenticates the bootstrap extension against that published ancestor. The corrected
+[original execution-v4 manifest](execution_v4/manifest.json) remains preserved; the additive
+[POSIX manifest](execution_v5/posix_component_manifest.json) binds the current correction to that same ancestor. The corrected
 [runtime locks](execution_v3/runtime_locks_v2.json) retain the same complete package maps.
 The old pod is deleted. Full runtime qualification remains pending. Before any Runpod G2 fit:
 
@@ -90,12 +94,20 @@ Freeze 1c and numerical G3 still precede the 96 S1 plus eight CLEAN inner fits.
 The committed workstation entry point now owns local preparation, cache seeding and bounded execution;
 the [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues) owns its commands.
 The extension preserves the original execution manifests and runtime/archive pins. Its warm path is designed
-to avoid repeated bulk transfers from the workstation; actual cold/warm throughput remains unmeasured.
-The [private-configuration template](execution_v4/workstation_config.example.json) supplies the complete
+to avoid repeated bulk transfers from the workstation; full cold/warm qualification remains incomplete.
+The [POSIX configuration template](execution_v5/workstation_config.example.json) supplies the complete
 staging closure and runtime maps. Replace every local path and resource placeholder, reconcile prior spending
 and refresh the quote; its deliberately expired quote and ceiling-sized prior reserve refuse accidental launch.
-The [verification record](execution_v4/verification.json) binds the CPU checks to unchanged source. Both complete
+The [current verification record](execution_v5/posix_component_verification.json) binds the correction's CPU checks;
+the [earlier record](execution_v4/verification.json) remains preserved. Both complete
 runtime maps and archive pins are checked against the published lock document before large input reads.
+
+The campaign directory must retain its exact campaign ID before any allocation. Explicit `runpod.posix_root`
+places both extracted runtimes directly on local storage. The authenticated preparation helper measures free
+space and actual private/read-only modes, then prepares local view and request directories before bulk staging.
+Only their parent aliases cross from network storage; downloaded archives retain nonsymlink ancestry.
+Preflight derives capacity from runtime and view contents, with 25% overhead and the 5-GiB reserve. Retry credit
+is capped by each planned component and never follows symlinks. Existing unexpected paths are refused.
 
 The approved cache is a private **20-GB Standard network volume in EU-RO-1**, accessed as an S3 origin rather
 than mounted on a GPU pod. It holds exactly the two locked runtime archives and compressed Fold-0 transfer

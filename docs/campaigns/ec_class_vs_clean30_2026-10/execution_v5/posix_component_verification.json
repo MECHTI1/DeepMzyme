@@ -1,0 +1,63 @@
+{
+  "actual_new_gpu_qualification": "pending",
+  "allocation_or_budget_authority_changed": false,
+  "cpu_smoke": {
+    "log_sha256": "9cb207dafdb22e4db0b19668cedf56cdb6417774593740b5f39ec600de1377d0",
+    "passed": 44,
+    "seconds": 28.336118466002517,
+    "skip_reason": "Local multi-metal fixture absent",
+    "skipped": 1
+  },
+  "docs_contract": {
+    "baseline_warnings": 11,
+    "strict_failures": 0
+  },
+  "execution_manifest": "manifest_posix_v2.json",
+  "execution_manifest_sha256": "d22999979bcacc468845d21658448235ec87439338c064c1a8ac4bff5fda4cd6",
+  "focused_tests": {
+    "log_sha256": "e5250a3aea91676a6aee1204f5814c9dff2a24557f6308f6672d3cd1bba587ca",
+    "passed": 439,
+    "seconds": 21.55935601300007,
+    "skip_reason": "No owned delegated cgroup for live CPU qualification",
+    "skipped": 1
+  },
+  "format": "deepmzyme_ec_clean30_posix_bootstrap_verification_v1",
+  "g2_completed_events": 0,
+  "local_preflight": {
+    "component_bytes": {
+      "clean_env": 3882102310,
+      "main_env": 6554890643,
+      "views": 1482770169
+    },
+    "config_sha256": "dd0d5c1e92bb8945fde75acdd08086df2efaff4387c885ccb3f2ab404309ba39",
+    "estimated_gross_usd": 4.518465753424658,
+    "gross_ceiling_usd": 5.0,
+    "preflight_sha256": "9e40d8c53bb470b712ced7d7e57f2df50455cca92312a4e50c77a6b66f3083f4",
+    "required_posix_free_bytes": 20268413023,
+    "source_published": false,
+    "staging_peak_bytes": 29315891139,
+    "status": "draft_unpublished"
+  },
+  "preserved_predecessor": {
+    "commit": "c16399564608e70fcbc2aaab0bda7b9cabf02e74",
+    "path": "manifest.json",
+    "sha256": "8c9285e9391a9d86f537d9caa71f2d86205b3cebf0fb7f25500b615e924af851"
+  },
+  "scientific_source_and_inputs_changed": false,
+  "source_sha256": {
+    "src/ec_clean30/runpod_bootstrap.py": "a22b3a1f21895f441ee950180ec40eea377b5962024b95bd076de3d756396460",
+    "src/ec_clean30/workstation.py": "a7e19576257f83beab135deaad20e5bd13eaf8779bbc300f749fdbf625f15c16",
+    "tests/test_ec_clean30_container_caps.py": "98dbd48cd5d77bd0aaad690d983f5ded0d1900e375245de76573d8df9c34da54",
+    "tests/test_ec_clean30_execution_v2.py": "3058e142afad29d99d3b81c650e2af06d8fef182a04a88e1a2b4012a1da37481",
+    "tests/test_ec_clean30_execution_v3.py": "f5b75d001b3078a57556d43be6083bbe47ff1cf6cc0f8cda2898e24bb67bfe4b",
+    "tests/test_ec_clean30_execution_v4.py": "e15e5a37f52dd7c4b221f134cd700107e85028e08dc84556642146e5429a934e",
+    "tests/test_ec_clean30_posix_storage.py": "d439057877e87dcf8b2ebf9cac4ca990a3b76ea5015a3fed08d4554f78a12866",
+    "tests/test_ec_clean30_public_archive.py": "110dda1c1da02324199d631f4cedc1aa0aa8e087014c580a05c93cad0c2feaa7",
+    "tests/test_ec_clean30_runpod_bootstrap.py": "52c970dff0b5c60e23e2820249d6c74325d0f8d842c53bb79a3949a7aaaff3e1",
+    "tests/test_ec_clean30_runtime_lock_binding.py": "530a09b9a3250262c12be7b9ec0eb9cac11a15239aa1345603df22987ecd6b68",
+    "tests/test_ec_clean30_workstation.py": "5c3a9610ca62d9be1280c88079415edc34e73b5ed03a5f2f25c1bdd72939228a",
+    "tests/test_ec_clean30_workstation_bootstrap.py": "dfe4b5a0ca130fdba2fd142d2b27fe9da619a8b1dbf0f7ddf65031b2722e18b1",
+    "tests/test_ec_clean30_workstation_posix.py": "db94e693ef2b122a55aa87d64cc347484a44818d20367a420157c6bc5b58944c"
+  },
+  "status": "cpu_verified_publication_and_live_qualification_pending"
+}

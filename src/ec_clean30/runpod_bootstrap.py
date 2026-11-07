@@ -18,6 +18,7 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import stat
 import sys
 import tarfile
@@ -42,6 +43,9 @@ ESMC_URL = ("https://huggingface.co/EvolutionaryScale/esmc-300m-2024-12/resolve/
 ESMC_BODY_SHA256 = "323dff9fbf3fef297a74f4f18b6528e6f2e599b0bcf72b6927516804015becea"
 ESMC_BODY_BYTES = 1332095738
 ESMC_ARCHIVE_SHA256 = "47182be2bbc30d1d2b3bd772b8660f7dd36beba71d2803339fe2cb06cfcf9cf9"
+POSIX_STORAGE_FORMAT = "deepmzyme_ec_clean30_posix_storage_v1"
+POSIX_RESERVE_BYTES = 5 * 1024 ** 3
+CAMPAIGN_ID = "ec_class_vs_clean30_2026-10"
 _DIGEST = re.compile(r"[0-9a-f]{64}")
 
 
@@ -79,6 +83,151 @@ def _read(path: Path) -> Any:
 
 def _regular(path: Path) -> None:
     require(path.is_file() and not path.is_symlink(), "Artifact must be a regular, nonsymlink file.")
+
+
+def validate_posix_storage_request(request: Mapping[str, Any]) -> dict[str, Any]:
+    """Check the explicit storage layout without reading remote filesystem state."""
+    require(isinstance(request, Mapping), "POSIX storage request must be an object.")
+    value = dict(request)
+    require(set(value) == {"format", "campaign_root", "local_root", "required_free_bytes", "runtime_prefixes",
+                           "component_bytes"}
+            and value["format"] == POSIX_STORAGE_FORMAT, "Unknown POSIX storage request.")
+
+    def absolute(raw: Any) -> Path:
+        require(isinstance(raw, str) and raw and not any(c in raw for c in "\n\r\0"),
+                "POSIX storage paths must be explicit absolute paths.")
+        path = Path(raw)
+        require(path.is_absolute() and ".." not in path.parts and path != Path(path.anchor),
+                "POSIX storage paths must be explicit absolute paths without traversal.")
+        return path
+
+    campaign, local = absolute(value["campaign_root"]), absolute(value["local_root"])
+    require(campaign.name == CAMPAIGN_ID, "POSIX campaign root must retain the canonical campaign name.")
+    require(campaign != local and campaign not in local.parents and local not in campaign.parents,
+            "Bulk archive and local POSIX roots must be separate.")
+    required = value["required_free_bytes"]
+    require(type(required) is int and required >= POSIX_RESERVE_BYTES,
+            "POSIX capacity must include the five-GiB reserve.")
+    prefixes = value["runtime_prefixes"]
+    require(isinstance(prefixes, list) and len(prefixes) == 2,
+            "POSIX storage must declare exactly two runtime prefixes.")
+    paths = [absolute(prefix) for prefix in prefixes]
+    require(len(set(paths)) == 2 and all(path.parent == local and path.name not in {"views", "requests"}
+                                       for path in paths),
+            "Runtime prefixes must be distinct direct children of the local root.")
+    components = value["component_bytes"]
+    require(isinstance(components, dict) and set(components) == {"views", *(path.name for path in paths)}
+            and all(type(size) is int and size > 0 for size in components.values()),
+            "POSIX component sizes must match both runtime prefixes and views.")
+    require(required >= sum(components.values()) + POSIX_RESERVE_BYTES,
+            "POSIX capacity must cover all components and the five-GiB reserve.")
+    value.update(campaign_root=str(campaign), local_root=str(local), runtime_prefixes=[str(path) for path in paths])
+    return value
+
+
+def _no_symlink_ancestors(path: Path) -> None:
+    require(not any(current.is_symlink() for current in (path, *path.parents)),
+            "POSIX storage path contains a symlink.")
+
+
+def _private_directory(path: Path) -> None:
+    _no_symlink_ancestors(path)
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    info = path.lstat()
+    require(stat.S_ISDIR(info.st_mode) and info.st_uid == os.getuid()
+            and stat.S_IMODE(info.st_mode) == 0o700,
+            "POSIX storage directory must be owned, nonsymlink and mode 0700.")
+
+
+def _probe_posix_modes(root: Path) -> dict[str, int]:
+    directory = Path(tempfile.mkdtemp(prefix=".g2-posix-probe-", dir=root))
+    path = directory / "mode-probe"
+    measured = {}
+    try:
+        directory.chmod(0o700)
+        measured["private_directory"] = stat.S_IMODE(directory.stat().st_mode)
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(b"POSIX mode probe\n")
+        measured["private_file"] = stat.S_IMODE(path.stat().st_mode)
+        path.chmod(0o444)
+        measured["readonly_file"] = stat.S_IMODE(path.stat().st_mode)
+        directory.chmod(0o555)
+        measured["readonly_directory"] = stat.S_IMODE(directory.stat().st_mode)
+        require(measured == {"private_directory": 0o700, "private_file": 0o600,
+                             "readonly_file": 0o444, "readonly_directory": 0o555},
+                "Local storage does not enforce the required POSIX modes.")
+        return measured
+    finally:
+        directory.chmod(0o700)
+        path.unlink(missing_ok=True)
+        directory.rmdir()
+
+
+def _component_storage_bytes(path: Path, device: int, seen: set[tuple[int, int]]) -> int:
+    """Credit owned allocated bytes only; runtime symlinks never add capacity."""
+    if not path.exists() and not path.is_symlink():
+        return 0
+    pending, total = [path], 0
+    while pending:
+        current = pending.pop()
+        info = current.lstat()
+        require(info.st_uid == os.getuid() and info.st_dev == device,
+                "POSIX component contains a foreign owner or filesystem.")
+        require(current != path or stat.S_ISDIR(info.st_mode), "POSIX component root must be a directory.")
+        if stat.S_ISLNK(info.st_mode):
+            require(current != path, "POSIX component root cannot be a symlink.")
+            continue
+        if stat.S_ISDIR(info.st_mode):
+            with os.scandir(current) as entries:
+                pending.extend(Path(entry.path) for entry in entries)
+        elif stat.S_ISREG(info.st_mode):
+            identity = (info.st_dev, info.st_ino)
+            if identity not in seen:
+                total += min(info.st_blocks * 512, info.st_size)
+                seen.add(identity)
+        else:
+            raise RuntimeError("POSIX component contains an unsupported file type.")
+    return total
+
+
+def prepare_posix_storage(request: Mapping[str, Any]) -> dict[str, Any]:
+    """Prepare private requests and read-only views without relocating archives."""
+    value = validate_posix_storage_request(request)
+    campaign, local = Path(value["campaign_root"]), Path(value["local_root"])
+    _no_symlink_ancestors(campaign)
+    _no_symlink_ancestors(local)
+    for prefix in value["runtime_prefixes"]:
+        _no_symlink_ancestors(Path(prefix))
+    links = {campaign / "views": local / "views", campaign / "g2_requests": local / "requests"}
+    for path, target in links.items():
+        if path.exists() or path.is_symlink():
+            require(path.is_symlink() and path.lstat().st_uid == os.getuid() and path.readlink() == target,
+                    "POSIX storage alias already has an unexpected target or directory.")
+    _private_directory(local)
+    modes = _probe_posix_modes(local)
+    free = shutil.disk_usage(local).free
+    seen: set[tuple[int, int]] = set()
+    credited = {name: min(size, _component_storage_bytes(local / name, local.stat().st_dev, seen))
+                for name, size in value["component_bytes"].items()}
+    remaining = max(POSIX_RESERVE_BYTES, value["required_free_bytes"] - sum(credited.values()))
+    require(free >= remaining, "Insufficient local POSIX storage and reserve.")
+    campaign.mkdir(parents=True, exist_ok=True)
+    require(campaign.is_dir() and campaign.stat().st_uid == os.getuid(),
+            "Campaign storage root must be an owned directory.")
+    for path, target in links.items():
+        _private_directory(target)
+        if not path.is_symlink():
+            path.symlink_to(target, target_is_directory=True)
+        require(path.readlink() == target and path.resolve() == target,
+                "POSIX storage alias differs from its declared target.")
+    return {"format": POSIX_STORAGE_FORMAT, "status": "passed", "campaign_root": str(campaign),
+            "local_root": str(local), "runtime_prefixes": value["runtime_prefixes"],
+            "required_free_bytes": value["required_free_bytes"], "free_bytes": free, "modes": modes,
+            "component_bytes": value["component_bytes"], "credited_bytes": credited,
+            "remaining_required_bytes": remaining,
+            "links": {str(path): str(target) for path, target in links.items()},
+            "helper_sha256": _sha(Path(__file__).resolve())}
 
 
 def validate_cache_config(config: Mapping[str, Any]) -> dict[str, Any]:
@@ -822,10 +971,16 @@ def main(argv: list[str] | None = None) -> int:
     hydrate.add_argument("--request", type=Path, required=True)
     public = actions.add_parser("public-archive")
     public.add_argument("--request", type=Path, required=True)
+    posix = actions.add_parser("prepare-posix-storage")
+    posix.add_argument("--request", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
-        function = hydrate_request if args.action == "hydrate" else reconstruct_public_archive
-        print(json.dumps(function(args.request), sort_keys=True), flush=True)
+        if args.action == "prepare-posix-storage":
+            result = prepare_posix_storage(_read(args.request))
+        else:
+            function = hydrate_request if args.action == "hydrate" else reconstruct_public_archive
+            result = function(args.request)
+        print(json.dumps(result, sort_keys=True), flush=True)
         return 0
     except (RuntimeError, OSError, ValueError, KeyError) as exc:
         # Request authorizations and SDK errors are never rendered here.

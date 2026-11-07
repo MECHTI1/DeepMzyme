@@ -175,7 +175,8 @@ def cached_driver(tmp_path, monkeypatch):
                 return "{}"
             return "ready"
 
-    def preserve(*args):
+    def preserve(*args, max_download_bytes):
+        assert type(max_download_bytes) is int and max_download_bytes > 0
         events.append("preserve")
         return None
 
@@ -207,6 +208,66 @@ def test_cold_cache_refuses_before_any_allocation_or_provider_command(cached_dri
     state_path = Path(case.config["state_root"]) / "driver_state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else {}
     assert not state.get("start_attempted")
+
+
+def test_v5_gate_refusal_precedes_controller_construction_and_provider(cached_driver, monkeypatch):
+    case = cached_driver
+    from ec_clean30 import runpod_controller
+    case.config["execution_scope"] = "g2_then_fold0_v5"
+    case.config["g2_max_download_bytes"] = 10 * ws.GIB
+    case.ready["source"]["format"] = phase3.EXECUTION_V5_FORMAT
+    write(case.path, case.config)
+    def forbidden(*args, **kwargs):
+        pytest.fail("controller or provider reached before launch authorization")
+    monkeypatch.setattr(runpod_controller, "RunpodController", forbidden)
+    monkeypatch.setattr(ws.subprocess, "run", forbidden)
+    def refuse(config, path, ready):
+        assert config is case.config and path == case.path and ready is case.ready
+        raise ws.WorkstationError("authorization pending")
+    with pytest.raises(ws.WorkstationError, match="authorization pending"):
+        ws._run_runpod_g2(case.config, case.path, pre_allocation=refuse, prepare_phase4=lambda *a: {},
+                         prepare_g2=lambda *a: pytest.fail("preparation reached before launch authorization"),
+                         complete_g2=lambda *a: pytest.fail("completion reached before launch authorization"))
+    assert case.events == []
+
+
+def test_v5_cannot_use_legacy_entry_or_omit_callbacks(cached_driver):
+    case = cached_driver
+    case.config["execution_scope"] = "g2_then_fold0_v5"
+    with pytest.raises(ws.WorkstationError, match="launch dispatcher"):
+        ws.run_g2(case.config, case.path)
+    with pytest.raises(ws.WorkstationError, match="launch gate"):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert case.events == []
+
+
+def test_v5_continues_before_single_owned_closeout(cached_driver, monkeypatch):
+    case = cached_driver
+    case.config["execution_scope"] = "g2_then_fold0_v5"
+    case.config["g2_max_download_bytes"] = 10 * ws.GIB
+    case.ready["source"]["format"] = phase3.EXECUTION_V5_FORMAT
+    case.ready["source"]["execution_manifest_sha256"] = "a" * 64
+    write(case.path, case.config)
+    prepare = lambda *a: {}
+    def gate(config, path, ready):
+        case.events.append("launch_gate")
+        return {"config_sha256": ws._sha(path), "execution_manifest_sha256": "a" * 64}
+    monkeypatch.setattr(ws, "_stage_runpod_runtime", lambda *a: case.events.append("stage"))
+    monkeypatch.setattr(ws, "_prepare_g2_v5", lambda *a: case.events.append("pretrain"))
+    monkeypatch.setattr(ws, "_complete_g2_v5", lambda *a: case.events.append("freeze1c_v2"))
+    def continuation(config, transport, state, path, session, ready, manifest, probe, check, callback):
+        assert transport is case.transport and callback is prepare and session["session_id"] == "owned-session"
+        assert check()["pod_id"] == "owned-pod"
+        case.events.append("phase4")
+    monkeypatch.setattr(ws, "_continue_runpod_phase4", continuation)
+    result = ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport,
+                              pre_allocation=gate, prepare_phase4=prepare,
+                              prepare_g2=lambda *a: {}, complete_g2=lambda *a: {})
+    assert case.events.count("start") == case.events.count("stop") == 1
+    assert case.events.index("launch_gate") < case.events.index("cache_verified") < case.events.index("start")
+    assert (case.events.index("pretrain") < case.events.index("queue") < case.events.index("freeze1c_v2")
+            < case.events.index("phase4") < case.events.index("preserve") < case.events.index("stop"))
+    assert result["provider_stop_verified"]
 
 
 def test_cached_route_requires_execution_v4_before_cache_or_allocation(cached_driver):
@@ -594,3 +655,19 @@ def test_keepalive_staging_failure_joins_existing_writer_before_recovery(tmp_pat
             release.set()
         with pytest.raises(ws.WorkstationError, match='staging failed'): future.result(timeout=10)
     assert events == ['writer_settled', 'recovery_can_begin']
+
+
+def test_posix_preparation_failure_precedes_payload_and_preserves_closeout(cached_driver, monkeypatch):
+    case = cached_driver
+
+    def refuse(*args):
+        case.events.append('posix_refused')
+        raise ws.WorkstationError('POSIX storage refused')
+
+    monkeypatch.setattr(ws, '_prepare_runpod_storage', refuse)
+    monkeypatch.setattr(ws, '_stage_runpod_runtime', lambda *a: pytest.fail('payload before POSIX proof'))
+    with pytest.raises(ws.WorkstationError, match='POSIX storage refused'):
+        ws._run_runpod_g2(case.config, case.path, controller=case.controller, transport=case.transport)
+    assert 'posix_refused' in case.events
+    assert case.events.index('preserve') < case.events.index('stop')
+    assert not {'admit', 'queue'}.intersection(case.events)

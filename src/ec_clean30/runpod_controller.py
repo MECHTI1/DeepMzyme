@@ -28,11 +28,6 @@ import uuid
 import urllib.parse
 import urllib.request
 
-MAX_SECONDS = 117 * 60
-MAX_REQUESTED_HOURS = 2.0
-MAX_GROSS_USD = 5.0
-
-
 class RunpodError(RuntimeError):
     """A configuration, ownership, budget, or shutdown check failed."""
 
@@ -172,12 +167,10 @@ def _validate(config: Mapping[str, Any], *, fresh: bool) -> dict[str, Any]:
     _require(not search or (cfg.get('data_center_id') == 'EU-RO-1' and not cfg.get('adopt_pod_id')),
              'Stock search requires a new EU-RO-1 allocation.')
     hours = _number(cfg.get("requested_hours"), "requested_hours")
-    duration = _number(cfg.get("max_runtime_seconds", MAX_SECONDS), "max_runtime_seconds")
+    duration = _number(cfg.get("max_runtime_seconds"), "max_runtime_seconds")
     ceiling = _number(cfg.get("gross_ceiling_usd"), "gross_ceiling_usd")
     reserve = _number(cfg.get("stop_reserve_seconds", 60), "stop_reserve_seconds")
-    _require(hours <= MAX_REQUESTED_HOURS and duration <= min(MAX_SECONDS, hours * 3600),
-             "Runpod runtime exceeds the two-hour request or 117-minute limit.")
-    _require(ceiling <= MAX_GROSS_USD, "Runpod gross ceiling exceeds $5.00.")
+    _require(duration <= hours * 3600, "Runpod runtime exceeds the configured requested hours.")
     _require(min(120, duration / 2) <= reserve < duration, "Insufficient shutdown-request reserve.")
     heartbeat = _number(cfg.get("heartbeat_timeout_seconds", 900), "heartbeat_timeout_seconds")
     _require(heartbeat <= 900, "Owner heartbeat timeout exceeds 900 seconds.")
@@ -972,11 +965,71 @@ class RunpodController:
         self.session()
         self._update(workload_admitted=True)
 
-    def _verify_preservation(self, path: Path) -> str:
+    def register_output_roots(self, roots: list[dict[str, str]]) -> None:
+        """Bind every execution tree before additional work can require its preservation."""
+        self._unchanged()
+        _require(isinstance(roots, list) and roots, "Execution output roots are required.")
+        local_roots, remote_roots = [], []
+        for row in roots:
+            _require(set(row) == {"execution_root", "primary_root", "mirror_root"}, "Invalid execution output root binding.")
+            remote = Path(row["execution_root"])
+            _require(remote.is_absolute() and ".." not in remote.parts and str(remote) == row["execution_root"],
+                     "Execution output root must be canonical and absolute.")
+            remote_roots.append(remote)
+            for key in ("primary_root", "mirror_root"):
+                root = Path(row[key])
+                _require(root.is_absolute() and root.resolve() == root, "Preservation destination must be canonical.")
+                local_roots.append(root)
+        for paths in (local_roots, remote_roots):
+            _require(all(a != b and a not in b.parents and b not in a.parents
+                         for index, a in enumerate(paths) for b in paths[index + 1:]),
+                     "Execution preservation roots cannot alias or overlap.")
+        current = self._state().get("required_preservation_roots")
+        _require(current is None or current == roots, "The registered output roots cannot change during a session.")
+        admitted = self._state().get("admitted_output_roots", [])
+        if current is None and self._state().get("workload_admitted"):
+            admitted = [roots[0]["execution_root"]]
+        self._update(required_preservation_roots=roots, admitted_output_roots=admitted)
+
+    def admit_output_root(self, execution_root: str) -> None:
+        """Mark a registered tree before its first remote execution request."""
+        self._unchanged()
+        state = self._state()
+        _require(not state.get("stop_requested") and state.get("phase") not in {"stopped", "deleted"},
+                 "Output admission is closed with the allocation.")
+        _require(execution_root in [row["execution_root"] for row in state.get("required_preservation_roots", [])],
+                 "Output admission requires a pre-registered execution root.")
+        admitted = list(state.get("admitted_output_roots", []))
+        if execution_root not in admitted:
+            admitted.append(execution_root)
+            self._update(admitted_output_roots=admitted)
+
+    def _verify_preservation(self, path: Path, *, _allow_set: bool = True) -> str:
         """Verify the complete collected inventory in two independent local copies."""
         _require(path.is_absolute() and path.is_file() and not path.is_symlink(), "Preservation receipt must be a regular local file.")
         proof, state = _read(path), self._state()
         identity = {"pod_id": self._owned_id(), "session_id": state["session_id"], "config_sha256": self.config_sha}
+        if proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_set_v1":
+            _require(_allow_set and all(proof.get(key) == value for key, value in identity.items()),
+                     "Preservation set is nested or belongs to another allocation.")
+            children = proof.get("receipts")
+            _require(isinstance(children, list) and children, "Preservation set has no execution receipts.")
+            roots, seen = [], set()
+            for child in children:
+                _require(isinstance(child, dict) and set(child) == {"path", "sha256"}, "Invalid preservation-set member.")
+                child_path = Path(child["path"])
+                _require(child_path.resolve() not in seen and child_path.resolve() != path.resolve(),
+                         "Duplicate or recursive preservation-set receipt.")
+                seen.add(child_path.resolve())
+                _require(self._verify_preservation(child_path, _allow_set=False) == child["sha256"],
+                         "Preservation-set member checksum differs.")
+                record = _read(child_path)
+                roots.append({key: record.get(key) for key in ("execution_root", "primary_root", "mirror_root")})
+            expected = state.get("required_preservation_roots")
+            _require(expected and roots == expected, "Preservation set omits or changes a registered execution root.")
+            return _sha(path)
+        _require(not _allow_set or not state.get("required_preservation_roots"),
+                 "This allocation needs a complete preservation set before deletion.")
         _require(proof.get("format") == "deepmzyme_ec_clean30_runpod_preservation_v1"
                  and all(proof.get(key) == value for key, value in identity.items()),
                  "Preservation receipt belongs to another allocation.")
@@ -1002,6 +1055,42 @@ class RunpodController:
                          and item.stat().st_size == entry["size_bytes"] and _sha(item) == entry["sha256"],
                          "Preservation bytes are missing or differ between local copies.")
             members[name] = entry
+        # A recovered execution state alone cannot prove that local hot data was copied.
+        for name in members:
+            if Path(name).name in {"pretrain_attachment.json", "scientific_outputs_pending.json"}:
+                remote_root = proof.get("execution_root")
+                _require(isinstance(remote_root, str) and Path(remote_root).is_absolute(),
+                         "External-output preservation needs its original execution root.")
+                for root in roots:
+                    try:
+                        if Path(name).name == "pretrain_attachment.json":
+                            from ec_clean30 import phase3
+
+                            record = phase3.verify_preserved_pretrain_attachment(root / name,
+                                original_attempt=Path(remote_root) / Path(name).parent)
+                            owner = record["identity"]
+                        else:
+                            from ec_clean30 import phase4
+
+                            phase4.verify_preserved_scientific_outputs(root / name,
+                                original_attempt=Path(remote_root) / Path(name).parent)
+                            owner = _read((root / name).parent / "request.json")
+                        _require(all(owner.get(key) == identity[key] for key in ("session_id", "pod_id")),
+                                 "External-output snapshot belongs to another allocation.")
+                    except (OSError, ValueError, KeyError) as exc:
+                        raise RunpodError(f"External scientific outputs are not completely preserved: {exc}") from exc
+            if re.fullmatch(r"runs/[^/]+/attempt[1-9][0-9]*/hot_storage\.json", name):
+                from ec_clean30 import hot_storage
+
+                remote_root = proof.get("execution_root")
+                _require(isinstance(remote_root, str) and Path(remote_root).is_absolute(),
+                         "Hot preservation needs its original execution root.")
+                for root in roots:
+                    try:
+                        hot_storage.verify_preserved_attempt((root / name).parent,
+                            original_attempt=Path(remote_root) / Path(name).parent)
+                    except (OSError, ValueError, hot_storage.HotStorageError) as exc:
+                        raise RunpodError(f"Hot attempt is not completely preserved: {exc}") from exc
         inventory_name = proof.get("remote_inventory_path")
         _require(inventory_name in members, "Complete remote inventory must be preserved in both copies.")
         inventory = _read(roots[0] / inventory_name)
@@ -1019,7 +1108,12 @@ class RunpodController:
                  "Collected bytes do not cover the complete remote inventory.")
         manifests = proof.get("host_pull_manifests", [])
         _require(isinstance(manifests, list) and len(set(manifests)) == len(manifests), "Invalid HostPull manifest list.")
-        if state.get("workload_admitted"):
+        admitted = state.get("workload_admitted")
+        if not _allow_set and state.get("required_preservation_roots"):
+            _require(proof.get("execution_root") in [row["execution_root"] for row in state["required_preservation_roots"]],
+                     "Preservation child names an unregistered execution root.")
+            admitted = proof["execution_root"] in state.get("admitted_output_roots", [])
+        if admitted:
             _require(remote_files and manifests, "An admitted workload needs its complete artifacts and HostPull acknowledgments.")
         else:
             _require(not remote_files or manifests, "Nonempty execution artifacts require HostPull acknowledgments.")

@@ -1,6 +1,6 @@
 # EC class versus CLEAN on the official CLEAN split30 benchmark
 
-Status: active (2026-11-03; G2 measurements pending)
+Status: active (2026-11-04; launches paused, execution v5 CPU-checked draft)
 
 Goal: predict the first EC digit and outperform retrained CLEAN on the official `split30` five-fold metalloenzyme
 benchmark and its test proteins without a ≥30% identity hit to training. This is a secondary benchmark;
@@ -16,18 +16,18 @@ reference; that file stays unchanged.
 - [Continuation](continuation.md) and [G2 readiness](g2_readiness.md): path to the first fold-0 decision.
 - Outputs (secondary drive, NVMe mirror): `DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/`.
 
-Official folds stay unchanged. The [design](design.md) defines both co-primary populations, the EC1–6 balanced-accuracy
-endpoint, paired homology-cluster inference, published CLEAN comparator and five-seed DeepMzyme refits.
+Official folds stay unchanged. The [design](design.md) records the published scientific policy; amendment 2
+is being prepared separately to implement the 2026-11-04 decisions. [Execution v5](execution_v5/README.md)
+owns the current launch hold, execution requirements and provisional cost scenarios.
 
-Phases: 0 decisions and records; 1 infrastructure (CPU); 2 inputs and Freeze 1 (CPU); 3 measured GPU smoke (G2);
-4 fold-0 development with a stop-or-continue gap gate; 5 folds 1–4; 6 refits and Freeze 2; 7 the single
-scoring pass (test read at G5); 8 close-out. Estimate: GPU about $55–100 (three lanes) or $99–166 (serial), CLEAN about
-160 CPU-hours run serially (measured in Phase 2; planned 95–135); the campaign GPU ceiling (G3) is set only after the Phase 3 measurement.
+The recorded phases and historical estimates remain in the [continuation](continuation.md).
+The amended fold-0 scope and cost ceiling must be fixed before G2; historical estimates do not price that scope.
 
 Current state: [Freeze 1](freeze1.md) is published; Freeze 1b passed ([evc-011](log.md#evc-011)).
-The [log](log.md) preserves earlier capacity attempts, runtime repairs and Runpod closeout.
-[evc-030](log.md#evc-030) records verified cache seeding; [evc-032](log.md#evc-032) records bounded stock retries.
-[evc-033](log.md#evc-033) records mounted Data1 and the staged, unpublished Pass I correction.
-Next: verify and publish the execution package, complete current preflight, then measure G2 under applicable authorization.
-Recorded G2 completion remains 0/12; Freeze 1c/G3 await measurements.
+The [log](log.md) preserves capacity attempts and verified cache seeding.
+[evc-034](log.md#evc-034) records Pass I: main-runtime checks passed, but filesystem and path constraints
+blocked scientific admission. The pod is stopped and deleted; G2 remains 0/12.
+The POSIX correction is retained inside v5. [evc-036](log.md#evc-036) records the CPU-checked dispatch hooks.
+Next: finish the science interface handoff, publish amendment 2 and v5, approve the fold-0 ceiling and obtain
+separate explicit launch authorization. No launch loop is active.
 Root STATUS is stale (evc-009); [DATASETS](../../DATASETS.md#test-use-ledger) owns exposures and identity restrictions.

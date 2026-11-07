@@ -173,6 +173,7 @@ from training.access_guard import (  # noqa: E402
     FORBIDDEN_READ_ROOTS_ENV, forbidden_roots_environment, install_forbidden_read_guard,
 )
 from training.ec_classes import EC_CLASS_TOKENS, STATUS_AMBIGUOUS, STATUS_OK  # noqa: E402
+from ec_clean30 import runtime_precision  # noqa: E402
 
 
 SCHEMA_VERSION = 1
@@ -293,6 +294,9 @@ GUARDED_LAUNCH = "\n".join((
     "sys.path[0] = os.path.dirname(script)",
     "runpy.run_path(script, run_name='__main__')",
 ))
+CUDA_GUARDED_LAUNCH = GUARDED_LAUNCH.replace(
+    "script = os.path.abspath(sys.argv[2])",
+    runtime_precision.bootstrap_code("cuda") + "script = os.path.abspath(sys.argv[2])")
 
 C4_CONTRACT = "clean_split30_distance_export"
 C4_VERSION = 2
@@ -1513,7 +1517,8 @@ def _write_json_once(path: Path, payload: Mapping[str, Any]) -> None:
 
 def _git_head(clone: Path) -> str:
     result = subprocess.run(["git", "-C", str(clone), "rev-parse", "HEAD"], capture_output=True, text=True,
-                            check=False)
+                            check=False, env={key: value for key, value in os.environ.items()
+                                              if not key.startswith("GIT_")})
     if result.returncode:
         raise ComparatorError(f"git rev-parse failed in {clone}: {result.stderr.strip()}")
     return result.stdout.strip()
@@ -1549,8 +1554,10 @@ def verify_pinned_file(path: Path, expected_sha256: str, what: str) -> dict[str,
 
 
 def build_clean_env(*, clean_clone: Path, hash_seed: int, threads: int, forbidden_roots: Sequence[Path],
-                    base_env: Optional[Mapping[str, str]] = None) -> dict[str, str]:
-    """Minimal child environment: fixed hash seed and threads, CPU only, no user site, guard roots set."""
+                    base_env: Optional[Mapping[str, str]] = None, device: str = "cpu") -> dict[str, str]:
+    """Minimal child environment with an explicit device, fixed threads and read guards."""
+    if device not in {"cpu", "cuda"}:
+        raise ComparatorError("CLEAN device must be cpu or cuda")
     if threads < 1:
         raise ComparatorError("threads must be at least 1")
     if not forbidden_roots:
@@ -1559,15 +1566,27 @@ def build_clean_env(*, clean_clone: Path, hash_seed: int, threads: int, forbidde
     env = {key: base[key] for key in PASSTHROUGH_ENV if key in base}
     env.update({
         "PYTHONHASHSEED": str(int(hash_seed)), "PYTHONNOUSERSITE": "1", "PYTHONDONTWRITEBYTECODE": "1",
-        "CUDA_VISIBLE_DEVICES": "", "OMP_NUM_THREADS": str(threads), "MKL_NUM_THREADS": str(threads),
+        "OMP_NUM_THREADS": str(threads), "MKL_NUM_THREADS": str(threads),
         "MKL_THREADING_LAYER": "GNU", "PYTHONPATH": str(Path(clean_clone).resolve() / CLEAN_SOURCE_DIR),
         FORBIDDEN_READ_ROOTS_ENV: forbidden_roots_environment(forbidden_roots),
     })
+    if device == "cpu":
+        env["CUDA_VISIBLE_DEVICES"] = ""
+    else:
+        if "CUDA_VISIBLE_DEVICES" in base:
+            env["CUDA_VISIBLE_DEVICES"] = base["CUDA_VISIBLE_DEVICES"]
+        try:
+            env = runtime_precision.execution_environment(env, device)
+        except RuntimeError as exc:
+            raise ComparatorError(str(exc)) from exc
     return env
 
 
-def guarded_command(clean_python: Path, script: Path, script_args: Sequence[str]) -> list[str]:
-    return [str(clean_python), "-c", GUARDED_LAUNCH, str(ACCESS_GUARD_FILE), str(script), *script_args]
+def guarded_command(clean_python: Path, script: Path, script_args: Sequence[str], *, device: str = "cpu") -> list[str]:
+    if device not in {"cpu", "cuda"}:
+        raise ComparatorError("CLEAN device must be cpu or cuda")
+    launch = CUDA_GUARDED_LAUNCH if device == "cuda" else GUARDED_LAUNCH
+    return [str(clean_python), "-c", launch, str(ACCESS_GUARD_FILE), str(script), *script_args]
 
 
 def build_train_args(*, name: str, model: str, epochs: int, adaptive_rate: int, seed: int,
@@ -1585,6 +1604,21 @@ def _run(command: Sequence[str], *, cwd: Path, env: Mapping[str, str], log_path:
     with log_path.open("x", encoding="utf-8") as log:
         return subprocess.run(list(command), cwd=str(cwd), env=dict(env), stdout=log, stderr=subprocess.STDOUT,
                               check=False).returncode
+
+
+def run_command(command: Sequence[str], *, cwd: Path, env: Mapping[str, str], log_path: Path) -> int:
+    """Execute a declared CLEAN preparation step and retain its complete child log."""
+    return _run(command, cwd=cwd, env=env, log_path=log_path)
+
+
+def cuda_step_evidence(log_path: Path, *, training: bool) -> dict[str, Any]:
+    try:
+        policy = runtime_precision.read_policy_log(log_path, device="cuda")
+    except RuntimeError as exc:
+        raise ComparatorError(str(exc)) from exc
+    if training and not re.search(r"^==> device used:\s+cuda(?::0)?\s+\|", log_path.read_text(), re.MULTILINE):
+        raise ComparatorError("CLEAN training log does not prove the model used CUDA")
+    return {"runtime_policy": policy, "log_sha256": sha256_file(log_path)}
 
 
 def verify_fit_outputs(work_dir: Path, *, model: str, seed: int, epochs: int, adaptive_rate: int,
@@ -1619,8 +1653,10 @@ def run_fit(*, work_dir: Path, clean_python: Path, clean_clone: Path, training_s
             distance_helper_sha256: str = DISTANCE_MAP_HELPER_SHA256,
             epochs: int = PUBLISHED_RECIPE["epochs"], adaptive_rate: int = PUBLISHED_RECIPE["adaptive_rate"],
             threads: int = DEFAULT_THREADS, extra_forbidden_roots: Sequence[Path] = (),
-            dry_run: bool = False) -> dict[str, Any]:
+            dry_run: bool = False, device: str = "cpu") -> dict[str, Any]:
     """Distance map (unless linked), then training, each in a fresh guarded CLEAN process."""
+    if device not in {"cpu", "cuda"}:
+        raise ComparatorError("CLEAN device must be cpu or cuda")
     check_epochs(epochs, adaptive_rate)
     work_dir = refuse_inside_repository(work_dir, "the work directory")
     manifest = json.loads((work_dir / PREPARE_MANIFEST).read_text(encoding="utf-8"))
@@ -1650,18 +1686,18 @@ def run_fit(*, work_dir: Path, clean_python: Path, clean_clone: Path, training_s
     steps = []
     if not (work_dir / "data" / "distance_map" / f"{name}_receipt.json").is_file():
         steps.append({"step": "distance_map", "hash_seed": DISTANCE_MAP_HASH_SEED,
-                      "command": guarded_command(clean_python, distance_helper, ["--training_data", name])})
+                      "command": guarded_command(clean_python, distance_helper, ["--training_data", name], device=device)})
     steps.append({"step": "train", "hash_seed": seed,
                   "command": guarded_command(clean_python, training_script, build_train_args(
                       name=name, model=model, epochs=epochs, adaptive_rate=adaptive_rate, seed=seed,
-                      input_dim=input_dim))})
+                      input_dim=input_dim), device=device)})
     plan = {"work_dir": str(work_dir), "model_name": model, "threads": threads, "steps": steps}
     if dry_run:
         return plan
 
     for step in steps:
         env = build_clean_env(clean_clone=Path(clean_clone), hash_seed=step["hash_seed"], threads=threads,
-                              forbidden_roots=roots)
+                              forbidden_roots=roots, device=device)
         log_path = work_dir / "logs" / f"{step['step']}.log"
         code = _run(step["command"], cwd=work_dir, env=env, log_path=log_path)
         step["returncode"] = code
@@ -1669,6 +1705,8 @@ def run_fit(*, work_dir: Path, clean_python: Path, clean_clone: Path, training_s
         step["env"] = {key: value for key, value in env.items() if key not in PASSTHROUGH_ENV}
         if code:
             raise ComparatorError(f"CLEAN {step['step']} step failed with exit code {code}; see {log_path}")
+        if device == "cuda":
+            step.update(cuda_step_evidence(log_path, training=step["step"] == "train"))
     distance_map = verify_distance_map(work_dir / "data" / "distance_map", name, manifest["training_table"]["sha256"],
                                        base_farm_sha256=farm["base"]["farm_sha256"], input_dim=input_dim,
                                        helper_sha256=distance_helper_sha256)
@@ -2168,12 +2206,14 @@ def run_export(*, work_dir: Path | str, query_ids_file: Path | str, query_esm_di
                export_script_sha256: str = EXPORT_SCRIPT_SHA256, freeze2_manifest: Optional[Path | str] = None,
                freeze2_sha256: Optional[str] = None, threads: int = DEFAULT_THREADS,
                extra_forbidden_roots: Sequence[Path] = (), allow_in_sample: bool = False,
-               dry_run: bool = False) -> dict[str, Any]:
+               dry_run: bool = False, device: str = "cpu") -> dict[str, Any]:
     """Distance export of one completed fit in a fresh guarded CLEAN process, then its C4 validation.
 
     Test mode also runs only the pinned export script, checks the Freeze-2 ``code_sha256`` in full
     (DeepMzyme environment) and writes the checkpoint's claim file before the launch.
     """
+    if device != "cpu":
+        raise ComparatorError("The pinned CLEAN validation exporter supports only explicit CPU execution")
     work_dir = refuse_inside_repository(work_dir, "the fit work directory")
     prepare = _read_json(work_dir / PREPARE_MANIFEST, "Prepare manifest")
     roots = resolve_forbidden_roots(list(extra_forbidden_roots) + prepare.get("forbidden_roots", []),
@@ -2205,7 +2245,7 @@ def run_export(*, work_dir: Path | str, query_ids_file: Path | str, query_esm_di
                         "--freeze2-sha256", plan.inputs["freeze2_manifest"]["sha256"]]
     if allow_in_sample:
         script_args.append("--allow-in-sample-queries")
-    command = guarded_command(clean_python, export_script, script_args)
+    command = guarded_command(clean_python, export_script, script_args, device=device)
     if dry_run:
         return {"out": str(plan.out), "mode": mode, "hash_seed": plan.seed, "command": command,
                 "n_query": len(plan.query_ids), "metadata": plan.metadata}
@@ -2224,7 +2264,8 @@ def run_export(*, work_dir: Path | str, query_ids_file: Path | str, query_esm_di
         except FileExistsError:
             raise ComparatorError(f"This checkpoint already has a test export claim: {claim_path}") from None
         claim = {"path": str(claim_path), "sha256": sha256_file(claim_path)}
-    env = build_clean_env(clean_clone=Path(clean_clone), hash_seed=plan.seed, threads=threads, forbidden_roots=roots)
+    env = build_clean_env(clean_clone=Path(clean_clone), hash_seed=plan.seed, threads=threads, forbidden_roots=roots,
+                          device=device)
     plan.out.parent.mkdir(parents=True, exist_ok=True)
     code = _run(command, cwd=plan.out.parent, env=env, log_path=side["log"])
     if code:
@@ -2318,6 +2359,7 @@ def build_parser() -> argparse.ArgumentParser:
     fit.add_argument("--epochs", type=int, default=PUBLISHED_RECIPE["epochs"])
     fit.add_argument("--adaptive-rate", type=int, default=PUBLISHED_RECIPE["adaptive_rate"])
     fit.add_argument("--threads", type=int, default=DEFAULT_THREADS)
+    fit.add_argument("--device", choices=("cpu", "cuda"), default="cpu")
     fit.add_argument("--forbidden-root", type=Path, action="append", default=[])
     fit.add_argument("--dry-run", action="store_true", help="Verify inputs and print the commands only.")
 
@@ -2337,6 +2379,7 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--export-script", type=Path, required=True)
     export.add_argument("--export-script-sha256", default=EXPORT_SCRIPT_SHA256)
     export.add_argument("--threads", type=int, default=DEFAULT_THREADS)
+    export.add_argument("--device", choices=("cpu",), default="cpu")
     export.add_argument("--allow-in-sample-queries", action="store_true",
                         help="Validation mode, engineering checks only: accept queries the fit trained on (counted "
                              "in the export).")
@@ -2387,7 +2430,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             export_script_sha256=args.export_script_sha256, freeze2_manifest=args.freeze2_manifest,
                             freeze2_sha256=args.freeze2_sha256, threads=args.threads,
                             extra_forbidden_roots=args.forbidden_root,
-                            allow_in_sample=args.allow_in_sample_queries, dry_run=args.dry_run)
+                            allow_in_sample=args.allow_in_sample_queries, dry_run=args.dry_run, device=args.device)
         summary = result if args.dry_run else {"out": str(Path(args.out).resolve()), **result["export"]}
     elif args.action == "esmc-farm":
         result = write_esmc_farm(cache_dir=args.cache_dir, cache_manifest_sha256=args.cache_manifest_sha256,
@@ -2412,7 +2455,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                           training_script_sha256=args.training_script_sha256,
                           distance_helper_sha256=args.distance_helper_sha256, epochs=args.epochs,
                           adaptive_rate=args.adaptive_rate, threads=args.threads,
-                          extra_forbidden_roots=args.forbidden_root, dry_run=args.dry_run)
+                          extra_forbidden_roots=args.forbidden_root, dry_run=args.dry_run, device=args.device)
     else:
         export = read_distance_export(args.npz, args.receipt)
         summary = {"npz": str(args.npz), "n_query": len(export.query_ids), "n_ec": len(export.ec_labels),

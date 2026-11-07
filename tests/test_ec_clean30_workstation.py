@@ -202,7 +202,8 @@ def test_runpod_transport_propagates_fixed_precision_to_remote_launcher(tmp_path
 
     monkeypatch.setattr(subprocess, "run", execute)
     assert transport.remote(["python", "runner.py"], cwd="/workspace/repo") == "ready"
-    assert calls[0][-1] == "cd /workspace/repo && env NVIDIA_TF32_OVERRIDE=0 PYTHONNOUSERSITE=1 python runner.py"
+    assert calls[0][-1].startswith("cd /workspace/repo && ")
+    assert calls[0][-1].endswith("env NVIDIA_TF32_OVERRIDE=0 PYTHONNOUSERSITE=1 python runner.py")
 
 
 @pytest.mark.parametrize("returncode", [0, 2])
@@ -316,7 +317,7 @@ def config(tmp_path, monkeypatch):
         stage.append({"local": str(local), "remote": f"{remote}/inputs/{name}", "sha256": ws._sha(local), "kind": "file"})
     cfg = {"controller_root": str(controller), "expected_identity": identity, "ssh_alias": "fixture-host",
            "secondary_drive": str(secondary), "durable_root": str(secondary / "backup"), "state_root": str(secondary / "state"),
-           "remote_repo": f"{remote}/repo", "remote_campaign": f"{remote}/campaign", "remote_python": f"{remote}/python",
+           "remote_repo": f"{remote}/repo", "remote_campaign": f"{remote}/{ws.phase3.CAMPAIGN_ID}", "remote_python": f"{remote}/python",
            "bootstrap_python": "/usr/bin/python3", "execution_manifest": str(ROOT / "fixture_manifest.json"), "stage": stage,
            "view_archive": f"{remote}/inputs/view.tar", "view_archive_sha256": stage[0]["sha256"], "timing_inputs": f"{remote}/inputs/timing",
            "bounds": {name: {"forecast_seconds": 60, "unit_timeout_seconds": 60} for _, name in ws.QUEUE},
@@ -340,10 +341,32 @@ def config(tmp_path, monkeypatch):
     return cfg, path
 
 
+@pytest.mark.parametrize("entrypoint", ["preflight", "_prepared_preflight"])
+@pytest.mark.parametrize("provider", ["gcp", "runpod"])
+def test_preflight_refuses_noncanonical_campaign_before_hashing_or_cloud(config, monkeypatch, entrypoint, provider):
+    cfg, path = config
+    cfg["provider"] = provider
+    cfg["remote_campaign"] = "/workspace/campaign"
+    if provider == "runpod":
+        cfg["artifact_cache"] = {"fixture": True}
+        cfg["stage"][0]["conda_unpack"] = True
+        cfg["runtime_environments"] = {key: {"archive": cfg["stage"][0]["remote"],
+            "archive_sha256": cfg["stage"][0]["sha256"], "packages": {"torch": "fixture"},
+            "python_version": "fixture", "torch_cuda": "fixture"} for key in ("fit", "esm1b")}
+    monkeypatch.setattr(ws, "_sha", lambda *_: pytest.fail("campaign location must be checked before hashing"))
+    monkeypatch.setattr(ws.phase3, "verify_execution_source", lambda *a, **kw: pytest.fail("source read before location check"))
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: pytest.fail("cloud call before location check"))
+    with pytest.raises(ws.WorkstationError, match="remote_campaign must end with"):
+        getattr(ws, entrypoint)(cfg, path)
+    assert not (Path(cfg["state_root"]) / "driver_state.json").exists()
+
+
 def test_preview_is_local_only_and_names_exact_launch(config, monkeypatch):
     cfg, path = config
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: pytest.fail("preview made an external call"))
     preview = ws.preflight(cfg, path)
+    assert ws.phase3.views.view_location_problem(Path(cfg["remote_campaign"]) / "views/fold0",
+                                                smoke=False, fold=0) is None
     assert preview["status"] == "draft_unpublished"
     assert len(preview["queue"]) == 12 and preview["cost"]["conservative_max_usd"] < 3
     assert preview["launch_command"].endswith(f"--config {path} --run")

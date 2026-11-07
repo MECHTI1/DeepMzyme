@@ -5,6 +5,7 @@ import csv
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import stat
@@ -269,8 +270,51 @@ def test_esmc_command_pins_offline_cache_and_uses_existing_producer(esmc_command
     assert env["HF_HUB_CACHE"] == env["HUGGINGFACE_HUB_CACHE"] == str(Path(cache) / "hub")
     assert env["HF_HUB_OFFLINE"] == env["TRANSFORMERS_OFFLINE"] == "1"
     assert "INFRA_PROVIDER" not in env
-    assert json.loads(env[FORBIDDEN_READ_ROOTS_ENV]) == transfer_view.forbidden_read_roots
+    assert env[FORBIDDEN_READ_ROOTS_ENV].split(os.pathsep) == [
+        str(Path(root).resolve()) for root in transfer_view.forbidden_read_roots]
     assert "install_guard_from_environment()" in argv[2]
+    assert argv[2].index("install_guard_from_environment()") < argv[2].index("configure_and_record('cuda')")
+    assert env["NVIDIA_TF32_OVERRIDE"] == "0"
+
+
+def test_esmc_launch_guard_blocks_each_forbidden_sentinel_in_fresh_process(esmc_command_inputs, tmp_path):
+    request, source, output = esmc_command_inputs
+    request["device"] = "cpu"
+    roots, sentinels = [], []
+    for name in ("first-held-out", "second-held-out"):
+        root = tmp_path / name
+        root.mkdir()
+        sentinel = root / "sentinel.txt"
+        sentinel.write_text("forbidden")
+        roots.append(str(root))
+        sentinels.append(str(sentinel))
+    allowed = tmp_path / "allowed.txt"
+    allowed.write_text("allowed")
+    package = tmp_path / "producer-fixture" / "embed_helpers"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("")
+    (package / "esmc_chain_means.py").write_text(
+        "import json, os, torch\nfrom pathlib import Path\n"
+        "assert torch.backends.cuda.matmul.allow_tf32 is False\n"
+        "assert torch.backends.cudnn.allow_tf32 is False\n"
+        "assert Path(os.environ['ALLOWED_SENTINEL']).read_text() == 'allowed'\n"
+        "blocked = 0\n"
+        "for name in json.loads(os.environ['FORBIDDEN_SENTINELS']):\n"
+        "    try:\n        Path(name).read_text()\n"
+        "    except PermissionError:\n        blocked += 1\n"
+        "    else:\n        raise SystemExit('forbidden sentinel read was allowed')\n"
+        "print(json.dumps({'blocked': blocked, 'allowed_read': True}))\n")
+    # A CPU fixture must not need CUDA availability, model weights or a torch import from the real runtime.
+    (package.parent / "torch.py").write_text(
+        "import os\nfrom types import SimpleNamespace as S\n"
+        "assert os.environ['NVIDIA_TF32_OVERRIDE'] == '0'\n__version__ = 'synthetic'\n"
+        "backends = S(cuda=S(matmul=S(allow_tf32=True)), cudnn=S(allow_tf32=True))\n")
+    argv, env = phase3.embedding_command(request, source, SimpleNamespace(forbidden_read_roots=roots), output)
+    env.update(PYTHONPATH=str(package.parent) + os.pathsep + env["PYTHONPATH"],
+               ALLOWED_SENTINEL=str(allowed), FORBIDDEN_SENTINELS=json.dumps(sentinels))
+    result = subprocess.run(argv, env=env, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout.splitlines()[-1]) == {"blocked": 2, "allowed_read": True}
 
 
 @pytest.mark.parametrize("case", ["changed_weight", "missing_pin", "outside_cache", "wrong_sdk_snapshot"])
@@ -413,23 +457,34 @@ def test_esm1b_cuda_preflight_refuses_cpu_or_failed_check(tmp_path, monkeypatch,
         phase3._esm1b_cuda_preflight(request, {}, tmp_path)
 
 
-@pytest.mark.parametrize("case", ["passed", "missing_log", "tampered_log", "cpu_fallback"])
+@pytest.mark.parametrize("case", ["passed", "missing_log", "tampered_log", "cpu_fallback", "missing_policy", "tf32_on"])
 def test_esm1b_gpu_evidence_requires_hash_bound_actual_transfer(tmp_path, case):
+    from ec_clean30 import runtime_precision
+
+    policy = {"device": "cuda", "nvidia_tf32_override": "0", "cuda_matmul_allow_tf32": False,
+              "cudnn_allow_tf32": False, "torch_version": "synthetic", "cuda_device_count": 1,
+              "cuda_device_name": "Synthetic GPU", "helper_sha256": _sha(Path(runtime_precision.__file__))}
     log = tmp_path / "extract.log"
-    log.write_text("Loaded model\nTransferred model to GPU\nFinished\n")
+    log.write_text(runtime_precision.POLICY_PREFIX + json.dumps(policy) + "\nLoaded model\nTransferred model to GPU\nFinished\n")
     extraction = {"device": "cuda", "returncode": 0, "log": "extract.log", "log_sha256": _sha(log)}
     if case == "missing_log":
         log.unlink()
     elif case == "tampered_log":
         log.write_text(log.read_text() + "changed\n")
     elif case == "cpu_fallback":
-        log.write_text("Loaded model\nFinished\n")
+        log.write_text(log.read_text().replace("Transferred model to GPU\n", ""))
+        extraction["log_sha256"] = _sha(log)
+    elif case in {"missing_policy", "tf32_on"}:
+        text = ("" if case == "missing_policy" else runtime_precision.POLICY_PREFIX + json.dumps(
+            {**policy, "cuda_matmul_allow_tf32": True}) + "\n")
+        log.write_text(text + "Transferred model to GPU\n")
         extraction["log_sha256"] = _sha(log)
     _json_write(tmp_path / "farm_receipt.json", {"extraction": extraction})
     if case == "passed":
-        assert phase3._esm1b_gpu_evidence(tmp_path) == {"extraction_log_sha256": _sha(log)}
+        assert phase3._esm1b_gpu_evidence(tmp_path) == {"extraction_log_sha256": _sha(log), "precision_policy": policy}
     else:
-        with pytest.raises(phase3.Phase3Error, match="actually used CUDA"):
+        match = "precision" if case in {"missing_policy", "tf32_on"} else "actually used CUDA"
+        with pytest.raises(phase3.Phase3Error, match=match):
             phase3._esm1b_gpu_evidence(tmp_path)
 
 
@@ -579,7 +634,7 @@ def test_fixed_timing_recipes_reuse_builder_and_stay_outside_selection(transfer_
 
 @pytest.mark.parametrize("case", ["view", "dry_run", "layer"])
 def test_real_view_must_match_the_original_freeze(transfer_view, case):
-    view = SimpleNamespace(smoke=False, manifest_sha256=transfer_view.manifest_sha256,
+    view = SimpleNamespace(smoke=False, fold=0, manifest_sha256=transfer_view.manifest_sha256,
                            receipts=transfer_view.receipts, chain_means_manifest_sha256=transfer_view.chain_means_manifest_sha256)
     frozen = {"view_manifest_sha256": view.manifest_sha256,
               "dry_run_receipt": {"sha256": _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME)},

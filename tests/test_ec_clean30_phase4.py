@@ -235,7 +235,10 @@ def test_real_execution_ownership_host_ack_and_verified_reuse(tmp_path, monkeypa
     request = {"execution_root": str(root), "durable_root": str(durable), "session_id": "fixture-allocation",
                "persistence_mode": "host_pull", "unit_id": unit.unit_id, "plan": str(plan), "forecast_seconds": 20,
                "unit_timeout_seconds": 20, "python": sys.executable}
-    monkeypatch.setattr(phase4, "_runtime", lambda request, resource: ({}, None, policy, {}, {}))
+    def runtime(request, *, resource, kind):
+        assert (resource, kind) == ("gpu", "s1")
+        return {}, None, policy, {}, {}
+    monkeypatch.setattr(phase4, "_runtime", runtime)
     monkeypatch.setattr(phase4, "_verify_result", lambda *args: None)
     original = CampaignExecution.run_subprocess
     calls = []
@@ -361,7 +364,10 @@ def test_s1_worker_real_cpu_terminal_replay_and_persistence(tmp_path, tmp_path_f
             "unit_timeout_seconds": 120, "python": sys.executable, "device": "cpu", "g3_sha256": "7"*64,
             "cap_prefix": ["env", "OMP_NUM_THREADS=1", "MKL_NUM_THREADS=1", "OPENBLAS_NUM_THREADS=1", "MKL_THREADING_LAYER=GNU"],
             "memory_limit_bytes": 2*1024**3}
-        monkeypatch.setattr(phase4, "_runtime", lambda request, resource: (source, view, policy, {}, {}))
+        def runtime(request, *, resource, kind):
+            assert (resource, kind) == ("gpu", "s1")
+            return source, view, policy, {}, {}
+        monkeypatch.setattr(phase4, "_runtime", runtime)
         def worker(self, argv, **kwargs):
             phase4.s1_worker(request)
             return subprocess.CompletedProcess(argv, 0)

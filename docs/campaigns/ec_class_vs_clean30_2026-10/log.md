@@ -1653,3 +1653,84 @@ Recorded G2 completion remains 0/12; Freeze 1c and numerical G3 await measuremen
 [continuation](continuation.md) retains the existing scientific sequence and gates. No compute was started,
 no held-out data was read, and this update grants no new execution or budget authority. Root STATUS remains
 unchanged under [C-10](freeze1_decisions.json); current progress stays in these campaign records.
+
+## evc-034
+
+2026-11-03 — **Pass I qualification, verified closeout and POSIX storage correction.** The stock-retry
+package was published at `c163995`; full local preflight, source authentication and cache readback passed.
+A Secure EU-RO-1 RTX 4090 was allocated at 21:13:02 UTC after one confirmed stock rejection. The original
+first-intent clock, $5 gross ceiling, independent stop process and 900-second reserve remained in force.
+
+Actual kernel resource enforcement passed. The network filesystem did not enforce private request modes,
+and main-runtime extraction exceeded its 600-second bound. Same-source recovery used private local storage
+and the unchanged archive bytes. The main runtime then passed its complete package lock, resource-cap probe
+and small CUDA workload. The CLEAN archive was restored; its full model qualification remained pending.
+The configured `/workspace/campaign/views/fold0` also failed the existing lexical campaign-name rule.
+That configuration could not change within the retained allocation's hash binding. No scientific unit was
+admitted; G2 remains **0/12**. No held-out data was read.
+
+Both output-inventory copies were verified before STOP at 21:39:49 UTC and deletion at 21:39:51 UTC.
+A fresh provider inventory independently confirmed absence. Fifty closeout/preparation files were copied
+to the independent NVMe device with matching hashes. The retained 20-GB artifact cache is unchanged.
+Compute for this allocation is approximately $0.40 from verified timestamps and the $0.89/hour rate;
+this estimate excludes storage and is not a final provider invoice.
+
+The additive [POSIX execution manifest](execution_v5/posix_component_manifest.json) preserves all predecessors.
+Preflight now rejects an incorrectly named campaign root before allocation. The new preparation helper
+checks local permissions and capacity, keeps bulk archives on network storage, and prepares private request
+and view directories before bulk transfer. Runtimes use direct local paths. Capacity includes measured
+archive contents, 25% filesystem overhead and the existing 5-GiB reserve; bounded credit permits safe retries.
+The [verification record](execution_v5/posix_component_verification.json) records 439 passing focused tests and
+44 passing CPU smoke checks, with one environment-dependent skip in each. The corrected local input preflight
+passed with draft source: 20,268,413,023 bytes of required POSIX free space and a $4.5185 conservative gross
+forecast under $5, including a $2.10 prior-charge reserve. Publication and actual execution
+of this repaired bootstrap remain pending. The closed pass is not automatically restarted; a fresh bounded
+launch needs applicable authority and current preflight. Freeze 1c, numerical G3 and Phase 4 remain gated.
+
+## evc-035
+
+2026-11-04 — **Execution hold and v5 preparation.** All G2, Runpod and GCP launch attempts are paused.
+The POSIX correction is retained in [execution v5](execution_v5/README.md), with no separate readiness
+publication. Amendment 2 and v5 must be published before a separately authorized launch. G2 writes
+inner-fold-0 predictions for proteins that occur in other official folds' test sets; all design changes must
+therefore be recorded before G2. Recorded G2 completion remains 0/12.
+
+The scientific amendment is being prepared separately: best-inner-family S1 selection across F2–F6 with a
+harm guard; EC1–6 accuracy primary and BA secondary; whole-protein F6 pretraining on the full fold training
+file; S2 omitted except L9; raw-distance RBF default; F1 control only in fold 0; and a fold-0 futility stop at
+projected P(win) below approximately 20%. These are decisions awaiting the exact amendment contract,
+not implemented or experimentally validated claims in this execution record.
+
+Execution is Runpod-only, with G2 continuing into fold 0 on the same pod. CLEAN fits and both embedding
+builds use CUDA with explicit child TF32-off controls. CUDA fits replay on CPU at `1e-5`. Two additional
+failed launch windows exhaust retry authority. The fold-0 ceiling requires advance approval; the v5 record
+provides conditional cost scenarios and the missing workload inputs. Current work is CPU-only, with local
+checks limited to two cores and 3 GB. No GPU compute was allocated and no G2 or Phase-4 unit was executed.
+The [v5 CPU record](execution_v5/cpu_verification.json) records passing transport, replay, precision, read-guard,
+storage and smoke checks. General amendment-chain and final dispatcher integration remain blocked on the
+exact amendment-2 contract; the existing scientific verifier is unchanged.
+
+## evc-036
+
+2026-11-04 — **Amendment-2 execution integration, CPU checks only.** The execution-v5 draft now consumes the
+science-owned chain receipt, binds scientific identity and fit chain, requires per-fold dry-run-v2 evidence,
+and exposes the pinned CPU replay comparison. The comparator's runtime-precision dependency is registered
+in the scorer code list. The original POSIX correction remains in the same package.
+
+The dispatcher implements full-union ESMC fp32 preparation, F6 attachment and CPU parity before G2 v2 and
+Freeze 1c v2. Its canonical plan-v2 queues, CLEAN sanity hooks, binding futility stop and verified refit queues
+use the science interfaces. The shared retry ledger survives configuration changes. Pending F6 attachments and
+scientific outputs, including all applicable futility pointers, must be preserved before cleanup or reuse.
+
+An isolated combined execution/science copy produced **4,665 passes, 63 skips and 15 subtest passes** in the
+full CPU run. Four failures were corrected: two old Phase-4 mock signatures, the isolated copy's unindexed
+source files, and its omitted delegated scorer-list entry. The affected suites then passed **207 tests** with
+one committed-source-only skip; production code did not change for these corrections. The full run includes
+**44 CPU smoke passes and one missing-local-fixture skip**. Checks were capped at two CPU cores and 3 GB.
+The [verification record](execution_v5/cpu_verification.json) preserves exact scope, source pins and limitations.
+
+The science handoff must still expose the five public view/model-probe helpers, register the replay-function
+pin, and bind each F6 corpus-table receipt. Five dry-run-v2 receipts, amendment-2 publication and the final v5
+manifest remain pending. The [v5 record](execution_v5/README.md) owns the interfaces and cost limitations.
+No campaign fit, G2 event, allocation or provider operation occurred. G2 remains 0/12, and Freeze 1c/G3 remain
+unmeasured. Publication, an approved fold-0 ceiling and separate explicit launch authorization are required.

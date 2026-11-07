@@ -27,7 +27,7 @@ import textwrap
 import time
 from typing import Any, Mapping, Sequence
 
-from ec_clean30 import commands, freeze, provenance, views
+from ec_clean30 import commands, freeze, provenance, runtime_precision, views
 from ec_clean30.campaign import CAMPAIGN_ID, FAMILIES, KIND_INNER, default_smoke_recipe, recipe_with_lever
 from benchmarking.pmm_execution import CampaignExecution, ExecutionPolicy, verify_host_pull
 
@@ -47,14 +47,19 @@ RUNPOD_FORMAT = "deepmzyme_ec_clean30_execution_v3"
 RUNPOD_FILES = (*AUTOMATION_FILES, "src/ec_clean30/runpod_controller.py", "src/ec_clean30/container_caps.py")
 BOOTSTRAP_FORMAT = "deepmzyme_ec_clean30_execution_v4"
 BOOTSTRAP_FILES = (*RUNPOD_FILES, "src/ec_clean30/runpod_bootstrap.py")
+EXECUTION_V5_FORMAT = "deepmzyme_ec_clean30_execution_v5"
 TRANSFER_FORMAT = "deepmzyme_ec_clean30_fold0_transfer_v1"
+FOLD_TRANSFER_FORMAT = "deepmzyme_ec_clean30_fold_transfer_v2"
+RUNTIME_LOCKS_PATH = "docs/campaigns/ec_class_vs_clean30_2026-10/execution_v3/runtime_locks_v2.json"
+PRETRAIN_ATTACHMENT_MARKER = "pretrain_attachment.json"
+PRETRAIN_ATTACHMENT_FORMAT = "deepmzyme_ec_clean30_pretrain_attachment_snapshot_v1"
 GPU_PROFILES = {"gcp_l4": "NVIDIA L4", "runpod_l4": "NVIDIA L4",
                 "runpod_rtx4090": "NVIDIA GeForce RTX 4090"}
 GPU_MEMORY_MIN_BYTES = 22 * 1024 ** 3
 GPU_MEMORY_MAX_BYTES = 25 * 1024 ** 3
 ESM1B_WEIGHTS_SHA256 = "0569754efaff7dcb7e068c27367bc73f10afb4b450ea30aac30d9bc60783a8b1"
 ESM1B_CONTACT_SHA256 = "77193a8814f0db0b36a03aebb1a311adc6b4745f463c04839defc15407bbb28a"
-# Feature qualification is distinct from the unchanged 1e-6 absolute EC-logit replay policy.
+# Synthetic qualification retains its separate tolerances; fit replay follows Freeze-1 G1.
 ESM1B_REPLAY_ATOL = 1.0e-4
 ESM1B_REPLAY_RTOL = 1.0e-4
 MAIN_REPLAY_ATOL = 1.0e-6
@@ -435,11 +440,12 @@ def _member_mode(name: str) -> int:
     return 0o644 if name.startswith(views.RECEIPTS_DIR + "/") else 0o444
 
 
-def pack_view(view_root: Path, archive_path: Path, *, smoke: bool = False) -> dict[str, Any]:
-    """Write only the exact fold-0 view closure; stale probes and caches never travel."""
+def pack_view(view_root: Path, archive_path: Path, *, smoke: bool = False, fold: int = 0) -> dict[str, Any]:
+    """Write the exact declared fold closure; attached F6 inputs and stale probes never travel."""
     _no_restricted_path(view_root)
     view = views.View.load(view_root)
-    _require(view.fold == 0 and view.smoke == smoke, "Only the declared fold-0 view may travel.")
+    _require(type(fold) is int and fold in range(5) and view.fold == fold and view.smoke == smoke,
+             "Only the declared fold view may travel.")
     views.verify_view(view.root, require_chain_means=("final", "block26"), write_receipt=False)
     receipt = views.read_dry_run_receipt(view)
     _require(receipt is not None and receipt.get("status") == "passed"
@@ -448,7 +454,8 @@ def pack_view(view_root: Path, archive_path: Path, *, smoke: bool = False) -> di
     names = _transfer_names(view.root, view.manifest)
     files = [{"path": name, "sha256": _sha(_safe_file(view.root, name)),
               "size_bytes": (view.root / name).stat().st_size, "mode": _member_mode(name)} for name in names]
-    manifest = {"format": TRANSFER_FORMAT, "campaign_id": CAMPAIGN_ID, "fold": 0, "smoke": smoke,
+    manifest = {"format": TRANSFER_FORMAT if fold == 0 else FOLD_TRANSFER_FORMAT,
+                "campaign_id": CAMPAIGN_ID, "fold": fold, "smoke": smoke,
                 "view_manifest_sha256": view.manifest_sha256, "files": files,
                 "original_dry_run_sha256": _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME)}
     archive_path = Path(archive_path)
@@ -481,7 +488,7 @@ def pack_view(view_root: Path, archive_path: Path, *, smoke: bool = False) -> di
 
 
 def unpack_view(archive_path: Path, destination: Path, *, expected_sha256: str,
-                smoke: bool = False) -> dict[str, Any]:
+                smoke: bool = False, fold: int = 0) -> dict[str, Any]:
     """Validate every tar member before extracting into an isolated staging view."""
     archive_path, destination = Path(archive_path), Path(destination)
     _no_restricted_path(archive_path)
@@ -500,9 +507,11 @@ def unpack_view(archive_path: Path, destination: Path, *, expected_sha256: str,
         _require(descriptor.size <= 16 * 1024 * 1024 and descriptor.mode == 0o444,
                  "Invalid transfer manifest size or permissions.")
         manifest = json.load(archive.extractfile(descriptor))
-        _require(manifest.get("format") == TRANSFER_FORMAT and manifest.get("campaign_id") == CAMPAIGN_ID
-                 and manifest.get("fold") == 0 and manifest.get("smoke") is smoke,
-                 "Transfer is not the declared fold-0 view.")
+        _require(type(fold) is int and fold in range(5)
+                 and manifest.get("format") == (TRANSFER_FORMAT if fold == 0 else FOLD_TRANSFER_FORMAT)
+                 and manifest.get("campaign_id") == CAMPAIGN_ID
+                 and manifest.get("fold") == fold and manifest.get("smoke") is smoke,
+                 "Transfer is not the declared fold view.")
         records = manifest.get("files", [])
         expected = {row["path"]: row for row in records}
         _require(len(expected) == len(records) and set(names) == {TRANSFER_MANIFEST, *expected},
@@ -529,6 +538,10 @@ def unpack_view(archive_path: Path, destination: Path, *, expected_sha256: str,
                      "View manifest checksum differs.")
             for name in (*views.WRITABLE_DIRS, views.RING_DIR):
                 (stage / name).mkdir(exist_ok=True)
+            for name in getattr(views, "ATTACHED_DIRS", ()):
+                attached = stage / name
+                _require(not attached.exists(), "Attached inputs must not occur in the transferred view manifest.")
+                attached.mkdir(mode=0o755)
             for name in views.CACHE_SUBDIRS:
                 (stage / views.CACHE_DIR / name).mkdir(exist_ok=True)
             # Existing permission and verification hooks enforce the relocated view contract.
@@ -579,7 +592,66 @@ def timing_inputs(training_file: Path, out: Path, *, expected_sha256: str) -> di
 
 
 def _git(repo: Path, *args: str) -> str:
-    return subprocess.check_output(["git", "-C", str(repo), *args], text=True, stderr=subprocess.PIPE).strip()
+    return subprocess.check_output(["git", "-C", str(repo), *args], text=True,
+                                   stderr=subprocess.PIPE, env=git_environment()).strip()
+
+
+def git_environment() -> dict[str, str]:
+    """Repository subprocesses never inherit another checkout's Git environment."""
+    return clean_repository_environment()
+
+
+def clean_repository_environment(base: Mapping[str, str] | None = None) -> dict[str, str]:
+    return {key: value for key, value in (os.environ if base is None else base).items()
+            if not key.startswith("GIT_")}
+
+
+def source_identity(source: Mapping[str, Any]) -> dict[str, Any]:
+    """Record the scientific binding; retain the historical execution binding for replay."""
+    if source.get("format") == EXECUTION_V5_FORMAT or "scientific_identity_sha256" in source:
+        identity, chain = source.get("scientific_identity_sha256"), source.get("fit_chain")
+        _require(isinstance(identity, str) and re.fullmatch(r"[0-9a-f]{64}", identity)
+                 and isinstance(chain, list) and len(chain) >= 2
+                 and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) for value in chain),
+                 "Execution v5 requires its scientific identity and amendment-2 fit chain.")
+        return {"scientific_identity_sha256": identity, "fit_chain": list(chain)}
+    _require(bool(source.get("execution_manifest_sha256")), "Historical execution binding is missing.")
+    return {"execution_manifest_sha256": source["execution_manifest_sha256"]}
+
+
+def require_same_scientific_identity(record: Mapping[str, Any], source: Mapping[str, Any]) -> None:
+    expected = source_identity(source)
+    _require(all(record.get(key) == value for key, value in expected.items()),
+             "Record belongs to another scientific identity or fit chain.")
+
+
+def authenticated_chain(source: Mapping[str, Any], *, repo: Path = REPO_ROOT) -> dict[str, Any]:
+    """Check the workstation receipt cheaply; never run full chain verification on a pod."""
+    from ec_clean30 import amendment_chain
+
+    _require(source.get("format") == EXECUTION_V5_FORMAT, "An execution-v5 source is required.")
+    receipt = source.get("amendment_chain_receipt")
+    _require(isinstance(receipt, str) and receipt, "The session amendment-chain receipt is missing.")
+    chain = amendment_chain.check_chain_receipt(Path(receipt), repo=repo,
+                                                expected_chain=source.get("amendment_chain"))
+    _require(chain.get("tip_sequence", 0) >= 2 and chain.get("published") is True,
+             "Real work requires a published amendment chain at sequence 2 or later.")
+    require_same_scientific_identity(chain, source)
+    return chain
+
+
+def require_record_precedence(record: Mapping[str, Any], source: Mapping[str, Any], *,
+                              repo: Path = REPO_ROOT) -> None:
+    require_same_scientific_identity(record, source)
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        from ec_clean30 import amendment_chain
+
+        amendment_chain.require_record_precedence(authenticated_chain(source, repo=repo), [record], repo=repo)
+
+
+def _source_pins(repo: Path) -> dict[str, str]:
+    names = _git(repo, "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "src", "scripts")
+    return {name: _sha(_safe_file(repo, name)) for name in sorted(set(filter(None, names.split("\0"))))}
 
 
 def _baseline_authentication(repo: Path, commit: str, amendment_name: str, base_digest: str) -> dict[str, Any]:
@@ -590,7 +662,7 @@ def _baseline_authentication(repo: Path, commit: str, amendment_name: str, base_
     with tempfile.TemporaryDirectory(prefix="ec30-amendment-source-") as temporary:
         baseline = Path(temporary) / "source"
         subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", str(repo), str(baseline)],
-                       check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                       check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=git_environment())
         _git(baseline, "sparse-checkout", "set", "--no-cone", "/src/", "/scripts/",
              "/" + freeze.CAMPAIGN_DOCS_DIR + "/")
         _git(baseline, "checkout", "--quiet", "--detach", commit)
@@ -622,17 +694,106 @@ def make_execution_manifest(amendment_path: Path, out: Path, *, amendment_commit
     return document
 
 
+def make_execution_v5_manifest(chain_receipt_path: Path, out: Path, *, timing_inputs_sha256: str,
+                               expected_chain: Sequence[str], repo: Path = REPO_ROOT,
+                               runtime_locks_path: str = RUNTIME_LOCKS_PATH) -> dict[str, Any]:
+    """Build a draft from the published chain receipt; publication is a separate maintainer action."""
+    from ec_clean30 import amendment_chain, amendment_rules
+
+    repo = Path(repo).resolve()
+    verified = amendment_chain.check_chain_receipt(chain_receipt_path, repo=repo, expected_chain=expected_chain)
+    _require(verified.get("published") is True and verified.get("tip_sequence", 0) >= 2,
+             "Manifest v5 requires the published amendment-2 chain.")
+    _require(isinstance(timing_inputs_sha256, str) and re.fullmatch(r"[0-9a-f]{64}", timing_inputs_sha256),
+             "Timing inputs need their SHA-256 binding.")
+    execution_files = verified["execution_file_set"]
+    amendment_rules.partition(_git(repo, "ls-files", "-z", "--", "src", "scripts").split("\0"), execution_files)
+    _require(set(BOOTSTRAP_FILES).issubset(execution_files), "The closed execution set lacks its Runpod transport.")
+    runtime_path = _safe_file(repo, runtime_locks_path)
+    _require(_json(runtime_path).get("format") == "deepmzyme_ec_clean30_runtime_locks_v1",
+             "Manifest v5 needs the complete reviewed runtime lock document.")
+    document = {"format": EXECUTION_V5_FORMAT, "campaign_id": CAMPAIGN_ID,
+                "freeze1_sha256": amendment_rules.FREEZE1_SHA256, "freeze1b_sha256": FREEZE1B_SHA256,
+                "amendment_chain": list(verified["chain"]), **source_identity(verified),
+                "amendment_path": amendment_rules.link_path(verified["tip_sequence"]),
+                "source_sha256": {name: _sha(_safe_file(repo, name)) for name in execution_files},
+                "execution_file_set": list(execution_files),
+                "runtime_locks": {"path": runtime_locks_path, "sha256": _sha(runtime_path)},
+                "timing_inputs_sha256": timing_inputs_sha256,
+                "official_fold0_training_sha256": OFFICIAL_FOLD0_SHA256,
+                "hardware_profiles": sorted(name for name in GPU_PROFILES if name.startswith("runpod_")),
+                "purpose": "Runpod G2 v2 and fold execution under a published scientific identity; separate launch authority required"}
+    _write(out, document)
+    return document
+
+
+def _verify_execution_v5(document: Mapping[str, Any], manifest_path: Path, *, repo: Path,
+                         require_published: bool, chain_receipt_path: Path | None,
+                         expected_chain: Sequence[str] | None) -> dict[str, Any]:
+    from ec_clean30 import amendment_chain, amendment_rules
+
+    _require(chain_receipt_path is not None, "Execution v5 requires the session's workstation chain receipt.")
+    declared_chain = document.get("amendment_chain")
+    _require(isinstance(declared_chain, list) and len(declared_chain) >= 2,
+             "Real work requires an amendment-chain tip at sequence 2 or later.")
+    if expected_chain is not None:
+        _require(declared_chain == list(expected_chain), "Manifest amendment chain differs from the expected chain.")
+    verified = amendment_chain.check_chain_receipt(chain_receipt_path, repo=repo, expected_chain=declared_chain)
+    _require(verified.get("tip_sequence", 0) >= 2 and verified.get("published") is True,
+             "Real work requires a published amendment-chain tip at sequence 2 or later.")
+    require_same_scientific_identity(document, verified)
+    _require(document.get("amendment_path") == amendment_rules.link_path(verified["tip_sequence"]),
+             "Manifest v5 must name its authenticated chain tip.")
+    _require(document.get("freeze1_sha256") == amendment_rules.FREEZE1_SHA256,
+             "Manifest v5 must retain the original Freeze-1 binding.")
+    allowed = verified["execution_file_set"]
+    _require(document.get("execution_file_set") == allowed
+             and set(document.get("source_sha256", {})) == set(allowed),
+             "Manifest v5 must pin exactly the chain's closed execution file set.")
+    amendment_rules.partition(_git(repo, "ls-files", "-z", "--", "src", "scripts").split("\0"), allowed)
+    _require(all(_sha(_safe_file(repo, name)) == digest for name, digest in document["source_sha256"].items()),
+             "Live execution source differs from manifest v5.")
+    _require(document.get("hardware_profiles") == sorted(name for name in GPU_PROFILES if name.startswith("runpod_")),
+             "Execution v5 permits only Runpod hardware profiles.")
+    locks = document.get("runtime_locks", {})
+    _require(isinstance(locks, dict) and _sha(_safe_file(repo, locks.get("path", ""))) == locks.get("sha256")
+             and _json(_safe_file(repo, locks["path"])).get("format") == "deepmzyme_ec_clean30_runtime_locks_v1",
+             "Manifest v5 runtime-lock binding is missing or changed.")
+    head = _git(repo, "rev-parse", "HEAD")
+    published = (_git(repo, "merge-base", head, "refs/remotes/origin/main") == head
+                 and not _git(repo, "status", "--porcelain", "--untracked-files=all"))
+    if require_published:
+        _require(published, "Real work requires a clean, published execution-v5 checkout.")
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"HEAD:{manifest_path.relative_to(repo)}"],
+                                          env=git_environment())
+        _require(content == manifest_path.read_bytes(), "Execution manifest v5 is not published with these bytes.")
+    base_path = _safe_file(repo, f"{freeze.CAMPAIGN_DOCS_DIR}/freeze1.json")
+    _require(_sha(base_path) == document["freeze1_sha256"], "Original Freeze 1 changed.")
+    base = _json(base_path)
+    return {**document, "execution_manifest_sha256": _sha(manifest_path), "published": published,
+            "git_head": head, "source_tree_sha256": provenance.source_tree_sha256(repo),
+            "amendment_chain_receipt": str(Path(chain_receipt_path).resolve()), "chain_verification": verified,
+            "frozen_views": base.get("views", {}), "frozen_fold0_view": base.get("views", {}).get("0"),
+            "frozen_inputs_manifest": base.get("inputs_manifest"),
+            "frozen_esmc_weight_sha256": base.get("pins", {}).get("esmc_300m_weights")}
+
+
 def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
-                            require_published: bool = True) -> dict[str, Any]:
+                            require_published: bool = True, chain_receipt_path: Path | None = None,
+                            expected_chain: Sequence[str] | None = None) -> dict[str, Any]:
     repo, manifest_path = Path(repo).resolve(), Path(manifest_path).absolute()
     _require(repo in manifest_path.parents and not manifest_path.is_symlink()
              and manifest_path.resolve() == manifest_path,
              "Execution manifest must be a regular repository document.")
     document = _json(manifest_path)
-    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT, RUNPOD_FORMAT, BOOTSTRAP_FORMAT}
+    _require(document.get("format") in {EXECUTION_FORMAT, AUTOMATION_FORMAT, RUNPOD_FORMAT, BOOTSTRAP_FORMAT,
+                                       EXECUTION_V5_FORMAT}
              and document.get("campaign_id") == CAMPAIGN_ID,
              "Unknown execution manifest.")
     _require(document.get("freeze1b_sha256") == FREEZE1B_SHA256, "Freeze-1b binding is missing or changed.")
+    if document["format"] == EXECUTION_V5_FORMAT:
+        return _verify_execution_v5(document, manifest_path, repo=repo, require_published=require_published,
+                                    chain_receipt_path=chain_receipt_path, expected_chain=expected_chain)
     verified = _baseline_authentication(repo, document["amendment_commit"], document["amendment_path"],
                                         document["freeze1_sha256"])
     _require(document.get("amendment_sha256") == verified["document_sha256"]
@@ -660,13 +821,14 @@ def verify_execution_source(manifest_path: Path, *, repo: Path = REPO_ROOT,
         allowed = EXECUTION_FILES
     _require(set(pins) == set(allowed), "Execution pins must name exactly the versioned execution files.")
     expected.update(pins)
-    _require(freeze._amendment_code(repo) == expected, "Live source differs from frozen and execution pins.")
+    _require(_source_pins(repo) == expected, "Live source differs from frozen and execution pins.")
     head = _git(repo, "rev-parse", "HEAD")
     published = (_git(repo, "merge-base", head, "refs/remotes/origin/main") == head
                  and not _git(repo, "status", "--porcelain"))
     if require_published:
         _require(published, "Real G2 work requires a clean, published execution checkout.")
-        content = subprocess.check_output(["git", "-C", str(repo), "show", f"HEAD:{manifest_path.relative_to(repo)}"])
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"HEAD:{manifest_path.relative_to(repo)}"],
+                                          env=git_environment())
         _require(content == manifest_path.read_bytes(), "Execution manifest is not published with these bytes.")
     return {**document, "execution_manifest_sha256": _sha(manifest_path), "published": published,
             "git_head": head, "source_tree_sha256": provenance.source_tree_sha256(repo),
@@ -685,7 +847,7 @@ def _verify_execution_base(repo: Path, document: Mapping[str, Any]) -> dict[str,
              "WP-13 base must be published and an ancestor of the execution checkout.")
     name = _relative(reference.get("path", ""))
     path = _safe_file(repo, name)
-    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
     _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
              "Original published WP-13 manifest changed.")
     base = json.loads(published)
@@ -695,7 +857,7 @@ def _verify_execution_base(repo: Path, document: Mapping[str, Any]) -> dict[str,
                 "amendment_commit", "amendment_chain", "official_fold0_training_sha256", "timing_inputs_sha256"):
         _require(document.get(key) == base.get(key), f"Automation changed the WP-13 {key} binding.")
     for name, digest in base["source_sha256"].items():
-        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
         _require(hashlib.sha256(content).hexdigest() == digest, "Published WP-13 source pin differs.")
     return base
 
@@ -726,7 +888,7 @@ def _verify_automation_base(repo: Path, document: Mapping[str, Any]) -> dict[str
              "Automation base must be published and an ancestor of the execution checkout.")
     name = _relative(reference.get("path", ""))
     path = _safe_file(repo, name)
-    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
     _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
              "Original published automation manifest changed.")
     base = json.loads(published)
@@ -739,7 +901,7 @@ def _verify_automation_base(repo: Path, document: Mapping[str, Any]) -> dict[str
                 "base_execution"):
         _require(document.get(key) == base.get(key), f"Runpod extension changed the automation {key} binding.")
     for name, digest in base["source_sha256"].items():
-        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
         _require(hashlib.sha256(content).hexdigest() == digest, "Published automation source pin differs.")
     _require(document.get("hardware_profiles") == sorted(GPU_PROFILES), "Approved hardware profiles differ.")
     return base
@@ -772,7 +934,7 @@ def _verify_runpod_base(repo: Path, document: Mapping[str, Any]) -> dict[str, An
              "Runpod base must be published and an ancestor of the execution checkout.")
     name = _relative(reference.get("path", ""))
     path = _safe_file(repo, name)
-    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+    published = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
     _require(_sha(path) == reference.get("sha256") == hashlib.sha256(published).hexdigest(),
              "Original published Runpod manifest changed.")
     base = json.loads(published)
@@ -786,7 +948,7 @@ def _verify_runpod_base(repo: Path, document: Mapping[str, Any]) -> dict[str, An
                 "base_execution", "base_automation", "hardware_profiles"):
         _require(document.get(key) == base.get(key), f"Bootstrap extension changed the Runpod {key} binding.")
     for name, digest in base["source_sha256"].items():
-        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"])
+        content = subprocess.check_output(["git", "-C", str(repo), "show", f"{commit}:{name}"], env=git_environment())
         _require(hashlib.sha256(content).hexdigest() == digest, "Published Runpod source pin differs.")
     return base
 
@@ -809,9 +971,11 @@ def make_bootstrap_manifest(base_runpod: Path, out: Path, *, base_commit: str,
 def _approved_runtime_profile(source: Mapping[str, Any], profile: str) -> dict[str, Any]:
     expected = hardware_profile(profile)
     if profile.startswith("runpod_"):
-        _require(source.get("format") in {RUNPOD_FORMAT, BOOTSTRAP_FORMAT}
+        _require(source.get("format") in {RUNPOD_FORMAT, BOOTSTRAP_FORMAT, EXECUTION_V5_FORMAT}
                  and profile in source.get("hardware_profiles", []),
                  "Runpod hardware requires its authenticated provider extension.")
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        _require(profile.startswith("runpod_"), "Execution v5 permits only Runpod sessions.")
     return expected
 
 
@@ -871,20 +1035,42 @@ def _verify_main_model_probe(request: Mapping[str, Any], view: views.View, profi
 def _bind_view(view: views.View, source: Mapping[str, Any]) -> None:
     if view.smoke:
         return
-    frozen = source.get("frozen_fold0_view") or {}
+    frozen = (source.get("frozen_views") or {}).get(str(view.fold))
+    if frozen is None:
+        frozen = source.get("frozen_fold0_view") if view.fold == 0 else {}
+    frozen = frozen or {}
     _require(frozen.get("view_manifest_sha256") == view.manifest_sha256
              and frozen.get("dry_run_receipt", {}).get("sha256") == _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME)
              and all(frozen.get("chain_means", {}).get(layer) == view.chain_means_manifest_sha256(layer)
-                     for layer in ("final", "block26")), "Fold-0 view differs from original Freeze 1.")
+                     for layer in ("final", "block26")), "Fold view differs from original Freeze 1.")
+    if source.get("format") == EXECUTION_V5_FORMAT or source.get("scientific_identity_sha256"):
+        from ec_clean30 import amendment_chain
+
+        verified = authenticated_chain(source)
+        evidence = amendment_chain.fold_dry_run_evidence(verified, view.fold)
+        receipt_path = _safe_file(REPO_ROOT, evidence["receipt"]["path"])
+        receipt_bytes = receipt_path.read_bytes()
+        _require(hashlib.sha256(receipt_bytes).hexdigest() == evidence["receipt"]["sha256"],
+                 "Amendment-2 fold dry-run receipt bytes differ (C11).")
+        receipt = json.loads(receipt_bytes)
+        _require(receipt.get("status") == "passed" and receipt.get("fold") == view.fold
+                 and receipt.get("plan_version") == 2
+                 and receipt.get("provenance", {}).get("git", {}).get("head") == evidence["source_commit"]
+                 and receipt.get("view_manifest_sha256") == view.manifest_sha256
+                 and evidence["in_view_receipt_sha256"] == _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME),
+                 "Amendment-2 dry-run evidence does not bind this fold view (C11).")
 
 
 def vm_probe(view_root: Path, execution_manifest_path: Path, out: Path, *,
              cap_prefix: Sequence[str], python: str = sys.executable, smoke: bool = False,
-             hardware_profile: str = "gcp_l4", cap_probe_path: Path | None = None) -> dict[str, Any]:
-    source = verify_execution_source(execution_manifest_path, require_published=not smoke)
+             hardware_profile: str = "gcp_l4", cap_probe_path: Path | None = None,
+             chain_receipt_path: Path | None = None, expected_chain: Sequence[str] | None = None) -> dict[str, Any]:
+    source = verify_execution_source(execution_manifest_path, require_published=not smoke,
+                                    chain_receipt_path=chain_receipt_path, expected_chain=expected_chain)
     _approved_runtime_profile(source, hardware_profile)
     view = views.View.load(view_root)
-    _require(view.fold == 0 and view.smoke == smoke, "Probe view differs from its declared role.")
+    accepted_folds = range(5) if source.get("format") == EXECUTION_V5_FORMAT and not smoke else (0,)
+    _require(view.fold in accepted_folds and view.smoke == smoke, "Probe view differs from its declared role.")
     _bind_view(view, source)
     cap_evidence = {}
     if hardware_profile.startswith("runpod_"):
@@ -896,18 +1082,33 @@ def vm_probe(view_root: Path, execution_manifest_path: Path, out: Path, *,
                         "container_caps_evidence_sha256": hashlib.sha256(_bytes(measured)).hexdigest()}
     original = _sha(view.receipts / views.DRY_RUN_RECEIPT_NAME)
     verification = views.verify_view(view.root, require_chain_means=("final", "block26"), write_receipt=False)
-    report = commands.dry_run(view, cap_prefix=cap_prefix, python=python, write=False)
+    dry_options = {"plan_version": 2, "pretrain_stub": True} if source.get("format") == EXECUTION_V5_FORMAT else {}
+    report = commands.dry_run(view, cap_prefix=cap_prefix, python=python, write=False, **dry_options)
     _require(_sha(view.receipts / views.DRY_RUN_RECEIPT_NAME) == original, "Probe rewrote the original dry run.")
     _require(report.get("status") == "passed", "Relocated VM dry-run probe failed.")
     receipt = {"format": "deepmzyme_ec_clean30_vm_probe_v1", "status": "passed", "source": source,
                "hardware_profile": hardware_profile, **cap_evidence,
                "view_manifest_sha256": view.manifest_sha256, "original_dry_run_sha256": original,
                "verification": verification, "dry_run": report}
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        receipt.update(source_identity(source), git_head=source["git_head"], created_utc=provenance.utc_now())
     _write(out, receipt)
     return receipt
 
 
-def timing_plan() -> dict[str, dict[str, Any]]:
+def timing_plan(*, version: int = 1) -> dict[str, dict[str, Any]]:
+    if version == 2:
+        from ec_clean30.campaign import timing_recipes_v2
+
+        result = {name: {"family": recipe.family, "epochs": recipe.epochs, "lever": None,
+                         "recipe": recipe} for name, recipe in timing_recipes_v2()}
+        lane_recipe = dict(timing_recipes_v2())["F4_raw"]
+        result.update({name: {"family": lane_recipe.family, "epochs": lane_recipe.epochs,
+                             "lever": None, "recipe": lane_recipe}
+                       for name in ("lane_serial_1", "lane_serial_2", "lane_parallel_1",
+                                    "lane_parallel_2", "lane_parallel_3")})
+        return result
+    _require(version == 1, "Unknown G2 timing plan version.")
     result = {name: {"family": name, "epochs": 5, "lever": None} for name in FAMILIES}
     result["F4_L3"] = {"family": "F4", "epochs": 5, "lever": "L3"}
     for name in ("lane_serial_1", "lane_serial_2", "lane_parallel_1", "lane_parallel_2", "lane_parallel_3"):
@@ -915,10 +1116,14 @@ def timing_plan() -> dict[str, dict[str, Any]]:
     return result
 
 
-def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, ExecutionPolicy]:
+def _runtime(request: Mapping[str, Any], *, pretraining: bool = False) -> tuple[dict[str, Any], views.View, ExecutionPolicy]:
     smoke = request.get("smoke", False)
     _require(type(smoke) is bool, "smoke must be explicit boolean.")
-    source = verify_execution_source(Path(request["execution_manifest"]), require_published=not smoke)
+    source = verify_execution_source(Path(request["execution_manifest"]), require_published=not smoke,
+                                    chain_receipt_path=request.get("amendment_chain_receipt"),
+                                    expected_chain=request.get("expected_chain"))
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        _require(request.get("plan_version") == 2, "Execution v5 requires G2 v2.")
     approved = _approved_runtime_profile(source, request.get("hardware_profile", "gcp_l4"))
     _require(all(os.environ.get(key) == value for key, value in approved["runtime_environment"].items()),
              "Runtime precision environment differs from its approved hardware profile.")
@@ -926,9 +1131,11 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
     _require(view.fold == 0 and view.smoke == smoke, "Runtime view role differs.")
     _bind_view(view, source)
     probe = _json(Path(request["vm_probe"]))
-    _require(probe.get("status") == "passed" and probe.get("view_manifest_sha256") == view.manifest_sha256
-             and probe.get("source", {}).get("execution_manifest_sha256") == source["execution_manifest_sha256"],
+    _require(probe.get("status") == "passed" and probe.get("view_manifest_sha256") == view.manifest_sha256,
              "Runtime requires its matching completed VM probe.")
+    require_same_scientific_identity(probe.get("source", {}), source)
+    if source.get("format") == EXECUTION_V5_FORMAT and not pretraining:
+        verify_pretrain_evidence(Path(request["pretrain_evidence"]), source, view=view)
     profile = request.get("hardware_profile", "gcp_l4")
     if profile.startswith("runpod_"):
         _require(probe.get("hardware_profile") == profile, "Runtime hardware profile differs from its VM probe.")
@@ -954,9 +1161,16 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
                              max_total_seconds=float(request["max_total_seconds"]),
                              allocation_started_unix=float(request["allocation_started_unix"]),
                              reserve_seconds=900, forecast_margin=1.25)
-    _require(policy.max_total_seconds <= 7200, "This G2 package permits at most a two-hour allocation.")
-    if profile.startswith("runpod_"):
-        _require(policy.max_total_seconds <= 7020, "Runpod G2 permits at most the reviewed 117-minute allocation.")
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        _require(math.isfinite(policy.max_total_seconds) and policy.max_total_seconds > policy.reserve_seconds
+                 and math.isclose(policy.deadline_unix - policy.allocation_started_unix,
+                                  policy.max_total_seconds, rel_tol=0, abs_tol=1)
+                 and re.fullmatch(r"[0-9a-f]{64}", str(request.get("runpod_config_sha256", ""))),
+                 "Execution v5 requires the configured session duration, deadline and Runpod configuration binding.")
+    else:
+        _require(policy.max_total_seconds <= 7200, "This G2 package permits at most a two-hour allocation.")
+        if profile.startswith("runpod_"):
+            _require(policy.max_total_seconds <= 7020, "Runpod G2 permits at most the reviewed 117-minute allocation.")
     execution_root = Path(request["execution_root"]).resolve()
     _require(execution_root == (view.default_runs_dir / "g2").resolve(), "G2 uses its dedicated fold-0 execution root.")
     _require(request.get("persistence_mode") == "host_pull", "G2 uses independent host-pull acknowledgment.")
@@ -965,20 +1179,27 @@ def _runtime(request: Mapping[str, Any]) -> tuple[dict[str, Any], views.View, Ex
 
 def _unit_name(request: Mapping[str, Any]) -> str:
     name, attempt = request["recipe"], request.get("attempt", 1)
-    _require(name in timing_plan() and type(attempt) is int and attempt > 0, "Unknown timing recipe or attempt.")
+    _require(name in timing_plan(version=request.get("plan_version", 1))
+             and type(attempt) is int and attempt > 0, "Unknown timing recipe or attempt.")
     return f"ecc30timing_{name}_attempt{attempt}"
 
 
 def _build_timing_command(request: Mapping[str, Any], source: Mapping[str, Any], view: views.View):
-    spec = timing_plan()[request["recipe"]]
-    recipe = default_smoke_recipe(spec["family"], epochs=spec["epochs"], lr_index=1)
+    from dataclasses import replace
+
+    version = 2 if source.get("format") == EXECUTION_V5_FORMAT else 1
+    spec = timing_plan(version=version)[request["recipe"]]
+    recipe = spec.get("recipe") or default_smoke_recipe(spec["family"], epochs=spec["epochs"], lr_index=1)
     if spec["lever"]:
         recipe = recipe_with_lever(recipe, spec["lever"])
-    return commands.build_unit_command(view, recipe, unit_id=_unit_name(request), kind=KIND_INNER,
+    command = commands.build_unit_command(view, recipe, unit_id=_unit_name(request), kind=KIND_INNER,
         seed=42, runs_dir=Path(request["execution_root"]) / "runs", step="G2_TIMING", inner_fold=0,
         device=request["device"], freeze1_sha256=source["freeze1_sha256"],
-        freeze1b_sha256=source["freeze1b_sha256"], freeze1_amendment_chain=source["amendment_chain"],
+        freeze1b_sha256=source["freeze1b_sha256"],
+        freeze1_amendment_chain=source.get("fit_chain", source["amendment_chain"]),
         git_head=source["git_head"], tree_sha256=source["source_tree_sha256"])
+    return replace(command, unset_env=tuple(sorted(set(command.unset_env)
+                   | {key for key in os.environ if key.startswith("GIT_")})))
 
 
 def _prediction_table(run_dir: Path) -> dict[str, list[Any]]:
@@ -1008,21 +1229,30 @@ def timing_worker(request: Mapping[str, Any]) -> dict[str, Any]:
     _require(verified.get("passed"), "Timing unit verification failed.")
     checked = time.monotonic()
     run_dir = Path(command.runs_dir) / command.unit_id
+    replay_atol = "1e-5" if request["device"] == "cuda" else "1e-6"
     replay_argv = [request["python"], "-m", "training.ec_prediction_export", "replay",
-                   "--run-dir", str(run_dir), "--device", request["device"], "--logit-atol", "1e-6"]
+                   "--run-dir", str(run_dir), "--device", "cpu", "--logit-atol", replay_atol]
     for root in view.forbidden_read_roots:
         replay_argv += ["--forbidden-read-root", root]
-    env = command.environment()
+    env = clean_repository_environment(command.environment())
     env["PYTHONPATH"] = str(REPO_ROOT / "src")
     with (run_dir / "g2_replay.log").open("x") as log:
         subprocess.run([*request["cap_prefix"], *replay_argv], cwd=command.runs_dir, env=env,
                        stdout=log, stderr=subprocess.STDOUT, check=True)
     replay = run_dir / "ec_prediction_replay" / "ec_prediction_replay_receipt.json"
     _require(replay.is_file(), "Independent replay receipt is missing.")
+    replay_record = _json(replay)
+    _require(replay_record.get("device") == "cpu" and replay_record.get("logit_atol") == float(replay_atol)
+             and replay_record.get("replay_status") == "match", "Independent replay policy or result differs.")
+    if source.get("format") == EXECUTION_V5_FORMAT:
+        from ec_clean30.phase4 import verify_cpu_replay
+
+        verify_cpu_replay(run_dir)
     finished = time.monotonic()
     record = {"format": "deepmzyme_ec_clean30_timing_unit_v1", "status": "passed", "recipe": request["recipe"],
               "unit_id": command.unit_id, "source": source, "view_manifest_sha256": view.manifest_sha256,
               "execution_manifest_sha256": source["execution_manifest_sha256"],
+              **source_identity(source), "git_head": source.get("git_head"), "created_utc": provenance.utc_now(),
               "runner_sha256": _sha(commands.runner_receipt_path(Path(command.runs_dir), command.unit_id)),
               "replay_sha256": _sha(replay), "verification": verified,
               "seconds": {"preparation": prepared-started, "fit_and_export": fitted-prepared,
@@ -1034,6 +1264,7 @@ def timing_worker(request: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _execution(request: Mapping[str, Any], policy: ExecutionPolicy) -> CampaignExecution:
+    require_restored_pretrain_attempts(Path(request["execution_root"]))
     return CampaignExecution(Path(request["execution_root"]), policy=policy,
                              session_id=request["session_id"], durable_root=Path(request["durable_root"]),
                              persistence_mode="host_pull")
@@ -1051,8 +1282,12 @@ def run_timing_unit(request: Mapping[str, Any]) -> dict[str, Any]:
     with _execution(request, policy) as execution:
         if output.exists():
             record = _json(output)
-            _require(record.get("status") == "passed" and record.get("source") == source,
+            _require(record.get("status") == "passed",
                      "Existing timing result has another source or failed.")
+            if source.get("format") == EXECUTION_V5_FORMAT:
+                require_record_precedence(record, source)
+            else:
+                _require(record.get("source") == source, "Existing timing result has another source or failed.")
             verification = commands.verify_unit(root / "runs", name, view=view,
                                                 memory_limit_bytes=int(request["memory_limit_bytes"]))
             _require(verification["passed"], "Existing timing result no longer verifies.")
@@ -1068,6 +1303,7 @@ def run_timing_unit(request: Mapping[str, Any]) -> dict[str, Any]:
         with (root / "commands" / f"{name}.log").open("x") as log:
             result = execution.run_subprocess(_child_command(request_file, "_timing-worker", request["python"]),
                                               cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT,
+                                              env=clean_repository_environment(),
                                               timeout=float(request["unit_timeout_seconds"]))
         elapsed = time.monotonic()-started
         passed = result.returncode == 0 and output.is_file() and _json(output).get("status") == "passed"
@@ -1130,9 +1366,19 @@ def lane_gate(serial: Sequence[Mapping[str, Any]], parallel: Sequence[Mapping[st
              "Lane recipe identities differ from the fixed plan.")
     ids, truth = list(serial[0]["ids"]), np.asarray(serial[0]["true"], dtype=int)
     _require(ids and len(set(ids)) == len(ids) and len(truth) == len(ids), "Lane query identities are invalid.")
-    binding = serial[0].get("execution_manifest_sha256")
-    _require(bool(binding) and all(row.get("execution_manifest_sha256") == binding for row in all_runs),
-             "Lane source identities differ.")
+    if serial[0].get("scientific_identity_sha256"):
+        binding = {key: serial[0].get(key) for key in ("scientific_identity_sha256", "fit_chain")}
+        _require(re.fullmatch(r"[0-9a-f]{64}", str(binding["scientific_identity_sha256"]))
+                 and isinstance(binding["fit_chain"], list) and len(binding["fit_chain"]) >= 2
+                 and all(re.fullmatch(r"[0-9a-f]{64}", str(value)) for value in binding["fit_chain"])
+                 and all(all(row.get(key) == value for key, value in binding.items()) for row in all_runs),
+                 "Lane scientific identities or fit chains differ.")
+    else:
+        binding = {"execution_manifest_sha256": serial[0].get("execution_manifest_sha256")}
+        _require(bool(binding["execution_manifest_sha256"])
+                 and all(not row.get("scientific_identity_sha256")
+                         and row.get("execution_manifest_sha256") == binding["execution_manifest_sha256"]
+                         for row in all_runs), "Lane source identities differ.")
     for row in all_runs:
         _require(list(row["ids"]) == ids and np.array_equal(row["true"], truth)
                  and len(row["predicted"]) == len(ids), "Lane query/label membership differs.")
@@ -1163,7 +1409,7 @@ def lane_gate(serial: Sequence[Mapping[str, Any]], parallel: Sequence[Mapping[st
     speedup = 3 * sum(float(row["wall_seconds"]) for row in serial) / 2 / batch_wall_seconds
     passed = resource_pass and all(row["passed"] for row in comparisons) and speedup >= 1.2
     return {"format": "deepmzyme_ec_clean30_lane_gate_v1", "status": "passed" if passed else "failed",
-            "execution_manifest_sha256": binding, "lanes": 3 if passed else 1, "speedup": speedup,
+            **binding, "lanes": 3 if passed else 1, "speedup": speedup,
             "supported_classes": [int(label) for label in supported], "minimum_validation_support": 10,
             "comparisons": comparisons, "resource_passed": resource_pass, "limits": dict(limits),
             "observed": dict(observed), "batch_wall_seconds": batch_wall_seconds,
@@ -1206,6 +1452,7 @@ def lane_worker(request: Mapping[str, Any]) -> dict[str, Any]:
             logs.append(log)
             processes.append(subprocess.Popen(_child_command(path, "_timing-worker", request["python"]),
                                                cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT,
+                                               env=clean_repository_environment(),
                                                pass_fds=(lock_fd,)))
         while any(process.poll() is None for process in processes):
             time.sleep(.5)
@@ -1246,8 +1493,10 @@ def run_lane_gate(request: Mapping[str, Any]) -> dict[str, Any]:
     serial_paths = [Path(path) for path in request["serial_receipts"]]
     serial = [_json(path) for path in serial_paths]
     _require(len(serial) == 2 and all(row.get("format") == "deepmzyme_ec_clean30_completed_timing_v1"
-             and row.get("status") == "passed" and row.get("execution_manifest_sha256") == source["execution_manifest_sha256"]
+             and row.get("status") == "passed"
              for row in serial), "Lane gate requires two verified and persisted serial repeats.")
+    for row in serial:
+        require_record_precedence(row, source)
     _require(float(request["forecast_seconds"]) >= 3*max(row["wall_seconds"] for row in serial),
              "Batch admission may not assume the speedup under test.")
     root = Path(request["execution_root"])
@@ -1271,16 +1520,17 @@ def run_lane_gate(request: Mapping[str, Any]) -> dict[str, Any]:
                                  limits=request["limits"], observed=result["observed"])
             else:
                 gate = {"format": "deepmzyme_ec_clean30_lane_gate_v1", "status": "failed", "lanes": 1,
-                        "reason": "parallel_batch_failed", "execution_manifest_sha256": source["execution_manifest_sha256"]}
+                        "reason": "parallel_batch_failed", **source_identity(source)}
             gate.update(host_transfer=transfer, serial_receipts=[{"path": str(path), "sha256": _sha(path)} for path in serial_paths],
-                        batch_timing_sha256=_sha(measured), persistence_seconds=persistence_seconds)
+                        batch_timing_sha256=_sha(measured), persistence_seconds=persistence_seconds,
+                        git_head=source.get("git_head"), created_utc=provenance.utc_now())
             _write(gate_path, gate)
             return gate
         local_request = {**request, "batch_name": name}
         request_file = root / "commands" / f"{name}.json"
         _write(request_file, local_request)
         execution.admit(name, float(request["forecast_seconds"]))
-        env = dict(os.environ)
+        env = clean_repository_environment()
         env["DEEPMZYME_EXECUTION_LOCK_FD"] = str(execution._lock.fileno())
         started = time.monotonic()
         with (root / "commands" / f"{name}.log").open("x") as log:
@@ -1301,27 +1551,43 @@ def run_lane_gate(request: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def build_freeze1c(evidence: Sequence[Path], out: Path, *, execution_manifest_path: Path,
-                   l3_vm_hours_per_fold: Mapping[str, Any]) -> dict[str, Any]:
-    source = verify_execution_source(execution_manifest_path)
-    _require(set(l3_vm_hours_per_fold) == {str(index) for index in range(5)}
-             and all(not isinstance(value, bool) and math.isfinite(float(value)) and float(value) > 0
-                     for value in l3_vm_hours_per_fold.values()), "Freeze 1c needs five positive numerical L3 ceilings.")
+                   l3_vm_hours_per_fold: Mapping[str, Any] | None = None,
+                   chain_receipt_path: Path | None = None,
+                   expected_chain: Sequence[str] | None = None,
+                   pretrain_evidence: Path | None = None) -> dict[str, Any]:
+    source = verify_execution_source(execution_manifest_path, chain_receipt_path=chain_receipt_path,
+                                    expected_chain=expected_chain)
+    v2 = source.get("format") == EXECUTION_V5_FORMAT
+    if not v2:
+        _require(isinstance(l3_vm_hours_per_fold, Mapping)
+                 and set(l3_vm_hours_per_fold) == {str(index) for index in range(5)}
+                 and all(not isinstance(value, bool) and math.isfinite(float(value)) and float(value) > 0
+                         for value in l3_vm_hours_per_fold.values()), "Freeze 1c needs five positive numerical L3 ceilings.")
+    else:
+        _require(l3_vm_hours_per_fold is None, "Freeze 1c v2 has no inactive L3 ceilings.")
+        _require(pretrain_evidence is not None, "Freeze 1c v2 requires persisted F6 cache and parity preparation.")
+        verify_pretrain_evidence(Path(pretrain_evidence), source)
     records, bindings = [], []
     for path in evidence:
         path = Path(path)
         _no_restricted_path(path)
         row = _json(path)
-        _require(row.get("execution_manifest_sha256") == source["execution_manifest_sha256"],
-                 "Measurement belongs to another execution source.")
+        require_record_precedence(row, source)
         transfer = row.get("host_transfer") or {}
         _require(all(re.fullmatch(r"[0-9a-f]{64}", str(transfer.get(key, "")))
                      for key in ("manifest_sha256", "ack_sha256")), "Measurement lacks verified host persistence.")
         records.append(row)
         bindings.append({"path": str(path), "sha256": _sha(path)})
     timings = [row for row in records if row.get("format") == "deepmzyme_ec_clean30_completed_timing_v1"]
-    _require({row.get("recipe") for row in timings} == {*FAMILIES, "F4_L3"}
+    if v2:
+        from ec_clean30.campaign import timing_recipes_v2
+
+        required_timings = {name for name, _recipe in timing_recipes_v2()}
+    else:
+        required_timings = {*FAMILIES, "F4_L3"}
+    _require({row.get("recipe") for row in timings} == required_timings
              and len(timings) == 7 and all(row.get("status") == "passed" for row in timings),
-             "Freeze 1c needs all six family timings and the L3 timing.")
+             "Freeze 1c needs every timing recipe from its versioned G2 plan.")
     embedding = [row for row in records if row.get("format") == "deepmzyme_ec_clean30_completed_embedding_v1"]
     _require(len(embedding) == 2 and {row.get("kind") for row in embedding} == {"esmc", "esm1b"}
              and all(row.get("status") == "passed" for row in embedding), "Both embedding timings are required.")
@@ -1329,11 +1595,18 @@ def build_freeze1c(evidence: Sequence[Path], out: Path, *, execution_manifest_pa
     _require(len(records) == 10 and len(gates) == 1 and gates[0].get("status") in {"passed", "failed"}
              and gates[0].get("lanes") == (3 if gates[0]["status"] == "passed" else 1),
              "Freeze 1c needs one complete lane decision.")
-    document = {"format": "deepmzyme_ec_clean30_freeze1c_v1", "campaign_id": CAMPAIGN_ID,
+    document = {"format": "deepmzyme_ec_clean30_freeze1c_v2" if v2 else "deepmzyme_ec_clean30_freeze1c_v1",
+                "campaign_id": CAMPAIGN_ID,
                 "freeze1_sha256": source["freeze1_sha256"], "freeze1b_sha256": source["freeze1b_sha256"],
                 "execution_manifest_sha256": source["execution_manifest_sha256"],
-                "l3_vm_hours_per_fold": dict(l3_vm_hours_per_fold), "lanes": gates[0]["lanes"],
+                **source_identity(source), "git_head": source.get("git_head"), "created_utc": provenance.utc_now(),
+                "lanes": gates[0]["lanes"],
                 "evidence": bindings, "budget_authority": "separate_G3_approval_required"}
+    if v2:
+        document["timing_recipes"] = [name for name, _recipe in timing_recipes_v2()]
+        document["pretrain_evidence"] = {"path": str(pretrain_evidence), "sha256": _sha(Path(pretrain_evidence))}
+    else:
+        document["l3_vm_hours_per_fold"] = dict(l3_vm_hours_per_fold)
     _write(out, document)
     return document
 
@@ -1345,6 +1618,466 @@ def _esmc_cached_weight(cache: Path) -> Path:
     snapshot = snapshot_download(repo_id="EvolutionaryScale/esmc-300m-2024-12",
                                  cache_dir=str(cache / "hub"), local_files_only=True)
     return (Path(snapshot) / "data/weights/esmc_300m_2024_12_v0.pth").resolve()
+
+
+def _bound_pretrain_file(source: Mapping[str, Any], role: str, path: Path) -> dict[str, str]:
+    from ec_clean30 import amendment_rules
+
+    tip = _json(_safe_file(REPO_ROOT, source["amendment_path"]))
+    bindings = amendment_rules.file_bindings(amendment_rules.binding_at(tip, role), role)
+    _no_restricted_path(path)
+    _require(path.is_file() and not path.is_symlink(), "A bound pretraining input must be a regular file.")
+    digest = _sha(path)
+    matched = [name for _where, name, expected in bindings if expected == digest]
+    _require(len(matched) == 1, f"Pretraining input does not match the authenticated {role} binding.")
+    return {"path": matched[0], "sha256": digest}
+
+
+def pretrain_sequence_inputs(union_fasta: Path, out: Path) -> dict[str, Any]:
+    """Materialize the producer's sequence map and its public, predeclared CPU parity sample."""
+    from ec_clean30 import pretrain_corpus
+    from embed_helpers.esmc_chain_means import read_fasta
+
+    records = read_fasta(union_fasta)
+    sequences = dict(records)
+    _require(bool(records) and len(records) == len(sequences), "Union FASTA has duplicate or empty accession keys.")
+    keys = pretrain_corpus.parity_sample_keys(sequences)
+    out.mkdir(parents=True, exist_ok=False)
+    mapping = out / "sequence_map.tsv"
+    with mapping.open("x", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t", lineterminator="\n")
+        writer.writerow(("accession", "sha256", "sequence"))
+        for accession, sequence in sorted(sequences.items()):
+            writer.writerow((accession, pretrain_corpus.sequence_key(sequence), sequence))
+    sample = {}
+    for accession, sequence in sorted(sequences.items()):
+        key = pretrain_corpus.sequence_key(sequence)
+        if key in keys and key not in sample:
+            sample[key] = (accession, sequence)
+    sample_fasta = out / "cpu_sample.fasta"
+    with sample_fasta.open("x") as handle:
+        handle.write("".join(f">{sample[key][0]}\n{sample[key][1]}\n" for key in keys))
+    result = {"sequence_map": str(mapping), "sequence_map_sha256": _sha(mapping),
+              "cpu_sample_fasta": str(sample_fasta), "cpu_sample_fasta_sha256": _sha(sample_fasta),
+              "sample_keys": keys, "union_fasta_sha256": _sha(union_fasta)}
+    _write(out / "sequence_inputs.json", result)
+    return result
+
+
+def pretrain_embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], view: views.View, *,
+                               fasta: Path, sequence_map: Path, sequence_map_sha256: str,
+                               output: Path, device: str) -> tuple[list[str], dict[str, str]]:
+    from training.access_guard import FORBIDDEN_READ_ROOTS_ENV, forbidden_roots_environment
+
+    _require(device in {"cpu", "cuda"}, "F6 embedding device must be CPU or CUDA.")
+    roots = view.forbidden_read_roots
+    cache, weights = Path(request["hf_home"]).resolve(), Path(request["esmc_weights"]).resolve()
+    for path in (fasta, sequence_map, output, cache, weights):
+        _outside_guard(path, roots)
+    _require(_sha(sequence_map) == sequence_map_sha256 and cache in weights.parents
+             and _esmc_cached_weight(cache) == weights and _sha(weights) == source["frozen_esmc_weight_sha256"],
+             "F6 embedding input or frozen offline ESMC weight differs.")
+    env = clean_repository_environment()
+    env.update(PYTHONPATH=os.pathsep.join((str(REPO_ROOT / "src"), str(REPO_ROOT))), HF_HOME=str(cache),
+               HF_HUB_CACHE=str(cache / "hub"), HUGGINGFACE_HUB_CACHE=str(cache / "hub"),
+               HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", PYTHONDONTWRITEBYTECODE="1")
+    env.pop("INFRA_PROVIDER", None)
+    if device == "cpu":
+        env["CUDA_VISIBLE_DEVICES"] = ""
+    env[FORBIDDEN_READ_ROOTS_ENV] = forbidden_roots_environment(roots)
+    env = runtime_precision.execution_environment(env, device)
+    # The fp32 producer itself records the precision policy after converting the loaded model.
+    wrapper = ("import runpy,sys\nfrom training.access_guard import install_guard_from_environment\n"
+               "if not install_guard_from_environment():\n    raise SystemExit('forbidden-read roots are required')\n"
+               "sys.argv=sys.argv[1:]\nrunpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
+    argv = [request["python"], "-c", wrapper, "esmc_chain_means", "sequences", "--fasta", str(fasta),
+            "--sequence-map", str(sequence_map), "--sequence-map-sha256", sequence_map_sha256,
+            "--out", str(output), "--layer-index", "26", "--device", device, "--forward-precision", "fp32"]
+    return argv, env
+
+
+def attach_pretrain(request: Mapping[str, Any]) -> dict[str, Any]:
+    """Attach a fold's bound corpus to the verified parent cache; no fit or model build is performed."""
+    from ec_clean30 import pretrain_corpus
+
+    source = verify_execution_source(Path(request["execution_manifest"]),
+        chain_receipt_path=request.get("amendment_chain_receipt"), expected_chain=request.get("expected_chain"))
+    _require(source.get("format") == EXECUTION_V5_FORMAT, "F6 attachment requires execution manifest v5.")
+    authenticated_chain(source)
+    view = views.View.load(request["view"])
+    _require(not view.smoke and view.fold in range(5), "F6 attachment needs its real frozen fold view.")
+    if view.fold > 0:
+        from ec_clean30 import futility
+
+        decision = futility.verify_futility_decision(Path(request["fold0_step_chain"]),
+            freeze1_sha256=source["freeze1_sha256"], amendment_tip=REPO_ROOT / source["amendment_path"],
+            campaign_root=Path(request["campaign_root"]), chain_receipt=Path(source["amendment_chain_receipt"]),
+            expected_chain=source["amendment_chain"])
+        require_same_scientific_identity(decision, source)
+        _require(decision.get("decision") == "continue", "Fold 1-4 F6 preparation is blocked by the futility decision.")
+    _bind_view(view, source)
+    corpus = Path(request["corpus_table"])
+    corpus_binding = _bound_pretrain_file(source, f"inputs.f6_corpus.tables.{view.fold}", corpus)
+    holdout = Path(request["holdout_receipt"])
+    holdout_binding = _bound_pretrain_file(source, f"inputs.f6_holdout.{view.fold}", holdout)
+    identity_work = Path(request["identity_work"])
+    _require(holdout == identity_work.parent / pretrain_corpus.HOLDOUT_RECEIPT_NAME
+             and _json(holdout).get("fold") == view.fold, "F6 hold-out receipt belongs to another identity folder or fold.")
+    cache = Path(request["seq_cache"])
+    digest = request["seq_manifest_sha256"]
+    _require(_sha(cache / "manifest.json") == digest, "F6 parent cache manifest changed.")
+    root = pretrain_corpus.pretrain_dir(view)
+    if not root.exists() or not any(root.iterdir()):
+        if view.fold == 0:
+            owned_attempt = Path(request["execution_root"]) / "runs" / _pretrain_name(request)
+            base_request = {key: value for key, value in request.items() if key not in {"seq_cache", "seq_manifest_sha256"}}
+            _require_pretrain_worker_marker(owned_attempt, base_request, source, view)
+            _require(cache.absolute() == (owned_attempt / "gpu_cache").absolute(),
+                     "Fold-0 F6 attachment must use its owned preparation cache.")
+        pretrain_corpus.build_view_pretrain_corpus(view.root, official_split_dir=request["official_split_dir"],
+            seq_cache_dir=cache, seq_manifest_sha256=digest, identity_work=identity_work,
+            provenance=source, bound_corpus=(corpus, corpus_binding["sha256"]))
+    verification = pretrain_corpus.verify_whole_protein_pretrain(view, required=True)
+    inputs = pretrain_corpus.view_pretrain_inputs(view)
+    receipt = _json(root / pretrain_corpus.CORPUS_RECEIPT_NAME)
+    _require(inputs.corpus_sha256 == corpus_binding["sha256"]
+             and receipt.get("inputs", {}).get("parent_sequence_means", {}).get("manifest_sha256") == digest,
+             "An existing F6 attachment belongs to another bound corpus or parent cache.")
+    return {"status": "passed", "fold": view.fold, "view_manifest_sha256": view.manifest_sha256,
+            "corpus_binding": corpus_binding, "holdout_binding": holdout_binding,
+            "parent_manifest_sha256": digest, "corpus_sha256": inputs.corpus_sha256,
+            "manifest_sha256": inputs.manifest_sha256, "receipt_sha256": inputs.receipt_sha256,
+            "verification": verification, **source_identity(source), "git_head": source["git_head"],
+            "created_utc": provenance.utc_now()}
+
+
+def verify_pretrain_evidence(path: Path, source: Mapping[str, Any], *, view: views.View | None = None) -> dict[str, Any]:
+    """Require the persisted CUDA cache, CPU sample parity and fold-0 attachment before any G2 v2 unit."""
+    _no_restricted_path(path)
+    record = _json(path)
+    require_record_precedence(record, source)
+    _require(record.get("format") == "deepmzyme_ec_clean30_pretrain_complete_v1" and record.get("status") == "passed"
+             and record.get("fold") == 0 and record.get("sequence") == ["gpu_fp32_cache", "attach", "cpu_sample_parity", "verify"],
+             "G2 v2 requires completed F6 cache, parity and attachment preparation.")
+    _require(record.get("parity", {}).get("passed") is True and record["parity"].get("n_compared", 0) > 0
+             and record.get("attachment", {}).get("status") == "passed"
+             and all(re.fullmatch(r"[0-9a-f]{64}", str(record.get("host_transfer", {}).get(key, "")))
+                     for key in ("manifest_sha256", "ack_sha256")),
+             "F6 preparation lacks passed parity, attachment or verified host persistence.")
+    attachment, caches = record["attachment"], record.get("caches", {})
+    require_same_scientific_identity(attachment, source)
+    _require(all(re.fullmatch(r"[0-9a-f]{64}", str(caches.get(device, {}).get("sha256", "")))
+                 for device in ("cuda", "cpu"))
+             and caches["cuda"]["sha256"] == attachment.get("parent_manifest_sha256")
+             and re.fullmatch(r"[0-9a-f]{64}", str(record.get("attachment_snapshot_sha256", ""))),
+             "F6 preparation cache, attachment or snapshot binding differs.")
+    marker = path.parent / PRETRAIN_ATTACHMENT_MARKER
+    if marker.exists():
+        preserved = _pretrain_marker(marker)
+        _require(_sha(marker) == record["attachment_snapshot_sha256"], "The F6 snapshot marker changed after preparation.")
+        require_same_scientific_identity(preserved["identity"], source)
+        verify_preserved_pretrain_attachment(marker, original_attempt=preserved["identity"]["attempt_root"])
+    for key, device in (("gpu_precision", "cuda"), ("cpu_precision", "cpu")):
+        runtime_precision.validate_policy(record[key], device=device)
+    if view is not None:
+        from ec_clean30 import pretrain_corpus
+
+        inputs = pretrain_corpus.view_pretrain_inputs(view)
+        _require(view.fold == 0 and record["attachment"]["view_manifest_sha256"] == view.manifest_sha256
+                 and inputs.receipt_sha256 == record["attachment"]["receipt_sha256"]
+                 and inputs.manifest_sha256 == record["attachment"]["manifest_sha256"]
+                 and inputs.corpus_sha256 == record["attachment"]["corpus_sha256"], "F6 attachment changed before G2.")
+    return record
+
+
+def _pretrain_name(request: Mapping[str, Any]) -> str:
+    attempt = request.get("attempt", 1)
+    _require(type(attempt) is int and attempt > 0, "F6 preparation requires a positive attempt number.")
+    return f"ecc30_pretrain_fold0_attempt{attempt}"
+
+
+def _pretrain_marker(path: Path) -> dict[str, Any]:
+    _require(path.name == PRETRAIN_ATTACHMENT_MARKER and path.is_file() and not path.is_symlink(),
+             "The F6 attachment ownership marker is missing or linked.")
+    record = _json(path)
+    identity = record.get("identity")
+    _require(record.get("format") == PRETRAIN_ATTACHMENT_FORMAT and record.get("status") in {"pending", "restored"}
+             and isinstance(identity, dict) and record.get("identity_sha256") == hashlib.sha256(_bytes(identity)).hexdigest(),
+             "The F6 attachment ownership marker is invalid.")
+    for name in ("attempt_root", "view_root"):
+        value = identity.get(name, "")
+        _require(isinstance(value, str) and PurePosixPath(value).is_absolute()
+                 and ".." not in PurePosixPath(value).parts and str(PurePosixPath(value)) == value,
+                 "The F6 attachment identity has an unsafe original path.")
+    _require(identity.get("unit_id") == PurePosixPath(identity["attempt_root"]).name
+             and isinstance(identity.get("session_id"), str) and bool(identity["session_id"])
+             and all(re.fullmatch(r"[0-9a-f]{64}", str(identity.get(name, "")))
+                     for name in ("view_manifest_sha256", "request_sha256")), "The F6 snapshot identity is incomplete.")
+    source_identity(identity)
+    return record
+
+
+def _write_pretrain_marker(path: Path, record: Mapping[str, Any], *, replace: bool = False) -> None:
+    target = path.with_name(path.name + ".partial") if replace else path
+    if replace and target.exists():
+        _require(target.is_file() and not target.is_symlink()
+                 and _json(target).get("identity_sha256") == record["identity_sha256"],
+                 "An interrupted F6 marker replacement has another identity.")
+        target.unlink()
+    with target.open("xb") as handle:
+        handle.write(_bytes(record))
+        handle.flush()
+        os.fsync(handle.fileno())
+    if replace:
+        os.replace(target, path)
+    descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def prepare_pretrain_attachment(out: Path, *, request: Mapping[str, Any], source: Mapping[str, Any],
+                                view: views.View, request_path: Path) -> Path:
+    """Persist pending ownership before a child can write into the view's attached folder."""
+    out.mkdir(parents=True, exist_ok=False)
+    identity = {"attempt_root": str(out.absolute()), "view_root": str(view.root.absolute()),
+                "view_manifest_sha256": view.manifest_sha256, "session_id": request["session_id"],
+                "pod_id": request.get("pod_id"), "unit_id": _pretrain_name(request),
+                "request_sha256": _sha(request_path), **source_identity(source)}
+    marker = out / PRETRAIN_ATTACHMENT_MARKER
+    _write_pretrain_marker(marker, {"format": PRETRAIN_ATTACHMENT_FORMAT, "status": "pending", "identity": identity,
+                                  "identity_sha256": hashlib.sha256(_bytes(identity)).hexdigest()})
+    descriptor = os.open(out.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+    return marker
+
+
+def _require_pretrain_worker_marker(out: Path, request: Mapping[str, Any], source: Mapping[str, Any],
+                                   view: views.View) -> dict[str, Any]:
+    marker = _pretrain_marker(out / PRETRAIN_ATTACHMENT_MARKER)
+    identity = marker["identity"]
+    request_path = Path(request["execution_root"]) / "commands" / f"{_pretrain_name(request)}.json"
+    _require(marker["status"] == "pending" and identity["attempt_root"] == str(out.absolute())
+             and identity["view_root"] == str(view.root.absolute())
+             and identity["view_manifest_sha256"] == view.manifest_sha256
+             and identity["session_id"] == request["session_id"]
+             and identity["pod_id"] == request.get("pod_id")
+             and request_path.is_file() and identity["request_sha256"] == _sha(request_path)
+             and _json(request_path) == dict(request), "F6 worker requires its parent's pending attachment marker.")
+    require_same_scientific_identity(identity, source)
+    return marker
+
+
+def _attachment_inventory(root: Path) -> list[dict[str, Any]]:
+    _require(root.is_dir() and not root.is_symlink(), "The F6 attachment snapshot is not a regular directory.")
+    files = []
+    for path in sorted(root.rglob("*")):
+        mode = path.lstat().st_mode
+        _require(stat.S_ISREG(mode) or stat.S_ISDIR(mode), "F6 attachment snapshots refuse links and special files.")
+        if stat.S_ISREG(mode):
+            files.append({"path": path.relative_to(root).as_posix(), "sha256": _sha(path), "size_bytes": path.stat().st_size})
+    return files
+
+
+def _fsync_attachment_snapshot(root: Path) -> None:
+    for path in root.rglob("*"):
+        if path.is_file():
+            with path.open("rb") as handle:
+                os.fsync(handle.fileno())
+    directories = [root, *(path for path in root.rglob("*") if path.is_dir())]
+    for path in reversed(directories):
+        descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+
+def verify_preserved_pretrain_attachment(local_marker: Path, *, original_attempt: str | Path) -> dict[str, Any]:
+    """Verify a restored attachment from an independent copy, without opening any original remote path."""
+    local_marker = Path(local_marker)
+    record = _pretrain_marker(local_marker)
+    _require(record["status"] == "restored" and record["identity"]["attempt_root"] == str(PurePosixPath(original_attempt)),
+             "F6 attachment is pending or belongs to another original attempt.")
+    inventory = record.get("files")
+    _require(isinstance(inventory, list) and record.get("inventory_sha256") == hashlib.sha256(_bytes(inventory)).hexdigest()
+             and inventory == _attachment_inventory(local_marker.parent / "attachment_snapshot"),
+             "F6 attachment snapshot inventory or bytes differ.")
+    proof = record.get("termination_proof")
+    _require(isinstance(proof, dict) and proof.get("session_id") == record["identity"]["session_id"]
+             and proof.get("request_sha256") == record["identity"]["request_sha256"]
+             and proof.get("kind") in {"owned_process_group_reaped", "provider_terminal"},
+             "F6 attachment snapshot lacks its termination proof.")
+    return record
+
+
+def restore_pretrain_attachment(marker_path: Path, *, worker_terminated: bool,
+                                termination_proof: Mapping[str, Any],
+                                execution: CampaignExecution | None = None) -> dict[str, Any]:
+    """Snapshot only after the owning parent reaped its child, or explicit verified provider termination.
+
+    A pending marker is never recovered automatically. An external recovery supplies a controller receipt,
+    not an assertion that a former worker probably finished.
+    """
+    marker_path = Path(marker_path)
+    record = _pretrain_marker(marker_path)
+    identity = record["identity"]
+    _require(str(marker_path.parent.absolute()) == identity["attempt_root"], "Restore must run at the owned attempt.")
+    if record["status"] == "restored":
+        return verify_preserved_pretrain_attachment(marker_path, original_attempt=identity["attempt_root"])
+    proof = dict(termination_proof)
+    _require(worker_terminated is True and proof.get("session_id") == identity["session_id"]
+             and proof.get("request_sha256") == identity["request_sha256"], "Verified worker termination is required before snapshotting.")
+    if proof.get("kind") == "provider_terminal":
+        binding = proof.get("receipt", {})
+        path = Path(binding.get("path", ""))
+        _require(path.is_file() and not path.is_symlink() and _sha(path) == binding.get("sha256"),
+                 "F6 recovery needs the immutable controller termination receipt.")
+        terminal = _json(path)
+        _require(terminal.get("session_id") == identity["session_id"] and terminal.get("pod_id") == identity.get("pod_id")
+                 and isinstance(identity.get("pod_id"), str)
+                 and ((terminal.get("status") == "EXITED" and terminal.get("runtime_status") == "stopped")
+                      or (terminal.get("status") == "DELETED" and terminal.get("provider_absence_verified") is True)),
+                 "The controller receipt does not prove termination of this F6 worker's pod.")
+    else:
+        _require(proof.get("kind") == "owned_process_group_reaped" and proof.get("parent_pid") == os.getpid()
+                 and isinstance(execution, CampaignExecution) and execution._lock is not None
+                 and execution.root == marker_path.parent.parent.parent.resolve()
+                 and execution.session_id == identity["session_id"]
+                 and execution.state.get("owner", {}).get("pid") == os.getpid()
+                 and execution.state.get("pending_unit", {}).get("run_name") == identity["unit_id"]
+                 and not execution.state.get("active_child"),
+                 "Only the owning parent may supply a process-group reaping proof.")
+    view = views.View.load(identity["view_root"])
+    _require(view.manifest_sha256 == identity["view_manifest_sha256"], "The F6 attachment view changed before snapshotting.")
+    from ec_clean30 import pretrain_corpus
+
+    attached = pretrain_corpus.pretrain_dir(view)
+    before = _attachment_inventory(attached)
+    staging, destination = marker_path.parent / "attachment_snapshot.partial", marker_path.parent / "attachment_snapshot"
+    if staging.exists():
+        _require(not staging.is_symlink(), "An interrupted F6 snapshot is linked.")
+        shutil.rmtree(staging)
+    if not destination.exists():
+        shutil.copytree(attached, staging)
+        _require(before == _attachment_inventory(staging) == _attachment_inventory(attached),
+                 "F6 attachment changed while its snapshot was copied.")
+        staging.rename(destination)
+    _require(before == _attachment_inventory(destination), "The existing F6 snapshot differs from its attachment.")
+    _fsync_attachment_snapshot(destination)
+    restored = {**record, "status": "restored", "files": before,
+                "inventory_sha256": hashlib.sha256(_bytes(before)).hexdigest(), "termination_proof": proof}
+    _write_pretrain_marker(marker_path, restored, replace=True)
+    return verify_preserved_pretrain_attachment(marker_path, original_attempt=identity["attempt_root"])
+
+
+def require_restored_pretrain_attempts(root: Path) -> None:
+    """Run before CampaignExecution can auto-persist an interrupted attempt or accept an acknowledgment."""
+    runs = Path(root) / "runs"
+    if not runs.exists():
+        return
+    for attempt in runs.iterdir():
+        if not re.fullmatch(r"ecc30_pretrain_fold0_attempt[1-9][0-9]*", attempt.name):
+            continue
+        _require(attempt.is_dir() and not attempt.is_symlink(), "F6 attempt root is linked or irregular.")
+        verify_preserved_pretrain_attachment(attempt / PRETRAIN_ATTACHMENT_MARKER, original_attempt=attempt.absolute())
+
+
+def pretrain_worker(request: Mapping[str, Any]) -> dict[str, Any]:
+    from ec_clean30 import pretrain_corpus
+
+    source, view, _policy = _runtime(request, pretraining=True)
+    _require(source.get("format") == EXECUTION_V5_FORMAT and not view.smoke,
+             "Real F6 cache preparation requires the published execution-v5 source.")
+    union = Path(request["union_fasta"])
+    union_binding = _bound_pretrain_file(source, "inputs.f6_corpus.union_fasta", union)
+    out = Path(request["execution_root"]) / "runs" / _pretrain_name(request)
+    _require_pretrain_worker_marker(out, request, source, view)
+    mapping = pretrain_sequence_inputs(union, out / "sequence_inputs")
+    cpu_cap = request["cpu_cap_prefix"]
+    _verify_container_caps(source, _json(Path(request["vm_probe"]))["container_caps_probe"], cpu_cap,
+                           python=request["python"])
+    caches, precision = {}, {}
+    for device, fasta in (("cuda", union), ("cpu", Path(mapping["cpu_sample_fasta"]))):
+        cache = out / ("gpu_cache" if device == "cuda" else "cpu_sample_cache")
+        argv, env = pretrain_embedding_command(request, source, view, fasta=fasta,
+            sequence_map=Path(mapping["sequence_map"]), sequence_map_sha256=mapping["sequence_map_sha256"],
+            output=cache, device=device)
+        log_path = out / f"{device}_embedding.log"
+        with log_path.open("x") as log:
+            subprocess.run([*(request["cap_prefix"] if device == "cuda" else cpu_cap), *argv], cwd=REPO_ROOT,
+                           env=env, stdout=log, stderr=subprocess.STDOUT, check=True)
+        manifest = _json(cache / "manifest.json")
+        pretrain_corpus.parent_precision_record(manifest, smoke=False)
+        precision[device] = runtime_precision.read_policy_log(log_path, device=device)
+        caches[device] = {"path": str(cache), "sha256": _sha(cache / "manifest.json")}
+        if device == "cuda":
+            attachment = attach_pretrain({**request, "seq_cache": caches["cuda"]["path"],
+                                         "seq_manifest_sha256": caches["cuda"]["sha256"]})
+    parity = pretrain_corpus.compare_sequence_mean_samples(caches["cuda"]["path"], caches["cuda"]["sha256"],
+        caches["cpu"]["path"], caches["cpu"]["sha256"], mapping["sample_keys"])
+    _require(parity.get("passed") is True and parity.get("n_compared") == len(mapping["sample_keys"]),
+             "F6 CUDA/CPU sequence-mean parity failed.")
+    pretrain_corpus.verify_whole_protein_pretrain(view, required=True)
+    record = {"format": "deepmzyme_ec_clean30_pretrain_preparation_v1", "status": "passed", "fold": 0,
+              "unit_id": _pretrain_name(request), "sequence": ["gpu_fp32_cache", "attach", "cpu_sample_parity", "verify"],
+              "union_binding": union_binding, "caches": caches, "parity": parity, "attachment": attachment,
+              "gpu_precision": precision["cuda"], "cpu_precision": precision["cpu"],
+              **source_identity(source), "git_head": source["git_head"], "created_utc": provenance.utc_now()}
+    _write(out / "pretrain_preparation.json", record)
+    return record
+
+
+def run_pretrain_preparation(request: Mapping[str, Any]) -> dict[str, Any]:
+    source, view, policy = _runtime(request, pretraining=True)
+    _require(source.get("format") == EXECUTION_V5_FORMAT, "F6 preparation requires execution manifest v5.")
+    root, name = Path(request["execution_root"]), _pretrain_name(request)
+    out = root / "runs" / name
+    result_path, complete_path = out / "pretrain_preparation.json", out / "pretrain_complete.json"
+    with _execution(request, policy) as execution:
+        if complete_path.exists():
+            return verify_pretrain_evidence(complete_path, source, view=view)
+        if result_path.exists():
+            record = _json(result_path)
+            require_record_precedence(record, source)
+            _require(execution.state.get("pending_unit", {}).get("run_name") == name
+                     and execution.state["pending_unit"].get("persisted"), "F6 preparation awaits independent host acknowledgment.")
+            seconds, transfer = _persistence_seconds(execution)
+            _write(complete_path, {**record, "format": "deepmzyme_ec_clean30_pretrain_complete_v1",
+                                  "host_transfer": transfer, "persistence_seconds": seconds,
+                                  "preparation_sha256": _sha(result_path),
+                                  "attachment_snapshot_sha256": _sha(out / PRETRAIN_ATTACHMENT_MARKER)})
+            return verify_pretrain_evidence(complete_path, source, view=view)
+        _require(not out.exists(), "An incomplete F6 preparation must be preserved before a new explicit attempt.")
+        request_path = root / "commands" / f"{name}.json"
+        _write(request_path, dict(request))
+        execution.admit(name, float(request["forecast_seconds"]))
+        marker = prepare_pretrain_attachment(out, request=request, source=source, view=view, request_path=request_path)
+        started = time.monotonic()
+        failure = None
+        with request_path.with_suffix(".log").open("x") as log:
+            try:
+                result = execution.run_subprocess([*request["cap_prefix"],
+                    *_child_command(request_path, "_pretrain-worker", request["python"])],
+                    cwd=REPO_ROOT, env=clean_repository_environment(), stdout=log, stderr=subprocess.STDOUT,
+                    timeout=float(request["unit_timeout_seconds"]))
+            except Exception as exc:
+                result, failure = None, exc
+        passed = result is not None and result.returncode == 0 and result_path.is_file() and _json(result_path).get("status") == "passed"
+        # run_subprocess has reaped its owned child on success, failure and timeout. Only now can
+        # the out-of-root attached data become a stable, independently preservable snapshot.
+        restore_pretrain_attachment(marker, worker_terminated=True, termination_proof={
+            "kind": "owned_process_group_reaped", "parent_pid": os.getpid(),
+            "session_id": request["session_id"], "request_sha256": _sha(request_path)}, execution=execution)
+        execution.record_result(name, "completed" if passed else "failed_preparation", time.monotonic()-started)
+        persistence = execution.persist([request_path, request_path.with_suffix(".log"), *([out] if out.exists() else [])])
+        _require(passed, "F6 preparation failed; preserve its terminal attempt before retrying."
+                 + (f" {type(failure).__name__}: {failure}" if failure else ""))
+        return {"status": "awaiting_host_ack", "unit_id": name, "persistence": persistence}
 
 
 def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], view: views.View,
@@ -1362,11 +2095,11 @@ def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], vie
              "Embedding timing is not the exact official fold-0 subset.")
     for name in ("timing.fasta", "sequence_map.tsv"):
         _require(receipt.get("files", {}).get(name) == _sha(_safe_file(inputs, name)), "Timing input changed.")
-    env = dict(os.environ)
+    env = clean_repository_environment()
     env.update(PYTHONPATH=os.pathsep.join((str(REPO_ROOT / "src"), str(REPO_ROOT))),
-               HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", PYTHONDONTWRITEBYTECODE="1")
+               HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", PYTHONDONTWRITEBYTECODE="1", NVIDIA_TF32_OVERRIDE="0")
     if request["kind"] == "esmc":
-        from training.access_guard import FORBIDDEN_READ_ROOTS_ENV
+        from training.access_guard import FORBIDDEN_READ_ROOTS_ENV, forbidden_roots_environment
         cache, weights = Path(request["hf_home"]).resolve(), Path(request["esmc_weights"]).resolve()
         _outside_guard(Path(request["hf_home"]), roots)
         _outside_guard(Path(request["esmc_weights"]), roots)
@@ -1377,13 +2110,17 @@ def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], vie
                  "ESMC weights must match Freeze 1 inside the explicit offline cache.")
         env.update(HF_HOME=str(cache), HF_HUB_CACHE=str(cache / "hub"), HUGGINGFACE_HUB_CACHE=str(cache / "hub"))
         env.pop("INFRA_PROVIDER", None)  # The SDK otherwise bypasses its HF cache and loads relative data/weights.
-        env[FORBIDDEN_READ_ROOTS_ENV] = json.dumps(roots)
-        wrapper = ("import runpy,sys; from training.access_guard import install_guard_from_environment; "
-                   "install_guard_from_environment(); sys.argv=sys.argv[1:]; "
-                   "runpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
+        env[FORBIDDEN_READ_ROOTS_ENV] = forbidden_roots_environment(roots)
+        fp32 = source.get("format") == EXECUTION_V5_FORMAT
+        wrapper = ("import runpy,sys\nfrom training.access_guard import install_guard_from_environment\n"
+                   "if not install_guard_from_environment():\n    raise SystemExit('forbidden-read roots are required')\n"
+                   + ("" if fp32 else runtime_precision.bootstrap_code(request["device"]))
+                   + "sys.argv=sys.argv[1:]\nrunpy.run_module('embed_helpers.esmc_chain_means',run_name='__main__')")
         argv = [request["python"], "-c", wrapper, "esmc_chain_means", "sequences", "--fasta", str(inputs / "timing.fasta"),
                 "--sequence-map", str(inputs / "sequence_map.tsv"), "--sequence-map-sha256", receipt["files"]["sequence_map.tsv"],
                 "--out", str(output), "--layer-index", "26", "--device", request["device"]]
+        if fp32:
+            argv += ["--forward-precision", "fp32"]
     elif request["kind"] == "esm1b":
         pins = {"harness": "73c25c5396f89a603a2ca97cf2adf82bb6b220bccf4d9f45801d1bdcf60bede4",
                 "extract_script": "902a69cffa0b35ab16798ba655d7b0e357d0e8efd5a268558cc4b064d2e7719d"}
@@ -1398,7 +2135,8 @@ def embedding_command(request: Mapping[str, Any], source: Mapping[str, Any], vie
         for path, key in ((weights, "weights_sha256"), (contact, "contact_weights_sha256")):
             _require(re.fullmatch(r"[0-9a-f]{64}", str(request.get(key, ""))) and _sha(path) == request[key],
                      "Private local weight checksum differs.")
-        argv = [request["clean_python"], str(request["harness"]), "--runner",
+        argv = [request["clean_python"], str(REPO_ROOT / "src/ec_clean30/runtime_precision.py"), "esm1b-farm",
+                "--harness", str(request["harness"]), "--", "--runner",
                 str(REPO_ROOT / "scripts/run_clean_split30_comparator.py"), "--extract-script", str(request["extract_script"]),
                 "--extract-sha256", pins["extract_script"], "--weights", str(weights), "--weights-sha256", request["weights_sha256"],
                 "--sequence-map", str(inputs / "sequence_map.tsv"), "--sequence-map-sha256", receipt["files"]["sequence_map.tsv"],
@@ -1424,7 +2162,7 @@ def _esm1b_cuda_preflight(request: Mapping[str, Any], env: Mapping[str, str], di
     return {"cuda_preflight_sha256": _sha(path), "cuda_preflight_log_sha256": _sha(log)}
 
 
-def _esm1b_gpu_evidence(output: Path) -> dict[str, str]:
+def _esm1b_gpu_evidence(output: Path) -> dict[str, Any]:
     extraction = _json(output / "farm_receipt.json").get("extraction", {})
     path = output / "extract.log"
     _require(extraction.get("device") == "cuda" and extraction.get("returncode") == 0
@@ -1432,7 +2170,11 @@ def _esm1b_gpu_evidence(output: Path) -> dict[str, str]:
              and extraction.get("log_sha256") == _sha(path)
              and "Transferred model to GPU" in path.read_text().splitlines(),
              "ESM-1b extraction lacks hash-bound evidence that its model actually used CUDA.")
-    return {"extraction_log_sha256": _sha(path)}
+    try:
+        policy = runtime_precision.read_policy_log(path, device="cuda")
+    except RuntimeError as exc:
+        raise Phase3Error(f"ESM-1b child precision policy is invalid: {exc}") from exc
+    return {"extraction_log_sha256": _sha(path), "precision_policy": policy}
 
 
 def embedding_worker(request: Mapping[str, Any]) -> dict[str, Any]:
@@ -1442,6 +2184,7 @@ def embedding_worker(request: Mapping[str, Any]) -> dict[str, Any]:
     directory.mkdir(parents=True)
     started = time.monotonic()
     argv, env = embedding_command(request, source, view, directory / "embeddings")
+    env = clean_repository_environment(env)
     device_evidence = {}
     if request["kind"] == "esm1b" and request["device"] == "cuda":
         device_evidence.update(_esm1b_cuda_preflight(request, env, directory))
@@ -1452,8 +2195,13 @@ def embedding_worker(request: Mapping[str, Any]) -> dict[str, Any]:
     _require(receipt.is_file(), "Embedding producer did not leave its completed receipt.")
     if request["kind"] == "esm1b" and request["device"] == "cuda":
         device_evidence.update(_esm1b_gpu_evidence(directory / "embeddings"))
+    elif request["kind"] == "esmc":
+        path = directory / "embedding.log"
+        device_evidence.update(precision_policy=runtime_precision.read_policy_log(path, device=request["device"]),
+                               child_log_sha256=_sha(path))
     result = {"format": "deepmzyme_ec_clean30_embedding_timing_v1", "status": "passed", "kind": request["kind"],
               "unit_id": name, "source": source, "execution_manifest_sha256": source["execution_manifest_sha256"],
+              **source_identity(source), "git_head": source.get("git_head"), "created_utc": provenance.utc_now(),
               "producer_receipt_sha256": _sha(receipt), "wall_seconds": time.monotonic()-started,
               "n_input_sequences": TIMING_ROWS, "device_evidence": device_evidence}
     _write(directory / "embedding_timing.json", result)
@@ -1471,7 +2219,11 @@ def embed_timing(request: Mapping[str, Any]) -> dict[str, Any]:
     with _execution(request, policy) as execution:
         if timing.exists():
             row = _json(timing)
-            _require(row.get("status") == "passed" and row.get("source") == source, "Embedding source or status differs.")
+            _require(row.get("status") == "passed", "Embedding source or status differs.")
+            if source.get("format") == EXECUTION_V5_FORMAT:
+                require_record_precedence(row, source)
+            else:
+                _require(row.get("source") == source, "Embedding source or status differs.")
             persistence_seconds, transfer = _persistence_seconds(execution)
             _require(execution.state.get("pending_unit", {}).get("run_name") == name
                      and execution.state["pending_unit"].get("persisted"), "Embedding persistence is not acknowledged.")
@@ -1488,7 +2240,8 @@ def embed_timing(request: Mapping[str, Any]) -> dict[str, Any]:
         started = time.monotonic()
         with (root / "commands" / f"{name}.log").open("x") as log:
             result = execution.run_subprocess(_child_command(request_file, "_embedding-worker", request["python"]),
-                cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=float(request["unit_timeout_seconds"]))
+                cwd=REPO_ROOT, stdout=log, stderr=subprocess.STDOUT, env=clean_repository_environment(),
+                timeout=float(request["unit_timeout_seconds"]))
         passed = result.returncode == 0 and timing.is_file() and _json(timing).get("status") == "passed"
         execution.record_result(name, "completed" if passed else "failed_embedding", time.monotonic()-started)
         paths = [request_file, root / "commands" / f"{name}.log"] + ([directory] if directory.exists() else [])
@@ -1504,11 +2257,13 @@ def build_parser() -> argparse.ArgumentParser:
     pack.add_argument("--view", type=Path, required=True)
     pack.add_argument("--archive", type=Path, required=True)
     pack.add_argument("--smoke", action="store_true")
+    pack.add_argument("--fold", type=int, choices=range(5), default=0)
     unpack = actions.add_parser("unpack-view")
     unpack.add_argument("--archive", type=Path, required=True)
     unpack.add_argument("--destination", type=Path, required=True)
     unpack.add_argument("--sha256", required=True)
     unpack.add_argument("--smoke", action="store_true")
+    unpack.add_argument("--fold", type=int, choices=range(5), default=0)
     inputs = actions.add_parser("timing-inputs")
     inputs.add_argument("--training-file", type=Path, required=True)
     inputs.add_argument("--sha256", required=True)
@@ -1531,9 +2286,17 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap.add_argument("--base-runpod", type=Path, required=True)
     bootstrap.add_argument("--base-commit", required=True)
     bootstrap.add_argument("--out", type=Path, required=True)
+    v5 = actions.add_parser("execution-v5-manifest")
+    v5.add_argument("--amendment-chain-receipt", type=Path, required=True)
+    v5.add_argument("--expected-chain", action="append", required=True)
+    v5.add_argument("--timing-inputs-sha256", required=True)
+    v5.add_argument("--out", type=Path, required=True)
+    v5.add_argument("--runtime-locks-path", default=RUNTIME_LOCKS_PATH)
     verify = actions.add_parser("verify-execution")
     verify.add_argument("--manifest", type=Path, required=True)
     verify.add_argument("--draft", action="store_true")
+    verify.add_argument("--amendment-chain-receipt", type=Path)
+    verify.add_argument("--expected-chain", action="append")
     probe = actions.add_parser("vm-probe")
     probe.add_argument("--view", type=Path, required=True)
     probe.add_argument("--execution-manifest", type=Path, required=True)
@@ -1543,7 +2306,10 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--hardware-profile", choices=sorted(GPU_PROFILES), default="gcp_l4")
     probe.add_argument("--cap-probe", type=Path)
     probe.add_argument("--smoke", action="store_true")
-    for name in ("timing-unit", "lane-gate", "embed-timing", "_timing-worker", "_lane-worker", "_embedding-worker"):
+    probe.add_argument("--amendment-chain-receipt", type=Path)
+    probe.add_argument("--expected-chain", action="append")
+    for name in ("timing-unit", "lane-gate", "embed-timing", "_timing-worker", "_lane-worker", "_embedding-worker",
+                 "pretrain-prepare", "_pretrain-worker", "pretrain-attach"):
         action = actions.add_parser(name)
         action.add_argument("--request", type=Path, required=True)
     ack = actions.add_parser("ack-host")
@@ -1554,18 +2320,24 @@ def build_parser() -> argparse.ArgumentParser:
     final = actions.add_parser("freeze1c")
     final.add_argument("--execution-manifest", type=Path, required=True)
     final.add_argument("--evidence", type=Path, action="append", required=True)
-    final.add_argument("--l3-ceilings", type=Path, required=True, help="JSON object with fold keys 0..4 and proposed hours.")
+    final.add_argument("--l3-ceilings", type=Path, help="Legacy v1 only: JSON fold keys 0..4 and proposed hours.")
+    final.add_argument("--amendment-chain-receipt", type=Path)
+    final.add_argument("--expected-chain", action="append")
+    final.add_argument("--pretrain-evidence", type=Path)
     final.add_argument("--out", type=Path, required=True)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    for key in tuple(os.environ):
+        if key.startswith("GIT_"):
+            del os.environ[key]
     args = build_parser().parse_args(argv)
     try:
         if args.action == "pack-view":
-            result = pack_view(args.view, args.archive, smoke=args.smoke)
+            result = pack_view(args.view, args.archive, smoke=args.smoke, fold=args.fold)
         elif args.action == "unpack-view":
-            result = unpack_view(args.archive, args.destination, expected_sha256=args.sha256, smoke=args.smoke)
+            result = unpack_view(args.archive, args.destination, expected_sha256=args.sha256, smoke=args.smoke, fold=args.fold)
         elif args.action == "timing-inputs":
             result = timing_inputs(args.training_file, args.out, expected_sha256=args.sha256)
         elif args.action == "execution-manifest":
@@ -1577,21 +2349,31 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = make_runpod_manifest(args.base_automation, args.out, base_commit=args.base_commit)
         elif args.action == "bootstrap-execution-manifest":
             result = make_bootstrap_manifest(args.base_runpod, args.out, base_commit=args.base_commit)
+        elif args.action == "execution-v5-manifest":
+            result = make_execution_v5_manifest(args.amendment_chain_receipt, args.out,
+                timing_inputs_sha256=args.timing_inputs_sha256, expected_chain=args.expected_chain,
+                runtime_locks_path=args.runtime_locks_path)
         elif args.action == "verify-execution":
-            result = verify_execution_source(args.manifest, require_published=not args.draft)
+            result = verify_execution_source(args.manifest, require_published=not args.draft,
+                chain_receipt_path=args.amendment_chain_receipt, expected_chain=args.expected_chain)
         elif args.action == "vm-probe":
             result = vm_probe(args.view, args.execution_manifest, args.out, cap_prefix=_json(args.cap_json),
                               python=args.python, smoke=args.smoke, hardware_profile=args.hardware_profile,
-                              cap_probe_path=args.cap_probe)
+                              cap_probe_path=args.cap_probe, chain_receipt_path=args.amendment_chain_receipt,
+                              expected_chain=args.expected_chain)
         elif args.action == "ack-host":
             result = host_ack(args.manifest, args.downloaded_root, args.ack, transfer_seconds=args.transfer_seconds)
         elif args.action == "freeze1c":
             result = build_freeze1c(args.evidence, args.out, execution_manifest_path=args.execution_manifest,
-                                    l3_vm_hours_per_fold=_json(args.l3_ceilings))
+                l3_vm_hours_per_fold=_json(args.l3_ceilings) if args.l3_ceilings else None,
+                chain_receipt_path=args.amendment_chain_receipt, expected_chain=args.expected_chain,
+                pretrain_evidence=args.pretrain_evidence)
         else:
             _no_restricted_path(args.request)
             action = {"timing-unit": run_timing_unit, "lane-gate": run_lane_gate, "embed-timing": embed_timing,
-                      "_timing-worker": timing_worker, "_lane-worker": lane_worker, "_embedding-worker": embedding_worker}[args.action]
+                      "_timing-worker": timing_worker, "_lane-worker": lane_worker, "_embedding-worker": embedding_worker,
+                      "pretrain-prepare": run_pretrain_preparation, "_pretrain-worker": pretrain_worker,
+                      "pretrain-attach": attach_pretrain}[args.action]
             result = action(_json(args.request))
         public = {key: result[key] for key in ("status", "format", "kind", "unit_id", "recipe", "archive_sha256",
                   "archive_bytes", "unpacked_bytes", "files", "n_rows", "published", "execution_manifest_sha256",

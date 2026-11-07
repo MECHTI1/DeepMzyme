@@ -302,8 +302,8 @@ def test_independent_watchdog_stops_after_losing_continuous_owner(fixture, monke
     assert stopped == ['owned-stop'] and state['deadline_unix'] == 9000
 
 
-@pytest.mark.parametrize("field,value,match", [("requested_hours", 2.1, "runtime"),
-    ("max_runtime_seconds", 7200, "runtime"), ("gross_ceiling_usd", 5.01, "ceiling"),
+@pytest.mark.parametrize("field,value,match", [("requested_hours", 1, "runtime"),
+    ("max_runtime_seconds", 7201, "runtime"), ("gross_ceiling_usd", 0, "gross_ceiling"),
     ("image", "example/mutable:latest", "digest"), ("gpu_id", "NVIDIA H100", "hardware profile"),
     ("volume_gb", 0, "volume_gb"), ("stop_reserve_seconds", 60, "shutdown-request reserve"),
     ("runtime_environment", {"NVIDIA_TF32_OVERRIDE": "1"}, "full-FP32"),
@@ -313,6 +313,25 @@ def test_config_refuses_widening(fixture, field, value, match):
     config["runpod"][field] = value
     with pytest.raises(rc.RunpodError, match=match):
         rc.validate_config(config)
+
+
+def test_session_budget_is_explicit_configuration_not_historical_g2_constants(fixture):
+    config, _, api, _, _ = fixture
+    config["runpod"].update(requested_hours=6, max_runtime_seconds=6 * 3600, gross_ceiling_usd=20)
+    result = rc.validate_config(config)
+    assert result["max_total_seconds"] == 6 * 3600
+    assert result["gross_ceiling_usd"] == 20
+    assert json.loads(api.read_text()) == {"pods": []}
+
+
+@pytest.mark.parametrize("field", ["requested_hours", "max_runtime_seconds", "gross_ceiling_usd"])
+@pytest.mark.parametrize("value", [None, 0, -1, float("inf"), float("nan"), True])
+def test_session_budget_requires_finite_positive_explicit_values(fixture, field, value):
+    config, _, api, _, _ = fixture
+    config["runpod"][field] = value
+    with pytest.raises(rc.RunpodError, match=field):
+        rc.validate_config(config)
+    assert json.loads(api.read_text()) == {"pods": []}
 
 
 def test_stale_quote_and_unsafe_credentials_never_create(fixture):
@@ -771,6 +790,35 @@ def preservation(controller, primary, mirror, *, workload=False):
         "primary_root": str(primary), "mirror_root": str(mirror), "files": files,
         "remote_inventory_path": "remote_inventory.json", "host_pull_manifests": manifests}))
     return path
+
+
+@pytest.mark.parametrize("name", ["runs/ecc30_pretrain_fold0_attempt1/pretrain_attachment.json",
+                                 "runs/science_futility/attempt1/scientific_outputs_pending.json"])
+def test_closeout_refuses_unrestored_external_scientific_outputs(fixture, tmp_path, mirror_device, name):
+    _, _, api, _, make = fixture
+    controller = make()
+    controller.start()
+    primary = tmp_path / "primary"
+    proof_path = preservation(controller, primary, mirror_device)
+    proof = json.loads(proof_path.read_text())
+    proof["execution_root"] = "/workspace/campaign/runs/fold0/g2"
+    payload = json.dumps({"status": "pending"}).encode()
+    row = {"path": name, "sha256": hashlib.sha256(payload).hexdigest(), "size_bytes": len(payload)}
+    inventory = json.loads((primary / "remote_inventory.json").read_text())
+    inventory["files"].append(row)
+    inventory_bytes = json.dumps(inventory).encode()
+    for root in (primary, mirror_device):
+        path = root / name
+        path.parent.mkdir(parents=True)
+        path.write_bytes(payload)
+        (root / "remote_inventory.json").write_bytes(inventory_bytes)
+    proof["files"].append(row)
+    entry = next(item for item in proof["files"] if item["path"] == "remote_inventory.json")
+    entry.update(sha256=hashlib.sha256(inventory_bytes).hexdigest(), size_bytes=len(inventory_bytes))
+    proof_path.write_text(json.dumps(proof))
+    with pytest.raises(rc.RunpodError, match="External scientific outputs"):
+        controller.closeout(proof_path)
+    assert not json.loads(api.read_text()).get("deleted_ids")
 
 
 @pytest.fixture

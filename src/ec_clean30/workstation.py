@@ -50,6 +50,26 @@ QUEUE = tuple([("timing-unit", name) for name in ("F1", "F2", "F3", "F4", "F5", 
               + [("lane-gate", "lane_batch"), ("embed-timing", "esmc"), ("embed-timing", "esm1b")])
 
 
+def measurement_queue(source: Mapping[str, Any]) -> tuple[tuple[str, str], ...]:
+    """The canonical science-owned timing recipes, followed by the frozen lane and embedding checks."""
+    if source.get("format") != phase3.EXECUTION_V5_FORMAT:
+        return QUEUE
+    from ec_clean30 import campaign
+
+    recipes = campaign.timing_recipes_v2()
+    return tuple([("timing-unit", name) for name, _recipe in recipes]
+                 + [("timing-unit", "lane_serial_1"), ("timing-unit", "lane_serial_2"),
+                    ("lane-gate", "lane_batch"), ("embed-timing", "esmc"), ("embed-timing", "esm1b")])
+
+
+def _g2_download_limit(config: Mapping[str, Any], source: Mapping[str, Any]) -> int:
+    if source.get("format") != phase3.EXECUTION_V5_FORMAT:
+        return PAYLOAD_CEILING_BYTES
+    limit = config.get("g2_max_download_bytes")
+    _require(type(limit) is int and limit > 0, "Execution v5 requires its positive G2 preservation-byte ceiling.")
+    return limit
+
+
 class WorkstationError(RuntimeError):
     """Readiness, ownership, persistence or a fixed operational ceiling refused work."""
 
@@ -106,6 +126,75 @@ def _epoch(value: str) -> float:
     return parsed.timestamp()
 
 
+def session_chain_receipt_path(config: Mapping[str, Any]) -> Path:
+    """The write-once receipt of this workstation session."""
+    path = Path(config.get("amendment_chain_receipt", Path(config["state_root"]) / "amendment_chain_receipt.json"))
+    _require(path.is_absolute() and path.resolve() == path and not path.is_symlink(),
+             "The session amendment-chain receipt needs a canonical absolute path.")
+    return path
+
+
+def _chain_manifest(config: Mapping[str, Any]) -> dict[str, Any] | None:
+    document = _json(Path(config["execution_manifest"]))
+    return document if document.get("format") == phase3.EXECUTION_V5_FORMAT else None
+
+
+def prepare_session_chain_receipt(config: Mapping[str, Any]) -> dict[str, Any]:
+    """Verify once on the full clone before allocation; recovery checks the existing receipt.
+
+    This published-source dispatch hook is never called by draft preflight or the historical launcher.
+    It cannot create a draft receipt or replace one when the source changes.
+    """
+    from ec_clean30 import amendment2, amendment_chain
+
+    document = _chain_manifest(config)
+    _require(document is not None, "A session chain receipt requires execution manifest v5.")
+    chain = document.get("amendment_chain")
+    _require(isinstance(chain, list) and len(chain) >= 2
+             and all(isinstance(item, str) and re.fullmatch(r"[0-9a-f]{64}", item) for item in chain),
+             "Execution v5 requires the manifest's complete amendment-2 chain.")
+    tip = phase3.REPO_ROOT / _relative(document["amendment_path"])
+    receipt = session_chain_receipt_path(config)
+    if not receipt.exists():
+        receipt.parent.mkdir(parents=True, exist_ok=True)
+        amendment2.write_chain_receipt(tip, document["freeze1_sha256"], receipt,
+                                      draft=False, expected_chain=chain, repo=phase3.REPO_ROOT)
+    verified = amendment_chain.check_chain_receipt(receipt, repo=phase3.REPO_ROOT, expected_chain=chain)
+    _require(verified.get("published") is True and verified.get("tip_sequence", 0) >= 2
+             and verified.get("scientific_identity_sha256") == document.get("scientific_identity_sha256")
+             and verified.get("fit_chain") == document.get("fit_chain"),
+             "The session receipt differs from the manifest's published scientific identity.")
+    source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=True,
+                                            chain_receipt_path=receipt, expected_chain=chain)
+    return {"path": str(receipt), "sha256": _sha(receipt), "expected_chain": chain,
+            "scientific_identity_sha256": source["scientific_identity_sha256"], "fit_chain": source["fit_chain"]}
+
+
+def _execution_source(config: Mapping[str, Any], *, published: bool) -> dict[str, Any]:
+    document = _chain_manifest(config) if config.get("execution_scope") == "g2_then_fold0_v5" else None
+    _require(config.get("execution_scope") != "g2_then_fold0_v5" or document is not None,
+             "The v5 session requires an execution-v5 manifest.")
+    options = {} if document is None else {"chain_receipt_path": session_chain_receipt_path(config),
+                                          "expected_chain": document["amendment_chain"]}
+    return phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published, **options)
+
+
+def _remote_chain_request(config: Mapping[str, Any], source: Mapping[str, Any]) -> dict[str, Any]:
+    if source.get("format") != phase3.EXECUTION_V5_FORMAT:
+        return {}
+    return {"amendment_chain_receipt": f"{config['remote_campaign']}/g2_requests/amendment_chain_receipt.json",
+            "expected_chain": list(source["amendment_chain"])}
+
+
+def _chain_cli_options(fields: Mapping[str, Any]) -> list[str]:
+    if not fields:
+        return []
+    result = ["--amendment-chain-receipt", fields["amendment_chain_receipt"]]
+    for digest in fields["expected_chain"]:
+        result += ["--expected-chain", digest]
+    return result
+
+
 class ControllerTransport:
     """Only controller lifecycle tools and its generated SSH configuration."""
 
@@ -126,18 +215,22 @@ class ControllerTransport:
     def controller(self, name: str, *args: str, timeout: float = 120) -> str:
         _require(name in {"status", "report", "start", "stop", "pycharm-info", "fallback"}, "Unknown controller action.")
         result = subprocess.run([str(self.controller_root / "bin" / f"vm-{name}"), *args],
-                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout)
+                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
+                                env=phase3.clean_repository_environment())
         _require(result.returncode == 0, f"Controller {name} failed: {(result.stderr or result.stdout)[-2000:]}")
         return result.stdout
 
     def remote(self, argv: list[str], *, cwd: str | None = None, timeout: float = 60) -> str:
-        command = shlex.join([str(value) for value in argv])
+        clean_exec = ("import os,sys; env={k:v for k,v in os.environ.items() if not k.startswith('GIT_')}; "
+                      "os.execvpe(sys.argv[1],sys.argv[1:],env)")
+        command = shlex.join([self.bootstrap_python, "-c", clean_exec, *[str(value) for value in argv]])
         if cwd:
             command = f"cd {shlex.quote(_absolute(cwd))} && {command}"
         result = subprocess.run(["ssh", "-F", str(self.ssh_config), "-o", "BatchMode=yes", "-o",
                                  "ConnectTimeout=20", "-o", "ServerAliveInterval=10", "-o",
                                  "ServerAliveCountMax=2", self.ssh_alias, command],
-                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=self._bounded(timeout))
+                                stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=self._bounded(timeout),
+                                env=phase3.clean_repository_environment())
         _require(result.returncode == 0, f"Remote command failed ({result.returncode}): {result.stderr[-2000:]}")
         _require(len(result.stdout) <= 4 * 1024 * 1024, "Unexpectedly large remote control output.")
         return result.stdout
@@ -159,7 +252,7 @@ class ControllerTransport:
         self.remote(["mkdir", "-p", str(PurePosixPath(remote).parent)])
         subprocess.run(["scp", "-q", "-F", str(self.ssh_config), "-o", "BatchMode=yes",
                        str(local), f"{self.ssh_alias}:{remote}"], check=True, timeout=self._bounded(timeout),
-                       stdin=subprocess.DEVNULL)
+                       stdin=subprocess.DEVNULL, env=phase3.clean_repository_environment())
 
     def fetch_official_weight(self, url: str, partial: str) -> dict[str, Any]:
         """A terminal result permits upload fallback; an ambiguous SSH failure does not."""
@@ -203,7 +296,7 @@ print(json.dumps(result))
         local.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(["scp", "-q", "-F", str(self.ssh_config), "-o", "BatchMode=yes",
                         f"{self.ssh_alias}:{_absolute(remote)}", str(local)], check=True, timeout=self._bounded(timeout),
-                       stdin=subprocess.DEVNULL)
+                       stdin=subprocess.DEVNULL, env=phase3.clean_repository_environment())
 
     def download_files(self, remote_root: str, local_root: Path, files: list[str], *, timeout: float) -> None:
         listing = local_root / ".pending_files"
@@ -211,23 +304,26 @@ print(json.dumps(result))
         ssh = shlex.join(["ssh", "-F", str(self.ssh_config), "-o", "BatchMode=yes", "-o", "ConnectTimeout=20"])
         subprocess.run(["rsync", "-a", "-s", "--timeout=45", f"--files-from={listing}", "-e", ssh,
                         f"{self.ssh_alias}:{_absolute(remote_root)}/", str(local_root) + "/"],
-                       check=True, timeout=self._bounded(timeout), stdin=subprocess.DEVNULL)
+                       check=True, timeout=self._bounded(timeout), stdin=subprocess.DEVNULL,
+                       env=phase3.clean_repository_environment())
 
     def launch(self, argv: list[str], *, cwd: str, job_dir: str) -> None:
         # An immutable job directory makes loss of the launch SSH response safe to reconcile.
         worker = ("import json,os,pathlib,subprocess,sys,time; d=pathlib.Path(sys.argv[1]); "
                   "a=json.loads(sys.argv[2]); c=sys.argv[3]; "
-                  "p=subprocess.run(a,cwd=c); q=d/'result.partial'; "
+                  "env={k:v for k,v in os.environ.items() if not k.startswith('GIT_')}; "
+                  "p=subprocess.run(a,cwd=c,env=env); q=d/'result.partial'; "
                   "q.write_text(json.dumps({'returncode':p.returncode,'finished_unix':time.time()})); "
                   "q.replace(d/'result.json')")
         launcher = ("import json,os,pathlib,subprocess,sys; d=pathlib.Path(sys.argv[1]); "
                     "d.parent.mkdir(parents=True,exist_ok=True); "
                     "\ntry: d.mkdir()\nexcept FileExistsError: sys.exit(0)\n"
                     "a=json.loads(sys.argv[2]); c=sys.argv[3]; "
+                    "env={k:v for k,v in os.environ.items() if not k.startswith('GIT_')}; "
                     "(d/'command.json').write_text(json.dumps({'argv':a,'cwd':c})); "
                     "f=(d/'stdout.log').open('xb'); "
                     "p=subprocess.Popen([sys.executable,'-c',sys.argv[4],str(d),json.dumps(a),c], "
-                    "stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,start_new_session=True); "
+                    "stdin=subprocess.DEVNULL,stdout=f,stderr=subprocess.STDOUT,start_new_session=True,env=env); "
                     "(d/'pid').write_text(str(p.pid))")
         self.remote([self.bootstrap_python, "-c", launcher, _absolute(job_dir), json.dumps(argv),
                      _absolute(cwd), worker])
@@ -611,6 +707,14 @@ def _weight_url(config: Mapping[str, Any], item: Mapping[str, Any]) -> str | Non
     return url
 
 
+def _validate_remote_campaign(config: Mapping[str, Any]) -> None:
+    root = config.get("remote_campaign")
+    _require(isinstance(root, str), "An explicit remote_campaign path is required.")
+    _absolute(root)
+    _require(PurePosixPath(root).name == phase3.CAMPAIGN_ID,
+             f"remote_campaign must end with {phase3.CAMPAIGN_ID!r} for the frozen view location rule.")
+
+
 def _validate_runpod_structure(config: Mapping[str, Any]) -> None:
     """Reject incomplete runtime references before reading large archives."""
     runtimes = config.get("runtime_environments", {})
@@ -626,6 +730,7 @@ def _validate_runpod_structure(config: Mapping[str, Any]) -> None:
                          and item.get("sha256") == runtime["archive_sha256"]
                          and item.get("conda_unpack") is True for item in stage),
                  f"The {key} runtime lacks a locked, relocatable archive.")
+    _validate_remote_campaign(config)
     if config.get("artifact_cache"):
         from ec_clean30 import runpod_bootstrap
         runpod_bootstrap.validate_cache_config(config)
@@ -636,12 +741,17 @@ def _validate_runpod_structure(config: Mapping[str, Any]) -> None:
 
 
 def _validate_published_runtime_locks(config: Mapping[str, Any], source: Mapping[str, Any]) -> None:
-    """Bind execution-v4 environments to the complete published runtime recipes."""
-    if source.get("format") != phase3.BOOTSTRAP_FORMAT:
+    """Bind execution environments to the complete manifest-authenticated runtime recipes."""
+    if source.get("format") not in {phase3.BOOTSTRAP_FORMAT, phase3.EXECUTION_V5_FORMAT}:
         return
-    path = phase3.REPO_ROOT / PUBLISHED_RUNTIME_LOCKS_PATH
+    binding = source.get("runtime_locks") if source.get("format") == phase3.EXECUTION_V5_FORMAT else {
+        "path": PUBLISHED_RUNTIME_LOCKS_PATH, "sha256": PUBLISHED_RUNTIME_LOCKS_SHA256}
+    _require(isinstance(binding, dict) and set(binding) == {"path", "sha256"}
+             and re.fullmatch(r"[0-9a-f]{64}", str(binding.get("sha256", ""))),
+             "The execution manifest must bind its complete published runtime lock document.")
+    path = phase3.REPO_ROOT / _relative(binding["path"])
     _require(path.is_file() and not path.is_symlink() and path.resolve() == path
-             and _sha(path) == PUBLISHED_RUNTIME_LOCKS_SHA256,
+             and _sha(path) == binding["sha256"],
              "The published runtime lock document is missing or changed.")
     document = _json(path)
     _require(document.get("format") == "deepmzyme_ec_clean30_runtime_locks_v1"
@@ -666,12 +776,14 @@ def _validate_published_runtime_locks(config: Mapping[str, Any], source: Mapping
 
 
 def _local_storage(config: Mapping[str, Any]) -> None:
+    payload_limit = (_g2_download_limit(config, {"format": phase3.EXECUTION_V5_FORMAT})
+                     if config.get("execution_scope") == "g2_then_fold0_v5" else PAYLOAD_CEILING_BYTES)
     secondary = Path(config["secondary_drive"]).resolve()
     _require(secondary.is_mount(), "The independent secondary drive is not mounted.")
     for key in ("durable_root", "state_root"):
         _require(secondary in Path(_absolute(config[key])).resolve().parents,
                  f"{key} must be on the independent secondary drive.")
-    _require(shutil.disk_usage(secondary).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
+    _require(shutil.disk_usage(secondary).free >= 5 * GIB + payload_limit,
              "The independent drive lacks the 5 GiB reserve plus the download allowance.")
     _require(shutil.disk_usage(phase3.REPO_ROOT).free >= 5 * GIB, "Internal ext4 is below its 5 GiB reserve.")
     if config.get("provider") == "runpod":
@@ -679,8 +791,42 @@ def _local_storage(config: Mapping[str, Any]) -> None:
         while not ancestor.exists():
             ancestor = ancestor.parent
         _require(ancestor.stat().st_dev != secondary.stat().st_dev
-                 and shutil.disk_usage(ancestor).free >= 5 * GIB + PAYLOAD_CEILING_BYTES,
+                 and shutil.disk_usage(ancestor).free >= 5 * GIB + payload_limit,
                  "Runpod requires an independent NVMe mirror with the payload allowance and reserve.")
+
+
+def _posix_storage_plan(config, unpacked_bytes, view_bytes):
+    root_value = config.get("runpod", {}).get("posix_root")
+    if root_value is None:
+        return None
+    from ec_clean30 import runpod_bootstrap
+    _require(config.get("artifact_cache"), "Local POSIX preparation requires the authenticated cache bootstrap.")
+    root = PurePosixPath(_absolute(root_value))
+    campaign = PurePosixPath(_absolute(config["remote_campaign"]))
+    prefixes, components = [], {"views": view_bytes}
+    for key in ("fit", "esm1b"):
+        archive = config["runtime_environments"][key]["archive"]
+        item = next(row for row in config["stage"] if row["remote"] == archive)
+        prefix = PurePosixPath(_absolute(item["extract_to"]))
+        _require(prefix.parent == root, "Both runtime prefixes must be direct children of runpod.posix_root.")
+        python = config["remote_python"] if key == "fit" else config["embedding"]["esm1b"]["clean_python"]
+        _require(python == str(prefix / "bin/python"), "Runtime interpreter differs from its local extraction prefix.")
+        prefixes.append(str(prefix))
+        components[prefix.name] = unpacked_bytes[item["remote"]]
+    for item in config["stage"]:
+        _require(PurePosixPath(item["remote"]).is_relative_to(campaign),
+                 "POSIX staging keeps bulk artifacts beneath the nonsymlink campaign root.")
+        destinations = [item["remote"]] + ([item["extract_to"]] if item["kind"] == "tar" else [])
+        _require(not any(PurePosixPath(path).is_relative_to(campaign / name)
+                         for path in destinations for name in ("views", "g2_requests")),
+                 "Bulk staging cannot use the protected view or request aliases.")
+        if item["kind"] == "tar" and PurePosixPath(item["extract_to"]).is_relative_to(root):
+            _require(item["extract_to"] in prefixes, "Unbudgeted extraction beneath the local POSIX root.")
+    request = {"format": "deepmzyme_ec_clean30_posix_storage_v1", "campaign_root": str(campaign),
+               "local_root": str(root), "runtime_prefixes": prefixes, "component_bytes": components,
+               "required_free_bytes": math.ceil(sum(components.values()) * 1.25) + 5 * GIB}
+    runpod_bootstrap.validate_posix_storage_request(request)
+    return request
 
 
 def _preparation_identity(config: Mapping[str, Any]) -> str:
@@ -700,7 +846,7 @@ def _prepared_preflight(config: Mapping[str, Any], config_path: Path, *, publish
     _validate_runpod_structure(config)
     from ec_clean30 import runpod_controller
     cost = runpod_controller.validate_config(config)
-    source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
+    source = _execution_source(config, published=published)
     _validate_published_runtime_locks(config, source)
     root = Path(config["state_root"])
     proof_path, baseline_path = root / "prepared_inputs.json", root / "prepared_config.json"
@@ -736,6 +882,7 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
         repo_url = config["repo_url"]
         _require(config["hardware_profile"] in {"runpod_l4", "runpod_rtx4090"}, "Explicit Runpod hardware profile required.")
     else:
+        _validate_remote_campaign(config)
         controller = Path(config["controller_root"]).resolve()
         controller_config = _controller_config(controller)
         _identity(config, controller_config)
@@ -746,16 +893,22 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
         if _fallback_policy(config):
             _require(os.access(controller / "bin/vm-fallback", os.X_OK), "Controller vm-fallback is unavailable.")
     _require(repo_url.startswith("https://github.com/"), "Checkout URL must use canonical HTTPS.")
-    origin = subprocess.check_output(["git", "-C", str(phase3.REPO_ROOT), "config", "--get", "remote.origin.url"], text=True).strip()
+    origin = subprocess.check_output(["git", "-C", str(phase3.REPO_ROOT), "config", "--get", "remote.origin.url"],
+                                     text=True, env=phase3.clean_repository_environment()).strip()
     _require(_repository_key(origin) == _repository_key(repo_url), "Local/controller repository identities differ.")
-    source = phase3.verify_execution_source(Path(config["execution_manifest"]), require_published=published)
+    source = _execution_source(config, published=published)
     _validate_published_runtime_locks(config, source)
+    queue = measurement_queue(source)
+    v5 = source.get("format") == phase3.EXECUTION_V5_FORMAT
+    _require(not v5 or runpod, "Execution v5 uses only the Runpod transport.")
+    max_seconds = cost["max_total_seconds"] if v5 else MAX_G2_SECONDS
+    payload_limit = _g2_download_limit(config, source)
     _local_storage(config)
     for key in ("remote_repo", "remote_python", "remote_campaign", "view_archive", "timing_inputs", "bootstrap_python"):
         _absolute(config[key])
     for command in ("ssh", "scp", "rsync"):
         _require(shutil.which(command), f"Required local transport command is unavailable: {command}")
-    staged, content, staging_bytes = set(), set(), 0
+    staged, content, staging_bytes, unpacked_bytes = set(), set(), 0, {}
     for item in config["stage"]:
         local, remote = Path(item["local"]).resolve(), _absolute(item["remote"])
         _require(local.is_file() and _sha(local) == item["sha256"], "A staging file is missing or changed.")
@@ -767,6 +920,7 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
         if item["kind"] == "tar":
             _absolute(item["extract_to"])
             _require(type(item.get("conda_unpack", False)) is bool, "conda_unpack must be a boolean.")
+            unpacked_bytes[remote] = 0
             with tarfile.open(local) as archive:
                 for member in archive:
                     name = member.name.removeprefix("./").rstrip("/")
@@ -777,20 +931,25 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
                         content.add(str(PurePosixPath(item["extract_to"]) / name))
                     if member.isfile():
                         staging_bytes += member.size
+                        unpacked_bytes[remote] += member.size
     _require(config["view_archive"] in staged and any(item["remote"] == config["view_archive"]
              and item["sha256"] == config["view_archive_sha256"] for item in config["stage"]), "Fold-0 archive lacks a staging pin.")
     view_item = next(item for item in config["stage"] if item["remote"] == config["view_archive"])
     view_bytes = _view_archive_bytes(Path(view_item["local"]))
     if view_item["kind"] == "file":
         staging_bytes += view_bytes
-    _require(set(config["bounds"]) == {name for _, name in QUEUE}, "G2 must retain the exact twelve-event queue.")
+    _require(set(config["bounds"]) == {name for _, name in queue}, "G2 must retain its exact versioned measurement queue.")
     for name, bound in config["bounds"].items():
+        _require(not v5 or set(bound) == {"forecast_seconds", "unit_timeout_seconds"},
+                 "V5 timing bounds cannot override source, paths or runtime authority.")
         forecast = _number(bound["forecast_seconds"], name + " forecast")
         timeout = _number(bound["unit_timeout_seconds"], name + " timeout")
-        _require(timeout <= forecast and forecast * 1.25 + RESERVE_SECONDS < MAX_G2_SECONDS,
-                 "A bounded unit cannot fit the fixed G2 admission window.")
+        _require(timeout <= forecast and forecast * 1.25 + RESERVE_SECONDS < max_seconds,
+                 "A bounded unit cannot fit the authenticated session admission window.")
     for key in ("fit", "esm1b"):
         profile = config["profiles"][key]
+        _require(not v5 or set(profile) == {"cap_prefix", "memory_limit_bytes"},
+                 "V5 resource profiles may contain only their explicit cap and memory limit.")
         _require(isinstance(profile["cap_prefix"], list) and profile["cap_prefix"]
                  and all(isinstance(value, str) and value for value in profile["cap_prefix"]), "Explicit resource-cap argv required.")
         _number(profile["memory_limit_bytes"], "memory cap")
@@ -831,9 +990,10 @@ def preflight(config: Mapping[str, Any], config_path: Path, *, published: bool =
                      f"The {key} runtime lacks a locked, relocatable archive.")
     _require(all(path in content for path in required), "The prepared staging closure omits an embedding input or interpreter.")
     return {"status": "ready" if source.get("published") else "draft_unpublished", "source": source,
-            "cost": cost, "queue": [{"action": action, "name": name} for action, name in QUEUE],
+            "posix_storage": _posix_storage_plan(config, unpacked_bytes, view_bytes) if runpod else None,
+            "cost": cost, "queue": [{"action": action, "name": name} for action, name in queue],
             "staging_peak_bytes": staging_bytes, "pending_runtime_checks": ["VM free space", "both CUDA interpreters", "source and view probe"],
-            "max_provider_seconds": MAX_G2_SECONDS, "payload_ceiling_bytes": PAYLOAD_CEILING_BYTES,
+            "max_provider_seconds": max_seconds, "payload_ceiling_bytes": payload_limit,
             "launch_command": shlex.join([sys.executable, str(phase3.REPO_ROOT / "scripts/run_ec_clean30_workstation.py"),
                                           "--config", str(config_path.resolve()), "--run"])}
 
@@ -894,11 +1054,12 @@ def _stage_file(config: Mapping[str, Any], transport: ControllerTransport, item:
 
 def _stage_checkout(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> None:
     origin = config["repo_url"] if config.get("provider") == "runpod" else _controller_config(transport.controller_root)["REPO_URL"]
-    checkout = ("import pathlib,subprocess,sys; p=pathlib.Path(sys.argv[1]); "
-                "\nif not p.exists(): subprocess.run(['git','clone','--filter=blob:none',sys.argv[2],str(p)],check=True)\n"
-                "assert not subprocess.check_output(['git','-C',str(p),'status','--porcelain'],text=True).strip(), 'Remote checkout is dirty'; "
-                "subprocess.run(['git','-C',str(p),'fetch','origin','main:refs/remotes/origin/main'],check=True); "
-                "subprocess.run(['git','-C',str(p),'checkout','--detach',sys.argv[3]],check=True)")
+    checkout = ("import os,pathlib,subprocess,sys; p=pathlib.Path(sys.argv[1]); "
+                "env={k:v for k,v in os.environ.items() if not k.startswith('GIT_')}; "
+                "\nif not p.exists(): subprocess.run(['git','clone','--filter=blob:none',sys.argv[2],str(p)],check=True,env=env)\n"
+                "assert not subprocess.check_output(['git','-C',str(p),'status','--porcelain'],text=True,env=env).strip(), 'Remote checkout is dirty'; "
+                "subprocess.run(['git','-C',str(p),'fetch','origin','main:refs/remotes/origin/main'],check=True,env=env); "
+                "subprocess.run(['git','-C',str(p),'checkout','--detach',sys.argv[3]],check=True,env=env)")
     transport.remote([config["bootstrap_python"], "-c", checkout, config["remote_repo"], origin, source["git_head"]], timeout=300)
 
 
@@ -954,6 +1115,35 @@ def _bootstrap_runpod(config, transport, source, session):
                           "--no-install-recommends", *tools["missing"]], timeout=180)
     _write(Path(config["state_root"]) / "bootstrap_tools.json", tools)
     return evidence
+
+
+def _prepare_runpod_storage(config, transport, ready, session):
+    request = ready.get("posix_storage")
+    if request is None:
+        _require(config.get("runpod", {}).get("posix_root") is None,
+                 "Local POSIX storage lacks its prebilling capacity plan.")
+        return
+    from ec_clean30 import runpod_bootstrap
+    runpod_bootstrap.validate_posix_storage_request(request)
+    helper = phase3.REPO_ROOT / "src/ec_clean30/runpod_bootstrap.py"
+    digest = _sha(helper)
+    _require(digest == ready["source"]["source_sha256"]["src/ec_clean30/runpod_bootstrap.py"],
+             "POSIX preparation helper differs from its published pin.")
+    root = f"/workspace/.deepmzyme-bootstrap/{session['session_id']}"
+    remote_helper = f"{root}/{digest}.py"
+    transport.upload(helper, remote_helper)
+    _require(transport.stat_file(remote_helper) == {"sha256": digest, "size_bytes": helper.stat().st_size},
+             "POSIX preparation helper transfer differs.")
+    local = Path(config["state_root"]) / "posix_storage_request.json"
+    _write(local, request)
+    remote_request = f"{root}/posix_storage_request.json"
+    transport.upload(local, remote_request)
+    result = json.loads(transport.remote([config["bootstrap_python"], remote_helper,
+                        "prepare-posix-storage", "--request", remote_request], timeout=90))
+    _require(result.get("status") == "passed" and result.get("helper_sha256") == digest
+             and all(result.get(key) == value for key, value in request.items()),
+             "POSIX preparation lacks a successful source-bound receipt.")
+    _write(Path(config["state_root"]) / "posix_storage.json", result)
 
 
 def _stage_runpod_runtime(config, transport, source, check_session):
@@ -1031,11 +1221,39 @@ def _verify_runtime_lock(config: Mapping[str, Any], transport: ControllerTranspo
              f"The {key} interpreter differs from its complete published runtime lock.")
 
 
+def stage_session_chain_receipt(config: Mapping[str, Any], transport: ControllerTransport,
+                                source: Mapping[str, Any]) -> dict[str, Any]:
+    """Ship the workstation receipt, refusing a changed local proof or a foreign remote file."""
+    fields = _remote_chain_request(config, source)
+    if not fields:
+        return fields
+    local = session_chain_receipt_path(config)
+    current = _execution_source(config, published=True)
+    _require(current["scientific_identity_sha256"] == source["scientific_identity_sha256"]
+             and current["fit_chain"] == source["fit_chain"]
+             and current["amendment_chain"] == source["amendment_chain"]
+             and current["execution_manifest_sha256"] == source["execution_manifest_sha256"],
+             "The source or chain changed before the session receipt was shipped.")
+    expected = {"sha256": _sha(local), "size_bytes": local.stat().st_size}
+    remote = fields["amendment_chain_receipt"]
+    existing = transport.stat_file(remote)
+    if existing is None:
+        partial = remote + ".partial"
+        transport.upload(local, partial)
+        _require(transport.stat_file(partial) == expected, "The uploaded amendment-chain receipt differs.")
+        transport.remote(["mv", "--", partial, remote])
+        existing = transport.stat_file(remote)
+    _require(existing == expected, "The remote amendment-chain receipt is foreign or changed.")
+    return fields
+
+
 def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport, source: Mapping[str, Any]) -> tuple[str, str]:
     repo, campaign = config["remote_repo"], config["remote_campaign"]
     manifest = str(PurePosixPath(repo) / Path(config["execution_manifest"]).resolve().relative_to(phase3.REPO_ROOT).as_posix())
     runner = f"{repo}/scripts/run_ec_clean30_phase3.py"
-    transport.remote([config["remote_python"], runner, "verify-execution", "--manifest", manifest], cwd=repo)
+    chain_fields = stage_session_chain_receipt(config, transport, source)
+    chain_args = _chain_cli_options(chain_fields)
+    transport.remote([config["remote_python"], runner, "verify-execution", "--manifest", manifest, *chain_args], cwd=repo)
     runpod = config.get("provider") == "runpod"
     profile = config.get("hardware_profile", "gcp_l4")
     cap_probe = _container_probe(config, transport) if runpod else None
@@ -1090,7 +1308,7 @@ def _runtime_preflight(config: Mapping[str, Any], transport: ControllerTransport
     if transport.read_json(probe, optional=True) is None:
         arguments = [config["remote_python"], runner, "vm-probe", "--view", view,
                           "--execution-manifest", manifest, "--out", probe, "--cap-json", cap,
-                          "--python", config["remote_python"]]
+                          "--python", config["remote_python"], *chain_args]
         if runpod:
             arguments += ["--hardware-profile", profile, "--cap-probe", cap_probe]
         transport.remote(arguments, cwd=repo, timeout=300)
@@ -1202,25 +1420,96 @@ def _fallback_after_stockout(config: dict[str, Any], state: dict[str, Any], stat
     _selected_fallback(config, state, state_path)
 
 
-def _execute_queue(config, transport, state, state_path, session, ready, manifest, probe, check_session):
-    """The one fixed queue, shared by both provider controllers."""
-    state_root = Path(config["state_root"])
-    transport.reserve_seconds = 30
-    host = HostPull(transport, Path(config["durable_root"]), state_root,
-                    max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=session["deadline_unix"],
-                    mirror_root=Path(config["mirror_root"]) if config.get("mirror_root") else None)
+def _g2_common_request(config, transport, session, source, manifest, probe):
     root = f"{config['remote_campaign']}/runs/fold0/g2"
     common = {**session, "execution_manifest": manifest, "view": f"{config['remote_campaign']}/views/fold0",
               "vm_probe": probe, "execution_root": root, "durable_root": str(Path(config["durable_root"]).resolve()),
               "persistence_mode": "host_pull", "python": config["remote_python"], "device": "cuda", "smoke": False,
               "attempt": 1}
+    common.update(_remote_chain_request(config, source))
     if config.get("provider") == "runpod":
         common.update(hardware_profile=config["hardware_profile"],
                       main_model_probe=f"{config['remote_campaign']}/g2_requests/main_model_probe.json",
                       main_model_probe_sha256=_sha(Path(config["state_root"]) / "main_model_probe.json"),
                       esm1b_model_probe=f"{config['remote_campaign']}/g2_requests/esm1b_model_probe.json",
                       esm1b_model_probe_sha256=_sha(Path(config["state_root"]) / "esm1b_model_probe.json"))
-    for action, name in QUEUE:
+        if source.get("format") == phase3.EXECUTION_V5_FORMAT:
+            common.update(provider="runpod", runpod_config_sha256=transport.stop_controller.config_sha,
+                          plan_version=2)
+    return common
+
+
+def _g2_host(config, transport, session, source):
+    return HostPull(transport, Path(config["durable_root"]), Path(config["state_root"]),
+                    max_download_bytes=_g2_download_limit(config, source), deadline_unix=session["deadline_unix"],
+                    mirror_root=Path(config["mirror_root"]) if config.get("mirror_root") else None)
+
+
+def _g2_evidence(config, relative, source):
+    local = Path(config["durable_root"]) / _relative(relative)
+    _require(local.is_file() and not local.is_symlink(), "The completed G2 evidence was not preserved locally.")
+    record = _json(local)
+    phase3.require_record_precedence(record, source)
+    return {"local_path": str(local.resolve()), "remote_path": f"{config['remote_campaign']}/runs/fold0/g2/{relative}",
+            "sha256": _sha(local)}
+
+
+def _prepare_g2_v5(config, transport, state, state_path, session, ready, manifest, probe, check_session, prepare_g2):
+    """Persist the cache/CPU parity/attachment unit before the first G2 timing admission."""
+    source = ready["source"]
+    _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and callable(prepare_g2),
+             "Execution v5 needs its published-source preparation hook.")
+    specification = dict(prepare_g2(config, None, state, session, ready, manifest, probe, check_session))
+    _require(set(specification) == {"pretrain_request", "max_download_bytes"}
+             and specification["max_download_bytes"] == _g2_download_limit(config, source),
+             "G2 preparation changes the approved preservation ceiling.")
+    options = specification["pretrain_request"]
+    allowed = {"union_fasta", "corpus_table", "holdout_receipt", "official_split_dir", "identity_work",
+               "hf_home", "esmc_weights", "cpu_cap_prefix", "forecast_seconds", "unit_timeout_seconds"}
+    _require(isinstance(options, dict) and set(options) == allowed,
+             "G2 preparation accepts only its bound F6 inputs and explicit resource/time bounds.")
+    common = _g2_common_request(config, transport, session, source, manifest, probe)
+    request = {**common, **config["profiles"]["fit"], **options}
+    binding = hashlib.sha256(json.dumps(request, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
+    _require(state.get("pretrain_request_sha256", binding) == binding,
+             "The session's F6 preparation request changed during recovery.")
+    state["pretrain_request_sha256"] = binding
+    state["g2_max_download_bytes"] = specification["max_download_bytes"]
+    _write(state_path, state)
+    forecast = _number(request["forecast_seconds"], "F6 preparation forecast")
+    timeout = _number(request["unit_timeout_seconds"], "F6 preparation timeout")
+    _require(timeout <= forecast, "F6 preparation timeout exceeds its admission forecast.")
+    check_session()
+    _require(session["deadline_unix"] - time.time() >= forecast * 1.25 + RESERVE_SECONDS,
+             "F6 preparation does not fit the owned session and closeout reserve.")
+    relative = "runs/ecc30_pretrain_fold0_attempt1/pretrain_complete.json"
+    host = _g2_host(config, transport, session, source)
+    completed = complete_remote_unit(transport, host, request,
+        runner=f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py", action="pretrain-prepare",
+        remote_request=f"{config['remote_campaign']}/g2_requests/pretrain_prepare.json",
+        completed_relative=relative, timeout=timeout + 60)
+    _require(completed.get("status") == "passed", "F6 cache, parity and attachment must pass before G2 v2.")
+    phase3.require_record_precedence(completed, source)
+    evidence = _g2_evidence(config, relative, source)
+    _require(_json(Path(evidence["local_path"])) == completed, "Preserved F6 preparation receipt differs.")
+    state["pretrain_preparation"] = {**evidence, "record": completed}
+    _write(state_path, state)
+
+
+def _execute_queue(config, transport, state, state_path, session, ready, manifest, probe, check_session):
+    """The exact versioned queue, with all receipts preserved before continuation."""
+    source = ready["source"]
+    transport.reserve_seconds = 30
+    host = _g2_host(config, transport, session, source)
+    common = _g2_common_request(config, transport, session, source, manifest, probe)
+    root = common["execution_root"]
+    v5 = source.get("format") == phase3.EXECUTION_V5_FORMAT
+    if v5:
+        pretrain = state.get("pretrain_preparation", {})
+        _require(pretrain.get("record", {}).get("status") == "passed" and pretrain.get("remote_path"),
+                 "G2 v2 requires the completed cache, parity and attachment unit.")
+        common["pretrain_evidence"] = pretrain["remote_path"]
+    for action, name in measurement_queue(source):
         if name in state["completed"]:
             continue
         check_session()
@@ -1237,18 +1526,48 @@ def _execute_queue(config, transport, state, state_path, session, ready, manifes
         else:
             request.update(kind=name, timing_inputs=config["timing_inputs"], **config["embedding"][name])
             complete = f"runs/ecc30timing_embed_{name}_attempt1/embedding_complete.json"
+        _require(not v5 or all(request.get(key) == value for key, value in common.items()),
+                 "A v5 timing request cannot override session, source or preparation identity.")
         remaining = session["deadline_unix"] - time.time()
         _require(remaining >= request["forecast_seconds"] * 1.25 + RESERVE_SECONDS,
                  "Next complete unit does not fit the approved allocation; retain evidence and request a new decision.")
         completed = complete_remote_unit(transport, host, request, runner=f"{config['remote_repo']}/scripts/run_ec_clean30_phase3.py",
             action=action, remote_request=f"{config['remote_campaign']}/g2_requests/{name}.json",
             completed_relative=complete, timeout=request["unit_timeout_seconds"] + 60)
-        _require(completed.get("execution_manifest_sha256") == ready["source"]["execution_manifest_sha256"]
+        expected_identity = phase3.source_identity(ready["source"])
+        _require(all(completed.get(key) == value for key, value in expected_identity.items())
                  and completed.get("status") in ({"passed", "failed"} if action == "lane-gate" else {"passed"}),
                  "The completed unit receipt is failed or foreign.")
+        if v5:
+            phase3.require_record_precedence(completed, source)
+            state.setdefault("g2_evidence", {})[name] = _g2_evidence(config, complete, source)
         state["completed"].append(name)
         _write(state_path, state)
     state["status"] = "measurements_complete"
+
+
+def _complete_g2_v5(config, transport, state, state_path, session, ready, manifest, probe, check_session, complete_g2):
+    """Materialize Freeze 1c locally from persisted evidence, then ship its immutable bytes."""
+    source = ready["source"]
+    _require(state.get("completed") == [name for _, name in measurement_queue(source)] and callable(complete_g2),
+             "Freeze 1c v2 requires the complete authenticated G2 v2 queue.")
+    specification = dict(complete_g2(config, None, state, session, ready, manifest, probe, check_session))
+    _require(set(specification) == {"local", "remote", "sha256"}
+             and specification["remote"] == f"{config['remote_campaign']}/g2_requests/freeze1c_v2.json",
+             "Freeze 1c v2 must use its exact session staging destination.")
+    local = Path(specification["local"])
+    _require(local.is_absolute() and local.resolve() == local and local.is_file() and not local.is_symlink()
+             and _sha(local) == specification["sha256"], "The Freeze 1c v2 file is missing or changed.")
+    record = _json(local)
+    _require(record.get("format") == "deepmzyme_ec_clean30_freeze1c_v2",
+             "The continuation requires Freeze 1c v2.")
+    phase3.require_record_precedence(record, source)
+    _require(not state.get("freeze1c") or state["freeze1c"] == specification,
+             "The session's Freeze 1c v2 binding cannot change during recovery.")
+    check_session()
+    _stage_file(config, transport, {**specification, "kind": "file"})
+    state["freeze1c"] = specification
+    _write(state_path, state)
 
 
 class RunpodTransport(ControllerTransport):
@@ -1272,13 +1591,22 @@ class RunpodTransport(ControllerTransport):
         raise WorkstationError("GCP lifecycle commands cannot operate a Runpod allocation.")
 
 
-def _preserve_runpod_outputs(config, transport, controller, session):
+def _preserve_runpod_outputs(config, transport, controller, session, *, output=None, receipt_name="preservation_receipt.json",
+                            max_download_bytes=PAYLOAD_CEILING_BYTES, host_state_root=None):
     """Read every output back twice before authorizing deletion of persistent storage."""
-    root = f"{config['remote_campaign']}/runs/fold0/g2"
+    output = output or {"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
+                        "primary_root": config["durable_root"], "mirror_root": config["mirror_root"]}
+    root = output["execution_root"]
     program = ("import hashlib,json,pathlib,sys; p=pathlib.Path(sys.argv[1]); files=[]; "
         "\nif p.exists():\n for f in sorted(p.rglob('*')):\n"
         "  assert not f.is_symlink(), 'Output symlink is not eligible for cleanup'\n"
         "  if f.is_file():\n"
+        "   if f.name == 'hot_storage.json':\n"
+        "    marker=json.loads(f.read_text()); assert marker.get('status') == 'restored', 'Pending hot data blocks cleanup'\n"
+        "   if f.name == 'pretrain_attachment.json':\n"
+        "    marker=json.loads(f.read_text()); assert marker.get('status') == 'restored', 'Pending pretraining data blocks cleanup'\n"
+        "   if f.name == 'scientific_outputs_pending.json':\n"
+        "    marker=json.loads(f.read_text()); assert marker.get('status') == 'restored', 'Pending scientific data blocks cleanup'\n"
         "   with f.open('rb') as h: digest=hashlib.file_digest(h,'sha256').hexdigest()\n"
         "   files.append({'path':f.relative_to(p).as_posix(),'size_bytes':f.stat().st_size,'sha256':digest})\n"
         "s=json.loads((p/'execution_state.json').read_text()) if (p/'execution_state.json').exists() else {}; "
@@ -1286,9 +1614,9 @@ def _preserve_runpod_outputs(config, transport, controller, session):
     inventory = json.loads(transport.remote([config["bootstrap_python"], "-c", program, root], timeout=120))
     identity = {"pod_id": session["pod_id"], "session_id": session["session_id"], "config_sha256": controller.config_sha}
     inventory.update(format="deepmzyme_ec_clean30_runpod_remote_inventory_v1", **identity)
-    host = HostPull(transport, Path(config["durable_root"]), Path(config["state_root"]),
-                    max_download_bytes=PAYLOAD_CEILING_BYTES, deadline_unix=session["deadline_unix"],
-                    mirror_root=Path(config["mirror_root"]))
+    host = HostPull(transport, Path(output["primary_root"]), Path(host_state_root or config["state_root"]),
+                    max_download_bytes=max_download_bytes, deadline_unix=session["deadline_unix"],
+                    mirror_root=Path(output["mirror_root"]))
     missing, count = [], 0
     for entry in inventory["files"]:
         name = _relative(entry["path"])
@@ -1320,11 +1648,372 @@ def _preserve_runpod_outputs(config, transport, controller, session):
                     and isinstance(document.get("ack_path"), str) and isinstance(document.get("files"), list)):
                 manifests.append(name)
     receipt = {"format": "deepmzyme_ec_clean30_runpod_preservation_v1", **identity,
+               "execution_root": root,
                "primary_root": str(host.root), "mirror_root": str(host.mirror_root), "files": files,
                "remote_inventory_path": relative, "host_pull_manifests": manifests}
-    path = Path(config["state_root"]) / "preservation_receipt.json"
+    path = Path(config["state_root"]) / receipt_name
     _write(path, receipt)
     return path
+
+
+def _preserve_runpod_session_outputs(config, transport, controller, session, state):
+    outputs = state.get("phase4", {}).get("preservation_roots")
+    g2_limit = state.get("g2_max_download_bytes", PAYLOAD_CEILING_BYTES)
+    if outputs is None:
+        return _preserve_runpod_outputs(config, transport, controller, session, max_download_bytes=g2_limit)
+    receipts = []
+    for index, output in enumerate(outputs):
+        path = _preserve_runpod_outputs(config, transport, controller, session, output=output,
+                                       receipt_name=f"preservation_receipt_{index}.json",
+                                       max_download_bytes=state["phase4"]["max_download_bytes"] if index else g2_limit,
+                                       host_state_root=state["phase4"].get("host_state_root") if index else None)
+        receipts.append({"path": str(path.resolve()), "sha256": _sha(path)})
+    path = Path(config["state_root"]) / "preservation_set.json"
+    _write(path, {"format": "deepmzyme_ec_clean30_runpod_preservation_set_v1",
+                  "pod_id": session["pod_id"], "session_id": session["session_id"],
+                  "config_sha256": controller.config_sha, "receipts": receipts})
+    return path
+
+
+def _storage_facts(path: Path) -> tuple[int, int]:
+    while not path.exists():
+        path = path.parent
+    return path.stat().st_dev, shutil.disk_usage(path).free
+
+
+def validate_phase4_plan(config: Mapping[str, Any], source: Mapping[str, Any],
+                         request: Mapping[str, Any], preapproval: Mapping[str, Any]) -> dict[str, Any]:
+    """Read-only transport validation before allocation; measured G2 fields are added later."""
+    from ec_clean30 import campaign, container_caps, phase4
+
+    _require(source.get("format") == phase3.EXECUTION_V5_FORMAT and request.get("fold") == 0
+             and type(request.get("fold")) is int, "The reviewed v5 continuation must be the complete fold-0 plan.")
+    required = {"local_plan", "execution_manifest", "remote_runner", "durable_root", "mirror_root",
+                "host_state_root", "max_download_bytes", "remote_request_template", "queue_actions",
+                "family_forecasts", "family_timeouts", "clean_forecasts", "clean_timeouts",
+                "embedding_forecasts", "embedding_timeouts", "scientific_forecasts", "scientific_timeouts",
+                "refit_forecast_seconds", "refit_timeout_seconds", "stage_files"}
+    _require(required <= set(request), "The reviewed Phase-4 transport request is incomplete.")
+    _require(request["queue_actions"] == ["clean_embeddings", "clean_fits", "s1"]
+             and request.get("queue_requests", {}) == {}, "V5 uses its fixed pipeline without queue overrides.")
+    attempts = request.get("attempts", {})
+    _require(isinstance(attempts, dict) and all(isinstance(name, str) and name
+             and type(value) is int and value > 0 for name, value in attempts.items()),
+             "Phase-4 attempts must be explicit positive integers.")
+    _require(request.get("clean_scope", "inner") == "inner", "The initial CLEAN queue must use its inner closure.")
+    _require(type(request.get("run_final_clean", False)) is bool, "Final CLEAN dispatch must be an explicit boolean.")
+    local_plan = Path(request["local_plan"])
+    _require(local_plan.is_absolute() and local_plan.resolve() == local_plan and local_plan.is_file(),
+             "The reviewed local fold plan must be an existing canonical file.")
+    plan = campaign.build_fold_plan_v2(0)
+    _require(_json(local_plan) == plan, "The reviewed fold plan differs from the canonical amendment-2 plan.")
+    clean_ids = {unit["unit_id"] for unit in phase4.clean_units()}
+    authorized_clean = set(clean_ids)
+    if request.get("run_final_clean", False):
+        authorized_clean.update(unit["unit_id"] for unit in phase4.clean_final_units(0))
+    _require(preapproval.get("campaign_id") == campaign.CAMPAIGN_ID
+             and preapproval.get("scope") == phase4.V5_SCOPE and preapproval.get("allowed_folds") == [0]
+             and preapproval.get("plan_sha256_by_fold") == {"0": plan["plan_sha256"]}
+             and preapproval.get("allowed_steps") == {"0": ["S1", "S4"]}
+             and preapproval.get("clean_unit_ids") == sorted(authorized_clean),
+             "G3 preapproval must cover exactly the reviewed fold-0 fitted and CLEAN units.")
+    _require(not {"allocations", "freeze1c_sha256", "git_head", "created_utc"}.intersection(preapproval),
+             "G3 preapproval cannot contain fabricated measured fields.")
+
+    forecasts = []
+    def bounds(forecast, timeout, name):
+        seconds = _number(forecast, name + " forecast")
+        _require(_number(timeout, name + " timeout") <= seconds, "A Phase-4 timeout exceeds its forecast.")
+        _require(1.25 * seconds + RESERVE_SECONDS < config["runpod"]["max_runtime_seconds"],
+                 "A Phase-4 unit cannot fit the reviewed allocation and shutdown reserve.")
+        forecasts.append(seconds)
+
+    families = {unit.family for unit in phase4.s1_units(plan)}
+    groups = {"family": families, "clean": clean_ids, "embedding": {"base", "masked"},
+              "scientific": set(phase4.SCIENTIFIC_STEPS)}
+    for group, names in groups.items():
+        for suffix in ("forecasts", "timeouts"):
+            values = request[f"{group}_{suffix}"]
+            _require(isinstance(values, dict) and set(values) == names,
+                     f"Phase-4 {group} {suffix} must cover the exact canonical queue.")
+        for name in names:
+            bounds(request[f"{group}_forecasts"][name], request[f"{group}_timeouts"][name], str(name))
+    bounds(request["refit_forecast_seconds"], request["refit_timeout_seconds"], "refit")
+
+    template = request["remote_request_template"]
+    needed = {"plan", "view", "campaign_root", "execution_root", "durable_root", "python", "device",
+              "persistence_mode", "step_chain", "fold0_step_chain", "scientific_inputs", "science_cap_profile",
+              "clean_cap_profile", "cap_prefix", "distance_cap_prefix", "memory_limit_bytes", "threads",
+              "clean_inputs", "base_farm", "masked_farm", "clean_python", "clean_clone", "training_script",
+              "distance_helper", "export_script", "embedding_python", "harness", "extract_script", "weights",
+              "weights_sha256", "contact_weights_sha256", "hot_work_root", "working_bytes", "distance_map_bytes"}
+    _require(isinstance(template, dict) and needed <= set(template), "The reviewed Phase-4 worker template is incomplete.")
+    _require(template.get("clean_scope", "inner") == "inner", "The initial CLEAN worker must use its inner closure.")
+    def remote_path(value):
+        _require(isinstance(value, str) and bool(value), "Every remote Phase-4 path must be explicit.")
+        path = PurePosixPath(_absolute(value))
+        _require(str(path) == value, "Remote Phase-4 paths must be canonical lexical paths.")
+        return path
+
+    campaign_root, repo = remote_path(config["remote_campaign"]), remote_path(config["remote_repo"])
+    execution_root = campaign_root / "runs/fold0/phase4"
+    _require(request["remote_runner"] == str(repo / "scripts/run_ec_clean30_phase4.py")
+             and template["view"] == str(campaign_root / "views/fold0")
+             and template["campaign_root"] == str(campaign_root)
+             and template["execution_root"] == str(execution_root)
+             and template["durable_root"] == request["durable_root"]
+             and template["python"] == config["remote_python"]
+             and template["clean_python"] == config["embedding"]["esm1b"]["clean_python"]
+             and template["embedding_python"] == template["clean_python"]
+             and template["device"] == "cuda" and template["persistence_mode"] == "host_pull",
+             "The reviewed worker changes the owned runtime, view or output roots.")
+    path_keys = {"plan", "step_chain", "fold0_step_chain", "clean_inputs", "base_farm", "masked_farm",
+                 "clean_clone", "training_script", "distance_helper", "export_script", "harness", "extract_script",
+                 "weights", "hot_work_root", "python", "clean_python", "embedding_python"}
+    paths = {key: remote_path(template[key]) for key in path_keys}
+    for kind, key in (("base", "base_farm"), ("masked", "masked_farm")):
+        unit_id = f"ecc30_clean_embed_{kind}"
+        expected = execution_root / "runs" / unit_id / f"attempt{attempts.get(unit_id, 1)}" / "farm"
+        _require(paths[key] == expected, "CLEAN farms must name the reviewed embedding attempts' generated outputs.")
+    _require(execution_root in paths["step_chain"].parents and paths["fold0_step_chain"] == paths["step_chain"],
+             "Fold-0 step chains must share the owned execution root.")
+    scientific = template["scientific_inputs"]
+    scientific_names = {"components", "clean_sanity_record", "clean_sanity_dispositions", "clean_sanity_verify_all",
+                        "futility_out", "f6_corpus", "r1_inner_lists"}
+    _require(isinstance(scientific, dict) and set(scientific) == scientific_names
+             and isinstance(scientific["clean_sanity_dispositions"], list)
+             and isinstance(scientific["r1_inner_lists"], list) and len(scientific["r1_inner_lists"]) == 4
+             and len(set(scientific["r1_inner_lists"])) == 4,
+             "The reviewed scientific inputs must include all sanity, selection and futility paths.")
+    for name, value in scientific.items():
+        values = value if isinstance(value, list) else [value]
+        for item in values:
+            path = remote_path(item)
+            if name in {"clean_sanity_record", "clean_sanity_verify_all", "futility_out"}:
+                _require(execution_root in path.parents, "Scientific outputs must stay under the owned execution root.")
+    profile = template["clean_cap_profile"]
+    _require(isinstance(profile, dict) and set(profile) ==
+             {"cgroup_root", "cpu_cores", "memory_bytes", "distance_map_memory_bytes"}
+             and profile == preapproval.get("clean_cap_profile")
+             and profile.get("cgroup_root") == config["cgroup_root"]
+             and all(type(profile[key]) is int and profile[key] > 0
+                     for key in ("cpu_cores", "memory_bytes", "distance_map_memory_bytes"))
+             and template["threads"] == profile["cpu_cores"]
+             and template["memory_limit_bytes"] == profile["memory_bytes"],
+             "The reviewed CLEAN resource profile differs from G3 or the qualified runtime.")
+    for key, memory in (("cap_prefix", "memory_bytes"), ("distance_cap_prefix", "distance_map_memory_bytes")):
+        _require(template[key] == container_caps.cap_prefix(template["python"], Path(repo), profile["cgroup_root"],
+                    cpu_cores=profile["cpu_cores"], memory_bytes=profile[memory]),
+                 "The reviewed CLEAN command differs from its explicit kernel resource profile.")
+    science = template["science_cap_profile"]
+    _require(isinstance(science, dict) and set(science) == {"cgroup_root", "cpu_cores", "memory_bytes"}
+             and science == preapproval.get("science_cap_profile") and science.get("cgroup_root") == config["cgroup_root"]
+             and all(type(science[key]) is int and science[key] > 0 for key in ("cpu_cores", "memory_bytes")),
+             "The reviewed scientific resource profile differs from G3 or the qualified runtime.")
+    _require(type(template["working_bytes"]) is int and template["working_bytes"] > 0
+             and type(template["distance_map_bytes"]) is int and 0 < template["distance_map_bytes"] <= phase4.MAX_DISTANCE_BYTES
+             and template["hot_work_root"] == preapproval.get("hot_work_root"),
+             "CLEAN needs its explicit approved working-space forecasts and hot root.")
+    protected = [repo, campaign_root / "views/fold0", execution_root,
+                 paths["python"].parent.parent, paths["clean_python"].parent.parent,
+                 *(paths[key] for key in ("clean_clone", "clean_inputs", "base_farm", "masked_farm"))]
+    hot = paths["hot_work_root"]
+    _require(all(hot != path and hot not in path.parents and path not in hot.parents for path in protected),
+             "CLEAN hot storage overlaps source, runtime, view, inputs or canonical outputs.")
+    input_pins = preapproval.get("clean_inputs_sha256_by_scope")
+    if input_pins is None:
+        input_pins = {"fold0_inner": preapproval.get("clean_inputs_sha256")}
+    _require(isinstance(input_pins, dict) and set(input_pins) ==
+             ({"fold0_inner", "fold0_final"} if request.get("run_final_clean", False) else {"fold0_inner"})
+             and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) for value in input_pins.values())
+             and all(isinstance(template[key], str) and re.fullmatch(r"[0-9a-f]{64}", template[key])
+                     for key in ("weights_sha256", "contact_weights_sha256")),
+             "Reviewed CLEAN inputs and embedding weights require SHA-256 pins.")
+    if request.get("run_final_clean", False):
+        final = request.get("final_clean_request")
+        _require(isinstance(final, dict) and {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts"} <= set(final)
+                 and set(final) <= {"clean_scope", "clean_inputs", "clean_forecasts", "clean_timeouts", "farms_by_unit", "farms_by_arm"}
+                 and final["clean_scope"] == "final", "Final CLEAN needs its separately reviewed input closure and forecasts.")
+        final_ids = {unit["unit_id"] for unit in phase4.clean_final_units(0)}
+        for suffix in ("forecasts", "timeouts"):
+            _require(isinstance(final[f"clean_{suffix}"], dict) and set(final[f"clean_{suffix}"]) == final_ids,
+                     "Final CLEAN forecasts must cover its exact frozen unit set.")
+        for name in final_ids:
+            bounds(final["clean_forecasts"][name], final["clean_timeouts"][name], name)
+        final_input = remote_path(final["clean_inputs"])
+        _require(final_input != paths["clean_inputs"] and final_input != hot
+                 and final_input not in hot.parents and hot not in final_input.parents,
+                 "Final CLEAN needs a separate closure outside hot working storage.")
+        maps = [name for name in ("farms_by_unit", "farms_by_arm") if name in final]
+        _require(len(maps) == 1, "Final CLEAN requires exactly one complete farm mapping.")
+        farms = final[maps[0]]
+        expected_farms = final_ids if maps[0] == "farms_by_unit" else {"r1", "r2", "c_esmc"}
+        _require(isinstance(farms, dict) and set(farms) == expected_farms, "Final CLEAN farm mapping is incomplete.")
+        for entry in farms.values():
+            _require(isinstance(entry, dict) and set(entry) == {"base_farm", "masked_farm"}, "Invalid final CLEAN farm mapping.")
+            for value in entry.values():
+                path = remote_path(value)
+                _require(hot != path and hot not in path.parents and path not in hot.parents,
+                         "Final CLEAN farms overlap hot working storage.")
+    else:
+        _require("final_clean_request" not in request, "An unused final CLEAN override is outside the reviewed pipeline.")
+
+    staged = {}
+    _require(isinstance(request["stage_files"], list), "Phase-4 staging must be an explicit file list.")
+    for row in request["stage_files"]:
+        _require(isinstance(row, dict) and set(row) == {"local", "remote", "sha256"}, "Invalid Phase-4 staged file.")
+        local, remote = Path(row["local"]), remote_path(row["remote"])
+        _require(local.is_absolute() and local.resolve() == local and local.is_file()
+                 and _sha(local) == row["sha256"] and campaign_root in remote.parents and str(remote) not in staged,
+                 "A reviewed Phase-4 staged file is missing, changed or outside the campaign.")
+        _require(not any(remote == campaign_root / name or campaign_root / name in remote.parents
+                         for name in ("views", "runs", "g2_requests")),
+                 "Reviewed staging files cannot overwrite views, output roots or generated session metadata.")
+        phase3._no_restricted_path(local)
+        staged[str(remote)] = row["sha256"]
+    if str(paths["plan"]) not in staged:
+        _require(repo in paths["plan"].parents, "The reviewed remote fold plan has no bound staged file.")
+        candidate = phase3.REPO_ROOT / paths["plan"].relative_to(repo)
+        _require(candidate.is_file() and _sha(candidate) == _sha(local_plan), "The checked-out fold plan differs.")
+    else:
+        _require(staged[str(paths["plan"])] == _sha(local_plan), "The staged fold plan differs from the reviewed plan.")
+    limit = request["max_download_bytes"]
+    _require(type(limit) is int and limit > 0, "Phase 4 requires an explicit positive preservation-byte ceiling.")
+    roots = [Path(config[key]) for key in ("durable_root", "mirror_root")]
+    roots += [Path(request[key]) for key in ("durable_root", "mirror_root")]
+    for root in [*roots, Path(request["host_state_root"])]:
+        _require(root.is_absolute() and root.resolve() == root, "Phase-4 preservation paths must be canonical absolute paths.")
+    _require(all(first != second and first not in second.parents and second not in first.parents
+                 for index, first in enumerate(roots) for second in roots[index + 1:]),
+             "G2 and Phase-4 preservation roots cannot overlap.")
+    _require(Path(request["host_state_root"]) != Path(config["state_root"]),
+             "G2 and Phase 4 need separate preservation-budget state roots.")
+    facts = [_storage_facts(root) for root in roots]
+    _require(facts[0][0] != facts[1][0] and facts[2][0] != facts[3][0],
+             "G2 and Phase 4 require independent primary and mirror devices.")
+    required_by_device = {}
+    for (device, _free), allowance in zip(facts, [_g2_download_limit(config, source)] * 2 + [limit] * 2):
+        required_by_device[device] = required_by_device.get(device, 5 * GIB) + allowance
+    _require(all(free >= required_by_device[device] for device, free in facts),
+             "Independent storage cannot hold the combined G2 and Phase-4 allowances plus reserve.")
+    return {"status": "passed", "plan_sha256": plan["plan_sha256"], "largest_unit_forecast_seconds": max(forecasts),
+            "max_download_bytes": limit}
+
+
+def _continue_runpod_phase4(config, transport, state, state_path, session, ready, manifest, probe,
+                           check_session, prepare_phase4):
+    """Plan locally, then register outputs before explicit queue work on the owned allocation.
+
+    prepare_phase4 may create local metadata only. Its transport argument is
+    deliberately None: it must not stage files, produce embeddings or fit models.
+    """
+    from ec_clean30 import phase4
+
+    source = ready.get("source", {})
+    _require(state.get("completed") == [name for _, name in measurement_queue(source)],
+             "Complete G2 receipts are required before Phase 4.")
+    check_session()
+    request = dict(prepare_phase4(config, None, state, session, ready, manifest, probe, check_session))
+    expected = {key: session[key] for key in ("pod_id", "session_id", "allocation_started_unix", "deadline_unix", "max_total_seconds")}
+    expected.update(provider="runpod", runpod_config_sha256=transport.stop_controller.config_sha)
+    _require(all(key not in request or request[key] == value for key, value in expected.items()),
+             "Prepared Phase 4 request changes the owned allocation.")
+    request.update(expected)
+    _require(Path(request["execution_manifest"]).resolve() == Path(config["execution_manifest"]).resolve(),
+             "Phase 4 must use the same published execution manifest as G2.")
+    actions = request.get("queue_actions")
+    _require(isinstance(actions, list) and actions and len(set(actions)) == len(actions)
+             and all(action in {"s1", "clean_embeddings", "clean_fits"} for action in actions),
+             "An explicit ordered Phase 4 queue is required.")
+    overrides = request.get("queue_requests", {})
+    allowed_overrides = {"s1": {"family_forecasts", "family_timeouts", "attempts"},
+                         "clean_embeddings": {"embedding_forecasts", "embedding_timeouts", "attempts"},
+                         "clean_fits": {"clean_forecasts", "clean_timeouts", "attempts"}}
+    _require(isinstance(overrides, dict) and set(overrides) <= set(actions)
+             and all(isinstance(values, dict) and set(values) <= allowed_overrides[action]
+                     for action, values in overrides.items()),
+             "Queue overrides may contain only declared forecasts, timeouts and attempts; runtime and authority are fixed.")
+    _require(config.get("execution_scope") != "g2_then_fold0_v5"
+             or source.get("format") == phase3.EXECUTION_V5_FORMAT,
+             "Phase 4 v5 requires the authenticated execution-v5 source.")
+    chain_fields = _remote_chain_request(config, source)
+    local_chain_fields = ({"amendment_chain_receipt": str(session_chain_receipt_path(config)),
+                           "expected_chain": chain_fields["expected_chain"]} if chain_fields else {})
+    _require(all(key not in request or request[key] == value for key, value in local_chain_fields.items()),
+             "Phase 4 preparation changes the authenticated amendment chain.")
+    # The outer coordinator verifies source locally; the worker checks the shipped receipt on the pod.
+    request.update(local_chain_fields)
+    template = dict(request["remote_request_template"])
+    _require(all(key not in template or template[key] == value for key, value in expected.items()),
+             "Remote Phase 4 request changes the owned allocation.")
+    template.update(expected)
+    _require(all(key not in template or template[key] == value for key, value in chain_fields.items()),
+             "The remote Phase 4 request changes the authenticated amendment chain.")
+    template.update(chain_fields)
+    _require(template["execution_root"] == f"{config['remote_campaign']}/runs/fold0/phase4"
+             and template["durable_root"] == request["durable_root"], "Phase 4 execution or durable root differs.")
+    request["remote_request_template"] = template
+    outputs = [{"execution_root": f"{config['remote_campaign']}/runs/fold0/g2",
+                "primary_root": str(Path(config["durable_root"]).resolve()),
+                "mirror_root": str(Path(config["mirror_root"]).resolve())},
+               {"execution_root": template["execution_root"], "primary_root": request["durable_root"],
+                "mirror_root": request["mirror_root"]}]
+    for output in outputs:
+        devices = []
+        for key in ("primary_root", "mirror_root"):
+            root = Path(output[key])
+            _require(root.is_absolute() and root.resolve() == root, "Phase 4 destinations must be canonical absolute paths.")
+            while not root.exists():
+                root = root.parent
+            devices.append(root.stat().st_dev)
+        _require(devices[0] != devices[1], "Phase 4 requires independent primary and mirror devices.")
+    transport.stop_controller.register_output_roots(outputs)
+    binding = {"request_sha256": hashlib.sha256(json.dumps(request, sort_keys=True, separators=(",", ":"),
+                                                          allow_nan=False).encode()).hexdigest(),
+               "preservation_roots": outputs, "max_download_bytes": request["max_download_bytes"],
+               "host_state_root": request["host_state_root"]}
+    _require(not state.get("phase4") or all(state["phase4"].get(key) == value for key, value in binding.items()),
+             "A prepared Phase 4 continuation cannot change during recovery.")
+    state.setdefault("phase4", {}).update(binding)
+    _write(state_path, state)
+    if source.get("format") == phase3.EXECUTION_V5_FORMAT:
+        from ec_clean30 import execution_v5
+
+        _require(actions == ["clean_embeddings", "clean_fits", "s1"],
+                 "Execution v5 requires its declared CLEAN preparation and fold-selection pipeline.")
+        _require(state.get("freeze1c", {}).get("remote")
+                 == f"{config['remote_campaign']}/g2_requests/freeze1c_v2.json",
+                 "Phase 4 requires the completed, staged Freeze 1c v2.")
+
+        def record_progress(name, result):
+            check_session()
+            _require(isinstance(name, str) and name and isinstance(result, Mapping),
+                     "A pipeline progress entry needs a name and a result record.")
+            state["phase4"].setdefault("completed_queues", {})[name] = dict(result)
+            _write(state_path, state)
+
+        result = execution_v5.run_phase4_pipeline(request, transport=transport, check_session=check_session,
+                                                  record_progress=record_progress)
+        _require(result.get("status") in {"passed", "stop_futility"},
+                 "The v5 pipeline did not reach a verified terminal boundary.")
+        state["phase4"]["result"] = result
+        state["status"] = "stopped_futility" if result["status"] == "stop_futility" else "phase4_complete"
+        _write(state_path, state)
+        return
+    runners = {"s1": phase4.run_s1_queue, "clean_embeddings": phase4.run_embedding_queue,
+               "clean_fits": phase4.run_clean_remote_queue}
+    for action in actions:
+        check_session()
+        current = {**request, **overrides.get(action, {})}
+        _require(all(current.get(key) == value for key, value in expected.items())
+                 and all(current.get(key) == request.get(key) for key in
+                         ("execution_manifest", "durable_root", "mirror_root", "host_state_root")),
+                 "Phase 4 queue override changes source, ownership or persistence.")
+        result = runners[action](current, transport=transport, check_session=check_session, close_session=False)
+        state["phase4"].setdefault("completed_queues", {})[action] = result
+        _write(state_path, state)
+    state["status"] = "phase4_complete"
+    _write(state_path, state)
 
 
 def _operator_root(config, *, prepare=False) -> Path:
@@ -1448,7 +2137,7 @@ def _operator_hold(config, config_path, state, state_path, session, source, chec
                         if action == 'retry-qualification':
                             _require(retry_allowed and not state.get('workload_admission_attempted')
                                      and not state.get('completed'), 'Qualification retry is forbidden after workload admission.')
-                            measured = phase3.verify_execution_source(Path(config['execution_manifest']), require_published=True)
+                            measured = _execution_source(config, published=True)
                             _require(measured == source, 'Qualification retry requires the exact same published source.')
                             _local_storage(config)
                             _require(time.time() < until, 'Qualification retry would consume the closeout reserve.')
@@ -1473,14 +2162,18 @@ def _operator_hold(config, config_path, state, state_path, session, source, chec
         _write(state_path, state)
 
 
-def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
+def _run_runpod_g2(config, config_path, *, transport=None, controller=None, pre_allocation=None,
+                   prepare_phase4=None, prepare_g2=None, complete_g2=None):
     from ec_clean30 import runpod_controller
+    continuation = config.get("execution_scope") == "g2_then_fold0_v5"
+    _require(not continuation or (config.get("provider") == "runpod"
+                                 and callable(pre_allocation) and callable(prepare_phase4)
+                                 and callable(prepare_g2) and callable(complete_g2)),
+             "Execution v5 requires the Runpod launch gate and same-session Phase 4 preparation.")
     keep_alive = config.get('runpod', {}).get('keep_alive_for_operator', False)
     _require(type(keep_alive) is bool, 'keep_alive_for_operator must be a boolean.')
     if keep_alive:
         _operator_root(config, prepare=True)
-    controller = controller or runpod_controller.RunpodController(config, config_path)
-    transport = transport or RunpodTransport(config, controller)
     state_root = Path(config["state_root"])
     state_root.mkdir(parents=True, exist_ok=True)
     state_path = state_root / "driver_state.json"
@@ -1493,15 +2186,32 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
         session, heartbeat_context, heartbeat = None, None, None
         try:
             ready = _prepared_preflight(config, config_path, published=True)
+            if continuation:
+                _require(ready["source"].get("format") == phase3.EXECUTION_V5_FORMAT,
+                         "The v5 continuation requires its published execution-v5 manifest.")
+                state["g2_max_download_bytes"] = _g2_download_limit(config, ready["source"])
+            if pre_allocation is not None:
+                binding = pre_allocation(config, config_path, ready)
+                _require(isinstance(binding, dict)
+                         and binding.get("config_sha256") == _sha(config_path)
+                         and binding.get("execution_manifest_sha256") == ready["source"]["execution_manifest_sha256"],
+                         "Launch gate must bind this configuration and published execution source.")
+                _require("launch_binding" not in state or state["launch_binding"] == binding,
+                         "The launch authorization binding cannot change during this session.")
+                state["launch_binding"] = binding
+                _write(state_path, state)
+            controller = controller or runpod_controller.RunpodController(config, config_path)
+            transport = transport or RunpodTransport(config, controller)
             cached = bool(config.get("artifact_cache"))
             if cached:
                 from ec_clean30 import runpod_bootstrap
-                _require(ready["source"]["format"] == phase3.BOOTSTRAP_FORMAT,
+                _require(continuation or ready["source"]["format"] == phase3.BOOTSTRAP_FORMAT,
                          "Cached bootstrap requires its authenticated execution-v4 manifest.")
                 runpod_bootstrap.verify_seeded_cache(config, source=ready["source"])
                 staging_scratch = runpod_bootstrap.staging_scratch_bytes(config)
             gcp = Path(config["gcp_controller_root"])
-            status = subprocess.run([str(gcp / "bin/vm-status")], check=True, capture_output=True, text=True, timeout=90).stdout
+            status = subprocess.run([str(gcp / "bin/vm-status")], check=True, capture_output=True, text=True,
+                                    timeout=90, env=phase3.clean_repository_environment()).stdout
             _require(_status(status, config["gcp_stopped_identity"]) == "TERMINATED", "The retained GCP VM must remain stopped.")
             _write(state_root / "gcp_before.json", {"status": status})
             if not owned:
@@ -1544,9 +2254,10 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                     check_session()
                     free = int(transport.remote([config["bootstrap_python"], "-c",
                         "import shutil; print(shutil.disk_usage('/workspace').free)"]).strip())
-                    extra = staging_scratch + PAYLOAD_CEILING_BYTES if cached else 0
+                    extra = staging_scratch + _g2_download_limit(config, ready["source"]) if cached else 0
                     _require(free >= ready["staging_peak_bytes"] + extra + 5 * GIB,
                              "Pod disk lacks staging and closeout space.")
+                    _prepare_runpod_storage(config, transport, ready, session)
                     if cached:
                         _stage_runpod_runtime(config, transport, ready["source"], check_session)
                     else:
@@ -1560,8 +2271,16 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
                     controller.admit_workload()
                     state['workload_admitted'] = True
                     _write(state_path, state)
+                    if continuation:
+                        _prepare_g2_v5(config, transport, state, state_path, session, ready, manifest, probe,
+                                       check_session, prepare_g2)
                     _execute_queue(config, transport, state, state_path, session, ready, manifest, probe,
                                    check_session)
+                    if continuation:
+                        _complete_g2_v5(config, transport, state, state_path, session, ready, manifest, probe,
+                                        check_session, complete_g2)
+                        _continue_runpod_phase4(config, transport, state, state_path, session, ready, manifest, probe,
+                                               check_session, prepare_phase4)
                 except Exception as exc:
                     state.update(status='interrupted', error=f'{type(exc).__name__}: {exc}')
                     state.setdefault('qualification_errors', []).append(state['error'])
@@ -1587,13 +2306,13 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
             state.update(status="interrupted", error=f"{type(exc).__name__}: {exc}")
             raise
         finally:
-            if owned:
+            if owned and controller is not None:
                 try:
                     preservation = None
                     if session:
                         transport.reserve_seconds = 15
                         try:
-                            preservation = _preserve_runpod_outputs(config, transport, controller, session)
+                            preservation = _preserve_runpod_session_outputs(config, transport, controller, session, state)
                         except Exception as exc:
                             state["preservation_error"] = f"{type(exc).__name__}: {exc}"
                     stopped = controller.stop()
@@ -1610,6 +2329,8 @@ def _run_runpod_g2(config, config_path, *, transport=None, controller=None):
 
 
 def run_g2(config: Mapping[str, Any], config_path: Path, *, transport: ControllerTransport | None = None) -> dict[str, Any]:
+    _require(config.get("execution_scope") != "g2_then_fold0_v5",
+             "Execution v5 must enter its published-source launch dispatcher with explicit authorization.")
     if config.get("provider") == "runpod":
         return _run_runpod_g2(config, config_path, transport=transport)
     config = dict(config)
@@ -1696,19 +2417,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", type=Path, required=True)
     actions = parser.add_mutually_exclusive_group()
     actions.add_argument("--run", action="store_true", help="Deliberately start once, or recover this still-active owned allocation.")
+    actions.add_argument("--run-v5", action="store_true", help="Run the published v5 dispatcher under explicit reviewed launch authority.")
     actions.add_argument("--seed-cache", action="store_true", help="Verify and seed the configured private artifact cache without allocating a GPU.")
     actions.add_argument('--operator', choices=('retry-qualification', 'closeout'),
                          help='Send one private control to this still-active Runpod operator hold.')
+    parser.add_argument("--authorization", type=Path, help="External reviewed launch-authorization record; --run-v5 only.")
+    parser.add_argument("--window-id", help="The approved launch-window identity; --run-v5 only.")
     args = parser.parse_args(argv)
     try:
+        _require((args.authorization is not None and bool(args.window_id)) if args.run_v5
+                 else (args.authorization is None and args.window_id is None),
+                 "--run-v5 requires --authorization and --window-id; those options are refused for every other action.")
         config = _json(args.config)
         if args.operator:
             result = request_operator(config, args.config, args.operator)
-        elif args.run:
+        elif args.run or args.run_v5:
             def interrupted(signum, frame):
                 raise KeyboardInterrupt(f"signal {signum}")
             signal.signal(signal.SIGTERM, interrupted)
-            result = run_g2(config, args.config)
+            if args.run_v5:
+                from ec_clean30.execution_v5 import run_v5
+
+                result = run_v5(config, args.config, authorization_path=args.authorization, window_id=args.window_id)
+            else:
+                result = run_g2(config, args.config)
         elif args.seed_cache:
             from ec_clean30 import runpod_bootstrap
             ready = _prepared_preflight(config, args.config, published=True)

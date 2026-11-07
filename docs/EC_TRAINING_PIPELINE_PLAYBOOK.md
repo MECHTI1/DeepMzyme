@@ -475,6 +475,10 @@ and two embedding receipts. Its numerical L3 ceilings are a proposal: G3 remains
 
 ### Automated G2 and the Fold-0 queues
 
+The campaign is under an [execution-v5 hold](campaigns/ec_class_vs_clean30_2026-10/execution_v5/README.md).
+The following v2–v4 recipes describe the earlier scope and do not authorize a launch. The v5 route requires
+published amendment 2, published execution v5, an approved fold-0 ceiling and separate explicit launch authority.
+
 The workstation loop uses the existing controller and the same WP-13 actions. Its default command is a local
 preview; `--run` is the deliberate start action. The private configuration binds the staging files, instance,
 cost quote, per-unit timeouts, resource caps and independent Data1 destination. Publication of the
@@ -500,6 +504,10 @@ kernel/CUDA checks precede remaining bulk staging. The cache route uses verified
 refuses a failed public download without silently starting a multi-gigabyte workstation upload. The
 [campaign bootstrap record](campaigns/ec_class_vs_clean30_2026-10/g2_readiness.md#reproducible-runpod-bootstrap)
 owns cache placement, source bindings and the unchanged spending, persistence and scientific gates.
+Preflight requires `remote_campaign` to retain the exact campaign directory name. For network-backed
+`/workspace`, explicit `runpod.posix_root` prepares verified local permissions and capacity before bulk staging;
+both runtime extraction paths must be direct children of that root. Use the configuration template linked from
+the campaign record; bulk archives, view paths and request paths have distinct placement checks.
 
 Explicit `runpod.keep_alive_for_operator:true` keeps the same heartbeat and watchdog alive after a repairable
 qualification failure or completed G2, until a control or the original deadline minus 900 seconds. It never

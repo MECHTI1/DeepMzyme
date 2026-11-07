@@ -1,7 +1,12 @@
 # Continuation after Freeze 1b
 
-The latest local readiness check is recorded in [evc-033](log.md#evc-033): Data1 is mounted, and the
-staged Pass I stock-retry correction awaits publication. Current preflight and G2 measurements remain pending.
+**2026-11-04 execution hold:** all launches are paused. [Execution v5](execution_v5/README.md) supersedes the launch sequence and budgets below; amendment 2, v5 publication and separate explicit launch authorization are required. The following preparation and recipes describe the earlier design.
+
+The latest attempt is recorded in [evc-034](log.md#evc-034): the published Pass I package reached successful
+main-runtime checks, then closed before scientific admission. The pod is stopped and deleted; G2 remains 0/12.
+The POSIX bootstrap repair and local draft preflight passed for the earlier scope. The correction now belongs
+to [execution v5](execution_v5/README.md); publication and any launch await the amended scientific contract.
+The older Freeze-1c/G3 sequence below is preserved as context and does not authorize execution.
 
 Status: updated, 2026-11-03; preparation and the S1 amendment are published through `3154a7f`.
 WP-13 is published at `10e0e11`; the execution extension is published at `589af0a`.
@@ -120,8 +125,9 @@ at their durable destination before reclaiming active scratch. No frozen evidenc
 The [Runpod bootstrap](g2_readiness.md#reproducible-runpod-bootstrap) stages the same pinned inputs through a
 private artifact cache and official model origins. Prepare and seed the cache with no GPU allocated, then use
 the single workstation entry point from the [EC recipe](../../EC_TRAINING_PIPELINE_PLAYBOOK.md#automated-g2-and-the-fold-0-queues).
-The new execution-v4 extension authenticates the added transport code against the preserved runtime-v2
-ancestor. Publication, cache readback, current pricing, independent local free space and fresh host qualification
+The [POSIX execution-v4 extension](execution_v5/posix_component_manifest.json) authenticates the corrected transport
+against the preserved runtime-v2 ancestor; the prior bootstrap manifest remains unchanged. Publication, cache
+readback, current pricing, independent local free space and fresh host qualification
 precede a new bounded pass. No upload-time reduction is claimed before actual cold/warm measurements.
 
 Declare these proposed operational choices in the CPU package before measuring results:

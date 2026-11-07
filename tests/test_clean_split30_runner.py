@@ -672,6 +672,42 @@ def test_fit_builds_guarded_commands_and_environment(fit_setup, monkeypatch):
         runner.run_fit(**kwargs)
 
 
+@pytest.mark.parametrize("actual_device", ["cuda:0", "cpu"])
+def test_explicit_cuda_fit_preserves_recipe_and_requires_child_device_evidence(fit_setup, monkeypatch, actual_device):
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0")
+    monkeypatch.setenv("NVIDIA_TF32_OVERRIDE", "1")
+    fake = FakeClean(fit_setup["work"])
+    policy = {"device": "cuda", "nvidia_tf32_override": "0", "cuda_matmul_allow_tf32": False,
+              "cudnn_allow_tf32": False, "torch_version": "synthetic", "cuda_device_count": 1,
+              "cuda_device_name": "Synthetic GPU",
+              "helper_sha256": runner.sha256_file(Path(runner.runtime_precision.__file__))}
+
+    def run(command, *, cwd, env, log_path):
+        code = fake(command, cwd=cwd, env=env, log_path=log_path)
+        with log_path.open("a") as handle:
+            handle.write(runner.runtime_precision.POLICY_PREFIX + json.dumps(policy) + "\n")
+            if "--model_name" in command:
+                handle.write(f"==> device used: {actual_device} | dtype used: torch.float32\n")
+        return code
+
+    monkeypatch.setattr(runner, "_run", run)
+    cpu_plan = runner.run_fit(**fit_setup["kwargs"], dry_run=True)
+    cuda_plan = runner.run_fit(**fit_setup["kwargs"], dry_run=True, device="cuda")
+    assert [row["command"][3:] for row in cuda_plan["steps"]] == [row["command"][3:] for row in cpu_plan["steps"]]
+    if actual_device == "cpu":
+        with pytest.raises(ComparatorError, match="model used CUDA"):
+            runner.run_fit(**fit_setup["kwargs"], device="cuda")
+        return
+    result = runner.run_fit(**fit_setup["kwargs"], device="cuda")
+    for call, step in zip(fake.calls, result["steps"]):
+        assert call["command"][2] == runner.CUDA_GUARDED_LAUNCH
+        assert call["env"]["CUDA_VISIBLE_DEVICES"] == "0"
+        assert call["env"]["NVIDIA_TF32_OVERRIDE"] == "0"
+        assert step["runtime_policy"] == policy
+        assert step["log_sha256"] == runner.sha256_file(fit_setup["work"] / step["log"])
+    assert result["recipe"] == {**runner.PUBLISHED_RECIPE, "epochs": 200, "adaptive_rate": 100}
+
+
 def test_fit_refusals(fit_setup, monkeypatch):
     kwargs = fit_setup["kwargs"]
     monkeypatch.setattr(runner, "_run", FakeClean(fit_setup["work"]))
