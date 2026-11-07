@@ -1,0 +1,268 @@
+{
+  "campaign_id": "ec_class_vs_clean30_2026-10",
+  "claim_engine": {
+    "engine": "stratified_rao_wu_v2",
+    "gate": "stats.inference_gate",
+    "max_skip_fraction": 0.01,
+    "metric": "ec_classes_1_6_accuracy",
+    "n_draws": 10000,
+    "seed": 20261023,
+    "stratified": true
+  },
+  "decides": false,
+  "descriptive": true,
+  "design": {
+    "clean_accuracy": 0.7,
+    "component_size": 2,
+    "margin_rule": "DeepMzyme is right wherever CLEAN is right, plus round(margin * n_U / 100) CLEAN errors in a fixed random order (common random numbers across margins)",
+    "proteins_per_ec_class_1_6": [
+      120,
+      110,
+      100,
+      60,
+      30,
+      40
+    ],
+    "seed": 20261105,
+    "wrong_prediction": "(true class + 1) mod 6"
+  },
+  "format": "deepmzyme_ec_clean30_futility_oc_v1",
+  "margins_points": [
+    0.0,
+    2.0,
+    4.0,
+    6.0,
+    8.0
+  ],
+  "n_replicates_per_margin": 200,
+  "provenance": {
+    "argv": [
+      "futility_oc_public.py",
+      "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/futility_oc.json"
+    ],
+    "code_sha256": {
+      "scripts/run_ec_clean30_campaign.py": "190d968e2e3421e69e7f3472f01fdf9d82dd0ec58b679ced34bf6a0613010e46",
+      "src/ec_clean30/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src/ec_clean30/amendment2.py": "9615bca08765bb8905aa0ecf51e544f8f4886717d4c4de2c4455e433a814d08b",
+      "src/ec_clean30/amendment_chain.py": "e7235f3bb6283fd783faf4fcebef5a051888c95c4da8c5b75142aa37a367e678",
+      "src/ec_clean30/amendment_rules.py": "0114d3ef1be4338de4cf7681cbaf58dafe8fee4ebf8d92843a172791e4be6c8c",
+      "src/ec_clean30/baseline.py": "9cec976db1c6f241f7b4aad247e6fce9e3e233c9c0ffa37905962d529023e795",
+      "src/ec_clean30/campaign.py": "fbff069d52c7f6a17131adc24df1fab62499e0f233c437ac3776d9793bf2a0c9",
+      "src/ec_clean30/clean_sanity.py": "a5d4b2296e5727456e2bbcc97e2ed3fe25b345c32bd7b6d36e012a8fe2a3bf4a",
+      "src/ec_clean30/cohort.py": "514f5f573c65afa1535d8b044198899ec2d1c348f110850cfd4029eef1df8e23",
+      "src/ec_clean30/commands.py": "84b63ce5ddf382483ebd4c707a012e11ee02db4a9dc9ffc514c4dea14b317775",
+      "src/ec_clean30/container_caps.py": "9bbbb625f902705c9f126c5a48f3940844d08f7737ce233b43719564c38bfccd",
+      "src/ec_clean30/execution_v5.py": "49448cdc81707113045bf2bf2e41faf55dd7a576bbdcd18f4ef0b2dcee658feb",
+      "src/ec_clean30/freeze.py": "58a00799356925622d1ef1d1a231bdab8233e82d830ba3dd6eb141c7ccc375be",
+      "src/ec_clean30/futility.py": "1d964c5c7fdd673d5ba8fad63791d159849641b74d2c107de74b1245d18dd6e9",
+      "src/ec_clean30/hot_storage.py": "2a735e90e3089c913930c79b39471dec11904622182b88da15d6360faf335ab5",
+      "src/ec_clean30/identity.py": "8391ab8abe955820a3162dfd30c83872ffab9bf4e2823428f5293855e7258ba2",
+      "src/ec_clean30/logit_adjustment.py": "7fdd280c98ef8eb52731e1ed496da89d2fcba1084baa4421c6c57e551b856387",
+      "src/ec_clean30/overlay.py": "d0f50244af6007d1e7193de08b3069112e43409ea1bc6abcd5636c3f5defda1d",
+      "src/ec_clean30/phase3.py": "5e940192ecbda0af28220e288d8c875d53e5f3d26b16e60347c685cef81a1e6c",
+      "src/ec_clean30/phase4.py": "2dcb6209d9955b5401c48403ef01dcb9ede1aea15287d529b9105a368cdbfa4e",
+      "src/ec_clean30/pretrain_corpus.py": "1cc9fb93d975879e287388e4c4fbdc9fd374cb83728c538bad654d6789fea96c",
+      "src/ec_clean30/provenance.py": "9173c3a041f1190aa2a4028c187fa2572b90b39cf6c8be589c4abfa1a2235d07",
+      "src/ec_clean30/r2_lists.py": "895775ce71469ac17bc268ebfc8f71d8513c2dd31d751fc1cfebc35eaaaee14e",
+      "src/ec_clean30/runpod_bootstrap.py": "a22b3a1f21895f441ee950180ec40eea377b5962024b95bd076de3d756396460",
+      "src/ec_clean30/runpod_controller.py": "c487a1d3006cc77feb07fee7bc8b74dbc0778201f43c64cd47cd5161909a7564",
+      "src/ec_clean30/runtime_precision.py": "db5a886deaba7fa8cf230ffc1a24f9020221572f6367133824e4b0d8db5ef57e",
+      "src/ec_clean30/s1_simulation.py": "6b8fe336f9f977843b39f3225a3f60a9acbcf08d1d810dee850dcbd214cf7d7d",
+      "src/ec_clean30/scoring.py": "69e979b25486abc7ebc5266ddff719bdb9bae70493bef43f9e6b2f23292d373c",
+      "src/ec_clean30/selection.py": "47d760d51ed6dc5856bec05e8b95e437513d84723c46e803209dabf578d74d96",
+      "src/ec_clean30/selector.py": "116be2f57a3fb482930194799a367518eb2aa1a918077ce722e051ac382530f8",
+      "src/ec_clean30/simulation.py": "7ea39a0eec562d1515a67d7a60a4a9b0e502739cd39310bc20c4bc105ae4c367",
+      "src/ec_clean30/stats.py": "38dca626c5223a7bd1329a483efa82be4d44332ba24656a48cd3efb1713317aa",
+      "src/ec_clean30/transfers.py": "151008db8ff895f7cb05214624bd072f504bf2adddd62f84e4abcc7059aee201",
+      "src/ec_clean30/views.py": "ca56b9c1b181c0ec09411e999483c7f9e6d14ca12ddf32f3c1993046ba4db6d4",
+      "src/ec_clean30/workstation.py": "88c5c4690c01bb230099c18d6940e2a02b279db3065f4e74b8ac7a0c17b9f12a",
+      "src/embed_helpers/esmc_chain_means.py": "36b99ac4530e768d59403d418b4216dc47d3493485ede6a7e8d370600abd0276",
+      "src/train.py": "f0b25cbb778f8863037999afa178b0f2b90517e209f9c3f73a450d7077b516f8",
+      "src/training/access_guard.py": "f10ce795f9c3b8adb274a57f10ea55cae93b04471235d09711ae823faf23ada7",
+      "src/training/config.py": "9fc7296a57ac7f05d334933c2925a85d0999dec06f408ae0c9e511b6837a7d8f",
+      "src/training/data.py": "586d0c7943e05d658468690e9a23fd80da31a402f50ec28df5657722834c23ef",
+      "src/training/ec_class_metrics.py": "9f6c7f1646fbc9d22ffa3846ede1708d6dc2c35f53fbe0c51be13bba04f43275",
+      "src/training/ec_classes.py": "3333dc64cc2a046dfa73cbcc06d32999e6352f3b2280dd40b97a18009f55889b",
+      "src/training/ec_membership.py": "9516da9aee394586eefebc2001d8b74f15dee1a8dc9d1c3bc1d13f4dd6f83fa1",
+      "src/training/ec_prediction_export.py": "bf70b4a17025096d489f550babc95af90df0350cef223655b3f376601a620f8f",
+      "src/training/global_esm_features.py": "210b2856910abd6a4293b66aacb47e371ef60711f95f561a691e6e1666bd9e15",
+      "src/training/run.py": "3eedb85701aa079207bfaa18db39638b9f598229d6f821bdd0eccadf026a2327",
+      "src/training/runtime_preparation.py": "b3bf92c6d777ec606e4b96315cc24e6d87733b50861f7d7997c37b8eaa7f23f4",
+      "src/training/site_filter.py": "c159f151872726b2cf192d8308639e5c8905160dede497754daefa0954bbce5a",
+      "src/training/structure_loading.py": "74d5a33938762907cb26cf4d4a5aaa24f0e2550b46f3e27b779169e304ed02fe"
+    },
+    "created_utc": "2026-11-07T17:45:04+00:00",
+    "environment": {
+      "cpu_count": 8,
+      "environment": {
+        "CUDA_VISIBLE_DEVICES": null,
+        "DEEPMZYME_FORBIDDEN_READ_ROOTS": null,
+        "DEEPMZYME_GRAPH_CACHE_DIR": null,
+        "DEEPMZYME_PARSE_CACHE_DIR": null,
+        "MKL_NUM_THREADS": "1",
+        "MKL_THREADING_LAYER": null,
+        "OMP_NUM_THREADS": "1",
+        "PYTHONHASHSEED": null
+      },
+      "packages": {
+        "biopython": "1.86",
+        "esm": "3.2.3",
+        "numpy": "2.4.4",
+        "pandas": null,
+        "scikit-learn": "1.8.0",
+        "torch": "2.11.0",
+        "torch-geometric": "2.7.0"
+      },
+      "platform": {
+        "machine": "x86_64",
+        "release": "7.0.0-42-generic",
+        "system": "Linux"
+      },
+      "python": {
+        "implementation": "CPython",
+        "version": "3.12.13"
+      }
+    },
+    "git": {
+      "branch": "main",
+      "clean": true,
+      "head": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+      "status_entries": 0,
+      "status_sample": [],
+      "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "redacted_for_publication": [
+      "git.repository_root",
+      "environment.hostname",
+      "environment.python.executable",
+      "argv[0] (the absolute path of this script; its file name is kept)"
+    ],
+    "schema_version": 1,
+    "smoke": false,
+    "source_tree_sha256": "93c7fd996bd861fcb55f7c808f3dfd1b66208a08571e5f51aba8a18dcf5dd089"
+  },
+  "rows": [
+    {
+      "decision_at_this_probability": "stop_futility",
+      "margin_points": 0.0,
+      "n_components": 230,
+      "n_population": 460,
+      "n_replicates": 200,
+      "n_successes": 0,
+      "per_population": {
+        "P1": {
+          "n_unavailable": 0,
+          "probability": 0.0
+        },
+        "P2": {
+          "n_unavailable": 0,
+          "probability": 0.0
+        }
+      },
+      "projected_probability": 0.0,
+      "wilson95": [
+        1.734723475976807e-18,
+        0.018845326377266575
+      ]
+    },
+    {
+      "decision_at_this_probability": "continue",
+      "margin_points": 2.0,
+      "n_components": 230,
+      "n_population": 460,
+      "n_replicates": 200,
+      "n_successes": 194,
+      "per_population": {
+        "P1": {
+          "n_unavailable": 0,
+          "probability": 0.97
+        },
+        "P2": {
+          "n_unavailable": 0,
+          "probability": 0.705
+        }
+      },
+      "projected_probability": 0.97,
+      "wilson95": [
+        0.9361057075454807,
+        0.9861796856598887
+      ]
+    },
+    {
+      "decision_at_this_probability": "continue",
+      "margin_points": 4.0,
+      "n_components": 230,
+      "n_population": 460,
+      "n_replicates": 200,
+      "n_successes": 200,
+      "per_population": {
+        "P1": {
+          "n_unavailable": 0,
+          "probability": 1.0
+        },
+        "P2": {
+          "n_unavailable": 0,
+          "probability": 0.96
+        }
+      },
+      "projected_probability": 1.0,
+      "wilson95": [
+        0.9811546736227335,
+        1.0
+      ]
+    },
+    {
+      "decision_at_this_probability": "continue",
+      "margin_points": 6.0,
+      "n_components": 230,
+      "n_population": 460,
+      "n_replicates": 200,
+      "n_successes": 200,
+      "per_population": {
+        "P1": {
+          "n_unavailable": 0,
+          "probability": 1.0
+        },
+        "P2": {
+          "n_unavailable": 0,
+          "probability": 1.0
+        }
+      },
+      "projected_probability": 1.0,
+      "wilson95": [
+        0.9811546736227335,
+        1.0
+      ]
+    },
+    {
+      "decision_at_this_probability": "continue",
+      "margin_points": 8.0,
+      "n_components": 230,
+      "n_population": 460,
+      "n_replicates": 200,
+      "n_successes": 200,
+      "per_population": {
+        "P1": {
+          "n_unavailable": 0,
+          "probability": 1.0
+        },
+        "P2": {
+          "n_unavailable": 0,
+          "probability": 1.0
+        }
+      },
+      "projected_probability": 1.0,
+      "wilson95": [
+        0.9811546736227335,
+        1.0
+      ]
+    }
+  ],
+  "rule_id": "futility_predictive_cluster_bootstrap_v1",
+  "schema_version": 1,
+  "synthetic": true,
+  "targets": {
+    "P1": 526,
+    "P2": 226
+  }
+}

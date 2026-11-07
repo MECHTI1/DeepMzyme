@@ -1,0 +1,65 @@
+{
+  "after_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+  "after_commit_role": "the dry-run-v2 source commit",
+  "before_commit": "c16399564608e70fcbc2aaab0bda7b9cabf02e74",
+  "claim": "Every v1 unit keeps its resolved-configuration hash.",
+  "date": "2026-11-07",
+  "folds": {
+    "0": {
+      "after_sha256": "e4a542c9eddcc65c7576d2c98546afc10d12f1c6b8b1a9753b3e10b8e8b6b454",
+      "before_sha256": "e4a542c9eddcc65c7576d2c98546afc10d12f1c6b8b1a9753b3e10b8e8b6b454",
+      "differing": 0,
+      "equal": true,
+      "n_commands": 356
+    },
+    "1": {
+      "after_sha256": "0cb52dad45b84a3a6039a3914425163a39c19f0d82ae11dbfea4e8c83a66b164",
+      "before_sha256": "0cb52dad45b84a3a6039a3914425163a39c19f0d82ae11dbfea4e8c83a66b164",
+      "differing": 0,
+      "equal": true,
+      "n_commands": 356
+    },
+    "2": {
+      "after_sha256": "581b8707ff3fc2d9fbf77c2f4612cceb17b8352189ec67555d13d2b94a45e33e",
+      "before_sha256": "581b8707ff3fc2d9fbf77c2f4612cceb17b8352189ec67555d13d2b94a45e33e",
+      "differing": 0,
+      "equal": true,
+      "n_commands": 356
+    },
+    "3": {
+      "after_sha256": "23b1e40143f03dd8aa8ffbcc35c440e5f80ae2344a616668198d426f08db4b07",
+      "before_sha256": "23b1e40143f03dd8aa8ffbcc35c440e5f80ae2344a616668198d426f08db4b07",
+      "differing": 0,
+      "equal": true,
+      "n_commands": 356
+    },
+    "4": {
+      "after_sha256": "095b16e0f90fa7f387c92dcb983d8e8de97af0b3c3104fd2da406cf6e561014a",
+      "before_sha256": "095b16e0f90fa7f387c92dcb983d8e8de97af0b3c3104fd2da406cf6e561014a",
+      "differing": 0,
+      "equal": true,
+      "n_commands": 356
+    }
+  },
+  "format": "deepmzyme_ec_clean30_amendment2_v1_resolved_config_v1",
+  "method": "commands.view_unit_commands (plan version 1) on the five fold views, once with the code of each commit, run from the main checkout with the same campaign-relative view and runs paths; the identity resolved_config_sha256 of every planned command (S1 units, S2 lever and S4 refit templates); per fold, the SHA-256 of the canonical sorted list of (unit, family, template, hash)",
+  "n_commands": 1780,
+  "n_differing": 0,
+  "private_evidence": {
+    "v1_resolved_config.py": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config.py",
+      "sha256": "11976cca2b59f66321fb37b98251f168a1e90825c57ee7c95ad0ac5692909822"
+    },
+    "v1_resolved_config_at_c163995.json": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config_at_c163995.json",
+      "sha256": "1258eb7c95a2e2e79489aabeeb60af5721b031138ebc48a8d01552c1d712fbd3"
+    },
+    "v1_resolved_config_at_f87b1f6.json": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/v1_resolved_config_at_f87b1f6.json",
+      "sha256": "6d2e883845276f09e3927c0183397ff1d3cac69bb07e6a730f0e598947a33965"
+    }
+  },
+  "rule": "A2-GOV-5",
+  "schema_version": 1,
+  "status": "passed"
+}

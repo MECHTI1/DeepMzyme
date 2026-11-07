@@ -27,14 +27,19 @@ the training-side union FASTA once):
 D=docs/campaigns/ec_class_vs_clean30_2026-10; A2="$D/amendment2"; F=$(sha256sum "$D/freeze1.json" | cut -d' ' -f1)
 for K in 0 1 2 3 4; do
   "${SMALL[@]}" "$PY" "$R" plan-v2 --fold "$K" --out "$C/plans_v2/fold$K.json" &&
-  "${CAP[@]}" "$PY" "$R" pretrain-corpus holdout-lists --overlay "$O" --campaign-root "$C" --fold "$K" \
-    --freeze1-sha256 "$F" &&
+  "${CAP[@]}" "$PY" "$R" pretrain-corpus holdout-lists --overlay "$O" --campaign-root "$C" --fold "$K" &&
   "${CAP[@]}" "$PY" "$R" pretrain-corpus build --campaign-root "$C" --fold "$K" --official-split-dir SPLITS \
     --identity-work "$C/amendment2/f6_holdout/fold$K/work" || break; done
 "${CAP[@]}" "$PY" "$R" pretrain-corpus fasta --campaign-root "$C" --official-split-dir SPLITS
-"${SMALL[@]}" "$PY" scripts/run_ec_clean30_clean_sanity.py tie-exposure --official-training-file TRAIN_FILE \
-  --fold K --r2-list R2_LIST --out "$C/amendment2/clean_tie_exposure.json"   # one file/fold pair per fold
+TIE=(); for K in 0 1 2 3 4; do TIE+=(--official-training-file "SPLITS/split30_train_split_$K.csv" --fold "$K"
+  --r2-list "$C/r2_lists/r2_allowlist_fold$K.txt"); done
+"${SMALL[@]}" "$PY" scripts/run_ec_clean30_clean_sanity.py tie-exposure "${TIE[@]}" \
+  --out "$C/amendment2/clean_tie_exposure.json"
 ```
+
+`SPLITS` is the official split directory, `DeepMzyme_Data/CLEAN_all_train_valid_splits/split30`. The hold-out
+lists take no `--freeze1-sha256`: the overlay's identity files predate Freeze 1 and record none, as the fold-0
+R1-inner lists of the recipe do; that option belongs to the complement search only.
 
 Private inputs. The repository is public and `$C` is gitignored. The dry-run-v2 receipts, the tie exposure and the
 F6 hold-out lists and corpus hold per-fold counts, accessions, absolute paths or host names, so each is written once

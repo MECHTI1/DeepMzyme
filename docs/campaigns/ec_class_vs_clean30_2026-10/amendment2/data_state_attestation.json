@@ -1,0 +1,16 @@
+{
+  "attested_by": "the maintainer",
+  "basis": [
+    "campaign log entries evc-033 (draft attestation) and evc-036 (G2 0/12; no fit, G2 event, allocation or provider operation)",
+    "the five dry-run-v2 receipts at the source commit (passed preparation probes only)"
+  ],
+  "date": "2026-11-07",
+  "fold0_data_definition": "A2-GOV-7 (1): a started G2 timing unit, a started fold-0 DeepMzyme fit, or a fold-0 CLEAN inner fit, export or inner prediction; label-free embeddings are not fold-0 data",
+  "fold0_records": [],
+  "format": "deepmzyme_ec_clean30_amendment2_data_state_attestation_v1",
+  "g2_completed_units": 0,
+  "rule": "A2-GOV-6",
+  "schema_version": 1,
+  "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+  "statement": "When amendment 2 is built, no fold-0 data exist: no G2 timing unit has started (recorded G2 completion 0/12), and no fold-0 DeepMzyme fit and no fold-0 CLEAN inner fit, export or inner prediction has started on any host. The dry-run-v2 probes of this build prepare data only (no training, no prediction), as the Freeze-1 dry runs did."
+}

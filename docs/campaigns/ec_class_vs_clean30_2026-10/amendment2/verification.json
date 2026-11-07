@@ -1,0 +1,183 @@
+{
+  "checks": {
+    "docs_contract": {
+      "baseline_warnings": 11,
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/docs_contract_f87b1f6.log",
+        "sha256": "0613c89c3d4baf36f55da25b6c6eb60c1a2c5f06f411b5e922b6d25384c0974a"
+      },
+      "status": "passed",
+      "strict_failures": 0,
+      "warnings": 11
+    },
+    "dry_runs_v2": {
+      "clean_tree": true,
+      "failed_probes": 0,
+      "receipts_private": {
+        "0": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold0.json",
+          "sha256": "e1de82920b46874eb4691a7926dbf39515781fbc18661f78cf200aa179fcd71b"
+        },
+        "1": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold1.json",
+          "sha256": "36330ee35acfddaa2e37e702cacd53fbd26175b717944a59f26b0010e0229c8e"
+        },
+        "2": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold2.json",
+          "sha256": "3d547fe22f5b5dbcbc5fd4c1bfafd614dedad6c9aa446c262ed4aec41decf36f"
+        },
+        "3": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold3.json",
+          "sha256": "311624c0f2a0cc3efef3871583c6259db74ae0a5de43e8a8e901ed15efe34b5e"
+        },
+        "4": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/dry_runs/fold4.json",
+          "sha256": "b23d9abba0fc90803a6e44ae6e052d8e315ccb168683f51dc3edf5c6a28278d0"
+        }
+      },
+      "rule": "r_cmd_v2",
+      "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+      "static_failures": 0,
+      "status": "passed"
+    },
+    "full_suite": {
+      "commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/full_suite_f87b1f6.log",
+        "sha256": "21b9d63927d4821b478347b5f61f9d795d60dd21f3546d9ef5604da5cf240797"
+      },
+      "failed": 0,
+      "status": "passed",
+      "summary": "4697 passed, 63 skipped, 15 subtests passed in 988.21s (0:16:28)"
+    },
+    "full_suite_science_rebased": {
+      "commit": "e31e5bb1eb98a66e364a9522840052cfca5daee6",
+      "evidence": {
+        "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/full_suite_e31e5bb_rebased.log",
+        "sha256": "5b4baf7cfe67275dfd7aaad971e74c555dcfdedf4bb09e7db45061d78688d63d"
+      },
+      "failed": 0,
+      "status": "passed",
+      "summary": "4669 passed, 63 skipped, 15 subtests passed in 1203.37s (0:20:03)"
+    },
+    "futility_oc": {
+      "evidence": {
+        "futility_oc_public.log": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/futility_oc_public.log",
+          "sha256": "db00e0df312484d17d2e62a225dca9a24998c9992265d122b5dfdbc16d1ed3b0"
+        },
+        "futility_oc_public.py": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/futility_oc_public.py",
+          "sha256": "cf9c03d1056d5ac3cdcbf6b029e6b6204cc18ea30b79e1090224dd18ed4a4644"
+        },
+        "futility_oc_unredacted.json": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/futility_oc_unredacted.json",
+          "sha256": "076d48f6e6fc44c18d9c7e1537b2df8906fa39a3c04e34f0ed313e641f03ac1d"
+        },
+        "futility_oc_unredacted.log": {
+          "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/futility_oc_unredacted.log",
+          "sha256": "3d486d17c33d16003968a498ac635ca02e9281d474ccc16840a565418ecdba31"
+        }
+      },
+      "provenance_redacted_for_publication": [
+        "git.repository_root",
+        "environment.hostname",
+        "environment.python.executable",
+        "argv[0] (the absolute path of this script; its file name is kept)"
+      ],
+      "record": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/futility_oc.json",
+        "sha256": "8ff839614773ce24fde8433911d2f5f04e5bfe7d1ca74c2178de2ec417ac196b"
+      },
+      "rows_equal_unredacted": true,
+      "status": "written",
+      "writer": "futility.operating_characteristics (the futility-oc call) through futility_oc_public.py"
+    },
+    "in_view_receipts_unchanged": {
+      "sha256": {
+        "0": "f71214bd98cfd5b042549d4a0bd0e2922aa5a573c65288e8548219488dff495a",
+        "1": "e19350c09c7cc01f251ab46428c7ecaa08abeb4b1495c4dbde7e0c29c1ce0b5d",
+        "2": "422128fd0e3c3872b9c011fa02528ee740f1cf1e044df456851de255727ff5a0",
+        "3": "657ee6a60ef268df8d3ce9416085b1bc86b667fb964c3cf8931e8e5cbb658283",
+        "4": "e27ce825fd1c313d5f624282d01b5ddb1c7b02bed6c5c2dd678fce4c21c3d805"
+      },
+      "status": "passed"
+    },
+    "independent_review_private_bindings": {
+      "findings_confirmed": 5,
+      "findings_fixed": 5,
+      "findings_rejected": 3,
+      "lenses": [
+        "soundness and forgery",
+        "privacy leakage",
+        "integration"
+      ],
+      "note": "each finding was reproduced or refuted separately before the fix; the fixes are in the source commit",
+      "status": "passed"
+    },
+    "plans_v2": {
+      "note": "each equals campaign.build_fold_plan_v2 at the source commit",
+      "plan_sha256": {
+        "0": "deea9d5d75238d70d1f41a59a57809cd48a26c57a13fc71521a022efff363720",
+        "1": "537371542b9a34a23916dd83de3d3efab58d8d4d504ed26f433613bf4403c95e",
+        "2": "74eab09a58197e565a80866fcc70497fa5e652afec0497ffc88c7cf16431d1a6",
+        "3": "514be14f141dd252c2beaa56dc103998139b7c82092c6ef62e757b168182fc35",
+        "4": "a1190541806dcb87f75c50532131d019f892914bcc3dadf4aca55203b5c4c8df"
+      },
+      "status": "passed"
+    },
+    "private_inputs": {
+      "note": "bound privately by path and SHA-256 in the record; no content here",
+      "roles": [
+        "inputs.clean_tie_exposure",
+        "inputs.f6_holdout",
+        "inputs.f6_corpus",
+        "dry_runs.receipts"
+      ],
+      "status": "written once at the source commit on a clean tree"
+    },
+    "v1_resolved_config": {
+      "n_commands": 1780,
+      "n_differing": 0,
+      "record": {
+        "path": "docs/campaigns/ec_class_vs_clean30_2026-10/amendment2/v1_resolved_config.json",
+        "sha256": "3bca610f051335ac8f1faa575a453257878c2b183749adb8c1341d8e43ddb90c"
+      },
+      "status": "passed"
+    }
+  },
+  "commits": {
+    "execution_v5": "cbab50b45a240bb36dcadf75427ae38c375f8717",
+    "private_bindings": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+    "science": "e31e5bb1eb98a66e364a9522840052cfca5daee6"
+  },
+  "date": "2026-11-07",
+  "environment": {
+    "numpy": "2.4.4",
+    "platform_machine": "x86_64",
+    "python": "3.12.13",
+    "scikit-learn": "1.8.0",
+    "torch": "2.11.0",
+    "torch-geometric": "2.7.0"
+  },
+  "format": "deepmzyme_ec_clean30_amendment2_verification_v1",
+  "private_evidence": {
+    "run_amend2_inputs.sh": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/run_amend2_inputs.sh",
+      "sha256": "b76657f2355f7caf0d9b1660ac85d9a17a5a61eff8f84f7e82735ed7f4bf6b0f"
+    },
+    "write_amend2_evidence.py": {
+      "path": "DeepMzyme_Data/campaigns/ec_class_vs_clean30_2026-10/amendment2/evidence/write_amend2_evidence.py",
+      "sha256": "93d77c1a1eeed2b43dc1d3ef0a6858b2843f41b17f618403eb53975f9bfc20a1"
+    }
+  },
+  "resource_caps": {
+    "cpu_quota_percent": 200,
+    "memory_max": "3G",
+    "memory_swap_max": 0
+  },
+  "schema_version": 1,
+  "scope": "CPU implementation and verification of amendment 2 before its record build. No fit, G2 event, GPU allocation or held-out evaluation. The chain verification of link 2 itself is not included (the record binds this file); it runs after publication with verify-amendment-chain.",
+  "source_commit": "f87b1f6a9feac6971d4d8cef1e360c9b90eeea78",
+  "status": "passed"
+}
